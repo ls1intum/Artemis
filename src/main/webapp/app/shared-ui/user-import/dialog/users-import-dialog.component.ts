@@ -1,16 +1,15 @@
-import { Component, DestroyRef, OnDestroy, ViewEncapsulation, inject, input, output, signal } from '@angular/core';
-import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
+import { Component, OnDestroy, ViewEncapsulation, inject, input, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { DialogModule } from 'primeng/dialog';
 import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
 import { TableModule } from 'primeng/table';
 import { ExamUserDTO } from 'app/exam/shared/entities/exam-user-dto.model';
-import { Subject, filter, finalize, takeUntil } from 'rxjs';
+import { Subject } from 'rxjs';
 import { ActionType } from 'app/shared-ui/delete-dialog/delete-dialog.model';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { Exam } from 'app/exam/shared/entities/exam.model';
-import { EXAM_PREPARATION_PENDING_HEADER, ExamManagementService } from 'app/exam/manage/services/exam-management.service';
+import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
 import { StudentDTO } from 'app/core/shared/entities/student-dto.model';
 import { faArrowRight, faBan, faCheck, faCircleNotch, faSpinner, faUpload } from '@fortawesome/free-solid-svg-icons';
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
@@ -22,7 +21,7 @@ import { Student } from 'app/openapi/model/student';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { readExamUserDTOsFromCSVFile, readStudentDTOsFromCSVFile } from 'app/shared-ui/user-import/util/read-users-from-csv';
 import { TutorialGroupApi } from 'app/openapi/api/tutorial-group-api';
-import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 @Component({
     selector: 'jhi-users-import-dialog',
@@ -37,17 +36,14 @@ export class UsersImportDialogComponent implements OnDestroy {
     private courseManagementService = inject(CourseManagementService);
     private adminUserService = inject(AdminUserService);
     private tutorialGroupApiService = inject(TutorialGroupApi);
-    private destroyRef = inject(DestroyRef);
 
     readonly ActionType = ActionType;
     readonly dialogVisible = signal<boolean>(false);
     readonly importCompleted = output<void>();
-    readonly examRegistrationCompleted = output<{ examId: number; students: ExamUserDTO[]; preparationPending: boolean }>();
 
     courseId = input<number>();
     courseRoleSlug = input<string>();
     exam = input<Exam | undefined>();
-    private readonly examChanges = toObservable(this.exam);
     tutorialGroup = input<TutorialGroup | undefined>();
     examUserMode = input<boolean>(false);
     adminUserMode = input<boolean>(false);
@@ -160,27 +156,13 @@ export class UsersImportDialogComponent implements OnDestroy {
                 error: () => this.onSaveError(),
             });
         } else if (!courseGroup && exam) {
-            const originalPayload = deepClone(this.examUsersToImport());
-            this.examManagementService
-                .addStudentsToExam(courseId!, exam.id!, originalPayload)
-                .pipe(
-                    takeUntilDestroyed(this.destroyRef),
-                    takeUntil(this.examChanges.pipe(filter((current) => current?.id !== exam.id))),
-                    finalize(() => this.isImporting.set(false)),
-                )
-                .subscribe({
-                    next: (res) => {
-                        if (this.exam()?.id !== exam.id) return;
-                        this.examRegistrationCompleted.emit({
-                            examId: exam.id!,
-                            students: originalPayload,
-                            preparationPending: res.headers?.get(EXAM_PREPARATION_PENDING_HEADER) === 'true',
-                        });
-                        const result = res.body;
-                        this.onSaveSuccess(result?.notFoundStudents ?? [], result?.rejectedStaffUsers ?? []);
-                    },
-                    error: () => this.onSaveError(),
-                });
+            this.examManagementService.addStudentsToExam(courseId!, exam.id!, this.examUsersToImport()).subscribe({
+                next: (res) => {
+                    const result = res.body;
+                    this.onSaveSuccess(result?.notFoundStudents ?? [], result?.rejectedStaffUsers ?? []);
+                },
+                error: () => this.onSaveError(),
+            });
         } else if (this.adminUserMode()) {
             // convert StudentDTO to User
             const artemisUsers = this.usersToImport().map((student) => cloneWith(student, { visibleRegistrationNumber: student.registrationNumber }));

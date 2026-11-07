@@ -1,14 +1,14 @@
-import { Component, DestroyRef, ElementRef, OnDestroy, computed, effect, inject, signal, untracked, viewChild } from '@angular/core';
+import { Component, DestroyRef, ElementRef, OnDestroy, computed, effect, inject, signal, viewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { NgTemplateOutlet } from '@angular/common';
-import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { HttpErrorResponse } from '@angular/common/http';
 import { ExamUser } from 'app/exam/shared/entities/exam-user.model';
 import { User } from 'app/account/user/user.model';
-import { Observable, Subject, Subscription, forkJoin, of } from 'rxjs';
+import { Observable, Subject, forkJoin, of } from 'rxjs';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ActionType } from 'app/shared-ui/delete-dialog/delete-dialog.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
-import { EXAM_PREPARATION_PENDING_HEADER, ExamManagementService, ExamRegistrationResultDTO } from 'app/exam/manage/services/exam-management.service';
+import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
 import { AccountService } from 'app/core/auth/account.service';
 import {
     faChair,
@@ -42,7 +42,6 @@ import {
     TumAetUiButtonDirective,
     TumAetUiConfirmDialogComponent,
     TumAetUiConfirmationService,
-    TumAetUiMessageComponent,
     TumAetUiPopoverComponent,
     TumAetUiPopoverTriggerDirective,
     TumAetUiProgressBarComponent,
@@ -70,7 +69,7 @@ import { ArtemisServerDateService } from 'app/foundation/service/server-date.ser
 import { AlertService } from 'app/foundation/service/alert.service';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { StudentExamStatusComponent } from 'app/exam/manage/student-exams/student-exam-status/student-exam-status.component';
-import { catchError, finalize, map, switchMap, tap } from 'rxjs/operators';
+import { catchError, map, switchMap, tap } from 'rxjs/operators';
 import { convertDateFromServer } from 'app/foundation/util/date.utils';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { ExamExerciseStartPreparationStatus } from 'app/exam/manage/services/exam-exercise-start-preparation-status.model';
@@ -79,19 +78,13 @@ import { TestExamWorkingTimeComponent } from 'app/exam/overview/test-exam-workin
 import { ExamChecklistService } from 'app/exam/manage/exams/exam-checklist-component/exam-checklist.service';
 import { buildDbQueryFromTableEvent } from 'app/shared-ui/tum-aet-ui-integration/tumaet-ui-table-request-builder';
 import { ExamStudentDTO, ExamStudentSearch } from 'app/exam/manage/students/exam-student-dto.model';
-import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 import { CourseTitleBarActionsDirective } from 'app/course/shared/directives/course-title-bar-actions.directive';
 import { CourseTitleBarTitleDirective } from 'app/course/shared/directives/course-title-bar-title.directive';
 
 const getWebsocketChannel = (examId: number) => `/topic/exams/${examId}/exercise-start-status`;
 
 const SEARCH_DEBOUNCE_MS = 300;
-
-interface PendingExamPreparation {
-    examId: number;
-    kind: 'registration' | 'generation';
-    retry: () => Observable<HttpResponse<unknown>>;
-}
 
 @Component({
     selector: 'jhi-exam-students',
@@ -115,7 +108,6 @@ interface PendingExamPreparation {
         TumAetUiPopoverTriggerDirective,
         TumAetUiProgressBarComponent,
         TumAetUiTagComponent,
-        TumAetUiMessageComponent,
         TumAetUiTooltipDirective,
         RouterLink,
         ArtemisDatePipe,
@@ -191,10 +183,6 @@ export class ExamStudentsComponent implements OnDestroy {
         return total > 0 && this.studentExamCount() < total;
     });
     readonly isAllExercisesPrepared = signal(false);
-    readonly preparationPending = signal<PendingExamPreparation | undefined>(undefined);
-    readonly preparationRetrying = signal(false);
-    private preparationRetrySubscription?: Subscription;
-    private preparationRequestExamId?: number;
     readonly examPreparationsComplete = computed(() => !this.isMissingIndividualExams() && this.isAllExercisesPrepared());
 
     readonly hasExamStarted = signal(false);
@@ -221,12 +209,16 @@ export class ExamStudentsComponent implements OnDestroy {
             registrationNumber: u.registrationNumber ?? '',
             email: u.email ?? '',
         }));
-        const request = this.registrationRequest(courseId, examId, dtos);
-        return request().pipe(
+        return this.examManagementService.addStudentsToExam(courseId, examId, dtos).pipe(
             tap((res) => {
-                this.capturePreparationStatus(res, examId, 'registration', request);
-                if (res.headers?.get(EXAM_PREPARATION_PENDING_HEADER) === 'true' && this.exam().id === examId) {
-                    this.reloadStudentsView();
+                const { notFoundStudents, rejectedStaffUsers } = res.body ?? {};
+                if (notFoundStudents?.length) {
+                    const logins = notFoundStudents.map((u) => u.login).join(', ');
+                    this.alertService.error('artemisApp.examManagement.examStudents.addDialog.notFoundStudents', { logins });
+                }
+                if (rejectedStaffUsers?.length) {
+                    const logins = rejectedStaffUsers.map((u) => u.login).join(', ');
+                    this.alertService.error('artemisApp.examManagement.examStudents.addDialog.rejectedStaffUsers', { logins });
                 }
             }),
             map(() => undefined),
@@ -415,20 +407,6 @@ export class ExamStudentsComponent implements OnDestroy {
         this.courseId.set(Number(this.route.snapshot.paramMap.get('courseId')));
         this.isAdmin.set(this.accountService.isAdmin());
 
-        effect(() => {
-            const examId = this.exam().id;
-            untracked(() => {
-                const pending = this.preparationPending();
-                if (this.preparationRequestExamId !== undefined && this.preparationRequestExamId !== examId) {
-                    this.preparationRetrySubscription?.unsubscribe();
-                    this.isLoading.set(false);
-                }
-                if (pending && pending.examId !== examId) {
-                    this.preparationPending.set(undefined);
-                }
-            });
-        });
-
         this.examData$
             .pipe(
                 takeUntilDestroyed(),
@@ -473,7 +451,7 @@ export class ExamStudentsComponent implements OnDestroy {
                 }),
             )
             .subscribe(({ examStats, exercisePreparationStatus }) => {
-                this.isAllExercisesPrepared.set(!this.preparationPending() && !!examStats?.allExamExercisesAllStudentsPrepared);
+                this.isAllExercisesPrepared.set(!!examStats?.allExamExercisesAllStudentsPrepared);
                 this.studentExamCount.set(examStats?.numberOfGeneratedStudentExams ?? 0);
                 this.statisticsReady.set(examStats !== undefined);
                 this.setExercisePreparationStatus(exercisePreparationStatus);
@@ -514,7 +492,6 @@ export class ExamStudentsComponent implements OnDestroy {
     }
 
     ngOnDestroy() {
-        this.preparationRetrySubscription?.unsubscribe();
         clearTimeout(this.searchTimer);
         clearTimeout(this.registrationDeadlineTimer);
         this.dialogErrorSource.unsubscribe();
@@ -677,119 +654,18 @@ export class ExamStudentsComponent implements OnDestroy {
             if (exam?.id) {
                 const courseId = this.courseId();
                 const examId = exam.id;
-                const request = () => this.examManagementService.addAllStudentsOfCourseToExam(courseId, examId);
-                request()
+                this.examManagementService
+                    .addAllStudentsOfCourseToExam(courseId, examId)
                     .pipe(takeUntilDestroyed(this.destroyRef))
                     .subscribe({
-                        next: (res) => {
+                        next: () => {
                             if (this.exam().id !== examId) return;
-                            this.capturePreparationStatus(res, examId, 'registration', request);
                             this.reloadStudentsView();
                         },
                         error: (error: HttpErrorResponse) => onError(this.alertService, error),
                     });
             }
         });
-    }
-
-    /** Keeps an imported exam registration retryable without changing the shared course-import flow. */
-    onImportedRegistrationCompleted(event: { examId: number; students: ExamUserDTO[]; preparationPending: boolean }): void {
-        if (this.exam().id !== event.examId) return;
-        if (event.preparationPending) {
-            this.rememberPendingPreparation(event.examId, 'registration', this.registrationRequest(this.courseId(), event.examId, event.students));
-        }
-    }
-
-    /** Replays saved registration, or retries preparation of the already generated attempts; never regenerates replacements. */
-    retryPendingPreparation(): void {
-        const pending = this.preparationPending();
-        if (!pending || this.preparationRetrying() || this.destroyRef.destroyed) return;
-        if (pending.examId !== this.exam().id) {
-            this.preparationPending.set(undefined);
-            return;
-        }
-        if (pending.kind === 'registration' && this.hasExamEnded()) return;
-        this.preparationRetrying.set(true);
-        this.preparationRequestExamId = pending.examId;
-        const retry =
-            pending.kind === 'generation'
-                ? this.prepareAndVerifyExercises(pending.examId, pending.retry)
-                : pending.retry().pipe(map((response) => response.headers?.get(EXAM_PREPARATION_PENDING_HEADER) !== 'true'));
-        this.preparationRetrySubscription = retry
-            .pipe(
-                takeUntilDestroyed(this.destroyRef),
-                finalize(() => {
-                    this.preparationRetrying.set(false);
-                    this.preparationRequestExamId = undefined;
-                }),
-            )
-            .subscribe({
-                next: (complete) => {
-                    if (this.exam().id !== pending.examId || this.preparationPending() !== pending) return;
-                    if (complete) this.preparationPending.set(undefined);
-                    if (pending.kind === 'generation') this.isAllExercisesPrepared.set(complete);
-                    this.reloadStudentsView();
-                },
-                error: () => {
-                    if (this.exam().id === pending.examId && this.preparationPending() === pending) {
-                        this.alertService.error('artemisApp.examManagement.examStudents.preparationRetryFailed');
-                    }
-                },
-            });
-    }
-
-    /** A successful preparation POST can still contain failed workers; only its authoritative status confirms readiness. */
-    private prepareAndVerifyExercises(examId: number, request: PendingExamPreparation['retry']): Observable<boolean> {
-        const courseId = this.courseId();
-        return request().pipe(
-            switchMap((response) => {
-                if (response.headers?.get(EXAM_PREPARATION_PENDING_HEADER) === 'true') return of(false);
-                return this.examManagementService.getExerciseStartStatus(courseId, examId).pipe(
-                    map(({ body: status }) => status != null && status.failed === 0 && status.finished != null && status.overall != null && status.finished >= status.overall),
-                    catchError(() => {
-                        this.alertService.error('artemisApp.examManagement.examStudents.preparationRetryFailed');
-                        return of(false);
-                    }),
-                );
-            }),
-        );
-    }
-
-    private registrationRequest(courseId: number, examId: number, dtos: ExamUserDTO[]): () => Observable<HttpResponse<ExamRegistrationResultDTO>> {
-        const originalPayload = deepClone(dtos);
-        return () =>
-            this.examManagementService.addStudentsToExam(courseId, examId, originalPayload).pipe(
-                tap((res) => {
-                    if (this.exam().id !== examId) return;
-                    const { notFoundStudents, rejectedStaffUsers } = res.body ?? {};
-                    if (notFoundStudents?.length) {
-                        this.alertService.error('artemisApp.examManagement.examStudents.addDialog.notFoundStudents', {
-                            logins: notFoundStudents.map((user) => user.login).join(', '),
-                        });
-                    }
-                    if (rejectedStaffUsers?.length) {
-                        this.alertService.error('artemisApp.examManagement.examStudents.addDialog.rejectedStaffUsers', {
-                            logins: rejectedStaffUsers.map((user) => user.login).join(', '),
-                        });
-                    }
-                }),
-            );
-    }
-
-    private capturePreparationStatus(response: HttpResponse<unknown>, examId: number, kind: PendingExamPreparation['kind'], retry: PendingExamPreparation['retry']): void {
-        if (this.exam().id !== examId) return;
-        if (response.headers?.get(EXAM_PREPARATION_PENDING_HEADER) === 'true') {
-            this.rememberPendingPreparation(examId, kind, retry);
-        } else if (this.preparationPending()?.retry === retry) {
-            this.preparationPending.set(undefined);
-        }
-    }
-
-    private rememberPendingPreparation(examId: number, kind: PendingExamPreparation['kind'], retry: PendingExamPreparation['retry']): void {
-        this.isAllExercisesPrepared.set(false);
-        const pending = this.preparationPending();
-        if (kind === 'generation' && pending?.examId === examId && pending.kind === 'registration') return;
-        this.preparationPending.set({ examId, kind, retry });
     }
 
     private scheduleRegistrationDeadline() {
@@ -896,42 +772,21 @@ export class ExamStudentsComponent implements OnDestroy {
      */
     startExercises() {
         const examId = this.exam().id;
-        if (!examId || this.preparationRetrying()) {
+        if (!examId) {
             return;
         }
-        const courseId = this.courseId();
-        const request = () => this.examManagementService.startExercises(courseId, examId);
-        const pending = this.preparationPending();
+
         this.isLoading.set(true);
-        this.preparationRetrying.set(true);
-        this.preparationRequestExamId = examId;
-        this.preparationRetrySubscription = this.prepareAndVerifyExercises(examId, request)
-            .pipe(
-                takeUntilDestroyed(this.destroyRef),
-                finalize(() => {
-                    this.preparationRetrying.set(false);
-                    this.preparationRequestExamId = undefined;
-                }),
-            )
-            .subscribe({
-                next: (complete) => {
-                    if (this.exam().id !== examId) return;
-                    if (complete) {
-                        if (pending?.kind === 'generation' && this.preparationPending() === pending) this.preparationPending.set(undefined);
-                        this.alertService.success('artemisApp.studentExams.startExerciseSuccess');
-                    } else if (this.preparationPending() === pending) {
-                        this.rememberPendingPreparation(examId, 'generation', request);
-                    }
-                    this.isAllExercisesPrepared.set(complete && !this.preparationPending());
-                    if (pending?.kind === 'generation' || !complete) this.reloadStudentsView();
-                    this.isLoading.set(false);
-                },
-                error: (err: HttpErrorResponse) => {
-                    if (this.exam().id !== examId) return;
-                    this.handleError('artemisApp.studentExams.startExerciseFailure', err);
-                    this.isLoading.set(false);
-                },
-            });
+        this.examManagementService.startExercises(this.courseId(), examId).subscribe({
+            next: () => {
+                this.alertService.success('artemisApp.studentExams.startExerciseSuccess');
+                this.isLoading.set(false);
+            },
+            error: (err: HttpErrorResponse) => {
+                this.handleError('artemisApp.studentExams.startExerciseFailure', err);
+                this.isLoading.set(false);
+            },
+        });
     }
 
     attendanceCheckFailed(examUser: ExamStudentDTO | undefined) {
@@ -1003,9 +858,7 @@ export class ExamStudentsComponent implements OnDestroy {
             .subscribe({
                 next: (res) => {
                     if (this.exam().id !== examId) return;
-                    const courseId = this.courseId();
                     this.studentExamCount.set(res?.body?.length ?? 0);
-                    this.capturePreparationStatus(res, examId, 'generation', () => this.examManagementService.startExercises(courseId, examId));
                     this.isLoading.set(false);
                     this.alertService.success('artemisApp.studentExams.studentExamGenerationSuccess', { number: res?.body?.length ?? 0 });
                     this.reloadStudentsView();
@@ -1053,7 +906,7 @@ export class ExamStudentsComponent implements OnDestroy {
             if (wasExercisePreparationRunning && !exPrepRunning) {
                 this.fetchExamData();
             } else if (!exPrepRunning) {
-                this.isAllExercisesPrepared.set(!this.preparationPending() && failedExams === 0 && finishedExams >= newStatus.overall);
+                this.isAllExercisesPrepared.set(failedExams === 0 && finishedExams >= newStatus.overall);
             }
         }
     }

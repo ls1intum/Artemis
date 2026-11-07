@@ -1,5 +1,5 @@
 import { vi } from 'vitest';
-import { HttpClient, HttpHeaders, HttpResponse } from '@angular/common/http';
+import { HttpClient, HttpResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -12,7 +12,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { Subject, of } from 'rxjs';
+import { of } from 'rxjs';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { UsersImportDialogComponent } from 'app/shared-ui/user-import/dialog/users-import-dialog.component';
 import { TranslateService } from '@ngx-translate/core';
@@ -150,37 +150,6 @@ describe('UsersImportDialogComponent', () => {
         expect(alertSpy).toHaveBeenCalledWith('artemisApp.importUsers.genericErrorMessage');
         expect(component.isParsing()).toBe(false);
         expect(event.target.value).toBe('');
-    });
-
-    it('reports pending exam preparation with an immutable original CSV payload', () => {
-        const users = [{ login: 'csv', firstName: '', lastName: '', registrationNumber: '123', email: '', room: 'A', seat: '4' }];
-        component.examUsersToImport.set(users);
-        const response = new HttpResponse({ body: { notFoundStudents: [], rejectedStaffUsers: [] }, headers: new HttpHeaders({ 'X-Artemis-Preparation-Pending': 'true' }) });
-        vi.spyOn(examManagementService, 'addStudentsToExam').mockReturnValue(of(response));
-        const pending = vi.spyOn(component.examRegistrationCompleted, 'emit');
-        component.importUsers();
-        users[0].room = 'CHANGED';
-        expect(component.hasImported()).toBe(true);
-        expect(component.isImporting()).toBe(false);
-        expect(pending).toHaveBeenCalledExactlyOnceWith({
-            examId: component.exam()!.id,
-            preparationPending: true,
-            students: [{ login: 'csv', firstName: '', lastName: '', registrationNumber: '123', email: '', room: 'A', seat: '4' }],
-        });
-    });
-
-    it('cancels an exam import when its owning exam changes and does not emit a stale pending event', () => {
-        const pending = new Subject<HttpResponse<ExamRegistrationResultDTO>>();
-        vi.spyOn(examManagementService, 'addStudentsToExam').mockReturnValue(pending);
-        const output = vi.spyOn(component.examRegistrationCompleted, 'emit');
-        component.importUsers();
-        expect(pending.observed).toBe(true);
-        fixture.componentRef.setInput('exam', { id: 999 });
-        fixture.detectChanges();
-        expect(pending.observed).toBe(false);
-        expect(component.isImporting()).toBe(false);
-        pending.next(new HttpResponse({ headers: new HttpHeaders({ 'X-Artemis-Preparation-Pending': 'true' }) }));
-        expect(output).not.toHaveBeenCalled();
     });
 
     it('should import students', () => {

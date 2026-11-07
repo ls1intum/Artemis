@@ -397,10 +397,6 @@
                 "button": "Show exam summary{{countdown}}",
                 "summaryAvailableFrom": "Your submission overview will be available from {{date}}."
             },
-            "examLoadConflict": {
-                "title": "Your exam is being prepared.",
-                "explanation": "Another exam operation is still running. Please wait a moment and try again."
-            },
             "summaryLoadFailed": {
                 "title": "The exam summary could not be loaded.",
                 "explanation": "Your submission and your results are stored on the server, nothing is lost. Please check your internet connection and try again.",
@@ -691,10 +687,6 @@
                     "verifyAttendance": "Verify attendance"
                 },
                 "statisticsFailed": "Exam statistics could not be loaded. Retry before registering students.",
-                "registrationSavedPreparationPending": "Registration was saved. Preparation is still pending. Retry preparation so newly registered students can start the exam.",
-                "generationSavedPreparationPending": "The new student exams were generated and saved. Cleanup or exercise preparation is still pending. Retry to finish preparing these exams.",
-                "retryPreparation": "Retry preparation",
-                "preparationRetryFailed": "Preparation is still pending. Please try again.",
                 "registrationClosed": "Registration is closed because the exam has ended.",
                 "registrationAfterGeneration": "Student exams have already been generated. Newly registered students will receive their own exam automatically. Exercises will also be prepared if preparation has already started. Continue?",
                 "manualAttendance": {

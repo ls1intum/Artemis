@@ -64,7 +64,6 @@ import { ExamPageComponent } from 'app/exam/overview/exercises/exam-page.compone
 import { SidebarCardElement, SidebarData } from 'app/foundation/types/sidebar';
 import { TumAetUiButtonDirective, TumAetUiMessageComponent, TumAetUiProgressSpinnerComponent } from '@tumaet/ui-angular';
 import { deepClone, hydrate } from 'app/foundation/util/deep-clone.util';
-import { isConcurrencyFailure } from 'app/foundation/util/retry-concurrency.util';
 import { QuizSubmissionApi } from 'app/openapi/api/quiz-submission-api';
 import { toQuizSubmissionFromLiveClient } from 'app/quiz/shared/util/generated-quiz-exercise.util';
 
@@ -177,7 +176,6 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     // True while the last summary request failed. The summary is then withheld entirely instead of falling back to the
     // conduction-era exam cached on this device, which carries no results and would read as a complete summary (#13317).
     readonly summaryLoadFailed = signal(false);
-    readonly examLoadConflict = signal(false);
     // Repeats whichever summary request failed; set alongside summaryLoadFailed
     private retrySummaryLoad?: () => void;
 
@@ -279,7 +277,10 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             } else if (this.testExam() && this.studentExamId()) {
                 this.loadTestExamStudentExamForSummary();
             } else {
-                this.loadOwnStudentExam();
+                this.examLoadSubscription = this.examParticipationService.getOwnStudentExam(this.courseId(), this.examId()).subscribe({
+                    next: (studentExam) => this.handleStudentExam(studentExam),
+                    error: () => this.handleNoStudentExam(),
+                });
             }
         });
 
@@ -332,22 +333,6 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             },
             error: () => {
                 this.handleFailedSummaryLoad(() => this.loadTestExamStudentExamForSummary());
-            },
-        });
-    }
-
-    /** Loads the owner attempt, keeping exhausted generation conflicts explicitly retryable. */
-    private loadOwnStudentExam(): void {
-        this.resetForNewLoad();
-        this.examLoadSubscription = this.examParticipationService.getOwnStudentExam(this.courseId(), this.examId()).subscribe({
-            next: (studentExam) => this.handleStudentExam(studentExam),
-            error: (error: unknown) => {
-                if (isConcurrencyFailure(error)) {
-                    this.handleFailedSummaryLoad(() => this.loadOwnStudentExam());
-                    this.examLoadConflict.set(true);
-                } else {
-                    this.handleNoStudentExam();
-                }
             },
         });
     }
@@ -436,7 +421,6 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
      */
     private clearFailedSummaryLoad(): void {
         this.summaryLoadFailed.set(false);
-        this.examLoadConflict.set(false);
         this.retrySummaryLoad = undefined;
     }
 

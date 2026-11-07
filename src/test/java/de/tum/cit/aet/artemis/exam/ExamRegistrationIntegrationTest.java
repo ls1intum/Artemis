@@ -3,90 +3,48 @@ package de.tum.cit.aet.artemis.exam;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.awaitility.Awaitility.await;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.verify;
 
-import java.io.IOException;
-import java.io.UncheckedIOException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.time.Instant;
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 
-import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.actuate.audit.AuditEventRepository;
-import org.springframework.dao.CannotAcquireLockException;
-import org.springframework.dao.PessimisticLockingFailureException;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.service.ldap.LdapUserDto;
 import de.tum.cit.aet.artemis.account.util.UserFactory;
 import de.tum.cit.aet.artemis.assessment.service.ParticipantScoreScheduleService;
-import de.tum.cit.aet.artemis.atlas.competency.util.CompetencyUtilService;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
-import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.dto.StudentDTO;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
-import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
 import de.tum.cit.aet.artemis.core.test_repository.UserCourseRoleTestRepository;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExamUser;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
-import de.tum.cit.aet.artemis.exam.dto.CreateTestRunDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamRegistrationResultDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamUserDTO;
-import de.tum.cit.aet.artemis.exam.dto.StudentExamDTO;
 import de.tum.cit.aet.artemis.exam.repository.ExamUserRepository;
-import de.tum.cit.aet.artemis.exam.service.ExamPreparationLockService;
 import de.tum.cit.aet.artemis.exam.service.ExamRegistrationService;
 import de.tum.cit.aet.artemis.exam.service.StudentExamService;
 import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
 import de.tum.cit.aet.artemis.exam.test_repository.StudentExamTestRepository;
 import de.tum.cit.aet.artemis.exam.util.ExamFactory;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
-import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
-import de.tum.cit.aet.artemis.exercise.dto.StudentParticipationDTO;
-import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
-import de.tum.cit.aet.artemis.exercise.repository.ExerciseTestRepository;
-import de.tum.cit.aet.artemis.exercise.service.ParticipationCleanupCommand;
-import de.tum.cit.aet.artemis.exercise.service.ParticipationCleanupCommand.Operation;
-import de.tum.cit.aet.artemis.exercise.service.ParticipationCleanupService;
 import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
-import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
-import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
-import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
-import de.tum.cit.aet.artemis.programming.domain.Repository;
-import de.tum.cit.aet.artemis.programming.domain.build.BuildLogEntry;
-import de.tum.cit.aet.artemis.programming.service.BuildLogEntryService;
-import de.tum.cit.aet.artemis.programming.service.FailedBuildLogService;
-import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalVCTest;
-import de.tum.cit.aet.artemis.text.domain.TextExercise;
 
 class ExamRegistrationIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 
@@ -110,40 +68,10 @@ class ExamRegistrationIntegrationTest extends AbstractSpringIntegrationLocalCILo
     private StudentExamService studentExamService;
 
     @Autowired
-    private ExamPreparationLockService examPreparationLockService;
-
-    @Autowired
-    private DistributedDataProvider distributedDataProvider;
-
-    @Autowired
-    private ParticipationCleanupService participationCleanupService;
-
-    @Autowired
-    private ExerciseTestRepository exerciseRepository;
-
-    @Autowired
-    private CompetencyUtilService competencyUtilService;
-
-    @Autowired
-    private ProgrammingExerciseUtilService programmingExerciseUtilService;
-
-    @Autowired
-    private AuditEventRepository auditEventRepository;
-
-    @Autowired
     private StudentParticipationTestRepository studentParticipationRepository;
 
     @Autowired
     private ChannelRepository channelRepository;
-
-    @Autowired
-    private ParticipationUtilService participationUtilService;
-
-    @Autowired
-    private BuildLogEntryService buildLogEntryService;
-
-    @Autowired
-    private FailedBuildLogService failedBuildLogService;
 
     @Autowired
     private ExamUtilService examUtilService;
@@ -192,433 +120,6 @@ class ExamRegistrationIntegrationTest extends AbstractSpringIntegrationLocalCILo
         participantScoreScheduleService.shutdown();
     }
 
-    @ParameterizedTest
-    @ValueSource(strings = { "missing", "individual", "regenerate" })
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
-    void testGenerationPathsRejectConcurrentGenerationAndAllowRetryWithoutDuplicates(String generationPath) throws Exception {
-        Exam exam = examUtilService.addActiveExamWithRegisteredUser(course1, student1);
-        exam = examUtilService.addTextModelingProgrammingExercisesToExam(exam, false, false);
-        exam.setStartDate(ZonedDateTime.now().plusHours(1));
-        exam.setEndDate(ZonedDateTime.now().plusHours(2));
-        exam.setExamMaxPoints(exam.getExerciseGroups().stream().mapToInt(group -> group.getExercises().iterator().next().getMaxPoints().intValue()).sum());
-        examRepository.save(exam);
-        long examId = exam.getId();
-        studentExamRepository.deleteAll(studentExamRepository.findByExamId(examId));
-        var firstEntered = new CountDownLatch(1);
-        var releaseFirst = new CountDownLatch(1);
-        var secondStarted = new CountDownLatch(1);
-        var securityContext = SecurityContextHolder.getContext();
-        try (var executor = Executors.newFixedThreadPool(2)) {
-            var first = executor.submit(() -> examRepository.withStudentExamGenerationLock(examId, () -> {
-                firstEntered.countDown();
-                try {
-                    assertThat(releaseFirst.await(10, TimeUnit.SECONDS)).isTrue();
-                }
-                catch (InterruptedException ex) {
-                    Thread.currentThread().interrupt();
-                    throw new IllegalStateException(ex);
-                }
-                return studentExamService.generateMissingStudentExams(examRepository.findByIdElseThrow(examId));
-            }));
-            try {
-                assertThat(firstEntered.await(10, TimeUnit.SECONDS)).isTrue();
-                var second = executor.submit(() -> {
-                    SecurityContextHolder.setContext(securityContext);
-                    secondStarted.countDown();
-                    try {
-                        Exam current = examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(examId);
-                        switch (generationPath) {
-                            case "missing" ->
-                                assertThatThrownBy(() -> studentExamService.generateMissingStudentExams(current)).isInstanceOf(PessimisticLockingFailureException.class);
-                            case "individual" -> assertThatThrownBy(() -> studentExamService.generateIndividualStudentExam(current, student1))
-                                    .isInstanceOf(PessimisticLockingFailureException.class);
-                            case "regenerate" -> request.postListWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + examId + "/generate-student-exams",
-                                    Optional.empty(), StudentExamDTO.class, HttpStatus.CONFLICT);
-                            default -> throw new IllegalArgumentException(generationPath);
-                        }
-                        return null;
-                    }
-                    finally {
-                        SecurityContextHolder.clearContext();
-                    }
-                });
-                assertThat(secondStarted.await(10, TimeUnit.SECONDS)).isTrue();
-                second.get(2, TimeUnit.SECONDS);
-                assertThat(first.isDone()).isFalse();
-                releaseFirst.countDown();
-                first.get(10, TimeUnit.SECONDS);
-                Exam current = examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(examId);
-                switch (generationPath) {
-                    case "missing" -> studentExamService.generateMissingStudentExams(current);
-                    case "individual" -> studentExamService.generateIndividualStudentExam(current, student1);
-                    case "regenerate" -> request.postListWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + examId + "/generate-student-exams", Optional.empty(),
-                            StudentExamDTO.class, HttpStatus.OK);
-                    default -> throw new IllegalArgumentException(generationPath);
-                }
-                assertThat(studentExamRepository.findByExamId(examId)).singleElement()
-                        .satisfies(studentExam -> assertThat(studentExam.getUser().getId()).isEqualTo(student1.getId()));
-                assertThat(studentExamRepository.findWithExercisesByUserIdAndExamId(student1.getId(), examId, false)).isPresent();
-            }
-            finally {
-                releaseFirst.countDown();
-            }
-        }
-    }
-
-    @ParameterizedTest
-    @ValueSource(booleans = { false, true })
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
-    void testRegenerationCleansExternalRepositoryOnlyAfterSuccessfulCommit(boolean failGeneration) throws Exception {
-        Exam exam = examUtilService.addActiveExamWithRegisteredUser(course1, student1);
-        exam = examUtilService.addTextModelingProgrammingExercisesToExam(exam, true, true);
-        exam.setStartDate(ZonedDateTime.now().minusHours(1));
-        exam.setEndDate(ZonedDateTime.now().plusHours(2));
-        exam.setExamMaxPoints(exam.getExerciseGroups().stream().mapToInt(group -> group.getExercises().iterator().next().getMaxPoints().intValue()).sum());
-        examRepository.save(exam);
-        long examId = exam.getId();
-        studentExamRepository.deleteAll(studentExamRepository.findByExamId(examId));
-        var previousExam = studentExamService.generateMissingStudentExams(exam).getFirst();
-        var exercise = (ProgrammingExercise) previousExam.getExercises().stream().filter(ProgrammingExercise.class::isInstance).findFirst().orElseThrow();
-        var participation = localVCLocalCITestService.createParticipation(exercise, student1.getLogin());
-        var repositoryUri = (LocalVCRepositoryUri) participation.getVcsRepositoryUri();
-        localVCLocalCITestService.createRepository(repositoryUri.getProjectKey(), localVCLocalCITestService.getRepositorySlug(repositoryUri.getProjectKey(), student1.getLogin()));
-        Path repositoryPath = repositoryUri.getLocalRepositoryPath(localVCBasePath);
-        assertThat(repositoryPath).exists();
-        var oldTestRun = studentExamService.createTestRun(exam, List.of(exercise.getId()), 3600);
-        var oldTestRunParticipation = programmingExerciseStudentParticipationRepository
-                .findAllWithSubmissionsByExerciseIdAndStudentId(exercise.getId(), oldTestRun.getUser().getId()).stream()
-                .filter(participationToCheck -> participationToCheck.isTestRun()).findFirst().orElseThrow();
-        Path testRunRepositoryPath = ((LocalVCRepositoryUri) oldTestRunParticipation.getVcsRepositoryUri()).getLocalRepositoryPath(localVCBasePath);
-        assertThat(testRunRepositoryPath).exists();
-        var testRunConfiguration = new CreateTestRunDTO(examId, List.of(exercise.getId()), 3600);
-        String testRunUrl = "/api/exam/courses/" + course1.getId() + "/exams/" + examId + "/test-runs";
-        var result = participationUtilService.addSampleFeedbackToResults(participationUtilService.createSubmissionAndResult(participation, 0, true));
-        var storedResult = resultRepository.findWithSubmissionAndFeedbackAndTeamStudentsByIdElseThrow(result.getId());
-        assertThat(storedResult.getCompletionDate()).isNotNull();
-        assertThat(storedResult.getFeedbacks()).hasSize(2);
-        var submission = (ProgrammingSubmission) result.getSubmission();
-        var buildLogs = List.of(new BuildLogEntry(ZonedDateTime.parse("2026-01-15T10:00:00Z"), "Compiler failure retained across rollback"));
-        buildLogEntryService.saveBuildLogs(buildLogs, submission, result);
-        assertThat(failedBuildLogService.getBuildLogs(exercise.getId(), submission.getId(), result.getId())).isPresent();
-        var generationCompleted = new AtomicBoolean();
-        doAnswer(invocation -> {
-            assertThat(repositoryPath).as("external resources must survive until the generation transaction commits").exists();
-            assertThat(failedBuildLogService.getBuildLogs(exercise.getId(), submission.getId(), result.getId())).as("build-log files must also survive until commit").isPresent();
-            var generated = invocation.callRealMethod();
-            generationCompleted.set(true);
-            if (failGeneration) {
-                throw new IllegalStateException("Force replacement generation rollback");
-            }
-            return generated;
-        }).when(studentExamService).generateStudentExams(any(Exam.class));
-
-        String generationUrl = "/api/exam/courses/" + course1.getId() + "/exams/" + examId + "/generate-student-exams";
-        if (failGeneration) {
-            request.postListWithResponseBody(generationUrl, Optional.empty(), StudentExamDTO.class, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-        else {
-            var cleanupEntered = new CountDownLatch(1);
-            var releaseCleanup = new CountDownLatch(1);
-            doAnswer(invocation -> {
-                // This query runs after the generation repository transaction returned, proving its deletion committed.
-                assertThat(programmingExerciseStudentParticipationRepository.findById(participation.getId())).isEmpty();
-                cleanupEntered.countDown();
-                assertThat(releaseCleanup.await(10, TimeUnit.SECONDS)).isTrue();
-                return invocation.callRealMethod();
-            }).when(gitServiceSpy).deleteLocalRepositoryStrictly(repositoryUri);
-            var context = SecurityContextHolder.getContext();
-            try (var executor = Executors.newSingleThreadExecutor()) {
-                var regeneration = executor.submit(() -> {
-                    SecurityContextHolder.setContext(context);
-                    try {
-                        return request.postListWithResponseBody(generationUrl, Optional.empty(), StudentExamDTO.class, HttpStatus.OK);
-                    }
-                    finally {
-                        SecurityContextHolder.clearContext();
-                    }
-                });
-                try {
-                    assertThat(cleanupEntered.await(10, TimeUnit.SECONDS)).isTrue();
-                    assertThatThrownBy(() -> studentExamService.startExercises(examId)).isInstanceOf(CannotAcquireLockException.class);
-                    request.postWithoutResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + examId + "/student-exams/start-exercises", Optional.empty(),
-                            HttpStatus.CONFLICT);
-                    request.postWithResponseBody(testRunUrl, testRunConfiguration, StudentExamDTO.class, HttpStatus.CONFLICT);
-                    assertThat(studentExamRepository.findAllTestRunsByExamId(examId)).isEmpty();
-                    userUtilService.changeUser(student1.getLogin());
-                    try {
-                        request.postWithoutResponseBody("/api/exercise/exercises/" + exercise.getId() + "/participations", Optional.empty(), HttpStatus.CONFLICT);
-                        assertThat(studentParticipationRepository.findByExerciseId(exercise.getId())).isEmpty();
-                        request.putWithResponseBody(
-                                "/api/exercise/exercises/" + exercise.getId() + "/participations/" + participation.getId() + "/resume-programming-participation", null,
-                                StudentParticipationDTO.class, HttpStatus.CONFLICT);
-                    }
-                    finally {
-                        userUtilService.changeUser(TEST_PREFIX + "instructor1");
-                    }
-                    assertThat(regeneration.isDone()).isFalse();
-                }
-                finally {
-                    releaseCleanup.countDown();
-                }
-                regeneration.get(10, TimeUnit.SECONDS);
-            }
-        }
-        verify(studentExamService).generateStudentExams(any(Exam.class));
-        assertThat(generationCompleted.get()).as("the injected failure must occur after replacement generation, not during deletion or fixture assertions").isTrue();
-        try (var executor = Executors.newSingleThreadExecutor()) {
-            assertThat(executor.submit(() -> examPreparationLockService.withPreparationLock(examId, () -> true)).get(2, TimeUnit.SECONDS))
-                    .as("success and rollback both release preparation admission for another thread").isTrue();
-        }
-
-        if (failGeneration) {
-            assertThat(repositoryPath).exists();
-            assertThat(failedBuildLogService.getBuildLogs(exercise.getId(), submission.getId(), result.getId()).orElseThrow()).singleElement().extracting(BuildLogEntry::getLog)
-                    .isEqualTo("Compiler failure retained across rollback");
-            assertThat(programmingExerciseStudentParticipationRepository.findById(participation.getId())).isPresent();
-            assertThat(resultRepository.findWithSubmissionAndFeedbackAndTeamStudentsByIdElseThrow(result.getId()).getFeedbacks()).hasSize(2);
-            assertThat(studentExamRepository.findByExamId(examId).stream().filter(studentExam -> !studentExam.isTestRun()).toList()).singleElement().extracting(StudentExam::getId)
-                    .isEqualTo(previousExam.getId());
-            assertThat(studentExamRepository.findAllTestRunsByExamId(examId)).singleElement().extracting(StudentExam::getId).isEqualTo(oldTestRun.getId());
-            assertThat(testRunRepositoryPath).exists();
-        }
-        else {
-            assertThat(repositoryPath).doesNotExist();
-            assertThat(failedBuildLogService.getBuildLogs(exercise.getId(), submission.getId(), result.getId())).isEmpty();
-            assertThat(programmingExerciseStudentParticipationRepository.findById(participation.getId())).isEmpty();
-            assertThat(resultRepository.findById(result.getId())).isEmpty();
-            assertThat(studentExamRepository.findByExamId(examId)).singleElement().extracting(StudentExam::getId).isNotEqualTo(previousExam.getId());
-            assertThat(testRunRepositoryPath).doesNotExist();
-            userUtilService.changeUser(student1.getLogin());
-            try {
-                var replacement = request.postWithResponseBody("/api/exercise/exercises/" + exercise.getId() + "/participations", Optional.empty(), StudentParticipationDTO.class,
-                        HttpStatus.CREATED);
-                assertThat(repositoryPath).exists();
-                request.putWithResponseBody("/api/exercise/exercises/" + exercise.getId() + "/participations/" + participation.getId() + "/resume-programming-participation", null,
-                        StudentParticipationDTO.class, HttpStatus.NOT_FOUND);
-                assertThat(repositoryPath).as("a stale resume cannot touch the replacement repository").exists();
-
-                // Once cleanup releases admission, resume the replacement's inactive build plan without replacing its repository or identity.
-                var inactive = programmingExerciseStudentParticipationRepository.findByIdElseThrow(replacement.id());
-                inactive.setInitializationState(InitializationState.INACTIVE);
-                inactive.setBuildPlanId(null);
-                programmingExerciseStudentParticipationRepository.saveAndFlush(inactive);
-                var resumed = request.putWithResponseBody(
-                        "/api/exercise/exercises/" + exercise.getId() + "/participations/" + replacement.id() + "/resume-programming-participation", null,
-                        StudentParticipationDTO.class, HttpStatus.OK);
-                assertThat(resumed.id()).isEqualTo(replacement.id());
-                assertThat(resumed.repositoryUri()).isEqualTo(replacement.repositoryUri());
-                assertThat(resumed.initializationState()).isEqualTo(InitializationState.INITIALIZED);
-                assertThat(resumed.buildPlanId()).isNotBlank();
-                assertThat(repositoryPath).exists();
-                assertThat(programmingExerciseStudentParticipationRepository.findByExerciseId(exercise.getId())).singleElement()
-                        .extracting(existingParticipation -> existingParticipation.getId()).isEqualTo(replacement.id());
-            }
-            finally {
-                userUtilService.changeUser(TEST_PREFIX + "instructor1");
-            }
-            request.postWithResponseBody(testRunUrl, testRunConfiguration, StudentExamDTO.class, HttpStatus.OK);
-            assertThat(studentExamRepository.findAllTestRunsByExamId(examId)).hasSize(1);
-            assertThat(testRunRepositoryPath).as("retry recreates a repository only after old cleanup finished").exists();
-        }
-        assertThat(examUserRepository.findAllByExamId(examId)).singleElement().extracting(examUser -> examUser.getUser().getId()).isEqualTo(student1.getId());
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
-    void testRetainedCompetencyCleanupAfterExerciseDeletionAdmitsPreparation() throws Exception {
-        Exam exam = examUtilService.addActiveExamWithRegisteredUser(course1, student1);
-        exam = examUtilService.addTextModelingProgrammingExercisesToExam(exam, false, false);
-        exam.setStartDate(ZonedDateTime.now().plusHours(1));
-        exam.setEndDate(ZonedDateTime.now().plusHours(2));
-        examRepository.save(exam);
-        long examId = exam.getId();
-        studentExamRepository.deleteAll(studentExamRepository.findByExamId(examId));
-        var studentExam = studentExamService.generateStudentExams(exam).getFirst();
-        var exercise = studentExam.getExercises().stream().filter(TextExercise.class::isInstance).findFirst().orElseThrow();
-        long exerciseId = exercise.getId();
-        var competency = competencyUtilService.createCompetencyWithExercise(course1, exercise);
-        var command = new ParticipationCleanupCommand(Operation.COMPETENCY_PROGRESS, 0, exerciseId, 0, null, null, null);
-
-        participationCleanupService.execute(command);
-        verify(competencyProgressApi).updateProgressByLearningObjectAsync(org.mockito.ArgumentMatchers.argThat(learningObject -> learningObject.getId().equals(exerciseId)));
-
-        // Cleanup intent may survive until an instructor deletes an exercise from the still-existing exam.
-        var cleanupMap = distributedDataProvider.<Long, List<ParticipationCleanupCommand>>getMap("exam-unfinished-resource-cleanup");
-        cleanupMap.put(examId, List.of(command));
-        try {
-            request.delete("/api/text/text-exercises/" + exerciseId, HttpStatus.OK);
-            assertThat(exerciseRepository.findById(exerciseId)).isEmpty();
-            assertThat(examRepository.findById(examId)).isPresent();
-            assertThat(studentExamRepository.findByIdWithExercisesElseThrow(studentExam.getId()).getExercises()).extracting(assignedExercise -> assignedExercise.getId())
-                    .doesNotContain(exerciseId);
-            verify(competencyProgressApi)
-                    .updateProgressByCompetencyAsync(org.mockito.ArgumentMatchers.argThat(linkedCompetency -> linkedCompetency.getId().equals(competency.getId())));
-
-            assertThat(examPreparationLockService.withPreparationLock(examId, () -> "admitted")).isEqualTo("admitted");
-            assertThat(cleanupMap.get(examId)).isNull();
-        }
-        finally {
-            cleanupMap.remove(examId);
-        }
-    }
-
-    @ParameterizedTest
-    @ValueSource(strings = { "ci", "vc", "ci-local", "local-io" })
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
-    void testRegenerationRetainsFailedCleanupAndReplaysItBeforePreparingNewRepositories(String failedAdapter) throws Exception {
-        Exam exam = examUtilService.addActiveExamWithRegisteredUser(course1, student1);
-        exam = examUtilService.addTextModelingProgrammingExercisesToExam(exam, true, true);
-        exam.setStartDate(ZonedDateTime.now().plusHours(1));
-        exam.setEndDate(ZonedDateTime.now().plusHours(2));
-        exam.setExamMaxPoints(exam.getExerciseGroups().stream().mapToInt(group -> group.getExercises().iterator().next().getMaxPoints().intValue()).sum());
-        examRepository.save(exam);
-        var otherStudent = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
-        var registered = new ExamUser();
-        registered.setExam(exam);
-        registered.setUser(otherStudent);
-        examUserRepository.save(registered);
-        var previousIds = studentExamService.generateStudentExams(exam).stream().map(StudentExam::getId).toList();
-        studentExamService.startExercises(exam.getId()).join();
-        var exercise = exam.getExerciseGroups().stream().flatMap(group -> group.getExercises().stream()).filter(ProgrammingExercise.class::isInstance)
-                .map(ProgrammingExercise.class::cast).findFirst().orElseThrow();
-        var participations = new ArrayList<>(programmingExerciseStudentParticipationRepository.findByExerciseId(exercise.getId()));
-        assertThat(participations).hasSize(2);
-        var repositoryPaths = new ArrayList<Path>();
-        var editorPaths = new ArrayList<Path>();
-        boolean localDeletionFails = failedAdapter.equals("ci-local") || failedAdapter.equals("local-io");
-        var submissions = new ArrayList<ProgrammingSubmission>();
-        var resultIds = new ArrayList<Long>();
-        for (var participation : participations) {
-            Path repositoryPath = ((LocalVCRepositoryUri) participation.getVcsRepositoryUri()).getLocalRepositoryPath(localVCBasePath);
-            assertThat(repositoryPath).exists();
-            repositoryPaths.add(repositoryPath);
-            var uri = (LocalVCRepositoryUri) participation.getVcsRepositoryUri();
-            String slug = localVCLocalCITestService.getRepositorySlug(uri.getProjectKey(), uri.getRepositoryTypeOrUserName());
-            try (var repository = localVCLocalCITestService.cloneWorkingCopy(uri.getProjectKey(), slug)) {
-                FileUtils.writeStringToFile(repository.workingCopyPath().resolve("old-student-answer.txt").toFile(), "Previous private student answer", StandardCharsets.UTF_8);
-                repository.workingCopy().add().addFilepattern("old-student-answer.txt").call();
-                de.tum.cit.aet.artemis.localvc.service.GitService.commit(repository.workingCopy()).setMessage("Commit previous student answer").call();
-                repository.workingCopy().push().call();
-            }
-            try (var editorRepository = gitServiceSpy.getOrCheckoutRepository(uri, true, false)) {
-                Path editorPath = editorRepository.getLocalPath();
-                editorPaths.add(editorPath);
-                FileUtils.writeStringToFile(editorPath.resolve("old-editor-answer.txt").toFile(), "Uncommitted private editor answer", StandardCharsets.UTF_8);
-            }
-            var result = participationUtilService.createSubmissionAndResult(participation, 80, true);
-            var submission = (ProgrammingSubmission) result.getSubmission();
-            buildLogEntryService.saveBuildLogs(List.of(new BuildLogEntry(ZonedDateTime.parse("2026-01-15T10:00:00Z"), "Retained until commit")), submission, result);
-            assertThat(failedBuildLogService.getBuildLogs(exercise.getId(), submission.getId(), result.getId())).isPresent();
-            submissions.add(submission);
-            resultIds.add(result.getId());
-        }
-        var sharedFailure = new IllegalStateException("Injected cleanup failure");
-        var localFailure = new IOException("Injected working-copy deletion failure");
-        if (failedAdapter.equals("ci") || failedAdapter.equals("ci-local")) {
-            org.mockito.Mockito.doThrow(sharedFailure).when(continuousIntegrationService).deleteBuildPlan(org.mockito.ArgumentMatchers.eq(exercise.getProjectKey()),
-                    org.mockito.ArgumentMatchers.anyString());
-        }
-        else if (failedAdapter.equals("vc")) {
-            org.mockito.Mockito.doThrow(sharedFailure).when(versionControlService).deleteRepository(org.mockito.ArgumentMatchers.any(LocalVCRepositoryUri.class));
-        }
-        if (localDeletionFails) {
-            doAnswer(invocation -> {
-                Repository repository = invocation.getArgument(0);
-                repository.closeBeforeDelete();
-                throw localFailure;
-            }).when(gitServiceSpy).deleteLocalRepository(any(Repository.class));
-        }
-
-        try {
-            var response = request.postWithoutResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/generate-student-exams", null, HttpStatus.OK,
-                    null);
-            assertThat(response.getHeader("X-Artemis-Preparation-Pending")).isEqualTo("true");
-            var committed = List.of(request.getObjectMapper().readValue(response.getContentAsString(), StudentExamDTO[].class));
-            var committedIds = committed.stream().map(StudentExamDTO::id).toList();
-            assertThat(committedIds).hasSize(2).doesNotContainAnyElementsOf(previousIds);
-            assertThat(studentExamRepository.findByExamId(exam.getId())).extracting(StudentExam::getId).containsExactlyInAnyOrderElementsOf(committedIds);
-            for (int index = 0; index < participations.size(); index++) {
-                assertThat(programmingExerciseStudentParticipationRepository.findById(participations.get(index).getId())).isEmpty();
-                if (failedAdapter.equals("vc")) {
-                    assertThat(repositoryPaths.get(index)).exists();
-                    var uri = (LocalVCRepositoryUri) participations.get(index).getVcsRepositoryUri();
-                    String slug = localVCLocalCITestService.getRepositorySlug(uri.getProjectKey(), uri.getRepositoryTypeOrUserName());
-                    try (var repository = localVCLocalCITestService.cloneWorkingCopy(uri.getProjectKey(), slug)) {
-                        assertThat(Files.readString(repository.workingCopyPath().resolve("old-student-answer.txt"))).isEqualTo("Previous private student answer");
-                    }
-                }
-                else {
-                    assertThat(repositoryPaths.get(index)).doesNotExist();
-                }
-                assertThat(failedBuildLogService.getBuildLogs(exercise.getId(), submissions.get(index).getId(), resultIds.get(index))).isEmpty();
-                Path editorPath = editorPaths.get(index);
-                if (localDeletionFails) {
-                    assertThat(Files.readString(editorPath.resolve("old-editor-answer.txt"))).isEqualTo("Uncommitted private editor answer");
-                }
-                else {
-                    assertThat(editorPath).doesNotExist();
-                }
-                verify(gitServiceSpy).deleteLocalRepository(org.mockito.ArgumentMatchers.argThat((Repository repository) -> repository.getLocalPath().equals(editorPath)));
-            }
-            verify(continuousIntegrationService).deleteBuildPlan(exercise.getProjectKey(), participations.get(1).getBuildPlanId());
-            long examId = exam.getId();
-            var cleanupMap = distributedDataProvider.<Long, List<ParticipationCleanupCommand>>getMap("exam-unfinished-resource-cleanup");
-            if (localDeletionFails) {
-                var retained = cleanupMap.get(examId);
-                assertThat(retained).hasSize(failedAdapter.equals("ci-local") ? 4 : 2);
-                for (var participation : participations) {
-                    var operations = assertThat(retained).filteredOn(command -> command.participationId() == participation.getId())
-                            .extracting(ParticipationCleanupCommand::operation);
-                    if (failedAdapter.equals("ci-local")) {
-                        operations.containsExactlyInAnyOrder(Operation.BUILD_PLAN, Operation.LOCAL_REPOSITORY);
-                    }
-                    else {
-                        operations.containsExactly(Operation.LOCAL_REPOSITORY);
-                    }
-                }
-            }
-            assertThatThrownBy(() -> studentExamService.startExercises(examId)).isInstanceOf(CannotAcquireLockException.class).satisfies(exception -> {
-                if (localDeletionFails) {
-                    var failures = List.of(exception.getCause().getSuppressed());
-                    assertThat(failures).filteredOn(UncheckedIOException.class::isInstance).hasSize(2).allSatisfy(failure -> assertThat(failure.getCause()).isSameAs(localFailure));
-                    if (failedAdapter.equals("ci-local")) {
-                        assertThat(failures).filteredOn(failure -> failure == sharedFailure).hasSize(2);
-                        assertThat(failures).hasSize(4);
-                    }
-                    else {
-                        assertThat(failures).hasSize(2);
-                    }
-                }
-            });
-            assertThat(programmingExerciseStudentParticipationRepository.findByExerciseId(exercise.getId())).isEmpty();
-            org.mockito.Mockito.doCallRealMethod().when(continuousIntegrationService).deleteBuildPlan(org.mockito.ArgumentMatchers.eq(exercise.getProjectKey()),
-                    org.mockito.ArgumentMatchers.anyString());
-            org.mockito.Mockito.doCallRealMethod().when(versionControlService).deleteRepository(org.mockito.ArgumentMatchers.any(LocalVCRepositoryUri.class));
-            org.mockito.Mockito.doCallRealMethod().when(gitServiceSpy).deleteLocalRepository(any(Repository.class));
-            studentExamService.startExercises(examId).join();
-            assertThat(cleanupMap.get(examId)).isNull();
-            assertThat(studentExamRepository.findByExamId(exam.getId())).extracting(StudentExam::getId).containsExactlyInAnyOrderElementsOf(committedIds);
-            assertThat(programmingExerciseStudentParticipationRepository.findByExerciseId(exercise.getId())).hasSize(2);
-            for (var oldParticipation : participations) {
-                var uri = (LocalVCRepositoryUri) oldParticipation.getVcsRepositoryUri();
-                String slug = localVCLocalCITestService.getRepositorySlug(uri.getProjectKey(), uri.getRepositoryTypeOrUserName());
-                try (var repository = localVCLocalCITestService.cloneWorkingCopy(uri.getProjectKey(), slug)) {
-                    assertThat(repository.workingCopyPath().resolve("old-student-answer.txt")).doesNotExist();
-                }
-                try (var editorRepository = gitServiceSpy.getOrCheckoutRepository(uri, true, false)) {
-                    assertThat(editorRepository.getLocalPath().resolve("old-editor-answer.txt")).doesNotExist();
-                }
-            }
-        }
-        finally {
-            org.mockito.Mockito.doCallRealMethod().when(continuousIntegrationService).deleteBuildPlan(org.mockito.ArgumentMatchers.eq(exercise.getProjectKey()),
-                    org.mockito.ArgumentMatchers.anyString());
-            org.mockito.Mockito.doCallRealMethod().when(versionControlService).deleteRepository(org.mockito.ArgumentMatchers.any(LocalVCRepositoryUri.class));
-            org.mockito.Mockito.doCallRealMethod().when(gitServiceSpy).deleteLocalRepository(any(Repository.class));
-            examPreparationLockService.withPreparationLock(exam.getId(), () -> null);
-        }
-    }
-
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testIndividualGenerationReusesRealExamAndPreservesMultipleTestExamAttempts() {
@@ -633,6 +134,28 @@ class ExamRegistrationIntegrationTest extends AbstractSpringIntegrationLocalCILo
         StudentExam attempt = studentExamService.generateIndividualStudentExam(exam, student1);
         assertThat(attempt.getId()).isNotEqualTo(first.getId());
         assertThat(studentExamRepository.findByExamId(exam.getId())).hasSize(2);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testRegistrationPropagatesInvalidExerciseGroupFailure() throws Exception {
+        Exam exam = examUtilService.addExam(course1);
+        exam = examUtilService.addTextModelingProgrammingExercisesToExam(exam, false, false);
+        exam.setStartDate(ZonedDateTime.now().plusHours(1));
+        exam.setEndDate(ZonedDateTime.now().plusHours(2));
+        examRepository.save(exam);
+        var existing = examUtilService.addStudentExamWithUser(exam, student1);
+        // A new mandatory group without an exercise is an incomplete instructor configuration.
+        // Generating the new student's exam must surface the failure rather than report pending success.
+        ExamFactory.generateExerciseGroupWithTitle(true, exam, "Empty mandatory group");
+        exam.setNumberOfExercisesInExam(exam.getNumberOfExercisesInExam() + 1);
+        examRepository.save(exam);
+        var student = new StudentDTO(OTHER_PREFIX + "student1", "", "", "", "");
+
+        request.postWithoutLocation("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/students", List.of(student), HttpStatus.INTERNAL_SERVER_ERROR, null);
+
+        assertThat(studentExamRepository.findByExamId(exam.getId())).extracting(StudentExam::getId).containsExactly(existing.getId());
+        assertThat(examUserRepository.findUserIdsByExamId(exam.getId())).contains(userUtilService.getUserByLogin(OTHER_PREFIX + "student1").getId());
     }
 
     @Test
@@ -658,10 +181,13 @@ class ExamRegistrationIntegrationTest extends AbstractSpringIntegrationLocalCILo
         exam.setStartDate(ZonedDateTime.now().plusHours(1));
         exam.setEndDate(ZonedDateTime.now().plusHours(2));
         examRepository.save(exam);
-        examUtilService.addStudentExamWithUser(exam, student1);
+        var existing = examUtilService.addStudentExamWithUser(exam, student1);
         var student = new StudentDTO(OTHER_PREFIX + "student1", "", "", "", "");
         request.postWithoutLocation("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/students", List.of(student), HttpStatus.OK, null);
-        assertThat(studentExamRepository.findByExamId(exam.getId())).hasSize(2);
+        var initialIds = studentExamRepository.findByExamId(exam.getId()).stream().map(StudentExam::getId).toList();
+        assertThat(initialIds).hasSize(2).contains(existing.getId());
+        request.postWithoutLocation("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/students", List.of(student), HttpStatus.OK, null);
+        assertThat(studentExamRepository.findByExamId(exam.getId())).extracting(StudentExam::getId).containsExactlyInAnyOrderElementsOf(initialIds);
     }
 
     @Test
@@ -672,10 +198,14 @@ class ExamRegistrationIntegrationTest extends AbstractSpringIntegrationLocalCILo
         exam.setStartDate(ZonedDateTime.now().plusHours(1));
         exam.setEndDate(ZonedDateTime.now().plusHours(2));
         examRepository.save(exam);
-        examUtilService.addStudentExamWithUser(exam, student1);
+        var existing = examUtilService.addStudentExamWithUser(exam, student1);
         request.postWithoutLocation("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/register-course-students", null, HttpStatus.OK, null);
         assertThat(studentExamRepository.findUserIdsWithStudentExamsForExam(exam.getId()))
                 .containsExactlyInAnyOrderElementsOf(examUserRepository.findUserIdsByExamId(exam.getId()));
+        var initialIds = studentExamRepository.findByExamId(exam.getId()).stream().map(StudentExam::getId).toList();
+        assertThat(initialIds).contains(existing.getId());
+        request.postWithoutLocation("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/register-course-students", null, HttpStatus.OK, null);
+        assertThat(studentExamRepository.findByExamId(exam.getId())).extracting(StudentExam::getId).containsExactlyInAnyOrderElementsOf(initialIds);
     }
 
     @Test
@@ -697,163 +227,6 @@ class ExamRegistrationIntegrationTest extends AbstractSpringIntegrationLocalCILo
         await().untilAsserted(() -> assertThat(exerciseIds.stream()
                 .mapToLong(exerciseId -> studentParticipationRepository.countInitializedParticipationsByExerciseIdAndExamIdIgnoreTestRuns(exerciseId, examId)).sum())
                 .isEqualTo(expectedParticipations));
-    }
-
-    @ParameterizedTest
-    @ValueSource(booleans = { false, true })
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
-    void testRegistrationReportsFailedPreparationAndRetriesExistingStudentExam(boolean allCourseStudents) throws Exception {
-        Exam exam = examUtilService.addActiveExamWithRegisteredUser(course1, student1);
-        exam = examUtilService.addTextModelingProgrammingExercisesToExam(exam, true, false);
-        exam.setStartDate(ZonedDateTime.now().plusHours(1));
-        exam.setEndDate(ZonedDateTime.now().plusHours(2));
-        examRepository.save(exam);
-        long examId = exam.getId();
-        // The helper's empty placeholder is replaced by generation in the real endpoint.
-        studentExamRepository.deleteAll(studentExamRepository.findByExamId(examId));
-        studentExamService.generateStudentExams(exam);
-        studentExamService.startExercises(examId).join();
-        var preparedStudentExam = studentExamRepository.findWithExercisesByUserIdAndExamId(student1.getId(), examId, false).orElseThrow();
-        var initializedParticipationIds = studentParticipationRepository.findByStudentExamWithEagerLatestSubmissionResult(preparedStudentExam, false).stream()
-                .map(participation -> participation.getId()).toList();
-        User newStudent = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
-        var payload = allCourseStudents ? null : List.of(new StudentDTO(newStudent.getLogin(), "", "", "", ""));
-        String url = "/api/exam/courses/" + course1.getId() + "/exams/" + examId + (allCourseStudents ? "/register-course-students" : "/students");
-        org.mockito.Mockito.doThrow(new IllegalStateException("Injected participation preparation failure")).when(continuousIntegrationService).configureBuildPlan(any());
-        Long savedStudentExamId;
-        try {
-            var response = request.postWithoutResponseBody(url, payload, HttpStatus.OK, null);
-            assertThat(studentExamService.getExerciseStartStatusOfExam(examId).orElseThrow().failed()).isPositive();
-            assertThat(examUserRepository.findUserIdsByExamId(examId)).contains(newStudent.getId());
-            savedStudentExamId = studentExamRepository.findWithExercisesByUserIdAndExamId(newStudent.getId(), examId, false).orElseThrow().getId();
-            assertThat(response.getHeader("X-Artemis-Preparation-Pending")).isEqualTo("true");
-        }
-        finally {
-            org.mockito.Mockito.doCallRealMethod().when(continuousIntegrationService).configureBuildPlan(any());
-        }
-        var response = request.postWithoutResponseBody(url, payload, HttpStatus.OK, null);
-        assertThat(response.getHeader("X-Artemis-Preparation-Pending")).isNull();
-        var retriedStudentExam = studentExamRepository.findWithExercisesByUserIdAndExamId(newStudent.getId(), examId, false).orElseThrow();
-        assertThat(retriedStudentExam.getId()).isEqualTo(savedStudentExamId);
-        assertThat(studentParticipationRepository.findByStudentExamWithEagerLatestSubmissionResult(retriedStudentExam, false)).hasSize(exam.getNumberOfExercisesInExam())
-                .allMatch(participation -> participation.isAtLeastInitialized());
-        assertThat(studentExamService.getExerciseStartStatusOfExam(examId).orElseThrow().failed()).isZero();
-        assertThat(studentParticipationRepository.findByStudentExamWithEagerLatestSubmissionResult(preparedStudentExam, false)).extracting(participation -> participation.getId())
-                .containsExactlyInAnyOrderElementsOf(initializedParticipationIds);
-    }
-
-    @ParameterizedTest
-    @ValueSource(booleans = { false, true })
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
-    void testRegistrationRetriesAllFailedPreparationWithoutInitializedParticipations(boolean cacheExpired) throws Exception {
-        Exam exam = examUtilService.addActiveExamWithRegisteredUser(course1, student1);
-        ExamFactory.generateExerciseGroup(true, exam);
-        exam.setNumberOfExercisesInExam(1);
-        exam.setStartDate(ZonedDateTime.now().plusHours(1));
-        exam.setEndDate(ZonedDateTime.now().plusHours(2));
-        exam = examRepository.save(exam);
-        var exercise = programmingExerciseUtilService.addProgrammingExerciseToExam(exam, 0);
-        long examId = exam.getId();
-        // The helper's empty placeholder is replaced by generation in the real endpoint.
-        studentExamRepository.deleteAll(studentExamRepository.findByExamId(examId));
-        studentExamService.generateStudentExams(exam);
-        var newStudent = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
-        var payload = List.of(new StudentDTO(newStudent.getLogin(), "", "", "", ""));
-        String url = "/api/exam/courses/" + course1.getId() + "/exams/" + examId + "/students";
-        org.mockito.Mockito.doThrow(new IllegalStateException("Injected first preparation failure")).when(continuousIntegrationService).configureBuildPlan(any());
-        List<Long> originalParticipationIds;
-        try {
-            studentExamService.startExercises(examId).join();
-            var failedStatus = studentExamService.getExerciseStartStatusOfExam(examId).orElseThrow();
-            assertThat(failedStatus.failed()).isEqualTo(1);
-            assertThat(failedStatus.finished()).isZero();
-            assertThat(studentParticipationRepository.countInitializedParticipationsByExerciseIdAndExamIdIgnoreTestRuns(exercise.getId(), examId)).isZero();
-            originalParticipationIds = programmingExerciseStudentParticipationRepository.findByExerciseId(exercise.getId()).stream().map(participation -> participation.getId())
-                    .toList();
-            assertThat(originalParticipationIds).hasSize(1);
-            if (cacheExpired) {
-                studentExamService.invalidateExerciseStartStatus(examId);
-            }
-            var response = request.postWithoutResponseBody(url, payload, HttpStatus.OK, null);
-            assertThat(response.getHeader("X-Artemis-Preparation-Pending")).isEqualTo("true");
-        }
-        finally {
-            org.mockito.Mockito.doCallRealMethod().when(continuousIntegrationService).configureBuildPlan(any());
-        }
-        var response = request.postWithoutResponseBody(url, payload, HttpStatus.OK, null);
-        assertThat(response.getHeader("X-Artemis-Preparation-Pending")).isNull();
-        assertThat(programmingExerciseStudentParticipationRepository.findByExerciseId(exercise.getId())).hasSize(2).allMatch(participation -> participation.isAtLeastInitialized())
-                .extracting(participation -> participation.getId()).containsAll(originalParticipationIds);
-        assertThat(studentExamService.getExerciseStartStatusOfExam(examId).orElseThrow().failed()).isZero();
-    }
-
-    @ParameterizedTest
-    @ValueSource(booleans = { false, true })
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
-    void testRegistrationDefersStudentExamCreationWhenPreparationIsBusyAndRetryPreparesIt(boolean allCourseStudents) throws Exception {
-        Exam exam = examUtilService.addActiveExamWithRegisteredUser(course1, student1);
-        exam = examUtilService.addTextModelingProgrammingExercisesToExam(exam, false, false);
-        exam.setStartDate(ZonedDateTime.now().plusHours(1));
-        exam.setEndDate(ZonedDateTime.now().plusHours(2));
-        examRepository.save(exam);
-        long examId = exam.getId();
-        studentExamRepository.deleteAll(studentExamRepository.findByExamId(examId));
-        studentExamService.generateMissingStudentExams(exam);
-        assertThat(studentExamService.getExerciseStartStatusOfExam(examId)).isEmpty();
-        User newStudent = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
-        var student = new StudentDTO(newStudent.getLogin(), "", "", "", "");
-        String url = "/api/exam/courses/" + course1.getId() + "/exams/" + examId + "/students";
-        if (allCourseStudents) {
-            url = "/api/exam/courses/" + course1.getId() + "/exams/" + examId + "/register-course-students";
-        }
-        int auditCount = auditEventRepository.find(TEST_PREFIX + "instructor1", Instant.EPOCH, Constants.ADD_USER_TO_EXAM).size();
-        String examTitle = exam.getTitle();
-        var preparationEntered = new CountDownLatch(1);
-        var releasePreparation = new CountDownLatch(1);
-        try (var executor = Executors.newSingleThreadExecutor()) {
-            var preparation = executor.submit(() -> examPreparationLockService.withPreparationLock(examId, () -> {
-                preparationEntered.countDown();
-                try {
-                    assertThat(releasePreparation.await(10, TimeUnit.SECONDS)).isTrue();
-                }
-                catch (InterruptedException exception) {
-                    Thread.currentThread().interrupt();
-                    throw new IllegalStateException(exception);
-                }
-                return null;
-            }));
-            try {
-                assertThat(preparationEntered.await(10, TimeUnit.SECONDS)).isTrue();
-                if (allCourseStudents) {
-                    var response = request.postWithoutResponseBody(url, null, HttpStatus.OK, null, Map.of("X-Artemis-Preparation-Pending", "true"));
-                    assertThat(response.getContentAsString()).isEmpty();
-                }
-                else {
-                    var response = request.postWithResponseBody(url, List.of(student), ExamRegistrationResultDTO.class, HttpStatus.OK, null,
-                            Map.of("X-Artemis-Preparation-Pending", "true"));
-                    assertThat(response.notFoundStudents()).isNullOrEmpty();
-                    assertThat(response.rejectedStaffUsers()).isNullOrEmpty();
-                }
-                assertThat(examUserRepository.findUserIdsByExamId(examId)).contains(newStudent.getId());
-                assertThat(studentExamRepository.findWithExercisesByUserIdAndExamId(newStudent.getId(), examId, false)).isEmpty();
-                assertThat(auditEventRepository.find(TEST_PREFIX + "instructor1", Instant.EPOCH, Constants.ADD_USER_TO_EXAM)).hasSize(auditCount + 1)
-                        .anySatisfy(event -> assertThat(event.getData()).containsEntry("exam", examTitle));
-            }
-            finally {
-                releasePreparation.countDown();
-            }
-            preparation.get(10, TimeUnit.SECONDS);
-        }
-
-        // The first preparation completes before retry and its progress cache expires. Admission must re-read persisted preparation state.
-        studentExamService.startExercises(examId).join();
-        studentExamService.invalidateExerciseStartStatus(examId);
-        var retried = request.postWithoutResponseBody(url, allCourseStudents ? null : List.of(student), HttpStatus.OK, null);
-        assertThat(retried.getHeader("X-Artemis-Preparation-Pending")).isNull();
-
-        var generated = studentExamRepository.findWithExercisesByUserIdAndExamId(newStudent.getId(), examId, false).orElseThrow();
-        assertThat(generated.getExercises()).hasSize(exam.getNumberOfExercisesInExam());
-        assertThat(studentParticipationRepository.findByStudentExamWithEagerLatestSubmissionResult(generated, false)).hasSize(exam.getNumberOfExercisesInExam());
     }
 
     @Test
@@ -880,7 +253,8 @@ class ExamRegistrationIntegrationTest extends AbstractSpringIntegrationLocalCILo
         request.postWithoutLocation("/api/exam/courses/" + course1.getId() + "/exams/" + examId + "/students", List.of(new StudentDTO(login, "", "", "", "")), HttpStatus.OK, null);
 
         var generated = studentExamRepository.findWithExercisesByUserIdAndExamId(userUtilService.getUserByLogin(login).getId(), examId, false).orElseThrow();
-        assertThat(studentParticipationRepository.findByStudentExamWithEagerLatestSubmissionResult(generated, false)).hasSize(exam.getNumberOfExercisesInExam());
+        int expectedExercises = exam.getNumberOfExercisesInExam();
+        await().untilAsserted(() -> assertThat(studentParticipationRepository.findByStudentExamWithEagerLatestSubmissionResult(generated, false)).hasSize(expectedExercises));
     }
 
     @Test

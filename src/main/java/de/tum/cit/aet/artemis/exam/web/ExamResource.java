@@ -129,7 +129,6 @@ import de.tum.cit.aet.artemis.exam.service.ExamDateService;
 import de.tum.cit.aet.artemis.exam.service.ExamDeletionService;
 import de.tum.cit.aet.artemis.exam.service.ExamImportService;
 import de.tum.cit.aet.artemis.exam.service.ExamLiveEventsService;
-import de.tum.cit.aet.artemis.exam.service.ExamPreparationLockService;
 import de.tum.cit.aet.artemis.exam.service.ExamRegistrationService;
 import de.tum.cit.aet.artemis.exam.service.ExamService;
 import de.tum.cit.aet.artemis.exam.service.ExamSessionService;
@@ -142,8 +141,6 @@ import de.tum.cit.aet.artemis.exercise.dto.ExerciseForPlagiarismCasesOverviewDTO
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseGroupWithIdAndExamDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
-import de.tum.cit.aet.artemis.exercise.service.ParticipationCleanupCommand;
-import de.tum.cit.aet.artemis.exercise.service.ParticipationCleanupCommand.Task;
 import de.tum.cit.aet.artemis.exercise.service.SubmissionService;
 import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.ExamSearchableEntityDTO;
 import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityWeaviateService;
@@ -186,8 +183,6 @@ public class ExamResource {
     private final ExamService examService;
 
     private final ExamDeletionService examDeletionService;
-
-    private final ExamPreparationLockService examPreparationLockService;
 
     private final ExamDateService examDateService;
 
@@ -234,12 +229,11 @@ public class ExamResource {
             CustomAuditEventRepository auditEventRepository, ChannelService channelService, ChannelRepository channelRepository, ExerciseRepository exerciseRepository,
             ExamSessionService examSessionRepository, ExamLiveEventsService examLiveEventsService, StudentExamService studentExamService, ExamUserService examUserService,
             Optional<AutomaticAfterDueDateService> automaticAfterDueDateService, Optional<SearchableEntityWeaviateService> searchableEntityWeaviateServiceOptional,
-            StudentParticipationRepository studentParticipationRepository, ExamPreparationLockService examPreparationLockService) {
+            StudentParticipationRepository studentParticipationRepository) {
         this.userRepository = userRepository;
         this.courseRepository = courseRepository;
         this.examService = examService;
         this.examDeletionService = examDeletionService;
-        this.examPreparationLockService = examPreparationLockService;
         this.submissionService = submissionService;
         this.examDateService = examDateService;
         this.examRegistrationService = examRegistrationService;
@@ -1158,7 +1152,7 @@ public class ExamResource {
      *
      * @param courseId the id of the course
      * @param examId   the id of the exam
-     * @return the committed student exams with their users; X-Artemis-Preparation-Pending signals that resource cleanup needs a preparation retry
+     * @return the list of student exams with their corresponding users
      */
     @FeatureUsage(UserFeature.EXAM_CONDUCTION_MANAGEMENT)
     @PostMapping("courses/{courseId}/exams/{examId}/generate-student-exams")
@@ -1168,34 +1162,11 @@ public class ExamResource {
         log.info("REST request to generate student exams for exam {}", examId);
 
         final var exam = checkAccessForStudentExamGenerationAndLogAuditEvent(courseId, examId, Constants.GENERATE_STUDENT_EXAMS);
-        record GenerationOutcome(List<StudentExam> studentExams, boolean preparationPending) {
-        }
-        var outcome = examPreparationLockService.withPreparationLock(examId, () -> {
-            List<ParticipationCleanupCommand> externalCleanup = new ArrayList<>();
-            List<StudentExam> generated = examRepository.withStudentExamGenerationLock(examId, () -> {
-                // Database deletion and replacement roll back together; irreversible resource cleanup waits for commit.
-                examDeletionService.deleteStudentExamsAndExistingParticipationsForExam(examId, cleanup -> {
-                    if (!(cleanup instanceof Task task)) {
-                        throw new IllegalStateException("Regeneration cleanup must provide serializable resource identifiers");
-                    }
-                    externalCleanup.add(task.command());
-                });
-                return studentExamService.generateStudentExams(exam);
-            });
-            // Acknowledge the committed replacement even if retained cleanup prevents preparation for now.
-            try {
-                examPreparationLockService.retainAndRunCleanup(examId, externalCleanup);
-                return new GenerationOutcome(generated, false);
-            }
-            catch (RuntimeException exception) {
-                log.error("Student exam generation for exam {} committed, but external cleanup remains pending", examId, exception);
-                return new GenerationOutcome(generated, true);
-            }
-        });
-        log.info("Generated {} student exams in {} for exam {}", outcome.studentExams().size(), formatDurationFrom(start), examId);
-        // The client only counts the generated student exams; return the slim, exam-masked projection (no nested exam graph,
-        // which is why the previous breakCyclesForSerialization is no longer needed).
-        return preparationResponse(outcome.preparationPending()).body(outcome.studentExams().stream().map(StudentExamDTO::of).toList());
+        // Reset existing student exams and participations only after validating the exam configuration above.
+        examDeletionService.deleteStudentExamsAndExistingParticipationsForExam(exam.getId());
+        List<StudentExam> studentExams = studentExamService.generateStudentExams(exam);
+        log.info("Generated {} student exams in {} for exam {}", studentExams.size(), formatDurationFrom(start), examId);
+        return ResponseEntity.ok(studentExams.stream().map(StudentExamDTO::of).toList());
     }
 
     @NonNull
@@ -1284,7 +1255,7 @@ public class ExamResource {
      * @param courseId    the id of the course
      * @param examId      the id of the exam
      * @param studentDtos the list of students (with at least registration number) who should get access to the exam
-     * @return the registration result; X-Artemis-Preparation-Pending signals saved registration with unfinished preparation
+     * @return the registration result
      */
     @FeatureUsage(UserFeature.EXAM_REGISTRATION)
     @PostMapping("courses/{courseId}/exams/{examId}/students")
@@ -1295,8 +1266,7 @@ public class ExamResource {
 
         examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
 
-        var outcome = examRegistrationService.registerStudentsForExam(courseId, examId, studentDtos);
-        return preparationResponse(outcome.preparationPending()).body(outcome.result());
+        return ResponseEntity.ok(examRegistrationService.registerStudentsForExam(courseId, examId, studentDtos));
     }
 
     /**
@@ -1304,7 +1274,7 @@ public class ExamResource {
      *
      * @param courseId the id of the course
      * @param examId   the id of the exam
-     * @return status 200 for saved registrations, with X-Artemis-Preparation-Pending when preparation needs a retry, or status 404 if absent
+     * @return status 200 for successful registration, or status 404 if the exam is absent
      */
     @FeatureUsage(UserFeature.EXAM_REGISTRATION)
     @PostMapping("courses/{courseId}/exams/{examId}/register-course-students")
@@ -1320,16 +1290,8 @@ public class ExamResource {
             throw new BadRequestAlertException("Registration of course students is only allowed for real exams", ENTITY_NAME, "AddCourseStudentsOnlyForRealExams");
         }
 
-        boolean preparationPending = examRegistrationService.addAllStudentsOfCourseToExam(courseId, exam);
-        return preparationResponse(preparationPending).build();
-    }
-
-    private ResponseEntity.BodyBuilder preparationResponse(boolean preparationPending) {
-        var response = ResponseEntity.ok();
-        if (preparationPending) {
-            response.header("X-Artemis-Preparation-Pending", "true");
-        }
-        return response;
+        examRegistrationService.addAllStudentsOfCourseToExam(courseId, exam);
+        return ResponseEntity.ok().build();
     }
 
     /**

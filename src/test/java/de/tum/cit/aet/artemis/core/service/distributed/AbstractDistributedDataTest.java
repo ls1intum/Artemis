@@ -49,8 +49,6 @@ import de.tum.cit.aet.artemis.core.service.distributed.local.LocalDataProviderSe
 import de.tum.cit.aet.artemis.core.service.distributed.local.LocalMap;
 import de.tum.cit.aet.artemis.core.service.distributed.redisson.RedissonDistributedMap;
 import de.tum.cit.aet.artemis.core.util.IpAddresses;
-import de.tum.cit.aet.artemis.exercise.service.ParticipationCleanupCommand;
-import de.tum.cit.aet.artemis.exercise.service.ParticipationCleanupCommand.Operation;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationLiveSaveService.LiveSaveSlot;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationLiveSaveService.TestCaseSynchronization;
 import de.tum.cit.aet.artemis.shared.base.AbstractArtemisBuildAgentTest;
@@ -473,28 +471,6 @@ public abstract class AbstractDistributedDataTest extends AbstractArtemisBuildAg
             assertThat(map.get("exercise")).isEqualTo(completed);
             assertThat(map.remove("exercise", pending)).isFalse();
             assertThat(map.remove("exercise", completed)).isTrue();
-        }
-        finally {
-            map.clear();
-        }
-    }
-
-    @Test
-    void testParticipationCleanupCommandsSurviveProviderRoundTrip() {
-        var commands = List.of(new ParticipationCleanupCommand(Operation.BUILD_PLAN, 1, 0, 0, "PROJECT", "PROJECT-STUDENT", null),
-                new ParticipationCleanupCommand(Operation.VC_REPOSITORY, 1, 0, 0, null, null, "http://localhost/git/PROJECT/project-student.git"),
-                new ParticipationCleanupCommand(Operation.LOCAL_REPOSITORY, 1, 0, 0, null, null, "http://localhost/git/PROJECT/project-student.git"),
-                new ParticipationCleanupCommand(Operation.QUEUED_JOBS, 1, 0, 0, null, null, null),
-                new ParticipationCleanupCommand(Operation.BUILD_LOG_FILES, 0, 2, 3, null, null, null),
-                new ParticipationCleanupCommand(Operation.COMPETENCY_PROGRESS, 0, 2, 0, null, null, null));
-        DistributedMap<Long, List<ParticipationCleanupCommand>> map = getDistributedDataProvider().getMap("cleanupCommandRoundTrip");
-        try {
-            map.put(7L, commands);
-            assertThat(map.get(7L)).containsExactlyElementsOf(commands);
-            var failedOnly = List.of(commands.get(1));
-            assertThat(map.replace(7L, commands, failedOnly)).isTrue();
-            assertThat(map.get(7L)).containsExactly(commands.get(1));
-            assertThat(map.remove(7L, failedOnly)).isTrue();
         }
         finally {
             map.clear();

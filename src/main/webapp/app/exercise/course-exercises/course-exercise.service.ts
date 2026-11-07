@@ -17,7 +17,6 @@ import { convertDateFromServer } from 'app/foundation/util/date.utils';
 import { CourseExerciseDueDateDTO, exerciseFromCourseExerciseDueDateDTO } from 'app/course/shared/entities/course-content-response.dto';
 import { StudentParticipationDTO, fromStudentParticipationDTO } from 'app/exercise/shared/entities/participation/student-participation.dto';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
-import { retryOnConcurrencyFailure } from 'app/foundation/util/retry-concurrency.util';
 
 @Service()
 export class CourseExerciseService {
@@ -90,10 +89,9 @@ export class CourseExerciseService {
      * @param exercise - the complete exercise already loaded by the caller
      */
     startExercise(exerciseId: number, exercise: Exercise): Observable<StudentParticipation> {
-        return this.http.post<StudentParticipationDTO>(`api/exercise/exercises/${exerciseId}/participations`, {}).pipe(
-            retryOnConcurrencyFailure(),
-            map((dto) => this.handleParticipation(fromStudentParticipationDTO(dto), exercise)),
-        );
+        return this.http
+            .post<StudentParticipationDTO>(`api/exercise/exercises/${exerciseId}/participations`, {})
+            .pipe(map((dto) => this.handleParticipation(fromStudentParticipationDTO(dto), exercise)));
     }
 
     /**
@@ -159,10 +157,9 @@ export class CourseExerciseService {
      * @param exercise - the complete exercise already loaded by the caller
      */
     resumeProgrammingExercise(exerciseId: number, participationId: number, exercise: Exercise): Observable<StudentParticipation> {
-        return this.http.put<StudentParticipationDTO>(`api/exercise/exercises/${exerciseId}/participations/${participationId}/resume-programming-participation`, {}).pipe(
-            retryOnConcurrencyFailure(),
-            map((dto) => this.handleParticipation(fromStudentParticipationDTO(dto), exercise)),
-        );
+        return this.http
+            .put<StudentParticipationDTO>(`api/exercise/exercises/${exerciseId}/participations/${participationId}/resume-programming-participation`, {})
+            .pipe(map((dto) => this.handleParticipation(fromStudentParticipationDTO(dto), exercise)));
     }
 
     requestFeedback(exerciseId: number, participationId: number): Observable<StudentParticipation> {

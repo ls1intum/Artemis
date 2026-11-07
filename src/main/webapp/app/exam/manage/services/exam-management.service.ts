@@ -38,8 +38,6 @@ import { StudentExamDTO } from 'app/exam/shared/entities/student-exam-dto.model'
 type EntityResponseType = HttpResponse<Exam>;
 type EntityArrayResponseType = HttpResponse<Exam[]>;
 
-export const EXAM_PREPARATION_PENDING_HEADER = 'X-Artemis-Preparation-Pending';
-
 @Service()
 export class ExamManagementService {
     private http = inject(HttpClient);

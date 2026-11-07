@@ -7,7 +7,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -30,8 +29,7 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation
 import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
-import de.tum.cit.aet.artemis.exercise.service.ParticipationCleanupCommand.Operation;
-import de.tum.cit.aet.artemis.exercise.service.ParticipationCleanupCommand.Task;
+import de.tum.cit.aet.artemis.localci.service.SharedQueueManagementService;
 import de.tum.cit.aet.artemis.localci.service.ci.ContinuousIntegrationService;
 import de.tum.cit.aet.artemis.localvc.service.GitService;
 import de.tum.cit.aet.artemis.localvc.service.ParticipationVcsAccessTokenService;
@@ -48,8 +46,6 @@ import de.tum.cit.aet.artemis.programming.service.BuildLogEntryService;
 public class ParticipationDeletionService {
 
     private static final Logger log = LoggerFactory.getLogger(ParticipationDeletionService.class);
-
-    private final ParticipationCleanupService participationCleanupService;
 
     private final StudentParticipationRepository studentParticipationRepository;
 
@@ -79,14 +75,15 @@ public class ParticipationDeletionService {
 
     private final Optional<VersionControlService> versionControlService;
 
+    private final Optional<SharedQueueManagementService> localCISharedBuildJobQueueService;
+
     public ParticipationDeletionService(StudentParticipationRepository studentParticipationRepository, ParticipantScoreRepository participantScoreRepository,
             SubmissionRepository submissionRepository, Optional<CompetencyProgressApi> competencyProgressApi, ParticipationRepository participationRepository,
             TeamScoreRepository teamScoreRepository, ResultService resultService, StudentScoreRepository studentScoreRepository,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository,
             Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService, GitService gitService,
             BuildLogEntryService buildLogEntryService, ParticipationVcsAccessTokenService participationVcsAccessTokenService,
-            ParticipationCleanupService participationCleanupService) {
-        this.participationCleanupService = participationCleanupService;
+            Optional<SharedQueueManagementService> localCISharedBuildJobQueueService) {
         this.studentParticipationRepository = studentParticipationRepository;
         this.participantScoreRepository = participantScoreRepository;
         this.submissionRepository = submissionRepository;
@@ -101,6 +98,7 @@ public class ParticipationDeletionService {
         this.gitService = gitService;
         this.buildLogEntryService = buildLogEntryService;
         this.participationVcsAccessTokenService = participationVcsAccessTokenService;
+        this.localCISharedBuildJobQueueService = localCISharedBuildJobQueueService;
     }
 
     /**
@@ -110,17 +108,6 @@ public class ParticipationDeletionService {
      * @param recalculateCompetencyProgress specify if the competency progress should be recalculated
      */
     public void deleteAllByExercise(Exercise exercise, boolean recalculateCompetencyProgress) {
-        deleteAllByExercise(exercise, recalculateCompetencyProgress, Runnable::run);
-    }
-
-    /**
-     * Deletes participation data, letting a surrounding atomic operation defer external cleanup until its commit succeeds.
-     *
-     * @param exercise                      the exercise to clear
-     * @param recalculateCompetencyProgress whether to update competency progress
-     * @param externalCleanup               accepts work that must run only after the surrounding transaction commits
-     */
-    public void deleteAllByExercise(Exercise exercise, boolean recalculateCompetencyProgress, Consumer<Runnable> externalCleanup) {
         var participationsToDelete = studentParticipationRepository.findByExerciseId(exercise.getId());
         log.info("Request to delete all {} participations of exercise with id : {}", participationsToDelete.size(), exercise.getId());
 
@@ -128,7 +115,7 @@ public class ParticipationDeletionService {
         participantScoreRepository.deleteAllByExerciseId(exercise.getId());
 
         for (StudentParticipation participation : participationsToDelete) {
-            delete(participation.getId(), false, externalCleanup);
+            delete(participation.getId(), false);
         }
 
         // The async ParticipantScoreScheduleService (on the scheduling node) may re-create a participant score
@@ -141,8 +128,7 @@ public class ParticipationDeletionService {
         participantScoreRepository.deleteAllByExerciseId(exercise.getId());
 
         if (recalculateCompetencyProgress) {
-            var command = new ParticipationCleanupCommand(Operation.COMPETENCY_PROGRESS, 0, exercise.getId(), 0, null, null, null);
-            externalCleanup.accept(new Task(command, () -> competencyProgressApi.ifPresent(api -> api.updateProgressByLearningObjectAsync(exercise))));
+            competencyProgressApi.ifPresent(api -> api.updateProgressByLearningObjectAsync(exercise));
         }
     }
 
@@ -170,10 +156,6 @@ public class ParticipationDeletionService {
      * @param deleteParticipantScores false if the participant scores have already been bulk deleted, true by default otherwise
      */
     public void delete(long participationId, boolean deleteParticipantScores) {
-        delete(participationId, deleteParticipantScores, Runnable::run);
-    }
-
-    private void delete(long participationId, boolean deleteParticipantScores, Consumer<Runnable> externalCleanup) {
         StudentParticipation participation = studentParticipationRepository.findByIdElseThrow(participationId);
         log.info("Request to delete Participation : {}", participation);
 
@@ -181,34 +163,30 @@ public class ParticipationDeletionService {
             var repositoryUri = programmingExerciseParticipation.getVcsRepositoryUri();
             String buildPlanId = programmingExerciseParticipation.getBuildPlanId();
 
-            String projectKey = buildPlanId == null ? null : programmingExerciseParticipation.getProgrammingExercise().getProjectKey();
-            boolean hasRepository = programmingExerciseParticipation.getRepositoryUri() != null;
             if (buildPlanId != null) {
-                var command = new ParticipationCleanupCommand(Operation.BUILD_PLAN, participationId, 0, 0, projectKey, buildPlanId, null);
-                externalCleanup.accept(new Task(command, () -> participationCleanupService.execute(command)));
+                final var projectKey = programmingExerciseParticipation.getProgrammingExercise().getProjectKey();
+                continuousIntegrationService.orElseThrow().deleteBuildPlan(projectKey, buildPlanId);
             }
-            if (hasRepository) {
-                var command = new ParticipationCleanupCommand(Operation.VC_REPOSITORY, participationId, 0, 0, null, null, repositoryUri.toString());
-                externalCleanup.accept(new Task(command, () -> {
-                    try {
-                        versionControlService.orElseThrow().deleteRepository(repositoryUri);
-                    }
-                    catch (Exception ex) {
-                        log.error("Could not delete repository {} of participation {}", repositoryUri, participationId, ex);
-                    }
-                }));
+            if (programmingExerciseParticipation.getRepositoryUri() != null) {
+                try {
+                    versionControlService.orElseThrow().deleteRepository(repositoryUri);
+                }
+                catch (Exception ex) {
+                    // Keep the deletion best-effort (the participation must still be deleted), but log the full exception:
+                    // a failed repository deletion strands a broken repository on disk that needs to be diagnosed.
+                    log.error("Could not delete repository {} of participation {}", repositoryUri, participationId, ex);
+                }
             }
-            var command = new ParticipationCleanupCommand(Operation.LOCAL_REPOSITORY, participationId, 0, 0, null, null, repositoryUri != null ? repositoryUri.toString() : null);
-            externalCleanup.accept(new Task(command, () -> gitService.deleteLocalRepository(repositoryUri)));
+            // delete local repository cache
+            gitService.deleteLocalRepository(repositoryUri);
 
             participationVcsAccessTokenService.deleteByParticipationId(participationId);
         }
 
         // If local CI is active, remove all queued jobs for participation
-        var cancelJobs = new ParticipationCleanupCommand(Operation.QUEUED_JOBS, participationId, 0, 0, null, null, null);
-        externalCleanup.accept(new Task(cancelJobs, () -> participationCleanupService.execute(cancelJobs)));
+        localCISharedBuildJobQueueService.ifPresent(service -> service.cancelAllJobsForParticipation(participationId));
 
-        deleteResultsAndSubmissionsOfParticipation(participationId, deleteParticipantScores, externalCleanup);
+        deleteResultsAndSubmissionsOfParticipation(participationId, deleteParticipantScores);
         studentParticipationRepository.delete(participation);
     }
 
@@ -219,10 +197,6 @@ public class ParticipationDeletionService {
      * @param deleteParticipantScores false if the participant scores have already been bulk deleted, true by default otherwise
      */
     public void deleteResultsAndSubmissionsOfParticipation(Long participationId, boolean deleteParticipantScores) {
-        deleteResultsAndSubmissionsOfParticipation(participationId, deleteParticipantScores, Runnable::run);
-    }
-
-    private void deleteResultsAndSubmissionsOfParticipation(Long participationId, boolean deleteParticipantScores, Consumer<Runnable> externalCleanup) {
         log.debug("Request to delete all results and submissions of participation with id : {}", participationId);
         var participation = participationRepository.findByIdWithSubmissionsResults(participationId)
                 .orElseThrow(() -> new EntityNotFoundException("Participation", participationId));
@@ -239,11 +213,13 @@ public class ParticipationDeletionService {
         Set<Result> resultsToBeDeleted = submissions.stream().flatMap(submission -> submission.getResults().stream()).filter(Objects::nonNull).collect(Collectors.toSet());
         // By removing the participation, the ResultListener will ignore this result instead of scheduling a participant score update
         // This is okay here, because we delete the whole participation (no older results will exist for the score)
-        resultsToBeDeleted.forEach(resultService::deleteResultWithCascade);
+        resultsToBeDeleted.forEach(result -> resultService.deleteResult(result, false));
         // Delete all submissions for this participation
         submissions.forEach(submission -> {
+            // We have to set the results to an empty list because otherwise clearing the build log entries does not work correctly
+            submission.setResults(Set.of());
             if (submission instanceof ProgrammingSubmission programmingSubmission) {
-                buildLogEntryService.deleteBuildLogEntriesForProgrammingSubmission(programmingSubmission, externalCleanup);
+                buildLogEntryService.deleteBuildLogEntriesForProgrammingSubmission(programmingSubmission);
             }
             submissionRepository.deleteById(submission.getId());
         });

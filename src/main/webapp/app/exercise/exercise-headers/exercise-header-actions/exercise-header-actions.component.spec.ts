@@ -859,37 +859,28 @@ describe('ExerciseHeaderActionsComponent', () => {
             expect(fixture.componentInstance.isLoading()).toBe(false);
         });
 
-        it('shows the retryable concurrency error after four actual resume HTTP conflicts and releases the button', async () => {
-            vi.useFakeTimers();
-            try {
-                const exercise = programming(true);
-                exercise.studentParticipations = [{ id: 10, testRun: false, initializationState: InitializationState.INACTIVE }];
-                createComponent(exercise, { realCourseExercise: true });
-                const http = TestBed.inject(HttpTestingController);
-                const error = vi.spyOn(TestBed.inject(AlertService), 'error');
-                fixture.componentInstance.resumeProgrammingExercise(false);
-                for (const delay of [250, 500, 1000, 0]) {
-                    http.expectOne('api/exercise/exercises/7/participations/10/resume-programming-participation').flush(
-                        { message: 'error.concurrencyFailure' },
-                        { status: 409, statusText: 'Conflict' },
-                    );
-                    await vi.advanceTimersByTimeAsync(delay);
-                }
-                fixture.detectChanges();
-                expect(error).toHaveBeenCalledExactlyOnceWith('error.concurrencyFailure');
-                expect(fixture.componentInstance.isLoading()).toBe(false);
-                const button = fixture.nativeElement.querySelector('#resume-exercise-7') as HTMLButtonElement;
-                expect(button).not.toBeNull();
-                expect(button.disabled).toBe(false);
-                button.click();
-                const retry = http.expectOne('api/exercise/exercises/7/participations/10/resume-programming-participation');
-                fixture.destroy();
-                expect(retry.cancelled).toBe(true);
-                http.verify();
-            } finally {
-                fixture?.destroy();
-                vi.useRealTimers();
-            }
+        it('reports an ordinary resume failure immediately and lets the student retry', () => {
+            const exercise = programming(true);
+            exercise.studentParticipations = [{ id: 10, testRun: false, initializationState: InitializationState.INACTIVE }];
+            createComponent(exercise, { realCourseExercise: true });
+            const http = TestBed.inject(HttpTestingController);
+            const error = vi.spyOn(TestBed.inject(AlertService), 'error');
+            fixture.componentInstance.resumeProgrammingExercise(false);
+            http.expectOne('api/exercise/exercises/7/participations/10/resume-programming-participation').flush(
+                { entityName: 'programmingExercise', errorKey: 'unavailable' },
+                { status: 500, statusText: 'Failure' },
+            );
+            fixture.detectChanges();
+            expect(error).toHaveBeenCalledExactlyOnceWith('artemisApp.programmingExercise.errors.unavailable');
+            expect(fixture.componentInstance.isLoading()).toBe(false);
+            const button = fixture.nativeElement.querySelector('#resume-exercise-7') as HTMLButtonElement;
+            expect(button).not.toBeNull();
+            expect(button.disabled).toBe(false);
+            button.click();
+            const retry = http.expectOne('api/exercise/exercises/7/participations/10/resume-programming-participation');
+            fixture.destroy();
+            expect(retry.cancelled).toBe(true);
+            http.verify();
         });
 
         it('ignores a second resume click before rendering so the first request remains tracked', () => {

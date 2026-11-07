@@ -104,40 +104,6 @@ reports progress while it runs.
 The **Individual exams status** indicator on the same page tells you where you stand: whether every registered
 student has an individual exam, and whether every exercise in those exams has been prepared.
 
-If a warning says registration or individual exam generation was saved but preparation is pending, the registrations
-and generated individual exams are already saved, even if preparation temporarily failed. Choose **Retry preparation**
-to finish preparing those exams while preserving their IDs. Generating individual exams again would replace them.
-For a registration warning, the retry repeats the original registration action, so you do not need to enter the
-students again. Registration still closes immediately at the exam's end date.
-
-If preparation remains blocked because a cached online-editor checkout cannot be opened, ask an administrator to
-recover that checkout. Artemis leaves it in place, preserving any uncommitted answers, and blocks further preparation
-for the exam until the checkout problem is resolved.
-
-<details>
-<summary><strong>Administrator recovery for a blocked preparation</strong></summary>
-
-This procedure concerns only the cached editor working copy. Leave the bare LocalVC repository, database records and
-submissions untouched.
-
-1. Identify the affected node and exact cached checkout from the cleanup exception and server log.
-   For example, a malformed configuration can appear as `Repository config file …/.git/config invalid`; another
-   possible message is `Local repository checkout remains at …`. Use the directory containing `.git` as the checkout,
-   and match it to the configured `artemis.repo-clone-path`; operate on that checkout, not the whole clone directory.
-2. Stop using the affected checkout in the online editor and coordinate or suspend access on the affected node.
-   If the clone path is shared, coordinate every node that uses that checkout. The node-local working-copy lock covers
-   checkout, pull, clone and strict deletion; it does not cover subsequent editor writes or freeze access on other nodes.
-3. Preserve the entire checkout, including Git metadata and uncommitted, untracked and ignored files, in a restricted
-   administrator-only location outside the active clone path. Prefer an atomic move on the same filesystem.
-4. Repair the permissions or Git metadata only after securing a separate complete backup, or leave the checkout
-   quarantined outside the active clone path and verify that its original path is absent. Retain the preserved copy
-   while resolving the active path.
-5. After the administrator has verified the checkout is safe to remove or its original path is absent, choose
-   **Retry preparation** for the saved individual exams. This prepares the same generated cohort and keeps its IDs.
-   Keep the backup until the answers have been recovered according to your site's retention and recovery policy.
-
-</details>
-
 Programming exercises need one more check before the exam: that the tests are set to run only after it, and that the
 solution build passes them. See [Run the Tests After the Exam](/instructor/exams/add-exercises#run-the-tests-after-the-exam).
 

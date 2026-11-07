@@ -14,7 +14,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
-import org.springframework.dao.ConcurrencyFailureException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -45,7 +44,6 @@ import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.course.repository.CourseAthenaConfigRepository;
-import de.tum.cit.aet.artemis.exam.api.ExamPreparationApi;
 import de.tum.cit.aet.artemis.exam.api.StudentExamApi;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
@@ -95,8 +93,6 @@ public class ParticipationResource {
 
     private final Optional<StudentExamApi> studentExamApi;
 
-    private final Optional<ExamPreparationApi> examPreparationApi;
-
     private final ExerciseRepository exerciseRepository;
 
     private final CourseAthenaConfigRepository courseAthenaConfigRepository;
@@ -119,8 +115,8 @@ public class ParticipationResource {
             AuthorizationCheckService authCheckService, UserRepository userRepository, StudentParticipationRepository studentParticipationRepository,
             FeatureToggleService featureToggleService, ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository,
             SubmissionRepository submissionRepository, ExerciseDateService exerciseDateService, ParticipationAuthorizationService participationAuthorizationService,
-            Optional<StudentExamApi> studentExamApi, Optional<ExamPreparationApi> examPreparationApi, ModuleFeatureService moduleFeatureService,
-            FeedbackRequestService feedbackRequestService, CourseAthenaConfigRepository courseAthenaConfigRepository) {
+            Optional<StudentExamApi> studentExamApi, ModuleFeatureService moduleFeatureService, FeedbackRequestService feedbackRequestService,
+            CourseAthenaConfigRepository courseAthenaConfigRepository) {
         this.courseAthenaConfigRepository = courseAthenaConfigRepository;
         this.participationService = participationService;
         this.exerciseRepository = exerciseRepository;
@@ -134,7 +130,6 @@ public class ParticipationResource {
         this.exerciseDateService = exerciseDateService;
         this.participationAuthorizationService = participationAuthorizationService;
         this.studentExamApi = studentExamApi;
-        this.examPreparationApi = examPreparationApi;
         this.moduleFeatureService = moduleFeatureService;
         this.feedbackRequestService = feedbackRequestService;
     }
@@ -168,12 +163,7 @@ public class ParticipationResource {
         }
         StudentParticipation participation;
         try {
-            participation = exercise.isExamExercise() && !exercise.getExam().isTestExam() ? examPreparationApi.orElseThrow()
-                    .withParticipationPreparationLock(exercise.getExam().getId(), () -> participationService.startExercise(exercise, participant, true))
-                    : participationService.startExercise(exercise, participant, true);
-        }
-        catch (ConcurrencyFailureException exception) {
-            throw exception;
+            participation = participationService.startExercise(exercise, participant, true);
         }
         catch (Exception e) {
             if (e instanceof VersionControlException && e.getCause() instanceof LargeObjectException) {
@@ -259,15 +249,6 @@ public class ParticipationResource {
     public ResponseEntity<StudentParticipationDTO> resumeParticipation(@PathVariable Long exerciseId, @PathVariable Long participationId) {
         log.debug("REST request to resume Exercise : {}", exerciseId);
         var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
-        if (programmingExercise.isExamExercise() && !programmingExercise.getExam().isTestExam()) {
-            return examPreparationApi.orElseThrow().withParticipationPreparationLock(programmingExercise.getExam().getId(),
-                    () -> resumeProgrammingParticipation(programmingExercise, participationId));
-        }
-        return resumeProgrammingParticipation(programmingExercise, participationId);
-    }
-
-    private ResponseEntity<StudentParticipationDTO> resumeProgrammingParticipation(ProgrammingExercise programmingExercise, long participationId) {
-        // Read participation state only after admission: regeneration may have deleted the old participation while this request was waiting.
         var participation = programmingExerciseStudentParticipationRepository.findWithTeamStudentsByIdElseThrow(participationId);
         if (!participation.getExercise().getId().equals(programmingExercise.getId())) {
             throw new BadRequestAlertException("Participation does not belong to the exercise", ENTITY_NAME, "participationExerciseMismatch");

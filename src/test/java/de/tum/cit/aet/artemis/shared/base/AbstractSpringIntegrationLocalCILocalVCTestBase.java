@@ -32,7 +32,6 @@ import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyProgressService
 import de.tum.cit.aet.artemis.buildagent.BuildAgentConfiguration;
 import de.tum.cit.aet.artemis.core.service.ResourceLoaderService;
 import de.tum.cit.aet.artemis.exam.service.ExamLiveEventsService;
-import de.tum.cit.aet.artemis.exam.service.StudentExamService;
 import de.tum.cit.aet.artemis.iris.api.PyrisFaqApi;
 import de.tum.cit.aet.artemis.iris.service.IrisCitationService;
 import de.tum.cit.aet.artemis.iris.service.IrisSessionPresenceService;
@@ -88,10 +87,6 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTestBase extends Ab
     @MockitoSpyBean
     protected GitService gitServiceSpy;
 
-    // Fault injection verifies that failed regeneration preserves database rows and external participation resources.
-    @MockitoSpyBean
-    protected StudentExamService studentExamServiceSpy;
-
     // Spy is only used for simulating non-feasible failure scenarios. Please use the real bean otherwise.
     @MockitoSpyBean
     protected BareGitRepositoryService bareGitRepositoryServiceSpy;
@@ -137,7 +132,7 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTestBase extends Ab
     @MockitoSpyBean
     protected SpringSecurityLdapTemplate ldapTemplate;
 
-    @MockitoSpyBean
+    @Autowired
     protected LocalVCService versionControlService;
 
     @MockitoSpyBean
@@ -268,10 +263,9 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTestBase extends Ab
     @AfterEach
     @Override
     protected void resetSpyBeans() {
-        Mockito.reset(gitServiceSpy, versionControlService, studentExamServiceSpy, bareGitRepositoryServiceSpy, continuousIntegrationService, localCITriggerService,
-                resourceLoaderService, programmingMessagingService, competencyProgressService, competencyProgressApi, irisCitationService, irisChatSessionService,
-                irisSessionPresenceService, pyrisPipelineService, pyrisEventService, ldapUserService, ldapTemplate, examLiveEventsService, pyrisFaqApi, azureOpenAiChatModel,
-                repositoryVcsAccessTokenService, fallbackBuildLogEntryService);
+        Mockito.reset(gitServiceSpy, bareGitRepositoryServiceSpy, continuousIntegrationService, localCITriggerService, resourceLoaderService, programmingMessagingService,
+                competencyProgressService, competencyProgressApi, irisCitationService, irisChatSessionService, irisSessionPresenceService, pyrisPipelineService, pyrisEventService,
+                ldapUserService, ldapTemplate, examLiveEventsService, pyrisFaqApi, azureOpenAiChatModel, repositoryVcsAccessTokenService, fallbackBuildLogEntryService);
         buildAgentConfigurationOverrides.reset();
         // Preserve startup answers while discarding calls recorded by scheduled and build threads.
         Mockito.clearInvocations(buildAgentConfiguration);

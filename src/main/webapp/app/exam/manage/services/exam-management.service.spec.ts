@@ -24,7 +24,7 @@ import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { UMLDiagramType } from '@tumaet/apollon';
-import { HttpResponse, provideHttpClient } from '@angular/common/http';
+import { provideHttpClient } from '@angular/common/http';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
@@ -627,16 +627,6 @@ describe('Exam Management Service Tests', () => {
         expect(req.request.body).toEqual([2, 1]);
         req.flush(null);
         await Promise.resolve();
-    });
-
-    it('preserves the pending-preparation header and void body for bulk registration', () => {
-        let response: HttpResponse<void> | undefined;
-        service.addAllStudentsOfCourseToExam(course.id!, 1).subscribe((value) => (response = value));
-        const req = httpMock.expectOne({ method: 'POST', url: `${service.resourceUrl}/${course.id!}/exams/1/register-course-students` });
-        req.flush(null, { headers: { 'X-Artemis-Preparation-Pending': 'true' } });
-        expect(response).toBeInstanceOf(HttpResponse);
-        expect(response?.headers.get('X-Artemis-Preparation-Pending')).toBe('true');
-        expect(response?.body).toBeNull();
     });
 
     it('should enroll all registered students to exam', async () => {

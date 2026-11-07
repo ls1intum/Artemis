@@ -449,28 +449,6 @@ describe('ExamParticipationComponent', () => {
         expect(pending.observed).toBe(false);
     });
 
-    it('offers an explicit exam-load retry after generation conflicts instead of reporting a missing exam', () => {
-        const studentExam = new StudentExam();
-        studentExam.id = 42;
-        studentExam.exam = new Exam();
-        studentExam.exam.testExam = true;
-        studentExam.exam.startDate = dayjs().subtract(2000, 'seconds');
-        studentExam.workingTime = 150;
-        TestBed.inject(ActivatedRoute).params = of({ courseId: '1', examId: '2' });
-        const load = vi
-            .spyOn(examParticipationService, 'getOwnStudentExam')
-            .mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 409, error: { message: 'error.concurrencyFailure' } })))
-            .mockReturnValue(of(studentExam));
-        comp.ngOnInit();
-        expect(comp.summaryLoadFailed()).toBe(true);
-        expect(comp.loadingExam()).toBe(false);
-        expect(comp.studentExam()).toBeUndefined();
-        comp.retryLoadSummary();
-        expect(load).toHaveBeenCalledTimes(2);
-        expect(comp.summaryLoadFailed()).toBe(false);
-        expect(comp.studentExam()?.id).toBe(studentExam.id);
-    });
-
     it('should determine tutor status if no exam was loaded', () => {
         const httpError = new HttpErrorResponse({
             error: { errorKey: 'No student exam for you' },

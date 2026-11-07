@@ -301,76 +301,15 @@ describe('Course Management Service', () => {
         expect(programmingExercise.releaseDate).toBe(originalReleaseDate);
     });
 
-    it.each(['start', 'resume'])('recovers %s after bounded preparation conflicts and emits only the real participation', async (operation) => {
-        vi.useFakeTimers();
-        try {
-            let received: StudentParticipation | undefined;
-            let error: unknown;
-            const url = `api/exercise/exercises/${exerciseId}/participations${operation === 'resume' ? '/12345/resume-programming-participation' : ''}`;
-            const request = operation === 'resume' ? service.resumeProgrammingExercise(exerciseId, 12345, textExercise) : service.startExercise(exerciseId, textExercise);
-            request.subscribe({ next: (value) => (received = value), error: (value) => (error = value) });
-            for (const delay of [250, 500]) {
-                httpMock.expectOne(url).flush({ message: 'error.concurrencyFailure' }, { status: 409, statusText: 'Conflict' });
-                expect(received).toBeUndefined();
-                expect(error).toBeUndefined();
-                await vi.advanceTimersByTimeAsync(delay);
-            }
-            httpMock.expectOne(url).flush({ id: 12345, type: ParticipationType.STUDENT, submissions: [] });
-            expect(received?.id).toBe(12345);
-            expect(error).toBeUndefined();
-            await vi.advanceTimersByTimeAsync(10000);
-            httpMock.expectNone(url);
-        } finally {
-            vi.useRealTimers();
-        }
-    });
-
-    it.each(['start', 'resume'])('limits %s conflicts and permits an explicit retry after contention ends', async (operation) => {
+    it.each(['start', 'resume'])('surfaces a %s conflict immediately without an automatic retry', async (operation) => {
         vi.useFakeTimers();
         try {
             let error: HttpErrorResponse | undefined;
-            let received: StudentParticipation | undefined;
             const url = `api/exercise/exercises/${exerciseId}/participations${operation === 'resume' ? '/12345/resume-programming-participation' : ''}`;
             const request = operation === 'resume' ? service.resumeProgrammingExercise(exerciseId, 12345, textExercise) : service.startExercise(exerciseId, textExercise);
             request.subscribe({ error: (value) => (error = value) });
-            for (const delay of [250, 500, 1000, 0]) {
-                httpMock.expectOne(url).flush({ message: 'error.concurrencyFailure' }, { status: 409, statusText: 'Conflict' });
-                await vi.advanceTimersByTimeAsync(delay);
-            }
-            expect(error?.status).toBe(409);
-            await vi.advanceTimersByTimeAsync(10000);
-            httpMock.expectNone(url);
-            request.subscribe((value) => (received = value));
-            httpMock.expectOne(url).flush({ id: 12345, type: ParticipationType.STUDENT, submissions: [] });
-            expect(received?.id).toBe(12345);
-        } finally {
-            vi.useRealTimers();
-        }
-    });
-
-    it.each([401, 403, 409])('does not retry a participation failure unrelated to preparation (%s)', async (status) => {
-        vi.useFakeTimers();
-        try {
-            let error: HttpErrorResponse | undefined;
-            service.startExercise(exerciseId, textExercise).subscribe({ error: (value) => (error = value) });
-            const url = `api/exercise/exercises/${exerciseId}/participations`;
-            httpMock.expectOne(url).flush({ message: 'error.otherConflict' }, { status, statusText: 'Failure' });
-            await vi.advanceTimersByTimeAsync(10000);
-            httpMock.expectNone(url);
-            expect(error?.status).toBe(status);
-        } finally {
-            vi.useRealTimers();
-        }
-    });
-
-    it.each(['start', 'resume'])('cancels a queued %s retry when its caller unsubscribes', async (operation) => {
-        vi.useFakeTimers();
-        try {
-            const url = `api/exercise/exercises/${exerciseId}/participations${operation === 'resume' ? '/12345/resume-programming-participation' : ''}`;
-            const request = operation === 'resume' ? service.resumeProgrammingExercise(exerciseId, 12345, textExercise) : service.startExercise(exerciseId, textExercise);
-            const subscription = request.subscribe({ error: () => undefined });
             httpMock.expectOne(url).flush({ message: 'error.concurrencyFailure' }, { status: 409, statusText: 'Conflict' });
-            subscription.unsubscribe();
+            expect(error?.status).toBe(409);
             await vi.advanceTimersByTimeAsync(10000);
             httpMock.expectNone(url);
         } finally {

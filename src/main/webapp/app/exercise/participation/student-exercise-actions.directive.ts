@@ -18,7 +18,6 @@ import { ArtemisQuizService } from 'app/quiz/shared/service/quiz.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/submission/submission.model';
 import { Subscription } from 'rxjs';
-import { isConcurrencyFailure } from 'app/foundation/util/retry-concurrency.util';
 
 /** Shared participation state and student exercise actions used by both exercise action surfaces. */
 @Directive()
@@ -214,7 +213,7 @@ export abstract class StudentExerciseActionsDirective {
                     this.alertService.success('artemisApp.exercise.resumeProgrammingExercise');
                 },
                 error: (error) => {
-                    this.alertService.error(isConcurrencyFailure(error) ? 'error.concurrencyFailure' : `artemisApp.${error.error.entityName}.errors.${error.error.errorKey}`);
+                    this.alertService.error(`artemisApp.${error.error.entityName}.errors.${error.error.errorKey}`);
                 },
             });
         this.participationAction = { exerciseId, subscription };

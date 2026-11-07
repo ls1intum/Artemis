@@ -9,11 +9,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
-
-import jakarta.persistence.LockModeType;
-import jakarta.persistence.QueryHint;
 
 import org.jspecify.annotations.NonNull;
 import org.springframework.context.annotation.Conditional;
@@ -21,12 +17,9 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
-import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.jpa.repository.QueryHints;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
-import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.calendar.dto.ExamCalendarEventDTO;
 import de.tum.cit.aet.artemis.core.dto.CourseEntityIdDTO;
@@ -50,28 +43,6 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 @Lazy
 @Repository
 public interface ExamRepository extends ArtemisJpaRepository<Exam, Long> {
-
-    @Lock(LockModeType.PESSIMISTIC_WRITE)
-    @QueryHints(@QueryHint(name = "jakarta.persistence.lock.timeout", value = "0"))
-    @Query("SELECT exam FROM Exam exam WHERE exam.id = :examId")
-    Optional<Exam> findForStudentExamGenerationById(@Param("examId") long examId);
-
-    /**
-     * Serializes student-exam generation on the owning exam row across all server nodes. The callback must read the
-     * current configuration and existing student exams only after acquiring this lock; all inserts and any preceding
-     * regeneration deletion commit before another generator can inspect the same exam. Contention fails immediately
-     * through the standard retryable concurrency conflict, rather than tying up a request and connection.
-     *
-     * @param examId     the exam whose student exams are generated
-     * @param generation synchronous generation, including deletion when regenerating
-     * @param <T>        the generation result
-     * @return the result after the transaction commits
-     */
-    @Transactional
-    default <T> T withStudentExamGenerationLock(long examId, Supplier<T> generation) {
-        getValueElseThrow(findForStudentExamGenerationById(examId), examId);
-        return generation.get();
-    }
 
     /**
      * Counts the real exams of the given courses for the public usage dashboard. Test exams (the practice format for students) and exams whose title starts

@@ -13,10 +13,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import java.util.function.Consumer;
 
 import org.apache.commons.io.FileUtils;
-import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -30,9 +28,6 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildLogDTO;
 import de.tum.cit.aet.artemis.core.service.ProfileService;
-import de.tum.cit.aet.artemis.exercise.service.ParticipationCleanupCommand;
-import de.tum.cit.aet.artemis.exercise.service.ParticipationCleanupCommand.Operation;
-import de.tum.cit.aet.artemis.exercise.service.ParticipationCleanupCommand.Task;
 import de.tum.cit.aet.artemis.localci.domain.BuildJob;
 import de.tum.cit.aet.artemis.localci.repository.BuildJobRepository;
 import de.tum.cit.aet.artemis.localci.service.ci.ContinuousIntegrationService;
@@ -402,34 +397,11 @@ public class BuildLogEntryService {
      * @param programmingSubmission the programming submission for which the build logs should be deleted
      */
     public void deleteBuildLogEntriesForProgrammingSubmission(ProgrammingSubmission programmingSubmission) {
-        deleteBuildLogEntriesForProgrammingSubmission(programmingSubmission, Runnable::run);
-    }
-
-    /**
-     * Deletes log rows while letting an enclosing atomic deletion defer irreversible file cleanup until commit.
-     *
-     * @param programmingSubmission the submission whose logs are deleted
-     * @param externalCleanup       accepts file cleanup to run after the surrounding transaction commits
-     */
-    public void deleteBuildLogEntriesForProgrammingSubmission(ProgrammingSubmission programmingSubmission, Consumer<Runnable> externalCleanup) {
         long exerciseId = programmingSubmission.getParticipation().getExercise().getId();
-        long submissionId = programmingSubmission.getId();
-        var command = new ParticipationCleanupCommand(Operation.BUILD_LOG_FILES, 0, exerciseId, submissionId, null, null, null);
-        externalCleanup.accept(new Task(command, () -> deleteBuildLogFiles(exerciseId, submissionId)));
-        if (Hibernate.isInitialized(programmingSubmission.getBuildLogEntries())) {
-            programmingSubmission.getBuildLogEntries().clear();
-        }
-        buildLogEntryRepository.deleteByProgrammingSubmissionId(submissionId);
-    }
-
-    /**
-     * Deletes captured submission log files without looking up database records that regeneration already removed.
-     *
-     * @param exerciseId   the owning exercise
-     * @param submissionId the deleted submission
-     */
-    public void deleteBuildLogFiles(long exerciseId, long submissionId) {
-        failedBuildLogService.deleteBuildLogs(exerciseId, submissionId);
+        failedBuildLogService.deleteBuildLogs(exerciseId, programmingSubmission.getId());
+        programmingSubmission.setBuildLogEntries(Set.of());
+        programmingSubmissionRepository.save(programmingSubmission);
+        buildLogEntryRepository.deleteByProgrammingSubmissionId(programmingSubmission.getId());
     }
 
     private long exerciseIdOf(ProgrammingSubmission programmingSubmission) {

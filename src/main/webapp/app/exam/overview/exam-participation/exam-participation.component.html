@@ -11,12 +11,8 @@
         }
         <tumaet-ui-message id="summaryLoadFailedMessage" severity="error" class="w-full">
             <div class="flex flex-col items-start gap-2">
-                <strong
-                    [jhiTranslate]="examLoadConflict() ? 'artemisApp.examParticipation.examLoadConflict.title' : 'artemisApp.examParticipation.summaryLoadFailed.title'"
-                ></strong>
-                <span
-                    [jhiTranslate]="examLoadConflict() ? 'artemisApp.examParticipation.examLoadConflict.explanation' : 'artemisApp.examParticipation.summaryLoadFailed.explanation'"
-                ></span>
+                <strong jhiTranslate="artemisApp.examParticipation.summaryLoadFailed.title"></strong>
+                <span jhiTranslate="artemisApp.examParticipation.summaryLoadFailed.explanation"></span>
                 <button tumAetUiButton type="button" id="retryLoadSummaryButton" size="small" [disabled]="loadingExam()" (click)="retryLoadSummary()">
                     {{ 'artemisApp.examParticipation.summaryLoadFailed.retry' | artemisTranslate }}
                 </button>

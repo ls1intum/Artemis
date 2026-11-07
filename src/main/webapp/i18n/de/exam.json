@@ -397,10 +397,6 @@
                 "button": "Zusammenfassung der Klausur anzeigen{{ countdown }}",
                 "summaryAvailableFrom": "Deine Abgabenübersicht ist ab dem {{ date }} verfügbar."
             },
-            "examLoadConflict": {
-                "title": "Deine Klausur wird vorbereitet.",
-                "explanation": "Eine andere Klausuraktion läuft noch. Bitte warte einen Moment und versuche es erneut."
-            },
             "summaryLoadFailed": {
                 "title": "Die Zusammenfassung der Klausur konnte nicht geladen werden.",
                 "explanation": "Deine Abgabe und deine Ergebnisse sind auf dem Server gespeichert, es ist nichts verloren. Bitte überprüfe deine Internetverbindung und versuche es erneut.",
@@ -691,10 +687,6 @@
                     "verifyAttendance": "Anwesenheit prüfen"
                 },
                 "statisticsFailed": "Die Prüfungsstatistik konnte nicht geladen werden. Lade sie vor der Anmeldung von Studierenden erneut.",
-                "registrationSavedPreparationPending": "Die Anmeldung wurde gespeichert. Die Vorbereitung steht noch aus. Versuche die Vorbereitung erneut, damit neu angemeldete Studierende die Prüfung starten können.",
-                "generationSavedPreparationPending": "Die neuen individuellen Prüfungen wurden generiert und gespeichert. Die Bereinigung oder Vorbereitung der Aufgaben ist noch nicht abgeschlossen. Versuche es erneut, um diese Prüfungen vollständig vorzubereiten.",
-                "retryPreparation": "Vorbereitung erneut versuchen",
-                "preparationRetryFailed": "Die Vorbereitung steht noch aus. Bitte versuche es erneut.",
                 "registrationClosed": "Die Anmeldung ist geschlossen, da die Prüfung beendet ist.",
                 "registrationAfterGeneration": "Die individuellen Prüfungen wurden bereits generiert. Neu angemeldete Studierende erhalten automatisch eine eigene Prüfung. Falls die Vorbereitung bereits gestartet wurde, werden auch ihre Aufgaben vorbereitet. Fortfahren?",
                 "manualAttendance": {
