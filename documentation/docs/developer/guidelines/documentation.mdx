@@ -2,7 +2,7 @@
 id: documentation
 title: Writing Documentation
 sidebar_label: Documentation
-last_reviewed: 2026-11-04
+last_reviewed: 2026-11-07
 ---
 
 import Callout from "../../../src/components/Callout/Callout";
@@ -28,6 +28,10 @@ Documentation lives under `documentation/docs/`, split by audience: `admin/`, `i
 `developer/`, `about/`. Write for the audience of the folder. An instructor page explains what an instructor
 configures; a student page explains what a student sees and does. When both need to know about the same feature,
 write two pages and link them, rather than one page that describes the other side's screens.
+
+Document what helps the reader complete a task or understand a decision. A visual refinement does not by itself
+need a documentation change: do not add prose or screenshots merely to describe centered text, responsive widths,
+spacing or theme colours. Explain such details only when users need them to operate the feature.
 
 A new page is only reachable once it is listed in the matching `documentation/sidebar-*.ts`. Add it there and link
 it from the related pages in the same change.
@@ -127,6 +131,18 @@ to every page — see [Terminology](/developer/guidelines/terminology).
 
 ## Screenshots
 
+**Add a screenshot only when it helps explain the feature or workflow.** Do not add images just to satisfy a
+documentation checklist; omit them when the existing explanation is sufficient.
+
+**Capture the running application.** Screenshots in documentation and pull requests must come from a real
+Artemis instance with realistic course, exercise and participant data. Automated browser capture of the real
+application is welcome. Never substitute AI-generated images, drawn mockups, standalone HTML recreations or
+isolated component renders for application screenshots.
+
+**Preserve the actual theme and background.** Capture the application's light or dark theme as rendered. Do not
+override theme colours for the capture, recolour the image or replace its background to imitate the application. A crop
+may focus on the relevant content, but must preserve the captured interface and its colours.
+
 Use the `Image` component rather than a raw `<img>` tag, so that every figure gets the same frame, sizing and
 caption treatment:
 
@@ -163,7 +179,8 @@ accumulate invisibly; they are never noticed until someone measures.
 
 ### Generated screenshots
 
-A screenshot that can be rendered again from the demo course does not have to be recaptured by hand.
+These are automated browser captures of the running Artemis application with its demo course, not synthetic
+images. A screenshot that can be captured again from the demo course does not have to be recaptured by hand.
 `documentation/screenshots/manifest.json` describes such a screenshot, and `src/test/playwright/docs-screenshots` renders every entry in a
 light theme, in English and with reduced motion. An entry has these fields:
 
