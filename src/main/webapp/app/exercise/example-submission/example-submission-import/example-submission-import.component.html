@@ -86,7 +86,13 @@
                                         {{ submission.submissionSize }}
                                     </td>
                                     <td>
-                                        <jhi-button (onClick)="selectImport(submission)" [title]="'artemisApp.exercise.import.table.doImport'" />
+                                        <button
+                                            tumAetUiButton
+                                            type="button"
+                                            severity="secondary"
+                                            (click)="selectImport(submission)"
+                                            jhiTranslate="artemisApp.exercise.import.table.doImport"
+                                        ></button>
                                     </td>
                                 </tr>
                             }

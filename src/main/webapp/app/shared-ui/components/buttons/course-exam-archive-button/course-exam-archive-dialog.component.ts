@@ -126,7 +126,7 @@ export class CourseExamArchiveOverwriteDialogComponent extends CourseExamArchive
             </ul>
         </div>
         <div class="modal-footer">
-            <button type="button" class="btn btn-warning" (click)="close()">Close</button>
+            <button type="button" class="btn btn-secondary" (click)="close()">Close</button>
         </div>
     `,
 })

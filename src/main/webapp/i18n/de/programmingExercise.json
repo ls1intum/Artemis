@@ -1,6 +1,22 @@
 {
     "artemisApp": {
         "programmingExercise": {
+            "instructionTableLabel": "Tabelle in der Aufgabenstellung",
+            "repositoryBuildOverview": {
+                "title": "Repositories und Builds",
+                "template": "Vorlage",
+                "solution": "Lösung",
+                "tests": "Tests",
+                "auxiliary": "Zusätzliches Repository",
+                "templateDescription": "Der Ausgangspunkt für Studierende.",
+                "solutionDescription": "Die Referenzimplementierung.",
+                "templateExpectedScore": "Erwartete Bewertung: 0%, bevor Studierende die Lösung implementieren.",
+                "solutionExpectedScore": "Erwartete Bewertung: 100% für die Referenzimplementierung.",
+                "result": "Build-Ergebnis",
+                "resultsLoading": "Build-Ergebnis wird geladen…",
+                "checkoutLoading": "Checkout-Verzeichnisse werden geladen…",
+                "checkoutUnavailable": "Checkout-Verzeichnisse konnten nicht geladen werden."
+            },
             "home": {
                 "title": "Programmieraufgabe",
                 "createLabel": "Programmieraufgabe erstellen",
@@ -254,11 +270,6 @@
             },
             "importFromFile": {
                 "title": "Programmieraufgabe aus Datei importieren",
-                "description": "Die Datei muss ein Zip-Archiv sein, das die Aufgabenkonfiguration im JSON-Format auf der obersten Ebene enthält und für jedes Repository (template, solution, tests) ein Zip-Archiv enthält. Eine solche Datei kann mit dem Aufgabenexport erstellt werden.",
-                "uploadForImport": "Programmieraufgabe für den Import hochladen",
-                "fileTooBigError": "Die Datei {{ fileName }} ist zu groß. Die maximale Dateigröße beträgt 20 MB.",
-                "fileTypeNotSupportedError": "Der Dateityp wird nicht unterstützt. Bitte wähle eine Datei mit der Endung .zip.",
-                "noExerciseDetailsJsonAtRootLevel": "Es konnte keine JSON-Datei im Wurzelverzeichnis des Zip-Archivs gefunden werden, die die Aufgabendetails enthält.",
                 "notSupportedProgrammingLanguage": "Die Programmiersprache {{ programmingLanguage }} wird noch nicht für den Import aus einer Datei unterstützt.",
                 "GccNotSupportedForC": "Der Projekttyp GCC wird noch nicht für den Import aus einer Datei unterstützt."
             },
@@ -346,8 +357,8 @@
                 "diffLineStatTooltip": "Zeilen, die durch die KI-Verfeinerung hinzugefügt und entfernt wurden."
             },
             "status": {
-                "solutionFailsTest": "Das Solution-Repository erfüllt einen oder mehrere Testfälle nicht. Das könnte auf ein Problem mit dem Solution-Repository oder den Testfällen hinweisen.",
-                "templateFulfillsTest": "Das Template-Repository erfüllt bereits einen oder mehrere Testfälle. Das könnte auf ein Problem mit dem Template-Repository oder den Testfällen hinweisen."
+                "solutionFailsTest": "Die Musterlösung sollte 100% erreichen und alle Tests bestehen. Prüfe das Solution-Repository und die Testfälle.",
+                "templateFulfillsTest": "Die Vorlage sollte 0% erreichen. Prüfe bei einer abweichenden Bewertung das Template-Repository und die Testfälle."
             },
             "testCaseAnalysis": {
                 "invalidTestCases": "{{number}} Testfälle sind Teil der Aufgabenstellung aber können nicht im Test-Repository gefunden werden:",
@@ -941,6 +952,13 @@
                 },
                 "outdated": "Veraltet",
                 "reanalyze": "Erneut analysieren"
+            },
+            "buildNotifications": {
+                "enable": "Browser-Benachrichtigungen für Build-Ergebnisse aktivieren",
+                "disable": "Browser-Benachrichtigungen für Build-Ergebnisse deaktivieren",
+                "blocked": "Benachrichtigungen sind blockiert. Erlaube sie in deinen Browser-Einstellungen.",
+                "error": "Browser-Benachrichtigungen sind nicht verfügbar. Das Tab-Symbol zeigt weiterhin Build-Ergebnisse an.",
+                "resultReceived": "Build-Ergebnis erhalten"
             }
         },
         "checklistAnalysisRequest": {

@@ -2,7 +2,9 @@ import { Component, computed, effect, inject, input, output, signal, untracked }
 import { FormsModule } from '@angular/forms';
 import { CourseSummaryDTO } from 'app/course/shared/entities/course-summary.model';
 import { DialogModule } from 'primeng/dialog';
-import { ButtonModule } from 'primeng/button';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { faSpinner } from '@fortawesome/free-solid-svg-icons';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
 import { CheckboxModule } from 'primeng/checkbox';
 import { TableModule } from 'primeng/table';
 import { InputTextModule } from 'primeng/inputtext';
@@ -28,7 +30,8 @@ type DialogStep = 'selectCourse' | 'selectOptions';
     imports: [
         FormsModule,
         DialogModule,
-        ButtonModule,
+        TumAetUiButtonDirective,
+        FaIconComponent,
         CheckboxModule,
         TableModule,
         InputTextModule,
@@ -46,6 +49,8 @@ export class CourseMaterialImportDialogComponent {
     private readonly courseSearchService = inject(CourseForImportDTOPagingService);
     private readonly alertService = inject(AlertService);
     private readonly currentLocale = getCurrentLocaleSignal(this.translateService);
+
+    protected readonly faSpinner = faSpinner;
 
     // Input for target course ID
     readonly targetCourseId = input.required<number>();

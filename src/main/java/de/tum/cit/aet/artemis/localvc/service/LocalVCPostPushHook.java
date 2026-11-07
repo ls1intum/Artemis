@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.localvc.service;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Optional;
+import java.util.function.Supplier;
 
 import org.apache.sshd.server.session.ServerSession;
 import org.eclipse.jgit.lib.Repository;
@@ -14,6 +15,7 @@ import org.jspecify.annotations.NonNull;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.localci.exception.LocalCIException;
 import de.tum.cit.aet.artemis.localvc.service.ssh.SshConstants;
+import de.tum.cit.aet.artemis.programming.domain.AuthenticationMechanism;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.VcsAccessLog;
@@ -34,17 +36,25 @@ public class LocalVCPostPushHook implements PostReceiveHook {
 
     private final User user;
 
+    private final Supplier<AuthenticationMechanism> authenticationMechanism;
+
     public LocalVCPostPushHook(LocalVCServletService localVCServletService, ServerSession serverSession, @NonNull User user) {
         this.localVCServletService = localVCServletService;
         this.participation = serverSession.getAttribute(SshConstants.PARTICIPATION_KEY);
         this.exercise = serverSession.getAttribute(SshConstants.REPOSITORY_EXERCISE_KEY);
         this.vcsAccessLog = serverSession.getAttribute(SshConstants.VCS_ACCESS_LOG_KEY);
         this.user = user;
+        this.authenticationMechanism = () -> AuthenticationMechanism.SSH;
     }
 
-    public LocalVCPostPushHook(LocalVCServletService localVCServletService, @NonNull User user) {
+    /**
+     * @param authenticationMechanism reads how the push authenticated. JGit creates the hook before the push filter authorizes the request, so the value is only read when the hook
+     *                                    runs.
+     */
+    public LocalVCPostPushHook(LocalVCServletService localVCServletService, @NonNull User user, Supplier<AuthenticationMechanism> authenticationMechanism) {
         this.localVCServletService = localVCServletService;
         this.user = user;
+        this.authenticationMechanism = authenticationMechanism;
         // For HTTPs we are unable to store the attributes in the session or request unfortunately
         this.participation = null;
         this.exercise = null;
@@ -59,6 +69,11 @@ public class LocalVCPostPushHook implements PostReceiveHook {
      */
     @Override
     public void onPostReceive(ReceivePack receivePack, Collection<ReceiveCommand> commands) {
+
+        // Said before anything else, so that a push that updates nothing or is rejected below still tells the user.
+        if (authenticationMechanism.get() == AuthenticationMechanism.PASSWORD) {
+            receivePack.sendMessage(localVCServletService.getPasswordAuthenticationPushNotice());
+        }
 
         // The PreReceiveHook already checked that there is exactly one command and rejects the push otherwise.
         Iterator<ReceiveCommand> iterator = commands.iterator();
