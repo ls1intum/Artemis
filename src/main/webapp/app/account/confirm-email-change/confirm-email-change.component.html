@@ -1,0 +1,46 @@
+<div class="flex justify-center">
+    <div class="w-full md:w-2/3">
+        <h1 jhiTranslate="confirmEmailChange.title"></h1>
+        @if (initialized() && !hasKey()) {
+            <tumaet-ui-message severity="error" data-testid="confirm-email-change-key-missing">
+                <span jhiTranslate="confirmEmailChange.keyMissing"></span>
+            </tumaet-ui-message>
+        }
+        @switch (state()) {
+            @case ('completed') {
+                <tumaet-ui-message severity="success" data-testid="confirm-email-change-completed">
+                    <span jhiTranslate="confirmEmailChange.messages.completed"></span>
+                </tumaet-ui-message>
+            }
+            @case ('waitingForOtherAddress') {
+                <tumaet-ui-message severity="success" data-testid="confirm-email-change-waiting">
+                    <span jhiTranslate="confirmEmailChange.messages.waitingForOther"></span>
+                </tumaet-ui-message>
+            }
+            @case ('invalid') {
+                <tumaet-ui-message severity="error" data-testid="confirm-email-change-invalid">
+                    <span jhiTranslate="confirmEmailChange.messages.invalid"></span>
+                </tumaet-ui-message>
+            }
+            @case ('emailAlreadyUsed') {
+                <tumaet-ui-message severity="error" data-testid="confirm-email-change-email-already-used">
+                    <span jhiTranslate="confirmEmailChange.messages.emailAlreadyUsed"></span>
+                </tumaet-ui-message>
+            }
+            @case ('error') {
+                <tumaet-ui-message severity="error" data-testid="confirm-email-change-error">
+                    <span jhiTranslate="confirmEmailChange.messages.error"></span>
+                </tumaet-ui-message>
+            }
+            @default {}
+        }
+        @if (canConfirm() || state() === 'running') {
+            <p jhiTranslate="confirmEmailChange.explanation"></p>
+            <tumaet-ui-button data-testid="confirm-email-change-button" [loading]="state() === 'running'" (clicked)="confirm()">
+                <span jhiTranslate="confirmEmailChange.button"></span>
+            </tumaet-ui-button>
+        } @else if (state() !== 'idle') {
+            <a class="underline" data-testid="confirm-email-change-settings-link" [routerLink]="['/account/settings']" jhiTranslate="confirmEmailChange.toSettings"></a>
+        }
+    </div>
+</div>

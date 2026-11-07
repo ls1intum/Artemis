@@ -10,12 +10,31 @@
             "button": "Save"
         },
         "saml2SyncedInfo": "Your name and email address are managed by your institution via SAML2 and cannot be changed here.",
+        "pendingEmailChange": {
+            "title": "Email change waiting for confirmation",
+            "description": "Your email address changes only after you confirm the change from both addresses. We sent a link to each of them.",
+            "currentAddress": "Current address",
+            "newAddress": "New address",
+            "confirmed": "confirmed",
+            "notConfirmed": "not confirmed yet",
+            "expires": "The links are valid until",
+            "resend": "Resend confirmation emails",
+            "cancel": "Cancel change"
+        },
         "messages": {
             "error": {
                 "fail": "<strong>An error has occurred!</strong> Settings could not be saved.",
-                "emailExists": "<strong>Email is already in use!</strong> Please choose another one."
+                "emailExists": "<strong>Email is already in use!</strong> Please choose another one.",
+                "emailInvalid": "<strong>This email address is not allowed.</strong> Please use an address that matches the allowed pattern.",
+                "emailChangeUnavailable": "<strong>The email address cannot be changed here.</strong> This Artemis instance cannot send emails. Please ask an administrator.",
+                "emailChangeRequestedTooRecently": "<strong>Please wait a moment.</strong> You requested an email change less than a minute ago. Try again in a minute.",
+                "noPendingEmailChange": "<strong>There is no pending email change.</strong> It may have expired or been cancelled already."
             },
             "success": "<strong>Settings saved!</strong>",
+            "successEmailChangeRequested": "<strong>Settings saved!</strong> We sent a confirmation email to your current address and one to your new address. Your email address changes after you confirm both. Until then you keep using your current address.",
+            "confirmationMailsResent": "<strong>Confirmation emails sent again.</strong> We sent new links to your current and your new address. Earlier links no longer work.",
+            "emailChangeCancelled": "<strong>Email change cancelled.</strong> Your email address stays the same.",
+            "emailChangeUnavailableHint": "You cannot change your email address here because this Artemis instance cannot send confirmation emails. Please ask an administrator to change it for you.",
             "validate": {
                 "firstname": {
                     "required": "Your first name is required.",

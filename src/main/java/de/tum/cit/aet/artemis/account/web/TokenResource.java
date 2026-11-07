@@ -24,6 +24,7 @@ import de.tum.cit.aet.artemis.core.security.jwt.JWTCookieService;
 import de.tum.cit.aet.artemis.core.security.jwt.JWTFilter;
 import de.tum.cit.aet.artemis.core.security.jwt.JwtWithSource;
 import de.tum.cit.aet.artemis.core.security.jwt.TokenProvider;
+import de.tum.cit.aet.artemis.core.service.SessionFreshnessService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 
@@ -39,9 +40,12 @@ public class TokenResource {
 
     private final TokenProvider tokenProvider;
 
-    public TokenResource(JWTCookieService jwtCookieService, TokenProvider tokenProvider) {
+    private final SessionFreshnessService sessionFreshnessService;
+
+    public TokenResource(JWTCookieService jwtCookieService, TokenProvider tokenProvider, SessionFreshnessService sessionFreshnessService) {
         this.jwtCookieService = jwtCookieService;
         this.tokenProvider = tokenProvider;
+        this.sessionFreshnessService = sessionFreshnessService;
     }
 
     /**
@@ -51,7 +55,9 @@ public class TokenResource {
      * @param asCookie if true the token is sent back as a cookie
      * @param request  HTTP request
      * @param response HTTP response
-     * @return the ResponseEntity with status 200 (ok), 401 (unauthorized) and depending on the asCookie flag a bearer token in the body
+     * @return the ResponseEntity with status 200 (ok), 401 (unauthorized) and depending on the asCookie flag a bearer token in the body. The token is also refused if the
+     *         session was established before the credentials of the account last changed: a tool token starts a new session of its own, so it would otherwise carry the old one
+     *         past the change.
      */
     @PostMapping("tool-token")
     @EnforceAtLeastStudent
@@ -62,6 +68,7 @@ public class TokenResource {
         if (jwtWithSource == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
+        sessionFreshnessService.requireCurrentSession();
 
         // get validity of the token
         long tokenRemainingTime = tokenProvider.getExpirationDate(jwtWithSource.jwt()).getTime() - System.currentTimeMillis();

@@ -964,6 +964,57 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
     }
 
     /**
+     * Applies a confirmed e-mail change, as one statement that only matches while the request still exists, is the one identified by the two keys and has been confirmed from both
+     * addresses, and while the account is active. Cancelling, replacing or recovering the account before this statement runs therefore stops the change, and no stale copy of the
+     * request that was read earlier can apply it afterwards. It also matches only while the account still has the address it had when the request was made, null for an
+     * account that had none: the confirmation of the current address proves that mailbox and no other, so an address that was assigned in between is never replaced. It
+     * matches likewise only while the credentials have not changed since the request was made, null-safe: a password change ends a pending request, but a request that is stored
+     * late, after that change, would otherwise survive it. The address is written straight to the column, bypassing {@code User.setEmail}, so the caller has to pass the canonical
+     * address, see {@code User.canonicalEmail}. It
+     * matches only once: when two confirmations complete the request at the same moment, the second finds the address already changed and applies nothing.
+     *
+     * @param userId       the id of the account
+     * @param email        the canonical new address
+     * @param currentKeyId the id of the key that was mailed to the current address
+     * @param newKeyId     the id of the key that was mailed to the new address
+     * @return 1 if the address was changed, 0 if there was nothing left to apply
+     */
+    @Modifying
+    @Transactional // ok because of modifying query
+    @Query("""
+            UPDATE User user
+            SET user.email = :email
+            WHERE user.id = :userId
+                AND user.activated = TRUE
+                AND user.deleted = FALSE
+                AND (user.email IS NULL OR user.email <> :email)
+                AND EXISTS (
+                    SELECT recoveryKey.userId
+                    FROM UserRecoveryKey recoveryKey
+                    WHERE recoveryKey.userId = :userId
+                        AND recoveryKey.pendingEmailChange.currentKeyId = :currentKeyId
+                        AND recoveryKey.pendingEmailChange.newKeyId = :newKeyId
+                        AND recoveryKey.pendingEmailChange.currentConfirmedAt IS NOT NULL
+                        AND recoveryKey.pendingEmailChange.newConfirmedAt IS NOT NULL
+                        AND (user.email = recoveryKey.pendingEmailChange.originalEmail
+                            OR (user.email IS NULL AND recoveryKey.pendingEmailChange.originalEmail IS NULL))
+                        AND (EXISTS (
+                                SELECT activity.userId
+                                FROM UserActivity activity
+                                WHERE activity.userId = user.id
+                                    AND activity.credentialsChangedDate = recoveryKey.pendingEmailChange.credentialsChangedAt
+                            )
+                            OR (recoveryKey.pendingEmailChange.credentialsChangedAt IS NULL AND NOT EXISTS (
+                                SELECT activity.userId
+                                FROM UserActivity activity
+                                WHERE activity.userId = user.id
+                                    AND activity.credentialsChangedDate IS NOT NULL
+                            )))
+                )
+            """)
+    int applyConfirmedEmailChange(@Param("userId") long userId, @Param("email") String email, @Param("currentKeyId") String currentKeyId, @Param("newKeyId") String newKeyId);
+
+    /**
      * Writes the stored profile picture reference straight to the column, bypassing {@code User.setImageUrl}. The caller therefore has to pass the filename, never the URL the
      * picture is served under.
      *
@@ -978,6 +1029,32 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
             WHERE user.id = :userId
             """)
     void updateUserImageUrl(@Param("userId") long userId, @Param("filename") String filename);
+
+    /**
+     * Writes the fields of the settings form and nothing else on the account, as a single statement. Saving the entity that was read instead writes every column back as it was
+     * read, so an address that a confirmation applied in the meantime would be replaced by the old one.
+     *
+     * @param userId     the account
+     * @param firstName  the first name
+     * @param lastName   the last name
+     * @param langKey    the language key
+     * @param modifiedBy who changed the account, which saving the entity would record through auditing
+     * @param modifiedAt when the account was changed
+     * @return 1 if the account was changed
+     */
+    @Modifying
+    @Transactional // ok because of modifying query
+    @Query("""
+            UPDATE User user
+            SET user.firstName = :firstName,
+                user.lastName = :lastName,
+                user.langKey = :langKey,
+                user.lastModifiedBy = :modifiedBy,
+                user.lastModifiedDate = :modifiedAt
+            WHERE user.id = :userId
+            """)
+    int updateBasicInformation(@Param("userId") long userId, @Param("firstName") String firstName, @Param("lastName") String lastName, @Param("langKey") String langKey,
+            @Param("modifiedBy") String modifiedBy, @Param("modifiedAt") Instant modifiedAt);
 
     @Modifying
     @Transactional // ok because of modifying query

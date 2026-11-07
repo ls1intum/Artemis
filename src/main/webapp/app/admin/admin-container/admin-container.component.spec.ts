@@ -66,6 +66,7 @@ describe('AdminContainerComponent', () => {
         versionControlName: '',
         versionControlUrl: '',
         localLLMDeploymentEnabled: false,
+        mailConfigured: true,
     };
 
     beforeEach(async () => {

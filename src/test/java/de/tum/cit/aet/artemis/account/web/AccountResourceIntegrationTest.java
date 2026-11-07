@@ -481,16 +481,21 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
         assertThat(updated.getEmail()).isEqualTo(email);
     }
 
+    /**
+     * Removing the address would leave an account that needs only the new address to confirm when one is added next, which is the way around the
+     * confirmation of the current one.
+     */
     @Test
     @WithMockUser(username = AUTHENTICATEDUSER)
-    void saveAccountAllowsRemovingAnEmail() throws Exception {
+    void saveAccountRejectsRemovingTheEmailOfAnInternalUser() throws Exception {
         User user = userUtilService.createAndSaveUser(AUTHENTICATEDUSER);
+        String email = user.getEmail();
         UserDTO update = new UserDTO(user);
         update.setEmail(null);
 
-        request.put("/api/account/basic-information", update, HttpStatus.OK);
+        request.put("/api/account/basic-information", update, HttpStatus.BAD_REQUEST);
 
-        assertThat(userTestRepository.findOneByLogin(AUTHENTICATEDUSER).orElseThrow().getEmail()).isNull();
+        assertThat(userTestRepository.findOneByLogin(AUTHENTICATEDUSER).orElseThrow().getEmail()).isEqualTo(email);
     }
 
     @Test
@@ -854,6 +859,33 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
             // Only the language key must have been updated
             assertThat(updatedUser.get().getLangKey()).isEqualTo("de");
         });
+    }
+
+    @Test
+    @WithMockUser(username = AUTHENTICATEDUSER)
+    void saveAccountSaml2PreservesConcurrentAccountChanges() {
+        User user = userUtilService.createAndSaveUser(AUTHENTICATEDUSER);
+        UserDTO update = new UserDTO(user);
+        update.setLangKey("de");
+        Mockito.doAnswer(invocation -> {
+            // The settings service already read its detached account before asking whether SAML is active.
+            User concurrentAccount = userTestRepository.findById(user.getId()).orElseThrow();
+            concurrentAccount.setEmail("confirmed-concurrently@example.org");
+            concurrentAccount.setActivated(false);
+            userTestRepository.saveAndFlush(concurrentAccount);
+            return true;
+        }).when(profileService).isSaml2Active();
+        try {
+            accountService.updateBasicInformationOfCurrentUser(update);
+
+            User stored = userTestRepository.findById(user.getId()).orElseThrow();
+            assertThat(stored.getLangKey()).isEqualTo("de");
+            assertThat(stored.getEmail()).isEqualTo("confirmed-concurrently@example.org");
+            assertThat(stored.getActivated()).isFalse();
+        }
+        finally {
+            Mockito.doCallRealMethod().when(profileService).isSaml2Active();
+        }
     }
 
     @Test
