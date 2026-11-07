@@ -480,6 +480,7 @@ describe('@tumaet/ui-angular integration contract', () => {
                 '--tumaet-ui-disabled-color',
                 '--tumaet-ui-focus-color',
                 '--tumaet-ui-font-family',
+                '--tumaet-ui-hover-background',
                 '--tumaet-ui-muted-color',
                 '--tumaet-ui-overlay-background',
                 '--tumaet-ui-primary-color',

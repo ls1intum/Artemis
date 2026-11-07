@@ -82,6 +82,19 @@ export class ResizablePanelsComponent implements AfterViewInit, OnDestroy {
     readonly collapseSnapPercent = input(12);
     /** Removes the standard content gutter around the primary panel for full-bleed editors or canvases. */
     readonly flushLeftPanel = input(false);
+    /**
+     * Smallest width (percent) the left panel keeps, so dragging the slider cannot squeeze it away. The right panel
+     * needs no such bound, as dragging it narrow collapses it (see {@link collapseSnapPercent}). 0 leaves it unbounded.
+     */
+    readonly leftMinSizePercent = input(0);
+    /**
+     * {@link leftMinSizePercent}, capped so the right panel can still be dragged as wide again as {@link collapseSnapPercent}.
+     * A larger minimum would leave every permitted drag below the threshold, so each drag would close the right panel.
+     */
+    protected readonly effectiveLeftMinSizePercent = computed(() => {
+        const snap = this.collapseSnapPercent();
+        return snap > 0 ? Math.max(0, Math.min(this.leftMinSizePercent(), 100 - 2 * snap)) : this.leftMinSizePercent();
+    });
 
     /**
      * Gutter size (px) of the splitter: the grey divider between the two panels, so it matches `--spacing-divider`,
@@ -118,7 +131,7 @@ export class ResizablePanelsComponent implements AfterViewInit, OnDestroy {
      */
     readonly savedSizes = signal<number[] | undefined>(undefined);
 
-    readonly panelSizesForSplitter = computed(() => this.savedSizes() ?? ResizablePanelsComponent.DEFAULT_SIZES);
+    readonly panelSizesForSplitter = computed(() => this.savedSizes() ?? this.defaultSizes());
 
     private resizeObserver?: ResizeObserver;
     private rightPanelCollapseChangedByUser = false;
@@ -142,6 +155,21 @@ export class ResizablePanelsComponent implements AfterViewInit, OnDestroy {
             untracked(() => {
                 if (this._activeSingleIndex() >= len) {
                     this._activeSingleIndex.set(Math.max(0, len - 1));
+                }
+            });
+        });
+
+        // The splitter refuses every drag that leaves the left panel below its minimum, so a remembered split that is
+        // already below it (e.g. saved before the minimum applied) would freeze the slider. Widen it to the minimum.
+        effect(() => {
+            this.effectiveLeftMinSizePercent();
+            untracked(() => {
+                const sizes = this.savedSizes();
+                if (sizes) {
+                    const clamped = this.withLeftMinSize(sizes);
+                    if (clamped !== sizes) {
+                        this.savedSizes.set(clamped);
+                    }
                 }
             });
         });
@@ -200,11 +228,22 @@ export class ResizablePanelsComponent implements AfterViewInit, OnDestroy {
                 parsed[0] > 0 &&
                 parsed[1] > this.collapseSnapPercent()
             ) {
-                this.savedSizes.set(parsed);
+                this.savedSizes.set(this.withLeftMinSize(parsed));
             }
         } catch {
             // Malformed or unavailable storage (private mode / no window); the in-memory default applies.
         }
+    }
+
+    /** The split itself when its left panel keeps {@link leftMinSizePercent}, otherwise the split widened to it. */
+    private withLeftMinSize(sizes: number[]): number[] {
+        const leftMinSize = this.effectiveLeftMinSizePercent();
+        return sizes[0] >= leftMinSize ? sizes : [leftMinSize, 100 - leftMinSize];
+    }
+
+    /** {@link DEFAULT_SIZES}, widened to {@link leftMinSizePercent}. */
+    private defaultSizes(): number[] {
+        return this.withLeftMinSize(ResizablePanelsComponent.DEFAULT_SIZES);
     }
 
     setActiveRight(value: string | number | undefined): void {
@@ -228,7 +267,7 @@ export class ResizablePanelsComponent implements AfterViewInit, OnDestroy {
 
     private restoreUsableSplit(): void {
         const current = this.savedSizes();
-        this.savedSizes.set(current && (current[1] ?? 0) > this.collapseSnapPercent() ? [...current] : [...ResizablePanelsComponent.DEFAULT_SIZES]);
+        this.savedSizes.set(current && (current[1] ?? 0) > this.collapseSnapPercent() ? [...current] : [...this.defaultSizes()]);
     }
 
     collapseRightPanel(): void {
@@ -257,7 +296,7 @@ export class ResizablePanelsComponent implements AfterViewInit, OnDestroy {
         if (this.collapseSnapPercent() > 0 && rightSize <= this.collapseSnapPercent()) {
             // A snap never replaces the usable reopen width.
             const remembered = this.savedSizes();
-            const reopenSizes = remembered && (remembered[1] ?? 0) > this.collapseSnapPercent() ? [...remembered] : [...ResizablePanelsComponent.DEFAULT_SIZES];
+            const reopenSizes = remembered && (remembered[1] ?? 0) > this.collapseSnapPercent() ? [...remembered] : [...this.defaultSizes()];
             this.savedSizes.set(reopenSizes);
             this.persistSizes(reopenSizes);
             this.collapseRightPanel();
