@@ -19,7 +19,8 @@
             controls
             preload="auto"
             playsinline
-            (pointerdown)="onVideoInteraction()"
+            (pointermove)="onVideoInteraction()"
+            (focus)="onVideoInteraction()"
             (keydown)="onVideoInteraction()"
             (play)="onVideoPlaybackChange()"
             (pause)="onVideoPlaybackChange()"

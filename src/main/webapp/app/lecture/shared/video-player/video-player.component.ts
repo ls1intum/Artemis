@@ -14,7 +14,7 @@ const MIN_VIDEO_WIDTH = 300;
 /** Minimum width reserved for the transcript column in pixels. */
 const MIN_TRANSCRIPT_WIDTH = 250;
 
-/** How long the transcript holds still after a click or key press on the video (see `transcriptScrollDeferredUntil`). */
+/** How long the transcript holds still after the last pointer movement, focus or key press on the video (see `transcriptScrollDeferredUntil`). */
 const TRANSCRIPT_SCROLL_DEFER_MS = 10_000;
 
 @Component({
@@ -70,8 +70,10 @@ export class VideoPlayerComponent implements AfterViewInit, OnDestroy {
 
     /**
      * Until when the transcript must not auto-scroll. Chrome closes a native control menu (playback speed, download) as soon
-     * as anything scrolls, and the menu is opened by a click or key press on the video, so the transcript holds still for a
-     * short while after one. Playing, pausing, seeking or picking a speed ends the hold early.
+     * as anything scrolls. The native controls keep clicks to themselves (the video element never sees a pointerdown or click
+     * from them), but it does see the pointer moving over it, focus and key presses, so the transcript holds still for a short
+     * while after the last of those. A pointer that rests on the video therefore stops holding it back after that time.
+     * Playing, pausing, seeking or picking a speed ends the hold early.
      */
     private transcriptScrollDeferredUntil = 0;
 
@@ -430,7 +432,7 @@ export class VideoPlayerComponent implements AfterViewInit, OnDestroy {
         }
     }
 
-    /** A click or key press on the video may have opened a native menu, so keep the transcript still for a moment. */
+    /** The pointer moving over the video, focus or a key press may mean a native menu is open, so keep the transcript still for a moment. */
     protected onVideoInteraction(): void {
         this.transcriptScrollDeferredUntil = Date.now() + TRANSCRIPT_SCROLL_DEFER_MS;
     }
