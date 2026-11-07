@@ -55,6 +55,16 @@ describe('ProgrammingAssessmentRepoExportButtonComponent', () => {
         vi.restoreAllMocks();
     });
 
+    it.each([false, true])('translates the accessible name in single-participant mode: %s', (singleMode) => {
+        const titleKey = singleMode ? 'artemisApp.instructorDashboard.exportRepos.titleSingle' : 'artemisApp.instructorDashboard.exportRepos.title';
+        vi.spyOn(TestBed.inject(TranslateService), 'instant').mockImplementation((key) => `Translated ${key}`);
+        fixture.componentRef.setInput('singleParticipantMode', singleMode);
+        fixture.detectChanges();
+
+        const button: HTMLButtonElement = fixture.nativeElement.querySelector('button');
+        expect(button.getAttribute('aria-label')).toBe(`Translated ${titleKey}`);
+    });
+
     it('should open repo export dialog with the correct data and a dismissable config', () => {
         const openSpy = vi.spyOn(dialogService, 'open');
         const buttonPressedSpy = vi.fn();

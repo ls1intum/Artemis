@@ -7,6 +7,10 @@ export type TumAetUiOverlayPlacement = 'top' | 'bottom' | 'left' | 'right';
 interface TumAetUiConnectedOverlayOptions {
     hasBackdrop?: boolean;
     matchOriginWidth?: boolean;
+    /** Keep a content-sized panel at least as wide as its trigger. */
+    minWidthFromOrigin?: boolean;
+    /** Minimum panel width when the trigger is narrower. */
+    minWidth?: number;
 }
 
 const OFFSET = 8;
@@ -44,6 +48,10 @@ export class TumAetUiOverlayService {
 
     createConnectedOverlay(origin: ElementRef<HTMLElement> | HTMLElement, placement: TumAetUiOverlayPlacement, options: TumAetUiConnectedOverlayOptions = {}): OverlayRef {
         const originElement = origin instanceof ElementRef ? origin.nativeElement : origin;
+        const originSize = () => ({
+            width: options.matchOriginWidth ? originElement.getBoundingClientRect().width : undefined,
+            minWidth: options.minWidthFromOrigin ? Math.max(originElement.getBoundingClientRect().width, options.minWidth ?? 0) : undefined,
+        });
         const overlayRef = this.overlay.create({
             panelClass: 'tumaet-ui-overlay',
             positionStrategy: this.positionStrategy(origin, placement),
@@ -51,12 +59,16 @@ export class TumAetUiOverlayService {
             hasBackdrop: options.hasBackdrop ?? false,
             backdropClass: 'cdk-overlay-transparent-backdrop',
             direction: this.directionality,
-            width: options.matchOriginWidth ? originElement.getBoundingClientRect().width : undefined,
+            ...originSize(),
+            maxWidth: options.minWidthFromOrigin ? `calc(100vw - ${2 * VIEWPORT_MARGIN}px)` : undefined,
         });
-        if (options.matchOriginWidth && typeof ResizeObserver !== 'undefined') {
-            const resizeObserver = new ResizeObserver(() => overlayRef.updateSize({ width: originElement.getBoundingClientRect().width }));
+        if ((options.matchOriginWidth || options.minWidthFromOrigin) && typeof ResizeObserver !== 'undefined') {
+            const resizeObserver = new ResizeObserver(() => overlayRef.updateSize(originSize()));
             const disconnect = () => resizeObserver.disconnect();
-            resizeObserver.observe(originElement);
+            overlayRef.attachments().subscribe(() => {
+                overlayRef.updateSize(originSize());
+                resizeObserver.observe(originElement);
+            });
             overlayRef.detachments().subscribe({ next: disconnect, complete: disconnect });
         }
         return overlayRef;

@@ -1,13 +1,5 @@
-import {
-    TumAetUiButtonDirective,
-    TumAetUiDatePickerComponent,
-    TumAetUiInputDirective,
-    TumAetUiPopoverComponent,
-    TumAetUiPopoverTriggerDirective,
-    TumAetUiTagComponent,
-    TumAetUiTooltipDirective,
-} from '@tumaet/ui-angular';
-
+import { CellTemplateRef, ColumnDef, TableViewComponent, TableViewLazyLoadEvent, TableViewOptions } from 'app/shared-ui/table-view/table-view';
+import { buildDbQueryFromLazyEvent } from 'app/shared-ui/table-view/request-builder';
 import { Component, OnDestroy, OnInit, computed, effect, inject, signal, untracked, viewChild } from '@angular/core';
 import { PROFILE_LOCALCI } from 'app/app.constants';
 import { Subject, Subscription } from 'rxjs';
@@ -30,7 +22,20 @@ import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { AlertService } from 'app/foundation/service/alert.service';
-import { faCheck, faCircleNotch, faDownload, faEraser, faFilePowerpoint, faFolderOpen, faPencil, faSync, faTimes, faTrash } from '@fortawesome/free-solid-svg-icons';
+import {
+    faCheck,
+    faChevronDown,
+    faCircleNotch,
+    faComment,
+    faDownload,
+    faEraser,
+    faFilePowerpoint,
+    faFolderOpen,
+    faPencil,
+    faSync,
+    faTimes,
+    faTrash,
+} from '@fortawesome/free-solid-svg-icons';
 import { faFileCode } from '@fortawesome/free-regular-svg-icons';
 import { GradingService } from 'app/assessment/manage/grading/grading-service';
 import { GradeStepsDTO } from 'app/assessment/shared/entities/grade-step.model';
@@ -39,7 +44,15 @@ import { FormsModule } from '@angular/forms';
 import { ProgrammingExerciseInstructorSubmissionStateComponent } from 'app/programming/shared/actions/instructor-submission-state/programming-exercise-instructor-submission-state.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { CodeButtonComponent } from 'app/shared-ui/components/buttons/code-button/code-button.component';
-
+import {
+    TumAetUiButtonDirective,
+    TumAetUiDatePickerComponent,
+    TumAetUiInputDirective,
+    TumAetUiPopoverComponent,
+    TumAetUiPopoverTriggerDirective,
+    TumAetUiTagComponent,
+    TumAetUiTooltipDirective,
+} from '@tumaet/ui-angular';
 import { ProgrammingExerciseInstructorTriggerBuildButtonComponent } from 'app/programming/shared/actions/trigger-build-button/instructor/programming-exercise-instructor-trigger-build-button.component';
 import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
 import { FeatureToggleDirective } from 'app/foundation/feature-toggle/feature-toggle.directive';
@@ -47,9 +60,6 @@ import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { TableViewLazyLoadEvent } from 'app/shared-ui/table-view/table-view';
-import { buildDbQueryFromLazyEvent } from 'app/shared-ui/table-view/request-builder';
-import { CellTemplateRef, ColumnDef, TableViewComponent, TableViewOptions } from 'app/shared-ui/table-view/table-view';
 import { ParticipationManagementDTO } from './participation-management-dto.model';
 import { ParticipationSearch } from 'app/foundation/pagination/pageable-table';
 import { FilterDropdownComponent, FilterGroup } from 'app/exercise/shared/filter-dropdown/filter-dropdown.component';
@@ -68,9 +78,7 @@ import { Range } from 'app/foundation/util/utils';
 import { onError } from 'app/foundation/util/global.utils';
 import { ResultService } from 'app/exercise/result/result.service';
 import { ExerciseCacheService } from 'app/exercise/services/exercise-cache.service';
-
 import { ExternalSubmissionButtonComponent } from 'app/exercise/external-submission/external-submission-button.component';
-import { ExerciseActionButtonComponent } from 'app/shared-ui/components/buttons/exercise-action-button/exercise-action-button.component';
 import { ExerciseScoresExportButtonComponent } from 'app/exercise/exercise-scores/export-button/exercise-scores-export-button.component';
 import { ProgrammingAssessmentRepoExportButtonComponent } from 'app/programming/manage/assess/repo-export/export-button/programming-assessment-repo-export-button.component';
 import { SubmissionExportButtonComponent } from 'app/exercise/submission-export/button/submission-export-button.component';
@@ -80,14 +88,16 @@ import { ResultComponent } from 'app/exercise/result/result.component';
 import { ArtemisDurationFromSecondsPipe } from 'app/foundation/pipes/artemis-duration-from-seconds.pipe';
 
 export enum FilterProp {
-    ALL = 'All',
     FAILED = 'Failed',
     NO_SUBMISSIONS = 'NoSubmissions',
-    NO_PRACTICE = 'NoPracticeMode',
+    VALID_SUBMISSIONS = 'ValidSubmissions',
+    NO_PRACTICE_MODE = 'NoPracticeMode',
+    GRADED = 'Graded',
     SUCCESSFUL = 'Successful',
     UNSUCCESSFUL = 'Unsuccessful',
     BUILD_FAILED = 'BuildFailed',
     MANUAL = 'Manual',
+    SEMI_AUTOMATIC = 'SemiAutomatic',
     AUTOMATIC = 'Automatic',
     LOCKED = 'Locked',
 }
@@ -97,18 +107,17 @@ export enum FilterProp {
     templateUrl: './participation.component.html',
     providers: [ExerciseCacheService],
     imports: [
-        TumAetUiPopoverTriggerDirective,
-        TumAetUiPopoverComponent,
-        TumAetUiTooltipDirective,
-        TumAetUiButtonDirective,
-        TumAetUiInputDirective,
-        TumAetUiTagComponent,
         TranslateDirective,
         ParticipationAccessNoticeComponent,
         FormsModule,
         ProgrammingExerciseInstructorSubmissionStateComponent,
         RouterLink,
         FaIconComponent,
+        TumAetUiButtonDirective,
+        TumAetUiInputDirective,
+        TumAetUiPopoverComponent,
+        TumAetUiPopoverTriggerDirective,
+        TumAetUiTooltipDirective,
         TableViewComponent,
         CodeButtonComponent,
         TumAetUiDatePickerComponent,
@@ -121,8 +130,8 @@ export enum FilterProp {
         TeamStudentsListComponent,
         CourseTitleBarTitleDirective,
         CourseTitleBarActionsDirective,
+        TumAetUiTagComponent,
         ExternalSubmissionButtonComponent,
-        ExerciseActionButtonComponent,
         ExerciseScoresExportButtonComponent,
         ProgrammingAssessmentRepoExportButtonComponent,
         SubmissionExportButtonComponent,
@@ -146,6 +155,8 @@ export class ParticipationComponent implements OnInit, OnDestroy {
     private readonly gradingService = inject(GradingService);
     private readonly websocketService = inject(WebsocketService);
 
+    protected readonly faComment = faComment;
+    protected readonly faChevronDown = faChevronDown;
     protected readonly faDownload = faDownload;
     protected readonly faSync = faSync;
     protected readonly faFolderOpen = faFolderOpen;
@@ -191,7 +202,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
     readonly totalRows = signal(0);
     readonly isLoading = signal(false);
     readonly isSaving = signal(false);
-    readonly activeFilter = signal<FilterProp>(FilterProp.ALL);
+    readonly activeFilters = signal<FilterProp[]>([]);
     readonly hasLoadedPendingSubmissions = signal(false);
     readonly isAdmin = signal(false);
     readonly isLocalCIEnabled = signal(true);
@@ -211,17 +222,29 @@ export class ParticipationComponent implements OnInit, OnDestroy {
         const ex = this.exercise();
         if (!ex) return [];
         const isProgramming = ex.type === ExerciseType.PROGRAMMING;
-        const assessmentTypeFilterable = this.newManualResultAllowed() || !!ex.allowComplaintsForAutomaticAssessments;
-        const submissions = [...(isProgramming ? [FilterProp.FAILED, FilterProp.BUILD_FAILED] : []), FilterProp.NO_SUBMISSIONS, ...(isProgramming ? [FilterProp.NO_PRACTICE] : [])];
-        const results = [
-            FilterProp.SUCCESSFUL,
-            FilterProp.UNSUCCESSFUL,
-            ...(assessmentTypeFilterable ? [FilterProp.MANUAL, FilterProp.AUTOMATIC] : []),
-            ...(this.newManualResultAllowed() && ex.isAtLeastInstructor ? [FilterProp.LOCKED] : []),
-        ];
+        const assessmentTypeFilterable = isProgramming || ex.type === ExerciseType.TEXT || ex.type === ExerciseType.MODELING;
+        const manualAssessmentEnabled = ex.type !== ExerciseType.QUIZ && (!isProgramming || ex.assessmentType !== AssessmentType.AUTOMATIC);
         return [
-            { labelKey: 'artemisApp.participation.filterGroup.submissions', items: submissions },
-            { labelKey: 'artemisApp.participation.filterGroup.results', items: results },
+            {
+                labelKey: 'artemisApp.participation.filterGroup.submissions',
+                single: !isProgramming,
+                items: [...(isProgramming ? [FilterProp.FAILED, FilterProp.BUILD_FAILED] : []), FilterProp.NO_SUBMISSIONS, FilterProp.VALID_SUBMISSIONS],
+            },
+            { labelKey: 'artemisApp.participation.filterGroup.results', items: [FilterProp.SUCCESSFUL, FilterProp.UNSUCCESSFUL], single: true },
+            ...(assessmentTypeFilterable
+                ? [
+                      {
+                          labelKey: 'artemisApp.participation.filterGroup.assessmentType',
+                          items: [FilterProp.MANUAL, FilterProp.SEMI_AUTOMATIC, ...(isProgramming ? [FilterProp.AUTOMATIC] : [])],
+                          single: true,
+                      },
+                  ]
+                : []),
+            ...(isProgramming ? [{ labelKey: 'artemisApp.participation.filterGroup.mode', items: [FilterProp.NO_PRACTICE_MODE] }] : []),
+            ...(isProgramming || ex.type === ExerciseType.QUIZ || ex.type === ExerciseType.TEXT || ex.type === ExerciseType.MODELING
+                ? [{ labelKey: 'artemisApp.participation.filterGroup.gradingStatus', items: [FilterProp.GRADED] }]
+                : []),
+            ...(manualAssessmentEnabled && ex.isAtLeastInstructor ? [{ labelKey: 'artemisApp.participation.filterGroup.assessmentStatus', items: [FilterProp.LOCKED] }] : []),
         ];
     });
 
@@ -247,11 +270,12 @@ export class ParticipationComponent implements OnInit, OnDestroy {
 
     readonly tableOptions = computed<TableViewOptions>(() => ({
         dataKey: 'participationId',
+        searchSize: 'small',
         striped: true,
         scrollable: true,
         scrollHeight: 'flex',
         showSearch: !this.hideParticipantInformation(),
-        searchPlaceholder: this.exercise()?.teamMode ? 'artemisApp.exercise.searchForTeams' : 'artemisApp.exercise.searchForStudents',
+        searchPlaceholder: this.exercise()?.teamMode ? 'artemisApp.participation.searchTeams' : 'artemisApp.participation.searchStudents',
     }));
 
     // Template refs
@@ -454,7 +478,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
 
     private setupFailedFilterWebsocket(exerciseId: number) {
         const reloadIfFailedFilterActive = () => {
-            if (this.activeFilter() === FilterProp.FAILED) {
+            if (this.activeFilters().includes(FilterProp.FAILED)) {
                 this.loadPage();
             }
         };
@@ -478,7 +502,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
         const search: ParticipationSearch = cloneWith(base, {
             searchTerm: this.hideParticipantInformation() ? '' : base.searchTerm,
             sortedColumn: this.hideParticipantInformation() && ['participantName', 'participantIdentifier', 'buildPlanId'].includes(base.sortedColumn) ? 'id' : base.sortedColumn,
-            filterProp: this.activeFilter() !== FilterProp.ALL ? this.activeFilter() : undefined,
+            filterProp: this.activeFilters().join(',') || undefined,
             scoreRangeLower: this.rangeFilter()?.lowerBound,
             scoreRangeUpper: this.rangeFilter()?.upperBound,
         });
@@ -504,17 +528,17 @@ export class ParticipationComponent implements OnInit, OnDestroy {
         });
     }
 
-    updateParticipationFilter(newValue: string) {
-        this.activeFilter.set(newValue as FilterProp);
+    updateParticipationFilter(newValue: string[]) {
+        this.activeFilters.set(newValue.filter((value): value is FilterProp => Object.values(FilterProp).includes(value as FilterProp)));
         this.loadPage();
     }
 
     /**
-     * Resets the score range filter and active filter, then reloads data
+     * Resets the score range and selected filters, then reloads data
      */
     resetFilterOptions(): void {
         this.rangeFilter.set(undefined);
-        this.activeFilter.set(FilterProp.ALL);
+        this.activeFilters.set([]);
         void this.router.navigate([], { relativeTo: this.route, queryParams: { scoreRangeFilter: undefined }, queryParamsHandling: 'merge', replaceUrl: true });
         this.loadPage();
     }

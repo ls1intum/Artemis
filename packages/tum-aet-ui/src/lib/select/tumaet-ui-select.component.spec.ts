@@ -54,6 +54,57 @@ describe('TumAetUiSelectComponent', () => {
         return Array.from(document.querySelectorAll('[role="option"]')) as HTMLElement[];
     }
 
+    it('updates the content-sized panel minimum width while open and disconnects on close', () => {
+        let resize!: () => void;
+        const observe = vi.fn();
+        const disconnect = vi.fn();
+        class MockResizeObserver {
+            observe = observe;
+            disconnect = disconnect;
+            unobserve = vi.fn();
+
+            constructor(callback: ResizeObserverCallback) {
+                resize = () => callback([], this);
+            }
+        }
+        vi.stubGlobal('ResizeObserver', MockResizeObserver);
+        try {
+            let width = 180;
+            vi.spyOn(triggerButton(), 'getBoundingClientRect').mockImplementation(() => ({ width }) as DOMRect);
+            fixture.componentRef.setInput('matchTriggerWidth', false);
+            fixture.detectChanges();
+            openPanel();
+            const pane = document.querySelector('.cdk-overlay-pane') as HTMLElement;
+            expect(pane.style.minWidth).toBe('180px');
+            expect(observe).toHaveBeenCalledWith(triggerButton());
+
+            width = 240;
+            resize();
+            expect(pane.style.minWidth).toBe('240px');
+            width = 120;
+            resize();
+            expect(pane.style.minWidth).toBe('120px');
+            expect(pane.style.width).toBe('');
+            expect(triggerButton().getAttribute('aria-expanded')).toBe('true');
+
+            triggerButton().dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+            fixture.detectChanges();
+            expect(disconnect).toHaveBeenCalledTimes(2);
+        } finally {
+            fixture.destroy();
+            vi.unstubAllGlobals();
+        }
+    });
+
+    it.each([true, false])('only wraps option labels when matchTriggerWidth is false (%s)', (matchTriggerWidth) => {
+        fixture.componentRef.setInput('matchTriggerWidth', matchTriggerWidth);
+        fixture.detectChanges();
+        openPanel();
+        const label = optionElements()[0].querySelector('span')!;
+        expect(label.classList.contains('tumaet:truncate')).toBe(matchTriggerWidth);
+        expect(label.classList.contains('tumaet:whitespace-normal')).toBe(!matchTriggerWidth);
+    });
+
     it('renders the placeholder when nothing is selected', () => {
         fixture.componentRef.setInput('placeholder', 'Pick one');
         fixture.detectChanges();

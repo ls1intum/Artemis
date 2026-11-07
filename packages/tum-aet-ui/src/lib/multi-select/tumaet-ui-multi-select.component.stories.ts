@@ -23,6 +23,13 @@ const meta = {
         options: eventTypes,
         placeholder: 'Choose event types',
     },
+    parameters: {
+        docs: {
+            description: {
+                component: 'The panel stays open while selecting values. A backdrop intercepts outside clicks and dismisses the panel.',
+            },
+        },
+    },
     argTypes: {
         size: {
             control: 'inline-radio',
