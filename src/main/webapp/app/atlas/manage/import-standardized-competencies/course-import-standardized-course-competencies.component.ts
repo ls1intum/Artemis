@@ -10,10 +10,13 @@ import {
 } from 'app/atlas/shared/entities/standardized-competency.model';
 import { faBan, faDownLeftAndUpRightToCenter, faFileImport, faSort, faTrash, faUpRightAndDownLeftFromCenter } from '@fortawesome/free-solid-svg-icons';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Component, HostListener, OnInit, inject, signal, viewChild } from '@angular/core';
+import { Component, DestroyRef, HostListener, Injector, OnInit, computed, inject, runInInjectionContext, signal, viewChild } from '@angular/core';
 import { onError } from 'app/foundation/util/global.utils';
 import { KnowledgeAreaTreeComponent } from 'app/atlas/shared/standardized-competencies/knowledge-area-tree.component';
-import { forkJoin, map } from 'rxjs';
+import { filter, finalize, forkJoin, map, take } from 'rxjs';
+import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
+import { getSourcesResource } from 'app/openapi/api/standardized-competency-resources';
+import { knowledgeAreaForView, sourceForView } from 'app/atlas/shared/standardized-competencies/standardized-competency-api.mapper';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { ComponentCanDeactivate } from 'app/foundation/guard/can-deactivate.model';
@@ -40,6 +43,8 @@ interface KnowledgeAreaForImport extends KnowledgeAreaForTree {
     template: '',
 })
 export abstract class CourseImportStandardizedCourseCompetenciesComponent extends StandardizedCompetencyFilterPageComponent implements OnInit, ComponentCanDeactivate {
+    private readonly injector = inject(Injector);
+    private readonly destroyRef = inject(DestroyRef);
     protected router = inject(Router);
     protected activatedRoute = inject(ActivatedRoute);
     protected standardizedCompetencyService = inject(StandardizedCompetencyService);
@@ -79,24 +84,42 @@ export abstract class CourseImportStandardizedCourseCompetenciesComponent extend
     ngOnInit(): void {
         this.isLoading.set(true);
         const getKnowledgeAreasObservable = this.standardizedCompetencyService.getAllForTreeView();
-        const getSourcesObservable = this.standardizedCompetencyService.getSources();
-        forkJoin([getKnowledgeAreasObservable, getSourcesObservable]).subscribe({
-            next: ([knowledgeAreasResponse, sourcesResponse]) => {
-                const knowledgeAreas = knowledgeAreasResponse.body!;
-                const knowledgeAreasForImport = knowledgeAreas.map((knowledgeArea) => this.convertToKnowledgeAreaForImport(knowledgeArea));
-                this.dataSource.data = knowledgeAreasForImport;
-                knowledgeAreasForImport.forEach((knowledgeArea) => {
-                    this.addSelfAndDescendantsToMap(knowledgeArea);
-                    this.addSelfAndDescendantsToSelectArray(knowledgeArea);
-                });
-
-                this.sources = sourcesResponse.body!;
-            },
-            error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
-            complete: () => {
-                this.isLoading.set(false);
-            },
+        // This injection context owns both the HTTP resource and its signal bridge. A fresh
+        // component gets a fresh read; the readiness barrier initializes mutable tree state once.
+        const sourcesResource = runInInjectionContext(this.injector, () => getSourcesResource());
+        const sourcesValue = computed(() => {
+            const error = sourcesResource.error();
+            if (error) {
+                throw error;
+            }
+            return sourcesResource.value();
         });
+        const getSourcesObservable = toObservable(sourcesValue, { injector: this.injector }).pipe(
+            filter((sources) => sources !== undefined),
+            take(1),
+        );
+        forkJoin([getKnowledgeAreasObservable, getSourcesObservable])
+            .pipe(
+                takeUntilDestroyed(this.destroyRef),
+                finalize(() => sourcesResource.destroy()),
+            )
+            .subscribe({
+                next: ([knowledgeAreasResponse, sourcesResponse]) => {
+                    const knowledgeAreas = knowledgeAreasResponse.map(knowledgeAreaForView);
+                    const knowledgeAreasForImport = knowledgeAreas.map((knowledgeArea) => this.convertToKnowledgeAreaForImport(knowledgeArea));
+                    this.dataSource.data = knowledgeAreasForImport;
+                    knowledgeAreasForImport.forEach((knowledgeArea) => {
+                        this.addSelfAndDescendantsToMap(knowledgeArea);
+                        this.addSelfAndDescendantsToSelectArray(knowledgeArea);
+                    });
+
+                    this.sources = sourcesResponse.map(sourceForView);
+                },
+                error: (errorResponse: unknown) => onError(this.alertService, errorResponse),
+                complete: () => {
+                    this.isLoading.set(false);
+                },
+            });
         this.courseId = Number(this.activatedRoute.snapshot.paramMap.get('courseId'));
     }
 
