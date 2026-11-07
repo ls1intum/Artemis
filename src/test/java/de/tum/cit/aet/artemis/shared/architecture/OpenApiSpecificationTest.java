@@ -34,7 +34,7 @@ class OpenApiSpecificationTest {
             }
         }
 
-        assertThat(atlasOperations).containsExactlyInAnyOrder("get /api/atlas/standardized-competencies/{competencyId}",
-                "get /api/atlas/standardized-competencies/for-tree-view", "get /api/atlas/standardized-competencies/sources");
+        assertThat(atlasOperations).containsExactlyInAnyOrder("get /api/atlas/standardized-competencies/{competencyId}", "get /api/atlas/standardized-competencies/for-tree-view",
+                "get /api/atlas/standardized-competencies/sources");
     }
 }
