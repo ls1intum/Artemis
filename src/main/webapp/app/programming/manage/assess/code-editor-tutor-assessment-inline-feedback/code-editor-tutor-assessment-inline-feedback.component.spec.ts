@@ -15,6 +15,7 @@ import { StructuredGradingCriterionService } from 'app/exercise/structured-gradi
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { By } from '@angular/platform-browser';
 import { UnifiedFeedbackComponent } from 'app/shared/components/unified-feedback/unified-feedback.component';
+import { typeIntoInputNumber } from 'test/helpers/input-number-test-helpers';
 
 describe('CodeEditorTutorAssessmentInlineFeedbackComponent', () => {
     let comp: CodeEditorTutorAssessmentInlineFeedbackComponent;
@@ -189,7 +190,7 @@ describe('CodeEditorTutorAssessmentInlineFeedbackComponent', () => {
         expect(textToBeDisplayed).toEqual(expectedTextToBeDisplayed);
     });
 
-    it('should not display a points pill for non-graded feedback suggestions', () => {
+    it('should display a points pill for non-graded feedback suggestions, such as preliminary feedback', () => {
         fixture.componentRef.setInput('feedback', {
             type: FeedbackType.AUTOMATIC,
             text: NON_GRADED_FEEDBACK_SUGGESTION_IDENTIFIER + 'feedback',
@@ -197,7 +198,7 @@ describe('CodeEditorTutorAssessmentInlineFeedbackComponent', () => {
         fixture.detectChanges();
 
         const pointsElement = fixture.debugElement.query(By.css('.unified-feedback-points'));
-        expect(pointsElement).toBeNull();
+        expect(pointsElement).not.toBeNull();
     });
 
     it('should display a points pill for graded feedback', () => {
@@ -340,6 +341,28 @@ describe('CodeEditorTutorAssessmentInlineFeedbackComponent', () => {
         expect(onUpdateFeedbackSpy).toHaveBeenCalledOnce();
         expect(comp.currentFeedback().detailText).toBe('Off-by-one error here.');
         expect(comp.currentFeedback().reference).toBe(`file:${fileName}_line:${codeLine}`);
+    });
+
+    it('should keep the generated file and line title on the first edits of a new feedback', async () => {
+        const onUpdateFeedbackSpy = vi.fn();
+        comp.onUpdateFeedback.subscribe(onUpdateFeedbackSpy);
+        fixture.detectChanges();
+
+        const detailTextarea = fixture.debugElement.query(By.css('.unified-feedback-detail-input')).nativeElement as HTMLTextAreaElement;
+        detailTextarea.value = 'Off-by-one error here.';
+        detailTextarea.dispatchEvent(new Event('input'));
+        fixture.detectChanges();
+
+        expect(comp.currentFeedback().text).toBe('File testFile at line 2');
+        expect(onUpdateFeedbackSpy).toHaveBeenLastCalledWith(expect.objectContaining({ text: 'File testFile at line 2' }));
+
+        const pointsInput = fixture.debugElement.query(By.css('[data-testid="unified-feedback-points-input"] input')).nativeElement as HTMLInputElement;
+        typeIntoInputNumber(pointsInput, '-1');
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        expect(comp.currentFeedback().credits).toBe(-1);
+        expect(comp.currentFeedback().text).toBe('File testFile at line 2');
     });
 
     it('should keep the explicit save button for a non-manual feedback opened for editing', () => {
