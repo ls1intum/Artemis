@@ -952,6 +952,13 @@
                 },
                 "outdated": "Outdated",
                 "reanalyze": "Re-analyze"
+            },
+            "buildNotifications": {
+                "enable": "Enable browser notifications for build results",
+                "disable": "Disable browser notifications for build results",
+                "blocked": "Notifications are blocked. Allow them in your browser settings.",
+                "error": "Browser notifications are unavailable. The tab icon still shows build results.",
+                "resultReceived": "Build result received"
             }
         },
         "checklistAnalysisRequest": {
