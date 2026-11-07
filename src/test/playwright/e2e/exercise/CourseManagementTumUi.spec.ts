@@ -271,6 +271,20 @@ test.describe('Course management TUM UI tables', { tag: '@slow' }, () => {
             }
         }
 
+        async function expectExerciseProgressLayout(): Promise<void> {
+            const panel = page.getByTestId('exercise-assessment-progress');
+            await expect(panel).toBeVisible();
+            await expect(panel.getByText('Assessment progress', { exact: true })).toBeVisible();
+            const progress = panel.getByRole('progressbar');
+            await expect(progress).toHaveJSProperty('max', 100);
+            await expect(progress).toHaveJSProperty('value', 0);
+            await expect(panel.getByText('Assessed', { exact: true })).toBeVisible();
+            await expect(panel.getByText('In progress', { exact: true })).toBeVisible();
+            await expect(panel.getByText('Open', { exact: true })).toBeVisible();
+            await expectWithinViewport(panel, ['left', 'right'], { name: 'exercise assessment progress' });
+            await expectNoHorizontalScrollAround(panel, { name: 'exercise assessment progress' });
+        }
+
         /** Runs each layout contract in both themes and attaches representative desktop and phone captures. */
         async function captureLayouts(screen: string, check: (viewport: { width: number; height: number }) => Promise<void>, afterCapture?: () => Promise<void>): Promise<void> {
             for (const theme of ['light', 'dark'] as const) {
@@ -346,8 +360,7 @@ test.describe('Course management TUM UI tables', { tag: '@slow' }, () => {
             const dashboardRoute = `/course-management/${course.id}/assessment-dashboard/${exercise.id}`;
             await login(tutor, dashboardRoute);
             await dismissPasskeyReminderIfPresent(page);
-            await expect(page.getByTestId('tutor-progress-branch').first()).toBeVisible();
-            await expectTutorGraphLayout();
+            await expectExerciseProgressLayout();
             await exerciseAssessment.clickHaveReadInstructionsButton();
             const startAssessment = page.getByTestId('start-new-assessment').first();
             await expect(startAssessment).toBeVisible();
@@ -355,19 +368,6 @@ test.describe('Course management TUM UI tables', { tag: '@slow' }, () => {
 
             await page.goto(`/course-management/${course.id}/assessment-dashboard`);
             await captureLayouts('course-assessment-graph', expectTutorGraphLayout);
-            await page.goto(dashboardRoute);
-
-            await captureLayouts('exercise-assessment-dashboard', async () => {
-                await expectTutorGraphLayout();
-                // The native submission table may scroll inside its explicit wrapper at narrow widths.
-                await expect(page.getByTestId('correction-round-0').getByRole('table')).toBeVisible();
-                await expectNoHorizontalOverflow(page, [], { name: 'exercise assessment dashboard' });
-                await expectNoHorizontalScrollAround(page.getByTestId('correction-round-0'), { name: 'submission panel' });
-                await startAssessment.scrollIntoViewIfNeeded();
-                await expectWithinViewport(startAssessment, ['left', 'right'], { name: 'start assessment action' });
-                await page.evaluate(() => window.scrollTo(0, 0));
-            });
-
             await test.step('keeps the trailing graph step reachable by user scrolling', async () => {
                 const viewport = page.viewportSize()!;
                 const graph = page.getByTestId('tutor-participation-graph');
@@ -392,6 +392,19 @@ test.describe('Course management TUM UI tables', { tag: '@slow' }, () => {
                     await page.emulateMedia({ reducedMotion: 'no-preference' });
                     await page.setViewportSize(viewport);
                 }
+            });
+
+            await page.goto(dashboardRoute);
+
+            await captureLayouts('exercise-assessment-dashboard', async () => {
+                await expectExerciseProgressLayout();
+                // The native submission table may scroll inside its explicit wrapper at narrow widths.
+                await expect(page.getByTestId('correction-round-0').getByRole('table')).toBeVisible();
+                await expectNoHorizontalOverflow(page, [], { name: 'exercise assessment dashboard' });
+                await expectNoHorizontalScrollAround(page.getByTestId('correction-round-0'), { name: 'submission panel' });
+                await startAssessment.scrollIntoViewIfNeeded();
+                await expectWithinViewport(startAssessment, ['left', 'right'], { name: 'start assessment action' });
+                await page.evaluate(() => window.scrollTo(0, 0));
             });
 
             await exerciseAssessment.clickStartNewAssessment();

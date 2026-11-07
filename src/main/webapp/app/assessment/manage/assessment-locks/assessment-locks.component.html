@@ -57,15 +57,7 @@
                                 </span>
                                 <span>
                                     @if (!submission.latestResult!.completionDate) {
-                                        <button
-                                            type="button"
-                                            (click)="cancelAssessment(submission)"
-                                            class="mb-1"
-                                            tumAetUiButton
-                                            severity="secondary"
-                                            variant="outlined"
-                                            size="small"
-                                        >
+                                        <button type="button" (click)="cancelAssessment(submission)" class="mb-1" tumAetUiButton severity="danger" size="small">
                                             <fa-icon [icon]="faBan" [fixedWidth]="true" />&nbsp;{{ 'artemisApp.assessment.dashboard.actions.cancel' | artemisTranslate }}
                                         </button>
                                     }

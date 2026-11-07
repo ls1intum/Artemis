@@ -1,0 +1,44 @@
+<div class="mb-4! flex flex-wrap items-baseline gap-2">
+    <span class="text-4xl font-bold leading-none text-color">{{ completed() }} / {{ total() }}</span>
+    <span class="text-base text-muted-color">
+        <span jhiTranslate="artemisApp.assessmentDashboard.assessmentsCompleted"></span>
+        ({{ assessedPercentage() }}%)
+    </span>
+</div>
+<progress
+    class="sr-only"
+    max="100"
+    [value]="assessedPercentage()"
+    [attr.aria-label]="
+        'artemisApp.assessmentDashboard.progressDescription'
+            | artemisTranslate
+                : {
+                      percentageAssessed: assessedPercentage(),
+                      numberAssessed: completed(),
+                      numberSubmissions: total(),
+                  }
+    "
+>
+    {{ assessedPercentage() }}%
+</progress>
+<div class="relative my-1 h-[calc(var(--tumaet-ui-spacing)*5)] overflow-hidden rounded-md bg-(--artemis-control-disabled-background)" aria-hidden="true">
+    <span class="absolute inset-y-0 left-0 bg-state-success text-(--tumaet-ui-state-success-contrast)" [style.width.%]="assessedPercentage()" aria-hidden="true"></span>
+    <span class="pointer-events-none absolute inset-y-0 bg-state-warning" [style.left.%]="assessedPercentage()" [style.width.%]="inProgressPercentage()" aria-hidden="true"></span>
+</div>
+<div class="flex flex-wrap gap-x-6! gap-y-4! text-sm text-muted-color">
+    <span class="inline-flex items-center gap-1.5">
+        <span class="h-3 w-3 rounded-sm bg-state-success text-(--tumaet-ui-state-success-contrast)"></span>
+        <span jhiTranslate="artemisApp.assessmentDashboard.assessed"></span>
+        {{ completed() }}
+    </span>
+    <span class="inline-flex items-center gap-1.5">
+        <span class="h-3 w-3 rounded-sm bg-state-warning"></span>
+        <span jhiTranslate="artemisApp.assessmentDashboard.inProgress"></span>
+        {{ inProgress() }}
+    </span>
+    <span class="inline-flex items-center gap-1.5">
+        <span class="h-3 w-3 rounded-sm bg-(--artemis-control-disabled-background)"></span>
+        <span jhiTranslate="artemisApp.assessmentDashboard.open"></span>
+        {{ open() }}
+    </span>
+</div>

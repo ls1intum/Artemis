@@ -1,11 +1,5 @@
-import {
-    TumAetUiButtonDirective,
-    TumAetUiDoughnutChartComponent,
-    TumAetUiDoughnutChartConfig,
-    TumAetUiMessageComponent,
-    TumAetUiTableDirective,
-    TumAetUiTooltipDirective,
-} from '@tumaet/ui-angular';
+import { AssessmentProgressComponent } from '../assessment-progress.component';
+import { TumAetUiButtonDirective, TumAetUiMessageComponent, TumAetUiPanelComponent, TumAetUiTableDirective, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 import { Component, DestroyRef, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { SafeHtml } from '@angular/platform-browser';
@@ -56,15 +50,10 @@ import { parseJson } from 'app/foundation/util/json.util';
 import { roundValueSpecifiedByCourseSettings } from 'app/foundation/util/utils';
 import { getLinkToSubmissionAssessment } from 'app/foundation/util/navigation.utils';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
-import { ChartSeriesEntry } from 'app/shared-ui/chart/chart-data.model';
-import { singleSeriesChart } from 'app/shared-ui/chart/tum-aet-ui-chart-adapters';
 import dayjs from 'dayjs/esm';
 import { faCheckCircle, faCircleInfo, faExclamationTriangle, faFlag, faFolderOpen, faListAlt, faQuestionCircle, faSort, faSpinner } from '@fortawesome/free-solid-svg-icons';
-import { GraphColors } from 'app/exercise/shared/entities/statistics.model';
 import { isManualResult } from 'app/exercise/result/result.utils';
-import { TutorParticipationGraphComponent } from 'app/exercise/dashboards/tutor-participation-graph/tutor-participation-graph.component';
 import { SecondCorrectionEnableButtonComponent } from './second-correction-button/second-correction-enable-button.component';
-import { SidePanelComponent } from 'app/shared-ui/side-panel/side-panel.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { CodeButtonComponent } from 'app/shared-ui/components/buttons/code-button/code-button.component';
@@ -99,12 +88,11 @@ export interface ExampleSubmissionQueryParams {
     styleUrls: ['./exercise-assessment-dashboard.component.scss'],
     providers: [CourseManagementService],
     imports: [
+        AssessmentProgressComponent,
         HeaderExercisePageWithDetailsComponent,
-        TutorParticipationGraphComponent,
         SecondCorrectionEnableButtonComponent,
-        TumAetUiDoughnutChartComponent,
+        TumAetUiPanelComponent,
         TumAetUiButtonDirective,
-        SidePanelComponent,
         TranslateDirective,
         RouterLink,
         FaIconComponent,
@@ -168,7 +156,6 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, OnDestroy {
     readonly numberOfTutorAssessments = signal(0);
     readonly numberOfSubmissions = signal(new DueDateStat());
     readonly totalNumberOfAssessments = signal(0);
-    readonly numberOfAutomaticAssistedAssessments = signal(new DueDateStat());
     readonly numberOfAssessmentsOfCorrectionRounds = signal<DueDateStat[]>([new DueDateStat()]);
     readonly correctionRoundIndices = computed(() => {
         const numberOfConfiguredRounds = this.isTestRun() ? 0 : (this.exam()?.numberOfCorrectionRoundsInExam ?? 0);
@@ -180,6 +167,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, OnDestroy {
     readonly feedbackRequestEnabled = signal(false);
     readonly tutorAssessmentPercentage = signal(0);
     readonly tutorParticipationStatus = signal<TutorParticipationStatus>(undefined!);
+    readonly assessmentInstructionsCollapsed = signal(true);
     // Indexed by correction round (0, 1) — readonly so any in-place mutation is a compile error and updates go through .update() with a new array.
     readonly assessedSubmissionsByRound = signal<readonly (readonly Submission[])[]>([]);
     readonly unassessedSubmissionByRound = signal<readonly (Submission | undefined)[]>([]);
@@ -238,19 +226,46 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, OnDestroy {
     readonly complaintsDashboardInfo = signal(new AssessmentDashboardInformationEntry(0, 0));
     readonly moreFeedbackRequestsDashboardInfo = signal(new AssessmentDashboardInformationEntry(0, 0));
     readonly ratingsDashboardInfo = signal(new AssessmentDashboardInformationEntry(0, 0));
-
-    // graph (rebuilt in setupGraph, which also runs on the async onLangChange — signals so the chart re-renders under zoneless)
-    private readonly chartEntries = signal<ChartSeriesEntry[]>([]);
-    // colors as CSS variable references, index-aligned with chartEntries; the SVG chart consumes them directly
-    private readonly rawChartColors = signal<string[]>([]);
-
-    readonly chartData = computed(() => singleSeriesChart(this.chartEntries(), this.rawChartColors()));
-    readonly chartConfig = computed<TumAetUiDoughnutChartConfig>(() => ({
-        arcWidth: 1,
-        legend: { position: 'bottom' },
-        tooltip: { label: (item) => `${((item.value * 100) / this.numberOfSubmissions().total).toFixed(2)}%` },
-    }));
-    readonly isAutomaticAssessedProgrammingExercise = signal(false);
+    readonly numberOfTutorAssessedSubmissions = computed(
+        () =>
+            new Set(
+                this.assessedSubmissionsByRound().flatMap((submissions, correctionRound) =>
+                    submissions
+                        .filter((submission) => submission.id !== undefined && getSubmissionResultByCorrectionRound(submission, correctionRound)?.completionDate)
+                        .map((submission) => submission.id),
+                ),
+            ).size,
+    );
+    readonly tutorSubmissionPercentage = computed(() =>
+        this.numberOfSubmissions().total > 0 ? Math.floor((100 * this.numberOfTutorAssessedSubmissions()) / this.numberOfSubmissions().total) : 100,
+    );
+    readonly showsComplaintProgress = computed(() => this.exercise()?.type === ExerciseType.PROGRAMMING && !!this.exercise().allowComplaintsForAutomaticAssessments);
+    readonly totalAssessmentSlots = computed(() => {
+        if (this.showsComplaintProgress()) {
+            return this.statsForDashboard().numberOfComplaints;
+        }
+        const correctionRounds = this.isExamMode() ? this.correctionRoundIndices().length : 1;
+        return this.numberOfSubmissions().total * correctionRounds;
+    });
+    readonly completedAssessments = computed(() => {
+        if (this.showsComplaintProgress()) {
+            return this.statsForDashboard().numberOfComplaints - this.statsForDashboard().numberOfOpenComplaints;
+        }
+        if (this.isExamMode()) {
+            return this.numberOfAssessmentsOfCorrectionRounds().reduce((total, round) => total + round.inTime, 0);
+        }
+        return this.totalNumberOfAssessments();
+    });
+    readonly inProgressAssessments = computed(() =>
+        this.showsComplaintProgress() ? 0 : Math.min(Math.max(0, this.totalAssessmentSlots() - this.completedAssessments()), this.statsForDashboard().totalNumberOfAssessmentLocks),
+    );
+    readonly openAssessments = computed(() => Math.max(0, this.totalAssessmentSlots() - this.completedAssessments() - this.inProgressAssessments()));
+    readonly assessedPercentage = computed(() =>
+        this.totalAssessmentSlots() > 0 ? Math.min(100, Math.floor((100 * this.completedAssessments()) / this.totalAssessmentSlots())) : 0,
+    );
+    readonly inProgressPercentage = computed(() =>
+        this.totalAssessmentSlots() > 0 ? Math.min(100 - this.assessedPercentage(), (100 * this.inProgressAssessments()) / this.totalAssessmentSlots()) : 0,
+    );
 
     /**
      * Bumped once the moment assessment becomes possible has passed, so that the reason below stops applying without the
@@ -324,56 +339,11 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, OnDestroy {
         // onLangChange never completes, so it has to be tied to the component lifetime explicitly
         this.translateService.onLangChange.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
             this.currentLanguage.set(this.translateService.getCurrentLang() ?? undefined);
-            this.setupGraph();
         });
     }
 
     ngOnDestroy(): void {
         clearTimeout(this.assessmentAvailabilityTimeout);
-    }
-
-    setupGraph() {
-        // If the programming exercise is assessed automatically but complaints are enabled, the term "unassessed submissions" might be misleading.
-        // In this case, we only show open and resolved complaints
-        if (
-            this.programmingExercise() &&
-            this.programmingExercise().assessmentType === AssessmentType.AUTOMATIC &&
-            this.programmingExercise().allowComplaintsForAutomaticAssessments
-        ) {
-            const numberOfComplaintsLabel = this.translateService.instant('artemisApp.exerciseAssessmentDashboard.numberOfOpenComplaints');
-            const numberOfResolvedComplaintsLabel = this.translateService.instant('artemisApp.exerciseAssessmentDashboard.numberOfResolvedComplaints');
-            this.isAutomaticAssessedProgrammingExercise.set(true);
-            this.rawChartColors.set([GraphColors.YELLOW, GraphColors.GREEN]);
-            this.chartEntries.set([
-                {
-                    name: numberOfComplaintsLabel,
-                    value: this.statsForDashboard().numberOfOpenComplaints,
-                },
-                {
-                    name: numberOfResolvedComplaintsLabel,
-                    value: this.statsForDashboard().numberOfComplaints - this.statsForDashboard().numberOfOpenComplaints,
-                },
-            ]);
-        } else {
-            const numberOfUnassessedSubmissionLabel = this.translateService.instant('artemisApp.exerciseAssessmentDashboard.numberOfUnassessedSubmissions');
-            const numberOfAutomaticAssistedSubmissionsLabel = this.translateService.instant('artemisApp.exerciseAssessmentDashboard.numberOfAutomaticAssistedSubmissions');
-            const numberOfManualAssessedSubmissionsLabel = this.translateService.instant('artemisApp.exerciseAssessmentDashboard.numberOfManualAssessedSubmissions');
-            this.rawChartColors.set([GraphColors.RED, GraphColors.BLUE, GraphColors.YELLOW]);
-            this.chartEntries.set([
-                {
-                    name: numberOfUnassessedSubmissionLabel,
-                    value: this.numberOfSubmissions().total - this.totalNumberOfAssessments(),
-                },
-                {
-                    name: numberOfManualAssessedSubmissionsLabel,
-                    value: this.totalNumberOfAssessments() - this.numberOfAutomaticAssistedAssessments().total,
-                },
-                {
-                    name: numberOfAutomaticAssistedSubmissionsLabel,
-                    value: this.numberOfAutomaticAssistedAssessments().total,
-                },
-            ]);
-        }
     }
 
     setupLinks() {
@@ -491,7 +461,6 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, OnDestroy {
                     this.numberOfSubmissions.set(this.statsForDashboard().numberOfSubmissions);
                     this.totalNumberOfAssessments.set(this.statsForDashboard().totalNumberOfAssessments);
                     this.numberOfAssessmentsOfCorrectionRounds.set(this.statsForDashboard().numberOfAssessmentsOfCorrectionRounds);
-                    this.numberOfAutomaticAssistedAssessments.set(this.statsForDashboard().numberOfAutomaticAssistedAssessments);
                     this.numberOfLockedAssessmentByOtherTutorsOfCorrectionRound.set(this.statsForDashboard().numberOfLockedAssessmentByOtherTutorsOfCorrectionRound);
 
                     const tutorLeaderboardEntry = this.statsForDashboard().tutorLeaderboardEntries?.find((entry) => entry.userId === this.tutor()!.id);
@@ -544,8 +513,6 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, OnDestroy {
                     this.complaintsEnabled.set(this.statsForDashboard().complaintsEnabled);
                     this.feedbackRequestEnabled.set(this.statsForDashboard().feedbackRequestEnabled);
                     this.calculateAssessmentProgressInformation();
-
-                    this.setupGraph();
                 },
                 error: (response: string) => this.onError(response),
             });
@@ -587,22 +554,6 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, OnDestroy {
                 this.getSubmissionWithoutAssessmentForAllCorrectionRounds();
             }
         }, millisecondsUntilNextChange);
-    }
-
-    get yourStatusTitle(): string {
-        switch (this.tutorParticipationStatus()) {
-            case TutorParticipationStatus.TRAINED:
-                // If we are in 'TRAINED' state, but never really "trained" on example submissions, display the
-                // 'REVIEWED_INSTRUCTIONS' state text instead.
-                const exampleSubmissions = this.exercise().exampleSubmissions;
-                if (!exampleSubmissions || exampleSubmissions.length === 0) {
-                    return TutorParticipationStatus.REVIEWED_INSTRUCTIONS.toString();
-                }
-
-                return TutorParticipationStatus.TRAINED.toString();
-            default:
-                return this.tutorParticipationStatus().toString();
-        }
     }
 
     language(submission: Submission): string {
@@ -799,6 +750,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, OnDestroy {
                     const dto = res.body!;
                     this.tutorParticipation.set(dto);
                     this.tutorParticipationStatus.set(dto.status);
+                    this.assessmentInstructionsCollapsed.set(false);
                     this.alertService.success('artemisApp.exerciseAssessmentDashboard.participation.instructionsReviewed');
                 },
                 error: this.onError,

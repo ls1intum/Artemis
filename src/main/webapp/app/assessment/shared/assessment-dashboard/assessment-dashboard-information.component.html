@@ -1,54 +1,14 @@
 <div class="mt-2 grid grid-cols-1 items-stretch gap-6! lg:grid-cols-[1.1fr_1fr]">
     <tumaet-ui-panel class="h-full min-w-0">
         <span tumAetUiPanelHeader class="text-base font-semibold text-color" jhiTranslate="artemisApp.assessmentDashboard.progressTitle"></span>
-        <div class="mb-4! flex flex-wrap items-baseline gap-2">
-            <span class="text-4xl font-bold leading-none text-color">{{ assessedSubmissions() }} / {{ totalProgressItems() }}</span>
-            <span class="text-base text-muted-color">
-                <span jhiTranslate="artemisApp.assessmentDashboard.assessmentsCompleted"></span>
-                ({{ assessedPercentage() }}%)
-            </span>
-        </div>
-        <div
-            class="relative my-1 h-[calc(var(--tumaet-ui-spacing)*5)] overflow-hidden rounded-md bg-(--artemis-control-disabled-background)"
-            role="progressbar"
-            aria-valuemin="0"
-            aria-valuemax="100"
-            [attr.aria-valuenow]="assessedPercentage()"
-            [attr.aria-label]="
-                'artemisApp.assessmentDashboard.progressDescription'
-                    | artemisTranslate
-                        : {
-                              percentageAssessed: assessedPercentage(),
-                              numberAssessed: assessedSubmissions(),
-                              numberSubmissions: totalProgressItems(),
-                          }
-            "
-        >
-            <span class="absolute inset-y-0 left-0 bg-state-success text-(--tumaet-ui-state-success-contrast)" [style.width.%]="assessedPercentage()" aria-hidden="true"></span>
-            <span
-                class="pointer-events-none absolute inset-y-0 bg-state-warning"
-                [style.left.%]="assessedPercentage()"
-                [style.width.%]="inProgressPercentage()"
-                aria-hidden="true"
-            ></span>
-        </div>
-        <div class="flex flex-wrap gap-x-6! gap-y-4! text-sm text-muted-color">
-            <span class="inline-flex items-center gap-1.5">
-                <span class="h-3 w-3 rounded-sm bg-state-success text-(--tumaet-ui-state-success-contrast)"></span>
-                <span jhiTranslate="artemisApp.assessmentDashboard.assessed"></span>
-                {{ assessedSubmissions() }}
-            </span>
-            <span class="inline-flex items-center gap-1.5">
-                <span class="h-3 w-3 rounded-sm bg-state-warning"></span>
-                <span jhiTranslate="artemisApp.assessmentDashboard.inProgress"></span>
-                {{ inProgressSubmissions() }}
-            </span>
-            <span class="inline-flex items-center gap-1.5">
-                <span class="h-3 w-3 rounded-sm bg-(--artemis-control-disabled-background)"></span>
-                <span jhiTranslate="artemisApp.assessmentDashboard.open"></span>
-                {{ openSubmissions() }}
-            </span>
-        </div>
+        <jhi-assessment-progress
+            [completed]="assessedSubmissions()"
+            [total]="totalProgressItems()"
+            [assessedPercentage]="assessedPercentage()"
+            [inProgressPercentage]="inProgressPercentage()"
+            [inProgress]="inProgressSubmissions()"
+            [open]="openSubmissions()"
+        />
     </tumaet-ui-panel>
 
     <tumaet-ui-panel class="h-full min-w-0 overflow-hidden [&_.tumaet-ui-panel-header]:!hidden">
