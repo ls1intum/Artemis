@@ -24,6 +24,6 @@ python3 -m pip install -r requirements.txt
 python3 Tests.py
 ```
 
-Use the test-controlled Makefile in `assignment/` as the build plan does, retaining the assignment's source and include settings. Keep the relative path to `testUtils/c/shadow_exec.c` intact; it provides the execution wrapper used by the tests.
+Before running the tests, use the test-controlled Makefile in `assignment/`, retaining the assignment's source and include settings. As the build plan does, append `../tests/testUtils/c/shadow_exec.c` to `SOURCE` in `assignment/Makefile`. This links the execution wrapper used by the tests into the test executables.
 
-To add a test, implement a class under `tests/` and register it in `Tests.py` with a unique name and any prerequisites. Keep test names consistent with the exercise problem statement and grading configuration. Check the generated XML and verify both the solution and template builds before publishing the exercise.
+To add a test, implement a class under `tests/` and register it in `Tests.py` with a unique name and any prerequisites. Register prerequisites before the tests that depend on them, because tests run in registration order and a dependent test whose prerequisite has not run yet is skipped. Keep test names consistent with the exercise problem statement and grading configuration. Check the generated XML and verify both the solution and template builds before publishing the exercise.
