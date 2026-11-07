@@ -53,9 +53,9 @@
     </div>
 
     <ng-template #footer>
-        <p-button severity="secondary" [outlined]="true" size="small" (onClick)="onBack()">
+        <button type="button" tumAetUiButton severity="secondary" variant="outlined" size="small" (click)="onBack()">
             <fa-icon [icon]="faArrowLeft" class="me-1" /><span jhiTranslate="entity.action.back"></span>
-        </p-button>
-        <button type="button" class="btn btn-success" (click)="exportQuiz()" jhiTranslate="artemisApp.quizExercise.export.export"></button>
+        </button>
+        <button type="button" tumAetUiButton size="small" severity="secondary" (click)="exportQuiz()" jhiTranslate="artemisApp.quizExercise.export.export"></button>
     </ng-template>
 </tumaet-ui-dialog>

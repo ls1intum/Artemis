@@ -160,6 +160,13 @@ overrides the package's font family, brand, application surfaces, and status rol
 configuration owns application utilities. Set `data-theme="dark"` on the document element for dark
 mode; the package theme also sets the matching CSS `color-scheme` for browser controls.
 
+Button-only colors are centralized in the light/dark **Button palette** blocks of
+`packages/tum-aet-ui/themes.css`. The `--tumaet-ui-button-<severity>-{background,contrast,foreground}`
+properties let a host adjust buttons independently of status feedback. Existing Bootstrap and
+PrimeNG button adapters consume the same palette while migration continues; new controls use TUM
+AET UI directly. See [changing the global button palette](/developer/guidelines/client-theming#change-the-global-button-palette)
+for the property contract, overrides, and verification commands.
+
 Treat package token names and responsive thresholds as public styling contracts. Add a token only when a host needs a supported customization
 axis; do not expose Tailwind's full primitive theme.
 
