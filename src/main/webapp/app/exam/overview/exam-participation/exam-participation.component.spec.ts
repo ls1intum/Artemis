@@ -646,6 +646,115 @@ describe('ExamParticipationComponent', () => {
         expect(courseExerciseServiceStub).toHaveBeenCalledOnce();
     });
 
+    describe('manual participation recovery', () => {
+        function prepareExercise(exercise: TextExercise | ProgrammingExercise) {
+            fixture.detectChanges();
+            exercise.id = 42;
+            comp.exam.set({ id: 2, course: new Course(), startDate: dayjs().subtract(1, 'hours') });
+            comp.studentExam.set({ id: 3, exercises: [exercise], exam: comp.exam(), numberOfExamSessions: 0 });
+            comp.activeExamPage.set({ isOverviewPage: false, exercise });
+            comp.pageComponentVisited.set([false]);
+            comp.examStartConfirmed.set(true);
+            comp.individualStudentEndDate.set(dayjs().add(1, 'hours'));
+            comp.updateSidebarData();
+            vi.spyOn(comp, 'isVisible').mockReturnValue(true);
+            vi.spyOn(comp, 'isActive').mockReturnValue(true);
+            vi.spyOn(comp, 'isOver').mockReturnValue(false);
+            vi.spyOn(comp, 'triggerSave').mockImplementation(() => {});
+        }
+
+        function clickRetry() {
+            fixture.detectChanges();
+            const button = fixture.debugElement.query(By.css('[data-testid="retry-exercise-participation"]'));
+            expect(button, 'the failed start exposes the real Retry control').not.toBeNull();
+            button.nativeElement.click();
+            fixture.detectChanges();
+        }
+
+        it('renders the text exercise after the real Retry control succeeds', () => {
+            const exercise = new TextExercise(new Course(), undefined);
+            prepareExercise(exercise);
+            const participation = new StudentParticipation();
+            participation.id = 321;
+            participation.initializationState = InitializationState.INITIALIZED;
+            participation.submissions = [new TextSubmission()];
+            const start = vi
+                .spyOn(courseExerciseService, 'startExercise')
+                .mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 409 })))
+                .mockReturnValueOnce(of(participation));
+            comp.onPageChange({ overViewChange: false, exercise, forceSave: false });
+            expect(comp.pageComponentVisited()).toEqual([false]);
+
+            clickRetry();
+
+            expect(start).toHaveBeenCalledTimes(2);
+            expect(comp.generateParticipationStatus.value).toBe('success');
+            expect(exercise.studentParticipations).toEqual([participation]);
+            expect(comp.pageComponentVisited()).toEqual([true]);
+            expect(fixture.debugElement.query(By.css('#exercise-42 jhi-text-editor-exam'))).not.toBeNull();
+        });
+
+        it('initializes the programming submission subscription and clean placeholder once after Retry', () => {
+            const exercise = new ProgrammingExercise(new Course(), undefined);
+            prepareExercise(exercise);
+            const participation = new StudentParticipation();
+            participation.id = 321;
+            participation.initializationState = InitializationState.INITIALIZED;
+            const pendingSubmissions = new Subject<ProgrammingSubmissionStateObj>();
+            const pending = vi.spyOn(programmingSubmissionService, 'getLatestPendingSubmissionByParticipationId').mockReturnValue(pendingSubmissions);
+            const delayedStart = new Subject<StudentParticipation>();
+            const start = vi
+                .spyOn(courseExerciseService, 'startExercise')
+                .mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 409 })))
+                .mockReturnValueOnce(delayedStart);
+            comp.onPageChange({ overViewChange: false, exercise, forceSave: false });
+
+            clickRetry();
+            comp.retryParticipationForExercise();
+            expect(start, 'a second Retry while the request is pending does not start it again').toHaveBeenCalledTimes(2);
+            delayedStart.next(participation);
+            delayedStart.complete();
+            fixture.detectChanges();
+
+            expect(pending.mock.calls.filter((call) => call[4] === true)).toEqual([[321, 42, true, false, true]]);
+            expect(participation.submissions).toHaveLength(1);
+            expect(participation.submissions![0]).toMatchObject({ isSynced: true, submitted: false });
+            expect(comp.pageComponentVisited()).toEqual([true]);
+            expect(fixture.debugElement.query(By.css('#exercise-42 jhi-programming-submission-exam'))).not.toBeNull();
+        });
+
+        it('cancels a pending manual Retry when another exercise is selected', () => {
+            const exercise = new TextExercise(new Course(), undefined);
+            prepareExercise(exercise);
+            const otherExercise = new TextExercise(new Course(), undefined);
+            otherExercise.id = 43;
+            const otherParticipation = new StudentParticipation();
+            otherParticipation.initializationState = InitializationState.INITIALIZED;
+            otherParticipation.submissions = [new TextSubmission()];
+            otherExercise.studentParticipations = [otherParticipation];
+            comp.studentExam().exercises!.push(otherExercise);
+            comp.pageComponentVisited.set([false, false]);
+            const delayed = new Subject<StudentParticipation>();
+            const start = vi
+                .spyOn(courseExerciseService, 'startExercise')
+                .mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 409 })))
+                .mockReturnValueOnce(delayed);
+            comp.onPageChange({ overViewChange: false, exercise, forceSave: false });
+            clickRetry();
+            expect(comp.generateParticipationStatus.value).toBe('generating');
+
+            comp.onPageChange({ overViewChange: false, exercise: otherExercise, forceSave: false });
+            delayed.next(new StudentParticipation());
+            delayed.complete();
+
+            expect(start).toHaveBeenCalledTimes(2);
+            expect(exercise.studentParticipations).toBeUndefined();
+            expect(comp.activeExamPage().exercise).toBe(otherExercise);
+            expect(comp.pageComponentVisited()).toEqual([false, true]);
+            expect(comp.generateParticipationStatus.value).toBe('success');
+        });
+    });
+
     describe('websocket working time subscription', () => {
         const startDate = dayjs('2022-02-21T23:00:00+01:00');
 

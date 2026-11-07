@@ -1009,6 +1009,8 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
      * @param exerciseChange
      */
     onPageChange(exerciseChange: { overViewChange: boolean; exercise?: Exercise; forceSave: boolean }): void {
+        this.participationStartCancelled.next();
+        this.generateParticipationStatus.next('success');
         const activeComponent = this.activePageComponent;
         if (activeComponent) {
             activeComponent.onDeactivate();
@@ -1061,6 +1063,14 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         this.activeExamPage().isOverviewPage = true;
         this.activeExamPage().exercise = undefined;
         this.exerciseIndex.set(-1);
+    }
+
+    /** Retries the active exercise with the same activation and programming submission setup as its initial start. */
+    retryParticipationForExercise(): void {
+        const exercise = this.activeExamPage().exercise;
+        if (this.generateParticipationStatus.value === 'failed' && exercise) {
+            this.initializeExercise(exercise);
+        }
     }
 
     /**
