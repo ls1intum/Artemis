@@ -45,6 +45,7 @@ describe('GlobalNotificationsSettingsComponent', () => {
         fixture = TestBed.createComponent(GlobalNotificationsSettingsComponent);
         component = fixture.componentInstance;
         alertService = TestBed.inject(AlertService);
+        vi.spyOn(alertService, 'success');
     });
 
     afterEach(() => {

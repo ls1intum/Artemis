@@ -235,7 +235,8 @@ class SystemNotificationIntegrationTest extends AbstractSpringIntegrationIndepen
     @Test
     @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
     void shouldAllowAdminPagingWithRepeatedSortAndDetail() throws Exception {
-        request.performMvcRequest(get("/api/notification/admin/system-notifications").param("page", "0").param("size", "1").param("sort", "notificationDate,desc", "id,asc"))
+        request.performMvcRequest(
+                get("/api/notification/admin/system-notifications").queryParam("page", "0").queryParam("size", "1").queryParam("sort", "notificationDate,desc", "id,asc"))
                 .andExpect(status().isOk()).andExpect(jsonPath("$.length()").value(1)).andExpect(jsonPath("$[0].id").value(systemNotificationFuture.getId()))
                 .andExpect(header().string("X-Total-Count", "3"))
                 .andExpect(header().string("Link", org.hamcrest.Matchers.allOf(org.hamcrest.Matchers.containsString("page=1"), org.hamcrest.Matchers.containsString("rel=\"next\""),

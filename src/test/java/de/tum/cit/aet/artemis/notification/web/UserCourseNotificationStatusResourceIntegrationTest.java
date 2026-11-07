@@ -214,8 +214,7 @@ class UserCourseNotificationStatusResourceIntegrationTest extends AbstractSpring
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldApplySelectiveUpdatesOnlyToCurrentUsersRows() throws Exception {
-        userUtilService.addUsers(TEST_PREFIX + "other", 1, 0, 0, 0);
-        User other = userUtilService.getUserByLogin(TEST_PREFIX + "otherstudent1");
+        User other = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
         var notification = courseNotificationRepository.save(new CourseNotification(course, (short) 1, ZonedDateTime.now(), ZonedDateTime.now()));
         var own = userCourseNotificationStatusRepository.save(new UserCourseNotificationStatus(notification, user, UserCourseNotificationStatusType.UNSEEN));
         var others = userCourseNotificationStatusRepository.save(new UserCourseNotificationStatus(notification, other, UserCourseNotificationStatusType.UNSEEN));
@@ -232,8 +231,7 @@ class UserCourseNotificationStatusResourceIntegrationTest extends AbstractSpring
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldArchiveOnlyCurrentUsersRowsInRequestedCourseWithoutRequestBody() throws Exception {
-        userUtilService.addUsers(TEST_PREFIX + "other", 1, 0, 0, 0);
-        User other = userUtilService.getUserByLogin(TEST_PREFIX + "otherstudent1");
+        User other = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
         var otherCourse = courseUtilService.createEnrolledCourse(TEST_PREFIX);
         var notification = courseNotificationRepository.save(new CourseNotification(course, (short) 1, ZonedDateTime.now(), ZonedDateTime.now()));
         var otherNotification = courseNotificationRepository.save(new CourseNotification(otherCourse, (short) 1, ZonedDateTime.now(), ZonedDateTime.now()));

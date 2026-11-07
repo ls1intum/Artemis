@@ -48,7 +48,9 @@ describe('SystemNotificationManagementResolve', () => {
     });
 
     it('constructs a new UI notification when no id is provided', () => {
-        const result = resolver.resolve(new ActivatedRouteSnapshot());
+        const route = new ActivatedRouteSnapshot();
+        route.params = {};
+        const result = resolver.resolve(route);
         expect(result).toBeInstanceOf(SystemNotification);
         expect(find).not.toHaveBeenCalled();
     });
