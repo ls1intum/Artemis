@@ -1,28 +1,32 @@
-<select
-    class="[&_option]:text-text [&_optgroup]:text-text rounded-md border border-border bg-(--tumaet-ui-control-background) px-3 py-2 text-sm"
-    [ngModel]="activeFilter()"
-    (ngModelChange)="filterChange.emit($event ?? allValue())"
-    [attr.aria-label]="filterLabelKey() | artemisTranslate"
-    [class.text-state-success]="isFiltered()"
->
-    <option [ngValue]="allValue()">{{ filterLabelKey() | artemisTranslate }}</option>
-    @if (groupedFilters(); as groups) {
-        @for (group of groups; track $index) {
-            @if (group.labelKey) {
-                <optgroup [label]="group.labelKey | artemisTranslate">
+<span class="relative inline-block">
+    <select
+        class="[&_option]:text-text [&_optgroup]:text-text appearance-none rounded-md border border-border bg-(--tumaet-ui-control-background) py-2 ps-3 pe-9 text-sm"
+        [ngModel]="activeFilter()"
+        (ngModelChange)="filterChange.emit($event ?? allValue())"
+        [attr.aria-label]="filterLabelKey() | artemisTranslate"
+        [class.text-state-success]="isFiltered()"
+    >
+        <option [ngValue]="allValue()">{{ filterLabelKey() | artemisTranslate }}</option>
+        @if (groupedFilters(); as groups) {
+            @for (group of groups; track $index) {
+                @if (group.labelKey) {
+                    <optgroup [label]="group.labelKey | artemisTranslate">
+                        @for (filter of group.items; track filter) {
+                            <option [ngValue]="filter">{{ translationPrefix() + filter | artemisTranslate }}</option>
+                        }
+                    </optgroup>
+                } @else {
                     @for (filter of group.items; track filter) {
                         <option [ngValue]="filter">{{ translationPrefix() + filter | artemisTranslate }}</option>
                     }
-                </optgroup>
-            } @else {
-                @for (filter of group.items; track filter) {
-                    <option [ngValue]="filter">{{ translationPrefix() + filter | artemisTranslate }}</option>
                 }
             }
+        } @else {
+            @for (filter of filters(); track filter) {
+                <option [ngValue]="filter">{{ translationPrefix() + filter | artemisTranslate }}</option>
+            }
         }
-    } @else {
-        @for (filter of filters(); track filter) {
-            <option [ngValue]="filter">{{ translationPrefix() + filter | artemisTranslate }}</option>
-        }
-    }
-</select>
+    </select>
+    <!-- The native chevron sits high and tight against the edge, so it is drawn here, centered on the select. -->
+    <fa-icon [icon]="faChevronDown" class="pointer-events-none absolute end-3 top-1/2 -translate-y-1/2 text-xs text-text-secondary" />
+</span>
