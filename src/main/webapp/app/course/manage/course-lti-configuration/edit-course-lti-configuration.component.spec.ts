@@ -39,7 +39,7 @@ describe('Edit Course LTI Configuration Component', () => {
         id: 1,
         userPrefix: 'prefix',
         requireExistingUser: false,
-    } as OnlineCourseConfiguration;
+    } satisfies OnlineCourseConfiguration;
     const course = {
         id: 123,
         title: 'Course Title',
@@ -111,9 +111,7 @@ describe('Edit Course LTI Configuration Component', () => {
     it('should save upon form submission and navigate', () => {
         fixture.detectChanges();
 
-        const changedConfiguration = {
-            ...onlineCourseConfiguration,
-        } as OnlineCourseConfiguration;
+        const changedConfiguration = { ...onlineCourseConfiguration };
 
         comp.onlineCourseConfigurationForm = new FormGroup({
             id: new FormControl(changedConfiguration.id),
@@ -121,12 +119,7 @@ describe('Edit Course LTI Configuration Component', () => {
             requireExistingUser: new FormControl(changedConfiguration.requireExistingUser),
         });
 
-        const updateResponse: HttpResponse<OnlineCourseConfiguration> = new HttpResponse({
-            body: changedConfiguration,
-            status: 200,
-        });
-
-        const updatedStub = vi.spyOn(courseService, 'updateOnlineCourseConfiguration').mockReturnValue(of(updateResponse));
+        const updatedStub = vi.spyOn(courseService, 'updateOnlineCourseConfiguration').mockReturnValue(of(changedConfiguration));
         const navigateSpy = vi.spyOn(router, 'navigate');
 
         expect(comp.isSaving()).toBe(false);
