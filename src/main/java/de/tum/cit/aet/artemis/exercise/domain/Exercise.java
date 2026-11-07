@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.exercise.domain;
 
+import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.Collection;
 import java.util.HashSet;
@@ -90,6 +91,10 @@ import de.tum.cit.aet.artemis.text.domain.TextExercise;
 // @formatter:on
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public abstract class Exercise extends BaseExercise implements LearningObject {
+
+    /** Creation is known for new content; older undated content deliberately stays unknown. */
+    @Column(name = "created_date")
+    private ZonedDateTime createdDate;
 
     @Column(name = "allow_complaints_for_automatic_assessments")
     private boolean allowComplaintsForAutomaticAssessments;
@@ -376,6 +381,9 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
      */
     @PrePersist
     private void dropVariantGroupOfNewExercise() {
+        if (createdDate == null) {
+            createdDate = ZonedDateTime.now(ZoneOffset.UTC);
+        }
         exerciseVariantGroup = null;
     }
 
@@ -853,46 +861,9 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
     public Set<GradingCriterion> copyGradingCriteria(Map<Long, GradingInstruction> gradingInstructionCopyTracker) {
         Set<GradingCriterion> newGradingCriteria = new LinkedHashSet<>();
         for (GradingCriterion originalGradingCriterion : getGradingCriteria()) {
-            GradingCriterion newGradingCriterion = new GradingCriterion();
-            newGradingCriterion.setExercise(this);
-            newGradingCriterion.setTitle(originalGradingCriterion.getTitle());
-            newGradingCriterion.setSortOrder(originalGradingCriterion.getSortOrder());
-            newGradingCriterion.setStructuredGradingInstructions(copyGradingInstruction(originalGradingCriterion, newGradingCriterion, gradingInstructionCopyTracker));
-            newGradingCriteria.add(newGradingCriterion);
+            newGradingCriteria.add(originalGradingCriterion.copyForExercise(this, gradingInstructionCopyTracker));
         }
         return newGradingCriteria;
-    }
-
-    /**
-     * Helper method which does a hard copy of the Grading Instructions
-     * Also fills {@code gradingInstructionCopyTracker}.
-     *
-     * @param originalGradingCriterion      The original grading criterion which contains the grading instructions
-     * @param newGradingCriterion           The cloned grading criterion in which we insert the grading instructions
-     * @param gradingInstructionCopyTracker The mapping from original GradingInstruction Ids to new GradingInstruction instances.
-     * @return A clone of the grading instruction list of the grading criterion
-     */
-    private Set<GradingInstruction> copyGradingInstruction(GradingCriterion originalGradingCriterion, GradingCriterion newGradingCriterion,
-            Map<Long, GradingInstruction> gradingInstructionCopyTracker) {
-        Set<GradingInstruction> newGradingInstructions = new LinkedHashSet<>();
-        for (GradingInstruction originalGradingInstruction : originalGradingCriterion.getStructuredGradingInstructions()) {
-            final var newGradingInstruction = copyGradingInstruction(newGradingCriterion, originalGradingInstruction);
-            newGradingInstructions.add(newGradingInstruction);
-            gradingInstructionCopyTracker.put(originalGradingInstruction.getId(), newGradingInstruction);
-        }
-        return newGradingInstructions;
-    }
-
-    private static GradingInstruction copyGradingInstruction(GradingCriterion newGradingCriterion, GradingInstruction originalGradingInstruction) {
-        GradingInstruction newGradingInstruction = new GradingInstruction();
-        newGradingInstruction.setCredits(originalGradingInstruction.getCredits());
-        newGradingInstruction.setFeedback(originalGradingInstruction.getFeedback());
-        newGradingInstruction.setGradingScale(originalGradingInstruction.getGradingScale());
-        newGradingInstruction.setInstructionDescription(originalGradingInstruction.getInstructionDescription());
-        newGradingInstruction.setUsageCount(originalGradingInstruction.getUsageCount());
-        newGradingInstruction.setSortOrder(originalGradingInstruction.getSortOrder());
-        newGradingInstruction.setGradingCriterion(newGradingCriterion);
-        return newGradingInstruction;
     }
 
     /**
@@ -981,4 +952,14 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
         }
         return managedCriteria;
     }
+
+    @JsonIgnore
+    public ZonedDateTime getCreatedDate() {
+        return createdDate;
+    }
+
+    public void setCreatedDate(ZonedDateTime createdDate) {
+        this.createdDate = createdDate;
+    }
+
 }

@@ -35,7 +35,7 @@ import de.tum.cit.aet.artemis.assessment.test_repository.ResultTestRepository;
 import de.tum.cit.aet.artemis.atlas.competency.util.CompetencyUtilService;
 import de.tum.cit.aet.artemis.communication.domain.Faq;
 import de.tum.cit.aet.artemis.communication.domain.FaqState;
-import de.tum.cit.aet.artemis.communication.repository.FaqRepository;
+import de.tum.cit.aet.artemis.communication.test_repository.FaqTestRepository;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.dto.CourseAvailableTabsDTO;
 import de.tum.cit.aet.artemis.course.dto.CourseExercisesForOverviewDTO;
@@ -176,7 +176,7 @@ class CourseOverviewLoadProfileTest extends AbstractSpringIntegrationIndependent
     private ProgrammingExerciseUtilService programmingExerciseUtilService;
 
     @Autowired
-    private FaqRepository faqRepository;
+    private FaqTestRepository faqRepository;
 
     @Autowired
     private de.tum.cit.aet.artemis.exercise.repository.ExerciseTestRepository exerciseRepository;

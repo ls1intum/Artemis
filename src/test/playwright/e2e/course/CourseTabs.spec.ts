@@ -21,7 +21,11 @@ import multipleChoiceQuizTemplate from '../../fixtures/exercise/quiz/multiple_ch
 function recordRequests(page: Page, pattern: RegExp): string[] {
     const seen: string[] = [];
     page.on('request', (request) => {
-        if (pattern.test(request.url())) {
+        // The shared goto fixture can reload a cold app before returning. Count the
+        // final document's loads; SPA navigation and duplicate calls still accumulate.
+        if (request.isNavigationRequest() && request.frame() === page.mainFrame()) {
+            seen.length = 0;
+        } else if (pattern.test(request.url())) {
             seen.push(request.url());
         }
     });
@@ -81,6 +85,23 @@ async function expectLoadsOnceAndRefreshesOnReselect(page: Page, courseId: numbe
 function sidebarCard(page: Page, title: string) {
     return page.getByTestId('sidebar-card-title').filter({ hasText: title });
 }
+
+test('request counting retains duplicate calls within a document and resets after a full reload', async ({ page }) => {
+    await page.route('**/__request-counter-page', (route) => route.fulfill({ contentType: 'text/html', body: '<main id="account-menu">Request counter</main>' }));
+    await page.route('**/__request-counter-api', (route) => route.fulfill({ contentType: 'application/json', body: '{}' }));
+    const requests = recordRequests(page, /__request-counter-api$/);
+    await page.goto('/__request-counter-page');
+    await page.evaluate(async () => {
+        await fetch('/__request-counter-api');
+        await fetch('/__request-counter-api');
+    });
+    expect(requests).toHaveLength(2);
+    await page.reload();
+    await page.evaluate(async () => {
+        await fetch('/__request-counter-api');
+    });
+    expect(requests).toHaveLength(1);
+});
 
 test.describe('Course overview tabs', { tag: '@fast' }, () => {
     // Count the tab's requests from one navigation; an automatic fixture reload would add a cancelled request.

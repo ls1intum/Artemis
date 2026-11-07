@@ -7,14 +7,20 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_DEMO;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_SCHEDULING;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_TEST_INDEPENDENT;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.parallel.ResourceLock;
+import org.mockito.Mockito;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.testcontainers.weaviate.WeaviateContainer;
 
+import de.tum.cit.aet.artemis.course.config.CourseHomeAiProperties;
+import de.tum.cit.aet.artemis.course.service.home.CourseHomeAiClient;
 import de.tum.cit.aet.artemis.shared.WeaviateTestConfiguration;
 import de.tum.cit.aet.artemis.shared.WeaviateTestContainerFactory;
 
@@ -32,6 +38,17 @@ import de.tum.cit.aet.artemis.shared.WeaviateTestContainerFactory;
         // Property moved here to avoid creating a separate Spring context in AutomaticBuildJobCleanupServiceIntegrationTest
         "artemis.continuous-integration.build-job.retention-period=30" })
 public abstract class AbstractSpringIntegrationIndependentTest extends AbstractSpringIntegrationIndependentTestBase {
+
+    @MockitoBean
+    protected CourseHomeAiClient courseHomeAiClient;
+
+    @MockitoSpyBean
+    protected CourseHomeAiProperties courseHomeAiProperties;
+
+    @AfterEach
+    void resetCourseHomeAiMocks() {
+        Mockito.reset(courseHomeAiClient, courseHomeAiProperties);
+    }
 
     protected static final WeaviateContainer weaviateContainer;
 

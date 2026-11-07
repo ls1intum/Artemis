@@ -750,6 +750,7 @@ export default tseslint.config(
             'src/main/webapp/app/exam/**/*.html',
             'src/main/webapp/app/course/manage/user-management-dropdown/**/*.html',
             'src/main/webapp/app/course/manage/update/**/*.html',
+            'src/main/webapp/app/course/overview/course-home/**/*.html',
             'src/main/webapp/app/account/**/*.html',
             'src/main/webapp/app/lecture/manage/lecture-update/**/*.html',
             'src/main/webapp/app/lecture/manage/lecture-period/**/*.html',
@@ -815,6 +816,7 @@ export default tseslint.config(
         // See client-development.mdx (### Styling).
         files: [
             'src/main/webapp/app/course/overview/course-statistics/**/*.html',
+            'src/main/webapp/app/course/overview/course-home/**/*.html',
             'src/main/webapp/app/exam/overview/**/*.html',
             'src/main/webapp/app/exam/shared/**/*.html',
             'src/main/webapp/app/assessment/overview/**/*.html',

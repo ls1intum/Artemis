@@ -11,6 +11,7 @@ import {
     faComments,
     faDumbbell,
     faFileAlt,
+    faHouse,
     faList,
     faNetworkWired,
     faPersonChalkboard,
@@ -45,6 +46,10 @@ export class CourseSidebarItemService {
             this.getExercisesItem(courseId),
             this.getStatisticsItem(courseId),
         ];
+    }
+
+    getHomeItem(): SidebarItem {
+        return { routerLink: 'home', icon: faHouse, title: 'Home', translation: 'artemisApp.courseOverview.menu.home', testId: 'home-tab', hidden: false };
     }
 
     getExercisesItem(courseId?: number): SidebarItem {

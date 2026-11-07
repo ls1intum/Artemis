@@ -31,7 +31,7 @@ import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.communication.domain.Reaction;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.repository.AnswerPostRepository;
-import de.tum.cit.aet.artemis.communication.repository.FaqRepository;
+import de.tum.cit.aet.artemis.communication.test_repository.FaqTestRepository;
 import de.tum.cit.aet.artemis.communication.test_repository.ReactionTestRepository;
 import de.tum.cit.aet.artemis.communication.util.ConversationUtilService;
 import de.tum.cit.aet.artemis.core.domain.Language;
@@ -139,7 +139,7 @@ class PublicUsageStatisticsTest extends AbstractSpringIntegrationIndependentTest
     private AnswerPostRepository answerPostRepository;
 
     @Autowired
-    private FaqRepository faqRepository;
+    private FaqTestRepository faqRepository;
 
     private final UsageSemester currentSemester = UsageSemester.containing(ZonedDateTime.now(ZONE).toLocalDate());
 

@@ -70,7 +70,8 @@ public record CourseCreateDTO(
         // The strict deserializer matches CourseUpdateDTO: @Min(1) alone would not reject a fractional value, because the
         // default Integer deserializer truncates it (10.5 -> 10) before bean validation runs.
         boolean autoOrchestratorEnabled, @Min(1) @JsonDeserialize(using = StrictIntegerDeserializer.class) Integer debounceWindowSecondsOverride,
-        @Min(1) @JsonDeserialize(using = StrictIntegerDeserializer.class) Integer maxDailyOrchestrationOverride) implements CourseSettingsDTO {
+        @Min(1) @JsonDeserialize(using = StrictIntegerDeserializer.class) Integer maxDailyOrchestrationOverride, @Size(max = 2000) String studentWelcomeContext)
+        implements CourseSettingsDTO {
 
     /**
      * Creates a new Course entity from this DTO.
@@ -104,6 +105,7 @@ public record CourseCreateDTO(
         configuration.setAutoOrchestratorEnabled(autoOrchestratorEnabled);
         configuration.setDebounceWindowSecondsOverride(debounceWindowSecondsOverride);
         configuration.setMaxDailyOrchestrationOverride(maxDailyOrchestrationOverride);
+        configuration.setStudentWelcomeContext(studentWelcomeContext);
         configuration.setCourse(course);
         course.setCourseConfiguration(configuration);
 

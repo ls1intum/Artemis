@@ -5,6 +5,7 @@ import { TumAetUiTranslationKey, TumAetUiTranslationParams, TumAetUiTranslator, 
 import { map, merge } from 'rxjs';
 
 const ARTEMIS_TRANSLATION_KEYS = {
+    'tumAetUi.avatar.unknown': 'global.generic.unknownPerson',
     'tumAetUi.autocomplete.empty': 'global.search.noResultsFound',
     'tumAetUi.autocomplete.remove': 'entity.action.remove',
     'tumAetUi.chip.remove': 'entity.action.remove',

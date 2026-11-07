@@ -161,4 +161,12 @@ public interface LearningDataCleanupRepository extends ArtemisJpaRepository<Quiz
             WHERE event.identity = :oldIdentity
             """)
     int renameScienceEventIdentity(@Param("oldIdentity") String oldIdentity, @Param("newIdentity") String newIdentity);
+
+    @Query("SELECT v.userId AS userId, COUNT(v) AS count FROM CourseHomeVisit v WHERE v.userId IN :userIds GROUP BY v.userId")
+    List<UserReferenceCount> countHomeVisits(@Param("userIds") Collection<Long> userIds);
+
+    @Modifying
+    @Transactional
+    @Query("DELETE FROM CourseHomeVisit v WHERE v.userId = :userId")
+    int deleteHomeVisits(@Param("userId") long userId);
 }

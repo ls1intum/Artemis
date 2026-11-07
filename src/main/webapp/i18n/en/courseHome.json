@@ -1,0 +1,278 @@
+{
+    "artemisApp": {
+        "courseHome": {
+            "title": "Home",
+            "loading": "Loading your course overview…",
+            "error": "Your course overview could not be loaded. Please try again.",
+            "retry": "Try again",
+            "refresh": "Refresh",
+            "refreshError": "Updates could not be loaded. Your previous overview is still shown.",
+            "aiSource": "AI-generated encouragement",
+            "exams": "Upcoming exams",
+            "nextStep": "Your next step",
+            "open": "Open",
+            "due": "Due",
+            "updates": "New in your course",
+            "noUpdates": "No new course material in this overview.",
+            "viewExercises": "All exercises",
+            "viewLectures": "All lectures",
+            "announcement": "From your course team",
+            "faq": "New FAQs",
+            "viewFaq": "All FAQs",
+            "progress": "Your submitted work",
+            "progressCount": "{{submitted}} of {{total}} available exercises submitted",
+            "dueProgress": "{{submitted}} of {{total}} exercises due within 72 hours submitted",
+            "noExercises": "No exercises are available to you yet.",
+            "progressHint": "Alternative exercise variants count as one task. Submitting work does not measure mastery.",
+            "team": "Your course team",
+            "moreTeam": "Show more team members",
+            "lessTeam": "Show fewer team members",
+            "teamError": "More team members could not be loaded. Try again.",
+            "noTeam": "The course team will appear here when available.",
+            "about": "About this course",
+            "approach": "How we learn in this course",
+            "questions": "My latest questions",
+            "allQuestions": "Open communication",
+            "noQuestions": "Your recent questions will appear here.",
+            "AWAITING_REPLY": "Awaiting reply",
+            "ANSWERED": "Answered",
+            "RESOLVED": "Resolved",
+            "unread": "{{count}} unread replies",
+            "replies": "{{count}} replies",
+            "iris": "My recent Iris conversations",
+            "openIris": "Open Iris",
+            "noIris": "Your recent course conversations with Iris will appear here.",
+            "untitledIris": "Course conversation",
+            "unavailable": "This section is temporarily unavailable.",
+            "INSTRUCTOR": "Instructor",
+            "EDITOR": "Editor",
+            "TEACHING_ASSISTANT": "Tutor",
+            "REVIEW": "Review",
+            "NEW_EXERCISE": "New exercise",
+            "NEW_LECTURE": "New lecture material",
+            "NEW_FAQ": "New FAQ",
+            "NEW_FEEDBACK": "New feedback",
+            "DEADLINE_TODAY": "Due within 24 hours",
+            "DEADLINE_SOON": "Due within 72 hours",
+            "IN_PROGRESS": "Continue your work",
+            "EXAM_SOON": "Upcoming exam",
+            "UNREAD_REPLY": "Unread reply",
+            "IMPORTANT_ANNOUNCEMENT": "Important announcement",
+            "IRIS_SESSION": "Continue with Iris",
+            "AVAILABLE": "Available",
+            "welcome": {
+                "BEFORE_START": {
+                    "v0": {
+                        "title": "Find your bearings{{nameSuffix}}.",
+                        "body": "Take a moment to meet the course team and explore how this course works. A little orientation now can make the first learning steps feel more familiar."
+                    },
+                    "v1": {
+                        "title": "Welcome to {{courseTitle}}.",
+                        "body": "You have a place to begin: get to know the people and ideas behind this course. Come back as the course opens to discover your next steps."
+                    },
+                    "v2": {
+                        "title": "A new beginning{{nameSuffix}}.",
+                        "body": "Start with curiosity. The course introduction and teaching team can help you understand what you will explore and where to find support."
+                    }
+                },
+                "FIRST_VISIT": {
+                    "v0": {
+                        "title": "Good to have you here{{nameSuffix}}.",
+                        "body": "Explore the course approach, meet your teaching team, and choose one manageable first step. Understanding grows through trying things and asking questions."
+                    },
+                    "v1": {
+                        "title": "Your learning starts here.",
+                        "body": "You do not need to understand everything at once. Get familiar with the course, then use the suggested next step to begin exploring."
+                    },
+                    "v2": {
+                        "title": "Welcome aboard{{nameSuffix}}.",
+                        "body": "Make this course your own: look around, meet the people who can help, and try a first task. Each question is a useful starting point."
+                    }
+                },
+                "DEADLINE_TODAY": {
+                    "v0": {
+                        "title": "One focused step{{nameSuffix}}.",
+                        "body": "An upcoming deadline deserves your attention. Open the task, check what is still needed, and give yourself a clear, manageable next step."
+                    },
+                    "v1": {
+                        "title": "Bring your work together.",
+                        "body": "Use the deadline shown below to plan your remaining work. Review the task requirements and make sure your submission reflects what you have learned."
+                    },
+                    "v2": {
+                        "title": "Keep the next step small.",
+                        "body": "When a deadline is close, clarity helps. Look at the highlighted task and work through the most useful remaining step."
+                    }
+                },
+                "DEADLINE_SOON": {
+                    "v0": {
+                        "title": "Make room for your next idea.",
+                        "body": "There is work with an approaching deadline. Starting with one small part can give you time to test your understanding and ask for help."
+                    },
+                    "v1": {
+                        "title": "A little planning goes a long way.",
+                        "body": "Check the highlighted deadline and decide where to begin. Breaking a task into smaller steps can make progress easier to see."
+                    },
+                    "v2": {
+                        "title": "Build momentum{{nameSuffix}}.",
+                        "body": "Open the suggested task and find a good starting point. An early attempt can reveal which ideas you want to revisit."
+                    }
+                },
+                "IMPORTANT_ANNOUNCEMENT": {
+                    "v0": {
+                        "title": "Stay in the loop{{nameSuffix}}.",
+                        "body": "Your course team has an announcement worth reading. Check it before planning your next learning step."
+                    },
+                    "v1": {
+                        "title": "A course update for you.",
+                        "body": "Take a look at the highlighted announcement. Knowing what has changed can help you focus your effort."
+                    },
+                    "v2": {
+                        "title": "Pause for a useful update.",
+                        "body": "The teaching team has shared something important. Read the announcement, then return to the task that moves your learning forward."
+                    }
+                },
+                "UNREAD_REPLY": {
+                    "v0": {
+                        "title": "Your question has a new response.",
+                        "body": "Someone has replied to a question you asked. See what they shared and use the discussion to develop your understanding."
+                    },
+                    "v1": {
+                        "title": "Keep the conversation going.",
+                        "body": "An unread reply is waiting in your course discussion. It may offer a useful explanation or a new angle on your question."
+                    },
+                    "v2": {
+                        "title": "A new perspective{{nameSuffix}}.",
+                        "body": "Return to your question and read the latest reply. If something is still unclear, the discussion is a good place to follow up."
+                    }
+                },
+                "EXAM_SOON": {
+                    "v0": {
+                        "title": "Prepare with purpose{{nameSuffix}}.",
+                        "body": "Your registered exam is approaching. Check its details and use your course work to identify the ideas you want to revisit."
+                    },
+                    "v1": {
+                        "title": "Connect what you have learned.",
+                        "body": "Review the exam information, then practise explaining the key ideas in your own words. Questions you still have can guide your preparation."
+                    },
+                    "v2": {
+                        "title": "Take stock before the exam.",
+                        "body": "Check the exam details and choose a topic to review. Working through a familiar example can help you find gaps and build confidence."
+                    }
+                },
+                "NEW_FEEDBACK": {
+                    "v0": {
+                        "title": "Turn feedback into a next step.",
+                        "body": "Feedback on your work is available. Look for one insight you can use in your next attempt or a future task."
+                    },
+                    "v1": {
+                        "title": "See your work from another angle.",
+                        "body": "Take a look at the feedback on your submission. Comparing it with your approach can make the learning behind the task clearer."
+                    },
+                    "v2": {
+                        "title": "Something to build on{{nameSuffix}}.",
+                        "body": "Your feedback is ready to explore. Notice what worked and choose a specific point you would like to understand better."
+                    }
+                },
+                "RETURNING": {
+                    "v0": {
+                        "title": "Welcome back{{nameSuffix}}.",
+                        "body": "Take a fresh look at the course. Start with the highlighted step and recent updates, then choose a pace that helps you reconnect."
+                    },
+                    "v1": {
+                        "title": "Pick up the thread.",
+                        "body": "A small step is a good way back in. Review what is available and choose one thing you would like to understand or finish."
+                    },
+                    "v2": {
+                        "title": "Begin again from here.",
+                        "body": "You can start with what is in front of you. Use the next step and course updates to decide where your attention will help most."
+                    }
+                },
+                "IN_PROGRESS": {
+                    "v0": {
+                        "title": "Keep your ideas moving{{nameSuffix}}.",
+                        "body": "There is a task you can continue. Revisit your approach, try the next small part, and use questions to guide your thinking."
+                    },
+                    "v1": {
+                        "title": "Build on your first attempt.",
+                        "body": "Return to the suggested task and see what you can develop further. Progress often comes from testing one idea at a time."
+                    },
+                    "v2": {
+                        "title": "Stay curious.",
+                        "body": "Continue with the task below. If you get stuck, describing the problem clearly can help you find a different approach or ask a useful question."
+                    }
+                },
+                "NEW_EXERCISE": {
+                    "v0": {
+                        "title": "A new idea to try{{nameSuffix}}.",
+                        "body": "A new exercise is available. Read the task, connect it with the course material, and make a first attempt."
+                    },
+                    "v1": {
+                        "title": "Put your understanding to work.",
+                        "body": "Explore the newly available exercise. A small experiment can show you which concepts are already clear and which deserve another look."
+                    },
+                    "v2": {
+                        "title": "Your next challenge is ready.",
+                        "body": "Open the new task and look for a manageable starting point. You can refine your understanding as you work through it."
+                    }
+                },
+                "NEW_LECTURE": {
+                    "v0": {
+                        "title": "A fresh perspective awaits.",
+                        "body": "New course material is available. Explore it and look for a connection to something you have already tried."
+                    },
+                    "v1": {
+                        "title": "Make a new connection{{nameSuffix}}.",
+                        "body": "Take a look at the latest lecture material. Noting one question or example can help you engage with its ideas."
+                    },
+                    "v2": {
+                        "title": "Explore the next part of the course.",
+                        "body": "The course has new material to discover. Give yourself space to read, reflect, and connect it with your work."
+                    }
+                },
+                "NEW_FAQ": {
+                    "v0": {
+                        "title": "A useful answer to explore.",
+                        "body": "The course FAQ has an update. It may clarify something you have been wondering about or help with your next task."
+                    },
+                    "v1": {
+                        "title": "Learn from shared questions.",
+                        "body": "Take a look at the latest FAQ. Questions from the course can reveal useful details and different ways to think about the material."
+                    },
+                    "v2": {
+                        "title": "One more piece of clarity.",
+                        "body": "A new FAQ is available. Check the explanation and see how it connects to what you are working on."
+                    }
+                },
+                "CAUGHT_UP": {
+                    "v0": {
+                        "title": "Choose what to explore next{{nameSuffix}}.",
+                        "body": "Take a moment to reflect on your learning. You can revisit an idea, explore available work, or use a conversation to deepen your understanding."
+                    },
+                    "v1": {
+                        "title": "Give your understanding room to grow.",
+                        "body": "Use the course overview to choose a useful next step. Explaining a concept or revisiting an example can reveal a new connection."
+                    },
+                    "v2": {
+                        "title": "Keep the curiosity going.",
+                        "body": "There is more than one way to learn. Review your work, follow up on a question, or explore the next available course resource."
+                    }
+                },
+                "COURSE_ENDED": {
+                    "v0": {
+                        "title": "Carry your learning forward{{nameSuffix}}.",
+                        "body": "The course has ended. Reflect on the work you submitted and the ideas you want to keep developing. Available material and feedback can support your review."
+                    },
+                    "v1": {
+                        "title": "Look back with curiosity.",
+                        "body": "Review your course experience and notice what has changed in your thinking. Your submitted work is one part of that story; there may be ideas you want to revisit."
+                    },
+                    "v2": {
+                        "title": "A foundation for what comes next.",
+                        "body": "The course period is over, and your learning can continue. Use the available resources to reflect on your progress and identify something you would like to practise further."
+                    }
+                }
+            },
+            "CAUGHT_UP": "Explore your course"
+        }
+    }
+}

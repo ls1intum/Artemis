@@ -103,6 +103,12 @@ describe('CourseIrisComponent', () => {
         expect(component.sessionId()).toBeUndefined();
     });
 
+    it.each(['-1', '0', '1.5', 'Infinity', '9007199254740992'])('ignores invalid linked session id %s', async (id) => {
+        queryParamMapSubject.next(convertToParamMap({ [IRIS_SESSION_QUERY_PARAM]: id }));
+        await fixture.whenStable();
+        expect(component.sessionId()).toBeUndefined();
+    });
+
     it('should derive isCollapsed from the chatbot chat-history open state', () => {
         const isChatHistoryOpen = signal(true);
         vi.spyOn(component as unknown as CourseIrisInternals, 'courseChatbot').mockReturnValue({ isChatHistoryOpen, toggleChatHistory: vi.fn() });
@@ -122,12 +128,12 @@ describe('CourseIrisComponent', () => {
         expect(toggleChatHistory).toHaveBeenCalledOnce();
     });
 
-    it('should navigate to exercises when the user opts out of AI via the chat service', async () => {
+    it('should navigate to Home when the user opts out of AI via the chat service', async () => {
         await fixture.whenStable();
 
         llmOptedOutSubject.next();
 
-        expect(router.navigate).toHaveBeenCalledWith(['/courses', 123, 'exercises']);
+        expect(router.navigate).toHaveBeenCalledWith(['/courses', 123, 'home']);
     });
 
     it('should not navigate if the course id is not resolved yet when the opt-out event fires', async () => {

@@ -141,6 +141,22 @@ describe('Course Management Update Component', () => {
         (Intl as any).supportedValuesOf = undefined;
     });
 
+    it('loads instructor welcome context and saves an intentional clear without dropping course configuration', () => {
+        course.courseConfiguration = { studentWelcomeContext: 'Learn through practice.', gradeRelevant: false, dataRetentionHold: true };
+        vi.spyOn(profileService, 'getProfileInfo').mockReturnValue({ ...profileService.getProfileInfo(), activeProfiles: [], activeModuleFeatures: [] });
+        vi.spyOn(organizationService, 'getOrganizationsByCourse').mockReturnValue(of([]));
+        comp.ngOnInit();
+        fixture.detectChanges();
+        expect(comp.courseForm.controls['studentWelcomeContext'].value).toBe('Learn through practice.');
+        const update = vi.spyOn(courseManagementService, 'update').mockReturnValue(of(new HttpResponse({ body: course })));
+        comp.courseForm.controls['studentWelcomeContext'].setValue('');
+        comp.save();
+        const saved = update.mock.calls[0][1];
+        expect(toCourseUpdateDTO(saved).studentWelcomeContext).toBe('');
+        expect(saved.courseConfiguration?.gradeRelevant).toBe(false);
+        expect(saved.courseConfiguration?.dataRetentionHold).toBe(true);
+    });
+
     describe('previousState', () => {
         it('should fall back to the management page when editing an existing course', () => {
             const navigateBackSpy = vi.spyOn(navigationUtilService, 'navigateBackWithOptional').mockImplementation(() => undefined);
