@@ -60,7 +60,7 @@ final class WorkingCopyLocks {
         try {
             lock = acquire(path);
         }
-        catch (InterruptedException exception) {
+        catch (InterruptedException exception) { // NOSONAR java:S2142, the interruption is reported as an InterruptedIOException on purpose, see below
             // As for checkout, do not leave the worker interrupted for its next JGit operation.
             var cancellation = new InterruptedIOException("Waiting for a working copy got interrupted.");
             cancellation.initCause(exception);
