@@ -2,7 +2,7 @@
 id: file-upload-exercise
 title: File Upload Exercise
 sidebar_label: File Upload Exercise
-last_reviewed: 2026-11-03
+last_reviewed: 2026-11-06
 ---
 
 import Image, {ImageSize} from "../../../src/components/Image/Image";
@@ -11,6 +11,7 @@ import createFormGeneral from './assets/file-upload/create-form-general.png';
 import createFormContent from './assets/file-upload/create-form-content.png';
 import createFormGrading from './assets/file-upload/create-form-grading.png';
 import exerciseInDashboard from './assets/file-upload/course-dashboard-exercise-file-upload.png';
+import exerciseDetailsFileUpload from './assets/file-upload/exercise-details-file-upload.png';
 import assessmentView from './assets/file-upload/file-upload-exercise-assessment.png';
 import feedbackModal from './assets/general/feedback-modal.png';
 
@@ -60,6 +61,22 @@ they achieved, **Edit** reopens the form and **Delete** removes it. The title op
 itself.
 
 <Image src={exerciseInDashboard} alt="Course exercise list showing the new file upload exercise" size={ImageSize.large} caption="The exercise on the course's exercise list" />
+
+## Manage the Exercise
+
+Select the exercise title to open its details. The header shows the saved title and exercise type, and **General**
+contains the **Exercise ID**. Section links scroll to the configuration, problem statement, example solution and
+grading information without hiding other sections; browser search can find content throughout the page.
+
+The action bar separates **Participations**, **Statistics** and **Assessment Dashboard** from **Edit**, with
+**Teams** for team exercises. Available controls depend on your role and whether the exercise belongs to a course
+or an exam. Instructors find **Delete** in **Exercise administration** at the bottom, where deletion requires
+confirmation.
+
+<Image src={exerciseDetailsFileUpload} alt="File upload exercise details with navigation, editing actions and section links" size={ImageSize.large} caption="The file upload exercise's details" />
+
+See [Exercise Details for Course Staff](/instructor/exercises/intro#exercise-details-for-course-staff) for shared
+navigation and compact-screen behavior.
 
 ## Assess Submissions
 

@@ -7,7 +7,7 @@
             "action": {
                 "import": "Importieren",
                 "export": "Exportieren",
-                "createVariantWithAi": "Variante mit KI erstellen"
+                "createVariantWithAi": "Variante erstellen"
             },
             "error": {
                 "onlyIndividualQuiz": "Nur Quizze im Einzelmodus können einer Aufgabengruppe hinzugefügt werden.",
@@ -70,6 +70,7 @@
                 },
                 "createHint": "Wähle einen Aufgabentyp. Alle Details kannst du im nächsten Schritt anpassen.",
                 "importHint": "Wähle aus, was du importieren möchtest.",
+                "exportHint": "Wähle einen Aufgabentyp und dann die Aufgabe, die du als Zip-Datei herunterladen möchtest. Du kannst die Datei in jeden Kurs über Importieren und Aus einer Datei importieren.",
                 "cta": {
                     "create": "Erstellen",
                     "select": "Auswählen"
@@ -93,7 +94,13 @@
                     "TEXT": "Freitext-Essays und offene Fragen mit manueller Bewertung.",
                     "FILE_UPLOAD": "Arbeitsblatt- oder Dokumenteinreichungen, die von Lehrenden bewertet werden."
                 },
-                "generateHint": "Beschreibe, was die Studierenden lernen sollen. Prüfe und überarbeite die generierte Aufgabe vor der Veröffentlichung."
+                "generateHint": "Beschreibe, was die Studierenden lernen sollen. Prüfe und überarbeite die generierte Aufgabe vor der Veröffentlichung.",
+                "export": {
+                    "empty": "Dieser Kurs hat keine Aufgaben dieses Typs.",
+                    "exportButton": "Exportieren",
+                    "exportExercise": "{{ title }} exportieren",
+                    "failed": "Die Aufgabe konnte nicht exportiert werden."
+                }
             },
             "groupEdit": {
                 "header": "Gruppe bearbeiten",

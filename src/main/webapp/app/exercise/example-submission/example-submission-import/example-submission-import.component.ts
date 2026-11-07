@@ -15,7 +15,6 @@ import { SortByDirective } from 'app/foundation/sort/directive/sort-by.directive
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 import { ResultComponent } from '../../result/result.component';
-import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ExampleSubmissionImportPagingService } from 'app/exercise/example-submission/example-submission-import/example-submission-import-paging.service';
@@ -35,7 +34,6 @@ import { ExampleSubmissionImportPagingService } from 'app/exercise/example-submi
         SortByDirective,
         FaIconComponent,
         ResultComponent,
-        ButtonComponent,
         ArtemisDatePipe,
         ArtemisTranslatePipe,
     ],
