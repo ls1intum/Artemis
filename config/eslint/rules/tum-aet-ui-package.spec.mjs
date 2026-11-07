@@ -469,11 +469,12 @@ describe('@tumaet/ui-angular integration contract', () => {
         expect(hostProperties).toEqual(
             [
                 '--tumaet-ui-accent-color',
+                '--tumaet-ui-button-contrast-foreground',
+                '--tumaet-ui-button-focus-color',
                 '--tumaet-ui-content-background',
                 '--tumaet-ui-control-background',
                 '--tumaet-ui-control-border-color',
                 '--tumaet-ui-control-border-hover-color',
-                '--tumaet-ui-contrast-background',
                 '--tumaet-ui-contrast-color',
                 '--tumaet-ui-disabled-background',
                 '--tumaet-ui-disabled-color',

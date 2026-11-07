@@ -30,6 +30,11 @@ interface ManifestEntry {
     selector?: string;
     /** With `selector`: CSS pixels of the page that are added around the element on every side, so that borders and shadows of its content are not cut off. The element has to fit into the viewport. */
     padding?: number;
+    /**
+     * With `selector`: CSS selector of the element where the image ends, for a part of a long form whose sections are siblings without a common wrapper. The image runs from
+     * the top of `selector` to the top of this element, as wide as `selector`, and needs a viewport that is tall enough to show both.
+     */
+    until?: string;
     /** A box of the page in CSS pixels, for a crop that has no element of its own. Not combined with `selector`. */
     clip?: { x: number; y: number; width: number; height: number };
     /** CSS selector that has to be visible before the image is taken, for content that loads after the page. */
@@ -112,6 +117,7 @@ async function itemId(api: APIRequestContext, kind: string, title: string, cours
         exercise: `api/course/courses/${courseId}/with-exercises`,
         exam: `api/exam/courses/${courseId}/exams`,
         lecture: `api/lecture/courses/${courseId}/lectures`,
+        competency: `api/atlas/courses/${courseId}/competencies`,
     };
     const response = await api.get(listings[kind]);
     expect(response.ok(), `the ${kind} list of the demo course could not be loaded`).toBe(true);
@@ -122,10 +128,10 @@ async function itemId(api: APIRequestContext, kind: string, title: string, cours
     return item!.id;
 }
 
-/** Replaces {courseId} and the {exercise:Title}, {exam:Title} and {lecture:Title} placeholders of a route by the ids of the demo course. */
+/** Replaces {courseId} and the {exercise:Title}, {exam:Title}, {lecture:Title} and {competency:Title} placeholders of a route by the ids of the demo course. */
 async function resolveRoute(baseURL: string | undefined, route: string, courseId: number): Promise<string> {
     let resolved = route.replace('{courseId}', String(courseId));
-    const placeholders = Array.from(route.matchAll(/\{(exercise|exam|lecture):([^}]+)\}/g));
+    const placeholders = Array.from(route.matchAll(/\{(exercise|exam|lecture|competency):([^}]+)\}/g));
     if (placeholders.length === 0) {
         return resolved;
     }
@@ -230,7 +236,18 @@ for (const entry of manifest.screenshots.filter((candidate) => only.length === 0
         const target = update ? path.join(DOCS_ROOT, entry.image) : path.join(outputRoot, entry.image);
         fs.mkdirSync(path.dirname(target), { recursive: true });
         const mask = [...(entry.mask ?? []).map((testId) => page.getByTestId(testId)), ...(entry.maskSelector ?? []).map((selector) => page.locator(selector))];
-        if (entry.selector && entry.padding) {
+        if (entry.selector && entry.until) {
+            const start = page.locator(entry.selector).first();
+            await start.scrollIntoViewIfNeeded();
+            const startBox = (await start.boundingBox())!;
+            const endBox = (await page.locator(entry.until).first().boundingBox())!;
+            await page.screenshot({
+                path: target,
+                clip: { x: startBox.x, y: startBox.y, width: startBox.width, height: endBox.y - startBox.y },
+                animations: 'disabled',
+                mask,
+            });
+        } else if (entry.selector && entry.padding) {
             const element = page.locator(entry.selector).first();
             await element.scrollIntoViewIfNeeded();
             const box = (await element.boundingBox())!;

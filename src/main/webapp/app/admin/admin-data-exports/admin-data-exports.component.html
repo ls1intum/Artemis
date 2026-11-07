@@ -1,7 +1,14 @@
 <div>
     <h5 *adminTitleBarTitle id="admin-data-exports-page-heading" class="mb-0" jhiTranslate="artemisApp.dataExport.admin.title"></h5>
     <div *adminTitleBarActions>
-        <tumaet-ui-button size="small" (clicked)="openCreateModal()" data-testid="create-export-btn">
+        <tumaet-ui-button
+            data-button-intent="transfer"
+            data-button-intent-reason="Opens the data export request workflow"
+            size="small"
+            severity="secondary"
+            (clicked)="openCreateModal()"
+            data-testid="create-export-btn"
+        >
             <fa-icon [icon]="faPlus" class="me-1" />
             <span jhiTranslate="artemisApp.dataExport.admin.createExport"></span>
         </tumaet-ui-button>
@@ -42,7 +49,7 @@
                             <div class="flex items-center justify-end gap-2">
                                 @if (dataExport.downloadable) {
                                     <tumaet-ui-button
-                                        severity="success"
+                                        severity="secondary"
                                         size="small"
                                         (clicked)="downloadExport(dataExport)"
                                         data-testid="download-btn"

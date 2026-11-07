@@ -80,6 +80,7 @@
                 "packages/tum-aet-ui/src/lib/**/*.scss",
                 "src/main/webapp/app/exercise/**/*.scss",
                 "src/main/webapp/app/programming/manage/detail/**/*.scss",
+                "src/main/webapp/app/programming/manage/vcs-repository-access-log-view/**/*.scss",
                 "src/main/webapp/app/quiz/manage/detail/**/*.scss",
                 "src/main/webapp/app/quiz/manage/manage-buttons/**/*.scss",
                 "src/main/webapp/app/quiz/manage/lifecyle-buttons/**/*.scss",

@@ -263,6 +263,27 @@ describe('ProgrammingExerciseDetailComponent', () => {
         expect(fixture.nativeElement.querySelector('[data-testid="edit-in-editor-action"]')).toBeNull();
     });
 
+    it.each(['/course-management/1/programming-exercises/21715', '/course-management/1/exams/2/exercise-groups/3/programming-exercises/21715'])(
+        'provides direct editor access from the toolbar under %s',
+        (base) => {
+            const exercise = new ProgrammingExercise(new Course(), undefined);
+            exercise.id = 21715;
+            exercise.isAtLeastEditor = true;
+            exercise.templateParticipation = { id: 42 };
+            comp.programmingExercise.set(exercise);
+            comp.baseResource.set(base);
+            fixture.detectChanges();
+            const editor = fixture.nativeElement.querySelector('[data-testid="edit-in-editor-action"]') as HTMLAnchorElement;
+            expect(editor).not.toBeNull();
+            expect(editor.closest('[data-testid="exercise-editing-actions"]')).not.toBeNull();
+            expect(router.createUrlTree).toHaveBeenCalledWith([base, 'code-editor', 'TEMPLATE', 42], expect.anything());
+
+            comp.programmingExercise.set(Object.assign(new ProgrammingExercise(new Course(), undefined), { id: 21715, templateParticipation: { id: 42 } }));
+            fixture.detectChanges();
+            expect(fixture.nativeElement.querySelector('[data-testid="edit-in-editor-action"]')).toBeNull();
+        },
+    );
+
     it('names the compact editing links when their visible labels are hidden', () => {
         const exercise = new ProgrammingExercise(new Course(), undefined);
         exercise.id = 21715;

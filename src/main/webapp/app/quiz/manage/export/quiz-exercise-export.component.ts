@@ -1,3 +1,4 @@
+import { TumAetUiButtonDirective, TumAetUiDialogComponent } from '@tumaet/ui-angular';
 import { ChangeDetectionStrategy, Component, effect, inject, input, model, output, signal, untracked } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { forkJoin } from 'rxjs';
@@ -14,14 +15,12 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 import { FormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faArrowLeft } from '@fortawesome/free-solid-svg-icons';
-import { ButtonModule } from 'primeng/button';
-import { TumAetUiDialogComponent } from '@tumaet/ui-angular';
 
 @Component({
     selector: 'jhi-quiz-exercise-export',
     templateUrl: './quiz-exercise-export.component.html',
     styleUrls: ['./quiz-exercise-export.component.scss', '../../shared/quiz.scss'],
-    imports: [TranslateDirective, ArtemisTranslatePipe, FormsModule, FaIconComponent, ButtonModule, TumAetUiDialogComponent],
+    imports: [TumAetUiButtonDirective, TranslateDirective, ArtemisTranslatePipe, FormsModule, FaIconComponent, TumAetUiDialogComponent],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class QuizExerciseExportComponent {
