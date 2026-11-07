@@ -19,8 +19,12 @@
             controls
             preload="auto"
             playsinline
-            (pointerenter)="onVideoPointerEnter()"
-            (pointerleave)="onVideoPointerLeave()"
+            (pointerdown)="onVideoInteraction()"
+            (keydown)="onVideoInteraction()"
+            (play)="onVideoPlaybackChange()"
+            (pause)="onVideoPlaybackChange()"
+            (seeking)="onVideoPlaybackChange()"
+            (ratechange)="onVideoPlaybackChange()"
         ></video>
     </div>
 

@@ -3,12 +3,15 @@
         <div class="flex min-w-0 items-stretch gap-2 [&_span]:hidden @4xl:[&_span]:inline [&>*]:min-w-0 [&>*]:flex-initial">
             <ng-content select="[detailNavigationActions]" />
         </div>
-        <div
-            data-testid="exercise-editing-actions"
-            class="flex min-w-0 items-stretch gap-1 @sm:gap-2 [&_a]:min-w-8 [&_a]:whitespace-nowrap! [&_a>span]:hidden @sm:[&_a>span]:inline [&_button]:whitespace-normal! [&>*]:flex-none"
-        >
-            <ng-content select="[detailEditingActions]" />
+        <!-- The editing actions and "More actions" move to the next line together, so the menu never sits alone at the left edge. -->
+        <div class="flex min-w-0 items-start gap-1 @sm:gap-2">
+            <div
+                data-testid="exercise-editing-actions"
+                class="flex min-w-0 items-stretch gap-1 @sm:gap-2 [&_a]:min-w-8 [&_a]:whitespace-nowrap! [&_a>span]:hidden @sm:[&_a>span]:inline [&_button]:whitespace-normal! [&>*]:flex-none"
+            >
+                <ng-content select="[detailEditingActions]" />
+            </div>
+            <div class="flex items-start [&_button>span]:hidden @3xl:[&_button>span]:inline"><ng-content select="[detailMoreActions]" /></div>
         </div>
-        <div class="flex items-start [&_button>span]:hidden @3xl:[&_button>span]:inline"><ng-content select="[detailMoreActions]" /></div>
     </div>
 </div>
