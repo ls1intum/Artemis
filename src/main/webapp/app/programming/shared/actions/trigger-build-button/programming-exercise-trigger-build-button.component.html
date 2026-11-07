@@ -1,7 +1,7 @@
 @if (participationBuildCanBeTriggered() && (showForSuccessfulSubmissions() || participationHasLatestSubmissionWithoutResult())) {
     <jhi-button
         [btnSize]="btnSize()"
-        [btnType]="participationHasLatestSubmissionWithoutResult() ? ButtonType.ERROR : ButtonType.PRIMARY"
+        [btnType]="!personalParticipation && !participationHasLatestSubmissionWithoutResult() && lastResultIsManual() ? ButtonType.ERROR : ButtonType.PRIMARY"
         [icon]="faRedo"
         [title]="title()"
         [shouldToggle]="!!title()"

@@ -123,8 +123,7 @@
         </div>
     }
     @if (section() === 'administration' && course() && exercise.isAtLeastInstructor) {
-        <section class="mt-8! border-t border-border pt-6!" aria-labelledby="exercise-administration-heading">
-            <h3 id="exercise-administration-heading" class="mb-4! text-lg font-semibold" jhiTranslate="artemisApp.exerciseDetail.administration"></h3>
+        <div class="flex flex-wrap items-center gap-2">
             <button
                 type="button"
                 jhiDeleteButton
@@ -142,6 +141,6 @@
             >
                 <fa-icon [icon]="faTrash" />
             </button>
-        </section>
+        </div>
     }
 }

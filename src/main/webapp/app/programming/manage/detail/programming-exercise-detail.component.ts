@@ -15,6 +15,7 @@ import {
     faHistory,
     faListAlt,
     faMagnifyingGlass,
+    faPencilAlt,
     faTrash,
     faUndo,
     faUserCheck,
@@ -48,6 +49,7 @@ import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/del
 import { DetailOverviewListComponent, DetailOverviewSection, DetailType } from 'app/shared-ui/detail-overview-list/detail-overview-list.component';
 import { Detail, ProgrammingDiffReportDetail } from 'app/shared-ui/detail-overview-list/detail.model';
 import { FeatureToggleHideDirective } from 'app/foundation/feature-toggle/feature-toggle-hide.directive';
+import { FeatureToggleLinkDirective } from 'app/foundation/feature-toggle/feature-toggle-link.directive';
 import { FeatureToggleDirective } from 'app/foundation/feature-toggle/feature-toggle.directive';
 import { FeatureToggle, FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -67,6 +69,7 @@ import { ProgrammingExerciseSharingService } from '../services/programming-exerc
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { AtlasOrchestrationTriggerComponent } from 'app/atlas/manage/orchestration-trigger/atlas-orchestration-trigger.component';
 import { parseBuildPlanPhases } from 'app/programming/shared/entities/build-plan-phases.model';
+import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { ExerciseDetailHeaderComponent } from 'app/exercise/detail/exercise-detail-header.component';
 import { ExerciseDetailActionsComponent } from 'app/exercise/detail/exercise-detail-actions.component';
 import { downloadZipFileFromResponse } from 'app/foundation/util/download.util';
@@ -88,6 +91,7 @@ import { downloadZipFileFromResponse } from 'app/foundation/util/download.util';
         RouterLink,
         FaIconComponent,
         FeatureToggleDirective,
+        FeatureToggleLinkDirective,
         FeatureToggleHideDirective,
         ProgrammingExerciseResetButtonDirective,
         DeleteButtonDirective,
@@ -133,11 +137,13 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     protected readonly ButtonSize = ButtonSize;
     protected readonly ButtonType = ButtonType;
     protected readonly AssessmentType = AssessmentType;
+    protected readonly RepositoryType = RepositoryType;
     protected readonly documentationType: DocumentationType = 'Programming';
 
     protected readonly faUndo = faUndo;
     protected readonly faTrash = faTrash;
     protected readonly faWrench = faWrench;
+    protected readonly faPencilAlt = faPencilAlt;
     protected readonly faFileSignature = faFileSignature;
     protected readonly faListAlt = faListAlt;
     protected readonly faChartBar = faChartBar;
@@ -546,7 +552,6 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                         exercise,
                         localCIEnabled: this.localCIEnabled(),
                         supportsAuxiliaryRepositories: this.supportsAuxiliaryRepositories,
-                        editorBaseResource: exercise.isAtLeastEditor ? this.baseResource() : undefined,
                         editBuildPlanLink: exercise.isAtLeastEditor && this.isBuildPlanEditable() ? [this.baseResource(), 'edit-build-plan'] : undefined,
                         checkConsistency: exercise.isAtLeastEditor ? () => this.checkConsistencies(exercise) : undefined,
                         templateStatus: {

@@ -101,39 +101,61 @@ test.describe('Programming Exercise Management', { tag: '@fast' }, () => {
             await route.fulfill({ response, json: info });
         });
         await login(admin);
-        const exercise = await exerciseAPIRequests.createProgrammingExercise({ course, programmingLanguage: ProgrammingLanguage.C });
+        const exercise = await exerciseAPIRequests.createProgrammingExercise({
+            course,
+            programmingLanguage: ProgrammingLanguage.C,
+            problemStatement: '[task][Implement sorting](testSorting)',
+        });
         try {
             await page.goto(`/course-management/${course.id}/programming-exercises/${exercise.id}`);
             const editing = page.getByTestId('exercise-editing-actions');
             const toolbar = editing.locator('..');
             const controls = [
                 editing.getByRole('link', { name: 'Edit', exact: true }),
+                editing.getByTestId('edit-in-editor-action'),
                 editing.getByRole('link', { name: 'Grading', exact: true }),
                 editing.getByTestId('create-variant-ai-button').getByRole('button'),
             ];
-            await expect(controls[2]).toBeVisible();
+            await expect(controls[3]).toBeVisible();
+            await expect(controls[1]).toHaveAttribute('href', /\/code-editor\/TEMPLATE\/\d+$/);
             const checkActions = async () => {
                 for (const name of ['Participations', 'Statistics']) {
                     const navigation = toolbar.getByRole('link', { name, exact: true });
                     await expect.poll(async () => (await measure(navigation, { name })).width, { message: `${name} remains a compact button` }).toBeLessThanOrEqual(240);
                 }
                 for (const [index, control] of controls.entries()) {
-                    const name = ['Edit', 'Grading', 'Create Variant'][index];
+                    const name = ['Edit', 'Edit in editor', 'Grading', 'Create Variant'][index];
                     await expectInside(control, toolbar, ['top', 'right', 'bottom', 'left'], { name: `${name} stays inside the action toolbar` });
                     await expect.poll(async () => (await measure(control, { name })).width, { message: `${name} retains a usable width` }).toBeGreaterThanOrEqual(32);
                     await expect.poll(async () => (await measure(control, { name })).height, { message: `${name} uses at most two text lines` }).toBeLessThanOrEqual(64);
                 }
-                await expectNoOverlap(controls, { name: 'Edit, Grading and Create Variant' });
+                await expectNoOverlap(controls, { name: 'Edit, Edit in editor, Grading and Create Variant' });
                 const rows = await toolbar.evaluate((element) => {
                     const controls = Array.from(element.querySelectorAll('a, button')).filter((control) => control.getClientRects().length);
                     return new Set(controls.map((control) => Math.round(control.getBoundingClientRect().top))).size;
                 });
                 expect(rows, 'navigation and editing occupy at most two rows').toBeLessThanOrEqual(2);
             };
-            await forEachViewport(page, checkActions);
+            const tasksLabel = page.getByTestId('programming-tasks-label');
+            const checkDetails = async () => {
+                await checkActions();
+                await expect(tasksLabel).toBeVisible();
+                await expect
+                    .poll(
+                        () =>
+                            tasksLabel.evaluate((element) => {
+                                const range = document.createRange();
+                                range.selectNodeContents(element);
+                                return range.getClientRects().length;
+                            }),
+                        { message: 'the Tasks label stays on one line inside the problem details' },
+                    )
+                    .toBe(1);
+            };
+            await forEachViewport(page, checkDetails);
             await test.step('390px phone with the management sidebar', async () => {
                 await page.setViewportSize({ width: 390, height: 844 });
-                await checkActions();
+                await checkDetails();
             });
         } finally {
             await exerciseAPIRequests.deleteProgrammingExercise(exercise.id!);

@@ -1,3 +1,4 @@
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
 import { QuestionReevaluationActionsComponent } from '../question-reevaluation-actions/question-reevaluation-actions.component';
 import {
     AfterViewInit,
@@ -78,6 +79,7 @@ import { CustomMaxLengthDirective } from 'app/foundation/validators/custom-max-l
     styleUrls: ['./drag-and-drop-question-edit.component.scss', '../exercise/quiz-exercise.scss', '../../../quiz/shared/quiz.scss'],
     encapsulation: ViewEncapsulation.None,
     imports: [
+        TumAetUiButtonDirective,
         QuestionReevaluationActionsComponent,
         FaIconComponent,
         FormsModule,

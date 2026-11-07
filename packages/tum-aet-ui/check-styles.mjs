@@ -96,6 +96,33 @@ const contrastRule = ruleFor('tumaet:text-primary-contrast');
 if (declarationValue(contrastRule, 'color') !== 'var(--tumaet-ui-primary-contrast-color)') {
     errors.push('the primary contrast selector does not use its package token');
 }
+// Button colors are a public customization axis, independent of status/validation feedback.
+for (const severity of ['primary', 'secondary', 'success', 'info', 'warn', 'danger', 'contrast']) {
+    for (const [suffix, utility, property] of [
+        ['background', `tumaet:bg-button-${severity}`, 'background-color'],
+        ['contrast', `tumaet:text-button-${severity}-contrast`, 'color'],
+        ['foreground', `tumaet:text-button-${severity}-foreground`, 'color'],
+    ]) {
+        const token = `--tumaet-ui-button-${severity}-${suffix}`;
+        if (declarationValue(ruleFor(utility), property) !== `var(${token})`) {
+            errors.push(`button utility ${utility} does not consume ${token}`);
+        }
+        for (const theme of ['light', 'dark']) {
+            let defined = false;
+            stylesheet.walkRules((rule) => {
+                if (rule.selector.includes(`[data-theme=${theme}]`)) {
+                    rule.walkDecls(token, () => {
+                        defined = true;
+                    });
+                }
+            });
+            if (!defined) {
+                errors.push(`button token ${token} is missing from the ${theme} palette`);
+            }
+        }
+    }
+}
+
 const controlBackgroundRule = ruleFor('tumaet:bg-control-background');
 if (declarationValue(controlBackgroundRule, 'background-color') !== 'var(--tumaet-ui-control-background)') {
     errors.push('the control background selector does not use its semantic package token');

@@ -1,3 +1,4 @@
+import { TumAetUiButtonDirective, TumAetUiDatePickerComponent, TumAetUiFormFieldComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 import { isExamExerciseRoute } from 'app/exercise/util/exercise-detail-route-context';
 import { JsonPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, DestroyRef, HostListener, OnInit, ViewEncapsulation, computed, inject, signal, viewChild, viewChildren } from '@angular/core';
@@ -15,7 +16,6 @@ import { DragAndDropQuestionUtil } from 'app/quiz/shared/service/drag-and-drop-q
 import { ShortAnswerQuestionUtil } from 'app/quiz/shared/service/short-answer-question-util.service';
 import { Duration } from '../interfaces/quiz-exercise-interfaces';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { TumAetUiDatePickerComponent, TumAetUiFormFieldComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 import { DialogService } from 'primeng/dynamicdialog';
 import dayjs from 'dayjs/esm';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -64,7 +64,6 @@ import { CompetencySelectionComponent } from 'app/atlas/shared/competency-select
 import { CalendarService } from 'app/calendar/shared/service/calendar.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MODULE_FEATURE_HYPERION } from 'app/app.constants';
-import { ButtonModule } from 'primeng/button';
 import { TextareaModule } from 'primeng/textarea';
 import { ExerciseGroupDateNoticeComponent } from 'app/exercise/exercise-group-date-notice/exercise-group-date-notice.component';
 import { ExerciseGroupTimelineLockComponent } from 'app/course/manage/exercises/group-timeline-lock/exercise-group-timeline-lock.component';
@@ -92,6 +91,7 @@ const MAX_TIMEOUT_DELAY = 2_147_483_647;
     styleUrls: ['./quiz-exercise-update.component.scss', '../../shared/quiz.scss'],
     encapsulation: ViewEncapsulation.None,
     imports: [
+        TumAetUiButtonDirective,
         TranslateDirective,
         DocumentationButtonComponent,
         FormsModule,
@@ -105,7 +105,6 @@ const MAX_TIMEOUT_DELAY = 2_147_483_647;
         FaIconComponent,
         ArtemisTranslatePipe,
         RouterLink,
-        ButtonModule,
         TextareaModule,
         CheckboxModule,
         InputTextModule,
