@@ -25,8 +25,8 @@ import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.exam.web.ExamResource;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseCategoryDTO;
+import de.tum.cit.aet.artemis.exercise.dto.ExerciseDeletionCountsDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseDeletionInfoDTO;
-import de.tum.cit.aet.artemis.exercise.dto.ExerciseDeletionSummaryDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseForCourseOverviewDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseIdAndTitleDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseTitleDTO;
@@ -924,19 +924,17 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
     Set<ExerciseDeletionInfoDTO> findDeletionInfoByCourseId(@Param("courseId") long courseId);
 
     /**
-     * Fetches all deletion summary statistics for an exercise in a single query.
+     * Fetches the deletion summary statistics of an exercise that are counted together in a single query.
      * This includes participation count, build count (for programming exercises),
      * assessment count (for non-quiz exercises), and post/answer counts from the exercise channel.
+     * The teams, submissions and results are counted with their own repositories.
      *
      * @param exerciseId the id of the exercise
-     * @return an Optional containing the ExerciseDeletionSummaryDTO, or empty if exercise not found
+     * @return an Optional containing the ExerciseDeletionCountsDTO, or empty if exercise not found
      */
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.exercise.dto.ExerciseDeletionSummaryDTO(
+            SELECT new de.tum.cit.aet.artemis.exercise.dto.ExerciseDeletionCountsDTO(
                 (SELECT COUNT(p) FROM StudentParticipation p WHERE p.exercise.id = :exerciseId),
-                (SELECT COUNT(t) FROM Team t WHERE t.exercise.id = :exerciseId),
-                (SELECT COUNT(s) FROM Submission s WHERE s.participation.exercise.id = :exerciseId),
-                (SELECT COUNT(r) FROM Result r WHERE r.exerciseId = :exerciseId),
                 (
                     SELECT COUNT(DISTINCT sp)
                     FROM StudentParticipation sp
@@ -965,7 +963,7 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
                 LEFT JOIN Channel c ON c.exercise.id = e.id
             WHERE e.id = :exerciseId
             """)
-    Optional<ExerciseDeletionSummaryDTO> findDeletionSummaryByExerciseId(@Param("exerciseId") long exerciseId);
+    Optional<ExerciseDeletionCountsDTO> findDeletionCountsByExerciseId(@Param("exerciseId") long exerciseId);
 
     /**
      * Returns pairs of (exerciseId, exerciseGroupId) for exam exercises matching the given IDs.

@@ -596,6 +596,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         request.delete("/api/exam/courses/" + exam2.getCourse().getId() + "/exams/" + exam2.getId(), HttpStatus.ACCEPTED);
         asyncDeletionTestUtilService.awaitExamDeletion(exam2.getId());
 
+        assertThat(examRepository.findById(exam2.getId())).isEmpty();
         assertThat(studentExamRepository.findAllTestRunsByExamId(exam2.getId())).isEmpty();
         assertThat(studentExamRepository.findByExamId(exam2.getId())).isEmpty();
     }

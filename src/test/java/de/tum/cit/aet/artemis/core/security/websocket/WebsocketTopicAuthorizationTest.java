@@ -28,6 +28,7 @@ import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.util.UserUtilService;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.websocket.WebsocketTopicRegistry.Decision;
+import de.tum.cit.aet.artemis.core.util.CourseUtilService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
@@ -70,6 +71,9 @@ class WebsocketTopicAuthorizationTest extends AbstractSpringIntegrationIndepende
 
     @Autowired
     private ExamUtilService examUtilService;
+
+    @Autowired
+    private CourseUtilService courseUtilService;
 
     @Autowired
     private LectureUtilService lectureUtilService;
@@ -262,6 +266,11 @@ class WebsocketTopicAuthorizationTest extends AbstractSpringIntegrationIndepende
         // an exam that does not belong to the course in the destination must not be reachable through the course of an instructor
         String foreignExam = "/topic/courses/" + (course.getId() + 1000) + "/exams/" + exam.getId() + "/deletion-progress";
         assertThat(decide("instructor1", Role.INSTRUCTOR, foreignExam)).isEqualTo(DENIED);
+
+        // the same holds for an exam of another course that is addressed with the id of the course the instructor manages
+        Exam examOfOtherCourse = examUtilService.addExam(courseUtilService.addEmptyCourse());
+        String examOfOtherCourseThroughManagedCourse = "/topic/courses/" + course.getId() + "/exams/" + examOfOtherCourse.getId() + "/deletion-progress";
+        assertThat(decide("instructor1", Role.INSTRUCTOR, examOfOtherCourseThroughManagedCourse)).isEqualTo(DENIED);
     }
 
     @Test

@@ -5,7 +5,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { TranslateService } from '@ngx-translate/core';
 import { TumAetUiDialogService } from '@tumaet/ui-angular';
 import { MockProvider } from 'ng-mocks';
-import { BehaviorSubject, Subject, throwError } from 'rxjs';
+import { BehaviorSubject, Observable, Subject, throwError } from 'rxjs';
 import { SKIP_HTTP_ERROR_ALERT } from 'app/core/interceptor/errorhandler.interceptor';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { DELETION_STATUS_POLL_INTERVAL_MS, EntityDeletionService } from 'app/shared-ui/delete-dialog/service/entity-deletion.service';
@@ -108,11 +108,19 @@ describe('EntityDeletionService', () => {
     });
 
     it('subscribes to the topic before it sends the request', () => {
-        service.delete(exerciseTarget, http.delete('api/text/text-exercises/7')).subscribe();
+        let requestSubscriptions = 0;
+        let topicObservedWhenRequestStarted: boolean | undefined;
+        const request$ = new Observable<void>(() => {
+            requestSubscriptions++;
+            topicObservedWhenRequestStarted = topic$.observed;
+        });
+
+        service.delete(exerciseTarget, request$).subscribe();
 
         expect(websocketSubscribe).toHaveBeenCalledWith('/topic/exercises/7/deletion-progress');
-        // the request is only sent when the caller subscribed, which the service did after listening
-        httpMock.expectOne({ method: 'DELETE', url: 'api/text/text-exercises/7' });
+        expect(requestSubscriptions).toBe(1);
+        // the request only starts when the service subscribed to it, which it must do after it listens for progress
+        expect(topicObservedWhenRequestStarted).toBe(true);
     });
 
     it('opens the progress dialog once the server accepted the deletion and reads the status once', () => {

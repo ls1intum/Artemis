@@ -18,6 +18,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.assessment.repository.TutorParticipationRepository;
 import de.tum.cit.aet.artemis.assessment.service.ExampleSubmissionService;
 import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
@@ -33,9 +34,12 @@ import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.exercise.domain.EntityDeletionType;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.dto.EntityDeletionProgressDTO;
+import de.tum.cit.aet.artemis.exercise.dto.ExerciseDeletionCountsDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseDeletionSummaryDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
+import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
+import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
 import de.tum.cit.aet.artemis.exercise.web.ExerciseWebsocketTopics;
 import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
 import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityWeaviateService;
@@ -92,12 +96,19 @@ public class ExerciseDeletionService {
 
     private final ParticipationRepository participationRepository;
 
+    private final TeamRepository teamRepository;
+
+    private final SubmissionRepository submissionRepository;
+
+    private final ResultRepository resultRepository;
+
     public ExerciseDeletionService(ExerciseRepository exerciseRepository, ParticipationDeletionService participationDeletionService,
             ProgrammingExerciseDeletionService programmingExerciseDeletionService, QuizExerciseService quizExerciseService,
             TutorParticipationRepository tutorParticipationRepository, ExampleSubmissionService exampleSubmissionService, Optional<StudentExamApi> studentExamApi,
             Optional<LectureUnitApi> lectureUnitApi, Optional<PlagiarismResultApi> plagiarismResultApi, Optional<TextApi> textApi, ChannelService channelService,
             Optional<CompetencyProgressApi> competencyProgressApi, Optional<SearchableEntityWeaviateService> searchableItemWeaviateService,
-            Optional<IrisChatSessionApi> irisChatSessionApi, EntityDeletionProgressService entityDeletionProgressService, ParticipationRepository participationRepository) {
+            Optional<IrisChatSessionApi> irisChatSessionApi, EntityDeletionProgressService entityDeletionProgressService, ParticipationRepository participationRepository,
+            TeamRepository teamRepository, SubmissionRepository submissionRepository, ResultRepository resultRepository) {
         this.exerciseRepository = exerciseRepository;
         this.participationDeletionService = participationDeletionService;
         this.programmingExerciseDeletionService = programmingExerciseDeletionService;
@@ -114,6 +125,9 @@ public class ExerciseDeletionService {
         this.irisChatSessionApi = irisChatSessionApi;
         this.entityDeletionProgressService = entityDeletionProgressService;
         this.participationRepository = participationRepository;
+        this.teamRepository = teamRepository;
+        this.submissionRepository = submissionRepository;
+        this.resultRepository = resultRepository;
     }
 
     /**
@@ -123,7 +137,14 @@ public class ExerciseDeletionService {
      * @return the summary of the deletion of the exercise
      */
     public ExerciseDeletionSummaryDTO getDeletionSummary(long exerciseId) {
-        return exerciseRepository.findDeletionSummaryByExerciseId(exerciseId).orElseThrow(() -> new EntityNotFoundException("Exercise", exerciseId));
+        ExerciseDeletionCountsDTO counts = exerciseRepository.findDeletionCountsByExerciseId(exerciseId).orElseThrow(() -> new EntityNotFoundException("Exercise", exerciseId));
+        long numberOfTeams = teamRepository.getNumberOfTeamsForExercise(exerciseId);
+        long numberOfSubmissions = submissionRepository.countByExerciseId(exerciseId);
+        long numberOfResults = resultRepository.countByExerciseIds(Set.of(exerciseId));
+        return new ExerciseDeletionSummaryDTO(counts.numberOfStudentParticipations(), numberOfTeams, numberOfSubmissions, numberOfResults, counts.numberOfAssessments(),
+                counts.numberOfComplaints(), counts.numberOfPlagiarismComparisons(), counts.numberOfExampleSubmissions(), counts.numberOfBuilds(),
+                counts.numberOfCommunicationPosts(), counts.numberOfAnswerPosts(), counts.numberOfCompetencyLinks(), counts.numberOfLectureUnitLinks(),
+                counts.numberOfStudentExams());
     }
 
     /**

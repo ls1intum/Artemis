@@ -36,10 +36,13 @@ test.describe.serial('Exam reset and deletion summary', { tag: '@slow' }, () => 
         await page.getByTestId('exam-delete').click();
         const dialog = page.getByRole('dialog');
         await expect(dialog).toContainText('What will be deleted');
-        await expect(dialog).toContainText(/Exercise groups\D*1\b/);
-        await expect(dialog).toContainText(/Text exercises\D*1\b/);
-        await expect(dialog).toContainText(/Registered students\D*1\b/);
-        await expect(dialog).toContainText(/Student exams \(submitted\)\D*1\b/);
+        // Each count is read from the cell right beside its own label, so a missing count cannot be satisfied by the number of the next row.
+        const countBesideLabel = (label: string) =>
+            dialog.locator('dt', { hasText: new RegExp(`^\\s*${label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s*$`) }).locator('xpath=following-sibling::dd[1]');
+        await expect(countBesideLabel('Exercise groups')).toHaveText('1');
+        await expect(countBesideLabel('Text exercises')).toHaveText('1');
+        await expect(countBesideLabel('Registered students')).toHaveText('1');
+        await expect(countBesideLabel('Student exams (submitted)')).toHaveText('1');
         await dialog.getByRole('button', { name: 'Cancel' }).click();
 
         // Cancelling changed nothing.

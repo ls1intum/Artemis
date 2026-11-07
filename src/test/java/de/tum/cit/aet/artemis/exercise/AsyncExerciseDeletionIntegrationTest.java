@@ -174,6 +174,12 @@ class AsyncExerciseDeletionIntegrationTest extends AbstractSpringIntegrationInde
         assertThat(messages).extracting(EntityDeletionProgressDTO::weightedProgressPercent).isSorted();
         assertThat(messages).as("the deletion of the last participation is reported")
                 .anyMatch(message -> "participations".equals(message.currentStep()) && message.totalItems() == 2 && message.itemsProcessed() == 2);
+
+        // The exercise is gone, but an instructor of its course, who is no administrator, can still read the final status and so finish a run that missed the last message.
+        var retained = request.get(progressUrl(), HttpStatus.OK, EntityDeletionProgressDTO.class);
+        assertThat(retained.status()).isEqualTo(EntityDeletionStatus.COMPLETED);
+        assertThat(retained.entityId()).isEqualTo(exercise.getId());
+        assertThat(retained.entityType()).isEqualTo(EntityDeletionType.EXERCISE);
     }
 
     @Test

@@ -458,14 +458,14 @@ public class EntityDeletionProgressService {
     }
 
     private void sendAndStore(EntityDeletionClaim claim, EntityDeletionProgressDTO status) {
-        // Send first: whoever reads the stored status afterwards (the status endpoint, or a test that waits for it) can rely on the message having been sent.
-        try {
-            websocketMessagingService.sendMessage(claim.destination(), status);
-        }
-        catch (RuntimeException e) {
-            // A lost progress message must not fail a deletion, clients can read the stored status.
-            log.warn("Failed to send the progress of the deletion of {} {}", claim.entityType(), claim.entityId(), e);
-        }
+        // Hand the message over first: whoever reads the stored status afterwards (the status endpoint, or a test that waits for it) can rely on it having been submitted.
+        // The sending itself is asynchronous and never throws, a failure only completes the returned future.
+        // A lost progress message must not fail a deletion, clients can read the stored status.
+        websocketMessagingService.sendMessage(claim.destination(), status).whenComplete((ignored, failure) -> {
+            if (failure != null) {
+                log.warn("Failed to send the progress of the deletion of {} {}", claim.entityType(), claim.entityId(), failure);
+            }
+        });
         statuses.put(claim.scopeKey(), status);
     }
 }

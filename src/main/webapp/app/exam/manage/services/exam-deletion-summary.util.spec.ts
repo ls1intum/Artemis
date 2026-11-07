@@ -51,6 +51,16 @@ describe('exam deletion summary util', () => {
             expect(categories[2].items[0]).toEqual({ labelKey: `${prefix}.numberStudentParticipations`, value: 600, highlight: true });
         });
 
+        it('lists the exam sessions and the live events, each with its own count', () => {
+            const categories = buildExamDeletionSummary({ numberOfExamSessions: 77, numberOfExamLiveEvents: 9 });
+
+            expect(categories.map((category) => category.titleKey)).toEqual([`${prefix}.category.students`]);
+            expect(categories[0].items.map(({ labelKey, value }) => ({ labelKey, value }))).toEqual([
+                { labelKey: `${prefix}.numberExamSessions`, value: 77 },
+                { labelKey: `${prefix}.numberExamLiveEvents`, value: 9 },
+            ]);
+        });
+
         it('lists nothing for an exam without data', () => {
             expect(buildExamDeletionSummary({})).toEqual([]);
         });

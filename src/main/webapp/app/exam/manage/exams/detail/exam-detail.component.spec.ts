@@ -416,6 +416,20 @@ describe('ExamDetailComponent', () => {
         expect(navigateSpy).not.toHaveBeenCalled();
     });
 
+    it('should not write to the closed delete dialog subject when the deletion request fails after the user left the page', () => {
+        const deletionService = TestBed.inject(EntityDeletionService) as unknown as MockEntityDeletionService;
+        const failed$ = new Subject<EntityDeletionProgress>();
+        deletionService.delete.mockReturnValueOnce(failed$);
+        vi.spyOn(service, 'delete').mockReturnValue(of(new HttpResponse<void>({ status: 202 })));
+        const dialogErrorNextSpy = vi.spyOn(component['dialogErrorSource'], 'next');
+
+        component.deleteExam(1);
+        fixture.destroy();
+        failed$.error(new HttpErrorResponse({ status: 409, statusText: 'Conflict', url: '/api/exam/delete' }));
+
+        expect(dialogErrorNextSpy).not.toHaveBeenCalled();
+    });
+
     it('should refresh lists but not navigate when the deletion ends while the page shows another exam', () => {
         const deletionService = TestBed.inject(EntityDeletionService) as unknown as MockEntityDeletionService;
         const ended$ = new Subject<EntityDeletionProgress>();

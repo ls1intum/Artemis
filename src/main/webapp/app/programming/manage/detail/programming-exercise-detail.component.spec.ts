@@ -645,6 +645,21 @@ describe('ProgrammingExerciseDetailComponent', () => {
         expect(routerNavigateSpy).not.toHaveBeenCalled();
     });
 
+    it('should not write to the closed delete dialog subject when the deletion request fails after the user left the page', () => {
+        const deletionService = TestBed.inject(EntityDeletionService) as unknown as MockEntityDeletionService;
+        const failed$ = new Subject<EntityDeletionProgress>();
+        deletionService.delete.mockReturnValueOnce(failed$);
+        vi.spyOn(exerciseService, 'delete').mockReturnValue(of(new HttpResponse({ body: null })));
+        comp.programmingExercise.set(mockProgrammingExercise);
+        const dialogErrorNextSpy = vi.spyOn(comp['dialogErrorSource'], 'next');
+
+        comp.deleteProgrammingExercise({});
+        fixture.destroy();
+        failed$.error(new HttpErrorResponse({ status: 409, statusText: 'Conflict', url: '/api/programming/delete' }));
+
+        expect(dialogErrorNextSpy).not.toHaveBeenCalled();
+    });
+
     it('should generate structure oracle', async () => {
         const alertSpy = vi.spyOn(alertService, 'addAlert');
         vi.spyOn(exerciseService, 'generateStructureOracle').mockReturnValue(of('success'));

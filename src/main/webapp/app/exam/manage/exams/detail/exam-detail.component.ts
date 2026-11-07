@@ -198,7 +198,12 @@ export class ExamDetailComponent implements OnInit, OnDestroy {
                     this.dialogErrorSource.next('');
                 }
             },
-            error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
+            error: (error: HttpErrorResponse) => {
+                // The request can fail after the user left the page, when the subject is already closed.
+                if (this.isAlive()) {
+                    this.dialogErrorSource.next(error.message);
+                }
+            },
         });
     }
 
