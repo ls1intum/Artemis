@@ -636,7 +636,7 @@
                                         }
                                         @if (
                                             isExamMode() &&
-                                            (!unassessedSubmissionByRound()[correctionRound]?.id || isTestRun()) &&
+                                            (getUnassessedSubmissionsForRound(correctionRound).length === 0 || isTestRun()) &&
                                             numberOfSubmissions().inTime !== numberOfAssessmentsOfCorrectionRounds()[correctionRound].inTime
                                         ) {
                                             <tumaet-ui-message severity="info">

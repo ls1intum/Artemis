@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.exercise.service;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.MAX_NUMBER_OF_LOCKED_SUBMISSIONS_PER_TUTOR;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.assertj.core.api.Assertions.fail;
@@ -210,6 +211,78 @@ class SubmissionServiceTest extends AbstractSpringIntegrationIndependentBatchTes
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void assessmentQueueTeamsRejectsStudents() throws Exception {
         request.get("/api/exercise/exercises/" + examTextExercise.getId() + "/assessment-queue-teams", HttpStatus.FORBIDDEN, String.class);
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = AssessmentType.class, names = { "MANUAL", "SEMI_AUTOMATIC" })
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void teamQueueExistingAssessmentIgnoresAthenaResults(AssessmentType assessmentType) {
+        var exercise = teamExercise(ExerciseType.TEXT);
+        var submission = teamSubmission(exercise, tutor1, "own");
+        var athenaResult = new Result();
+        athenaResult.setSubmission(submission);
+        athenaResult.setExerciseId(exercise.getId());
+        athenaResult.setCorrectionRound(0);
+        athenaResult.setAssessmentType(AssessmentType.AUTOMATIC_ATHENA);
+        resultRepository.save(athenaResult);
+        assertThat(studentParticipationRepository.findTeamAssessmentQueueParticipations(exercise.getId(), tutor1.getId(), 0)).hasSize(1)
+                .allSatisfy(entry -> assertThat(entry.submissionId()).isNull());
+        var manualResult = new Result();
+        manualResult.setSubmission(submission);
+        manualResult.setExerciseId(exercise.getId());
+        manualResult.setCorrectionRound(0);
+        manualResult.setAssessmentType(assessmentType);
+        resultRepository.save(manualResult);
+        var newerSubmission = participationUtilService.addSubmission((StudentParticipation) submission.getParticipation(), new TextSubmission().text("Later answer"));
+        var newerAthenaResult = new Result();
+        newerAthenaResult.setSubmission(newerSubmission);
+        newerAthenaResult.setExerciseId(exercise.getId());
+        newerAthenaResult.setCorrectionRound(0);
+        newerAthenaResult.setAssessmentType(AssessmentType.AUTOMATIC_ATHENA);
+        resultRepository.save(newerAthenaResult);
+        assertThat(studentParticipationRepository.findTeamAssessmentQueueParticipations(exercise.getId(), tutor1.getId(), 0)).extracting(entry -> entry.submissionId())
+                .containsExactly(submission.getId());
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = ExerciseType.class, names = { "TEXT", "MODELING", "FILE_UPLOAD" })
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void teamDraftTransferRespectsLockLimitButOwnDraftCanReopen(ExerciseType type) throws Exception {
+        var exercise = teamExercise(type);
+        var own = teamSubmission(exercise, tutor1, "own");
+        request.get(assessmentStartUrl(type, own.getId()), HttpStatus.OK, String.class);
+        var ownResultId = submissionRepository.findOneWithEagerResultAndFeedbackAndAssessmentNote(own.getId()).getLatestResult().getId();
+        for (int i = 1; i < MAX_NUMBER_OF_LOCKED_SUBMISSIONS_PER_TUTOR; i++) {
+            Submission additionalDraft = switch (type) {
+                case TEXT -> new TextSubmission().text("Open draft");
+                case MODELING -> new ModelingSubmission().model("{}");
+                case FILE_UPLOAD -> new FileUploadSubmission();
+                default -> throw new IllegalArgumentException();
+            };
+            var additional = participationUtilService.addSubmission((StudentParticipation) own.getParticipation(), additionalDraft);
+            var result = new Result();
+            result.setSubmission(additional);
+            result.setExerciseId(exercise.getId());
+            result.setAssessmentType(AssessmentType.MANUAL);
+            result.setCorrectionRound(0);
+            result.setAssessor(tutor1);
+            resultRepository.save(result);
+        }
+        var transferred = teamSubmission(exercise, tutor2, "other");
+        userUtilService.changeUser(TEST_PREFIX + "tutor2");
+        request.get(assessmentStartUrl(type, transferred.getId()), HttpStatus.OK, String.class);
+        var transferredResultId = submissionRepository.findOneWithEagerResultAndFeedbackAndAssessmentNote(transferred.getId()).getLatestResult().getId();
+        var team = teamRepository.findWithStudentsByIdElseThrow(((StudentParticipation) transferred.getParticipation()).getTeam().orElseThrow().getId());
+        team.setOwner(tutor1);
+        teamRepository.save(exercise, team);
+        userUtilService.changeUser(TEST_PREFIX + "tutor1");
+        var courseId = exercise.getCourseViaExerciseGroupOrCourseMemberElseThrow().getId();
+        assertThat(submissionService.getLockedSubmissions(courseId)).hasSize(Math.toIntExact(MAX_NUMBER_OF_LOCKED_SUBMISSIONS_PER_TUTOR));
+        request.get(assessmentStartUrl(type, transferred.getId()), HttpStatus.BAD_REQUEST, String.class);
+        assertThat(resultRepository.findByIdWithEagerFeedbacksAndAssessor(transferredResultId).orElseThrow().getAssessor()).isEqualTo(tutor2);
+        request.get(assessmentStartUrl(type, own.getId()), HttpStatus.OK, String.class);
+        assertThat(resultRepository.findByIdWithEagerFeedbacksAndAssessor(ownResultId).orElseThrow().getAssessor()).isEqualTo(tutor1);
+        assertThat(submissionService.getLockedSubmissions(courseId)).hasSize(Math.toIntExact(MAX_NUMBER_OF_LOCKED_SUBMISSIONS_PER_TUTOR));
     }
 
     @ParameterizedTest

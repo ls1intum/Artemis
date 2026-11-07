@@ -689,7 +689,11 @@ public class SubmissionService {
 
         if (result.getAssessor() == null || submission.getParticipation().getExercise().isTeamMode() && submission.getParticipation() instanceof StudentParticipation participation
                 && participation.getTeam().isPresent() && result.getCompletionDate() == null) {
-            result.setAssessor(userRepository.getUser());
+            var user = userRepository.getUser();
+            if (result.getAssessor() != null && !result.getAssessor().getId().equals(user.getId())) {
+                checkSubmissionLockLimit(submission.getParticipation().getExercise().getCourseViaExerciseGroupOrCourseMemberElseThrow().getId());
+            }
+            result.setAssessor(user);
         }
 
         // The requested correction round takes precedence over the one Submission.addResult would derive.

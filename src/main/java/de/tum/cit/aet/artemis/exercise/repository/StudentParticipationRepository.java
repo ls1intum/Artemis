@@ -1086,7 +1086,10 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
      */
     @Query("""
             SELECT new de.tum.cit.aet.artemis.exercise.dto.TeamAssessmentQueueEntryDTO(p.id, team.id, team.shortName,
-                (SELECT MAX(s.id) FROM Submission s JOIN s.results r WHERE s.participation.id = p.id AND r.correctionRound = :correctionRound))
+                (SELECT MAX(s.id) FROM Submission s JOIN s.results r WHERE s.participation.id = p.id AND r.correctionRound = :correctionRound
+                    AND r.assessmentType IN (
+                        de.tum.cit.aet.artemis.assessment.domain.AssessmentType.MANUAL,
+                        de.tum.cit.aet.artemis.assessment.domain.AssessmentType.SEMI_AUTOMATIC)))
             FROM StudentParticipation p JOIN p.team team
             WHERE p.exercise.id = :exerciseId AND p.testRun = FALSE
                 AND (:teamOwnerId IS NULL OR team.owner.id = :teamOwnerId)
