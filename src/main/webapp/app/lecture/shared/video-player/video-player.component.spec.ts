@@ -114,7 +114,7 @@ describe('VideoPlayerComponent', () => {
                             (resizeMove)="onVideoColumnResize($event)"
                             (resizeEnd)="onResizeEnd()"
                         >
-                            <video #videoRef></video>
+                            <video #videoRef (pointerenter)="onVideoPointerEnter()" (pointerleave)="onVideoPointerLeave()"></video>
                         </div>
                         <button #resizerHandle type="button" class="resizer-handle"></button>
                         <div class="transcript-column"></div>
@@ -192,6 +192,34 @@ describe('VideoPlayerComponent', () => {
 
         expect(getIndex()).toBe(0);
         expect(component.getCurrentSlideNumber()).toBe(7);
+    });
+
+    it('defers the transcript scroll while the pointer is over the video so a native menu stays open', async () => {
+        const segments: TranscriptSegment[] = [
+            { startTime: 10, endTime: 12, text: 'A' },
+            { startTime: 20, endTime: 22, text: 'B' },
+        ];
+        setInputs('https://cdn.example.com/m.m3u8', segments);
+        await render();
+
+        const scrollSpy = vi.fn();
+        // The test template renders no transcript viewer, so stub the viewChild signal.
+        (component as any).transcriptViewer = () => ({ scrollToSegment: scrollSpy });
+        const videoElement = component.videoRef()!.nativeElement;
+
+        videoElement.dispatchEvent(new Event('pointerenter'));
+        component.updateCurrentSegment(10.1);
+        component.updateCurrentSegment(20.1);
+        expect(getIndex()).toBe(1);
+        expect(scrollSpy).not.toHaveBeenCalled();
+
+        videoElement.dispatchEvent(new Event('pointerleave'));
+        expect(scrollSpy).toHaveBeenCalledOnce();
+        expect(scrollSpy).toHaveBeenCalledWith(1);
+
+        component.updateCurrentSegment(10.1);
+        expect(scrollSpy).toHaveBeenCalledTimes(2);
+        expect(scrollSpy).toHaveBeenLastCalledWith(0);
     });
 
     it('timeupdate outside any segment leaves index at -1', async () => {

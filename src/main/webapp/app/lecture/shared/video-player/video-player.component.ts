@@ -65,6 +65,15 @@ export class VideoPlayerComponent implements AfterViewInit, OnDestroy {
     /** True while the divider is being dragged; disables the video's pointer events so the drag stays smooth. */
     protected readonly isResizing = signal<boolean>(false);
 
+    /**
+     * True while the pointer is over the video, including the native controls and their popup menus (speed, download).
+     * Chrome closes such a menu as soon as any scroll happens, so the transcript must not auto-scroll meanwhile.
+     */
+    private pointerOverVideo = false;
+
+    /** The segment the transcript still has to scroll to once the pointer leaves the video. */
+    private pendingTranscriptScrollIndex: number | undefined = undefined;
+
     /** Store reference to window resize handler for cleanup */
     private resizeHandler: (() => void) | undefined = undefined;
 
@@ -400,11 +409,29 @@ export class VideoPlayerComponent implements AfterViewInit, OnDestroy {
             this.currentSegmentIndex.set(index);
             this.updateActiveSlideNumber(segments[index].slideNumber);
 
-            // Scroll to the active segment in the transcript viewer
-            const viewer = this.transcriptViewer();
-            if (viewer) {
-                viewer.scrollToSegment(index);
-            }
+            this.scrollTranscriptToSegment(index);
+        }
+    }
+
+    /** Scrolls the transcript to the segment, or defers it while the pointer is over the video so an open native menu stays open. */
+    private scrollTranscriptToSegment(index: number): void {
+        if (this.pointerOverVideo) {
+            this.pendingTranscriptScrollIndex = index;
+            return;
+        }
+        this.transcriptViewer()?.scrollToSegment(index);
+    }
+
+    protected onVideoPointerEnter(): void {
+        this.pointerOverVideo = true;
+    }
+
+    protected onVideoPointerLeave(): void {
+        this.pointerOverVideo = false;
+        const pendingIndex = this.pendingTranscriptScrollIndex;
+        this.pendingTranscriptScrollIndex = undefined;
+        if (pendingIndex !== undefined) {
+            this.transcriptViewer()?.scrollToSegment(pendingIndex);
         }
     }
 

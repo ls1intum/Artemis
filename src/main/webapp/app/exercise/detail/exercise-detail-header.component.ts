@@ -1,13 +1,14 @@
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 import { Exercise, getIcon } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { DocumentationButtonComponent, DocumentationType } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
 
 @Component({
     selector: 'jhi-exercise-detail-header',
     templateUrl: './exercise-detail-header.component.html',
-    imports: [FaIconComponent, TranslateDirective, DocumentationButtonComponent],
+    imports: [FaIconComponent, TranslateDirective, ArtemisTranslatePipe, DocumentationButtonComponent],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ExerciseDetailHeaderComponent {

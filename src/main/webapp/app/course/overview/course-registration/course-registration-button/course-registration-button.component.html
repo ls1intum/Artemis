@@ -11,11 +11,5 @@
     />
 }
 @if (!course().enrollmentConfirmationMessage!) {
-    <button
-        type="button"
-        class="btn btn-primary"
-        (click)="registerForCourse(course().id!)"
-        [disabled]="loading()"
-        jhiTranslate="artemisApp.studentDashboard.enroll.enrollInCourse"
-    ></button>
+    <button type="button" tumAetUiButton (click)="registerForCourse(course().id!)" [disabled]="loading()" jhiTranslate="artemisApp.studentDashboard.enroll.enrollInCourse"></button>
 }

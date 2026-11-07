@@ -1,6 +1,6 @@
 <div class="@container mb-4!">
-    <div class="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-start gap-x-2 gap-y-2 @7xl:grid-cols-[minmax(0,1fr)_auto_auto]">
-        <div class="col-span-2 flex min-w-0 items-stretch gap-2 [&_span]:hidden @4xl:[&_span]:inline [&>*]:min-w-0 [&>*]:flex-initial @7xl:col-span-1">
+    <div class="flex min-w-0 flex-wrap items-start gap-2">
+        <div class="flex min-w-0 items-stretch gap-2 [&_span]:hidden @4xl:[&_span]:inline [&>*]:min-w-0 [&>*]:flex-initial">
             <ng-content select="[detailNavigationActions]" />
         </div>
         <div
@@ -9,6 +9,6 @@
         >
             <ng-content select="[detailEditingActions]" />
         </div>
-        <div class="flex items-start justify-end [&_button>span]:hidden @3xl:[&_button>span]:inline"><ng-content select="[detailMoreActions]" /></div>
+        <div class="flex items-start [&_button>span]:hidden @3xl:[&_button>span]:inline"><ng-content select="[detailMoreActions]" /></div>
     </div>
 </div>

@@ -15,15 +15,15 @@
             <table class="table table-striped">
                 <thead>
                     <tr jhiSort [(predicate)]="predicate" [(ascending)]="ascending" (sortChange)="transition()">
-                        <th jhiSortBy="title">
+                        <th jhiSortBy="title" class="whitespace-nowrap">
                             <span jhiTranslate="artemisApp.studentDashboard.course"></span>
                             <fa-icon [icon]="faSort" />
                         </th>
-                        <th jhiSortBy="semester">
+                        <th jhiSortBy="semester" class="whitespace-nowrap">
                             <span jhiTranslate="artemisApp.course.semester"></span>
                             <fa-icon [icon]="faSort" />
                         </th>
-                        <th>
+                        <th class="w-full">
                             <span jhiTranslate="artemisApp.course.description"></span>
                         </th>
                     </tr>
@@ -34,7 +34,7 @@
                             <td>
                                 <span>{{ course.title }}</span>
                             </td>
-                            <td>
+                            <td class="whitespace-nowrap">
                                 <span>{{ course.semester }}</span>
                             </td>
                             <td>

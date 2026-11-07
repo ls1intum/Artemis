@@ -41,4 +41,18 @@ describe('ExerciseCategoriesComponent', () => {
 
         expect(fixture.nativeElement.textContent).toContain('Algorithms');
     });
+
+    it('should use white text on a dark category color and black text on a light one', () => {
+        expect(component.categoryTextColor('#8b0000')).toBe('white');
+        expect(component.categoryTextColor('#ffff00')).toBe('black');
+        expect(component.categoryTextColor(undefined)).toBeUndefined();
+    });
+
+    it('should apply the contrasting text color to the rendered category', () => {
+        fixture.componentRef.setInput('exercise', { ...exercise, categories: [{ category: 'Dark', color: '#8b0000' }] } as Exercise);
+        fixture.detectChanges();
+
+        const badge = fixture.nativeElement.querySelector('span.rounded') as HTMLElement;
+        expect(badge.style.color).toBe('white');
+    });
 });
