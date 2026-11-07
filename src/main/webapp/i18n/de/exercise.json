@@ -83,8 +83,17 @@
                 "tabTitle": "Von dieser Instanz"
             },
             "importFromFile": {
-                "notSupportedExerciseType": "Der Import von Dateien wird für den Aufgabentyp {{ exerciseType }} nicht unterstützt.",
-                "tabTitle": "Aus einer Datei"
+                "tabTitle": "Aus einer Datei",
+                "description": "Wähle eine Zip-Datei, die du mit Exportieren in der Aufgabenübersicht eines Kurses heruntergeladen hast. Artemis öffnet dann den Aufgabeneditor mit den Einstellungen aus der Datei, sodass du sie vor dem Speichern prüfen kannst.",
+                "uploadForImport": "Aufgabe aus Datei importieren",
+                "fileCountError": "Wähle genau eine Datei.",
+                "fileTooBigError": "Die Datei {{ fileName }} ist zu groß. Die maximale Dateigröße beträgt 20 MB.",
+                "fileTypeNotSupportedError": "Der Dateityp wird nicht unterstützt. Wähle eine Datei mit der Endung .zip.",
+                "noExerciseDetailsJson": "Das Zip-Archiv enthält nicht genau eine JSON-Datei mit den Aufgabendetails.",
+                "exerciseTypeDoesntMatch": "Die Datei enthält keine Aufgabe des gewählten Typs.",
+                "missingImage": "Das Zip-Archiv enthält das Bild {{ fileName }} nicht.",
+                "imageUploadFailed": "Das Bild {{ fileName }} konnte nicht hochgeladen werden.",
+                "importFailed": "Der Aufgabenimport konnte nicht vorbereitet werden. Bitte versuche es erneut."
             },
             "exercise": "Aufgabe",
             "results": "Ergebnisse",
@@ -183,7 +192,6 @@
             "no": "Nein",
             "createAction": "Erstellen",
             "importAction": "Importieren",
-            "exportAction": "Exportieren",
             "difficulty": "Schwierigkeit",
             "noLevel": "Keine Angabe",
             "easy": "Leicht",
