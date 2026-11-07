@@ -659,7 +659,7 @@ public class StudentExamService {
      * Sets up the participations and submissions for the given exercises of one student exam.
      * <p>
      * Takes the few values it reads rather than the student exam entity, so that the bulk preparation in
-     * {@link #startExercises(Long, List)} can feed it from a projection instead of loading the whole exam graph.
+     * {@link #startExercises(Long)} can feed it from a projection instead of loading the whole exam graph.
      *
      * @param studentExamId           the id of the student exam the participations belong to, used for logging only
      * @param student                 the student to create the participations for
