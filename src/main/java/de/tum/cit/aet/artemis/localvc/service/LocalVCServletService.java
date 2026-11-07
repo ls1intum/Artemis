@@ -13,8 +13,14 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.MessageDigest;
 import java.time.Duration;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
+import java.time.format.FormatStyle;
 import java.util.Base64;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -22,6 +28,7 @@ import java.util.function.Supplier;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
+import jakarta.annotation.PostConstruct;
 import jakarta.servlet.http.HttpServletRequest;
 
 import org.apache.sshd.server.session.ServerSession;
@@ -206,6 +213,14 @@ public class LocalVCServletService {
     @Value("${artemis.version-control.build-agent-use-ssh:false}")
     private boolean useSshForBuildAgent;
 
+    /**
+     * The day on which this installation plans to stop accepting account passwords for Git, as an ISO date such as {@code 2027-01-15}. Empty announces no date.
+     * <p>
+     * This only changes what the password notices (the email and the message printed on a push) tell users. Artemis does not reject passwords on that day.
+     */
+    @Value("${artemis.version-control.password-authentication-end-date:}")
+    private String passwordAuthenticationEndDate;
+
     public static final String BUILD_USER_NAME = "buildjob_user";
 
     public static final String HTTPS_CLONE_EMAIL_CACHE = "httpsCloneWarningEmailCache";
@@ -215,8 +230,6 @@ public class LocalVCServletService {
      * has been accepted, so later stages can recognise build agent traffic without guessing from the username.
      */
     private static final String BUILD_AGENT_CLONE_REQUEST_ATTRIBUTE = "artemis.buildAgentClone";
-
-    private static final String AUTHENTICATED_USER_REQUEST_ATTRIBUTE = "artemis.authenticatedUser";
 
     private static final String AUTHENTICATION_MECHANISM_REQUEST_ATTRIBUTE = "artemis.authenticationMechanism";
 
@@ -410,7 +423,6 @@ public class LocalVCServletService {
 
         var authenticated = authenticateUser(authorizationHeader, exercise, localVCRepositoryUri, participationForRepository);
         User user = authenticated.user();
-        request.setAttribute(AUTHENTICATED_USER_REQUEST_ATTRIBUTE, user);
         request.setAttribute(AUTHENTICATION_MECHANISM_REQUEST_ATTRIBUTE, authenticated.mechanism());
 
         // Check that offline IDE usage is allowed.
@@ -437,6 +449,10 @@ public class LocalVCServletService {
         }
 
         request.setAttribute(AUTHORIZED_EXERCISE_ATTRIBUTE, exercise);
+
+        if (authenticated.mechanism() == AuthenticationMechanism.PASSWORD) {
+            sendPasswordAuthenticationEmail(user, exercise);
+        }
 
         log.debug("Authorizing user {} for repository {} took {}", user.getLogin(), localVCRepositoryUri, TimeLogUtil.formatDurationFrom(timeNanoStart));
     }
@@ -1755,19 +1771,6 @@ public class LocalVCServletService {
             RepositoryActionType repositoryActionType = getRepositoryActionReadType(clientOffered);
 
             vcsAccessLogService.ifPresent(service -> service.updateRepositoryActionType(localVCRepositoryUri, repositoryActionType));
-
-            if (repositoryActionType == RepositoryActionType.CLONE) {
-                User user = (User) request.getAttribute(AUTHENTICATED_USER_REQUEST_ATTRIBUTE);
-                AuthenticationMechanism mechanism = (AuthenticationMechanism) request.getAttribute(AUTHENTICATION_MECHANISM_REQUEST_ATTRIBUTE);
-                if (mechanism == AuthenticationMechanism.PASSWORD && user != null) {
-                    try {
-                        checkAndSendHttpsCloneEmail(user);
-                    }
-                    catch (Exception e) {
-                        log.warn("Could not send HTTPS clone tip email for user {}: {}", user.getId(), e.getMessage());
-                    }
-                }
-            }
         }
         catch (Exception e) {
             log.debug("Could not update VCS access log for HTTPS clone/pull: {}", e.getMessage());
@@ -1775,26 +1778,111 @@ public class LocalVCServletService {
     }
 
     /**
-     * Sends an email tip about using Token/SSH authentication instead of HTTPS password,
-     * limited to at most once per 24 hours per user using Hazelcast cache.
+     * Tells a user who just authenticated with an account password to switch to a token or an SSH key, by email.
+     * <p>
+     * Any password authentication counts, not only a clone: a user who cloned once and keeps a saved password in the Git client only ever pulls and pushes.
+     * At most one email is sent per user and 24 hours, whichever repository or action comes first.
      *
-     * @param user The user performing the clone operation.
+     * @param user     the user who authenticated with their password
+     * @param exercise the exercise whose repository the user accessed
      */
-    private void checkAndSendHttpsCloneEmail(User user) {
-        if (user.getEmail() == null || user.getEmail().isBlank()) {
+    void sendPasswordAuthenticationEmail(User user, GitRepositoryAccessDTO exercise) {
+        DistributedMap<Long, Boolean> cache = null;
+        boolean slotClaimed = false;
+        // A notice must never cost the user their git operation, whatever goes wrong while it is prepared or sent.
+        try {
+            if (user.getEmail() == null || user.getEmail().isBlank()) {
+                return;
+            }
+
+            cache = distributedDataProvider.getExpiringMap(HTTPS_CLONE_EMAIL_CACHE, Duration.ofHours(24));
+            // putIfAbsent returns null if there was no entry, so only the first password authentication within 24 hours continues
+            if (cache.putIfAbsent(user.getId(), Boolean.TRUE, Duration.ofHours(24)) != null) {
+                return;
+            }
+            slotClaimed = true;
+
+            var titles = programmingExerciseRepository.findExerciseAndCourseTitlesById(exercise.exerciseId()).orElse(null);
+            Map<String, Object> variables = new HashMap<>();
+            variables.put("exerciseTitle", titles != null ? titles.exerciseTitle() : "");
+            variables.put("courseTitle", titles != null && titles.courseTitle() != null ? titles.courseTitle() : "");
+            variables.put("courseId", exercise.courseId());
+            variables.put("exerciseId", exercise.exerciseId());
+            // An exam exercise has no page of its own outside the exam, so the email links to its course instead.
+            variables.put("examExercise", exercise.examId() != null);
+            getPasswordAuthenticationEndDate().ifPresent(endDate -> variables.put("endDate", formatForUser(endDate, user)));
+
+            mailSendingService.buildAndSendAsync(MailRecipientDTO.from(user), "email.httpsCloneTip.title", "mail/httpsCloneTipEmail", variables);
+        }
+        catch (Exception e) {
+            log.warn("Could not send the password authentication email for user {}: {}", user.getId(), e.getMessage());
+            // Give back only a slot this attempt claimed, so that the next password authentication can try again instead of waiting a day.
+            // A failed claim must not remove the slot of a concurrent request.
+            if (slotClaimed) {
+                releaseEmailSlot(cache, user);
+            }
+        }
+    }
+
+    private void releaseEmailSlot(DistributedMap<Long, Boolean> cache, User user) {
+        if (cache == null) {
             return;
         }
-
-        DistributedMap<Long, Boolean> cache = distributedDataProvider.getExpiringMap(HTTPS_CLONE_EMAIL_CACHE, Duration.ofHours(24));
-        // putIfAbsent returns null if cache is empty
-        boolean isFirstTimeIn24Hours = cache.putIfAbsent(user.getId(), Boolean.TRUE, Duration.ofHours(24)) == null;
-
-        // If cache was empty then send an email
-        if (isFirstTimeIn24Hours) {
-            MailRecipientDTO mailRecipient = MailRecipientDTO.from(user);
-
-            mailSendingService.buildAndSendAsync(mailRecipient, "email.httpsCloneTip.title", "mail/httpsCloneTipEmail", Map.of());
+        try {
+            cache.remove(user.getId());
         }
+        catch (Exception e) {
+            log.warn("Could not release the password authentication email slot of user {}: {}", user.getId(), e.getMessage());
+        }
+    }
+
+    /**
+     * The message git prints to a user who pushed with an account password, as {@code remote: ...} lines.
+     *
+     * @return the message, including the end date when the installation announces one
+     */
+    public String getPasswordAuthenticationPushNotice() {
+        String notice = "You pushed with your Artemis account password. A password can reach everything your account can reach and stays saved in your Git client. "
+                + "Please switch to an access token or an SSH key: open the exercise in Artemis, click the Code button and choose Token or SSH.";
+        return getPasswordAuthenticationEndDate().map(endDate -> notice + " Your Artemis administrators plan to stop accepting passwords for Git on " + endDate + ".")
+                .orElse(notice);
+    }
+
+    /**
+     * Reads how a request authenticated, as recorded when the request was authorized.
+     *
+     * @param request a request that went through {@link #authenticateAndAuthorizeGitRequest}
+     * @return the mechanism, or {@code null} if the request was not authenticated
+     */
+    @Nullable
+    public AuthenticationMechanism getAuthenticationMechanism(HttpServletRequest request) {
+        return (AuthenticationMechanism) request.getAttribute(AUTHENTICATION_MECHANISM_REQUEST_ATTRIBUTE);
+    }
+
+    /**
+     * Rejects a malformed {@code password-authentication-end-date} when the server starts, rather than failing for the first user who authenticates with a password.
+     */
+    @PostConstruct
+    void validatePasswordAuthenticationEndDate() {
+        getPasswordAuthenticationEndDate();
+    }
+
+    private Optional<LocalDate> getPasswordAuthenticationEndDate() {
+        if (passwordAuthenticationEndDate == null || passwordAuthenticationEndDate.isBlank()) {
+            return Optional.empty();
+        }
+        try {
+            return Optional.of(LocalDate.parse(passwordAuthenticationEndDate.strip()));
+        }
+        catch (DateTimeParseException e) {
+            throw new IllegalStateException(
+                    "artemis.version-control.password-authentication-end-date must be an ISO date such as 2027-01-15, but was '" + passwordAuthenticationEndDate + "'", e);
+        }
+    }
+
+    private static String formatForUser(LocalDate date, User user) {
+        Locale locale = user.getLangKey() != null ? Locale.forLanguageTag(user.getLangKey()) : Locale.ENGLISH;
+        return date.format(DateTimeFormatter.ofLocalizedDate(FormatStyle.LONG).withLocale(locale));
     }
 
     /**

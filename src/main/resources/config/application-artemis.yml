@@ -92,6 +92,7 @@ artemis:
     # build-agent-use-ssh: true
     default-branch: main            # The branch that should be used as default branch for all newly created repositories. This does NOT have to be equal to the default branch of the VCS
     repository-authentication-mechanisms: token,ssh,password # the order of authentication mechanisms in the code button pop up. Removing parts removes them from the drop-down
+    # password-authentication-end-date: 2027-01-15  # ISO date on which you plan to stop accepting account passwords for Git. Only announced in the email and the push message sent to users who still use a password; Artemis does not reject passwords on that day
   # REMOVE_IN_ARTEMIS_11 (Jenkins): user, password, token, url, vcs-credentials, artemis-authentication-token-* and build-timeout are Jenkins-only keys
   continuous-integration:
     user: <username>                # e.g. ga12abc

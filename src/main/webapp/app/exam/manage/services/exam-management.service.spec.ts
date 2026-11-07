@@ -632,18 +632,13 @@ describe('Exam Management Service Tests', () => {
     it('should enroll all registered students to exam', async () => {
         // GIVEN
         const mockExam: Exam = { id: 1 };
-        const expected: StudentDTO[] = [
-            { firstName: 'firstName1', lastName: 'lastName1', registrationNumber: '1', login: 'login1', email: '' },
-            { firstName: 'firstName2', lastName: 'lastName2', registrationNumber: '2', login: 'login2', email: '' },
-        ];
-
-        service.addAllStudentsOfCourseToExam(course.id!, mockExam.id!).subscribe((res) => expect(res.body).toBeUndefined());
+        service.addAllStudentsOfCourseToExam(course.id!, mockExam.id!).subscribe((res) => expect(res.body).toBeNull());
 
         const req = httpMock.expectOne({
             method: 'POST',
             url: `${service.resourceUrl}/${course.id!}/exams/${mockExam.id!}/register-course-students`,
         });
-        req.flush(expected);
+        req.flush(null);
         await Promise.resolve();
     });
 
@@ -956,6 +951,28 @@ describe('Exam Management Service Tests', () => {
     it('loads tutor statistics by default with the returned checklist data', () => {
         service.getExamStatistics(1, 2).subscribe((response) => expect(response.body?.numberOfGeneratedStudentExams).toBe(3));
         httpMock.expectOne({ method: 'GET', url: 'api/exam/courses/1/exams/2/statistics' }).flush({ numberOfGeneratedStudentExams: 3 });
+    });
+
+    it('loads announcement history and converts every timestamp', () => {
+        service.getAnnouncements(1, 2).subscribe((events) => {
+            expect(events).toHaveLength(1);
+            expect(events[0].createdDate.toISOString()).toBe('2026-10-25T08:00:00.000Z');
+        });
+        httpMock.expectOne({ method: 'GET', url: 'api/exam/courses/1/exams/2/announcements' }).flush([{ id: 3, createdDate: '2026-10-25T08:00:00Z' }]);
+    });
+
+    it('requests all registered users for manual attendance correction', () => {
+        service.verifyExamUserAttendance(1, 2, true).subscribe();
+        const req = httpMock.expectOne((request) => request.url === 'api/exam/courses/1/exams/2/verify-exam-users');
+        expect(req.request.params.get('includeAll')).toBe('true');
+        req.flush([]);
+    });
+
+    it.each([true, false])('saves the explicit attendance confirmation %s', (attended) => {
+        service.updateAttendance(1, 2, 3, attended).subscribe();
+        const req = httpMock.expectOne({ method: 'PUT', url: 'api/exam/courses/1/exams/2/exam-users/3/attendance' });
+        expect(req.request.body).toEqual({ attended });
+        req.flush(null, { status: 204, statusText: 'No Content' });
     });
 
     it('creates an announcement and converts its publication date', () => {
