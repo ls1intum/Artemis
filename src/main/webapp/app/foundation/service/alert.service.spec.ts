@@ -3,6 +3,7 @@ import { TestBed, inject } from '@angular/core/testing';
 import { MissingTranslationHandler, TranslateService, provideTranslateService } from '@ngx-translate/core';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { missingTranslationHandler } from 'app/core/config/translation.config';
+import { captureException } from 'app/core/error-reporting/capture-exception';
 import { Alert, AlertCreationProperties, AlertService, AlertType } from 'app/foundation/service/alert.service';
 import { EventManager } from 'app/foundation/service/event-manager.service';
 import englishUserManagement from 'src/main/webapp/i18n/en/user-management.json';
@@ -11,6 +12,8 @@ import englishErrors from 'src/main/webapp/i18n/en/error.json';
 import germanErrors from 'src/main/webapp/i18n/de/error.json';
 import enQuizSubmission from 'src/main/webapp/i18n/en/quizSubmission.json';
 import deQuizSubmission from 'src/main/webapp/i18n/de/quizSubmission.json';
+
+vi.mock('app/core/error-reporting/capture-exception', () => ({ captureException: vi.fn() }));
 
 describe('Alert Service Test', () => {
     const alertSample = {
@@ -198,6 +201,23 @@ describe('Alert Service Test', () => {
         // THEN
         expect(service.get()).toHaveLength(1);
         expect(service.get()[0].message).toBe('Server not reachable');
+    });
+
+    it('should show the translation of the server not being reachable once the translations are loaded', () => {
+        TestBed.inject(TranslateService).setTranslation('en', { 'error.server.not.reachable': 'Der Server ist nicht erreichbar' }, true);
+
+        eventManager.broadcast({ name: 'artemisApp.httpError', content: { status: 0 } });
+
+        expect(service.get()[0].message).toBe('Der Server ist nicht erreichbar');
+    });
+
+    it('should not report a missing translation if the server is not reachable, because the translations may not be loadable either', () => {
+        vi.mocked(captureException).mockClear();
+
+        eventManager.broadcast({ name: 'artemisApp.httpError', content: { status: 0 } });
+
+        expect(service.get()[0].message).toBe('Server not reachable');
+        expect(captureException).not.toHaveBeenCalled();
     });
 
     it('should not display an alert on status 404', () => {

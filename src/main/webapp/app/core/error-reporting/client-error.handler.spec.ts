@@ -98,6 +98,81 @@ describe('ClientErrorHandler', () => {
 
             expect(captureException).not.toHaveBeenCalled();
         });
+
+        describe('errors that no change of the application can avoid', () => {
+            it.each(['ResizeObserver loop completed with undelivered notifications.', 'ResizeObserver loop limit exceeded'])(
+                'should not report the notice of the browser "%s", but still log it to the console',
+                (message) => {
+                    handler.handleError(new Error(message, { cause: { isTrusted: true } }));
+
+                    expect(captureException).not.toHaveBeenCalled();
+                    expect(consoleError).toHaveBeenCalled();
+                },
+            );
+
+            it('should report an error whose message only mentions the resize observer', () => {
+                const error = new Error('Could not set up the ResizeObserver loop of the chart');
+
+                handler.handleError(error);
+
+                expect(captureException).toHaveBeenCalledExactlyOnceWith(error);
+            });
+
+            it.each([
+                [
+                    'V8',
+                    "TypeError: Cannot read properties of undefined (reading 'M_ID')\n    at Y (chrome-extension://eppiocemhmnlbhjplcgkofciiegomcon/executors/200.js:1:761)\n    at E (chrome-extension://eppiocemhmnlbhjplcgkofciiegomcon/executors/200.js:1:1442)",
+                ],
+                [
+                    'Firefox',
+                    'TypeError: undefined has no properties\nrun@moz-extension://3c2f7d9a-0000-4000-8000-000000000000/content.js:12:5\n@https://artemis.tum.de/main.js:1:1',
+                ],
+                ['Safari', 'TypeError: undefined is not an object\nrun@safari-web-extension://ABC/content.js:12:5\nglobal code@https://artemis.tum.de/sign-in:1:30'],
+            ])('should not report an error that was thrown inside a browser extension (%s)', (_browser, stack) => {
+                const error = new Error('thrown by an extension');
+                error.stack = stack;
+
+                handler.handleError(error);
+
+                expect(captureException).not.toHaveBeenCalled();
+            });
+
+            it('should report an error of the application that a browser extension caused, because only the top frame decides', () => {
+                const error = new Error('Cannot read properties of undefined');
+                error.stack =
+                    "TypeError: Cannot read properties of undefined (reading 'toLowerCase')\n    at isToggleShortcut (https://artemis.tum.de/main.js:17216:22)\n    at dispatch (chrome-extension://abc/content.js:1:1)";
+
+                handler.handleError(error);
+
+                expect(captureException).toHaveBeenCalledExactlyOnceWith(error);
+            });
+
+            it('should report an error whose message mentions an extension url but whose stack is ours', () => {
+                const error = new Error('Failed to load chrome-extension://abc/icon.png');
+                error.stack = 'Error: Failed to load chrome-extension://abc/icon.png\n    at load (https://artemis.tum.de/main.js:1:1)';
+
+                handler.handleError(error);
+
+                expect(captureException).toHaveBeenCalledExactlyOnceWith(error);
+            });
+
+            it('should report an error without a stack', () => {
+                const error = new Error('no stack');
+                error.stack = undefined;
+
+                handler.handleError(error);
+
+                expect(captureException).toHaveBeenCalledExactlyOnceWith(error);
+            });
+
+            it('should report an address that matches no route as information only', () => {
+                const error = new Error("NG04002: 'courses/588/excercises'");
+
+                handler.handleError(error);
+
+                expect(captureException).toHaveBeenCalledExactlyOnceWith(error, { severity: 'INFO' });
+            });
+        });
     });
 
     describe('reportIfPasskeyIsNotSupported', () => {

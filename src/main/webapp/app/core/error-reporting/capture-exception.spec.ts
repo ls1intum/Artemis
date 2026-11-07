@@ -85,6 +85,42 @@ describe('ClientErrorReporter', () => {
             expect(reportOf(1).message).toBe('Http failure response for (unknown url): 502');
         });
 
+        it.each([
+            { status: 0, requested: 'ERROR', expected: 'INFO' },
+            { status: 0, requested: 'CRITICAL', expected: 'INFO' },
+            { status: 403, requested: 'CRITICAL', expected: 'INFO' },
+            { status: 499, requested: 'ERROR', expected: 'INFO' },
+            { status: 502, requested: 'ERROR', expected: 'WARN' },
+            { status: 503, requested: 'CRITICAL', expected: 'WARN' },
+            { status: 504, requested: 'ERROR', expected: 'WARN' },
+            { status: 504, requested: 'INFO', expected: 'INFO' },
+            { status: 500, requested: 'ERROR', expected: 'ERROR' },
+            { status: 500, requested: 'CRITICAL', expected: 'CRITICAL' },
+        ] as const)('should report a failed request with status $status that was requested as $requested with severity $expected', ({ status, requested, expected }) => {
+            reporter.report(new HttpErrorResponse({ status, url: '/api/core/courses' }), { severity: requested });
+
+            expect(reportOf(0).severity).toBe(expected);
+        });
+
+        it('should classify an error that failed because of a failed request like the request', () => {
+            reporter.report(new Error('Passkey autocomplete error', { cause: new HttpErrorResponse({ status: 504 }) }));
+            reporter.report(new Error('Passkey autocomplete error', { cause: new HttpErrorResponse({ status: 0 }) }));
+            reporter.report(new Error('Passkey autocomplete error', { cause: new HttpErrorResponse({ status: 500 }) }));
+            reporter.report(new Error('Passkey autocomplete error', { cause: new Error('not a request') }));
+
+            expect(send.mock.calls.map(([report]) => report.severity)).toEqual(['WARN', 'INFO', 'ERROR', 'ERROR']);
+        });
+
+        it('should look at the first causes only', () => {
+            const request = new HttpErrorResponse({ status: 504 });
+            // the request is the fifth cause
+            const error = new Error('outer', { cause: new Error('1', { cause: new Error('2', { cause: new Error('3', { cause: new Error('4', { cause: request }) }) }) }) });
+
+            reporter.report(error);
+
+            expect(reportOf(0).severity).toBe('ERROR');
+        });
+
         it('should describe a value that cannot be converted to json', () => {
             const circular: Record<string, unknown> = {};
             circular['self'] = circular;
