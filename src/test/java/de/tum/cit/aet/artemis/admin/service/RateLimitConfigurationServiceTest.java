@@ -105,6 +105,24 @@ class RateLimitConfigurationServiceTest {
     }
 
     @Test
+    void testGetEffectiveRpm_OidcAuthorization_WithCustomValue_ShouldReturnCustomValue() {
+        when(properties.getOIDCAuthorizationRequestsPerMinute()).thenReturn(500);
+
+        int rpm = configurationService.getEffectiveRpm(RateLimitType.OIDC_AUTHORIZATION);
+
+        assertThat(rpm).isEqualTo(500);
+    }
+
+    @Test
+    void testGetEffectiveRpm_OidcAuthorization_WithNullValue_ShouldReturnDefault() {
+        when(properties.getOIDCAuthorizationRequestsPerMinute()).thenReturn(null);
+
+        int rpm = configurationService.getEffectiveRpm(RateLimitType.OIDC_AUTHORIZATION);
+
+        assertThat(rpm).isEqualTo(RateLimitType.OIDC_AUTHORIZATION.getDefaultRpm()); // 3000
+    }
+
+    @Test
     void testGetEffectiveRpm_OnlineResourceFetch_UsesTheCustomValueOrTheDefault() {
         when(properties.getOnlineResourceFetchRequestsPerMinute()).thenReturn(12);
         assertThat(configurationService.getEffectiveRpm(RateLimitType.ONLINE_RESOURCE_FETCH)).isEqualTo(12);

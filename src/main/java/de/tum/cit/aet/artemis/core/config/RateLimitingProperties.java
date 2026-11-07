@@ -62,6 +62,12 @@ public class RateLimitingProperties {
     private Integer loginOptionsRequestsPerMinute;
 
     /**
+     * Requests per minute for unauthenticated oidc flow initiation
+     * If not specified, uses the default from {@link de.tum.cit.aet.artemis.core.security.RateLimitType#OIDC_AUTHORIZATION}
+     */
+    private Integer oidcAuthorizationRequestsPerMinute;
+
+    /**
      * Requests per minute for the problem-statement rendering endpoint.
      * If not specified, uses the default from {@link de.tum.cit.aet.artemis.core.security.RateLimitType#PROBLEM_STATEMENT_RENDERING}.
      */
@@ -141,6 +147,14 @@ public class RateLimitingProperties {
 
     public void setLoginOptionsRequestsPerMinute(Integer loginOptionsRequestsPerMinute) {
         this.loginOptionsRequestsPerMinute = loginOptionsRequestsPerMinute;
+    }
+
+    public Integer getOIDCAuthorizationRequestsPerMinute() {
+        return oidcAuthorizationRequestsPerMinute;
+    }
+
+    public void setOIDCAuthorizationRequestsPerMinute(Integer oidcAuthorizationRequestsPerMinute) {
+        this.oidcAuthorizationRequestsPerMinute = oidcAuthorizationRequestsPerMinute;
     }
 
     public Integer getProblemStatementRenderingRequestsPerMinute() {
