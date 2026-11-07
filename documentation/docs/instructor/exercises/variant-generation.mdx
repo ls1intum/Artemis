@@ -2,7 +2,7 @@
 id: variant-generation
 title: Generate Variants with AI
 sidebar_label: Variant Generation
-last_reviewed: 2026-11-03
+last_reviewed: 2026-11-05
 ---
 
 import Callout from '../../../src/components/Callout/Callout';
@@ -19,7 +19,7 @@ import examWizard from './assets/variant-generation/exam-wizard.png';
 
 Writing a second version of an exercise by hand is the expensive part of [exercise variants](/instructor/exercises/exercise-variants). For a programming exercise it means re-theming the problem statement, template, solution and tests consistently, keeping every task-to-test link intact, and making sure the solution still builds green while the template still fails.
 
-Artemis can do that work for you. **Create Variant with AI** takes an existing exercise, asks what should change, and produces a complete, verified Artemis exercise in the background.
+Artemis can do that work for you. **Create Variant** takes an existing exercise, asks what should change, and produces a complete, verified Artemis exercise in the background.
 
 <Callout variant={CalloutVariant.info}>
 
@@ -35,13 +35,13 @@ Variant generation is part of [Hyperion](/admin/hyperion) and is available only 
 | Quiz                        | Yes, unless the quiz contains drag-and-drop questions                                                                                                                                  |
 | Modeling, Text, File Upload | No                                                                                                                                                                                     |
 
-The action is hidden for exercises it cannot handle, and for anyone below the Editor role.
+The action is hidden when the required module is disabled or you lack Editor access. For programming exercises, it is also hidden in exam management. On programming exercise details pages, unsupported configurations show a disabled action with an explanation. In exercise lists, the action is hidden when the list data identifies an unsupported configuration. If that data omits configuration details, the action can remain available; open the details page to see the configuration check and any explanation.
 
 ## Starting a Generation
 
-On the course's **Exercises** page in course management, the overflow menu (**…**) of an exercise row offers **Create Variant with AI**. For quiz exercises in exams, the same action sits on the rows of an exercise group.
+On an exercise's details page, the yellow **Create Variant** button appears with the editing actions. On the course's **Exercises** page in course management, the overflow menu (**…**) of an exercise row offers **Create Variant**. For quiz exercises in exams, the same action sits on the rows of an exercise group.
 
-<Image src={createVariantAction} alt="Create Variant with AI in the row actions" size={ImageSize.medium} caption="The AI action in the overflow menu of an exercise row" />
+<Image src={createVariantAction} alt="Quiz details with the prominent yellow Create Variant action" size={ImageSize.medium} caption="Create Variant alongside the editing actions on a quiz’s details page" />
 
 A wizard collects the requested changes and placement. Programming variants then
 continue in the shared [AI authoring run view](/instructor/exercises/hyperion-generation);

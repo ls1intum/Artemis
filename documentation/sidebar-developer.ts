@@ -54,6 +54,7 @@ const sidebars: SidebarsConfig = {
                 },
             ],
         },
+        'glossary',
         'local-user-management',
         'open-source',
         'system-design',

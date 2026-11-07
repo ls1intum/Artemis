@@ -866,14 +866,14 @@ describe('ExerciseHeaderActionsComponent', () => {
         createComponent(exercise);
         const gradedButton = fixture.nativeElement.querySelector('#resume-exercise-7');
         const practiceButton = fixture.nativeElement.querySelector('#resume-practice-exercise-7');
-        expect(gradedButton.classList.contains('btn-secondary')).toBe(true);
-        expect(practiceButton.classList.contains('btn-primary')).toBe(true);
+        expect(gradedButton.classList.contains('tumaet:bg-button-secondary')).toBe(true);
+        expect(practiceButton.classList.contains('tumaet:bg-button-primary')).toBe(true);
 
         const updated = Object.assign(new ProgrammingExercise(undefined, undefined), exercise, { studentParticipations: [graded] });
         fixture.componentRef.setInput('exercise', updated);
         fixture.detectChanges();
         expect(fixture.nativeElement.querySelector('#resume-practice-exercise-7')).toBeNull();
-        expect(fixture.nativeElement.querySelector('#resume-exercise-7').classList.contains('btn-primary')).toBe(true);
+        expect(fixture.nativeElement.querySelector('#resume-exercise-7').classList.contains('tumaet:bg-button-primary')).toBe(true);
     });
 
     describe('quiz action', () => {

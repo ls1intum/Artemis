@@ -8,6 +8,7 @@ import { generateUUID, readResponseJson } from '../../../support/utils';
 import { expect } from '@playwright/test';
 import { Exercise, ExerciseMode, ProgrammingLanguage } from '../../../support/constants';
 import { SEED_COURSES } from '../../../support/seedData';
+import { expectInside, expectNoOverlap, forEachViewport, measure } from '../../../support/layout';
 
 const course = { id: SEED_COURSES.programmingManagement.id } as any;
 
@@ -88,6 +89,77 @@ test.describe('Programming Exercise Management', { tag: '@fast' }, () => {
             await programmingExerciseCreation.checkIsHeadlineVisibleToUser(firstSectionHeadline, true);
             await programmingExerciseCreation.checkIsHeadlineVisibleToUser(fourthSectionHeadline, false);
         });
+    });
+
+    test('Keeps detail buttons compact and editing actions readable at every screen width', async ({ login, page, exerciseAPIRequests }) => {
+        // The layout must also hold when a deployment exposes generation. This exercises the visible,
+        // configuration-disabled C variant action without requiring a generation worker or changing server settings.
+        await page.route('**/management/info', async (route) => {
+            const response = await route.fetch();
+            const info = await response.json();
+            info.activeModuleFeatures = [...new Set([...(info.activeModuleFeatures ?? []), 'hyperion', 'hyperion-exercise-generation'])];
+            await route.fulfill({ response, json: info });
+        });
+        await login(admin);
+        const exercise = await exerciseAPIRequests.createProgrammingExercise({
+            course,
+            programmingLanguage: ProgrammingLanguage.C,
+            problemStatement: '[task][Implement sorting](testSorting)',
+        });
+        try {
+            await page.goto(`/course-management/${course.id}/programming-exercises/${exercise.id}`);
+            const editing = page.getByTestId('exercise-editing-actions');
+            const toolbar = editing.locator('..');
+            const controls = [
+                editing.getByRole('link', { name: 'Edit', exact: true }),
+                editing.getByTestId('edit-in-editor-action'),
+                editing.getByRole('link', { name: 'Grading', exact: true }),
+                editing.getByTestId('create-variant-ai-button').getByRole('button'),
+            ];
+            await expect(controls[3]).toBeVisible();
+            await expect(controls[1]).toHaveAttribute('href', /\/code-editor\/TEMPLATE\/\d+$/);
+            const checkActions = async () => {
+                for (const name of ['Participations', 'Statistics']) {
+                    const navigation = toolbar.getByRole('link', { name, exact: true });
+                    await expect.poll(async () => (await measure(navigation, { name })).width, { message: `${name} remains a compact button` }).toBeLessThanOrEqual(240);
+                }
+                for (const [index, control] of controls.entries()) {
+                    const name = ['Edit', 'Edit in editor', 'Grading', 'Create Variant'][index];
+                    await expectInside(control, toolbar, ['top', 'right', 'bottom', 'left'], { name: `${name} stays inside the action toolbar` });
+                    await expect.poll(async () => (await measure(control, { name })).width, { message: `${name} retains a usable width` }).toBeGreaterThanOrEqual(32);
+                    await expect.poll(async () => (await measure(control, { name })).height, { message: `${name} uses at most two text lines` }).toBeLessThanOrEqual(64);
+                }
+                await expectNoOverlap(controls, { name: 'Edit, Edit in editor, Grading and Create Variant' });
+                const rows = await toolbar.evaluate((element) => {
+                    const controls = Array.from(element.querySelectorAll('a, button')).filter((control) => control.getClientRects().length);
+                    return new Set(controls.map((control) => Math.round(control.getBoundingClientRect().top))).size;
+                });
+                expect(rows, 'navigation and editing occupy at most two rows').toBeLessThanOrEqual(2);
+            };
+            const tasksLabel = page.getByTestId('programming-tasks-label');
+            const checkDetails = async () => {
+                await checkActions();
+                await expect(tasksLabel).toBeVisible();
+                await expect
+                    .poll(
+                        () =>
+                            tasksLabel.evaluate((element) => {
+                                const range = document.createRange();
+                                range.selectNodeContents(element);
+                                return range.getClientRects().length;
+                            }),
+                        { message: 'the Tasks label stays on one line inside the problem details' },
+                    )
+                    .toBe(1);
+            };
+            await forEachViewport(page, checkDetails);
+            await test.step('390px phone with the management sidebar', async () => {
+                await page.setViewportSize({ width: 390, height: 844 });
+                await checkDetails();
+            });
+        } finally {
+            await exerciseAPIRequests.deleteProgrammingExercise(exercise.id!);
+        }
     });
 
     test.describe('Programming exercise deletion', () => {

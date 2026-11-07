@@ -37,8 +37,19 @@ test('links the published library and supplies forms, overlays, icons, typograph
     await page.evaluate(() => document.documentElement.setAttribute('data-theme', 'dark'));
     await expect(page.locator('html')).toHaveCSS('color-scheme', 'dark');
     await expect(trigger).not.toHaveCSS('background-color', lightBackground);
+    const darkBackground = await trigger.evaluate(async (button) => {
+        await Promise.all(button.getAnimations().map((animation) => animation.finished));
+        return getComputedStyle(button).backgroundColor;
+    });
     await page.evaluate(() => document.documentElement.style.setProperty('--tumaet-ui-primary-color', 'rgb(12, 34, 56)'));
+    await expect(trigger).toHaveCSS('background-color', darkBackground);
+    await page.evaluate(() => {
+        document.documentElement.style.setProperty('--tumaet-ui-button-primary-background', 'rgb(12, 34, 56)');
+        document.documentElement.style.setProperty('--tumaet-ui-button-primary-contrast', 'rgb(240, 248, 255)');
+    });
     await expect(trigger).toHaveCSS('background-color', 'rgb(12, 34, 56)');
+    await expect(trigger).toHaveCSS('color', 'rgb(240, 248, 255)');
+    await expect(page.locator('html')).toHaveCSS('--tumaet-ui-primary-color', 'rgb(12, 34, 56)');
     expect(errors).toEqual([]);
 });
 
