@@ -291,6 +291,22 @@ describe('ExampleTextSubmissionComponent', () => {
         expect(comp.state.constructor.name).toBe('NewState');
     });
 
+    it('passes referenced and unreferenced feedback to example assessment usage hints', () => {
+        vi.spyOn(comp, 'ngOnInit').mockImplementation(() => {});
+        comp.exercise = exercise;
+        comp.exampleSubmission = exampleSubmission;
+        comp.submission = submission;
+        comp.state = State.forExistingAssessmentWithContext(comp);
+        const reference = TextBlockRef.new();
+        reference.initFeedback();
+        comp.textBlockRefs = [reference];
+        const unreferenced = new Feedback();
+        comp.unreferencedFeedback.set([unreferenced]);
+        fixture.detectChanges();
+        const area = debugElement.query(By.directive(TextAssessmentAreaComponent)).componentInstance as TextAssessmentAreaComponent;
+        expect(area.allFeedbacks()).toEqual([reference.feedback, unreferenced]);
+    });
+
     it('should switch state when starting assessment', async () => {
         // GIVEN
         vi.spyOn(exampleSubmissionService, 'prepareForAssessment').mockReturnValue(httpResponse({}));

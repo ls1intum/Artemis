@@ -477,6 +477,20 @@ public class ExamResource {
     }
 
     /**
+     * @param courseId the course containing the exam
+     * @param examId   the exam whose announcement history is requested
+     * @return all exam-wide announcements, including their original timestamps
+     */
+    @FeatureUsage(UserFeature.EXAM_CONDUCTION_MANAGEMENT)
+    @GetMapping("courses/{courseId}/exams/{examId}/announcements")
+    @EnforceAtLeastStudent
+    @ManualConfig
+    public ResponseEntity<List<ExamWideAnnouncementEventDTO>> getExamAnnouncements(@PathVariable Long courseId, @PathVariable Long examId) {
+        examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
+        return ResponseEntity.ok(examLiveEventsService.getAnnouncements(examId));
+    }
+
+    /**
      * POST /courses/{courseId}/exams/{examId}/announcements : Create a new announcement for the exam.
      *
      * @param courseId the course to which the exam belongs
@@ -1148,14 +1162,11 @@ public class ExamResource {
         log.info("REST request to generate student exams for exam {}", examId);
 
         final var exam = checkAccessForStudentExamGenerationAndLogAuditEvent(courseId, examId, Constants.GENERATE_STUDENT_EXAMS);
-        // Reset existing student exams & participations in case they already exist
+        // Reset existing student exams and participations only after validating the exam configuration above.
         examDeletionService.deleteStudentExamsAndExistingParticipationsForExam(exam.getId());
-
         List<StudentExam> studentExams = studentExamService.generateStudentExams(exam);
         log.info("Generated {} student exams in {} for exam {}", studentExams.size(), formatDurationFrom(start), examId);
-        // The client only counts the generated student exams; return the slim, exam-masked projection (no nested exam graph,
-        // which is why the previous breakCyclesForSerialization is no longer needed).
-        return ResponseEntity.ok().body(studentExams.stream().map(StudentExamDTO::of).toList());
+        return ResponseEntity.ok(studentExams.stream().map(StudentExamDTO::of).toList());
     }
 
     @NonNull
@@ -1244,7 +1255,7 @@ public class ExamResource {
      * @param courseId    the id of the course
      * @param examId      the id of the exam
      * @param studentDtos the list of students (with at least registration number) who should get access to the exam
-     * @return the list of students who could not be registered for the exam, because they could NOT be found in the Artemis database and could NOT be found in the TUM LDAP
+     * @return the registration result
      */
     @FeatureUsage(UserFeature.EXAM_REGISTRATION)
     @PostMapping("courses/{courseId}/exams/{examId}/students")
@@ -1255,8 +1266,7 @@ public class ExamResource {
 
         examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
 
-        ExamRegistrationResultDTO notFoundStudentsDtos = examRegistrationService.registerStudentsForExam(courseId, examId, studentDtos);
-        return ResponseEntity.ok().body(notFoundStudentsDtos);
+        return ResponseEntity.ok(examRegistrationService.registerStudentsForExam(courseId, examId, studentDtos));
     }
 
     /**
@@ -1264,7 +1274,7 @@ public class ExamResource {
      *
      * @param courseId the id of the course
      * @param examId   the id of the exam
-     * @return empty ResponseEntity with status 200 (OK) or with status 404 (Not Found)
+     * @return status 200 for successful registration, or status 404 if the exam is absent
      */
     @FeatureUsage(UserFeature.EXAM_REGISTRATION)
     @PostMapping("courses/{courseId}/exams/{examId}/register-course-students")
@@ -1281,7 +1291,7 @@ public class ExamResource {
         }
 
         examRegistrationService.addAllStudentsOfCourseToExam(courseId, exam);
-        return ResponseEntity.ok().body(null);
+        return ResponseEntity.ok().build();
     }
 
     /**

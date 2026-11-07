@@ -104,7 +104,7 @@ public class ArtemisGitServletService extends GitServlet {
                 // Add a hook that prevents illegal actions on push (delete branch, rename branch, force push).
                 receivePack.setPreReceiveHook(new LocalVCPrePushHook(localVCServletService, user));
                 // Add a hook that triggers the creation of a new submission after the push went through successfully.
-                receivePack.setPostReceiveHook(new LocalVCPostPushHook(localVCServletService, user));
+                receivePack.setPostReceiveHook(new LocalVCPostPushHook(localVCServletService, user, () -> localVCServletService.getAuthenticationMechanism(request)));
             }
             return receivePack;
         });

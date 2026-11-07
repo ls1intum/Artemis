@@ -95,6 +95,19 @@ describe('Exercise Service', () => {
         httpMock.verify();
     });
 
+    it.each([
+        [ExerciseType.PROGRAMMING, 'api/programming/programming-exercises/5/export-instructor-exercise'],
+        [ExerciseType.TEXT, 'api/text/text-exercises/5/export'],
+        [ExerciseType.MODELING, 'api/modeling/modeling-exercises/5/export'],
+        [ExerciseType.FILE_UPLOAD, 'api/fileupload/file-upload-exercises/5/export'],
+        [ExerciseType.QUIZ, 'api/quiz/quiz-exercises/5/export'],
+    ])('should export a %s exercise to a file', (type, url) => {
+        service.exportToFile({ id: 5, type } as Exercise).subscribe();
+        const request = httpMock.expectOne({ method: 'GET', url });
+        expect(request.request.responseType).toBe('blob');
+        request.flush(new Blob(['zip']));
+    });
+
     it('should fetch only the exercise title projection for selection lists', () => {
         const titles: ExerciseTitle[] = [
             { id: 1, title: 'Text title', type: ExerciseType.TEXT },

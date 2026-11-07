@@ -11,6 +11,7 @@ import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 
 import org.apache.commons.io.FileUtils;
+import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -83,7 +84,7 @@ public class TempFileUtilService {
      * @return the path to the newly created directory
      * @throws IOException if an I/O error occurs or the parent directory does not exist
      */
-    public Path createTempDirectory(Path parent, String prefix) throws IOException {
+    public @NonNull Path createTempDirectory(Path parent, String prefix) throws IOException {
         Files.createDirectories(parent);
         return Files.createTempDirectory(parent, prefix);
     }

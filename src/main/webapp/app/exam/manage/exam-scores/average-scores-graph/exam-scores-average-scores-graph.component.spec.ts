@@ -72,6 +72,18 @@ describe('ExamScoresAverageScoresGraphComponent', () => {
         }).compileComponents();
 
         fixture = TestBed.createComponent(ExamScoresAverageScoresGraphComponent);
+        // Supply the layout size that jsdom cannot measure, as in the chart component's own integration tests.
+        vi.spyOn(Element.prototype, 'getBoundingClientRect').mockReturnValue({
+            width: 600,
+            height: 300,
+            top: 0,
+            left: 0,
+            right: 600,
+            bottom: 300,
+            x: 0,
+            y: 0,
+            toJSON: () => ({}),
+        } as DOMRect);
         component = fixture.componentInstance;
         navigateToExerciseMock = vi.spyOn(component, 'navigateToExercise').mockImplementation(() => {});
 
@@ -101,13 +113,15 @@ describe('ExamScoresAverageScoresGraphComponent', () => {
     });
 
     const adaptExpectedData = (averagePoints: number, newColor: string, expectedColorDomain: string[], expectedData: ChartSeriesEntry[]) => {
-        component.averageScores().averagePoints = averagePoints;
-        component.averageScores().averagePercentage = averagePoints * 10;
+        const scores = deepClone(component.averageScores());
+        scores.averagePoints = averagePoints;
+        scores.averagePercentage = averagePoints * 10;
+        fixture.componentRef.setInput('averageScores', scores);
 
         expectedColorDomain[0] = newColor;
         expectedData[0].value = averagePoints * 10;
 
-        component.ngOnInit();
+        fixture.detectChanges();
 
         executeExpectStatements(expectedData, expectedColorDomain);
     };
@@ -178,7 +192,7 @@ describe('ExamScoresAverageScoresGraphComponent', () => {
             const singleExercise = deepClone(returnValue);
             singleExercise.exerciseResults = [deepClone(returnValue.exerciseResults[0])];
             fixture.componentRef.setInput('averageScores', singleExercise);
-            component.ngOnInit();
+            fixture.detectChanges();
 
             expect(component.chartEntries()).toHaveLength(2);
             expect(component.chartHeight()).toBe(48 + 2 * 34);
@@ -188,11 +202,54 @@ describe('ExamScoresAverageScoresGraphComponent', () => {
             const withoutExercises = deepClone(returnValue);
             withoutExercises.exerciseResults = [];
             fixture.componentRef.setInput('averageScores', withoutExercises);
-            component.ngOnInit();
+            fixture.detectChanges();
 
             // Only the exercise-group bar remains, so the box must still be tall enough for one bar plus the axis.
             expect(component.chartHeight()).toBe(48 + 34);
         });
+    });
+
+    it.each([undefined, null, Number.NaN])('omits unscored bars while retaining a genuine zero score (%s)', async (missingAverage) => {
+        const scores = deepClone(returnValue);
+        scores.averagePoints = missingAverage as number | undefined;
+        scores.averagePercentage = missingAverage as number | undefined;
+        scores.exerciseResults[0].averagePoints = missingAverage as number | undefined;
+        scores.exerciseResults[0].averagePercentage = missingAverage as number | undefined;
+        scores.exerciseResults[1].averagePoints = 0;
+        scores.exerciseResults[1].averagePercentage = 0;
+        fixture.componentRef.setInput('averageScores', scores);
+        fixture.detectChanges();
+
+        expect(component.chartEntries()).toEqual([
+            { name: '3 BridgePattern', value: 0 },
+            { name: '4 ProxyPattern', value: 20 },
+        ]);
+        expect(component.chartData().series[0].data).toEqual([0, 20]);
+        expect(component.lookup['3 BridgePattern'].absoluteValue).toBe(0);
+        fixture.detectChanges();
+        await fixture.whenStable();
+        fixture.detectChanges();
+        const bars = fixture.nativeElement.querySelectorAll('rect[role="button"]') as NodeListOf<SVGRectElement>;
+        expect(bars).toHaveLength(2);
+        expect(bars[0].getAttribute('aria-label')).toContain('3 BridgePattern');
+        expect(bars[0].getAttribute('aria-label')).toContain('0');
+    });
+
+    it('has no zero-score bars when no assignment has a completed score', () => {
+        const scores = deepClone(returnValue);
+        scores.averagePoints = undefined;
+        scores.averagePercentage = undefined;
+        scores.exerciseResults.forEach((exercise) => {
+            exercise.averagePoints = undefined;
+            exercise.averagePercentage = undefined;
+        });
+        fixture.componentRef.setInput('averageScores', scores);
+        fixture.detectChanges();
+
+        expect(component.chartEntries()).toEqual([]);
+        expect(component.chartData().series[0].data).toEqual([]);
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelectorAll('rect[role="button"]')).toHaveLength(0);
     });
 
     it('should look up absolute value', () => {

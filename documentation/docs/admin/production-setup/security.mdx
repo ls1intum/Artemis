@@ -2,6 +2,7 @@
 id: security
 title: Security
 sidebar_label: Security
+last_reviewed: 2026-11-03
 ---
 
 import Callout from "../../../src/components/Callout/Callout";
@@ -485,7 +486,7 @@ connection request with its origin.
 
 ## Rate Limiting
 
-Artemis provides **cluster-wide rate limiting** powered by [Bucket4j](https://bucket4j.com) (token buckets) and [Hazelcast](https://hazelcast.com) (distributed state).
+Artemis provides **cluster-wide rate limiting** powered by [Bucket4j](https://bucket4j.com) (token buckets). The bucket state lives in the configured distributed data provider (Hazelcast, Redis or Valkey), or in the process itself with the `Local` provider.
 It helps protect authentication and account management endpoints from brute-force attempts and other types of abusive traffic.
 
 ### What It Does

@@ -11,7 +11,7 @@ import { EntityResponseType, ResultService } from 'app/exercise/result/result.se
 import { ResultWithPointsPerGradingCriterion } from 'app/exercise/shared/entities/result/result-with-points-per-grading-criterion.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
-import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Participation, ParticipationType } from 'app/exercise/shared/entities/participation/participation.model';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -369,6 +369,40 @@ describe('ResultService', () => {
             expect(resultService.getResultString(modelingResult, modelingExercise, undefined, true)).toBe('artemisApp.result.resultString.short');
             expect(translateServiceSpy).toHaveBeenCalledExactlyOnceWith('artemisApp.result.resultString.short', { relativeScore: 42 });
             expect(captureExceptionSpy).not.toHaveBeenCalledWith('Tried to generate a result string, but either the result or exercise was undefined');
+        });
+
+        describe('rounding of the score', () => {
+            // an exercise of the course overview carries no course
+            const exerciseWithoutCourse = { id: 77, type: ExerciseType.TEXT, maxPoints: 10 } as Exercise;
+            const result: Result = { id: 7, score: 42.4567, completionDate: dayjs() };
+            const missingCourseMessage = 'The course object used for determining the rounding of scores was undefined';
+
+            beforeEach(() => {
+                vi.spyOn(ErrorReporting, 'captureException').mockClear();
+            });
+
+            it('rounds to the accuracy of the course that is passed for an exercise without a course, and does not report it', () => {
+                resultService.getResultString(result, exerciseWithoutCourse, undefined, true, { accuracyOfScores: 3 });
+
+                expect(translateServiceSpy).toHaveBeenCalledExactlyOnceWith('artemisApp.result.resultString.short', { relativeScore: 42.457 });
+                expect(ErrorReporting.captureException).not.toHaveBeenCalled();
+            });
+
+            it('uses the course of the exercise before the passed course', () => {
+                const exerciseWithCourse = { id: 78, type: ExerciseType.TEXT, maxPoints: 10, course: { id: 1, accuracyOfScores: 0 } } as Exercise;
+
+                resultService.getResultString(result, exerciseWithCourse, undefined, true, { accuracyOfScores: 3 });
+
+                expect(translateServiceSpy).toHaveBeenCalledExactlyOnceWith('artemisApp.result.resultString.short', { relativeScore: 42 });
+                expect(ErrorReporting.captureException).not.toHaveBeenCalled();
+            });
+
+            it('reports a missing course and rounds to the default accuracy when there is neither a course of the exercise nor a passed course', () => {
+                resultService.getResultString(result, exerciseWithoutCourse, undefined, true);
+
+                expect(translateServiceSpy).toHaveBeenCalledExactlyOnceWith('artemisApp.result.resultString.short', { relativeScore: 42.5 });
+                expect(ErrorReporting.captureException).toHaveBeenCalledWith(expect.objectContaining({ message: missingCourseMessage }));
+            });
         });
 
         it('reports an error if result or exercise is undefined', () => {
