@@ -58,6 +58,13 @@ public class PasswordAuthenticationNoticeService {
     @Value("${artemis.version-control.password-authentication-end-date:}")
     private String passwordAuthenticationEndDate;
 
+    /**
+     * Creates the service.
+     *
+     * @param mailSendingService            sends the email
+     * @param distributedDataProvider       holds the limit of one email per user and day, shared by all nodes
+     * @param programmingExerciseRepository reads the titles of the exercise and the course the email names
+     */
     public PasswordAuthenticationNoticeService(MailSendingService mailSendingService, DistributedDataProvider distributedDataProvider,
             ProgrammingExerciseRepository programmingExerciseRepository) {
         this.mailSendingService = mailSendingService;
@@ -112,6 +119,12 @@ public class PasswordAuthenticationNoticeService {
         }
     }
 
+    /**
+     * Gives back the slot of a user after the email could not be prepared or handed over, so that the next password authentication can try again instead of waiting a day.
+     *
+     * @param cache the map the slot was claimed in, or null if it could not even be reached
+     * @param user  the user whose slot is released
+     */
     private void releaseEmailSlot(DistributedMap<Long, Boolean> cache, User user) {
         if (cache == null) {
             return;
@@ -144,6 +157,12 @@ public class PasswordAuthenticationNoticeService {
         getPasswordAuthenticationEndDate();
     }
 
+    /**
+     * Reads the announced end date of password authentication.
+     *
+     * @return the date, or empty if the installation announces none
+     * @throws IllegalStateException if the configured value is no ISO date
+     */
     private Optional<LocalDate> getPasswordAuthenticationEndDate() {
         if (passwordAuthenticationEndDate == null || passwordAuthenticationEndDate.isBlank()) {
             return Optional.empty();
@@ -157,6 +176,13 @@ public class PasswordAuthenticationNoticeService {
         }
     }
 
+    /**
+     * Formats a date in the language of a user.
+     *
+     * @param date the date
+     * @param user the user, whose language key decides the language, with English as the fallback
+     * @return the date in its long form, for example "15 December 2026"
+     */
     private static String formatForUser(LocalDate date, User user) {
         Locale locale = user.getLangKey() != null ? Locale.forLanguageTag(user.getLangKey()) : Locale.ENGLISH;
         return date.format(DateTimeFormatter.ofLocalizedDate(FormatStyle.LONG).withLocale(locale));

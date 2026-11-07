@@ -18,6 +18,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpHeaders;
+import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import de.tum.cit.aet.artemis.localci.service.DistributedDataAccessService;
@@ -120,16 +121,27 @@ class LocalVCBuildAgentAuthenticationServiceTest {
     }
 
     @Test
-    void theBuildJobUser_isABuildAgentClone() {
-        assertThat(buildAgentAuthenticationService.isBuildAgentClone(requestOf(basicAuth(LocalVCBuildAgentAuthenticationService.BUILD_USER_NAME, "pw")))).isTrue();
+    void anOrdinaryUserNamedLikeTheBuildJobUser_isNoBuildAgentClone() {
+        // the user name proves nothing: both build agent mechanisms mark the request they accepted instead
+        assertThat(buildAgentAuthenticationService.isBuildAgentClone(requestOf(basicAuth("buildjob_user", "pw")))).isFalse();
     }
 
     @Test
-    void theConfiguredBuildAgentUser_isABuildAgentCloneAndAStudentIsNot() {
+    void anOrdinaryUserNamedLikeTheConfiguredBuildAgentUser_isNoBuildAgentClone() {
         ReflectionTestUtils.setField(buildAgentAuthenticationService, "buildAgentGitUsername", "custom-agent");
 
-        assertThat(buildAgentAuthenticationService.isBuildAgentClone(requestOf(basicAuth("custom-agent", "pw")))).isTrue();
-        assertThat(buildAgentAuthenticationService.isBuildAgentClone(requestOf(basicAuth("student", "pw")))).isFalse();
+        assertThat(buildAgentAuthenticationService.isBuildAgentClone(requestOf(basicAuth("custom-agent", "pw")))).isFalse();
+    }
+
+    @Test
+    void aRequestOfTheSharedCredential_isABuildAgentCloneOnceItWasAccepted() throws Exception {
+        configureNodeWithoutLocalCI("custom-agent", "a-long-shared-secret", false);
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.addHeader(HttpHeaders.AUTHORIZATION, basicAuth("custom-agent", "a-long-shared-secret"));
+
+        assertThat(buildAgentAuthenticationService.isBuildAgentClone(request)).isFalse();
+        assertThat(buildAgentAuthenticationService.authenticateSharedBuildAgentCredential(request, request.getHeader(HttpHeaders.AUTHORIZATION))).isTrue();
+        assertThat(buildAgentAuthenticationService.isBuildAgentClone(request)).isTrue();
     }
 
     @Test

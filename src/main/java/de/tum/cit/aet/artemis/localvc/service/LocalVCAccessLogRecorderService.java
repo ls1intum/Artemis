@@ -2,7 +2,6 @@ package de.tum.cit.aet.artemis.localvc.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALVC;
 import static de.tum.cit.aet.artemis.localvc.service.LocalVCBuildAgentAuthenticationService.BUILD_AGENT_CLONE_REQUEST_ATTRIBUTE;
-import static de.tum.cit.aet.artemis.localvc.service.LocalVCBuildAgentAuthenticationService.BUILD_USER_NAME;
 import static de.tum.cit.aet.artemis.localvc.service.LocalVCCredentials.extractUsernameAndPassword;
 import static de.tum.cit.aet.artemis.localvc.service.LocalVCCredentials.secretMatches;
 import static de.tum.cit.aet.artemis.localvc.service.LocalVCPersonalAccessTokenManagementService.TOKEN_PREFIX;
@@ -60,6 +59,16 @@ public class LocalVCAccessLogRecorderService {
 
     private final ProgrammingExerciseParticipationService programmingExerciseParticipationService;
 
+    /**
+     * Creates the recorder.
+     *
+     * @param vcsAccessLogService                     writes the entries, absent on an installation without LocalVC
+     * @param repositoryResolver                      reads the latest commit of a repository and parses repository URIs
+     * @param userRepository                          finds the user of a rejected request
+     * @param userVcsAccessTokenService               tells whether a credential is the personal access token of a user
+     * @param repositoryVCSAccessTokenRepository      tells whether a credential is the token of a user for one repository
+     * @param programmingExerciseParticipationService finds the participation an entry is written for
+     */
     public LocalVCAccessLogRecorderService(Optional<VcsAccessLogService> vcsAccessLogService, LocalVCRepositoryResolverService repositoryResolver, UserRepository userRepository,
             UserVcsAccessTokenService userVcsAccessTokenService, RepositoryVCSAccessTokenRepository repositoryVCSAccessTokenRepository,
             ProgrammingExerciseParticipationService programmingExerciseParticipationService) {
@@ -159,6 +168,9 @@ public class LocalVCAccessLogRecorderService {
 
     /**
      * When cloning/pushing with SSH we can keep data loaded inside the SSH session, to avoid unnecessary database queries.
+     * <p>
+     * The state of the command that ran before is dropped first. A connection can carry several commands one after another, and a command whose repository has no participation
+     * (an auxiliary repository, say) would otherwise be handled with the participation and the access log of the previous one.
      *
      * @param user                    the user accessing the repository
      * @param optionalParticipation   the participation associated with the repository
@@ -170,6 +182,8 @@ public class LocalVCAccessLogRecorderService {
      */
     public void cacheAttributesInSshSession(User user, Optional<ProgrammingExerciseParticipation> optionalParticipation, RepositoryActionType repositoryActionType,
             AuthenticationMechanism authenticationMechanism, String ipAddress, LocalVCRepositoryUri localVCRepositoryUri, ServerSession serverSession) {
+        serverSession.removeAttribute(SshConstants.VCS_ACCESS_LOG_KEY);
+        serverSession.removeAttribute(SshConstants.PARTICIPATION_KEY);
         if (optionalParticipation.isPresent()) {
             ProgrammingExerciseParticipation participation = optionalParticipation.get();
             try {
@@ -195,33 +209,25 @@ public class LocalVCAccessLogRecorderService {
     /**
      * Updates the VCS (Version Control System) access log for clone and pull actions using HTTPS.
      * <p>
-     * This method logs the access information based on the incoming HTTP request. It checks if the action
-     * is performed by a build job user and, if not, records the user's repository action (clone or pull).
-     * The action type is determined based on the number of offers (`clientOffered`).
+     * This method logs the access information based on the incoming HTTP request. It checks if the request is a build agent clone and, if not, records the repository
+     * action (clone or pull). The action type is determined based on the number of offers (`clientOffered`).
      *
-     * @param request             the request from the user
-     * @param authorizationHeader the authorization header containing the user's credentials
-     * @param clientOffered       the number of objects offered by the client in the operation, used to determine
-     *                                if the action is a clone (if 0) or a pull (if greater than 0).
+     * @param request       the request from the user
+     * @param clientOffered the number of objects offered by the client in the operation, used to determine
+     *                          if the action is a clone (if 0) or a pull (if greater than 0).
      */
-    public void updateAndStoreVCSAccessLogForCloneAndPullHTTPS(HttpServletRequest request, String authorizationHeader, int clientOffered) {
+    public void updateAndStoreVCSAccessLogForCloneAndPullHTTPS(HttpServletRequest request, int clientOffered) {
         if (!request.getMethod().equals("POST")) {
             return;
         }
         // A build agent clone has its own audit entry already, and this method updates whichever entry is newest for
         // the repository, so running it here would relabel a student's entry as the agent's clone. Keyed on the
-        // attribute the authorization set rather than on a username: an agent presenting its own short name never
-        // matches the literal below, and neither does an installation that renamed the shared credential.
+        // attribute the authorization set, which both build agent mechanisms (the build job token and the shared
+        // credential) set, and not on a user name that an ordinary user could carry as well.
         if (request.getAttribute(BUILD_AGENT_CLONE_REQUEST_ATTRIBUTE) != null) {
             return;
         }
         try {
-            UsernameAndPassword usernameAndPassword = extractUsernameAndPassword(authorizationHeader);
-            String userName = usernameAndPassword.username();
-            if (userName.equals(BUILD_USER_NAME)) {
-                return;
-            }
-
             LocalVCRepositoryUri localVCRepositoryUri = repositoryResolver.parseRepositoryUri(request);
             RepositoryActionType repositoryActionType = getRepositoryActionReadType(clientOffered);
 
@@ -249,7 +255,8 @@ public class LocalVCAccessLogRecorderService {
             // failure. They used to be dereferenced straight away, so the absence arrived as a NullPointerException
             // caught below and logged at debug, indistinguishable from an actual problem with the access log.
             var user = session.getAttribute(SshConstants.USER_KEY);
-            if (user == null || user.getName().equals(BUILD_USER_NAME)) {
+            // A build agent session carries no user and gets an audit entry of its own, so a missing user is all there is to exclude.
+            if (user == null) {
                 return;
             }
             var accessLog = session.getAttribute(SshConstants.VCS_ACCESS_LOG_KEY);

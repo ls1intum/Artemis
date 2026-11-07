@@ -17,9 +17,16 @@ import de.tum.cit.aet.artemis.localvc.exception.LocalVCAuthException;
  */
 final class LocalVCCredentials {
 
+    /** A class of static helpers that is never instantiated. */
     private LocalVCCredentials() {
     }
 
+    /**
+     * The credentials of a Basic authorization header.
+     *
+     * @param username the user name, which may be empty
+     * @param password the password or token, which may be empty
+     */
     record UsernameAndPassword(@NonNull String username, @NonNull String password) {
     }
 

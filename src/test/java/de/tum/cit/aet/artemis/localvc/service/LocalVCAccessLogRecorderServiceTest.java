@@ -250,7 +250,7 @@ class LocalVCAccessLogRecorderServiceTest {
 
     @Test
     void aRequestThatIsNoPost_isNotLogged() {
-        accessLogRecorder.updateAndStoreVCSAccessLogForCloneAndPullHTTPS(postRequest("GET"), basicAuth("testuser", "pw"), 0);
+        accessLogRecorder.updateAndStoreVCSAccessLogForCloneAndPullHTTPS(postRequest("GET"), 0);
 
         verifyNoInteractions(vcsAccessLogService);
     }
@@ -260,25 +260,17 @@ class LocalVCAccessLogRecorderServiceTest {
         HttpServletRequest request = postRequest("POST");
         when(request.getAttribute("artemis.buildAgentClone")).thenReturn("build-agent-1");
 
-        accessLogRecorder.updateAndStoreVCSAccessLogForCloneAndPullHTTPS(request, basicAuth("build-agent-1", "bjct-token"), 0);
+        accessLogRecorder.updateAndStoreVCSAccessLogForCloneAndPullHTTPS(request, 0);
 
         verifyNoInteractions(vcsAccessLogService);
     }
 
     @Test
-    void theBuildJobUser_isNotLogged() {
+    void aRequestForNoRepository_isIgnored() {
         HttpServletRequest request = postRequest("POST");
+        when(request.getRequestURI()).thenReturn("/git/not-a-repository-path");
 
-        accessLogRecorder.updateAndStoreVCSAccessLogForCloneAndPullHTTPS(request, basicAuth(LocalVCBuildAgentAuthenticationService.BUILD_USER_NAME, "pw"), 0);
-
-        verifyNoInteractions(vcsAccessLogService);
-    }
-
-    @Test
-    void aMalformedAuthorizationHeader_isIgnored() {
-        HttpServletRequest request = postRequest("POST");
-
-        assertThatCode(() -> accessLogRecorder.updateAndStoreVCSAccessLogForCloneAndPullHTTPS(request, "not-a-basic-header", 0)).doesNotThrowAnyException();
+        assertThatCode(() -> accessLogRecorder.updateAndStoreVCSAccessLogForCloneAndPullHTTPS(request, 0)).doesNotThrowAnyException();
 
         verifyNoInteractions(vcsAccessLogService);
     }
@@ -287,7 +279,7 @@ class LocalVCAccessLogRecorderServiceTest {
     void aStudentFetchWithoutOfferedObjects_isCompletedAsAClone() {
         HttpServletRequest request = studentFetchRequest();
 
-        accessLogRecorder.updateAndStoreVCSAccessLogForCloneAndPullHTTPS(request, basicAuth("testuser", "pw"), 0);
+        accessLogRecorder.updateAndStoreVCSAccessLogForCloneAndPullHTTPS(request, 0);
 
         ArgumentCaptor<LocalVCRepositoryUri> repositoryUri = ArgumentCaptor.forClass(LocalVCRepositoryUri.class);
         verify(vcsAccessLogService).updateRepositoryActionType(repositoryUri.capture(), eq(RepositoryActionType.CLONE));
@@ -298,7 +290,7 @@ class LocalVCAccessLogRecorderServiceTest {
     void aStudentFetchWithOfferedObjects_isCompletedAsAPull() {
         HttpServletRequest request = studentFetchRequest();
 
-        accessLogRecorder.updateAndStoreVCSAccessLogForCloneAndPullHTTPS(request, basicAuth("testuser", "pw"), 3);
+        accessLogRecorder.updateAndStoreVCSAccessLogForCloneAndPullHTTPS(request, 3);
 
         ArgumentCaptor<LocalVCRepositoryUri> repositoryUri = ArgumentCaptor.forClass(LocalVCRepositoryUri.class);
         verify(vcsAccessLogService).updateRepositoryActionType(repositoryUri.capture(), eq(RepositoryActionType.PULL));
@@ -366,6 +358,42 @@ class LocalVCAccessLogRecorderServiceTest {
         accessLogRecorder.cacheAttributesInSshSession(testUser, participation, RepositoryActionType.READ, AuthenticationMechanism.SSH, "10.0.0.1", testRepositoryUri, session);
 
         verify(session, never()).setAttribute(any(), any());
+    }
+
+    @Test
+    void cacheAttributesInSshSession_dropsTheStateOfTheCommandBefore() {
+        ServerSession session = mock(ServerSession.class);
+
+        accessLogRecorder.cacheAttributesInSshSession(testUser, Optional.of(testParticipation), RepositoryActionType.READ, AuthenticationMechanism.SSH, "10.0.0.1",
+                testRepositoryUri, session);
+
+        // whether or not the new state could be cached, the old one must not survive into this command
+        verify(session).removeAttribute(SshConstants.VCS_ACCESS_LOG_KEY);
+        verify(session).removeAttribute(SshConstants.PARTICIPATION_KEY);
+    }
+
+    @Test
+    void cacheAttributesInSshSession_forARepositoryWithoutParticipation_leavesNoStateBehind() {
+        ServerSession session = mock(ServerSession.class);
+
+        accessLogRecorder.cacheAttributesInSshSession(testUser, Optional.empty(), RepositoryActionType.WRITE, AuthenticationMechanism.SSH, "10.0.0.1", testRepositoryUri, session);
+
+        verify(session).removeAttribute(SshConstants.VCS_ACCESS_LOG_KEY);
+        verify(session).removeAttribute(SshConstants.PARTICIPATION_KEY);
+        verify(session, never()).setAttribute(any(), any());
+    }
+
+    @Test
+    void aUserWhoseNameIsTheBuildJobUserName_isLoggedOverSsh() {
+        var user = new User();
+        user.setLogin("buildjob_user");
+        assertThat(user.getName()).isEqualTo("buildjob_user");
+        var accessLog = new VcsAccessLog();
+
+        // build agent sessions carry no user and get an audit entry of their own, so the name alone must not exclude anyone
+        accessLogRecorder.updateAndStoreVCSAccessLogForCloneAndPullSSH(sessionOf(user, accessLog), 0);
+
+        verify(vcsAccessLogService).saveVcsAccesslog(accessLog);
     }
 
     private static String basicAuth(String username, String password) {

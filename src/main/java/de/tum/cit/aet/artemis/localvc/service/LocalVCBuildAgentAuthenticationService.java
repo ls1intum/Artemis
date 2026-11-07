@@ -16,7 +16,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
-import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
@@ -50,8 +49,6 @@ import inet.ipaddr.IPAddressString;
 public class LocalVCBuildAgentAuthenticationService {
 
     private static final Logger log = LoggerFactory.getLogger(LocalVCBuildAgentAuthenticationService.class);
-
-    public static final String BUILD_USER_NAME = "buildjob_user";
 
     /**
      * Marks a request that was authorized as a build agent cloning for one of its build jobs. Set once the credential
@@ -104,6 +101,19 @@ public class LocalVCBuildAgentAuthenticationService {
     @Value("${artemis.version-control.build-agent-use-ssh:false}")
     private boolean useSshForBuildAgent;
 
+    /**
+     * Creates the service.
+     *
+     * @param distributedDataAccessService            reads the build agents and the build jobs they run, absent on a node without local CI
+     * @param buildAgentAddressRegistryService        knows the addresses the build agents are connected from, absent on a node without local CI
+     * @param buildJobCloneTokenService               checks the token of a build job, absent on a node without local CI
+     * @param buildAgentNetworkPolicy                 the networks build agents may come from
+     * @param rateLimitService                        bounds how often a caller may let a check reach the build job scan
+     * @param repositoryResolver                      parses repository URIs and reads the latest commit of a repository
+     * @param vcsAccessLogService                     writes the access log entry of a build agent clone, absent on an installation without LocalVC
+     * @param programmingExerciseParticipationService finds the participation an access log entry is written for
+     * @param programmingExerciseRepository           reads the exercise of a repository
+     */
     public LocalVCBuildAgentAuthenticationService(Optional<DistributedDataAccessService> distributedDataAccessService,
             Optional<BuildAgentAddressRegistryService> buildAgentAddressRegistryService, Optional<BuildJobCloneTokenService> buildJobCloneTokenService,
             BuildAgentNetworkPolicy buildAgentNetworkPolicy, RateLimitService rateLimitService, LocalVCRepositoryResolverService repositoryResolver,
@@ -296,7 +306,7 @@ public class LocalVCBuildAgentAuthenticationService {
      * The other is ssh: build agents that authenticate with a key never present this pair.
      *
      * An accepted request is marked as a build agent clone, like one that authenticated with a build job token. Without the mark, the hook that completes the access log of
-     * a fetch would take the Jenkins fetch for one of a student whenever the shared user name is not {@value #BUILD_USER_NAME}, and relabel the newest entry of the repository.
+     * a fetch would take the Jenkins fetch for one of a student and relabel the newest entry of the repository.
      *
      * @param request             the fetch request
      * @param authorizationHeader the Basic authorization header of that request
@@ -358,27 +368,23 @@ public class LocalVCBuildAgentAuthenticationService {
     /**
      * Whether a git request over HTTPS was made by a build agent or a CI system cloning for a build, rather than by a person.
      * <p>
-     * Local CI agents are recognised by the attribute their authorization sets. A CI system using the shared build
-     * credential, which returns from the authorization before that attribute is set, is recognised by the credential's
-     * username instead; by the time a completed request is inspected, authentication has already succeeded, so the
-     * username cannot be claimed without the password.
+     * Both build agent mechanisms are recognised by the attribute their authorization sets: the token of a build job and the credential shared with Jenkins. The user name
+     * is deliberately not consulted, because an ordinary user can carry any name and would then be counted as a system.
      *
      * @param request a git request that has been served
      * @return true if the request was a clone for a build
      */
     public boolean isBuildAgentClone(HttpServletRequest request) {
-        if (request.getAttribute(BUILD_AGENT_CLONE_REQUEST_ATTRIBUTE) != null) {
-            return true;
-        }
-        try {
-            String username = extractUsernameAndPassword(request.getHeader(HttpHeaders.AUTHORIZATION)).username();
-            return BUILD_USER_NAME.equals(username) || (StringUtils.hasText(buildAgentGitUsername) && buildAgentGitUsername.equals(username));
-        }
-        catch (LocalVCAuthException _) {
-            return false;
-        }
+        return request.getAttribute(BUILD_AGENT_CLONE_REQUEST_ATTRIBUTE) != null;
     }
 
+    /**
+     * Reads the exercise of a project.
+     *
+     * @param projectKey the project key taken from the repository URI
+     * @return the exercise
+     * @throws LocalVCInternalException if there is no exercise with that project key
+     */
     private ProgrammingExercise getProgrammingExerciseOrThrow(String projectKey) {
         try {
             return programmingExerciseRepository.findOneByProjectKeyOrThrow(projectKey, false);

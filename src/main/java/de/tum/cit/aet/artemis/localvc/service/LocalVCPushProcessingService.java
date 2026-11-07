@@ -78,6 +78,21 @@ public class LocalVCPushProcessingService {
 
     private final LocalVCRepositoryResolverService repositoryResolver;
 
+    /**
+     * Creates the service.
+     *
+     * @param programmingExerciseRepository             reads the exercise of a pushed repository
+     * @param programmingExerciseParticipationService   finds the participation of a pushed repository
+     * @param auxiliaryRepositoryService                tells auxiliary repositories from student repositories
+     * @param ciTriggerService                          triggers the build of a push
+     * @param programmingSubmissionService              creates the submission of a push
+     * @param programmingSubmissionMessagingService     tells the clients about a new submission
+     * @param programmingExerciseTestCaseChangedService flags that the test cases changed
+     * @param exerciseVersionService                    creates the version of a changed exercise
+     * @param hyperionMutationApi                       coordinates changes of an exercise with Hyperion, absent when Hyperion is not part of the installation
+     * @param vcsAccessLogService                       completes the access log of a push, absent on an installation without LocalVC
+     * @param repositoryResolver                        parses repository paths and reads the latest commit of a repository
+     */
     public LocalVCPushProcessingService(ProgrammingExerciseRepository programmingExerciseRepository,
             ProgrammingExerciseParticipationService programmingExerciseParticipationService, AuxiliaryRepositoryService auxiliaryRepositoryService,
             ContinuousIntegrationTriggerService ciTriggerService, ProgrammingSubmissionService programmingSubmissionService,
@@ -274,10 +289,23 @@ public class LocalVCPushProcessingService {
         }
     }
 
+    /**
+     * Reads the solution participation of an exercise, which a push to the tests or to an auxiliary repository is built against.
+     *
+     * @param exercise the exercise
+     * @return the solution participation
+     */
     private ProgrammingExerciseParticipation retrieveSolutionParticipation(ProgrammingExercise exercise) {
         return programmingExerciseParticipationService.retrieveSolutionParticipation(exercise);
     }
 
+    /**
+     * Reads the exercise of a project.
+     *
+     * @param projectKey the project key taken from the repository URI
+     * @return the exercise
+     * @throws VersionControlException if there is no exercise with that project key
+     */
     private ProgrammingExercise getProgrammingExercise(String projectKey) {
         ProgrammingExercise exercise;
         try {
@@ -289,6 +317,13 @@ public class LocalVCPushProcessingService {
         return exercise;
     }
 
+    /**
+     * Parses the repository a pushed folder belongs to.
+     *
+     * @param repositoryFolderPath the path of the bare repository
+     * @return the repository URI
+     * @throws VersionControlException if the path is no valid repository path, which means that the installation is misconfigured
+     */
     private LocalVCRepositoryUri getLocalVCRepositoryUri(Path repositoryFolderPath) {
         try {
             return repositoryResolver.parseRepositoryUri(repositoryFolderPath);
@@ -330,6 +365,14 @@ public class LocalVCPushProcessingService {
         ciTriggerService.triggerBuild(solutionParticipation, commitHash, repositoryType);
     }
 
+    /**
+     * Creates the submission of the solution participation that a push to the tests or to an auxiliary repository leads to.
+     *
+     * @param exercise   the exercise whose solution is built
+     * @param commitHash the hash of the commit of the test repository to build against, or null for the latest one
+     * @return the new submission
+     * @throws VersionControlException if the submission cannot be created
+     */
     private ProgrammingSubmission getProgrammingSubmission(ProgrammingExercise exercise, String commitHash) {
         ProgrammingSubmission submission;
         try {
@@ -341,10 +384,24 @@ public class LocalVCPushProcessingService {
         return submission;
     }
 
+    /**
+     * Determines the type of a repository, including the auxiliary repositories of the exercise.
+     *
+     * @param repositoryTypeOrUserName the repository type or the user name taken from the repository URI
+     * @param exercise                 the exercise the repository belongs to
+     * @return the type of the repository
+     */
     private RepositoryType getRepositoryType(String repositoryTypeOrUserName, ProgrammingExercise exercise) {
         return getRepositoryType(repositoryTypeOrUserName, exercise.getId());
     }
 
+    /**
+     * Determines the type of a repository, including the auxiliary repositories of the exercise.
+     *
+     * @param repositoryTypeOrUserName the repository type or the user name taken from the repository URI
+     * @param exerciseId               the id of the exercise the repository belongs to
+     * @return the type of the repository
+     */
     private RepositoryType getRepositoryType(String repositoryTypeOrUserName, long exerciseId) {
         RepositoryType type = getRepositoryTypeWithoutAuxiliary(repositoryTypeOrUserName);
         if (type == RepositoryType.USER && auxiliaryRepositoryService.isAuxiliaryRepositoryOfExercise(repositoryTypeOrUserName, exerciseId)) {
@@ -353,6 +410,13 @@ public class LocalVCPushProcessingService {
         return type;
     }
 
+    /**
+     * Determines the type of a repository from its name alone. Every name that is no template, solution or tests repository counts as a user repository, because telling an
+     * auxiliary repository from one needs a lookup, which {@link #getRepositoryType(String, long)} makes.
+     *
+     * @param repositoryTypeOrUserName the repository type or the user name taken from the repository URI
+     * @return the type of the repository
+     */
     private RepositoryType getRepositoryTypeWithoutAuxiliary(String repositoryTypeOrUserName) {
         if (repositoryTypeOrUserName.equals(RepositoryType.TEMPLATE.toString())) {
             return RepositoryType.TEMPLATE;
@@ -392,6 +456,16 @@ public class LocalVCPushProcessingService {
         programmingSubmissionMessagingService.notifyUserAboutSubmission(submission, participation.getExercise().getId());
     }
 
+    /**
+     * Reads a commit and the branch it is on.
+     *
+     * @param commitHash the hash of the commit
+     * @param repository the repository the commit is in
+     * @return the commit with its author, message and branch
+     * @throws IOException             if the commit cannot be read
+     * @throws GitAPIException         if the branch cannot be determined
+     * @throws VersionControlException if the hash cannot be resolved or no branch points to the commit
+     */
     private Commit extractCommitInfo(String commitHash, Repository repository) throws IOException, GitAPIException, VersionControlException {
         RevCommit revCommit;
         String branch = null;
