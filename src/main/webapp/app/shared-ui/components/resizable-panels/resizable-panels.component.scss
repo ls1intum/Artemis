@@ -53,10 +53,10 @@
     min-height: 2.75rem;
 }
 
-// The tab bar is as high as the title bar of the page, instead of the generous padding the UI kit gives a tab.
+// The tab bar is at least as high as the title bar of the page, instead of the generous padding the UI kit gives a tab; it still grows with enlarged text.
 .right-panel-header,
 .compact-tab-list {
-    height: var(--title-bar-height);
+    min-height: var(--title-bar-height);
 }
 
 .right-panel-header tumaet-ui-tab-list {
