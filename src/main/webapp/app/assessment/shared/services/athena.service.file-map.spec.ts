@@ -58,7 +58,7 @@ describe('AthenaService file map behaviour', () => {
         const submission = { id: 5, text: 'Hello World' } as TextSubmission;
         const suggestion = new TextFeedbackSuggestion(1, exercise.id!, submission.id!, 'Title', 'Description', 2, 99, undefined, undefined);
         const suggestionsPromise = lastValueFrom(service.getTextFeedbackSuggestions(exercise, submission));
-        httpMock.expectOne('api/athena/text-exercises/10/submissions/5/feedback-suggestions').flush([suggestion]);
+        httpMock.expectOne('/api/athena/text-exercises/10/submissions/5/feedback-suggestions').flush([suggestion]);
         const suggestions = await suggestionsPromise;
         const feedback = suggestions[0] as Feedback;
 
@@ -71,7 +71,7 @@ describe('AthenaService file map behaviour', () => {
         const exercise = { ...exerciseBase, type: 'programming' } as Exercise;
         const programmingSuggestion = new ProgrammingFeedbackSuggestion(2, exercise.id!, 9, 'Issue', 'Fix it', 0.5, 99, 'src/Main.java', 4, undefined);
         const suggestionsPromise = lastValueFrom(service.getProgrammingFeedbackSuggestions(exercise, 9));
-        httpMock.expectOne('api/athena/programming-exercises/10/submissions/9/feedback-suggestions').flush([programmingSuggestion]);
+        httpMock.expectOne('/api/athena/programming-exercises/10/submissions/9/feedback-suggestions').flush([programmingSuggestion]);
         const [feedback] = await suggestionsPromise;
 
         expect(feedback.reference).toBe('file:src/Main.java_line:4');
@@ -83,7 +83,7 @@ describe('AthenaService file map behaviour', () => {
         const exercise = { ...exerciseBase, type: 'programming' } as Exercise;
         const suggestion = new ProgrammingFeedbackSuggestion(3, exercise.id!, 9, 'Hint', 'Think about edge cases', 1, undefined, '', undefined, undefined);
         const suggestionsPromise = lastValueFrom(service.getProgrammingFeedbackSuggestions(exercise, 9));
-        httpMock.expectOne('api/athena/programming-exercises/10/submissions/9/feedback-suggestions').flush([suggestion]);
+        httpMock.expectOne('/api/athena/programming-exercises/10/submissions/9/feedback-suggestions').flush([suggestion]);
         const [feedback] = await suggestionsPromise;
 
         expect(feedback.type).toBe(FeedbackType.MANUAL_UNREFERENCED);
@@ -95,7 +95,7 @@ describe('AthenaService file map behaviour', () => {
         const modelingSuggestion = new ModelingFeedbackSuggestion(4, exercise.id!, 11, 'Model', 'Looks good', 2, 99, 'element:123');
         const submission = { id: 11 } as ModelingSubmission;
         const suggestionsPromise = lastValueFrom(service.getModelingFeedbackSuggestions(exercise, submission));
-        httpMock.expectOne('api/athena/modeling-exercises/10/submissions/11/feedback-suggestions').flush([modelingSuggestion]);
+        httpMock.expectOne('/api/athena/modeling-exercises/10/submissions/11/feedback-suggestions').flush([modelingSuggestion]);
         const [feedback] = await suggestionsPromise;
 
         expect(feedback.type).toBe(FeedbackType.AUTOMATIC);
@@ -111,7 +111,7 @@ describe('AthenaService file map behaviour', () => {
         const modelingSuggestion = new ModelingFeedbackSuggestion(5, exercise.id!, 11, 'Model', 'Needs work', 0, undefined, undefined);
         const submission = { id: 11 } as ModelingSubmission;
         const suggestionsPromise = lastValueFrom(service.getModelingFeedbackSuggestions(exercise, submission));
-        httpMock.expectOne('api/athena/modeling-exercises/10/submissions/11/feedback-suggestions').flush([modelingSuggestion]);
+        httpMock.expectOne('/api/athena/modeling-exercises/10/submissions/11/feedback-suggestions').flush([modelingSuggestion]);
         const [feedback] = await suggestionsPromise;
 
         expect(feedback.type).toBe(FeedbackType.MANUAL_UNREFERENCED);

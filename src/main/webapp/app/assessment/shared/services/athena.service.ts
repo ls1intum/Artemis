@@ -1,6 +1,5 @@
 import { Service, inject } from '@angular/core';
-import { HttpClient, HttpResponse } from '@angular/common/http';
-import { Observable, map, of, switchMap } from 'rxjs';
+import { Observable, map, of } from 'rxjs';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER, Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
@@ -9,31 +8,22 @@ import { TextBlockRef } from 'app/text/shared/entities/text-block-ref.model';
 import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 import { MODULE_FEATURE_ATHENA } from 'app/app.constants';
 import { ModelingSubmission } from 'app/modeling/shared/entities/modeling-submission.model';
-import { ModelingFeedbackSuggestion, ProgrammingFeedbackSuggestion, TextFeedbackSuggestion } from 'app/assessment/shared/entities/feedback-suggestion.model';
+import { AthenaApi } from 'app/openapi/api/athena-api';
 import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
 
 @Service()
 export class AthenaService {
-    protected http = inject(HttpClient);
+    private readonly athenaApi = inject(AthenaApi);
     private profileService = inject(ProfileService);
-
-    public resourceUrl = 'api/athena';
 
     /**
      * Get feedback suggestions for the given submission from Athena
      *
-     * @param exercise
-     * @param submissionId the id of the submission
+     * @param request the generated request to make when Athena is enabled
      * @return observable that emits the feedback suggestions
      */
-    private getFeedbackSuggestions<T>(exercise: Exercise, submissionId: number): Observable<T[]> {
-        if (!this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATHENA)) {
-            return of([] as T[]);
-        }
-
-        return this.http
-            .get<T[]>(`${this.resourceUrl}/${exercise.type}-exercises/${exercise.id}/submissions/${submissionId}/feedback-suggestions`, { observe: 'response' })
-            .pipe(switchMap((res: HttpResponse<T[]>) => of(res.body!)));
+    private getFeedbackSuggestions<T>(request: () => Observable<T[]>): Observable<T[]> {
+        return this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATHENA) ? request() : of([]);
     }
 
     /**
@@ -60,7 +50,7 @@ export class AthenaService {
      * with the "FeedbackSuggestion:accepted:" prefix
      */
     public getTextFeedbackSuggestions(exercise: Exercise, submission: TextSubmission): Observable<(TextBlockRef | Feedback)[]> {
-        return this.getFeedbackSuggestions<TextFeedbackSuggestion>(exercise, submission.id!).pipe(
+        return this.getFeedbackSuggestions(() => this.athenaApi.getTextFeedbackSuggestions(exercise.id!, submission.id!)).pipe(
             map((suggestions) => {
                 // Convert referenced feedback suggestions to TextBlockRefs for easier handling in the components
                 return suggestions.map((suggestion) => {
@@ -99,7 +89,7 @@ export class AthenaService {
      * @return observable that emits the feedback suggestions as Feedback objects with the "FeedbackSuggestion:accepted:" prefix
      */
     public getProgrammingFeedbackSuggestions(exercise: Exercise, submissionId: number): Observable<Feedback[]> {
-        return this.getFeedbackSuggestions<ProgrammingFeedbackSuggestion>(exercise, submissionId).pipe(
+        return this.getFeedbackSuggestions(() => this.athenaApi.getProgrammingFeedbackSuggestions(exercise.id!, submissionId)).pipe(
             map((suggestions) => {
                 return suggestions.map((suggestion) => {
                     const feedback = new Feedback();
@@ -135,12 +125,12 @@ export class AthenaService {
      * @return observable that emits the feedback suggestions as Feedback objects with the "FeedbackSuggestion:accepted:" prefix
      */
     public getModelingFeedbackSuggestions(exercise: Exercise, submission: ModelingSubmission): Observable<Feedback[]> {
-        return this.getFeedbackSuggestions<ModelingFeedbackSuggestion>(exercise, submission.id!).pipe(
+        return this.getFeedbackSuggestions(() => this.athenaApi.getModelingFeedbackSuggestions(exercise.id!, submission.id!)).pipe(
             map((suggestions) => {
                 return suggestions.map((suggestion) => {
                     const feedback = new Feedback();
                     feedback.credits = suggestion.credits;
-                    feedback.positive = suggestion.credits >= 1;
+                    feedback.positive = (suggestion.credits ?? 0) >= 1;
 
                     // Extract reference details if present
                     const reference = suggestion.reference?.split(':');
