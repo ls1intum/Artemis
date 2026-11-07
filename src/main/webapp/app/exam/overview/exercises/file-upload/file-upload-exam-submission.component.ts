@@ -77,7 +77,11 @@ export class FileUploadExamSubmissionComponent extends ExamSubmissionComponent i
     readonly previewUrl = computed(() => {
         const url = this.submittedFileUrl();
         const revision = this.previewRevision();
-        return url && revision > 0 ? `${url}${url.includes('?') ? '&' : '?'}rev=${revision}` : url;
+        if (!url || revision <= 0) {
+            return url;
+        }
+        const separator = url.includes('?') ? '&' : '?';
+        return `${url}${separator}rev=${revision}`;
     });
     participation?: StudentParticipation;
     result?: Result;

@@ -22,6 +22,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.function.ToDoubleFunction;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -792,7 +793,10 @@ public class CourseStudentDataExportService {
             // Build data rows for each student
             final var configuredPoints = examScores.maxPoints() != null ? String.valueOf(examScores.maxPoints()) : "";
             // A single maximum describes all real exams. Test attempts can have different automatic subtotals.
-            final var points = useAttemptScores ? attemptMaxima.size() == 1 ? formatValue(attemptMaxima.getFirst(), course) : "" : configuredPoints;
+            var points = configuredPoints;
+            if (useAttemptScores) {
+                points = attemptMaxima.size() == 1 ? formatValue(attemptMaxima.getFirst(), course) : "";
+            }
             for (ExamScoresDTO.StudentResultDTO studentResult : examScores.studentResults()) {
                 List<String> rowParts = new ArrayList<>();
                 rowParts.add(escapeCSV(studentResult.name()));
@@ -810,10 +814,14 @@ public class CourseStudentDataExportService {
                     if (exerciseResult != null) {
                         rowParts.add(escapeCSV(exerciseResult.title()));
                         boolean ungradedPracticeExercise = studentResult.maxPoints() != null && exerciseResult.achievedPoints() == null;
-                        rowParts.add(ungradedPracticeExercise ? ""
-                                : exerciseResult.achievedPoints() != null ? formatValue(exerciseResult.achievedPoints(), course) : formatValue(0.0, course));
-                        rowParts.add(ungradedPracticeExercise ? ""
-                                : exerciseResult.achievedScore() != null ? formatValue(exerciseResult.achievedScore(), course) : formatValue(0.0, course));
+                        if (ungradedPracticeExercise) {
+                            rowParts.add("");
+                            rowParts.add("");
+                        }
+                        else {
+                            rowParts.add(formatValue(Objects.requireNonNullElse(exerciseResult.achievedPoints(), 0.0), course));
+                            rowParts.add(formatValue(Objects.requireNonNullElse(exerciseResult.achievedScore(), 0.0), course));
+                        }
 
                         // Collect for statistics
                         if (exerciseResult.achievedPoints() != null) {
@@ -1259,14 +1267,14 @@ public class CourseStudentDataExportService {
      * @return the formatted statistics row
      */
     private List<String> createStatisticsRow(String label, List<Long> groups, Map<Long, List<Double>> pointsByGroup, Map<Long, Double> maxPointsByGroup,
-            Function<List<Double>, Double> statisticFunction, List<Double> overallPoints, Double maxPoints, List<Double> overallScores, Course course) {
+            ToDoubleFunction<List<Double>> statisticFunction, List<Double> overallPoints, Double maxPoints, List<Double> overallScores, Course course) {
         List<String> row = new ArrayList<>();
         row.add(label);
         row.addAll(Collections.nCopies(4, ""));
 
         for (Long groupId : groups) {
             List<Double> groupPoints = pointsByGroup.getOrDefault(groupId, List.of());
-            double statValue = statisticFunction.apply(groupPoints);
+            double statValue = statisticFunction.applyAsDouble(groupPoints);
             row.add(""); // Empty for exercise name column in exam export
             row.add(formatValue(statValue, course));
             Double groupMax = maxPointsByGroup.get(groupId);
@@ -1275,10 +1283,10 @@ public class CourseStudentDataExportService {
         }
 
         // Overall statistics
-        double overallStat = statisticFunction.apply(overallPoints);
+        double overallStat = statisticFunction.applyAsDouble(overallPoints);
         row.add(overallScores != null && overallPoints.isEmpty() ? "" : formatValue(overallStat, course));
         if (overallScores != null) {
-            row.add(overallScores.isEmpty() ? "" : formatValue(statisticFunction.apply(overallScores), course));
+            row.add(overallScores.isEmpty() ? "" : formatValue(statisticFunction.applyAsDouble(overallScores), course));
         }
         else if (maxPoints != null && maxPoints > 0) {
             row.add(formatValue(overallStat / maxPoints * 100.0, course));

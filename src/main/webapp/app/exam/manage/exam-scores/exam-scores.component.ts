@@ -792,13 +792,7 @@ export class ExamScoresComponent implements OnInit {
         headers.push(EXAM_OVERALL_SCORE_KEY);
         if (this.gradingScaleExists()) {
             headers.push(this.isBonus() ? BONUS_KEY : GRADE_KEY);
-            if (this.hasBonus()) {
-                if (this.presentationScoreThreshold() != undefined) {
-                    headers.push(`${PRESENTATION_SCORE_IN_BONUS_SOURCE_KEY} ${this.presentationScoreThreshold()}`);
-                }
-                headers.push(this.hasBonus() === BonusStrategy.POINTS ? BONUS_POINTS_KEY : BONUS_GRADE_KEY);
-                headers.push(FINAL_GRADE_KEY);
-            }
+            headers.push(...this.bonusExportColumnNames());
         }
         headers.push(EXAM_SUBMITTED);
         if (this.gradingScaleExists() && !this.isBonus()) {
@@ -813,6 +807,19 @@ export class ExamScoresComponent implements OnInit {
             headers.push(PLAGIARISM_VERDICT_IN_BONUS_SOURCE_KEY);
         }
 
+        return headers;
+    }
+
+    /** Additional export columns for the configured bonus source. */
+    private bonusExportColumnNames(): string[] {
+        if (!this.hasBonus()) {
+            return [];
+        }
+        const headers = [];
+        if (this.presentationScoreThreshold() != undefined) {
+            headers.push(`${PRESENTATION_SCORE_IN_BONUS_SOURCE_KEY} ${this.presentationScoreThreshold()}`);
+        }
+        headers.push(this.hasBonus() === BonusStrategy.POINTS ? BONUS_POINTS_KEY : BONUS_GRADE_KEY, FINAL_GRADE_KEY);
         return headers;
     }
 
@@ -868,7 +875,8 @@ export class ExamScoresComponent implements OnInit {
         }
         rowData.set(EXAM_SUBMITTED, studentResult.submitted ? 'yes' : 'no');
         if (this.gradingScaleExists() && !this.isBonus()) {
-            rowData.set(EXAM_PASSED, this.isUnscoredTestAttempt(studentResult) ? '' : studentResult.hasPassed ? 'yes' : 'no');
+            const passed = studentResult.hasPassed ? 'yes' : 'no';
+            rowData.set(EXAM_PASSED, this.isUnscoredTestAttempt(studentResult) ? '' : passed);
         }
 
         if (this.hasPlagiarismVerdicts()) {

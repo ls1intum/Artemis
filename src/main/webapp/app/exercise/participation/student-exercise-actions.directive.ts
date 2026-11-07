@@ -212,8 +212,22 @@ export abstract class StudentExerciseActionsDirective {
                     this.receiveNewParticipation(resumedParticipation);
                     this.alertService.success('artemisApp.exercise.resumeProgrammingExercise');
                 },
-                error: (error) => {
-                    this.alertService.error(`artemisApp.${error.error.entityName}.errors.${error.error.errorKey}`);
+                error: (error: HttpErrorResponse) => {
+                    const body: unknown = error.error;
+                    if (
+                        typeof body === 'object' &&
+                        body !== null &&
+                        'entityName' in body &&
+                        typeof body.entityName === 'string' &&
+                        body.entityName.trim().length > 0 &&
+                        'errorKey' in body &&
+                        typeof body.errorKey === 'string' &&
+                        body.errorKey.trim().length > 0
+                    ) {
+                        this.alertService.error(`artemisApp.${body.entityName}.errors.${body.errorKey}`);
+                    } else {
+                        this.alertService.error('artemisApp.exercise.startError');
+                    }
                 },
             });
         this.participationAction = { exerciseId, subscription };

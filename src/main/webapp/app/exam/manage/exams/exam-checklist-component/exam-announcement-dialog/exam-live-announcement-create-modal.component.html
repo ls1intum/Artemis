@@ -35,7 +35,7 @@
             }
         }
         <section class="flex flex-col gap-2" data-testid="announcement-history">
-            <h3 class="my-0! text-lg font-semibold" jhiTranslate="artemisApp.examManagement.announcementCreate.history"></h3>
+            <h3 class="my-0! text-lg font-semibold">{{ 'artemisApp.examManagement.announcementCreate.history' | artemisTranslate }}</h3>
             @if (historyLoadingFailed()) {
                 <p class="text-state-danger" jhiTranslate="artemisApp.examManagement.announcementCreate.historyFailed"></p>
             } @else if (pastAnnouncements().length === 0) {

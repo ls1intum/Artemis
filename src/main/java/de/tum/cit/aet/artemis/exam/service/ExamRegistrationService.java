@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.exam.service;
 
 import static de.tum.cit.aet.artemis.core.util.TimeLogUtil.formatDurationFrom;
 
+import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -404,7 +405,7 @@ public class ExamRegistrationService {
     }
 
     private void checkRegistrationOpen(Exam exam) {
-        if (exam.getEndDate() != null && !ZonedDateTime.now().isBefore(exam.getEndDate())) {
+        if (!ZonedDateTime.now(ZoneOffset.UTC).isBefore(exam.getEndDate())) {
             throw new BadRequestAlertException("Registration is closed because the exam has ended", "exam", "registrationClosed");
         }
     }

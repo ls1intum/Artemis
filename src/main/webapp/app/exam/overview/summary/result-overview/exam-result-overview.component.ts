@@ -181,9 +181,7 @@ export class ExamResultOverviewComponent implements OnInit {
 
     private getOverallAchievedPercentageRoundedByCourseSettings() {
         let overallScoreAchieved = this.studentExamWithGrade().studentResult.overallScoreAchieved;
-        if (overallScoreAchieved == null) {
-            overallScoreAchieved = this.summedAchievedExerciseScorePercentage();
-        }
+        overallScoreAchieved ??= this.summedAchievedExerciseScorePercentage();
 
         return roundScorePercentSpecifiedByCourseSettings(overallScoreAchieved / 100, this.studentExamWithGrade().studentExam?.exam?.course);
     }

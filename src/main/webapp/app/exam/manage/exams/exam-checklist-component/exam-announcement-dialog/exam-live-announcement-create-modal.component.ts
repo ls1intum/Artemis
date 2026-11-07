@@ -40,7 +40,7 @@ export class ExamLiveAnnouncementCreateModalComponent implements OnInit {
     private examManagementService = inject(ExamManagementService);
     private destroyRef = inject(DestroyRef);
 
-    actions = [new BoldAction(), new ItalicAction(), new UnderlineAction(), new CodeAction(), new CodeBlockAction(), new OrderedListAction(), new UnorderedListAction()];
+    readonly actions = [new BoldAction(), new ItalicAction(), new UnderlineAction(), new CodeAction(), new CodeBlockAction(), new OrderedListAction(), new UnorderedListAction()];
 
     readonly visible = model(true);
     readonly courseId = input.required<number>();

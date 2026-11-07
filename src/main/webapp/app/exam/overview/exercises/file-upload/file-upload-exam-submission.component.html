@@ -44,11 +44,11 @@
                             </button>
                         </div>
                     }
-                    <div class="sr-only" role="status" aria-live="polite">
+                    <output class="sr-only" aria-live="polite">
                         @if (uploading()) {
                             <span jhiTranslate="artemisApp.fileUploadSubmission.examUploading"></span>
                         }
-                    </div>
+                    </output>
                     <div class="mt-2 flex flex-wrap items-center gap-1">
                         <span jhiTranslate="artemisApp.fileUploadExercise.supportedFileExtensions"></span>
                         @for (extension of exercise().filePattern!.split(','); track extension) {
@@ -58,7 +58,7 @@
                 </div>
             }
             @if (submittedFileName() && submittedFileUrl()) {
-                <div class="mt-3! rounded-lg border border-(--border-color) p-3!" data-testid="file-upload-confirmation" role="status">
+                <div class="mt-3! rounded-lg border border-(--border-color) p-3!" data-testid="file-upload-confirmation">
                     @if (isImage()) {
                         <img
                             [src]="previewUrl()"
@@ -71,7 +71,9 @@
                     } @else {
                         <fa-icon [icon]="faFile" class="mb-2 inline-block text-3xl" />
                     }
-                    <h6 jhiTranslate="artemisApp.fileUploadSubmission.submittedFile" [translateValues]="{ filename: submittedFileName() }"></h6>
+                    <output class="mb-2 block font-semibold" aria-live="polite">{{
+                        'artemisApp.fileUploadSubmission.submittedFile' | artemisTranslate: { filename: submittedFileName() }
+                    }}</output>
                     <button
                         type="button"
                         tumAetUiButton

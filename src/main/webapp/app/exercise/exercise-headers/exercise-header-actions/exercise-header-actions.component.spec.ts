@@ -896,12 +896,55 @@ describe('ExerciseHeaderActionsComponent', () => {
             expect(pending.observed).toBe(false);
         });
 
+        it.each([
+            { label: 'null body', body: null },
+            { label: 'missing body', body: undefined },
+            { label: 'text body', body: 'Service unavailable' },
+            { label: 'empty body', body: {} },
+            { label: 'array body', body: [] },
+            { label: 'missing error key', body: { entityName: 'participation' } },
+            { label: 'non-string entity', body: { entityName: 42, errorKey: 'resumeFailed' } },
+            { label: 'non-string error key', body: { entityName: 'participation', errorKey: false } },
+            { label: 'blank entity', body: { entityName: ' ', errorKey: 'resumeFailed' } },
+            { label: 'blank error key', body: { entityName: 'participation', errorKey: '' } },
+        ])('reports a generic resume failure for $label without changing participation', ({ body }) => {
+            const exercise = programming(true);
+            const participation = { id: 10, testRun: false, initializationState: InitializationState.INACTIVE } as StudentParticipation;
+            exercise.studentParticipations = [participation];
+            createComponent(exercise);
+            vi.spyOn(TestBed.inject(CourseExerciseService), 'resumeProgrammingExercise').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500, error: body })));
+            const errorSpy = vi.spyOn(TestBed.inject(AlertService), 'error');
+            const output = vi.spyOn(fixture.componentInstance.newParticipation, 'emit');
+
+            fixture.componentInstance.resumeProgrammingExercise(false);
+
+            expect(errorSpy).toHaveBeenCalledExactlyOnceWith('artemisApp.exercise.startError');
+            expect(fixture.componentInstance.isLoading()).toBe(false);
+            expect(output).not.toHaveBeenCalled();
+            expect(exercise.studentParticipations[0]).toBe(participation);
+        });
+
+        it('reports a generic resume failure for an actual network error', () => {
+            const exercise = programming(true);
+            exercise.studentParticipations = [{ id: 10, testRun: false, initializationState: InitializationState.INACTIVE }];
+            createComponent(exercise, { realCourseExercise: true });
+            const http = TestBed.inject(HttpTestingController);
+            const errorSpy = vi.spyOn(TestBed.inject(AlertService), 'error');
+
+            fixture.componentInstance.resumeProgrammingExercise(false);
+            http.expectOne('api/exercise/exercises/7/participations/10/resume-programming-participation').error(new ProgressEvent('error'));
+
+            expect(errorSpy).toHaveBeenCalledExactlyOnceWith('artemisApp.exercise.startError');
+            expect(fixture.componentInstance.isLoading()).toBe(false);
+            http.verify();
+        });
+
         it('should alert the error key of the server when resuming fails', () => {
             const exercise = programming(true);
             exercise.studentParticipations = [{ id: 10, testRun: false } as StudentParticipation];
             createComponent(exercise);
             vi.spyOn(TestBed.inject(CourseExerciseService), 'resumeProgrammingExercise').mockReturnValue(
-                throwError(() => ({ error: { entityName: 'participation', errorKey: 'resumeFailed' } })),
+                throwError(() => new HttpErrorResponse({ status: 400, error: { entityName: 'participation', errorKey: 'resumeFailed' } })),
             );
             const errorSpy = vi.spyOn(TestBed.inject(AlertService), 'error');
 

@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.exam.web;
 
 import java.nio.file.Path;
+import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Set;
@@ -199,7 +200,7 @@ public class ExamUserResource {
         ExamUser examUser = examUserRepository.findWithExamById(examUserId).filter(registration -> registration.getExam().getId().equals(examId))
                 .orElseThrow(() -> new EntityNotFoundException("Exam user not found in the requested exam"));
         var exam = examUser.getExam();
-        if (exam.isTestExam() || exam.getEndDate() == null || ZonedDateTime.now().isBefore(exam.getEndDate())) {
+        if (exam.isTestExam() || ZonedDateTime.now(ZoneOffset.UTC).isBefore(exam.getEndDate())) {
             throw new BadRequestAlertException("Attendance can only be corrected after a real exam has ended", "exam", "attendanceCorrectionNotAllowed");
         }
         examUser.setAttendanceOverride(update.attended());
