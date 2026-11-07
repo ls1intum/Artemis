@@ -1,6 +1,7 @@
 {
     "artemisApp": {
         "programmingExercise": {
+            "instructionTableLabel": "Tabelle in der Aufgabenstellung",
             "repositoryBuildOverview": {
                 "title": "Repositories und Builds",
                 "template": "Vorlage",

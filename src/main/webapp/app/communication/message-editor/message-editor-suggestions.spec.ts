@@ -3,6 +3,7 @@ import { HttpResponse } from '@angular/common/http';
 import { of, throwError } from 'rxjs';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
+import { ConversationService } from 'app/communication/conversations/service/conversation.service';
 import { ChannelService } from 'app/communication/conversations/service/channel.service';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { LectureService } from 'app/lecture/manage/services/lecture.service';
@@ -14,6 +15,7 @@ import { EMOTICON_TO_EMOJI } from 'app/editor/monaco-editor/model/emoticon-emoji
 describe('Message editor suggestions', () => {
     const emojis = { search: vi.fn() };
     const members = { searchMembersForUserMentions: vi.fn() };
+    const conversations = { searchMembersForUserMentions: vi.fn() };
     const channels = { getPublicChannelsOfCourse: vi.fn() };
     const exercises = { getTitlesForAccessibleCourse: vi.fn() };
     const lectures = { findAllByCourseIdForOverview: vi.fn() };
@@ -26,6 +28,16 @@ describe('Message editor suggestions', () => {
             { id: 'joy_cat', native: '😹' },
         ]);
         members.searchMembersForUserMentions.mockReturnValue(of(new HttpResponse({ body: [{ name: 'Anna', login: 'anna' }] })));
+        conversations.searchMembersForUserMentions.mockReturnValue(
+            of(
+                new HttpResponse({
+                    body: [
+                        { name: 'Recent member', login: 'recent' },
+                        { name: 'Older member', login: 'older' },
+                    ],
+                }),
+            ),
+        );
         channels.getPublicChannelsOfCourse.mockReturnValue(of(new HttpResponse({ body: [{ id: 2, name: 'general' }] })));
         exercises.getTitlesForAccessibleCourse.mockReturnValue(of([{ id: 3, title: 'Exercise', type: 'programming' }]));
         lectures.findAllByCourseIdForOverview.mockReturnValue(of([{ id: 4, title: 'Lecture' }]));
@@ -34,6 +46,7 @@ describe('Message editor suggestions', () => {
                 MessageEditorSuggestions,
                 { provide: EmojiSearch, useValue: emojis },
                 { provide: CourseManagementService, useValue: members },
+                { provide: ConversationService, useValue: conversations },
                 { provide: ChannelService, useValue: channels },
                 { provide: ExerciseService, useValue: exercises },
                 { provide: LectureService, useValue: lectures },
@@ -104,6 +117,20 @@ describe('Message editor suggestions', () => {
 
     it('retains numeric message references as explicit suggestions', async () => {
         expect((await suggestions.search('#', '123', 1))[0]).toMatchObject({ markdown: '#123', kind: 'message' });
+    });
+
+    it('suggests only conversation members in server activity order', async () => {
+        const conversation = { id: 42, type: ConversationType.CHANNEL };
+        const items = await suggestions.search('@', '', 1, conversation);
+        expect(items.map((item) => item.markdown)).toEqual(['[user]Recent member(recent)[/user]', '[user]Older member(older)[/user]']);
+        expect(conversations.searchMembersForUserMentions).toHaveBeenCalledExactlyOnceWith(1, 42, '');
+        expect(members.searchMembersForUserMentions).not.toHaveBeenCalled();
+    });
+
+    it('uses the current conversation after switching chats', async () => {
+        await suggestions.search('@', 'ann', 1, { id: 42, type: ConversationType.CHANNEL });
+        await suggestions.search('@', 'ann', 1, { id: 43, type: ConversationType.CHANNEL });
+        expect(conversations.searchMembersForUserMentions).toHaveBeenLastCalledWith(1, 43, 'ann');
     });
 
     it('only suggests all members when creating a group-chat message', async () => {
