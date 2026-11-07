@@ -15,10 +15,19 @@ import de.tum.cit.aet.artemis.core.exception.RateLimitExceededException;
 import de.tum.cit.aet.artemis.core.security.RateLimitType;
 import inet.ipaddr.IPAddress;
 
+/**
+ * Filter that enforces rate limiting on OIDC authorization initialization requests.
+ * Intercepts requests matching `/oauth2/authorization` and checks the client's rate limit budget.
+ */
 public class OIDCRateLimitFilter extends OncePerRequestFilter {
 
     private final RateLimitService rateLimitService;
 
+    /**
+     * Instantiates a new OIDC rate limit filter.
+     *
+     * @param rateLimitService the rate limit service used to check budgets and resolve client addresses
+     */
     public OIDCRateLimitFilter(RateLimitService rateLimitService) {
         this.rateLimitService = rateLimitService;
     }
