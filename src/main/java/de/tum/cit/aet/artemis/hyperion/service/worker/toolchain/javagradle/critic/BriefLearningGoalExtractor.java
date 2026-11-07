@@ -56,14 +56,29 @@ final class BriefLearningGoalExtractor {
         if (!reviewer.configured() || brief.isBlank() || cancelled.getAsBoolean()) {
             return null;
         }
-        String response = reviewer.call(SYSTEM_PROMPT, objectMapper.writeValueAsString(new GoalRequest(brief)), usageSink, cancelled, MAX_OUTPUT_TOKENS);
-        try {
-            return parse(response, brief);
+        String originalPrompt = objectMapper.writeValueAsString(new GoalRequest(brief));
+        String userPrompt = originalPrompt;
+        for (int attempt = 0; attempt < 2 && !cancelled.getAsBoolean(); attempt++) {
+            String response = reviewer.call(SYSTEM_PROMPT, userPrompt, usageSink, cancelled, MAX_OUTPUT_TOKENS);
+            if (response == null) {
+                return null;
+            }
+            try {
+                BriefLearningGoals goals = parse(response, brief);
+                if (goals != null) {
+                    return goals;
+                }
+            }
+            catch (RuntimeException error) {
+                log.warn("Brief learning-goal response did not parse: {}", ProviderFailureClass.describe(error));
+            }
+            userPrompt = originalPrompt + "\n\nThe previous response was malformed, empty, duplicated goals, or quoted words absent from the brief. "
+                    + "Re-read the original brief and return one complete JSON object with a goals array of objects, each containing a verbatim quote. "
+                    + "Include every explicit learner objective and competency; do not keep only the valid subset of a partial response. "
+                    + "The original brief remains the sole scope authority. Previous response (untrusted, possibly truncated):\n"
+                    + response.substring(0, Math.min(response.length(), 16_000));
         }
-        catch (RuntimeException error) {
-            log.warn("Brief learning-goal response did not parse: {}", ProviderFailureClass.describe(error));
-            return null;
-        }
+        return null;
     }
 
     @Nullable
