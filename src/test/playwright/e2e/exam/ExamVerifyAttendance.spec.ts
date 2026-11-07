@@ -116,20 +116,23 @@ test.describe('Exam attendance verification', { tag: '@slow' }, () => {
         await expect(rows).toHaveCount(2);
         await expect(secondSignature).toHaveAttribute('src', secondSignatureSource!);
 
+        // Marking a student absent clears the four identity checks: the signature stays, but the student is shown as unverified again.
         await setAttendance(studentOne, 'false');
         await expect(firstSignature).toHaveAttribute('src', firstSignatureSource!);
-        await expect(first.getByTestId('attendance-check-status')).toHaveAttribute('data-checked', 'true');
-
-        // Reset restores the original incomplete identity check without erasing the signature.
-        await setAttendance(studentTwo, '');
+        await expect(first.getByTestId('attendance-check-status')).toHaveAttribute('data-checked', 'false');
         await expect(page.getByTestId('not-checked-count')).toHaveText('1');
+        await expect(second.getByTestId('attendance-check-status')).toHaveAttribute('data-checked', 'true');
+
+        await setAttendance(studentTwo, 'false');
+        await expect(page.getByTestId('not-checked-count')).toHaveText('2');
         await expect(second.getByTestId('attendance-check-status')).toHaveAttribute('data-checked', 'false');
         await expect(secondSignature).toHaveAttribute('src', secondSignatureSource!);
-
-        // A manual absence is also a completed decision, even with incomplete original checks.
-        await setAttendance(studentTwo, 'false');
-        await expect(page.getByTestId('all-students-checked')).toBeVisible();
-        await expect(second.getByTestId('attendance-check-status')).toHaveAttribute('data-checked', 'true');
         await expect(rows).toHaveCount(2);
+
+        // A later correction confirms the checks again, without a new signature.
+        await setAttendance(studentOne, 'true');
+        await expect(page.getByTestId('not-checked-count')).toHaveText('1');
+        await expect(first.getByTestId('attendance-check-status')).toHaveAttribute('data-checked', 'true');
+        await expect(firstSignature).toHaveAttribute('src', firstSignatureSource!);
     });
 });
