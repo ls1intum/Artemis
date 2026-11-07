@@ -2530,6 +2530,37 @@ paths:
         schema: {type: string}
       responses:
         '200': {description: OK}
+  /api/lti/public/lti13/auth-login:
+    post:
+      tags: [lti]
+      summary: Completes an LTI 1.3 launch with the state and id token that the platform
+        sent
+      operationId: lti13AuthLogin
+      requestBody:
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                state: {type: string}
+                id_token: {type: string}
+              required: [id_token, state]
+        required: true
+      responses:
+        '200':
+          description: The launch succeeded
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Lti13AuthenticationResponse'}
+        '401':
+          description: The user has to sign in before the launch continues
+          headers:
+            ltiSuccessLoginRequired:
+              description: The login to prefill on the sign-in page
+              schema: {type: string}
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Lti13AuthenticationResponse'}
 components:
   schemas:
     CourseCompetency:
@@ -3133,6 +3164,12 @@ components:
           type: string
           default: short-answer
           enum: [short-answer]
+    Lti13AuthenticationResponse:
+      type: object
+      properties:
+        targetLinkUri: {type: string}
+        ltiIdToken: {type: string}
+        clientRegistrationId: {type: string}
     ExerciseGenerationActivity:
       type: object
       description: What a generation run is doing right now, so a long synchronous
