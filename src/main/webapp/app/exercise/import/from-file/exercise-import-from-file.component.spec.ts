@@ -23,7 +23,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { FileUploaderService } from 'app/foundation/service/file-uploader.service';
 import { DragAndDropQuestion } from 'app/quiz/shared/entities/drag-and-drop-question.model';
 import { DragItem } from 'app/quiz/shared/entities/drag-item.model';
-import dayjs from 'dayjs/esm';
 
 describe('ExerciseImportFromFileComponent', () => {
     let component: ExerciseImportFromFileComponent;
