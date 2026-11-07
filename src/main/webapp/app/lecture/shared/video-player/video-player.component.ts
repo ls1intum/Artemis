@@ -14,6 +14,9 @@ const MIN_VIDEO_WIDTH = 300;
 /** Minimum width reserved for the transcript column in pixels. */
 const MIN_TRANSCRIPT_WIDTH = 250;
 
+/** How long the transcript holds still after a click or key press on the video (see `transcriptScrollDeferredUntil`). */
+const TRANSCRIPT_SCROLL_DEFER_MS = 10_000;
+
 @Component({
     selector: 'jhi-video-player',
     standalone: true,
@@ -64,6 +67,16 @@ export class VideoPlayerComponent implements AfterViewInit, OnDestroy {
 
     /** True while the divider is being dragged; disables the video's pointer events so the drag stays smooth. */
     protected readonly isResizing = signal<boolean>(false);
+
+    /**
+     * Until when the transcript must not auto-scroll. Chrome closes a native control menu (playback speed, download) as soon
+     * as anything scrolls, and the menu is opened by a click or key press on the video, so the transcript holds still for a
+     * short while after one. Playing, pausing, seeking or picking a speed ends the hold early.
+     */
+    private transcriptScrollDeferredUntil = 0;
+
+    /** True while the transcript still has to catch up with the active segment after a deferred scroll. */
+    private transcriptScrollPending = false;
 
     /** Store reference to window resize handler for cleanup */
     private resizeHandler: (() => void) | undefined = undefined;
@@ -400,12 +413,32 @@ export class VideoPlayerComponent implements AfterViewInit, OnDestroy {
             this.currentSegmentIndex.set(index);
             this.updateActiveSlideNumber(segments[index].slideNumber);
 
-            // Scroll to the active segment in the transcript viewer
-            const viewer = this.transcriptViewer();
-            if (viewer) {
-                viewer.scrollToSegment(index);
-            }
+            this.transcriptScrollPending = true;
         }
+        this.scrollTranscriptIfDue();
+    }
+
+    /** Scrolls the transcript to the active segment once the hold after a click on the video has ended. */
+    private scrollTranscriptIfDue(): void {
+        if (!this.transcriptScrollPending || Date.now() < this.transcriptScrollDeferredUntil) {
+            return;
+        }
+        this.transcriptScrollPending = false;
+        const index = this.currentSegmentIndex();
+        if (index >= 0) {
+            this.transcriptViewer()?.scrollToSegment(index);
+        }
+    }
+
+    /** A click or key press on the video may have opened a native menu, so keep the transcript still for a moment. */
+    protected onVideoInteraction(): void {
+        this.transcriptScrollDeferredUntil = Date.now() + TRANSCRIPT_SCROLL_DEFER_MS;
+    }
+
+    /** Playing, pausing, seeking or changing the speed means no native menu is open any more. */
+    protected onVideoPlaybackChange(): void {
+        this.transcriptScrollDeferredUntil = 0;
+        this.scrollTranscriptIfDue();
     }
 
     private updateActiveSlideNumber(slideNumber: number | undefined): void {

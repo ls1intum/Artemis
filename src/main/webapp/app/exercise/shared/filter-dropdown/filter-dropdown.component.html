@@ -1,5 +1,5 @@
 <select
-    class="rounded-md border border-border bg-(--tumaet-ui-control-background) px-3 py-2 text-sm"
+    class="[&_option]:text-text [&_optgroup]:text-text rounded-md border border-border bg-(--tumaet-ui-control-background) px-3 py-2 text-sm"
     [ngModel]="activeFilter()"
     (ngModelChange)="filterChange.emit($event ?? allValue())"
     [attr.aria-label]="filterLabelKey() | artemisTranslate"
