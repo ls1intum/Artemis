@@ -1,5 +1,6 @@
 import { ChangeDetectorRef, Component, DestroyRef, ElementRef, afterRenderEffect, computed, effect, inject, input, model, output, signal, viewChild } from '@angular/core';
 import { Exercise, ExerciseType, getIcon } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { hasExerciseDueDatePassed } from 'app/exercise/util/exercise.utils';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { SubmissionPolicy } from 'app/exercise/shared/entities/submission/submission-policy.model';
@@ -182,6 +183,8 @@ export class ExerciseHeaderComponent {
      * information boxes that know it; the header only reacts to it.
      */
     readonly isViewingSubmission = input<boolean>(false);
+    /** The result selected in the history dropdown, shared with the information boxes of the panel. */
+    readonly displayedResult = model<Result | undefined>(undefined);
 
     /** Returns the student to their latest submission; supplied by the details panel for the same reason. */
     readonly onContinueToLatest = input<() => void>();

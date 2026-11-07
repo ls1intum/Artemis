@@ -1,20 +1,20 @@
-import { Component, OnDestroy, OnInit, inject, input, signal, viewChild } from '@angular/core';
+import { Component, OnDestroy, OnInit, computed, inject, input, signal, viewChild } from '@angular/core';
 import { ExerciseSubmission } from 'app/exercise/shared/exercise-submission.interface';
 import { IncludedInScoreBadgeComponent } from 'app/exercise/exercise-headers/included-in-score-badge/included-in-score-badge.component';
 import { UpdatingResultComponent } from 'app/exercise/result/updating-result/updating-result.component';
-import { Observable, Subscription } from 'rxjs';
-import { map, tap } from 'rxjs/operators';
+import { EMPTY, Observable, Subscription, of, throwError } from 'rxjs';
+import { catchError, filter, map, switchMap, tap } from 'rxjs/operators';
 import { ProgrammingExerciseParticipationService } from 'app/programming/manage/services/programming-exercise-participation.service';
 import { ButtonSize } from 'app/shared-ui/components/buttons/button/button.component';
 import { ExerciseType, IncludedInOverallScore, getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { Feedback, FeedbackType, checkSubsequentFeedbackInAssessment } from 'app/assessment/shared/entities/feedback.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { CodeEditorContainerComponent } from 'app/programming/manage/code-editor/container/code-editor-container.component';
 import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
 import { isPracticeMode } from 'app/exercise/shared/entities/participation/student-participation.model';
-import { getManualUnreferencedFeedback } from 'app/exercise/result/result.utils';
+import { getManualUnreferencedFeedback, isAthenaAIResult } from 'app/exercise/result/result.utils';
 import { getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/submission/submission.model';
 import { SubmissionPolicyType } from 'app/exercise/shared/entities/submission/submission-policy.model';
 import { Course } from 'app/course/shared/entities/course.model';
@@ -30,6 +30,11 @@ import { CodeEditorRepositoryIsLockedComponent } from 'app/programming/shared/co
 import { ProgrammingExerciseStudentTriggerBuildButtonComponent } from 'app/programming/shared/actions/trigger-build-button/student/programming-exercise-student-trigger-build-button.component';
 import { DomainService } from 'app/programming/shared/code-editor/services/code-editor-domain.service';
 import { DomainType } from 'app/programming/shared/code-editor/model/code-editor.model';
+import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
+import { ResultService } from 'app/exercise/result/result.service';
+import { TumAetUiMessageComponent } from '@tumaet/ui-angular';
+import { ParticipationWebsocketService } from 'app/course/shared/services/participation-websocket.service';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 @Component({
     selector: 'jhi-code-editor-student',
@@ -44,12 +49,16 @@ import { DomainType } from 'app/programming/shared/code-editor/model/code-editor
         ProgrammingExerciseStudentTriggerBuildButtonComponent,
         ProgrammingExerciseInstructionComponent,
         AdditionalFeedbackComponent,
+        RouterLink,
+        TumAetUiMessageComponent,
     ],
 })
 export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy, ExerciseSubmission {
     private domainService = inject(DomainService);
     private programmingExerciseParticipationService = inject(ProgrammingExerciseParticipationService);
     private submissionPolicyService = inject(SubmissionPolicyService);
+    private resultService = inject(ResultService);
+    private participationWebsocketService = inject(ParticipationWebsocketService);
     private route = inject(ActivatedRoute);
 
     readonly codeEditorContainer = viewChild(CodeEditorContainerComponent);
@@ -63,6 +72,7 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy, E
     PROGRAMMING = ExerciseType.PROGRAMMING;
 
     paramSub?: Subscription;
+    private newResultSub?: Subscription;
     // Template-read state written in async callbacks (route params subscription + HTTP loads) must be
     // signal-backed under zoneless change detection, otherwise the loaded editor never renders.
     readonly participation = signal<ProgrammingExerciseStudentParticipation>(undefined!);
@@ -78,6 +88,10 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy, E
     readonly latestResult = signal<Result | undefined>(undefined);
     readonly hasTutorAssessment = signal(false);
     readonly numberOfSubmissionsForSubmissionPolicy = signal<number | undefined>(undefined);
+    /** The earlier submission opened from the result history, shown read-only at its commit; undefined for the latest code. */
+    readonly viewedSubmission = signal<ProgrammingSubmission | undefined>(undefined);
+    /** The participation narrowed to the viewed earlier submission, so the problem statement beside the editor shows its tasks. */
+    readonly earlierSubmissionParticipation = computed(() => (this.viewedSubmission() ? this.participation() : undefined));
 
     // Icons
     faCircleNotch = faCircleNotch;
@@ -85,49 +99,60 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy, E
 
     /**
      * On init set up the route param subscription.
-     * Will load the participation according to participation Id with the latest result and result details.
+     * Will load the participation according to participation Id with the latest result and result details, or, when the route
+     * names a submission and result, with that earlier submission and result.
      */
     ngOnInit(): void {
-        this.paramSub = this.route.params.subscribe((params) => {
-            this.loadingParticipation.set(true);
-            this.participationCouldNotBeFetched.set(false);
-            const participationId = this.participationId() ?? Number(params['participationId']);
-            this.loadParticipationWithLatestResult(participationId)
-                .pipe(
-                    tap((participationWithResults) => {
-                        this.domainService.setDomain([DomainType.PARTICIPATION, participationWithResults]);
-                        this.participation.set(participationWithResults);
-                        const exercise = participationWithResults.exercise as ProgrammingExercise;
-                        this.exercise.set(exercise);
-                        this.lightweight.set(!exercise?.exerciseGroup);
-                        const dueDateHasPassed = hasExerciseDueDatePassed(exercise, participationWithResults);
-                        // TODO: load this information from the server in case submission policies are enabled for programming exercises
-                        this.repositoryIsLocked.set(dueDateHasPassed && !isPracticeMode(participationWithResults));
-                        const allResults = getAllResultsOfAllSubmissions(participationWithResults.submissions);
-                        this.latestResult.set(allResults.length >= 1 ? allResults.first() : undefined);
-                        this.checkForTutorAssessment(dueDateHasPassed);
-                        this.course.set(getCourseFromExercise(exercise));
-                        this.submissionPolicyService.getSubmissionPolicyOfProgrammingExercise(exercise.id!).subscribe((submissionPolicy) => {
-                            if (submissionPolicy?.active) {
-                                this.exercise().submissionPolicy = submissionPolicy;
-                                this.getNumberOfSubmissionsForSubmissionPolicy();
+        // switchMap drops a load that a newer navigation replaced, and each load handles its own error, so later navigations still load
+        this.paramSub = this.route.params
+            .pipe(
+                switchMap((params) => {
+                    this.loadingParticipation.set(true);
+                    this.participationCouldNotBeFetched.set(false);
+                    this.viewedSubmission.set(undefined);
+                    this.newResultSub?.unsubscribe();
+                    const participationId = this.participationId() ?? Number(params['participationId']);
+                    const submissionId = params['submissionId'] === undefined ? undefined : Number(params['submissionId']);
+                    const participation$ =
+                        submissionId === undefined
+                            ? this.loadParticipationWithLatestResult(participationId)
+                            : this.loadParticipationWithSubmissionAndResult(participationId, submissionId, Number(params['resultId']));
+                    return participation$.pipe(
+                        tap((participationWithResults) => {
+                            this.domainService.setDomain([DomainType.PARTICIPATION, participationWithResults]);
+                            this.participation.set(participationWithResults);
+                            const exercise = participationWithResults.exercise as ProgrammingExercise;
+                            this.exercise.set(exercise);
+                            this.lightweight.set(!exercise?.exerciseGroup);
+                            const dueDateHasPassed = hasExerciseDueDatePassed(exercise, participationWithResults);
+                            // TODO: load this information from the server in case submission policies are enabled for programming exercises
+                            this.repositoryIsLocked.set(dueDateHasPassed && !isPracticeMode(participationWithResults));
+                            const allResults = getAllResultsOfAllSubmissions(participationWithResults.submissions);
+                            this.latestResult.set(allResults.length >= 1 ? allResults.first() : undefined);
+                            this.checkForTutorAssessment(dueDateHasPassed);
+                            this.course.set(getCourseFromExercise(exercise));
+                            this.submissionPolicyService.getSubmissionPolicyOfProgrammingExercise(exercise.id!).subscribe((submissionPolicy) => {
+                                if (submissionPolicy?.active) {
+                                    this.exercise().submissionPolicy = submissionPolicy;
+                                    this.getNumberOfSubmissionsForSubmissionPolicy();
+                                }
+                            });
+                            if (allResults && allResults[0] && allResults[0].feedbacks) {
+                                checkSubsequentFeedbackInAssessment(allResults[0].feedbacks);
                             }
-                        });
-                        if (allResults && allResults[0] && allResults[0].feedbacks) {
-                            checkSubsequentFeedbackInAssessment(allResults[0].feedbacks);
-                        }
-                    }),
-                )
-                .subscribe({
-                    next: () => {
-                        this.loadingParticipation.set(false);
-                    },
-                    error: () => {
-                        this.participationCouldNotBeFetched.set(true);
-                        this.loadingParticipation.set(false);
-                    },
-                });
-        });
+                            if (submissionId === undefined) {
+                                this.showNewResults(participationWithResults.id!, exercise.id!);
+                            }
+                        }),
+                        catchError(() => {
+                            this.participationCouldNotBeFetched.set(true);
+                            this.loadingParticipation.set(false);
+                            return EMPTY;
+                        }),
+                    );
+                }),
+            )
+            .subscribe(() => this.loadingParticipation.set(false));
     }
 
     submitExercise(): void {
@@ -141,6 +166,34 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy, E
         if (this.paramSub) {
             this.paramSub.unsubscribe();
         }
+        this.newResultSub?.unsubscribe();
+    }
+
+    /**
+     * Shows each newer result of the latest code as it arrives, e.g. the tests of a newer push, so the file badges and the inline
+     * feedback show that result and not the AI feedback of an earlier submission. AI feedback counts once it is done, as after a reload.
+     * @param participationId the participation shown in the editor
+     * @param exerciseId      the exercise of the participation
+     */
+    private showNewResults(participationId: number, exerciseId: number) {
+        // The newest submission shown or on its way, so a result of an older submission that arrives late, e.g. its AI feedback, is ignored
+        let newestSubmissionId = Math.max(0, ...(this.participation().submissions ?? []).map((submission) => submission.id ?? 0));
+        this.newResultSub = this.participationWebsocketService
+            .subscribeForLatestResultOfParticipation(participationId, true, exerciseId)
+            .pipe(
+                filter((result): result is Result => !!result?.submission && !(isAthenaAIResult(result) && result.successful === undefined)),
+                filter((result) => (result.submission!.id ?? 0) >= newestSubmissionId),
+                tap((result) => (newestSubmissionId = result.submission!.id ?? 0)),
+                switchMap((result) =>
+                    result.feedbacks
+                        ? of(result)
+                        : this.resultService.getFeedbackDetailsForResult(participationId, result).pipe(map((response) => cloneWith(result, { feedbacks: response.body ?? [] }))),
+                ),
+            )
+            .subscribe((result) => {
+                this.participation.set(cloneWith(this.participation(), { submissions: [cloneWith(result.submission!, { results: [result] })] }));
+                this.latestResult.set(result);
+            });
     }
 
     /**
@@ -151,6 +204,38 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy, E
         return this.programmingExerciseParticipationService.getStudentParticipationWithLatestResult(participationId).pipe(
             map((participation: ProgrammingExerciseStudentParticipation) => {
                 return participation;
+            }),
+        );
+    }
+
+    /**
+     * Load the participation from server with only the given earlier submission and result, so the editor, the instructions and the
+     * feedback show that result. The result's feedback is loaded separately, since the participation comes without it.
+     * @param participationId the participation the submission belongs to
+     * @param submissionId    the submission to show
+     * @param resultId        the result of that submission to show
+     */
+    loadParticipationWithSubmissionAndResult(participationId: number, submissionId: number, resultId: number): Observable<ProgrammingExerciseStudentParticipation> {
+        return this.programmingExerciseParticipationService.getStudentParticipationWithAllResults(participationId).pipe(
+            switchMap((participation) => {
+                const submission: ProgrammingSubmission | undefined = participation.submissions?.find((candidate) => candidate.id === submissionId);
+                const result = submission?.results?.find((candidate) => candidate.id === resultId);
+                // Without its commit there is no code to show, and a result the student cannot see is not offered either
+                if (!submission?.commitHash || !result) {
+                    return throwError(() => new Error('submissionNotFound'));
+                }
+                const feedbacks$ = result.feedbacks
+                    ? of(result.feedbacks)
+                    : this.resultService.getFeedbackDetailsForResult(participationId, result).pipe(map((response) => response.body ?? []));
+                return feedbacks$.pipe(
+                    map((feedbacks) => {
+                        result.feedbacks = feedbacks;
+                        submission.results = [result];
+                        participation.submissions = [submission];
+                        this.viewedSubmission.set(submission);
+                        return participation;
+                    }),
+                );
             }),
         );
     }
@@ -180,13 +265,18 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy, E
     }
 
     /**
-     * Check whether a latestResult exists and if, returns the unreferenced feedback of it
+     * Check whether a latestResult exists and if, returns the unreferenced feedback of it. For an earlier submission this also includes
+     * the AI feedback about a whole file: the editor only shows feedback on a line, and the result control that would open the rest is hidden.
      */
     get unreferencedFeedback(): Feedback[] {
         const latestResult = this.latestResult();
         if (latestResult?.feedbacks) {
             checkSubsequentFeedbackInAssessment(latestResult.feedbacks);
-            return getManualUnreferencedFeedback(latestResult.feedbacks) ?? [];
+            const manualFeedback = getManualUnreferencedFeedback(latestResult.feedbacks) ?? [];
+            if (!this.viewedSubmission()) {
+                return manualFeedback;
+            }
+            return [...manualFeedback, ...latestResult.feedbacks.filter((feedback) => Feedback.isNonGradedFeedbackSuggestion(feedback) && !feedback.reference)];
         }
         return [];
     }

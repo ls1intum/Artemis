@@ -37,6 +37,7 @@ public interface ResultGradeRepository extends ArtemisJpaRepository<Result, Long
 
     /**
      * Selects grade-relevant result ids before loading their collection graph, so pagination stays in the database.
+     * A requested AI feedback of a programming exercise only copies a test score, so it is never the grade.
      *
      * @param participationId the participation whose results are considered
      * @param pageable        the requested page, with size one for latest-grade publication
@@ -49,6 +50,8 @@ public interface ResultGradeRepository extends ArtemisJpaRepository<Result, Long
                 AND r.score IS NOT NULL
                 AND r.completionDate IS NOT NULL
                 AND (r.assessmentType IS NULL OR r.assessmentType <> de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC_ATHENA OR r.successful = TRUE)
+                AND (TYPE(r.submission.participation.exercise) <> ProgrammingExercise OR r.assessmentType IS NULL
+                    OR r.assessmentType <> de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC_ATHENA)
             ORDER BY r.completionDate DESC, r.id DESC
             """)
     List<Long> findGradeRelevantResultIdsByParticipationId(@Param("participationId") long participationId, Pageable pageable);

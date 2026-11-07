@@ -150,9 +150,10 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                 AND (r.assessmentType IS NULL OR r.assessmentType <> de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC_ATHENA OR r.successful = TRUE)
                 AND r.completionDate IS NOT NULL
                 AND r.score IS NOT NULL
+                AND (TYPE(ex) <> ProgrammingExercise OR r.assessmentType IS NULL OR r.assessmentType <> de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC_ATHENA)
                 AND s.submissionDate IS NOT NULL
                 AND s.submissionDate = (SELECT MAX(s2.submissionDate) FROM Submission s2 WHERE s2.participation = p)
-                AND r.completionDate = (SELECT MAX(r2.completionDate) FROM Result r2 WHERE r2.submission = s AND (r2.assessmentType IS NULL OR r2.assessmentType <> de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC_ATHENA OR r2.successful = TRUE))
+                AND r.completionDate = (SELECT MAX(r2.completionDate) FROM Result r2 WHERE r2.submission = s AND (TYPE(ex) <> ProgrammingExercise OR r2.assessmentType IS NULL OR r2.assessmentType <> de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC_ATHENA) AND (r2.assessmentType IS NULL OR r2.assessmentType <> de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC_ATHENA OR r2.successful = TRUE))
             """)
     Set<CourseGradeScoreDTO> findIndividualGradesByCourseIdAndStudentId(@Param("courseIds") Collection<Long> courseIds, @Param("studentId") long studentId);
 
@@ -180,15 +181,17 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                 AND (r.assessmentType IS NULL OR r.assessmentType <> de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC_ATHENA OR r.successful = TRUE)
                 AND r.completionDate IS NOT NULL
                 AND r.score IS NOT NULL
+                AND (TYPE(ex) <> ProgrammingExercise OR r.assessmentType IS NULL OR r.assessmentType <> de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC_ATHENA)
                 AND s.submissionDate IS NOT NULL
                 AND s.submissionDate = (SELECT MAX(s2.submissionDate) FROM Submission s2 WHERE s2.participation = p)
-                AND r.completionDate = (SELECT MAX(r2.completionDate) FROM Result r2 WHERE r2.submission = s AND (r2.assessmentType IS NULL OR r2.assessmentType <> de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC_ATHENA OR r2.successful = TRUE))
+                AND r.completionDate = (SELECT MAX(r2.completionDate) FROM Result r2 WHERE r2.submission = s AND (TYPE(ex) <> ProgrammingExercise OR r2.assessmentType IS NULL OR r2.assessmentType <> de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC_ATHENA) AND (r2.assessmentType IS NULL OR r2.assessmentType <> de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC_ATHENA OR r2.successful = TRUE))
             """)
     Set<CourseGradeScoreDTO> findTeamGradesByCourseIdAndStudentId(@Param("courseIds") Collection<Long> courseIds, @Param("studentId") long studentId);
 
     /**
      * Projects the latest rated result for each visible individual non-quiz participation in the course overview.
      * Unlike the shared course-score query, a newer submission without a result does not suppress the preceding grade.
+     * A requested AI feedback of a programming exercise only copies a test score, so it is never the grade.
      *
      * @param exerciseIds     the visible non-quiz exercise ids
      * @param studentId       the requesting student
@@ -221,6 +224,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                 AND (r.assessmentType IS NULL OR r.assessmentType <> de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC_ATHENA OR r.successful = TRUE)
                 AND r.completionDate IS NOT NULL
                 AND r.score IS NOT NULL
+                AND (TYPE(ex) <> ProgrammingExercise OR r.assessmentType IS NULL OR r.assessmentType <> de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC_ATHENA)
                 AND s.submissionDate IS NOT NULL
                 AND NOT EXISTS (
                     SELECT newerResult
@@ -233,6 +237,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                         AND (newerResult.assessmentType IS NULL OR newerResult.assessmentType <> de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC_ATHENA OR newerResult.successful = TRUE)
                         AND newerResult.completionDate IS NOT NULL
                         AND newerResult.score IS NOT NULL
+                        AND (TYPE(ex) <> ProgrammingExercise OR newerResult.assessmentType IS NULL OR newerResult.assessmentType <> de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC_ATHENA)
                         AND newerResult.submission.submissionDate IS NOT NULL
                         AND (ex.dueDate IS NULL OR newerResult.submission.submissionDate <= FUNCTION('timestampadd', SECOND, de.tum.cit.aet.artemis.core.config.Constants.PROGRAMMING_GRACE_PERIOD_SECONDS, COALESCE(p.individualDueDate, ex.dueDate)))
                         AND (newerResult.completionDate > r.completionDate
@@ -245,6 +250,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
     /**
      * Projects the latest rated result for each visible team participation in the course overview, independently of
      * any newer resultless submission.
+     * A requested AI feedback of a programming exercise only copies a test score, so it is never the grade.
      *
      * @param exerciseIds     the visible team exercise ids
      * @param studentId       the requesting student
@@ -277,6 +283,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                 AND (r.assessmentType IS NULL OR r.assessmentType <> de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC_ATHENA OR r.successful = TRUE)
                 AND r.completionDate IS NOT NULL
                 AND r.score IS NOT NULL
+                AND (TYPE(ex) <> ProgrammingExercise OR r.assessmentType IS NULL OR r.assessmentType <> de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC_ATHENA)
                 AND s.submissionDate IS NOT NULL
                 AND NOT EXISTS (
                     SELECT newerResult
@@ -289,6 +296,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                         AND (newerResult.assessmentType IS NULL OR newerResult.assessmentType <> de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC_ATHENA OR newerResult.successful = TRUE)
                         AND newerResult.completionDate IS NOT NULL
                         AND newerResult.score IS NOT NULL
+                        AND (TYPE(ex) <> ProgrammingExercise OR newerResult.assessmentType IS NULL OR newerResult.assessmentType <> de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC_ATHENA)
                         AND newerResult.submission.submissionDate IS NOT NULL
                         AND (ex.dueDate IS NULL OR newerResult.submission.submissionDate <= FUNCTION('timestampadd', SECOND, de.tum.cit.aet.artemis.core.config.Constants.PROGRAMMING_GRACE_PERIOD_SECONDS, COALESCE(p.individualDueDate, ex.dueDate)))
                         AND (newerResult.completionDate > r.completionDate
@@ -342,9 +350,10 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                 AND (r.assessmentType IS NULL OR r.assessmentType <> de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC_ATHENA OR r.successful = TRUE)
                 AND r.completionDate IS NOT NULL
                 AND r.score IS NOT NULL
+                AND (TYPE(ex) <> ProgrammingExercise OR r.assessmentType IS NULL OR r.assessmentType <> de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC_ATHENA)
                 AND s.submissionDate IS NOT NULL
                 AND s.submissionDate = (SELECT MAX(s2.submissionDate) FROM Submission s2 WHERE s2.participation = p)
-                AND r.completionDate = (SELECT MAX(r2.completionDate) FROM Result r2 WHERE r2.submission = s AND (r2.assessmentType IS NULL OR r2.assessmentType <> de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC_ATHENA OR r2.successful = TRUE))
+                AND r.completionDate = (SELECT MAX(r2.completionDate) FROM Result r2 WHERE r2.submission = s AND (TYPE(ex) <> ProgrammingExercise OR r2.assessmentType IS NULL OR r2.assessmentType <> de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC_ATHENA) AND (r2.assessmentType IS NULL OR r2.assessmentType <> de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC_ATHENA OR r2.successful = TRUE))
             """)
     Set<CourseGradeScoreDTO> findIndividualGradesByCourseId(@Param("courseId") long courseId);
 
@@ -372,9 +381,10 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                 AND (r.assessmentType IS NULL OR r.assessmentType <> de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC_ATHENA OR r.successful = TRUE)
                 AND r.completionDate IS NOT NULL
                 AND r.score IS NOT NULL
+                AND (TYPE(ex) <> ProgrammingExercise OR r.assessmentType IS NULL OR r.assessmentType <> de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC_ATHENA)
                 AND s.submissionDate IS NOT NULL
                 AND s.submissionDate = (SELECT MAX(s2.submissionDate) FROM Submission s2 WHERE s2.participation = p)
-                AND r.completionDate = (SELECT MAX(r2.completionDate) FROM Result r2 WHERE r2.submission = s AND (r2.assessmentType IS NULL OR r2.assessmentType <> de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC_ATHENA OR r2.successful = TRUE))
+                AND r.completionDate = (SELECT MAX(r2.completionDate) FROM Result r2 WHERE r2.submission = s AND (TYPE(ex) <> ProgrammingExercise OR r2.assessmentType IS NULL OR r2.assessmentType <> de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC_ATHENA) AND (r2.assessmentType IS NULL OR r2.assessmentType <> de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC_ATHENA OR r2.successful = TRUE))
             """)
     Set<CourseGradeScoreDTO> findTeamGradesByCourseId(@Param("courseId") long courseId);
 
@@ -1266,8 +1276,10 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
      * Projects the requesting user's individual participations and the latest submission's visible-result candidates
      * for the course overview, plus the latest programming submission with a rated automatic result when it differs.
      * This preserves the student's automatic result while a newer manual submission is hidden. Each submission's
-     * result side is bounded to the latest result, latest grade-relevant result, and latest rated automatic fallback.
-     * The grade-relevant candidate preserves a released manual grade while a later Athena request is pending or failed. Unlike the
+     * result side is bounded to the latest result, the latest grade-relevant result, the latest rated test result as the
+     * fallback until manual results are released, and the latest result that is not a requested AI feedback, which only
+     * copies a test score and so is never what a programming submission is graded by. The grade-relevant candidate
+     * preserves a released manual grade while a later Athena request is pending or failed. Unlike the
      * entity fetch used by the deprecated dashboard, this selects only the programming participation's clone URL from
      * subtype-specific data and selects no student, team, feedback, or exercise entity.
      *
@@ -1359,11 +1371,14 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                         FROM Result latestAutomaticResult
                         WHERE latestAutomaticResult.submission = submission
                             AND latestAutomaticResult.rated = TRUE
-                            AND (latestAutomaticResult.assessmentType <> de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC_ATHENA
-                                OR latestAutomaticResult.successful = TRUE)
-                            AND latestAutomaticResult.assessmentType IN (
-                                de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC,
-                                de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC_ATHENA)
+                            AND latestAutomaticResult.assessmentType = de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC
+                    )
+                    OR result.id = (
+                        SELECT MAX(latestGradingResult.id)
+                        FROM Result latestGradingResult
+                        WHERE latestGradingResult.submission = submission
+                            AND (latestGradingResult.assessmentType IS NULL
+                                OR latestGradingResult.assessmentType <> de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC_ATHENA)
                     ))
             """)
     List<ParticipationOverviewRowDTO> findIndividualRowsForCourseOverview(@Param("studentId") long studentId, @Param("exerciseIds") Collection<Long> exerciseIds,
@@ -1584,11 +1599,14 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                         FROM Result latestAutomaticResult
                         WHERE latestAutomaticResult.submission = submission
                             AND latestAutomaticResult.rated = TRUE
-                            AND (latestAutomaticResult.assessmentType <> de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC_ATHENA
-                                OR latestAutomaticResult.successful = TRUE)
-                            AND latestAutomaticResult.assessmentType IN (
-                                de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC,
-                                de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC_ATHENA)
+                            AND latestAutomaticResult.assessmentType = de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC
+                    )
+                    OR result.id = (
+                        SELECT MAX(latestGradingResult.id)
+                        FROM Result latestGradingResult
+                        WHERE latestGradingResult.submission = submission
+                            AND (latestGradingResult.assessmentType IS NULL
+                                OR latestGradingResult.assessmentType <> de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC_ATHENA)
                     ))
             """)
     List<ParticipationOverviewRowDTO> findTeamRowsForCourseOverview(@Param("studentId") long studentId, @Param("exerciseIds") Collection<Long> exerciseIds);
