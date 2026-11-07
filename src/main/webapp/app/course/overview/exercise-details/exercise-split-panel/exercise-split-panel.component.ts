@@ -35,9 +35,7 @@ import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { ExampleSolutionInfo } from 'app/exercise/services/exercise.service';
 import { DiscussionSectionComponent } from 'app/communication/shared/discussion-section/discussion-section.component';
 import { ModelingEditorComponent } from 'app/modeling/shared/modeling-editor/modeling-editor.component';
-import { AccountService } from 'app/core/auth/account.service';
 import { TeamPracticeHintComponent } from 'app/course/overview/exercise-details/team-practice-hint/team-practice-hint.component';
-import { LLMSelectionDecision } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
 
 @Component({
     selector: 'jhi-exercise-split-panel',
@@ -68,7 +66,6 @@ import { LLMSelectionDecision } from 'app/account/user/shared/dto/updateLLMSelec
 })
 export class ExerciseSplitPanelComponent {
     private readonly chatService = inject(IrisChatService);
-    private readonly accountService = inject(AccountService);
     private readonly router = inject(Router);
     private readonly route = inject(ActivatedRoute);
     private readonly childrenOutletContexts = inject(ChildrenOutletContexts);
@@ -168,9 +165,8 @@ export class ExerciseSplitPanelComponent {
         return this.irisEnabled() && !!ExerciseSplitPanelComponent.getChatMode(exercise.type!) && !exercise.exerciseGroup;
     });
 
-    readonly irisPanelStartsCollapsed = computed(
-        () => this.accountService.userIdentity()?.selectedLLMUsage === LLMSelectionDecision.NO_AI && this.showIris() && !this.showEditorPanel(),
-    );
+    // Keep the problem statement visible in the right pane when an editor occupies the left pane.
+    readonly irisPanelStartsCollapsed = computed(() => this.showIris() && !this.showEditorPanel());
 
     readonly showCodeEditor = computed(() => {
         const exercise = this.exercise();

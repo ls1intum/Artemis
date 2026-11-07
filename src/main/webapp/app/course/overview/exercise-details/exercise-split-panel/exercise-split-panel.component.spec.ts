@@ -119,22 +119,30 @@ describe('ExerciseSplitPanelComponent', () => {
         vi.unstubAllGlobals();
     });
 
-    it('should start the Iris panel collapsed for users who opted out of AI', () => {
-        accountService.userIdentity.set({ selectedLLMUsage: LLMSelectionDecision.NO_AI } as User);
+    it.each([LLMSelectionDecision.NO_AI, LLMSelectionDecision.CLOUD_AI, LLMSelectionDecision.LOCAL_AI, undefined])(
+        'should start the Iris panel collapsed for AI selection %s',
+        (selectedLLMUsage) => {
+            accountService.userIdentity.set({ selectedLLMUsage } as User);
+            fixture.detectChanges();
 
-        expect(component.irisPanelStartsCollapsed()).toBe(true);
-    });
+            const resizablePanels = fixture.debugElement.query(By.directive(ResizablePanelsComponent)).componentInstance as ResizablePanelsComponent;
 
-    it('should not start the Iris panel collapsed for users who accepted AI', () => {
-        accountService.userIdentity.set({ selectedLLMUsage: LLMSelectionDecision.CLOUD_AI } as User);
+            expect(resizablePanels.isRightPanelCollapsed()).toBe(true);
+            expect(fixture.nativeElement.querySelector('[data-testid="right-panel-content"]').hidden).toBe(true);
+            expect(fixture.nativeElement.querySelector('[data-testid="collapsed-panel-tab"]')).not.toBeNull();
+        },
+    );
 
-        expect(component.irisPanelStartsCollapsed()).toBe(false);
-    });
+    it('should allow users to open Iris manually', () => {
+        const irisTab = fixture.nativeElement.querySelector('[data-testid="collapsed-panel-tab"]') as HTMLButtonElement;
+        irisTab.click();
+        fixture.detectChanges();
 
-    it('should not start the Iris panel collapsed before the user made an AI selection', () => {
-        accountService.userIdentity.set({ selectedLLMUsage: undefined } as User);
+        const resizablePanels = fixture.debugElement.query(By.directive(ResizablePanelsComponent)).componentInstance as ResizablePanelsComponent;
 
-        expect(component.irisPanelStartsCollapsed()).toBe(false);
+        expect(resizablePanels.isRightPanelCollapsed()).toBe(false);
+        expect(fixture.nativeElement.querySelector('[data-testid="right-panel-content"]').hidden).toBe(false);
+        expect(fixture.nativeElement.querySelector('[data-testid="right-panel-content"]').textContent).toContain('Iris');
     });
 
     it('should make the modeling editor panel full bleed', () => {
@@ -236,19 +244,22 @@ describe('ExerciseSplitPanelComponent', () => {
         });
     });
 
-    it('should keep the problem statement open for users who opted out of AI when an editor panel is shown', () => {
-        accountService.userIdentity.set({ selectedLLMUsage: LLMSelectionDecision.NO_AI } as User);
-        fixture.componentRef.setInput('studentParticipation', { id: 1 } as StudentParticipation);
-        fixture.detectChanges();
+    it.each([LLMSelectionDecision.NO_AI, LLMSelectionDecision.CLOUD_AI, LLMSelectionDecision.LOCAL_AI, undefined])(
+        'should keep the problem statement open beside the editor for AI selection %s',
+        (selectedLLMUsage) => {
+            accountService.userIdentity.set({ selectedLLMUsage } as User);
+            fixture.componentRef.setInput('studentParticipation', { id: 1 } as StudentParticipation);
+            fixture.detectChanges();
 
-        const resizablePanels = fixture.debugElement.query(By.directive(ResizablePanelsComponent)).componentInstance as ResizablePanelsComponent;
+            const resizablePanels = fixture.debugElement.query(By.directive(ResizablePanelsComponent)).componentInstance as ResizablePanelsComponent;
 
-        expect(component.irisPanelStartsCollapsed()).toBe(false);
-        expect(resizablePanels.isRightPanelCollapsed()).toBe(false);
-        expect(resizablePanels.activeRightIndex()).toBe(0);
-        expect(fixture.nativeElement.querySelector('.collapsed-right-panel')).toBeNull();
-        expect(fixture.nativeElement.textContent).toContain('Problem Statement');
-    });
+            expect(resizablePanels.isRightPanelCollapsed()).toBe(false);
+            expect(resizablePanels.activeRightIndex()).toBe(0);
+            expect(fixture.nativeElement.querySelector('[data-testid="collapsed-panel-tab"]')).toBeNull();
+            expect(fixture.nativeElement.querySelector('[data-testid="right-panel-content"]').hidden).toBe(false);
+            expect(fixture.nativeElement.textContent).toContain('Problem Statement');
+        },
+    );
 
     describe('exercise details panel', () => {
         /**
