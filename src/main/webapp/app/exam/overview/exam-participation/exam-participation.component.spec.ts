@@ -694,6 +694,24 @@ describe('ExamParticipationComponent', () => {
             expect(fixture.debugElement.query(By.css('#exercise-42 jhi-text-editor-exam'))).not.toBeNull();
         });
 
+        it('clears the failed status when Retry finds the participation already valid', () => {
+            const exercise = new TextExercise(new Course(), undefined);
+            prepareExercise(exercise);
+            const start = vi.spyOn(courseExerciseService, 'startExercise').mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 409 })));
+            comp.onPageChange({ overViewChange: false, exercise, forceSave: false });
+            expect(comp.generateParticipationStatus.value).toBe('failed');
+            const participation = new StudentParticipation();
+            participation.initializationState = InitializationState.INITIALIZED;
+            participation.submissions = [new TextSubmission()];
+            exercise.studentParticipations = [participation];
+
+            comp.retryParticipationForExercise();
+
+            expect(start).toHaveBeenCalledTimes(1);
+            expect(comp.generateParticipationStatus.value).toBe('success');
+            expect(comp.pageComponentVisited()).toEqual([true]);
+        });
+
         it('initializes the programming submission subscription and clean placeholder once after Retry', () => {
             const exercise = new ProgrammingExercise(new Course(), undefined);
             prepareExercise(exercise);

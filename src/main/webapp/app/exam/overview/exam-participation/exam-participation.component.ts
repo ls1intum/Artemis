@@ -1055,6 +1055,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                 }
             });
         } else {
+            this.generateParticipationStatus.next('success');
             this.activateActiveComponent();
         }
     }
