@@ -36,6 +36,20 @@ class LocalVCCredentialsTest {
     }
 
     @Test
+    void severalSpacesMaySeparateTheSchemeFromTheCredentials() throws Exception {
+        UsernameAndPassword credentials = LocalVCCredentials.extractUsernameAndPassword("Basic   " + encoded("student:secret"));
+
+        assertThat(credentials.username()).isEqualTo("student");
+        assertThat(credentials.password()).isEqualTo("secret");
+    }
+
+    @Test
+    void aHeaderWithTokensAfterTheCredentialsIsRejected() {
+        assertThatExceptionOfType(LocalVCAuthException.class)
+                .isThrownBy(() -> LocalVCCredentials.extractUsernameAndPassword("Basic " + encoded("student:secret") + " " + encoded("other:credentials")));
+    }
+
+    @Test
     void aPasswordMayContainAColon() throws Exception {
         UsernameAndPassword credentials = LocalVCCredentials.extractUsernameAndPassword("Basic " + encoded("student:pass:word"));
 

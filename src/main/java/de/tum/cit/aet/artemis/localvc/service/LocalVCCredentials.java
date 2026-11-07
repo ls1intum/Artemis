@@ -41,9 +41,10 @@ final class LocalVCCredentials {
         if (authorizationHeader == null) {
             throw new LocalVCAuthException("No authorization header provided", true);
         }
-        String[] basicAuthCredentialsEncoded = authorizationHeader.split(" ");
+        // The scheme and the credentials are separated by one or more spaces, and nothing may follow the credentials.
+        String[] basicAuthCredentialsEncoded = authorizationHeader.strip().split(" +");
 
-        if (basicAuthCredentialsEncoded.length < 2 || !"Basic".equalsIgnoreCase(basicAuthCredentialsEncoded[0])) {
+        if (basicAuthCredentialsEncoded.length != 2 || !"Basic".equalsIgnoreCase(basicAuthCredentialsEncoded[0])) {
             throw new LocalVCAuthException("Invalid authorization header format");
         }
 
