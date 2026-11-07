@@ -221,7 +221,7 @@ ng-bootstrap in new work.
 
 Choose button severity by the established action family and its context, following
 [Button intent and hierarchy](../../documentation/docs/developer/guidelines/client-theming.mdx#button-intent-and-hierarchy).
-In exercise management, preserve blue workflow/navigation, yellow authoring/configuration, cyan
+Across the client, preserve blue workflow/navigation/Create/Save, yellow authoring/configuration, cyan
 analytics/assessment, green preview/reference and positive execution/activation, red destructive/stop
 or consequential bulk actions, and neutral utilities consistently across course lists, exam lists
 and details. Use variants and grouping for
@@ -232,6 +232,32 @@ use gray `secondary`; menu entries retain menu styling. Neutral `secondary` is a
 enabled gray-toned utility style, independent of disabled state. Distinguish action colours from
 status/validation feedback.
 Let TUM AET UI choose the contrasting foreground; do not override button text or icon colours.
+
+Button colors have one light/dark source: the Button palette blocks in
+`packages/tum-aet-ui/themes.css`, using `--tumaet-ui-button-<severity>-background`, `-contrast` and
+`-foreground`. Keep button-only adjustments separate from status colors. Bootstrap compatibility
+styles and the PrimeNG button preset consume these same tokens; they are migration bridges, not
+an API for new markup. Prefer native `tumAetUiButton` and migrate adjacent action groups to the
+same size, typography and spacing. Attribute-selector components that already own a native button
+host use `tumAetUiButtonClasses()` rather than attaching a second component to that element.
+Trace reset/cancel/retry handlers: saved-work deletion/overrides stay danger, ordinary view refresh
+is secondary, and persisted grading resets are danger. Conditional Create/Edit uses primary/warn;
+ordinary Save stays primary. Selected-state colors are separate; use a solid semantic variant on a
+colored selected row when text/outlined contrast would be insufficient. Remove local color
+hover/foreground overrides when migrating. Check the Button Palette Storybook browser tests after
+changing shared tokens and retain permission/feature/disabled/loading/submit behavior.
+
+The client lint gate enforces `localRules/enforce-button-intent` in external and inline application
+templates. Common labels (resolved through the English catalog) must match their action family;
+native TUM buttons cannot override their palette with local color classes/styles. Use the component's
+`ariaLabel` input when an icon-only `<tumaet-ui-button>` needs a name;
+an `aria-label` on its wrapper does not name the native button. For an opaque action
+label, declare `data-button-intent`; for a contextual exception, also declare a static
+`data-button-intent-reason` describing the behavior. Preserve destructive cancellation/editing and
+documented variant-authoring exceptions rather than recoloring them from their labels. Semantic
+selection controls and a provably disabled green completion state remain distinct from actions.
+Do not use a generic lint suppression. Unknown dynamic labels/severities still need behavioral
+tests and review. Run `pnpm run test:rules` and `pnpm run lint` after changing this policy.
 
 Colours use semantic tokens. Use TUM AET UI component variants, or `text-state-danger`,
 `text-state-success`, `text-state-warning`, `text-state-info` for plain markup. Never `--p-<color>-N`
