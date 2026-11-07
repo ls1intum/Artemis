@@ -1933,23 +1933,6 @@
             "source": ["src/main/webapp/app/course/shared/course-sidebar"]
         },
         {
-            "id": "export-quiz-list-dialog",
-            "image": "instructor/exercises/assets/quiz/export-quizzes-list.png",
-            "pages": ["instructor/exercises/quiz-exercise.mdx"],
-            "user": "instructor",
-            "route": "/course-management/{courseId}/exercises",
-            "steps": [
-                {
-                    "click": "button:has-text(\"Export\")"
-                },
-                {
-                    "waitFor": "text=Export All quiz questions"
-                }
-            ],
-            "selector": "cdk-dialog-container",
-            "source": ["src/main/webapp/app/exercise"]
-        },
-        {
             "id": "exam-bonus-options",
             "image": "instructor/assessment-grading/assets/grading/bonus-create-options.png",
             "pages": ["instructor/assessment-grading/grading.mdx"],

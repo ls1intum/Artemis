@@ -125,9 +125,7 @@
             "editNotPossibleStudentsStarted": "Eine Bearbeitung ist nicht möglich, da Studierende bereits an diesem Quiz teilgenommen haben.",
             "saveError": "Beim Speichern ist ein Fehler ist aufgetreten. Bitte überprüfe deine Eingabe und versuche es später noch einmal.",
             "export": {
-                "title": "Alle Quizfragen zum Kurs {{ param }}",
                 "export": "Export",
-                "loading": "Quizfragen werden geladen…",
                 "questionTitle": "Kurzer Fragetitel",
                 "quizExerciseTitle": "Quiz Übungstitel"
             },
