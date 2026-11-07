@@ -136,7 +136,7 @@
         >
             <ng-container tumAetUiEmptyStateActions>
                 @if (!search() && course()?.isAtLeastEditor) {
-                    <tumaet-ui-button [icon]="faFileImport" variant="outlined" (clicked)="openImportModal()">
+                    <tumaet-ui-button severity="secondary" [icon]="faFileImport" variant="outlined" (clicked)="openImportModal()">
                         <span jhiTranslate="artemisApp.exerciseManagement.empty.import"></span>
                     </tumaet-ui-button>
                     <tumaet-ui-button [icon]="faPlus" (clicked)="openCreateModal()">

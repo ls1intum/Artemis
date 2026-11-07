@@ -106,3 +106,21 @@ export const IconOnly: Story = {
         rounded: true,
     },
 };
+
+/** Every action family and emphasis level, for comparing the shared light/dark button palette. */
+export const Palette: Story = {
+    render: () => ({
+        props: { severities, variants },
+        template: `
+            <div style="display: flex; flex-direction: column; gap: 1rem">
+                @for (variant of variants; track variant) {
+                    <div style="display: flex; flex-wrap: wrap; gap: 0.5rem">
+                        @for (severity of severities; track severity) {
+                            <tumaet-ui-button [severity]="severity" [variant]="variant" size="small">{{ severity }} {{ variant }}</tumaet-ui-button>
+                        }
+                    </div>
+                }
+            </div>
+        `,
+    }),
+};

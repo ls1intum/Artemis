@@ -6,7 +6,7 @@
         (change)="setFileForExerciseImport($event)"
         style="margin-right: -10px; padding-right: -10px"
     />
-    <tumaet-ui-button id="upload-exercise-btn" [disabled]="fileForImport() === undefined" [icon]="faUpload" (clicked)="uploadExercise()"
+    <tumaet-ui-button severity="secondary" id="upload-exercise-btn" [disabled]="fileForImport() === undefined" [icon]="faUpload" (clicked)="uploadExercise()"
         ><span jhiTranslate="artemisApp.programmingExercise.importFromFile.uploadForImport"></span
     ></tumaet-ui-button>
     <jhi-help-icon text="artemisApp.programmingExercise.importFromFile.description" style="margin-left: 15px" />
