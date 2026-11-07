@@ -41,6 +41,7 @@
             tumAetUiButton
             type="button"
             id="save-entity"
+            [severity]="isImport() ? 'secondary' : 'primary'"
             class="aria-disabled:opacity-60 aria-disabled:cursor-not-allowed"
             size="small"
             [tumAetUiTooltip]="invalidReasonTexts()"

@@ -104,7 +104,7 @@ describe('JhiResetRepoButtonComponent', () => {
         TestBed.tick();
         fixture.detectChanges();
 
-        const resetButton = fixture.debugElement.query(By.css('.btn-danger'));
+        const resetButton = fixture.debugElement.query(By.css('[data-testid="reset-repository-action"]'));
         expect(!!resetButton).toEqual(shouldShowButton);
     });
 

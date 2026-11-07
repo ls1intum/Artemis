@@ -9,7 +9,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 @Component({
     selector: 'jhi-teams-export-button',
     template: `
-        <button tumAetUiButton severity="primary" size="small" (click)="exportTeams($event)">
+        <button tumAetUiButton severity="secondary" size="small" (click)="exportTeams($event)">
             <fa-icon [icon]="faDownload" />
             <span>{{ 'artemisApp.team.exportTeams.buttonLabel' | artemisTranslate }}</span>
         </button>

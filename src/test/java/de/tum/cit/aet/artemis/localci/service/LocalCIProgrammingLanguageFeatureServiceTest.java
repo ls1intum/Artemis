@@ -32,12 +32,24 @@ class LocalCIProgrammingLanguageFeatureServiceTest {
     }
 
     @Test
-    void shouldSupportSequentialTestRunsForKotlin() {
+    void shouldSupportSequentialTestRunsAndStaticCodeAnalysisForKotlin() {
         var kotlin = service.getProgrammingLanguageFeatures(ProgrammingLanguage.KOTLIN);
 
         assertThat(kotlin.sequentialTestRuns()).isTrue();
-        // Kotlin has no static code analysis, so a sequential exercise selects the template without the static suffix
-        assertThat(kotlin.staticCodeAnalysis()).isFalse();
+        assertThat(kotlin.staticCodeAnalysis()).isTrue();
+        assertThat(StaticCodeAnalysisTool.getToolsForProgrammingLanguage(ProgrammingLanguage.KOTLIN)).containsExactly(StaticCodeAnalysisTool.DETEKT);
+    }
+
+    @Test
+    void shouldSupportStaticCodeAnalysisForCSharp() {
+        assertThat(service.getProgrammingLanguageFeatures(ProgrammingLanguage.C_SHARP).staticCodeAnalysis()).isTrue();
+        assertThat(StaticCodeAnalysisTool.getToolsForProgrammingLanguage(ProgrammingLanguage.C_SHARP)).containsExactly(StaticCodeAnalysisTool.ROSLYN);
+    }
+
+    @Test
+    void shouldSupportStaticCodeAnalysisForGo() {
+        assertThat(service.getProgrammingLanguageFeatures(ProgrammingLanguage.GO).staticCodeAnalysis()).isTrue();
+        assertThat(StaticCodeAnalysisTool.getToolsForProgrammingLanguage(ProgrammingLanguage.GO)).containsExactly(StaticCodeAnalysisTool.GOLANGCI_LINT);
     }
 
     @Test

@@ -65,9 +65,12 @@
                     }
                     @case (SubmissionButtonStates.EDIT) {
                         <jhi-confirm-button
+                            data-button-intent="destructive"
+                            data-button-intent-reason="Deletes the saved example assessment before enabling editing"
                             class="col-auto"
                             [icon]="faEdit"
                             id="editSampleSolution"
+                            [btnType]="ButtonType.ERROR"
                             title="artemisApp.exampleSubmission.editExampleSubmission"
                             confirmationText="artemisApp.exampleSubmission.editExampleSubmissionConfirmationQuestion"
                             confirmationTitle="artemisApp.exampleSubmission.editExampleSubmission"
@@ -135,6 +138,7 @@
         @if (state.ui === UIStates.ASSESSMENT) {
             <jhi-text-assessment-area
                 [allowManualBlockSelection]="!this.toComplete()"
+                [allFeedbacks]="allAssessmentFeedbacks()"
                 [submission]="submission!"
                 [(textBlockRefs)]="textBlockRefs"
                 [readOnly]="readOnly() || (!!exercise && !exercise.isAtLeastEditor && !toComplete())"

@@ -237,16 +237,16 @@
             }
             <div class="grow flex justify-end">
                 @if (!hasImported()) {
-                    <button pButton type="button" severity="secondary" size="small" class="cancel me-2" (click)="clear()">
+                    <button tumAetUiButton type="button" severity="secondary" size="small" class="cancel me-2" (click)="clear()">
                         <fa-icon [icon]="faBan" />&nbsp;<span jhiTranslate="entity.action.cancel"></span>
                     </button>
-                    <button pButton type="submit" id="import" name="importButton" severity="primary" size="small" [disabled]="isSubmitDisabled" (click)="importUsers()">
+                    <button tumAetUiButton type="submit" id="import" name="importButton" severity="secondary" size="small" [disabled]="isSubmitDisabled" (click)="importUsers()">
                         <fa-icon [icon]="faUpload" class="me-2" />
                         <span jhiTranslate="entity.action.to-import"></span>
                         <fa-icon class="ms-1" [hidden]="!isImporting()" animation="spin" [icon]="faCircleNotch" />
                     </button>
                 } @else {
-                    <button type="button" pButton severity="success" size="small" id="finish-button" (click)="onFinish()">
+                    <button type="button" tumAetUiButton severity="primary" size="small" id="finish-button" (click)="onFinish()">
                         <fa-icon [icon]="faCheck" class="me-2" />
                         <span jhiTranslate="entity.action.finish"></span>
                     </button>

@@ -1,3 +1,4 @@
+import { importFromFileNavigation } from 'app/exercise/import/import-from-file-navigation';
 import { TumAetUiButtonComponent, TumAetUiDialogComponent, TumAetUiPanelComponent } from '@tumaet/ui-angular';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -241,18 +242,13 @@ export class ExerciseGroupsComponent implements OnInit {
         if (!exerciseGroup || !exerciseType) {
             return;
         }
-        const importBaseRoute = ['/course-management', this.courseId(), 'exams', this.examId(), 'exercise-groups', exerciseGroup.id, `${exerciseType}-exercises`];
+        const groupRoute = ['/course-management', this.courseId(), 'exams', this.examId(), 'exercise-groups', exerciseGroup.id];
         if (result.id) {
-            importBaseRoute.push('import', result.id);
-            void this.router.navigate(importBaseRoute, { queryParams: { sourceIsExamExercise: !!result.exerciseGroup } });
+            void this.router.navigate([...groupRoute, `${exerciseType}-exercises`, 'import', result.id], { queryParams: { sourceIsExamExercise: !!result.exerciseGroup } });
         } else {
-            // we know it must be a programming exercise, because only programming exercises can be imported from a file
-            importBaseRoute.push('import-from-file');
-            void this.router.navigate(importBaseRoute, {
-                state: {
-                    programmingExerciseForImportFromFile: result,
-                },
-            });
+            // An exercise read from a file has no id.
+            const { segments, extras } = importFromFileNavigation(result);
+            void this.router.navigate([...groupRoute, ...segments], extras);
         }
     }
 
