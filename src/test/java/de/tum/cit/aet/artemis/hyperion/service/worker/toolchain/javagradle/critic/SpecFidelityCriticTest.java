@@ -65,6 +65,8 @@ class SpecFidelityCriticTest {
 
     private static final String GITHUB_SENTINEL = "ghp_ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghij";
 
+    private static final JsonMapper FIXTURE_MAPPER = JsonMapper.builder().build();
+
     private final JsonMapper objectMapper = JsonMapper.builder().build();
 
     private static final String UNICODE_BRIEF = "Implement count_graphemes(s) counting user-perceived characters. It MUST be tested on accented Latin (café), a combining-mark "
@@ -144,7 +146,38 @@ class SpecFidelityCriticTest {
         if (body.startsWith("{") && body.contains("\"learningFit\"") && !body.contains("\"boundaryChecks\"")) {
             body = "{\"boundaryChecks\":[]," + body.substring(1);
         }
+        if (body.startsWith("{") && body.contains("\"learningFit\"") && !body.contains("\"goalChecks\"")) {
+            try {
+                SpecificationFixture fixture = FIXTURE_MAPPER.readValue(body, SpecificationFixture.class);
+                if (fixture.learningFit() != null) {
+                    String checks = FIXTURE_MAPPER.writeValueAsString(List.of(new GoalCheckFixture("G1", true, fixture.learningFit().specEvidenceIds(),
+                            "The fixture assigns the requested learner work through the cited specification.")));
+                    body = "{\"goalChecks\":" + checks + "," + body.substring(1);
+                }
+            }
+            catch (RuntimeException ignored) {
+                // Preserve intentionally malformed provider responses for the parser tests.
+            }
+        }
         return exactRawResponse(body);
+    }
+
+    private record SpecificationFixture(@Nullable LearningFitFixture learningFit) {
+    }
+
+    private record LearningFitFixture(@Nullable List<String> specEvidenceIds) {
+    }
+
+    private record GoalCheckFixture(String goalId, boolean covered, @Nullable List<String> specEvidenceIds, String reason) {
+    }
+
+    private record BriefGoalRequestFixture(String brief) {
+    }
+
+    private record GoalQuoteFixture(String quote) {
+    }
+
+    private record GoalInventoryFixture(List<GoalQuoteFixture> goals) {
     }
 
     private static ChatResponse exactRawResponse(String body) {
@@ -319,7 +352,17 @@ class SpecFidelityCriticTest {
     private ScriptedCritic criticScripted(List<ChatResponse> responses) {
         ChatModel chatModel = mock(ChatModel.class);
         if (!responses.isEmpty()) {
-            when(chatModel.call(any(Prompt.class))).thenReturn(responses.getFirst(), responses.subList(1, responses.size()).toArray(ChatResponse[]::new));
+            AtomicInteger responseIndex = new AtomicInteger();
+            when(chatModel.call(any(Prompt.class))).thenAnswer(invocation -> {
+                Prompt prompt = invocation.getArgument(0);
+                String input = prompt.getUserMessage().getText();
+                if (input.startsWith("{\"brief\":")) {
+                    // These existing specification fixtures use one whole-brief goal. Dedicated coverage tests supply atomic inventories.
+                    BriefGoalRequestFixture request = FIXTURE_MAPPER.readValue(input, BriefGoalRequestFixture.class);
+                    return exactRawResponse(FIXTURE_MAPPER.writeValueAsString(new GoalInventoryFixture(List.of(new GoalQuoteFixture(request.brief())))));
+                }
+                return responses.get(Math.min(responseIndex.getAndIncrement(), responses.size() - 1));
+            });
         }
         // Spring AI 2.0 merges per-request options with the model defaults, so ChatClient reads getOptions() during the request.
         when(chatModel.getOptions()).thenReturn(ChatOptions.builder().build());
@@ -704,7 +747,7 @@ class SpecFidelityCriticTest {
 
         assertThat(review.complete()).isTrue();
         ArgumentCaptor<Prompt> prompts = ArgumentCaptor.forClass(Prompt.class);
-        verify(scripted.model(), times(2)).call(prompts.capture());
+        verify(scripted.model(), times(3)).call(prompts.capture());
         assertThat(prompts.getAllValues().getLast().getInstructions().get(1).getText()).contains("One or more mandatory finding arrays were missing");
     }
 
@@ -726,7 +769,7 @@ class SpecFidelityCriticTest {
         assertThat(review.complete()).isFalse();
         assertThat(review.accepted()).isFalse();
         assertThat(review.auditSummary()).contains("objectiveEvidenceIds", "known, substantive E evidence");
-        verify(scripted.model(), times(2)).call(any(Prompt.class));
+        verify(scripted.model(), times(3)).call(any(Prompt.class));
     }
 
     @Test
@@ -825,7 +868,7 @@ class SpecFidelityCriticTest {
 
         assertThat(review.complete()).isTrue();
         assertThat(review.accepted()).isTrue();
-        verify(scripted.model()).call(any(Prompt.class));
+        verify(scripted.model(), times(2)).call(any(Prompt.class));
     }
 
     @Test
@@ -854,8 +897,8 @@ class SpecFidelityCriticTest {
         assertThat(review.complete()).isTrue();
         assertThat(review.accepted()).isTrue();
         ArgumentCaptor<Prompt> prompts = ArgumentCaptor.forClass(Prompt.class);
-        verify(scripted.model(), times(2)).call(prompts.capture());
-        assertThat((prompts.getAllValues().get(1).getInstructions().get(1)).getText()).contains("SERVER VALIDATION FAILURE TO CORRECT", "conceptAlignment validation failed",
+        verify(scripted.model(), times(3)).call(prompts.capture());
+        assertThat((prompts.getAllValues().getLast().getInstructions().get(1)).getText()).contains("SERVER VALIDATION FAILURE TO CORRECT", "conceptAlignment validation failed",
                 "mandatory conceptAlignment object is missing");
     }
 
@@ -884,7 +927,7 @@ class SpecFidelityCriticTest {
 
         assertThat(review.complete()).isTrue();
         ArgumentCaptor<Prompt> prompts = ArgumentCaptor.forClass(Prompt.class);
-        verify(scripted.model(), times(2)).call(prompts.capture());
+        verify(scripted.model(), times(3)).call(prompts.capture());
         assertThat(prompts.getAllValues().getLast().getInstructions().get(1).getText()).contains("candidate heading alone is not evidence");
     }
 
@@ -929,7 +972,7 @@ class SpecFidelityCriticTest {
                         """));
         scripted.critic().reviewSpecification("Students create the strategy interface.", "The design table marks it student-creates.", null, () -> false);
         ArgumentCaptor<Prompt> prompt = ArgumentCaptor.forClass(Prompt.class);
-        verify(scripted.model()).call(prompt.capture());
+        verify(scripted.model(), times(2)).call(prompt.capture());
         assertThat((prompt.getValue().getInstructions().get(1)).getText()).contains("INSTRUCTOR BRIEF EVIDENCE", "[B1] Students create the strategy interface.",
                 "CANDIDATE SPECIFICATION EVIDENCE", "[E1] The design table marks it student-creates.").doesNotContain("FINAL REPRESENTATION-DOMAIN CHECK");
         assertThat((prompt.getValue().getInstructions().getFirst()).getText()).contains("LEARNER PATH", "CONTRACT SOUNDNESS");
@@ -951,7 +994,7 @@ class SpecFidelityCriticTest {
                 previous, null, () -> false);
 
         ArgumentCaptor<Prompt> prompt = ArgumentCaptor.forClass(Prompt.class);
-        verify(scripted.model()).call(prompt.capture());
+        verify(scripted.model(), times(2)).call(prompt.capture());
         assertThat(prompt.getValue().getInstructions().get(1).getText()).contains("PREVIOUS SPECIFICATION REVIEW HYPOTHESES THAT CAUSED THIS REVISION",
                 "[F1] Internal conflict — lower == upper satisfies both R2 and R4", "Adjudicate every F ID", "merely asserts the conflict is resolved is not evidence");
         assertThat(review.accepted()).isTrue();
@@ -984,7 +1027,7 @@ class SpecFidelityCriticTest {
                 .doesNotContain("lower == upper satisfies both R2 and R4");
         assertThat(review.auditSummary()).contains("F1 STILL_PRESENT", "lower == upper satisfies both R2 and R4", "R2 and R4 still both include equality");
         ArgumentCaptor<Prompt> prompts = ArgumentCaptor.forClass(Prompt.class);
-        verify(scripted.model(), times(2)).call(prompts.capture());
+        verify(scripted.model(), times(3)).call(prompts.capture());
         assertThat(prompts.getAllValues().getLast().getInstructions().get(1).getText()).contains("priorFindingChecks validation failed", "mandatory when F findings were supplied");
     }
 
@@ -1005,7 +1048,7 @@ class SpecFidelityCriticTest {
                 "R1 accepts every int floor and minimizes absolute distance.", intermediateAccepted, null, () -> false);
 
         ArgumentCaptor<Prompt> prompt = ArgumentCaptor.forClass(Prompt.class);
-        verify(scripted.model()).call(prompt.capture());
+        verify(scripted.model(), times(2)).call(prompt.capture());
         assertThat(prompt.getValue().getInstructions().get(1).getText()).contains("SPECIFICATION RISK HISTORY", "[F1] " + overflowRisk);
         assertThat(review.findings()).singleElement().asString().contains("Persistent specification defect [F1]", "subtraction overflows");
         assertThat(review.riskHistory()).contains(overflowRisk);
@@ -1092,7 +1135,7 @@ class SpecFidelityCriticTest {
         assertThat(review.complete()).isTrue();
         assertThat(review.accepted()).isFalse();
         assertThat(review.feedback()).contains("preserving state", "resets");
-        verify(scripted.model()).call(any(Prompt.class));
+        verify(scripted.model(), times(2)).call(any(Prompt.class));
     }
 
     @Test
@@ -1111,7 +1154,7 @@ class SpecFidelityCriticTest {
                 """, null, () -> false);
 
         ArgumentCaptor<Prompt> prompts = ArgumentCaptor.forClass(Prompt.class);
-        verify(scripted.model(), times(2)).call(prompts.capture());
+        verify(scripted.model(), times(3)).call(prompts.capture());
         assertThat(prompts.getAllValues().getLast().getInstructions().get(1).getText()).contains("FIELD-SPECIFIC SPEC EVIDENCE GUIDE",
                 "studentOwnershipEvidenceIds: Design-section candidates [E4]", "assessmentEvidenceIds: Testing Strategy-section candidates [E8]",
                 "Authored S labels inside a Testing Strategy row are content");
@@ -1146,7 +1189,7 @@ class SpecFidelityCriticTest {
         assertThat(review.complete()).isTrue();
         assertThat(review.accepted()).isFalse();
         assertThat(review.learningFitDirection()).isEqualTo("TOO_SHALLOW");
-        verify(scripted.model(), times(2)).call(any(Prompt.class));
+        verify(scripted.model(), times(3)).call(any(Prompt.class));
     }
 
     @Test
@@ -1216,7 +1259,7 @@ class SpecFidelityCriticTest {
         assertThat(review.complete()).isFalse();
         assertThat(review.accepted()).isFalse();
         assertThat(review.auditSummary()).contains("known, substantive E evidence");
-        verify(scripted.model(), times(2)).call(any(Prompt.class));
+        verify(scripted.model(), times(3)).call(any(Prompt.class));
     }
 
     @Test
@@ -1243,7 +1286,7 @@ class SpecFidelityCriticTest {
         assertThat(review.complete()).isTrue();
         assertThat(review.accepted()).isTrue();
         assertThat(review.feedback()).doesNotContain("The claims conflict");
-        verify(scripted.model(), times(2)).call(any(Prompt.class));
+        verify(scripted.model(), times(3)).call(any(Prompt.class));
     }
 
     @Test
@@ -1274,7 +1317,7 @@ class SpecFidelityCriticTest {
         assertThat(review.complete()).isTrue();
         assertThat(review.accepted()).isTrue();
         assertThat(review.conceptualReworkRequired()).isFalse();
-        verify(scripted.model(), times(2)).call(any(Prompt.class));
+        verify(scripted.model(), times(3)).call(any(Prompt.class));
     }
 
     @Test
@@ -1301,7 +1344,7 @@ class SpecFidelityCriticTest {
         assertThat(review.complete()).isTrue();
         assertThat(review.accepted()).isTrue();
         assertThat(review.feedback()).doesNotContain("The decisions conflict");
-        verify(scripted.model(), times(2)).call(any(Prompt.class));
+        verify(scripted.model(), times(3)).call(any(Prompt.class));
     }
 
     @Test
@@ -1330,7 +1373,7 @@ class SpecFidelityCriticTest {
         assertThat(review.accepted()).isFalse();
         assertThat(review.feedback()).contains("Persistent specification defect [F1]", "still mandates the exact threshold");
         ArgumentCaptor<Prompt> prompts = ArgumentCaptor.forClass(Prompt.class);
-        verify(scripted.model(), times(2)).call(prompts.capture());
+        verify(scripted.model(), times(3)).call(prompts.capture());
         assertThat(prompts.getAllValues().getLast().getInstructions().get(1).getText()).contains("[F1] Unsupported constraint", "Adjudicate every F ID",
                 "Do not repeat an F finding in an ordinary finding array", "preserve their values and evidence IDs", "objectiveEvidenceIds: E candidates",
                 "Every briefEvidenceIds field: B candidates", "PREVIOUS RESPONSE TO CORRECT", "Students reason about both threshold boundaries");
@@ -1354,7 +1397,7 @@ class SpecFidelityCriticTest {
 
         assertThat(review.complete()).isTrue();
         assertThat(review.accepted()).isTrue();
-        verify(scripted.model(), times(2)).call(any(Prompt.class));
+        verify(scripted.model(), times(3)).call(any(Prompt.class));
     }
 
     @Test
@@ -1375,7 +1418,7 @@ class SpecFidelityCriticTest {
         assertThat(review.complete()).isFalse();
         assertThat(review.auditSummary()).contains("added grounded hypotheses beyond the bounded continuity context", "specification remains unapproved");
         assertThat(review.riskHistory()).containsExactlyElementsOf(priorRisks);
-        verify(scripted.model(), times(1)).call(any(Prompt.class));
+        verify(scripted.model(), times(2)).call(any(Prompt.class));
     }
 
     @Test

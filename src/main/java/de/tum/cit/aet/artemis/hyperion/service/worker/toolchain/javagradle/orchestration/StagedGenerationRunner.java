@@ -619,6 +619,8 @@ public class StagedGenerationRunner {
                                         unresolvedSpecificationFindings);
                             }
                             emit(progress, "Reviewing the specification against the instructor brief");
+                            previousSpecificationReview = SpecFidelityCritic.SpecificationReview.retainBriefLearningGoals(previousSpecificationReview,
+                                    approvedSpecs.learningGoals(sessionId).orElse(null));
                             SpecFidelityCritic.SpecificationReview review;
                             if (previousSpecificationReview != null) {
                                 review = specificationReviewer.reviewSpecification(sourceBrief, selectedConcept, specSnapshot, previousSpecificationReview, usageSink, cancelled);
@@ -628,6 +630,9 @@ public class StagedGenerationRunner {
                             }
                             else {
                                 review = specificationReviewer.reviewSpecification(sourceBrief, selectedConcept, specSnapshot, usageSink, cancelled);
+                            }
+                            if (review.briefLearningGoals() != null) {
+                                approvedSpecs.rememberLearningGoals(sessionId, review.briefLearningGoals());
                             }
                             previousSpecificationReview = review;
                             transcriptWriter.writeAudit(exercise.id(), "spec-review-" + ++specificationReviewNumber, SpecificationReviewPrompts.specificationReviewAudit(review));

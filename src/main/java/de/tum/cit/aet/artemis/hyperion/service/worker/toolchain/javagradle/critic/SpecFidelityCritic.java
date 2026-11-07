@@ -111,15 +111,20 @@ public class SpecFidelityCritic {
         }
     }
 
-    /** A complete, evidence-grounded brief-to-spec verdict. Incomplete means the provider returned no trustworthy verdict, so the runner must not freeze the contract. */
+    /** A brief-to-spec verdict; an incomplete review keeps final review required when the bounded workflow preserves a draft. */
     public record SpecificationReview(boolean complete, boolean conceptualReworkRequired, boolean coherentRewriteRequired, List<String> findings, String auditSummary,
-            @Nullable String learningFitDirection, List<String> riskHistory) {
+            @Nullable String learningFitDirection, List<String> riskHistory, @Nullable BriefLearningGoals briefLearningGoals) {
 
         public SpecificationReview {
             findings = List.copyOf(findings);
             auditSummary = auditSummary == null ? "" : auditSummary.strip();
             learningFitDirection = learningFitDirection == null ? null : learningFitDirection.strip();
             riskHistory = List.copyOf(riskHistory);
+        }
+
+        public SpecificationReview(boolean complete, boolean conceptualReworkRequired, boolean coherentRewriteRequired, List<String> findings, String auditSummary,
+                @Nullable String learningFitDirection, List<String> riskHistory) {
+            this(complete, conceptualReworkRequired, coherentRewriteRequired, findings, auditSummary, learningFitDirection, riskHistory, null);
         }
 
         public SpecificationReview(boolean complete, boolean conceptualReworkRequired, boolean coherentRewriteRequired, List<String> findings, String auditSummary,
@@ -141,6 +146,31 @@ public class SpecFidelityCritic {
 
         public boolean accepted() {
             return complete && findings.isEmpty();
+        }
+
+        /**
+         * Retains the same brief-owned scope through successful, incomplete and corrected specification reviews.
+         *
+         * @param goals the source-bound learning goals
+         * @return this verdict with the retained scope
+         */
+        public SpecificationReview withBriefLearningGoals(BriefLearningGoals goals) {
+            return new SpecificationReview(complete, conceptualReworkRequired, coherentRewriteRequired, findings, auditSummary, learningFitDirection, riskHistory, goals);
+        }
+
+        /**
+         * Keeps brief-owned goals when a new concept or assessment review clears candidate-specific findings.
+         *
+         * @param previousReview the preceding candidate review, when available
+         * @param goals          the session's retained source-bound learning goals
+         * @return the preceding review with retained goals, or an incomplete review when only the goals remain
+         */
+        @Nullable
+        public static SpecificationReview retainBriefLearningGoals(@Nullable SpecificationReview previousReview, @Nullable BriefLearningGoals goals) {
+            if (goals == null) {
+                return previousReview;
+            }
+            return (previousReview == null ? new SpecificationReview(false, List.of()) : previousReview).withBriefLearningGoals(goals);
         }
 
         public String feedback() {
@@ -309,7 +339,7 @@ public class SpecFidelityCritic {
                         + "the configured assessment can enforce it without source, bytecode, stack, or grader-context inspection.")
                 .filter(finding -> !findings.contains(finding)).forEach(findings::add);
         return new SpecificationReview(review.complete(), review.conceptualReworkRequired(), true, List.copyOf(findings), review.auditSummary(), review.learningFitDirection(),
-                review.riskHistory());
+                review.riskHistory(), review.briefLearningGoals());
     }
 
     /**

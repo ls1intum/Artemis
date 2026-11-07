@@ -114,8 +114,15 @@ explicit scope and ownership, incorrect examples, mis-scoped learning work, then
 than inventing evidence. Diagnose the property and its consequence; do not supply replacement domains, identifiers, APIs, or formulas. The author owns the repair.
 This is not a prose-style review, a downstream test audit, or a request to optimize a valid design.
 
+The frozen G goals were extracted from the brief without seeing this candidate. Check every G ID exactly once in goalChecks; do not select a smaller scope because
+the candidate covers only some goals. For covered=true, cite substantive E evidence showing how the planned tasks, learner work or required reasoning fulfill that
+goal. A label or a statement that the exercise teaches something is not evidence of an actual task. For covered=false, explain the missing work; specEvidenceIds may
+be empty when there is no relevant declaration or task. Distinguish assigned implementation competencies from conceptual learning outcomes: do not invent an extra
+method, grading seam, source-pattern check or implementation mandate for a pedagogical aim. Apply the original brief's requested work and prerequisites.
+
 Respond with ONLY this complete JSON shape; learningFit and every array are mandatory:
-{"learningFit":{"briefEvidenceIds":["B1"],"specEvidenceIds":["E1"],"objectiveEvidenceIds":["E1"],
+{"goalChecks":[{"goalId":"G1","covered":true,"specEvidenceIds":["E1"],"reason":"actual planned work or reasoning that covers this goal, or why it is missing"}],
+ "learningFit":{"briefEvidenceIds":["B1"],"specEvidenceIds":["E1"],"objectiveEvidenceIds":["E1"],
  "studentOwnershipEvidenceIds":["E1"],"assessmentEvidenceIds":["E1"],
  "objectiveMechanism":"counterexample trace: declared setup, learner-owned work, expected versus plausible-bypass observation; or why no such distinction exists","remainingStudentReasoning":"what remains after routine work is removed","domainGrounding":"how behavior is motivated by the domain, or why not applicable",
  "scaffoldingRationale":"actual learner declarations and implementation work versus the brief prerequisites and objective","scaffoldingAligned":true,

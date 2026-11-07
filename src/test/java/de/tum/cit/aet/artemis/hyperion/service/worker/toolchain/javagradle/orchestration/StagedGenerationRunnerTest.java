@@ -51,6 +51,7 @@ import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.agent
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.agent.AgentTranscriptWriter;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.agent.GenerationStage;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.agent.SandboxAgentTools;
+import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.critic.BriefLearningGoals;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.critic.SpecFidelityCritic;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification.AgentVerifyReport;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification.ApprovedSpecRegistry;
@@ -243,11 +244,15 @@ class StagedGenerationRunnerTest {
     @Test
     void aNonDiscriminatingAssessmentReopensAndReapprovesTheContractBeforeStatementAuthoring() {
         var reviewer = mock(SpecFidelityCritic.class);
-        when(reviewer.reviewSpecification(anyString(), anyString(), any(), any())).thenReturn(new SpecFidelityCritic.SpecificationReview(true, List.of()));
+        var goals = new BriefLearningGoals("brief", List.of(new BriefLearningGoals.Goal("G1", "brief")));
+        when(reviewer.reviewSpecification(anyString(), anyString(), any(), any()))
+                .thenReturn(new SpecFidelityCritic.SpecificationReview(true, List.of()).withBriefLearningGoals(goals));
         when(reviewer.reviewSpecification(anyString(), any(), anyString(), any(SpecFidelityCritic.SpecificationReview.class), any(), any())).thenAnswer(invocation -> {
             SpecFidelityCritic.SpecificationReview prior = invocation.getArgument(3);
             assertThat(prior.riskHistory()).singleElement().asString().contains("unchanged template");
-            return new SpecFidelityCritic.SpecificationReview(true, false, false, List.of(), "The revised API addresses the counterexample", null, prior.riskHistory());
+            assertThat(prior.briefLearningGoals()).isEqualTo(goals);
+            return new SpecFidelityCritic.SpecificationReview(true, false, false, List.of(), "The revised API addresses the counterexample", null, prior.riskHistory())
+                    .withBriefLearningGoals(goals);
         });
         runner = new StagedGenerationRunner(agentLoopRunner, systemPromptService, stageCheckService, new AgentTranscriptWriter(""), approvedSpecs, reviewer, "FRESH");
         AtomicInteger calls = new AtomicInteger();
@@ -266,6 +271,7 @@ class StagedGenerationRunnerTest {
         assertThat(result.status()).isEqualTo(AgentLoopResult.Status.COMPLETED);
         assertThat(calls).hasValue(5);
         assertThat(approvedSpecs.approved("s")).hasValue(sandbox.specMarkdown);
+        assertThat(approvedSpecs.learningGoals("s")).contains(goals);
         verify(reviewer).reviewSpecification(anyString(), anyString(), any(), any());
         verify(reviewer).reviewSpecification(anyString(), any(), anyString(), any(SpecFidelityCritic.SpecificationReview.class), any(), any());
         InOrder stages = inOrder(baseTools);

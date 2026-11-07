@@ -6,8 +6,10 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import org.jspecify.annotations.Nullable;
 
+import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.critic.BriefLearningGoals;
+
 /**
- * Holds the SPEC.md content that PASSED the specification gate, per sandbox session.
+ * Retains brief-owned learning goals and the SPEC.md content that passed the specification gate, per sandbox session.
  * <p>
  * Every later gate derives from the specification — which types the template must omit, whether the statement needs a diagram — but SPEC.md lives in the workspace and the agent
  * may write it, so reading the live file at gate time would let the agent dissolve the contract it is judged against by downgrading its own ownership decisions until the
@@ -16,7 +18,7 @@ import org.jspecify.annotations.Nullable;
  */
 public class ApprovedSpecRegistry {
 
-    private record Approval(@Nullable String specification, boolean assessmentReopened) {
+    private record Approval(@Nullable String specification, boolean assessmentReopened, @Nullable BriefLearningGoals learningGoals) {
     }
 
     private final Map<String, Approval> approvedBySession = new ConcurrentHashMap<>();
@@ -34,7 +36,7 @@ public class ApprovedSpecRegistry {
                 if (existing != null && existing.specification() != null && !existing.specification().equals(spec)) {
                     throw new IllegalStateException("A different specification is already approved for sandbox session " + sessionId);
                 }
-                return new Approval(spec, existing != null && existing.assessmentReopened());
+                return new Approval(spec, existing != null && existing.assessmentReopened(), existing == null ? null : existing.learningGoals());
             });
         }
     }
@@ -53,7 +55,8 @@ public class ApprovedSpecRegistry {
             return false;
         }
         Approval current = approvedBySession.get(sessionId);
-        return current != null && expected.equals(current.specification()) && approvedBySession.replace(sessionId, current, new Approval(amended, current.assessmentReopened()));
+        return current != null && expected.equals(current.specification())
+                && approvedBySession.replace(sessionId, current, new Approval(amended, current.assessmentReopened(), current.learningGoals()));
     }
 
     /**
@@ -76,7 +79,31 @@ public class ApprovedSpecRegistry {
     public boolean reopenForAssessment(String sessionId, String expected) {
         Approval current = sessionId == null ? null : approvedBySession.get(sessionId);
         return current != null && !current.assessmentReopened() && expected != null && expected.equals(current.specification())
-                && approvedBySession.replace(sessionId, current, new Approval(null, true));
+                && approvedBySession.replace(sessionId, current, new Approval(null, true, current.learningGoals()));
+    }
+
+    /**
+     * Retains source-only goal identities independently of concept changes, specification revisions and assessment re-entry.
+     *
+     * @param sessionId the sandbox session
+     * @param goals     the immutable brief-owned scope
+     */
+    public void rememberLearningGoals(String sessionId, BriefLearningGoals goals) {
+        approvedBySession.compute(sessionId, (key, existing) -> {
+            if (existing != null && existing.learningGoals() != null && !existing.learningGoals().equals(goals)) {
+                throw new IllegalStateException("Different brief learning goals are already retained for sandbox session " + sessionId);
+            }
+            return new Approval(existing == null ? null : existing.specification(), existing != null && existing.assessmentReopened(), goals);
+        });
+    }
+
+    /**
+     * @param sessionId the sandbox session
+     * @return the brief-owned scope, including while specification approval is reopened
+     */
+    public Optional<BriefLearningGoals> learningGoals(String sessionId) {
+        Approval current = sessionId == null ? null : approvedBySession.get(sessionId);
+        return current == null ? Optional.empty() : Optional.ofNullable(current.learningGoals());
     }
 
     /**

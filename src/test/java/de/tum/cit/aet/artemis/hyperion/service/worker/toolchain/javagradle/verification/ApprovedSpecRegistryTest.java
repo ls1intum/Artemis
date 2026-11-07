@@ -3,9 +3,38 @@ package de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.veri
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import java.util.List;
+
 import org.junit.jupiter.api.Test;
 
+import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.critic.BriefLearningGoals;
+
 class ApprovedSpecRegistryTest {
+
+    @Test
+    void sourceGoalsSurviveApprovalAmendmentAndAssessmentReentryUntilTheSessionIsForgotten() {
+        var registry = new ApprovedSpecRegistry();
+        var goals = new BriefLearningGoals("Preserve order and choose the smallest holder.",
+                List.of(new BriefLearningGoals.Goal("G1", "Preserve order"), new BriefLearningGoals.Goal("G2", "choose the smallest holder")));
+        registry.rememberLearningGoals("s", goals);
+        registry.approve("s", "first specification");
+        assertThat(registry.learningGoals("s")).contains(goals);
+
+        assertThat(registry.amend("s", "first specification", "ownership correction")).isTrue();
+        assertThat(registry.learningGoals("s")).contains(goals);
+        assertThat(registry.reopenForAssessment("s", "ownership correction")).isTrue();
+        assertThat(registry.approved("s")).isEmpty();
+        assertThat(registry.learningGoals("s")).contains(goals);
+
+        var reducedScope = new BriefLearningGoals(goals.sourceBrief(), List.of(goals.goals().getFirst()));
+        assertThatThrownBy(() -> registry.rememberLearningGoals("s", reducedScope)).isInstanceOf(IllegalStateException.class);
+        registry.approve("s", "redesigned specification");
+        assertThat(registry.learningGoals("s")).contains(goals);
+
+        registry.forget("s");
+        assertThat(registry.learningGoals("s")).isEmpty();
+        assertThat(registry.approved("s")).isEmpty();
+    }
 
     @Test
     void approvalIsImmutableButIdempotent() {
