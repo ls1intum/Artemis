@@ -61,7 +61,9 @@
 
         .editor-center {
             flex: 1 1 auto;
-            min-width: 0; /* let center shrink */
+
+            /* Even at phone widths, reserve the card's borders so they cannot overlap the neighbouring divider. */
+            min-width: 2px;
 
             .card {
                 height: 100%;

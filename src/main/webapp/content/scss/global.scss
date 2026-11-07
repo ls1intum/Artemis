@@ -22,6 +22,9 @@
 @import 'primeicons/primeicons.css';
 @import '@angular/cdk/a11y-prebuilt.css';
 
+// Transitional Bootstrap buttons share the TUM AET UI palette and sizing.
+@import 'button-colors';
+
 // Smooth transition between themes. SVG is excluded: `background` is not rendered on SVG elements,
 // so the transition can never be seen there, yet it still marks every node of an SVG subtree as
 // running a paint transition - which is enough to keep a surface on a stale raster.
@@ -144,25 +147,8 @@ a.disabled {
     white-space: nowrap;
 }
 
-/* Default the color to white even on bootstrap 5 */
-.btn-primary,
-.btn-primary:hover,
-.btn-primary:disabled,
-.btn-info,
-.btn-info:hover,
-.btn-success,
-.btn-success:hover {
-    color: $colored-btn-font !important;
-}
-
 a.btn {
     -webkit-appearance: none !important;
-}
-
-.btn-default {
-    color: $default-btn-font;
-    background-color: $default-btn-background;
-    border-color: $default-btn-border;
 }
 
 .popover {
