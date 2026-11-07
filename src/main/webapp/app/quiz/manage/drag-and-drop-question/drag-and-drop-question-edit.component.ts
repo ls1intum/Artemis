@@ -248,9 +248,12 @@ export class DragAndDropQuestionEditComponent implements OnInit, AfterViewInit, 
         this.mouse = new DragAndDropMouseEvent();
         this.questionEditorText.set(generateExerciseHintExplanation(question));
 
-        // check if question was generated with an ApollonDiagram
+        // check if the question was generated with an ApollonDiagram or imported from a file; both bring their images as files keyed by path
         if (question.importedFiles) {
-            this.setBackgroundFileFromFile(new File([question.importedFiles.get('diagram-background.png')!], 'diagram-background.png'));
+            const backgroundFilePath = question.backgroundFilePath;
+            if (backgroundFilePath && question.importedFiles.has(backgroundFilePath)) {
+                this.setBackgroundFileFromFile(new File([question.importedFiles.get(backgroundFilePath)!], backgroundFilePath));
+            }
             for (const dragItem of question.dragItems ?? []) {
                 if (dragItem.pictureFilePath && question.importedFiles.has(dragItem.pictureFilePath)) {
                     this.changeToPictureDragItemFromFile(dragItem, new File([question.importedFiles.get(dragItem.pictureFilePath)!], dragItem.pictureFilePath));

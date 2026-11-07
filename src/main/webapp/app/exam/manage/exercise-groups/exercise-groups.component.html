@@ -145,7 +145,7 @@
 }
 
 @if (exerciseImportType(); as importType) {
-    <jhi-exam-exercise-import-dialog [(visible)]="exerciseImportVisible" [exerciseType]="importType" (imported)="onExerciseImported($event)" />
+    <jhi-exam-exercise-import-dialog [(visible)]="exerciseImportVisible" [exerciseType]="importType" [courseId]="courseId()" (imported)="onExerciseImported($event)" />
 }
 
 <jhi-exam-delete-dialog
