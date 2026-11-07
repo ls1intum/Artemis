@@ -36,14 +36,15 @@ final class LocalVCCredentials {
         }
         String[] basicAuthCredentialsEncoded = authorizationHeader.split(" ");
 
-        if (basicAuthCredentialsEncoded.length < 2 || !("Basic".equals(basicAuthCredentialsEncoded[0]))) {
+        if (basicAuthCredentialsEncoded.length < 2 || !"Basic".equalsIgnoreCase(basicAuthCredentialsEncoded[0])) {
             throw new LocalVCAuthException("Invalid authorization header format");
         }
 
-        // Decode the Base64-encoded credentials (username:password).
+        // Decode the Base64-encoded credentials (username:password). The scheme name above is case-insensitive and the credentials are UTF-8, whatever the default charset of the
+        // JVM is.
         String basicAuthCredentials;
         try {
-            basicAuthCredentials = new String(Base64.getDecoder().decode(basicAuthCredentialsEncoded[1]));
+            basicAuthCredentials = new String(Base64.getDecoder().decode(basicAuthCredentialsEncoded[1]), StandardCharsets.UTF_8);
         }
         catch (IllegalArgumentException _) {
             throw new LocalVCAuthException("Invalid Base64 encoding in authorization header");
