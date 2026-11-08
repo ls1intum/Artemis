@@ -2,7 +2,7 @@
 id: openapi
 title: OpenAPI and API-driven Development
 sidebar_label: OpenAPI
-last_reviewed: 2026-11-03
+last_reviewed: 2026-11-08
 ---
 
 import Callout from '../../src/components/Callout/Callout';
@@ -10,7 +10,7 @@ import { CalloutVariant } from '../../src/components/Callout/Callout.types';
 
 We migrate the Artemis server to an API-driven development approach using OpenAPI specifications. This especially helps us with client generation to avoid subtle bugs that are often unnoticed in code reviews.
 
-Currently, the OpenAPI specs are generated for the `aiworker`, `globalsearch`, `tutorialgroup`, `hyperion`, `calendar`, and `quiz` modules. We only support API-driven development for endpoints that are DTO-only and do not return domain objects.
+Currently, the OpenAPI specs are generated for the `aiworker`, `globalsearch`, `tutorialgroup`, `hyperion`, `calendar`, `quiz`, and `lecture` modules. We only support API-driven development for endpoints that are DTO-only and do not return domain objects.
 
 <Callout variant={CalloutVariant.info}>
     If you want to make use of the OpenAPI specs, you need to ensure that the endpoint you are working on is a DTO-only endpoint. This means that the endpoint should not return or
@@ -50,6 +50,8 @@ This command:
 - Post-processes generated files: removes unused imports and strips the numeric suffixes that duplicate operation ids leave in method names
 
 The generator returns the full `HttpResponse` for operations that declare a response header (`observeResponseHeaders`), so callers can read it.
+
+Every generated service method takes an optional last argument with an `HttpContext` and extra headers, for example `{ context: new HttpContext().set(SKIP_HTTP_ERROR_ALERT, true) }` to show a failure in place instead of as an alert.
 
 The generated client files are stored in the `src/main/webapp/app/openapi` directory.
 
