@@ -138,6 +138,7 @@
         @if (state.ui === UIStates.ASSESSMENT) {
             <jhi-text-assessment-area
                 [allowManualBlockSelection]="!this.toComplete()"
+                [allFeedbacks]="allAssessmentFeedbacks()"
                 [submission]="submission!"
                 [(textBlockRefs)]="textBlockRefs"
                 [readOnly]="readOnly() || (!!exercise && !exercise.isAtLeastEditor && !toComplete())"

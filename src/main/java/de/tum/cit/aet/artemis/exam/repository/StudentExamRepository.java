@@ -349,27 +349,6 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
             """)
     List<StudentExamExerciseStartDTO> findExerciseStartDataByExamId(@Param("examId") long examId);
 
-    /**
-     * The same rows as {@link #findExerciseStartDataByExamId}, restricted to the given student exams. Ids that do not
-     * belong to the exam, and ids of test runs, simply do not match, so callers cannot prepare exercises across exams
-     * or interfere with a test run.
-     *
-     * @param examId         the id of the exam
-     * @param studentExamIds the ids of the student exams to read
-     * @return one row per exercise of every requested student exam that belongs to the exam
-     */
-    @Query("""
-            SELECT new de.tum.cit.aet.artemis.exam.dto.StudentExamExerciseStartDTO(studentExam.id, student.id, student.login, exercise.id)
-            FROM StudentExam studentExam
-                JOIN studentExam.user student
-                JOIN studentExam.exercises exercise
-            WHERE studentExam.exam.id = :examId
-                AND studentExam.id IN :studentExamIds
-                AND (studentExam.testRun IS NULL OR studentExam.testRun = FALSE)
-            ORDER BY studentExam.id, exercise.id
-            """)
-    List<StudentExamExerciseStartDTO> findExerciseStartDataByExamIdAndStudentExamIds(@Param("examId") long examId, @Param("studentExamIds") Collection<Long> studentExamIds);
-
     Optional<StudentExam> findFirstByExamIdAndUserIdOrderByCreatedDateDesc(long examId, long userId);
 
     /**
