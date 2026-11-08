@@ -2,7 +2,7 @@
 id: participation-checker
 title: Exam Participation Checker
 sidebar_label: Exam Participation Checker
-last_reviewed: 2026-11-03
+last_reviewed: 2026-11-07
 ---
 
 import Callout from "../../../src/components/Callout/Callout";
@@ -40,14 +40,17 @@ Using the Artemis Exam Participation Checker iPad application requires additiona
   Seats and rooms can currently only be assigned via the CSV import of students by defining the `seat` and `room` in the CSV file.
 </Callout>
 
-**Verify attendance**, in the same **Logistics** menu, opens the web counterpart of the app: the list of students who
-have started the exam in Artemis but whose check-in is not finished. A student leaves the list once all four
-identity checks are ticked and a signature has been recorded, so the count beside the heading is the work the room
-has left.
+**Verify attendance**, in the same **Logistics** menu, opens the web counterpart of the app. It lists the registered students and their check-in information. The count beside the heading includes students who have started the exam but whose attendance has not been verified. A completed automatic check requires all four identity checks and a signature.
 
 <Image src={verifyAttendanceMissing} alt="Verify attendance list with one student still to check in" size={ImageSize.large} caption="One student has still to be checked in" />
 
-Once the last student is done the list is empty and says so, which is the state to look for before the exam starts.
+Once every started student has been checked, the page reports that all checks have passed. The rows remain available for review.
+After the exam ends, instructors can mark a student present by confirming the four existing identity checks, without
+providing a signature. Marking a student absent clears those checks. Existing signatures and exam start/submission
+records remain unchanged; a cleared check is shown as unverified.
+
+Attendance updates from the web application and the iPad app are recorded in the application audit log. Administrators
+can review who made the change, when it happened, the affected student and exam, and the previous and new check values.
 
 <Image src={verifyAttendanceComplete} alt="Verify attendance view reporting that every student has been checked" size={ImageSize.large} caption="Every student checked in" />
 

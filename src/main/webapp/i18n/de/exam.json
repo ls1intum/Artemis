@@ -111,6 +111,14 @@
                 }
             },
             "examSummary": {
+                "partialTestExamResult": "Dieses Teilergebnis und die theoretische Note berücksichtigen nur automatisch bewertete Aufgaben. Manuell zu bewertende Aufgaben wurden nicht bewertet.",
+                "notAutomaticallyAssessed": "Nicht automatisch bewertet",
+                "theoreticalGrade": "Theoretische Note:",
+                "theoreticalGradeBeforeBonus": "Theoretische Note vor Bonus:",
+                "theoreticalGradeAfterBonus": "Theoretische Note nach Bonus:",
+                "automaticResultsPending": "Die automatische Bewertung läuft noch. Gesamtpunktzahl und theoretische Note werden angezeigt, sobald die Ergebnisse vorliegen.",
+                "bonusResultPending": "Die Bonusquelle wird noch bewertet. Ihre Punktzahl und Note vor Bonus sind verfügbar; die endgültige Note mit Bonus wird angezeigt, sobald die Ergebnisse der Bonusquelle vorliegen.",
+                "automaticResultPending": "Bewertung läuft",
                 "backToOverview": "Zurück zur Übersicht",
                 "examResults": "Prüfungsergebnisse",
                 "generalInformation": "Allgemeine Informationen",
@@ -663,7 +671,7 @@
                     "Submitted": "Eingereicht",
                     "DidNotAttend": "Nicht teilgenommen",
                     "AttendanceNotChecked": "Anwesenheitsprüfung fehlgeschlagen",
-                    "AttendanceChecked": "Anwesenheitsprüfung bestanden"
+                    "AttendanceChecked": "Anwesenheit geprüft"
                 },
                 "menu": {
                     "manageStudents": "Studierende",
@@ -677,6 +685,17 @@
                     "uploadImages": "Bilder hochladen",
                     "distribute": "Studierende verteilen",
                     "verifyAttendance": "Anwesenheit prüfen"
+                },
+                "statisticsFailed": "Die Prüfungsstatistik konnte nicht geladen werden. Lade sie vor der Anmeldung von Studierenden erneut.",
+                "registrationClosed": "Die Anmeldung ist geschlossen, da die Prüfung beendet ist.",
+                "registrationAfterGeneration": "Die individuellen Prüfungen wurden bereits generiert. Neu angemeldete Studierende erhalten automatisch eine eigene Prüfung. Falls die Vorbereitung bereits gestartet wurde, werden auch ihre Aufgaben vorbereitet. Fortfahren?",
+                "manualAttendance": {
+                    "checked": "Überprüfung abgeschlossen",
+                    "incomplete": "Überprüfung unvollständig",
+                    "reloadFailed": "Die Anwesenheit konnte nicht aktualisiert werden. Lade die aktuellen Einträge vor weiteren Änderungen erneut.",
+                    "title": "Anwesenheitsentscheidung",
+                    "present": "Anwesend (alle Identitätsprüfungen bestätigt)",
+                    "absent": "Abwesend (alle Identitätsprüfungen zurückgesetzt)"
                 },
                 "addDialog": {
                     "title": "Studierende hinzufügen",
@@ -891,6 +910,9 @@
                 "typeNameToConfirm": "Bitte gib den Namen der Klausur zur Bestätigung ein."
             },
             "announcementCreate": {
+                "history": "Bisherige Ankündigungen",
+                "historyEmpty": "Es wurden noch keine Ankündigungen gesendet.",
+                "historyFailed": "Die bisherigen Ankündigungen konnten nicht geladen werden.",
                 "button": "Ankündigung erstellen",
                 "title": "Klausurweite Ankündigung erstellen",
                 "task": "Gib deine Ankündigung hier ein.",

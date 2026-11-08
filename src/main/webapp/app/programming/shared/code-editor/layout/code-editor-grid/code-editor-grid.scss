@@ -76,6 +76,10 @@
             flex-flow: row nowrap;
             width: 500px;
 
+            /* The panel must not keep the width of its widest line (the task wizard has padding and does not wrap its title): the panel
+               would then take the room of the editor, whose card overflows the divider next to it in a narrow window. */
+            min-width: 0;
+
             .instructions-wrapper__content {
                 overflow: hidden;
                 display: flex;

@@ -238,8 +238,7 @@ public abstract class PostingService {
      */
     private Set<ConversationNotificationRecipientSummary> getConversationParticipantsAsSummaries(Conversation postConversation) {
         return conversationParticipantRepository.findConversationParticipantsByConversationId(postConversation.getId()).stream()
-                .map(participant -> new ConversationNotificationRecipientSummary(participant.getUser(), participant.getIsMuted(),
-                        participant.getIsHidden() != null && participant.getIsHidden(), false))
+                .map(participant -> new ConversationNotificationRecipientSummary(participant.getUser(), participant.getIsMuted(), participant.getIsHidden(), false))
                 .collect(Collectors.toSet());
     }
 
@@ -256,8 +255,7 @@ public abstract class PostingService {
         }
 
         return conversationParticipantRepository.findConversationParticipantsWithUserCourseRolesByConversationId(conversation.getId()).stream()
-                .map(participant -> new ConversationNotificationRecipientSummary(participant.getUser(), participant.getIsMuted(),
-                        participant.getIsHidden() != null && participant.getIsHidden(),
+                .map(participant -> new ConversationNotificationRecipientSummary(participant.getUser(), participant.getIsMuted(), participant.getIsHidden(),
                         authorizationCheckService.isAtLeastTeachingAssistantInCourse(conversation.getCourse(), participant.getUser())));
     }
 

@@ -2346,6 +2346,24 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
     }
 
     /**
+     * Checks whether preparation has created any participation for an exercise assigned in this exam, including failed
+     * initialization. Test runs do not establish preparation intent for the registered cohort.
+     *
+     * @param examId the exam whose preparation may have started
+     * @return whether a registered-cohort participation exists
+     */
+    @Query("""
+            SELECT COUNT(p) > 0
+            FROM StudentParticipation p
+            JOIN StudentExam se ON p.student.id = se.user.id
+            JOIN se.exercises e
+            WHERE se.exam.id = :examId
+            AND e.id = p.exercise.id
+            AND p.testRun = FALSE
+            """)
+    boolean existsParticipationByExamIdIgnoreTestRuns(@Param("examId") long examId);
+
+    /**
      * Counts the number of unique, active students who have an initialized participation
      * for a specific exercise and are explicitly assigned this exact exercise variant
      * in their current exam.
