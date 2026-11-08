@@ -6,6 +6,8 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
@@ -28,6 +30,33 @@ class SemanticMutantAuthorTest {
     private static final String SOURCE = "package example; public class Scheduler { public int choose() { return 1; } }";
 
     private final SemanticMutantAuthor author = new SemanticMutantAuthor(mock(ReviewerClient.class), JsonMapper.builder().build());
+
+    @ParameterizedTest
+    @ValueSource(booleans = { false, true })
+    void unexecutedReviewTargetsGetOneProposalCorrectionWhenTheFirstBatchIsEmptyOrRejected(boolean rejected) {
+        ReviewerClient reviewer = mock(ReviewerClient.class);
+        when(reviewer.configured()).thenReturn(true);
+        String valid = response("src/example/Scheduler.java", "R1", "org.junit.jupiter.api.Assertions.assertEquals(1, new Scheduler().choose());");
+        when(reviewer.call(anyString(), anyString(), any(), any(), anyInt())).thenReturn(rejected ? valid.replace("\"R1\"", "\"R9\"") : "{\"mutants\":[]}", valid);
+        var configured = new SemanticMutantAuthor(reviewer, JsonMapper.builder().build());
+        var target = new SpecFidelityReport.Finding(SpecFidelityReport.Kind.WEAK_TEST_ORACLE, "global choice", "a first-batch-only selection may pass");
+
+        assertThat(configured.author(SPEC, Map.of("src/example/Scheduler.java", SOURCE), List.of(target), null, () -> false)).singleElement()
+                .satisfies(mutant -> assertThat(mutant.solutionPath()).isEqualTo("src/example/Scheduler.java"));
+        verify(reviewer, times(2)).call(anyString(), anyString(), any(), any(), anyInt());
+    }
+
+    @Test
+    void anUncertainCorrectionDoesNotInventAnExecutableDefect() {
+        ReviewerClient reviewer = mock(ReviewerClient.class);
+        when(reviewer.configured()).thenReturn(true);
+        when(reviewer.call(anyString(), anyString(), any(), any(), anyInt())).thenReturn("{\"mutants\":[]}");
+        var configured = new SemanticMutantAuthor(reviewer, JsonMapper.builder().build());
+        var target = new SpecFidelityReport.Finding(SpecFidelityReport.Kind.WEAK_TEST_ORACLE, "global choice", "a first-batch-only selection may pass");
+
+        assertThat(configured.author(SPEC, Map.of("src/example/Scheduler.java", SOURCE), List.of(target), null, () -> false)).isEmpty();
+        verify(reviewer, times(2)).call(anyString(), anyString(), any(), any(), anyInt());
+    }
 
     @ParameterizedTest
     @NullAndEmptySource

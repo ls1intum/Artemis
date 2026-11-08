@@ -2833,7 +2833,7 @@ class SpecFidelityCriticTest {
     }
 
     @Test
-    void authorContractWitnesses_dropsAProbeThatCallsASuiteLocalHelper() {
+    void authorContractWitnessesCannotReportSuccessWhenEveryProbeCallsASuiteLocalHelper() {
         String testSources = """
                 class ReservationPlannerTest {
                     private static Interval i(int start, int end) { return new Interval(start, end); }
@@ -2841,11 +2841,11 @@ class SpecFidelityCriticTest {
                 }
                 """;
 
-        assertThat(witnessesFrom("""
+        assertThatExceptionOfType(IllegalStateException.class).isThrownBy(() -> witnessesFrom("""
                 {"witnesses":[{"rule":"R1","testName":"testWitnessNegativeSalary",
                  "code":"@Test\\nvoid testWitnessNegativeSalary() { assertIntervalsEqual(i(1, 2), i(1, 2)); }",
                  "wrongBehavior":"accepts negative salary records"}]}
-                """, testSources)).isEmpty();
+                """, testSources)).withMessageContaining("no admissible executable witness");
     }
 
     private static Stream<String> invalidWitnesses() {
@@ -2871,7 +2871,7 @@ class SpecFidelityCriticTest {
     @ParameterizedTest
     @MethodSource("invalidWitnesses")
     void authorContractWitnessesRejectsMissingRationaleMismatchedNamesVacuousTestsAndInventedRules(String response) {
-        assertThat(witnessesFrom(response)).isEmpty();
+        assertThatExceptionOfType(IllegalStateException.class).isThrownBy(() -> witnessesFrom(response)).withMessageContaining("no admissible executable witness");
     }
 
     @Test
@@ -2914,8 +2914,8 @@ class SpecFidelityCriticTest {
     }
 
     @Test
-    void authorContractWitnesses_acceptsAnExplicitEmptyArray() {
-        assertThat(witnessesFrom("{\"witnesses\":[]}")).isEmpty();
+    void authorContractWitnessesReportsAnExplicitEmptyArrayAsUnavailable() {
+        assertThatExceptionOfType(IllegalStateException.class).isThrownBy(() -> witnessesFrom("{\"witnesses\":[]}")).withMessageContaining("no admissible executable witness");
     }
 
     @Test

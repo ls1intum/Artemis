@@ -343,7 +343,7 @@ class StageChecksTest {
         }
 
         @Test
-        void aPartialSolutionCannotAuthorizeOwnershipRedesign() {
+        void aPartialSolutionCannotAuthorizeOwnershipRedesignWhenTheStarterCompiles() {
             String spec = specWithDesign("| Player | context students create | student-creates |\n| Demo | supplied entry point | given |\n");
             approvedSpecs.approve("s", spec);
             sandbox.spec = spec;
@@ -354,6 +354,28 @@ class StageChecksTest {
 
             assertThat(check(GenerationStage.TESTS).contractRedesignRequired()).isFalse();
             assertThat(approvedSpecs.approved("s")).contains(spec);
+        }
+
+        @Test
+        void aFailingSolutionCannotHideTheOwnershipConflictThatPreventsStarterCompilation() {
+            String spec = specWithDesign("| Player | context students create | student-creates |\n| Demo | supplied entry point | given |\n");
+            approvedSpecs.approve("s", spec);
+            sandbox.spec = spec;
+            sandbox.templateRepositoryFiles = Map.of("src/Demo.java", "public class Demo { public Player player; }");
+            sandbox.solutionRepositoryFiles = Map.of("src/Player.java", "public class Player {}");
+            AgentVerifyReport failed = new AgentVerifyReport(5, false, List.of("testFoo"), 0, false, false, List.of(), List.of("testFoo"), List.of(), List.of(), false,
+                    List.of("The starter cannot compile its given type."));
+            when(verifier.selfCheckTestsStage(any(), anyString(), eq(exercise), any(), any(SeededStructuralTests.class))).thenReturn(failed);
+
+            StageCheckResult result = check(GenerationStage.TESTS);
+
+            assertThat(result.contractRedesignRequired()).isTrue();
+            assertThat(result.passed()).isFalse();
+            assertThat(result.report().solutionPassed()).isFalse();
+            assertThat(result.observation()).contains("Demo->Player", "Do not turn supplied support into extra learner TODOs");
+            assertThat(approvedSpecs.approved("s")).contains(spec);
+            assertThat(sandbox.spec).isEqualTo(spec);
+            assertThat(sandbox.templateRepositoryFiles).containsOnlyKeys("src/Demo.java");
         }
 
         @Test

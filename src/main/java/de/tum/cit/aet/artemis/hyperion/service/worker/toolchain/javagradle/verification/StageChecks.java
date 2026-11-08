@@ -739,7 +739,7 @@ public class StageChecks {
             return new StageCheckResult(false, "Could not run the differential self-check: " + e.getMessage(), null);
         }
         String observation = report.toTestsStageObservation();
-        if (report.solutionPassed()) {
+        if (report.solutionPassed() || !report.templateCompiled()) {
             Optional<String> conflict = givenOwnershipConflict(sandbox, sessionId);
             if (conflict.isPresent()) {
                 return StageCheckResult.ownershipRedesignRequired(conflict.get() + "\n" + observation, report);

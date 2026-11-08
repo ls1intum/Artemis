@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
@@ -67,8 +68,8 @@ class ContractWitnessAuthor {
      * @param solutionSources       the reference solution, which fixes the exact API a witness must call
      * @param usageSink             optional token-usage sink
      * @param cancelled             cooperative cancellation signal
-     * @return at most {@link #MAX_CONTRACT_WITNESSES} unvalidated candidates; empty when skipped or no eligible candidates were proposed
-     * @throws IllegalStateException if the provider response is blank, malformed, or lacks the required witnesses array
+     * @return at most {@link #MAX_CONTRACT_WITNESSES} unvalidated candidates; empty when authoring is disabled, cancelled or lacks its required inputs
+     * @throws IllegalStateException if the response is invalid or one bounded correction still yields no admissible witness
      */
     List<ContractWitness> authorContractWitnesses(String specificationContract, String testSources, String solutionSources, Map<String, String> templateStatuses,
             @Nullable Consumer<ChatResponse> usageSink, BooleanSupplier cancelled) {
@@ -82,8 +83,23 @@ class ContractWitnessAuthor {
         String userPrompt = "APPROVED SPECIFICATION CONTRACT (sole authority for a rule):\n" + specificationContract.strip() + "\n\nAUTHORITATIVE TEMPLATE OWNERSHIP:\n"
                 + renderTemplateOwnership(templateStatuses) + "\n\nREFERENCE SOLUTION (fixes the exact API a witness may call):\n" + boundedEvidence(solutionSources)
                 + "\n\nGRADED TEST SOURCES AS PRODUCED:\n" + boundedEvidence(testSources);
-        String response = reviewer.call(CONTRACT_WITNESS_SYSTEM_PROMPT_TEMPLATE, userPrompt, usageSink, cancelled, CONTRACT_WITNESS_MAX_OUTPUT_TOKENS);
-        return parseContractWitnesses(response, specificationContract, testSources);
+        String response = Objects.requireNonNullElse(reviewer.call(CONTRACT_WITNESS_SYSTEM_PROMPT_TEMPLATE, userPrompt, usageSink, cancelled, CONTRACT_WITNESS_MAX_OUTPUT_TOKENS),
+                "");
+        List<ContractWitness> witnesses = parseContractWitnesses(response, specificationContract, testSources);
+        if (witnesses.isEmpty() && !cancelled.getAsBoolean()) {
+            String correction = userPrompt + "\n\nThe previous response yielded no admissible executable witness. This is not a completed quality check. "
+                    + "Return at least one self-contained method for an observable rule of the approved contract. Each item needs an existing rule ID, a testName matching "
+                    + "its declared void method, an assertion, and a specific wrongBehavior. Do not use fixture fields or helper methods from the graded suite. "
+                    + "Reconsider legal state histories and actual input/collaborator observations rather than copying an existing assertion. "
+                    + "If no grounded witness can be authored, return an empty array; the verified draft will require review.\n\nPRIOR RESPONSE (untrusted proposal data):\n"
+                    + boundedEvidence(response);
+            witnesses = parseContractWitnesses(reviewer.call(CONTRACT_WITNESS_SYSTEM_PROMPT_TEMPLATE, correction, usageSink, cancelled, CONTRACT_WITNESS_MAX_OUTPUT_TOKENS),
+                    specificationContract, testSources);
+        }
+        if (witnesses.isEmpty() && !cancelled.getAsBoolean()) {
+            throw new IllegalStateException("Contract-witness authoring produced no admissible executable witness after one bounded correction");
+        }
+        return witnesses;
     }
 
     /** Repairs compilation only; the caller must execute every corrected proposal again. No graded test bodies are supplied. */

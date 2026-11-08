@@ -1,13 +1,17 @@
 package de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.critic;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
+import java.util.Map;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -18,6 +22,43 @@ import tools.jackson.databind.json.JsonMapper;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification.ContractWitnessOutcome;
 
 class ContractWitnessAuthorTest {
+
+    @ParameterizedTest
+    @ValueSource(strings = { "empty", "unknownRule", "suiteHelper" })
+    void anEmptyOrRejectedBatchGetsOneCorrectionBeforeItCanCountAsReviewed(String mode) {
+        var reviewer = mock(ReviewerClient.class);
+        when(reviewer.configured()).thenReturn(true);
+        String rejected = switch (mode) {
+            case "unknownRule" -> """
+                    {"witnesses":[{"rule":"R9","testName":"probe","wrongBehavior":"returns two","code":"@Test void probe() { assertEquals(1, 2); }"}]}
+                    """;
+            case "suiteHelper" -> """
+                    {"witnesses":[{"rule":"R1","testName":"probe","wrongBehavior":"returns two","code":"@Test void probe() { assertEquals(1, scheduler(2).choose()); }"}]}
+                    """;
+            default -> "{\"witnesses\":[]}";
+        };
+        String code = "@org.junit.jupiter.api.Test void probe() { var subject = new Subject(); org.junit.jupiter.api.Assertions.assertEquals(1, subject.value()); }";
+        when(reviewer.call(anyString(), anyString(), any(), any(), anyInt())).thenReturn(rejected, """
+                {"witnesses":[{"rule":"R1","testName":"probe","wrongBehavior":"returns two","code":"%s"}]}
+                """.formatted(code));
+        var author = new ContractWitnessAuthor(reviewer, JsonMapper.builder().build());
+
+        assertThat(author.authorContractWitnesses("R1. Return one.", SUITE, "class Subject { int value() { return 1; } }", Map.of(), null, () -> false))
+                .containsExactly(new ContractWitness("R1", "probe", code, "returns two"));
+        verify(reviewer, times(2)).call(anyString(), anyString(), any(), any(), anyInt());
+    }
+
+    @Test
+    void anEmptyCorrectionIsUnavailableRatherThanAnEmptySuccessfulReview() {
+        var reviewer = mock(ReviewerClient.class);
+        when(reviewer.configured()).thenReturn(true);
+        when(reviewer.call(anyString(), anyString(), any(), any(), anyInt())).thenReturn("{\"witnesses\":[]}");
+        var author = new ContractWitnessAuthor(reviewer, JsonMapper.builder().build());
+
+        assertThatThrownBy(() -> author.authorContractWitnesses("R1. Return one.", SUITE, "class Subject {}", Map.of(), null, () -> false))
+                .isInstanceOf(IllegalStateException.class).hasMessageContaining("no admissible executable witness after one bounded correction");
+        verify(reviewer, times(2)).call(anyString(), anyString(), any(), any(), anyInt());
+    }
 
     private static final String SUITE = """
             package example;

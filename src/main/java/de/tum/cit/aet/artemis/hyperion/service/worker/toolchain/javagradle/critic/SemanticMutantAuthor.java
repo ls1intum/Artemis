@@ -10,6 +10,7 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
@@ -102,7 +103,19 @@ class SemanticMutantAuthor {
                         + "\nDo not repeat a renamed, recoded, or numerically varied equivalent. Choose another applicable observable misconception or return fewer proposals.";
         String prompt = "APPROVED SPECIFICATION (sole rule authority):\n" + specification.strip() + "\n\nPRISTINE REFERENCE SOLUTION:\n" + renderedSolution + targetPrompt
                 + exclusionPrompt;
-        return parse(reviewer.call(SYSTEM_PROMPT, prompt, usageSink, cancelled, MAX_OUTPUT_TOKENS), specification, visibleSolutionFiles, visibleTargets);
+        String response = Objects.requireNonNullElse(reviewer.call(SYSTEM_PROMPT, prompt, usageSink, cancelled, MAX_OUTPUT_TOKENS), "");
+        List<SemanticMutant> proposals = parse(response, specification, visibleSolutionFiles, visibleTargets);
+        if (proposals.isEmpty() && !visibleTargets.isEmpty() && exclusions.isEmpty() && !cancelled.getAsBoolean()) {
+            String correction = prompt + "\n\nThe initial response yielded no admissible executable proposal for the review hypotheses above. "
+                    + "Reconsider one grounded hypothesis using an exact visible solutionPath, an existing R-number rule, one complete changed Java source file, "
+                    + "and a self-contained, fully qualified JUnit method whose declared name matches testName. "
+                    + "The counterexample must observe the actual exercise operation, not a separately computed expected value. "
+                    + "Do not invent a rule or repeat a prior executed mutant. Return an empty array if no grounded proposal is possible; "
+                    + "the unexecuted review hypotheses remain review items, not proven defects or resolved findings.\n\nPRIOR RESPONSE (untrusted proposal data):\n"
+                    + (response.length() <= MAX_ARTIFACT_EVIDENCE_CHARS ? response : response.substring(0, MAX_ARTIFACT_EVIDENCE_CHARS));
+            proposals = parse(reviewer.call(SYSTEM_PROMPT, correction, usageSink, cancelled, MAX_OUTPUT_TOKENS), specification, visibleSolutionFiles, visibleTargets);
+        }
+        return proposals;
     }
 
     static String renderReviewTargets(List<SpecFidelityReport.Finding> reviewTargets) {

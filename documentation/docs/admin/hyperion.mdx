@@ -319,7 +319,8 @@ The same bounded specification review handles a supplied type that depends on a
 learner-created type absent from the starter. The controller does not silently change
 that supplied type into extra learner work. It reopens the complete specification,
 then checks the revised ownership, responsibilities and grading before statement
-authoring. An unresolved ownership conflict cannot become a verified checkpoint.
+authoring. An unrelated failing reference test does not postpone this contract review.
+An unresolved ownership conflict cannot become a verified checkpoint.
 
 The configured `artemis.hyperion.agent.max-turns` is a **job-wide authoring limit**,
 shared by concept selection, stages, continuations and repair attempts. There is no
@@ -337,6 +338,12 @@ it does not edit the exercise or rewrite previously executed witnesses. Correcte
 compile and execute through the same verifier. If no executable replacement is obtained,
 the saved draft retains an explicit incomplete-evidence finding and requires review.
 Provider usage and the existing job deadline still apply to this correction.
+An empty or wholly rejected contract-witness response also gets one bounded proposal
+correction. If it still contains no admissible witness, executable review is unavailable;
+the verified draft remains available with review findings. A new text-review hypothesis
+with no accepted semantic-mutant proposal can receive one proposal correction before
+any mutation history exists. An unexecuted hypothesis remains a review item, never an
+execution-proven defect or a resolved finding.
 
 Optional assessment probes run on the complete candidate after statement authoring,
 where their evidence is bound to the verified draft. The TESTS-stage gate still
