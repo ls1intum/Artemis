@@ -146,6 +146,9 @@ overrides:
   '@babel/plugin-transform-modules-systemjs': '7.29.8'
   '@primeuix/styled': '0.7.4'
   '@primeuix/utils': '0.7.2'
+  # lighthouse (a dev tool) asks for @sentry/node ^11.8.0. Its 11.10.0 release pulls @sentry/bundler-plugins with glob ^13.0.6, which is affected by
+  # GHSA-3g3m-2fjr-6pw4 (fixed in glob 14.0.2). 11.11.0 is the first release whose bundler plugin uses glob ^14.0.3.
+  '@sentry/node': '11.11.0'
   '@sinonjs/fake-timers': '15.4.0'
   ajv: '8.20.0'
   brace-expansion: '5.0.12'
@@ -185,7 +188,9 @@ overrides:
   # @angular/build pulls less in transitively and accepts ^4.2.0, so pinning the latest 4.x
   # drops the package from the tree entirely instead.
   less: '4.9.1'
-  minimatch: '10.2.6'
+  # Must stay >= 11.0.1, which fixed GHSA-g3hv-75wg-m249 (denial of service through globparts amplification).
+  # The 10.x line never got the fix, and every consumer (eslint, typescript-estree) asks for a range that does not reach 11.
+  minimatch: '11.0.5'
   # Reached dev-side via postcss, whose range allows the patched release pinned here
   # (GHSA: custom generators can loop indefinitely when size is zero).
   nanoid: '3.3.20'
@@ -233,6 +238,9 @@ patchedDependencies:
   # Remove after an upstream fix: https://github.com/micromatch/braces/issues/70
   braces@3.0.3: config/pnpm/patches/braces@3.0.3.patch
   'eslint@10.14.0': 'config/pnpm/patches/eslint+10.14.0.patch'
+  # folder-hash calls minimatch.makeRe, which minimatch 11 removed. minimatch is pinned to 11 above (GHSA-g3hv-75wg-m249),
+  # and folder-hash is only used by supporting_scripts/client/prebuild.mjs. Remove once folder-hash supports minimatch 11.
+  folder-hash@4.1.4: config/pnpm/patches/folder-hash@4.1.4.patch
   y-monaco@0.1.6: config/pnpm/patches/y-monaco@0.1.6.patch
 
 # Allowlist of dependencies permitted to run install-time build / lifecycle scripts.
