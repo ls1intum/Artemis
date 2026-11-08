@@ -510,6 +510,8 @@
                                                                     >
                                                                         {{ team.shortName }}
                                                                     </a>
+                                                                } @else if (!exercise().teamMode || isTestRun()) {
+                                                                    {{ submission.id }}
                                                                 }
                                                             </td>
                                                             <td>{{ submission.submissionDate | artemisDate }}</td>

@@ -491,8 +491,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
     private Optional<Result> reuseTeamAssessmentResult(Submission submission, int correctionRound) {
         var assignedResult = submission.getResultForCorrectionRound(correctionRound);
         if (submission.getParticipation().getExercise().isTeamMode() && submission.getParticipation() instanceof StudentParticipation participation
-                && participation.getTeam().isPresent() && assignedResult != null
-                && (assignedResult.getAssessor() != null || assignedResult.isManual() && assignedResult.getCompletionDate() == null)) {
+                && participation.getTeam().isPresent() && assignedResult != null && (assignedResult.getAssessor() != null || assignedResult.isManual())) {
             if (assignedResult.getCompletionDate() == null) {
                 assignedResult.setAssessor(userRepository.getUser());
                 resultRepository.save(assignedResult);
@@ -545,6 +544,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
         if (assignedResult.isPresent()) {
             return assignedResult.get();
         }
+        checkSubmissionLockLimit(existingSubmission.getParticipation().getExercise().getCourseViaExerciseGroupOrCourseMemberElseThrow().getId());
         Result newResult = saveNewEmptyResult(existingSubmission);
         newResult.setAssessor(userRepository.getUser());
         newResult.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);

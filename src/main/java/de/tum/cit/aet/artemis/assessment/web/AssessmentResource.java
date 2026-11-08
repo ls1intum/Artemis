@@ -278,7 +278,7 @@ public abstract class AssessmentResource {
             return ResponseEntity.ok().build();
         }
         boolean isTeamDraft = exercise.isTeamMode() && studentParticipation.getTeam().isPresent() && resultForAuthorization.getCompletionDate() == null;
-        if (isTeamDraft) {
+        if (exercise.isTeamMode() && studentParticipation.getTeam().isPresent()) {
             authCheckService.checkTeamAssessmentAccessElseThrow(submission);
         }
         boolean isAtLeastInstructor = authCheckService.isAtLeastInstructorForExercise(exercise, user);
