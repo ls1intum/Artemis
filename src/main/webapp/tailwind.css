@@ -134,6 +134,7 @@
 @source './app/core/navbar/global-search/components/modal/global-search-modal.component.html';
 @source './app/course/overview/setup-passkey-modal';
 @source './app/course/overview/courses';
+@source './app/course/overview/course-registration';
 @source './app/course/sidebar';
 @source './app/notification';
 @source './app/communication/faq';

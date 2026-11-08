@@ -10,6 +10,8 @@ import org.springframework.stereotype.Service;
 import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.core.service.ArchivalReportEntry;
+import de.tum.cit.aet.artemis.core.service.FileService;
+import de.tum.cit.aet.artemis.core.service.ZipFileService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.dto.SubmissionExportOptionsDTO;
 import de.tum.cit.aet.artemis.exercise.repository.PlagiarismDetectionConfigRepository;
@@ -28,8 +30,9 @@ import de.tum.cit.aet.artemis.modeling.dto.ModelingExerciseResponseDTO;
 public class ModelingExerciseWithSubmissionsExportService extends ExerciseWithSubmissionsExportService {
 
     public ModelingExerciseWithSubmissionsExportService(ModelingSubmissionExportService modelingSubmissionExportService, JsonMapper objectMapper,
-            TeamAssignmentConfigRepository teamAssignmentConfigRepository, PlagiarismDetectionConfigRepository plagiarismDetectionConfigRepository) {
-        super(objectMapper, modelingSubmissionExportService, teamAssignmentConfigRepository, plagiarismDetectionConfigRepository);
+            TeamAssignmentConfigRepository teamAssignmentConfigRepository, PlagiarismDetectionConfigRepository plagiarismDetectionConfigRepository, FileService fileService,
+            ZipFileService zipFileService) {
+        super(objectMapper, modelingSubmissionExportService, teamAssignmentConfigRepository, plagiarismDetectionConfigRepository, fileService, zipFileService);
     }
 
     /**

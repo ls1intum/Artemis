@@ -119,7 +119,7 @@ public class CustomAuditEventRepository implements AuditEventRepository {
             return;
         }
 
-        if (authentication instanceof WebAuthnAuthentication) {
+        if (AuditEventConstants.AUTHENTICATION_SUCCESS.equals(eventType) && authentication instanceof WebAuthnAuthentication) {
             eventType = AuditEventConstants.AUTHENTICATION_PASSKEY_SUCCESS;
         }
 

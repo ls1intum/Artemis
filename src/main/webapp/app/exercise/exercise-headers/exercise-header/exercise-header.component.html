@@ -42,6 +42,9 @@
         the pills beside it on the left. Their width is measured as space the title cannot have.
     -->
     <div #controls data-testid="exercise-header-controls" class="flex items-center gap-2 ms-auto shrink-0">
+        @if (exercise().type === ExerciseType.PROGRAMMING && activeParticipation()?.id) {
+            <jhi-programming-build-notifications [exercise]="exercise()" [participation]="activeParticipation()" />
+        }
         <jhi-participation-mode-toggle
             [mode]="participationMode()"
             (modeChange)="participationMode.set($event)"

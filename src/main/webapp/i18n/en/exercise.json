@@ -84,7 +84,16 @@
             },
             "importFromFile": {
                 "tabTitle": "From file",
-                "notSupportedExerciseType": "The exercise type {{ exerciseType }} is not supported for importing from file."
+                "description": "Select a zip file that you downloaded with Export in the exercise overview of a course. Artemis then opens the exercise editor filled with the settings from the file, so you can review them before you save.",
+                "uploadForImport": "Import exercise from file",
+                "fileCountError": "Select exactly one file.",
+                "fileTooBigError": "The file {{ fileName }} is too large. The maximum file size is 20 MB.",
+                "fileTypeNotSupportedError": "The file type is not supported. Select a file with the extension .zip.",
+                "noExerciseDetailsJson": "The zip file does not contain exactly one JSON file with the exercise details.",
+                "exerciseTypeDoesntMatch": "The file does not contain an exercise of the selected type.",
+                "missingImage": "The zip file does not contain the image {{ fileName }}.",
+                "imageUploadFailed": "The image {{ fileName }} could not be uploaded.",
+                "importFailed": "The exercise import could not be prepared. Please try again."
             },
             "exercise": "Exercise",
             "results": "Results",
@@ -183,7 +192,6 @@
             "no": "No",
             "createAction": "Create",
             "importAction": "Import",
-            "exportAction": "Export",
             "difficulty": "Difficulty",
             "noLevel": "No Level",
             "easy": "Easy",
