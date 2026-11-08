@@ -11,6 +11,7 @@ import { LectureComponent, LectureDateFilter } from 'app/lecture/manage/lecture/
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { LectureService } from 'app/lecture/manage/services/lecture.service';
+import { LectureApi } from 'app/openapi/api/lecture-api';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
@@ -34,6 +35,7 @@ describe('Lecture', () => {
     let lectureComponentFixture: ComponentFixture<LectureComponent>;
     let lectureComponent: LectureComponent;
     let lectureService: LectureService;
+    let lectureApi: LectureApi;
     let profileService: ProfileService;
 
     let pastLecture: Lecture;
@@ -131,33 +133,16 @@ describe('Lecture', () => {
                 },
                 MockProvider(LectureService, {
                     findAllByCourseId: () => {
-                        return of(
-                            new HttpResponse({
-                                body: [pastLecture, pastLecture2, currentLecture, currentLecture2, currentLecture3, futureLecture, futureLecture2, unspecifiedLecture],
-                                status: 200,
-                            }),
-                        );
+                        return of([pastLecture, pastLecture2, currentLecture, currentLecture2, currentLecture3, futureLecture, futureLecture2, unspecifiedLecture]);
                     },
                     import: (_courseId, lectureId) => {
-                        return of(
-                            new HttpResponse({
-                                body: { id: lectureId, course: { id: _courseId } } as Lecture,
-                                status: 200,
-                            }),
-                        );
-                    },
-                    delete: () => {
-                        return of(new HttpResponse<void>({ status: 200 }));
+                        return of({ id: lectureId, course: { id: _courseId } } as Lecture);
                     },
                     create: () => {
-                        return of(
-                            new HttpResponse({
-                                body: { id: 999, course: { id: 1 } } as Lecture,
-                                status: 201,
-                            }),
-                        );
+                        return of({ id: 999, course: { id: 1 } } as Lecture);
                     },
                 }),
+                MockProvider(LectureApi, { deleteLecture: () => of(undefined) }),
                 MockProvider(IrisSettingsService),
                 MockProvider(AttachmentVideoUnitService),
                 MockProvider(AlertService),
@@ -169,6 +154,7 @@ describe('Lecture', () => {
         lectureComponentFixture = TestBed.createComponent(LectureComponent);
         lectureComponent = lectureComponentFixture.componentInstance;
         lectureService = TestBed.inject(LectureService);
+        lectureApi = TestBed.inject(LectureApi);
         profileService = TestBed.inject(ProfileService);
         vi.spyOn(profileService, 'getProfileInfo').mockReturnValue(profileInfo);
     });
@@ -211,7 +197,7 @@ describe('Lecture', () => {
     });
 
     it('should delete lecture', async () => {
-        const deleteSpy = vi.spyOn(lectureService, 'delete');
+        const deleteSpy = vi.spyOn(lectureApi, 'deleteLecture');
 
         lectureComponentFixture.detectChanges();
         await lectureComponentFixture.whenStable();
@@ -319,7 +305,7 @@ describe('Lecture', () => {
 
     it('should handle error when deleting lecture fails', async () => {
         const errorMessage = 'Delete failed';
-        vi.spyOn(lectureService, 'delete').mockReturnValue(throwError(() => new HttpErrorResponse({ error: errorMessage, status: 400 })));
+        vi.spyOn(lectureApi, 'deleteLecture').mockReturnValue(throwError(() => new HttpErrorResponse({ error: errorMessage, status: 400 })));
 
         lectureComponentFixture.detectChanges();
         await lectureComponentFixture.whenStable();
@@ -434,7 +420,7 @@ describe('Lecture', () => {
             createdLecture.id = 999;
             createdLecture.title = 'New Lecture';
             createdLecture.course = { id: 1 } as Course;
-            vi.spyOn(lectureService, 'create').mockReturnValue(of(new HttpResponse({ body: createdLecture, status: 201 })));
+            vi.spyOn(lectureService, 'create').mockReturnValue(of(createdLecture));
             vi.spyOn(attachmentVideoUnitService, 'createAttachmentVideoUnitFromFile').mockReturnValue(of(unitReleasedAt('2026-10-01T08:00:00.000Z')));
             const navigateSpy = vi.spyOn(router, 'navigate');
             const successSpy = vi.spyOn(alertService, 'success');

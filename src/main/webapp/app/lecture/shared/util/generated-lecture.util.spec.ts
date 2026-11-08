@@ -15,6 +15,7 @@ import {
     toAttachmentRequest,
     toLecture,
     toLectureForOverview,
+    toLectureSeriesCreateRequest,
     toLectureUnit,
     toLectureUnitRequest,
     toSimpleLectureRequest,
@@ -138,6 +139,14 @@ describe('generated lecture conversion', () => {
             isTutorialLecture: false,
             channelName: 'lecture-graphs',
             course: { id: 7 },
+        });
+    });
+
+    it('sends a series draft with its title and ISO dates, keeping an absent date absent', () => {
+        expect(toLectureSeriesCreateRequest({ title: 'Lecture 1', startDate: dayjs(START), endDate: undefined })).toEqual({
+            title: 'Lecture 1',
+            startDate: dayjs(START).toJSON(),
+            endDate: undefined,
         });
     });
 

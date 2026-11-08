@@ -1,27 +1,21 @@
-import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Service, inject } from '@angular/core';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { PagingService } from 'app/exercise/services/paging.service';
 import { SearchResult, SearchTermPageableSearch } from 'app/foundation/pagination/pageable-table';
-import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
-
-type EntityResponseType = SearchResult<Lecture>;
+import { Observable, map } from 'rxjs';
+import { LectureApi } from 'app/openapi/api/lecture-api';
+import { toLecture } from 'app/lecture/shared/util/generated-lecture.util';
 
 @Service()
 export class LecturePagingService extends PagingService<Lecture> {
-    private http = inject(HttpClient);
+    private readonly lectureApi = inject(LectureApi);
 
-    private static readonly RESOURCE_URL = 'api/lecture/lectures';
-
-    constructor() {
-        super();
-    }
-
-    override search(pageable: SearchTermPageableSearch): Observable<EntityResponseType> {
-        const params = this.createHttpParams(pageable);
-        return this.http
-            .get<EntityResponseType>(`${LecturePagingService.RESOURCE_URL}`, { params, observe: 'response' })
-            .pipe(map((resp: HttpResponse<EntityResponseType>) => resp && resp.body!));
+    override search(pageable: SearchTermPageableSearch): Observable<SearchResult<Lecture>> {
+        return this.lectureApi.getAllLecturesOnPage(pageable.page, pageable.pageSize, pageable.sortingOrder, pageable.sortedColumn, pageable.searchTerm).pipe(
+            map((page) => ({
+                resultsOnPage: (page.resultsOnPage ?? []).map(toLecture),
+                numberOfPages: page.numberOfPages ?? 0,
+            })),
+        );
     }
 }

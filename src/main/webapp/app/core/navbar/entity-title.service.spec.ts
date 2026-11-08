@@ -51,7 +51,6 @@ describe('EntityTitleService', () => {
 
     it.each([
         { type: EntityType.EXERCISE, ids: [1], url: 'exercise/exercises/1' },
-        { type: EntityType.LECTURE, ids: [1], url: 'lecture/lectures/1' },
         { type: EntityType.COURSE, ids: [1], url: 'course/courses/1' },
         { type: EntityType.DIAGRAM, ids: [1], url: 'modeling/apollon-diagrams/1' },
         { type: EntityType.EXAM, ids: [1], url: 'exam/exams/1' },
@@ -76,6 +75,25 @@ describe('EntityTitleService', () => {
         expect(result).toBe('Test Entity');
 
         subscription.unsubscribe();
+    });
+
+    it('fetches a lecture title as plain text through the generated API', () => {
+        vi.useFakeTimers();
+        try {
+            const titles: string[] = [];
+            service.getTitle(EntityType.LECTURE, [17]).subscribe((title) => titles.push(title));
+            vi.advanceTimersByTime(3000);
+
+            const http = TestBed.inject(HttpTestingController);
+            const request = http.expectOne('/api/lecture/lectures/17/title');
+            expect(request.request.method).toBe('GET');
+            expect(request.request.responseType).toBe('text');
+            request.flush('Lecture title');
+            expect(titles).toEqual(['Lecture title']);
+            http.verify();
+        } finally {
+            vi.useRealTimers();
+        }
     });
 
     it('fetches a tutorial group title as plain text through the generated API', () => {

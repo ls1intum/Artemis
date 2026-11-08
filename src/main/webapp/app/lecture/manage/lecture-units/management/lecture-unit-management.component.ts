@@ -180,7 +180,6 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
         this.lectureService
             .findWithDetails(this.resolvedLectureId!)
             .pipe(
-                map((response: HttpResponse<Lecture>) => response.body!),
                 finalize(() => {
                     if (sequence === this.loadSequence) {
                         this.isLoading.set(false);

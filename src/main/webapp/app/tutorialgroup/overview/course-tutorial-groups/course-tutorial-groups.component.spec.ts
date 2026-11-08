@@ -81,7 +81,7 @@ describe('CourseTutorialGroupsComponent', () => {
         courseOverviewService = TestBed.inject(CourseOverviewService);
         courseStorageService = TestBed.inject(CourseStorageService);
         lectureService = TestBed.inject(LectureService);
-        vi.spyOn(lectureService, 'findAllTutorialLecturesByCourseId').mockReturnValue(of(new HttpResponse({ body: [] })));
+        vi.spyOn(lectureService, 'findAllTutorialLecturesByCourseId').mockReturnValue(of([]));
         sessionStorageService = TestBed.inject(SessionStorageService);
         router = TestBed.inject(Router);
     });
@@ -155,7 +155,7 @@ describe('CourseTutorialGroupsComponent', () => {
         vi.spyOn(courseOverviewService, 'mapLectureToSidebarCardElement').mockImplementation(getSidebarCardElementForTutorialLecture);
 
         const tutorialGroupFetchSpy = vi.spyOn(tutorialGroupApiServiceMock, 'getTutorialGroupsForCourse').mockReturnValue(of([]));
-        const tutorialLectureFetchSpy = vi.spyOn(lectureService, 'findAllTutorialLecturesByCourseId').mockReturnValue(of(new HttpResponse({ body: [] })));
+        const tutorialLectureFetchSpy = vi.spyOn(lectureService, 'findAllTutorialLecturesByCourseId').mockReturnValue(of([]));
 
         fixture.detectChanges();
         await fixture.whenStable();
@@ -198,9 +198,7 @@ describe('CourseTutorialGroupsComponent', () => {
 
         const tutorialGroupFetchSpy = vi.spyOn(tutorialGroupApiServiceMock, 'getTutorialGroupsForCourse').mockReturnValue(of([tutorialGroup1, tutorialGroup2]));
 
-        const tutorialLectureFetchSpy = vi
-            .spyOn(lectureService, 'findAllTutorialLecturesByCourseId')
-            .mockReturnValue(of(new HttpResponse({ body: [tutorialLecture1, tutorialLecture2] })));
+        const tutorialLectureFetchSpy = vi.spyOn(lectureService, 'findAllTutorialLecturesByCourseId').mockReturnValue(of([tutorialLecture1, tutorialLecture2]));
 
         fixture.detectChanges();
         await fixture.whenStable();
@@ -264,7 +262,7 @@ describe('CourseTutorialGroupsComponent', () => {
         vi.spyOn(courseStorageService, 'getCourse').mockReturnValue(cachedCourse);
         const updateCourseSpy = vi.spyOn(courseStorageService, 'updateCourse').mockImplementation(() => {});
         vi.spyOn(tutorialGroupApiServiceMock, 'getTutorialGroupsForCourse').mockReturnValue(of(new HttpResponse({ body: [tutorialGroup1] })));
-        vi.spyOn(lectureService, 'findAllTutorialLecturesByCourseId').mockReturnValue(of(new HttpResponse({ body: [tutorialLecture1] })));
+        vi.spyOn(lectureService, 'findAllTutorialLecturesByCourseId').mockReturnValue(of([tutorialLecture1]));
         vi.spyOn(courseOverviewService, 'mapTutorialGroupsToSidebarCardElements').mockReturnValue([]);
         vi.spyOn(courseOverviewService, 'mapLecturesToSidebarCardElements').mockReturnValue([]);
 
@@ -288,7 +286,7 @@ describe('CourseTutorialGroupsComponent', () => {
         // The group and the lecture are gone on the server; the refresh legitimately returns nothing. Keeping the old
         // cards would leave the student clicking entries that no longer exist.
         vi.spyOn(tutorialGroupApiServiceMock, 'getTutorialGroupsForCourse').mockReturnValue(of(new HttpResponse({ body: [] })));
-        vi.spyOn(lectureService, 'findAllTutorialLecturesByCourseId').mockReturnValue(of(new HttpResponse({ body: [] })));
+        vi.spyOn(lectureService, 'findAllTutorialLecturesByCourseId').mockReturnValue(of([]));
         vi.mocked(courseOverviewService.mapTutorialGroupsToSidebarCardElements).mockReturnValue([]);
         vi.mocked(courseOverviewService.mapLecturesToSidebarCardElements).mockReturnValue([]);
 
@@ -308,7 +306,7 @@ describe('CourseTutorialGroupsComponent', () => {
         vi.spyOn(courseOverviewService, 'mapTutorialGroupsToSidebarCardElements').mockReturnValue([]);
         vi.spyOn(courseOverviewService, 'mapLecturesToSidebarCardElements').mockReturnValue([]);
         // The tutorial lecture was deleted on the server, so the refresh legitimately returns nothing
-        vi.spyOn(lectureService, 'findAllTutorialLecturesByCourseId').mockReturnValue(of(new HttpResponse({ body: [] })));
+        vi.spyOn(lectureService, 'findAllTutorialLecturesByCourseId').mockReturnValue(of([]));
 
         fixture.detectChanges();
         await fixture.whenStable();

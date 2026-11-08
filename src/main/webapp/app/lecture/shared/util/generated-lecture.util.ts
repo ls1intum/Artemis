@@ -1,4 +1,4 @@
-import dayjs from 'dayjs/esm';
+import dayjs, { Dayjs } from 'dayjs/esm';
 import { addPublicFilePrefix } from 'app/app.constants';
 import { convertDateFromClient, convertDateStringFromServer } from 'app/foundation/util/date.utils';
 import { hydrate } from 'app/foundation/util/deep-clone.util';
@@ -16,6 +16,7 @@ import { ExerciseUnit } from 'app/lecture/shared/entities/lecture-unit/exerciseU
 import { OnlineUnit } from 'app/lecture/shared/entities/lecture-unit/onlineUnit.model';
 import { TextUnit } from 'app/lecture/shared/entities/lecture-unit/textUnit.model';
 import type { SimpleLecture } from 'app/openapi/model/simple-lecture';
+import type { LectureSeriesCreateLecture } from 'app/openapi/model/lecture-series-create-lecture';
 import type { LectureDetails } from 'app/openapi/model/lecture-details';
 import type { GetLectures } from 'app/openapi/model/get-lectures';
 import type { LectureForOverview as GeneratedLectureForOverview } from 'app/openapi/model/lecture-for-overview';
@@ -180,6 +181,16 @@ export function toSimpleLectureRequest(lecture: Lecture): SimpleLecture {
         channelName: lecture.channelName,
         course: lecture.course?.id ? { id: lecture.course.id } : undefined,
     };
+}
+
+/**
+ * Builds one element of the body of a lecture series create request.
+ *
+ * @param draft the title and period of a lecture to create
+ * @returns the request element with ISO dates
+ */
+export function toLectureSeriesCreateRequest(draft: { title: string; startDate?: Dayjs; endDate?: Dayjs }): LectureSeriesCreateLecture {
+    return { title: draft.title, startDate: convertDateFromClient(draft.startDate), endDate: convertDateFromClient(draft.endDate) };
 }
 
 /**

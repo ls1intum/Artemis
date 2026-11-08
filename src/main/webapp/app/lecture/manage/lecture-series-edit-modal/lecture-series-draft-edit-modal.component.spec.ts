@@ -6,7 +6,6 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import * as globalUtils from 'app/foundation/util/global.utils';
 import { LectureSeriesDraftEditModalComponent } from './lecture-series-draft-edit-modal.component';
 import { LectureDraft, LectureDraftState } from 'app/lecture/manage/lecture-series-create/lecture-series-create.component';
-import { LectureSeriesCreateLectureDTO } from 'app/lecture/shared/entities/lecture.model';
 import dayjs from 'dayjs/esm';
 
 describe('LectureSeriesEditModal', () => {
@@ -36,20 +35,20 @@ describe('LectureSeriesEditModal', () => {
     });
 
     it('should open and populate inputs correctly', async () => {
-        const draft: LectureDraft = { id: testDraftId, state: LectureDraftState.REGULAR, dto: new LectureSeriesCreateLectureDTO(testTitle, testStartDate, testEndDate) };
+        const draft: LectureDraft = { id: testDraftId, state: LectureDraftState.REGULAR, title: testTitle, startDate: testStartDate, endDate: testEndDate };
 
         component.open(draft);
         fixture.changeDetectorRef.detectChanges();
         await fixture.whenStable();
 
         expect(component.show()).toBe(true);
-        expect(component.title()).toBe(draft.dto.title);
-        expect(component.startDate()).toEqual(draft.dto.startDate);
-        expect(component.endDate()).toEqual(draft.dto.endDate);
+        expect(component.title()).toBe(draft.title);
+        expect(component.startDate()).toEqual(draft.startDate);
+        expect(component.endDate()).toEqual(draft.endDate);
     });
 
     it('should close and clear inputs on cancel', async () => {
-        component.lectureDraft = { id: testDraftId, state: LectureDraftState.REGULAR, dto: new LectureSeriesCreateLectureDTO('Lecture 1', testStartDate, testEndDate) };
+        component.lectureDraft = { id: testDraftId, state: LectureDraftState.REGULAR, title: 'Lecture 1', startDate: testStartDate, endDate: testEndDate };
         component.title.set(testTitle);
         component.startDate.set(testStartDate);
         component.endDate.set(testEndDate);
@@ -69,7 +68,7 @@ describe('LectureSeriesEditModal', () => {
     });
 
     it('should close, update draft and clear inputs on save', async () => {
-        const draft = { id: testDraftId, state: LectureDraftState.REGULAR, dto: new LectureSeriesCreateLectureDTO('Lecture 1', testStartDate, testEndDate) };
+        const draft = { id: testDraftId, state: LectureDraftState.REGULAR, title: 'Lecture 1', startDate: testStartDate, endDate: testEndDate };
         const newTitle = 'Requirements Engineering';
         const newStartDate = testStartDate.add(1, 'hour');
         const newEndDate = testEndDate.add(1, 'hour');
@@ -90,12 +89,12 @@ describe('LectureSeriesEditModal', () => {
         expect(component.title()).toBe('');
         expect(component.startDate()).toBeUndefined();
         expect(component.endDate()).toBeUndefined();
-        expect(draft.dto.title).toBe(newTitle);
-        expect(draft.dto.startDate).toEqual(newStartDate);
-        expect(draft.dto.endDate).toEqual(newEndDate);
+        expect(draft.title).toBe(newTitle);
+        expect(draft.startDate).toEqual(newStartDate);
+        expect(draft.endDate).toEqual(newEndDate);
     });
     describe('with the dialog open', () => {
-        const draft: LectureDraft = { id: testDraftId, state: LectureDraftState.REGULAR, dto: new LectureSeriesCreateLectureDTO(testTitle, testStartDate, testEndDate) };
+        const draft: LectureDraft = { id: testDraftId, state: LectureDraftState.REGULAR, title: testTitle, startDate: testStartDate, endDate: testEndDate };
 
         function field(id: string): HTMLInputElement | null {
             return document.querySelector(`#${id}`);

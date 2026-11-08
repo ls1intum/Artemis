@@ -142,9 +142,8 @@ describe('LectureUnitManagementComponent', () => {
         lecture.id = 1;
         lecture.course = course;
         lecture.lectureUnits = [textUnit, exerciseUnit, attachmentVideoUnit];
-        const returnValue = of(new HttpResponse({ body: lecture, status: 200 }));
-        findLectureWithDetailsSpy.mockReturnValue(returnValue);
-        updateOrderSpy.mockReturnValue(returnValue);
+        findLectureWithDetailsSpy.mockReturnValue(of(lecture));
+        updateOrderSpy.mockReturnValue(of(new HttpResponse({ body: lecture, status: 200 })));
         deleteLectureUnitSpy.mockReturnValue(of(new HttpResponse({ body: attachmentVideoUnit, status: 200 })));
         // Mock the bulk status endpoint
         const combinedStatuses: LectureUnitCombinedStatus[] = [
@@ -201,7 +200,7 @@ describe('LectureUnitManagementComponent', () => {
 
     it('should handle lecture with no lectureUnits and set isStatusLoading to false', () => {
         const lectureWithNoUnits = { ...lecture, lectureUnits: undefined };
-        findLectureWithDetailsSpy.mockReturnValue(of(new HttpResponse({ body: lectureWithNoUnits, status: 200 })));
+        findLectureWithDetailsSpy.mockReturnValue(of(lectureWithNoUnits));
         lectureUnitManagementComponent.isStatusLoading.set(true);
 
         lectureUnitManagementComponent.loadData();
@@ -951,7 +950,7 @@ describe('LectureUnitManagementComponent', () => {
         });
 
         it('should keep the list and the form of the edited unit while the lecture loads again', () => {
-            const reload = new Subject<HttpResponse<Lecture>>();
+            const reload = new Subject<Lecture>();
             findLectureWithDetailsSpy.mockReturnValue(reload);
             const editor = queryAll('lecture-unit-editor')[0].nativeElement;
 
@@ -963,7 +962,7 @@ describe('LectureUnitManagementComponent', () => {
             reloadedLecture.id = 1;
             reloadedLecture.course = course;
             reloadedLecture.lectureUnits = [exerciseUnit, textUnit, attachmentVideoUnit].map((unit) => deepClone(unit));
-            reload.next(new HttpResponse({ body: reloadedLecture, status: 200 }));
+            reload.next(reloadedLecture);
             reload.complete();
             hostFixture.detectChanges();
 

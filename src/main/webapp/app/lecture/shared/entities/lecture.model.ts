@@ -20,25 +20,3 @@ export class Lecture implements BaseEntity {
     isAtLeastEditor?: boolean;
     isAtLeastInstructor?: boolean;
 }
-
-export class LectureSeriesCreateLectureDTO {
-    constructor(
-        public title: string,
-        public startDate?: Dayjs,
-        public endDate?: Dayjs,
-    ) {}
-}
-
-/**
- * DTO for creating and updating lectures. Matches the server-side SimpleLectureDTO.
- */
-export interface SimpleLectureDTO {
-    id?: number;
-    title?: string;
-    description?: string;
-    startDate?: string;
-    endDate?: string;
-    isTutorialLecture?: boolean;
-    channelName?: string;
-    course?: { id?: number };
-}
