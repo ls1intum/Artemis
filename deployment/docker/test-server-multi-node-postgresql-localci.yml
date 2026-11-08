@@ -45,6 +45,11 @@ services:
             SPRING_DATA_REDIS_PASSWORD: ${REDIS_PASSWORD:-artemis}
             # The node identity the Redis provider reports, so it must be unique per node and start with `artemis`.
             SPRING_DATA_REDIS_CLIENTNAME: artemis-node-1
+            # nginx forwards git ssh with a PROXY protocol header (see nginx/nginx.conf). Without trusting it, every
+            # connection looks like it comes from nginx, and the nodes refuse the build agents' keys because nginx's
+            # address is not one the agents are connected from. These are the docker bridge ranges, as in
+            # prod-singlenode.env: a compose stack is not a trust boundary.
+            ARTEMIS_VERSIONCONTROL_SSHPROXYPROTOCOL_TRUSTEDSOURCES: "172.16.0.0/12,10.0.0.0/8,192.168.0.0/16"
         volumes:
             - ${ARTEMIS_VOLUME_MOUNT:-./.docker-data/artemis-data}:/opt/artemis/data
             - ${ARTEMIS_LEGAL_MOUNT:-./.docker-data/artemis-legal}:/opt/artemis/legal
@@ -126,6 +131,15 @@ services:
             artemis-app-node-2:
                 condition: service_started
         restart: always
+        # The build agents clone through the server's public hostname. Resolved through public DNS, their connection
+        # would leave the container network and come back through docker-proxy, which hides the agent behind the
+        # bridge gateway, so the address it presents would not be the one the build agent address check observed
+        # on its Valkey connection. With the hostname as an alias, docker's DNS resolves it to nginx inside the
+        # network and nginx announces the agent's own address.
+        networks:
+            artemis:
+                aliases:
+                    - ${NGINX_PUBLIC_HOSTNAME:-artemis-nginx}
         volumes:
             - ./nginx/artemis-upstream-multi-node.conf:/etc/nginx/includes/artemis-upstream.conf:ro
             - ./nginx/artemis-ssh-upstream-two-nodes.conf:/etc/nginx/includes/artemis-ssh-upstream.conf:ro
