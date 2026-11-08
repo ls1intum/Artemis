@@ -26,20 +26,22 @@ export class LectureTranscriptionApi {
      *
      *
      * @param lectureUnitId
+     * @param options the HttpContext and extra headers of this request; a declared header parameter overrides a header of the same name
      */
-    getTranscript(lectureUnitId: number): Observable<LectureTranscription> {
+    getTranscript(lectureUnitId: number, options?: import('./request-options').RequestOptions): Observable<LectureTranscription> {
         const url = `${this.basePath}/api/lecture/lecture-units/${lectureUnitId}/transcript`;
-        return this.http.get<LectureTranscription>(url);
+        return this.http.get<LectureTranscription>(url, options && { ...(options.context !== undefined && { context: options.context }), ...(options.headers !== undefined && { headers: options.headers }) });
     }
 
     /**
      *
      *
      * @param lectureUnitId
+     * @param options the HttpContext and extra headers of this request; a declared header parameter overrides a header of the same name
      */
-    getTranscriptStatus(lectureUnitId: number): Observable<string> {
+    getTranscriptStatus(lectureUnitId: number, options?: import('./request-options').RequestOptions): Observable<string> {
         const url = `${this.basePath}/api/lecture/lecture-units/${lectureUnitId}/transcript/status`;
-        return this.http.get(url, { responseType: 'text' });
+        return this.http.get(url, { ...(options && { ...(options.context !== undefined && { context: options.context }), ...(options.headers !== undefined && { headers: options.headers }) }), responseType: 'text' });
     }
 
 }

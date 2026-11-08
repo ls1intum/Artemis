@@ -33,10 +33,11 @@ export class LectureApi {
      * Create a lecture
      * Creates an empty lecture in a course (set course with its id). title is required; startDate, if set, must not be after endDate. A lecture has no release date of its own: students see it with its title and description at once, and only its units can stay hidden with a releaseDate in the future. channelName names the lecture\&#39;s communication channel and is derived from the title if omitted.
      * @param simpleLecture
+     * @param options the HttpContext and extra headers of this request; a declared header parameter overrides a header of the same name
      */
-    createLecture(simpleLecture: SimpleLecture): Observable<SimpleLecture> {
+    createLecture(simpleLecture: SimpleLecture, options?: import('./request-options').RequestOptions): Observable<SimpleLecture> {
         const url = `${this.basePath}/api/lecture/lectures`;
-        return this.http.post<SimpleLecture>(url, simpleLecture);
+        return this.http.post<SimpleLecture>(url, simpleLecture, options && { ...(options.context !== undefined && { context: options.context }), ...(options.headers !== undefined && { headers: options.headers }) });
     }
 
     /**
@@ -44,20 +45,22 @@ export class LectureApi {
      *
      * @param courseId
      * @param lectureSeriesCreateLecture
+     * @param options the HttpContext and extra headers of this request; a declared header parameter overrides a header of the same name
      */
-    createLectureSeries(courseId: number, lectureSeriesCreateLecture: Array<LectureSeriesCreateLecture>): Observable<void> {
+    createLectureSeries(courseId: number, lectureSeriesCreateLecture: Array<LectureSeriesCreateLecture>, options?: import('./request-options').RequestOptions): Observable<void> {
         const url = `${this.basePath}/api/lecture/courses/${courseId}/lectures`;
-        return this.http.post<void>(url, lectureSeriesCreateLecture);
+        return this.http.post<void>(url, lectureSeriesCreateLecture, options && { ...(options.context !== undefined && { context: options.context }), ...(options.headers !== undefined && { headers: options.headers }) });
     }
 
     /**
      *
      *
      * @param lectureId
+     * @param options the HttpContext and extra headers of this request; a declared header parameter overrides a header of the same name
      */
-    deleteLecture(lectureId: number): Observable<void> {
+    deleteLecture(lectureId: number, options?: import('./request-options').RequestOptions): Observable<void> {
         const url = `${this.basePath}/api/lecture/lectures/${lectureId}`;
-        return this.http.delete<void>(url);
+        return this.http.delete<void>(url, options && { ...(options.context !== undefined && { context: options.context }), ...(options.headers !== undefined && { headers: options.headers }) });
     }
 
     /**
@@ -68,8 +71,9 @@ export class LectureApi {
      * @param sortingOrder
      * @param sortedColumn
      * @param searchTerm
+     * @param options the HttpContext and extra headers of this request; a declared header parameter overrides a header of the same name
      */
-    getAllLecturesOnPage(page: number, pageSize: number, sortingOrder: 'ASCENDING' | 'DESCENDING', sortedColumn: string, searchTerm?: string): Observable<SearchResultPageDTOSimpleLecture> {
+    getAllLecturesOnPage(page: number, pageSize: number, sortingOrder: 'ASCENDING' | 'DESCENDING', sortedColumn: string, searchTerm?: string, options?: import('./request-options').RequestOptions): Observable<SearchResultPageDTOSimpleLecture> {
         const queryParams = new URLSearchParams();
         appendQueryParam(queryParams, 'page', page);
         appendQueryParam(queryParams, 'pageSize', pageSize);
@@ -78,87 +82,95 @@ export class LectureApi {
         appendQueryParam(queryParams, 'searchTerm', searchTerm);
         const queryString = queryParams.toString();
         const url = `${this.basePath}/api/lecture/lectures${queryString ? `?${queryString}` : ''}`;
-        return this.http.get<SearchResultPageDTOSimpleLecture>(url);
+        return this.http.get<SearchResultPageDTOSimpleLecture>(url, options && { ...(options.context !== undefined && { context: options.context }), ...(options.headers !== undefined && { headers: options.headers }) });
     }
 
     /**
      *
      *
      * @param courseId
+     * @param options the HttpContext and extra headers of this request; a declared header parameter overrides a header of the same name
      */
-    getLearningStatistics(courseId: number): Observable<Array<LectureLearningStatistics>> {
+    getLearningStatistics(courseId: number, options?: import('./request-options').RequestOptions): Observable<Array<LectureLearningStatistics>> {
         const url = `${this.basePath}/api/lecture/courses/${courseId}/learning-statistics`;
-        return this.http.get<Array<LectureLearningStatistics>>(url);
+        return this.http.get<Array<LectureLearningStatistics>>(url, options && { ...(options.context !== undefined && { context: options.context }), ...(options.headers !== undefined && { headers: options.headers }) });
     }
 
     /**
      *
      *
      * @param lectureId
+     * @param options the HttpContext and extra headers of this request; a declared header parameter overrides a header of the same name
      */
-    getLecture(lectureId: number): Observable<SimpleLecture> {
+    getLecture(lectureId: number, options?: import('./request-options').RequestOptions): Observable<SimpleLecture> {
         const url = `${this.basePath}/api/lecture/lectures/${lectureId}`;
-        return this.http.get<SimpleLecture>(url);
+        return this.http.get<SimpleLecture>(url, options && { ...(options.context !== undefined && { context: options.context }), ...(options.headers !== undefined && { headers: options.headers }) });
     }
 
     /**
      *
      *
      * @param lectureId
+     * @param options the HttpContext and extra headers of this request; a declared header parameter overrides a header of the same name
      */
-    getLectureTitle(lectureId: number): Observable<string> {
+    getLectureTitle(lectureId: number, options?: import('./request-options').RequestOptions): Observable<string> {
         const url = `${this.basePath}/api/lecture/lectures/${lectureId}/title`;
-        return this.http.get(url, { responseType: 'text' });
+        return this.http.get(url, { ...(options && { ...(options.context !== undefined && { context: options.context }), ...(options.headers !== undefined && { headers: options.headers }) }), responseType: 'text' });
     }
 
     /**
      *
      *
      * @param lectureId
+     * @param options the HttpContext and extra headers of this request; a declared header parameter overrides a header of the same name
      */
-    getLectureWithDetails(lectureId: number): Observable<LectureDetails> {
+    getLectureWithDetails(lectureId: number, options?: import('./request-options').RequestOptions): Observable<LectureDetails> {
         const url = `${this.basePath}/api/lecture/lectures/${lectureId}/details`;
-        return this.http.get<LectureDetails>(url);
+        return this.http.get<LectureDetails>(url, options && { ...(options.context !== undefined && { context: options.context }), ...(options.headers !== undefined && { headers: options.headers }) });
     }
 
     /**
      *
      *
      * @param courseId
+     * @param options the HttpContext and extra headers of this request; a declared header parameter overrides a header of the same name
      */
-    getLecturesForCourse(courseId: number): Observable<Array<SimpleLecture>> {
+    getLecturesForCourse(courseId: number, options?: import('./request-options').RequestOptions): Observable<Array<SimpleLecture>> {
         const url = `${this.basePath}/api/lecture/courses/${courseId}/lectures`;
-        return this.http.get<Array<SimpleLecture>>(url);
+        return this.http.get<Array<SimpleLecture>>(url, options && { ...(options.context !== undefined && { context: options.context }), ...(options.headers !== undefined && { headers: options.headers }) });
     }
 
     /**
      *
      *
      * @param courseId
+     * @param options the HttpContext and extra headers of this request; a declared header parameter overrides a header of the same name
      */
-    getLecturesForCourseOverview(courseId: number): Observable<Array<LectureForOverview>> {
+    getLecturesForCourseOverview(courseId: number, options?: import('./request-options').RequestOptions): Observable<Array<LectureForOverview>> {
         const url = `${this.basePath}/api/lecture/courses/${courseId}/lectures-for-overview`;
-        return this.http.get<Array<LectureForOverview>>(url);
+        return this.http.get<Array<LectureForOverview>>(url, options && { ...(options.context !== undefined && { context: options.context }), ...(options.headers !== undefined && { headers: options.headers }) });
     }
 
     /**
      *
      *
      * @param courseId
+     * @param options the HttpContext and extra headers of this request; a declared header parameter overrides a header of the same name
      */
-    getLecturesWithSlidesForCourse(courseId: number): Observable<Array<GetLectures>> {
+    getLecturesWithSlidesForCourse(courseId: number, options?: import('./request-options').RequestOptions): Observable<Array<GetLectures>> {
         const url = `${this.basePath}/api/lecture/courses/${courseId}/lectures-with-slides`;
-        return this.http.get<Array<GetLectures>>(url);
+        return this.http.get<Array<GetLectures>>(url, options && { ...(options.context !== undefined && { context: options.context }), ...(options.headers !== undefined && { headers: options.headers }) });
     }
 
     /**
      *
      *
      * @param courseId
+     * @param options the HttpContext and extra headers of this request; a declared header parameter overrides a header of the same name
      */
-    getTutorialLecturesForCourse(courseId: number): Observable<Array<SimpleLecture>> {
+    getTutorialLecturesForCourse(courseId: number, options?: import('./request-options').RequestOptions): Observable<Array<SimpleLecture>> {
         const url = `${this.basePath}/api/lecture/courses/${courseId}/tutorial-lectures`;
-        return this.http.get<Array<SimpleLecture>>(url);
+        return this.http.get<Array<SimpleLecture>>(url, options && { ...(options.context !== undefined && { context: options.context }), ...(options.headers !== undefined && { headers: options.headers }) });
     }
 
     /**
@@ -166,24 +178,26 @@ export class LectureApi {
      *
      * @param sourceLectureId
      * @param courseId
+     * @param options the HttpContext and extra headers of this request; a declared header parameter overrides a header of the same name
      */
-    importLecture(sourceLectureId: number, courseId: number): Observable<SimpleLecture> {
+    importLecture(sourceLectureId: number, courseId: number, options?: import('./request-options').RequestOptions): Observable<SimpleLecture> {
         const queryParams = new URLSearchParams();
         appendQueryParam(queryParams, 'sourceLectureId', sourceLectureId);
         appendQueryParam(queryParams, 'courseId', courseId);
         const queryString = queryParams.toString();
         const url = `${this.basePath}/api/lecture/lectures/import${queryString ? `?${queryString}` : ''}`;
-        return this.http.post<SimpleLecture>(url, null);
+        return this.http.post<SimpleLecture>(url, null, options && { ...(options.context !== undefined && { context: options.context }), ...(options.headers !== undefined && { headers: options.headers }) });
     }
 
     /**
      *
      *
      * @param simpleLecture
+     * @param options the HttpContext and extra headers of this request; a declared header parameter overrides a header of the same name
      */
-    updateLecture(simpleLecture: SimpleLecture): Observable<SimpleLecture> {
+    updateLecture(simpleLecture: SimpleLecture, options?: import('./request-options').RequestOptions): Observable<SimpleLecture> {
         const url = `${this.basePath}/api/lecture/lectures`;
-        return this.http.put<SimpleLecture>(url, simpleLecture);
+        return this.http.put<SimpleLecture>(url, simpleLecture, options && { ...(options.context !== undefined && { context: options.context }), ...(options.headers !== undefined && { headers: options.headers }) });
     }
 
 }

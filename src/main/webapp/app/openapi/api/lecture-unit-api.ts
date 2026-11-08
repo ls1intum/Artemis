@@ -33,13 +33,14 @@ export class LectureUnitApi {
      * @param lectureUnitId
      * @param lectureId
      * @param completed
+     * @param options the HttpContext and extra headers of this request; a declared header parameter overrides a header of the same name
      */
-    completeLectureUnit(lectureUnitId: number, lectureId: number, completed: boolean): Observable<void> {
+    completeLectureUnit(lectureUnitId: number, lectureId: number, completed: boolean, options?: import('./request-options').RequestOptions): Observable<void> {
         const queryParams = new URLSearchParams();
         appendQueryParam(queryParams, 'completed', completed);
         const queryString = queryParams.toString();
         const url = `${this.basePath}/api/lecture/lectures/${lectureId}/lecture-units/${lectureUnitId}/completion${queryString ? `?${queryString}` : ''}`;
-        return this.http.post<void>(url, null);
+        return this.http.post<void>(url, null, options && { ...(options.context !== undefined && { context: options.context }), ...(options.headers !== undefined && { headers: options.headers }) });
     }
 
     /**
@@ -47,50 +48,55 @@ export class LectureUnitApi {
      *
      * @param lectureUnitId
      * @param lectureId
+     * @param options the HttpContext and extra headers of this request; a declared header parameter overrides a header of the same name
      */
-    deleteLectureUnit(lectureUnitId: number, lectureId: number): Observable<void> {
+    deleteLectureUnit(lectureUnitId: number, lectureId: number, options?: import('./request-options').RequestOptions): Observable<void> {
         const url = `${this.basePath}/api/lecture/lectures/${lectureId}/lecture-units/${lectureUnitId}`;
-        return this.http.delete<void>(url);
+        return this.http.delete<void>(url, options && { ...(options.context !== undefined && { context: options.context }), ...(options.headers !== undefined && { headers: options.headers }) });
     }
 
     /**
      *
      *
      * @param lectureUnitId
+     * @param options the HttpContext and extra headers of this request; a declared header parameter overrides a header of the same name
      */
-    getLectureUnitById(lectureUnitId: number): Observable<GetLectureUnitById200Response> {
+    getLectureUnitById(lectureUnitId: number, options?: import('./request-options').RequestOptions): Observable<GetLectureUnitById200Response> {
         const url = `${this.basePath}/api/lecture/lecture-units/${lectureUnitId}`;
-        return this.http.get<GetLectureUnitById200Response>(url);
+        return this.http.get<GetLectureUnitById200Response>(url, options && { ...(options.context !== undefined && { context: options.context }), ...(options.headers !== undefined && { headers: options.headers }) });
     }
 
     /**
      *
      *
      * @param lectureUnitId
+     * @param options the HttpContext and extra headers of this request; a declared header parameter overrides a header of the same name
      */
-    getLectureUnitForLearningPathNodeDetails(lectureUnitId: number): Observable<LectureUnitForLearningPathNodeDetails> {
+    getLectureUnitForLearningPathNodeDetails(lectureUnitId: number, options?: import('./request-options').RequestOptions): Observable<LectureUnitForLearningPathNodeDetails> {
         const url = `${this.basePath}/api/lecture/lecture-units/${lectureUnitId}/for-learning-path-node-details`;
-        return this.http.get<LectureUnitForLearningPathNodeDetails>(url);
+        return this.http.get<LectureUnitForLearningPathNodeDetails>(url, options && { ...(options.context !== undefined && { context: options.context }), ...(options.headers !== undefined && { headers: options.headers }) });
     }
 
     /**
      *
      *
      * @param lectureUnitId
+     * @param options the HttpContext and extra headers of this request; a declared header parameter overrides a header of the same name
      */
-    getLectureUnitMaterialVersions(lectureUnitId: number): Observable<LectureUnitMaterialVersions> {
+    getLectureUnitMaterialVersions(lectureUnitId: number, options?: import('./request-options').RequestOptions): Observable<LectureUnitMaterialVersions> {
         const url = `${this.basePath}/api/lecture/lecture-units/${lectureUnitId}/material-versions`;
-        return this.http.get<LectureUnitMaterialVersions>(url);
+        return this.http.get<LectureUnitMaterialVersions>(url, options && { ...(options.context !== undefined && { context: options.context }), ...(options.headers !== undefined && { headers: options.headers }) });
     }
 
     /**
      * Get the processing status of the units of a lecture
      * Reports, for each attachment video unit of the lecture, how far the background processing of its slides and video has come: processingPhase is IDLE, TRANSCRIBING, INGESTING, DONE, FAILED or SKIPPED. Poll this after uploading slides; DONE or SKIPPED means nothing more is pending. The list is empty when processing is not enabled on this instance.
      * @param lectureId
+     * @param options the HttpContext and extra headers of this request; a declared header parameter overrides a header of the same name
      */
-    getUnitStatuses(lectureId: number): Observable<Array<LectureUnitCombinedStatus>> {
+    getUnitStatuses(lectureId: number, options?: import('./request-options').RequestOptions): Observable<Array<LectureUnitCombinedStatus>> {
         const url = `${this.basePath}/api/lecture/lectures/${lectureId}/lecture-units/statuses`;
-        return this.http.get<Array<LectureUnitCombinedStatus>>(url);
+        return this.http.get<Array<LectureUnitCombinedStatus>>(url, options && { ...(options.context !== undefined && { context: options.context }), ...(options.headers !== undefined && { headers: options.headers }) });
     }
 
     /**
@@ -98,10 +104,11 @@ export class LectureUnitApi {
      *
      * @param lectureId
      * @param lectureUnitId
+     * @param options the HttpContext and extra headers of this request; a declared header parameter overrides a header of the same name
      */
-    retryProcessing(lectureId: number, lectureUnitId: number): Observable<LectureUnitCombinedStatus> {
+    retryProcessing(lectureId: number, lectureUnitId: number, options?: import('./request-options').RequestOptions): Observable<LectureUnitCombinedStatus> {
         const url = `${this.basePath}/api/lecture/lectures/${lectureId}/lecture-units/${lectureUnitId}/retry-processing`;
-        return this.http.post<LectureUnitCombinedStatus>(url, null);
+        return this.http.post<LectureUnitCombinedStatus>(url, null, options && { ...(options.context !== undefined && { context: options.context }), ...(options.headers !== undefined && { headers: options.headers }) });
     }
 
     /**
@@ -109,10 +116,11 @@ export class LectureUnitApi {
      *
      * @param lectureId
      * @param requestBody
+     * @param options the HttpContext and extra headers of this request; a declared header parameter overrides a header of the same name
      */
-    updateLectureUnitsOrder(lectureId: number, requestBody: Array<number>): Observable<Array<LectureUnit>> {
+    updateLectureUnitsOrder(lectureId: number, requestBody: Array<number>, options?: import('./request-options').RequestOptions): Observable<Array<LectureUnit>> {
         const url = `${this.basePath}/api/lecture/lectures/${lectureId}/lecture-units-order`;
-        return this.http.put<Array<LectureUnit>>(url, requestBody);
+        return this.http.put<Array<LectureUnit>>(url, requestBody, options && { ...(options.context !== undefined && { context: options.context }), ...(options.headers !== undefined && { headers: options.headers }) });
     }
 
 }

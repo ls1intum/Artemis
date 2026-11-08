@@ -27,10 +27,11 @@ export class TextUnitApi {
      *
      * @param lectureId
      * @param textUnit
+     * @param options the HttpContext and extra headers of this request; a declared header parameter overrides a header of the same name
      */
-    createTextUnit(lectureId: number, textUnit: TextUnit): Observable<TextUnit> {
+    createTextUnit(lectureId: number, textUnit: TextUnit, options?: import('./request-options').RequestOptions): Observable<TextUnit> {
         const url = `${this.basePath}/api/lecture/lectures/${lectureId}/text-units`;
-        return this.http.post<TextUnit>(url, textUnit);
+        return this.http.post<TextUnit>(url, textUnit, options && { ...(options.context !== undefined && { context: options.context }), ...(options.headers !== undefined && { headers: options.headers }) });
     }
 
     /**
@@ -38,10 +39,11 @@ export class TextUnitApi {
      *
      * @param textUnitId
      * @param lectureId
+     * @param options the HttpContext and extra headers of this request; a declared header parameter overrides a header of the same name
      */
-    getTextUnit(textUnitId: number, lectureId: number): Observable<TextUnit> {
+    getTextUnit(textUnitId: number, lectureId: number, options?: import('./request-options').RequestOptions): Observable<TextUnit> {
         const url = `${this.basePath}/api/lecture/lectures/${lectureId}/text-units/${textUnitId}`;
-        return this.http.get<TextUnit>(url);
+        return this.http.get<TextUnit>(url, options && { ...(options.context !== undefined && { context: options.context }), ...(options.headers !== undefined && { headers: options.headers }) });
     }
 
     /**
@@ -49,10 +51,11 @@ export class TextUnitApi {
      *
      * @param lectureId
      * @param textUnit
+     * @param options the HttpContext and extra headers of this request; a declared header parameter overrides a header of the same name
      */
-    updateTextUnit(lectureId: number, textUnit: TextUnit): Observable<TextUnit> {
+    updateTextUnit(lectureId: number, textUnit: TextUnit, options?: import('./request-options').RequestOptions): Observable<TextUnit> {
         const url = `${this.basePath}/api/lecture/lectures/${lectureId}/text-units`;
-        return this.http.put<TextUnit>(url, textUnit);
+        return this.http.put<TextUnit>(url, textUnit, options && { ...(options.context !== undefined && { context: options.context }), ...(options.headers !== undefined && { headers: options.headers }) });
     }
 
 }

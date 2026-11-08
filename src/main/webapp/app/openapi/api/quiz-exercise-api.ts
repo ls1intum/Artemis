@@ -26,20 +26,22 @@ export class QuizExerciseApi {
      *
      *
      * @param quizExerciseId
+     * @param options the HttpContext and extra headers of this request; a declared header parameter overrides a header of the same name
      */
-    endQuizExercise(quizExerciseId: number): Observable<QuizExerciseDates> {
+    endQuizExercise(quizExerciseId: number, options?: import('./request-options').RequestOptions): Observable<QuizExerciseDates> {
         const url = `${this.basePath}/api/quiz/quiz-exercises/${quizExerciseId}/end-now`;
-        return this.http.put<QuizExerciseDates>(url, null);
+        return this.http.put<QuizExerciseDates>(url, null, options && { ...(options.context !== undefined && { context: options.context }), ...(options.headers !== undefined && { headers: options.headers }) });
     }
 
     /**
      *
      *
      * @param exerciseId
+     * @param options the HttpContext and extra headers of this request; a declared header parameter overrides a header of the same name
      */
-    exportExercise(exerciseId: number): Observable<HttpResponse<Blob>> {
+    exportExercise(exerciseId: number, options?: import('./request-options').RequestOptions): Observable<HttpResponse<Blob>> {
         const url = `${this.basePath}/api/quiz/quiz-exercises/${exerciseId}/export`;
-        return this.http.get(url, { responseType: 'blob', observe: 'response' });
+        return this.http.get(url, { ...(options && { ...(options.context !== undefined && { context: options.context }), ...(options.headers !== undefined && { headers: options.headers }) }), responseType: 'blob', observe: 'response' });
     }
 
     /**
@@ -47,11 +49,12 @@ export class QuizExerciseApi {
      *
      * @param quizExerciseId
      * @param action
+     * @param options the HttpContext and extra headers of this request; a declared header parameter overrides a header of the same name
      */
-    performActionForQuizExercise(quizExerciseId: number, action: 'start-now' | 'end-now' | 'set-visible'): Observable<QuizExerciseDates> {
+    performActionForQuizExercise(quizExerciseId: number, action: 'start-now' | 'end-now' | 'set-visible', options?: import('./request-options').RequestOptions): Observable<QuizExerciseDates> {
         const actionPath = encodeURIComponent(String(action));
         const url = `${this.basePath}/api/quiz/quiz-exercises/${quizExerciseId}/${actionPath}`;
-        return this.http.put<QuizExerciseDates>(url, null);
+        return this.http.put<QuizExerciseDates>(url, null, options && { ...(options.context !== undefined && { context: options.context }), ...(options.headers !== undefined && { headers: options.headers }) });
     }
 
 }

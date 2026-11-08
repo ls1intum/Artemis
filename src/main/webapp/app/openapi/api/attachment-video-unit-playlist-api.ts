@@ -25,10 +25,11 @@ export class AttachmentVideoUnitPlaylistApi {
      *
      *
      * @param lectureUnitId
+     * @param options the HttpContext and extra headers of this request; a declared header parameter overrides a header of the same name
      */
-    getPlaylist(lectureUnitId: number): Observable<string> {
+    getPlaylist(lectureUnitId: number, options?: import('./request-options').RequestOptions): Observable<string> {
         const url = `${this.basePath}/api/lecture/lecture-units/${lectureUnitId}/playlist`;
-        return this.http.get(url, { responseType: 'text' });
+        return this.http.get(url, { ...(options && { ...(options.context !== undefined && { context: options.context }), ...(options.headers !== undefined && { headers: options.headers }) }), responseType: 'text' });
     }
 
 }

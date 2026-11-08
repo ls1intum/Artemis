@@ -35,8 +35,9 @@ export class AttachmentVideoUnitApi {
      * @param keepFilename
      * @param attachment
      * @param file
+     * @param options the HttpContext and extra headers of this request; a declared header parameter overrides a header of the same name
      */
-    createAttachmentVideoUnit(lectureId: number, attachmentVideoUnit: AttachmentVideoUnit, keepFilename?: boolean, attachment?: Attachment, file?: File): Observable<AttachmentVideoUnit> {
+    createAttachmentVideoUnit(lectureId: number, attachmentVideoUnit: AttachmentVideoUnit, keepFilename?: boolean, attachment?: Attachment, file?: File, options?: import('./request-options').RequestOptions): Observable<AttachmentVideoUnit> {
         const queryParams = new URLSearchParams();
         appendQueryParam(queryParams, 'keepFilename', keepFilename);
         const queryString = queryParams.toString();
@@ -51,7 +52,7 @@ export class AttachmentVideoUnitApi {
         if (file !== undefined && file !== null) {
             formData.append('file', file);
         }
-        return this.http.post<AttachmentVideoUnit>(url, formData);
+        return this.http.post<AttachmentVideoUnit>(url, formData, options && { ...(options.context !== undefined && { context: options.context }), ...(options.headers !== undefined && { headers: options.headers }) });
     }
 
     /**
@@ -60,11 +61,12 @@ export class AttachmentVideoUnitApi {
      * @param lectureId
      * @param filename
      * @param lectureUnitSplitInformation
+     * @param options the HttpContext and extra headers of this request; a declared header parameter overrides a header of the same name
      */
-    createAttachmentVideoUnits(lectureId: number, filename: string, lectureUnitSplitInformation: LectureUnitSplitInformation): Observable<Array<AttachmentVideoUnit>> {
+    createAttachmentVideoUnits(lectureId: number, filename: string, lectureUnitSplitInformation: LectureUnitSplitInformation, options?: import('./request-options').RequestOptions): Observable<Array<AttachmentVideoUnit>> {
         const filenamePath = encodeURIComponent(String(filename));
         const url = `${this.basePath}/api/lecture/lectures/${lectureId}/attachment-video-units/split/${filenamePath}`;
-        return this.http.post<Array<AttachmentVideoUnit>>(url, lectureUnitSplitInformation);
+        return this.http.post<Array<AttachmentVideoUnit>>(url, lectureUnitSplitInformation, options && { ...(options.context !== undefined && { context: options.context }), ...(options.headers !== undefined && { headers: options.headers }) });
     }
 
     /**
@@ -72,10 +74,11 @@ export class AttachmentVideoUnitApi {
      *
      * @param attachmentVideoUnitId
      * @param lectureId
+     * @param options the HttpContext and extra headers of this request; a declared header parameter overrides a header of the same name
      */
-    getAttachmentVideoUnit(attachmentVideoUnitId: number, lectureId: number): Observable<AttachmentVideoUnit> {
+    getAttachmentVideoUnit(attachmentVideoUnitId: number, lectureId: number, options?: import('./request-options').RequestOptions): Observable<AttachmentVideoUnit> {
         const url = `${this.basePath}/api/lecture/lectures/${lectureId}/attachment-video-units/${attachmentVideoUnitId}`;
-        return this.http.get<AttachmentVideoUnit>(url);
+        return this.http.get<AttachmentVideoUnit>(url, options && { ...(options.context !== undefined && { context: options.context }), ...(options.headers !== undefined && { headers: options.headers }) });
     }
 
     /**
@@ -83,11 +86,12 @@ export class AttachmentVideoUnitApi {
      *
      * @param lectureId
      * @param filename
+     * @param options the HttpContext and extra headers of this request; a declared header parameter overrides a header of the same name
      */
-    getAttachmentVideoUnitsData(lectureId: number, filename: string): Observable<LectureUnitSplitInformation> {
+    getAttachmentVideoUnitsData(lectureId: number, filename: string, options?: import('./request-options').RequestOptions): Observable<LectureUnitSplitInformation> {
         const filenamePath = encodeURIComponent(String(filename));
         const url = `${this.basePath}/api/lecture/lectures/${lectureId}/attachment-video-units/data/${filenamePath}`;
-        return this.http.get<LectureUnitSplitInformation>(url);
+        return this.http.get<LectureUnitSplitInformation>(url, options && { ...(options.context !== undefined && { context: options.context }), ...(options.headers !== undefined && { headers: options.headers }) });
     }
 
     /**
@@ -96,14 +100,15 @@ export class AttachmentVideoUnitApi {
      * @param lectureId
      * @param filename
      * @param commaSeparatedKeyPhrases
+     * @param options the HttpContext and extra headers of this request; a declared header parameter overrides a header of the same name
      */
-    getSlidesToRemove(lectureId: number, filename: string, commaSeparatedKeyPhrases: string): Observable<Array<number>> {
+    getSlidesToRemove(lectureId: number, filename: string, commaSeparatedKeyPhrases: string, options?: import('./request-options').RequestOptions): Observable<Array<number>> {
         const filenamePath = encodeURIComponent(String(filename));
         const queryParams = new URLSearchParams();
         appendQueryParam(queryParams, 'commaSeparatedKeyPhrases', commaSeparatedKeyPhrases);
         const queryString = queryParams.toString();
         const url = `${this.basePath}/api/lecture/lectures/${lectureId}/attachment-video-units/slides-to-remove/${filenamePath}${queryString ? `?${queryString}` : ''}`;
-        return this.http.get<Array<number>>(url);
+        return this.http.get<Array<number>>(url, options && { ...(options.context !== undefined && { context: options.context }), ...(options.headers !== undefined && { headers: options.headers }) });
     }
 
     /**
@@ -119,8 +124,9 @@ export class AttachmentVideoUnitApi {
      * @param studentVersion
      * @param hiddenPages
      * @param pageOrder
+     * @param options the HttpContext and extra headers of this request; a declared header parameter overrides a header of the same name
      */
-    updateAttachmentVideoUnit(lectureId: number, attachmentVideoUnitId: number, attachmentVideoUnit: AttachmentVideoUnit, keepFilename?: boolean, notificationText?: string, attachment?: Attachment, file?: File, studentVersion?: File, hiddenPages?: Array<HiddenPageInfo>, pageOrder?: Array<SlideOrder>): Observable<AttachmentVideoUnit> {
+    updateAttachmentVideoUnit(lectureId: number, attachmentVideoUnitId: number, attachmentVideoUnit: AttachmentVideoUnit, keepFilename?: boolean, notificationText?: string, attachment?: Attachment, file?: File, studentVersion?: File, hiddenPages?: Array<HiddenPageInfo>, pageOrder?: Array<SlideOrder>, options?: import('./request-options').RequestOptions): Observable<AttachmentVideoUnit> {
         const queryParams = new URLSearchParams();
         appendQueryParam(queryParams, 'keepFilename', keepFilename);
         appendQueryParam(queryParams, 'notificationText', notificationText);
@@ -145,7 +151,7 @@ export class AttachmentVideoUnitApi {
         if (pageOrder !== undefined && pageOrder !== null) {
             formData.append('pageOrder', new Blob([JSON.stringify(Array.from(pageOrder))], { type: 'application/json' }));
         }
-        return this.http.put<AttachmentVideoUnit>(url, formData);
+        return this.http.put<AttachmentVideoUnit>(url, formData, options && { ...(options.context !== undefined && { context: options.context }), ...(options.headers !== undefined && { headers: options.headers }) });
     }
 
     /**
@@ -154,14 +160,15 @@ export class AttachmentVideoUnitApi {
      * @param lectureId
      * @param attachmentVideoUnitId
      * @param studentVersion
+     * @param options the HttpContext and extra headers of this request; a declared header parameter overrides a header of the same name
      */
-    updateAttachmentVideoUnitStudentVersion(lectureId: number, attachmentVideoUnitId: number, studentVersion: File): Observable<AttachmentVideoUnit> {
+    updateAttachmentVideoUnitStudentVersion(lectureId: number, attachmentVideoUnitId: number, studentVersion: File, options?: import('./request-options').RequestOptions): Observable<AttachmentVideoUnit> {
         const url = `${this.basePath}/api/lecture/lectures/${lectureId}/attachment-video-units/${attachmentVideoUnitId}/student-version`;
         const formData = new FormData();
         if (studentVersion !== undefined && studentVersion !== null) {
             formData.append('studentVersion', studentVersion);
         }
-        return this.http.put<AttachmentVideoUnit>(url, formData);
+        return this.http.put<AttachmentVideoUnit>(url, formData, options && { ...(options.context !== undefined && { context: options.context }), ...(options.headers !== undefined && { headers: options.headers }) });
     }
 
     /**
@@ -169,14 +176,15 @@ export class AttachmentVideoUnitApi {
      *
      * @param lectureId
      * @param file
+     * @param options the HttpContext and extra headers of this request; a declared header parameter overrides a header of the same name
      */
-    uploadSlidesForProcessing(lectureId: number, file: File): Observable<string> {
+    uploadSlidesForProcessing(lectureId: number, file: File, options?: import('./request-options').RequestOptions): Observable<string> {
         const url = `${this.basePath}/api/lecture/lectures/${lectureId}/attachment-video-units/upload`;
         const formData = new FormData();
         if (file !== undefined && file !== null) {
             formData.append('file', file);
         }
-        return this.http.post<string>(url, formData);
+        return this.http.post<string>(url, formData, options && { ...(options.context !== undefined && { context: options.context }), ...(options.headers !== undefined && { headers: options.headers }) });
     }
 
 }

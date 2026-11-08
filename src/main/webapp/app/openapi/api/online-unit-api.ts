@@ -29,10 +29,11 @@ export class OnlineUnitApi {
      *
      * @param lectureId
      * @param onlineUnit
+     * @param options the HttpContext and extra headers of this request; a declared header parameter overrides a header of the same name
      */
-    createOnlineUnit(lectureId: number, onlineUnit: OnlineUnit): Observable<OnlineUnit> {
+    createOnlineUnit(lectureId: number, onlineUnit: OnlineUnit, options?: import('./request-options').RequestOptions): Observable<OnlineUnit> {
         const url = `${this.basePath}/api/lecture/lectures/${lectureId}/online-units`;
-        return this.http.post<OnlineUnit>(url, onlineUnit);
+        return this.http.post<OnlineUnit>(url, onlineUnit, options && { ...(options.context !== undefined && { context: options.context }), ...(options.headers !== undefined && { headers: options.headers }) });
     }
 
     /**
@@ -40,14 +41,15 @@ export class OnlineUnitApi {
      *
      * @param link
      * @param courseId
+     * @param options the HttpContext and extra headers of this request; a declared header parameter overrides a header of the same name
      */
-    getOnlineResource(link: string, courseId: number): Observable<OnlineResource> {
+    getOnlineResource(link: string, courseId: number, options?: import('./request-options').RequestOptions): Observable<OnlineResource> {
         const queryParams = new URLSearchParams();
         appendQueryParam(queryParams, 'link', link);
         appendQueryParam(queryParams, 'courseId', courseId);
         const queryString = queryParams.toString();
         const url = `${this.basePath}/api/lecture/lectures/online-units/fetch-online-resource${queryString ? `?${queryString}` : ''}`;
-        return this.http.get<OnlineResource>(url);
+        return this.http.get<OnlineResource>(url, options && { ...(options.context !== undefined && { context: options.context }), ...(options.headers !== undefined && { headers: options.headers }) });
     }
 
     /**
@@ -55,10 +57,11 @@ export class OnlineUnitApi {
      *
      * @param onlineUnitId
      * @param lectureId
+     * @param options the HttpContext and extra headers of this request; a declared header parameter overrides a header of the same name
      */
-    getOnlineUnit(onlineUnitId: number, lectureId: number): Observable<OnlineUnit> {
+    getOnlineUnit(onlineUnitId: number, lectureId: number, options?: import('./request-options').RequestOptions): Observable<OnlineUnit> {
         const url = `${this.basePath}/api/lecture/lectures/${lectureId}/online-units/${onlineUnitId}`;
-        return this.http.get<OnlineUnit>(url);
+        return this.http.get<OnlineUnit>(url, options && { ...(options.context !== undefined && { context: options.context }), ...(options.headers !== undefined && { headers: options.headers }) });
     }
 
     /**
@@ -66,10 +69,11 @@ export class OnlineUnitApi {
      *
      * @param lectureId
      * @param onlineUnit
+     * @param options the HttpContext and extra headers of this request; a declared header parameter overrides a header of the same name
      */
-    updateOnlineUnit(lectureId: number, onlineUnit: OnlineUnit): Observable<OnlineUnit> {
+    updateOnlineUnit(lectureId: number, onlineUnit: OnlineUnit, options?: import('./request-options').RequestOptions): Observable<OnlineUnit> {
         const url = `${this.basePath}/api/lecture/lectures/${lectureId}/online-units`;
-        return this.http.put<OnlineUnit>(url, onlineUnit);
+        return this.http.put<OnlineUnit>(url, onlineUnit, options && { ...(options.context !== undefined && { context: options.context }), ...(options.headers !== undefined && { headers: options.headers }) });
     }
 
 }

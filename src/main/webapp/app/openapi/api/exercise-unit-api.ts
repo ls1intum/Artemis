@@ -27,20 +27,22 @@ export class ExerciseUnitApi {
      *
      * @param lectureId
      * @param exerciseUnit
+     * @param options the HttpContext and extra headers of this request; a declared header parameter overrides a header of the same name
      */
-    createExerciseUnit(lectureId: number, exerciseUnit: ExerciseUnit): Observable<ExerciseUnit> {
+    createExerciseUnit(lectureId: number, exerciseUnit: ExerciseUnit, options?: import('./request-options').RequestOptions): Observable<ExerciseUnit> {
         const url = `${this.basePath}/api/lecture/lectures/${lectureId}/exercise-units`;
-        return this.http.post<ExerciseUnit>(url, exerciseUnit);
+        return this.http.post<ExerciseUnit>(url, exerciseUnit, options && { ...(options.context !== undefined && { context: options.context }), ...(options.headers !== undefined && { headers: options.headers }) });
     }
 
     /**
      *
      *
      * @param lectureId
+     * @param options the HttpContext and extra headers of this request; a declared header parameter overrides a header of the same name
      */
-    getAllExerciseUnitsOfLecture(lectureId: number): Observable<Array<ExerciseUnit>> {
+    getAllExerciseUnitsOfLecture(lectureId: number, options?: import('./request-options').RequestOptions): Observable<Array<ExerciseUnit>> {
         const url = `${this.basePath}/api/lecture/lectures/${lectureId}/exercise-units`;
-        return this.http.get<Array<ExerciseUnit>>(url);
+        return this.http.get<Array<ExerciseUnit>>(url, options && { ...(options.context !== undefined && { context: options.context }), ...(options.headers !== undefined && { headers: options.headers }) });
     }
 
 }

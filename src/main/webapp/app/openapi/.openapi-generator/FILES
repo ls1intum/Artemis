@@ -33,6 +33,7 @@ api/quiz-participation-api.ts
 api/quiz-statistics-api.ts
 api/quiz-submission-api.ts
 api/quiz-training-api.ts
+api/request-options.ts
 api/text-unit-api.ts
 api/tutorial-group-api.ts
 api/tutorial-group-free-period-api.ts

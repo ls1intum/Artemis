@@ -30,10 +30,11 @@ export class TutorialGroupSessionApi {
      * @param courseId
      * @param tutorialGroupId
      * @param sessionId
+     * @param options the HttpContext and extra headers of this request; a declared header parameter overrides a header of the same name
      */
-    activateSession(courseId: number, tutorialGroupId: number, sessionId: number): Observable<void> {
+    activateSession(courseId: number, tutorialGroupId: number, sessionId: number, options?: import('./request-options').RequestOptions): Observable<void> {
         const url = `${this.basePath}/api/tutorialgroup/courses/${courseId}/tutorial-groups/${tutorialGroupId}/sessions/${sessionId}/activate`;
-        return this.http.patch<void>(url, null);
+        return this.http.patch<void>(url, null, options && { ...(options.context !== undefined && { context: options.context }), ...(options.headers !== undefined && { headers: options.headers }) });
     }
 
     /**
@@ -43,13 +44,14 @@ export class TutorialGroupSessionApi {
      * @param tutorialGroupId
      * @param sessionId
      * @param explanation
+     * @param options the HttpContext and extra headers of this request; a declared header parameter overrides a header of the same name
      */
-    cancelSession(courseId: number, tutorialGroupId: number, sessionId: number, explanation?: string): Observable<void> {
+    cancelSession(courseId: number, tutorialGroupId: number, sessionId: number, explanation?: string, options?: import('./request-options').RequestOptions): Observable<void> {
         const queryParams = new URLSearchParams();
         appendQueryParam(queryParams, 'explanation', explanation);
         const queryString = queryParams.toString();
         const url = `${this.basePath}/api/tutorialgroup/courses/${courseId}/tutorial-groups/${tutorialGroupId}/sessions/${sessionId}/cancel${queryString ? `?${queryString}` : ''}`;
-        return this.http.patch<void>(url, null);
+        return this.http.patch<void>(url, null, options && { ...(options.context !== undefined && { context: options.context }), ...(options.headers !== undefined && { headers: options.headers }) });
     }
 
     /**
@@ -58,10 +60,11 @@ export class TutorialGroupSessionApi {
      * @param courseId
      * @param tutorialGroupId
      * @param createOrUpdateTutorialGroupSessionRequest
+     * @param options the HttpContext and extra headers of this request; a declared header parameter overrides a header of the same name
      */
-    createSession(courseId: number, tutorialGroupId: number, createOrUpdateTutorialGroupSessionRequest: CreateOrUpdateTutorialGroupSessionRequest): Observable<TutorialGroupSession> {
+    createSession(courseId: number, tutorialGroupId: number, createOrUpdateTutorialGroupSessionRequest: CreateOrUpdateTutorialGroupSessionRequest, options?: import('./request-options').RequestOptions): Observable<TutorialGroupSession> {
         const url = `${this.basePath}/api/tutorialgroup/courses/${courseId}/tutorial-groups/${tutorialGroupId}/sessions`;
-        return this.http.post<TutorialGroupSession>(url, createOrUpdateTutorialGroupSessionRequest);
+        return this.http.post<TutorialGroupSession>(url, createOrUpdateTutorialGroupSessionRequest, options && { ...(options.context !== undefined && { context: options.context }), ...(options.headers !== undefined && { headers: options.headers }) });
     }
 
     /**
@@ -70,10 +73,11 @@ export class TutorialGroupSessionApi {
      * @param courseId
      * @param tutorialGroupId
      * @param sessionId
+     * @param options the HttpContext and extra headers of this request; a declared header parameter overrides a header of the same name
      */
-    deleteSession(courseId: number, tutorialGroupId: number, sessionId: number): Observable<void> {
+    deleteSession(courseId: number, tutorialGroupId: number, sessionId: number, options?: import('./request-options').RequestOptions): Observable<void> {
         const url = `${this.basePath}/api/tutorialgroup/courses/${courseId}/tutorial-groups/${tutorialGroupId}/sessions/${sessionId}`;
-        return this.http.delete<void>(url);
+        return this.http.delete<void>(url, options && { ...(options.context !== undefined && { context: options.context }), ...(options.headers !== undefined && { headers: options.headers }) });
     }
 
     /**
@@ -83,10 +87,11 @@ export class TutorialGroupSessionApi {
      * @param tutorialGroupId
      * @param sessionId
      * @param createOrUpdateTutorialGroupSessionRequest
+     * @param options the HttpContext and extra headers of this request; a declared header parameter overrides a header of the same name
      */
-    updateSession(courseId: number, tutorialGroupId: number, sessionId: number, createOrUpdateTutorialGroupSessionRequest: CreateOrUpdateTutorialGroupSessionRequest): Observable<TutorialGroupSession> {
+    updateSession(courseId: number, tutorialGroupId: number, sessionId: number, createOrUpdateTutorialGroupSessionRequest: CreateOrUpdateTutorialGroupSessionRequest, options?: import('./request-options').RequestOptions): Observable<TutorialGroupSession> {
         const url = `${this.basePath}/api/tutorialgroup/courses/${courseId}/tutorial-groups/${tutorialGroupId}/sessions/${sessionId}`;
-        return this.http.put<TutorialGroupSession>(url, createOrUpdateTutorialGroupSessionRequest);
+        return this.http.put<TutorialGroupSession>(url, createOrUpdateTutorialGroupSessionRequest, options && { ...(options.context !== undefined && { context: options.context }), ...(options.headers !== undefined && { headers: options.headers }) });
     }
 
 }

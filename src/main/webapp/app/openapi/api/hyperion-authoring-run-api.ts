@@ -28,10 +28,11 @@ export class HyperionAuthoringRunApi {
      *
      *
      * @param requestBody
+     * @param options the HttpContext and extra headers of this request; a declared header parameter overrides a header of the same name
      */
-    checkAuthoringRunAccess(requestBody: Array<string>): Observable<Array<string>> {
+    checkAuthoringRunAccess(requestBody: Array<string>, options?: import('./request-options').RequestOptions): Observable<Array<string>> {
         const url = `${this.basePath}/api/hyperion/authoring-runs/access`;
-        return this.http.post<Array<string>>(url, requestBody);
+        return this.http.post<Array<string>>(url, requestBody, options && { ...(options.context !== undefined && { context: options.context }), ...(options.headers !== undefined && { headers: options.headers }) });
     }
 
     /**
@@ -39,24 +40,26 @@ export class HyperionAuthoringRunApi {
      *
      * @param exerciseId
      * @param runId
+     * @param options the HttpContext and extra headers of this request; a declared header parameter overrides a header of the same name
      */
-    getAuthoringRunStatus(exerciseId: number, runId: string): Observable<ExerciseGenerationStatus> {
+    getAuthoringRunStatus(exerciseId: number, runId: string, options?: import('./request-options').RequestOptions): Observable<ExerciseGenerationStatus> {
         const runIdPath = encodeURIComponent(String(runId));
         const url = `${this.basePath}/api/hyperion/programming-exercises/${exerciseId}/generation/runs/${runIdPath}`;
-        return this.http.get<ExerciseGenerationStatus>(url);
+        return this.http.get<ExerciseGenerationStatus>(url, options && { ...(options.context !== undefined && { context: options.context }), ...(options.headers !== undefined && { headers: options.headers }) });
     }
 
     /**
      *
      *
      * @param beforeId
+     * @param options the HttpContext and extra headers of this request; a declared header parameter overrides a header of the same name
      */
-    getAuthoringRuns(beforeId?: number): Observable<AuthoringRunPage> {
+    getAuthoringRuns(beforeId?: number, options?: import('./request-options').RequestOptions): Observable<AuthoringRunPage> {
         const queryParams = new URLSearchParams();
         appendQueryParam(queryParams, 'beforeId', beforeId);
         const queryString = queryParams.toString();
         const url = `${this.basePath}/api/hyperion/authoring-runs${queryString ? `?${queryString}` : ''}`;
-        return this.http.get<AuthoringRunPage>(url);
+        return this.http.get<AuthoringRunPage>(url, options && { ...(options.context !== undefined && { context: options.context }), ...(options.headers !== undefined && { headers: options.headers }) });
     }
 
 }

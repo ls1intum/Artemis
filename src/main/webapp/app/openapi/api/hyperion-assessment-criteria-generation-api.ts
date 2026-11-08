@@ -28,10 +28,11 @@ export class HyperionAssessmentCriteriaGenerationApi {
      *
      * @param courseId
      * @param assessmentCriteriaGenerationRequest
+     * @param options the HttpContext and extra headers of this request; a declared header parameter overrides a header of the same name
      */
-    generateAssessmentCriteria(courseId: number, assessmentCriteriaGenerationRequest: AssessmentCriteriaGenerationRequest): Observable<AssessmentCriteriaGenerationResponse> {
+    generateAssessmentCriteria(courseId: number, assessmentCriteriaGenerationRequest: AssessmentCriteriaGenerationRequest, options?: import('./request-options').RequestOptions): Observable<AssessmentCriteriaGenerationResponse> {
         const url = `${this.basePath}/api/hyperion/courses/${courseId}/assessment-criteria/generate`;
-        return this.http.post<AssessmentCriteriaGenerationResponse>(url, assessmentCriteriaGenerationRequest);
+        return this.http.post<AssessmentCriteriaGenerationResponse>(url, assessmentCriteriaGenerationRequest, options && { ...(options.context !== undefined && { context: options.context }), ...(options.headers !== undefined && { headers: options.headers }) });
     }
 
 }
