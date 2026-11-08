@@ -87,7 +87,8 @@ class ContractWitnessAuthor {
             return List.of();
         }
         String userPrompt = "APPROVED SPECIFICATION CONTRACT (sole authority for a rule):\n" + witnessContract(specificationContract) + "\n\nAUTHORITATIVE TEMPLATE OWNERSHIP:\n"
-                + renderTemplateOwnership(templateStatuses) + "\n\nPROBE PACKAGE DECLARATIONS (names only):\n" + packageDeclarations(testSources);
+                + renderTemplateOwnership(templateStatuses) + "\n\nSERVER-OWNED PROBE COMPILATION CONTEXT:\n" + ContractWitnessProbe.compilationContext()
+                + "\n\nPROBE PACKAGE DECLARATIONS (names only):\n" + packageDeclarations(testSources);
         String response = Objects.requireNonNullElse(reviewer.call(CONTRACT_WITNESS_SYSTEM_PROMPT_TEMPLATE, userPrompt, usageSink, cancelled, CONTRACT_WITNESS_MAX_OUTPUT_TOKENS),
                 "");
         List<ContractWitness> witnesses = parseContractWitnesses(response, specificationContract, testSources);
@@ -125,8 +126,9 @@ class ContractWitnessAuthor {
                 + "Include any required leading import declarations, or use fully qualified names. The server retains the original rule and wrongBehavior if omitted. Do not change exercise files, the rule, or expected behavior to make a failing test pass. "
                 + "No test executed in these rejected proposals. Each repair will be compiled and executed again; return an empty witnesses array when uncertain.\n\n"
                 + "APPROVED SPECIFICATION:\n" + witnessContract(specification) + "\n\nAUTHORITATIVE TEMPLATE OWNERSHIP:\n"
-                + renderTemplateOwnership(SpecFidelityCritic.designTemplateStatuses(specification)) + "\n\nPROBE PACKAGE DECLARATIONS (names only):\n"
-                + packageDeclarations(solutionSources) + "\n\nUNEXECUTED PROPOSALS AND COMPILER DIAGNOSTICS:\n" + failedSources;
+                + renderTemplateOwnership(SpecFidelityCritic.designTemplateStatuses(specification)) + "\n\nSERVER-OWNED PROBE COMPILATION CONTEXT:\n"
+                + ContractWitnessProbe.compilationContext() + "\n\nPROBE PACKAGE DECLARATIONS (names only):\n" + packageDeclarations(solutionSources)
+                + "\n\nUNEXECUTED PROPOSALS AND COMPILER DIAGNOSTICS:\n" + failedSources;
         String response = reviewer.call(CONTRACT_WITNESS_SYSTEM_PROMPT_TEMPLATE, prompt, usageSink, cancelled, CONTRACT_WITNESS_MAX_OUTPUT_TOKENS);
         Map<String, ContractWitness> originals = new java.util.LinkedHashMap<>();
         failures.forEach(outcome -> originals.putIfAbsent(outcome.witness().testName(), outcome.witness()));

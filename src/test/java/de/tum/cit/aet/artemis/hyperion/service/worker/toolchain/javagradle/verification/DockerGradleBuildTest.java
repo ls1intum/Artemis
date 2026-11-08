@@ -142,6 +142,31 @@ class DockerGradleBuildTest {
     }
 
     @Test
+    void theCompilerContextGivenToReviewersExecutesWithTheRealAresHarness() throws IOException {
+        String session = sandbox.createSession();
+        var seed = workspace.seedWorkspace(sandbox, session, exercise, Mode.ADAPT, probeSnapshot(), true);
+        String context = ContractWitnessProbe.compilationContext();
+        String source = "package de.tum.cit.aet.reference;\n" + context.substring(0, context.lastIndexOf('}')) + """
+                    @Test
+                    @StrictTimeout(1)
+                    void checksTheAdvertisedApi() {
+                        assertNotNull(getClazz("de.tum.cit.aet.reference.ScoreCalculator"));
+                        assertEquals(1, ScoreCalculator.countPassing(new int[] {150}));
+                    }
+                }
+                """;
+        String path = "test/de/tum/cit/aet/reference/" + ContractWitnessProbe.PROBE_CLASS_NAME + ".java";
+        sandbox.copyIn(session, "/workspace", WorkspaceArchive.buildWorkspaceTarStream(ContractWitnessProbe.workspaceOverlay(seed.testsSeedSnapshot(), path, source), Map.of()));
+        sandbox.copyIn(session, SandboxBuildCommands.PRISTINE_VERIFY_DIR,
+                WorkspaceArchive.buildWorkspaceTarStream(Map.of(SandboxBuildCommands.VERIFY_SCRIPT_NAME, commands.verifyScriptContent(exercise)), Map.of()));
+
+        BuildSummary result = build(session, "solution");
+
+        assertThat(result.exitCode()).as(result.buildDiagnostic()).isZero();
+        assertThat(result.testNames()).contains("checksTheAdvertisedApi");
+    }
+
+    @Test
     void contractWitnessRunsUnderAresAndRestoresTheCandidatePolicy() throws IOException {
         String session = sandbox.createSession();
         var seed = workspace.seedWorkspace(sandbox, session, exercise, Mode.ADAPT, probeSnapshot(), true);

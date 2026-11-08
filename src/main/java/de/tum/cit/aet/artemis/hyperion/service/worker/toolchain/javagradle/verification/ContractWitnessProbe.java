@@ -27,6 +27,22 @@ public final class ContractWitnessProbe {
 
     private static final Pattern METHOD_DECLARATION = Pattern.compile("\\bvoid\\s+([a-zA-Z_$][a-zA-Z\\d_$]*)\\s*\\(");
 
+    private static final List<String> PROBE_IMPORTS = List.of("import org.junit.jupiter.api.Test;", "import static org.junit.jupiter.api.Assertions.*;",
+            "import static de.tum.cit.ase.ares.api.util.ReflectionTestUtils.*;", "import de.tum.cit.ase.ares.api.StrictTimeout;");
+
+    private static final String PROBE_CLASS_HEADER = "@de.tum.cit.ase.ares.api.jupiter.Public\n" + "@de.tum.cit.ase.ares.api.Policy(value = \"SecurityPolicy.yaml\")\n"
+            + "@de.tum.cit.ase.ares.api.StrictTimeout(" + JavaSourceInspector.MAX_STRICT_TIMEOUT_SECONDS + ")\n"
+            + "@org.junit.jupiter.api.DisplayNameGeneration(org.junit.jupiter.api.DisplayNameGenerator.Simple.class)\nclass " + PROBE_CLASS_NAME + " {\n";
+
+    /**
+     * The actual server-owned compiler context, shared by initial design, compiler repair and execution rather than inferred from candidate tests.
+     *
+     * @return the trusted imports and annotated probe-class skeleton, without candidate implementation or grader bodies
+     */
+    public static String compilationContext() {
+        return String.join("\n", PROBE_IMPORTS) + "\n\n" + PROBE_CLASS_HEADER + "    // Supply one @Test method; these imports and class annotations already exist.\n}\n";
+    }
+
     private ContractWitnessProbe() {
     }
 
@@ -47,16 +63,12 @@ public final class ContractWitnessProbe {
         if (packageMatcher.find()) {
             source.append(packageMatcher.group().strip()).append("\n\n");
         }
-        Set<String> imports = new LinkedHashSet<>(List.of("import org.junit.jupiter.api.Test;", "import static org.junit.jupiter.api.Assertions.*;",
-                "import static de.tum.cit.ase.ares.api.util.ReflectionTestUtils.*;", "import de.tum.cit.ase.ares.api.StrictTimeout;"));
+        Set<String> imports = new LinkedHashSet<>(PROBE_IMPORTS);
         List<ProbeFragment> fragments = witnesses.stream().map(witness -> splitFragment(witness.code())).toList();
         fragments.forEach(fragment -> imports.addAll(fragment.imports()));
         imports.forEach(declaration -> source.append(declaration).append("\n"));
         source.append("\n");
-        source.append("@de.tum.cit.ase.ares.api.jupiter.Public\n").append("@de.tum.cit.ase.ares.api.Policy(value = \"SecurityPolicy.yaml\")\n")
-                .append("@de.tum.cit.ase.ares.api.StrictTimeout(").append(JavaSourceInspector.MAX_STRICT_TIMEOUT_SECONDS).append(")\n")
-                .append("@org.junit.jupiter.api.DisplayNameGeneration(org.junit.jupiter.api.DisplayNameGenerator.Simple.class)\n").append("class ").append(PROBE_CLASS_NAME)
-                .append(" {\n");
+        source.append(PROBE_CLASS_HEADER);
         for (ProbeFragment fragment : fragments) {
             source.append("\n").append(fragment.method().strip().indent(4));
         }

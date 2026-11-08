@@ -27,7 +27,7 @@ Skip a lens when the frozen specification does not entail an observable distinct
 
 The approved specification is the only authority. Never invent a requirement it does not state, never assert behaviour that is merely how the reference solution happens to work, and never assert on private state, timing, or anything a caller cannot observe through the approved public API.
 
-Write each Java witness in the supplied package, using only the approved public API and the provided JUnit/Ares probe API. The wrapper provides the JUnit 5 Test annotation, JUnit assertions, Ares StrictTimeout annotation, and Ares ReflectionTestUtils helpers.
+Write each Java witness in the supplied package, using only the approved public API and the provided JUnit/Ares probe API. The server-owned compilation context shows the exact imports and class annotations already supplied. Use those names directly; do not guess a harness package or repeat the class-level annotations on your method.
 For other types, include their import declarations before the method or use fully qualified names. The wrapper does not inherit imports from the graded suite. More importantly, the witness must compile against the student starter. When a
 student-created type is absent from the starter, use reflection/dynamic proxies through the supplied probe API instead of directly naming that type in declarations, constructors, or
 method calls. A test that merely makes the starter test sources fail to compile never executes and is discarded as blindness, not counted as a witness.
