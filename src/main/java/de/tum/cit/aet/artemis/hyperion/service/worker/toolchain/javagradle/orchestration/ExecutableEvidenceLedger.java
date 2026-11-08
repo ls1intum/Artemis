@@ -425,27 +425,27 @@ final class ExecutableEvidenceLedger {
             return initial;
         }
         emitter.accept("Repairing standalone probe compilation from compiler feedback; exercise files and prior executed evidence stay unchanged.");
-        Map<String, ContractWitness> repairs;
         try {
-            repairs = specFidelityCritic.repairProbeCompilation(specification, GenerationReviewSupport.renderArtifactSources(solution), failures, usageSink, cancelled).stream()
+            Map<String, ContractWitness> repairs = specFidelityCritic
+                    .repairProbeCompilation(specification, GenerationReviewSupport.renderArtifactSources(solution), failures, usageSink, cancelled).stream()
                     .collect(Collectors.toMap(ContractWitness::testName, witness -> witness));
+            List<SemanticMutant> corrected = initial.stream().filter(outcome -> outcome.disposition() == Disposition.INCONCLUSIVE
+                    && ContractWitnessProbe.hasCompilationFailure(outcome.diagnostic()) && repairs.containsKey(outcome.mutant().counterexample().testName())).map(outcome -> {
+                        SemanticMutant original = outcome.mutant();
+                        return new SemanticMutant(original.ruleId(), original.solutionPath(), original.originalSolutionSource(), original.mutantSource(),
+                                repairs.get(original.counterexample().testName()), original.reviewTarget(), original.evidence());
+                    }).toList();
+            if (corrected.isEmpty() || cancelled.getAsBoolean()) {
+                return initial;
+            }
+            Map<String, SemanticMutantOutcome> rechecked = verifier.evaluateSemanticMutants(sandbox, sessionId, exercise, tests, solution, structural, corrected, restore).stream()
+                    .collect(Collectors.toMap(outcome -> outcome.mutant().counterexample().testName(), outcome -> outcome));
+            return initial.stream().map(outcome -> rechecked.getOrDefault(outcome.mutant().counterexample().testName(), outcome)).toList();
         }
         catch (RuntimeException error) {
             retainUnadjudicated(initial, List.of());
             throw error;
         }
-        List<SemanticMutant> corrected = initial.stream().filter(outcome -> outcome.disposition() == Disposition.INCONCLUSIVE
-                && ContractWitnessProbe.hasCompilationFailure(outcome.diagnostic()) && repairs.containsKey(outcome.mutant().counterexample().testName())).map(outcome -> {
-                    SemanticMutant original = outcome.mutant();
-                    return new SemanticMutant(original.ruleId(), original.solutionPath(), original.originalSolutionSource(), original.mutantSource(),
-                            repairs.get(original.counterexample().testName()), original.reviewTarget(), original.evidence());
-                }).toList();
-        if (corrected.isEmpty() || cancelled.getAsBoolean()) {
-            return initial;
-        }
-        Map<String, SemanticMutantOutcome> rechecked = verifier.evaluateSemanticMutants(sandbox, sessionId, exercise, tests, solution, structural, corrected, restore).stream()
-                .collect(Collectors.toMap(outcome -> outcome.mutant().counterexample().testName(), outcome -> outcome));
-        return initial.stream().map(outcome -> rechecked.getOrDefault(outcome.mutant().counterexample().testName(), outcome)).toList();
     }
 
     private List<ContractWitnessOutcome> repairWitnessCompilation(List<ContractWitnessOutcome> initial, Set<String> retainedNames, String specification, Map<String, String> tests,
@@ -456,20 +456,20 @@ final class ExecutableEvidenceLedger {
             return initial;
         }
         emitter.accept("Repairing standalone witness compilation from compiler feedback; previously executed witnesses are not rewritten.");
-        List<ContractWitness> corrected;
         try {
-            corrected = specFidelityCritic.repairProbeCompilation(specification, GenerationReviewSupport.renderArtifactSources(solution), failures, usageSink, cancelled);
+            List<ContractWitness> corrected = specFidelityCritic.repairProbeCompilation(specification, GenerationReviewSupport.renderArtifactSources(solution), failures, usageSink,
+                    cancelled);
+            if (corrected.isEmpty() || cancelled.getAsBoolean()) {
+                return initial;
+            }
+            Map<String, ContractWitnessOutcome> rechecked = verifier.evaluateContractWitnesses(sandbox, sessionId, exercise, tests, structural, corrected, restore).stream()
+                    .collect(Collectors.toMap(outcome -> outcome.witness().testName(), outcome -> outcome));
+            return initial.stream().map(outcome -> rechecked.getOrDefault(outcome.witness().testName(), outcome)).toList();
         }
         catch (RuntimeException error) {
             retainUnadjudicated(List.of(), initial);
             throw error;
         }
-        if (corrected.isEmpty() || cancelled.getAsBoolean()) {
-            return initial;
-        }
-        Map<String, ContractWitnessOutcome> rechecked = verifier.evaluateContractWitnesses(sandbox, sessionId, exercise, tests, structural, corrected, restore).stream()
-                .collect(Collectors.toMap(outcome -> outcome.witness().testName(), outcome -> outcome));
-        return initial.stream().map(outcome -> rechecked.getOrDefault(outcome.witness().testName(), outcome)).toList();
     }
 
     /**

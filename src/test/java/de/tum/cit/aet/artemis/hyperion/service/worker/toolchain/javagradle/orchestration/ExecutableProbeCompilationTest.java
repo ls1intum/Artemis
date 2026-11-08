@@ -107,15 +107,23 @@ class ExecutableProbeCompilationTest {
         verify(critic, never()).repairProbeCompilation(anyString(), anyString(), anyList(), any(), any());
     }
 
-    @Test
-    void aFailedCompilerFeedbackCallRetainsOtherExecutedReferenceFailures() {
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(booleans = { false, true })
+    void interruptedCompilerFeedbackRetainsOtherExecutedReferenceFailures(boolean buildFailure) {
         var witness = new ContractWitness("R2", "keepsRequests", "@Test void keepsRequests() { fail(); }", "drops a request");
         var referenceFailure = new SemanticMutant("R2", MUTANT.solutionPath(), MUTANT.originalSolutionSource(), MUTANT.mutantSource(), witness);
         when(critic.authorSemanticMutants(anyString(), anyMap(), anyList(), anyList(), any(), any())).thenReturn(List.of(MUTANT, referenceFailure));
         when(verifier.evaluateSemanticMutants(any(), anyString(), any(), anyMap(), anyMap(), any(), eq(List.of(MUTANT, referenceFailure)), any()))
                 .thenReturn(List.of(new SemanticMutantOutcome(MUTANT, Disposition.INCONCLUSIVE, DIAGNOSTIC),
                         new SemanticMutantOutcome(referenceFailure, Disposition.REFERENCE_TEST_FAILED, "request missing")));
-        when(critic.repairProbeCompilation(anyString(), anyString(), anyList(), any(), any())).thenThrow(new IllegalStateException("Provider unavailable"));
+        if (buildFailure) {
+            when(critic.repairProbeCompilation(anyString(), anyString(), anyList(), any(), any())).thenReturn(List.of(REPAIRED));
+            when(verifier.evaluateSemanticMutants(any(), anyString(), any(), anyMap(), anyMap(), any(), eq(List.of(CORRECTED_MUTANT)), any()))
+                    .thenThrow(new IllegalStateException("Corrected probe lost its session"));
+        }
+        else {
+            when(critic.repairProbeCompilation(anyString(), anyString(), anyList(), any(), any())).thenThrow(new IllegalStateException("Provider unavailable"));
+        }
 
         assertThatThrownBy(this::review).isInstanceOf(IllegalStateException.class);
         var retained = ledger.withoutExecutableReview(SpecFidelityReport.empty());
@@ -138,6 +146,22 @@ class ExecutableProbeCompilationTest {
         assertThat(rechecked.hasBlockingFindings()).isTrue();
         assertThat(ledger.withoutExecutableReview(SpecFidelityReport.empty()).hasBlockingFindings()).isTrue();
         verify(critic, never()).repairProbeCompilation(anyString(), anyString(), anyList(), any(), any());
+    }
+
+    @Test
+    void anInterruptedCorrectedWitnessBuildRetainsOtherExecutedReferenceFailures() {
+        var failedReference = new ContractWitness("R2", "keepsRequests", "@Test void keepsRequests() { fail(); }", "drops a request");
+        when(critic.authorSemanticMutants(anyString(), anyMap(), anyList(), anyList(), any(), any())).thenReturn(List.of());
+        when(critic.authorContractWitnesses(anyString(), anyString(), anyString(), any(), any())).thenReturn(List.of(BROKEN, failedReference));
+        when(verifier.evaluateContractWitnesses(any(), anyString(), any(), anyMap(), any(), eq(List.of(BROKEN, failedReference)), any()))
+                .thenReturn(List.of(new ContractWitnessOutcome(BROKEN, ContractWitnessOutcome.Disposition.INCONCLUSIVE, DIAGNOSTIC),
+                        new ContractWitnessOutcome(failedReference, ContractWitnessOutcome.Disposition.REFERENCE_TEST_FAILED, "request missing")));
+        when(critic.repairProbeCompilation(anyString(), anyString(), anyList(), any(), any())).thenReturn(List.of(REPAIRED));
+        when(verifier.evaluateContractWitnesses(any(), anyString(), any(), anyMap(), any(), eq(List.of(REPAIRED)), any()))
+                .thenThrow(new IllegalStateException("Corrected probe lost its session"));
+
+        assertThatThrownBy(this::review).isInstanceOf(IllegalStateException.class);
+        assertThat(ledger.withoutExecutableReview(SpecFidelityReport.empty()).hasBlockingFindings()).isTrue();
     }
 
     @Test
