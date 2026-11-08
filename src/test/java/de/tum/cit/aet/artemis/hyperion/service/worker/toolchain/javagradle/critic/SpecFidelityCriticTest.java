@@ -28,6 +28,7 @@ import java.util.stream.Stream;
 import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
@@ -414,55 +415,55 @@ class SpecFidelityCriticTest {
                 "The bounded reconstruction behavior is deterministic and proportionate.", "Candidate 3");
     }
 
-    @Test
-    void conceptReviewCannotSelectACandidateThatPrematurelyRequiresAnImplementationConstruct() {
-        Map<Integer, String> candidates = Map.of(1, "Classify temperatures. The solution must rely on if-else statements (no switch).", 2,
-                "Reconcile overlapping fragments with a selected conflict policy.", 3, "Classify battery readings with explicit boundaries.");
-        SpecFidelityCritic.ConceptSelectionReview modelReview = new SpecFidelityCritic.ConceptSelectionReview(true, 1, List.of(), "Candidate 1 is selected.",
-                "The model accepted candidate 1.");
+    @ParameterizedTest
+    @CsvSource({
+            "Topic of the week: Java Streams API. Students practise pipelines over object collections.,Students must use a stream pipeline to filter records and answer collection questions.",
+            "The learning objective is recursion over trees. Students practise base cases and decomposition.,Students must implement recursive traversal and aggregation of tree nodes.",
+            "This week students practise Java switch expressions and case selection.,Students must use a switch expression to classify observations into distinct outcomes." })
+    void groundedConceptSelectionDoesNotDependOnMandateKeywordsInTheBrief(String brief, String concept) {
+        SpecFidelityCritic critic = criticReturning(rawResponse(groundedConceptSelectionResponse(false)));
+        var review = critic.reviewConceptCandidates(brief, conceptCandidates(concept, concept + " Alternative domain.", concept + " Another domain."), null, () -> false);
 
-        SpecFidelityCritic.ConceptSelectionReview review = SpecFidelityCritic.enforceExploratoryConcept("Practice comparisons and branching.", candidates, modelReview);
+        assertThat(review.complete()).isTrue();
+        assertThat(review.accepted()).isTrue();
+        assertThat(review.selectedCandidate()).isEqualTo(1);
+        assertThat(review.findings()).isEmpty();
+    }
+
+    @Test
+    void groundedPrematureContractClosureStillRejectsAConcept() {
+        SpecFidelityCritic critic = criticReturning(rawResponse(groundedConceptSelectionResponse(true)));
+        var review = critic.reviewConceptCandidates("Practice collection processing.",
+                conceptCandidates("The proposed technique replaces learner-owned reasoning with prescribed steps.",
+                        "The alternate concept fixes every algorithmic step before specification.", "The third concept leaves only transcription after its choices."),
+                null, () -> false);
 
         assertThat(review.complete()).isTrue();
         assertThat(review.accepted()).isFalse();
         assertThat(review.selectedCandidate()).isNull();
-        assertThat(review.findings()).singleElement().asString().contains("prematurely fixes an implementation construct", "if-else", "non-graded pedagogy");
-        assertThat(review.auditSummary()).contains("Server concept invariant: rejected selected candidate");
+        assertThat(review.findings()).isNotEmpty();
     }
 
-    @Test
-    void conceptReviewPreservesATechniqueExpressedAsTheLearningObjective() {
-        Map<Integer, String> candidates = Map.of(1, "Implement each method recursively.", 2, "Aggregate invoice totals.", 3, "Classify readings.");
-        SpecFidelityCritic.ConceptSelectionReview modelReview = new SpecFidelityCritic.ConceptSelectionReview(true, 1, List.of(),
-                "Candidate 1 directly preserves the instructor's recursion objective.", "The model accepted candidate 1.");
-
-        SpecFidelityCritic.ConceptSelectionReview review = SpecFidelityCritic.enforceExploratoryConcept(
-                "Create an intermediate Java exercise that teaches recursion. Students implement several recursive methods over numbers and strings.", candidates, modelReview);
-
-        assertThat(review).isEqualTo(modelReview);
-        assertThat(review.accepted()).isTrue();
-    }
-
-    /**
-     * The instructor's technique choice can reach the concept negated: on a Streams brief, banning explicit loops is how a concept states "use the Streams API". Comparing the
-     * construct families named by the brief against those named by the concept reads that ban as an iteration mandate the brief never made, and rejected the whole run. Whether
-     * the technique is the requested one is a brief-fit judgment, so the invariant asks only whether the brief fixed a technique at all.
-     */
-    @Test
-    void conceptReviewPreservesAnInstructorTechniqueStatedAsAProhibitionOfItsAlternative() {
-        Map<Integer, String> candidates = Map.of(1, "Aggregate sensor records through a pipeline. The solution must not use loops or external accumulators.", 2,
-                "Total invoice lines.", 3, "Classify readings.");
-        SpecFidelityCritic.ConceptSelectionReview modelReview = new SpecFidelityCritic.ConceptSelectionReview(true, 1, List.of(),
-                "Candidate 1 carries the requested Streams objective.", "The model accepted candidate 1.");
-
-        SpecFidelityCritic.ConceptSelectionReview review = SpecFidelityCritic.enforceExploratoryConcept(
-                "Create an intermediate Java exercise that teaches the Java Streams API and lambdas. Students filter, transform, and aggregate a small collection of records.",
-                candidates, modelReview);
-
-        assertThat(review).isEqualTo(modelReview);
-        assertThat(review.accepted()).isTrue();
-        // The same candidate under a brief that fixes no technique is still rejected, so the acceptance above is the brief's doing and not an undetected mandate.
-        assertThat(SpecFidelityCritic.enforceExploratoryConcept("Aggregate a small collection of records.", candidates, modelReview).accepted()).isFalse();
+    private static String groundedConceptSelectionResponse(boolean premature) {
+        String evaluation = """
+                {"candidate":%d,"candidateEvidenceIds":["C%d.2"],
+                 "briefCoverage":"The cited student work addresses the requested learning objective.",
+                 "objectiveCounterfactual":"The cited technique carries the learner-owned transformation rather than supplied plumbing.",
+                 "difficultyFit":"The student makes the relevant decisions at the requested level.",
+                 "smallestStudentImplementation":"The learner implements the cited transformation of the domain objects.",
+                 "reasoningAfterRoutineWork":"Selecting and combining the domain observations remains learner-owned.",
+                 "domainGrounding":"The domain objects supply the observations needed for the transformation.",
+                 "feasibility":"The bounded transformation fits the requested exercise effort.",
+                 "objectiveEssential":true,"briefCovered":true,"learningFitSufficient":%s,
+                 "learnerOwnsObjectiveMechanism":true,"objectiveObservable":true,"prematureContractClosure":%s,
+                 "difficultySufficient":true,"domainGrounded":true,"feasibleAndProportionate":true}
+                """;
+        List<String> evaluations = new ArrayList<>();
+        for (int candidate = 1; candidate <= 3; candidate++) {
+            evaluations.add(evaluation.formatted(candidate, candidate, !premature, premature));
+        }
+        return "{\"selectedCandidate\":" + (premature ? "null" : "1")
+                + ",\"selectionReason\":\"The grounded axis decisions determine whether the candidate fits.\",\"evaluations\":[" + String.join(",", evaluations) + "]}";
     }
 
     @Test
