@@ -26,12 +26,13 @@ import { CustomExerciseCategoryBadgeComponent } from 'app/exercise/exercise-cate
 import { CourseTitleBarActionsDirective } from 'app/course/shared/directives/course-title-bar-actions.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { FaqImportDialogComponent } from './import/faq-import-dialog.component';
-import { TumAetUiButtonComponent, TumAetUiEmptyStateComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonComponent, TumAetUiButtonDirective, TumAetUiEmptyStateComponent } from '@tumaet/ui-angular';
 @Component({
     selector: 'jhi-faq',
     templateUrl: './faq.component.html',
     styleUrls: [],
     imports: [
+        TumAetUiButtonDirective,
         CustomExerciseCategoryBadgeComponent,
         SearchFilterComponent,
         NgbDropdownModule,

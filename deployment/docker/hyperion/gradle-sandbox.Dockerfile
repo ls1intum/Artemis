@@ -5,7 +5,9 @@ FROM ${JAVA_IMAGE}
 
 ARG MAVEN_SHA512=831a8591fe20c8243b1dbe7d71e3244f31d1665b0804b2e825e38cbbe5ce0cafb8338851f90780735568773e0a6cd07bbec107cda0b896b008b861075358b6f6
 
-# Pinned Apache Maven 3.9.16 distribution: ADD verifies the SHA-256, the RUN verifies Apache's published SHA-512.
+# Pinned Apache Maven 3.9.16 distribution from Maven Central, whose CDN is faster and more reliable on CI runners than
+# archive.apache.org (EOF and TLS handshake timeouts). The base image has neither curl nor wget, so ADD fetches it.
+# ADD verifies the SHA-256, the RUN verifies Apache's published SHA-512.
 ADD --checksum=sha256:80ffca22aed9e8b9713a232f3394fd81d7f20322df75efdb2b047dbd3e3a23bb \
     https://repo.maven.apache.org/maven2/org/apache/maven/apache-maven/3.9.16/apache-maven-3.9.16-bin.tar.gz /tmp/maven.tar.gz
 RUN echo "${MAVEN_SHA512}  /tmp/maven.tar.gz" | sha512sum -c - \

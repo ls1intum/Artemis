@@ -218,14 +218,21 @@ describe('Exercise Groups Component', () => {
             comp.openImportModal(groups[0], exerciseType);
 
             // An exercise read from a file has no id
-            comp['onExerciseImported']({ id: undefined } as Exercise);
+            const fromFile = { id: undefined, type: exerciseType } as Exercise;
+            comp['onExerciseImported'](fromFile);
 
             expect(comp['exerciseImportVisible']()).toBe(false);
             expect(router.navigate).toHaveBeenCalledOnce();
-            expect(router.navigate).toHaveBeenCalledWith(
-                ['/course-management', 456, 'exams', 123, 'exercise-groups', 0, `${exerciseType}-exercises`, 'import-from-file'],
-                expect.anything(),
-            );
+            if (exerciseType === ExerciseType.PROGRAMMING) {
+                expect(router.navigate).toHaveBeenCalledWith(['/course-management', 456, 'exams', 123, 'exercise-groups', 0, 'programming-exercises', 'import-from-file'], {
+                    state: { programmingExerciseForImportFromFile: fromFile },
+                });
+            } else {
+                // The other types open the editor of a new exercise with the settings from the file.
+                expect(router.navigate).toHaveBeenCalledWith(['/course-management', 456, 'exams', 123, 'exercise-groups', 0, `${exerciseType}-exercises`, 'new'], {
+                    state: { exerciseForImportFromFile: fromFile },
+                });
+            }
         },
     );
 

@@ -27,7 +27,7 @@ set -Eeuo pipefail
 #   --help              Show this text.
 #
 # Environment (all optional): DOCS_SHOTS_SERVER_PORT (18080), DOCS_SHOTS_CLIENT_PORT (19000), DOCS_SHOTS_SSH_PORT (17921),
-# DOCS_SHOTS_DB_PORT (15432), SERVER_READY_TIMEOUT in seconds (900), PLAYWRIGHT_IMAGE.
+# DOCS_SHOTS_DB_PORT (15432), DOCS_SHOTS_DB_CONTAINER (docs-shots-pg, give each checkout that renders at the same time its own), SERVER_READY_TIMEOUT in seconds (900), PLAYWRIGHT_IMAGE.
 # Needs Docker, Java 25 (JAVA_HOME), Node 24 and pnpm, as described in the local setup guide.
 # =============================================================================
 
@@ -75,8 +75,8 @@ CLIENT_PORT="${DOCS_SHOTS_CLIENT_PORT:-19000}"
 SSH_PORT="${DOCS_SHOTS_SSH_PORT:-17921}"
 DB_PORT="${DOCS_SHOTS_DB_PORT:-15432}"
 READY_TIMEOUT="${SERVER_READY_TIMEOUT:-900}"
-PLAYWRIGHT_IMAGE="${PLAYWRIGHT_IMAGE:-mcr.microsoft.com/playwright:v1.64.1-noble}"
-DB_CONTAINER="docs-shots-pg"
+PLAYWRIGHT_IMAGE="${PLAYWRIGHT_IMAGE:-mcr.microsoft.com/playwright:v1.65.0-noble}"
+DB_CONTAINER="${DOCS_SHOTS_DB_CONTAINER:-docs-shots-pg}"
 STATE_DIR="$ROOT/build/docs-screenshots-stack"
 OUTPUT_DIR="build/docs-screenshots"
 mkdir -p "$STATE_DIR"

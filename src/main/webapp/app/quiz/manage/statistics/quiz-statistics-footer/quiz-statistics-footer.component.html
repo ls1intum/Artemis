@@ -3,7 +3,7 @@
         <div class="edit-quiz-footer-content row">
             <div class="form-group col-sm">
                 <div class="d-inline-block" ngbDropdown placement="top-right auto">
-                    <button type="button" class="btn btn-primary btn-sm" ngbDropdownToggle>
+                    <button type="button" tumAetUiButton severity="secondary" size="small" ngbDropdownToggle>
                         <fa-icon [icon]="farListAlt" />
                         <span class="hidden-xs hidden-sm" jhiTranslate="artemisApp.showStatistic.chooseStatistic"></span>
                         <span class="caret"></span>
@@ -158,9 +158,23 @@
             }
             <div class="form-group col-sm">
                 @if (quizExercise()) {
-                    <div class="btn-group flex-btn-group-container">
-                        <button type="button" (click)="previousStatistic()" jhiTranslate="artemisApp.showStatistic.previousStatistic" class="btn btn-default"></button>
-                        <button type="button" (click)="nextStatistic()" jhiTranslate="artemisApp.showStatistic.nextStatistic" class="btn btn-default"></button>
+                    <div class="flex flex-wrap gap-2">
+                        <button
+                            type="button"
+                            (click)="previousStatistic()"
+                            jhiTranslate="artemisApp.showStatistic.previousStatistic"
+                            tumAetUiButton
+                            severity="secondary"
+                            size="small"
+                        ></button>
+                        <button
+                            type="button"
+                            (click)="nextStatistic()"
+                            jhiTranslate="artemisApp.showStatistic.nextStatistic"
+                            tumAetUiButton
+                            severity="secondary"
+                            size="small"
+                        ></button>
                     </div>
                 }
             </div>

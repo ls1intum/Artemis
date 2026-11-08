@@ -40,6 +40,8 @@ export interface StudentResult {
     login: string;
     email: string;
     registrationNumber: string;
+    /** Actual score denominator of this test-exam attempt. Real exams use the exam maximum. */
+    maxPoints?: number;
     overallPointsAchieved?: number;
     overallScoreAchieved?: number;
     overallPointsAchievedInFirstCorrection?: number;
@@ -54,6 +56,8 @@ export interface StudentResult {
 
 /** Instantiated and/or deserialized from server data; fields are populated after construction, hence the definite-assignment (!) markers. */
 export class StudentExamWithGradeDTO {
+    /** Submitted automatic programming exercises whose build result is still pending. */
+    public pendingExerciseIds?: number[];
     public maxPoints!: number;
     public maxBonusPoints!: number;
     public gradeType?: GradeType;
@@ -169,6 +173,8 @@ export class AggregatedExerciseGroupResult {
     public maxPoints: number;
     public totalParticipants: number;
     public noOfParticipantsWithFilter = 0;
+    /** Only completed numeric exercise results contribute to the average denominator. */
+    public noOfScoredParticipantsWithFilter = 0;
     public totalPoints = 0;
     public averagePoints?: number;
     public averagePercentage?: number;
@@ -191,6 +197,8 @@ export class AggregatedExerciseResult {
     public exerciseType: ExerciseType;
     public totalParticipants: number;
     public noOfParticipantsWithFilter = 0;
+    /** Only completed numeric exercise results contribute to the average denominator. */
+    public noOfScoredParticipantsWithFilter = 0;
     public totalPoints = 0;
     public averagePoints?: number;
     public averagePercentage?: number;

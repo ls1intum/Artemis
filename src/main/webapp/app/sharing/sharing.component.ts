@@ -1,3 +1,4 @@
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute, Params, Router, RouterLink } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
@@ -26,7 +27,7 @@ import { finalize } from 'rxjs/operators';
     selector: 'jhi-sharing',
     templateUrl: './sharing.component.html',
     styleUrls: ['./sharing.scss'],
-    imports: [RouterLink, FormsModule, TranslateDirective, SortDirective, SortByDirective, FaIconComponent],
+    imports: [TumAetUiButtonDirective, RouterLink, FormsModule, TranslateDirective, SortDirective, SortByDirective, FaIconComponent],
 })
 export class SharingComponent implements OnInit {
     private route = inject(ActivatedRoute);

@@ -14,6 +14,7 @@ import { LiveQuizParticipationStatus } from 'app/quiz/shared/entities/quiz-exerc
 import { CourseSidebarToggleButtonComponent } from 'app/course/shared/course-sidebar-toggle-button/course-sidebar-toggle-button.component';
 import { QuizExerciseCountdownComponent } from 'app/exercise/exercise-headers/quiz-countdown/quiz-exercise-countdown.component';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
+import { ProgrammingBuildNotificationsComponent } from 'app/programming/overview/build-notifications/programming-build-notifications.component';
 
 /**
  * Width the title keeps for itself before the pills give way: the sidebar toggle plus enough of the exercise title to
@@ -56,6 +57,7 @@ export function pillsFitInTitleBar(barWidth: number, fixedContentWidth: number, 
         CourseSidebarToggleButtonComponent,
         QuizExerciseCountdownComponent,
         ExerciseHeadersInformationComponent,
+        ProgrammingBuildNotificationsComponent,
     ],
     styleUrl: './exercise-header.component.scss',
 })
