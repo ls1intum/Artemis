@@ -2,7 +2,7 @@
 id: intro
 title: General Information
 sidebar_label: General Information
-last_reviewed: 2026-11-05
+last_reviewed: 2026-11-06
 ---
 
 import Image, {ImageSize} from "../../../src/components/Image/Image";
@@ -40,8 +40,8 @@ The action bar groups participation, statistics and assessment navigation separa
 from editing and grading. **More actions** contains less frequent actions such as
 plagiarism checks, export and exercise download, where supported. Programming
 exercises keep **Version History** as a link beside the heading. Reset and delete
-controls are in **Exercise administration** at the bottom; their confirmations
-remain required.
+controls are in **Exercise administration** at the bottom, also reachable through the section navigation;
+their confirmations remain required. Programming exercises offer **Edit in editor** directly in the action bar.
 
 **Create Variant** is a yellow action for supported programming and quiz exercises.
 Its availability depends on your role and the server's Hyperion configuration; see
@@ -52,6 +52,22 @@ server's enabled features. On narrow screens, some action labels collapse to ico
 tooltips. The section links still scroll through the same visible details.
 
 <Image src={exerciseDetailsProgramming} alt="Programming exercise details with the exercise title, grouped actions and section links" size={ImageSize.large} caption="Exercise details group navigation and editing actions above the saved configuration" />
+
+## Moving an Exercise Between Courses
+
+The **Manage Exercises** dialog, which **Import** and **Export** on the course's exercise page open, moves exercises
+of every type the same way:
+
+- **Export**, which instructors see, offers the five exercise types. Pick one, then **Export** next to an exercise of
+  the course to download it as a ZIP file. The file holds the exercise settings, the problem statement with its
+  images, and whatever the type needs on top: the template, solution and test repositories of a programming exercise,
+  or the questions and drag-and-drop images of a quiz. Student submissions are not included. The **Exports** feature
+  toggle switches this off, see [Exports and archives](/instructor/course-management/exports#export-an-exercise).
+- **Import** offers the same five types. Pick one, then either choose an exercise from any course you can edit, or
+  switch to **From file** and upload a ZIP file that **Export** created, on this or another Artemis instance. The
+  exercise editor then opens with the settings from the file, without dates, so you can review them before you save.
+
+The exercise group page of an exam offers the same **Import** for each type.
 
 ## Telling Students About a Change
 

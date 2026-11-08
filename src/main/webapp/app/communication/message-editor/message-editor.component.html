@@ -212,11 +212,29 @@
                 {{ 'artemisApp.communication.formattedEditor.apply' | artemisTranslate }}
             </button>
             @if (editingLink()) {
-                <button data-testid="remove-message-link" type="button" tumAetUiButton variant="text" size="small" (click)="removeLink()">
+                <button
+                    severity="secondary"
+                    data-button-intent="utility"
+                    data-button-intent-reason="Removes link formatting while preserving the message text"
+                    data-testid="remove-message-link"
+                    type="button"
+                    tumAetUiButton
+                    variant="text"
+                    size="small"
+                    (click)="removeLink()"
+                >
                     {{ 'artemisApp.communication.formattedEditor.unlink' | artemisTranslate }}
                 </button>
             }
-            <button type="button" tumAetUiButton variant="text" size="small" (click)="closeLink()" [attr.aria-label]="'artemisApp.communication.cancel' | artemisTranslate">
+            <button
+                type="button"
+                tumAetUiButton
+                severity="secondary"
+                variant="text"
+                size="small"
+                (click)="closeLink()"
+                [attr.aria-label]="'artemisApp.communication.cancel' | artemisTranslate"
+            >
                 <fa-icon [icon]="icons.faXmark" />
             </button>
             @if (linkInvalid()) {
@@ -305,7 +323,7 @@
                 {{ 'artemisApp.communication.formattedEditor.loading' | artemisTranslate }}
             } @else if (searchFailed()) {
                 {{ 'artemisApp.communication.formattedEditor.searchError' | artemisTranslate }}
-                <button type="button" tumAetUiButton size="small" variant="text" (mousedown)="$event.preventDefault()" (click)="refreshSuggestions()">
+                <button type="button" tumAetUiButton severity="secondary" size="small" variant="text" (mousedown)="$event.preventDefault()" (click)="refreshSuggestions()">
                     {{ 'artemisApp.communication.formattedEditor.retry' | artemisTranslate }}
                 </button>
             } @else if (!suggestions().length) {

@@ -35,11 +35,6 @@
                             [allowOnlineIde]="false"
                             [repositoryUri]="status.participation!.repositoryUri!"
                             [repositoryViewLink]="['.', 'repository', panel.repositoryType]"
-                            [repositoryEditorLink]="
-                                exercise.isAtLeastEditor && data.editorBaseResource && status.participation?.id
-                                    ? [data.editorBaseResource, 'code-editor', panel.repositoryType, status.participation!.id!]
-                                    : undefined
-                            "
                             [exerciseId]="exercise.id"
                             [vcsAccessTokenSourceInfo]="{ returnedTokenType: 'repository-token', repositoryType: panel.repositoryType }"
                         />

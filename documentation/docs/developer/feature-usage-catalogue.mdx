@@ -22,7 +22,7 @@ system, and neither of the last two counts as use. The interaction follows from 
 `@UsageInteraction` overrides it; every override is listed at the end. See
 [Feature Usage Analysis](/developer/feature-usage) for how the tracking works.
 
-Currently 20 product areas, 153 features, 1159 REST endpoints in 29 modules, and 65 interaction overrides.
+Currently 20 product areas, 153 features, 1167 REST endpoints in 29 modules, and 65 interaction overrides.
 
 ## Courses
 
@@ -260,7 +260,7 @@ Currently 20 product areas, 153 features, 1159 REST endpoints in 29 modules, and
 
 | Module | Resource | Actions | Views | Automatic | System |
 |--------|----------|--------:|------:|----------:|-------:|
-| assessment | `ResultResource` | 1 | 1 | 0 | 0 |
+| assessment | `ResultResource` | 1 | 2 | 0 | 0 |
 | core | `StatisticsResource` | 0 | 1 | 0 | 0 |
 
 ## Programming exercises
@@ -446,6 +446,7 @@ Also recorded outside REST by `LocalVCUsageTrackingService`.
 | modeling | `ApollonDiagramResource` | 3 | 2 | 1 | 0 |
 | quiz | `QuizExerciseCreationUpdateResource` | 3 | 0 | 0 | 0 |
 | quiz | `QuizExerciseDeletionResource` | 1 | 0 | 0 | 0 |
+| quiz | `QuizExerciseResource` | 0 | 1 | 0 | 0 |
 | quiz | `QuizExerciseRetrievalResource` | 0 | 5 | 0 | 0 |
 | quiz | `QuizSubmissionResource` | 0 | 1 | 0 | 0 |
 
@@ -486,7 +487,7 @@ Also recorded outside REST by `LocalVCUsageTrackingService`.
 | Module | Resource | Actions | Views | Automatic | System |
 |--------|----------|--------:|------:|----------:|-------:|
 | text | `TextExerciseCreationUpdateResource` | 3 | 0 | 0 | 0 |
-| text | `TextExerciseExportImportResource` | 2 | 0 | 0 | 0 |
+| text | `TextExerciseExportImportResource` | 2 | 1 | 0 | 0 |
 | text | `TextExerciseResource` | 1 | 4 | 0 | 0 |
 
 ### Modeling exercises
@@ -504,7 +505,7 @@ Also recorded outside REST by `LocalVCUsageTrackingService`.
 
 | Module | Resource | Actions | Views | Automatic | System |
 |--------|----------|--------:|------:|----------:|-------:|
-| modeling | `ModelingExerciseResource` | 6 | 3 | 0 | 0 |
+| modeling | `ModelingExerciseResource` | 6 | 4 | 0 | 0 |
 
 ### File upload exercises
 
@@ -521,7 +522,7 @@ Also recorded outside REST by `LocalVCUsageTrackingService`.
 
 | Module | Resource | Actions | Views | Automatic | System |
 |--------|----------|--------:|------:|----------:|-------:|
-| fileupload | `FileUploadExerciseResource` | 6 | 4 | 0 | 0 |
+| fileupload | `FileUploadExerciseResource` | 6 | 5 | 0 | 0 |
 
 ## Assessment and grading
 
@@ -694,7 +695,7 @@ Also recorded outside REST by `LocalVCUsageTrackingService`.
 |--------|----------|--------:|------:|----------:|-------:|
 | core | `FileResource` | 0 | 2 | 0 | 0 |
 | exam | `ExamRoomDistributionResource` | 0 | 1 | 0 | 0 |
-| exam | `ExamUserResource` | 1 | 1 | 0 | 0 |
+| exam | `ExamUserResource` | 2 | 1 | 0 | 0 |
 | exam | `StudentExamResource` | 1 | 0 | 0 | 0 |
 
 ### Exam conduction
@@ -703,7 +704,7 @@ Also recorded outside REST by `LocalVCUsageTrackingService`.
 
 | Module | Resource | Actions | Views | Automatic | System |
 |--------|----------|--------:|------:|----------:|-------:|
-| exam | `ExamResource` | 5 | 1 | 0 | 0 |
+| exam | `ExamResource` | 5 | 2 | 0 | 0 |
 | exam | `StudentExamConductionResource` | 1 | 0 | 0 | 0 |
 | exam | `StudentExamResource` | 7 | 5 | 0 | 0 |
 
@@ -804,6 +805,7 @@ Also recorded outside REST by `LocalVCUsageTrackingService`.
 | Module | Resource | Actions | Views | Automatic | System |
 |--------|----------|--------:|------:|----------:|-------:|
 | communication | `AnswerMessageResource` | 4 | 1 | 0 | 0 |
+| communication | `ConversationMentionResource` | 0 | 1 | 0 | 0 |
 | communication | `ConversationMessageResource` | 5 | 2 | 0 | 0 |
 | core | `FileResource` | 1 | 0 | 1 | 0 |
 | course | `CourseAccessResource` | 0 | 1 | 0 | 0 |

@@ -2,7 +2,7 @@
 id: write-code-and-tests
 title: Write the Exercise Code and Tests
 sidebar_label: Write the Exercise Code and Tests
-last_reviewed: 2026-11-05
+last_reviewed: 2026-11-06
 ---
 
 import Callout from "../../../../src/components/Callout/Callout";
@@ -120,8 +120,8 @@ cd tests || exit 1
 
 **Alternative 2: Edit in Browser**
 
-Select the exercise title in course management and scroll to **Repositories and builds**. Open **Code** in the
-**Template** or **Solution** panel, then choose **Edit in editor** to adapt that repository in the online editor.
+Select the exercise title in course management and choose **Edit in editor** in the action bar at the top.
+The online editor opens the template repository.
 This action requires Editor access. The editor lets you switch between the exercise's repositories.
 
 <Image src={instructorEditor} alt="Online editor on the template repository, with the tasks beside the code" size={ImageSize.large} caption="Editing the template repository" />
@@ -194,7 +194,7 @@ Values that were not set show as **Unset**. If a whole area is missing from a sn
 
 The problem statement is what students read, and it is *interactive*: when you bind a task to test cases, Artemis shows each student whether their latest submission passes that task, right inside the description. Getting these bindings right is what turns a wall of text into a checklist students can work through.
 
-Edit it either with **Edit** on the exercise, or with **Code → Edit in editor** in a repository panel to have it side by side with the code. Both editors synchronize in real time when several people work at once — see [Collaborative Editing](#collaborative-editing).
+Edit it either with **Edit** on the exercise, or with **Edit in editor** in the action bar to have it side by side with the code. Both editors synchronize in real time when several people work at once — see [Collaborative Editing](#collaborative-editing).
 
 The problem statement is Markdown, plus the two Artemis-specific constructs below.
 
@@ -272,6 +272,40 @@ Write test cases in the Test repository using language-specific frameworks:
 | 18  | MATLAB     | mpminstall      | -              | [matlab.unittest](https://www.mathworks.com/help/matlab/matlab-unit-test-framework.html) |
 | 19  | Ruby       | Gem             | Rake           | [minitest](https://docs.seattlerb.org/minitest/)                                         |
 | 20  | Dart       | pub             | built-in       | [package.test](https://dart.dev/tools/testing)                                           |
+
+### C Exercises with GCC
+
+The C **GCC** template ships its Python test framework in the test repository. `Tests.py` registers the classes in `tests/`, runs them through `testUtils/Tester.py`, and exports JUnit XML for Artemis. The default tests compile the C assignment, check its output, and repeat execution with address, undefined-behavior, and leak sanitizers.
+
+For a local run, use a checkout of trusted solution code. `Tests.py` executes the compiled assignment with your user's permissions; run student submissions in the configured isolated build environment instead.
+
+The runner expects the assignment in `../assignment` relative to the test directory. The build plan copies the test-controlled Makefile into that assignment checkout, preserving its source and include-directory settings. For a local run, reproduce this directory layout, use the exercise's build image or install GCC, GNU make, sanitizer runtimes and the Python dependencies from `requirements.txt`, then run `python3 Tests.py` from the test directory.
+
+Implement additional tests under `tests/` and register them in `Tests.py`. A test's prerequisites identify the tests that must pass before it can run. Keep names consistent with the grading configuration and problem statement. The generated test repository's README describes the supporting files and local layout.
+
+### C Exercises with FACT
+
+The C **FACT** project template uses Python to run tests against the student's C program. Its build has two stages: a test-controlled Makefile compiles the assignment with GCC, then `Tests.py` loads `exercise.yml`, runs the FACT tests, and exports a JUnit XML report. The build plan collects `test-reports/tests-results.xml` for grading.
+
+The test repository separates the runner from the test definitions:
+
+- `Makefile` defines the source files, compiler, and compiler flags. The supplied template builds `exercise.c` using C11 and warning flags. Artemis copies this file into the assignment directory before compiling.
+- `exercise.yml` selects the translation unit and declares each test's name, type, requirements, and options. The supplied compilation, structural, and input/output tests depend on one another, so a failed prerequisite can prevent subsequent tests from running.
+- `exercise_io.txt` supplies the input/output cases. The example also replaces variable initializations in the source to test several values.
+- `Tests.py` is the entry point. Add or adapt tests in the definition files rather than adding each test to the runner.
+
+The default FACT build image, `ls1tum/artemis-fact-minimal-docker:1.1.0`, supplies FACT and its compiler dependencies. If you configure a custom image, verify that it supplies these dependencies too; the standard C GCC image is intended for the separate GCC template.
+
+For a local run, put a disposable checkout of trusted solution code in `assignment/` beside the test checkout, so it is available at `../assignment` from the test directory. `Tests.py` executes the compiled assignment with your user's permissions; run student submissions in the configured isolated build environment instead. Save any custom assignment Makefile outside the disposable checkout before continuing: the copy command replaces it. In an environment with FACT and its compiler dependencies, run these commands from the test directory to reproduce the build's Makefile preparation and test execution:
+
+```sh
+cp Makefile ../assignment/Makefile
+python3 Tests.py
+```
+
+When changing the exercise, update the translation unit and Makefile together, keep the test names aligned with the problem statement and grading configuration, and verify both the solution and template builds. The separate C **GCC** template uses its own test setup; these instructions apply to FACT.
+
+The generated test repository includes a README with the file roles and run command. The [FACT documentation](https://fact.readthedocs.io/en/latest/) explains the available test types and definition syntax.
 
 Check the build plan results:
 

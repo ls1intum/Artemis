@@ -48,8 +48,8 @@ import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvid
 import de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap;
 import de.tum.cit.aet.artemis.localvc.service.BareGitRepositoryService;
 import de.tum.cit.aet.artemis.localvc.service.GitService;
+import de.tum.cit.aet.artemis.localvc.service.LocalVCPushProcessingService;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
-import de.tum.cit.aet.artemis.localvc.service.LocalVCServletService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.ProjectType;
@@ -134,7 +134,7 @@ public class SecurityFrameworkService {
 
     private final ResourceLoaderService resourceLoaderService;
 
-    private final Optional<LocalVCServletService> localVCServletService;
+    private final Optional<LocalVCPushProcessingService> localVCPushProcessingService;
 
     private final SolutionProgrammingExerciseParticipationRepository solutionParticipationRepository;
 
@@ -145,16 +145,17 @@ public class SecurityFrameworkService {
     private final DistributedDataProvider distributedDataProvider;
 
     public SecurityFrameworkService(GitService gitService, BareGitRepositoryService bareGitRepositoryService, TempFileUtilService tempFileUtilService,
-            ProgrammingExerciseBuildConfigRepository buildConfigRepository, ResourceLoaderService resourceLoaderService, Optional<LocalVCServletService> localVCServletService,
-            SolutionProgrammingExerciseParticipationRepository solutionParticipationRepository, ProgrammingSubmissionRepository programmingSubmissionRepository,
-            DistributedDataProvider distributedDataProvider, @Value("${artemis.version-control.default-branch:main}") String defaultBranch,
+            ProgrammingExerciseBuildConfigRepository buildConfigRepository, ResourceLoaderService resourceLoaderService,
+            Optional<LocalVCPushProcessingService> localVCPushProcessingService, SolutionProgrammingExerciseParticipationRepository solutionParticipationRepository,
+            ProgrammingSubmissionRepository programmingSubmissionRepository, DistributedDataProvider distributedDataProvider,
+            @Value("${artemis.version-control.default-branch:main}") String defaultBranch,
             @Value("${artemis.programming.security-framework.supported-versions:}") String[] configuredFrameworkVersions) {
         this.gitService = gitService;
         this.bareGitRepositoryService = bareGitRepositoryService;
         this.tempFileUtilService = tempFileUtilService;
         this.buildConfigRepository = buildConfigRepository;
         this.resourceLoaderService = resourceLoaderService;
-        this.localVCServletService = localVCServletService;
+        this.localVCPushProcessingService = localVCPushProcessingService;
         this.solutionParticipationRepository = solutionParticipationRepository;
         this.programmingSubmissionRepository = programmingSubmissionRepository;
         this.distributedDataProvider = distributedDataProvider;
@@ -498,7 +499,7 @@ public class SecurityFrameworkService {
             if (gitService.stageAllChanges(repository)) {
                 String trailers = "\n\n" + ACTION_TRAILER + action + (process ? "\n" + COMMIT_TRAILER : "");
                 String commitHash = gitService.commitStagedChanges(repository, commitMessage + trailers, user);
-                if (process && localVCServletService.isPresent()) {
+                if (process && localVCPushProcessingService.isPresent()) {
                     pendingProcessing().put(pendingProcessingKey(exercise, commitHash), commitHash);
                 }
                 gitService.pushCommitWithLease(repository, commitHash, branch, checkedOutHead);
@@ -532,9 +533,9 @@ public class SecurityFrameworkService {
      * repository, because it derives the exercise and the repository type from its location.
      */
     private void processPushToTestRepository(ProgrammingExercise exercise, LocalVCRepositoryUri testRepositoryUri, String branch, String commitHash, User user) {
-        localVCServletService.ifPresent(servletService -> {
+        localVCPushProcessingService.ifPresent(pushProcessingService -> {
             try (Repository serverRepository = bareGitRepositoryService.getBareRepository(testRepositoryUri, branch, false)) {
-                servletService.processNewPush(commitHash, serverRepository, user, Optional.empty(), Optional.empty(), Optional.empty());
+                pushProcessingService.processNewPush(commitHash, serverRepository, user, Optional.empty(), Optional.empty(), Optional.empty());
                 // Only now is the processing complete: the submission is saved, the results are marked as outdated and the builds are triggered.
                 pendingProcessing().remove(pendingProcessingKey(exercise, commitHash));
             }

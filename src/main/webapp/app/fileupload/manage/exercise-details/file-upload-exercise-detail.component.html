@@ -1,4 +1,4 @@
-<div class="mx-auto w-full max-w-7xl px-2 sm:px-4!">
+<div class="mx-auto w-full max-w-7xl -mt-2 px-0!">
     <div class="min-w-0">
         @if (fileUploadExercise(); as exercise) {
             <div>
@@ -19,11 +19,24 @@
                             <jhi-atlas-orchestration-trigger [exercise]="exercise" [showLabel]="true" />
                         }
                     </ng-template>
-                    <jhi-detail-overview-list [sections]="exerciseDetailSections()" [sectionActions]="{ 'artemisApp.exercise.sections.problem': competencyActions }" />
+                    <jhi-detail-overview-list
+                        [footerSection]="
+                            course() && exercise.isAtLeastInstructor ? { headline: 'artemisApp.exerciseDetail.administration', content: administrationActions } : undefined
+                        "
+                        [sections]="exerciseDetailSections()"
+                        [sectionActions]="{ 'artemisApp.exercise.sections.problem': competencyActions }"
+                    />
                 }
-                @if (course(); as courseValue) {
-                    <jhi-non-programming-exercise-detail-common-actions section="administration" [isExamExercise]="isExamExercise()" [course]="courseValue" [exercise]="exercise" />
-                }
+                <ng-template #administrationActions>
+                    @if (course(); as courseValue) {
+                        <jhi-non-programming-exercise-detail-common-actions
+                            section="administration"
+                            [isExamExercise]="isExamExercise()"
+                            [course]="courseValue"
+                            [exercise]="exercise"
+                        />
+                    }
+                </ng-template>
             </div>
         }
     </div>

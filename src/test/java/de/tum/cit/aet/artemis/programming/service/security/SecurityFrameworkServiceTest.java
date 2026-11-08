@@ -58,8 +58,8 @@ import de.tum.cit.aet.artemis.core.service.TempFileUtilService;
 import de.tum.cit.aet.artemis.core.service.distributed.local.LocalDataProviderService;
 import de.tum.cit.aet.artemis.localvc.service.BareGitRepositoryService;
 import de.tum.cit.aet.artemis.localvc.service.GitService;
+import de.tum.cit.aet.artemis.localvc.service.LocalVCPushProcessingService;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
-import de.tum.cit.aet.artemis.localvc.service.LocalVCServletService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
@@ -144,7 +144,7 @@ class SecurityFrameworkServiceTest {
 
     private ResourceLoaderService resourceLoaderService;
 
-    private LocalVCServletService localVCServletService;
+    private LocalVCPushProcessingService localVCPushProcessingService;
 
     private ProgrammingSubmissionTestRepository programmingSubmissionRepository;
 
@@ -212,7 +212,7 @@ class SecurityFrameworkServiceTest {
 
         resourceLoaderService = mock(ResourceLoaderService.class);
         when(resourceLoaderService.getResource(any(Path.class))).thenAnswer(call -> new FileSystemResource(MAIN_RESOURCES.resolve(call.getArgument(0, Path.class))));
-        localVCServletService = mock(LocalVCServletService.class);
+        localVCPushProcessingService = mock(LocalVCPushProcessingService.class);
         programmingSubmissionRepository = mock(ProgrammingSubmissionTestRepository.class);
         distributedDataProvider = new LocalDataProviderService();
 
@@ -227,7 +227,7 @@ class SecurityFrameworkServiceTest {
         SolutionProgrammingExerciseParticipationRepository solutionParticipationRepository = mock(SolutionProgrammingExerciseParticipationRepository.class);
         when(solutionParticipationRepository.findByProgrammingExerciseId(anyLong())).thenReturn(Optional.of(solutionParticipation));
         return new SecurityFrameworkService(gitService, bareGitRepositoryService, tempFileUtilService, buildConfigRepository, resourceLoaderService,
-                Optional.of(localVCServletService), solutionParticipationRepository, programmingSubmissionRepository, distributedDataProvider, "main", configuredVersions);
+                Optional.of(localVCPushProcessingService), solutionParticipationRepository, programmingSubmissionRepository, distributedDataProvider, "main", configuredVersions);
     }
 
     /**
@@ -452,7 +452,7 @@ class SecurityFrameworkServiceTest {
         assertThat(Files.readString(externalTest)).isEqualTo(externalContent);
         assertThat(outside.toFile().list()).containsExactly("OtherExerciseTest.java");
         assertThat(pushedHead()).isEqualTo(headBefore);
-        verifyNoInteractions(localVCServletService);
+        verifyNoInteractions(localVCPushProcessingService);
     }
 
     @Test
@@ -497,7 +497,7 @@ class SecurityFrameworkServiceTest {
 
         assertThat(pushedHead()).isEqualTo(headBefore);
         assertThat(readPushed(SecurityPolicyRepositoryFiles.POLICY_FILE_NAME)).contains(CUSTOM_POLICY);
-        verifyNoInteractions(localVCServletService);
+        verifyNoInteractions(localVCPushProcessingService);
     }
 
     private static void assertRejectedAsUnevaluable(ThrowingCallable call) {
@@ -636,13 +636,14 @@ class SecurityFrameworkServiceTest {
         securityFrameworkService.deactivate(exercise(ProgrammingLanguage.JAVA), user);
 
         String pushedHead = pushedHead();
-        verify(localVCServletService).processNewPush(eq(pushedHead), any(Repository.class), eq(user), eq(Optional.empty()), eq(Optional.empty()), eq(Optional.empty()));
+        verify(localVCPushProcessingService).processNewPush(eq(pushedHead), any(Repository.class), eq(user), eq(Optional.empty()), eq(Optional.empty()), eq(Optional.empty()));
     }
 
     @Test
     void aRetryResumesTheProcessingOfAChangeWhoseProcessingFailed() throws Exception {
         ProgrammingExercise exercise = exercise(ProgrammingLanguage.JAVA);
-        doThrow(new VersionControlException("Build trigger failed")).when(localVCServletService).processNewPush(anyString(), any(Repository.class), any(), any(), any(), any());
+        doThrow(new VersionControlException("Build trigger failed")).when(localVCPushProcessingService).processNewPush(anyString(), any(Repository.class), any(), any(), any(),
+                any());
 
         assertThatExceptionOfType(InternalServerErrorAlertException.class).isThrownBy(() -> securityFrameworkService.deactivate(exercise, user))
                 .matches(exception -> "securityFrameworkProcessingFailed".equals(exception.getErrorKey()));
@@ -650,12 +651,13 @@ class SecurityFrameworkServiceTest {
         assertThat(readPushed(SecurityPolicyRepositoryFiles.POLICY_FILE_NAME)).isEmpty();
 
         // The retry finds nothing left to change, but the pushed change has not been processed yet.
-        doNothing().when(localVCServletService).processNewPush(anyString(), any(Repository.class), any(), any(), any(), any());
+        doNothing().when(localVCPushProcessingService).processNewPush(anyString(), any(Repository.class), any(), any(), any(), any());
         SecurityFrameworkConfigDTO config = securityFrameworkService.deactivate(exercise, user);
 
         assertThat(config.status()).isEqualTo(SecurityActivationStatus.INACTIVE.name());
         assertThat(pushedHead()).isEqualTo(pushedHead);
-        verify(localVCServletService, times(2)).processNewPush(eq(pushedHead), any(Repository.class), eq(user), eq(Optional.empty()), eq(Optional.empty()), eq(Optional.empty()));
+        verify(localVCPushProcessingService, times(2)).processNewPush(eq(pushedHead), any(Repository.class), eq(user), eq(Optional.empty()), eq(Optional.empty()),
+                eq(Optional.empty()));
     }
 
     @Test
@@ -668,7 +670,7 @@ class SecurityFrameworkServiceTest {
         doAnswer(call -> {
             submittedCommits.add(call.getArgument(0, String.class));
             throw new VersionControlException("Build trigger failed");
-        }).when(localVCServletService).processNewPush(anyString(), any(Repository.class), any(), any(), any(), any());
+        }).when(localVCPushProcessingService).processNewPush(anyString(), any(Repository.class), any(), any(), any(), any());
 
         assertThatExceptionOfType(InternalServerErrorAlertException.class).isThrownBy(() -> securityFrameworkService.deactivate(exercise, user))
                 .matches(exception -> "securityFrameworkProcessingFailed".equals(exception.getErrorKey()));
@@ -676,13 +678,14 @@ class SecurityFrameworkServiceTest {
         assertThat(submittedCommits).containsExactly(pushedHead);
 
         // Although the submission exists, the processing did not complete, so the retry resumes it.
-        doNothing().when(localVCServletService).processNewPush(anyString(), any(Repository.class), any(), any(), any(), any());
+        doNothing().when(localVCPushProcessingService).processNewPush(anyString(), any(Repository.class), any(), any(), any(), any());
         securityFrameworkService.deactivate(exercise, user);
-        verify(localVCServletService, times(2)).processNewPush(eq(pushedHead), any(Repository.class), eq(user), eq(Optional.empty()), eq(Optional.empty()), eq(Optional.empty()));
+        verify(localVCPushProcessingService, times(2)).processNewPush(eq(pushedHead), any(Repository.class), eq(user), eq(Optional.empty()), eq(Optional.empty()),
+                eq(Optional.empty()));
 
         // Once the processing has completed, a further retry does not process the change again.
         securityFrameworkService.deactivate(exercise, user);
-        verify(localVCServletService, times(2)).processNewPush(anyString(), any(Repository.class), any(), any(), any(), any());
+        verify(localVCPushProcessingService, times(2)).processNewPush(anyString(), any(Repository.class), any(), any(), any(), any());
     }
 
     @Test
@@ -698,7 +701,7 @@ class SecurityFrameworkServiceTest {
                 throw new VersionControlException("Build trigger failed");
             }
             return null;
-        }).when(localVCServletService).processNewPush(anyString(), any(Repository.class), any(), any(), any(), any());
+        }).when(localVCPushProcessingService).processNewPush(anyString(), any(Repository.class), any(), any(), any(), any());
 
         // Instructor B checks out the repository. Before B pushes, instructor A pushes a change whose processing fails after saving the submission.
         afterNextCheckout = () -> assertThatExceptionOfType(InternalServerErrorAlertException.class).isThrownBy(() -> securityFrameworkService.deactivate(exercise, user))
@@ -713,8 +716,9 @@ class SecurityFrameworkServiceTest {
         // The rejected change of B has not replaced the pending entry of A, so the retry resumes the processing of A.
         failProcessing.set(false);
         securityFrameworkService.deactivate(exercise, user);
-        verify(localVCServletService, times(2)).processNewPush(eq(pushedHead), any(Repository.class), eq(user), eq(Optional.empty()), eq(Optional.empty()), eq(Optional.empty()));
-        verify(localVCServletService, times(2)).processNewPush(anyString(), any(Repository.class), any(), any(), any(), any());
+        verify(localVCPushProcessingService, times(2)).processNewPush(eq(pushedHead), any(Repository.class), eq(user), eq(Optional.empty()), eq(Optional.empty()),
+                eq(Optional.empty()));
+        verify(localVCPushProcessingService, times(2)).processNewPush(anyString(), any(Repository.class), any(), any(), any(), any());
     }
 
     @Test
@@ -725,7 +729,7 @@ class SecurityFrameworkServiceTest {
 
         securityFrameworkService.deactivate(exercise, user);
 
-        verify(localVCServletService, times(1)).processNewPush(anyString(), any(Repository.class), any(), any(), any(), any());
+        verify(localVCPushProcessingService, times(1)).processNewPush(anyString(), any(Repository.class), any(), any(), any(), any());
     }
 
     private String pushedHead() throws IOException {
@@ -738,7 +742,7 @@ class SecurityFrameworkServiceTest {
     void anUnchangedRepositoryIsNotProcessed() {
         securityFrameworkService.activate(exercise(ProgrammingLanguage.JAVA), "2.2.1", user);
 
-        verifyNoInteractions(localVCServletService);
+        verifyNoInteractions(localVCPushProcessingService);
     }
 
     private static final String SECOND_TEST_CLASS = TEST_CLASS.replace("SortingTest", "ClassTest");
@@ -888,7 +892,7 @@ class SecurityFrameworkServiceTest {
 
         securityFrameworkService.applyChoiceToImportedExercise(exercise, new SecurityFrameworkChoiceDTO(SecurityFrameworkAction.DEACTIVATE, null), user);
 
-        verifyNoInteractions(localVCServletService);
+        verifyNoInteractions(localVCPushProcessingService);
         try (Git git = Git.open(remote.toFile())) {
             String message = git.log().setMaxCount(1).call().iterator().next().getFullMessage();
             assertThat(message).contains("Security-Framework-Action: deactivate").doesNotContain("Changed-by: Artemis Security Framework");
@@ -896,7 +900,7 @@ class SecurityFrameworkServiceTest {
         assertThat(securityFrameworkService.getConfig(exercise).status()).isEqualTo(SecurityActivationStatus.INACTIVE.name());
         // A later action never mistakes the import commit for an unprocessed change.
         securityFrameworkService.deactivate(exercise, user);
-        verifyNoInteractions(localVCServletService);
+        verifyNoInteractions(localVCPushProcessingService);
 
         assertThat(securityFrameworkService.activate(exercise, "2.2.1", user).disabledTestClasses()).containsExactly("de.example.ClassTest");
     }

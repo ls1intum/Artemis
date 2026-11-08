@@ -19,6 +19,7 @@ import { MissingResultInformation, isAIResultAndIsBeingProcessed, isAthenaAIResu
 import { convertDateFromServer } from 'app/foundation/util/date.utils';
 import { ResultComponent } from '../result.component';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
+import { CourseScoreAccuracy } from 'app/foundation/util/utils';
 
 /**
  * A component that wraps the result component, updating its result on every websocket result event for the logged-in user.
@@ -37,6 +38,8 @@ export class UpdatingResultComponent implements OnInit, OnDestroy {
     private profileService = inject(ProfileService);
 
     readonly exercise = input<Exercise>(undefined!);
+    /** Forwarded to {@link ResultComponent.course}, for an exercise that carries no course. */
+    readonly course = input<CourseScoreAccuracy>();
     readonly participation = input<StudentParticipation>(undefined!);
     readonly short = input(true);
     readonly showUngradedResults = input(false);

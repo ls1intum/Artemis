@@ -200,11 +200,11 @@ class CourseStudentDataExportServiceCsvTest {
         var bonus = new BonusResultDTO(null, "Practice", 10.0, "0.3", null, "P+", null, null, null);
         var ada = new StudentResultDTO(1L, "Ada, \"L\"", "ada@example.org", "ada", "42", true, 75.0, 75.0, "P", "F", true, 70.0, bonus,
                 Map.of(1L, new ExerciseResultDTO(7L, "Solution, \"A\"", 50.0, 60.0, 30.0, true), 2L, new ExerciseResultDTO(8L, "Alternative", 50.0, 90.0, 45.0, true)),
-                PlagiarismVerdict.WARNING);
-        var missing = new StudentResultDTO(2L, "Missing", null, null, null, null, null, null, null, null, null, null, null, null, null);
+                PlagiarismVerdict.WARNING, null);
+        var missing = new StudentResultDTO(2L, "Missing", null, null, null, null, null, null, null, null, null, null, null, null, null, null);
         var emptyBonus = new BonusResultDTO(null, null, null, null, null, null, null, null, null);
         var noGrade = new StudentResultDTO(3L, "No grade", null, "third", null, false, 0.0, 0.0, "", null, false, null, emptyBonus,
-                Map.of(1L, new ExerciseResultDTO(7L, null, null, null, null, false)), null);
+                Map.of(1L, new ExerciseResultDTO(7L, null, null, null, null, false)), null, null);
         var groups = List.of(new ExerciseGroupDTO(1L, "First", 50.0, 3L, List.of()), new ExerciseGroupDTO(2L, "Second", 50.0, 3L, List.of()));
         var errors = new ArrayList<String>();
 
@@ -243,6 +243,58 @@ class CourseStudentDataExportServiceCsvTest {
         assertThat(csv.value("Average (Passed)", "Overall Points")).isEqualTo("60.0");
         assertThat(csv.value("Median", "Overall Points")).isEqualTo("40.0");
         assertThat(csv.value("Std Dev", "Overall Points")).isEqualTo("20.0");
+    }
+
+    @Test
+    void exportsAttemptMaximaAndAggregatesActualPercentagesWithoutCountingPendingAttempts() throws IOException {
+        var first = new StudentResultDTO(1L, "First", null, null, null, true, 8.4, 80.0, "P", null, true, null, null, Map.of(), null, 10.5);
+        var second = new StudentResultDTO(2L, "Second", null, null, null, true, 4.0, 20.0, "F", null, false, null, null, Map.of(), null, 20.0);
+        var pending = new StudentResultDTO(3L, "Pending", null, null, null, true, null, null, null, null, false, null, null, Map.of(), null, 15.0);
+        var errors = new ArrayList<String>();
+
+        var files = service.exportExamScoresFromData(exam("Practice", 100, false, List.of(), List.of(first, second, pending)), outputDirectory, errors, course);
+
+        assertThat(errors).isEmpty();
+        CsvData csv = readCsv(files.getFirst());
+        assertThat(csv.value("First", "Max Points")).isEqualTo("10.5");
+        assertThat(csv.value("Second", "Max Points")).isEqualTo("20.0");
+        assertThat(csv.value("Pending", "Overall Points")).isEmpty();
+        assertThat(csv.value("Pending", "Overall Score")).isEmpty();
+        assertThat(csv.value("Max", "Overall Points")).isEmpty();
+        assertThat(csv.value("Average (All)", "Overall Points")).isEqualTo("6.2");
+        assertThat(csv.value("Average (All)", "Overall Score")).isEqualTo("50.0");
+        assertThat(csv.value("Average (Submitted)", "Overall Score")).isEqualTo("50.0");
+        assertThat(csv.value("Average (Passed)", "Overall Score")).isEqualTo("80.0");
+        assertThat(csv.value("Median", "Overall Score")).isEqualTo("50.0");
+        assertThat(csv.value("Std Dev", "Overall Score")).isEqualTo("30.0");
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = { true, false })
+    void exportsUngradedAssignmentMetadataWithoutInventingPracticePoints(boolean practiceExam) throws IOException {
+        var groups = List.of(new ExerciseGroupDTO(1L, "Group", 20.0, 1L, List.of()));
+        var assignment = new ExerciseResultDTO(7L, "Manual essay", 20.0, null, null, true);
+        var student = new StudentResultDTO(1L, "Student", null, null, null, true, 0.0, 0.0, null, null, false, null, null, Map.of(1L, assignment), null, practiceExam ? 0.0 : null);
+        var errors = new ArrayList<String>();
+
+        var files = service.exportExamScoresFromData(exam("Exam", 100, false, groups, List.of(student)), outputDirectory, errors, course);
+
+        assertThat(errors).isEmpty();
+        var csv = readCsv(files.getFirst());
+        assertThat(csv.value("Student", "Group Exercise")).isEqualTo("Manual essay");
+        assertThat(csv.value("Student", "Group Points")).isEqualTo(practiceExam ? "" : "0.0");
+        assertThat(csv.value("Student", "Group Score")).isEqualTo(practiceExam ? "" : "0.0");
+    }
+
+    @Test
+    void exportsTheSharedAutomaticMaximumForUniformTestAttempts() throws IOException {
+        var student = new StudentResultDTO(1L, "First", null, null, null, true, 8.4, 80.0, null, null, false, null, null, Map.of(), null, 10.5);
+        var errors = new ArrayList<String>();
+        var files = service.exportExamScoresFromData(exam("Practice", 100, false, List.of(), List.of(student)), outputDirectory, errors, course);
+        assertThat(errors).isEmpty();
+        CsvData csv = readCsv(files.getFirst());
+        assertThat(csv.value("Max", "Overall Points")).isEqualTo("10.5");
+        assertThat(csv.value("Average (All)", "Overall Score")).isEqualTo("80.0");
     }
 
     @ParameterizedTest
@@ -295,6 +347,46 @@ class CourseStudentDataExportServiceCsvTest {
         assertThat(csv.rows()).contains(List.of("GRADE", "P", "50.0", "100.0", "true", "4", "57.1"), List.of("GRADE", "F", "0.0", "50.0", "false", "1", "14.3"),
                 List.of("INTERVAL", "0-10%", "0", "10", "", "3", "42.9"), List.of("INTERVAL", "10-20%", "10", "20", "", "1", "14.3"),
                 List.of("INTERVAL", "90-100%", "90", "100", "", "3", "42.9"));
+    }
+
+    @Test
+    void excludesUnscoredTestAttemptsFromGradeAndScoreDistributionsButRetainsActualZeroScores() throws IOException {
+        when(gradingScaleRepository.findByExamId(EXAM_ID)).thenReturn(Optional.of(gradingScale()));
+        var zero = new StudentResultDTO(1L, "Zero", null, null, null, true, 0.0, 0.0, "F", null, false, null, null, Map.of(), null, 10.5);
+        var passing = new StudentResultDTO(2L, "Passing", null, null, null, true, 8.4, 80.0, "P", null, true, null, null, Map.of(), null, 10.5);
+        var pending = new StudentResultDTO(3L, "Pending", null, null, null, true, null, null, "F", null, false, null, null, Map.of(), null, 20.0);
+        var manualOnly = new StudentResultDTO(4L, "Manual only", null, null, null, true, 0.0, 0.0, "F", null, false, null, null, Map.of(), null, 0.0);
+        var errors = new ArrayList<String>();
+
+        var files = service.exportExamScoresFromData(exam("Practice", 100, false, List.of(), List.of(zero, passing, pending, manualOnly)), outputDirectory, errors, course);
+
+        assertThat(errors).isEmpty();
+        assertThat(files).hasSize(2);
+        CsvData csv = readCsv(files.get(1));
+        assertThat(csv.rows()).contains(List.of("GRADE", "P", "50.0", "100.0", "true", "1", "50.0"), List.of("GRADE", "F", "0.0", "50.0", "false", "1", "50.0"),
+                List.of("INTERVAL", "0-10%", "0", "10", "", "1", "50.0"), List.of("INTERVAL", "80-90%", "80", "90", "", "1", "50.0"));
+        CsvData scores = readCsv(files.getFirst());
+        assertThat(scores.value("Zero", "Passed")).isEqualTo("false");
+        assertThat(scores.value("Passing", "Passed")).isEqualTo("true");
+        assertThat(scores.value("Pending", "Passed")).isEmpty();
+        assertThat(scores.value("Manual only", "Passed")).isEmpty();
+    }
+
+    @ParameterizedTest
+    @ValueSource(doubles = { 0.0, 15.0 })
+    void omitsGradeDistributionWhenNoTestAttemptHasAScore(double maxPoints) throws IOException {
+        when(gradingScaleRepository.findByExamId(EXAM_ID)).thenReturn(Optional.of(gradingScale()));
+        Double score = maxPoints == 0 ? 0.0 : null;
+        var unscored = new StudentResultDTO(1L, "Unscored", null, null, null, true, score, score, "F", null, false, null, null, Map.of(), null, maxPoints);
+        var errors = new ArrayList<String>();
+
+        var files = service.exportExamScoresFromData(exam("Practice", 100, false, List.of(), List.of(unscored)), outputDirectory, errors, course);
+
+        assertThat(errors).isEmpty();
+        assertThat(files).hasSize(1);
+        CsvData csv = readCsv(files.getFirst());
+        assertThat(csv.value("Unscored", "Overall Score")).isEmpty();
+        assertThat(csv.value("Average (All)", "Overall Score")).isEmpty();
     }
 
     @Test
@@ -624,7 +716,7 @@ class CourseStudentDataExportServiceCsvTest {
     }
 
     private static StudentResultDTO student(String name, Boolean submitted, Double points, Double score, String grade, Boolean passed, Map<Long, ExerciseResultDTO> results) {
-        return new StudentResultDTO(1L, name, "student@example.org", "student", "123", submitted, points, score, grade, null, passed, null, null, results, null);
+        return new StudentResultDTO(1L, name, "student@example.org", "student", "123", submitted, points, score, grade, null, passed, null, null, results, null, null);
     }
 
     private static ExamScoresDTO exam(String title, Integer maxPoints, Boolean secondCorrection, List<ExerciseGroupDTO> groups, List<StudentResultDTO> students) {

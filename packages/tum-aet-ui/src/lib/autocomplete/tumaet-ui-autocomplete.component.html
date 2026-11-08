@@ -70,5 +70,10 @@
                 </li>
             }
         </ul>
+        @if (footerMessage(); as message) {
+            <div class="tumaet-ui-autocomplete-footer tumaet:border-t tumaet:border-border tumaet:px-3 tumaet:py-2 tumaet:text-sm tumaet:text-muted" role="status">
+                {{ message }}
+            </div>
+        }
     </div>
 </ng-template>
