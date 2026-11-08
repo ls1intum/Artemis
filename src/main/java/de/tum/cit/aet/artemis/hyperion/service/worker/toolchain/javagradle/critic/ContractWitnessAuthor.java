@@ -20,6 +20,7 @@ import org.springframework.ai.chat.model.ChatResponse;
 
 import tools.jackson.databind.json.JsonMapper;
 
+import de.tum.cit.aet.artemis.hyperion.runtime.verification.JavaSourceText;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification.ContractWitnessOutcome;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification.ContractWitnessProbe;
 
@@ -44,6 +45,11 @@ class ContractWitnessAuthor {
     private static final Pattern TEST_METHOD_DECLARATION = Pattern.compile(
             "(?m)^[ \\t]*+(?:[\\w<>,?\\[\\].$]++[ \\t]++(?!\\())++(?!(?:if|for|while|switch|catch|synchronized)(?![\\w$]))([A-Za-z_$][A-Za-z0-9_$]*+)[ \\t]*+\\((?:[^;{}()]++|\\((?:[^;{}()]++|\\([^;{}()]*+\\))*+\\))*+\\)\\s*+(?:throws\\s[^{;]*+)?\\{");
 
+    private static final Pattern WITNESS_CONTRACT_SECTION = Pattern.compile("^## (Rules|Worked Examples|Public API)[ \\t]*\\r?$.*?(?=^## |\\z)",
+            Pattern.MULTILINE | Pattern.DOTALL);
+
+    private static final Pattern PACKAGE_DECLARATION = Pattern.compile("(?m)^[ \\t]*package[ \\t]+[\\w.$]+[ \\t]*;");
+
     private record ContractWitnessResponse(@Nullable List<ContractWitnessItem> witnesses) {
     }
 
@@ -64,8 +70,8 @@ class ContractWitnessAuthor {
      * authoring agent did not think of it, so asking that same context to attack its own work reproduces the blind spot.
      *
      * @param specificationContract the approved specification whose {@code ## Rules} rows are the only admissible source of a witness
-     * @param testSources           the graded test sources as produced, so the pass targets rules the suite does not already pin
-     * @param solutionSources       the reference solution, which fixes the exact API a witness must call
+     * @param testSources           the graded sources, used locally to reject fixture-helper dependencies; only package declarations reach the witness designer
+     * @param solutionSources       the reference source, screened locally; implementation bodies are withheld from witness design
      * @param usageSink             optional token-usage sink
      * @param cancelled             cooperative cancellation signal
      * @return at most {@link #MAX_CONTRACT_WITNESSES} unvalidated candidates; empty when authoring is disabled, cancelled or lacks its required inputs
@@ -75,14 +81,13 @@ class ContractWitnessAuthor {
             @Nullable Consumer<ChatResponse> usageSink, BooleanSupplier cancelled) {
         requireReviewTextSafe("contract-witness/specification", specificationContract);
         requireReviewTextSafe("contract-witness/tests", testSources);
-        // The reference solution goes to the provider like every other artifact, so it passes the same secret-material policy; an adapted exercise can carry a hard-coded key.
+        // Keep the review safety boundary even though implementation bodies are withheld from this provider call.
         requireReviewTextSafe("contract-witness/solution", solutionSources);
         if (cancelled.getAsBoolean() || !reviewer.configured() || specificationContract.isBlank() || testSources.isBlank()) {
             return List.of();
         }
-        String userPrompt = "APPROVED SPECIFICATION CONTRACT (sole authority for a rule):\n" + specificationContract.strip() + "\n\nAUTHORITATIVE TEMPLATE OWNERSHIP:\n"
-                + renderTemplateOwnership(templateStatuses) + "\n\nREFERENCE SOLUTION (fixes the exact API a witness may call):\n" + boundedEvidence(solutionSources)
-                + "\n\nGRADED TEST SOURCES AS PRODUCED:\n" + boundedEvidence(testSources);
+        String userPrompt = "APPROVED SPECIFICATION CONTRACT (sole authority for a rule):\n" + witnessContract(specificationContract) + "\n\nAUTHORITATIVE TEMPLATE OWNERSHIP:\n"
+                + renderTemplateOwnership(templateStatuses) + "\n\nPROBE PACKAGE DECLARATIONS (names only):\n" + packageDeclarations(testSources);
         String response = Objects.requireNonNullElse(reviewer.call(CONTRACT_WITNESS_SYSTEM_PROMPT_TEMPLATE, userPrompt, usageSink, cancelled, CONTRACT_WITNESS_MAX_OUTPUT_TOKENS),
                 "");
         List<ContractWitness> witnesses = parseContractWitnesses(response, specificationContract, testSources);
@@ -119,9 +124,9 @@ class ContractWitnessAuthor {
                 + "Keep its intended public behavior and assertions. The wrapper contains no fixture fields, setup or helpers: construct all required objects inside the method. "
                 + "Include any required leading import declarations, or use fully qualified names. The server retains the original rule and wrongBehavior if omitted. Do not change exercise files, the rule, or expected behavior to make a failing test pass. "
                 + "No test executed in these rejected proposals. Each repair will be compiled and executed again; return an empty witnesses array when uncertain.\n\n"
-                + "APPROVED SPECIFICATION:\n" + specification + "\n\nAUTHORITATIVE TEMPLATE OWNERSHIP:\n"
-                + renderTemplateOwnership(SpecFidelityCritic.designTemplateStatuses(specification)) + "\n\nREFERENCE SOLUTION:\n" + boundedEvidence(solutionSources)
-                + "\n\nUNEXECUTED PROPOSALS AND COMPILER DIAGNOSTICS:\n" + failedSources;
+                + "APPROVED SPECIFICATION:\n" + witnessContract(specification) + "\n\nAUTHORITATIVE TEMPLATE OWNERSHIP:\n"
+                + renderTemplateOwnership(SpecFidelityCritic.designTemplateStatuses(specification)) + "\n\nPROBE PACKAGE DECLARATIONS (names only):\n"
+                + packageDeclarations(solutionSources) + "\n\nUNEXECUTED PROPOSALS AND COMPILER DIAGNOSTICS:\n" + failedSources;
         String response = reviewer.call(CONTRACT_WITNESS_SYSTEM_PROMPT_TEMPLATE, prompt, usageSink, cancelled, CONTRACT_WITNESS_MAX_OUTPUT_TOKENS);
         Map<String, ContractWitness> originals = new java.util.LinkedHashMap<>();
         failures.forEach(outcome -> originals.putIfAbsent(outcome.witness().testName(), outcome.witness()));
@@ -151,6 +156,27 @@ class ContractWitnessAuthor {
             rendered.append('\n');
         });
         return rendered.toString().stripTrailing();
+    }
+
+    private static String witnessContract(String specification) {
+        // The contract's normative sections define expectations; author-selected risks and implementation rationale would prime an independent reviewer.
+        Matcher sections = WITNESS_CONTRACT_SECTION.matcher(specification);
+        StringBuilder contract = new StringBuilder();
+        boolean hasRules = false;
+        while (sections.find()) {
+            hasRules |= "Rules".equals(sections.group(1));
+            contract.append(sections.group()).append('\n');
+        }
+        return hasRules ? contract.toString().strip() : specification.strip();
+    }
+
+    private static String packageDeclarations(String sources) {
+        Matcher packages = PACKAGE_DECLARATION.matcher(JavaSourceText.maskCommentsAndLiterals(sources));
+        Set<String> declarations = new java.util.TreeSet<>();
+        while (packages.find()) {
+            declarations.add(packages.group().strip());
+        }
+        return String.join("\n", declarations);
     }
 
     private static String boundedEvidence(String text) {

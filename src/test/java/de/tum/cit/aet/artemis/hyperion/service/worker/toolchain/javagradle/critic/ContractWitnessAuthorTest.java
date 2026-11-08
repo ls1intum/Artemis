@@ -17,6 +17,7 @@ import java.util.Map;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.mockito.ArgumentCaptor;
 
 import tools.jackson.databind.json.JsonMapper;
 
@@ -59,6 +60,46 @@ class ContractWitnessAuthorTest {
         assertThatThrownBy(() -> author.authorContractWitnesses("R1. Return one.", SUITE, "class Subject {}", Map.of(), null, () -> false))
                 .isInstanceOf(IllegalStateException.class).hasMessageContaining("no admissible executable witness after one bounded correction");
         verify(reviewer, times(2)).call(anyString(), anyString(), any(), any(), anyInt());
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "authoring", "compilationRepair" })
+    void independentWitnessInputsDoNotChangeWithImplementationOrGraderBodies(String phase) {
+        var reviewer = mock(ReviewerClient.class);
+        when(reviewer.configured()).thenReturn(true);
+        String code = "@Test void probe() { assertEquals(1, new Subject().value()); }";
+        when(reviewer.call(anyString(), anyString(), any(), any(), anyInt())).thenReturn("""
+                {"witnesses":[{"rule":"R1","testName":"probe","wrongBehavior":"returns two","code":"%s"}]}
+                """.formatted(code));
+        var author = new ContractWitnessAuthor(reviewer, JsonMapper.builder().build());
+        String specification = """
+                ## Rules
+                R1. Return one.
+                ## Worked Examples
+                value() returns 1.
+                ## Public API
+                public class Subject { public int value(); }
+                ## Decision Ledger
+                IMPLEMENTATION_RATIONALE must not guide an independent expectation.
+                """;
+        for (String variant : List.of("first", "second")) {
+            int expected = variant.equals("first") ? 1 : 2;
+            String solution = "package example; class Subject { /* IMPLEMENTATION_" + variant + " */ int value() { return " + expected + "; } }";
+            if (phase.equals("authoring")) {
+                String tests = "package example; class Grader { @Test void check() { assertEquals(" + expected + ", \"GRADER_" + variant + "\"); } }";
+                assertThat(author.authorContractWitnesses(specification, tests, solution, Map.of(), null, () -> false)).hasSize(1);
+            }
+            else {
+                var original = new ContractWitness("R1", "probe", "@Test void probe() { assertEquals(1, subject.value()); }", "returns two");
+                var failed = new ContractWitnessOutcome(original, ContractWitnessOutcome.Disposition.INCONCLUSIVE,
+                        "HyperionContractWitnessProbeTest.java:9: error: cannot find symbol subject");
+                assertThat(author.repairCompilation(specification, solution, List.of(failed), null, () -> false)).hasSize(1);
+            }
+        }
+        var prompts = ArgumentCaptor.forClass(String.class);
+        verify(reviewer, times(2)).call(anyString(), prompts.capture(), any(), any(), anyInt());
+        assertThat(prompts.getAllValues().getFirst()).isEqualTo(prompts.getAllValues().getLast()).contains("R1. Return one.", "public int value();", "package example;")
+                .doesNotContain("IMPLEMENTATION_first", "IMPLEMENTATION_second", "GRADER_first", "GRADER_second", "IMPLEMENTATION_RATIONALE");
     }
 
     private static final String SUITE = """
