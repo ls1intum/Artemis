@@ -320,8 +320,18 @@ final class ApprovedStructuralContract {
             Set<String> extra = new LinkedHashSet<>(actualSurface);
             extra.removeAll(expectedSurface);
             if (!missing.isEmpty() || !extra.isEmpty()) {
-                reasons.add("the " + repository + " public API for " + expected.getKey() + " differs from the approved SPEC (missing " + missing + ", extra " + extra
-                        + "). Remove invented overloads/public helpers and implement the exact approved type kind, relationships, and signatures; private helpers remain allowed.");
+                Set<String> precreatedStudentMembers = new LinkedHashSet<>();
+                if ("template".equals(repository)) {
+                    precreatedStudentMembers.addAll(canonicalSurface(expected.getValue(), types.keySet(), false));
+                    precreatedStudentMembers.removeAll(expectedSurface);
+                    precreatedStudentMembers.retainAll(extra);
+                }
+                String repair = precreatedStudentMembers.isEmpty()
+                        ? "Remove invented overloads/public helpers and implement the exact approved type kind, relationships, and signatures; private helpers remain allowed."
+                        : "Approved @studentCreates members are solution-only declarations, not template TODO bodies. Omit those marked members from the starter, keep their owner "
+                                + "and its supplied members, and make supplied callers compile without the omitted APIs. Reconcile any other missing or extra declarations with the approved SPEC.";
+                reasons.add(
+                        "the " + repository + " public API for " + expected.getKey() + " differs from the approved SPEC (missing " + missing + ", extra " + extra + "). " + repair);
             }
         }
         return List.copyOf(reasons);

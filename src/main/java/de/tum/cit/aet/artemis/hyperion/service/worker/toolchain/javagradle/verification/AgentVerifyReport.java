@@ -133,6 +133,7 @@ public record AgentVerifyReport(int solutionTests, boolean solutionPassed, List<
             // The blocking reason for failing solution tests already carries their evidence (see renderFailureEvidence), so it is not repeated here.
             builder.append("Solution FAILS: ").append(renderNames(solutionFailedNames)).append(" — your reference solution must pass every test.\n");
         }
+        appendReflectionClassLookupGuidance(builder, solutionFailureEvidence);
         appendReflectionConstructorGuidance(builder, solutionFailureEvidence);
 
         if (!templateCompiled) {
@@ -230,6 +231,18 @@ public record AgentVerifyReport(int solutionTests, boolean solutionPassed, List<
             builder.append("(+").append(ordered.size() - rendered).append(" more failures)\n");
         }
         return builder.toString();
+    }
+
+    private static void appendReflectionClassLookupGuidance(StringBuilder builder, List<TestFailureEvidence> evidence) {
+        boolean lookupFailed = evidence.stream().map(TestFailureEvidence::message)
+                .anyMatch(message -> message.contains("was not found within the submission") || message.contains("ClassNotFoundException"));
+        if (lookupFailed) {
+            builder.append("""
+                    REFLECTION CLASS LOOKUP DIAGNOSTIC: Ares ReflectionTestUtils.getClazz(name) delegates to Class.forName and needs the fully qualified binary name, \
+                    for example getClazz("package.Owner"), not getClazz("Owner"). Imports do not qualify string arguments. Check the declared package and type name \
+                    in the existing solution before changing its implementation. Keep reflection in instructor tests; do not add student-created declarations to the template.
+                    """);
+        }
     }
 
     private static void appendReflectionConstructorGuidance(StringBuilder builder, List<TestFailureEvidence> evidence) {

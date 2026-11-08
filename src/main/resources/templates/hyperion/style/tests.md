@@ -30,6 +30,9 @@ If the collaborator interface is `student-creates` and therefore absent from the
 create the recording fake with `java.lang.reflect.Proxy`. Invoke constructors and methods whose signatures
 mention that missing interface reflectively too. Merely storing an instance in an `Object` variable does not
 make a normal call to a method expecting the missing interface compile against both repositories.
+`ReflectionTestUtils.getClazz(name)` delegates to `Class.forName`. Use the fully qualified binary name from
+the declared package and type, such as `getClazz("example.exercise.RequiredType")`, not `getClazz("RequiredType")`.
+Imports do not qualify string arguments. The `ownerName` and `collaboratorName` below are fully qualified names.
 `ReflectionTestUtils.newInstance(className, arguments...)` infers exact runtime classes. It therefore does not
 match an approved constructor declared with an interface or supertype when an argument is a concrete
 implementation. Resolve the declared signature explicitly, then instantiate it:

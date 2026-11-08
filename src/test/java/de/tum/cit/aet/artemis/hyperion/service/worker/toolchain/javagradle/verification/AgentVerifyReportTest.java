@@ -6,6 +6,8 @@ import java.util.List;
 import java.util.stream.IntStream;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 class AgentVerifyReportTest {
 
@@ -98,5 +100,26 @@ class AgentVerifyReportTest {
                 List.of("constructsDispatcher"), List.of(), List.of(), false, List.of("solution failed"));
 
         assertThat(report.toTestsStageObservation()).doesNotContain("REFLECTION HARNESS DIAGNOSTIC");
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "The class 'Extension' was not found within the submission. Make sure to implement it properly.", "java.lang.ClassNotFoundException: Extension" })
+    void referenceClassLookupFailureExplainsFullyQualifiedNames(String message) {
+        var failure = new AgentVerifyReport.TestFailureEvidence("loadsExtension", message);
+        AgentVerifyReport report = new AgentVerifyReport(1, false, List.of("loadsExtension"), List.of(failure), 1, true, true, List.of(), List.of(), List.of("loadsExtension"),
+                List.of(), List.of(), false, List.of("reference failed"));
+
+        assertThat(report.toTestsStageObservation()).contains("Class.forName", "fully qualified binary name", "Imports do not qualify string arguments")
+                .contains("do not add student-created declarations to the template");
+        assertThat(report.toObservation()).contains("Class.forName", "fully qualified binary name");
+    }
+
+    @Test
+    void expectedMissingStarterClassDoesNotSuggestChangingTheVerifiedReference() {
+        var failure = new AgentVerifyReport.TestFailureEvidence("loadsExtension", "The class 'Extension' was not found within the submission.");
+        AgentVerifyReport report = new AgentVerifyReport(1, true, List.of(), List.of(), 1, true, true, List.of(failure), List.of(), List.of("loadsExtension"), List.of(), List.of(),
+                true, List.of());
+
+        assertThat(report.toTestsStageObservation()).doesNotContain("REFLECTION CLASS LOOKUP DIAGNOSTIC");
     }
 }

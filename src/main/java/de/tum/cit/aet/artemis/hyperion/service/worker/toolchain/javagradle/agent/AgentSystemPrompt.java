@@ -75,6 +75,8 @@ public class AgentSystemPrompt {
             whole types. Supply incidental plumbing; leave the requested reasoning to the learner. A harder unrelated algorithm cannot compensate for missing the objective.
             For modification work, retain the existing behavior that gives the change meaning. For declaration work, omit only the assigned declarations; an approved
             `/** @studentCreates */` Public API marker means the member is absent from its otherwise supplied owner. These ownership tags belong only in the specification.
+            Supplied callers must compile without those omitted constructors or methods. Do not supply TODO stubs for declaration work merely to satisfy a demonstration:
+            supply a compile-safe demonstration, or reconcile its ownership in the specification before freezing the contract.
             A `student-creates` type is absent, whereas a `stubbed` type contains unfinished work and may retain working methods or partial bodies. Preserve compile-safe
             support without solving the learner's task. Knowing how to use an object does not imply knowing how to declare a class, generic type, or inheritance relationship.
             Design an observable learner entry point: test-controlled input must reach the student's work and affect the result or collaborator state. A supplied mechanism
@@ -598,6 +600,8 @@ public class AgentSystemPrompt {
 
             Sources may omit a class, method, or field from the template so Artemis generates structural tests. Behaviour tests must still compile against that incomplete template,
             so access omitted members through `de.tum.cit.ase.ares.api.util.ReflectionTestUtils` (static import of its methods is supported).
+            `getClazz(name)` delegates to `Class.forName`: use the fully qualified binary name from the declared package and type, for example
+            `getClazz("example.exercise.RequiredType")`, never the simple name `getClazz("RequiredType")`. Imports do not qualify string arguments.
             Resolve declared signatures explicitly: `newInstance(getConstructor(getClazz(ownerName), int.class), degrees)` and
             `invokeMethod(instance, getMethod(instance, "sin"))`. These return Object; cast the result to the declared return type.
             For exception assertions, use `invokeMethodRethrowing(instance, getMethod(instance, "withdraw", double.class), amount)` or

@@ -266,11 +266,29 @@ class ApprovedStructuralContractTest {
         assertThat(parsed.errors()).isEmpty();
         assertThat(parsed.contract().templateSurfaceReasons(Map.of("Palette.java", "public class Palette { public int size() { return 0; } }"), Set.of("Palette"))).isEmpty();
         assertThat(parsed.contract().templateSurfaceReasons(Map.of("Palette.java", "public class Palette { public int size() { return 0; } public void add(String color) {} }"),
-                Set.of("Palette"))).anyMatch(reason -> reason.contains("extra") && reason.contains("add"));
+                Set.of("Palette")))
+                .anyMatch(reason -> reason.contains("extra") && reason.contains("add") && reason.contains("@studentCreates") && reason.contains("solution-only declarations")
+                        && reason.contains("supplied callers"));
         assertThat(parsed.contract().templateSurfaceReasons(Map.of("Palette.java", "public class Palette {}"), Set.of("Palette")))
                 .anyMatch(reason -> reason.contains("missing") && reason.contains("size"));
         assertThat(parsed.contract().solutionSurfaceReasons(Map.of("Palette.java", "public class Palette { public int size() { return 0; } }")))
                 .anyMatch(reason -> reason.contains("missing") && reason.contains("add"));
+    }
+
+    @Test
+    void unapprovedHelperIsNotMisreportedAsStudentDeclarationWork() {
+        var parsed = ApprovedStructuralContract.parse("""
+                ## Public API
+                ```java
+                public class Palette {
+                    public int size();
+                }
+                ```
+                """, Set.of("Palette"), Set.of());
+
+        assertThat(parsed.errors()).isEmpty();
+        assertThat(parsed.contract().templateSurfaceReasons(Map.of("Palette.java", "public class Palette { public int size() { return 0; } public void debug() {} }"),
+                Set.of("Palette"))).anyMatch(reason -> reason.contains("extra") && reason.contains("debug")).noneMatch(reason -> reason.contains("solution-only declarations"));
     }
 
     @Test

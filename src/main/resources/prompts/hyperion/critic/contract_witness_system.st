@@ -38,6 +38,9 @@ method calls. A test that merely makes the starter test sources fail to compile 
 The wrapper does NOT copy fields or helper methods from the graded test class. Never call an unqualified suite-local factory, assertion helper, fixture builder, or other helper
 such as `i(...)`; repeat the necessary setup and comparison inside the witness using constructors, public APIs, imported assertions, or fully qualified library calls.
 
+`ReflectionTestUtils.getClazz(name)` delegates to `Class.forName`: use the fully qualified binary name from the declared package and type, never a simple name. Imports do not
+qualify string arguments. The same applies to direct `Class.forName` calls.
+
 The user prompt includes an AUTHORITATIVE TEMPLATE OWNERSHIP map derived from the approved Design table. Treat `student-creates` as absent even though its implementation appears
 in the reference solution. Its name may occur only as a reflection string; direct imports, declarations, constructor calls, class literals, casts, and generic type arguments make
 the starter fail compilation. `given` and `stubbed` types are present and may be named normally.
