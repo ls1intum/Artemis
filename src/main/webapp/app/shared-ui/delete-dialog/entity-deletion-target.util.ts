@@ -2,6 +2,7 @@ import { DestroyRef } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { EntityDeletionProgress, EntityDeletionStatus, EntityDeletionTarget, EntityDeletionType } from 'app/shared-ui/delete-dialog/entity-deletion-progress.model';
+import type { AlertService } from 'app/foundation/service/alert.service';
 
 /** Success alert of each exercise type; the server used to send the same keys as an alert header with the synchronous delete. */
 const EXERCISE_DELETED_ALERT_KEYS: Record<ExerciseType, string> = {
@@ -50,27 +51,17 @@ export function trackAlive(destroyRef: DestroyRef): () => boolean {
 }
 
 /**
- * Whether the global error handling already shows an alert for the given rejected request, or deliberately stays silent about it. Callers
- * that report a rejection themselves use this to avoid showing the same failure twice. It mirrors {@code AlertService}: it alerts when the
- * server is not reachable, on 403, on a 400 with an error header, field errors or a title, and on any other error that carries a title. It
- * never alerts on 404, and not for an error without a title such as the plain 502 page of a proxy.
+ * Whether the global error handling already shows an alert for the given rejected request, or the server asked for no alert at all. Callers
+ * that report a rejection themselves use this to avoid showing the same failure twice. The decision which errors are alerted is
+ * {@link AlertService#showsHttpErrorAlert}, which lives next to the alert listener it mirrors. A rejection that is not alerted, such as a 404
+ * or the plain 502 page of a proxy, has to be reported by the caller.
  */
-export function isRejectionReportedByGlobalHandler(error: unknown): boolean {
+export function isRejectionReportedByGlobalHandler(error: unknown, alertService: Pick<AlertService, 'showsHttpErrorAlert'>): boolean {
     if (!(error instanceof HttpErrorResponse)) {
         return false;
     }
-    if (error.error?.skipAlert) {
-        // The server asked for no alert.
-        return true;
-    }
-    if (error.status === 0 || error.status === 403) {
-        return true;
-    }
-    if (error.status === 404) {
-        return false;
-    }
-    const hasAppErrorHeader = error.headers?.keys().some((key) => key.toLowerCase().endsWith('app-error')) ?? false;
-    return hasAppErrorHeader || !!error.error?.fieldErrors || !!error.error?.title;
+    // The server asked for no alert: honour that instead of reporting the failure here.
+    return !!error.error?.skipAlert || alertService.showsHttpErrorAlert(error);
 }
 
 /** Whether the deletion is confirmed to be done. An {@link isDeletionOutcomeUnknown unknown} outcome is not a confirmation. */

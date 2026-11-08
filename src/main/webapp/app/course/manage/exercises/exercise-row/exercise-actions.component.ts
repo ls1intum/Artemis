@@ -66,6 +66,8 @@ export class ExerciseActionsComponent {
 
     readonly exerciseUpdated = output<Exercise>();
     readonly exerciseDeleted = output<Exercise>();
+    /** Emitted when it is not known how a deletion ended; the parent reloads its exercises instead of removing the row. */
+    readonly exerciseDeletionOutcomeUnknown = output<void>();
     /**
      * Width (px) the actions column must reserve for this row's quiz buttons plus the ellipsis trigger; 0 for
      * non-quiz rows. The table floors the shared column at the max across its rows (see exercise-table).
@@ -381,6 +383,7 @@ export class ExerciseActionsComponent {
                     } else if (isDeletionOutcomeUnknown(progress)) {
                         // Not known how it ended: only refresh the list, which shows the real state, instead of announcing a deletion.
                         this.eventManager.broadcast({ name: evtName, content: 'Refresh after an unknown deletion outcome' });
+                        this.exerciseDeletionOutcomeUnknown.emit();
                     }
                     // A failed deletion is reported by the progress dialog; this only ends the confirmation dialog.
                     this.dialogErrorSource.next('');

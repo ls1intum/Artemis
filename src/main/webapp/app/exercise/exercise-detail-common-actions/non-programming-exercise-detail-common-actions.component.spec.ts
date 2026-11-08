@@ -288,6 +288,45 @@ describe('Exercise detail common actions Component', () => {
         expect(checkEnded).toBe(true);
     });
 
+    it('should look for a running deletion of the other exercise when the reused component shows it', () => {
+        const deletionService = TestBed.inject(EntityDeletionService) as unknown as MockEntityDeletionService;
+        const first = new TextExercise({ id: 123 }, undefined);
+        first.id = 5;
+        first.isAtLeastInstructor = true;
+        const second = new TextExercise({ id: 123 }, undefined);
+        second.id = 6;
+        second.isAtLeastInstructor = true;
+        fixture.componentRef.setInput('course', course);
+        fixture.componentRef.setInput('exercise', first);
+        fixture.detectChanges();
+        expect(deletionService.resume).toHaveBeenCalledOnce();
+
+        fixture.componentRef.setInput('exercise', second);
+        fixture.detectChanges();
+
+        // Another instructor may be deleting the exercise that is shown now: its progress and its completion must not be missed.
+        expect(deletionService.resume).toHaveBeenCalledTimes(2);
+        expect(deletionService.resume.mock.calls[1][0]).toEqual(expect.objectContaining({ entityType: EntityDeletionType.EXERCISE, entityId: 6 }));
+    });
+
+    it('should not look for a running deletion of the other exercise when the user is no instructor of it', () => {
+        const deletionService = TestBed.inject(EntityDeletionService) as unknown as MockEntityDeletionService;
+        const first = new TextExercise({ id: 123 }, undefined);
+        first.id = 5;
+        first.isAtLeastInstructor = true;
+        const second = new TextExercise({ id: 123 }, undefined);
+        second.id = 6;
+        second.isAtLeastInstructor = false;
+        fixture.componentRef.setInput('course', course);
+        fixture.componentRef.setInput('exercise', first);
+        fixture.detectChanges();
+
+        fixture.componentRef.setInput('exercise', second);
+        fixture.detectChanges();
+
+        expect(deletionService.resume).toHaveBeenCalledOnce();
+    });
+
     it('should end the pending check for a running deletion when the component is destroyed', () => {
         const deletionService = TestBed.inject(EntityDeletionService) as unknown as MockEntityDeletionService;
         const exercise = new TextExercise({ id: 123 }, undefined);

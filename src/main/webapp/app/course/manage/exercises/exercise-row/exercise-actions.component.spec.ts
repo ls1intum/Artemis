@@ -545,6 +545,22 @@ describe('ExerciseActionsComponent', () => {
             expect(deleted).toEqual([]);
         });
 
+        it('asks the list to reload instead of removing the exercise when it is not known how the background deletion ended', () => {
+            (TestBed.inject(EntityDeletionService) as unknown as MockEntityDeletionService).status = EntityDeletionStatus.UNKNOWN;
+            vi.spyOn(textExerciseService, 'delete').mockReturnValue(of(new HttpResponse<void>()));
+            fixture.componentRef.setInput('exercise', textExercise({ id: 3, type: ExerciseType.TEXT }));
+            const deleted: Exercise[] = [];
+            let reloads = 0;
+            component.exerciseDeleted.subscribe((e) => deleted.push(e));
+            component.exerciseDeletionOutcomeUnknown.subscribe(() => reloads++);
+
+            component['onDelete']({});
+
+            // The exercise may still exist, so it is not removed as if the deletion was confirmed; the list is read from the server again.
+            expect(deleted).toEqual([]);
+            expect(reloads).toBe(1);
+        });
+
         it('reports a refused deletion, e.g. one that is already running, to the confirmation dialog', () => {
             vi.spyOn(textExerciseService, 'delete').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 409, statusText: 'Conflict' })));
             const errors: string[] = [];

@@ -485,7 +485,7 @@ export class CourseManagementExercisesComponent implements OnInit {
                 map(() => undefined),
                 catchError((error: unknown) => {
                     // The global error handling stays silent about some rejections, e.g. the plain 502 page of a proxy, so those are reported here.
-                    if (!isRejectionReportedByGlobalHandler(error)) {
+                    if (!isRejectionReportedByGlobalHandler(error, this.alertService)) {
                         this.alertService.error('artemisApp.deletionProgress.requestRejected', { title: exercise.title ?? '' });
                     }
                     return of(undefined);
@@ -603,6 +603,14 @@ export class CourseManagementExercisesComponent implements OnInit {
         const exercise = this.exercises().find((candidate) => candidate.id === exerciseId);
         if (exercise) {
             this.onExerciseDeleted(exercise);
+        }
+    }
+
+    /** It is not known how a deletion ended, so nothing is announced or removed locally: the exercises are read from the server again. */
+    onExerciseDeletionOutcomeUnknown(): void {
+        const courseId = this.course()?.id;
+        if (courseId !== undefined) {
+            this.loadCourseExercises(courseId);
         }
     }
 

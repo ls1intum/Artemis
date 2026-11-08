@@ -203,6 +203,17 @@ describe('Exercise Groups Component', () => {
         expect(comp.exerciseGroups()).toEqual(serverGroups);
     });
 
+    it('reads the exercise groups from the server again, e.g. when it is not known how the deletion of an exercise ended', () => {
+        comp.exerciseGroups.set(groups);
+        const serverGroups = [{ id: 0, title: 'still there', exercises: [{ id: 11 }] } as ExerciseGroup];
+        const loadSpy = vi.spyOn(comp, 'loadExerciseGroups').mockReturnValue(of(new HttpResponse<Exam>({ body: { exerciseGroups: serverGroups } as Exam })));
+
+        comp.reloadExerciseGroups();
+
+        expect(loadSpy).toHaveBeenCalledOnce();
+        expect(comp.exerciseGroups()).toEqual(serverGroups);
+    });
+
     it('hands the exercise group to the background deletion with the title it has', () => {
         comp.exerciseGroups.set([{ id: 5, title: 'Group A' } as ExerciseGroup]);
         vi.spyOn(exerciseGroupService, 'delete').mockReturnValue(of(new HttpResponse<void>()));

@@ -229,6 +229,23 @@ describe('EntityDeletionService', () => {
         expect(topic$.observed).toBe(true);
     });
 
+    it('ends the run of an exercise group with an unknown outcome when the status endpoint answers 403, instead of polling forever', () => {
+        const results: EntityDeletionProgress[] = [];
+        service.delete(groupTarget, http.delete('api/exam/courses/1/exams/3/exercise-groups/9')).subscribe((value) => results.push(value));
+        httpMock.expectOne('api/exam/courses/1/exams/3/exercise-groups/9').flush(null, { status: 202, statusText: 'Accepted' });
+
+        httpMock.expectOne('api/exam/courses/1/exams/3/deletion-progress').flush(null, { status: 403, statusText: 'Forbidden' });
+
+        // The instructor may have lost access while the group still exists: nothing is announced, the caller refreshes its data.
+        expect(results).toHaveLength(1);
+        expect(results[0].status).toBe(EntityDeletionStatus.UNKNOWN);
+        expect(alertService.success).not.toHaveBeenCalled();
+        expect(alertService.error).not.toHaveBeenCalled();
+        expect(topic$.observed).toBe(false);
+        vi.advanceTimersByTime(DELETION_STATUS_POLL_INTERVAL_MS * 3);
+        httpMock.expectNone('api/exam/courses/1/exams/3/deletion-progress');
+    });
+
     it('does not let failing status reads raise an error alert', () => {
         service.delete(exerciseTarget, http.delete('api/text/text-exercises/7')).subscribe();
         httpMock.expectOne('api/text/text-exercises/7').flush(null, { status: 202, statusText: 'Accepted' });

@@ -326,6 +326,15 @@ describe('ExamExerciseRowButtonsComponent', () => {
                 expect(deleteTextExerciseStub).toHaveBeenCalledOnce();
                 expect(onDeleteExerciseEmitSpy).not.toHaveBeenCalled();
             });
+            it('should ask the table to reload instead of removing the exercise when it is not known how the background deletion ended', () => {
+                (TestBed.inject(EntityDeletionService) as unknown as MockEntityDeletionService).status = EntityDeletionStatus.UNKNOWN;
+                const unknownEmitSpy = vi.spyOn(component.onDeletionOutcomeUnknown, 'emit');
+                deleteTextExerciseStub.mockReturnValue(of({}));
+                setExerciseInput(fixture, textExercise);
+                component.deleteExercise();
+                expect(unknownEmitSpy).toHaveBeenCalledOnce();
+                expect(onDeleteExerciseEmitSpy).not.toHaveBeenCalled();
+            });
             it('should handle error for textexercise', () => {
                 const error = { message: 'error occurred!' } as HttpErrorResponse;
                 deleteTextExerciseStub.mockReturnValue(throwError(() => error));

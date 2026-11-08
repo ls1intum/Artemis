@@ -489,6 +489,19 @@ describe('Course Management Exercises Component', () => {
         });
     });
 
+    describe('outcome of a deletion that is not known', () => {
+        it('reads the exercises from the server again and keeps every row, because the exercise may still exist', () => {
+            comp.ngOnInit();
+            const reloadSpy = vi.spyOn(courseManagementService, 'findWithExercises');
+            const idsBefore = comp.exercises().map((exercise) => exercise.id);
+
+            comp.onExerciseDeletionOutcomeUnknown();
+
+            expect(reloadSpy).toHaveBeenCalledOnce();
+            expect(comp.exercises().map((exercise) => exercise.id)).toEqual(idsBefore);
+        });
+    });
+
     describe('deleteSelectedExercises', () => {
         let programmingDelete: ReturnType<typeof vi.spyOn>;
         let textDelete: ReturnType<typeof vi.spyOn>;
@@ -578,11 +591,15 @@ describe('Course Management Exercises Component', () => {
 
         it('does not repeat an alert that the global error handling already shows for a rejected request', () => {
             const errorAlert = vi.spyOn(TestBed.inject(AlertService), 'error');
-            programmingDelete.mockReturnValue(throwError(() => new HttpErrorResponse({ error: { title: 'Another deletion is already in progress' }, status: 409 })));
+            const rejection = new HttpErrorResponse({ error: { title: 'Another deletion is already in progress' }, status: 409 });
+            const alertedSpy = vi.spyOn(TestBed.inject(AlertService), 'showsHttpErrorAlert').mockReturnValue(true);
+            programmingDelete.mockReturnValue(throwError(() => rejection));
             comp.toggleSelection(1);
 
             comp.deleteSelectedExercises();
 
+            // the decision comes from the alert handling itself, so the rejection is not reported a second time
+            expect(alertedSpy).toHaveBeenCalledWith(rejection);
             expect(errorAlert).not.toHaveBeenCalled();
         });
 

@@ -140,6 +140,8 @@ export class QuizExerciseManageButtonsComponent implements OnInit {
                 } else if (isDeletionOutcomeUnknown(progress)) {
                     // Not known how it ended: only refresh the list, which shows the real state, instead of announcing a deletion or leaving the page.
                     this.eventManager.broadcast({ name: 'quizExerciseListModification', content: 'Refresh after an unknown deletion outcome' });
+                    // The detail page reloads the quiz, which tells whether it still exists.
+                    this.loadQuizExercises.emit();
                 }
                 // A failed deletion is reported by the progress dialog; this only ends the confirmation dialog.
                 this.dialogErrorSource.next('');

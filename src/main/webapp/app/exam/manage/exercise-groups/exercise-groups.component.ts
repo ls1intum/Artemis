@@ -188,6 +188,15 @@ export class ExerciseGroupsComponent implements OnInit {
     }
 
     /**
+     * Reads the exercise groups of the exam from the server again, e.g. when it is not known how a deletion ended.
+     */
+    reloadExerciseGroups() {
+        this.loadExerciseGroups()
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe({ next: (res) => this.exerciseGroups.set(res.body?.exerciseGroups) });
+    }
+
+    /**
      * Remove the exercise with the given exerciseId from the exercise group with the given exerciseGroupId.
      * @param exerciseId
      * @param exerciseGroupId
@@ -232,9 +241,7 @@ export class ExerciseGroupsComponent implements OnInit {
                 if (isDeletionCompleted(progress) || isDeletionOutcomeUnknown(progress)) {
                     // The exam only reports its latest operation. When another operation replaced ours before the end was seen, the outcome is
                     // unknown: nothing is announced and the groups are read from the server, which tells how it really ended.
-                    this.loadExerciseGroups()
-                        .pipe(takeUntilDestroyed(this.destroyRef))
-                        .subscribe({ next: (res) => this.exerciseGroups.set(res.body?.exerciseGroups) });
+                    this.reloadExerciseGroups();
                 }
                 // A failed deletion is reported by the progress dialog; this only ends the confirmation dialog.
                 this.dialogErrorSource.next('');

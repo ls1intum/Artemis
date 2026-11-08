@@ -108,12 +108,15 @@ export class NonProgrammingExerciseDetailCommonActionsComponent implements OnIni
 
     constructor() {
         // This component is reused for other exercises. The status response of the previous exercise must not open its progress dialog over the
-        // exercise that is shown now.
+        // exercise that is shown now, and the exercise that is shown now is checked for a running deletion itself.
         effect(() => {
-            const exerciseId = this.exercise().id;
+            const exercise = this.exercise();
             untracked(() => {
-                if (this.resumeCheckedExerciseId !== undefined && this.resumeCheckedExerciseId !== exerciseId) {
+                if (this.resumeCheckedExerciseId !== undefined && this.resumeCheckedExerciseId !== exercise.id) {
                     this.resumeCheckEnded$.next();
+                    if (exercise.isAtLeastInstructor) {
+                        this.resumeRunningDeletion();
+                    }
                 }
             });
         });

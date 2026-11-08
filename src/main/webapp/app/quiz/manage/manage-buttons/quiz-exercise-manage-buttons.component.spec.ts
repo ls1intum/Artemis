@@ -313,6 +313,24 @@ describe('QuizExercise Management Buttons Component - Exam Mode', () => {
         expect(navigateSpy).not.toHaveBeenCalled();
     });
 
+    it('should reload the quiz and stay on the detail page when it is not known how the background deletion ended', () => {
+        (TestBed.inject(EntityDeletionService) as unknown as MockEntityDeletionService).status = EntityDeletionStatus.UNKNOWN;
+        const quizExerciseDeletionApi = TestBed.inject(QuizExerciseDeletionApi);
+        const router = TestBed.inject(Router);
+        vi.spyOn(quizExerciseDeletionApi, 'deleteQuizExercise').mockReturnValue(of(undefined));
+        const navigateSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+        const loadSpy = vi.spyOn(comp.loadQuizExercises, 'emit');
+        fixture.componentRef.setInput('quizExercise', quizExercise);
+        fixture.componentRef.setInput('isDetailPage', true);
+        comp.ngOnInit();
+
+        comp.deleteQuizExercise();
+
+        // The quiz may still exist: the page reads it from the server instead of announcing a deletion or leaving.
+        expect(loadSpy).toHaveBeenCalledOnce();
+        expect(navigateSpy).not.toHaveBeenCalled();
+    });
+
     it('should hand the quiz to the background deletion', () => {
         const quizExerciseDeletionApi = TestBed.inject(QuizExerciseDeletionApi);
         vi.spyOn(quizExerciseDeletionApi, 'deleteQuizExercise').mockReturnValue(of(undefined));

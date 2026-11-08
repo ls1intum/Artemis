@@ -357,14 +357,15 @@ export class EntityDeletionService {
                             // After an accepted delete, an exercise or an exam that cannot be read any more is gone when the status endpoint answers
                             // 404: the deletion completed and its terminal message was missed. A 403 is not proof of that, the instructor may have
                             // lost access while the entity still exists, so the outcome is unknown. Any other failure must not disturb the running
-                            // deletion, the websocket stays the source of truth. (The exam of an exercise group stays, so its status remains readable.)
-                            if (!(error instanceof HttpErrorResponse) || target.entityType === EntityDeletionType.EXERCISE_GROUP) {
+                            // deletion, the websocket stays the source of truth. An exercise group is different for a 404 only: its exam stays, so
+                            // a 404 does not say that the group is gone. A 403 ends the run for a group as well, otherwise it would poll forever.
+                            if (!(error instanceof HttpErrorResponse)) {
                                 return;
                             }
-                            if (error.status === 404) {
-                                run.apply(endedProgress(EntityDeletionStatus.COMPLETED));
-                            } else if (error.status === 403) {
+                            if (error.status === 403) {
                                 run.apply(endedProgress(EntityDeletionStatus.UNKNOWN));
+                            } else if (error.status === 404 && target.entityType !== EntityDeletionType.EXERCISE_GROUP) {
+                                run.apply(endedProgress(EntityDeletionStatus.COMPLETED));
                             }
                         },
                     });

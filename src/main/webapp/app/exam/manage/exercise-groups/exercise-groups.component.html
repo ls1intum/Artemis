@@ -78,6 +78,7 @@
                             [connectedDropLists]="dropListIds()"
                             (groupChange)="onTableGroupChange($event)"
                             (exerciseDeleted)="removeExercise($event.id!, exerciseGroup.id!)"
+                            (exerciseDeletionOutcomeUnknown)="reloadExerciseGroups()"
                         />
                     }
                 }
