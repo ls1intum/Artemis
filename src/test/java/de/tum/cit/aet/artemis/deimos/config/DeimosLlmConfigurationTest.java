@@ -54,7 +54,7 @@ class DeimosLlmConfigurationTest {
 
     @ParameterizedTest
     @ValueSource(strings = { "api/chat/completions", "/api/completions", "/api/chat/completions/", "http://x/api/chat/completions", "//host/api/chat/completions",
-            "/api/chat/completions?x=1", "/api/chat/completions#frag", "" })
+            "/api/chat/completions?x=1", "/api/chat/completions#frag", "", "/a b/chat/completions" })
     void rejectsRelativeSchemedOrOtherwiseUnmappablePaths(String completionsPath) {
         assertThat(DeimosLlmConfiguration.isValidCompletionsPath(completionsPath)).isFalse();
     }

@@ -341,6 +341,32 @@ class DeimosBatchServiceTest {
     }
 
     @Test
+    void notificationLeavesOutAParticipationWithoutExerciseButKeepsTheOthers() {
+        ZonedDateTime from = FIXED_NOW.minusDays(1);
+        ZonedDateTime to = FIXED_NOW;
+        // Without an exercise id there is no page to link to, so the entry is left out; the counts still include it.
+        var withoutExercise = new DeimosBatchSummaryDTO.ParticipationAnalysis(312L, 0L, DeimosVerdict.MALICIOUS, true, "no exercise", null, List.of(), 0, List.of(), 0);
+        var withExercise = new DeimosBatchSummaryDTO.ParticipationAnalysis(313L, 55L, DeimosVerdict.MALICIOUS, true, "with exercise", null, List.of(), 0, List.of(), 0);
+        when(deimosBatchParticipationRepository.countDistinctParticipationIdsForCourseInRange(7L, from, to)).thenReturn(2L);
+        when(deimosBatchParticipationRepository.findParticipationIdsForCourseInRange(eq(7L), eq(from), eq(to), any(Pageable.class)))
+                .thenReturn(new SliceImpl<>(List.of(312L, 313L)));
+        when(courseRepository.getCourseTitle(7L)).thenReturn("Course 7");
+        when(deimosAnalysisService.analyze(any(), any(), any(), any(), any(), any()))
+                .thenReturn(new DeimosBatchSummaryDTO("run-11", "MANUAL", "COURSE", from, to, 2, 2, 0, 2, 0, 0, 0, List.of(withoutExercise, withExercise), List.of()));
+
+        deimosBatchService.triggerCourseBatch(7L, new DeimosBatchRequestDTO(from, to), createTriggerUser());
+
+        var emailData = captureEmailData();
+        assertThat(emailData.analyzed()).isEqualTo(2);
+        assertThat(emailData.maliciousCount()).isEqualTo(2);
+        assertThat(emailData.maliciousParticipationLinks()).singleElement().satisfies(link -> {
+            assertThat(link.participationId()).isEqualTo(313L);
+            assertThat(link.url()).endsWith("/course-management/7/programming-exercises/55/participations/313/submissions");
+            assertThat(link.rationale()).isEqualTo("with exercise");
+        });
+    }
+
+    @Test
     void configuredLimitsReplaceTheDefaults() throws MalformedURLException {
         var restrictedService = createService(Runnable::run, 10, 7);
         ZonedDateTime to = FIXED_NOW;

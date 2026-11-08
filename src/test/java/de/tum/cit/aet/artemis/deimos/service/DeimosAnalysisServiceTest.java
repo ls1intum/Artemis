@@ -5,12 +5,14 @@ import static org.assertj.core.api.Assertions.tuple;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.io.IOException;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
@@ -42,6 +44,7 @@ import ch.qos.logback.core.read.ListAppender;
 import de.tum.cit.aet.artemis.deimos.config.DeimosLimits;
 import de.tum.cit.aet.artemis.deimos.dto.DeimosBatchScope;
 import de.tum.cit.aet.artemis.deimos.dto.DeimosBatchSummaryDTO;
+import de.tum.cit.aet.artemis.deimos.dto.DeimosBatchSummaryDTO.FailedAnalysis;
 import de.tum.cit.aet.artemis.deimos.dto.DeimosFailureType;
 import de.tum.cit.aet.artemis.deimos.dto.DeimosLlmRequest;
 import de.tum.cit.aet.artemis.deimos.dto.DeimosLlmResponse;
@@ -51,6 +54,8 @@ import de.tum.cit.aet.artemis.deimos.dto.DeimosOmissionReason;
 import de.tum.cit.aet.artemis.deimos.dto.DeimosTriggerType;
 import de.tum.cit.aet.artemis.deimos.dto.DeimosVerdict;
 import de.tum.cit.aet.artemis.deimos.exception.DeimosLlmException;
+import de.tum.cit.aet.artemis.deimos.exception.DeimosSnapshotHistoryException;
+import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.localvc.service.BareGitRepositoryService;
 import de.tum.cit.aet.artemis.localvc.service.GitService;
@@ -1024,6 +1029,36 @@ class DeimosAnalysisServiceTest {
         });
     }
 
+    @Test
+    void analyzeContinuesFromADroppedSnapshot() throws Exception {
+        // The budget setup of the previous test. The third snapshot is dropped; the fourth repeats it. Only if the dropped
+        // snapshot still became the base, the fourth produces no change and no second omission.
+        deimosAnalysisService = createService(4 * DeimosLimits.MIN_BYTE_LIMIT, DeimosLimits.MIN_BYTE_LIMIT, 4 * DeimosLimits.MIN_BYTE_LIMIT, 2 * DeimosLimits.MIN_BYTE_LIMIT);
+        Map<String, String> firstFiles = Map.of("src/A.java", "a\n".repeat(750), "src/B.java", "b\n".repeat(750));
+        Map<String, String> secondFiles = new HashMap<>(firstFiles);
+        secondFiles.put("src/C.java", "c\n");
+        Map<String, String> thirdFiles = new HashMap<>(secondFiles);
+        // Sorted before the large files, so the final state shows it within its budget.
+        thirdFiles.put("src/0Dropped.java", "dropped\n");
+        stubHistory(901L, Map.of(), new Snapshot("first001", firstFiles), new Snapshot("second01", secondFiles), new Snapshot("third001", thirdFiles),
+                new Snapshot("fourth01", Map.copyOf(thirdFiles)));
+        when(deimosLlmClient.analyze(any())).thenReturn(new DeimosLlmResponse(false, "ordinary"));
+
+        DeimosBatchSummaryDTO summary = analyze(List.of(901L));
+
+        String payload = capturedPayload();
+        assertThat(payload).contains("1 snapshot(s) omitted to stay within the size limit").doesNotContain("=== Snapshot 3");
+        String finalState = payload.substring(payload.indexOf("=== Final state vs. exercise template ==="));
+        assertThat(finalState).contains("+++ b/src/0Dropped.java").contains("+dropped");
+        assertThat(summary.analyzedParticipations()).singleElement().satisfies(analysis -> {
+            assertThat(analysis.omissions()).filteredOn(omission -> omission.filePath() == null).singleElement().satisfies(omission -> {
+                assertThat(omission.reason()).isEqualTo(DeimosOmissionReason.PAYLOAD_LIMIT);
+                assertThat(omission.snapshot()).startsWith("third001, ");
+            });
+            assertThat(analysis.omissions()).noneSatisfy(omission -> assertThat(omission.snapshot()).startsWith("fourth01, "));
+        });
+    }
+
     @ParameterizedTest
     @CsvSource({ "true,  true,  MALICIOUS, MANIPULATION_ATTEMPT", "true,  false, BENIGN,    MANIPULATION_ATTEMPT", "true,  true,  FAILURE,   MANIPULATION_ATTEMPT",
             "false, true,  MALICIOUS, MALICIOUS", "false, false, MALICIOUS, MALICIOUS", "false, true,  BENIGN,    INCOMPLETELY_CHECKED", "false, false, BENIGN,    BENIGN",
@@ -1581,6 +1616,99 @@ class DeimosAnalysisServiceTest {
         assertThat(userPrompt).contains("1 submission(s) could not be examined and are not represented above");
         // Distinct from the size-limit notice, which would wrongly suggest the evidence was dropped to save space.
         assertThat(userPrompt).doesNotContain("snapshot(s) omitted to stay within the size limit");
+    }
+
+    @Test
+    void analyzeRejectsAParticipationOfAnotherExerciseType() {
+        when(studentParticipationRepository.findById(902L)).thenReturn(Optional.of(new StudentParticipation()));
+
+        DeimosBatchSummaryDTO summary = analyze(List.of(902L));
+
+        assertThat(summary.failedAnalyses()).containsExactly(new FailedAnalysis(902L, DeimosFailureType.OTHER, "Not a programming exercise participation"));
+        verify(deimosLlmClient, never()).analyze(any());
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = { true, false })
+    void analyzeFailsAParticipationWithoutExerciseOrRepository(boolean withoutExercise) {
+        var participation = mockParticipation(903L);
+        if (withoutExercise) {
+            when(participation.getProgrammingExercise()).thenReturn(null);
+        }
+        else {
+            when(participation.getVcsRepositoryUri()).thenReturn(null);
+        }
+
+        DeimosBatchSummaryDTO summary = analyze(List.of(903L));
+
+        String reason = withoutExercise ? "Participation 903 has no programming exercise" : "Participation 903 has no repository URI";
+        assertThat(summary.failedAnalyses())
+                .containsExactly(new FailedAnalysis(903L, DeimosFailureType.SNAPSHOT_HISTORY_ERROR, DeimosSnapshotHistoryException.class.getSimpleName() + ": " + reason));
+        verify(deimosLlmClient, never()).analyze(any());
+    }
+
+    @Test
+    void analyzeFailsAParticipationWhoseSnapshotCannotBeRead() throws Exception {
+        stubHistory(904L, Map.of(), new Snapshot("commit01", Map.of("src/Main.java", "class Main {}\n")));
+        when(deimosSnapshotReader.read(bareRepository, "commit01")).thenThrow(new IOException("pack file corrupt"));
+
+        DeimosBatchSummaryDTO summary = analyze(List.of(904L));
+
+        assertThat(summary.failedAnalyses()).singleElement().satisfies(failure -> {
+            assertThat(failure.failureType()).isEqualTo(DeimosFailureType.SNAPSHOT_HISTORY_ERROR);
+            assertThat(failure.reason()).isEqualTo(DeimosSnapshotHistoryException.class.getSimpleName() + ": Could not read commit commit01 from the participation repository");
+        });
+        verify(deimosLlmClient, never()).analyze(any());
+    }
+
+    @Test
+    void analyzeFencesThePayloadWithAFreshSentinelWhenTheFirstOccursInIt() throws Exception {
+        String leaked = "0123456789abcdef0123456789abcdef";
+        String fresh = "fedcba9876543210fedcba9876543210";
+        DeimosAnalysisService service = Mockito.spy(deimosAnalysisService);
+        doReturn(leaked, fresh).when(service).generateSentinel();
+        stubHistory(905L, Map.of(), new Snapshot("commit01", Map.of("src/Leak.java", "// " + leaked + "\n")));
+        when(deimosLlmClient.analyze(any())).thenReturn(new DeimosLlmResponse(false, "ordinary"));
+
+        var logger = (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(DeimosAnalysisService.class);
+        var appender = new ListAppender<ILoggingEvent>();
+        appender.start();
+        logger.addAppender(appender);
+        DeimosBatchSummaryDTO summary;
+        try {
+            summary = service.analyze("run", DeimosTriggerType.MANUAL, DeimosBatchScope.EXERCISE, ZonedDateTime.parse("2026-01-15T00:00:00Z"),
+                    ZonedDateTime.parse("2026-01-16T00:00:00Z"), List.of(905L));
+        }
+        finally {
+            logger.detachAppender(appender);
+        }
+
+        // Both checks report it: the scan of the submitted content, and the prompt builder that regenerates the sentinel.
+        assertThat(appender.list).extracting(ILoggingEvent::getFormattedMessage).contains(
+                "The prompt sentinel of participation 905 occurs in its submitted content, which indicates a defect in Deimos",
+                "The prompt sentinel occurred in the payload of participation 905, regenerating it");
+
+        DeimosLlmRequest request = capturedRequest();
+        assertThat(request.systemPrompt()).contains("---BEGIN UNTRUSTED DATA " + fresh + "---").doesNotContain(leaked);
+        assertThat(request.userPrompt()).contains("---BEGIN UNTRUSTED DATA " + fresh + "---", "---END UNTRUSTED DATA " + fresh + "---");
+        String payload = capturedPayload();
+        // The evidence is never altered: the leaked value stays in the payload, and only there.
+        assertThat(payload).contains("+// " + leaked);
+        assertThat(request.userPrompt().replace(payload, "")).doesNotContain(leaked);
+        assertThat(summary.analyzedParticipations()).singleElement().satisfies(analysis -> {
+            assertThat(analysis.verdict()).isEqualTo(DeimosVerdict.BENIGN);
+            assertThat(analysis.findings()).isEmpty();
+            assertThat(analysis.omissions()).isEmpty();
+        });
+    }
+
+    @Test
+    void displayPathNeverSplitsASurrogatePairWhenShortening() {
+        String path = "a".repeat(196) + "😀" + "b".repeat(10);
+
+        String displayed = DeimosAnalysisService.displayPath(path);
+
+        assertThat(displayed).isEqualTo("a".repeat(196) + "...");
     }
 
     private static ProgrammingSubmission createSubmission(long id, String commitHash, ZonedDateTime submissionDate) {

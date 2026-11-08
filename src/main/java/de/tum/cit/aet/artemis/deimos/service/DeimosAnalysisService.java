@@ -10,9 +10,10 @@ import static de.tum.cit.aet.artemis.deimos.config.DeimosLimits.MAX_FILE_DIFF_BY
 import static de.tum.cit.aet.artemis.deimos.config.DeimosLimits.MAX_FILE_INPUT_BYTES_PROPERTY;
 import static de.tum.cit.aet.artemis.deimos.config.DeimosLimits.MAX_PAYLOAD_BYTES_PROPERTY;
 import static de.tum.cit.aet.artemis.deimos.dto.DeimosBatchSummaryDTO.BATCH_LEVEL_FAILURE_PARTICIPATION_ID;
+import static de.tum.cit.aet.artemis.deimos.service.DeimosDiffBuilder.escapeMetadata;
+import static de.tum.cit.aet.artemis.deimos.service.DeimosDiffBuilder.utf8Length;
 
-import java.io.ByteArrayOutputStream;
-import java.nio.charset.StandardCharsets;
+import java.io.IOException;
 import java.security.SecureRandom;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -26,11 +27,6 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
-import org.eclipse.jgit.diff.DiffFormatter;
-import org.eclipse.jgit.diff.EditList;
-import org.eclipse.jgit.diff.HistogramDiff;
-import org.eclipse.jgit.diff.RawText;
-import org.eclipse.jgit.diff.RawTextComparator;
 import org.eclipse.jgit.lib.ObjectId;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
@@ -55,6 +51,7 @@ import de.tum.cit.aet.artemis.deimos.dto.DeimosTriggerType;
 import de.tum.cit.aet.artemis.deimos.dto.DeimosVerdict;
 import de.tum.cit.aet.artemis.deimos.exception.DeimosLlmException;
 import de.tum.cit.aet.artemis.deimos.exception.DeimosSnapshotHistoryException;
+import de.tum.cit.aet.artemis.deimos.service.DeimosDiffBuilder.DiffOmission;
 import de.tum.cit.aet.artemis.deimos.service.DeimosSnapshotReader.TextSnapshot;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.localvc.service.BareGitRepositoryService;
@@ -73,13 +70,6 @@ public class DeimosAnalysisService {
     private static final String SYSTEM_PROMPT_PATH = "prompts/deimos/analyze_submission_system.st";
 
     private static final String USER_PROMPT_PATH = "prompts/deimos/analyze_submission_user.st";
-
-    /**
-     * Space held back inside every diff budget for the trailing "further changed file(s) omitted" notice. Reserving it
-     * up front is what lets {@link #buildDiff} treat its budget as a hard bound: the notice is only known after the
-     * loop, so it cannot be checked against the remaining space like the sections before it.
-     */
-    private static final int DIFF_OMISSION_NOTICE_RESERVED_BYTES = 128;
 
     /**
      * Length of the random sentinel fencing the untrusted payload: 16 bytes, i.e. 128 bits.
@@ -121,17 +111,7 @@ public class DeimosAnalysisService {
 
     private final BareGitRepositoryService bareGitRepositoryService;
 
-    /**
-     * Files larger than this are not diffed at all. The output budgets below bound what is sent to the model, but they
-     * do not bound the work done to produce it: the snapshot is already fully in memory and {@link HistogramDiff}
-     * processes complete inputs. This guard is what keeps a pathological file from dominating a run.
-     */
-    private final int maxFileInputBytes;
-
-    /**
-     * Maximum size of the unified diff emitted for a single file.
-     */
-    private final int maxFileDiffBytes;
+    private final DeimosDiffBuilder deimosDiffBuilder;
 
     /**
      * Maximum size of the whole untrusted payload handed to the model.
@@ -157,8 +137,7 @@ public class DeimosAnalysisService {
         this.deimosPromptTemplateService = deimosPromptTemplateService;
         this.deimosSnapshotReader = deimosSnapshotReader;
         this.bareGitRepositoryService = bareGitRepositoryService;
-        this.maxFileInputBytes = maxFileInputBytes;
-        this.maxFileDiffBytes = maxFileDiffBytes;
+        this.deimosDiffBuilder = new DeimosDiffBuilder(maxFileInputBytes, maxFileDiffBytes);
         this.maxPayloadBytes = maxPayloadBytes;
         this.finalStateReservedBytes = finalStateReservedBytes;
     }
@@ -337,7 +316,7 @@ public class DeimosAnalysisService {
      *
      * @return the sentinel as a hex string
      */
-    private static String generateSentinel() {
+    String generateSentinel() {
         byte[] bytes = new byte[SENTINEL_BYTES];
         SECURE_RANDOM.nextBytes(bytes);
         return HexFormat.of().formatHex(bytes);
@@ -472,84 +451,118 @@ public class DeimosAnalysisService {
             }
 
             TextSnapshot template = setupCommitHash != null ? readSnapshot(repository, setupCommitHash) : new TextSnapshot(Map.of(), Map.of());
-            Map<String, String> templateFiles = template.textFiles();
-            var templateMarkerLines = new HashMap<String, Set<String>>();
-
-            var sb = new StringBuilder();
-            // Byte counts are kept in long: the limits are configurable, and their sums must not overflow.
-            long usedBytes = 0;
-            long incrementalBudget = (long) maxPayloadBytes - finalStateReservedBytes;
-            Map<String, String> previousFiles = templateFiles;
-            Map<String, ObjectId> previousOtherFiles = template.otherFiles();
-            int emittedSnapshots = 0;
-            int omittedSnapshots = 0;
-            int unexaminableSubmissions = 0;
-            int nonTextChanges = 0;
-
+            var history = new HistoryAccumulator(participationId, repository, template, new MarkerScan(participationId, template, sentinel, evidence), evidence);
             for (ProgrammingSubmission submission : submissions) {
-                var snapshot = new SnapshotRef(submission.getId(), snapshotLabel(submission));
-                if (submission.getCommitHash() == null || submission.getCommitHash().isBlank()) {
-                    // A submission without a commit hash cannot be examined. Record it rather than skipping silently,
-                    // so it cannot masquerade as a participation that simply never changed anything.
-                    log.warn("Submission {} of participation {} has no commit hash, skipping snapshot", submission.getId(), participationId);
-                    unexaminableSubmissions++;
-                    evidence.omissions.add(new RecordedOmission(DeimosOmissionReason.MISSING_COMMIT_HASH, null, snapshot));
-                    continue;
-                }
+                history.add(submission);
+            }
+            return history.finish();
+        }
+        catch (DeimosSnapshotHistoryException ex) {
+            throw ex;
+        }
+        catch (Exception ex) {
+            throw new DeimosSnapshotHistoryException("Could not build snapshot history for participation " + participationId, ex);
+        }
+    }
 
-                TextSnapshot current = readSnapshot(repository, submission.getCommitHash());
-                Map<String, String> currentFiles = current.textFiles();
-                // Scanned on the full contents before any limit applies, so padding cannot push a forged marker out of
-                // sight of this check, even when it pushes it out of the payload.
-                scanForImitatedMarkers(participationId, template, templateMarkerLines, previousFiles, previousOtherFiles.keySet(), current, snapshot.label(), sentinel, evidence);
-                // Recorded before any budget decision, so dropping this snapshot's text section cannot drop them as well.
-                nonTextChanges += recordNonTextChanges(template, previousOtherFiles, current, snapshot, evidence);
+    /**
+     * Builds the payload of one participation snapshot by snapshot. Created per participation, since the service is shared.
+     */
+    private final class HistoryAccumulator {
 
-                // The header is known before the diff, so its bytes can be taken out of the budget the diff may spend.
-                // Handing buildDiff the whole payload budget instead would let it return a section that no longer fits,
-                // which the check below then discards in full rather than keeping a truncated version of it.
-                String header = "=== Snapshot %d (%s) ===%n".formatted(emittedSnapshots + 1, snapshot.label());
-                long sectionOverheadBytes = utf8Length(header) + (long) SECTION_TRAILER_LINE_SEPARATORS * utf8Length(System.lineSeparator());
-                long diffBudget = Math.max(0, incrementalBudget - usedBytes - sectionOverheadBytes);
+        private final long participationId;
 
-                var diffResult = buildDiff(previousFiles, currentFiles, diffBudget, snapshot);
-                previousFiles = currentFiles;
-                previousOtherFiles = current.otherFiles();
+        private final Repository repository;
 
-                if (diffResult.text().isEmpty()) {
-                    continue;
-                }
+        private final TextSnapshot template;
 
-                String section = header + diffResult.text() + System.lineSeparator().repeat(SECTION_TRAILER_LINE_SEPARATORS);
-                int sectionBytes = utf8Length(section);
+        private final MarkerScan markerScan;
 
-                if (usedBytes + sectionBytes > incrementalBudget) {
-                    // The section is dropped as a whole, so its file-level omissions do not describe what the model
-                    // misses: the entire snapshot is missing.
-                    omittedSnapshots++;
-                    evidence.omissions.add(new RecordedOmission(DeimosOmissionReason.PAYLOAD_LIMIT, null, snapshot));
-                    continue;
-                }
-                evidence.omissions.addAll(diffResult.omissions());
-                sb.append(section);
-                usedBytes += sectionBytes;
-                emittedSnapshots++;
+        private final ParticipationEvidence evidence;
+
+        private final StringBuilder sb = new StringBuilder();
+
+        // Byte counts are kept in long: the limits are configurable, and their sums must not overflow.
+        private final long incrementalBudget = (long) maxPayloadBytes - finalStateReservedBytes;
+
+        private long usedBytes;
+
+        private Map<String, String> previousFiles;
+
+        private Map<String, ObjectId> previousOtherFiles;
+
+        private int emittedSnapshots;
+
+        private int omittedSnapshots;
+
+        private int unexaminableSubmissions;
+
+        private int nonTextChanges;
+
+        private HistoryAccumulator(long participationId, Repository repository, TextSnapshot template, MarkerScan markerScan, ParticipationEvidence evidence) {
+            this.participationId = participationId;
+            this.repository = repository;
+            this.template = template;
+            this.markerScan = markerScan;
+            this.evidence = evidence;
+            this.previousFiles = template.textFiles();
+            this.previousOtherFiles = template.otherFiles();
+        }
+
+        private void add(ProgrammingSubmission submission) throws IOException {
+            var snapshot = new SnapshotRef(submission.getId(), snapshotLabel(submission));
+            if (submission.getCommitHash() == null || submission.getCommitHash().isBlank()) {
+                // A submission without a commit hash cannot be examined. Record it rather than skipping silently,
+                // so it cannot masquerade as a participation that simply never changed anything.
+                log.warn("Submission {} of participation {} has no commit hash, skipping snapshot", submission.getId(), participationId);
+                unexaminableSubmissions++;
+                evidence.omissions.add(new RecordedOmission(DeimosOmissionReason.MISSING_COMMIT_HASH, null, snapshot));
+                return;
             }
 
-            if (omittedSnapshots > 0) {
-                String omissionNotice = "[... %d snapshot(s) omitted to stay within the size limit ...]%n%n".formatted(omittedSnapshots);
-                sb.append(omissionNotice);
-                usedBytes += utf8Length(omissionNotice);
-            }
+            TextSnapshot current = readSnapshot(repository, submission.getCommitHash());
+            // Scanned on the full contents before any limit applies, so padding cannot push a forged marker out of
+            // sight of this check, even when it pushes it out of the payload.
+            markerScan.scan(previousFiles, previousOtherFiles.keySet(), current, snapshot.label());
+            // Recorded before any budget decision, so dropping this snapshot's text section cannot drop them as well.
+            nonTextChanges += recordNonTextChanges(template, previousOtherFiles, current, snapshot, evidence);
 
+            // The header is known before the diff, so its bytes can be taken out of the budget the diff may spend.
+            // Handing buildDiff the whole payload budget instead would let it return a section that no longer fits,
+            // which the check below then discards in full rather than keeping a truncated version of it.
+            String header = "=== Snapshot %d (%s) ===%n".formatted(emittedSnapshots + 1, snapshot.label());
+            long sectionOverheadBytes = utf8Length(header) + (long) SECTION_TRAILER_LINE_SEPARATORS * utf8Length(System.lineSeparator());
+            long diffBudget = Math.max(0, incrementalBudget - usedBytes - sectionOverheadBytes);
+
+            var diffResult = deimosDiffBuilder.buildDiff(previousFiles, current.textFiles(), diffBudget);
+            previousFiles = current.textFiles();
+            previousOtherFiles = current.otherFiles();
+            if (!diffResult.text().isEmpty()) {
+                appendSection(header + diffResult.text() + System.lineSeparator().repeat(SECTION_TRAILER_LINE_SEPARATORS), recorded(diffResult.omissions(), snapshot), snapshot);
+            }
+        }
+
+        private void appendSection(String section, List<RecordedOmission> sectionOmissions, SnapshotRef snapshot) {
+            int sectionBytes = utf8Length(section);
+            if (usedBytes + sectionBytes > incrementalBudget) {
+                // The section is dropped as a whole, so its file-level omissions do not describe what the model
+                // misses: the entire snapshot is missing.
+                omittedSnapshots++;
+                evidence.omissions.add(new RecordedOmission(DeimosOmissionReason.PAYLOAD_LIMIT, null, snapshot));
+                return;
+            }
+            evidence.omissions.addAll(sectionOmissions);
+            sb.append(section);
+            usedBytes += sectionBytes;
+            emittedSnapshots++;
+        }
+
+        private SnapshotHistory finish() throws IOException {
+            appendNotice(omittedSnapshots, "[... %d snapshot(s) omitted to stay within the size limit ...]%n%n");
             // Reported separately from the size-limit omission above: these snapshots are missing because they could not
             // be examined at all, not because the payload ran out of room. Without the notice the model would read the
             // remaining sequence as the participation's complete history, which is what the system prompt forbids.
-            if (unexaminableSubmissions > 0) {
-                String unexaminableNotice = "[... %d submission(s) could not be examined and are not represented above ...]%n%n".formatted(unexaminableSubmissions);
-                sb.append(unexaminableNotice);
-                usedBytes += utf8Length(unexaminableNotice);
-            }
+            appendNotice(unexaminableSubmissions, "[... %d submission(s) could not be examined and are not represented above ...]%n%n");
 
             // Recomputed against the template so the model always sees where the participation ended up, even when
             // intermediate snapshots were dropped above. The incremental loop stopped at maxPayloadBytes -
@@ -567,14 +580,7 @@ public class DeimosAnalysisService {
             // a fully examined participation as incompletely checked. Changes to binary files and links say nothing about
             // whether that text section is complete.
             boolean cumulativeIsRedundant = emittedSnapshots == 1 && omittedSnapshots == 0 && !evidence.hasTextOmissions();
-            String cumulativeSection = "";
-            if (!cumulativeIsRedundant) {
-                var cumulativeResult = buildDiff(templateFiles, previousFiles, cumulativeBudget, null);
-                if (!cumulativeResult.text().isEmpty()) {
-                    evidence.omissions.addAll(cumulativeResult.omissions());
-                    cumulativeSection = cumulativeHeader + cumulativeResult.text();
-                }
-            }
+            String cumulativeSection = cumulativeIsRedundant ? "" : cumulativeSection(cumulativeHeader, cumulativeBudget);
             // Only alongside other content: a history that changed nothing but binary files and links, without any other
             // notice, is reported without asking the model, so this notice alone must not turn it into a payload.
             if (!nonTextNotice.isEmpty() && (!sb.isEmpty() || !cumulativeSection.isEmpty())) {
@@ -584,64 +590,94 @@ public class DeimosAnalysisService {
 
             return new SnapshotHistory(sb.toString().stripTrailing(), emittedSnapshots);
         }
-        catch (DeimosSnapshotHistoryException ex) {
-            throw ex;
+
+        private void appendNotice(int count, String format) {
+            if (count > 0) {
+                String notice = format.formatted(count);
+                sb.append(notice);
+                usedBytes += utf8Length(notice);
+            }
         }
-        catch (Exception ex) {
-            throw new DeimosSnapshotHistoryException("Could not build snapshot history for participation " + participationId, ex);
+
+        private String cumulativeSection(String header, long budget) throws IOException {
+            var cumulativeResult = deimosDiffBuilder.buildDiff(template.textFiles(), previousFiles, budget);
+            if (cumulativeResult.text().isEmpty()) {
+                return "";
+            }
+            evidence.omissions.addAll(recorded(cumulativeResult.omissions(), null));
+            return header + cumulativeResult.text();
         }
     }
 
     /**
-     * Records every imitated fence marker a snapshot introduces.
+     * Records every imitated fence marker a participation's snapshots introduce. Created per participation.
      * <p>
      * Only files whose content changed against the previous snapshot are scanned, so each content is scanned once. A
      * marker line that already occurs in the exercise template's version of the same file is the instructor's, for
      * example in an exercise about prompt injection, and is not attributed to the student. File paths are scanned as
      * well, because they reach the prompt through the diff headers.
-     *
-     * @param participationId     the participation, for the log
-     * @param template            the exercise template
-     * @param templateMarkerLines cache of the marker lines per template file
-     * @param previousFiles       the text files of the previous snapshot
-     * @param previousOtherPaths  the paths of the previous snapshot that are not text files
-     * @param current             the snapshot to scan
-     * @param snapshot            the label of the snapshot, for the report
-     * @param sentinel            the prompt sentinel, which must never occur in a submission
-     * @param evidence            collects the findings
      */
-    private static void scanForImitatedMarkers(long participationId, TextSnapshot template, Map<String, Set<String>> templateMarkerLines, Map<String, String> previousFiles,
-            Set<String> previousOtherPaths, TextSnapshot current, String snapshot, String sentinel, ParticipationEvidence evidence) {
-        Map<String, String> templateFiles = template.textFiles();
-        // Binary files and symbolic links never reach the payload, but their names are the student's as well.
-        for (String path : new TreeSet<>(current.otherFiles().keySet())) {
-            boolean inTemplate = templateFiles.containsKey(path) || template.otherFiles().containsKey(path);
-            if (!previousOtherPaths.contains(path) && !inTemplate && DeimosFenceMarkers.containsFenceMarker(path)) {
-                evidence.addFinding("path\0" + path, new DeimosManipulationFinding(displayPath(path), null, snapshot));
+    private static final class MarkerScan {
+
+        private final long participationId;
+
+        private final TextSnapshot template;
+
+        /**
+         * The prompt sentinel, which must never occur in a submission.
+         */
+        private final String sentinel;
+
+        private final ParticipationEvidence evidence;
+
+        /**
+         * The marker lines per template file, computed once per file.
+         */
+        private final Map<String, Set<String>> templateMarkerLines = new HashMap<>();
+
+        private MarkerScan(long participationId, TextSnapshot template, String sentinel, ParticipationEvidence evidence) {
+            this.participationId = participationId;
+            this.template = template;
+            this.sentinel = sentinel;
+            this.evidence = evidence;
+        }
+
+        /**
+         * Records the imitated fence markers one snapshot introduces.
+         *
+         * @param previousFiles      the text files of the previous snapshot
+         * @param previousOtherPaths the paths of the previous snapshot that are not text files
+         * @param current            the snapshot to scan
+         * @param snapshotLabel      the label of the snapshot, for the report
+         */
+        private void scan(Map<String, String> previousFiles, Set<String> previousOtherPaths, TextSnapshot current, String snapshotLabel) {
+            // Binary files and symbolic links never reach the payload, but their names are the student's as well.
+            for (String path : new TreeSet<>(current.otherFiles().keySet())) {
+                if (!previousOtherPaths.contains(path)) {
+                    scanPath(path, snapshotLabel);
+                }
+            }
+            for (Map.Entry<String, String> file : new TreeMap<>(current.textFiles()).entrySet()) {
+                String content = file.getValue();
+                if (content != null && !content.equals(previousFiles.get(file.getKey()))) {
+                    scanTextFile(file.getKey(), content, snapshotLabel);
+                }
             }
         }
-        for (Map.Entry<String, String> file : new TreeMap<>(current.textFiles()).entrySet()) {
-            String path = file.getKey();
-            String content = file.getValue();
-            if (content == null || content.equals(previousFiles.get(path))) {
-                continue;
-            }
 
-            if (!templateFiles.containsKey(path) && !template.otherFiles().containsKey(path) && DeimosFenceMarkers.containsFenceMarker(path)) {
-                evidence.addFinding("path\0" + path, new DeimosManipulationFinding(displayPath(path), null, snapshot));
+        private void scanPath(String path, String snapshotLabel) {
+            boolean inTemplate = template.textFiles().containsKey(path) || template.otherFiles().containsKey(path);
+            if (!inTemplate && DeimosFenceMarkers.containsFenceMarker(path)) {
+                evidence.addFinding("path\0" + path, new DeimosManipulationFinding(displayPath(path), null, snapshotLabel));
             }
+        }
 
-            Set<String> markerLinesInTemplate = templateMarkerLines.computeIfAbsent(path, templatePath -> {
-                String templateContent = templateFiles.get(templatePath);
-                Set<String> lines = new HashSet<>();
-                if (templateContent != null) {
-                    DeimosFenceMarkers.forEachMarkerLine(templateContent, (lineNumber, line) -> lines.add(line));
-                }
-                return lines;
-            });
+        private void scanTextFile(String path, String content, String snapshotLabel) {
+            scanPath(path, snapshotLabel);
+            Set<String> markerLinesInTemplate = templateMarkerLines.computeIfAbsent(path, this::markerLinesOfTemplateFile);
             DeimosFenceMarkers.forEachMarkerLine(content, (lineNumber, line) -> {
                 if (!markerLinesInTemplate.contains(line)) {
-                    evidence.addFinding("line\0" + path + "\0" + line, new DeimosManipulationFinding(displayPath(path), lineNumber, snapshot));
+                    evidence.addFinding("line\0" + path + "\0" + line, new DeimosManipulationFinding(displayPath(path), lineNumber, snapshotLabel));
                 }
             });
 
@@ -651,6 +687,15 @@ public class DeimosAnalysisService {
                 evidence.sentinelSeen = true;
                 log.warn("The prompt sentinel of participation {} occurs in its submitted content, which indicates a defect in Deimos", participationId);
             }
+        }
+
+        private Set<String> markerLinesOfTemplateFile(String path) {
+            String templateContent = template.textFiles().get(path);
+            Set<String> lines = new HashSet<>();
+            if (templateContent != null) {
+                DeimosFenceMarkers.forEachMarkerLine(templateContent, (lineNumber, line) -> lines.add(line));
+            }
+            return lines;
         }
     }
 
@@ -672,10 +717,9 @@ public class DeimosAnalysisService {
         // Sorted, so the entries shown in the capped report do not depend on hash order.
         for (Map.Entry<String, ObjectId> entry : new TreeMap<>(current.otherFiles()).entrySet()) {
             ObjectId objectId = entry.getValue();
-            if (!objectId.equals(previousOtherFiles.get(entry.getKey())) && !objectId.equals(template.otherFiles().get(entry.getKey()))) {
-                if (evidence.omissions.add(new RecordedOmission(DeimosOmissionReason.NON_TEXT_FILE, entry.getKey(), snapshot))) {
-                    recorded++;
-                }
+            boolean changed = !objectId.equals(previousOtherFiles.get(entry.getKey())) && !objectId.equals(template.otherFiles().get(entry.getKey()));
+            if (changed && evidence.omissions.add(new RecordedOmission(DeimosOmissionReason.NON_TEXT_FILE, entry.getKey(), snapshot))) {
+                recorded++;
             }
         }
         return recorded;
@@ -711,191 +755,6 @@ public class DeimosAnalysisService {
     }
 
     /**
-     * Outcome of diffing two snapshots.
-     *
-     * @param text      the rendered unified diff, empty when nothing changed
-     * @param omissions the files skipped or truncated, each with the limit that actually caused it
-     */
-    private record DiffResult(String text, List<RecordedOmission> omissions) {
-    }
-
-    /**
-     * Builds a unified diff between two snapshots.
-     * <p>
-     * Emits actual hunks rather than whole file contents. Dumping full files made the payload grow with file size and
-     * snapshot count, repeated the same content in the cumulative section, and described itself to the model as a diff
-     * while being nothing of the sort.
-     *
-     * @param baseFiles     the base snapshot, path to content
-     * @param targetFiles   the target snapshot, path to content
-     * @param budgetInBytes the maximum size of the rendered diff in UTF-8 bytes, across all files
-     * @param snapshot      the target snapshot, or {@code null} for the final state, for the omissions
-     * @return the rendered diff and what had to be omitted
-     */
-    private DiffResult buildDiff(Map<String, String> baseFiles, Map<String, String> targetFiles, long budgetInBytes, @Nullable SnapshotRef snapshot) {
-        var allPaths = new TreeSet<String>();
-        allPaths.addAll(baseFiles.keySet());
-        allPaths.addAll(targetFiles.keySet());
-
-        var sb = new StringBuilder();
-        List<RecordedOmission> omissions = new ArrayList<>();
-        long usedBytes = 0;
-        int omittedFiles = 0;
-        // Held back so the trailing notice, whose text is only known once the loop has finished, still fits.
-        long sectionBudget = Math.max(0, budgetInBytes - DIFF_OMISSION_NOTICE_RESERVED_BYTES);
-
-        for (String path : allPaths) {
-            String baseContent = baseFiles.get(path);
-            String targetContent = targetFiles.get(path);
-            if (baseContent == null && targetContent == null) {
-                continue;
-            }
-            if (baseContent != null && baseContent.equals(targetContent)) {
-                continue;
-            }
-
-            // A per-file cap alone does not bound the payload: many individually capped diffs still add up. Stop once
-            // the budget for this section is spent, and say how many files were dropped. Placed after the identity
-            // checks above so files unchanged between the two snapshots are never counted as omitted.
-            if (usedBytes >= sectionBudget) {
-                omittedFiles++;
-                omissions.add(new RecordedOmission(DeimosOmissionReason.PAYLOAD_LIMIT, path, snapshot));
-                continue;
-            }
-
-            String safePath = escapeMetadata(path);
-            String oldHeader = baseContent == null ? "--- /dev/null" : "--- a/" + safePath;
-            String newHeader = targetContent == null ? "+++ /dev/null" : "+++ b/" + safePath;
-
-            if (utf8Length(baseContent != null ? baseContent : "") > maxFileInputBytes || utf8Length(targetContent != null ? targetContent : "") > maxFileInputBytes) {
-                String notice = oldHeader + System.lineSeparator() + newHeader + System.lineSeparator() + "[file omitted: exceeds the " + maxFileInputBytes
-                        + " byte analysis size limit]" + System.lineSeparator() + System.lineSeparator();
-                // Its content would never have been diffed, so the input limit is what the model misses it to, whether or
-                // not the notice still fits.
-                omissions.add(new RecordedOmission(DeimosOmissionReason.FILE_INPUT_LIMIT, path, snapshot));
-                if (usedBytes + utf8Length(notice) > sectionBudget) {
-                    omittedFiles++;
-                    continue;
-                }
-                sb.append(notice);
-                usedBytes += utf8Length(notice);
-                continue;
-            }
-
-            String unifiedDiff;
-            try {
-                unifiedDiff = unifiedDiff(baseContent != null ? baseContent : "", targetContent != null ? targetContent : "");
-            }
-            catch (Exception ex) {
-                throw new DeimosSnapshotHistoryException("Could not build diff for file " + path, ex);
-            }
-            if (unifiedDiff.isEmpty()) {
-                continue;
-            }
-
-            // Bounded by whichever is smaller: the per-file cap, or what is left of this section's overall budget. The
-            // file headers and the trailing separator are appended alongside the diff, so they are subtracted here
-            // rather than added on top afterwards, which would let the rendered section outgrow the caller's budget.
-            String headers = oldHeader + System.lineSeparator() + newHeader + System.lineSeparator();
-            int fixedSectionBytes = utf8Length(headers) + utf8Length(System.lineSeparator());
-            long remainingDiffBytes = Math.max(0, sectionBudget - usedBytes - fixedSectionBytes);
-            int allowedDiffBytes = (int) Math.min(maxFileDiffBytes, remainingDiffBytes);
-            RecordedOmission truncation = null;
-            if (utf8Length(unifiedDiff) > allowedDiffBytes) {
-                String truncationNotice = "[... diff truncated at the " + allowedDiffBytes + " byte limit ...]" + System.lineSeparator();
-                unifiedDiff = truncateAtLineBoundary(unifiedDiff, Math.max(0, allowedDiffBytes - utf8Length(truncationNotice))) + truncationNotice;
-                // Attributed to the limit that actually bound: the per-file cap only when it was the smaller of the two.
-                DeimosOmissionReason reason = maxFileDiffBytes <= remainingDiffBytes ? DeimosOmissionReason.FILE_DIFF_LIMIT : DeimosOmissionReason.PAYLOAD_LIMIT;
-                truncation = new RecordedOmission(reason, path, snapshot);
-            }
-
-            String section = headers + unifiedDiff + System.lineSeparator();
-            // Even a fully truncated diff still carries the headers, and a long student-controlled path can make those
-            // headers alone exceed the remaining budget. Omit the file rather than append an over-budget section, so the
-            // payload stays bounded regardless of path length.
-            if (usedBytes + utf8Length(section) > sectionBudget) {
-                omittedFiles++;
-                omissions.add(new RecordedOmission(DeimosOmissionReason.PAYLOAD_LIMIT, path, snapshot));
-                continue;
-            }
-            if (truncation != null) {
-                omissions.add(truncation);
-            }
-            sb.append(section);
-            usedBytes += utf8Length(section);
-        }
-
-        if (omittedFiles > 0) {
-            sb.append("[... %d further changed file(s) omitted to stay within the size limit ...]%n".formatted(omittedFiles));
-        }
-
-        return new DiffResult(sb.toString().stripTrailing(), omissions);
-    }
-
-    /**
-     * Renders a unified diff between two file contents using JGit, without touching a repository.
-     *
-     * @param oldContent the base content
-     * @param newContent the target content
-     * @return the unified diff hunks, without file headers
-     */
-    private static String unifiedDiff(String oldContent, String newContent) throws Exception {
-        RawText oldText = oldContent.isEmpty() ? RawText.EMPTY_TEXT : new RawText(oldContent.getBytes(StandardCharsets.UTF_8));
-        RawText newText = newContent.isEmpty() ? RawText.EMPTY_TEXT : new RawText(newContent.getBytes(StandardCharsets.UTF_8));
-        EditList edits = new HistogramDiff().diff(RawTextComparator.DEFAULT, oldText, newText);
-        if (edits.isEmpty()) {
-            return "";
-        }
-        try (var outputStream = new ByteArrayOutputStream(); var formatter = new DiffFormatter(outputStream)) {
-            // DiffFormatter.format(EditList, RawText, RawText) writes hunks only; the file headers are written by the caller.
-            formatter.format(edits, oldText, newText);
-            formatter.flush();
-            return outputStream.toString(StandardCharsets.UTF_8);
-        }
-    }
-
-    /**
-     * Escapes newlines and control characters in student-influenced metadata such as file paths.
-     * <p>
-     * Git allows newlines and control characters in paths, so an unescaped path could forge a section header inside the
-     * prompt. The value is escaped rather than rejected: refusing a hostile filename would let a student suppress the
-     * analysis of their own participation, which is exactly the evasion this feature exists to catch.
-     *
-     * @param value the raw value
-     * @return the value with newlines and control characters rendered visibly
-     */
-    static String escapeMetadata(String value) {
-        if (value == null) {
-            return "";
-        }
-        var sb = new StringBuilder(value.length());
-        for (int i = 0; i < value.length(); i++) {
-            char currentChar = value.charAt(i);
-            switch (currentChar) {
-                case '\n' -> sb.append("\\n");
-                case '\r' -> sb.append("\\r");
-                case '\t' -> sb.append("\\t");
-                default -> {
-                    // C0 controls and DEL, C1 controls (0x80-0x9F, including NEL U+0085), and the Unicode line and
-                    // paragraph separators U+2028/U+2029. All of these render as a line break somewhere in the
-                    // toolchain and could otherwise be used to forge a structural line inside the payload.
-                    boolean isControl = currentChar < 0x20 || currentChar == 0x7F || (currentChar >= 0x80 && currentChar <= 0x9F);
-                    // Compared numerically on purpose: written as Unicode escapes in a char literal, these characters
-                    // break source tooling such as the formatter's import cleanup.
-                    boolean isLineSeparator = currentChar == 0x2028 || currentChar == 0x2029;
-                    if (isControl || isLineSeparator) {
-                        sb.append("\\u%04x".formatted((int) currentChar));
-                    }
-                    else {
-                        sb.append(currentChar);
-                    }
-                }
-            }
-        }
-        return sb.toString();
-    }
-
-    /**
      * Escapes a student-controlled file path and shortens it for the completion email.
      *
      * @param path the raw path
@@ -927,70 +786,12 @@ public class DeimosAnalysisService {
         return escapeMetadata(commit) + ", " + escapeMetadata(submissionDate);
     }
 
+    private static List<RecordedOmission> recorded(List<DiffOmission> omissions, @Nullable SnapshotRef snapshot) {
+        return omissions.stream().map(omission -> new RecordedOmission(omission.reason(), omission.path(), snapshot)).toList();
+    }
+
     private static String shortHash(String commitHash) {
         return commitHash.substring(0, Math.min(SHORT_COMMIT_HASH_LENGTH, commitHash.length()));
     }
 
-    private static int utf8Length(String value) {
-        return value.getBytes(StandardCharsets.UTF_8).length;
-    }
-
-    /**
-     * Truncates text to at most {@code maxBytes} UTF-8 bytes, cutting only at a line boundary so no character and no
-     * diff line is split in half.
-     *
-     * @param text     the text to truncate
-     * @param maxBytes the byte budget
-     * @return the truncated text, always ending with a line separator when non-empty
-     */
-    static String truncateAtLineBoundary(String text, int maxBytes) {
-        var sb = new StringBuilder();
-        int usedBytes = 0;
-        for (String line : text.split("\n", -1)) {
-            String lineWithSeparator = line + "\n";
-            int lineBytes = utf8Length(lineWithSeparator);
-            if (usedBytes + lineBytes > maxBytes) {
-                break;
-            }
-            sb.append(lineWithSeparator);
-            usedBytes += lineBytes;
-        }
-
-        // Minified sources and one-line JSON have no line break to cut at, so a purely line-based truncation would
-        // emit nothing at all and hand the model an empty diff. Fall back to a hard cut on a character boundary so
-        // at least the beginning of the change stays visible.
-        if (sb.isEmpty() && !text.isEmpty()) {
-            return truncateAtCharacterBoundary(text, maxBytes);
-        }
-        return sb.toString();
-    }
-
-    /**
-     * Truncates text to at most {@code maxBytes} UTF-8 bytes without splitting a character.
-     *
-     * @param text     the text to truncate
-     * @param maxBytes the byte budget
-     * @return the truncated text, ending with a line separator, or empty when not even the separator fits
-     */
-    private static String truncateAtCharacterBoundary(String text, int maxBytes) {
-        if (maxBytes < 1) {
-            return "";
-        }
-        var sb = new StringBuilder();
-        int usedBytes = 0;
-        int index = 0;
-        while (index < text.length()) {
-            int codePoint = text.codePointAt(index);
-            int charCount = Character.charCount(codePoint);
-            int codePointBytes = utf8Length(text.substring(index, index + charCount));
-            // Reserve one byte for the line separator appended below.
-            if (usedBytes + codePointBytes + 1 > maxBytes) {
-                break;
-            }
-            sb.appendCodePoint(codePoint);
-            usedBytes += codePointBytes;
-            index += charCount;
-        }
-        return sb.append('\n').toString();
-    }
 }

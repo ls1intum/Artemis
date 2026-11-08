@@ -61,7 +61,7 @@ public class DefaultDeimosLlmClient implements DeimosLlmClient {
 
     private static final Logger log = LoggerFactory.getLogger(DefaultDeimosLlmClient.class);
 
-    private static final Pattern FENCED_BLOCK_PATTERN = Pattern.compile("```(?:json)?\\s*(.*?)```", Pattern.DOTALL | Pattern.CASE_INSENSITIVE);
+    private static final Pattern FENCED_BLOCK_PATTERN = Pattern.compile("```(?:json)?\\s*+(.*?)```", Pattern.DOTALL | Pattern.CASE_INSENSITIVE);
 
     private static final String MALICIOUS_FIELD = "malicious";
 
@@ -192,27 +192,12 @@ public class DefaultDeimosLlmClient implements DeimosLlmClient {
         List<String> objects = new ArrayList<>();
         int depth = 0;
         int start = -1;
-        boolean inString = false;
-        boolean escaped = false;
 
-        for (int i = 0; i < text.length(); i++) {
+        int i = 0;
+        while (i < text.length()) {
             char currentChar = text.charAt(i);
-
-            if (inString) {
-                if (escaped) {
-                    escaped = false;
-                }
-                else if (currentChar == '\\') {
-                    escaped = true;
-                }
-                else if (currentChar == '"') {
-                    inString = false;
-                }
-                continue;
-            }
-
             if (currentChar == '"') {
-                inString = true;
+                i = endOfString(text, i);
             }
             else if (currentChar == '{') {
                 if (depth == 0) {
@@ -227,8 +212,29 @@ public class DefaultDeimosLlmClient implements DeimosLlmClient {
                     start = -1;
                 }
             }
+            i++;
         }
         return objects;
+    }
+
+    /**
+     * Finds the quote closing a JSON string, skipping escaped characters.
+     *
+     * @param text         the text to scan
+     * @param openingQuote the index of the opening quote
+     * @return the index of the closing quote, or the length of the text if the string is never closed
+     */
+    private static int endOfString(String text, int openingQuote) {
+        int i = openingQuote + 1;
+        while (i < text.length()) {
+            char currentChar = text.charAt(i);
+            if (currentChar == '"') {
+                return i;
+            }
+            // A backslash escapes the character after it, which therefore cannot close the string.
+            i += currentChar == '\\' ? 2 : 1;
+        }
+        return text.length();
     }
 
     /**
@@ -321,20 +327,28 @@ public class DefaultDeimosLlmClient implements DeimosLlmClient {
             if (current instanceof SocketTimeoutException || current instanceof TimeoutException) {
                 return DeimosFailureType.LLM_TIMEOUT;
             }
-            String message = current.getMessage();
-            if (message != null) {
-                String lowerCaseMessage = message.toLowerCase(Locale.ROOT);
-                if (lowerCaseMessage.contains("429") || lowerCaseMessage.contains("rate limit") || lowerCaseMessage.contains("too many requests")) {
-                    return DeimosFailureType.LLM_RATE_LIMITED;
-                }
-                if (lowerCaseMessage.contains("timeout") || lowerCaseMessage.contains("timed out")) {
-                    return DeimosFailureType.LLM_TIMEOUT;
-                }
+            DeimosFailureType classifiedByMessage = classifyByMessage(current.getMessage());
+            if (classifiedByMessage != null) {
+                return classifiedByMessage;
             }
             if (current instanceof IOException) {
                 return DeimosFailureType.LLM_ERROR;
             }
         }
         return DeimosFailureType.LLM_ERROR;
+    }
+
+    private static @Nullable DeimosFailureType classifyByMessage(@Nullable String message) {
+        if (message == null) {
+            return null;
+        }
+        String lowerCaseMessage = message.toLowerCase(Locale.ROOT);
+        if (lowerCaseMessage.contains("429") || lowerCaseMessage.contains("rate limit") || lowerCaseMessage.contains("too many requests")) {
+            return DeimosFailureType.LLM_RATE_LIMITED;
+        }
+        if (lowerCaseMessage.contains("timeout") || lowerCaseMessage.contains("timed out")) {
+            return DeimosFailureType.LLM_TIMEOUT;
+        }
+        return null;
     }
 }

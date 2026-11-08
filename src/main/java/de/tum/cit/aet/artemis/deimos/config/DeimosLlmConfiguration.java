@@ -137,7 +137,7 @@ public class DeimosLlmConfiguration {
             return uri.getScheme() == null && uri.getRawAuthority() == null && uri.getRawQuery() == null && uri.getRawFragment() == null
                     && completionsPath.equals(uri.getRawPath());
         }
-        catch (IllegalArgumentException e) {
+        catch (IllegalArgumentException _) {
             return false;
         }
     }

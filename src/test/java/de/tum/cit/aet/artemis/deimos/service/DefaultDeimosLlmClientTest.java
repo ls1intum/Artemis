@@ -8,8 +8,10 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import java.io.IOException;
+import java.net.SocketTimeoutException;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.NullAndEmptySource;
@@ -281,6 +283,136 @@ class DefaultDeimosLlmClientTest {
 
         assertThat(DefaultDeimosLlmClient.credentialRejectionStatus(first)).isEmpty();
         assertThat(callFailingWith(first).getFailureType()).isEqualTo(DeimosFailureType.LLM_ERROR);
+    }
+
+    @Test
+    void shouldReturnTheVerdictOfASuccessfulCall() {
+        var client = new DefaultDeimosLlmClient(chatClientAnswering("{\"malicious\": true, \"rationale\": \"probes the grader\"}"));
+
+        var verdict = client.analyze(new DeimosLlmRequest(7L, "system", "user"));
+
+        assertThat(verdict.malicious()).isTrue();
+        assertThat(verdict.rationale()).isEqualTo("probes the grader");
+    }
+
+    @ParameterizedTest
+    @NullAndEmptySource
+    @ValueSource(strings = { "   ", "\n\t" })
+    void shouldReportAnEmptyAnswerAsUnparseable(String content) {
+        var client = new DefaultDeimosLlmClient(chatClientAnswering(content));
+
+        Throwable thrown = catchThrowable(() -> client.analyze(new DeimosLlmRequest(7L, "system", "user")));
+
+        assertThat(thrown).isInstanceOf(DeimosLlmException.class).hasMessage("LLM returned an empty response for participation 7");
+        assertThat(((DeimosLlmException) thrown).getFailureType()).isEqualTo(DeimosFailureType.LLM_UNPARSEABLE);
+    }
+
+    @Test
+    void shouldReportAnAnswerWithoutVerdictAsUnparseable() {
+        var client = new DefaultDeimosLlmClient(chatClientAnswering("I cannot decide."));
+
+        Throwable thrown = catchThrowable(() -> client.analyze(new DeimosLlmRequest(7L, "system", "user")));
+
+        assertThat(thrown).isInstanceOf(DeimosLlmException.class).hasMessage("LLM response for participation 7 contained no valid verdict object");
+        assertThat(((DeimosLlmException) thrown).getFailureType()).isEqualTo(DeimosFailureType.LLM_UNPARSEABLE);
+    }
+
+    @Test
+    void shouldRejectTwoVerdictsThatAgreeOnTheClassificationButNotOnTheRationale() {
+        String content = "Either {\"malicious\": false, \"rationale\": \"plain loops\"} or {\"malicious\": false, \"rationale\": \"plain recursion\"}.";
+
+        assertThat(DefaultDeimosLlmClient.parseVerdict(content)).isEmpty();
+    }
+
+    @Test
+    void shouldClassifyATimeoutCauseAsTimeout() {
+        var failure = new RuntimeException("wrapper", new SocketTimeoutException("read"));
+
+        assertThat(callFailingWith(failure).getFailureType()).isEqualTo(DeimosFailureType.LLM_TIMEOUT);
+    }
+
+    @Test
+    void shouldClassifyATimeoutMessageAsTimeout() {
+        assertThat(callFailingWith(new RuntimeException("Read timed out")).getFailureType()).isEqualTo(DeimosFailureType.LLM_TIMEOUT);
+    }
+
+    @Test
+    void shouldClassifyAnInputOutputFailureBeforeItsCauses() {
+        var failure = new RuntimeException("wrapper", new IOException("connection reset", new SocketTimeoutException("read")));
+
+        assertThat(callFailingWith(failure).getFailureType()).isEqualTo(DeimosFailureType.LLM_ERROR);
+    }
+
+    @Test
+    void shouldClassifyAFailureWithoutMessageAsError() {
+        assertThat(callFailingWith(new RuntimeException((String) null)).getFailureType()).isEqualTo(DeimosFailureType.LLM_ERROR);
+    }
+
+    @Test
+    void shouldPreferARateLimitOverATimeoutInTheSameMessage() {
+        assertThat(callFailingWith(new RuntimeException("429: request timed out")).getFailureType()).isEqualTo(DeimosFailureType.LLM_RATE_LIMITED);
+    }
+
+    @Test
+    void shouldRecoverAnObjectFromProseWithBracesInsideItsStrings() {
+        var verdict = DefaultDeimosLlmClient.parseVerdict("Verdict: {\"malicious\": true, \"rationale\": \"writes \\\"{\\\" and } to stdout\"} done.");
+
+        assertThat(verdict).hasValueSatisfying(response -> assertThat(response.rationale()).isEqualTo("writes \"{\" and } to stdout"));
+    }
+
+    @Test
+    void shouldCloseAStringAfterAnEvenRunOfBackslashes() {
+        var verdict = DefaultDeimosLlmClient.parseVerdict("Answer {\"malicious\": false, \"rationale\": \"reads C:\\\\\"} end");
+
+        assertThat(verdict).hasValueSatisfying(response -> assertThat(response.rationale()).isEqualTo("reads C:\\"));
+    }
+
+    @Test
+    void shouldKeepAStringOpenAfterAnOddRunOfBackslashes() {
+        var verdict = DefaultDeimosLlmClient.parseVerdict("Answer {\"malicious\": false, \"rationale\": \"prints \\\\\\\"} and {\"} end");
+
+        assertThat(verdict).hasValueSatisfying(response -> assertThat(response.rationale()).isEqualTo("prints \\\"} and {"));
+    }
+
+    @Test
+    void shouldSkipABraceQuotedOutsideAnObject() {
+        var verdict = DefaultDeimosLlmClient.parseVerdict("The student wrote \"{\" before {\"malicious\": true, \"rationale\": \"forged\"}");
+
+        assertThat(verdict).hasValueSatisfying(response -> {
+            assertThat(response.malicious()).isTrue();
+            assertThat(response.rationale()).isEqualTo("forged");
+        });
+    }
+
+    @Test
+    void shouldLetAnUnterminatedStringEndTheScan() {
+        var verdict = DefaultDeimosLlmClient.parseVerdict("{\"malicious\": false, \"rationale\": \"fine\"} and a stray \" {\"malicious\": false, \"rationale\": \"other\"}");
+
+        // The stray quote opens a string that the next quote closes, so the second object is never seen as one.
+        assertThat(verdict).hasValueSatisfying(response -> assertThat(response.rationale()).isEqualTo("fine"));
+    }
+
+    @Test
+    // The quadratic pattern took minutes on this input; a separate thread lets the timeout stop it.
+    @Timeout(value = 5, threadMode = Timeout.ThreadMode.SEPARATE_THREAD)
+    void shouldParseAnUnclosedFenceOfWhitespaceInLinearTime() {
+        String content = "```" + " ".repeat(200_000);
+
+        assertThat(DefaultDeimosLlmClient.parseVerdict(content)).isEmpty();
+    }
+
+    @Test
+    void shouldStillParseAFencedVerdictAfterMuchWhitespace() {
+        // The earlier unfenced draft makes the object scan ambiguous, so only the fenced tier can produce this verdict.
+        String content = "{\"malicious\": false, \"rationale\": \"draft\"} ```json" + " \n".repeat(25_000) + "{\"malicious\": false, \"rationale\": \"fine\"}```";
+
+        assertThat(DefaultDeimosLlmClient.parseVerdict(content)).hasValueSatisfying(response -> assertThat(response.rationale()).isEqualTo("fine"));
+    }
+
+    private static ChatClient chatClientAnswering(String content) {
+        ChatClient chatClient = mock(ChatClient.class, RETURNS_DEEP_STUBS);
+        when(chatClient.prompt().system(anyString()).user(anyString()).call().content()).thenReturn(content);
+        return chatClient;
     }
 
     private static DeimosLlmException callFailingWith(RuntimeException failure) {

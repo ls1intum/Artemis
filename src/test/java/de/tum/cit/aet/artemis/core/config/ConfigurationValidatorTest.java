@@ -189,6 +189,14 @@ class ConfigurationValidatorTest {
             assertThatThrownBy(validator::validateConfigurations).isInstanceOf(DeimosConfigurationException.class).hasMessageContaining("artemis.deimos.llm.base-url");
         }
 
+        @Test
+        void testUnparseableBaseUrlShouldFailValidation() {
+            ConfigurationValidator validator = createDeimosValidator(true, "https://llm example.com", VALID_DEIMOS_MODEL, VALID_DEIMOS_COMPLETIONS_PATH, 90, 3);
+
+            assertThatThrownBy(validator::validateConfigurations).isInstanceOf(DeimosConfigurationException.class)
+                    .hasMessageContaining("artemis.deimos.llm.base-url (not a valid URL:");
+        }
+
         @ParameterizedTest
         @ValueSource(strings = { "http://llm.example.com", "http://localhost:1234", "http://127.0.0.1:8000" })
         void testCleartextBaseUrlShouldFailValidation(String baseUrl) {

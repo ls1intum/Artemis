@@ -81,17 +81,20 @@ public class DeimosSnapshotReader {
             while (treeWalk.next()) {
                 String path = treeWalk.getPathString();
                 FileMode fileMode = treeWalk.getFileMode(0);
+                ObjectId objectId = treeWalk.getObjectId(0);
                 if (fileMode == FileMode.SYMLINK || fileMode.getObjectType() != Constants.OBJ_BLOB) {
-                    otherFiles.put(path, treeWalk.getObjectId(0));
-                    continue;
+                    otherFiles.put(path, objectId);
                 }
-                ObjectLoader blobLoader = repository.open(treeWalk.getObjectId(0));
-                if (isBinaryFile(path) && !isTextScript(path) && startsWithBinaryContent(blobLoader)) {
-                    otherFiles.put(path, treeWalk.getObjectId(0));
-                    continue;
-                }
-                try (InputStream inputStream = blobLoader.openStream()) {
-                    textFiles.put(path, new String(inputStream.readAllBytes(), StandardCharsets.UTF_8));
+                else {
+                    ObjectLoader blobLoader = repository.open(objectId);
+                    if (isBinaryFile(path) && !isTextScript(path) && startsWithBinaryContent(blobLoader)) {
+                        otherFiles.put(path, objectId);
+                    }
+                    else {
+                        try (InputStream inputStream = blobLoader.openStream()) {
+                            textFiles.put(path, new String(inputStream.readAllBytes(), StandardCharsets.UTF_8));
+                        }
+                    }
                 }
             }
         }

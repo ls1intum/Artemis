@@ -66,7 +66,7 @@ resolvable in integration tests.
 | --- | --- |
 | `web` | `DeimosResource`, the two `POST` endpoints, role annotations and the feature toggle |
 | `api` | `DeimosBatchApi`, the interface the resource implements |
-| `service` | `DeimosBatchService` (validation, scheduling, mail), `DeimosAnalysisService` (evidence and orchestration), `DeimosLlmClient` with `DefaultDeimosLlmClient`, `DeimosPromptTemplateService`, `DeimosSnapshotReader` (the files of one commit) |
+| `service` | `DeimosBatchService` (validation, scheduling, mail), `DeimosAnalysisService` (evidence and orchestration), `DeimosLlmClient` with `DefaultDeimosLlmClient`, `DeimosPromptTemplateService`, `DeimosSnapshotReader` (the files of one commit), `DeimosDiffBuilder` (the unified diffs within the size limits, and the escaping of paths in them) |
 | `repository` | `DeimosBatchParticipationRepository`, the candidate-selection queries |
 | `dto` | Request, summary, email and failure records |
 | `exception` | `DeimosConfigurationException`, `DeimosLlmException`, `DeimosSnapshotHistoryException`, plus the failure analyzer |
@@ -147,7 +147,7 @@ budget-caused omission is written into the payload as an explicit marker.
 Every omission is also recorded as a `DeimosOmission` with its reason (`FILE_INPUT_LIMIT`, `FILE_DIFF_LIMIT`,
 `PAYLOAD_LIMIT`, `MISSING_COMMIT_HASH`, `NON_TEXT_FILE`), the file and the snapshot. For the limits, the reason is the
 limit that actually bound. A truncated diff counts as
-`FILE_DIFF_LIMIT` only when the per-file cap was smaller than what was left of the section budget. When a whole
+`FILE_DIFF_LIMIT` only when the per-file cap was no larger than what was left of the section budget. When a whole
 snapshot section is dropped, the file-level omissions of its text diff are replaced by one snapshot-level
 `PAYLOAD_LIMIT` entry; its `NON_TEXT_FILE` omissions are kept. The
 system prompt tells the model that omitted content is unexamined and a reason for caution, and that a notice about
@@ -169,7 +169,7 @@ stripped, if it happens to occur inside the payload, so evidence is never altere
 prompt instructs the model to treat the region strictly as evidence, to ignore any instruction, verdict or marker
 appearing inside it, and to weigh attempts at steering the classification as a signal in their own right.
 
-File paths and metadata pass through `escapeMetadata`, which escapes newlines and control characters rather than
+File paths and metadata pass through `DeimosDiffBuilder.escapeMetadata`, which escapes newlines and control characters rather than
 rejecting them. Rejecting a hostile filename would let a student suppress the analysis of their own participation,
 which is the opposite of what you want.
 
