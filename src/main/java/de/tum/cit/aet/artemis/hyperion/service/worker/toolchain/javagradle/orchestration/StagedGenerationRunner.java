@@ -545,18 +545,6 @@ public class StagedGenerationRunner {
                     // A gate that never went through the tools (a reused cache, or a TESTS turn that never called verify/submit) would leave STATEMENT blind, so the official
                     // gate result is always written back even though the agent's in-loop checks may have recorded it already.
                     baseTools.recordLastTestsReport(gate.report());
-                    String correctedSpec = approvedSpecs.approved(sessionId).orElse(null);
-                    if (publishedSpec != null && correctedSpec != null && !correctedSpec.equals(publishedSpec)) {
-                        // The TESTS gate demoted a given type whose code needs a student-created type (see StageChecks#correctGivenOwnership). The correction reaches the
-                        // instructor and the downstream critic grounding through the same sink as the approval itself.
-                        publishedSpec = correctedSpec;
-                        if (specSink != null) {
-                            specSink.accept(correctedSpec);
-                        }
-                        log.info("Exercise {}: published the server-corrected approved specification after the TESTS checks", exercise.id());
-                        emit(progress, "Artemis changed a type the specification marked 'given' to 'stubbed', because its code needs a type students create and an identical "
-                                + "starter copy could never compile.");
-                    }
                 }
 
                 if (gate.contractRedesignRequired()) {
@@ -566,8 +554,7 @@ public class StagedGenerationRunner {
                     }
                     if (!specStageApplies || assessmentRedesignUsed || reentriesRemaining == 0 || wallClockExceeded(startedAt)
                             || allocatablePool(GenerationStage.SPEC, remainingPool) < MIN_STAGE_BUDGET) {
-                        String failure = "The executed assessment still cannot distinguish the required student work; no further contract redesign is available. "
-                                + gate.observation();
+                        String failure = "The executable artifacts conflict with the approved contract; no further contract redesign is available. " + gate.observation();
                         return finish(exercise, AgentLoopResult.Status.ERROR, totalTurns, appendGateReport(lastFinalMessage, failure), archivedConversation, conversation,
                                 unresolvedSpecificationFindings, TerminationReason.NO_SCHEDULABLE_SURFACE, List.of(), failure);
                     }
@@ -595,7 +582,7 @@ public class StagedGenerationRunner {
                     unresolvedSpecificationFindings = List.of();
                     publishedSpec = null;
                     lastTestsReport = null;
-                    emit(progress, "The executed assessment does not distinguish the student work. Reopening specification review once, within the remaining authoring budget.");
+                    emit(progress, "The executable artifacts require a coherent contract revision. Reopening specification review once, within the remaining authoring budget.");
                     index = -1;
                     break;
                 }

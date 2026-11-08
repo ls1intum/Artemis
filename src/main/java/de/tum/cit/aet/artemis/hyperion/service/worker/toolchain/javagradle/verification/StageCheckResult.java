@@ -5,14 +5,14 @@ import org.jspecify.annotations.Nullable;
 /**
  * One staged-generation gate's outcome, returned by {@link StageChecks#check}.
  *
- * @param outcome     whether the artifact passed, needs an artifact repair, or failed an executed assessment counterexample
+ * @param outcome     whether the artifact passed, needs an artifact repair, or needs coherent contract review from executable evidence
  * @param observation gate evidence and actionable feedback
  * @param report      the TESTS differential report, whose exact names also form the statement handoff; null for other stages
  */
 public record StageCheckResult(Outcome outcome, String observation, @Nullable AgentVerifyReport report) {
 
     public enum Outcome {
-        PASSED, ARTIFACT_FAILURE, ASSESSMENT_FAILURE
+        PASSED, ARTIFACT_FAILURE, ASSESSMENT_FAILURE, OWNERSHIP_CONFLICT
     }
 
     public StageCheckResult(boolean passed, String observation, @Nullable AgentVerifyReport report) {
@@ -24,11 +24,15 @@ public record StageCheckResult(Outcome outcome, String observation, @Nullable Ag
     }
 
     public boolean contractRedesignRequired() {
-        return outcome == Outcome.ASSESSMENT_FAILURE;
+        return outcome == Outcome.ASSESSMENT_FAILURE || outcome == Outcome.OWNERSHIP_CONFLICT;
     }
 
     public static StageCheckResult redesignRequired(String observation, AgentVerifyReport report) {
         return new StageCheckResult(Outcome.ASSESSMENT_FAILURE, observation, report);
+    }
+
+    public static StageCheckResult ownershipRedesignRequired(String observation, @Nullable AgentVerifyReport report) {
+        return new StageCheckResult(Outcome.OWNERSHIP_CONFLICT, observation, report);
     }
 
     public static StageCheckResult passed(String observation) {

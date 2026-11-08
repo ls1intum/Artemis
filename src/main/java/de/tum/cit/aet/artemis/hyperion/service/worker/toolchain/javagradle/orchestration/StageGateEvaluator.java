@@ -45,13 +45,8 @@ final class StageGateEvaluator {
                         + ". Keep every approved student-created type public in the solution and absent from the template; do not edit the server-generated structural test assets."),
                         false);
             }
-            // Only this end-of-attempt gate may correct an unsatisfiable given ownership: the correction is irreversible, so it must not fire on a half-written solution.
-            Optional<String> ownershipCorrection = stageCheckService.correctGivenOwnership(sandbox, sessionId);
             StageCheckResult result = stageCheckService.check(stage, sandbox, sessionId, exercise, seedTestsFiles, lastTestsReport, baseTools.seededStructuralTests());
             result = classifyAssessment(result, baseTools.seededStructuralTests());
-            if (ownershipCorrection.isPresent()) {
-                result = new StageCheckResult(result.outcome(), ownershipCorrection.get() + "\n" + result.observation(), result.report());
-            }
             return new Result(result, false);
         }
         Optional<StageCheckResult> reused = baseTools.reuseCachedPassingCheck(stage);
@@ -64,7 +59,8 @@ final class StageGateEvaluator {
     /** An unchanged starter that passes every declared student-work test is an executed assessment counterexample, even without output comparisons. */
     static StageCheckResult classifyAssessment(StageCheckResult result, SeededStructuralTests seeded) {
         AgentVerifyReport report = result.report();
-        if (report == null || !report.solutionPassed() || !report.templateCompiled() || report.solutionTests() == 0 || report.templateTests() != report.solutionTests()) {
+        if (result.contractRedesignRequired() || report == null || !report.solutionPassed() || !report.templateCompiled() || report.solutionTests() == 0
+                || report.templateTests() != report.solutionTests()) {
             return result;
         }
         List<String> studentTests = report.exactTestNames().stream().filter(name -> !seeded.testNames().contains(name) && !report.preservationTestNames().contains(name)).toList();

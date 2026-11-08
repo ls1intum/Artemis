@@ -882,7 +882,11 @@ public class SandboxAgentTools implements SubmitVetoAware, AuthoringProgress {
         if (stage != null) {
             StageCheckResult result = runStageCheck(stage);
             // Assigned rather than only set on rejection, so a passing resubmit can never be blocked by a veto a caller failed to consume after an earlier rejection.
-            submitVetoed = !result.passed();
+            submitVetoed = !result.passed() && !result.contractRedesignRequired();
+            if (result.contractRedesignRequired()) {
+                return screenObservation("tool/submit",
+                        "Submitted for controller-owned specification review; this candidate has not passed verification.\n" + formatStageCheckObservation(result));
+            }
             if (submitVetoed) {
                 return screenObservation("tool/submit", "SUBMIT REJECTED — fix these and resubmit:\n" + formatStageCheckObservation(result));
             }

@@ -64,7 +64,9 @@ final class SpecificationReviewPrompts {
         return executedEvidence
                 + """
 
-                        The server has reopened SPEC.md because an executed counterexample disproved the declared assessment. Revise the coherent contract before rebuilding its artifacts.
+                        The server has reopened SPEC.md because executable evidence disproved its assessment or supplied-code ownership. Revise the coherent contract before rebuilding its artifacts.
+                        When supplied code needs a learner-created type absent from the starter, reconcile the whole design instead of changing one ownership row. Preserve supplied
+                        support as supplied work; do not add learner TODOs merely to make it compile. Reconcile all ownership claims, examples, entry points and grading seams.
                         Preserve the instructor brief, learner responsibilities and prerequisites. Choose runtime observations of the learner-owned behavior that the supported harness can
                         execute; tests of supplied collaborators alone cannot establish student integration. A supplied observation facility may expose otherwise-local operations without
                         adding learner work. Do not require source or bytecode inspection, introduce untaught syntax, remove a learning objective, or replace it with output transcription.

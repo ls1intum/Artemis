@@ -1062,6 +1062,23 @@ class SandboxAgentToolsTest {
     }
 
     @Test
+    void submitHandsAnOwnershipConflictToTheControllerWithoutClaimingVerificationPassed() {
+        FakeInteractiveSandbox sandbox = new FakeInteractiveSandbox();
+        GenerationInput exercise = new GenerationInput(0, "", null, false, Set.of(), Set.of(), GenerationBuildTool.GRADLE);
+        StageChecks stageCheckService = mock(StageChecks.class);
+        when(stageCheckService.check(eq(GenerationStage.TESTS), eq(sandbox), eq("s"), eq(exercise), eq(Map.of()), any(), any(SeededStructuralTests.class)))
+                .thenReturn(StageCheckResult.ownershipRedesignRequired("supplied code needs a missing learner type", null));
+        SandboxAgentTools tools = stagedTools(sandbox, exercise, stageCheckService);
+        tools.enterStage(GenerationStage.TESTS);
+
+        String out = tools.submit("done");
+
+        assertThat(out).contains("controller-owned specification review", "has not passed verification");
+        assertThat(tools.consumeSubmitVeto()).isFalse();
+        assertThat(tools.reuseCachedPassingCheck(GenerationStage.TESTS)).isEmpty();
+    }
+
+    @Test
     void submit_inStagedSession_afterAFixThatPasses_succeedsWithNoVeto() {
         FakeInteractiveSandbox sandbox = new FakeInteractiveSandbox();
         GenerationInput exercise = new GenerationInput(0, "", null, false, Set.of(), Set.of(), GenerationBuildTool.GRADLE);

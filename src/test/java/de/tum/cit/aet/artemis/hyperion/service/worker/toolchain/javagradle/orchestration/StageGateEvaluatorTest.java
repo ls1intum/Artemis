@@ -10,7 +10,6 @@ import static org.mockito.Mockito.when;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 
 import org.junit.jupiter.api.Test;
@@ -38,7 +37,6 @@ class StageGateEvaluatorTest {
         var checks = spy(new StageChecks(verifier, new ApprovedSpecRegistry()));
         var report = report(true, true, List.of(), List.of("testStudent"), List.of());
         var mechanicallyPassed = new StageCheckResult(true, "mechanical checks passed", report);
-        doReturn(Optional.empty()).when(checks).correctGivenOwnership(sandbox, "s");
         doReturn(mechanicallyPassed).when(checks).check(GenerationStage.TESTS, sandbox, "s", exercise, Map.of(), null, SeededStructuralTests.EMPTY);
         when(verifier.probeOutputOnlyMains(any(), anyString(), any(), any(), any(), any(), any(), any(), any(), any(), any()))
                 .thenThrow(new AssertionError("Optional assessment started before the complete draft could be checkpointed"));

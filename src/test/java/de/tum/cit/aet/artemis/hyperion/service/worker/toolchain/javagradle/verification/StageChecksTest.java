@@ -11,7 +11,6 @@ import static org.mockito.Mockito.when;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
@@ -317,25 +316,6 @@ class StageChecksTest {
         verifyNoInteractions(verifier);
     }
 
-    @Test
-    void demotingAGivenTypeRewritesOnlyItsDesignStatusCell() {
-        String spec = """
-                ## Design
-                | Type | Role | Template status |
-                |---|---|---|
-                | `Demo` | supplied entry point, not given away | **given** |
-                | Track | supplied data | given |
-                | Player | context | student-creates
-                ## Notes
-                | Demo | elsewhere | given |
-                """;
-
-        String demoted = StageChecks.demoteGivenTypes(spec, Set.of("Demo", "Player"));
-
-        assertThat(demoted).isEqualTo(spec.replace("| `Demo` | supplied entry point, not given away | **given** |", "| `Demo` | supplied entry point, not given away | stubbed |"));
-        assertThat(StageChecks.designTableRows(demoted)).extracting(StageChecks.DesignRow::status).containsExactly("stubbed", "given", "student-creates");
-    }
-
     @Nested
     class Tests {
 
@@ -345,30 +325,33 @@ class StageChecksTest {
         }
 
         @Test
-        void demotesAGivenTypeWhoseCodeNeedsAStudentCreatedTypeOnlyThroughTheStageGateCorrection() {
+        void aGivenDependencyReturnsToContractReviewWithoutChangingOwnershipOrTheStarter() {
             String spec = specWithDesign("| Player | context students create | student-creates |\n| Demo | supplied entry point | given |\n");
-            assertThat(service.correctGivenOwnership(sandbox, "s")).as("no approved specification to correct").isEmpty();
             approvedSpecs.approve("s", spec);
             sandbox.spec = spec;
             sandbox.templateRepositoryFiles = Map.of("src/Demo.java", "public class Demo { public int calculate(int input) { return new Player().calculate(input); } }");
             sandbox.solutionRepositoryFiles = Map.of("src/Player.java", "public class Player { public int calculate(int input) { return input; } }");
             when(verifier.selfCheckTestsStage(any(), anyString(), eq(exercise), any(), any(SeededStructuralTests.class))).thenReturn(report(true, false));
 
-            // An in-loop verify on a possibly half-written solution never makes the irreversible correction.
-            assertThat(check(GenerationStage.TESTS).observation()).doesNotContain("OWNERSHIP CORRECTED");
+            StageCheckResult result = check(GenerationStage.TESTS);
+
+            assertThat(result.contractRedesignRequired()).isTrue();
+            assertThat(result.passed()).isFalse();
+            assertThat(result.observation()).contains("Demo->Player", "Do not turn supplied support into extra learner TODOs");
             assertThat(approvedSpecs.approved("s")).contains(spec);
+            assertThat(sandbox.spec).isEqualTo(spec);
+        }
 
-            Optional<String> notice = service.correctGivenOwnership(sandbox, "s");
+        @Test
+        void aPartialSolutionCannotAuthorizeOwnershipRedesign() {
+            String spec = specWithDesign("| Player | context students create | student-creates |\n| Demo | supplied entry point | given |\n");
+            approvedSpecs.approve("s", spec);
+            sandbox.spec = spec;
+            sandbox.templateRepositoryFiles = Map.of("src/Demo.java", "public class Demo { public Player player; }");
+            when(verifier.selfCheckTestsStage(any(), anyString(), eq(exercise), any(), any(SeededStructuralTests.class))).thenReturn(report(false, false));
 
-            String corrected = approvedSpecs.approved("s").orElseThrow();
-            assertThat(StageChecks.designTableRows(corrected)).extracting(StageChecks.DesignRow::status).containsExactly("student-creates", "stubbed");
-            assertThat(corrected).isEqualTo(spec.replace("| Demo | supplied entry point | given |", "| Demo | supplied entry point | stubbed |"));
-            assertThat(sandbox.files()).containsEntry("/workspace/SPEC.md", corrected);
-            assertThat(notice)
-                    .hasValueSatisfying(text -> assertThat(text).startsWith("OWNERSHIP CORRECTED").contains("[Demo]", "Demo->Player", "'stubbed'", "compilable stub bodies"));
-            // The corrected contract has no given type left that needs a student-created one, so nothing is corrected twice.
-            assertThat(service.correctGivenOwnership(sandbox, "s")).isEmpty();
-            assertThat(approvedSpecs.approved("s")).contains(corrected);
+            assertThat(check(GenerationStage.TESTS).contractRedesignRequired()).isFalse();
+            assertThat(approvedSpecs.approved("s")).contains(spec);
         }
 
         @Test

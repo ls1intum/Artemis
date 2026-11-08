@@ -23,7 +23,6 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -259,7 +258,7 @@ class StagedGenerationRunnerTest {
         when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenAnswer(invocation -> {
             if (calls.incrementAndGet() == 3) {
                 assertThat(approvedSpecs.approved("s")).isEmpty();
-                assertThat(invocation.<String>getArgument(1)).contains("executed counterexample", "Preserve the instructor brief");
+                assertThat(invocation.<String>getArgument(1)).contains("executable evidence", "Preserve the instructor brief");
                 sandbox.specMarkdown = VALID_SPEC_DOCUMENT.replace("computes a result", "computes an observable result");
             }
             return completed(1, "done");
@@ -404,7 +403,8 @@ class StagedGenerationRunnerTest {
     @Test
     void anExecutableContinuationRequiresItsExactApprovedSpecification() {
         StagedAssessmentContinuation continuation = exhaustRedesignedAssessment();
-        assertThat(approvedSpecs.amend("s", continuation.approvedSpecification(), "replacement approval")).isTrue();
+        approvedSpecs.forget("s");
+        approvedSpecs.approve("s", "replacement approval");
 
         var resumed = resume(continuation);
 
@@ -1071,23 +1071,34 @@ class StagedGenerationRunnerTest {
     }
 
     @Test
-    void aServerOwnershipCorrectionDuringTestsIsPublishedToTheSink() {
-        String corrected = VALID_SPEC_DOCUMENT + "\n<!-- corrected ownership -->\n";
+    void anOwnershipConflictRevisesTheWholeContractBeforeStatementAuthoring() {
+        String revised = VALID_SPEC_DOCUMENT + "\nReconciled supplied support and learner tasks.\n";
         stageCheckService = mock(StageChecks.class);
-        when(stageCheckService.check(any(), any(), anyString(), any(), anyMap(), any(), any(SeededStructuralTests.class))).thenReturn(StageCheckResult.passed("Stage passed"));
-        when(stageCheckService.correctGivenOwnership(any(), anyString())).thenAnswer(invocation -> {
-            approvedSpecs.amend("s", VALID_SPEC_DOCUMENT, corrected);
-            return Optional.of("OWNERSHIP CORRECTED: Demo");
-        });
+        var conflict = StageCheckResult.ownershipRedesignRequired("Supplied Demo depends on missing learner type Player", passingReport("testFoo"));
+        when(stageCheckService.check(any(), any(), anyString(), any(), anyMap(), any(), any(SeededStructuralTests.class))).thenReturn(StageCheckResult.passed("spec"), conflict,
+                StageCheckResult.passed("revised spec"), new StageCheckResult(true, "tests", passingReport("testFoo")), StageCheckResult.passed("statement"));
         runner = new StagedGenerationRunner(agentLoopRunner, systemPromptService, stageCheckService, new AgentTranscriptWriter(""), approvedSpecs, "FRESH");
-        when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed(1, "spec"), completed(2, "build"),
-                completed(1, "statement"));
+        AtomicInteger calls = new AtomicInteger();
+        when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenAnswer(invocation -> {
+            int call = calls.incrementAndGet();
+            if (call == 3) {
+                assertThat(approvedSpecs.approved("s")).isEmpty();
+                sandbox.specMarkdown = revised;
+            }
+            if (call == 5) {
+                assertThat(approvedSpecs.approved("s")).contains(revised);
+            }
+            return completed(1, "done");
+        });
         List<String> published = new ArrayList<>();
 
-        runner.run(exercise, baseTools, baseTools, "brief", "brief", Map.of(), sandbox, "s", NEVER_CANCELLED, null, null, () -> SeededStructuralTests.EMPTY, true, published::add);
+        var outcome = runner.run(exercise, baseTools, baseTools, "brief", "brief", Map.of(), sandbox, "s", NEVER_CANCELLED, null, null, () -> SeededStructuralTests.EMPTY, true,
+                published::add);
 
-        assertThat(published).containsExactly(VALID_SPEC_DOCUMENT, corrected);
-        verify(stageCheckService).correctGivenOwnership(any(), anyString());
+        assertThat(outcome.result().status()).isEqualTo(AgentLoopResult.Status.COMPLETED);
+        assertThat(published).containsExactly(VALID_SPEC_DOCUMENT, revised);
+        assertThat(calls).hasValue(5);
+        verify(baseTools, times(2)).enterStage(GenerationStage.SPEC);
     }
 
     @Test

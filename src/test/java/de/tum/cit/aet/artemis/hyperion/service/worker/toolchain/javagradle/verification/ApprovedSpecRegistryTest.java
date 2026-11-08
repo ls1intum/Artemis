@@ -12,7 +12,7 @@ import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.criti
 class ApprovedSpecRegistryTest {
 
     @Test
-    void sourceGoalsSurviveApprovalAmendmentAndAssessmentReentryUntilTheSessionIsForgotten() {
+    void sourceGoalsSurviveApprovalAndAssessmentReentryUntilTheSessionIsForgotten() {
         var registry = new ApprovedSpecRegistry();
         var goals = new BriefLearningGoals("Preserve order and choose the smallest holder.",
                 List.of(new BriefLearningGoals.Goal("G1", "Preserve order"), new BriefLearningGoals.Goal("G2", "choose the smallest holder")));
@@ -20,9 +20,7 @@ class ApprovedSpecRegistryTest {
         registry.approve("s", "first specification");
         assertThat(registry.learningGoals("s")).contains(goals);
 
-        assertThat(registry.amend("s", "first specification", "ownership correction")).isTrue();
-        assertThat(registry.learningGoals("s")).contains(goals);
-        assertThat(registry.reopenForAssessment("s", "ownership correction")).isTrue();
+        assertThat(registry.reopenForAssessment("s", "first specification")).isTrue();
         assertThat(registry.approved("s")).isEmpty();
         assertThat(registry.learningGoals("s")).contains(goals);
 
@@ -49,19 +47,6 @@ class ApprovedSpecRegistryTest {
     }
 
     @Test
-    void anAmendmentReplacesOnlyTheExactContractItWasDerivedFrom() {
-        ApprovedSpecRegistry registry = new ApprovedSpecRegistry();
-
-        assertThat(registry.amend("session", "approved contract", "corrected contract")).isFalse();
-        registry.approve("session", "approved contract");
-
-        assertThat(registry.amend("session", "stale contract", "corrected contract")).isFalse();
-        assertThat(registry.approved("session")).contains("approved contract");
-        assertThat(registry.amend("session", "approved contract", "corrected contract")).isTrue();
-        assertThat(registry.approved("session")).contains("corrected contract");
-    }
-
-    @Test
     void staleApprovalCannotReopenAnotherContract() {
         var registry = new ApprovedSpecRegistry();
         registry.approve("s", "first");
@@ -74,16 +59,14 @@ class ApprovedSpecRegistryTest {
     }
 
     @Test
-    void reapprovalAndOwnershipCorrectionCannotRefreshTheSessionRedesignAllowance() {
+    void reapprovalCannotRefreshTheSessionRedesignAllowance() {
         var registry = new ApprovedSpecRegistry();
         registry.approve("s", "first");
         assertThat(registry.reopenForAssessment("s", "first")).isTrue();
         registry.approve("s", "redesigned");
-        assertThat(registry.amend("s", "redesigned", "ownership correction")).isTrue();
-
         assertThat(registry.assessmentReopened("s")).isTrue();
-        assertThat(registry.reopenForAssessment("s", "ownership correction")).isFalse();
-        assertThat(registry.approved("s")).hasValue("ownership correction");
+        assertThat(registry.reopenForAssessment("s", "redesigned")).isFalse();
+        assertThat(registry.approved("s")).hasValue("redesigned");
         registry.forget("s");
         registry.approve("s", "new session");
         assertThat(registry.reopenForAssessment("s", "new session")).isTrue();

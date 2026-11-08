@@ -2,7 +2,7 @@
 id: hyperion
 title: Hyperion Service
 sidebar_label: Hyperion Setup
-last_reviewed: 2026-11-06
+last_reviewed: 2026-11-08
 ---
 
 import { CalloutVariant } from '../../src/components/Callout/Callout.types';
@@ -314,6 +314,12 @@ differential verification. Redesign uses the remaining shared budget and the ori
 deadline. A confirmed bypass found after mechanical verification can also request
 that single redesign, while retaining the existing draft and its findings. A failed
 redesign returns the earlier draft. It does not turn that draft into a qualified result.
+
+The same bounded specification review handles a supplied type that depends on a
+learner-created type absent from the starter. The controller does not silently change
+that supplied type into extra learner work. It reopens the complete specification,
+then checks the revised ownership, responsibilities and grading before statement
+authoring. An unresolved ownership conflict cannot become a verified checkpoint.
 
 The configured `artemis.hyperion.agent.max-turns` is a **job-wide authoring limit**,
 shared by concept selection, stages, continuations and repair attempts. There is no

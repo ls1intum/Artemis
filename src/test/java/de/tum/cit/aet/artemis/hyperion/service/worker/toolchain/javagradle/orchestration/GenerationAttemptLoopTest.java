@@ -536,30 +536,17 @@ class GenerationAttemptLoopTest {
     }
 
     @Test
-    void aSubmittedCandidateWhoseGivenTypeNeedsAStudentTypeIsCorrectedThenVerifiedAgainstTheCorrection() {
-        // Attempt 1 exposes the unsatisfiable given ownership; the server corrects it before that attempt's verification, which still fails on the identical template copy, and
-        // the next attempt, told what it may now stub, is accepted instead of being rejected for the same given type again.
-        String corrected = "## Design\n| Type | Role | Template status |\n|---|---|---|\n| Client | entry point | stubbed |\n| Car | vehicle | student-creates |\n";
-        String notice = "OWNERSHIP CORRECTED: the approved specification marked [Client] as 'given', but their code uses student-created types [Client->Car].";
-        when(stageChecks.correctGivenOwnership(any(), anyString())).thenAnswer(invocation -> {
-            sandbox.withFile(SPEC_PATH, corrected);
-            return Optional.of(notice);
-        }).thenReturn(Optional.empty());
-        when(verifier.verify(any(), anyString(), any(), any(VerificationRequest.class), any(Runnable.class))).thenReturn(rejected("The template does not compile: Car"),
-                accepted());
-
-        GenerationAttemptLoop loop = newGenerateLoop(3, 1);
+    void aSubmittedOwnershipConflictCannotSilentlyChangeTheContractOrBecomeASavedCandidate() {
+        String notice = "Supplied Client depends on missing learner type Car";
+        when(stageChecks.givenOwnershipConflict(any(), anyString())).thenReturn(Optional.of(notice));
+        GenerationAttemptLoop loop = newGenerateLoop(1, 1);
         loop.run();
 
-        InOrder order = Mockito.inOrder(stageChecks, verifier);
-        order.verify(stageChecks).correctGivenOwnership(any(), anyString());
-        order.verify(verifier).verify(any(), anyString(), any(), any(VerificationRequest.class), any(Runnable.class));
-        assertThat(publishedSpecs).containsExactly(corrected);
-        assertThat(progressLines).anyMatch(line -> line.contains("changed a type the specification marked 'given' to 'stubbed'"));
-        ArgumentCaptor<String> prompts = ArgumentCaptor.forClass(String.class);
-        verify(agentLoopRunner, times(2)).runSession(anyString(), any(), prompts.capture(), any(), anyInt(), any(), any(), any());
-        assertThat(prompts.getAllValues().getLast()).contains(notice, "The template does not compile");
-        assertThat(loop.terminationReason()).isEqualTo(TerminationReason.CONVERGED);
+        assertThat(publishedSpecs).isEmpty();
+        assertThat(loop.verification().mechanicallyVerified()).isFalse();
+        assertThat(loop.verification().reasons()).contains(notice);
+        assertThat(loop.lastMechanicallyVerifiedCandidate()).isNull();
+        verify(verifier, never()).verify(any(), anyString(), any(), any(VerificationRequest.class), any(Runnable.class));
     }
 
     @Test

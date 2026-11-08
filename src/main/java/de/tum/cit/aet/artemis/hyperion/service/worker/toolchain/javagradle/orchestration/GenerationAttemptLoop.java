@@ -355,24 +355,23 @@ class GenerationAttemptLoop {
                 terminationReason = TerminationReason.UNCHANGED_CANDIDATE_RESUBMITTED;
                 break;
             }
-            // A submitted candidate is complete, so an unsatisfiable given ownership it exposes is corrected before its authoritative verification, which then judges it
-            // against the corrected contract. In-loop verify calls never correct; see StageChecks#correctGivenOwnership.
-            Optional<String> ownershipCorrection = stageChecks.correctGivenOwnership(sandbox, sessionId);
-            // Snapshot the approved SPEC.md because each verification restore resets and must re-seed the tmpfs workspace.
+            Optional<String> ownershipConflict = stageChecks.givenOwnershipConflict(sandbox, sessionId);
+            if (ownershipConflict.isPresent() && useStagedGeneration && attempt < maxGenerationAttempts) {
+                stagedContinuation = stagedGenerationRunner.requestAssessmentRedesign(exercise, sessionId, stagedAuthoringStartedAt, ownershipConflict.get(),
+                        unresolvedConceptFindings);
+                if (stagedContinuation != null) {
+                    if (!canContinueAssessment(attempt)) {
+                        return outcomeIfAgentStopped();
+                    }
+                    continue;
+                }
+            }
             String specDocumentSnapshot = GenerationOrchestrator.readSpecDocument(sandbox, sessionId);
-            if (ownershipCorrection.isPresent()) {
-                publishOwnershipCorrection(specDocumentSnapshot);
-            }
             emitPhase(Phase.VERIFYING, "Building the solution and starter code against the generated tests");
-            var assessed = verifyCandidate(artifacts, specDocumentSnapshot);
+            var assessed = ownershipConflict.isPresent()
+                    ? new ExecutableEvidenceLedger.AssessmentVerdict(new VerificationResult(false, false, false, 0, List.of(ownershipConflict.get())), List.of())
+                    : verifyCandidate(artifacts, specDocumentSnapshot);
             verification = assessed.verification();
-            if (ownershipCorrection.isPresent() && !verification.mechanicallyVerified()) {
-                // The template still carries the given copy that cannot compile; the notice tells the next attempt what it may now stub.
-                List<String> reasons = new ArrayList<>(List.of(ownershipCorrection.get()));
-                reasons.addAll(verification.reasons());
-                verification = new VerificationResult(false, verification.solutionPassed(), verification.templateFailed(), verification.testCount(), reasons,
-                        verification.templateFailureEvidence());
-            }
             emit(verification.report());
             if (!assessed.counterexamples().isEmpty()) {
                 checkpointMechanicallyVerifiedCandidate(artifacts, specDocumentSnapshot, verification);
@@ -752,18 +751,6 @@ class GenerationAttemptLoop {
             return specFidelityReport;
         }
         return new SpecFidelityReport(specFidelityReport.findings().stream().filter(finding -> finding.kind() != SpecFidelityReport.Kind.CONTRACT_WITNESS_AVAILABLE).toList());
-    }
-
-    /** Publishes a server-corrected approved specification the way the staged runner publishes its approval: to the critic grounding and the instructor-visible SPEC.md. */
-    private void publishOwnershipCorrection(@Nullable String correctedSpecification) {
-        if (correctedSpecification == null || correctedSpecification.isBlank()) {
-            return;
-        }
-        specSnapshot.set(correctedSpecification);
-        specObserver.accept(correctedSpecification);
-        log.info("Exercise {}: published the server-corrected approved specification before verifying the submitted candidate", exercise.id());
-        emit("Artemis changed a type the specification marked 'given' to 'stubbed', because its code needs a type students create and an identical starter copy could never "
-                + "compile.");
     }
 
     /** Re-attaches both contested-authority states after a fresh review, which only ever reports on artifacts and cannot discharge either. */

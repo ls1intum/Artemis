@@ -13,7 +13,7 @@ import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.criti
  * <p>
  * Every later gate derives from the specification — which types the template must omit, whether the statement needs a diagram — but SPEC.md lives in the workspace and the agent
  * may write it, so reading the live file at gate time would let the agent dissolve the contract it is judged against by downgrading its own ownership decisions until the
- * artifacts it already has pass. This snapshot is unreachable from the sandbox and is every downstream gate's sole authority. An executed assessment counterexample can
+ * artifacts it already has pass. This snapshot is unreachable from the sandbox and is every downstream gate's sole authority. Executable assessment or ownership evidence can
  * authorize the staged controller to revoke its exact approval and repeat specification review within the existing budget; the agent cannot revoke it.
  */
 public class ApprovedSpecRegistry {
@@ -42,24 +42,6 @@ public class ApprovedSpecRegistry {
     }
 
     /**
-     * Replaces the approved specification with a server-derived ownership correction. Narrower than a second approval: the caller must name the exact text it corrects, so a
-     * stale or concurrent amendment is refused rather than overwriting a newer contract. Only the server calls this; the agent can never reach the registry.
-     *
-     * @param sessionId the sandbox session the specification belongs to
-     * @param expected  the currently approved SPEC.md content the correction was derived from
-     * @param amended   the corrected SPEC.md content
-     * @return whether the correction was recorded
-     */
-    public boolean amend(String sessionId, String expected, String amended) {
-        if (sessionId == null || expected == null || amended == null || amended.isBlank()) {
-            return false;
-        }
-        Approval current = approvedBySession.get(sessionId);
-        return current != null && expected.equals(current.specification())
-                && approvedBySession.replace(sessionId, current, new Approval(amended, current.assessmentReopened(), current.learningGoals()));
-    }
-
-    /**
      * @param sessionId the sandbox session
      * @return the specification this session's spec gate approved, or empty when the spec stage never ran (the instructor's statement IS the specification, an ADAPT run, or a
      *         non-staged language)
@@ -70,7 +52,7 @@ public class ApprovedSpecRegistry {
     }
 
     /**
-     * Revokes only the exact contract disproved by an executed assessment check, before a bounded server-controlled redesign.
+     * Revokes only the exact contract disproved by executable assessment or ownership evidence, before a bounded server-controlled redesign.
      *
      * @param sessionId the sandbox session whose contract is being reviewed
      * @param expected  the exact approved specification that the counterexample challenged
