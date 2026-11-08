@@ -144,7 +144,7 @@ final class AgentToolBatch {
     static boolean escalateRepeatedRejections(List<Message> conversation, List<AssistantMessage.ToolCall> toolCalls, Map<String, Integer> repeatedCallCounts) {
         for (int i = conversation.size() - 1; i >= 0; i--) {
             if (conversation.get(i) instanceof ToolResponseMessage toolResponse) {
-                if (toolResponse.getResponses().stream().anyMatch(response -> WORKSPACE_MUTATING_TOOLS.contains(response.name()) && !isErrorResponse(response.responseData()))) {
+                if (toolResponse.getResponses().stream().anyMatch(AgentToolBatch::changedWorkspace)) {
                     forgetObservations(repeatedCallCounts);
                 }
                 boolean repeatedRejection = false;
@@ -156,7 +156,7 @@ final class AgentToolBatch {
                         continue;
                     }
                     boolean rejected = isErrorResponse(response.responseData());
-                    if (!rejected && WORKSPACE_MUTATING_TOOLS.contains(response.name())) {
+                    if (changedWorkspace(response)) {
                         // A write reports only what it wrote, not whether the file had changed since the last identical write, so repeating it is not evidence of a loop.
                         responses.add(response);
                         continue;
@@ -208,6 +208,14 @@ final class AgentToolBatch {
             }
         }
         return false;
+    }
+
+    private static boolean changedWorkspace(ToolResponseMessage.ToolResponse response) {
+        if (!WORKSPACE_MUTATING_TOOLS.contains(response.name()) || isErrorResponse(response.responseData())) {
+            return false;
+        }
+        String result = response.responseData() == null ? "" : response.responseData().stripLeading();
+        return !result.startsWith("No change:") && !result.startsWith("\"No change:");
     }
 
     private static boolean isErrorResponse(@Nullable String responseData) {

@@ -192,6 +192,32 @@ class SandboxAgentToolsTest {
     }
 
     @Test
+    void identicalWritePreservesVerificationButRestoresAnInterveningChange() {
+        String path = "solution/src/Example.java";
+        String content = "class Example {}";
+        FakeInteractiveSandbox sandbox = new FakeInteractiveSandbox().withFile("/workspace/" + path, content);
+        GenerationInput exercise = new GenerationInput(0, "", null, false, Set.of(), Set.of(), GenerationBuildTool.GRADLE);
+        StageChecks checks = mock(StageChecks.class);
+        when(checks.check(eq(GenerationStage.TESTS), eq(sandbox), eq("s"), eq(exercise), eq(Map.of()), any(), any(SeededStructuralTests.class)))
+                .thenReturn(StageCheckResult.passed("clean"));
+        SandboxAgentTools tools = stagedTools(sandbox, exercise, checks);
+        tools.enterStage(GenerationStage.TESTS);
+        tools.verify();
+
+        assertThat(tools.writeFile(path, content)).startsWith("No change:");
+        assertThat(tools.authoringProgress().mutations()).isZero();
+        assertThat(tools.authoringProgress().verified()).isTrue();
+        assertThat(tools.reuseCachedPassingCheck(GenerationStage.TESTS)).isPresent();
+        assertThat(tools.latestMutationContent()).isNull();
+
+        sandbox.files().put("/workspace/" + path, "class Example { int changed; }");
+        assertThat(tools.writeFile(path, content)).startsWith("Wrote ");
+        assertThat(sandbox.files().get("/workspace/" + path)).isEqualTo(content);
+        assertThat(tools.authoringProgress().mutations()).isEqualTo(1);
+        assertThat(tools.authoringProgress().verified()).isFalse();
+    }
+
+    @Test
     void search_returnsMatchingLinesWithoutDirtyingTheWorkspace() {
         FakeInteractiveSandbox sandbox = FakeInteractiveSandbox.returning(new SandboxExecResultDTO(0,
                 "/workspace/problem-statement.md:2:Elevator list is empty\n/workspace/problem-statement.md:3:last Elevator list is empty\n", "", false));
@@ -346,7 +372,7 @@ class SandboxAgentToolsTest {
         assertThat(tools.editFile("problem-statement.md", "replace this suffix", "updated suffix")).startsWith("Replaced 1");
         String written = new String(java.util.Base64.getDecoder().decode(sandbox.lastWrittenBase64()), java.nio.charset.StandardCharsets.UTF_8);
         assertThat(written).isEqualTo(prefix + "updated suffix");
-        assertThat(sandbox.copiedPaths()).containsExactly("/workspace/problem-statement.md", "/workspace/problem-statement.md");
+        assertThat(sandbox.copiedPaths()).containsOnly("/workspace/problem-statement.md");
         assertThat(sandbox.files().get("/workspace/problem-statement.md")).isEqualTo(prefix + "updated suffix");
         assertThat(sandbox.executedCommands()).isEmpty();
     }

@@ -131,7 +131,11 @@ class DockerGradleBuildTest {
         String prefix = "preserve this prefix\n".repeat(8_000);
         String path = "solution/nested/large.md";
         assertThat(tools.writeFile(path, prefix + "replace this suffix")).startsWith("Wrote ");
+        assertThat(tools.writeFile(path, prefix + "replace this suffix")).startsWith("No change:");
+        assertThat(tools.editFile(path, "replace this suffix", "replace this suffix")).startsWith("No change:");
+        assertThat(tools.authoringProgress().mutations()).isEqualTo(1);
         assertThat(tools.editFile(path, "replace this suffix", "updated suffix")).startsWith("Replaced 1");
+        assertThat(tools.authoringProgress().mutations()).isEqualTo(2);
         try (var archive = sandbox.copyOut(session, "/workspace/" + path)) {
             assertThat(WorkspaceArchive.readTar(archive, "")).containsExactlyEntriesOf(Map.of("large.md", prefix + "updated suffix"));
         }

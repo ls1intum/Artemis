@@ -51,6 +51,25 @@ class AgentToolBatchTest {
         assertThat(AgentToolBatch.lastRejection(conversation)).startsWith("search: ERROR: this exact search call");
     }
 
+    @ParameterizedTest
+    @CsvSource({ "write_file", "edit_file", "delete_file" })
+    void unchangedMutationsKeepRepeatedObservationsVisibleWithoutRejectingTheCall(String tool) {
+        Map<String, Integer> counts = new HashMap<>();
+        List<AssistantMessage.ToolCall> read = List.of(call("r", "read_file", "{}"));
+        List<AssistantMessage.ToolCall> mutation = List.of(call("w", tool, "{}"));
+        for (int index = 0; index < AgentToolBatch.REPEATED_REJECTION_ESCALATION - 1; index++) {
+            AgentToolBatch.escalateRepeatedRejections(batch(response("r", "read_file", "same content")), read, counts);
+            assertThat(AgentToolBatch.escalateRepeatedRejections(batch(response("w", tool, "\"No change: same content\"")), mutation, counts)).isFalse();
+        }
+        List<Message> observed = batch(response("r", "read_file", "same content"));
+        assertThat(AgentToolBatch.escalateRepeatedRejections(observed, read, counts)).isFalse();
+        assertThat(lastResponse(observed)).startsWith("NOTE: this exact read_file call");
+        List<Message> unchanged = batch(response("w", tool, "\"No change: same content\""));
+        assertThat(AgentToolBatch.escalateRepeatedRejections(unchanged, mutation, counts)).isFalse();
+        assertThat(lastResponse(unchanged)).startsWith("NOTE: this exact " + tool + " call");
+        assertThat(AgentToolBatch.hasRejectedToolAction(unchanged)).isFalse();
+    }
+
     @Test
     void identicalSuccessfulWritesAndSubmitsAreNeverRepeats() {
         Map<String, Integer> counts = new HashMap<>();

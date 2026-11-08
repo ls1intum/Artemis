@@ -394,6 +394,9 @@ public class SandboxAgentTools implements SubmitVetoAware, AuthoringProgress {
         if (packageRejection != null) {
             return packageRejection + " No file was written; the workspace is unchanged.";
         }
+        if (hasSameContent(safe, content)) {
+            return "No change: '" + safe + "' already has this exact content. Use verify to inspect the outstanding failure; change the implementation before writing again.";
+        }
         try (InputStream archive = WorkspaceArchive.buildWorkspaceTarStream(Map.of(safe, content), Map.of())) {
             sandbox.copyIn(sessionId, WORKSPACE, archive);
         }
@@ -404,6 +407,16 @@ public class SandboxAgentTools implements SubmitVetoAware, AuthoringProgress {
         structuredMutations++;
         markDirty();
         return "Wrote " + content.length() + " characters to " + safe;
+    }
+
+    private boolean hasSameContent(String path, String content) {
+        try {
+            return content.equals(readCompleteFile(path));
+        }
+        catch (IOException | UncheckedIOException | WorkspaceArchive.RejectedWorkspaceEntryException failure) {
+            // Equality is unknown for a missing or unreadable file. A successful replacement still invalidates verification.
+            return false;
+        }
     }
 
     /**
