@@ -11,6 +11,7 @@ import static org.mockito.Mockito.when;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.IntStream;
@@ -39,6 +40,33 @@ class AgentLoopRunnerTest {
                 .allSatisfy(method -> assertThat(method.getParameterTypes()).contains(SubmitVetoAware.class).doesNotContain(Object.class));
         org.assertj.core.api.Assertions.assertThatIllegalArgumentException()
                 .isThrownBy(() -> runner(mock(ChatModel.class)).run("system", "brief", null, 1, () -> false, null, null));
+    }
+
+    @Test
+    void stagedTextRepliesContinueUntilFilesAreWrittenAndExplicitlySubmitted() {
+        ChatModel model = mock(ChatModel.class);
+        when(model.call(any(Prompt.class))).thenReturn(text("# SPEC.md\nComplete specification in chat"), calls("write-1", "write"), text("Done"), calls("submit-1", "submit"));
+        StagedTools tools = new StagedTools();
+
+        var result = runner(model).run("system", "brief", tools, 6, () -> false, null, null);
+
+        assertThat(result.status()).isEqualTo(AgentLoopResult.Status.COMPLETED);
+        assertThat(result.turns()).isEqualTo(4);
+        assertThat(tools.actions).containsExactly("write", "submit");
+    }
+
+    @Test
+    void stagedTextRepliesCannotCompleteOrExtendTheSharedTurnBudget() {
+        ChatModel model = mock(ChatModel.class);
+        when(model.call(any(Prompt.class))).thenReturn(text("Complete specification in chat"));
+        StagedTools tools = new StagedTools();
+
+        var result = runner(model).run("system", "brief", tools, 3, () -> false, null, null);
+
+        assertThat(result.status()).isEqualTo(AgentLoopResult.Status.BUDGET_EXHAUSTED);
+        assertThat(result.turns()).isEqualTo(3);
+        assertThat(tools.actions).isEmpty();
+        verify(model, times(3)).call(any(Prompt.class));
     }
 
     @ParameterizedTest
@@ -370,6 +398,23 @@ class AgentLoopRunnerTest {
 
         assertThat(result.status()).isEqualTo(AgentLoopResult.Status.COMPLETED);
         assertThat(progress).anyMatch(message -> message.contains("unavailable action")).noneMatch(message -> message.contains("private-instructor-text"));
+    }
+
+    @Test
+    void unavailableToolFeedbackLetsTheAgentSelectARegisteredToolWithoutExecutingTheRejectedBatch() {
+        ChatModel model = mock(ChatModel.class);
+        when(model.call(any(Prompt.class))).thenReturn(calls("one", "write", "two", "ls"), calls("three", "write"), calls("four", "submit"));
+        RecordingTools tools = new RecordingTools();
+
+        var result = runner(model).run("system", "brief", tools, 4, () -> false, null, null);
+
+        assertThat(result.status()).isEqualTo(AgentLoopResult.Status.COMPLETED);
+        assertThat(tools.actions).containsExactly("write", "submit");
+        var prompts = ArgumentCaptor.forClass(Prompt.class);
+        verify(model, times(3)).call(prompts.capture());
+        assertThat(prompts.getAllValues().get(1).getInstructions().stream().filter(ToolResponseMessage.class::isInstance).map(ToolResponseMessage.class::cast)
+                .flatMap(message -> message.getResponses().stream()).toList()).hasSize(2)
+                .allSatisfy(response -> assertThat(response.responseData()).contains("no call in this batch was executed", "available tools: [submit, write]"));
     }
 
     @Test
@@ -752,6 +797,26 @@ class AgentLoopRunnerTest {
             calls.add(new AssistantMessage.ToolCall(idAndName[i], "function", idAndName[i + 1], "{}"));
         }
         return new ChatResponse(List.of(new Generation(AssistantMessage.builder().content("").toolCalls(calls).build())));
+    }
+
+    static class StagedTools extends RecordingTools {
+
+        @Override
+        @Tool(description = "Record an edit")
+        public String write() {
+            return super.write();
+        }
+
+        @Override
+        @Tool(description = "Submit the current workspace")
+        public String submit() {
+            return super.submit();
+        }
+
+        @Override
+        public Optional<String> pendingCompletionFeedback() {
+            return Optional.of("Write the artifact with the file tools, then call submit.");
+        }
     }
 
     static class RecordingTools implements SubmitVetoAware {

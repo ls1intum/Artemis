@@ -160,7 +160,23 @@ class JavaSourceInspectorTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = { "@Policy", "@Policy(activated = false)", "@Policy(value = \"other.yaml\")" })
+    @ValueSource(strings = { "@Policy(\"SecurityPolicy.yaml\")", "@Policy(value = \"SecurityPolicy.yaml\")", "@de.tum.cit.ase.ares.api.Policy(\"SecurityPolicy.yaml\")",
+            "@Policy( /* exact policy */ \"SecurityPolicy.yaml\")" })
+    void javaTestAnnotationSummary_acceptsBothJavaFormsOfTheExactTrustedPolicy(String policy) {
+        String source = "import de.tum.cit.ase.ares.api.Policy; @de.tum.cit.ase.ares.api.jupiter.Public " + policy
+                + " class TestCase { @org.junit.jupiter.api.Test @de.tum.cit.ase.ares.api.StrictTimeout(1) void runs() {} }";
+
+        var summary = JavaSourceInspector.javaTestAnnotationSummary(source);
+
+        assertThat(summary.hasTestMethods()).isTrue();
+        assertThat(summary.classWithMissingAresAnnotations()).isFalse();
+        assertThat(summary.testMethodWithoutStrictTimeout()).isFalse();
+        assertThat(summary.unsupportedAnnotationSyntax()).isFalse();
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "@Policy", "@Policy(activated = false)", "@Policy(value = \"other.yaml\")", "@Policy(\"other.yaml\")",
+            "@Policy(value = \"SecurityPolicy.yaml\", activated = false)", "@Policy(\"SecurityPolicy.yaml\" + suffix)" })
     void javaTestAnnotationSummary_rejectsImplicitDisabledOrAlternatePolicies(String policy) {
         String source = "import de.tum.cit.ase.ares.api.Policy; @de.tum.cit.ase.ares.api.jupiter.Public " + policy
                 + " class TestCase { @org.junit.jupiter.api.Test @de.tum.cit.ase.ares.api.StrictTimeout(1) void runs() {} }";

@@ -419,6 +419,20 @@ public class AgentLoopRunner {
                             messagesAtLastCall, toolDefinitionTokens));
                     continue;
                 }
+                var pendingCompletion = tools.pendingCompletionFeedback();
+                if (pendingCompletion.isPresent()) {
+                    previousReplyCutOffWithoutAction = false;
+                    emit(stepListener, "The stage still needs its files and explicit submission.");
+                    conversation.add(response.getResult().getOutput());
+                    conversation.add(new UserMessage(pendingCompletion.get()));
+                    conversation = activeRunner.compactIfNeeded(conversation, lastPromptTokens, messagesAtLastCall, toolDefinitionTokens, usageSink, cancelled, stepListener);
+                    if (cancelled.getAsBoolean()) {
+                        return session(AgentLoopResult.Status.CANCELLED, turn, lastAssistantText, conversation);
+                    }
+                    prompt = new Prompt(conversation, activeRunner.agentOptions(toolCallbacks, conversation, lastPromptConversation == conversation ? lastPromptTokens : 0,
+                            messagesAtLastCall, toolDefinitionTokens));
+                    continue;
+                }
                 // Append this closing turn before returning so a caller carrying the conversation forward does not lose it.
                 emit(stepListener, "Preparing the exercise for verification.");
                 List<Message> completedConversation = new ArrayList<>(conversation);
@@ -534,7 +548,7 @@ public class AgentLoopRunner {
                 // Every requested call id must be answered, or the chat-completions tool-pairing contract is violated on the next request.
                 String outcome = executionStarted
                         ? "ERROR: this batch stopped after execution began. Some calls may have completed. Inspect the workspace before retrying any action."
-                        : "ERROR: no call in this batch was executed. Use only available tools with valid JSON object arguments, then retry.";
+                        : AgentToolBatch.preflightRejectionFeedback(toolCallbacks);
                 conversation.add(AgentToolBatch.unexecutedResponses(failedTurn.getToolCalls(), outcome));
                 if (consecutiveToolFailures >= MAX_CONSECUTIVE_TOOL_FAILURES) {
                     return failed(turn, lastAssistantText, conversation,

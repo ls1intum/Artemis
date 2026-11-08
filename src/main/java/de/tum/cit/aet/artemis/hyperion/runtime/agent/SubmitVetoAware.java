@@ -1,6 +1,8 @@
 package de.tum.cit.aet.artemis.hyperion.runtime.agent;
 
-/** The contract the agent loop needs from a sandbox-backed tools object: whether it may end on submit, and whether its sandbox is still alive. */
+import java.util.Optional;
+
+/** The contract the agent loop needs from a sandbox-backed tools object: how it may complete, and whether its sandbox is still alive. */
 public interface SubmitVetoAware {
 
     /**
@@ -9,6 +11,15 @@ public interface SubmitVetoAware {
      * @return whether submission was vetoed
      */
     boolean consumeSubmitVeto();
+
+    /**
+     * Explains what a text-only reply must still do before this session can complete.
+     *
+     * @return feedback when explicit submission is required, otherwise empty
+     */
+    default Optional<String> pendingCompletionFeedback() {
+        return Optional.empty();
+    }
 
     /**
      * Whether the sandbox session backing these tools has been terminated, which the loop treats as a hard stop.

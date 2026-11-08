@@ -908,6 +908,13 @@ public class SandboxAgentTools implements SubmitVetoAware, AuthoringProgress {
     }
 
     @Override
+    public Optional<String> pendingCompletionFeedback() {
+        return currentStage == null ? Optional.empty()
+                : Optional.of("This stage is not submitted. Write its artifact through the file tools, then call submit by itself. "
+                        + "A specification, source file, or completion report returned only as chat text does not write or submit the workspace.");
+    }
+
+    @Override
     public boolean consumeSubmitVeto() {
         boolean vetoed = submitVetoed;
         submitVetoed = false;

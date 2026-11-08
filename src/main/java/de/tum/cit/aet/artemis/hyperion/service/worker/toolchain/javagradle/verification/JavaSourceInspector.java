@@ -43,7 +43,7 @@ final class JavaSourceInspector {
     private static final Pattern ANNOTATION_NAME = Pattern
             .compile("\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*(?:\\s*\\.\\s*\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*)*+");
 
-    private static final Pattern EXPLICIT_POLICY_ARGUMENT = Pattern.compile("value\\s*=\\s*\"SecurityPolicy\\.yaml\"");
+    private static final Pattern POLICY_PATH_ARGUMENT = Pattern.compile("(?:value\\s*=\\s*)?\"SecurityPolicy\\.yaml\"");
 
     private static final Pattern SIMPLE_ANNOTATION_ARGUMENT = Pattern.compile("[0-9]+|\"(?:build|build/classes/java/test)\"");
 
@@ -373,7 +373,7 @@ final class JavaSourceInspector {
         }
         String argument = source.substring(argumentStart, offset - 1).trim();
         // Only the literal path and integer arguments used by the safety contract can supply evidence.
-        String trustedArgument = EXPLICIT_POLICY_ARGUMENT.matcher(argument).matches() ? "value = \"SecurityPolicy.yaml\""
+        String trustedArgument = POLICY_PATH_ARGUMENT.matcher(argument).matches() ? "value = \"SecurityPolicy.yaml\""
                 : SIMPLE_ANNOTATION_ARGUMENT.matcher(argument).matches() ? argument : "?";
         return new JavaAnnotation(annotation + "(" + trustedArgument + ")", offset);
     }

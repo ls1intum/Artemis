@@ -67,7 +67,7 @@ final class AresConventions {
             }
         }
         if (!missingClassAnnotations.isEmpty()) {
-            reasons.add("Java test classes must use trusted Ares 2 @Public and @Policy(value = \"SecurityPolicy.yaml\"); missing or shadowed in "
+            reasons.add("Java test classes must use trusted Ares 2 @Public and @Policy naming \"SecurityPolicy.yaml\"; missing or shadowed in "
                     + sampleNames(new LinkedHashSet<>(missingClassAnnotations)));
         }
         if (!missingTimeouts.isEmpty()) {

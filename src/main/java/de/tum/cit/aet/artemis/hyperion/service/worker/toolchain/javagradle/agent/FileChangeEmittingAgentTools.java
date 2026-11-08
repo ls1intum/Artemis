@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.agent;
 
 import java.time.Instant;
+import java.util.Optional;
 import java.util.function.Consumer;
 
 import org.jspecify.annotations.Nullable;
@@ -108,6 +109,11 @@ public class FileChangeEmittingAgentTools implements TurnAware, SubmitVetoAware,
     @Override
     public boolean isSandboxSessionTerminated() {
         return delegate.isSandboxSessionTerminated();
+    }
+
+    @Override
+    public Optional<String> pendingCompletionFeedback() {
+        return delegate.pendingCompletionFeedback();
     }
 
     @Override

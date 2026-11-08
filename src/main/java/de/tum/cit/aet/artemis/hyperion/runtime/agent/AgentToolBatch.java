@@ -98,6 +98,12 @@ final class AgentToolBatch {
         return name.substring(0, name.indexOf("<|")).strip();
     }
 
+    static String preflightRejectionFeedback(ToolCallback[] callbacks) {
+        List<String> available = java.util.Arrays.stream(callbacks).map(callback -> callback.getToolDefinition().name()).sorted().toList();
+        return "ERROR: no call in this batch was executed. Use only these available tools: " + available
+                + ". Supply valid JSON object arguments matching the selected tool's schema, then retry.";
+    }
+
     static void validateToolBatch(List<AssistantMessage.ToolCall> calls, ToolCallback[] callbacks) {
         for (AssistantMessage.ToolCall call : calls) {
             boolean available = false;
