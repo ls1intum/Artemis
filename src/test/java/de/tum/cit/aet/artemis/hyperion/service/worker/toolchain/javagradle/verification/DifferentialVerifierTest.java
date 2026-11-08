@@ -1762,7 +1762,7 @@ class DifferentialVerifierTest {
         }
 
         @Test
-        void includesParsedFailureMessagesForSolutionAndTemplate() {
+        void preservesBothParsedFailureLanesButFocusesFeedbackOnTheFailedPolicy() {
             BuildReportSpec solution = BuildReportSpec.withJunitXml("""
                     <testsuite name="GeneratedSuite">
                       <testcase name="sortsUnsortedArray"><failure message="expected sorted first element but was 9"/></testcase>
@@ -1781,8 +1781,9 @@ class DifferentialVerifierTest {
             assertThat(report.solutionFailureEvidence()).containsExactly(new TestFailureEvidence("sortsUnsortedArray", "expected sorted first element but was 9"));
             assertThat(report.templateFailureEvidence()).containsExactly(new TestFailureEvidence("sortsUnsortedArray", "Sorter constructor threw NullPointerException"),
                     new TestFailureEvidence("sortsArrayWithDuplicates", "expected duplicate values to remain"));
-            assertThat(report.toObservation()).contains("Solution failure evidence", "sortsUnsortedArray: expected sorted first element but was 9", "Template failure evidence",
-                    "sortsUnsortedArray: Sorter constructor threw NullPointerException");
+            assertThat(report.templateFailed()).isTrue();
+            assertThat(report.toObservation()).contains("Solution failure evidence").containsOnlyOnce("sortsUnsortedArray: expected sorted first element but was 9")
+                    .doesNotContain("Template failure evidence", "sortsUnsortedArray: Sorter constructor threw NullPointerException");
         }
 
         @Test
