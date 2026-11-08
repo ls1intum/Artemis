@@ -2,7 +2,7 @@
 id: e2e-testing-iris
 title: E2E Testing Iris (Real Pyris)
 sidebar_label: E2E Testing Iris (Real Pyris)
-last_reviewed: 2026-11-03
+last_reviewed: 2026-11-05
 ---
 
 import Callout from "../../src/components/Callout/Callout";
@@ -72,7 +72,7 @@ for Pyris's `openai_chat` / `openai_embedding` model clients:
 - **`POST /v1/embeddings`** → a deterministic, constant-dimension embedding vector.
 - **`GET /v1/models`**, **`GET /health`**, **`GET /`** → liveness/model listing.
 
-Two behaviors make it possible to exercise more than "the model replies once":
+These behaviors make it possible to exercise more than "the model replies once":
 
 - **One tool-call round.** If the latest user message contains the marker `[e2e-tool]`
   *and* the request offers tools, the mock first answers with a `tool_calls` response
@@ -81,6 +81,10 @@ Two behaviors make it possible to exercise more than "the model replies once":
   hooks → Pyris's `ActivityTracker` → activity snapshots → Artemis relay → the activity feed
   component — with a deterministic tool round, instead of asserting on hardcoded fake
   "progress" text.
+- **Two tool-call rounds.** With the marker `[e2e-two-tool-rounds]` instead, the mock asks
+  for a tool twice, each time with its own preamble text, before the canned reply. Pyris then
+  sends two interim messages, and a test can check that each step shows between the message
+  before it and the message after it, live and after a reload.
 - **Server-Sent Events streaming.** Pyris streams chat answers to the browser as they
   generate: every course/lecture chat completion is requested with `"stream": true` so Pyris
   can forward partial deltas to Artemis while the model is still "typing" (see
@@ -116,7 +120,8 @@ Configuration (all optional, see the top of `mock_llm.py`):
 | `MOCK_LLM_REPLY` | a canned sentence containing `mock-llm` | The final answer text asserted on by e2e tests |
 | `MOCK_LLM_EMBED_DIM` | `1536` | Embedding vector dimension |
 | `MOCK_LLM_TOOL_MARKER` | `[e2e-tool]` | Marker in the user message that triggers the tool-call round |
-| `MOCK_LLM_TOOL_FOLLOWUP_DELAY_S` | `1.5` | Delay before the post-tool answer, so the UI assertion has time to see the finished tool chip |
+| `MOCK_LLM_TWO_ROUND_TOOL_MARKER` | `[e2e-two-tool-rounds]` | Marker in the user message that triggers two tool-call rounds |
+| `MOCK_LLM_TOOL_FOLLOWUP_DELAY_S` | `4.0` | Delay before the post-tool answer, so the UI assertion has time to see the finished tool chip |
 
 ## Running locally
 

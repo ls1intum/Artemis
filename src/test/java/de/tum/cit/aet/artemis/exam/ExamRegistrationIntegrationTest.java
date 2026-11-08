@@ -2,6 +2,8 @@ package de.tum.cit.aet.artemis.exam;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.awaitility.Awaitility.await;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.verify;
 
@@ -36,10 +38,12 @@ import de.tum.cit.aet.artemis.exam.dto.ExamRegistrationResultDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamUserDTO;
 import de.tum.cit.aet.artemis.exam.repository.ExamUserRepository;
 import de.tum.cit.aet.artemis.exam.service.ExamRegistrationService;
+import de.tum.cit.aet.artemis.exam.service.StudentExamService;
 import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
 import de.tum.cit.aet.artemis.exam.test_repository.StudentExamTestRepository;
 import de.tum.cit.aet.artemis.exam.util.ExamFactory;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
+import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalVCTest;
 
 class ExamRegistrationIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {
@@ -59,6 +63,12 @@ class ExamRegistrationIntegrationTest extends AbstractSpringIntegrationLocalCILo
 
     @Autowired
     private ExamRegistrationService examRegistrationService;
+
+    @Autowired
+    private StudentExamService studentExamService;
+
+    @Autowired
+    private StudentParticipationTestRepository studentParticipationRepository;
 
     @Autowired
     private ChannelRepository channelRepository;
@@ -108,6 +118,143 @@ class ExamRegistrationIntegrationTest extends AbstractSpringIntegrationLocalCILo
     void tearDown() {
         ParticipantScoreScheduleService.DEFAULT_WAITING_TIME_FOR_SCHEDULED_TASKS = 500;
         participantScoreScheduleService.shutdown();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testIndividualGenerationReusesRealExamAndPreservesMultipleTestExamAttempts() {
+        Exam exam = examUtilService.addActiveExamWithRegisteredUser(course1, student1);
+        exam = examUtilService.addTextModelingProgrammingExercisesToExam(exam, false, false);
+        StudentExam first = studentExamService.generateIndividualStudentExam(exam, student1);
+        assertThat(studentExamService.generateIndividualStudentExam(exam, student1).getId()).isEqualTo(first.getId());
+        assertThat(studentExamRepository.findByExamId(exam.getId())).hasSize(1);
+
+        exam.setTestExam(true);
+        examRepository.save(exam);
+        StudentExam attempt = studentExamService.generateIndividualStudentExam(exam, student1);
+        assertThat(attempt.getId()).isNotEqualTo(first.getId());
+        assertThat(studentExamRepository.findByExamId(exam.getId())).hasSize(2);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testRegistrationPropagatesInvalidExerciseGroupFailure() throws Exception {
+        Exam exam = examUtilService.addExam(course1);
+        exam = examUtilService.addTextModelingProgrammingExercisesToExam(exam, false, false);
+        exam.setStartDate(ZonedDateTime.now().plusHours(1));
+        exam.setEndDate(ZonedDateTime.now().plusHours(2));
+        examRepository.save(exam);
+        var existing = examUtilService.addStudentExamWithUser(exam, student1);
+        // A new mandatory group without an exercise is an incomplete instructor configuration.
+        // Generating the new student's exam must surface the failure rather than report pending success.
+        ExamFactory.generateExerciseGroupWithTitle(true, exam, "Empty mandatory group");
+        exam.setNumberOfExercisesInExam(exam.getNumberOfExercisesInExam() + 1);
+        examRepository.save(exam);
+        var student = new StudentDTO(OTHER_PREFIX + "student1", "", "", "", "");
+
+        request.postWithoutLocation("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/students", List.of(student), HttpStatus.INTERNAL_SERVER_ERROR, null);
+
+        assertThat(studentExamRepository.findByExamId(exam.getId())).extracting(StudentExam::getId).containsExactly(existing.getId());
+        assertThat(examUserRepository.findUserIdsByExamId(exam.getId())).contains(userUtilService.getUserByLogin(OTHER_PREFIX + "student1").getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testRegistrationRejectedAfterExamEnd() throws Exception {
+        exam1.setStartDate(ZonedDateTime.now().minusHours(2));
+        exam1.setEndDate(ZonedDateTime.now().minusMinutes(1));
+        examRepository.save(exam1);
+        var student = new StudentDTO(OTHER_PREFIX + "student1", "", "", "", "");
+        String base = "/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId();
+        request.postWithoutLocation(base + "/students", List.of(student), HttpStatus.BAD_REQUEST, null);
+        request.postWithoutLocation(base + "/register-course-students", null, HttpStatus.BAD_REQUEST, null);
+        assertThat(examUserRepository.findAllByExamId(exam1.getId())).isEmpty();
+        assertThat(userCourseRoleTestRepository.existsByUser_IdAndCourse_IdAndRole(userUtilService.getUserByLogin(OTHER_PREFIX + "student1").getId(), course1.getId(),
+                CourseRole.STUDENT)).isFalse();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testRegistrationGeneratesMissingExamsBeforeStart() throws Exception {
+        Exam exam = examUtilService.addExam(course1);
+        exam = examUtilService.addTextModelingProgrammingExercisesToExam(exam, false, false);
+        exam.setStartDate(ZonedDateTime.now().plusHours(1));
+        exam.setEndDate(ZonedDateTime.now().plusHours(2));
+        examRepository.save(exam);
+        var existing = examUtilService.addStudentExamWithUser(exam, student1);
+        var student = new StudentDTO(OTHER_PREFIX + "student1", "", "", "", "");
+        request.postWithoutLocation("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/students", List.of(student), HttpStatus.OK, null);
+        var initialIds = studentExamRepository.findByExamId(exam.getId()).stream().map(StudentExam::getId).toList();
+        assertThat(initialIds).hasSize(2).contains(existing.getId());
+        request.postWithoutLocation("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/students", List.of(student), HttpStatus.OK, null);
+        assertThat(studentExamRepository.findByExamId(exam.getId())).extracting(StudentExam::getId).containsExactlyInAnyOrderElementsOf(initialIds);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testBulkRegistrationGeneratesMissingExamsBeforeStart() throws Exception {
+        Exam exam = examUtilService.addExam(course1);
+        exam = examUtilService.addTextModelingProgrammingExercisesToExam(exam, false, false);
+        exam.setStartDate(ZonedDateTime.now().plusHours(1));
+        exam.setEndDate(ZonedDateTime.now().plusHours(2));
+        examRepository.save(exam);
+        var existing = examUtilService.addStudentExamWithUser(exam, student1);
+        request.postWithoutLocation("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/register-course-students", null, HttpStatus.OK, null);
+        assertThat(studentExamRepository.findUserIdsWithStudentExamsForExam(exam.getId()))
+                .containsExactlyInAnyOrderElementsOf(examUserRepository.findUserIdsByExamId(exam.getId()));
+        var initialIds = studentExamRepository.findByExamId(exam.getId()).stream().map(StudentExam::getId).toList();
+        assertThat(initialIds).contains(existing.getId());
+        request.postWithoutLocation("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/register-course-students", null, HttpStatus.OK, null);
+        assertThat(studentExamRepository.findByExamId(exam.getId())).extracting(StudentExam::getId).containsExactlyInAnyOrderElementsOf(initialIds);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testRegistrationPreparesExercisesBeforeStartAfterProgressCacheExpires() throws Exception {
+        Exam exam = examUtilService.addActiveExamWithRegisteredUser(course1, student1);
+        exam = examUtilService.addTextModelingProgrammingExercisesToExam(exam, false, false);
+        exam.setStartDate(ZonedDateTime.now().plusHours(1));
+        exam.setEndDate(ZonedDateTime.now().plusHours(2));
+        examRepository.save(exam);
+        studentExamService.generateStudentExams(exam);
+        studentExamService.startExercises(exam.getId()).join();
+        studentExamService.invalidateExerciseStartStatus(exam.getId());
+        var student = new StudentDTO(OTHER_PREFIX + "student1", "", "", "", "");
+        request.postWithoutLocation("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/students", List.of(student), HttpStatus.OK, null);
+        long examId = exam.getId();
+        var exerciseIds = exam.getExerciseGroups().stream().flatMap(group -> group.getExercises().stream()).map(exercise -> exercise.getId()).toList();
+        long expectedParticipations = 2L * exam.getNumberOfExercisesInExam();
+        await().untilAsserted(() -> assertThat(exerciseIds.stream()
+                .mapToLong(exerciseId -> studentParticipationRepository.countInitializedParticipationsByExerciseIdAndExamIdIgnoreTestRuns(exerciseId, examId)).sum())
+                .isEqualTo(expectedParticipations));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testRegistrationRechecksPreparationThatCompletesWhileResolvingStudents() throws Exception {
+        Exam exam = examUtilService.addActiveExamWithRegisteredUser(course1, student1);
+        exam = examUtilService.addTextModelingProgrammingExercisesToExam(exam, false, false);
+        exam.setStartDate(ZonedDateTime.now().plusHours(1));
+        exam.setEndDate(ZonedDateTime.now().plusHours(2));
+        examRepository.save(exam);
+        long examId = exam.getId();
+        studentExamRepository.deleteAll(studentExamRepository.findByExamId(examId));
+        studentExamService.generateMissingStudentExams(exam);
+        assertThat(studentExamService.getExerciseStartStatusOfExam(examId)).isEmpty();
+        String login = TEST_PREFIX + "fastprepstudent";
+        var ldapStudent = new LdapUserDto().firstName("Fast").lastName("Preparation").login(login).registrationNumber("79870122").email(login + "@tum.de");
+        doAnswer(invocation -> {
+            // Registration has begun, but user resolution can take long enough for a first preparation to finish.
+            studentExamService.startExercises(examId).join();
+            studentExamService.invalidateExerciseStartStatus(examId);
+            return Optional.of(ldapStudent);
+        }).when(ldapUserService).findByLogin(login);
+
+        request.postWithoutLocation("/api/exam/courses/" + course1.getId() + "/exams/" + examId + "/students", List.of(new StudentDTO(login, "", "", "", "")), HttpStatus.OK, null);
+
+        var generated = studentExamRepository.findWithExercisesByUserIdAndExamId(userUtilService.getUserByLogin(login).getId(), examId, false).orElseThrow();
+        int expectedExercises = exam.getNumberOfExercisesInExam();
+        await().untilAsserted(() -> assertThat(studentParticipationRepository.findByStudentExamWithEagerLatestSubmissionResult(generated, false)).hasSize(expectedExercises));
     }
 
     @Test

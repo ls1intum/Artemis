@@ -48,6 +48,23 @@ public interface ResultTestRepository extends ResultRepository {
 
     List<Result> findBySubmissionParticipationIdOrderByCompletionDateDesc(long participationId);
 
+    /**
+     * Finds the first result by participation ID, including its feedback, ordered by completion date in descending order.
+     * This method avoids in-memory paging by retrieving the first result directly from the database.
+     *
+     * @param participationId the ID of the participation to find the result for
+     * @return an {@code Optional} containing the first {@code Result} with feedback, ordered by completion date in descending order,
+     *         or an empty {@code Optional} if no result is found
+     */
+    default Optional<Result> findFirstWithFeedbacksByParticipationIdOrderByCompletionDateDesc(long participationId) {
+        var resultOptional = findFirstBySubmissionParticipationIdOrderByCompletionDateDesc(participationId);
+        if (resultOptional.isEmpty()) {
+            return Optional.empty();
+        }
+        var id = resultOptional.get().getId();
+        return findResultWithFeedbacksById(id);
+    }
+
     default Result findFirstWithFeedbacksByParticipationIdOrderByCompletionDateDescElseThrow(long participationId) {
         return getValueElseThrow(findFirstWithFeedbacksByParticipationIdOrderByCompletionDateDesc(participationId));
     }
