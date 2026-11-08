@@ -8,7 +8,9 @@ import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { lastValueFrom } from 'rxjs';
 import { Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
 import { ModelingSubmission } from 'app/modeling/shared/entities/modeling-submission.model';
-import { ModelingFeedbackSuggestion, ProgrammingFeedbackSuggestion, TextFeedbackSuggestion } from 'app/assessment/shared/entities/feedback-suggestion.model';
+import { ModelingFeedback } from 'app/openapi/model/modeling-feedback';
+import { ProgrammingFeedback } from 'app/openapi/model/programming-feedback';
+import { TextFeedback } from 'app/openapi/model/text-feedback';
 import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 
@@ -56,7 +58,15 @@ describe('AthenaService file map behaviour', () => {
     it('should rehydrate grading instructions for text suggestions', async () => {
         const exercise = { ...exerciseBase, type: 'text' } as Exercise;
         const submission = { id: 5, text: 'Hello World' } as TextSubmission;
-        const suggestion = new TextFeedbackSuggestion(1, exercise.id!, submission.id!, 'Title', 'Description', 2, 99, undefined, undefined);
+        const suggestion = {
+            id: 1,
+            exerciseId: exercise.id!,
+            submissionId: submission.id!,
+            title: 'Title',
+            description: 'Description',
+            credits: 2,
+            structuredGradingInstructionId: 99,
+        } satisfies TextFeedback;
         const suggestionsPromise = lastValueFrom(service.getTextFeedbackSuggestions(exercise, submission));
         httpMock.expectOne('/api/athena/text-exercises/10/submissions/5/feedback-suggestions').flush([suggestion]);
         const suggestions = await suggestionsPromise;
@@ -69,7 +79,17 @@ describe('AthenaService file map behaviour', () => {
 
     it('should use lineStart fallback when programming suggestion lacks an end line', async () => {
         const exercise = { ...exerciseBase, type: 'programming' } as Exercise;
-        const programmingSuggestion = new ProgrammingFeedbackSuggestion(2, exercise.id!, 9, 'Issue', 'Fix it', 0.5, 99, 'src/Main.java', 4, undefined);
+        const programmingSuggestion = {
+            id: 2,
+            exerciseId: exercise.id!,
+            submissionId: 9,
+            title: 'Issue',
+            description: 'Fix it',
+            credits: 0.5,
+            structuredGradingInstructionId: 99,
+            filePath: 'src/Main.java',
+            lineStart: 4,
+        } satisfies ProgrammingFeedback;
         const suggestionsPromise = lastValueFrom(service.getProgrammingFeedbackSuggestions(exercise, 9));
         httpMock.expectOne('/api/athena/programming-exercises/10/submissions/9/feedback-suggestions').flush([programmingSuggestion]);
         const [feedback] = await suggestionsPromise;
@@ -81,7 +101,15 @@ describe('AthenaService file map behaviour', () => {
 
     it('should mark programming suggestions without location as unreferenced', async () => {
         const exercise = { ...exerciseBase, type: 'programming' } as Exercise;
-        const suggestion = new ProgrammingFeedbackSuggestion(3, exercise.id!, 9, 'Hint', 'Think about edge cases', 1, undefined, '', undefined, undefined);
+        const suggestion = {
+            id: 3,
+            exerciseId: exercise.id!,
+            submissionId: 9,
+            title: 'Hint',
+            description: 'Think about edge cases',
+            credits: 1,
+            filePath: '',
+        } satisfies ProgrammingFeedback;
         const suggestionsPromise = lastValueFrom(service.getProgrammingFeedbackSuggestions(exercise, 9));
         httpMock.expectOne('/api/athena/programming-exercises/10/submissions/9/feedback-suggestions').flush([suggestion]);
         const [feedback] = await suggestionsPromise;
@@ -92,7 +120,16 @@ describe('AthenaService file map behaviour', () => {
 
     it('should split modeling references into type and id and expose positivity', async () => {
         const exercise = { ...exerciseBase, type: 'modeling' } as Exercise;
-        const modelingSuggestion = new ModelingFeedbackSuggestion(4, exercise.id!, 11, 'Model', 'Looks good', 2, 99, 'element:123');
+        const modelingSuggestion = {
+            id: 4,
+            exerciseId: exercise.id!,
+            submissionId: 11,
+            title: 'Model',
+            description: 'Looks good',
+            credits: 2,
+            structuredGradingInstructionId: 99,
+            reference: 'element:123',
+        } satisfies ModelingFeedback;
         const submission = { id: 11 } as ModelingSubmission;
         const suggestionsPromise = lastValueFrom(service.getModelingFeedbackSuggestions(exercise, submission));
         httpMock.expectOne('/api/athena/modeling-exercises/10/submissions/11/feedback-suggestions').flush([modelingSuggestion]);
@@ -108,7 +145,7 @@ describe('AthenaService file map behaviour', () => {
 
     it('should fallback to suggestion metadata when modeling reference is missing', async () => {
         const exercise = { ...exerciseBase, type: 'modeling' } as Exercise;
-        const modelingSuggestion = new ModelingFeedbackSuggestion(5, exercise.id!, 11, 'Model', 'Needs work', 0, undefined, undefined);
+        const modelingSuggestion = { id: 5, exerciseId: exercise.id!, submissionId: 11, title: 'Model', description: 'Needs work', credits: 0 } satisfies ModelingFeedback;
         const submission = { id: 11 } as ModelingSubmission;
         const suggestionsPromise = lastValueFrom(service.getModelingFeedbackSuggestions(exercise, submission));
         httpMock.expectOne('/api/athena/modeling-exercises/10/submissions/11/feedback-suggestions').flush([modelingSuggestion]);
