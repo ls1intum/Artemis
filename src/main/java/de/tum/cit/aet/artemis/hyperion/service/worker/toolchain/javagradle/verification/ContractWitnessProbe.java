@@ -31,11 +31,11 @@ public final class ContractWitnessProbe {
     }
 
     /**
-     * Combines witness methods with the JUnit/Ares probe API and an existing test's package and additional imports. Uses the same Ares restrictions as instructor tests; the
+     * Combines self-contained witness fragments with the JUnit/Ares probe API and an existing test's package. Uses the same Ares restrictions as instructor tests; the
      * caller restores the candidate after probing, so these temporary tests never enter the saved grading suite.
      *
-     * @param existingTestSource one graded test source from the same repository, used only as the source of the package and import declarations
-     * @param witnesses          the candidate witnesses, each contributing one method
+     * @param existingTestSource one graded test source from the same repository, used only as the source of the package declaration
+     * @param witnesses          the candidate witnesses, each contributing optional imports and one method
      * @return the complete probe source, or empty when there is nothing to build
      */
     public static String buildProbeSource(String existingTestSource, List<ContractWitness> witnesses) {
@@ -43,26 +43,46 @@ public final class ContractWitnessProbe {
             return "";
         }
         StringBuilder source = new StringBuilder();
-        Matcher packageMatcher = PACKAGE_DECLARATION.matcher(existingTestSource);
+        Matcher packageMatcher = PACKAGE_DECLARATION.matcher(JavaSourceInspector.maskCommentsAndLiterals(existingTestSource));
         if (packageMatcher.find()) {
             source.append(packageMatcher.group().strip()).append("\n\n");
         }
         Set<String> imports = new LinkedHashSet<>(List.of("import org.junit.jupiter.api.Test;", "import static org.junit.jupiter.api.Assertions.*;",
-                "import static de.tum.cit.ase.ares.api.util.ReflectionTestUtils.*;"));
-        Matcher importMatcher = IMPORT_DECLARATION.matcher(existingTestSource);
-        while (importMatcher.find()) {
-            imports.add(importMatcher.group().strip());
-        }
+                "import static de.tum.cit.ase.ares.api.util.ReflectionTestUtils.*;", "import de.tum.cit.ase.ares.api.StrictTimeout;"));
+        List<ProbeFragment> fragments = witnesses.stream().map(witness -> splitFragment(witness.code())).toList();
+        fragments.forEach(fragment -> imports.addAll(fragment.imports()));
         imports.forEach(declaration -> source.append(declaration).append("\n"));
         source.append("\n");
         source.append("@de.tum.cit.ase.ares.api.jupiter.Public\n").append("@de.tum.cit.ase.ares.api.Policy(value = \"SecurityPolicy.yaml\")\n")
                 .append("@de.tum.cit.ase.ares.api.StrictTimeout(").append(JavaSourceInspector.MAX_STRICT_TIMEOUT_SECONDS).append(")\n")
                 .append("@org.junit.jupiter.api.DisplayNameGeneration(org.junit.jupiter.api.DisplayNameGenerator.Simple.class)\n").append("class ").append(PROBE_CLASS_NAME)
                 .append(" {\n");
-        for (ContractWitness witness : witnesses) {
-            source.append("\n").append(witness.code().strip().indent(4));
+        for (ProbeFragment fragment : fragments) {
+            source.append("\n").append(fragment.method().strip().indent(4));
         }
         return source.append("}\n").toString();
+    }
+
+    private static ProbeFragment splitFragment(String code) {
+        String masked = JavaSourceInspector.maskCommentsAndLiterals(code);
+        Matcher method = METHOD_DECLARATION.matcher(masked);
+        int prefixEnd = method.find() ? method.start() : 0;
+        Matcher declarations = IMPORT_DECLARATION.matcher(masked);
+        List<String> imports = new ArrayList<>();
+        StringBuilder body = new StringBuilder(code);
+        while (declarations.find() && declarations.end() <= prefixEnd) {
+            imports.add(code.substring(declarations.start(), declarations.end()).strip());
+            // Keep offsets, line breaks and all literal contents unchanged when lifting imports.
+            for (int offset = declarations.start(); offset < declarations.end(); offset++) {
+                if (body.charAt(offset) != '\n' && body.charAt(offset) != '\r') {
+                    body.setCharAt(offset, ' ');
+                }
+            }
+        }
+        return new ProbeFragment(List.copyOf(imports), body.toString());
+    }
+
+    private record ProbeFragment(List<String> imports, String method) {
     }
 
     /**

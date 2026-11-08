@@ -86,7 +86,7 @@ class ContractWitnessProbeTest {
             """, "does not skip blank lines");
 
     @Test
-    void buildProbeSource_carriesThePackageAndImportsOfTheSuiteItProbes() {
+    void buildProbeSource_usesTheSuitePackageAndDefinedProbeApi() {
         String probe = ContractWitnessProbe.buildProbeSource(GENERATED_TEST, List.of(NEGATIVE_SALARY));
 
         assertThat(probe).startsWith("package de.tum.cit.aet.nodraft;").contains("import org.junit.jupiter.api.Test;").contains("import static org.junit.jupiter.api.Assertions.*;")

@@ -117,7 +117,7 @@ class ContractWitnessAuthor {
         requireReviewTextSafe("probe-compilation/failures", failedSources);
         String prompt = "COMPILATION REPAIR OF TEMPORARY PROBES. Repair the reported compiler errors only. Return the same rule and testName for each corrected method. "
                 + "Keep its intended public behavior and assertions. The wrapper contains no fixture fields, setup or helpers: construct all required objects inside the method. "
-                + "Use fully qualified annotation, assertion and library names. Do not change exercise files, the rule, or expected behavior to make a failing test pass. "
+                + "Include any required leading import declarations, or use fully qualified names. The server retains the original rule and wrongBehavior if omitted. Do not change exercise files, the rule, or expected behavior to make a failing test pass. "
                 + "No test executed in these rejected proposals. Each repair will be compiled and executed again; return an empty witnesses array when uncertain.\n\n"
                 + "APPROVED SPECIFICATION:\n" + specification + "\n\nAUTHORITATIVE TEMPLATE OWNERSHIP:\n"
                 + renderTemplateOwnership(SpecFidelityCritic.designTemplateStatuses(specification)) + "\n\nREFERENCE SOLUTION:\n" + boundedEvidence(solutionSources)
@@ -125,7 +125,7 @@ class ContractWitnessAuthor {
         String response = reviewer.call(CONTRACT_WITNESS_SYSTEM_PROMPT_TEMPLATE, prompt, usageSink, cancelled, CONTRACT_WITNESS_MAX_OUTPUT_TOKENS);
         Map<String, ContractWitness> originals = new java.util.LinkedHashMap<>();
         failures.forEach(outcome -> originals.putIfAbsent(outcome.witness().testName(), outcome.witness()));
-        return parseContractWitnesses(response, specification, "").stream().flatMap(repair -> {
+        return parseContractWitnesses(response, specification, "", originals).stream().flatMap(repair -> {
             ContractWitness original = originals.get(repair.testName());
             if (original == null || !original.ruleId().equals(repair.ruleId()) || original.code().equals(repair.code())) {
                 return java.util.stream.Stream.empty();
@@ -159,6 +159,10 @@ class ContractWitnessAuthor {
     }
 
     private List<ContractWitness> parseContractWitnesses(@Nullable String text, String specificationContract, String testSources) {
+        return parseContractWitnesses(text, specificationContract, testSources, Map.of());
+    }
+
+    private List<ContractWitness> parseContractWitnesses(@Nullable String text, String specificationContract, String testSources, Map<String, ContractWitness> originals) {
         if (text == null || text.isBlank()) {
             throw new IllegalStateException("Contract-witness authoring returned no response");
         }
@@ -175,19 +179,27 @@ class ContractWitnessAuthor {
         List<ContractWitness> witnesses = new ArrayList<>();
         Set<String> seenNames = new HashSet<>();
         for (ContractWitnessItem item : parsed.witnesses()) {
-            if (item == null || isBlank(item.rule()) || isBlank(item.testName()) || isBlank(item.code()) || isBlank(item.wrongBehavior())) {
+            if (item == null || isBlank(item.testName()) || isBlank(item.code())) {
                 continue;
             }
             String testName = item.testName().strip();
             String code = item.code().strip();
-            String ruleId = item.rule().strip();
+            ContractWitness original = originals.get(testName);
+            if (original == null && (!originals.isEmpty() || isBlank(item.rule()) || isBlank(item.wrongBehavior()))) {
+                continue;
+            }
+            String ruleId = isBlank(item.rule()) ? original.ruleId() : item.rule().strip();
+            if (original != null && !original.ruleId().equals(ruleId)) {
+                continue;
+            }
+            String wrongBehavior = original == null ? item.wrongBehavior().strip() : original.wrongBehavior();
             // The name must be the method the code DECLARES, or a build result could never be attributed to it; a witness with no assertion passes against every implementation;
             // and a rule the specification does not contain is an invented requirement.
             if (!declaresMethod(code, testName) || !containsAssertion(code) || !specificationDeclaresRule(specificationContract, ruleId)
                     || usesSuiteLocalHelper(code, testName, testSources) || !seenNames.add(testName)) {
                 continue;
             }
-            witnesses.add(new ContractWitness(ruleId, testName, code, item.wrongBehavior().strip()));
+            witnesses.add(new ContractWitness(ruleId, testName, code, wrongBehavior));
             if (witnesses.size() == MAX_CONTRACT_WITNESSES) {
                 break;
             }
@@ -204,7 +216,7 @@ class ContractWitnessAuthor {
         return ASSERTION_CALL.matcher(code).find();
     }
 
-    /** A probe copies the suite's imports, not its class body. An unqualified call to a method declared by that class would therefore make the throwaway probe uncompilable. */
+    /** A probe does not copy the suite's class body. An unqualified call to a method declared by that class would therefore make the throwaway probe uncompilable. */
     static boolean usesSuiteLocalHelper(String code, String testName, String testSources) {
         Matcher declarations = TEST_METHOD_DECLARATION.matcher(testSources);
         while (declarations.find()) {

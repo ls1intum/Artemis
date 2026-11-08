@@ -30,9 +30,9 @@ Skip a lens when the frozen specification does not entail an observable distinct
 
 The approved specification is the only authority. Never invent a requirement it does not state, never assert behaviour that is merely how the reference solution happens to work, and never assert on private state, timing, or anything a caller cannot observe through the public API the reference solution declares.
 
-Write each witness in the SAME language, package, available imports, test framework, and compilation style as the graded tests you were shown, calling only the public API the
-reference solution declares. The wrapper provides the JUnit 5 Test annotation, JUnit assertions, and Ares ReflectionTestUtils helpers, plus imports from one existing graded test.
-Use fully qualified names for other annotation and library types unless the selected test imports them. More importantly, the witness must compile against the student starter exactly as the existing behavioral tests do. When a
+Write each witness in the SAME language, package, test framework, and compilation style as the graded tests you were shown, calling only the public API the
+reference solution declares. The wrapper provides the JUnit 5 Test annotation, JUnit assertions, Ares StrictTimeout annotation, and Ares ReflectionTestUtils helpers.
+For other types, include their import declarations before the method or use fully qualified names. The wrapper does not inherit imports from the graded suite. More importantly, the witness must compile against the student starter exactly as the existing behavioral tests do. When a
 student-created type is absent from the starter, preserve the suite's reflection/dynamic-proxy pattern instead of directly naming that type in declarations, constructors, or
 method calls. A test that merely makes the starter test sources fail to compile never executes and is discarded as blindness, not counted as a witness.
 The wrapper does NOT copy fields or helper methods from the graded test class. Never call an unqualified suite-local factory, assertion helper, fixture builder, or other helper
@@ -50,13 +50,12 @@ values, minimum/maximum values, overflow, underflow, or a non-finite value—whe
 Do not invent behavior for a value the rules leave undefined.
 
 Give every assertion a message naming the behaviour it pins. Use fixed data only: no randomness, no shuffling, no current time — a graded test that draws on them scores the same
-submission differently on re-run. Emit ONE complete self-contained method per witness, including its annotations, and nothing else: no class declaration, no imports, no
-commentary.
+submission differently on re-run. Emit ONE complete self-contained method per witness, including its annotations and optional leading import declarations. Do not emit package or class declarations, helper methods, or commentary.
 
 Respond with ONLY this complete JSON shape:
 {"witnesses": [{"rule":"the rule ID exactly as the specification writes it, e.g. R1",
  "testName":"the method name declared in code",
  "wrongBehavior":"specific plausible contract-breaking implementation this input is designed to distinguish",
- "code":"one complete test method"}]}
+ "code":"optional leading imports followed by one complete test method"}]}
 Return at most four semantically distinct witnesses. One strong witness is enough when the remaining rules are already pinned. Return {"witnesses": []} rather than inventing
 behavior or emitting a witness you cannot ground confidently in the frozen specification.

@@ -10,6 +10,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -101,6 +102,34 @@ class ContractWitnessAuthorTest {
         var author = new ContractWitnessAuthor(reviewer, JsonMapper.builder().build());
 
         var repaired = author.repairCompilation("R1. Return one.", "class Subject { int value() { return 1; } }", List.of(failure), null, () -> false);
+
+        assertThat(repaired).containsExactly(new ContractWitness(original.ruleId(), original.testName(), correctedCode, original.wrongBehavior()));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "rule", "wrongBehavior", "both" })
+    void compilerRepairCanSupplyImportsWithoutRepeatingServerOwnedMetadata(String omitted) {
+        var reviewer = mock(ReviewerClient.class);
+        when(reviewer.configured()).thenReturn(true);
+        var original = new ContractWitness("R1", "probe",
+                "@Test void probe() { Set<Integer> expected = new HashSet<>(); expected.add(1); assertEquals(expected, new Subject().values()); }", "returns an empty set");
+        String correctedCode = "import java.util.Set;\nimport java.util.HashSet;\n" + original.code();
+        Map<String, String> item = new LinkedHashMap<>();
+        item.put("testName", original.testName());
+        item.put("code", correctedCode);
+        if (!omitted.equals("rule") && !omitted.equals("both")) {
+            item.put("rule", original.ruleId());
+        }
+        if (!omitted.equals("wrongBehavior") && !omitted.equals("both")) {
+            item.put("wrongBehavior", original.wrongBehavior());
+        }
+        when(reviewer.call(anyString(), anyString(), any(), any(), anyInt())).thenReturn(JsonMapper.builder().build().writeValueAsString(Map.of("witnesses", List.of(item))));
+        var failure = new ContractWitnessOutcome(original, ContractWitnessOutcome.Disposition.INCONCLUSIVE,
+                "HyperionContractWitnessProbeTest.java:9: error: cannot find symbol HashSet");
+        var author = new ContractWitnessAuthor(reviewer, JsonMapper.builder().build());
+
+        var repaired = author.repairCompilation("R1. Return the singleton set containing one.", "class Subject { java.util.Set<Integer> values() { return java.util.Set.of(1); } }",
+                List.of(failure), null, () -> false);
 
         assertThat(repaired).containsExactly(new ContractWitness(original.ruleId(), original.testName(), correctedCode, original.wrongBehavior()));
     }

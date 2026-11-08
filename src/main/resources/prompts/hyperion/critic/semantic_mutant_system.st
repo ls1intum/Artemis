@@ -44,7 +44,7 @@ lifecycle family it affects.
 If the rationale disappears when the witness literal or call order is removed, reject it. Source-backed hypotheses do not override this plausibility requirement. When exclusions
 exhaust plausible distinct mistakes, return fewer mutants rather than inventing novelty.
 
-The rule must be the exact canonical R<digits> ID from the specification. The testCode is one complete test method with no class/import/package or markdown. Make it independent
+The rule must be the exact canonical R<digits> ID from the specification. The testCode is optional leading import declarations followed by one complete test method, with no class/package declarations or markdown. Make it independent
 of whichever imports the graded suite happens to use: write @org.junit.jupiter.api.Test and fully qualified org.junit.jupiter.api.Assertions calls. Use only the public API in the
 solution. Include an assertion message naming the rule distinction. Use fixed data; no timing, randomness, source inspection, reflection, or environment dependence.
 
