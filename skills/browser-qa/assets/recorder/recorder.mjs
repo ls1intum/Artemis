@@ -21,13 +21,9 @@ const HOME = process.env.HOME || os.homedir();
 let FFMPEG = null;
 try { FFMPEG = require('ffmpeg-static'); } catch { FFMPEG = 'ffmpeg'; }
 
-// Chromium: CHROME_PATH if set; else the browser this playwright-core expects,
-// which Playwright resolves per platform and swaps for its headless shell when
-// headless; else, when that revision is not installed, the newest Chromium in
-// the Playwright cache. Resolved at launch, so importing never throws.
-function executablePath() {
-  if (process.env.CHROME_PATH) return process.env.CHROME_PATH;
-  if (fs.existsSync(chromium.executablePath())) return undefined;
+// Newest Chromium in the Playwright cache ($PLAYWRIGHT_BROWSERS_PATH, else the
+// platform default), or undefined.
+function cachedChromium() {
   const platform = process.platform;
   const defaultCache = {
     darwin: `${HOME}/Library/Caches/ms-playwright`,
@@ -50,7 +46,22 @@ function executablePath() {
       if (fs.existsSync(p)) return p;
     }
   }
-  throw new Error(`No Chromium found for this playwright-core or in ${cache}. Run \`npx playwright-core install chromium\` or set CHROME_PATH.`);
+  return undefined;
+}
+
+// Chromium: CHROME_PATH if set; else whatever this playwright-core launches by
+// itself (its own revision, or its headless shell when headless); else, when
+// Playwright reports that browser missing, the newest Chromium in the cache.
+async function launchChromium(headless) {
+  if (process.env.CHROME_PATH) return chromium.launch({ executablePath: process.env.CHROME_PATH, headless });
+  try {
+    return await chromium.launch({ headless });
+  } catch (error) {
+    if (!/Executable doesn't exist/i.test(String(error))) throw error;
+    const fallback = cachedChromium();
+    if (!fallback) throw new Error('No Chromium found. Run `npx playwright-core install chromium` or set CHROME_PATH.', { cause: error });
+    return chromium.launch({ executablePath: fallback, headless });
+  }
 }
 
 const CURSOR_SCRIPT = `
@@ -106,7 +117,7 @@ const CURSOR_SCRIPT = `
  * so it never interrupts a recorded take.
  */
 export async function prepareAuth(username, password, baseURL = 'http://localhost:9000') {
-  const browser = await chromium.launch({ executablePath: executablePath(), headless: true });
+  const browser = await launchChromium(true);
   try {
     return await signIn(browser, username, password, baseURL);
   } finally {
@@ -115,7 +126,7 @@ export async function prepareAuth(username, password, baseURL = 'http://localhos
 }
 
 async function signIn(browser, username, password, baseURL) {
-  const context = await browser.newContext({ baseURL });
+  const context = await browser.newContext({ baseURL, ignoreHTTPSErrors: true });
   const page = await context.newPage();
   await page.goto('/sign-in', { waitUntil: 'networkidle' });
   // The sign-in form may be two-step (username -> Continue -> password) or single-step; handle both.
@@ -145,15 +156,21 @@ async function signIn(browser, username, password, baseURL) {
 
 export async function startSession({ name, outDir, baseURL = 'http://localhost:9000', viewport = { width: 1440, height: 810 }, headless = true, storageState = undefined }) {
   fs.mkdirSync(outDir, { recursive: true });
-  const browser = await chromium.launch({ executablePath: executablePath(), headless });
-  const context = await browser.newContext({
-    baseURL,
-    viewport,
-    recordVideo: { dir: outDir, size: viewport },
-    ignoreHTTPSErrors: true,
-    storageState,
-  });
-  await context.addInitScript(CURSOR_SCRIPT);
+  const browser = await launchChromium(headless);
+  let context;
+  try {
+    context = await browser.newContext({
+      baseURL,
+      viewport,
+      recordVideo: { dir: outDir, size: viewport },
+      ignoreHTTPSErrors: true,
+      storageState,
+    });
+    await context.addInitScript(CURSOR_SCRIPT);
+  } catch (error) {
+    await browser.close();
+    throw error;
+  }
   const events = [];
   const pending = new Set();
   let capture = null;

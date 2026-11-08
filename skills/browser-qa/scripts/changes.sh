@@ -36,14 +36,23 @@ kind_of() {
 
 printf 'id\tkind\tfile\tline\tsymbol\n'
 n=0
+# File headers sit between "diff --git" and the first "@@"; inside a hunk, a line
+# such as "+++ b/x" is content.
+header=0
 git diff -U0 --no-color --find-renames "$mb" HEAD | while IFS= read -r l; do
+    if [ "$header" = 1 ]; then
+        case "$l" in
+            '--- a/'*) old=${l#--- a/} ;;
+            '--- /dev/null') old= ;;
+            '+++ b/'*) file=${l#+++ b/}; kind=$(kind_of "$file") ;;
+            '+++ /dev/null') file=$old; kind=$(kind_of "$file") ;;
+            'rename to '*) file=${l#rename to } ;;
+        esac
+    fi
     case "$l" in
-        '--- a/'*) old=${l#--- a/} ;;
-        '--- /dev/null') old= ;;
-        '+++ b/'*) file=${l#+++ b/}; kind=$(kind_of "$file") ;;
-        '+++ /dev/null') file=$old; kind=$(kind_of "$file") ;;
-        'rename to '*) file=${l#rename to } ;;
+        'diff --git '*) header=1 ;;
         '@@ '*)
+            header=0
             line=$(sed -E 's/^@@ -[0-9,]+ \+([0-9]+).*/\1/' <<<"$l")
             sym=$(sed -E 's/^@@ [^@]+ @@ ?//' <<<"$l" | tr '\t' ' ' | cut -c1-160)
             n=$((n + 1))
