@@ -747,7 +747,7 @@ instances will also use a ActiveMQ Artemis broker to synchronize WebSocket messa
 
 * 2 Artemis instances:
     * artemis-app-node-1: using following spring profile: `prod,localvc,localci,core,scheduling,docker`
-    * artemis-app-node-2: using following profile: `prod,localvc,localci,buildagent,core,docker`
+    * artemis-app-node-2: using following profile: `localvc,localci,buildagent,core,prod,docker`
 * A PostgreSQL database addressable on port 5432 of the host system
 * A Load balancer (nginx) addressable on ports 80/443 of the host system: `http(s)://localhost`.
 * Valkey, addressable on port 6379 of the loopback interface of the host system. Only the user `artemis` can connect,
