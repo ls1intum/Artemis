@@ -7,7 +7,7 @@ import { Subject, forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
 import { EntityDeletionService } from 'app/shared-ui/delete-dialog/service/entity-deletion.service';
-import { exerciseGroupDeletionTarget, isDeletionCompleted } from 'app/shared-ui/delete-dialog/entity-deletion-target.util';
+import { exerciseGroupDeletionTarget, isDeletionCompleted, isDeletionOutcomeUnknown } from 'app/shared-ui/delete-dialog/entity-deletion-target.util';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -228,8 +228,10 @@ export class ExerciseGroupsComponent implements OnInit {
                         content: 'Deleted an exercise group',
                     });
                     this.exerciseGroups.set(this.exerciseGroups()?.filter((exerciseGroup) => exerciseGroup.id !== exerciseGroupId));
-                    // The exam only reports its latest operation. When another operation replaced ours before the end was seen, COMPLETED only
-                    // means that ours is over, so the groups are read from the server, which tells how it really ended.
+                }
+                if (isDeletionCompleted(progress) || isDeletionOutcomeUnknown(progress)) {
+                    // The exam only reports its latest operation. When another operation replaced ours before the end was seen, the outcome is
+                    // unknown: nothing is announced and the groups are read from the server, which tells how it really ended.
                     this.loadExerciseGroups()
                         .pipe(takeUntilDestroyed(this.destroyRef))
                         .subscribe({ next: (res) => this.exerciseGroups.set(res.body?.exerciseGroups) });

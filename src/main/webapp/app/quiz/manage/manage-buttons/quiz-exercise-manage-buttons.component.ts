@@ -15,7 +15,7 @@ import { QuizExerciseService } from '../service/quiz-exercise.service';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ActionType, EntitySummaryCategory } from 'app/shared-ui/delete-dialog/delete-dialog.model';
 import { EntityDeletionService } from 'app/shared-ui/delete-dialog/service/entity-deletion.service';
-import { exerciseDeletionTarget, isDeletionCompleted, trackAlive } from 'app/shared-ui/delete-dialog/entity-deletion-target.util';
+import { exerciseDeletionTarget, isDeletionCompleted, isDeletionOutcomeUnknown, trackAlive } from 'app/shared-ui/delete-dialog/entity-deletion-target.util';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { EventManager } from 'app/foundation/service/event-manager.service';
@@ -137,6 +137,9 @@ export class QuizExerciseManageButtonsComponent implements OnInit {
                     if (this.isDetailPage() && this.isAlive() && this.quizExercise().id === quizExercise.id) {
                         void this.router.navigate(['course-management', this.courseId, 'exercises']);
                     }
+                } else if (isDeletionOutcomeUnknown(progress)) {
+                    // Not known how it ended: only refresh the list, which shows the real state, instead of announcing a deletion or leaving the page.
+                    this.eventManager.broadcast({ name: 'quizExerciseListModification', content: 'Refresh after an unknown deletion outcome' });
                 }
                 // A failed deletion is reported by the progress dialog; this only ends the confirmation dialog.
                 this.dialogErrorSource.next('');

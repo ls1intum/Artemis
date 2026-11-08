@@ -15,6 +15,7 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.locks.ReentrantLock;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -86,6 +87,11 @@ public class EntityDeletionProgressService {
 
     // Scopes that a running deletion claimed after it started, for example the exercise of an exercise group that was added after the request, by the token of the owner.
     private final Map<UUID, Set<String>> lateScopeKeys = new ConcurrentHashMap<>();
+
+    /**
+     * Orders the writes of the stored status on this node: the progress writes of the worker and the heartbeat refresh of the renewal task.
+     */
+    private final ReentrantLock statusWriteLock = new ReentrantLock();
 
     public EntityDeletionProgressService(WebsocketMessagingService websocketMessagingService, DistributedDataProvider distributedDataProvider,
             @Qualifier("taskScheduler") TaskScheduler taskScheduler, @Qualifier("entityDeletionExecutor") Executor deletionExecutor) {
@@ -263,9 +269,10 @@ public class EntityDeletionProgressService {
         // checked and audited in the request.
         SecurityUtils.runAsSystem(() -> {
             DeletionProgressTracker tracker = new DeletionProgressTracker(this, claim, totalWeight);
+            boolean deleted = false;
             try {
                 job.run(tracker);
-                finish(claim, newStatus(claim, EntityDeletionStatus.COMPLETED, null, claim.totalSteps(), claim.totalSteps(), 0, null, 100.0, null));
+                deleted = true;
             }
             catch (Throwable failure) {
                 log.error("Failed to delete {} {}", claim.entityType(), claim.entityId(), failure);
@@ -281,9 +288,29 @@ public class EntityDeletionProgressService {
                 }
             }
             finally {
-                releaseClaims(claim);
+                try {
+                    if (deleted) {
+                        reportCompleted(claim);
+                    }
+                }
+                finally {
+                    releaseClaims(claim);
+                }
             }
         });
+    }
+
+    /**
+     * Publishes the successful outcome. The entity is gone at this point, so a failure of the status store or the messaging must never be turned into a failed deletion. The
+     * claims are released by the caller, and clients that miss the message find the entity gone.
+     */
+    private void reportCompleted(EntityDeletionClaim claim) {
+        try {
+            finish(claim, newStatus(claim, EntityDeletionStatus.COMPLETED, null, claim.totalSteps(), claim.totalSteps(), 0, null, 100.0, null));
+        }
+        catch (RuntimeException | Error reportingFailure) {
+            log.error("Deleted {} {}, but its completion could not be reported", claim.entityType(), claim.entityId(), reportingFailure);
+        }
     }
 
     void updateProgress(EntityDeletionClaim claim, String currentStep, int stepsCompleted, int itemsProcessed, int totalItems, String currentItemTitle, double percent,
@@ -411,12 +438,19 @@ public class EntityDeletionProgressService {
      * of the scope. Nothing is sent to the clients, they only see the newer time of the update when they read the status.
      */
     private void refreshStatus(EntityDeletionClaim claim) {
-        EntityDeletionProgressDTO status = statuses.get(claim.scopeKey());
-        if (status != null && status.status() == EntityDeletionStatus.IN_PROGRESS) {
-            statuses.put(claim.scopeKey(),
-                    new EntityDeletionProgressDTO(status.entityType(), status.entityId(), status.status(), status.currentStep(), status.stepsCompleted(), status.totalSteps(),
-                            status.itemsProcessed(), status.totalItems(), status.currentItemTitle(), status.weightedProgressPercent(), status.startedAt(), ZonedDateTime.now(),
-                            status.errorMessage()));
+        // The read-modify-write must not interleave with a progress write of the worker, or the heartbeat would bring back the previous step.
+        statusWriteLock.lock();
+        try {
+            EntityDeletionProgressDTO status = statuses.get(claim.scopeKey());
+            if (status != null && status.status() == EntityDeletionStatus.IN_PROGRESS) {
+                statuses.put(claim.scopeKey(),
+                        new EntityDeletionProgressDTO(status.entityType(), status.entityId(), status.status(), status.currentStep(), status.stepsCompleted(), status.totalSteps(),
+                                status.itemsProcessed(), status.totalItems(), status.currentItemTitle(), status.weightedProgressPercent(), status.startedAt(), ZonedDateTime.now(),
+                                status.errorMessage()));
+            }
+        }
+        finally {
+            statusWriteLock.unlock();
         }
     }
 
@@ -463,9 +497,15 @@ public class EntityDeletionProgressService {
         // A lost progress message must not fail a deletion, clients can read the stored status.
         websocketMessagingService.sendMessage(claim.destination(), status).whenComplete((ignored, failure) -> {
             if (failure != null) {
-                log.warn("Failed to send the progress of the deletion of {} {}", claim.entityType(), claim.entityId(), failure);
+                log.warn("Failed to send the progress of the deletion of {} {}: {}", claim.entityType(), claim.entityId(), failure.toString());
             }
         });
-        statuses.put(claim.scopeKey(), status);
+        statusWriteLock.lock();
+        try {
+            statuses.put(claim.scopeKey(), status);
+        }
+        finally {
+            statusWriteLock.unlock();
+        }
     }
 }

@@ -250,6 +250,8 @@ class AsyncExerciseDeletionIntegrationTest extends AbstractSpringIntegrationInde
         startHolding(examScope, List.of(), 1, () -> {
         }, tracker -> started.countDown());
         assertThat(started.await(30, TimeUnit.SECONDS)).isTrue();
+        // the replacement job uses the shared websocket spy until it published its outcome, so it must be over before the test ends
+        awaitCompleted(examScope);
     }
 
     @Test
@@ -306,6 +308,8 @@ class AsyncExerciseDeletionIntegrationTest extends AbstractSpringIntegrationInde
         finally {
             release.countDown();
         }
+        // the released worker reports its outcome now, and it must not do so while the next test uses the shared websocket spy
+        awaitCompleted(scopeKey());
     }
 
     @Test
@@ -637,8 +641,9 @@ class AsyncExerciseDeletionIntegrationTest extends AbstractSpringIntegrationInde
             });
         });
 
-        // before, the failing report ended the deletion before the cleanup ran
-        asyncDeletionTestUtilService.awaitExerciseDeletion(exercise.getId());
+        // Before, the failing report ended the deletion before the cleanup ran. Without its claim the status endpoint answers "interrupted" while the worker is still running,
+        // so wait for the outcome the worker publishes itself instead of the first final status.
+        awaitCompleted(scopeKey());
         assertThat(exerciseRepository.findById(exercise.getId())).isEmpty();
     }
 }

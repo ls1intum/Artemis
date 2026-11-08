@@ -437,7 +437,7 @@ describe('EntityDeletionService', () => {
             expect(results[0].status).toBe(EntityDeletionStatus.FAILED);
         });
 
-        it.each([403, 404])('treats a %i of the polled status of an exam as completed, because the exam is gone', (status) => {
+        it('treats a 404 of the polled status of an exam as completed, because the exam is gone', () => {
             const results: EntityDeletionProgress[] = [];
             service.delete(examTarget, http.delete('api/exam/courses/1/exams/3')).subscribe((value) => results.push(value));
             httpMock.expectOne('api/exam/courses/1/exams/3').flush(null, { status: 202, statusText: 'Accepted' });
@@ -446,23 +446,79 @@ describe('EntityDeletionService', () => {
                 .flush(progress(EntityDeletionStatus.IN_PROGRESS, { entityType: EntityDeletionType.EXAM, entityId: 3 }));
 
             vi.advanceTimersByTime(DELETION_STATUS_POLL_INTERVAL_MS);
-            httpMock.expectOne('api/exam/courses/1/exams/3/deletion-progress').flush(null, { status, statusText: 'Gone' });
+            httpMock.expectOne('api/exam/courses/1/exams/3/deletion-progress').flush(null, { status: 404, statusText: 'Not Found' });
 
             expect(results).toHaveLength(1);
             expect(results[0].status).toBe(EntityDeletionStatus.COMPLETED);
+            expect(alertService.success).toHaveBeenCalledOnce();
             expect(alertService.error).not.toHaveBeenCalled();
         });
 
-        it('treats a 403 of the status endpoint as completed for an exercise, whose permission check needs the exercise that is gone', () => {
+        it('does not take a 403 of the polled status of an exam for a deletion, the instructor may just have lost access', () => {
+            const results: EntityDeletionProgress[] = [];
+            service.delete(examTarget, http.delete('api/exam/courses/1/exams/3')).subscribe((value) => results.push(value));
+            httpMock.expectOne('api/exam/courses/1/exams/3').flush(null, { status: 202, statusText: 'Accepted' });
+            httpMock
+                .expectOne('api/exam/courses/1/exams/3/deletion-progress')
+                .flush(progress(EntityDeletionStatus.IN_PROGRESS, { entityType: EntityDeletionType.EXAM, entityId: 3 }));
+
+            vi.advanceTimersByTime(DELETION_STATUS_POLL_INTERVAL_MS);
+            httpMock.expectOne('api/exam/courses/1/exams/3/deletion-progress').flush(null, { status: 403, statusText: 'Forbidden' });
+
+            expect(results).toHaveLength(1);
+            expect(results[0].status).toBe(EntityDeletionStatus.UNKNOWN);
+            expect(alertService.success).not.toHaveBeenCalled();
+            expect(alertService.error).not.toHaveBeenCalled();
+        });
+
+        it('reports an unknown outcome and no deletion when the status endpoint answers 403 for an exercise', () => {
             const results: EntityDeletionProgress[] = [];
             service.delete(exerciseTarget, http.delete('api/text/text-exercises/7')).subscribe((value) => results.push(value));
             httpMock.expectOne('api/text/text-exercises/7').flush(null, { status: 202, statusText: 'Accepted' });
 
             httpMock.expectOne('api/exercise/exercises/7/deletion-progress').flush(null, { status: 403, statusText: 'Forbidden' });
 
+            // A 403 is no proof that the exercise is gone: callers refresh their data instead of announcing a deletion.
             expect(results).toHaveLength(1);
-            expect(results[0].status).toBe(EntityDeletionStatus.COMPLETED);
+            expect(results[0].status).toBe(EntityDeletionStatus.UNKNOWN);
+            expect(results[0].status).not.toBe(EntityDeletionStatus.COMPLETED);
+            expect(alertService.success).not.toHaveBeenCalled();
+            expect(alertService.error).not.toHaveBeenCalled();
+            expect(dialogClose).toHaveBeenCalledOnce();
             expect(topic$.observed).toBe(false);
+        });
+
+        it('reads the status with at most one request in flight and reads again once when triggers piled up meanwhile', () => {
+            const results: EntityDeletionProgress[] = [];
+            startDeletion(results);
+
+            // The read is slow: three more polling intervals pass and the websocket reconnects before the response arrives.
+            vi.advanceTimersByTime(DELETION_STATUS_POLL_INTERVAL_MS);
+            const slowRead = httpMock.expectOne('api/exercise/exercises/7/deletion-progress');
+            vi.advanceTimersByTime(3 * DELETION_STATUS_POLL_INTERVAL_MS);
+            connection$.next(new ConnectionState(false, true));
+            connection$.next(new ConnectionState(true, true));
+            httpMock.expectNone('api/exercise/exercises/7/deletion-progress');
+
+            slowRead.flush(progress(EntityDeletionStatus.IN_PROGRESS));
+
+            // all the triggers that piled up are served by a single further read
+            const again = httpMock.expectOne('api/exercise/exercises/7/deletion-progress');
+            httpMock.expectNone('api/exercise/exercises/7/deletion-progress');
+            again.flush(progress(EntityDeletionStatus.COMPLETED));
+            expect(results).toHaveLength(1);
+        });
+
+        it('cancels a pending status read when the deletion ends', () => {
+            startDeletion([]);
+            vi.advanceTimersByTime(DELETION_STATUS_POLL_INTERVAL_MS);
+            const pendingRead = httpMock.expectOne('api/exercise/exercises/7/deletion-progress');
+
+            topic$.next(progress(EntityDeletionStatus.COMPLETED));
+
+            expect(pendingRead.cancelled).toBe(true);
+            vi.advanceTimersByTime(3 * DELETION_STATUS_POLL_INTERVAL_MS);
+            httpMock.expectNone('api/exercise/exercises/7/deletion-progress');
         });
     });
 
@@ -483,9 +539,10 @@ describe('EntityDeletionService', () => {
                 vi.advanceTimersByTime(DELETION_STATUS_POLL_INTERVAL_MS);
                 httpMock.expectOne('api/exam/courses/1/exams/3/deletion-progress').flush(progress(otherStatus, { entityType: EntityDeletionType.EXERCISE_GROUP, entityId: 10 }));
 
-                // The outcome is not known any more: the caller is told to refresh, and no success alert claims something that is unverified.
+                // The outcome is not known any more: the caller is told to refresh, and neither a success nor a failure is claimed.
                 expect(results).toHaveLength(1);
-                expect(results[0].status).toBe(EntityDeletionStatus.COMPLETED);
+                expect(results[0].status).toBe(EntityDeletionStatus.UNKNOWN);
+                expect(results[0].status).not.toBe(EntityDeletionStatus.COMPLETED);
                 expect(alertService.success).not.toHaveBeenCalled();
                 expect(alertService.error).not.toHaveBeenCalled();
                 expect(dialogClose).toHaveBeenCalledOnce();
@@ -627,6 +684,39 @@ describe('EntityDeletionService', () => {
             expect(request.cancelled).toBe(true);
             expect(dialogOpen).not.toHaveBeenCalled();
             expect(websocketSubscribe).not.toHaveBeenCalled();
+            expect(completed).toBe(true);
+        });
+
+        it('cancels the status request and opens no dialog when the observable that ends the check emits, e.g. for a reused component', () => {
+            const checkEnded$ = new Subject<void>();
+            let completed = false;
+            service.resume(exerciseTarget, checkEnded$).subscribe({ complete: () => (completed = true) });
+            const request = httpMock.expectOne('api/exercise/exercises/7/deletion-progress');
+
+            checkEnded$.next();
+
+            // the response of the exercise that was shown before must never open its dialog over the exercise shown now
+            expect(request.cancelled).toBe(true);
+            expect(dialogOpen).not.toHaveBeenCalled();
+            expect(websocketSubscribe).not.toHaveBeenCalled();
+            expect(completed).toBe(true);
+        });
+
+        it('does not replay the outcome of a run that ended before the response of its request arrived', () => {
+            const first: EntityDeletionProgress[] = [];
+            service.delete(exerciseTarget, http.delete('api/text/text-exercises/7')).subscribe((value) => first.push(value));
+            // the terminal message overtakes the response of the DELETE request
+            topic$.next(progress(EntityDeletionStatus.COMPLETED));
+            httpMock.expectOne('api/text/text-exercises/7').flush(null, { status: 202, statusText: 'Accepted' });
+            expect(first).toHaveLength(1);
+
+            const second: EntityDeletionProgress[] = [];
+            let completed = false;
+            service.resume(exerciseTarget, destroyRef).subscribe({ next: (value) => second.push(value), complete: () => (completed = true) });
+
+            // the finished run was not registered: resume asks the server instead of replaying the old outcome
+            httpMock.expectOne('api/exercise/exercises/7/deletion-progress').flush(null, { status: 204, statusText: 'No Content' });
+            expect(second).toHaveLength(0);
             expect(completed).toBe(true);
         });
 

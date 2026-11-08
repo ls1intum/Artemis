@@ -3,7 +3,7 @@ import { Component, computed, effect, inject, input, output, signal } from '@ang
 import { HttpErrorResponse } from '@angular/common/http';
 import { Observable, Subject } from 'rxjs';
 import { EntityDeletionService } from 'app/shared-ui/delete-dialog/service/entity-deletion.service';
-import { exerciseDeletionTarget, isDeletionCompleted } from 'app/shared-ui/delete-dialog/entity-deletion-target.util';
+import { exerciseDeletionTarget, isDeletionCompleted, isDeletionOutcomeUnknown } from 'app/shared-ui/delete-dialog/entity-deletion-target.util';
 import { ActionItem } from 'app/exercise/exercise-action-bar/exercise-action-bar.model';
 import { ExerciseActionBarComponent } from 'app/exercise/exercise-action-bar/exercise-action-bar.component';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -357,6 +357,9 @@ export class ExamExerciseRowButtonsComponent {
                 if (isDeletionCompleted(progress)) {
                     this.eventManager.broadcast({ name: eventName, content: eventContent });
                     this.onDeleteExercise.emit();
+                } else if (isDeletionOutcomeUnknown(progress)) {
+                    // Not known how it ended: only refresh the list, which shows the real state, instead of announcing a deletion.
+                    this.eventManager.broadcast({ name: eventName, content: 'Refresh after an unknown deletion outcome' });
                 }
                 // A failed deletion is reported by the progress dialog; this only ends the confirmation dialog.
                 this.dialogErrorSource.next('');

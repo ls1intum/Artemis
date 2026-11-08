@@ -34,7 +34,8 @@
                 "exerciseGroup": "Aufgabengruppe wird gelöscht"
             },
             "otherDeletionRunning": "Eine Aufgabengruppe dieser Klausur wird gerade im Hintergrund gelöscht.",
-            "failedInBackground": "Das Löschen von {{ title }} ist fehlgeschlagen. Teile davon sind möglicherweise schon gelöscht. {{ error }}"
+            "failedInBackground": "Das Löschen von {{ title }} ist fehlgeschlagen. Teile davon sind möglicherweise schon gelöscht. {{ error }}",
+            "requestRejected": "Das Löschen von {{ title }} konnte nicht gestartet werden."
         }
     }
 }

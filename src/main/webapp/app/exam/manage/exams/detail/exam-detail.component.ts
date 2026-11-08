@@ -7,7 +7,7 @@ import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ActionType, EntitySummaryCategory } from 'app/shared-ui/delete-dialog/delete-dialog.model';
 import { EntityDeletionProgress } from 'app/shared-ui/delete-dialog/entity-deletion-progress.model';
 import { EntityDeletionService } from 'app/shared-ui/delete-dialog/service/entity-deletion.service';
-import { examDeletionTarget, isDeletionCompleted, trackAlive } from 'app/shared-ui/delete-dialog/entity-deletion-target.util';
+import { examDeletionTarget, isDeletionCompleted, isDeletionOutcomeUnknown, trackAlive } from 'app/shared-ui/delete-dialog/entity-deletion-target.util';
 import { ArtemisMarkdownService } from 'app/foundation/service/markdown.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
@@ -224,6 +224,9 @@ export class ExamDetailComponent implements OnInit, OnDestroy {
             if (this.isAlive() && this.exam().id === deletedExamId) {
                 void this.router.navigate(['/course-management', courseId, 'exams']);
             }
+        } else if (isDeletionOutcomeUnknown(progress)) {
+            // Not known how it ended (another operation replaced the status): only refresh the exam list, which shows the real state, and stay here.
+            this.eventManager.broadcast({ name: 'examListModification', content: 'Refresh after an unknown deletion outcome' });
         }
     }
 

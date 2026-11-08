@@ -101,6 +101,9 @@ export async function awaitDeletion(request: APIRequestContext, target: Deletion
                 if (progress.status === 'FAILED') {
                     return { failed: true, errorMessage: progress.errorMessage ?? 'the server did not report a reason' };
                 }
+            } else if ((await request.get(entityUrl(target))).status() === 404) {
+                // The status describes another operation that replaced ours before its end was seen. The entity itself tells how ours ended: it is gone.
+                return { failed: false };
             }
         } else if (status === 204) {
             // Nothing known about a deletion: it either finished long ago or never started. The entity itself tells which.

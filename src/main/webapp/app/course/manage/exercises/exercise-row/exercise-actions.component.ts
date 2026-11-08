@@ -12,7 +12,7 @@ import { Course } from 'app/course/shared/entities/course.model';
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { EntitySummaryCategory } from 'app/shared-ui/delete-dialog/delete-dialog.model';
 import { EntityDeletionService } from 'app/shared-ui/delete-dialog/service/entity-deletion.service';
-import { exerciseDeletionTarget, isDeletionCompleted } from 'app/shared-ui/delete-dialog/entity-deletion-target.util';
+import { exerciseDeletionTarget, isDeletionCompleted, isDeletionOutcomeUnknown } from 'app/shared-ui/delete-dialog/entity-deletion-target.util';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { EventManager } from 'app/foundation/service/event-manager.service';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -378,6 +378,9 @@ export class ExerciseActionsComponent {
                         this.eventManager.broadcast({ name: evtName, content: 'Deleted an exercise' });
                         // Notify the parent so the deleted exercise is removed from the view without a page refresh.
                         this.exerciseDeleted.emit(exercise);
+                    } else if (isDeletionOutcomeUnknown(progress)) {
+                        // Not known how it ended: only refresh the list, which shows the real state, instead of announcing a deletion.
+                        this.eventManager.broadcast({ name: evtName, content: 'Refresh after an unknown deletion outcome' });
                     }
                     // A failed deletion is reported by the progress dialog; this only ends the confirmation dialog.
                     this.dialogErrorSource.next('');

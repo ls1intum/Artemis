@@ -1,6 +1,14 @@
 import { describe, expect, it } from 'vitest';
+import { HttpErrorResponse, HttpHeaders } from '@angular/common/http';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { examDeletionTarget, exerciseDeletionTarget, exerciseGroupDeletionTarget, isDeletionCompleted } from 'app/shared-ui/delete-dialog/entity-deletion-target.util';
+import {
+    examDeletionTarget,
+    exerciseDeletionTarget,
+    exerciseGroupDeletionTarget,
+    isDeletionCompleted,
+    isDeletionOutcomeUnknown,
+    isRejectionReportedByGlobalHandler,
+} from 'app/shared-ui/delete-dialog/entity-deletion-target.util';
 import { EntityDeletionProgress, EntityDeletionStatus, EntityDeletionType, isTerminalDeletionStatus } from 'app/shared-ui/delete-dialog/entity-deletion-progress.model';
 
 describe('entity deletion target util', () => {
@@ -55,10 +63,44 @@ describe('entity deletion target util', () => {
         expect(isDeletionCompleted(progress(EntityDeletionStatus.IN_PROGRESS))).toBe(false);
     });
 
-    it('treats completed and failed as the end of a deletion', () => {
+    it('keeps an unknown outcome apart from a confirmed deletion', () => {
+        const unknown = { status: EntityDeletionStatus.UNKNOWN } as EntityDeletionProgress;
+
+        expect(isDeletionOutcomeUnknown(unknown)).toBe(true);
+        expect(isDeletionCompleted(unknown)).toBe(false);
+        expect(isDeletionOutcomeUnknown({ status: EntityDeletionStatus.COMPLETED } as EntityDeletionProgress)).toBe(false);
+        expect(isDeletionOutcomeUnknown({ status: EntityDeletionStatus.FAILED } as EntityDeletionProgress)).toBe(false);
+    });
+
+    it('treats completed, failed and unknown as the end of a deletion', () => {
         expect(isTerminalDeletionStatus(EntityDeletionStatus.COMPLETED)).toBe(true);
         expect(isTerminalDeletionStatus(EntityDeletionStatus.FAILED)).toBe(true);
+        expect(isTerminalDeletionStatus(EntityDeletionStatus.UNKNOWN)).toBe(true);
         expect(isTerminalDeletionStatus(EntityDeletionStatus.IN_PROGRESS)).toBe(false);
         expect(isTerminalDeletionStatus(undefined)).toBe(false);
+    });
+
+    describe('isRejectionReportedByGlobalHandler', () => {
+        const rejection = (status: number, body?: unknown, headers?: Record<string, string>) => new HttpErrorResponse({ status, error: body, headers: new HttpHeaders(headers) });
+
+        it.each([
+            ['the server is not reachable', rejection(0)],
+            ['access is denied', rejection(403)],
+            ['a bad request carries an error header', rejection(400, undefined, { 'x-artemisapp-error': 'error.something' })],
+            ['a bad request carries field errors', rejection(400, { fieldErrors: [{ field: 'a', message: 'b' }] })],
+            ['an error carries a title', rejection(409, { title: 'Another deletion is already in progress' })],
+            ['the server asked for no alert', rejection(500, { skipAlert: true })],
+        ])('is true when %s, because the global handler already shows it or deliberately stays silent', (_description, error) => {
+            expect(isRejectionReportedByGlobalHandler(error)).toBe(true);
+        });
+
+        it.each([
+            ['an unstructured 502 of a proxy', rejection(502, '<html>Bad Gateway</html>')],
+            ['an unstructured 500', rejection(500)],
+            ['a 404, which is never alerted', rejection(404, { title: 'Not found' })],
+            ['something that is no HTTP error', new Error('boom')],
+        ])('is false for %s, so the caller has to report it', (_description, error) => {
+            expect(isRejectionReportedByGlobalHandler(error)).toBe(false);
+        });
     });
 });

@@ -12,7 +12,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
 import { EntitySummaryCategory } from 'app/shared-ui/delete-dialog/delete-dialog.model';
 import { EntityDeletionService } from 'app/shared-ui/delete-dialog/service/entity-deletion.service';
-import { exerciseDeletionTarget, isDeletionCompleted } from 'app/shared-ui/delete-dialog/entity-deletion-target.util';
+import { exerciseDeletionTarget, isDeletionCompleted, isDeletionOutcomeUnknown } from 'app/shared-ui/delete-dialog/entity-deletion-target.util';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { Course } from 'app/course/shared/entities/course.model';
@@ -50,6 +50,9 @@ export class TextExerciseRowButtonsComponent {
                         name: 'textExerciseListModification',
                         content: 'Deleted a textExercise',
                     });
+                } else if (isDeletionOutcomeUnknown(progress)) {
+                    // Not known how it ended: only refresh the list, which shows the real state, instead of announcing a deletion.
+                    this.eventManager.broadcast({ name: 'textExerciseListModification', content: 'Refresh after an unknown deletion outcome' });
                 }
                 // A failed deletion is reported by the progress dialog; this only ends the confirmation dialog.
                 this.dialogErrorSource.next('');

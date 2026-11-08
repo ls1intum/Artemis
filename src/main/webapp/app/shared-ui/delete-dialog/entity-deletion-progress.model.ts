@@ -10,12 +10,18 @@ export enum EntityDeletionType {
 }
 
 /**
- * Status of an asynchronous deletion. Mirrors the server-side {@code EntityDeletionStatus}.
+ * Status of an asynchronous deletion. Mirrors the server-side {@code EntityDeletionStatus}, except for {@link UNKNOWN}.
  */
 export enum EntityDeletionStatus {
     IN_PROGRESS = 'IN_PROGRESS',
     COMPLETED = 'COMPLETED',
     FAILED = 'FAILED',
+    /**
+     * Only ever produced by the client, never sent by the server: the deletion is over for this client, but it could not read how it ended,
+     * for example because another operation replaced the status of the exam or because the status was not readable any more. It is neither a
+     * confirmed deletion nor a failure, so callers refresh their data instead of announcing one of them.
+     */
+    UNKNOWN = 'UNKNOWN',
 }
 
 /**
@@ -68,5 +74,5 @@ export interface EntityDeletionProgressDialogData {
 }
 
 export function isTerminalDeletionStatus(status: EntityDeletionStatus | undefined): boolean {
-    return status === EntityDeletionStatus.COMPLETED || status === EntityDeletionStatus.FAILED;
+    return status === EntityDeletionStatus.COMPLETED || status === EntityDeletionStatus.FAILED || status === EntityDeletionStatus.UNKNOWN;
 }

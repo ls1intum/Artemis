@@ -3,6 +3,7 @@ import dayjs from 'dayjs';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { annotateRecovery, dayjsToString, generateUUID, titleLowercase } from '../utils';
 import { awaitDeletion, awaitNoRunningExamDeletion } from '../deletion';
+import { DELETION_COMPLETION_TIMEOUT } from '../timeouts';
 import examTemplate from '../../fixtures/exam/template.json';
 import { APIRequestContext, APIResponse, Page, expect } from '@playwright/test';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
@@ -163,7 +164,9 @@ export class ExamAPIRequests {
         // Such builds finish within seconds, so the delete is repeated for a bounded time; a retry is recorded in the report and anything
         // that still fails afterwards is a real failure.
         let retryDeadline = Date.now() + 30_000;
-        let conflicts = 0;
+        // A conflict can also come from the deletion of a single exercise of the exam, which the exam progress does not report. It is retried until
+        // the same bounded deadline a deletion may take, instead of a fixed number of attempts that a slow deletion would exhaust.
+        const conflictDeadline = Date.now() + DELETION_COMPLETION_TIMEOUT;
         for (let attempt = 1; ; attempt++) {
             const response = await this.request.delete(`api/exam/courses/${courseId}/exams/${exam.id}`);
             const status = response.status();
@@ -175,7 +178,7 @@ export class ExamAPIRequests {
                 // A deletion that holds the exam or one of its exercise groups is running, so this request was refused and its own progress will
                 // never show up. Wait for the conflicting job to end, then send the request again. The wait is not a retry caused by builds,
                 // so it does not use up the retry budget.
-                if (++conflicts > 5) {
+                if (Date.now() > conflictDeadline) {
                     throw new Error(`Failed to delete exam ${exam.id}: it keeps conflicting with other deletions (${await response.text()})`);
                 }
                 const waited = await awaitNoRunningExamDeletion(this.request, courseId, exam.id);
@@ -256,13 +259,18 @@ export class ExamAPIRequests {
      */
     async deleteExerciseGroupForExam(exam: Exam, exerciseGroup: ExerciseGroup) {
         const courseId = exam.course!.id!;
-        for (let conflicts = 0; conflicts <= 5; conflicts++) {
+        // Conflicts are retried until the bounded deadline a deletion may take, also when they come from the deletion of a single exercise.
+        const conflictDeadline = Date.now() + DELETION_COMPLETION_TIMEOUT;
+        while (true) {
             const response = await this.request.delete(`api/exam/courses/${courseId}/exams/${exam.id}/exercise-groups/${exerciseGroup.id}`);
             // A test may already have deleted the group through the UI.
             if (response.status() === 404) {
                 return;
             }
             if (response.status() === 409) {
+                if (Date.now() > conflictDeadline) {
+                    throw new Error(`Failed to delete exercise group ${exerciseGroup.id} of exam ${exam.id}: it keeps conflicting with other deletions`);
+                }
                 // A deletion that holds the exam or one of its groups is running, so this request was refused and its own progress will never
                 // show up. Wait for that job to end, then send the request again (the group is gone if that job deleted it, which is a 404).
                 await awaitNoRunningExamDeletion(this.request, courseId, exam.id!);
@@ -276,7 +284,6 @@ export class ExamAPIRequests {
             }
             return;
         }
-        throw new Error(`Failed to delete exercise group ${exerciseGroup.id} of exam ${exam.id}: it keeps conflicting with other deletions`);
     }
 
     /**

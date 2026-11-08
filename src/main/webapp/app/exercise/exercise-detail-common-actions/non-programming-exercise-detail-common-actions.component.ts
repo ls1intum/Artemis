@@ -1,6 +1,6 @@
 import { TumAetUiButtonDirective, TumAetUiMenuComponent, TumAetUiMenuItemDirective, TumAetUiMenuTriggerDirective, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 
-import { Component, DestroyRef, OnInit, computed, inject, input, signal } from '@angular/core';
+import { Component, DestroyRef, OnInit, computed, effect, inject, input, signal, untracked } from '@angular/core';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Observable, Subject } from 'rxjs';
 import { TextExerciseService } from 'app/text/manage/text-exercise/service/text-exercise.service';
@@ -23,7 +23,7 @@ import { ExerciseDetailActionsComponent } from 'app/exercise/detail/exercise-det
 import { EntitySummaryCategory } from 'app/shared-ui/delete-dialog/delete-dialog.model';
 import { EntityDeletionProgress } from 'app/shared-ui/delete-dialog/entity-deletion-progress.model';
 import { EntityDeletionService } from 'app/shared-ui/delete-dialog/service/entity-deletion.service';
-import { exerciseDeletionTarget, isDeletionCompleted, trackAlive } from 'app/shared-ui/delete-dialog/entity-deletion-target.util';
+import { exerciseDeletionTarget, isDeletionCompleted, isDeletionOutcomeUnknown, trackAlive } from 'app/shared-ui/delete-dialog/entity-deletion-target.util';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 
 @Component({
@@ -102,6 +102,24 @@ export class NonProgrammingExerciseDetailCommonActionsComponent implements OnIni
     faUserCheck = faUserCheck;
     faRobot = faRobot;
 
+    /** Ends a pending check for a running deletion: when the component is destroyed and when it is reused for another exercise. */
+    private readonly resumeCheckEnded$ = new Subject<void>();
+    private resumeCheckedExerciseId?: number;
+
+    constructor() {
+        // This component is reused for other exercises. The status response of the previous exercise must not open its progress dialog over the
+        // exercise that is shown now.
+        effect(() => {
+            const exerciseId = this.exercise().id;
+            untracked(() => {
+                if (this.resumeCheckedExerciseId !== undefined && this.resumeCheckedExerciseId !== exerciseId) {
+                    this.resumeCheckEnded$.next();
+                }
+            });
+        });
+        this.destroyRef.onDestroy(() => this.resumeCheckEnded$.next());
+    }
+
     ngOnInit(): void {
         this.irisEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_IRIS));
         this.plagiarismEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_PLAGIARISM));
@@ -146,8 +164,9 @@ export class NonProgrammingExerciseDetailCommonActionsComponent implements OnIni
      */
     private resumeRunningDeletion() {
         const exercise = this.exercise();
+        this.resumeCheckedExerciseId = exercise.id;
         this.entityDeletionService
-            .resume(exerciseDeletionTarget(exercise), this.destroyRef)
+            .resume(exerciseDeletionTarget(exercise), this.resumeCheckEnded$)
             .subscribe((progress) =>
                 this.onDeletionEnded(
                     progress,
@@ -165,6 +184,9 @@ export class NonProgrammingExerciseDetailCommonActionsComponent implements OnIni
             if (this.isAlive() && this.exercise().id === deletedExerciseId) {
                 this.navigateToOverview();
             }
+        } else if (isDeletionOutcomeUnknown(progress)) {
+            // Not known how it ended: only refresh the list, which shows the real state, instead of announcing a deletion or leaving the page.
+            this.eventManager.broadcast({ name: eventName, content: 'Refresh after an unknown deletion outcome' });
         }
     }
 

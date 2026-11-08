@@ -18,7 +18,8 @@ export class MockEntityDeletionService {
         );
     });
 
-    resume = vi.fn((): Observable<EntityDeletionProgress> => EMPTY);
+    /** Finds no running deletion. The lifetime the caller passed is recorded in the calls. */
+    resume = vi.fn<(target: EntityDeletionTarget, lifetime: unknown) => Observable<EntityDeletionProgress>>(() => EMPTY);
 
     private finalProgress(target: EntityDeletionTarget): EntityDeletionProgress {
         return {

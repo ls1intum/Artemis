@@ -47,7 +47,7 @@ import { DocumentationType } from 'app/shared-ui/components/buttons/documentatio
 import { EntitySummaryCategory } from 'app/shared-ui/delete-dialog/delete-dialog.model';
 import { EntityDeletionProgress } from 'app/shared-ui/delete-dialog/entity-deletion-progress.model';
 import { EntityDeletionService } from 'app/shared-ui/delete-dialog/service/entity-deletion.service';
-import { exerciseDeletionTarget, isDeletionCompleted, trackAlive } from 'app/shared-ui/delete-dialog/entity-deletion-target.util';
+import { exerciseDeletionTarget, isDeletionCompleted, isDeletionOutcomeUnknown, trackAlive } from 'app/shared-ui/delete-dialog/entity-deletion-target.util';
 import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
 import { DetailOverviewListComponent, DetailOverviewSection, DetailType } from 'app/shared-ui/detail-overview-list/detail-overview-list.component';
 import { Detail, ProgrammingDiffReportDetail } from 'app/shared-ui/detail-overview-list/detail.model';
@@ -828,6 +828,11 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     }
 
     private onDeletionEnded(progress: EntityDeletionProgress, deletedExerciseId: number | undefined): void {
+        if (isDeletionOutcomeUnknown(progress)) {
+            // Not known how it ended: only refresh the list, which shows the real state, instead of announcing a deletion or leaving the page.
+            this.eventManager.broadcast({ name: 'programmingExerciseListModification', content: 'Refresh after an unknown deletion outcome' });
+            return;
+        }
         if (!isDeletionCompleted(progress)) {
             return;
         }

@@ -73,7 +73,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { DeleteDialogService } from 'app/shared-ui/delete-dialog/service/delete-dialog.service';
 import { ActionType, EntitySummaryCategory } from 'app/shared-ui/delete-dialog/delete-dialog.model';
 import { EntityDeletionService } from 'app/shared-ui/delete-dialog/service/entity-deletion.service';
-import { exerciseDeletionTarget } from 'app/shared-ui/delete-dialog/entity-deletion-target.util';
+import { exerciseDeletionTarget, isRejectionReportedByGlobalHandler } from 'app/shared-ui/delete-dialog/entity-deletion-target.util';
 import { mergeSummaryCategories } from 'app/shared-ui/delete-dialog/entity-summary.util';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
@@ -483,7 +483,13 @@ export class CourseManagementExercisesComponent implements OnInit {
         const deletionObservables = exercisesToDelete.map((exercise) =>
             this.entityDeletionService.delete(exerciseDeletionTarget(exercise), this.deleteObservableFor(exercise, event), { silent: true }).pipe(
                 map(() => undefined),
-                catchError(() => of(undefined)),
+                catchError((error: unknown) => {
+                    // The global error handling stays silent about some rejections, e.g. the plain 502 page of a proxy, so those are reported here.
+                    if (!isRejectionReportedByGlobalHandler(error)) {
+                        this.alertService.error('artemisApp.deletionProgress.requestRejected', { title: exercise.title ?? '' });
+                    }
+                    return of(undefined);
+                }),
             ),
         );
         this.alertService.info('artemisApp.deletionProgress.bulkStarted', { count: exercisesToDelete.length });

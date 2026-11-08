@@ -11,7 +11,7 @@ import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { TextExerciseService } from 'app/text/manage/text-exercise/service/text-exercise.service';
-import { Subject, of } from 'rxjs';
+import { Observable, Subject, of } from 'rxjs';
 import { EventManager } from 'app/foundation/service/event-manager.service';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ModelingExerciseService } from 'app/modeling/manage/services/modeling-exercise.service';
@@ -262,6 +262,63 @@ describe('Exercise detail common actions Component', () => {
         comp.ngOnInit();
 
         expect(deletionService.resume).toHaveBeenCalledWith(expect.objectContaining({ entityType: EntityDeletionType.EXERCISE, entityId: 5 }), expect.anything());
+    });
+
+    it('should end the pending check for a running deletion when the reused component shows another exercise', () => {
+        const deletionService = TestBed.inject(EntityDeletionService) as unknown as MockEntityDeletionService;
+        const first = new TextExercise({ id: 123 }, undefined);
+        first.id = 5;
+        first.isAtLeastInstructor = true;
+        const second = new TextExercise({ id: 123 }, undefined);
+        second.id = 6;
+        second.isAtLeastInstructor = true;
+        fixture.componentRef.setInput('course', course);
+        fixture.componentRef.setInput('exercise', first);
+        fixture.detectChanges();
+        expect(deletionService.resume).toHaveBeenCalledOnce();
+        let checkEnded = false;
+        (deletionService.resume.mock.calls[0][1] as Observable<unknown>).subscribe(() => (checkEnded = true));
+        fixture.detectChanges();
+        expect(checkEnded).toBe(false);
+
+        // the status response of the first exercise must not open its dialog over the second one
+        fixture.componentRef.setInput('exercise', second);
+        fixture.detectChanges();
+
+        expect(checkEnded).toBe(true);
+    });
+
+    it('should end the pending check for a running deletion when the component is destroyed', () => {
+        const deletionService = TestBed.inject(EntityDeletionService) as unknown as MockEntityDeletionService;
+        const exercise = new TextExercise({ id: 123 }, undefined);
+        exercise.id = 5;
+        exercise.isAtLeastInstructor = true;
+        fixture.componentRef.setInput('course', course);
+        fixture.componentRef.setInput('exercise', exercise);
+        fixture.detectChanges();
+        let checkEnded = false;
+        (deletionService.resume.mock.calls[0][1] as Observable<unknown>).subscribe(() => (checkEnded = true));
+
+        fixture.destroy();
+
+        expect(checkEnded).toBe(true);
+    });
+
+    it('should only refresh the list and stay on the page when the outcome of the deletion is unknown', () => {
+        const deletionService = TestBed.inject(EntityDeletionService) as unknown as MockEntityDeletionService;
+        const router = TestBed.inject(Router);
+        const navigateSpy = vi.spyOn(router, 'navigateByUrl').mockResolvedValue(true);
+        const broadcastSpy = vi.spyOn(TestBed.inject(EventManager), 'broadcast');
+        vi.spyOn(TestBed.inject(TextExerciseService), 'delete').mockReturnValue(of({} as HttpResponse<any>));
+        fixture.componentRef.setInput('course', course);
+        fixture.componentRef.setInput('exercise', new TextExercise({ id: 123 }, undefined));
+        deletionService.status = EntityDeletionStatus.UNKNOWN;
+
+        comp.deleteExercise();
+
+        expect(navigateSpy).not.toHaveBeenCalled();
+        expect(broadcastSpy).toHaveBeenCalledOnce();
+        expect(broadcastSpy).toHaveBeenCalledWith(expect.objectContaining({ name: 'textExerciseListModification', content: expect.not.stringContaining('Deleted') }));
     });
 
     it('should not look for a running deletion when the user is no instructor', () => {

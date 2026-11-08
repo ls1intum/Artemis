@@ -466,6 +466,20 @@ describe('ExamDetailComponent', () => {
         expect(navigateSpy).not.toHaveBeenCalled();
     });
 
+    it('should only refresh the exam list and stay on the page when the outcome of the deletion is unknown', () => {
+        const deletionService = TestBed.inject(EntityDeletionService) as unknown as MockEntityDeletionService;
+        deletionService.status = EntityDeletionStatus.UNKNOWN;
+        vi.spyOn(service, 'delete').mockReturnValue(of(new HttpResponse<void>({ status: 202 })));
+        const navigateSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+        const broadcastSpy = vi.spyOn(TestBed.inject(EventManager), 'broadcast');
+
+        component.deleteExam(1);
+
+        expect(navigateSpy).not.toHaveBeenCalled();
+        expect(broadcastSpy).toHaveBeenCalledOnce();
+        expect(broadcastSpy).toHaveBeenCalledWith(expect.objectContaining({ name: 'examListModification', content: expect.not.stringContaining('Deleted') }));
+    });
+
     it('should describe the general information of the exam in the detail sections', () => {
         exam.examiner = 'Prof. Example';
         exam.gracePeriod = 180;

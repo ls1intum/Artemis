@@ -34,7 +34,8 @@
                 "exerciseGroup": "Deleting the exercise group"
             },
             "otherDeletionRunning": "An exercise group of this exam is being deleted in the background.",
-            "failedInBackground": "Deleting {{ title }} failed. Parts of it may already be deleted. {{ error }}"
+            "failedInBackground": "Deleting {{ title }} failed. Parts of it may already be deleted. {{ error }}",
+            "requestRejected": "The deletion of {{ title }} could not be started."
         }
     }
 }

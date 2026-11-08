@@ -559,9 +559,31 @@ describe('Course Management Exercises Component', () => {
             comp.deleteSelectedExercises();
 
             expect(textDelete).toHaveBeenCalled();
-            // the refused request is reported by the global error handling, the confirmation dialog is simply ended
             expect(errors).toEqual(['']);
             expect(reloadSpy).toHaveBeenCalled();
+        });
+
+        it('reports a rejected request that the global error handling stays silent about, such as an unstructured 502', () => {
+            const errorAlert = vi.spyOn(TestBed.inject(AlertService), 'error');
+            programmingDelete.mockReturnValue(throwError(() => new HttpErrorResponse({ error: '<html>Bad Gateway</html>', status: 502 })));
+            comp.toggleSelection(1);
+            comp.toggleSelection(2);
+
+            comp.deleteSelectedExercises();
+
+            // only the rejected exercise is reported, the other one was accepted
+            expect(errorAlert).toHaveBeenCalledOnce();
+            expect(errorAlert).toHaveBeenCalledWith('artemisApp.deletionProgress.requestRejected', { title: expect.any(String) });
+        });
+
+        it('does not repeat an alert that the global error handling already shows for a rejected request', () => {
+            const errorAlert = vi.spyOn(TestBed.inject(AlertService), 'error');
+            programmingDelete.mockReturnValue(throwError(() => new HttpErrorResponse({ error: { title: 'Another deletion is already in progress' }, status: 409 })));
+            comp.toggleSelection(1);
+
+            comp.deleteSelectedExercises();
+
+            expect(errorAlert).not.toHaveBeenCalled();
         });
 
         it('does not open one progress dialog per exercise and announces the batch', () => {

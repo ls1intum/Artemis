@@ -228,6 +228,22 @@ describe('Exercise Groups Component', () => {
         expect(broadcastSpy).not.toHaveBeenCalled();
     });
 
+    it('announces no deletion and reads the groups from the server when the outcome of the deletion is unknown', () => {
+        (TestBed.inject(EntityDeletionService) as unknown as MockEntityDeletionService).status = EntityDeletionStatus.UNKNOWN;
+        comp.exerciseGroups.set(groups);
+        vi.spyOn(exerciseGroupService, 'delete').mockReturnValue(of(new HttpResponse<void>()));
+        const broadcastSpy = vi.spyOn(eventManager, 'broadcast');
+        const serverGroups = [...groups];
+        const loadSpy = vi.spyOn(comp, 'loadExerciseGroups').mockReturnValue(of(new HttpResponse<Exam>({ body: { exerciseGroups: serverGroups } as Exam })));
+
+        comp.deleteExerciseGroup(0, {});
+
+        // the group is neither removed locally nor announced as deleted: the server tells what is left
+        expect(broadcastSpy).not.toHaveBeenCalled();
+        expect(loadSpy).toHaveBeenCalledOnce();
+        expect(comp.exerciseGroups()).toEqual(serverGroups);
+    });
+
     it('reports a refused deletion to the confirmation dialog', () => {
         comp.exerciseGroups.set(groups);
         vi.spyOn(exerciseGroupService, 'delete').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 409, statusText: 'Conflict' })));

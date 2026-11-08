@@ -1,7 +1,6 @@
 import { DestroyRef, Service, inject, signal } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { HttpClient, HttpContext, HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { Observable, ReplaySubject, Subscription, filter, interval, skip, take } from 'rxjs';
+import { Observable, ReplaySubject, Subscription, filter, finalize, interval, skip, take, takeUntil } from 'rxjs';
 import { TumAetUiDialogRef, TumAetUiDialogService } from '@tumaet/ui-angular';
 import { TranslateService } from '@ngx-translate/core';
 import dayjs from 'dayjs/esm';
@@ -116,10 +115,11 @@ export class EntityDeletionService {
      * sent it to the background and came back, that run is reused and its dialog is shown again.
      *
      * @param target the entity that may be deleted right now
-     * @param destroyRef lifetime of the caller: the status request is cancelled when the caller is destroyed first, and no dialog is opened for it afterwards
+     * @param lifetime lifetime of the caller: the {@link DestroyRef} of the caller, or an observable that emits when the check is no longer wanted,
+     *        for example because a reused component now shows another entity. The status request is cancelled then, and no dialog is opened afterwards
      * @return emits the final progress when the deletion that was found ended; completes without a value if none was running
      */
-    resume(target: EntityDeletionTarget, destroyRef: DestroyRef): Observable<EntityDeletionProgress> {
+    resume(target: EntityDeletionTarget, lifetime: DestroyRef | Observable<unknown>): Observable<EntityDeletionProgress> {
         const existing = this.activeRuns.get(this.runKey(target));
         if (existing) {
             existing.reattach();
@@ -127,9 +127,18 @@ export class EntityDeletionService {
         }
         const result$ = new ReplaySubject<EntityDeletionProgress>(1);
         let attached = false;
+        const until$ =
+            lifetime instanceof Observable
+                ? lifetime
+                : new Observable<void>((subscriber) =>
+                      lifetime.onDestroy(() => {
+                          subscriber.next();
+                          subscriber.complete();
+                      }),
+                  );
         this.http
             .get<EntityDeletionProgress>(this.statusUrl(target), { observe: 'response', context: this.silentContext() })
-            .pipe(takeUntilDestroyed(destroyRef))
+            .pipe(takeUntil(until$))
             .subscribe({
                 next: (response) => {
                     const progress = response.body;
@@ -213,12 +222,19 @@ export class EntityDeletionService {
 
         const matchesTarget = (message: EntityDeletionProgress) => message.entityType === target.entityType && message.entityId === target.entityId;
 
-        const goneProgress = (): EntityDeletionProgress => {
+        // At most one status read is in flight per run: when a read takes longer than the polling interval, the next trigger is remembered
+        // and runs once the read ended, instead of piling up requests.
+        let readInFlight = false;
+        let readAgain = false;
+        let statusRead: Subscription | undefined;
+
+        /** The progress that ends a run on the client side, when the server did not send the terminal message. */
+        const endedProgress = (status: EntityDeletionStatus.COMPLETED | EntityDeletionStatus.UNKNOWN): EntityDeletionProgress => {
             const last = progress();
             return {
                 entityType: target.entityType,
                 entityId: target.entityId,
-                status: EntityDeletionStatus.COMPLETED,
+                status,
                 stepsCompleted: last?.totalSteps ?? 0,
                 totalSteps: last?.totalSteps ?? 0,
                 itemsProcessed: 0,
@@ -230,7 +246,11 @@ export class EntityDeletionService {
         const run: DeletionRun = {
             result$,
             register: () => {
-                this.activeRuns.set(this.runKey(target), run);
+                // A run whose terminal message arrived before the response of the request is over; later resumes must check the server instead
+                // of replaying its old outcome.
+                if (!finished) {
+                    this.activeRuns.set(this.runKey(target), run);
+                }
             },
             listen: () => {
                 subscription = this.websocketService.subscribe<EntityDeletionProgress>(this.topic(target)).subscribe((message) => run.apply(message));
@@ -240,6 +260,10 @@ export class EntityDeletionService {
                 subscription = undefined;
                 fallback?.unsubscribe();
                 fallback = undefined;
+                readAgain = false;
+                statusRead?.unsubscribe();
+                statusRead = undefined;
+                readInFlight = false;
                 if (this.activeRuns.get(this.runKey(target)) === run) {
                     this.activeRuns.delete(this.runKey(target));
                 }
@@ -281,7 +305,10 @@ export class EntityDeletionService {
                 }
                 finished = true;
                 run.stop();
-                if (message.status === EntityDeletionStatus.COMPLETED && !options.silent) {
+                if (message.status === EntityDeletionStatus.UNKNOWN) {
+                    // The dialog has nothing to tell about an outcome that is not known; the caller refreshes its view from the server.
+                    dialogRef?.close();
+                } else if (message.status === EntityDeletionStatus.COMPLETED && !options.silent) {
                     this.alertService.success(target.successAlertKey, { param: target.title });
                 } else if (message.status === EntityDeletionStatus.FAILED && (continuedInBackground || options.silent)) {
                     // The dialog that would have shown the failure is gone or was never shown, so the failure must not pass unnoticed.
@@ -291,36 +318,56 @@ export class EntityDeletionService {
                 result$.complete();
             },
             readStatus: () => {
+                if (finished) {
+                    return;
+                }
+                if (readInFlight) {
+                    readAgain = true;
+                    return;
+                }
+                readInFlight = true;
                 // Covers messages that were sent before the subscription was established.
-                this.http.get<EntityDeletionProgress>(this.statusUrl(target), { observe: 'response', context: this.silentContext() }).subscribe({
-                    next: (response: HttpResponse<EntityDeletionProgress>) => {
-                        const status = response.body;
-                        if (response.status !== 200 || !status || finished) {
-                            return;
-                        }
-                        if (matchesTarget(status)) {
-                            run.apply(status);
-                            return;
-                        }
-                        // The exam status is shared by the exam and its exercise groups and only describes the latest operation. A status of another
-                        // entity means that ours is over, but how it ended is not known any more. The run ends without a success alert and reports
-                        // COMPLETED, so the caller refreshes its view from the server, which is the only reliable source for the outcome.
-                        finished = true;
-                        run.stop();
-                        dialogRef?.close();
-                        result$.next(goneProgress());
-                        result$.complete();
-                    },
-                    error: (error: unknown) => {
-                        // After an accepted delete, an exercise or an exam that cannot be read any more is gone: the status endpoint answers 404, or 403
-                        // when the permission is derived from the entity that no longer exists. The deletion completed and its terminal message was
-                        // missed. Any other failure must not disturb the running deletion, the websocket stays the source of truth. (The exam of
-                        // an exercise group stays, so its status remains readable.)
-                        if (error instanceof HttpErrorResponse && (error.status === 404 || error.status === 403) && target.entityType !== EntityDeletionType.EXERCISE_GROUP) {
-                            run.apply(goneProgress());
-                        }
-                    },
-                });
+                statusRead = this.http
+                    .get<EntityDeletionProgress>(this.statusUrl(target), { observe: 'response', context: this.silentContext() })
+                    .pipe(
+                        finalize(() => {
+                            readInFlight = false;
+                            if (readAgain) {
+                                readAgain = false;
+                                run.readStatus();
+                            }
+                        }),
+                    )
+                    .subscribe({
+                        next: (response: HttpResponse<EntityDeletionProgress>) => {
+                            const status = response.body;
+                            if (response.status !== 200 || !status || finished) {
+                                return;
+                            }
+                            if (matchesTarget(status)) {
+                                run.apply(status);
+                                return;
+                            }
+                            // The exam status is shared by the exam and its exercise groups and only describes the latest operation. A status of
+                            // another entity means that ours is over, but how it ended is not known any more. The run ends without any alert and
+                            // reports an UNKNOWN outcome, so the caller refreshes its view from the server, which is the only reliable source.
+                            run.apply(endedProgress(EntityDeletionStatus.UNKNOWN));
+                        },
+                        error: (error: unknown) => {
+                            // After an accepted delete, an exercise or an exam that cannot be read any more is gone when the status endpoint answers
+                            // 404: the deletion completed and its terminal message was missed. A 403 is not proof of that, the instructor may have
+                            // lost access while the entity still exists, so the outcome is unknown. Any other failure must not disturb the running
+                            // deletion, the websocket stays the source of truth. (The exam of an exercise group stays, so its status remains readable.)
+                            if (!(error instanceof HttpErrorResponse) || target.entityType === EntityDeletionType.EXERCISE_GROUP) {
+                                return;
+                            }
+                            if (error.status === 404) {
+                                run.apply(endedProgress(EntityDeletionStatus.COMPLETED));
+                            } else if (error.status === 403) {
+                                run.apply(endedProgress(EntityDeletionStatus.UNKNOWN));
+                            }
+                        },
+                    });
             },
             openDialog: () => {
                 const data: EntityDeletionProgressDialogData = {
