@@ -84,6 +84,17 @@ export class ExamManagementService {
             .pipe(map((res: EntityResponseType) => this.processExamResponseFromServer(res)));
     }
 
+    getAnnouncements(courseId: number, examId: number): Observable<ExamWideAnnouncementEvent[]> {
+        return this.http.get<ExamWideAnnouncementEvent[]>(`${this.resourceUrl}/${courseId}/exams/${examId}/announcements`).pipe(
+            map((events) => {
+                for (const event of events) {
+                    event.createdDate = convertDateFromServer(event.createdDate)!;
+                }
+                return events;
+            }),
+        );
+    }
+
     createAnnouncement(courseId: number, examId: number, content: string): Observable<ExamWideAnnouncementEvent> {
         return this.http.post<ExamWideAnnouncementEvent>(`${this.resourceUrl}/${courseId}/exams/${examId}/announcements`, content, { observe: 'response' }).pipe(
             map((res: HttpResponse<ExamWideAnnouncementEvent>) => {
@@ -295,7 +306,7 @@ export class ExamManagementService {
      * @return studentDtos of students that were not found in the system
      */
     addAllStudentsOfCourseToExam(courseId: number, examId: number): Observable<HttpResponse<void>> {
-        return this.http.post<HttpResponse<void>>(`${this.resourceUrl}/${courseId}/exams/${examId}/register-course-students`, { observe: 'response' });
+        return this.http.post<void>(`${this.resourceUrl}/${courseId}/exams/${examId}/register-course-students`, {}, { observe: 'response' });
     }
 
     /**
@@ -378,13 +389,18 @@ export class ExamManagementService {
     }
 
     /**
-     * Returns exam users who started the exam but have not yet submitted a signed attendance record.
+     * Returns exam users who started the exam and whose attendance checks are incomplete.
      * @param courseId The course id.
      * @param examId The exam id.
-     * @returns Exam users with incomplete attendance check data.
+     * @param includeAll Include all registered exam users for attendance correction.
+     * @returns Exam users with incomplete attendance check data, or all registered users when requested.
      */
-    verifyExamUserAttendance(courseId: number, examId: number): Observable<HttpResponse<ExamUserAttendanceCheckDTO[]>> {
-        return this.http.get<ExamUserAttendanceCheckDTO[]>(`${this.resourceUrl}/${courseId}/exams/${examId}/verify-exam-users`, { observe: 'response' });
+    verifyExamUserAttendance(courseId: number, examId: number, includeAll = false): Observable<HttpResponse<ExamUserAttendanceCheckDTO[]>> {
+        return this.http.get<ExamUserAttendanceCheckDTO[]>(`${this.resourceUrl}/${courseId}/exams/${examId}/verify-exam-users`, { observe: 'response', params: { includeAll } });
+    }
+
+    updateAttendance(courseId: number, examId: number, examUserId: number, attended: boolean): Observable<void> {
+        return this.http.put<void>(`${this.resourceUrl}/${courseId}/exams/${examId}/exam-users/${examUserId}/attendance`, { attended });
     }
 
     /**

@@ -1,5 +1,7 @@
 {
     "error": {
+        "registrationClosed": "Registration is closed because the exam has ended.",
+        "attendanceCorrectionNotAllowed": "Attendance can only be corrected after a real exam has ended.",
         "exerciseGenerationCancellationUnavailable": "The cancellation could not be confirmed. Check the current run status, then try again.",
         "title": "Error page!",
         "http": {
@@ -76,7 +78,6 @@
         "incorrectPassword": "The current password is incorrect.",
         "invalidActivationKey": "The activation key is invalid. Please use the registration form to sign up.",
         "internalServerError": "Internal server error",
-        "server.not.reachable": "Server not reachable",
         "url.not.found": "Not found",
         "Email": "Field {{ fieldName }} must be a valid email address!",
         "NotBlank": "Field {{ fieldName }} cannot be blank!",
@@ -224,7 +225,7 @@
             "submissionIdMissing": "The submission must be saved before it can be converted."
         },
         "exerciseVersionIdMismatch": "The requested exercise version does not belong to the provided exercise ID.",
-        "participationExerciseMismatch": "The feedback request could not be processed because the participation does not match the exercise.",
+        "participationExerciseMismatch": "The request could not be processed because the participation does not match the exercise.",
         "submissionExerciseMismatch": "The submission does not belong to the specified exercise.",
         "maxAthenaResultsReached": "Maximum number of AI feedback requests reached.",
         "otherTestRunNotSubmitted": "Submit your other test runs of this exam before requesting AI feedback.",

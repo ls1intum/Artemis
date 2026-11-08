@@ -22,7 +22,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
             }
         </div>
         <ng-template titleBarActions>
-            <button tumAetUiButton size="small" severity="primary" (click)="printPDF()">
+            <button tumAetUiButton size="small" severity="secondary" (click)="printPDF()">
                 <fa-icon [icon]="faPrint" />
                 <span class="title-bar-collapsible-label" jhiTranslate="artemisApp.exam.examSummary.exportPDF"></span>
             </button>

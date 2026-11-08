@@ -1,5 +1,7 @@
 {
     "error": {
+        "registrationClosed": "Die Anmeldung ist geschlossen, da die Prüfung beendet ist.",
+        "attendanceCorrectionNotAllowed": "Die Anwesenheit kann erst nach dem Ende einer echten Prüfung korrigiert werden.",
         "exerciseGenerationCancellationUnavailable": "Der Abbruch konnte nicht bestätigt werden. Prüfe den aktuellen Status des Laufs und versuche es erneut.",
         "title": "Fehlerseite!",
         "http": {
@@ -76,7 +78,6 @@
         "incorrectPassword": "Das aktuelle Passwort ist falsch.",
         "invalidActivationKey": "Der Aktivierungsschlüssel ist ungültig. Bitte benutze die Registrierungsmaske, um dich zu registrieren.",
         "internalServerError": "Interner Serverfehler",
-        "server.not.reachable": "Server ist nicht erreichbar",
         "url.not.found": "Nicht gefunden",
         "Email": "Feld {{fieldName}} muss eine gültige E-Mail-Adresse sein!",
         "NotBlank": "Feld {{fieldName}} darf nicht leer sein!",
@@ -224,7 +225,7 @@
             "submissionIdMissing": "Die Abgabe muss zuerst gespeichert werden, bevor sie umgewandelt werden kann."
         },
         "exerciseVersionIdMismatch": "Die angeforderte Übungsversion gehört nicht zur angegebenen Übungs-ID.",
-        "participationExerciseMismatch": "Die Feedback-Anfrage konnte nicht verarbeitet werden, da die Teilnahme nicht zur Aufgabe passt.",
+        "participationExerciseMismatch": "Die Anfrage konnte nicht verarbeitet werden, da die Teilnahme nicht zur Aufgabe passt.",
         "submissionExerciseMismatch": "Die Abgabe gehört nicht zur angegebenen Aufgabe.",
         "maxAthenaResultsReached": "Maximale Anzahl an KI-Feedback-Anfragen erreicht.",
         "otherTestRunNotSubmitted": "Reiche deine anderen Testläufe dieser Klausur ab, bevor du KI-Feedback anfragst.",

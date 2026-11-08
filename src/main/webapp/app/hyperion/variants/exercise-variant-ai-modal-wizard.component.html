@@ -493,7 +493,15 @@
                 </tumaet-ui-message>
                 @if (isRunning()) {
                     <div class="flex justify-end gap-2 mt-4">
-                        <tumaet-ui-button severity="danger" variant="outlined" size="small" (clicked)="cancelGeneration($event)" data-testid="variant-wizard-cancel">
+                        <tumaet-ui-button
+                            data-button-intent="destructive"
+                            data-button-intent-reason="Stops the running generation job"
+                            severity="danger"
+                            variant="outlined"
+                            size="small"
+                            (clicked)="cancelGeneration($event)"
+                            data-testid="variant-wizard-cancel"
+                        >
                             <fa-icon [icon]="faBan" class="mr-1" />
                             {{ 'artemisApp.exerciseVariantGeneration.tray.cancel' | artemisTranslate }}
                         </tumaet-ui-button>
@@ -530,7 +538,7 @@
                         'artemisApp.exerciseVariantGeneration.wizard.close' | artemisTranslate
                     }}</tumaet-ui-button>
                     @if (generatedVariant()) {
-                        <tumaet-ui-button severity="primary" size="small" [icon]="faPenToSquare" (clicked)="confirmVariant()" data-testid="variant-wizard-open-editor">
+                        <tumaet-ui-button severity="warn" size="small" [icon]="faPenToSquare" (clicked)="confirmVariant()" data-testid="variant-wizard-open-editor">
                             {{ 'artemisApp.exerciseVariantGeneration.wizard.openInEditor' | artemisTranslate }}
                         </tumaet-ui-button>
                     }
@@ -552,7 +560,7 @@
                         'artemisApp.exerciseVariantGeneration.wizard.close' | artemisTranslate
                     }}</tumaet-ui-button>
                     @if (generatedVariant()) {
-                        <tumaet-ui-button severity="primary" size="small" [icon]="faPenToSquare" (clicked)="confirmVariant()" data-testid="variant-wizard-cancelled-open-editor">
+                        <tumaet-ui-button severity="warn" size="small" [icon]="faPenToSquare" (clicked)="confirmVariant()" data-testid="variant-wizard-cancelled-open-editor">
                             {{ 'artemisApp.exerciseVariantGeneration.wizard.openInEditor' | artemisTranslate }}
                         </tumaet-ui-button>
                     }
@@ -609,7 +617,7 @@
                         'artemisApp.exerciseVariantGeneration.wizard.close' | artemisTranslate
                     }}</tumaet-ui-button>
                     <tumaet-ui-button
-                        severity="primary"
+                        severity="warn"
                         size="small"
                         [icon]="faPenToSquare"
                         [disabled]="!generatedVariant()"
