@@ -11,7 +11,7 @@
     (onHide)="onClose()"
     styleClass="course-operation-progress-dialog"
 >
-    <div class="operation-content">
+    <div class="operation-content" data-testid="course-operation-progress" [attr.data-status]="bufferedProgress()?.status">
         <div class="d-flex align-items-center mb-3">
             @if (isInProgress()) {
                 <fa-icon [icon]="faSpinner" animation="spin" class="me-2 status-icon text-primary" />

@@ -74,6 +74,16 @@ describe('CourseOperationProgressComponent', () => {
         expect(component.dialogVisible()).toBe(true);
     });
 
+    it.each([CourseOperationStatus.IN_PROGRESS, CourseOperationStatus.COMPLETED, CourseOperationStatus.FAILED])('should expose the status %s for tests', async (status) => {
+        fixture.componentRef.setInput('progress', createProgressDTO({ status }));
+        fixture.detectChanges();
+        await flushBuffer();
+        fixture.detectChanges();
+
+        const content: HTMLElement | null = fixture.nativeElement.querySelector('[data-testid="course-operation-progress"]');
+        expect(content?.getAttribute('data-status')).toBe(status);
+    });
+
     describe('status indicators', () => {
         it('should show spinner icon when in progress', async () => {
             fixture.componentRef.setInput('progress', createProgressDTO({ status: CourseOperationStatus.IN_PROGRESS }));

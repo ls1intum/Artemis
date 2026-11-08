@@ -120,3 +120,45 @@ export async function awaitDeletion(request: APIRequestContext, target: Deletion
         await new Promise((resolve) => setTimeout(resolve, POLL_INTERVALS_MS[Math.min(attempt, POLL_INTERVALS_MS.length - 1)]));
     }
 }
+
+type CourseOperationProgressBody = { operationType?: string; status?: string; errorMessage?: string };
+
+/**
+ * Waits until an accepted (202) deletion of a course finished in the background, by following the progress of the course operation.
+ * <p>
+ * The status endpoint of a course operation is open to administrators and does not depend on the course, so the course itself is only
+ * checked when the endpoint knows nothing about a deletion (204, or the status of another operation): then the course is gone when the
+ * course endpoint answers 404. A deletion that failed on the server is reported as a failure and not as a timeout.
+ *
+ * @param request the API context of an administrator
+ * @param courseId the course whose deletion was started
+ * @param timeoutMs how long a deletion may stay in progress
+ */
+export async function awaitCourseDeletion(request: APIRequestContext, courseId: number, timeoutMs = DELETION_COMPLETION_TIMEOUT): Promise<DeletionOutcome> {
+    const deadline = Date.now() + timeoutMs;
+    for (let attempt = 0; ; attempt++) {
+        const statusResponse = await request.get(`api/admin/courses/${courseId}/operation-progress`);
+        const status = statusResponse.status();
+        if (status !== 200 && status !== 204) {
+            throw new Error(`Could not read the progress of the deletion of course ${courseId}: ${status} ${await statusResponse.text()}`);
+        }
+        const progress = status === 200 ? ((await statusResponse.json()) as CourseOperationProgressBody) : undefined;
+        if (progress?.operationType === 'DELETE' && progress.status === 'COMPLETED') {
+            return { failed: false };
+        }
+        if (progress?.operationType === 'DELETE' && progress.status === 'FAILED') {
+            return { failed: true, errorMessage: progress.errorMessage ?? 'the server did not report a reason' };
+        }
+        if (progress?.operationType !== 'DELETE' || progress.status !== 'IN_PROGRESS') {
+            // Nothing known about a deletion: it either finished long ago or never started. The course itself tells which.
+            const courseResponse = await request.get(`api/course/courses/${courseId}/for-instructor`);
+            if (courseResponse.status() === 404) {
+                return { failed: false };
+            }
+        }
+        if (Date.now() > deadline) {
+            throw new Error(`The deletion of course ${courseId} did not finish within ${timeoutMs} ms`);
+        }
+        await new Promise((resolve) => setTimeout(resolve, POLL_INTERVALS_MS[Math.min(attempt, POLL_INTERVALS_MS.length - 1)]));
+    }
+}

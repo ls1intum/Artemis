@@ -11,13 +11,18 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.course.domain.CourseOperationStatus;
+import de.tum.cit.aet.artemis.course.domain.CourseOperationType;
+import de.tum.cit.aet.artemis.course.dto.CourseOperationProgressDTO;
+import de.tum.cit.aet.artemis.course.service.CourseOperationProgressService;
 import de.tum.cit.aet.artemis.exercise.domain.EntityDeletionStatus;
 import de.tum.cit.aet.artemis.exercise.domain.EntityDeletionType;
 import de.tum.cit.aet.artemis.exercise.dto.EntityDeletionProgressDTO;
 import de.tum.cit.aet.artemis.exercise.service.EntityDeletionProgressService;
 
 /**
- * Waits for the deletion of an exercise, an exam or an exercise group, which the server runs in the background after the DELETE request returned 202 (Accepted). A test that
+ * Waits for the deletion of a course, an exercise, an exam or an exercise group, which the server runs in the background after the DELETE request returned 202 (Accepted). A test
+ * that
  * asserts what a deletion removed calls one of the {@code await...Deletion} methods after the request. These assert that the deletion completed and fail with the reason the
  * server reported otherwise, so a deletion that failed in the background cannot go unnoticed. A test that expects a failed deletion calls one of the
  * {@code await...DeletionFailure} methods instead.
@@ -34,6 +39,9 @@ public class AsyncDeletionTestUtilService {
 
     @Autowired
     private EntityDeletionProgressService entityDeletionProgressService;
+
+    @Autowired
+    private CourseOperationProgressService courseOperationProgressService;
 
     /**
      * Waits until the background deletion of the exercise ended and asserts that it completed.
@@ -95,6 +103,39 @@ public class AsyncDeletionTestUtilService {
      */
     public EntityDeletionProgressDTO awaitExerciseGroupDeletionFailure(long examId, long exerciseGroupId) {
         return assertFailed(awaitEnd(EntityDeletionProgressService.examScopeKey(examId), EntityDeletionType.EXERCISE_GROUP, exerciseGroupId));
+    }
+
+    /**
+     * Waits until the background deletion of the course ended and asserts that it completed. The course is gone and its operation claim released when this returns.
+     *
+     * @param courseId the id of the course that is deleted
+     * @return the last progress of the deletion, which is completed
+     */
+    public CourseOperationProgressDTO awaitCourseDeletion(long courseId) {
+        CourseOperationProgressDTO progress = awaitCourseDeletionEnd(courseId);
+        assertThat(progress.status()).as("the background deletion of course %s ended with the error: %s", courseId, progress.errorMessage())
+                .isEqualTo(CourseOperationStatus.COMPLETED);
+        return progress;
+    }
+
+    /**
+     * Waits until the background deletion of the course ended and asserts that it failed.
+     *
+     * @param courseId the id of the course that is deleted
+     * @return the last progress of the deletion, which is failed and has an error message
+     */
+    public CourseOperationProgressDTO awaitCourseDeletionFailure(long courseId) {
+        CourseOperationProgressDTO progress = awaitCourseDeletionEnd(courseId);
+        assertThat(progress.status()).as("the background deletion of course %s was expected to fail", courseId).isEqualTo(CourseOperationStatus.FAILED);
+        assertThat(progress.errorMessage()).as("error message of the failed deletion").isNotBlank();
+        return progress;
+    }
+
+    private CourseOperationProgressDTO awaitCourseDeletionEnd(long courseId) {
+        // The status of another operation of the course, for example an archive, stays available until the next operation replaces it, so the type has to match.
+        await().atMost(TIMEOUT).pollInterval(Duration.ofMillis(50)).until(() -> courseOperationProgressService.getOperationProgress(courseId)
+                .filter(progress -> progress.operationType() == CourseOperationType.DELETE && progress.status() != CourseOperationStatus.IN_PROGRESS).isPresent());
+        return courseOperationProgressService.getOperationProgress(courseId).orElseThrow();
     }
 
     private EntityDeletionProgressDTO awaitEnd(String scopeKey, EntityDeletionType entityType, long entityId) {
