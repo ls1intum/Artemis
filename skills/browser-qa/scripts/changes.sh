@@ -10,6 +10,7 @@ mb=$(git merge-base "$base" HEAD)
 
 kind_of() {
     case "$1" in
+        src/test/* | src/main/webapp/*.spec.ts) echo test ;;
         src/main/java/*/web/*Resource.java) echo server-endpoint ;;
         src/main/java/*/dto/*) echo server-dto ;;
         src/main/java/*/domain/*) echo server-domain ;;
@@ -22,8 +23,8 @@ kind_of() {
         src/main/resources/templates/*) echo server-template ;;
         src/main/webapp/i18n/*) echo client-i18n ;;
         src/main/webapp/app/openapi/*) echo client-generated ;;
-        src/main/webapp/*.spec.ts | src/test/* | */test/*) echo test ;;
-        src/main/webapp/*route*.ts) echo client-route ;;
+        src/main/webapp/*.md) echo docs ;;
+        src/main/webapp/*.route.ts | src/main/webapp/*.routes.ts | src/main/webapp/*-routes.ts) echo client-route ;;
         src/main/webapp/*.html) echo client-template ;;
         src/main/webapp/*.scss | src/main/webapp/*.css) echo client-style ;;
         src/main/webapp/*.component.ts) echo client-component ;;

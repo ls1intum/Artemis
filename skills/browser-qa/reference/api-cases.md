@@ -15,15 +15,15 @@ Every entry in a feature's `endpoints` whose `changed` is not `none` gets at lea
 
 ## Running them
 
-Use `skills/browser-qa/scripts/api.sh`. It signs in through the same authenticate endpoint the client uses, keeps one cookie jar per user in the run dir, checks the current account before each authenticated request, reauthenticates when needed, and saves request and response metadata in `api/<name>.txt` and the complete response body in `api/<name>.body`:
+Use `skills/browser-qa/scripts/api.sh`. It signs in through the same authenticate endpoint the client uses, keeps one cookie jar per server port and user in the run dir, checks the current account before each authenticated request, reauthenticates when needed, and saves request and response metadata in `api/<name>.txt` and the complete response body in `api/<name>.body`:
 
 ```bash
 skills/browser-qa/scripts/api.sh <run> <server-port> artemis_test_user_16 F01-api-01 GET /api/lecture/lectures/<lectureId>
-skills/browser-qa/scripts/api.sh <run> <server-port> artemis_test_user_1 F01-api-02 PUT /api/lecture/lectures @<run>/api/F01-api-02.body.json
+skills/browser-qa/scripts/api.sh <run> <server-port> artemis_test_user_1 F01-api-02 PUT /api/lecture/lectures @<absolute-run>/api/F01-api-02.request.json
 skills/browser-qa/scripts/api.sh <run> <server-port> anonymous F01-api-03 GET /api/lecture/lectures/<lectureId>
 ```
 
-Write JSON request bodies with a serializer, such as `JSON.stringify` in Node, not by joining strings. Parse `api/<name>.body` with a suitable parser and check fields one path at a time. The OpenAPI spec at `config/openapi/openapi.yaml` in the checkout names each endpoint's documented shape; a response that differs from it is a finding when the change touched that endpoint.
+Write JSON request bodies with a serializer, such as `JSON.stringify` in Node, not by joining strings. Name body files `api/<name>.request.json` and pass them by absolute path; the script refuses a relative `@` path. Parse `api/<name>.body` with a suitable parser and check fields one path at a time. The OpenAPI spec at `config/openapi/openapi.yaml` in the checkout names each endpoint's documented shape; a response that differs from it is a finding when the change touched that endpoint.
 
 ## Results
 

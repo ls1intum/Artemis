@@ -14,27 +14,32 @@ path=${6:?path, e.g. /api/lecture/lectures/1}
 body=${7:-}
 base="http://localhost:$port"
 mkdir -p "$run/api" "$run/api/.jar"
-jar="$run/api/.jar/$user"
+jar="$run/api/.jar/${port}_$user"
+case "$body" in @/*) ;; @*) echo "body file must be an absolute path: $body" >&2; exit 2 ;; esac
+tmp=$(mktemp -d "$run/api/.call.XXXXXX")
+trap 'rm -rf "$tmp"' EXIT
 
 identity_matches() {
-    [ -s "$jar" ] || return 1
-    curl -fsS -m 20 -b "$jar" "$base/api/core/public/account" | \
+    local j=${1:-$jar}
+    [ -s "$j" ] || return 1
+    curl -fsS -m 20 -b "$j" "$base/api/core/public/account" | \
         node -e 'let data=""; process.stdin.on("data", c => data += c); process.stdin.on("end", () => { try { process.exit(JSON.parse(data).login === process.argv[1] ? 0 : 1); } catch { process.exit(1); } });' "$user"
 }
 
 if [ "$user" != anonymous ]; then
     if ! identity_matches; then
-        rm -f "$jar"
+        # Sign in into a private jar, then swap it in whole, so parallel calls never read a half-written jar.
         auth=$(QA_USER="$user" QA_PASSWORD="${PASS:-$user}" node -e 'process.stdout.write(JSON.stringify({username:process.env.QA_USER,password:process.env.QA_PASSWORD,rememberMe:false}))')
-        code=$(curl -s -m 20 -c "$jar" -o /dev/null -w '%{http_code}' -H 'Content-Type: application/json' \
+        code=$(curl -s -m 20 -c "$tmp/jar" -o /dev/null -w '%{http_code}' -H 'Content-Type: application/json' \
             -d "$auth" "$base/api/core/public/authenticate") || code=000
-        [ "$code" = 200 ] || { rm -f "$jar"; echo "sign-in as $user failed: $code" >&2; exit 2; }
         unset auth
+        [ "$code" = 200 ] || { echo "sign-in as $user failed: $code" >&2; exit 2; }
+        identity_matches "$tmp/jar" || { echo "could not verify identity as $user" >&2; exit 2; }
+        mv -f "$tmp/jar" "$jar"
     fi
-    identity_matches || { rm -f "$jar"; echo "could not verify identity as $user" >&2; exit 2; }
 fi
 
-args=(-s -m 60 -X "$method" -D "$run/api/.headers" -o "$run/api/.body" -w '%{http_code}')
+args=(-s -m 60 -X "$method" -D "$tmp/headers" -o "$tmp/body" -w '%{http_code}')
 [ "$user" != anonymous ] && args+=(-b "$jar")
 if [ -n "$body" ]; then
     args+=(-H 'Content-Type: application/json' --data-binary "$body")
@@ -50,11 +55,10 @@ out="$run/api/$name.txt"
     fi
     echo
     echo "### status $status"
-    grep -iE '^(x-artemisapp-|content-type|location)' "$run/api/.headers" || true
+    grep -iE '^(x-artemisapp-|content-type|location)' "$tmp/headers" || true
     echo
     echo "### body"
     echo "Saved to $name.body"
 } >"$out"
-mv "$run/api/.body" "$run/api/$name.body"
-rm -f "$run/api/.headers"
+mv "$tmp/body" "$run/api/$name.body"
 echo "$status $method $path"

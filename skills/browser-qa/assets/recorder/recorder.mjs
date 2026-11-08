@@ -20,20 +20,28 @@ const HOME = process.env.HOME;
 let FFMPEG = null;
 try { FFMPEG = require('ffmpeg-static'); } catch { FFMPEG = 'ffmpeg'; }
 
-// Chromium: explicit override, else newest revision in the Playwright cache.
+// Chromium: explicit override, else newest revision in the Playwright cache
+// ($PLAYWRIGHT_BROWSERS_PATH, else the platform default).
 function findChromium() {
   if (process.env.CHROME_PATH) return process.env.CHROME_PATH;
-  const cache = `${HOME}/.cache/ms-playwright`;
+  const mac = process.platform === 'darwin';
+  const cache = process.env.PLAYWRIGHT_BROWSERS_PATH || (mac ? `${HOME}/Library/Caches/ms-playwright` : `${HOME}/.cache/ms-playwright`);
+  const subs = mac
+    ? ['chrome-mac-arm64', 'chrome-mac-x64', 'chrome-mac'].flatMap(dir => [
+        `${dir}/Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing`,
+        `${dir}/Chromium.app/Contents/MacOS/Chromium`,
+      ])
+    : ['chrome-linux64/chrome', 'chrome-linux/chrome'];
   const revs = fs.existsSync(cache)
     ? fs.readdirSync(cache).filter(d => /^chromium-\d+$/.test(d)).sort((a, b) => Number(b.split('-')[1]) - Number(a.split('-')[1]))
     : [];
   for (const rev of revs) {
-    for (const sub of ['chrome-linux64/chrome', 'chrome-linux/chrome']) {
+    for (const sub of subs) {
       const p = path.join(cache, rev, sub);
       if (fs.existsSync(p)) return p;
     }
   }
-  throw new Error('No chromium found in ~/.cache/ms-playwright. Set CHROME_PATH or install a Playwright browser.');
+  throw new Error(`No chromium found in ${cache}. Set CHROME_PATH or install a Playwright browser.`);
 }
 const CHROME = findChromium();
 
@@ -91,6 +99,14 @@ const CURSOR_SCRIPT = `
  */
 export async function prepareAuth(username, password, baseURL = 'http://localhost:9000') {
   const browser = await chromium.launch({ executablePath: CHROME, headless: true });
+  try {
+    return await signIn(browser, username, password, baseURL);
+  } finally {
+    await browser.close();
+  }
+}
+
+async function signIn(browser, username, password, baseURL) {
   const context = await browser.newContext({ baseURL });
   const page = await context.newPage();
   await page.goto('/sign-in', { waitUntil: 'networkidle' });
@@ -102,16 +118,21 @@ export async function prepareAuth(username, password, baseURL = 'http://localhos
   if (await continueButton.count()) { await continueButton.first().click(); }
   await page.locator('#password').waitFor({ state: 'visible', timeout: 20000 });
   await page.fill('#password', password);
+  // Judge sign-in by the auth calls, not by the landing route, which differs between branches.
+  const authResponse = page.waitForResponse(r => r.url().includes('/api/core/public/authenticate'), { timeout: 30000 });
   await page.locator('button[type="submit"]').last().click();
-  await page.waitForURL(/courses|course-management/, { timeout: 30000 });
+  const auth = await authResponse;
+  if (!auth.ok()) throw new Error(`Sign-in as ${username} failed: HTTP ${auth.status()}`);
+  const account = await context.request.get('/api/core/public/account');
+  const login = account.ok() ? (await account.json()).login : undefined;
+  if (login !== username) throw new Error(`Sign-in as ${username} did not hold: account endpoint returned ${account.status()} for ${login ?? 'nobody'}`);
+  await page.waitForURL(url => !url.pathname.startsWith('/sign-in'), { timeout: 30000 });
   await page.evaluate(() => {
     const future = new Date();
     future.setDate(future.getDate() + 30);
     localStorage.setItem('earliestSetupPasskeyReminderDate', JSON.stringify(future.toISOString()));
   });
-  const state = await context.storageState();
-  await browser.close();
-  return state;
+  return context.storageState();
 }
 
 export async function startSession({ name, outDir, baseURL = 'http://localhost:9000', viewport = { width: 1440, height: 810 }, headless = true, storageState = undefined }) {

@@ -13,7 +13,7 @@ npm i --no-fund --no-audit playwright-core ffmpeg-static
 command cp -f <artemis-checkout>/skills/browser-qa/assets/recorder/recorder.mjs .
 ```
 
-Chromium comes from `CHROME_PATH`, else the newest `chromium-*` in `~/.cache/ms-playwright`. ffmpeg comes from `ffmpeg-static`, else the system `ffmpeg`, else the run delivers webm only and notes it in the events file.
+Chromium comes from `CHROME_PATH`, else the newest `chromium-*` in the Playwright cache: `$PLAYWRIGHT_BROWSERS_PATH`, else `~/.cache/ms-playwright` on Linux or `~/Library/Caches/ms-playwright` on macOS. ffmpeg comes from `ffmpeg-static`, else the system `ffmpeg`, else the run delivers webm only and notes it in the events file.
 
 ## API
 
