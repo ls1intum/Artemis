@@ -17,16 +17,12 @@ import de.tum.cit.aet.artemis.admin.service.RateLimitService;
 import de.tum.cit.aet.artemis.core.exception.RateLimitExceededException;
 import de.tum.cit.aet.artemis.core.security.RateLimitType;
 import inet.ipaddr.IPAddress;
-import inet.ipaddr.IPAddressString;
 
 /**
  * Filter that enforces rate limiting on OIDC authorization initialization requests.
  * Intercepts requests matching `/oauth2/authorization/**` and checks the client's rate limit budget.
  */
 public class OIDCRateLimitFilter extends OncePerRequestFilter {
-
-    // Safe fallback IP if client resolution fails or untrusted headers are encountered
-    private static final IPAddress FALLBACK_CLIENT_IP = new IPAddressString("127.0.0.1").getAddress();
 
     private static final AntPathMatcher PATH_MATCHER = new AntPathMatcher();
 
@@ -45,6 +41,11 @@ public class OIDCRateLimitFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
         // Decode URI to protect the rate-limit bypass via percent-encoding (e.g., %61uthorization)
         String requestUri = request.getRequestURI();
+        String contextPath = request.getContextPath();
+        if (contextPath != null && requestUri != null && requestUri.startsWith(contextPath)) {
+            requestUri = requestUri.substring(contextPath.length());
+        }
+
         String path = requestUri;
         if (requestUri != null) {
             try {
@@ -58,14 +59,12 @@ public class OIDCRateLimitFilter extends OncePerRequestFilter {
         // Filter should only be triggered for /oauth2/authorization/** requests
         if (path != null && PATH_MATCHER.match("/oauth2/authorization/**", path)) {
             IPAddress clientId = null;
-            try {
-                clientId = rateLimitService.resolveClientId();
-            }
-            catch (Exception ignored) {
-            }
-
+            clientId = rateLimitService.resolveClientId();
+            // if clientId can not be resolved -> reject the request
             if (clientId == null) {
-                clientId = FALLBACK_CLIENT_IP;
+                response.setStatus(HttpStatus.BAD_REQUEST.value());
+                response.getWriter().write("Unable to resolve valid client IP address.");
+                return;
             }
 
             try {
