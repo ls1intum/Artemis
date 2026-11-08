@@ -391,6 +391,21 @@ public class SpecFidelityCritic {
         return witnessAuthor.authorContractWitnesses(specificationContract, testSources, solutionSources, designTemplateStatuses(specificationContract), usageSink, cancelled);
     }
 
+    /**
+     * Repairs standalone-probe compilation once per supplied batch without exposing graded test bodies or changing exercise artifacts.
+     *
+     * @param specification   approved rule authority
+     * @param solutionSources reference API and sources
+     * @param failures        unexecuted proposals with sanitized compiler diagnostics
+     * @param usageSink       shared provider-usage accounting
+     * @param cancelled       authoring stop signal
+     * @return changed methods with their original rule, name and misconception retained; all still require execution
+     */
+    public List<ContractWitness> repairProbeCompilation(String specification, String solutionSources, List<ContractWitnessOutcome> failures,
+            @Nullable Consumer<ChatResponse> usageSink, BooleanSupplier cancelled) {
+        return witnessAuthor.repairCompilation(specification, solutionSources, failures, usageSink, cancelled);
+    }
+
     public ReferenceWitnessReview adjudicateReferenceWitnesses(String specificationContract, String solutionSources, List<ContractWitnessOutcome> outcomes,
             @Nullable Consumer<ChatResponse> usageSink, BooleanSupplier cancelled) {
         return referenceWitnessCritic.adjudicate(specificationContract, solutionSources, designTemplateStatuses(specificationContract), outcomes, usageSink, cancelled);

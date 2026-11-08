@@ -44,7 +44,7 @@ assertEquals(java.util.List.of(1, 0), actual.history());
 assertEquals(0, actual.value());
 ```
 
-Use the instructor annotations and policy from `reference/style/tests.md`.
+Use the instructor annotations and policy from `reference/style/tests.md` during the TESTS stage.
 For this declared sequence, the reference passes; empty, print-only, omitted-increment and omitted-reset
 implementations fail. The integer snapshot after increment stays 1 even after reset. Retaining only a mutable
 object reference would lose that evidence. For linked objects, retain identity separately from immutable

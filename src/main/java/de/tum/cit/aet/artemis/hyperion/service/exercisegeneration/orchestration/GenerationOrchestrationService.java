@@ -1,7 +1,6 @@
 package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration;
 
 import java.nio.charset.StandardCharsets;
-import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -127,7 +126,7 @@ public class GenerationOrchestrationService {
                     client.send(new WorkerCommand(WorkerCommand.PROTOCOL_VERSION, WorkerCommand.Type.RENEW, claim.identity(), null));
                     renewAt = Instant.now().plusSeconds(10);
                 }
-                if (Instant.now().isAfter(deadline.plus(Duration.ofMinutes(5)))) {
+                if (Instant.now().isAfter(deadline.plus(GenerationAssignment.AUTHORING_DRAIN_WINDOW))) {
                     throw new IllegalStateException("Worker did not finish within the authoring drain window");
                 }
                 client.receive(claim, event -> {

@@ -767,17 +767,26 @@ public class StageChecks {
             plan = GeneratedTestPlan.parse(planJson);
         }
         catch (IllegalArgumentException e) {
-            return new StageCheckResult(false, "The differential passed, but test-plan.json is invalid: " + e.getMessage(), report);
+            return failedTestPlan("The differential passed, but test-plan.json is invalid: " + e.getMessage(), report, seededStructuralTestNames);
         }
         String specification = authoritativeSpec(sandbox, sessionId);
         List<String> planReasons = ExerciseIntegrityGate.approvedTestPlanReasons(specification, planJson, report.exactTestNames(), exercise.hasDueDate(),
                 seededStructuralTestNames);
         if (!planReasons.isEmpty()) {
-            return new StageCheckResult(false, "The differential passed, but the grading plan does not implement the approved Testing Strategy:\n" + String.join("\n", planReasons),
-                    report);
+            return failedTestPlan("The differential passed, but the grading plan does not implement the approved Testing Strategy:\n" + String.join("\n", planReasons), report,
+                    seededStructuralTestNames);
         }
         String planSummary = "Grading plan accepted: " + plan.tests().size() + " test(s), " + plan.hiddenEntries().size() + " hidden until the due date.";
         return new StageCheckResult(true, observation + "\n" + planSummary, report);
+    }
+
+    private static StageCheckResult failedTestPlan(String reason, AgentVerifyReport report, Set<String> seededStructuralTestNames) {
+        List<String> behavioralNames = report.exactTestNames().stream().filter(name -> !seededStructuralTestNames.contains(name)).toList();
+        return new StageCheckResult(false,
+                reason + "\nThese are the verified behavioral test names: " + behavioralNames
+                        + ". Copy them verbatim into test-plan.json; do not add a class prefix unless it appears here. "
+                        + "Repair the plan rather than inspecting Gradle internals. Server-seeded structural checks are managed separately: " + seededStructuralTestNames + ".",
+                report);
     }
 
     private StageCheckResult checkStatement(InteractiveSandbox sandbox, String sessionId, @Nullable AgentVerifyReport lastTestsReport, Set<String> seededStructuralTestNames) {

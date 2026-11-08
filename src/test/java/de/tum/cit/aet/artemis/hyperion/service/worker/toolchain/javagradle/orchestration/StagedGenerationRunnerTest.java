@@ -427,10 +427,22 @@ class StagedGenerationRunnerTest {
         verify(baseTools, never()).enterStage(GenerationStage.STATEMENT);
     }
 
+    private int exhaustedAssessmentTurns;
+
     private StagedAssessmentContinuation exhaustRedesignedAssessment() {
+        return exhaustRedesignedAssessment(4);
+    }
+
+    private StagedAssessmentContinuation exhaustRedesignedAssessment(int exhaustedCall) {
         var settings = new HyperionGenerationSettings("small", null, 40, Duration.ofMinutes(30), 1_000_000, true, "FRESH", 32_000, null, false, false);
         runner = runner.forSettings(settings, agentLoopRunner, null);
-        when(verifier.selfCheckTestsStage(any(), anyString(), any(), anyMap(), any())).thenReturn(nondiscriminatingReport(), failingReport(), passingReport("testFoo"));
+        if (exhaustedCall == 4) {
+            when(verifier.selfCheckTestsStage(any(), anyString(), any(), anyMap(), any())).thenReturn(nondiscriminatingReport(), failingReport(), passingReport("testFoo"));
+        }
+        else {
+            when(verifier.selfCheckTestsStage(any(), anyString(), any(), anyMap(), any())).thenReturn(nondiscriminatingReport(), failingReport(), failingReport(),
+                    passingReport("testFoo"));
+        }
         AtomicInteger calls = new AtomicInteger();
         when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenAnswer(invocation -> {
             int budget = invocation.getArgument(3);
@@ -439,15 +451,17 @@ class StagedGenerationRunnerTest {
                 case 1 -> 3;
                 case 2 -> 15;
                 case 3 -> 5;
-                case 4 -> budget;
+                case 4 -> exhaustedCall == 4 ? budget : 1;
+                case 5 -> exhaustedCall == 5 ? budget : 1;
                 default -> 1;
             };
             assertThat(used).isLessThanOrEqualTo(budget);
-            return new AgentLoopResult(call == 4 ? AgentLoopResult.Status.BUDGET_EXHAUSTED : AgentLoopResult.Status.COMPLETED, used, "current artifacts");
+            return new AgentLoopResult(call == exhaustedCall ? AgentLoopResult.Status.BUDGET_EXHAUSTED : AgentLoopResult.Status.COMPLETED, used, "current artifacts");
         });
         var paused = runner.run(exercise, baseTools, baseTools, "brief", Map.of(), sandbox, "s", NEVER_CANCELLED, null, null, () -> SeededStructuralTests.EMPTY);
         assertThat(paused.result().status()).isEqualTo(AgentLoopResult.Status.BUDGET_EXHAUSTED);
         assertThat(paused.result().turns()).isLessThanOrEqualTo(40);
+        exhaustedAssessmentTurns = paused.result().turns();
         assertThat(paused.assessmentContinuation()).isNotNull();
         return paused.assessmentContinuation();
     }
@@ -455,6 +469,46 @@ class StagedGenerationRunnerTest {
     private StagedGenerationRunner.StagedRunOutcome resume(StagedAssessmentContinuation continuation) {
         return runner.resume(continuation, exercise, baseTools, baseTools, "brief", "brief", Map.of(), sandbox, "s", NEVER_CANCELLED, null, null, () -> SeededStructuralTests.EMPTY,
                 true, false, null, null);
+    }
+
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(ints = { 4, 5 })
+    void redesignedTestsCanContinueWithOnlyTheActualSharedTurnsLeft(int exhaustedCall) {
+        var continuation = exhaustRedesignedAssessment(exhaustedCall);
+        int remaining = 40 - exhaustedAssessmentTurns;
+        var settings = new HyperionGenerationSettings("remaining", null, remaining, Duration.ofMinutes(30), 1_000_000, true, "FRESH", 32_000, null, false, false);
+        runner = runner.forSettings(settings, agentLoopRunner, null);
+
+        var resumed = resume(continuation);
+
+        assertThat(resumed.result().status()).isEqualTo(AgentLoopResult.Status.COMPLETED);
+        assertThat(resumed.result().turns()).isLessThanOrEqualTo(remaining);
+        assertThat(exhaustedAssessmentTurns + resumed.result().turns()).isLessThanOrEqualTo(40);
+        verify(baseTools).enterStage(GenerationStage.STATEMENT);
+    }
+
+    @Test
+    void anOuterAssessmentRedesignAlsoReservesItsExecutableContinuation() {
+        int exhaustedCall = 2;
+        var settings = new HyperionGenerationSettings("small", null, 40, Duration.ofMinutes(30), 1_000_000, true, "FRESH", 32_000, null, false, false);
+        runner = runner.forSettings(settings, agentLoopRunner, null);
+        approvedSpecs.approve("s", VALID_SPEC_DOCUMENT);
+        var redesign = runner.requestAssessmentRedesign(exercise, "s", java.time.Instant.now(), "executed bypass", List.of());
+        when(verifier.selfCheckTestsStage(any(), anyString(), any(), anyMap(), any())).thenReturn(failingReport(), passingReport("testFoo"));
+        AtomicInteger calls = new AtomicInteger();
+        when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenAnswer(invocation -> {
+            int used = calls.incrementAndGet() == exhaustedCall ? invocation.getArgument(3) : 1;
+            return new AgentLoopResult(calls.get() == exhaustedCall ? AgentLoopResult.Status.BUDGET_EXHAUSTED : AgentLoopResult.Status.COMPLETED, used, "current artifacts");
+        });
+
+        var paused = resume(redesign);
+        assertThat(paused.assessmentContinuation()).isNotNull();
+        int remaining = 40 - paused.result().turns();
+        runner = runner.withTurnLimit(remaining);
+        var resumed = resume(paused.assessmentContinuation());
+
+        assertThat(resumed.result().status()).isEqualTo(AgentLoopResult.Status.COMPLETED);
+        assertThat(paused.result().turns() + resumed.result().turns()).isLessThanOrEqualTo(40);
     }
 
     @Test

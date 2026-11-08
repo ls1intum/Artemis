@@ -130,6 +130,14 @@ final class GenerationReviewSupport {
                             + "because they are unchanged in the print-only version; the finding clears once no graded test compares the transcript alone.",
                     changedSolutionLines(mutant));
         }
+        if (mutant.testsLearnerAssertions()) {
+            return new SpecFidelityReport.Finding(SpecFidelityReport.Kind.EXECUTABLE_WEAK_TEST_ORACLE,
+                    "The graded tests accept ineffective learner assertions for " + mutant.ruleId(),
+                    "The environment replaced learner-owned test code in " + mutant.solutionPath() + " so that " + mutant.counterexample().wrongBehavior()
+                            + ". The graded suite still passed this variant. This probe did not add or execute a separate counterexample test. Strengthen the assessment so that "
+                            + "ineffective learner assertions cannot earn credit, while preserving the frozen specification and the verified reference behavior.",
+                    changedSolutionLines(mutant));
+        }
         return new SpecFidelityReport.Finding(SpecFidelityReport.Kind.EXECUTABLE_WEAK_TEST_ORACLE,
                 "Rule " + mutant.ruleId() + " has an environment-proven surviving semantic mutant",
                 "The existing graded suite passed this complete replacement for " + mutant.solutionPath() + ", while the counterexample below executed and passed on the "

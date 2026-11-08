@@ -770,6 +770,11 @@ class DockerGradleBuildTest {
         if (observeInteraction) {
             assertThat(outcomes).noneMatch(outcome -> outcome.disposition() == SemanticMutantOutcome.Disposition.SURVIVED_GRADED_SUITE
                     || outcome.disposition() == SemanticMutantOutcome.Disposition.INCONCLUSIVE);
+            assertThat(outcomes).anySatisfy(outcome -> {
+                assertThat(outcome.mutant().solutionPath()).isEqualTo(sourcePath);
+                assertThat(outcome.mutant().evidence()).isEqualTo(SemanticMutant.Evidence.PRINTED_TRANSCRIPT);
+                assertThat(outcome.disposition()).isEqualTo(SemanticMutantOutcome.Disposition.KILLED_BY_GRADED_SUITE);
+            });
         }
         else {
             assertThat(outcomes).anyMatch(outcome -> outcome.disposition() == SemanticMutantOutcome.Disposition.SURVIVED_GRADED_SUITE);

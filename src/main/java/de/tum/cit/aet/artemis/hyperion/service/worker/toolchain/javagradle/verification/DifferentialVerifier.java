@@ -74,6 +74,17 @@ public class DifferentialVerifier {
 
     private final StudentTestAssessmentHistory studentTestAssessmentHistory = new StudentTestAssessmentHistory();
 
+    /**
+     * Captures existing learner-test ownership before authoring.
+     *
+     * @param sessionId active sandbox session
+     * @param tests     trusted seeded tests and permissions
+     * @param solution  trusted initial reference sources
+     */
+    public void captureBaselineStudentTests(String sessionId, Map<String, String> tests, Map<String, String> solution) {
+        approvedSpecs.rememberBaselineStudentTests(sessionId, AresSecurityPolicy.trustedStudentTests(tests, solution));
+    }
+
     public DifferentialVerifier(SandboxBuildCommands sandboxBuildCommandService, ApprovedSpecRegistry approvedSpecs, BooleanSupplier stopVerification) {
         this.sandboxBuildCommandService = sandboxBuildCommandService;
         this.approvedSpecs = approvedSpecs;
@@ -212,7 +223,7 @@ public class DifferentialVerifier {
         List<String> javaAresConventionReasons = new ArrayList<>(
                 ExerciseIntegrityGate.javaAresConventionReasons(request.seedTestsFiles(), request.producedTestsFiles(), request.adaptation()));
         javaAresConventionReasons.addAll(ExerciseIntegrityGate.securityPolicyReasons(request.seedTestsFiles(), request.producedTestsFiles(), request.producedSolutionFiles(),
-                approvedSpecs.approved(sessionId).orElse(null)));
+                approvedSpecs.approved(sessionId).orElse(null), AresSecurityPolicy.trustedStudentTests(request.seedTestsFiles(), request.seedSolutionFiles())));
         boolean javaAresConventionsHold = javaAresConventionReasons.isEmpty();
         reasons.addAll(javaAresConventionReasons);
         List<String> javaSourceLayoutReasons = ExerciseIntegrityGate.javaGeneratedSourceLayoutReasons(exercise.packageName(), request.seedTestsFiles(), request.seedTemplateFiles(),
@@ -308,8 +319,8 @@ public class DifferentialVerifier {
         }
         else {
             javaAresConventionReasons.addAll(ExerciseIntegrityGate.javaAresConventionReasons(seedTestsFiles, testsRepositoryFiles, adaptation));
-            javaAresConventionReasons
-                    .addAll(ExerciseIntegrityGate.securityPolicyReasons(seedTestsFiles, testsRepositoryFiles, solutionFiles, approvedSpecs.approved(sessionId).orElse(null)));
+            javaAresConventionReasons.addAll(ExerciseIntegrityGate.securityPolicyReasons(seedTestsFiles, testsRepositoryFiles, solutionFiles,
+                    approvedSpecs.approved(sessionId).orElse(null), approvedSpecs.baselineStudentTests(sessionId)));
         }
         boolean javaAresConventionsHold = javaAresConventionReasons.isEmpty();
         reasons.addAll(javaAresConventionReasons);

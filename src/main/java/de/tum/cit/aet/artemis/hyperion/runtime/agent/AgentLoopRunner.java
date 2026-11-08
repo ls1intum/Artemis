@@ -435,7 +435,7 @@ public class AgentLoopRunner {
                 conversation.add(AgentToolBatch.unexecutedResponses(toolCalls,
                         "ERROR: this tool call was not executed - the response hit the output token limit, so its arguments may be truncated. "
                                 + "Re-issue the call with complete arguments, splitting large content across smaller calls if needed."));
-                conversation = compactIfNeeded(conversation, lastPromptTokens, messagesAtLastCall, toolDefinitionTokens, usageSink, cancelled, stepListener);
+                conversation = activeRunner.compactIfNeeded(conversation, lastPromptTokens, messagesAtLastCall, toolDefinitionTokens, usageSink, cancelled, stepListener);
                 if (cancelled.getAsBoolean()) {
                     return session(AgentLoopResult.Status.CANCELLED, turn, lastAssistantText, conversation);
                 }
@@ -457,7 +457,7 @@ public class AgentLoopRunner {
                 conversation.add(response.getResult().getOutput());
                 conversation.add(AgentToolBatch.unexecutedResponses(toolCalls,
                         "ERROR: no call in this batch was executed. Submit must be the only tool call in its response. Finish other actions first, then submit separately."));
-                conversation = compactIfNeeded(conversation, lastPromptTokens, messagesAtLastCall, toolDefinitionTokens, usageSink, cancelled, stepListener);
+                conversation = activeRunner.compactIfNeeded(conversation, lastPromptTokens, messagesAtLastCall, toolDefinitionTokens, usageSink, cancelled, stepListener);
                 if (cancelled.getAsBoolean()) {
                     return session(AgentLoopResult.Status.CANCELLED, turn, lastAssistantText, conversation);
                 }
@@ -540,7 +540,7 @@ public class AgentLoopRunner {
                     return failed(turn, lastAssistantText, conversation,
                             consecutiveToolFailures + " consecutive tool calls could not be executed (last failure: " + e.getClass().getSimpleName() + ").");
                 }
-                conversation = compactIfNeeded(conversation, lastPromptTokens, messagesAtLastCall, toolDefinitionTokens, usageSink, cancelled, stepListener);
+                conversation = activeRunner.compactIfNeeded(conversation, lastPromptTokens, messagesAtLastCall, toolDefinitionTokens, usageSink, cancelled, stepListener);
                 if (cancelled.getAsBoolean()) {
                     return session(AgentLoopResult.Status.CANCELLED, turn, lastAssistantText, conversation);
                 }
@@ -568,7 +568,7 @@ public class AgentLoopRunner {
                 conversation.add(new UserMessage("You are close to the step limit. Finish the current change, make sure the build and tests reflect the intended outcome, "
                         + "and then stop calling tools."));
             }
-            conversation = compactIfNeeded(conversation, lastPromptTokens, messagesAtLastCall, toolDefinitionTokens, usageSink, cancelled, stepListener);
+            conversation = activeRunner.compactIfNeeded(conversation, lastPromptTokens, messagesAtLastCall, toolDefinitionTokens, usageSink, cancelled, stepListener);
             if (cancelled.getAsBoolean()) {
                 return session(AgentLoopResult.Status.CANCELLED, turn, lastAssistantText, conversation);
             }

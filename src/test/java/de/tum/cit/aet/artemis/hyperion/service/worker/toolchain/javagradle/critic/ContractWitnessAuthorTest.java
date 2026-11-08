@@ -1,10 +1,21 @@
 package de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.critic;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
+import java.util.List;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
+
+import tools.jackson.databind.json.JsonMapper;
+
+import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification.ContractWitnessOutcome;
 
 class ContractWitnessAuthorTest {
 
@@ -34,6 +45,43 @@ class ContractWitnessAuthorTest {
                 }
             }
             """;
+
+    @Test
+    void compilerFeedbackKeepsTheOriginalProbeIdentityAndMisconception() {
+        var reviewer = mock(ReviewerClient.class);
+        when(reviewer.configured()).thenReturn(true);
+        String correctedCode = "@org.junit.jupiter.api.Test void probe() { var subject = new Subject(); org.junit.jupiter.api.Assertions.assertEquals(1, subject.value()); }";
+        when(reviewer.call(anyString(), anyString(), any(), any(), anyInt())).thenReturn("""
+                {"witnesses":[{"rule":"R1","testName":"probe","wrongBehavior":"model changed the description","code":"%s"}]}
+                """.formatted(correctedCode));
+        var original = new ContractWitness("R1", "probe", "@Test void probe() { assertEquals(1, subject.value()); }", "returns two");
+        var failure = new ContractWitnessOutcome(original, ContractWitnessOutcome.Disposition.INCONCLUSIVE,
+                "HyperionContractWitnessProbeTest.java:9: error: cannot find symbol subject");
+        var author = new ContractWitnessAuthor(reviewer, JsonMapper.builder().build());
+
+        var repaired = author.repairCompilation("R1. Return one.", "class Subject { int value() { return 1; } }", List.of(failure), null, () -> false);
+
+        assertThat(repaired).containsExactly(new ContractWitness(original.ruleId(), original.testName(), correctedCode, original.wrongBehavior()));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "differentRule", "differentName", "unchanged" })
+    void compilationRepairCannotChangeTheRuleOrIdentityOrRepeatTheSameCode(String mode) {
+        var reviewer = mock(ReviewerClient.class);
+        when(reviewer.configured()).thenReturn(true);
+        var original = new ContractWitness("R1", "probe", "@Test void probe() { assertEquals(1, subject.value()); }", "returns two");
+        String name = mode.equals("differentName") ? "otherProbe" : "probe";
+        String code = mode.equals("unchanged") ? original.code() : "@Test void " + name + "() { assertEquals(1, new Subject().value()); }";
+        String rule = mode.equals("differentRule") ? "R2" : "R1";
+        when(reviewer.call(anyString(), anyString(), any(), any(), anyInt())).thenReturn("""
+                {"witnesses":[{"rule":"%s","testName":"%s","wrongBehavior":"returns two","code":"%s"}]}
+                """.formatted(rule, name, code));
+        var failure = new ContractWitnessOutcome(original, ContractWitnessOutcome.Disposition.INCONCLUSIVE,
+                "HyperionContractWitnessProbeTest.java:9: error: cannot find symbol subject");
+        var author = new ContractWitnessAuthor(reviewer, JsonMapper.builder().build());
+
+        assertThat(author.repairCompilation("R1. Return one. R2. Keep requests.", "class Subject {}", List.of(failure), null, () -> false)).isEmpty();
+    }
 
     @Test
     void aCallToAMethodDeclaredByTheSuiteIsASuiteLocalHelper() {

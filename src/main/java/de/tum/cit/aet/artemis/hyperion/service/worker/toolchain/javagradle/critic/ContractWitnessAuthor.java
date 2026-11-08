@@ -19,11 +19,14 @@ import org.springframework.ai.chat.model.ChatResponse;
 
 import tools.jackson.databind.json.JsonMapper;
 
+import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification.ContractWitnessOutcome;
+import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification.ContractWitnessProbe;
+
 /**
  * The contract-witness authoring pass: it proposes a few executable test methods that pin rules of the approved specification, so rule coverage becomes something the server can
  * run instead of something a model asserts.
  * <p>
- * Every candidate is validated against the reference solution by the caller and discarded unless it passes, which is why an over-confident witness costs nothing.
+ * Every candidate is validated against the reference solution by the caller; a proposal is not correctness evidence until execution establishes it.
  */
 class ContractWitnessAuthor {
 
@@ -81,6 +84,38 @@ class ContractWitnessAuthor {
                 + "\n\nGRADED TEST SOURCES AS PRODUCED:\n" + boundedEvidence(testSources);
         String response = reviewer.call(CONTRACT_WITNESS_SYSTEM_PROMPT_TEMPLATE, userPrompt, usageSink, cancelled, CONTRACT_WITNESS_MAX_OUTPUT_TOKENS);
         return parseContractWitnesses(response, specificationContract, testSources);
+    }
+
+    /** Repairs compilation only; the caller must execute every corrected proposal again. No graded test bodies are supplied. */
+    List<ContractWitness> repairCompilation(String specification, String solutionSources, List<ContractWitnessOutcome> outcomes, @Nullable Consumer<ChatResponse> usageSink,
+            BooleanSupplier cancelled) {
+        List<ContractWitnessOutcome> failures = outcomes.stream()
+                .filter(outcome -> outcome.disposition() == ContractWitnessOutcome.Disposition.INCONCLUSIVE && ContractWitnessProbe.hasCompilationFailure(outcome.diagnostic()))
+                .limit(MAX_CONTRACT_WITNESSES).toList();
+        if (failures.isEmpty() || cancelled.getAsBoolean() || !reviewer.configured()) {
+            return List.of();
+        }
+        requireReviewTextSafe("probe-compilation/specification", specification);
+        requireReviewTextSafe("probe-compilation/solution", solutionSources);
+        String failedSources = objectMapper.writeValueAsString(failures);
+        requireReviewTextSafe("probe-compilation/failures", failedSources);
+        String prompt = "COMPILATION REPAIR OF TEMPORARY PROBES. Repair the reported compiler errors only. Return the same rule and testName for each corrected method. "
+                + "Keep its intended public behavior and assertions. The wrapper contains no fixture fields, setup or helpers: construct all required objects inside the method. "
+                + "Use fully qualified annotation, assertion and library names. Do not change exercise files, the rule, or expected behavior to make a failing test pass. "
+                + "No test executed in these rejected proposals. Each repair will be compiled and executed again; return an empty witnesses array when uncertain.\n\n"
+                + "APPROVED SPECIFICATION:\n" + specification + "\n\nAUTHORITATIVE TEMPLATE OWNERSHIP:\n"
+                + renderTemplateOwnership(SpecFidelityCritic.designTemplateStatuses(specification)) + "\n\nREFERENCE SOLUTION:\n" + boundedEvidence(solutionSources)
+                + "\n\nUNEXECUTED PROPOSALS AND COMPILER DIAGNOSTICS:\n" + failedSources;
+        String response = reviewer.call(CONTRACT_WITNESS_SYSTEM_PROMPT_TEMPLATE, prompt, usageSink, cancelled, CONTRACT_WITNESS_MAX_OUTPUT_TOKENS);
+        Map<String, ContractWitness> originals = new java.util.LinkedHashMap<>();
+        failures.forEach(outcome -> originals.putIfAbsent(outcome.witness().testName(), outcome.witness()));
+        return parseContractWitnesses(response, specification, "").stream().flatMap(repair -> {
+            ContractWitness original = originals.get(repair.testName());
+            if (original == null || !original.ruleId().equals(repair.ruleId()) || original.code().equals(repair.code())) {
+                return java.util.stream.Stream.empty();
+            }
+            return java.util.stream.Stream.of(new ContractWitness(original.ruleId(), original.testName(), repair.code(), original.wrongBehavior()));
+        }).toList();
     }
 
     static String renderTemplateOwnership(Map<String, String> statuses) {

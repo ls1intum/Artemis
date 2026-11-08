@@ -74,6 +74,19 @@ class GenerationReviewSupportTest {
     }
 
     @Test
+    void learnerAssertionProbeKeepsItsActualEvidenceWithoutInventingACounterexampleExecution() {
+        String source = "class StudentTest { @Test void checksSize() { assertEquals(1, size()); } }";
+        SemanticMutant probe = SemanticMutant.emptyStudentTests("src/StudentTest.java", source, "class StudentTest { @Test void checksSize() {} }");
+
+        var finding = GenerationReviewSupport.semanticMutantFinding(probe);
+
+        assertThat(finding.isBlocking()).isTrue();
+        assertThat(finding.location().path()).isEqualTo("src/StudentTest.java");
+        assertThat(finding.detail()).contains("learner-owned test code", probe.counterexample().wrongBehavior(), "did not add or execute a separate counterexample")
+                .doesNotContain("executed and passed on the pristine solution");
+    }
+
+    @Test
     void priorExecutedMutantsAreIncludedInTheNextAuthoringContext() {
         SpecFidelityReport.Finding staticRisk = new SpecFidelityReport.Finding(SpecFidelityReport.Kind.WEAK_TEST_ORACLE, "boundary", "check the boundary");
         SemanticMutant executed = mutant("hardCodedThresholds", "uses fixed thresholds");

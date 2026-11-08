@@ -138,6 +138,25 @@ class SpecificationReviewCriticGoalCoverageTest {
     }
 
     @Test
+    void longMissingGoalsKeepEveryIdentityWithinTheContinuityFindingLimit() {
+        String quote = "Preserve arrival order while coordinating all admitted operations. ".repeat(40);
+        // The retained inventory can have long source quotations; diagnostics must still fit the next review.
+        String checks = java.util.stream.IntStream.rangeClosed(1, 32).mapToObj(i -> "{\"goalId\":\"G" + i + "\",\"covered\":false,\"specEvidenceIds\":[],\"reason\":\""
+                + "No assigned operation covers the required reasoning. ".repeat(20) + "\"}").collect(java.util.stream.Collectors.joining(","));
+        var goals = new BriefLearningGoals(quote, java.util.stream.IntStream.rangeClosed(1, 32).mapToObj(i -> new BriefLearningGoals.Goal("G" + i, quote)).toList());
+        when(reviewer.call(eq(REVIEW_PROMPT), anyString(), any(), any(), anyInt())).thenReturn(verdict(checks, "[]"));
+
+        var previous = new SpecFidelityCritic.SpecificationReview(false, java.util.List.of()).withBriefLearningGoals(goals);
+        var review = critic.reviewSpecification(quote, null, SPECIFICATION, previous, null, () -> false);
+
+        assertThat(review.findings()).singleElement().asString().hasSizeLessThan(8_000);
+        for (int i = 1; i <= 32; i++) {
+            assertThat(review.findings().getFirst()).contains("[G" + i + "]");
+        }
+        assertThat(review.briefLearningGoals()).isSameAs(goals);
+    }
+
+    @Test
     void retainedScopeCannotBeReboundToADifferentBrief() {
         reply(verdict(COVERED_FIRST_GOAL + "," + UNCOVERED_SECOND_GOAL, "[]"));
         var previous = critic.reviewSpecification(BRIEF, SPECIFICATION, null, () -> false);

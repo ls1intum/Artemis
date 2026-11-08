@@ -379,6 +379,7 @@ public class StagedGenerationRunner {
         String selectedConcept = null;
         int specificationReviewNumber = 0;
         boolean assessmentRedesignUsed = continuation != null;
+        boolean canContinueTests = continuation == null || continuation.stage() == GenerationStage.SPEC;
         boolean assessmentVerified = false;
         String assessmentRedesignFeedback = continuation != null && continuation.stage() == GenerationStage.SPEC ? continuation.feedback() : null;
         baseTools.configureStructuralOracleRefresh(structuralSeedHook);
@@ -457,8 +458,10 @@ public class StagedGenerationRunner {
                 conversation = null;
             }
 
-            int allocation = stage == GenerationStage.TESTS ? allocatablePool(stage, remainingPool)
-                    : allocateStageBudget(STAGE_BASE_BUDGETS[index], rollover, allocatablePool(stage, remainingPool));
+            // A redesigned assessment may need one fresh TESTS context. Reserve half its executable pool for that continuation, independently of the statement reserve.
+            int available = allocatablePool(stage, remainingPool);
+            int allocation = stage == GenerationStage.TESTS ? testsAttemptPool(available, assessmentRedesignUsed && canContinueTests)
+                    : allocateStageBudget(STAGE_BASE_BUDGETS[index], rollover, available);
             enterStep(progress, stage);
             emit(progress, STAGE_PROGRESS_LABELS.get(index));
             baseTools.enterStage(stage);
@@ -815,6 +818,9 @@ public class StagedGenerationRunner {
                     allocation = allocateStageBudget(SEMANTIC_SPEC_REFINEMENT_BUDGET, 0, allocatablePool(stage, remainingPool));
                     continue;
                 }
+                if (stage == GenerationStage.TESTS && assessmentRedesignUsed && canContinueTests && result.status() == AgentLoopResult.Status.BUDGET_EXHAUSTED) {
+                    break;
+                }
                 boolean stageCanReenter = stageReentriesUsed == 0 && reentriesRemaining > 0;
                 if (!stageCanReenter || allocatablePool(stage, remainingPool) < MIN_STAGE_BUDGET) {
                     // A failed TESTS gate still lets STATEMENT run: it can be authored from the approved SPEC and the tests that did execute, and the outer verifier then gives
@@ -836,7 +842,9 @@ public class StagedGenerationRunner {
                 reentriesRemaining--;
                 gateFeedback = gate.observation();
                 emit(progress, "Stage " + (index + 1) + "/" + STAGE_ORDER.size() + ": retrying after gate feedback");
-                allocation = allocateStageBudget(STAGE_BASE_BUDGETS[index], 0, allocatablePool(stage, remainingPool));
+                int reentryPool = allocatablePool(stage, remainingPool);
+                allocation = allocateStageBudget(STAGE_BASE_BUDGETS[index], 0,
+                        stage == GenerationStage.TESTS ? testsAttemptPool(reentryPool, assessmentRedesignUsed && canContinueTests) : reentryPool);
             }
 
             // The run is leaving this stage, whether its gate passed or it exhausted its re-entries: the last moment its output exists in a live sandbox and the natural place
@@ -845,8 +853,8 @@ public class StagedGenerationRunner {
             if (stageBoundarySink != null) {
                 stageBoundarySink.accept(stage);
             }
-            if (stage == GenerationStage.TESTS && assessmentRedesignUsed && !assessmentVerified && continuation == null && !wallClockExceeded(startedAt)
-                    && allocatablePool(stage, remainingPool) < MIN_STAGE_BUDGET && approvedSpecs.approved(sessionId).isPresent()) {
+            if (stage == GenerationStage.TESTS && assessmentRedesignUsed && !assessmentVerified && canContinueTests && !wallClockExceeded(startedAt)
+                    && lastStatus == AgentLoopResult.Status.BUDGET_EXHAUSTED && approvedSpecs.approved(sessionId).isPresent()) {
                 StagedRunOutcome paused = finish(exercise, AgentLoopResult.Status.BUDGET_EXHAUSTED, totalTurns, lastFinalMessage, archivedConversation, conversation,
                         unresolvedSpecificationFindings);
                 return new StagedRunOutcome(paused.result(), paused.conversation(), paused.unresolvedSpecificationFindings(), null, conceptFindings,
@@ -917,6 +925,10 @@ public class StagedGenerationRunner {
      */
     static int allocateStageBudget(int base, int rollover, int remainingPool) {
         return Math.max(MIN_STAGE_BUDGET, Math.min(base + rollover, remainingPool));
+    }
+
+    private static int testsAttemptPool(int available, boolean canContinue) {
+        return canContinue ? Math.max(MIN_STAGE_BUDGET, (available + 1) / 2) : available;
     }
 
     static int allocatablePool(GenerationStage stage, int remainingPool) {

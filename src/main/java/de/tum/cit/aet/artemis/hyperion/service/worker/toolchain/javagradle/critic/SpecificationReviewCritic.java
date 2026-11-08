@@ -510,13 +510,17 @@ class SpecificationReviewCritic {
                 return "goal IDs must be known G IDs without duplicates.";
             }
             if (check.covered() == null || check.reason() == null || check.reason().strip().length() < 20 || check.specEvidenceIds() == null) {
-                return "every goal needs a final coverage verdict, specification evidence IDs and a substantive reason.";
+                return "every goal needs a final coverage verdict, specification evidence IDs and a grounded reason of at least 20 characters.";
             }
             if ((Boolean.TRUE.equals(check.covered()) || !check.specEvidenceIds().isEmpty()) && !evidence.specification().containsSubstantive(check.specEvidenceIds())) {
                 return "a covered goal needs substantive E evidence; missing work may use an empty evidence list, never invented E IDs.";
             }
         }
         return null;
+    }
+
+    private static String goalFindingExcerpt(String text) {
+        return text.length() <= 100 ? text : text.substring(0, 100) + "…";
     }
 
     /** Keeps missing-goal hypotheses during response correction, even when another goal's check was malformed or omitted. */
@@ -527,8 +531,8 @@ class SpecificationReviewCritic {
                     || !check.specEvidenceIds().isEmpty() && !evidence.specification().containsSubstantive(check.specEvidenceIds())) {
                 continue;
             }
-            evidence.learningGoals().goals().stream().filter(goal -> goal.id().equals(check.goalId())).findFirst().ifPresent(
-                    goal -> missing.putIfAbsent(goal.id(), "[" + goal.id() + "] The brief requires \"" + goal.quote() + "\": " + truncateLearningEvidence(check.reason().strip())));
+            evidence.learningGoals().goals().stream().filter(goal -> goal.id().equals(check.goalId())).findFirst().ifPresent(goal -> missing.putIfAbsent(goal.id(),
+                    "[" + goal.id() + "] The brief requires \"" + goalFindingExcerpt(goal.quote()) + "\": " + goalFindingExcerpt(check.reason().strip())));
         }
         if (missing.isEmpty()) {
             return List.of();

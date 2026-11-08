@@ -313,6 +313,25 @@ class GenerationAttemptLoopTest {
     }
 
     @Test
+    void aChangedSpecificationIsNotTheSameRejectedVerificationInput() {
+        when(workspace.extractProblemStatement(any(), anyString())).thenReturn("Generated statement");
+        sandbox.withFile(SPEC_PATH, "## Rules\nR1. The original contract.");
+        AtomicInteger verifications = new AtomicInteger();
+        when(verifier.verify(any(), anyString(), any(), any(VerificationRequest.class), any(Runnable.class))).thenAnswer(invocation -> {
+            if (verifications.incrementAndGet() == 1) {
+                sandbox.withFile(SPEC_PATH, "## Rules\nR1. The redesigned contract.");
+            }
+            return rejected("still invalid");
+        });
+
+        GenerationAttemptLoop loop = newGenerateLoop(10, 1);
+
+        assertThat(loop.run()).isNull();
+        assertThat(verifications).hasValue(2);
+        assertThat(loop.terminationReason()).isEqualTo(TerminationReason.UNCHANGED_CANDIDATE_RESUBMITTED);
+    }
+
+    @Test
     void aRepairSessionThatStopsOnItsOwnWithTheRejectedCandidateStillEndsTheRun() {
         when(workspace.extractProblemStatement(any(), anyString())).thenReturn("Generated statement");
         when(verifier.verify(any(), anyString(), any(), any(VerificationRequest.class), any(Runnable.class))).thenReturn(rejected("still invalid"));
@@ -564,6 +583,21 @@ class GenerationAttemptLoopTest {
         verify(service, times(4)).preserveCandidate(checkpoint.capture(), any(), anyString(), any());
         assertThat(checkpoint.getValue().problemStatement()).isEqualTo("PROBLEM STATEMENT 1");
         verify(agentLoopRunner, times(2)).runSession(anyString(), any(), anyString(), any(), anyInt(), any(), any(), any());
+    }
+
+    @Test
+    void theFirstVerifiedCheckpointAlreadyCarriesBothDesignObjections() {
+        when(stagedGenerationRunner.run(any(), any(), any(), anyString(), anyString(), any(), any(), anyString(), any(), any(), any(), any(), anyBoolean(), anyBoolean(), any(),
+                any()))
+                .thenReturn(new StagedGenerationRunner.StagedRunOutcome(completed(), null, List.of("Unresolved specification choice"), null, List.of("Unresolved concept choice")));
+        GenerationAttemptLoop loop = newLoop(Mode.GENERATE, 1, 0, true);
+
+        loop.run();
+
+        ArgumentCaptor<GenerationAttemptLoop.CandidateSnapshot> checkpoints = ArgumentCaptor.forClass(GenerationAttemptLoop.CandidateSnapshot.class);
+        verify(service, Mockito.atLeastOnce()).preserveCandidate(checkpoints.capture(), any(), anyString(), any());
+        assertThat(checkpoints.getAllValues().getFirst().reviewReport().findings()).extracting(SpecFidelityReport.Finding::kind)
+                .contains(SpecFidelityReport.Kind.SPECIFICATION_REVIEW_FINDING, SpecFidelityReport.Kind.CONCEPT_ADMISSION_FINDING);
     }
 
     @Test

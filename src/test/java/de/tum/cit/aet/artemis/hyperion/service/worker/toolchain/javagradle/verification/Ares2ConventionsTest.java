@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Set;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
@@ -116,6 +117,25 @@ class Ares2ConventionsTest {
         String stubbed = SPEC_ASSIGNING_STUDENT_TESTS.replace("| StackUsageTest | tests students write | student-creates |",
                 "| StackUsageTest | tests students complete | stubbed |");
         assertThat(AresSecurityPolicy.derive(seed.get(AresSecurityPolicy.PATH), tests, SOLUTION_WITH_STUDENT_TESTS, stubbed)).contains("org.junit.jupiter");
+    }
+
+    @Test
+    void adaptationRetainsOnlyTheLearnerTestOwnershipOfTheTrustedSeed() throws IOException {
+        Map<String, String> originalHarness = harness();
+        Map<String, String> tests = new LinkedHashMap<>(candidate());
+        tests.put(AresSecurityPolicy.PATH,
+                AresSecurityPolicy.derive(originalHarness.get(AresSecurityPolicy.PATH), tests, SOLUTION_WITH_STUDENT_TESTS, SPEC_ASSIGNING_STUDENT_TESTS));
+        Set<String> baseline = AresSecurityPolicy.trustedStudentTests(tests, SOLUTION_WITH_STUDENT_TESTS);
+
+        assertThat(baseline).containsExactly("StackUsageTest");
+        assertThat(AresSecurityPolicy.trustedStudentTests(Map.of(AresSecurityPolicy.PATH, tests.get(AresSecurityPolicy.PATH).replace("\n", "\r\n")), SOLUTION_WITH_STUDENT_TESTS))
+                .isEqualTo(baseline);
+        assertThat(ExerciseIntegrityGate.securityPolicyReasons(tests, tests, SOLUTION_WITH_STUDENT_TESTS, null, baseline)).isEmpty();
+        Map<String, String> augmented = new LinkedHashMap<>(SOLUTION_WITH_STUDENT_TESTS);
+        augmented.put("src/de/test/UnassignedTest.java", "package de.test; class UnassignedTest { @org.junit.jupiter.api.Test void check() {} }");
+        assertThat(ExerciseIntegrityGate.securityPolicyReasons(tests, tests, augmented, null, baseline)).singleElement().asString().contains("UnassignedTest");
+        assertThat(AresSecurityPolicy.trustedStudentTests(originalHarness, SOLUTION_WITH_STUDENT_TESTS)).isEmpty();
+        assertThat(ExerciseIntegrityGate.securityPolicyReasons(originalHarness, tests, SOLUTION_WITH_STUDENT_TESTS, null, Set.of())).isNotEmpty();
     }
 
     /** Ares rejects JUnit imports in supervised code, so an exercise whose reference solution has students write tests needs exactly that one permission. */

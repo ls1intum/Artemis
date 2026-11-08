@@ -417,6 +417,24 @@ class ApprovedOwnershipGateTest {
                 .anySatisfy(reason -> assertThat(reason).contains("structural contract is invalid", "cannot be replaced by candidate code"));
     }
 
+    @ParameterizedTest
+    @ValueSource(strings = { "\"TODO S1\"", "\"\"\"\nTODO S1\n\"\"\"" })
+    void seamLabelsInsideLiteralsDoNotInvalidateTaskComments(String literal) {
+        String spec = """
+                ## Design
+                | Type | Role | Template status |
+                |---|---|---|
+                | Player | calculates a value | stubbed |
+                ## Testing Strategy
+                | Seam | Owner type | Observable responsibility | Weight | Hidden variant |
+                |---|---|---|---|---|
+                | S1 | Player | calculate a value | 3 | no |
+                """;
+        String source = "class Player { String label = " + literal + ";\n // TODO: calculate a value\n int calculate() { return 0; }\n}";
+
+        assertThat(ApprovedOwnershipGate.templateTodoSeamReasons(spec, Map.of("src/Player.java", source), Map.of())).isEmpty();
+    }
+
     @Test
     void templateTodoSeams_rejectSeamIdLabelsAndStubbedOwnersWithoutTodo() {
         String spec = """

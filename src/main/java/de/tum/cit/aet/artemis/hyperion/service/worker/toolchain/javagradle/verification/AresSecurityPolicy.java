@@ -83,6 +83,11 @@ final class AresSecurityPolicy {
         return solutionJUnitTestClasses(solutionFiles).stream().filter(type -> !studentOwned.contains(type)).toList();
     }
 
+    static Set<String> trustedStudentTests(Map<String, String> tests, Map<String, String> solution) {
+        String policy = tests.get(PATH);
+        return policy != null && JUNIT_IMPORT_PERMISSION.matcher(normalized(policy)).find() ? Set.copyOf(solutionJUnitTestClasses(solution)) : Set.of();
+    }
+
     /** Whether the exercise has students write tests: the solution has JUnit test classes, and the approved specification assigns every one of them to students. */
     static boolean junitImportPermitted(Map<String, String> solutionFiles, @Nullable String approvedSpec) {
         return !solutionJUnitTestClasses(solutionFiles).isEmpty() && unassignedJUnitTestClasses(solutionFiles, approvedSpec).isEmpty();
@@ -113,7 +118,12 @@ final class AresSecurityPolicy {
      * @return rejection reasons, empty when the produced policy is exactly the server-derived one
      */
     static List<String> reasons(Map<String, String> seed, Map<String, String> produced, Map<String, String> producedSolution, @Nullable String approvedSpec) {
-        List<String> unassignedTestClasses = unassignedJUnitTestClasses(producedSolution, approvedSpec);
+        return reasons(seed, produced, producedSolution, approvedSpec, Set.of());
+    }
+
+    static List<String> reasons(Map<String, String> seed, Map<String, String> produced, Map<String, String> producedSolution, @Nullable String approvedSpec,
+            Set<String> baselineStudentTests) {
+        List<String> unassignedTestClasses = unassignedJUnitTestClasses(producedSolution, approvedSpec).stream().filter(type -> !baselineStudentTests.contains(type)).toList();
         if (!unassignedTestClasses.isEmpty()) {
             return List.of("The reference solution declares JUnit test methods in " + unassignedTestClasses + ", but no approved specification marks these classes "
                     + "'student-creates' or 'stubbed', so Artemis does not permit their JUnit import. Students write tests only in classes the specification assigns to them: "

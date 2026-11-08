@@ -66,6 +66,14 @@ public final class ContractWitnessProbe {
         return source.append("}\n").toString();
     }
 
+    /**
+     * @param diagnostic sanitized compiler output from an unexecuted probe
+     * @return whether Java compilation specifically rejected the temporary witness source
+     */
+    public static boolean hasCompilationFailure(@Nullable String diagnostic) {
+        return diagnostic != null && diagnostic.contains(PROBE_CLASS_NAME + ".java") && diagnostic.contains("error:");
+    }
+
     /** Builds the temporary source and policy overlay without changing the candidate's resource permissions. */
     static Map<String, String> workspaceOverlay(Map<String, String> testsFiles, String probePath, String probeSource) {
         Map<String, String> augmentedTests = new LinkedHashMap<>(testsFiles);

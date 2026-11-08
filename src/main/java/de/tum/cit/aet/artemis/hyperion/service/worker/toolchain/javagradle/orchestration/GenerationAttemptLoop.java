@@ -227,6 +227,9 @@ class GenerationAttemptLoop {
     @Nullable
     private VerificationRequest lastRejectedVerificationRequest;
 
+    @Nullable
+    private String lastRejectedSpecification;
+
     private final RepairRoundScheduler repairScheduler;
 
     /** The executed mutant and witness evidence this run carries across its repair rounds. */
@@ -331,8 +334,9 @@ class GenerationAttemptLoop {
             if (cancelled.getAsBoolean()) {
                 return cancelledOutcome(cancelledResult(loopResult));
             }
+            String specDocumentSnapshot = GenerationOrchestrator.readSpecDocument(sandbox, sessionId);
             boolean adaptUnedited = adaptAttemptEndedWithoutAnyEdit(artifacts);
-            if (adaptUnedited || repairAttemptEndedWithoutAnyEdit(artifacts)) {
+            if (adaptUnedited || repairAttemptEndedWithoutAnyEdit(artifacts, specDocumentSnapshot)) {
                 // The tree is still the seeded baseline or the rejected candidate: a differential build of it costs a full verification and can only say what the agent already
                 // knows. The attempt still counts, both against the run's attempt cap and the bounded mechanical phase, so an agent that never edits cannot keep the run alive.
                 if (attempt == maxGenerationAttempts) {
@@ -350,7 +354,8 @@ class GenerationAttemptLoop {
                         : repairPrompts.editBeforeRepairing(attempt, specSnapshot.get(), verification.report(), specFidelityReport);
                 continue;
             }
-            if (lastRejectedVerificationRequest != null && lastRejectedVerificationRequest.equals(artifacts.verificationRequest())) {
+            if (lastRejectedVerificationRequest != null && lastRejectedVerificationRequest.equals(artifacts.verificationRequest())
+                    && Objects.equals(lastRejectedSpecification, specDocumentSnapshot)) {
                 emit("The agent resubmitted the unchanged rejected candidate; stopping without repeating the same verification.");
                 terminationReason = TerminationReason.UNCHANGED_CANDIDATE_RESUBMITTED;
                 break;
@@ -366,7 +371,6 @@ class GenerationAttemptLoop {
                     continue;
                 }
             }
-            String specDocumentSnapshot = GenerationOrchestrator.readSpecDocument(sandbox, sessionId);
             emitPhase(Phase.VERIFYING, "Building the solution and starter code against the generated tests");
             var assessed = ownershipConflict.isPresent()
                     ? new ExecutableEvidenceLedger.AssessmentVerdict(new VerificationResult(false, false, false, 0, List.of(ownershipConflict.get())), List.of())
@@ -392,6 +396,7 @@ class GenerationAttemptLoop {
             }
             if (!verification.mechanicallyVerified() && artifacts.extractionFailed().isEmpty()) {
                 lastRejectedVerificationRequest = artifacts.verificationRequest();
+                lastRejectedSpecification = specDocumentSnapshot;
             }
             if (verification.mechanicallyVerified() && assessed.counterexamples().isEmpty()) {
                 checkpointMechanicallyVerifiedCandidate(artifacts, specDocumentSnapshot, verification);
@@ -606,9 +611,10 @@ class GenerationAttemptLoop {
      * A mechanical repair attempt that ran out of steps without changing the candidate the verifier just rejected. A fresh session that loses its whole budget to inspection
      * would otherwise end the run as an unchanged resubmission, although it never chose to resubmit; a session that stopped on its own still does.
      */
-    private boolean repairAttemptEndedWithoutAnyEdit(CandidateArtifacts artifacts) {
+    private boolean repairAttemptEndedWithoutAnyEdit(CandidateArtifacts artifacts, @Nullable String specification) {
         return loopResult.status() == AgentLoopResult.Status.BUDGET_EXHAUSTED && artifacts.extractionFailed().isEmpty() && repairScheduler.roundsStarted() == 0
-                && verification != null && lastRejectedVerificationRequest != null && lastRejectedVerificationRequest.equals(artifacts.verificationRequest());
+                && verification != null && lastRejectedVerificationRequest != null && lastRejectedVerificationRequest.equals(artifacts.verificationRequest())
+                && Objects.equals(lastRejectedSpecification, specification);
     }
 
     /** Reads all candidate artifacts back and preserves extraction failures so verification can distinguish them from empty repositories. */
@@ -674,8 +680,8 @@ class GenerationAttemptLoop {
     /** Checkpoints the first verified candidate; a later semantic repair is promoted only once its review has run, see {@link #promoteReviewedCandidate}. */
     private void checkpointMechanicallyVerifiedCandidate(CandidateArtifacts artifacts, @Nullable String specDocumentSnapshot, VerificationResult verified) {
         CandidateSnapshot mechanicallyVerifiedCandidate = new CandidateSnapshot(loopResult, verified, copyProducedFiles(producedFilesByType), producedProblemStatement,
-                executableEvidence.preserveExecutableEvidenceState(
-                        SpecFidelityReport.qualityReviewUnavailable("This mechanically verified draft still requires full quality review before study qualification.")),
+                executableEvidence.preserveExecutableEvidenceState(preserveDesignAuthorityState(
+                        SpecFidelityReport.qualityReviewUnavailable("This mechanically verified draft still requires full quality review before study qualification."))),
                 specDocumentSnapshot, artifacts.testPlanJson());
         if (candidateBeforeCurrentRepair == null) {
             lastMechanicallyVerifiedCandidate = mechanicallyVerifiedCandidate;

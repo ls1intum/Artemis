@@ -518,8 +518,8 @@ public class AgentSystemPrompt {
     private static String safeToolUseSection(GenerationInput exercise) {
         return """
                 SAFE TOOL USE
-                Your only tools are bash, read_file, write_file, edit_file, delete_file, verify, and submit. Use `verify` for the acceptance verdict. Use bash only for inspection
-                and raw verify scripts only for diagnostics; their exit codes are not verdicts because the template should fail tests.
+                Your only tools are bash, read_file, write_file, edit_file, delete_file, verify, and submit. Use `verify` for the acceptance verdict. Use bash only for workspace
+                inspection. Never invoke internal verifier scripts through the shell: their source isolation requires server-managed restoration and can otherwise delete your work.
                 Never run repository Gradle directly or change build infrastructure
                 to work around offline dependency resolution. Do not edit file contents through bash; use write_file or edit_file (there is no apply_patch tool). Never fabricate build or test results.%s
                 """

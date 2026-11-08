@@ -348,6 +348,8 @@ class StageChecksTest {
             approvedSpecs.approve("s", spec);
             sandbox.spec = spec;
             sandbox.templateRepositoryFiles = Map.of("src/Demo.java", "public class Demo { public Player player; }");
+            sandbox.solutionRepositoryFiles = Map.of("src/Player.java", "public class Player {}");
+            assertThat(service.givenOwnershipConflict(sandbox, "s")).isPresent();
             when(verifier.selfCheckTestsStage(any(), anyString(), eq(exercise), any(), any(SeededStructuralTests.class))).thenReturn(report(false, false));
 
             assertThat(check(GenerationStage.TESTS).contractRedesignRequired()).isFalse();
@@ -386,6 +388,21 @@ class StageChecksTest {
 
             assertThat(result.passed()).isFalse();
             assertThat(result.observation()).contains("test-plan.json is invalid").contains("tiers must be between 1 and 3");
+        }
+
+        @Test
+        void rejectedPlanShowsTheVerifiedNamesAndCanBeRepairedWithoutChangingTests() {
+            when(verifier.selfCheckTestsStage(any(), anyString(), eq(exercise), any(), any(SeededStructuralTests.class))).thenReturn(report(true, true));
+            sandbox.testPlanJson = "{\"tests\":[{\"name\":\"SomeSuite.testFoo\",\"seam\":\"S1\",\"seamWeightTier\":3,\"visibility\":\"ALWAYS\"}]}";
+
+            StageCheckResult rejected = check(GenerationStage.TESTS);
+
+            assertThat(rejected.passed()).isFalse();
+            assertThat(rejected.report().solutionPassed()).isTrue();
+            assertThat(rejected.observation()).contains("names tests the verifier did not run", "verified behavioral test names: [testFoo]")
+                    .doesNotContain("MECHANICAL PRECHECK: PASS");
+            sandbox.testPlanJson = sandbox.testPlanJson.replace("SomeSuite.testFoo", "testFoo");
+            assertThat(check(GenerationStage.TESTS).passed()).isTrue();
         }
 
         @Test

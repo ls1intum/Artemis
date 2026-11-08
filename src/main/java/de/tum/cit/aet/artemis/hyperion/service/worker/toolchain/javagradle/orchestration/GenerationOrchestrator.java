@@ -183,6 +183,7 @@ public class GenerationOrchestrator {
             Map<String, String> testsSeedSnapshot = replacePlaceholders(workspaceSeed.testsSeedSnapshot(), placeholderReplacements);
             structuralOracleSeeder.captureBaseline(sessionId, workspaceSeed.testsSeedSnapshot());
             baselineRepositoryFiles = replacePlaceholdersByRepository(workspaceSeed.repositoryTextFiles(), placeholderReplacements);
+            verifier.captureBaselineStudentTests(sessionId, testsSeedSnapshot, baselineRepositoryFiles.getOrDefault(RepositoryRole.SOLUTION, Map.of()));
             capture = new AuthoringStageCapture(this, workspace, sandbox, sessionId, lifecycle, workspaceSeed, placeholderReplacements, baselineRepositoryFiles,
                     baselineProblemStatement);
             if (cancelled.getAsBoolean()) {

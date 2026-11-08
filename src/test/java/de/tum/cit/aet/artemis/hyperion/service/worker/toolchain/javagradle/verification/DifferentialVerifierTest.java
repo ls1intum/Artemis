@@ -350,22 +350,24 @@ class DifferentialVerifierTest {
         assertThat(outcomes).hasSize(4).allSatisfy(outcome -> assertThat(outcome.disposition()).isEqualTo(SemanticMutantOutcome.Disposition.INCONCLUSIVE));
     }
 
-    @Test
-    void optionalAssessmentFinishesTheCurrentProbeAndStopsBeforeTheNextOne() {
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(ints = { 2, 4 })
+    void optionalAssessmentFinishesTheCurrentProbeAndStopsBeforeTheNextOne(int stopAfterRestore) {
         var stopped = new AtomicBoolean();
         var restores = new AtomicInteger();
         var verifier = new DifferentialVerifier(sandboxBuildCommandService(), new ApprovedSpecRegistry(), stopped::get);
         var sandbox = new ScriptedSandbox(result(2, 0, 0, 0), result(2, 2, 0, 1), PROBLEM_STATEMENT_WITH_TASK);
         var outcomes = verifier.probeStudentTestAssertions(sandbox, "s", input(), Map.of(), learnerTests(), null, SeededStructuralTests.EMPTY, () -> {
-            if (restores.incrementAndGet() == 2) {
+            if (restores.incrementAndGet() == stopAfterRestore) {
                 stopped.set(true);
             }
         }, _ -> {
         });
 
-        assertThat(restores).hasValue(2);
+        assertThat(restores).hasValue(stopAfterRestore);
         assertThat(outcomes).hasSize(4);
-        assertThat(outcomes.getFirst().disposition()).isEqualTo(SemanticMutantOutcome.Disposition.SURVIVED_GRADED_SUITE);
+        assertThat(outcomes.getFirst().disposition())
+                .isEqualTo(stopAfterRestore == 2 ? SemanticMutantOutcome.Disposition.INCONCLUSIVE : SemanticMutantOutcome.Disposition.SURVIVED_GRADED_SUITE);
         assertThat(outcomes.subList(1, 4)).allSatisfy(outcome -> assertThat(outcome.disposition()).isEqualTo(SemanticMutantOutcome.Disposition.INCONCLUSIVE));
     }
 
@@ -378,7 +380,7 @@ class DifferentialVerifierTest {
         var sandbox = new ScriptedSandbox(result(2, 0, 0, 0), result(2, 2, 0, 1), PROBLEM_STATEMENT_WITH_TASK);
 
         assertThatThrownBy(() -> verifier.probeStudentTestAssertions(sandbox, "s", input(), Map.of(), learnerTests(), null, SeededStructuralTests.EMPTY, () -> {
-            if (restores.incrementAndGet() == 3) {
+            if (restores.incrementAndGet() == 5) {
                 assertThat(completed).hasSize(1);
                 throw failure;
             }

@@ -27,6 +27,7 @@ import org.springframework.stereotype.Service;
 import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.aiworker.api.SandboxApi;
+import de.tum.cit.aet.artemis.aiworker.api.WorkloadApi;
 import de.tum.cit.aet.artemis.hyperion.protocol.ExecutionIdentity;
 import de.tum.cit.aet.artemis.hyperion.protocol.ExerciseBrief;
 import de.tum.cit.aet.artemis.hyperion.protocol.GenerationActivity;
@@ -151,7 +152,7 @@ public class JavaGradleGenerationAdapterService implements ToolchainGenerationAd
         var commands = new SandboxBuildCommands(resources);
         var workspace = new GenerationWorkspace(resources);
         var approvedSpecs = new ApprovedSpecRegistry();
-        var verifier = new DifferentialVerifier(commands, approvedSpecs, stopAuthoring);
+        var verifier = new DifferentialVerifier(commands, approvedSpecs, stopVerification(cancelled, assignment.authoringDeadline()));
         var stageChecks = new StageChecks(verifier, approvedSpecs);
         var prompt = new AgentSystemPrompt(commands);
         var runner = new AgentLoopRunner(models, parameters.contextWindowTokens(), Duration.ofMinutes(5), cooldown);
@@ -178,6 +179,13 @@ public class JavaGradleGenerationAdapterService implements ToolchainGenerationAd
         finally {
             active.remove(assignment.identity(), orchestrator);
         }
+    }
+
+    static BooleanSupplier stopVerification(BooleanSupplier stopping, Instant authoringDeadline) {
+        BooleanSupplier cancelled = stopping instanceof WorkloadApi.StopSignal signal ? signal.cancelled() : stopping;
+        Instant drainDeadline = authoringDeadline.isAfter(Instant.MAX.minus(GenerationAssignment.AUTHORING_DRAIN_WINDOW)) ? Instant.MAX
+                : authoringDeadline.plus(GenerationAssignment.AUTHORING_DRAIN_WINDOW);
+        return () -> cancelled.getAsBoolean() || !Instant.now().isBefore(drainDeadline);
     }
 
     static BooleanSupplier stopAuthoring(BooleanSupplier cancelled, WorkerUsageRecorder usage, Instant authoringDeadline) {

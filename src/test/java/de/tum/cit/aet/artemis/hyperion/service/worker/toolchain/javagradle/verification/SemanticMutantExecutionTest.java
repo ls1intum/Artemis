@@ -59,7 +59,10 @@ class SemanticMutantExecutionTest {
     void rechecksEveryRetainedMutantWhenOnlyTheFirstFourAreKilled() {
         List<SemanticMutant> retained = IntStream.rangeClosed(1, 6).mapToObj(index -> new SemanticMutant("R" + index, PATH, ORIGINAL, MUTANT_SOURCE, COUNTEREXAMPLE)).toList();
         AtomicInteger builds = new AtomicInteger();
-        List<SemanticMutantOutcome> outcomes = SemanticMutantExecution.recheck(Map.of(PATH, ORIGINAL), retained, (_, _) -> {
+        List<SemanticMutantOutcome> outcomes = SemanticMutantExecution.recheck(Map.of(PATH, ORIGINAL), retained, (mutant, _) -> {
+            if (mutant == null) {
+                return new BuildSummary(1, 0, 0, false, List.of("graded"), List.of(), List.of(), "");
+            }
             boolean killed = builds.incrementAndGet() <= 4;
             return new BuildSummary(1, killed ? 1 : 0, killed ? 1 : 0, false, List.of("graded"), killed ? List.of("graded") : List.of(), List.of(), "");
         });
@@ -127,10 +130,10 @@ class SemanticMutantExecutionTest {
     @Test
     void ordinaryRecheckRequiresAnExecutedFailingTestRatherThanACompileFailure() {
         AtomicInteger killedRestores = new AtomicInteger();
-        assertThat(verifier().checkSemanticMutants(sandbox(reports(List.of("globalChoice"), List.of("globalChoice"))), "session", javaExercise(), Map.of(PATH, ORIGINAL),
-                SeededStructuralTests.EMPTY, List.of(MUTANT), killedRestores::incrementAndGet)).singleElement().extracting(SemanticMutantOutcome::disposition)
-                .isEqualTo(Disposition.KILLED_BY_GRADED_SUITE);
-        assertThat(killedRestores).hasValue(2);
+        assertThat(verifier().checkSemanticMutants(sandbox(reports(List.of("globalChoice"), List.of()), reports(List.of("globalChoice"), List.of("globalChoice"))), "session",
+                javaExercise(), Map.of(PATH, ORIGINAL), SeededStructuralTests.EMPTY, List.of(MUTANT), killedRestores::incrementAndGet)).singleElement()
+                .extracting(SemanticMutantOutcome::disposition).isEqualTo(Disposition.KILLED_BY_GRADED_SUITE);
+        assertThat(killedRestores).hasValue(4);
 
         AtomicInteger compileFailureRestores = new AtomicInteger();
         assertThat(verifier().checkSemanticMutants(sandbox(reports(List.of(), List.of())), "session", javaExercise(), Map.of(PATH, ORIGINAL), SeededStructuralTests.EMPTY,
@@ -140,9 +143,21 @@ class SemanticMutantExecutionTest {
 
     @Test
     void anAdaptedOrRenamedFailingTestKillsTheProvenMutant() {
-        assertThat(verifier().checkSemanticMutants(sandbox(reports(List.of("strongerRenamedTest"), List.of("strongerRenamedTest"))), "session", javaExercise(),
+        assertThat(verifier().checkSemanticMutants(
+                sandbox(reports(List.of("strongerRenamedTest"), List.of()), reports(List.of("strongerRenamedTest"), List.of("strongerRenamedTest"))), "session", javaExercise(),
                 Map.of(PATH, ORIGINAL), SeededStructuralTests.EMPTY, List.of(MUTANT), () -> {
                 })).singleElement().extracting(SemanticMutantOutcome::disposition).isEqualTo(Disposition.KILLED_BY_GRADED_SUITE);
+    }
+
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(booleans = { true, false })
+    void aMissingBaselineTestMakesTheMutantRecheckInconclusive(boolean remainingTestFails) {
+        List<SemanticMutantOutcome> outcomes = SemanticMutantExecution.recheck(Map.of(PATH, ORIGINAL), List.of(MUTANT),
+                (mutant, _) -> mutant == null ? new BuildSummary(2, 0, 0, false, List.of("first", "second"), List.of(), List.of(), "")
+                        : new BuildSummary(1, remainingTestFails ? 1 : 0, remainingTestFails ? 1 : 0, false, List.of("first"), remainingTestFails ? List.of("first") : List.of(),
+                                List.of(), ""));
+
+        assertThat(outcomes).singleElement().extracting(SemanticMutantOutcome::disposition).isEqualTo(Disposition.INCONCLUSIVE);
     }
 
     @Test

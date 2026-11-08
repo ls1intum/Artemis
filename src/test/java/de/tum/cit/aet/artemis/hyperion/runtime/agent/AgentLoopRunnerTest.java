@@ -90,6 +90,37 @@ class AgentLoopRunnerTest {
     }
 
     @Test
+    void conversationCompactionAfterHandoffUsesTheRepairModel() {
+        ChatModel model = mock(ChatModel.class);
+        AtomicInteger turns = new AtomicInteger();
+        List<String> summaryModels = new ArrayList<>();
+        when(model.call(any(Prompt.class))).thenAnswer(invocation -> {
+            Prompt prompt = invocation.getArgument(0);
+            if (prompt.getInstructions().getLast().getText().startsWith("Summarize the following earlier session messages")) {
+                summaryModels.add(prompt.getOptions().getModel());
+                return text("The workspace is unchanged; continue the repair.");
+            }
+            int turn = turns.incrementAndGet();
+            if (turn > 41) {
+                return text("finished");
+            }
+            ChatResponse response = new ChatResponse(List.of(new Generation(AssistantMessage.builder().content("Earlier work detail. ".repeat(300))
+                    .toolCalls(List.of(new AssistantMessage.ToolCall("edit-" + turn, "function", "write", "{}"))).build())));
+            return turn == 41
+                    ? new ChatResponse(response.getResults(),
+                            org.springframework.ai.chat.metadata.ChatResponseMetadata.builder().usage(new org.springframework.ai.chat.metadata.DefaultUsage(199_000, 10)).build())
+                    : response;
+        });
+        var settings = new HyperionGenerationSettings("pilot", null, 180, Duration.ofHours(2), 6_000_000, true, "CONTINUOUS", 200_000,
+                org.springframework.ai.openai.OpenAiChatOptions.builder().model("primary").build(), false, true, "repair");
+
+        var result = runner(model).forSettings(settings).run("system", "brief", new ProgressTools(), 180, () -> false, null, null);
+
+        assertThat(result.status()).isEqualTo(AgentLoopResult.Status.COMPLETED);
+        assertThat(summaryModels).containsExactly("repair");
+    }
+
+    @Test
     void aMissingRepairModelDoesNotCoolDownTheHealthyPrimaryModel() {
         ChatModel model = mock(ChatModel.class);
         AtomicInteger turn = new AtomicInteger();

@@ -324,19 +324,35 @@ authoring. An unresolved ownership conflict cannot become a verified checkpoint.
 The configured `artemis.hyperion.agent.max-turns` is a **job-wide authoring limit**,
 shared by concept selection, stages, continuations and repair attempts. There is no
 hidden 83-turn staged cap and a retry does not receive a new full allocation.
+A redesigned executable stage keeps part of its remaining turn pool for one fresh
+continuation as well as preserving the statement phase. The continuation uses only
+the turns actually left in the job.
 The single contract-redesign allowance is separate from scoped repair: after it is
 spent, the verified draft receives its full quality review and may use remaining
 repair rounds within the frozen contract. An exhausted redesign allowance alone
 does not mean that no test repair is possible.
+A temporary quality probe that fails Java compilation can receive one compiler-feedback
+repair per proposed batch. This repairs only the probe method and keeps its rule and identity;
+it does not edit the exercise or rewrite previously executed witnesses. Corrected methods must
+compile and execute through the same verifier. If no executable replacement is obtained,
+the saved draft retains an explicit incomplete-evidence finding and requires review.
+Provider usage and the existing job deadline still apply to this correction.
+
 Optional assessment probes run on the complete candidate after statement authoring,
 where their evidence is bound to the verified draft. The TESTS-stage gate still
 checks compilation, reference/starter grading and the grading plan; it does not
 repeat the optional probes before a complete draft can be checkpointed.
 Each completed assessment result is added to the matching immutable checkpoint
 before the next probe starts. A later build or sandbox failure keeps the completed
-findings; unfinished checks remain unverified.
-Verification and review still use the job's token and wall-clock guards. Every twenty
-authoring turns, the agent receives a work checkpoint. A current passing tool check
+findings; unfinished checks remain unverified. Mutant rechecks first establish the
+reference suite's executed test identities. Missing or skipped graded tests make the
+recheck inconclusive; they cannot clear a previously executed finding.
+Authoring and model reviews stop at the job's token or authoring deadline. A sandbox
+verification already in progress can finish within the coordinator's existing five-minute
+drain window, so crossing the authoring deadline between build lanes does not discard
+a verifiable draft. Explicit cancellation or loss of execution ownership still stops
+verification. This drain does not grant additional authoring turns or model calls.
+Every twenty authoring turns, the agent receives a work checkpoint. A current passing tool check
 returns control to the authoritative gate; two blocks without a verified reduction
 in failures stop that session and return its artifacts for verification. Writes alone
 do not establish progress. A new stage starts its own progress assessment.

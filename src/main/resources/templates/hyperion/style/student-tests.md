@@ -56,7 +56,7 @@ void learnerAssertionsDetectFaultyBehavior() throws Exception {
 }
 ```
 
-Use the ordinary instructor-test annotations and policy from `reference/style/tests.md`.
+Use the ordinary instructor-test annotations and policy from `reference/style/tests.md` during the TESTS stage.
 If the learner must create the entire test class, preserve that responsibility and use the documented Ares reflection helpers instead of a compile-time reference to the absent class.
 Unwrap reflective invocation so the grader observes the learner's `AssertionError`, not `InvocationTargetException` or a helper error.
 

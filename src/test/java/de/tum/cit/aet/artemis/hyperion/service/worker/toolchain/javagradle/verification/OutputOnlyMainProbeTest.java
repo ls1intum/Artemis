@@ -213,11 +213,14 @@ class OutputOnlyMainProbeTest {
     @Test
     void onlyAFailingWeightedTestKillsThePrintOnlyVariant() {
         String planWithPreservation = """
-                {"tests":[{"name":"printsTheSize","seam":"S1","seamWeightTier":3,"visibility":"ALWAYS"},
-                 {"name":"keepsTheSuppliedSetup","purpose":"PRESERVATION","seamWeightTier":0,"visibility":"ALWAYS"}]}
+                {"tests":[{"name":"LibraryTest.printsTheSize","seam":"S1","seamWeightTier":3,"visibility":"ALWAYS"},
+                 {"name":"LibraryTest.keepsTheSuppliedSetup","purpose":"PRESERVATION","seamWeightTier":0,"visibility":"ALWAYS"}]}
                 """;
         // Replacing all of main also drops supplied setup, which only the zero-weight check observes; the weighted transcript test still passes.
         SemanticMutantExecution.ProbeRunner preservationFails = (mutant, probe) -> {
+            if (mutant == null) {
+                return new BuildSummary(2, 0, 0, false, List.of("LibraryTest.printsTheSize()", "LibraryTest.keepsTheSuppliedSetup()"), List.of(), List.of(), "");
+            }
             boolean prints = mutant.mutantSource().contains("Books: 1");
             return new BuildSummary(2, prints ? 1 : 2, prints ? 1 : 2, false, List.of("LibraryTest.printsTheSize()", "LibraryTest.keepsTheSuppliedSetup()"),
                     prints ? List.of("LibraryTest.keepsTheSuppliedSetup()") : List.of("LibraryTest.printsTheSize()", "LibraryTest.keepsTheSuppliedSetup()"), List.of(), "");
@@ -249,10 +252,13 @@ class OutputOnlyMainProbeTest {
         assertThat(OutputOnlyMainProbe.stillApplies(probe, unrecognizedShape, PLAN)).isFalse();
         List<String> built = new ArrayList<>();
         SemanticMutantExecution.ProbeRunner transcriptGraded = (mutant, ignored) -> {
+            if (mutant == null) {
+                return new BuildSummary(2, 0, 0, false, List.of("printsTheSize()", "countsAddedBooks()"), List.of(), List.of(), "");
+            }
             boolean prints = mutant.mutantSource().contains("System.out.print(");
             built.add(prints ? "print-only" : "silent");
-            return prints ? new BuildSummary(1, 0, 0, false, List.of("printsTheSize()"), List.of(), List.of(), "")
-                    : new BuildSummary(1, 1, 1, false, List.of("printsTheSize()"), List.of("printsTheSize()"), List.of(), "");
+            return new BuildSummary(2, prints ? 0 : 1, prints ? 0 : 1, false, List.of("printsTheSize()", "countsAddedBooks()"), prints ? List.of() : List.of("printsTheSize()"),
+                    List.of(), "");
         };
 
         assertThat(OutputOnlyMainProbe.recheck(unrecognizedShape, Map.of(PATH, SOLUTION), PLAN, List.of(probe), transcriptGraded)).extracting(SemanticMutantOutcome::disposition)
@@ -276,8 +282,11 @@ class OutputOnlyMainProbeTest {
         List<String> built = new ArrayList<>();
         // Without main's output the transcript test fails; the plan decides whether that failure costs credit.
         SemanticMutantExecution.ProbeRunner silentFailsTranscript = (mutant, ignored) -> {
+            if (mutant == null) {
+                return new BuildSummary(2, 0, 0, false, List.of("printsTheSize()", "countsAddedBooks()"), List.of(), List.of(), "");
+            }
             built.add(mutant.mutantSource());
-            return new BuildSummary(1, 1, 1, false, List.of("printsTheSize()"), List.of("printsTheSize()"), List.of(), "");
+            return new BuildSummary(2, 1, 1, false, List.of("printsTheSize()", "countsAddedBooks()"), List.of("printsTheSize()"), List.of(), "");
         };
         String transcriptUngraded = """
                 {"tests":[{"name":"printsTheSize","purpose":"PRESERVATION","seamWeightTier":0,"visibility":"ALWAYS"},
@@ -411,6 +420,9 @@ class OutputOnlyMainProbeTest {
         List<SemanticMutant> executed = new ArrayList<>();
         var outcomes = OutputOnlyMainProbe.evaluate(reflective, Map.of(PATH, TEMPLATE), Map.of(PATH, SOLUTION), PLAN, Set.of(), target -> Optional.of("Books: 1\n"),
                 (mutant, overlay) -> {
+                    if (mutant == null) {
+                        return new BuildSummary(1, 0, 0, false, List.of("printsTheSize"), List.of(), List.of(), "");
+                    }
                     executed.add(mutant);
                     boolean silent = !mutant.mutantSource().contains("Books: 1");
                     return new BuildSummary(1, silent ? 1 : 0, silent ? 1 : 0, false, List.of("printsTheSize"), silent ? List.of("printsTheSize") : List.of(), List.of(), "");
@@ -431,9 +443,68 @@ class OutputOnlyMainProbeTest {
     }
 
     @Test
+    void equalMethodNamesInDifferentSuitesDoNotShareGradingWeight() {
+        String plan = """
+                {"tests":[{"name":"WeightedSuite.check","seam":"S1","seamWeightTier":3,"visibility":"ALWAYS"},
+                 {"name":"PreservationSuite.check","purpose":"PRESERVATION","seamWeightTier":0,"visibility":"ALWAYS"}]}
+                """;
+        var graded = OutputOnlyMainProbe.gradedTest(plan);
+
+        assertThat(graded.test("WeightedSuite.check()")).isTrue();
+        assertThat(graded.test("PreservationSuite.check()")).isFalse();
+        assertThat(graded.test("OtherSuite.check()")).isFalse();
+    }
+
+    @Test
+    void parameterizedCaseLabelsKeepTheirOwnGradingWeight() {
+        String plan = """
+                {"tests":[{"name":"Suite.check[1]","seam":"S1","seamWeightTier":3,"visibility":"ALWAYS"},
+                 {"name":"Suite.check[2]","purpose":"PRESERVATION","seamWeightTier":0,"visibility":"ALWAYS"}]}
+                """;
+        var graded = OutputOnlyMainProbe.gradedTest(plan);
+
+        assertThat(graded.test("Suite.check[1]")).isTrue();
+        assertThat(graded.test("Suite.check[2]")).isFalse();
+    }
+
+    @Test
+    void aMissingWeightedResultCannotResolveAStalePrintOnlyProbe() {
+        String earlier = SOLUTION.replace("Dune", "Emma");
+        SemanticMutant stale = SemanticMutant.printedTranscript(PATH, earlier, OutputOnlyMainProbe.transcriptOnlyVariant(earlier, "Books: 1\n").orElseThrow(), "Library");
+        String plan = """
+                {"tests":[{"name":"printsTheSize","purpose":"PRESERVATION","seamWeightTier":0,"visibility":"ALWAYS"},
+                 {"name":"countsAddedBooks","seam":"S1","seamWeightTier":3,"visibility":"ALWAYS"}]}
+                """;
+
+        var outcomes = OutputOnlyMainProbe.resolveStale(Map.of(PATH, SOLUTION), plan, List.of(stale),
+                (mutant, _) -> new BuildSummary(1, 0, 0, false, List.of("printsTheSize"), List.of(), List.of(), ""));
+
+        assertThat(outcomes).singleElement().extracting(SemanticMutantOutcome::disposition).isEqualTo(Disposition.INCONCLUSIVE);
+    }
+
+    @Test
+    void pendingTargetsDoNotConsumeTheNewProbeLimit() {
+        Map<String, String> solutions = Map.of("src/example/A.java", SOLUTION.replace("Library", "A"), "src/example/B.java", SOLUTION.replace("Library", "B"), "src/example/C.java",
+                SOLUTION.replace("Library", "C"));
+        List<String> captured = new ArrayList<>();
+        var outcomes = OutputOnlyMainProbe.evaluate(Map.of(), Map.of(), solutions, PLAN, Set.of("src/example/A.java", "src/example/B.java"), target -> {
+            captured.add(target.simpleName());
+            return Optional.of("Books: 1\n");
+        }, (mutant, overlay) -> new BuildSummary(1, mutant == null ? 0 : 1, mutant == null ? 0 : 1, false, List.of("printsTheSize"),
+                mutant == null ? List.of() : List.of("printsTheSize"), List.of(), ""), _ -> {
+                });
+
+        assertThat(captured).containsExactly("C");
+        assertThat(outcomes).singleElement().satisfies(outcome -> assertThat(outcome.mutant().solutionPath()).isEqualTo("src/example/C.java"));
+    }
+
+    @Test
     void aPassingSuiteLetsThePrintOnlyVariantSurviveAndAFailingTestKillsIt() {
         List<SemanticMutant> built = new ArrayList<>();
         SemanticMutantExecution.ProbeRunner passing = (mutant, probe) -> {
+            if (mutant == null) {
+                return new BuildSummary(1, 0, 0, false, List.of("printsTheSize"), List.of(), List.of(), "");
+            }
             built.add(mutant);
             boolean silent = !mutant.mutantSource().contains("Books: 1");
             return new BuildSummary(1, silent ? 1 : 0, silent ? 1 : 0, false, List.of("printsTheSize"), silent ? List.of("printsTheSize") : List.of(), List.of(), "");
@@ -451,7 +522,8 @@ class OutputOnlyMainProbeTest {
         });
         assertThat(built).hasSize(2).last().satisfies(mutant -> assertThat(mutant.mutantSource()).contains("System.out.print(\"Books: 1\\n\");"));
 
-        SemanticMutantExecution.ProbeRunner failing = (mutant, probe) -> new BuildSummary(1, 1, 1, false, List.of("printsTheSize"), List.of("printsTheSize"), List.of(), "");
+        SemanticMutantExecution.ProbeRunner failing = (mutant, probe) -> new BuildSummary(1, mutant == null ? 0 : 1, mutant == null ? 0 : 1, false, List.of("printsTheSize"),
+                mutant == null ? List.of() : List.of("printsTheSize"), List.of(), "");
         assertThat(OutputOnlyMainProbe.evaluate(TESTS, Map.of(PATH, TEMPLATE), Map.of(PATH, SOLUTION), PLAN, Set.of(), target -> Optional.of("Books: 1\n"), failing, _ -> {
         })).extracting(SemanticMutantOutcome::disposition).containsExactly(Disposition.KILLED_BY_GRADED_SUITE);
         assertThat(OutputOnlyMainProbe.evaluate(TESTS, Map.of(PATH, TEMPLATE), Map.of(PATH, SOLUTION), PLAN, Set.of(PATH), target -> Optional.of("Books: 1\n"), failing, _ -> {
@@ -470,7 +542,7 @@ class OutputOnlyMainProbeTest {
         });
         AtomicReference<String> activeSource = new AtomicReference<>(SOLUTION);
         when(sandbox.copyOut(anyString(), anyString())).thenAnswer(invocation -> ReportTarFixtures.junitAndScaReports("solution", List.of("printsTheSize"),
-                activeSource.get().contains("Books: 1") ? List.of() : List.of("printsTheSize"), Map.of()));
+                activeSource.get().equals(SOLUTION) || activeSource.get().contains("Books: 1") ? List.of() : List.of("printsTheSize"), Map.of()));
         List<Map<String, String>> installed = new ArrayList<>();
         doAnswer(invocation -> {
             try (var archive = new TarArchiveInputStream(invocation.getArgument(2, InputStream.class))) {
@@ -488,8 +560,7 @@ class OutputOnlyMainProbeTest {
         GenerationInput exercise = new GenerationInput(42, "example", "", false, Set.of(), Set.of(), GenerationBuildTool.GRADLE);
 
         List<SemanticMutantOutcome> outcomes = new DifferentialVerifier(commands).probeOutputOnlyMains(sandbox, "session", exercise, TESTS, Map.of(PATH, TEMPLATE),
-                Map.of(PATH, SOLUTION), PLAN, SeededStructuralTests.EMPTY, Set.of(), () -> {
-                }, _ -> {
+                Map.of(PATH, SOLUTION), PLAN, SeededStructuralTests.EMPTY, Set.of(), () -> activeSource.set(SOLUTION), _ -> {
                 });
 
         assertThat(outcomes).singleElement().satisfies(outcome -> {

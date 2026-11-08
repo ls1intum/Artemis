@@ -427,11 +427,16 @@ public final class ExerciseIntegrityGate {
      */
     static List<String> securityPolicyReasons(Map<String, String> seedTestsFiles, Map<String, String> producedTestsFiles, Map<String, String> producedSolutionFiles,
             @Nullable String approvedSpec) {
+        return securityPolicyReasons(seedTestsFiles, producedTestsFiles, producedSolutionFiles, approvedSpec, Set.of());
+    }
+
+    static List<String> securityPolicyReasons(Map<String, String> seedTestsFiles, Map<String, String> producedTestsFiles, Map<String, String> producedSolutionFiles,
+            @Nullable String approvedSpec, Set<String> baselineStudentTests) {
         if (producedTestsFiles == null || !producedTestsFiles.containsKey(AresSecurityPolicy.PATH)) {
             return List.of();
         }
         return AresSecurityPolicy.reasons(seedTestsFiles == null ? Map.of() : seedTestsFiles, producedTestsFiles, producedSolutionFiles == null ? Map.of() : producedSolutionFiles,
-                approvedSpec);
+                approvedSpec, baselineStudentTests);
     }
 
     /**

@@ -329,7 +329,8 @@ public final class ApprovedOwnershipGate {
                 : templateFiles.entrySet().stream().filter(entry -> JavaSourceInspector.isJavaSource(entry.getKey()) && entry.getValue() != null)
                         .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (first, ignored) -> first, LinkedHashMap::new));
         List<String> reasons = new ArrayList<>();
-        List<String> labelledFiles = javaFiles.entrySet().stream().filter(entry -> TODO_SEAM_LABEL.matcher(entry.getValue()).find()).map(Map.Entry::getKey).sorted().toList();
+        List<String> labelledFiles = javaFiles.entrySet().stream().filter(entry -> TODO_SEAM_LABEL.matcher(commentsOnly(entry.getValue())).find()).map(Map.Entry::getKey).sorted()
+                .toList();
         if (!labelledFiles.isEmpty()) {
             reasons.add("the template labels TODOs with internal seam IDs in " + labelledFiles + ". Students never see these IDs defined, so write each as '// TODO: <task "
                     + "wording>' without the ID; the approved Testing Strategy already links every seam to its owner.");

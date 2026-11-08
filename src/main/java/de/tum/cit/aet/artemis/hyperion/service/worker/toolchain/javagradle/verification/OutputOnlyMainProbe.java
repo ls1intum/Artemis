@@ -121,15 +121,13 @@ final class OutputOnlyMainProbe {
     static List<SemanticMutantOutcome> evaluate(Map<String, String> testFiles, Map<String, String> templateFiles, Map<String, String> solutionFiles, @Nullable String testPlanJson,
             Set<String> excludedSolutionPaths, Function<Target, Optional<String>> captureTranscript, SemanticMutantExecution.ProbeRunner runner,
             Consumer<SemanticMutantOutcome> completed) {
-        List<Target> sourceVisible = targets(testFiles, templateFiles, solutionFiles, gradedTestMethods(testPlanJson));
-        List<Target> selected = new ArrayList<>(sourceVisible);
-        candidateTargets(templateFiles, solutionFiles).stream().filter(target -> !selected.contains(target)).limit((long) MAX_TARGETS - selected.size()).forEach(selected::add);
+        List<Target> eligible = candidateTargets(templateFiles, solutionFiles).stream().filter(target -> !excludedSolutionPaths.contains(target.solutionPath())).toList();
+        Set<String> gradedMethods = gradedTestMethods(testPlanJson);
+        List<Target> selected = new ArrayList<>(eligible.stream().filter(target -> gradesPrintedOutput(testFiles, target.simpleName(), gradedMethods)).limit(MAX_TARGETS).toList());
+        eligible.stream().filter(target -> !selected.contains(target)).limit((long) MAX_TARGETS - selected.size()).forEach(selected::add);
         List<SemanticMutant> variants = new ArrayList<>();
         List<SemanticMutantOutcome> outcomes = new ArrayList<>();
         for (Target target : selected) {
-            if (excludedSolutionPaths.contains(target.solutionPath())) {
-                continue;
-            }
             String source = solutionFiles.get(target.solutionPath());
             Optional<String> variant = captureTranscript.apply(target).flatMap(transcript -> transcriptOnlyVariant(source, transcript));
             if (variant.isEmpty()) {
@@ -282,8 +280,22 @@ final class OutputOnlyMainProbe {
 
     /** Whether a failure of the executed test with this name costs credit: it is weighted above zero, or there is no usable plan and every test counts. */
     static Predicate<String> gradedTest(@Nullable String testPlanJson) {
-        Set<String> graded = gradedTestMethods(testPlanJson);
-        return graded == null ? testName -> true : testName -> graded.contains(methodName(testName));
+        if (testPlanJson == null || testPlanJson.isBlank()) {
+            return testName -> true;
+        }
+        try {
+            Set<String> graded = GeneratedTestPlan.parse(testPlanJson).assessmentEntries().stream().filter(entry -> entry.seamWeightTier() > 0)
+                    .map(entry -> reportedTestName(entry.name())).collect(Collectors.toUnmodifiableSet());
+            return testName -> graded.contains(reportedTestName(testName));
+        }
+        catch (IllegalArgumentException _) {
+            return testName -> true;
+        }
+    }
+
+    private static String reportedTestName(String name) {
+        String stripped = name.strip();
+        return stripped.endsWith("()") ? stripped.substring(0, stripped.length() - 2) : stripped;
     }
 
     /** {@code Suite.method(args)[1]} and {@code method} both name the method {@code method}. */

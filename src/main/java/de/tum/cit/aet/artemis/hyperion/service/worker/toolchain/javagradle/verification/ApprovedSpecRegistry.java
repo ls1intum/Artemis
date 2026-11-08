@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.veri
 
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.jspecify.annotations.Nullable;
@@ -22,6 +23,30 @@ public class ApprovedSpecRegistry {
     }
 
     private final Map<String, Approval> approvedBySession = new ConcurrentHashMap<>();
+
+    private final Map<String, Set<String>> baselineStudentTests = new ConcurrentHashMap<>();
+
+    /**
+     * Retains instructor-owned learner test classes before the sandbox can be edited.
+     *
+     * @param sessionId active sandbox session
+     * @param classes   immutable baseline learner-test ownership
+     */
+    public void rememberBaselineStudentTests(String sessionId, Set<String> classes) {
+        Set<String> snapshot = Set.copyOf(classes);
+        Set<String> previous = baselineStudentTests.putIfAbsent(sessionId, snapshot);
+        if (previous != null && !previous.equals(snapshot)) {
+            throw new IllegalStateException("Different learner-test baselines are already retained for sandbox session " + sessionId);
+        }
+    }
+
+    /**
+     * @param sessionId active sandbox session
+     * @return learner test classes from the trusted initial workspace
+     */
+    public Set<String> baselineStudentTests(String sessionId) {
+        return baselineStudentTests.getOrDefault(sessionId, Set.of());
+    }
 
     /**
      * Records the specification a session's spec gate approved. Approval stays immutable until the server explicitly reopens assessment review: repeating the same value is
@@ -100,6 +125,7 @@ public class ApprovedSpecRegistry {
     public void forget(String sessionId) {
         if (sessionId != null) {
             approvedBySession.remove(sessionId);
+            baselineStudentTests.remove(sessionId);
         }
     }
 }
