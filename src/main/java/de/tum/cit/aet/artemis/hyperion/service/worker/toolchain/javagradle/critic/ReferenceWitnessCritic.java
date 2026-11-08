@@ -7,10 +7,8 @@ import static de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradl
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 
@@ -18,6 +16,8 @@ import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.model.ChatResponse;
+
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import tools.jackson.databind.json.JsonMapper;
 
@@ -45,7 +45,8 @@ class ReferenceWitnessCritic {
     private record Response(@Nullable List<Item> outcomes) {
     }
 
-    private record Item(@Nullable String testName, @Nullable Verdict verdict, @Nullable String sourceQuote, @Nullable String ownerType, @Nullable String reason) {
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    private record Item(@Nullable String testName, @Nullable String verdict, @Nullable String sourceQuote, @Nullable String ownerType, @Nullable String reason) {
     }
 
     private final ReviewerClient reviewer;
@@ -113,36 +114,49 @@ class ReferenceWitnessCritic {
                 return unavailable("The environment reported duplicate contract-witness test names.", candidates);
             }
         }
-        Set<String> seen = new HashSet<>();
+        Map<String, List<Item>> decisionsByName = new HashMap<>();
+        int unidentifiedRows = 0;
+        for (Item item : response.outcomes()) {
+            if (item == null || item.testName() == null || !candidatesByName.containsKey(item.testName())) {
+                unidentifiedRows++;
+                continue;
+            }
+            decisionsByName.computeIfAbsent(item.testName(), ignored -> new ArrayList<>()).add(item);
+        }
+        if (unidentifiedRows > 0) {
+            log.warn("Ignored {} adjudication row(s) that did not identify an observed contract witness", unidentifiedRows);
+        }
         List<SpecFidelityReport.Finding> findings = new ArrayList<>();
         List<ContractWitness> supported = new ArrayList<>();
         List<ContractWitness> adoptable = new ArrayList<>();
         List<ContractWitness> invalid = new ArrayList<>();
         List<ContractWitness> unresolvedReference = new ArrayList<>();
         List<ContractWitness> unresolvedAdoption = new ArrayList<>();
-        for (Item item : response.outcomes()) {
-            if (item == null || item.testName() == null || item.verdict() == null || !seen.add(item.testName())) {
-                return unavailable("The independent contract-witness verdict did not identify every test exactly once.", candidates);
+        for (ContractWitnessOutcome candidate : candidates) {
+            List<Item> decisions = decisionsByName.getOrDefault(candidate.witness().testName(), List.of());
+            if (decisions.size() != 1) {
+                addUnresolved(candidate, unresolvedReference, unresolvedAdoption);
+                continue;
             }
-            ContractWitnessOutcome candidate = candidatesByName.get(item.testName());
-            if (candidate == null) {
-                return unavailable("The independent contract-witness verdict named a test the environment did not report.", candidates);
+            Item item = decisions.getFirst();
+            Verdict verdict = parseVerdict(item.verdict());
+            if (verdict == null || item.reason() == null || item.reason().isBlank()) {
+                addUnresolved(candidate, unresolvedReference, unresolvedAdoption);
+                continue;
             }
-            if (item.reason() == null || item.reason().isBlank()) {
-                return unavailable("The independent contract-witness verdict omitted its rationale.", candidates);
-            }
-            if (item.verdict() == Verdict.INVALID_WITNESS) {
+            if (verdict == Verdict.INVALID_WITNESS) {
                 invalid.add(candidate.witness());
                 continue;
             }
-            if (item.verdict() == Verdict.INCONCLUSIVE) {
+            if (verdict == Verdict.INCONCLUSIVE) {
                 addUnresolved(candidate, unresolvedReference, unresolvedAdoption);
                 continue;
             }
             if (item.sourceQuote() == null || item.sourceQuote().isBlank() || !specification.contains(item.sourceQuote().strip())) {
-                return unavailable("A supported contract witness was not grounded in an exact specification quote.", candidates);
+                addUnresolved(candidate, unresolvedReference, unresolvedAdoption);
+                continue;
             }
-            if (item.verdict() == Verdict.SUPPORTED_REFERENCE_DEFECT && candidate.disposition() == Disposition.REFERENCE_TEST_FAILED) {
+            if (verdict == Verdict.SUPPORTED_REFERENCE_DEFECT && candidate.disposition() == Disposition.REFERENCE_TEST_FAILED) {
                 ContractWitness witness = candidate.witness();
                 findings.add(new SpecFidelityReport.Finding(SpecFidelityReport.Kind.CONTRACT_CONTRADICTION,
                         "Reference solution violates " + witness.ruleId() + " in executable witness " + witness.testName(),
@@ -153,7 +167,7 @@ class ReferenceWitnessCritic {
                 supported.add(witness);
                 continue;
             }
-            if (item.verdict() == Verdict.SUPPORTED_GRADING_WITNESS && candidate.disposition() == Disposition.REFERENCE_PASSED_STARTER_FAILED
+            if (verdict == Verdict.SUPPORTED_GRADING_WITNESS && candidate.disposition() == Disposition.REFERENCE_PASSED_STARTER_FAILED
                     && studentOwned(item.ownerType(), templateStatuses)) {
                 ContractWitness witness = candidate.witness();
                 findings.add(new SpecFidelityReport.Finding(SpecFidelityReport.Kind.CONTRACT_WITNESS_AVAILABLE,
@@ -166,12 +180,25 @@ class ReferenceWitnessCritic {
                 adoptable.add(witness);
                 continue;
             }
-            return unavailable("A contract-witness verdict did not match its environment outcome or a student-owned Design type.", candidates);
+            addUnresolved(candidate, unresolvedReference, unresolvedAdoption);
         }
-        if (!seen.equals(candidatesByName.keySet())) {
-            return unavailable("The independent contract-witness verdict omitted an environment-confirmed test.", candidates);
+        if (!unresolvedReference.isEmpty()) {
+            findings.addAll(SpecFidelityReport.qualityReviewUnavailable("The independent contract-witness verdict left " + unresolvedReference.size()
+                    + " executed reference failure(s) unresolved; individually validated verdicts were retained.").findings());
         }
         return new SpecFidelityCritic.ReferenceWitnessReview(findings, supported, adoptable, invalid, unresolvedReference, unresolvedAdoption);
+    }
+
+    private static @Nullable Verdict parseVerdict(@Nullable String value) {
+        if (value == null) {
+            return null;
+        }
+        try {
+            return Verdict.valueOf(value);
+        }
+        catch (IllegalArgumentException exception) {
+            return null;
+        }
     }
 
     private static void addUnresolved(ContractWitnessOutcome outcome, List<ContractWitness> unresolvedReference, List<ContractWitness> unresolvedAdoption) {

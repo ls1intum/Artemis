@@ -31,8 +31,8 @@ Skip a lens when the frozen specification does not entail an observable distinct
 The approved specification is the only authority. Never invent a requirement it does not state, never assert behaviour that is merely how the reference solution happens to work, and never assert on private state, timing, or anything a caller cannot observe through the public API the reference solution declares.
 
 Write each witness in the SAME language, package, available imports, test framework, and compilation style as the graded tests you were shown, calling only the public API the
-reference solution declares. The method is inserted into a wrapper that copies imports from one existing graded test; it does not infer new imports. Use only simple names already
-available in those imports or fully qualified names. More importantly, the witness must compile against the student starter exactly as the existing behavioral tests do. When a
+reference solution declares. The wrapper provides the JUnit 5 Test annotation, JUnit assertions, and Ares ReflectionTestUtils helpers, plus imports from one existing graded test.
+Use fully qualified names for other annotation and library types unless the selected test imports them. More importantly, the witness must compile against the student starter exactly as the existing behavioral tests do. When a
 student-created type is absent from the starter, preserve the suite's reflection/dynamic-proxy pattern instead of directly naming that type in declarations, constructors, or
 method calls. A test that merely makes the starter test sources fail to compile never executes and is discarded as blindness, not counted as a witness.
 The wrapper does NOT copy fields or helper methods from the graded test class. Never call an unqualified suite-local factory, assertion helper, fixture builder, or other helper

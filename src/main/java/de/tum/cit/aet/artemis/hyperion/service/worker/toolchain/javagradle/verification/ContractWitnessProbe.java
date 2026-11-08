@@ -31,8 +31,8 @@ public final class ContractWitnessProbe {
     }
 
     /**
-     * Combines witness methods with an existing test's package and imports, using the same Ares restrictions as instructor tests. The caller restores the candidate after probing,
-     * so these temporary tests never enter the saved grading suite.
+     * Combines witness methods with the JUnit/Ares probe API and an existing test's package and additional imports. Uses the same Ares restrictions as instructor tests; the
+     * caller restores the candidate after probing, so these temporary tests never enter the saved grading suite.
      *
      * @param existingTestSource one graded test source from the same repository, used only as the source of the package and import declarations
      * @param witnesses          the candidate witnesses, each contributing one method
@@ -47,15 +47,14 @@ public final class ContractWitnessProbe {
         if (packageMatcher.find()) {
             source.append(packageMatcher.group().strip()).append("\n\n");
         }
-        Set<String> imports = new LinkedHashSet<>();
+        Set<String> imports = new LinkedHashSet<>(List.of("import org.junit.jupiter.api.Test;", "import static org.junit.jupiter.api.Assertions.*;",
+                "import static de.tum.cit.ase.ares.api.util.ReflectionTestUtils.*;"));
         Matcher importMatcher = IMPORT_DECLARATION.matcher(existingTestSource);
         while (importMatcher.find()) {
             imports.add(importMatcher.group().strip());
         }
         imports.forEach(declaration -> source.append(declaration).append("\n"));
-        if (!imports.isEmpty()) {
-            source.append("\n");
-        }
+        source.append("\n");
         source.append("@de.tum.cit.ase.ares.api.jupiter.Public\n").append("@de.tum.cit.ase.ares.api.Policy(value = \"SecurityPolicy.yaml\")\n")
                 .append("@de.tum.cit.ase.ares.api.StrictTimeout(").append(JavaSourceInspector.MAX_STRICT_TIMEOUT_SECONDS).append(")\n")
                 .append("@org.junit.jupiter.api.DisplayNameGeneration(org.junit.jupiter.api.DisplayNameGenerator.Simple.class)\n").append("class ").append(PROBE_CLASS_NAME)

@@ -60,11 +60,12 @@ class DockerGradleBuildTest {
     private final GenerationInput exercise = new GenerationInput(1, "de.tum.cit.aet.reference", "Count passing scores.", false, Set.of(), Set.of(), GenerationBuildTool.GRADLE);
 
     private static final ContractWitness HIGH_SCORE_WITNESS = new ContractWitness("R1", "testScoreAboveOneHundred", """
-            @org.junit.jupiter.api.Test
+            @Test
             void testScoreAboveOneHundred() throws java.io.IOException {
                 int score = Integer.parseInt(java.nio.file.Files.readString(java.nio.file.Path.of("fixtures/witness-scores.txt")).strip());
-                org.junit.jupiter.api.Assertions.assertThrows(SecurityException.class, UnregisteredFixtureReader::readFixture);
-                org.junit.jupiter.api.Assertions.assertEquals(1, ScoreCalculator.countPassing(new int[] {score}), "R1: every score at least 50 passes");
+                assertNotNull(getClazz("de.tum.cit.aet.reference.ScoreCalculator"));
+                assertThrows(SecurityException.class, UnregisteredFixtureReader::readFixture);
+                assertEquals(1, ScoreCalculator.countPassing(new int[] {score}), "R1: every score at least 50 passes");
             }
             """, "incorrectly rejects passing scores above 100");
 
