@@ -49,6 +49,12 @@ function cachedChromium() {
   return undefined;
 }
 
+// Local stacks often serve a self-signed certificate. Accept one only on this
+// machine, so credentials never go to a remote host whose certificate fails.
+function isLocal(baseURL) {
+  return ['localhost', '127.0.0.1', '[::1]'].includes(new URL(baseURL).hostname);
+}
+
 // Chromium: CHROME_PATH if set; else whatever this playwright-core launches by
 // itself (its own revision, or its headless shell when headless); else, when
 // Playwright reports that browser missing, the newest Chromium in the cache.
@@ -126,7 +132,7 @@ export async function prepareAuth(username, password, baseURL = 'http://localhos
 }
 
 async function signIn(browser, username, password, baseURL) {
-  const context = await browser.newContext({ baseURL, ignoreHTTPSErrors: true });
+  const context = await browser.newContext({ baseURL, ignoreHTTPSErrors: isLocal(baseURL) });
   const page = await context.newPage();
   await page.goto('/sign-in', { waitUntil: 'networkidle' });
   // The sign-in form may be two-step (username -> Continue -> password) or single-step; handle both.
@@ -158,15 +164,17 @@ export async function startSession({ name, outDir, baseURL = 'http://localhost:9
   fs.mkdirSync(outDir, { recursive: true });
   const browser = await launchChromium(headless);
   let context;
+  let page;
   try {
     context = await browser.newContext({
       baseURL,
       viewport,
       recordVideo: { dir: outDir, size: viewport },
-      ignoreHTTPSErrors: true,
+      ignoreHTTPSErrors: isLocal(baseURL),
       storageState,
     });
     await context.addInitScript(CURSOR_SCRIPT);
+    page = await context.newPage();
   } catch (error) {
     await browser.close();
     throw error;
@@ -175,7 +183,6 @@ export async function startSession({ name, outDir, baseURL = 'http://localhost:9
   const pending = new Set();
   let capture = null;
   let requestNumber = 0;
-  const page = await context.newPage();
   page.on('console', m => {
     if (m.type() === 'error' || m.type() === 'warning') {
       events.push({ kind: 'console-' + m.type(), text: m.text().slice(0, 600), at: page.url() });

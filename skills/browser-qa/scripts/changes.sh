@@ -39,7 +39,7 @@ n=0
 # File headers sit between "diff --git" and the first "@@"; inside a hunk, a line
 # such as "+++ b/x" is content.
 header=0
-git diff -U0 --no-color --find-renames "$mb" HEAD | while IFS= read -r l; do
+git -c core.quotePath=false diff -U0 --no-color --find-renames --src-prefix=a/ --dst-prefix=b/ "$mb" HEAD | while IFS= read -r l; do
     if [ "$header" = 1 ]; then
         case "$l" in
             '--- a/'*) old=${l#--- a/} ;;
@@ -60,6 +60,6 @@ git diff -U0 --no-color --find-renames "$mb" HEAD | while IFS= read -r l; do
             ;;
     esac
 done
-git diff --no-color --diff-filter=D --name-only "$mb" HEAD | while IFS= read -r f; do
+git -c core.quotePath=false diff --no-color --diff-filter=D --name-only "$mb" HEAD | while IFS= read -r f; do
     printf 'D-%s\t%s\t%s\t0\tfile deleted\n' "$(basename "$f")" "$(kind_of "$f")" "$f"
 done
