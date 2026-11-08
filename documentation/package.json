@@ -46,8 +46,8 @@
         "@types/react": "19.3.0",
         "@typescript-eslint/eslint-plugin": "8.72.1",
         "@typescript-eslint/parser": "8.72.1",
-        "baseline-browser-mapping": "2.11.34",
-        "eslint": "10.13.0",
+        "baseline-browser-mapping": "2.11.35",
+        "eslint": "10.14.0",
         "prettier": "3.9.10",
         "typescript": "6.0.3"
     },
