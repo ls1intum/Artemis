@@ -20,6 +20,68 @@ import org.junit.jupiter.params.provider.ValueSource;
  */
 class ApprovedOwnershipGateTest {
 
+    private static final String MEMBER_OWNERSHIP_SPEC = """
+            ## Design
+            | Type | Role | Template status |
+            |---|---|---|
+            | Calculator | learner work | stubbed |
+            | Demo | supplied entry point | given |
+            ## Public API
+            ```java
+            public class Calculator {
+                /** @studentCreates */ public int calculate(int input);
+            }
+            public class Demo { public int run(); }
+            ```
+            """;
+
+    private static AgentVerifyReport missingMethodReport(String diagnostic) {
+        return new AgentVerifyReport(5, true, List.of(), List.of(), 0, false, false, List.of(), List.of(), List.of("testResult"), List.of(), List.of(), false,
+                List.of("Starter compilation failed"), List.of(), "", diagnostic);
+    }
+
+    private static final Map<String, String> GIVEN_CALLER = Map.of("src/Demo.java",
+            "package example; public class Demo { public int run() { return new Calculator().calculate(2); } }");
+
+    private static Map<String, String> memberSolution() {
+        Map<String, String> files = new LinkedHashMap<>(GIVEN_CALLER);
+        files.put("src/Calculator.java", "package example; public class Calculator { public int calculate(int input) { return input; } }");
+        return files;
+    }
+
+    @Test
+    void mavenMissingMemberDiagnosticRequiresCoherentSpecificationReview() {
+        AgentVerifyReport report = missingMethodReport("""
+                [ERROR] /tmp/hyperion-verify.abc/assignment/src/Demo.java:[1,99] cannot find symbol
+                [ERROR]   symbol:   method calculate(int)
+                [ERROR]   location: variable calculator of type example.Calculator
+                """);
+        assertThat(ApprovedOwnershipGate.givenCallsToAbsentMethods(MEMBER_OWNERSHIP_SPEC, GIVEN_CALLER, memberSolution(), report))
+                .containsExactly("Demo->Calculator.calculate(int)");
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "calculate(double)|example.Calculator|assignment/src/Demo", "calculate(int)|another.Calculator|assignment/src/Demo",
+            "typo(int)|example.Calculator|assignment/src/Demo", "calculate(int)|example.Calculator|src/test/Demo", "calculate(int)|example.Calculator|assignment/src/Other" })
+    void ordinaryAuthoringErrorsDoNotAuthorizeOwnershipRedesign(String mismatch) {
+        String[] parts = mismatch.split("\\|");
+        AgentVerifyReport report = missingMethodReport(
+                "/tmp/hyperion-verify.abc/" + parts[2] + ".java:1: error: cannot find symbol\n  symbol: method " + parts[0] + "\n  location: class " + parts[1] + "\n");
+        assertThat(ApprovedOwnershipGate.givenCallsToAbsentMethods(MEMBER_OWNERSHIP_SPEC, GIVEN_CALLER, memberSolution(), report)).isEmpty();
+    }
+
+    @Test
+    void aMissingOrdinaryStubOrEditedGivenFileStillNeedsCodeRepair() {
+        AgentVerifyReport report = missingMethodReport("""
+                /tmp/hyperion-verify.abc/assignment/src/Demo.java:1: error: cannot find symbol
+                  symbol: method calculate(int)
+                  location: class example.Calculator
+                """);
+        assertThat(ApprovedOwnershipGate.givenCallsToAbsentMethods(MEMBER_OWNERSHIP_SPEC.replace("/** @studentCreates */", ""), GIVEN_CALLER, memberSolution(), report)).isEmpty();
+        assertThat(ApprovedOwnershipGate.givenCallsToAbsentMethods(MEMBER_OWNERSHIP_SPEC, Map.of("src/Demo.java", GIVEN_CALLER.get("src/Demo.java") + " // changed"),
+                memberSolution(), report)).isEmpty();
+    }
+
     private static Map<String, String> map(String... kv) {
         Map<String, String> m = new LinkedHashMap<>();
         for (int i = 0; i < kv.length; i += 2) {

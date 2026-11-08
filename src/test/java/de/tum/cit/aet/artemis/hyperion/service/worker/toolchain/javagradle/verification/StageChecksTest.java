@@ -343,6 +343,33 @@ class StageChecksTest {
         }
 
         @Test
+        void aGivenCallToAnAbsentStudentCreatedMethodReturnsToContractReview() {
+            String spec = specWithDesign("| Calculator | student work | stubbed |\n| Demo | supplied entry point | given |\n").replace("public class Calculator {",
+                    "public class Calculator { /** @studentCreates */");
+            approvedSpecs.approve("s", spec);
+            sandbox.spec = spec;
+            String demo = "package example; public class Demo { public int run() { return new Calculator().calculate(2); } }";
+            sandbox.templateRepositoryFiles = Map.of("src/Demo.java", demo, "src/Calculator.java", "package example; public class Calculator {}");
+            sandbox.solutionRepositoryFiles = Map.of("src/Demo.java", demo, "src/Calculator.java",
+                    "package example; public class Calculator { public int calculate(int input) { return input * input; } }");
+            AgentVerifyReport failed = new AgentVerifyReport(5, true, List.of(), List.of(), 0, false, false, List.of(), List.of(), List.of("testFoo"), List.of(), List.of(), false,
+                    List.of("The starter cannot compile."), List.of(), "", """
+                            /tmp/hyperion-verify.abc/assignment/src/Demo.java:1: error: cannot find symbol
+                              symbol:   method calculate(int)
+                              location: class example.Calculator
+                            """);
+            when(verifier.selfCheckTestsStage(any(), anyString(), eq(exercise), any(), any(SeededStructuralTests.class))).thenReturn(failed);
+
+            StageCheckResult result = check(GenerationStage.TESTS);
+
+            assertThat(result.contractRedesignRequired()).isTrue();
+            assertThat(result.passed()).isFalse();
+            assertThat(result.observation()).contains("Demo->Calculator.calculate(int)", "specification review");
+            assertThat(approvedSpecs.approved("s")).contains(spec);
+            assertThat(sandbox.templateRepositoryFiles.get("src/Calculator.java")).doesNotContain("calculate");
+        }
+
+        @Test
         void aPartialSolutionCannotAuthorizeOwnershipRedesignWhenTheStarterCompiles() {
             String spec = specWithDesign("| Player | context students create | student-creates |\n| Demo | supplied entry point | given |\n");
             approvedSpecs.approve("s", spec);

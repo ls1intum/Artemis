@@ -186,6 +186,14 @@ final class ApprovedStructuralContract {
                 || type.getConstructors().stream().anyMatch(ApprovedStructuralContract::studentCreates)).map(JavaClass::getSimpleName).collect(Collectors.toSet());
     }
 
+    /** Matches the compiler's resolved signature conservatively; an unknown spelling is not evidence for changing the contract. */
+    boolean studentCreatesMethod(String owner, String methodName, String parameters) {
+        JavaClass type = types.get(owner);
+        return type != null && type.getMethods().stream().filter(ApprovedStructuralContract::studentCreates).filter(method -> method.getName().equals(methodName))
+                .anyMatch(method -> method.getParameters().stream().map(parameter -> parameter.getType().getGenericCanonicalName()).collect(Collectors.joining(","))
+                        .equals(parameters.replace(" ", "")));
+    }
+
     /** A first constructor is learner-created only when every declared constructor is absent from the starter. */
     boolean hasConstructorlessStarter(String typeName) {
         JavaClass type = types.get(typeName);

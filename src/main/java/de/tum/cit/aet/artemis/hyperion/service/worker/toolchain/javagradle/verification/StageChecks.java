@@ -699,7 +699,7 @@ public class StageChecks {
     }
 
     /**
-     * Reports a supplied type that needs a learner-created type absent from the starter. This is evidence for contract review, never permission to add learner work by
+     * Reports supplied code that needs a learner-created type or method absent from the starter. This is evidence for contract review, never permission to add learner work by
      * changing one ownership cell. The controller must reconcile the whole specification through its bounded review path.
      *
      * @param sandbox   active generation sandbox
@@ -707,8 +707,12 @@ public class StageChecks {
      * @return dependency evidence, or empty when no contradiction was established
      */
     public Optional<String> givenOwnershipConflict(InteractiveSandbox sandbox, String sessionId) {
+        return givenOwnershipConflict(sandbox, sessionId, null);
+    }
+
+    private Optional<String> givenOwnershipConflict(InteractiveSandbox sandbox, String sessionId, @Nullable AgentVerifyReport report) {
         String approved = approvedSpecs.approved(sessionId).orElse(null);
-        if (approved == null || specStudentCreatedTypes(approved).isEmpty()) {
+        if (approved == null || (specStudentCreatedTypes(approved).isEmpty() && (report == null || !report.solutionPassed() || report.templateCompiled()))) {
             return Optional.empty();
         }
         JavaSourceSnapshot sources;
@@ -719,10 +723,13 @@ public class StageChecks {
             log.warn("Could not inspect given-type dependencies for session {} ({})", sessionId, e.getClass().getSimpleName());
             return Optional.empty();
         }
-        List<String> dependencies = ApprovedOwnershipGate.givenTypeStudentCreatedDependencies(designTableRows(approved), specStudentCreatedTypes(approved), sources.templateFiles(),
-                sources.solutionFiles());
+        List<String> dependencies = new ArrayList<>(ApprovedOwnershipGate.givenTypeStudentCreatedDependencies(designTableRows(approved), specStudentCreatedTypes(approved),
+                sources.templateFiles(), sources.solutionFiles()));
+        if (report != null) {
+            dependencies.addAll(ApprovedOwnershipGate.givenCallsToAbsentMethods(approved, sources.templateFiles(), sources.solutionFiles(), report));
+        }
         return dependencies.isEmpty() ? Optional.empty()
-                : Optional.of("The approved supplied types depend on learner-created types absent from the starter: " + dependencies
+                : Optional.of("The approved supplied types depend on learner-created types or methods absent from the starter: " + dependencies
                         + ". A given type must be complete and identical in both repositories, so this contract cannot produce a compilable starter as written. "
                         + "Return the complete contract to specification review. Preserve the brief's learner responsibilities; reconcile ownership, supplied demonstrations, "
                         + "rules and grading together. Do not turn supplied support into extra learner TODOs by changing only its Design row.");
@@ -740,7 +747,7 @@ public class StageChecks {
         }
         String observation = report.toTestsStageObservation();
         if (report.solutionPassed() || !report.templateCompiled()) {
-            Optional<String> conflict = givenOwnershipConflict(sandbox, sessionId);
+            Optional<String> conflict = givenOwnershipConflict(sandbox, sessionId, report);
             if (conflict.isPresent()) {
                 return StageCheckResult.ownershipRedesignRequired(conflict.get() + "\n" + observation, report);
             }
