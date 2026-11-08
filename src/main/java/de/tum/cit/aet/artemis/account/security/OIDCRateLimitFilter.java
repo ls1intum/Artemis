@@ -61,13 +61,18 @@ public class OIDCRateLimitFilter extends OncePerRequestFilter {
         if (path != null && PATH_MATCHER.match("/oauth2/authorization/**", path)) {
             IPAddress clientId = null;
 
-            // Resolve the client identity strictly from the trusted peer (remoteAddr),
-            // avoiding untrusted forwarding headers (like X-Forwarded-For) that can be spoofed.
-            if (request != null && request.getRemoteAddr() != null && !request.getRemoteAddr().isBlank()) {
+            clientId = rateLimitService.resolveClientId();
+            // Fallback to remote address
+            if (clientId == null && request != null && request.getRemoteAddr() != null && !request.getRemoteAddr().isBlank()) {
                 clientId = parseIpWithPort(request.getRemoteAddr().trim());
             }
 
-            // If clientId cannot be resolved -> reject the request with HTTP 400
+            // IPv4-mapped IPv6 address normalization
+            if (clientId != null && clientId.isIPv4Convertible()) {
+                clientId = clientId.toIPv4();
+            }
+
+            // Otherwise, reject with bad request
             if (clientId == null) {
                 response.setStatus(HttpStatus.BAD_REQUEST.value());
                 response.getWriter().write("Unable to resolve valid client IP address.");
