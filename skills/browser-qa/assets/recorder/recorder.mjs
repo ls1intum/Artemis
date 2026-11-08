@@ -49,14 +49,10 @@ function cachedChromium() {
   return undefined;
 }
 
-// Local stacks often serve a self-signed certificate. Accept one only for a
-// loopback baseURL, and type credentials only into a page on that same origin,
-// so a redirect to another host never receives them.
-function isLocal(baseURL) {
-  const host = new URL(baseURL).hostname.replace(/\.$/, '');
-  return host === 'localhost' || host.endsWith('.localhost') || host === '[::1]' || /^127\.\d+\.\d+\.\d+$/.test(host);
-}
-
+// Type credentials only into a page on the session's own origin, so a redirect
+// to another host never receives them. Certificate errors fail by default; a
+// caller opts in with ignoreHTTPSErrors for a local stack with a self-signed
+// certificate.
 const sessionBaseURLs = new WeakMap();
 
 function assertOnOrigin(page, baseURL = sessionBaseURLs.get(page.context())) {
@@ -133,17 +129,17 @@ const CURSOR_SCRIPT = `
  * Also suppresses the "Stay Secure with Passkeys" nag modal (localStorage-gated)
  * so it never interrupts a recorded take.
  */
-export async function prepareAuth(username, password, baseURL = 'http://localhost:9000') {
+export async function prepareAuth(username, password, baseURL = 'http://localhost:9000', { ignoreHTTPSErrors = false } = {}) {
   const browser = await launchChromium(true);
   try {
-    return await signIn(browser, username, password, baseURL);
+    return await signIn(browser, username, password, baseURL, ignoreHTTPSErrors);
   } finally {
     await browser.close();
   }
 }
 
-async function signIn(browser, username, password, baseURL) {
-  const context = await browser.newContext({ baseURL, ignoreHTTPSErrors: isLocal(baseURL) });
+async function signIn(browser, username, password, baseURL, ignoreHTTPSErrors) {
+  const context = await browser.newContext({ baseURL, ignoreHTTPSErrors });
   const page = await context.newPage();
   await page.goto('/sign-in', { waitUntil: 'networkidle' });
   // The sign-in form may be two-step (username -> Continue -> password) or single-step; handle both.
@@ -151,8 +147,9 @@ async function signIn(browser, username, password, baseURL) {
   await usernameField.waitFor({ state: 'visible', timeout: 60000 });
   assertOnOrigin(page, baseURL);
   await usernameField.fill(username);
-  const continueButton = page.locator('button:has-text("Continue"), button:has-text("Weiter")');
-  if (await continueButton.count()) { await continueButton.first().click(); }
+  // The sign-in form may be two-step (username -> Continue -> password) or single-step.
+  const continueButton = page.locator('#continue-button, button:has-text("Continue"), button:has-text("Weiter"), button:has-text("Fortfahren")');
+  if (await continueButton.count() && !(await page.locator('#password').isVisible())) { await continueButton.first().click(); }
   await page.locator('#password').waitFor({ state: 'visible', timeout: 20000 });
   assertOnOrigin(page, baseURL);
   await page.fill('#password', password);
@@ -173,7 +170,7 @@ async function signIn(browser, username, password, baseURL) {
   return context.storageState();
 }
 
-export async function startSession({ name, outDir, baseURL = 'http://localhost:9000', viewport = { width: 1440, height: 810 }, headless = true, storageState = undefined }) {
+export async function startSession({ name, outDir, baseURL = 'http://localhost:9000', viewport = { width: 1440, height: 810 }, headless = true, storageState = undefined, ignoreHTTPSErrors = false }) {
   fs.mkdirSync(outDir, { recursive: true });
   const browser = await launchChromium(headless);
   let context;
@@ -183,7 +180,7 @@ export async function startSession({ name, outDir, baseURL = 'http://localhost:9
       baseURL,
       viewport,
       recordVideo: { dir: outDir, size: viewport },
-      ignoreHTTPSErrors: isLocal(baseURL),
+      ignoreHTTPSErrors,
       storageState,
     });
     sessionBaseURLs.set(context, baseURL);
@@ -313,7 +310,7 @@ export async function login(page, username, password) {
   assertOnOrigin(page);
   await humanType(page, '#username', username);
   // The sign-in form may be two-step (username -> Continue -> password) or single-step.
-  const continueButton = page.locator('button:has-text("Continue"), button:has-text("Weiter")');
+  const continueButton = page.locator('#continue-button, button:has-text("Continue"), button:has-text("Weiter"), button:has-text("Fortfahren")');
   if (await continueButton.count() && !(await page.locator('#password').isVisible())) {
     await humanClick(page, continueButton.first());
   }

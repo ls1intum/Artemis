@@ -36,8 +36,9 @@ kind_of() {
 
 printf 'id\tkind\tfile\tline\tsymbol\n'
 # Git names each changed file NUL-delimited, so paths need no unquoting. Each
-# file's own diff is read for "@@" lines only; with -U0 every content line
+# file's own diff is streamed and only its "@@" lines are kept; with -U0 every content line
 # starts with +, - or \, so no content line can pass for a hunk header.
+hunk_header='^@@ -[0-9,]+ \+([0-9]+)[0-9,]* @@ ?(.*)$'
 n=0
 git diff -z --name-status --no-ext-diff --find-renames "$mb" HEAD | while IFS= read -r -d '' status; do
     IFS= read -r -d '' path
@@ -50,20 +51,21 @@ git diff -z --name-status --no-ext-diff --find-renames "$mb" HEAD | while IFS= r
     if [ "$status" = D ]; then
         printf 'D-%s\t%s\t%s\t0\tfile deleted\n' "$(basename "$path")" "$kind" "$path"
     fi
-    patch=$(git --literal-pathspecs diff -U0 --no-color --no-ext-diff --no-textconv --find-renames "$mb" HEAD -- "${paths[@]}") ||
-        { echo "changes.sh: git diff failed for ${paths[*]@Q}" >&2; exit 1; }
-    hunks=0
-    while IFS= read -r l; do
-        case "$l" in
-            '@@ '*)
-                line=$(sed -E 's/^@@ -[0-9,]+ \+([0-9]+).*/\1/' <<<"$l")
-                sym=$(sed -E 's/^@@ [^@]+ @@ ?//' <<<"$l" | tr '\t' ' ' | cut -c1-160)
-                n=$((n + 1)); hunks=$((hunks + 1))
-                printf 'C%03d\t%s\t%s\t%s\t%s\n' "$n" "$kind" "$path" "$line" "$sym"
-                ;;
-        esac
-    done <<<"$patch"
-    if [ "$hunks" = 0 ] && [ "$status" != D ]; then
+    hunks=$(
+        git --literal-pathspecs diff -U0 --no-color --no-ext-diff --no-textconv --find-renames "$mb" HEAD -- "${paths[@]}" |
+            while IFS= read -r l; do
+                if [[ $l =~ $hunk_header ]]; then
+                    sym=${BASH_REMATCH[2]//$'\t'/ }
+                    printf '%s\t%s\t%s\t%s\n' "$kind" "$path" "${BASH_REMATCH[1]}" "${sym:0:160}"
+                fi
+            done
+        exit "${PIPESTATUS[0]}"
+    ) || { echo "changes.sh: git diff failed for ${paths[*]@Q}" >&2; exit 1; }
+    while IFS= read -r row; do
+        [ -n "$row" ] || continue
+        n=$((n + 1)); printf 'C%03d\t%s\n' "$n" "$row"
+    done <<<"$hunks"
+    if [ -z "$hunks" ] && [ "$status" != D ]; then
         n=$((n + 1))
         printf 'C%03d\t%s\t%s\t0\t%s\n' "$n" "$kind" "$path" "no text hunk (binary, mode or pure rename)"
     fi

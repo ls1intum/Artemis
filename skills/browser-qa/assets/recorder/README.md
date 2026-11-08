@@ -31,7 +31,8 @@ s.note('<case> permission check, 403 expected');
 const { mp4, webm, events } = await s.finish();
 ```
 
-- `startSession` records the whole browser context, so sign in first with `prepareAuth`. It handles the two-step sign-in form and suppresses the passkey reminder.
+- `startSession` records the whole browser context, so sign in first with `prepareAuth`. It handles the two-step sign-in form and suppresses the passkey reminder. Both refuse to type credentials into a page on another origin.
+- Certificate errors fail by default. For a local stack with a self-signed certificate, pass `{ ignoreHTTPSErrors: true }` as the fourth argument of `prepareAuth` and as an option of `startSession`.
 - `humanClick` moves the cursor visibly, then clicks. `humanType` clears the field and types key by key. Add `pause(page, 800..1500)` after each state change so it stays readable.
 - `s.events` records console errors and warnings, page errors, and fetch, XHR and document response statuses. `finish()` writes them to `<name>.events.json` next to the video. Authentication and account responses are excluded.
 - Before each case, call `s.captureNetwork('<case-id>', request => new URL(request.url()).pathname === '<expected-path>')`. Include all expected paths in the predicate. After the case's requests complete, call `s.stopNetworkCapture()`. The event records the case ID, method, URL, status, content type, and paths to the captured request and response bodies under `network/`. Inspect each expected event and its body files; a `captureError` or missing response body blocks any assertion that needs it. `finish()` waits for pending captures before closing the browser.
