@@ -13,7 +13,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 //One rendered block of the feedback list: the feedback belonging to a single grading criterion.
 export interface FeedbackGroup {
     /** Keep criterion groups distinct from Other feedback when linking inserts or removes a group. */
-    key: GradingCriterion | 'other';
+    key: number | GradingCriterion | 'other';
     title: string;
     translateTitle: boolean;
     feedbacks: Feedback[];
@@ -126,7 +126,7 @@ export class UnreferencedFeedbackComponent implements GradingInstructionSelectio
                 continue;
             }
             groupFeedbacks.forEach((feedback) => alreadyGrouped.add(feedback));
-            groups.push(toGroup(criterion.title ?? '', false, groupFeedbacks, contributingCredits, criterion));
+            groups.push(toGroup(criterion.title ?? '', false, groupFeedbacks, contributingCredits, criterion.id ?? criterion));
         }
 
         const ungrouped = feedbacks.filter((feedback) => !alreadyGrouped.has(feedback));

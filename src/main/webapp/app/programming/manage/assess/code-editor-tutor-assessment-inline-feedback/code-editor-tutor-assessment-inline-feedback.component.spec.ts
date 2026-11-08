@@ -153,6 +153,37 @@ describe('CodeEditorTutorAssessmentInlineFeedbackComponent', () => {
         expect(selection.applicationCount(instruction)).toBe(1);
     });
 
+    it.each([false, true])('preserves the accepted marker unless the suggestion was edited (%s)', async (edited) => {
+        const feedback = savedFeedback();
+        feedback.text = `${FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER}Suggestion title`;
+        await open(feedback);
+        if (edited) {
+            comp.currentFeedback().detailText = 'Edited comment';
+        }
+        const update = vi.spyOn(comp.onUpdateFeedback, 'emit');
+
+        comp.updateFeedback();
+
+        const marker = edited ? FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER : FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER;
+        expect(update).toHaveBeenCalledWith(expect.objectContaining({ text: `${marker}Suggestion title` }));
+    });
+
+    it('rechecks the live usage limit before dropping an instruction onto a suggestion', async () => {
+        const feedback = savedFeedback();
+        feedback.text = `${FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER}Suggestion title`;
+        await open(feedback);
+        const instruction = { id: 7, credits: 2, usageCount: 1 } as GradingInstruction;
+        vi.spyOn(selection, 'canApplyInstruction').mockReturnValue(false);
+        const update = vi.spyOn(TestBed.inject(StructuredGradingCriterionService), 'updateFeedbackWithStructuredGradingInstructionEvent');
+        const event = { dataTransfer: { getData: () => JSON.stringify(instruction) } } as unknown as Event;
+
+        comp.updateFeedbackOnDrop(event);
+
+        expect(selection.canApplyInstruction).toHaveBeenCalledWith(instruction);
+        expect(update).not.toHaveBeenCalled();
+        expect(comp.currentFeedback()).toEqual(feedback);
+    });
+
     it('links an accepted suggestion on a detached copy and keeps its identity until Save', async () => {
         const feedback = savedFeedback();
         feedback.id = undefined;

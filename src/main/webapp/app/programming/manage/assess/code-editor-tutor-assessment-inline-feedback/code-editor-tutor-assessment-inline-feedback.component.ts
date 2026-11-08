@@ -9,6 +9,8 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { UnifiedFeedbackComponent } from 'app/shared/components/unified-feedback/unified-feedback.component';
+import { parseJson } from 'app/foundation/util/json.util';
+import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
 
 @Component({
@@ -107,7 +109,11 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent implements OnDestr
         const feedback = deepClone(this.currentFeedback());
         feedback.type = FeedbackType.MANUAL;
         feedback.reference = `file:${this.selectedFile()}_line:${this.codeLine()}`;
-        feedback.text = feedback.text ? Feedback.markAdaptedIfAcceptedSuggestion(feedback.text) : `File ${this.selectedFile()} at line ${this.codeLine() + 1}`;
+        feedback.text = feedback.text
+            ? this.hasUnsavedEdits()
+                ? Feedback.markAdaptedIfAcceptedSuggestion(feedback.text)
+                : feedback.text
+            : `File ${this.selectedFile()} at line ${this.codeLine() + 1}`;
         feedback.positive = (feedback.credits ?? 0) > 0;
         this.editing.set(false);
         this.inputEdited.set(false);
@@ -160,6 +166,19 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent implements OnDestr
 
     updateFeedbackOnDrop(event: Event): void {
         if (!this.readOnly()) {
+            if (Feedback.isFeedbackSuggestion(this.currentFeedback())) {
+                try {
+                    const data = (event as DragEvent).dataTransfer?.getData('text/plain');
+                    if (data && !this.selectionService.canApplyInstruction(parseJson<GradingInstruction>(data))) {
+                        return;
+                    }
+                } catch (error) {
+                    if (!(error instanceof SyntaxError)) {
+                        throw error;
+                    }
+                    return;
+                }
+            }
             if (this.viewOnly()) {
                 this.editFeedback(this.codeLine());
             }

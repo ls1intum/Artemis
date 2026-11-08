@@ -365,7 +365,7 @@ describe('TextblockAssessmentCardComponent', () => {
         const deleteButton = fixture.debugElement.nativeElement.querySelector('[data-testid="delete-feedback"] button') as HTMLButtonElement;
         expect(deleteButton).toBeTruthy();
         deleteButton.click();
-        expect(textBlockRef.feedback).toBeDefined();
+        expect(component.textBlockRef().feedback).toBeDefined();
         deleteButton.click();
         fixture.changeDetectorRef.detectChanges();
 

@@ -233,6 +233,20 @@ describe('UnreferencedFeedbackComponent', () => {
             expect(comp.showGroupHeaders()).toBe(true);
         });
 
+        it('keeps criterion group keys when criteria are reloaded', () => {
+            comp.applyInstruction(documentationInstruction);
+            comp.addUnreferencedFeedback();
+            const keys = comp.feedbackGroups().map((group) => group.key);
+
+            fixture.componentRef.setInput(
+                'gradingCriteria',
+                comp.gradingCriteria().map((criterion) => ({ ...criterion })),
+            );
+
+            expect(comp.feedbackGroups().map((group) => group.key)).toEqual(keys);
+            expect(keys).toEqual([comp.gradingCriteria()[0].id, 'other']);
+        });
+
         it('should not show a group header for a single uncategorized block', () => {
             fixture.componentRef.setInput('gradingCriteria', []);
             comp.addUnreferencedFeedback();
