@@ -13,6 +13,8 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { AlertService } from 'app/foundation/service/alert.service';
 import { MockAlertService } from 'test/helpers/mocks/service/mock-alert.service';
 import { LectureUnitService } from 'app/lecture/manage/lecture-units/services/lecture-unit.service';
+import { LectureUnitApi } from 'app/openapi/api/lecture-unit-api';
+import type { LectureDetailsAttachmentUnit } from 'app/openapi/model/lecture-details-attachment-unit';
 import { of } from 'rxjs';
 import { CourseInformationSharingConfiguration } from 'app/course/shared/entities/course.model';
 import { DiscussionSectionComponent } from 'app/communication/shared/discussion-section/discussion-section.component';
@@ -52,6 +54,17 @@ describe('LearningPathLectureUnitComponent', () => {
         videoSource: 'https://www.youtube.com/embed/8iU8LPEa4o0',
     };
 
+    const generatedLectureUnit: LectureDetailsAttachmentUnit = {
+        id: 1,
+        description: 'Example video unit',
+        name: 'Example video',
+        lecture: { id: 2, course: { courseInformationSharingConfiguration: 'COMMUNICATION_AND_MESSAGING' } },
+        completed: false,
+        visibleToStudents: true,
+        videoSource: 'https://www.youtube.com/embed/8iU8LPEa4o0',
+        type: 'attachment',
+    };
+
     MockInstance(DiscussionSectionComponent, 'content', signal(new ElementRef(document.createElement('div'))));
     MockInstance(DiscussionSectionComponent, 'messages', signal([new ElementRef(document.createElement('div'))]));
     // @ts-ignore
@@ -87,13 +100,13 @@ describe('LearningPathLectureUnitComponent', () => {
             .compileComponents();
 
         lectureUnitService = TestBed.inject(LectureUnitService);
-        getLectureUnitByIdSpy = vi.spyOn(lectureUnitService, 'getLectureUnitById').mockReturnValue(of(lectureUnit));
-        lectureUnitService = TestBed.inject(LectureUnitService);
+        getLectureUnitByIdSpy = vi.spyOn(TestBed.inject(LectureUnitApi), 'getLectureUnitById').mockReturnValue(of(generatedLectureUnit));
         learningPathNavigationService = TestBed.inject(LearningPathNavigationService);
         setLearningObjectCompletionSpy = vi.spyOn(learningPathNavigationService, 'setCurrentLearningObjectCompletion').mockReturnValue();
 
         fixture = TestBed.createComponent(LearningPathLectureUnitComponent);
         component = fixture.componentInstance;
+        fixture.componentRef.setInput('courseId', 1);
         fixture.componentRef.setInput('lectureUnitId', learningPathId);
     });
 
@@ -120,7 +133,8 @@ describe('LearningPathLectureUnitComponent', () => {
         fixture.detectChanges();
         await fixture.whenStable();
         fixture.detectChanges();
-        expect(component.lectureUnit()).toEqual(lectureUnit);
+        expect(component.lectureUnit()).toBeInstanceOf(AttachmentVideoUnit);
+        expect(component.lectureUnit()).toMatchObject({ id: 1, name: 'Example video', videoSource: lectureUnit.videoSource, visibleToStudents: true });
     });
 
     it('should not set current learning object on error', async () => {
@@ -187,11 +201,8 @@ describe('LearningPathLectureUnitComponent', () => {
     });
 
     it('should not show discussion section when communication is disabled', async () => {
-        const lecture = {
-            ...lectureUnit.lecture,
-            course: { courseInformationSharingConfiguration: CourseInformationSharingConfiguration.DISABLED },
-        };
-        getLectureUnitByIdSpy.mockReturnValue(of({ ...lectureUnit, lecture }));
+        const lecture = { id: 2, course: { courseInformationSharingConfiguration: 'DISABLED' as const } };
+        getLectureUnitByIdSpy.mockReturnValue(of({ ...generatedLectureUnit, lecture }));
 
         fixture.detectChanges();
         await fixture.whenStable();

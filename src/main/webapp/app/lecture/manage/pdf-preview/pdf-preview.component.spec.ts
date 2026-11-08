@@ -8,7 +8,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { AttachmentVideoUnitService } from 'app/lecture/manage/lecture-units/services/attachment-video-unit.service';
-import { LectureUnitService } from 'app/lecture/manage/lecture-units/services/lecture-unit.service';
+import { LectureUnitApi } from 'app/openapi/api/lecture-unit-api';
 import { PdfEngineService } from 'app/core/pdf/pdf-engine.service';
 import { MockPdfEngineService } from 'test/helpers/mocks/service/mock-pdf-engine.service';
 import { OrderedPage, PdfPreviewComponent } from 'app/lecture/manage/pdf-preview/pdf-preview.component';
@@ -25,7 +25,7 @@ describe('PdfPreviewComponent', () => {
         getAttachmentFile: ReturnType<typeof vi.fn>;
         findById: ReturnType<typeof vi.fn>;
     };
-    let lectureUnitService: { delete: ReturnType<typeof vi.fn> };
+    let lectureUnitApi: { deleteLectureUnit: ReturnType<typeof vi.fn> };
     let alertService: { error: ReturnType<typeof vi.fn>; success: ReturnType<typeof vi.fn>; addAlert: ReturnType<typeof vi.fn> };
     let navigationUtilService: { navigateBack: ReturnType<typeof vi.fn> };
     // Mutable route data so ngOnInit-driven tests can inject an attachmentVideoUnit resolver payload.
@@ -43,7 +43,7 @@ describe('PdfPreviewComponent', () => {
     beforeEach(async () => {
         engineService = new MockPdfEngineService();
         attachmentVideoUnitService = { update: vi.fn(() => of({})), updateStudentVersion: vi.fn(() => of({})), getAttachmentFile: vi.fn(() => of(new Blob())), findById: vi.fn() };
-        lectureUnitService = { delete: vi.fn(() => of({})) };
+        lectureUnitApi = { deleteLectureUnit: vi.fn(() => of(undefined)) };
         alertService = { error: vi.fn(), success: vi.fn(), addAlert: vi.fn() };
         navigationUtilService = { navigateBack: vi.fn() };
         routeData = {};
@@ -65,7 +65,7 @@ describe('PdfPreviewComponent', () => {
                 { provide: ArtemisNavigationUtilService, useValue: navigationUtilService },
                 { provide: AlertService, useValue: alertService },
                 { provide: AttachmentVideoUnitService, useValue: attachmentVideoUnitService },
-                { provide: LectureUnitService, useValue: lectureUnitService },
+                { provide: LectureUnitApi, useValue: lectureUnitApi },
                 { provide: PdfEngineService, useValue: engineService },
             ],
         }).compileComponents();
@@ -860,7 +860,7 @@ describe('PdfPreviewComponent', () => {
 
             await component.deleteAttachmentFile();
 
-            expect(lectureUnitService.delete).toHaveBeenCalledOnce();
+            expect(lectureUnitApi.deleteLectureUnit).toHaveBeenCalledOnce();
             expect(navigationUtilService.navigateBack).not.toHaveBeenCalled();
         });
     });
@@ -872,14 +872,14 @@ describe('PdfPreviewComponent', () => {
 
             await component.deleteAttachmentFile();
 
-            expect(lectureUnitService.delete).toHaveBeenCalledWith(9, 4);
+            expect(lectureUnitApi.deleteLectureUnit).toHaveBeenCalledWith(9, 4);
             // Back to where the user came from, such as the lecture editor, else to the content page of the lecture.
             expect(navigationUtilService.navigateBack).toHaveBeenCalledWith(['course-management', 5, 'lectures', 4, 'unit-management']);
         });
 
         it('should surface an error when deleting an attachment video unit fails', async () => {
             component.attachmentVideoUnit.set({ id: 9, lecture: { id: 4 } } as any);
-            lectureUnitService.delete.mockReturnValueOnce(throwError(() => new Error('unit delete failed')));
+            lectureUnitApi.deleteLectureUnit.mockReturnValueOnce(throwError(() => new Error('unit delete failed')));
 
             await component.deleteAttachmentFile();
 

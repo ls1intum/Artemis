@@ -14,7 +14,7 @@ import dayjs from 'dayjs/esm';
 import { objectToJsonBlob } from 'app/foundation/util/blob-util';
 import { MAX_FILE_SIZE } from 'app/foundation/constants/input.constants';
 import { PdfPreviewThumbnailGridComponent } from 'app/lecture/manage/pdf-preview/pdf-preview-thumbnail-grid/pdf-preview-thumbnail-grid.component';
-import { LectureUnitService } from 'app/lecture/manage/lecture-units/services/lecture-unit.service';
+import { LectureUnitApi } from 'app/openapi/api/lecture-unit-api';
 import { PdfEngineService } from 'app/core/pdf/pdf-engine.service';
 import type { PdfDocumentObject } from '@embedpdf/models';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -114,7 +114,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
     // Injected services
     private readonly route = inject(ActivatedRoute);
     private readonly attachmentVideoUnitService = inject(AttachmentVideoUnitService);
-    private readonly lectureUnitService = inject(LectureUnitService);
+    private readonly lectureUnitApi = inject(LectureUnitApi);
     private readonly alertService = inject(AlertService);
     private readonly navigationUtilService = inject(ArtemisNavigationUtilService);
     private readonly pdfEngineService = inject(PdfEngineService);
@@ -699,7 +699,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
      */
     async deleteAttachmentFile() {
         if (this.attachmentVideoUnit()) {
-            this.lectureUnitService.delete(this.attachmentVideoUnit()!.id!, this.attachmentVideoUnit()!.lecture!.id!).subscribe({
+            this.lectureUnitApi.deleteLectureUnit(this.attachmentVideoUnit()!.id!, this.attachmentVideoUnit()!.lecture!.id!).subscribe({
                 next: () => {
                     this.navigateBack();
                     this.dialogErrorSource.next('');

@@ -484,23 +484,6 @@ export class ExerciseService {
     }
 
     /**
-     * Prepare client-exercise to be uploaded to the server
-     * @param exercise - Exercise that will be modified
-     */
-    static convertExerciseFromClient<E extends Exercise>(exercise: E): Exercise {
-        // convertExerciseDatesFromClient already returns a detached copy, so no separate copy step is needed
-        // (the previous `Object.assign(exercise, {})` was a no-op that returned the argument itself).
-        const copy = ExerciseService.convertExerciseDatesFromClient(exercise);
-        ExerciseService.stringifyExerciseCategories(copy);
-        if (copy.course) {
-            copy.course.exercises = [];
-            copy.course.lectures = [];
-        }
-        copy.studentParticipations = [];
-        return copy;
-    }
-
-    /**
      * Get the "exerciseId" exercise with data useful for tutors.
      * @param exerciseId - Id of exercise to retrieve
      */

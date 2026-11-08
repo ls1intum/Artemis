@@ -513,28 +513,6 @@ describe('Exercise Service', () => {
         expect(profileServiceSpy).not.toHaveBeenCalled();
     });
 
-    it('should convert exercise dates and categories from client', () => {
-        const category = {
-            color: '#6ae8ac',
-            category: 'category1',
-        } as ExerciseCategory;
-
-        const releaseDate = dayjs();
-
-        exercise = Object.assign({}, textExercise, {
-            categories: [category],
-            releaseDate,
-        });
-
-        const converted = ExerciseService.convertExerciseFromClient(exercise);
-
-        expect(converted.categories).toHaveLength(1);
-        expect(converted.categories![0]).toBe(JSON.stringify(category));
-
-        expect(converted.releaseDate).toBe(releaseDate.toJSON());
-        expect(converted.startDate).toBeUndefined();
-    });
-
     it('should convert category strings from server into real ExerciseCategory instances', () => {
         const categories = [JSON.stringify({ color: '#6ae8ac', category: 'category1' }), JSON.stringify({ color: '#123456', category: 'category2' })];
 
@@ -772,24 +750,6 @@ describe('Exercise Service', () => {
             expect(dayjs.isDayjs(converted)).toBe(true);
             expect(converted?.toISOString()).toBe(dayjs(value).toISOString());
         }
-    });
-
-    it('serializes a detached exercise without shipping its course graph or participation data', () => {
-        const source = new TextExercise(undefined, undefined);
-        source.id = 7;
-        source.releaseDate = dayjs('2026-01-01T10:00:00Z');
-        source.course = { id: 1, exercises: [new TextExercise(undefined, undefined)], lectures: [{ id: 2 }] };
-        source.studentParticipations = [{ id: 3 }];
-        source.categories = [new ExerciseCategory('Practice', '#123456')];
-        const converted = ExerciseService.convertExerciseFromClient(source);
-        expect(converted).not.toBe(source);
-        expect(converted.course).toMatchObject({ id: 1, exercises: [], lectures: [] });
-        expect(converted.studentParticipations).toEqual([]);
-        expect(converted.categories).toEqual([JSON.stringify(new ExerciseCategory('Practice', '#123456'))]);
-        expect(source.course.exercises).toHaveLength(1);
-        expect(source.course.lectures).toHaveLength(1);
-        expect(source.studentParticipations).toEqual([{ id: 3 }]);
-        expect(dayjs.isDayjs(source.releaseDate)).toBe(true);
     });
 
     it('loads upcoming exercises with converted dates for the administrator overview', () => {

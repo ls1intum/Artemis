@@ -24,8 +24,9 @@ import { Attachment, AttachmentType } from 'app/lecture/shared/entities/attachme
 import { objectToJsonBlob } from 'app/foundation/util/blob-util';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
 import { LectureUnitManagementComponent } from 'app/lecture/manage/lecture-units/management/lecture-unit-management.component';
-import { TextUnitService } from 'app/lecture/manage/lecture-units/services/text-unit.service';
-import { OnlineUnitService } from 'app/lecture/manage/lecture-units/services/online-unit.service';
+import { TextUnitApi } from 'app/openapi/api/text-unit-api';
+import { OnlineUnitApi } from 'app/openapi/api/online-unit-api';
+import { toLectureUnitRequest } from 'app/lecture/shared/util/generated-lecture.util';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { HttpContext, HttpErrorResponse } from '@angular/common/http';
 import { AttachmentVideoUnitService } from 'app/lecture/manage/lecture-units/services/attachment-video-unit.service';
@@ -108,8 +109,8 @@ const AUTOSAVE_REQUEST_CONTEXT = () => new HttpContext().set(SKIP_HTTP_ERROR_ALE
 export class LectureUpdateUnitsComponent implements OnInit {
     protected activatedRoute = inject(ActivatedRoute);
     protected alertService = inject(AlertService);
-    protected textUnitService = inject(TextUnitService);
-    protected onlineUnitService = inject(OnlineUnitService);
+    protected textUnitApi = inject(TextUnitApi);
+    protected onlineUnitApi = inject(OnlineUnitApi);
     protected attachmentVideoUnitService = inject(AttachmentVideoUnitService);
     private readonly router = inject(Router);
     private readonly destroyRef = inject(DestroyRef);
@@ -333,7 +334,7 @@ export class LectureUpdateUnitsComponent implements OnInit {
         textUnit.content = formData.content;
         textUnit.competencyLinks = formData.competencyLinks;
 
-        this.trackCreation(this.textUnitService.create(textUnit, this.lecture().id!)).subscribe({
+        this.trackCreation(this.textUnitApi.createTextUnit(this.lecture().id!, toLectureUnitRequest(textUnit))).subscribe({
             next: () => this.onUnitCreated(),
             error: (res: HttpErrorResponse) => onError(this.alertService, res),
         });
@@ -350,7 +351,7 @@ export class LectureUpdateUnitsComponent implements OnInit {
         onlineUnit.source = formData.source || undefined;
         onlineUnit.competencyLinks = formData.competencyLinks || undefined;
 
-        this.trackCreation(this.onlineUnitService.create(onlineUnit, this.lecture().id!)).subscribe({
+        this.trackCreation(this.onlineUnitApi.createOnlineUnit(this.lecture().id!, toLectureUnitRequest(onlineUnit))).subscribe({
             next: () => this.onUnitCreated(),
             error: (res: HttpErrorResponse) => onError(this.alertService, res),
         });
@@ -858,7 +859,7 @@ export class LectureUpdateUnitsComponent implements OnInit {
         textUnit.releaseDate = data.releaseDate;
         textUnit.content = data.content;
         textUnit.competencyLinks = this.competencyLinksToSend(data.competencyLinks);
-        return this.textUnitService.update(textUnit, this.lecture().id!, AUTOSAVE_REQUEST_CONTEXT()).pipe(map(() => textUnit));
+        return this.textUnitApi.updateTextUnit(this.lecture().id!, toLectureUnitRequest(textUnit), { context: AUTOSAVE_REQUEST_CONTEXT() }).pipe(map(() => textUnit));
     }
 
     private saveOnlineUnit(data: OnlineUnitFormData): Observable<LectureUnit> {
@@ -868,7 +869,7 @@ export class LectureUpdateUnitsComponent implements OnInit {
         onlineUnit.releaseDate = data.releaseDate || undefined;
         onlineUnit.source = data.source || undefined;
         onlineUnit.competencyLinks = this.competencyLinksToSend(data.competencyLinks);
-        return this.onlineUnitService.update(onlineUnit, this.lecture().id!, AUTOSAVE_REQUEST_CONTEXT()).pipe(map(() => onlineUnit));
+        return this.onlineUnitApi.updateOnlineUnit(this.lecture().id!, toLectureUnitRequest(onlineUnit), { context: AUTOSAVE_REQUEST_CONTEXT() }).pipe(map(() => onlineUnit));
     }
 
     /**

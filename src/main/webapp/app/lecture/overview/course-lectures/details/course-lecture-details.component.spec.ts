@@ -148,7 +148,6 @@ describe('CourseLectureDetailsComponent', () => {
                     },
                 }),
                 MockProvider(LectureUnitService, {
-                    setCompletion: (_lectureUnitId: number, _lectureId: number, _completed: boolean) => EMPTY,
                     completeLectureUnit: vi.fn(),
                 }),
                 MockProvider(AlertService),

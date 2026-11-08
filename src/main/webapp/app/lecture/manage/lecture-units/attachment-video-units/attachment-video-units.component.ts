@@ -6,7 +6,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Location } from '@angular/common';
 import { onError } from 'app/foundation/util/global.utils';
 import { AttachmentVideoUnitService } from 'app/lecture/manage/lecture-units/services/attachment-video-unit.service';
-import { LectureUnitService } from 'app/lecture/manage/lecture-units/services/lecture-unit.service';
+import { LectureUnitApi } from 'app/openapi/api/lecture-unit-api';
 import { combineLatest } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -78,7 +78,7 @@ export class AttachmentVideoUnitsComponent implements OnInit {
     private activatedRoute = inject(ActivatedRoute);
     private router = inject(Router);
     private attachmentVideoUnitService = inject(AttachmentVideoUnitService);
-    private readonly lectureUnitService = inject(LectureUnitService);
+    private readonly lectureUnitApi = inject(LectureUnitApi);
     private alertService = inject(AlertService);
     private translateService = inject(TranslateService);
     private readonly destroyRef = inject(DestroyRef);
@@ -263,7 +263,7 @@ export class AttachmentVideoUnitsComponent implements OnInit {
     }
 
     private deleteSourceUnitAndLeave(sourceUnitId: number): void {
-        this.lectureUnitService.delete(sourceUnitId, this.lectureId).subscribe({
+        this.lectureUnitApi.deleteLectureUnit(sourceUnitId, this.lectureId).subscribe({
             next: () => this.leaveAfterCreation(),
             error: (res: HttpErrorResponse) => {
                 // The new items exist, so the page is left anyway; the alert tells that the PDF item is still there.

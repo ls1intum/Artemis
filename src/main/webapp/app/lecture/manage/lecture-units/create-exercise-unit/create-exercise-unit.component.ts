@@ -5,11 +5,12 @@ import { CourseManagementService } from 'app/course/manage/services/course-manag
 import { HttpErrorResponse } from '@angular/common/http';
 import { onError } from 'app/foundation/util/global.utils';
 import { AlertService } from 'app/foundation/service/alert.service';
-import { concatMap, finalize, switchMap, take } from 'rxjs/operators';
+import { concatMap, finalize, map, switchMap, take } from 'rxjs/operators';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { SortService } from 'app/foundation/service/sort.service';
 import { Observable, combineLatest, forkJoin, from } from 'rxjs';
-import { ExerciseUnitService } from 'app/lecture/manage/lecture-units/services/exercise-unit.service';
+import { ExerciseUnitApi } from 'app/openapi/api/exercise-unit-api';
+import { toLectureUnit, toLectureUnitRequest } from 'app/lecture/shared/util/generated-lecture.util';
 import { faTimes } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -36,7 +37,7 @@ export class CreateExerciseUnitComponent implements OnInit {
     private readonly courseManagementService = inject(CourseManagementService);
     private readonly alertService = inject(AlertService);
     private readonly sortService = inject(SortService);
-    private readonly exerciseUnitService = inject(ExerciseUnitService);
+    private readonly exerciseUnitApi = inject(ExerciseUnitApi);
 
     protected readonly faTimes = faTimes;
 
@@ -81,7 +82,9 @@ export class CreateExerciseUnitComponent implements OnInit {
                     this.resolvedCourseId.set(this.courseId() ?? Number(parentParams.get('courseId')));
 
                     const courseObservable = this.courseManagementService.findWithExercises(this.resolvedCourseId()!);
-                    const exerciseUnitObservable = this.exerciseUnitService.findAllByLectureId(this.resolvedLectureId()!);
+                    const exerciseUnitObservable = this.exerciseUnitApi
+                        .getAllExerciseUnitsOfLecture(this.resolvedLectureId()!)
+                        .pipe(map((units) => units.map((unit) => toLectureUnit<ExerciseUnit>(unit))));
                     return forkJoin([courseObservable, exerciseUnitObservable]);
                 }),
                 finalize(() => {
@@ -92,9 +95,7 @@ export class CreateExerciseUnitComponent implements OnInit {
                 next: ([courseResult, exerciseUnitResult]) => {
                     const allExercisesOfCourse = courseResult?.body?.exercises ? courseResult?.body?.exercises : [];
                     this.hasCourseExercises.set(allExercisesOfCourse.length > 0);
-                    const idsOfExercisesAlreadyConnectedToUnit = exerciseUnitResult?.body
-                        ? exerciseUnitResult?.body?.map((exerciseUnit: ExerciseUnit) => exerciseUnit.exercise?.id)
-                        : [];
+                    const idsOfExercisesAlreadyConnectedToUnit = exerciseUnitResult.map((exerciseUnit: ExerciseUnit) => exerciseUnit.exercise?.id);
                     this.exercisesAvailableForUnitCreation.set(allExercisesOfCourse.filter((exercise: Exercise) => !idsOfExercisesAlreadyConnectedToUnit.includes(exercise.id)));
                 },
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),
@@ -110,7 +111,7 @@ export class CreateExerciseUnitComponent implements OnInit {
 
         this.trackRequest()(
             from(exerciseUnitsToCreate).pipe(
-                concatMap((unit) => this.exerciseUnitService.create(unit, this.resolvedLectureId()!)),
+                concatMap((unit) => this.exerciseUnitApi.createExerciseUnit(this.resolvedLectureId()!, toLectureUnitRequest(unit))),
                 finalize(() => {
                     if (this.shouldNavigateOnSubmit()) {
                         void this.router.navigate(['../../'], { relativeTo: this.activatedRoute });

@@ -21,15 +21,6 @@ describe('Attachment Service', () => {
         attachment.uploadDate = dayjs();
     });
 
-    it('should convert the dates to their server representation without touching the original', () => {
-        const converted = service.convertAttachmentDatesFromClient(attachment);
-
-        expect(converted.releaseDate).toEqual(attachment.releaseDate!.toJSON());
-        expect(converted.uploadDate).toEqual(attachment.uploadDate!.toJSON());
-        expect(dayjs.isDayjs(attachment.releaseDate)).toBe(true);
-        expect(dayjs.isDayjs(attachment.uploadDate)).toBe(true);
-    });
-
     it('should convert the dates from the server and derive the public file url', () => {
         const converted = service.convertAttachmentFromServer(attachment)!;
 

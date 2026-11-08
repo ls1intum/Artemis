@@ -2,15 +2,14 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { OnlineUnitFormComponent, OnlineUnitFormData } from 'app/lecture/manage/lecture-units/online-unit-form/online-unit-form.component';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CreateOnlineUnitComponent } from 'app/lecture/manage/lecture-units/create-online-unit/create-online-unit.component';
-import { OnlineUnitService } from 'app/lecture/manage/lecture-units/services/online-unit.service';
+import { OnlineUnitApi } from 'app/openapi/api/online-unit-api';
 import { MockProvider } from 'ng-mocks';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { of } from 'rxjs';
-import { OnlineUnit } from 'app/lecture/shared/entities/lecture-unit/onlineUnit.model';
 import dayjs from 'dayjs/esm';
-import { HttpResponse, provideHttpClient } from '@angular/common/http';
+import { provideHttpClient } from '@angular/common/http';
 import { By } from '@angular/platform-browser';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -27,7 +26,7 @@ describe('CreateOnlineUnitComponent', () => {
         await TestBed.configureTestingModule({
             imports: [],
             providers: [
-                MockProvider(OnlineUnitService),
+                MockProvider(OnlineUnitApi),
                 MockProvider(AlertService),
                 { provide: Router, useClass: MockRouter },
                 { provide: ProfileService, useClass: MockProfileService },
@@ -79,7 +78,7 @@ describe('CreateOnlineUnitComponent', () => {
 
     it('should send POST request upon form submission and navigate', async () => {
         const router: Router = TestBed.inject(Router);
-        const onlineUnitService = TestBed.inject(OnlineUnitService);
+        const onlineUnitApi = TestBed.inject(OnlineUnitApi);
 
         const formDate: OnlineUnitFormData = {
             name: 'Test',
@@ -88,12 +87,7 @@ describe('CreateOnlineUnitComponent', () => {
             source: 'https://www.example.com',
         };
 
-        const response: HttpResponse<OnlineUnit> = new HttpResponse({
-            body: new OnlineUnit(),
-            status: 201,
-        });
-
-        const createStub = vi.spyOn(onlineUnitService, 'create').mockReturnValue(of(response));
+        const createStub = vi.spyOn(onlineUnitApi, 'createOnlineUnit').mockReturnValue(of({ type: 'online' }));
         const navigateSpy = vi.spyOn(router, 'navigate');
 
         createOnlineUnitComponentFixture.detectChanges();
@@ -102,12 +96,11 @@ describe('CreateOnlineUnitComponent', () => {
         onlineUnitForm.formSubmitted.emit(formDate);
 
         await createOnlineUnitComponentFixture.whenStable();
-        const onlineUnitCallArgument: OnlineUnit = createStub.mock.calls[0][0];
-        const lectureIdCallArgument: number = createStub.mock.calls[0][1];
+        const [lectureIdCallArgument, onlineUnitCallArgument] = createStub.mock.calls[0];
 
         expect(onlineUnitCallArgument.name).toEqual(formDate.name);
         expect(onlineUnitCallArgument.description).toEqual(formDate.description);
-        expect(onlineUnitCallArgument.releaseDate).toEqual(formDate.releaseDate);
+        expect(onlineUnitCallArgument.releaseDate).toEqual(formDate.releaseDate!.toISOString());
         expect(onlineUnitCallArgument.source).toEqual(formDate.source);
         expect(lectureIdCallArgument).toBe(1);
 

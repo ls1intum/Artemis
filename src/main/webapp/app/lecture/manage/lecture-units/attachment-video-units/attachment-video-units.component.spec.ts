@@ -19,7 +19,7 @@ import { MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { TranslateService } from '@ngx-translate/core';
 import dayjs from 'dayjs/esm';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { LectureUnitService } from 'app/lecture/manage/lecture-units/services/lecture-unit.service';
+import { LectureUnitApi } from 'app/openapi/api/lecture-unit-api';
 import { FormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { Location } from '@angular/common';
@@ -83,7 +83,7 @@ describe('AttachmentVideoUnitsComponent', () => {
             ],
             providers: [
                 MockProvider(AlertService),
-                MockProvider(LectureUnitService),
+                MockProvider(LectureUnitApi),
                 { provide: TranslateService, useClass: MockTranslateService },
                 {
                     provide: AttachmentVideoUnitService,
@@ -393,9 +393,8 @@ describe('AttachmentVideoUnitsComponent', () => {
     });
 
     describe('when the lecture editor opened the page', () => {
-        let lectureUnitService: LectureUnitService;
         let navigateSpy: MockInstance<Router['navigate']>;
-        let deleteSpy: MockInstance<LectureUnitService['delete']>;
+        let deleteSpy: MockInstance<LectureUnitApi['deleteLectureUnit']>;
         let createSpy: MockInstance<AttachmentVideoUnitService['createUnits']>;
         let backSpy: MockInstance<Location['back']>;
         let replaceStateSpy: MockInstance<Location['replaceState']>;
@@ -421,8 +420,7 @@ describe('AttachmentVideoUnitsComponent', () => {
         }
 
         beforeEach(() => {
-            lectureUnitService = TestBed.inject(LectureUnitService);
-            deleteSpy = vi.spyOn(lectureUnitService, 'delete').mockReturnValue(of(new HttpResponse<object>({ status: 200 })));
+            deleteSpy = vi.spyOn(TestBed.inject(LectureUnitApi), 'deleteLectureUnit').mockReturnValue(of(undefined));
             createSpy = vi.spyOn(attachmentVideoUnitService, 'createUnits');
             navigateSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
             backSpy = vi.spyOn(TestBed.inject(Location), 'back').mockImplementation(() => {});

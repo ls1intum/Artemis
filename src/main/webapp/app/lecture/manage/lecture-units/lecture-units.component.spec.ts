@@ -9,8 +9,9 @@ import dayjs from 'dayjs/esm';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { By } from '@angular/platform-browser';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
-import { TextUnitService } from 'app/lecture/manage/lecture-units/services/text-unit.service';
-import { OnlineUnitService } from 'app/lecture/manage/lecture-units/services/online-unit.service';
+import { TextUnitApi } from 'app/openapi/api/text-unit-api';
+import { OnlineUnitApi } from 'app/openapi/api/online-unit-api';
+import type { TextUnit as GeneratedTextUnit } from 'app/openapi/model/text-unit';
 import { AttachmentVideoUnitService } from 'app/lecture/manage/lecture-units/services/attachment-video-unit.service';
 import { LectureUnitType } from 'app/lecture/shared/entities/lecture-unit/lectureUnit.model';
 import { LectureUnitManagementComponent } from 'app/lecture/manage/lecture-units/management/lecture-unit-management.component';
@@ -114,8 +115,8 @@ describe('LectureUpdateUnitsComponent', () => {
             schemas: [NO_ERRORS_SCHEMA],
             providers: [
                 MockProvider(AlertService),
-                MockProvider(TextUnitService),
-                MockProvider(OnlineUnitService),
+                MockProvider(TextUnitApi),
+                MockProvider(OnlineUnitApi),
                 MockProvider(AttachmentVideoUnitService),
                 MockProvider(LectureUnitManagementComponent),
                 { provide: Router, useClass: MockRouter },
@@ -236,7 +237,7 @@ describe('LectureUpdateUnitsComponent', () => {
     });
 
     it('should send POST request upon text form submission and update units', async () => {
-        const textUnitService = TestBed.inject(TextUnitService);
+        const textUnitApi = TestBed.inject(TextUnitApi);
 
         const formData: TextUnitFormData = {
             name: 'Test',
@@ -245,15 +246,7 @@ describe('LectureUpdateUnitsComponent', () => {
             competencyLinks: [new CompetencyLectureUnitLink({ id: 1, masteryThreshold: 0, optional: false, taxonomy: undefined, title: 'Test' }, undefined, 1)],
         };
 
-        const persistedTextUnit: TextUnit = new TextUnit();
-        persistedTextUnit.id = 1;
-        persistedTextUnit.name = formData.name;
-        persistedTextUnit.releaseDate = formData.releaseDate;
-        persistedTextUnit.content = formData.content;
-
-        const response: HttpResponse<TextUnit> = new HttpResponse({ body: persistedTextUnit, status: 200 });
-
-        const createStub = vi.spyOn(textUnitService, 'create').mockReturnValue(of(response));
+        const createStub = vi.spyOn(textUnitApi, 'createTextUnit').mockReturnValue(of({ id: 1, name: formData.name, content: formData.content, type: 'text' }));
 
         wizardUnitComponentFixture.detectChanges();
         await wizardUnitComponentFixture.whenStable();
@@ -264,13 +257,12 @@ describe('LectureUpdateUnitsComponent', () => {
         wizardUnitComponent.createTextUnit(formData);
         await wizardUnitComponentFixture.whenStable();
 
-        const textUnitCallArgument: TextUnit = createStub.mock.calls[0][0];
-        const lectureIdCallArgument: number = createStub.mock.calls[0][1];
+        const [lectureIdCallArgument, textUnitCallArgument] = createStub.mock.calls[0];
 
         expect(textUnitCallArgument.name).toEqual(formData.name);
         expect(textUnitCallArgument.content).toEqual(formData.content);
-        expect(textUnitCallArgument.releaseDate).toEqual(formData.releaseDate);
-        expect(textUnitCallArgument.competencyLinks).toEqual(formData.competencyLinks);
+        expect(textUnitCallArgument.releaseDate).toEqual(formData.releaseDate!.toISOString());
+        expect(textUnitCallArgument.competencyLinks).toEqual([{ competency: { id: 1, title: 'Test' }, weight: 1 }]);
         expect(lectureIdCallArgument).toBe(1);
 
         expect(createStub).toHaveBeenCalledTimes(1);
@@ -280,11 +272,11 @@ describe('LectureUpdateUnitsComponent', () => {
     });
 
     it('should not send POST request upon empty text form submission', async () => {
-        const textUnitService = TestBed.inject(TextUnitService);
+        const textUnitApi = TestBed.inject(TextUnitApi);
 
         const formData: TextUnitFormData = {};
 
-        const createStub = vi.spyOn(textUnitService, 'create');
+        const createStub = vi.spyOn(textUnitApi, 'createTextUnit');
 
         wizardUnitComponentFixture.detectChanges();
         await wizardUnitComponentFixture.whenStable();
@@ -297,7 +289,7 @@ describe('LectureUpdateUnitsComponent', () => {
     });
 
     it('should show alert upon unsuccessful text form submission', async () => {
-        const textUnitService = TestBed.inject(TextUnitService);
+        const textUnitApi = TestBed.inject(TextUnitApi);
         const alertService = TestBed.inject(AlertService);
 
         const formData: TextUnitFormData = {
@@ -306,7 +298,7 @@ describe('LectureUpdateUnitsComponent', () => {
             content: 'Lorem Ipsum',
         };
 
-        const createStub = vi.spyOn(textUnitService, 'create').mockReturnValue(throwError(() => ({ status: 404 })));
+        const createStub = vi.spyOn(textUnitApi, 'createTextUnit').mockReturnValue(throwError(() => ({ status: 404 })));
         const alertStub = vi.spyOn(alertService, 'error');
 
         wizardUnitComponentFixture.detectChanges();
@@ -321,7 +313,7 @@ describe('LectureUpdateUnitsComponent', () => {
     });
 
     it('should show alert upon unsuccessful online form submission', async () => {
-        const onlineUnitService = TestBed.inject(OnlineUnitService);
+        const onlineUnitApi = TestBed.inject(OnlineUnitApi);
         const alertService = TestBed.inject(AlertService);
 
         const formData: OnlineUnitFormData = {
@@ -331,7 +323,7 @@ describe('LectureUpdateUnitsComponent', () => {
             source: 'https://www.example.com',
         };
 
-        const createStub = vi.spyOn(onlineUnitService, 'create').mockReturnValue(throwError(() => ({ status: 404 })));
+        const createStub = vi.spyOn(onlineUnitApi, 'createOnlineUnit').mockReturnValue(throwError(() => ({ status: 404 })));
         const alertStub = vi.spyOn(alertService, 'error');
 
         wizardUnitComponentFixture.detectChanges();
@@ -346,7 +338,7 @@ describe('LectureUpdateUnitsComponent', () => {
     });
 
     it('should send POST request upon online form submission and update units', async () => {
-        const onlineUnitService = TestBed.inject(OnlineUnitService);
+        const onlineUnitApi = TestBed.inject(OnlineUnitApi);
 
         const formDate: OnlineUnitFormData = {
             name: 'Test',
@@ -356,9 +348,7 @@ describe('LectureUpdateUnitsComponent', () => {
             competencyLinks: [new CompetencyLectureUnitLink({ id: 1, masteryThreshold: 0, optional: false, taxonomy: undefined, title: 'Test' }, undefined, 1)],
         };
 
-        const response: HttpResponse<OnlineUnit> = new HttpResponse({ body: new OnlineUnit(), status: 201 });
-
-        const createStub = vi.spyOn(onlineUnitService, 'create').mockReturnValue(of(response));
+        const createStub = vi.spyOn(onlineUnitApi, 'createOnlineUnit').mockReturnValue(of({ type: 'online' }));
 
         wizardUnitComponentFixture.detectChanges();
         await wizardUnitComponentFixture.whenStable();
@@ -369,14 +359,13 @@ describe('LectureUpdateUnitsComponent', () => {
         wizardUnitComponent.createOnlineUnit(formDate);
         await wizardUnitComponentFixture.whenStable();
 
-        const onlineUnitCallArgument: OnlineUnit = createStub.mock.calls[0][0];
-        const lectureIdCallArgument: number = createStub.mock.calls[0][1];
+        const [lectureIdCallArgument, onlineUnitCallArgument] = createStub.mock.calls[0];
 
         expect(onlineUnitCallArgument.name).toEqual(formDate.name);
         expect(onlineUnitCallArgument.description).toEqual(formDate.description);
-        expect(onlineUnitCallArgument.releaseDate).toEqual(formDate.releaseDate);
+        expect(onlineUnitCallArgument.releaseDate).toEqual(formDate.releaseDate!.toISOString());
         expect(onlineUnitCallArgument.source).toEqual(formDate.source);
-        expect(onlineUnitCallArgument.competencyLinks).toEqual(formDate.competencyLinks);
+        expect(onlineUnitCallArgument.competencyLinks).toEqual([{ competency: { id: 1, title: 'Test' }, weight: 1 }]);
         expect(lectureIdCallArgument).toBe(1);
 
         expect(createStub).toHaveBeenCalledTimes(1);
@@ -386,11 +375,11 @@ describe('LectureUpdateUnitsComponent', () => {
     });
 
     it('should not send POST request upon empty online form submission', async () => {
-        const onlineUnitService = TestBed.inject(OnlineUnitService);
+        const onlineUnitApi = TestBed.inject(OnlineUnitApi);
 
         const formData: OnlineUnitFormData = {};
 
-        const createStub = vi.spyOn(onlineUnitService, 'create');
+        const createStub = vi.spyOn(onlineUnitApi, 'createOnlineUnit');
 
         wizardUnitComponentFixture.detectChanges();
         await wizardUnitComponentFixture.whenStable();
@@ -835,10 +824,10 @@ describe('LectureUpdateUnitsComponent', () => {
 
     describe('creating an item', () => {
         it('should count new items as content that is still being saved until every request completed or failed', () => {
-            const textUnitService = TestBed.inject(TextUnitService);
-            const first = new Subject<HttpResponse<TextUnit>>();
-            const second = new Subject<HttpResponse<TextUnit>>();
-            vi.spyOn(textUnitService, 'create').mockReturnValueOnce(first).mockReturnValueOnce(second);
+            const textUnitApi = TestBed.inject(TextUnitApi);
+            const first = new Subject<GeneratedTextUnit>();
+            const second = new Subject<GeneratedTextUnit>();
+            vi.spyOn(textUnitApi, 'createTextUnit').mockReturnValueOnce(first).mockReturnValueOnce(second);
             wizardUnitComponentFixture.detectChanges();
 
             wizardUnitComponent.createTextUnit({ name: 'Reading' });
@@ -846,7 +835,7 @@ describe('LectureUpdateUnitsComponent', () => {
             expect(wizardUnitComponent.isCreatingUnit()).toBe(true);
             expect(wizardUnitComponent.isSavingContent()).toBe(true);
 
-            first.next(new HttpResponse({ body: new TextUnit(), status: 201 }));
+            first.next({ type: 'text' });
             first.complete();
             expect(wizardUnitComponent.isCreatingUnit()).toBe(true);
 
@@ -1003,7 +992,7 @@ describe('LectureUpdateUnitsComponent', () => {
     });
 
     describe('editing an item in place', () => {
-        let textUnitService: TextUnitService;
+        let textUnitApi: TextUnitApi;
 
         const competencyLink = () => new CompetencyLectureUnitLink({ id: 1, masteryThreshold: 0, optional: false, taxonomy: undefined, title: 'Testing' }, undefined, 1);
 
@@ -1027,11 +1016,11 @@ describe('LectureUpdateUnitsComponent', () => {
             return { data: { name, content: 'Content' }, immediate, valid };
         }
 
-        const savedResponse = () => of(new HttpResponse<TextUnit>({ status: 200 }));
+        const savedResponse = () => of<GeneratedTextUnit>({ type: 'text' });
 
         beforeEach(() => {
             vi.useFakeTimers();
-            textUnitService = TestBed.inject(TextUnitService);
+            textUnitApi = TestBed.inject(TextUnitApi);
             wizardUnitComponentFixture.detectChanges();
         });
 
@@ -1053,7 +1042,7 @@ describe('LectureUpdateUnitsComponent', () => {
         });
 
         it('should save typed text after the pause, without an alert, and show when it was saved', () => {
-            const updateSpy = vi.spyOn(textUnitService, 'update').mockReturnValue(savedResponse());
+            const updateSpy = vi.spyOn(textUnitApi, 'updateTextUnit').mockReturnValue(savedResponse());
             wizardUnitComponent.startEditLectureUnit(savedTextUnit(3, 'Reading'));
 
             wizardUnitComponent.onTextUnitChanged(textChange('Reading list'));
@@ -1063,11 +1052,11 @@ describe('LectureUpdateUnitsComponent', () => {
 
             vi.advanceTimersByTime(1);
             expect(updateSpy).toHaveBeenCalledOnce();
-            const [sentUnit, lectureId, context] = updateSpy.mock.calls[0];
+            const [lectureId, sentUnit, options] = updateSpy.mock.calls[0];
             expect(sentUnit.id).toBe(3);
             expect(sentUnit.name).toBe('Reading list');
             expect(lectureId).toBe(1);
-            expect(context?.get(SKIP_HTTP_ERROR_ALERT)).toBe(true);
+            expect(options?.context?.get(SKIP_HTTP_ERROR_ALERT)).toBe(true);
             expect(wizardUnitComponent.autosaveState().kind).toBe('saved');
             expect(unitManagementComponentMock.replaceLectureUnit).toHaveBeenCalledWith(expect.objectContaining({ id: 3, name: 'Reading list' }));
             expect(unitManagementComponentMock.loadData).not.toHaveBeenCalled();
@@ -1075,7 +1064,7 @@ describe('LectureUpdateUnitsComponent', () => {
         });
 
         it('should save a choice at once and send nothing for a change that restores the saved state', () => {
-            const updateSpy = vi.spyOn(textUnitService, 'update').mockReturnValue(savedResponse());
+            const updateSpy = vi.spyOn(textUnitApi, 'updateTextUnit').mockReturnValue(savedResponse());
             wizardUnitComponent.startEditLectureUnit(savedTextUnit(3, 'Reading'));
 
             wizardUnitComponent.onTextUnitChanged(textChange('Reading', true));
@@ -1091,8 +1080,8 @@ describe('LectureUpdateUnitsComponent', () => {
         });
 
         it('should send one save at a time and the newest change once it completes', () => {
-            const firstResponse = new Subject<HttpResponse<TextUnit>>();
-            const updateSpy = vi.spyOn(textUnitService, 'update').mockReturnValueOnce(firstResponse).mockReturnValue(savedResponse());
+            const firstResponse = new Subject<GeneratedTextUnit>();
+            const updateSpy = vi.spyOn(textUnitApi, 'updateTextUnit').mockReturnValueOnce(firstResponse).mockReturnValue(savedResponse());
             wizardUnitComponent.startEditLectureUnit(savedTextUnit(3, 'Reading'));
 
             wizardUnitComponent.onTextUnitChanged(textChange('Reading l', true));
@@ -1100,18 +1089,18 @@ describe('LectureUpdateUnitsComponent', () => {
             expect(updateSpy).toHaveBeenCalledOnce();
             expect(wizardUnitComponent.hasUnsavedContent()).toBe(false);
 
-            firstResponse.next(new HttpResponse({ status: 200 }));
+            firstResponse.next({ type: 'text' });
             firstResponse.complete();
 
             expect(updateSpy).toHaveBeenCalledTimes(2);
-            expect(updateSpy.mock.calls[1][0].name).toBe('Reading list');
+            expect(updateSpy.mock.calls[1][1].name).toBe('Reading list');
             expect(wizardUnitComponent.autosaveState().kind).toBe('saved');
         });
 
         it('should keep a failed change, say so in the item instead of an alert, and send it again on retry', () => {
             const alertSpy = vi.spyOn(TestBed.inject(AlertService), 'error');
             const updateSpy = vi
-                .spyOn(textUnitService, 'update')
+                .spyOn(textUnitApi, 'updateTextUnit')
                 .mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 400, error: { title: 'The name is too long' } })))
                 .mockReturnValue(savedResponse());
             wizardUnitComponent.startEditLectureUnit(savedTextUnit(3, 'Reading'));
@@ -1123,19 +1112,19 @@ describe('LectureUpdateUnitsComponent', () => {
 
             wizardUnitComponent.retryAutosave();
             expect(updateSpy).toHaveBeenCalledTimes(2);
-            expect(updateSpy.mock.calls[1][0].name).toBe('Reading list');
+            expect(updateSpy.mock.calls[1][1].name).toBe('Reading list');
             expect(wizardUnitComponent.autosaveState().kind).toBe('saved');
             expect(wizardUnitComponent.hasUnsavedContent()).toBe(false);
         });
 
         it('should show a form that became invalid while a save ran', () => {
-            const response = new Subject<HttpResponse<TextUnit>>();
-            vi.spyOn(textUnitService, 'update').mockReturnValueOnce(response);
+            const response = new Subject<GeneratedTextUnit>();
+            vi.spyOn(textUnitApi, 'updateTextUnit').mockReturnValueOnce(response);
             wizardUnitComponent.startEditLectureUnit(savedTextUnit(3, 'Reading'));
 
             wizardUnitComponent.onTextUnitChanged(textChange('Reading list', true));
             wizardUnitComponent.onTextUnitChanged(textChange('', false, false));
-            response.next(new HttpResponse({ status: 200 }));
+            response.next({ type: 'text' });
             response.complete();
 
             expect(wizardUnitComponent.autosaveState().kind).toBe('invalid');
@@ -1143,43 +1132,43 @@ describe('LectureUpdateUnitsComponent', () => {
         });
 
         it('should send the saved state again when the user returns to it while another state is being saved', () => {
-            const response = new Subject<HttpResponse<TextUnit>>();
-            const updateSpy = vi.spyOn(textUnitService, 'update').mockReturnValueOnce(response).mockReturnValue(savedResponse());
+            const response = new Subject<GeneratedTextUnit>();
+            const updateSpy = vi.spyOn(textUnitApi, 'updateTextUnit').mockReturnValueOnce(response).mockReturnValue(savedResponse());
             wizardUnitComponent.startEditLectureUnit(savedTextUnit(3, 'Reading'));
 
             wizardUnitComponent.onTextUnitChanged(textChange('Reading list', true));
             wizardUnitComponent.onTextUnitChanged(textChange('Reading', true));
-            response.next(new HttpResponse({ status: 200 }));
+            response.next({ type: 'text' });
             response.complete();
 
             expect(updateSpy).toHaveBeenCalledTimes(2);
-            expect(updateSpy.mock.calls[1][0].name).toBe('Reading');
+            expect(updateSpy.mock.calls[1][1].name).toBe('Reading');
             expect(wizardUnitComponent.autosaveState().kind).toBe('saved');
         });
 
         it('should send an empty list when the last competency is removed, because missing links mean unchanged', () => {
-            const updateSpy = vi.spyOn(textUnitService, 'update').mockReturnValue(savedResponse());
+            const updateSpy = vi.spyOn(textUnitApi, 'updateTextUnit').mockReturnValue(savedResponse());
             const unit = savedTextUnit(3, 'Reading');
             unit.competencyLinks = [competencyLink()];
             wizardUnitComponent.startEditLectureUnit(unit);
 
             wizardUnitComponent.onTextUnitChanged({ data: { name: 'Reading', content: 'Content', competencyLinks: undefined }, immediate: true, valid: true });
 
-            expect(updateSpy.mock.calls[0][0].competencyLinks).toEqual([]);
+            expect(updateSpy.mock.calls[0][1].competencyLinks).toEqual([]);
         });
 
         it('should send no links for an item that has none', () => {
-            const updateSpy = vi.spyOn(textUnitService, 'update').mockReturnValue(savedResponse());
+            const updateSpy = vi.spyOn(textUnitApi, 'updateTextUnit').mockReturnValue(savedResponse());
             wizardUnitComponent.startEditLectureUnit(savedTextUnit(3, 'Reading'));
 
             wizardUnitComponent.onTextUnitChanged(textChange('Reading list', true));
 
-            expect(updateSpy.mock.calls[0][0].competencyLinks).toBeUndefined();
+            expect(updateSpy.mock.calls[0][1].competencyLinks).toBeUndefined();
         });
 
         it('should report a save that fails after the page was left in an alert', () => {
-            const response = new Subject<HttpResponse<TextUnit>>();
-            vi.spyOn(textUnitService, 'update').mockReturnValueOnce(response);
+            const response = new Subject<GeneratedTextUnit>();
+            vi.spyOn(textUnitApi, 'updateTextUnit').mockReturnValueOnce(response);
             const alertSpy = vi.spyOn(TestBed.inject(AlertService), 'error');
             wizardUnitComponent.startEditLectureUnit(savedTextUnit(3, 'Reading'));
             wizardUnitComponent.onTextUnitChanged(textChange('Reading list', true));
@@ -1191,14 +1180,14 @@ describe('LectureUpdateUnitsComponent', () => {
         });
 
         it('should keep the form open when it becomes invalid while Done waits for a save', () => {
-            const response = new Subject<HttpResponse<TextUnit>>();
-            vi.spyOn(textUnitService, 'update').mockReturnValueOnce(response);
+            const response = new Subject<GeneratedTextUnit>();
+            vi.spyOn(textUnitApi, 'updateTextUnit').mockReturnValueOnce(response);
             wizardUnitComponent.startEditLectureUnit(savedTextUnit(3, 'Reading'));
             wizardUnitComponent.onTextUnitChanged(textChange('Reading list', true));
 
             wizardUnitComponent.saveAndCloseEditor();
             wizardUnitComponent.onTextUnitChanged(textChange('', false, false));
-            response.next(new HttpResponse({ status: 200 }));
+            response.next({ type: 'text' });
             response.complete();
 
             expect(wizardUnitComponent.editingUnitId()).toBe(3);
@@ -1206,7 +1195,7 @@ describe('LectureUpdateUnitsComponent', () => {
         });
 
         it('should let the user discard a change that cannot be saved', () => {
-            const updateSpy = vi.spyOn(textUnitService, 'update');
+            const updateSpy = vi.spyOn(textUnitApi, 'updateTextUnit');
             wizardUnitComponent.startEditLectureUnit(savedTextUnit(3, 'Reading'));
             wizardUnitComponent.onTextUnitChanged(textChange('', false, false));
 
@@ -1218,7 +1207,7 @@ describe('LectureUpdateUnitsComponent', () => {
         });
 
         it('should let the user discard a change that failed to save, and continue at the Edit button of the item', () => {
-            vi.spyOn(textUnitService, 'update').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
+            vi.spyOn(textUnitApi, 'updateTextUnit').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
             wizardUnitComponent.startEditLectureUnit(savedTextUnit(3, 'Reading'));
             wizardUnitComponent.onTextUnitChanged(textChange('Reading list', true));
             expect(wizardUnitComponent.autosaveState().kind).toBe('failed');
@@ -1244,7 +1233,7 @@ describe('LectureUpdateUnitsComponent', () => {
         });
 
         it('should save a waiting change at once on Enter in a single-line field of the item, but not on Enter in its markdown editor', () => {
-            const updateSpy = vi.spyOn(textUnitService, 'update').mockReturnValue(savedResponse());
+            const updateSpy = vi.spyOn(textUnitApi, 'updateTextUnit').mockReturnValue(savedResponse());
             const editor = document.createElement('div');
             const nameField = document.createElement('input');
             nameField.type = 'text';
@@ -1278,13 +1267,13 @@ describe('LectureUpdateUnitsComponent', () => {
         });
 
         it('should keep an item open that the user opened while a new item was created', () => {
-            const created = new Subject<HttpResponse<TextUnit>>();
-            vi.spyOn(textUnitService, 'create').mockReturnValue(created);
+            const created = new Subject<GeneratedTextUnit>();
+            vi.spyOn(textUnitApi, 'createTextUnit').mockReturnValue(created);
             wizardUnitComponent.onCreateLectureUnit(LectureUnitType.TEXT);
             wizardUnitComponent.createTextUnit({ name: 'New reading' });
 
             wizardUnitComponent.startEditLectureUnit(savedTextUnit(3, 'Reading'));
-            created.next(new HttpResponse({ body: new TextUnit(), status: 201 }));
+            created.next({ type: 'text' });
             created.complete();
 
             expect(wizardUnitComponent.isEditingLectureUnit()).toBe(true);
@@ -1292,8 +1281,8 @@ describe('LectureUpdateUnitsComponent', () => {
         });
 
         it('should not count the running save of a deleted item for the item opened next', () => {
-            const response = new Subject<HttpResponse<TextUnit>>();
-            vi.spyOn(textUnitService, 'update').mockReturnValueOnce(response);
+            const response = new Subject<GeneratedTextUnit>();
+            vi.spyOn(textUnitApi, 'updateTextUnit').mockReturnValueOnce(response);
             wizardUnitComponent.onLectureUnitsChange([savedTextUnit(3, 'Reading'), savedOnlineUnit()]);
             wizardUnitComponent.startEditLectureUnit(savedTextUnit(3, 'Reading'));
             wizardUnitComponent.onTextUnitChanged(textChange('Reading list', true));
@@ -1303,7 +1292,7 @@ describe('LectureUpdateUnitsComponent', () => {
 
             expect(wizardUnitComponent.editingUnitId()).toBe(4);
             expect(wizardUnitComponent.autosaveState()).toEqual({ kind: 'idle' });
-            response.next(new HttpResponse({ status: 200 }));
+            response.next({ type: 'text' });
             response.complete();
             expect(wizardUnitComponent.editingUnitId()).toBe(4);
         });
@@ -1318,7 +1307,7 @@ describe('LectureUpdateUnitsComponent', () => {
         });
 
         it('should not save a form that cannot be saved and keep it open on Done', () => {
-            const updateSpy = vi.spyOn(textUnitService, 'update');
+            const updateSpy = vi.spyOn(textUnitApi, 'updateTextUnit');
             wizardUnitComponent.startEditLectureUnit(savedTextUnit(3, 'Reading'));
 
             wizardUnitComponent.onTextUnitChanged(textChange('', false, false));
@@ -1332,7 +1321,7 @@ describe('LectureUpdateUnitsComponent', () => {
         });
 
         it('should save at once and close the form on Done', () => {
-            const updateSpy = vi.spyOn(textUnitService, 'update').mockReturnValue(savedResponse());
+            const updateSpy = vi.spyOn(textUnitApi, 'updateTextUnit').mockReturnValue(savedResponse());
             wizardUnitComponent.startEditLectureUnit(savedTextUnit(3, 'Reading'));
             wizardUnitComponent.onTextUnitChanged(textChange('Reading list'));
 
@@ -1349,14 +1338,14 @@ describe('LectureUpdateUnitsComponent', () => {
         });
 
         it('should save and close the open item before opening another one', () => {
-            const updateSpy = vi.spyOn(textUnitService, 'update').mockReturnValue(savedResponse());
+            const updateSpy = vi.spyOn(textUnitApi, 'updateTextUnit').mockReturnValue(savedResponse());
             wizardUnitComponent.startEditLectureUnit(savedTextUnit(3, 'Reading'));
             wizardUnitComponent.onTextUnitChanged(textChange('Reading list'));
 
             wizardUnitComponent.startEditLectureUnit(savedOnlineUnit());
 
             expect(updateSpy).toHaveBeenCalledOnce();
-            expect(updateSpy.mock.calls[0][0].name).toBe('Reading list');
+            expect(updateSpy.mock.calls[0][1].name).toBe('Reading list');
             expect(wizardUnitComponent.editingUnitId()).toBe(4);
             expect(wizardUnitComponent.isOnlineUnitFormOpen()).toBe(true);
             expect(wizardUnitComponent.isTextUnitFormOpen()).toBe(false);
@@ -1364,7 +1353,7 @@ describe('LectureUpdateUnitsComponent', () => {
         });
 
         it('should save and close the open item before a new item is added', () => {
-            const updateSpy = vi.spyOn(textUnitService, 'update').mockReturnValue(savedResponse());
+            const updateSpy = vi.spyOn(textUnitApi, 'updateTextUnit').mockReturnValue(savedResponse());
             wizardUnitComponent.startEditLectureUnit(savedTextUnit(3, 'Reading'));
             wizardUnitComponent.onTextUnitChanged(textChange('Reading list'));
 
@@ -1389,7 +1378,7 @@ describe('LectureUpdateUnitsComponent', () => {
         });
 
         it('should save a waiting change as soon as the user leaves a field', () => {
-            const updateSpy = vi.spyOn(textUnitService, 'update').mockReturnValue(savedResponse());
+            const updateSpy = vi.spyOn(textUnitApi, 'updateTextUnit').mockReturnValue(savedResponse());
             wizardUnitComponent.startEditLectureUnit(savedTextUnit(3, 'Reading'));
             wizardUnitComponent.onTextUnitChanged(textChange('Reading list'));
 
@@ -1399,34 +1388,34 @@ describe('LectureUpdateUnitsComponent', () => {
         });
 
         it('should send a waiting change when the page is left', () => {
-            const updateSpy = vi.spyOn(textUnitService, 'update').mockReturnValue(savedResponse());
+            const updateSpy = vi.spyOn(textUnitApi, 'updateTextUnit').mockReturnValue(savedResponse());
             wizardUnitComponent.startEditLectureUnit(savedTextUnit(3, 'Reading'));
             wizardUnitComponent.onTextUnitChanged(textChange('Reading list'));
 
             wizardUnitComponentFixture.destroy();
 
             expect(updateSpy).toHaveBeenCalledOnce();
-            expect(updateSpy.mock.calls[0][0].name).toBe('Reading list');
+            expect(updateSpy.mock.calls[0][1].name).toBe('Reading list');
         });
 
         it('should save an online resource without an alert', () => {
-            const updateSpy = vi.spyOn(TestBed.inject(OnlineUnitService), 'update').mockReturnValue(of(new HttpResponse<OnlineUnit>({ status: 200 })));
+            const updateSpy = vi.spyOn(TestBed.inject(OnlineUnitApi), 'updateOnlineUnit').mockReturnValue(of({ type: 'online' }));
             wizardUnitComponent.startEditLectureUnit(savedOnlineUnit());
 
             wizardUnitComponent.onOnlineUnitChanged({ data: { name: 'Artemis', source: 'https://artemis.tum.de', description: 'Start here' }, immediate: false, valid: true });
             vi.advanceTimersByTime(AUTOSAVE_DELAY_MS);
 
             expect(updateSpy).toHaveBeenCalledOnce();
-            const [sentUnit, , context] = updateSpy.mock.calls[0];
+            const [, sentUnit, options] = updateSpy.mock.calls[0];
             expect(sentUnit.description).toBe('Start here');
             expect(sentUnit.source).toBe('https://artemis.tum.de');
-            expect(context?.get(SKIP_HTTP_ERROR_ALERT)).toBe(true);
+            expect(options?.context?.get(SKIP_HTTP_ERROR_ALERT)).toBe(true);
         });
 
         describe('content that is still being saved', () => {
             it('should count a change while it waits for the pause and while it is sent, but not once it is saved', () => {
-                const response = new Subject<HttpResponse<TextUnit>>();
-                vi.spyOn(textUnitService, 'update').mockReturnValueOnce(response);
+                const response = new Subject<GeneratedTextUnit>();
+                vi.spyOn(textUnitApi, 'updateTextUnit').mockReturnValueOnce(response);
                 wizardUnitComponent.startEditLectureUnit(savedTextUnit(3, 'Reading'));
                 expect(wizardUnitComponent.isSavingContent()).toBe(false);
 
@@ -1437,15 +1426,15 @@ describe('LectureUpdateUnitsComponent', () => {
                 vi.advanceTimersByTime(AUTOSAVE_DELAY_MS);
                 expect(wizardUnitComponent.isSavingContent()).toBe(true);
 
-                response.next(new HttpResponse({ status: 200 }));
+                response.next({ type: 'text' });
                 response.complete();
                 expect(wizardUnitComponent.isSavingContent()).toBe(false);
                 expect(wizardUnitComponent.hasUnsavedContent()).toBe(false);
             });
 
             it('should count a failed change as unsaved, not as being saved, until it is sent again', () => {
-                const retry = new Subject<HttpResponse<TextUnit>>();
-                vi.spyOn(textUnitService, 'update')
+                const retry = new Subject<GeneratedTextUnit>();
+                vi.spyOn(textUnitApi, 'updateTextUnit')
                     .mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 400, error: { title: 'The name is too long' } })))
                     .mockReturnValueOnce(retry);
                 wizardUnitComponent.startEditLectureUnit(savedTextUnit(3, 'Reading'));
@@ -1461,7 +1450,7 @@ describe('LectureUpdateUnitsComponent', () => {
             it('should send a change that waits for the pause and report text of the markdown editor before leaving is decided', () => {
                 const flushPendingEdits = vi.fn();
                 wizardUnitComponent.textUnitForm = signal({ flushPendingEdits } as unknown as TextUnitFormComponent).asReadonly() as Signal<TextUnitFormComponent | undefined>;
-                const updateSpy = vi.spyOn(textUnitService, 'update').mockReturnValue(savedResponse());
+                const updateSpy = vi.spyOn(textUnitApi, 'updateTextUnit').mockReturnValue(savedResponse());
                 wizardUnitComponent.startEditLectureUnit(savedTextUnit(3, 'Reading'));
 
                 wizardUnitComponent.onTextUnitChanged(textChange('Reading list'));
@@ -1473,7 +1462,7 @@ describe('LectureUpdateUnitsComponent', () => {
             });
 
             it('should not send a failed change again before leaving is decided', () => {
-                const updateSpy = vi.spyOn(textUnitService, 'update').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
+                const updateSpy = vi.spyOn(textUnitApi, 'updateTextUnit').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
                 wizardUnitComponent.startEditLectureUnit(savedTextUnit(3, 'Reading'));
                 wizardUnitComponent.onTextUnitChanged(textChange('Reading list', true));
 
@@ -1506,7 +1495,7 @@ describe('LectureUpdateUnitsComponent', () => {
 
         it('should not send a failed change again when the user leaves its field, but on Retry', () => {
             const updateSpy = vi
-                .spyOn(textUnitService, 'update')
+                .spyOn(textUnitApi, 'updateTextUnit')
                 .mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 503, error: { title: 'Service unavailable' } })))
                 .mockReturnValue(savedResponse());
             wizardUnitComponent.startEditLectureUnit(savedTextUnit(3, 'Reading'));
@@ -1524,12 +1513,12 @@ describe('LectureUpdateUnitsComponent', () => {
 
             wizardUnitComponent.retryAutosave();
             expect(updateSpy).toHaveBeenCalledTimes(2);
-            expect(updateSpy.mock.calls[1][0].name).toBe('Reading list');
+            expect(updateSpy.mock.calls[1][1].name).toBe('Reading list');
         });
 
         it('should send a newer change after a failed save when the user leaves its field', () => {
             const updateSpy = vi
-                .spyOn(textUnitService, 'update')
+                .spyOn(textUnitApi, 'updateTextUnit')
                 .mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 503, error: { title: 'Service unavailable' } })))
                 .mockReturnValue(savedResponse());
             wizardUnitComponent.startEditLectureUnit(savedTextUnit(3, 'Reading'));
@@ -1539,7 +1528,7 @@ describe('LectureUpdateUnitsComponent', () => {
             wizardUnitComponent.onEditorFocusOut();
 
             expect(updateSpy).toHaveBeenCalledTimes(2);
-            expect(updateSpy.mock.calls[1][0].name).toBe('Reading list for week 2');
+            expect(updateSpy.mock.calls[1][1].name).toBe('Reading list for week 2');
         });
 
         describe('file and video items', () => {
