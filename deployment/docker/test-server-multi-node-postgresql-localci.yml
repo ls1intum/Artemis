@@ -1,7 +1,15 @@
 # ----------------------------------------------------------------------------------------------------------------------
-# Setup for a multi-node test server with MySQL & LocalCI
+# Setup for a multi-node test server with Postgres & LocalCI
 # ----------------------------------------------------------------------------------------------------------------------
 # It is designed to take in a lot of environment variables to take in all the configuration of the test server.
+#
+# Two nodes, both behind nginx for HTTP and git over SSH. A third node would cost about 2 GB of memory that a test
+# server needs for its build containers, and two are enough to exercise every cross-node code path.
+#
+# The nodes share their state through Valkey on the Redis distributed data provider, so no Hazelcast instance and no
+# JHipster Registry is involved. The Redis connection is set in `environment`, which takes precedence over every
+# env_file: the host and client names follow from the services in this file, and the password comes from REDIS_PASSWORD
+# like the one of the redis service, so a deployment only has to set that one variable.
 # ----------------------------------------------------------------------------------------------------------------------
 
 services:
@@ -16,7 +24,7 @@ services:
             &depends-on-base
             postgres:
                 condition: service_healthy
-            jhipster-registry:
+            redis:
                 condition: service_healthy
             activemq-broker:
                 condition: service_healthy
@@ -28,6 +36,15 @@ services:
             - ${ARTEMIS_ENV_FILE:-./artemis/config/prod-multinode.env}
             - ${ARTEMIS_NODE_1_ENV_FILE:-./artemis/config/node1.env}
             - ./artemis/config/postgres.env
+        environment:
+            &redis-environment
+            ARTEMIS_DISTRIBUTEDDATA_PROVIDER: Redis
+            SPRING_DATA_REDIS_HOST: artemis-redis
+            SPRING_DATA_REDIS_PORT: 6379
+            SPRING_DATA_REDIS_USERNAME: artemis
+            SPRING_DATA_REDIS_PASSWORD: ${REDIS_PASSWORD:-artemis}
+            # The node identity the Redis provider reports, so it must be unique per node and start with `artemis`.
+            SPRING_DATA_REDIS_CLIENTNAME: artemis-node-1
         volumes:
             - ${ARTEMIS_VOLUME_MOUNT:-./.docker-data/artemis-data}:/opt/artemis/data
             - ${ARTEMIS_LEGAL_MOUNT:-./.docker-data/artemis-legal}:/opt/artemis/legal
@@ -38,33 +55,48 @@ services:
         <<: *artemis-app-base
         container_name: artemis-app-node-2
         depends_on:
-          <<: *depends-on-base
-          artemis-app-node-1:
-              condition: service_healthy
-        env_file:
-            - ${ARTEMIS_ENV_FILE:-./artemis/config/prod-multinode.env}
-            - ${ARTEMIS_NODE_2_ENV_FILE:-./artemis/config/node2.env}
-            - ./artemis/config/postgres.env
-
-
-    artemis-app-node-3:
-        <<: *artemis-app-base
-        container_name: artemis-app-node-3
-        depends_on:
             <<: *depends-on-base
             artemis-app-node-1:
                 condition: service_healthy
         env_file:
             - ${ARTEMIS_ENV_FILE:-./artemis/config/prod-multinode.env}
-            - ${ARTEMIS_NODE_3_ENV_FILE:-./artemis/config/node3.env}
+            - ${ARTEMIS_NODE_2_ENV_FILE:-./artemis/config/node2.env}
             - ./artemis/config/postgres.env
+        environment:
+            <<: *redis-environment
+            SPRING_DATA_REDIS_CLIENTNAME: artemis-node-2
 
-    jhipster-registry:
+    redis:
         extends:
-            file: ./broker-registry.yml
-            service: jhipster-registry
-        networks:
+            file: ./redis.yml
+            service: redis
+        restart: always
+        # The default user is disabled, so only the `artemis` user can connect. Protected mode would otherwise refuse
+        # every connection from outside the container, because it only checks whether the default user has a password.
+        # AOF persistence keeps queued build jobs, locks and the other shared state across a restart of the container.
+        command:
+            - valkey-server
+            - --appendonly
+            - "yes"
+            - --protected-mode
+            - "no"
+            - --user
+            - default
+            - "off"
+            - --user
             - artemis
+            - "on"
+            - ">${REDIS_PASSWORD:-artemis}"
+            - "~*"
+            - "&*"
+            - "+@all"
+        environment:
+            REDISCLI_AUTH: ${REDIS_PASSWORD:-artemis}
+        healthcheck:
+            # redis-cli exits with 0 on an error reply such as NOAUTH, so the reply itself is checked.
+            test: ["CMD-SHELL", "redis-cli --no-auth-warning --user artemis ping | grep -q PONG"]
+        volumes:
+            - ${REDIS_DATA_VOLUME:-./.docker-data/redis-data}:/data
 
     activemq-broker:
         extends:
@@ -93,12 +125,10 @@ services:
                 condition: service_started
             artemis-app-node-2:
                 condition: service_started
-            artemis-app-node-3:
-                condition: service_started
         restart: always
         volumes:
             - ./nginx/artemis-upstream-multi-node.conf:/etc/nginx/includes/artemis-upstream.conf:ro
-            - ./nginx/artemis-ssh-upstream-multi-node.conf:/etc/nginx/includes/artemis-ssh-upstream.conf:ro
+            - ./nginx/artemis-ssh-upstream-two-nodes.conf:/etc/nginx/includes/artemis-ssh-upstream.conf:ro
             - type: bind
               source: ${NGINX_PROXY_SSL_CERTIFICATE_PATH:-../../src/test/playwright/certs/artemis-nginx+4.pem}
               target: "/certs/fullchain.pem"
