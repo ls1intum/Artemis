@@ -44,9 +44,10 @@ disable and do not autofix it. Other provider metadata also keeps `@Injectable`.
 
 ## Generated HTTP transport
 
-Generated Observable APIs live in `app/openapi/api/*-api.ts`. GET resource factories and their
-query parameter interfaces live in separate `app/openapi/api/*-resources.ts` files. Import each
-from its matching file; generation enables both `useHttpResource` and `separateResources`.
+Generated Observable APIs live in `src/main/webapp/app/openapi/api/*-api.ts`. GET resource
+factories and their query parameter interfaces live in separate
+`src/main/webapp/app/openapi/api/*-resources.ts` files. Import each from its matching file;
+generation enables both `useHttpResource` and `separateResources`.
 Create a component-owned resource once in its injection context so Angular cleans it up on
 destruction. Keep Observable subscriptions when reads need independent failure handling and
 cancellation. Change the server contract or generation inputs and regenerate; never edit generated
