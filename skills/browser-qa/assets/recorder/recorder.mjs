@@ -10,11 +10,12 @@
 import { chromium } from 'playwright-core';
 import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import { createRequire } from 'node:module';
 
 const require = createRequire(import.meta.url);
-const HOME = process.env.HOME;
+const HOME = process.env.HOME || os.homedir();
 
 // mp4 conversion: prefer ffmpeg-static, fall back to a system ffmpeg.
 let FFMPEG = null;
@@ -24,14 +25,19 @@ try { FFMPEG = require('ffmpeg-static'); } catch { FFMPEG = 'ffmpeg'; }
 // ($PLAYWRIGHT_BROWSERS_PATH, else the platform default).
 function findChromium() {
   if (process.env.CHROME_PATH) return process.env.CHROME_PATH;
-  const mac = process.platform === 'darwin';
-  const cache = process.env.PLAYWRIGHT_BROWSERS_PATH || (mac ? `${HOME}/Library/Caches/ms-playwright` : `${HOME}/.cache/ms-playwright`);
-  const subs = mac
-    ? ['chrome-mac-arm64', 'chrome-mac-x64', 'chrome-mac'].flatMap(dir => [
-        `${dir}/Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing`,
-        `${dir}/Chromium.app/Contents/MacOS/Chromium`,
-      ])
-    : ['chrome-linux64/chrome', 'chrome-linux/chrome'];
+  const platform = process.platform;
+  const defaultCache = {
+    darwin: `${HOME}/Library/Caches/ms-playwright`,
+    win32: path.join(process.env.LOCALAPPDATA || path.join(os.homedir(), 'AppData', 'Local'), 'ms-playwright'),
+  }[platform] ?? `${HOME}/.cache/ms-playwright`;
+  const cache = process.env.PLAYWRIGHT_BROWSERS_PATH || defaultCache;
+  const subs = {
+    darwin: ['chrome-mac-arm64', 'chrome-mac-x64', 'chrome-mac'].flatMap(dir => [
+      `${dir}/Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing`,
+      `${dir}/Chromium.app/Contents/MacOS/Chromium`,
+    ]),
+    win32: ['chrome-win64/chrome.exe', 'chrome-win/chrome.exe'],
+  }[platform] ?? ['chrome-linux64/chrome', 'chrome-linux/chrome'];
   const revs = fs.existsSync(cache)
     ? fs.readdirSync(cache).filter(d => /^chromium-\d+$/.test(d)).sort((a, b) => Number(b.split('-')[1]) - Number(a.split('-')[1]))
     : [];
