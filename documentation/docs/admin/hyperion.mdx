@@ -403,6 +403,13 @@ Keeping calls or recorded values while ignoring assertion failures does not esta
 that the learner has written effective tests. Running the learner's tests only against
 the correct supplied implementation does not establish whether they detect faults.
 
+For a single test class whose changes are confined to test bodies, another probe makes
+all assigned tests fail unconditionally. No weighted criterion may reward that variant,
+even when another criterion rejects it. Each credited assertion check must accept correct
+behavior and reject the relevant faulty behavior together. A separate positive check does
+not protect other criteria from undeserved credit. This additional probe does not apply
+when other learner code changes, so unrelated work is not mistaken for ineffective tests.
+
 The specification must declare ordinary Java support that routes the learner's actual
 calls through correct and faulty behavior. Private JDK instrumentation is unavailable;
 a failed grader setup cannot count as a learner assertion detecting a fault. Non-empty lifecycle

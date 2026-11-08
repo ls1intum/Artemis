@@ -152,6 +152,7 @@ Test count follows the design's partitions, not a quota. Non-Java languages keep
 own framework's idiom. Shared fixtures/helpers are fine when they keep each test's focus readable.
 
 When the learner writes tests, assess both sides: the learner tests pass on conforming behavior and fail on representative faulty behavior.
+For a test-writing task, each credited criterion must run the learner tests against correct behavior successfully and then require them to reject the relevant faulty behavior. A positive-only criterion can reward empty tests; a negative-only criterion can reward tests that always fail. A separate zero-weight positive guard does not protect the credit awarded by negative-only checks.
 Merely invoking them against the correct supplied implementation accepts empty test bodies. Put fault-variant selection and result interpretation in supplied instructor support;
 it must not become additional learner work. Grade the effect of the learner's assertions, not their source spelling or an incidental assertion-method count.
 Keep observation instrumentation inside supplied API constructors and methods, so the ordinary calls assigned by the brief are recorded automatically.

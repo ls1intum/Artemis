@@ -14,6 +14,18 @@ class StudentTestAssessmentHistoryTest {
     private final SemanticMutant probe = SemanticMutant.nonFailingStudentTests("src/LearnerTest.java", "original", "assertions suppressed");
 
     @Test
+    void anAlwaysFailingClassMustBeRecheckedAndCanBeClearedAfterGraderChanges() {
+        var history = new StudentTestAssessmentHistory();
+        var old = SemanticMutant.alwaysFailingStudentTests("src/LearnerTest.java", "old learner source", "always fails");
+        history.record("session", new SemanticMutantOutcome(old, Disposition.SURVIVED_GRADED_SUITE));
+        assertThat(history.complete("session", List.of())).singleElement().extracting(SemanticMutantOutcome::disposition).isEqualTo(Disposition.INCONCLUSIVE);
+
+        var current = SemanticMutant.alwaysFailingStudentTests(old.solutionPath(), "current learner source", "still always fails");
+        assertThat(history.complete("session", List.of(new SemanticMutantOutcome(current, Disposition.KILLED_BY_GRADED_SUITE)))).singleElement()
+                .extracting(SemanticMutantOutcome::disposition).isEqualTo(Disposition.KILLED_BY_GRADED_SUITE);
+    }
+
+    @Test
     void removingTheLearnerTestSurfaceCannotDischargeAnExecutedCounterexample() {
         var history = new StudentTestAssessmentHistory();
         history.complete("job", List.of(new SemanticMutantOutcome(probe, Disposition.SURVIVED_GRADED_SUITE)));

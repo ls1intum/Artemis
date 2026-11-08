@@ -143,6 +143,12 @@ public record AgentVerifyReport(int solutionTests, boolean solutionPassed, List<
         else if (!templateWronglyPassing.isEmpty()) {
             builder.append("Template WRONGLY PASSES (these assessed student-work tests must FAIL; preserve unrelated supplied behavior): ")
                     .append(renderNames(templateWronglyPassing)).append('\n');
+            builder.append(
+                    """
+                            For learner-test tasks, merely running tests successfully against correct code also accepts empty tests; merely expecting an assertion error accepts tests that always fail. \
+                            Each credited check must first run the learner tests successfully against correct behavior, then require them to reject the relevant faulty behavior. \
+                            Repair the grading checks and their plan; keep the supplied implementation correct and identical in both repositories.
+                            """);
         }
         else if (!templateFailed) {
             builder.append("Template does not satisfy the starter policy. Read the blocking reasons: assessed work must fail, while preservation checks must pass.\n");

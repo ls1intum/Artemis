@@ -30,7 +30,9 @@ public record SemanticMutant(String ruleId, String solutionPath, String original
         /** The server removed the bodies of simple learner-owned JUnit tests; a passing graded suite does not assess their assertions. */
         EMPTY_STUDENT_TESTS,
         /** Learner test actions run, but their assertion failures cannot reach the grader. */
-        NON_FAILING_STUDENT_TESTS
+        NON_FAILING_STUDENT_TESTS,
+        /** All assigned learner tests fail unconditionally; no weighted criterion may reward them. */
+        ALWAYS_FAILING_STUDENT_TESTS
     }
 
     /** Concise run-local history used only to keep later mutation samples novel; it carries no contract authority or executable-evidence claim. */
@@ -75,6 +77,13 @@ public record SemanticMutant(String ruleId, String solutionPath, String original
                 Evidence.NON_FAILING_STUDENT_TESTS);
     }
 
+    /** A pure test-writing candidate whose assigned test bodies fail regardless of the implementation under test. */
+    public static SemanticMutant alwaysFailingStudentTests(String path, String source, String variant) {
+        String rule = "student-tests-always-failing";
+        return new SemanticMutant(rule, path, source, variant, new ContractWitness(rule, "", "", "every assigned learner test unconditionally throws an assertion error"), null,
+                Evidence.ALWAYS_FAILING_STUDENT_TESTS);
+    }
+
     /**
      * Identifies the independently rewritten learner method in diagnostics and retained assessment obligations.
      *
@@ -92,7 +101,7 @@ public record SemanticMutant(String ruleId, String solutionPath, String original
 
     /** Whether this probe tests the effect of learner-owned test assertions. */
     public boolean testsLearnerAssertions() {
-        return evidence == Evidence.EMPTY_STUDENT_TESTS || evidence == Evidence.NON_FAILING_STUDENT_TESTS;
+        return evidence == Evidence.EMPTY_STUDENT_TESTS || evidence == Evidence.NON_FAILING_STUDENT_TESTS || evidence == Evidence.ALWAYS_FAILING_STUDENT_TESTS;
     }
 
     /**

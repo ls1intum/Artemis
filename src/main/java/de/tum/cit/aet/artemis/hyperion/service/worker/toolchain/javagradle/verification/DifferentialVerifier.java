@@ -849,7 +849,15 @@ public class DifferentialVerifier {
                     studentTestAssessmentHistory.record(sessionId, outcome);
                     completed.accept(outcome);
                 });
-        return studentTestAssessmentHistory.complete(sessionId, outcomes);
+        List<SemanticMutantOutcome> allOutcomes = new ArrayList<>(outcomes);
+        List<SemanticMutantOutcome> alwaysFailing = AlwaysFailingStudentTestProbe.evaluate(producedTemplateFiles, producedSolutionFiles, testPlanJson,
+                (mutant, overlay) -> runSemanticMutantProbe(sandbox, sessionId, exercise, seededStructuralTests, mutant, overlay, restoreCandidate));
+        alwaysFailing.forEach(outcome -> {
+            studentTestAssessmentHistory.record(sessionId, outcome);
+            completed.accept(outcome);
+        });
+        allOutcomes.addAll(alwaysFailing);
+        return studentTestAssessmentHistory.complete(sessionId, allOutcomes);
     }
 
     /**

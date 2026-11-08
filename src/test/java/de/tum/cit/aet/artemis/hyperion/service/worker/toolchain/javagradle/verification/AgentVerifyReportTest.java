@@ -15,7 +15,16 @@ class AgentVerifyReportTest {
     void testsStageDefersTaskBindingGuidance() {
         AgentVerifyReport report = new AgentVerifyReport(1, true, List.of(), 1, true, true, List.of(), List.of("calculatesCost"), List.of(), List.of(), true, List.of());
 
-        assertThat(report.toTestsStageObservation()).contains("test-plan.json", "later STATEMENT stage").doesNotContain("bind each [task]");
+        assertThat(report.toTestsStageObservation()).contains("test-plan.json", "later STATEMENT stage").doesNotContain("bind each [task]", "Each credited check must first");
+    }
+
+    @Test
+    void aCreditedCheckThatPassesOnTheStarterGetsPairedGradingGuidance() {
+        AgentVerifyReport report = new AgentVerifyReport(2, true, List.of(), 2, true, true, List.of("acceptsCorrectTests"), List.of("acceptsCorrectTests", "rejectsFaultyBehavior"),
+                List.of(), List.of(), false, List.of("starter passes assessed work"));
+
+        assertThat(report.toTestsStageObservation()).contains("acceptsCorrectTests", "Each credited check must first", "then require them to reject",
+                "keep the supplied implementation correct");
     }
 
     @Test

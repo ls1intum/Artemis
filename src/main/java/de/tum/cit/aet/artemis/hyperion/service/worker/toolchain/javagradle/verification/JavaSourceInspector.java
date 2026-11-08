@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.UnaryOperator;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -87,20 +88,35 @@ final class JavaSourceInspector {
      * make this conservative probe inapplicable because assertions may execute outside the rewritten body.
      */
     static List<JUnitTestVariant> studentTestVariants(String source, String template) {
-        Map<String, String> suppliedBodies = new LinkedHashMap<>();
-        junitTestBodies(template).ifPresent(bodies -> bodies.forEach(body -> suppliedBodies.put(body.name(), template.substring(body.start(), body.end()))));
-        return junitTestBodies(source).orElse(List.of()).stream().filter(body -> !source.substring(body.start(), body.end()).equals(suppliedBodies.get(body.name())))
+        return changedJUnitTestBodies(source, template).stream()
                 .map(body -> new JUnitTestVariant(body.name(), rewriteJUnitBodies(source, List.of(body), false), rewriteJUnitBodies(source, List.of(body), true))).toList();
     }
 
+    /** Replaces every assigned test body by an unconditional failure, leaving supplied examples and declarations intact. */
+    static Optional<String> alwaysFailingStudentTests(String source, String template) {
+        List<JUnitTestBody> bodies = changedJUnitTestBodies(source, template);
+        String unchangedSource = rewriteJUnitBodies(source, junitTestBodies(source).orElse(List.of()), false);
+        String unchangedTemplate = rewriteJUnitBodies(template, junitTestBodies(template).orElse(List.of()), false);
+        return bodies.isEmpty() || !unchangedSource.equals(unchangedTemplate) ? Optional.empty()
+                : Optional.of(rewriteJUnitBodies(source, bodies, _ -> "org.junit.jupiter.api.Assertions.fail(\"Learner test always fails\");"));
+    }
+
+    private static List<JUnitTestBody> changedJUnitTestBodies(String source, String template) {
+        Map<String, String> suppliedBodies = new LinkedHashMap<>();
+        junitTestBodies(template).ifPresent(bodies -> bodies.forEach(body -> suppliedBodies.put(body.name(), template.substring(body.start(), body.end()))));
+        return junitTestBodies(source).orElse(List.of()).stream().filter(body -> !source.substring(body.start(), body.end()).equals(suppliedBodies.get(body.name()))).toList();
+    }
+
     private static String rewriteJUnitBodies(String source, List<JUnitTestBody> bodies, boolean suppressAssertionFailures) {
+        return rewriteJUnitBodies(source, bodies, body -> suppressAssertionFailures ? "try {" + body + "} catch (java.lang.AssertionError hyperionSuppressedAssertion) {}" : "");
+    }
+
+    private static String rewriteJUnitBodies(String source, List<JUnitTestBody> bodies, UnaryOperator<String> replacement) {
         StringBuilder variant = new StringBuilder();
         int copiedThrough = 0;
         for (JUnitTestBody body : bodies) {
             variant.append(source, copiedThrough, body.start());
-            if (suppressAssertionFailures) {
-                variant.append("try {").append(source, body.start(), body.end()).append("} catch (java.lang.AssertionError hyperionSuppressedAssertion) {}");
-            }
+            variant.append(replacement.apply(source.substring(body.start(), body.end())));
             copiedThrough = body.end();
         }
         return variant.append(source, copiedThrough, source.length()).toString();

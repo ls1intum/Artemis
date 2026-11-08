@@ -130,6 +130,14 @@ final class GenerationReviewSupport {
                             + "because they are unchanged in the print-only version; the finding clears once no graded test compares the transcript alone.",
                     changedSolutionLines(mutant));
         }
+        if (mutant.evidence() == SemanticMutant.Evidence.ALWAYS_FAILING_STUDENT_TESTS) {
+            return new SpecFidelityReport.Finding(SpecFidelityReport.Kind.EXECUTABLE_WEAK_TEST_ORACLE, "Some graded checks award credit when every learner test always fails",
+                    "The environment replaced every assigned learner test body in " + mutant.solutionPath()
+                            + " with an unconditional assertion error, leaving supplied code unchanged. " + mutant.counterexample().wrongBehavior()
+                            + ". This proves undeserved partial credit, not necessarily a full-credit bypass. For each credited learner-test criterion, verify that the learner tests "
+                            + "accept correct behavior and reject the relevant faulty behavior in the same check. A separate positive check cannot protect the credit awarded by other checks.",
+                    changedSolutionLines(mutant));
+        }
         if (mutant.testsLearnerAssertions()) {
             return new SpecFidelityReport.Finding(SpecFidelityReport.Kind.EXECUTABLE_WEAK_TEST_ORACLE,
                     "The graded tests accept ineffective learner assertions for " + mutant.ruleId(),

@@ -18,6 +18,16 @@ import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verif
 class GenerationReviewSupportTest {
 
     @Test
+    void unconditionalLearnerFailuresAreReportedAsUndeservedCreditRatherThanAFullSuitePass() {
+        var mutant = SemanticMutant.alwaysFailingStudentTests("src/LearnerTest.java", "original", "always fails");
+        var finding = GenerationReviewSupport.semanticMutantFinding(mutant);
+
+        assertThat(finding.kind()).isEqualTo(SpecFidelityReport.Kind.EXECUTABLE_WEAK_TEST_ORACLE);
+        assertThat(finding.requirement()).contains("Some graded checks");
+        assertThat(finding.detail()).contains("partial credit", "same check").doesNotContain("The graded suite still passed");
+    }
+
+    @Test
     void reviewProjectionRetainsAllExerciseCodeAndChangedLaunchersWithoutRepeatingBaselineLaunchers() {
         String launcher = "shell launch support\n".repeat(2_000);
         var baseline = Map.of(RepositoryRole.SOLUTION, Map.of("gradlew", launcher, "src/Given.java", "class Given {}"), RepositoryRole.TESTS, Map.of("gradlew", launcher));

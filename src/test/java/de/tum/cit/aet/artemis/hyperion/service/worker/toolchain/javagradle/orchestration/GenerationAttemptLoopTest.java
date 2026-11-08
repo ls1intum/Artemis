@@ -412,7 +412,7 @@ class GenerationAttemptLoopTest {
     }
 
     @ParameterizedTest
-    @EnumSource(value = SemanticMutant.Evidence.class, names = { "PRINTED_TRANSCRIPT", "EMPTY_STUDENT_TESTS", "NON_FAILING_STUDENT_TESTS" })
+    @EnumSource(value = SemanticMutant.Evidence.class, names = { "PRINTED_TRANSCRIPT", "EMPTY_STUDENT_TESTS", "NON_FAILING_STUDENT_TESTS", "ALWAYS_FAILING_STUDENT_TESTS" })
     void aMechanicallyValidDraftRetainsExecutedAssessmentDefects(SemanticMutant.Evidence evidence) {
         stubSchedulerFixture();
         when(stagedGenerationRunner.run(any(), any(), any(), anyString(), anyString(), any(), any(), anyString(), any(), any(), any(), any(), anyBoolean(), anyBoolean(), any(),
@@ -421,6 +421,7 @@ class GenerationAttemptLoopTest {
         var bypass = switch (evidence) {
             case EMPTY_STUDENT_TESTS -> SemanticMutant.emptyStudentTests("src/Scheduler.java", "class Scheduler {}", "class Scheduler { }");
             case NON_FAILING_STUDENT_TESTS -> SemanticMutant.nonFailingStudentTests("src/Scheduler.java", "class Scheduler {}", "class Scheduler { }");
+            case ALWAYS_FAILING_STUDENT_TESTS -> SemanticMutant.alwaysFailingStudentTests("src/Scheduler.java", "class Scheduler {}", "class Scheduler { }");
             default -> SemanticMutant.printedTranscript("src/Scheduler.java", "class Scheduler {}", "class Scheduler { }", "Scheduler");
         };
         if (bypass.testsLearnerAssertions()) {
@@ -443,7 +444,7 @@ class GenerationAttemptLoopTest {
     }
 
     @ParameterizedTest
-    @EnumSource(value = SemanticMutant.Evidence.class, names = { "PRINTED_TRANSCRIPT", "EMPTY_STUDENT_TESTS", "NON_FAILING_STUDENT_TESTS" })
+    @EnumSource(value = SemanticMutant.Evidence.class, names = { "PRINTED_TRANSCRIPT", "EMPTY_STUDENT_TESTS", "NON_FAILING_STUDENT_TESTS", "ALWAYS_FAILING_STUDENT_TESTS" })
     void anInconclusiveAssessmentKeepsADraftWithAnExplicitReviewFinding(SemanticMutant.Evidence evidence) {
         stubSchedulerFixture();
         when(stagedGenerationRunner.run(any(), any(), any(), anyString(), anyString(), any(), any(), anyString(), any(), any(), any(), any(), anyBoolean(), anyBoolean(), any(),
@@ -452,6 +453,7 @@ class GenerationAttemptLoopTest {
         var bypass = switch (evidence) {
             case EMPTY_STUDENT_TESTS -> SemanticMutant.emptyStudentTests("src/Scheduler.java", "class Scheduler {}", "class Scheduler { }");
             case NON_FAILING_STUDENT_TESTS -> SemanticMutant.nonFailingStudentTests("src/Scheduler.java", "class Scheduler {}", "class Scheduler { }");
+            case ALWAYS_FAILING_STUDENT_TESTS -> SemanticMutant.alwaysFailingStudentTests("src/Scheduler.java", "class Scheduler {}", "class Scheduler { }");
             default -> SemanticMutant.printedTranscript("src/Scheduler.java", "class Scheduler {}", "class Scheduler { }", "Scheduler");
         };
         if (bypass.testsLearnerAssertions()) {

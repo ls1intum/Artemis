@@ -68,6 +68,24 @@ class JavaSourceInspectorTest {
     }
 
     @Test
+    void unconditionalFailureChangesEveryAssignedBodyButPreservesSuppliedExamples() {
+        String template = """
+                class Learner {
+                    @org.junit.jupiter.api.Test void supplied() { assertTrue(true); }
+                    @org.junit.jupiter.api.Test void first() {}
+                    @org.junit.jupiter.api.Test void second() {}
+                    int helper() { return 2; }
+                }
+                """;
+        String solution = template.replace("void first() {}", "void first() { assertEquals(3, API.sum()); }").replace("void second() {}",
+                "void second() { assertEquals(4, API.size()); }");
+
+        assertThat(JavaSourceInspector.alwaysFailingStudentTests(solution, template))
+                .hasValueSatisfying(variant -> assertThat(variant).contains("void supplied() { assertTrue(true); }", "int helper() { return 2; }",
+                        "void first() {org.junit.jupiter.api.Assertions.fail(", "void second() {org.junit.jupiter.api.Assertions.fail(").doesNotContain("API.sum()", "API.size()"));
+    }
+
+    @Test
     void emptyLifecycleHooksDoNotDisableAssertionAssessment() {
         String source = """
                 class Learner {

@@ -36,6 +36,7 @@ Keep observation instrumentation inside supplied API constructors and methods, s
 Unless instrumentation is an explicit learning objective, learner code must not call recorders, registries, grading callbacks or reset functions to earn credit.
 A conforming learner implementation that follows the statement without those extra calls must pass. Hidden tests cannot make an undeclared recording call mandatory.
 The supplied observer records what the learner actually did; it must neither perform those actions nor trust a learner's claim that an unobserved action happened.
+For each credited learner-test criterion, require the learner tests to accept correct behavior and reject the relevant faulty behavior in the same check. A separate positive check does not protect other criteria from always-failing learner tests, and a standalone positive check can reward empty tests.
 For test-writing exercises, distinguish checking the supplied implementation from checking the learner-written tests. A teacher test that only calls supplied code is a zero-credit preservation check, even if the Testing Strategy labels its owner as the learner test class. Reject a positive-weight learner seam whose observations do not depend on learner work. Hidden variants require a declared observation path through that work; direct tests of the supplied API do not establish it.
 
 A grading repair must preserve the learner's assigned reasoning. Supplying cases or assertions that the learner was asked to choose or write changes the learning activity;
