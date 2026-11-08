@@ -367,6 +367,265 @@ paths:
           content:
             application/json:
               schema: {$ref: '#/components/schemas/QuizSubmissionBeforeEvaluation'}
+  /api/lecture/lectures:
+    get:
+      tags: [lecture]
+      operationId: getAllLecturesOnPage
+      parameters:
+      - name: page
+        in: query
+        required: true
+        schema: {type: integer, format: int32}
+      - name: pageSize
+        in: query
+        required: true
+        schema: {type: integer, format: int32}
+      - name: sortingOrder
+        in: query
+        required: true
+        schema:
+          type: string
+          enum: [ASCENDING, DESCENDING]
+      - name: sortedColumn
+        in: query
+        required: true
+        schema: {type: string}
+      - name: searchTerm
+        in: query
+        required: false
+        schema: {type: string, default: ''}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/SearchResultPageDTOSimpleLecture'}
+    put:
+      tags: [lecture]
+      operationId: updateLecture
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/SimpleLecture'}
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/SimpleLecture'}
+    post:
+      tags: [lecture]
+      summary: Create a lecture
+      description: 'Creates an empty lecture in a course (set course with its id).
+        title is required; startDate, if set, must not be after endDate. A lecture
+        has no release date of its own: students see it with its title and description
+        at once, and only its units can stay hidden with a releaseDate in the future.
+        channelName names the lecture''s communication channel and is derived from
+        the title if omitted.'
+      operationId: createLecture
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/SimpleLecture'}
+        required: true
+      responses:
+        '201':
+          description: The lecture was created.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/SimpleLecture'}
+  /api/lecture/lectures/{lectureId}/text-units:
+    put:
+      tags: [text-unit]
+      operationId: updateTextUnit
+      parameters:
+      - name: lectureId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/TextUnit'}
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/TextUnit'}
+    post:
+      tags: [text-unit]
+      operationId: createTextUnit
+      parameters:
+      - name: lectureId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/TextUnit'}
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/TextUnit'}
+  /api/lecture/lectures/{lectureId}/online-units:
+    put:
+      tags: [online-unit]
+      operationId: updateOnlineUnit
+      parameters:
+      - name: lectureId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/OnlineUnit'}
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/OnlineUnit'}
+    post:
+      tags: [online-unit]
+      operationId: createOnlineUnit
+      parameters:
+      - name: lectureId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/OnlineUnit'}
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/OnlineUnit'}
+  /api/lecture/lectures/{lectureId}/lecture-units-order:
+    put:
+      tags: [lecture-unit]
+      operationId: updateLectureUnitsOrder
+      parameters:
+      - name: lectureId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: array
+              items: {type: integer, format: int64}
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/LectureUnit'}
+  /api/lecture/lectures/{lectureId}/attachment-video-units/{attachmentVideoUnitId}:
+    get:
+      tags: [attachment-video-unit]
+      operationId: getAttachmentVideoUnit
+      parameters:
+      - name: attachmentVideoUnitId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: lectureId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/AttachmentVideoUnit'}
+    put:
+      tags: [attachment-video-unit]
+      operationId: updateAttachmentVideoUnit
+      parameters:
+      - name: lectureId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: attachmentVideoUnitId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: keepFilename
+        in: query
+        required: false
+        schema: {type: boolean, default: false}
+      - name: notificationText
+        in: query
+        required: false
+        schema: {type: string}
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                attachmentVideoUnit: {$ref: '#/components/schemas/AttachmentVideoUnit'}
+                attachment: {$ref: '#/components/schemas/Attachment'}
+                file: {type: string, format: binary}
+                studentVersion: {type: string, format: binary}
+                hiddenPages:
+                  type: array
+                  items: {$ref: '#/components/schemas/HiddenPageInfo'}
+                pageOrder:
+                  type: array
+                  items: {$ref: '#/components/schemas/SlideOrder'}
+              required: [attachmentVideoUnit]
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/AttachmentVideoUnit'}
+  /api/lecture/lectures/{lectureId}/attachment-video-units/{attachmentVideoUnitId}/student-version:
+    put:
+      tags: [attachment-video-unit]
+      operationId: updateAttachmentVideoUnitStudentVersion
+      parameters:
+      - name: lectureId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: attachmentVideoUnitId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                studentVersion: {type: string, format: binary}
+              required: [studentVersion]
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/AttachmentVideoUnit'}
   /api/hyperion/courses/{courseId}/quiz-question-pool/settings:
     get:
       tags: [hyperion-quiz-question-pool]
@@ -874,6 +1133,223 @@ paths:
         content:
           application/json:
             schema: {$ref: '#/components/schemas/LeaderboardSetting'}
+        required: true
+      responses:
+        '200': {description: OK}
+  /api/lecture/lectures/{lectureId}/lecture-units/{lectureUnitId}/retry-processing:
+    post:
+      tags: [lecture-unit]
+      operationId: retryProcessing
+      parameters:
+      - name: lectureId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: lectureUnitId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/LectureUnitCombinedStatus'}
+  /api/lecture/lectures/{lectureId}/lecture-units/{lectureUnitId}/completion:
+    post:
+      tags: [lecture-unit]
+      operationId: completeLectureUnit
+      parameters:
+      - name: lectureUnitId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: lectureId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: completed
+        in: query
+        required: true
+        schema: {type: boolean}
+      responses:
+        '200': {description: OK}
+  /api/lecture/lectures/{lectureId}/exercise-units:
+    get:
+      tags: [exercise-unit]
+      operationId: getAllExerciseUnitsOfLecture
+      parameters:
+      - name: lectureId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/ExerciseUnit'}
+    post:
+      tags: [exercise-unit]
+      operationId: createExerciseUnit
+      parameters:
+      - name: lectureId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/ExerciseUnit'}
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ExerciseUnit'}
+  /api/lecture/lectures/{lectureId}/attachment-video-units:
+    post:
+      tags: [attachment-video-unit]
+      summary: Add a unit with slides or a video to a lecture
+      description: 'Adds an attachment video unit to a lecture. Send multipart/form-data
+        with the part attachmentVideoUnit (JSON: name, releaseDate, description, videoSource),
+        and for slides the part attachment (JSON: name, attachmentType FILE, releaseDate)
+        together with the part file (the PDF). A request with a personal access token
+        must set releaseDate to a time in the future, on the unit and on the attachment.
+        The material becomes visible automatically when its release dates have passed,
+        so the instructor must review it before those dates and can move them in the
+        Artemis web interface. The unit is returned at once; splitting the PDF into
+        slides and indexing it for Iris continue in the background, and their progress
+        is reported by the lecture unit status endpoint.'
+      operationId: createAttachmentVideoUnit
+      parameters:
+      - name: lectureId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: keepFilename
+        in: query
+        required: false
+        schema: {type: boolean, default: false}
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                attachmentVideoUnit: {$ref: '#/components/schemas/AttachmentVideoUnit'}
+                attachment: {$ref: '#/components/schemas/Attachment'}
+                file: {type: string, format: binary}
+              required: [attachmentVideoUnit]
+      responses:
+        '201':
+          description: The unit was created as a draft.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/AttachmentVideoUnit'}
+  /api/lecture/lectures/{lectureId}/attachment-video-units/upload:
+    post:
+      tags: [attachment-video-unit]
+      operationId: uploadSlidesForProcessing
+      parameters:
+      - name: lectureId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file: {type: string, format: binary}
+              required: [file]
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {type: string}
+  /api/lecture/lectures/{lectureId}/attachment-video-units/split/{filename}:
+    post:
+      tags: [attachment-video-unit]
+      operationId: createAttachmentVideoUnits
+      parameters:
+      - name: lectureId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: filename
+        in: path
+        required: true
+        schema: {type: string}
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/LectureUnitSplitInformation'}
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/AttachmentVideoUnit'}
+  /api/lecture/lectures/import:
+    post:
+      tags: [lecture]
+      operationId: importLecture
+      parameters:
+      - name: sourceLectureId
+        in: query
+        required: true
+        schema: {type: integer, format: int64}
+      - name: courseId
+        in: query
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/SimpleLecture'}
+  /api/lecture/courses/{courseId}/lectures:
+    get:
+      tags: [lecture]
+      operationId: getLecturesForCourse
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/SimpleLecture'}
+                uniqueItems: true
+    post:
+      tags: [lecture]
+      operationId: createLectureSeries
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: array
+              items: {$ref: '#/components/schemas/LectureSeriesCreateLecture'}
         required: true
       responses:
         '200': {description: OK}
@@ -1851,6 +2327,21 @@ paths:
           content:
             application/json:
               schema: {$ref: '#/components/schemas/StudentQuizParticipation'}
+  /api/quiz/quiz-exercises/{exerciseId}/export:
+    get:
+      tags: [quiz-exercise]
+      operationId: exportExercise
+      parameters:
+      - name: exerciseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {type: string, format: binary}
   /api/quiz/exams/{examId}/quiz-exercises:
     get:
       tags: [quiz-exercise-retrieval]
@@ -1883,6 +2374,350 @@ paths:
           content:
             application/json:
               schema: {$ref: '#/components/schemas/LeaderboardWithCurrentUserEntry'}
+  /api/lecture/lectures/{lectureId}:
+    get:
+      tags: [lecture]
+      operationId: getLecture
+      parameters:
+      - name: lectureId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/SimpleLecture'}
+    delete:
+      tags: [lecture]
+      operationId: deleteLecture
+      parameters:
+      - name: lectureId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200': {description: OK}
+  /api/lecture/lectures/{lectureId}/title:
+    get:
+      tags: [lecture]
+      operationId: getLectureTitle
+      parameters:
+      - name: lectureId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            text/plain:
+              schema: {type: string}
+  /api/lecture/lectures/{lectureId}/text-units/{textUnitId}:
+    get:
+      tags: [text-unit]
+      operationId: getTextUnit
+      parameters:
+      - name: textUnitId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: lectureId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/TextUnit'}
+  /api/lecture/lectures/{lectureId}/online-units/{onlineUnitId}:
+    get:
+      tags: [online-unit]
+      operationId: getOnlineUnit
+      parameters:
+      - name: onlineUnitId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: lectureId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/OnlineUnit'}
+  /api/lecture/lectures/{lectureId}/lecture-units/statuses:
+    get:
+      tags: [lecture-unit]
+      summary: Get the processing status of the units of a lecture
+      description: 'Reports, for each attachment video unit of the lecture, how far
+        the background processing of its slides and video has come: processingPhase
+        is IDLE, TRANSCRIBING, INGESTING, DONE, FAILED or SKIPPED. Poll this after
+        uploading slides; DONE or SKIPPED means nothing more is pending. The list
+        is empty when processing is not enabled on this instance.'
+      operationId: getUnitStatuses
+      parameters:
+      - name: lectureId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/LectureUnitCombinedStatus'}
+  /api/lecture/lectures/{lectureId}/details:
+    get:
+      tags: [lecture]
+      operationId: getLectureWithDetails
+      parameters:
+      - name: lectureId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/LectureDetails'}
+  /api/lecture/lectures/{lectureId}/attachment-video-units/slides-to-remove/{filename}:
+    get:
+      tags: [attachment-video-unit]
+      operationId: getSlidesToRemove
+      parameters:
+      - name: lectureId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: filename
+        in: path
+        required: true
+        schema: {type: string}
+      - name: commaSeparatedKeyPhrases
+        in: query
+        required: true
+        schema: {type: string}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {type: integer, format: int32}
+  /api/lecture/lectures/{lectureId}/attachment-video-units/data/{filename}:
+    get:
+      tags: [attachment-video-unit]
+      operationId: getAttachmentVideoUnitsData
+      parameters:
+      - name: lectureId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: filename
+        in: path
+        required: true
+        schema: {type: string}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/LectureUnitSplitInformation'}
+  /api/lecture/lectures/online-units/fetch-online-resource:
+    get:
+      tags: [online-unit]
+      operationId: getOnlineResource
+      parameters:
+      - name: link
+        in: query
+        required: true
+        schema: {type: string}
+      - name: courseId
+        in: query
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/OnlineResource'}
+  /api/lecture/lecture-units/{lectureUnitId}:
+    get:
+      tags: [lecture-unit]
+      operationId: getLectureUnitById
+      parameters:
+      - name: lectureUnitId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                oneOf:
+                - {$ref: '#/components/schemas/LectureDetailsAttachmentUnit'}
+                - {$ref: '#/components/schemas/LectureDetailsExerciseUnit'}
+                - {$ref: '#/components/schemas/LectureDetailsOnlineUnit'}
+                - {$ref: '#/components/schemas/LectureDetailsTextUnit'}
+  /api/lecture/lecture-units/{lectureUnitId}/transcript:
+    get:
+      tags: [lecture-transcription]
+      operationId: getTranscript
+      parameters:
+      - name: lectureUnitId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/LectureTranscription'}
+  /api/lecture/lecture-units/{lectureUnitId}/transcript/status:
+    get:
+      tags: [lecture-transcription]
+      operationId: getTranscriptStatus
+      parameters:
+      - name: lectureUnitId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            text/plain:
+              schema: {type: string}
+  /api/lecture/lecture-units/{lectureUnitId}/playlist:
+    get:
+      tags: [attachment-video-unit-playlist]
+      operationId: getPlaylist
+      parameters:
+      - name: lectureUnitId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            text/plain:
+              schema: {type: string}
+  /api/lecture/lecture-units/{lectureUnitId}/material-versions:
+    get:
+      tags: [lecture-unit]
+      operationId: getLectureUnitMaterialVersions
+      parameters:
+      - name: lectureUnitId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/LectureUnitMaterialVersions'}
+  /api/lecture/lecture-units/{lectureUnitId}/for-learning-path-node-details:
+    get:
+      tags: [lecture-unit]
+      operationId: getLectureUnitForLearningPathNodeDetails
+      parameters:
+      - name: lectureUnitId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/LectureUnitForLearningPathNodeDetails'}
+  /api/lecture/courses/{courseId}/tutorial-lectures:
+    get:
+      tags: [lecture]
+      operationId: getTutorialLecturesForCourse
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/SimpleLecture'}
+                uniqueItems: true
+  /api/lecture/courses/{courseId}/lectures-with-slides:
+    get:
+      tags: [lecture]
+      operationId: getLecturesWithSlidesForCourse
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/GetLectures'}
+  /api/lecture/courses/{courseId}/lectures-for-overview:
+    get:
+      tags: [lecture]
+      operationId: getLecturesForCourseOverview
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/LectureForOverview'}
+                uniqueItems: true
+  /api/lecture/courses/{courseId}/learning-statistics:
+    get:
+      tags: [lecture]
+      operationId: getLearningStatistics
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/LectureLearningStatistics'}
   /api/hyperion/variant-jobs:
     get:
       tags: [hyperion-exercise-variant]
@@ -2291,6 +3126,21 @@ paths:
         required: true
         schema: {type: integer, format: int64}
       - name: resultId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200': {description: OK}
+  /api/lecture/lectures/{lectureId}/lecture-units/{lectureUnitId}:
+    delete:
+      tags: [lecture-unit]
+      operationId: deleteLectureUnit
+      parameters:
+      - name: lectureUnitId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: lectureId
         in: path
         required: true
         schema: {type: integer, format: int64}
@@ -2893,6 +3743,16 @@ components:
           type: [string, 'null']
           description: Optional inline replacement code for this location
       required: [endLine, filePath, startLine, type]
+    LectureDetailsCourse:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        title: {type: string}
+        shortName: {type: string}
+        courseInformationSharingConfiguration:
+          type: string
+          enum: [DISABLED, COMMUNICATION_AND_MESSAGING, COMMUNICATION_ONLY]
+        athenaFormativeFeedbackEnabled: {type: boolean}
     QuizExerciseDates:
       type: object
       properties:
@@ -3124,6 +3984,21 @@ components:
         points: {type: number, format: double}
         invalid: {type: boolean}
         quizQuestionStatistic: {$ref: '#/components/schemas/QuizQuestionStatistic'}
+    SubmissionOverview:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        submissionDate: {type: string, format: date-time}
+        submitted: {type: boolean}
+        type:
+          type: string
+          enum: [MANUAL, TIMEOUT, TEST, OTHER, INSTRUCTOR, EXTERNAL]
+        submissionExerciseType: {type: string}
+        buildFailed: {type: boolean}
+        commitHash: {type: string}
+        results:
+          type: array
+          items: {$ref: '#/components/schemas/ResultOverview'}
     CourseBrowserData:
       type: object
       properties:
@@ -3199,6 +4074,46 @@ components:
         usageCount: {type: integer, format: int32, description: Maximum number of
             uses, minimum: 0}
       required: [credits, feedback, gradingScale, instructionDescription, usageCount]
+    ExerciseUnit:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        name: {type: string}
+        releaseDate: {type: string, format: date-time}
+        completed: {type: boolean}
+        visibleToStudents: {type: boolean}
+        competencyLinks:
+          type: array
+          items: {$ref: '#/components/schemas/CompetencyLink'}
+          uniqueItems: true
+        exercise: {$ref: '#/components/schemas/ExerciseUnitExerciseReference'}
+        type: {type: string}
+    ParticipationOverview:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        type: {type: string}
+        initializationState:
+          type: string
+          enum: [UNINITIALIZED, REPO_COPIED, REPO_CONFIGURED, INACTIVE, BUILD_PLAN_COPIED,
+            BUILD_PLAN_CONFIGURED, INITIALIZED, FINISHED]
+        initializationDate: {type: string, format: date-time}
+        testRun: {type: boolean}
+        individualDueDate: {type: string, format: date-time}
+        repositoryUri: {type: string}
+        submissions:
+          type: array
+          items: {$ref: '#/components/schemas/SubmissionOverview'}
+          uniqueItems: true
+        hasSubmitted: {type: boolean}
+    LectureForOverview:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        title: {type: string}
+        startDate: {type: string, format: date-time}
+        endDate: {type: string, format: date-time}
+        isTutorialLecture: {type: boolean}
     QuizSearchExam:
       type: object
       properties:
@@ -3224,6 +4139,14 @@ components:
         isNewSession: {type: boolean}
         id: {type: integer, format: int64}
       required: [quizQuestionWithSolutionDTO]
+    LectureDetailsCompetency:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        title: {type: string}
+        taxonomy:
+          type: string
+          enum: [REMEMBER, UNDERSTAND, APPLY, ANALYZE, EVALUATE, CREATE]
     ExerciseGenerationWedgedSlot:
       type: object
       properties:
@@ -3308,12 +4231,61 @@ components:
       properties:
         type: {type: string}
       required: [type]
+    TextUnit:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        name: {type: string}
+        releaseDate: {type: string, format: date-time}
+        content: {type: string}
+        competencyLinks:
+          type: array
+          items: {$ref: '#/components/schemas/CompetencyLink'}
+          uniqueItems: true
+        type: {type: string}
     ShortAnswerMappingFromEditor:
       type: object
       properties:
         id: {type: integer, format: int64}
         solutionTempId: {type: integer, format: int64}
         spotTempId: {type: integer, format: int64}
+    OnlineUnit:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        name: {type: string}
+        releaseDate: {type: string, format: date-time}
+        description: {type: string, maxLength: 1000, minLength: 0}
+        source: {type: string}
+        competencyLinks:
+          type: array
+          items: {$ref: '#/components/schemas/CompetencyLink'}
+          uniqueItems: true
+        type: {type: string}
+    AttachmentVideoUnit:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        name: {type: string}
+        releaseDate: {type: string, format: date-time}
+        description: {type: string, maxLength: 1000, minLength: 0}
+        videoSource: {type: string}
+        competencyLinks:
+          type: array
+          items: {$ref: '#/components/schemas/CompetencyLink'}
+          uniqueItems: true
+        attachment: {$ref: '#/components/schemas/Attachment'}
+        slides:
+          type: array
+          items: {$ref: '#/components/schemas/Slide'}
+        slideMetadataPending: {type: boolean}
+        completed: {type: boolean}
+        visibleToStudents: {type: boolean}
+        lecture: {$ref: '#/components/schemas/AttachmentVideoUnitLectureReference'}
+        attachmentUpdateIntent:
+          type: string
+          enum: [NO_FILE_CHANGE, FILE_UPLOAD, EDITOR_PDF_CONTENT_CHANGED]
+        type: {type: string}
     QuizQuestionPoolProgress:
       type: object
       description: Progress of a course's quiz question pool build
@@ -3331,6 +4303,13 @@ components:
             rejected}
         failed: {type: integer, format: int32, description: Items whose generation
             or filtering failed permanently}
+    SimpleLectureCourse:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        title: {type: string}
+        shortName: {type: string}
+        semester: {type: string}
     IndexedContentObject:
       type: object
       properties:
@@ -3473,6 +4452,35 @@ components:
           items: {$ref: '#/components/schemas/GeneratedAssessmentCriterion'}
           minItems: 1
       required: [criteria]
+    Attachment:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        name: {type: string}
+        link: {type: string}
+        version: {type: integer, format: int32}
+        uploadDate: {type: string, format: date-time}
+        releaseDate: {type: string, format: date-time}
+        attachmentType:
+          type: string
+          enum: [FILE, URL]
+        studentVersion: {type: string}
+    LectureDetailsExerciseUnit:
+      allOf:
+      - {$ref: '#/components/schemas/LectureUnitDetails'}
+      - type: object
+        properties:
+          id: {type: integer, format: int64}
+          lecture: {$ref: '#/components/schemas/LectureDetailsLectureReference'}
+          name: {type: string}
+          releaseDate: {type: string, format: date-time}
+          completed: {type: boolean}
+          visibleToStudents: {type: boolean}
+          competencyLinks:
+            type: array
+            items: {$ref: '#/components/schemas/LectureDetailsCompetencyLink'}
+          exercise: {$ref: '#/components/schemas/ExerciseOverview'}
+          type: {type: string}
     AnswerOptionWithoutSolution:
       type: object
       properties:
@@ -3504,6 +4512,13 @@ components:
         competency: {$ref: '#/components/schemas/Competency'}
         weight: {type: number, format: double}
         generatedByAi: {type: boolean, readOnly: true}
+    LectureUnitSplit:
+      type: object
+      properties:
+        unitName: {type: string}
+        releaseDate: {type: string, format: date-time}
+        startPage: {type: integer, format: int32}
+        endPage: {type: integer, format: int32}
     ProblemStatementRewriteRequest:
       type: object
       description: Request to rewrite a problem statement
@@ -3526,6 +4541,18 @@ components:
           type: string
           default: drag-and-drop
           enum: [drag-and-drop]
+    GetLectures:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        title: {type: string}
+        description: {type: string}
+        startDate: {type: string, format: date-time}
+        endDate: {type: string, format: date-time}
+        isTutorialLecture: {type: boolean}
+        lectureUnits:
+          type: array
+          items: {$ref: '#/components/schemas/LectureSlidesAttachmentVideoUnit'}
     QuizQuestionStatistic:
       discriminator:
         propertyName: type
@@ -3552,6 +4579,13 @@ components:
         started: {type: boolean}
         ended: {type: boolean}
         startTime: {type: string, format: date-time}
+    LectureSeriesCreateLecture:
+      type: object
+      properties:
+        title: {type: string}
+        startDate: {type: string, format: date-time}
+        endDate: {type: string, format: date-time}
+      required: [title]
     CourseForQuizExercise:
       type: object
       properties:
@@ -3703,6 +4737,22 @@ components:
         justification: {type: string, description: One-sentence justification of the
             severity}
       required: [mode]
+    LectureDetailsTextUnit:
+      allOf:
+      - {$ref: '#/components/schemas/LectureUnitDetails'}
+      - type: object
+        properties:
+          id: {type: integer, format: int64}
+          lecture: {$ref: '#/components/schemas/LectureDetailsLectureReference'}
+          name: {type: string}
+          releaseDate: {type: string, format: date-time}
+          completed: {type: boolean}
+          visibleToStudents: {type: boolean}
+          competencyLinks:
+            type: array
+            items: {$ref: '#/components/schemas/LectureDetailsCompetencyLink'}
+          content: {type: string}
+          type: {type: string}
     QuizQuestionFilterDecision:
       type: object
       description: The filter's decision for one generated quiz question and the per-mode
@@ -3803,6 +4853,16 @@ components:
           type: string
           default: multiple-choice
           enum: [multiple-choice]
+    LectureUnit:
+      discriminator:
+        propertyName: type
+        mapping: {attachment: '#/components/schemas/AttachmentVideoUnit', exercise: '#/components/schemas/ExerciseUnit',
+          online: '#/components/schemas/OnlineUnit', text: '#/components/schemas/TextUnit'}
+      oneOf:
+      - {$ref: '#/components/schemas/AttachmentVideoUnit'}
+      - {$ref: '#/components/schemas/ExerciseUnit'}
+      - {$ref: '#/components/schemas/OnlineUnit'}
+      - {$ref: '#/components/schemas/TextUnit'}
     CodeGenerationRequest:
       type: object
       properties:
@@ -3813,6 +4873,19 @@ components:
         selectedFeedbackThreadIds:
           type: array
           items: {type: integer, format: int64}
+    SearchResultPageDTOSimpleLecture:
+      type: object
+      properties:
+        resultsOnPage:
+          type: array
+          items: {$ref: '#/components/schemas/SimpleLecture'}
+        numberOfPages: {type: integer, format: int32}
+    LectureDetailsCompetencyLink:
+      type: object
+      properties:
+        competency: {$ref: '#/components/schemas/LectureDetailsCompetency'}
+        weight: {type: number, format: double}
+        generatedByAi: {type: boolean}
     InferredCompetency:
       type: object
       properties:
@@ -3832,6 +4905,11 @@ components:
           type: array
           items: {type: string}
         matchedCourseCompetencyId: {type: integer, format: int64}
+    SlideOrder:
+      type: object
+      properties:
+        slideId: {type: string}
+        order: {type: integer, format: int32}
     SubmittedAnswerAfterEvaluation:
       discriminator:
         propertyName: type
@@ -3845,6 +4923,12 @@ components:
       properties:
         type: {type: string}
       required: [type]
+    LectureUnitMaterialVersions:
+      type: object
+      properties:
+        attachmentVersion: {type: integer, format: int32}
+        videoVersion: {type: integer, format: int32}
+        hasVideo: {type: boolean}
     PointCounter:
       type: object
       properties:
@@ -3874,6 +4958,15 @@ components:
         location: {type: string}
         facilitator: {type: string}
       required: [startDate, title, type]
+    ExerciseUnitExerciseReference:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        title: {type: string}
+        releaseDate: {type: string, format: date-time}
+        type:
+          type: string
+          enum: [text, programming, modeling, file-upload, quiz]
     QuizSearchExerciseGroup:
       type: object
       properties:
@@ -3962,6 +5055,10 @@ components:
         isEditable: {type: boolean}
         canBeEvaluated: {type: boolean}
         exerciseGroup: {$ref: '#/components/schemas/ExerciseGroupWithIdAndExam'}
+    AttachmentVideoUnitLectureReference:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
     TutorialGroupSummary:
       type: object
       properties:
@@ -3987,6 +5084,12 @@ components:
         courseTitle: {type: string}
         nextSession: {$ref: '#/components/schemas/TutorialGroupSummarySession'}
         averageAttendance: {type: integer, format: int32}
+    LectureDetailsLectureReference:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        isTutorialLecture: {type: boolean}
+        course: {$ref: '#/components/schemas/LectureDetailsCourse'}
     QuizQuestionRefinementFailure:
       description: Failed refinement result containing an error message
       required: [error, type]
@@ -4220,6 +5323,14 @@ components:
           type: string
           default: drag-and-drop
           enum: [drag-and-drop]
+    LectureLearningStatistics:
+      type: object
+      properties:
+        lectureId: {type: integer, format: int64}
+        lectureTitle: {type: string}
+        type: {type: string}
+        total: {type: integer, format: int64}
+        completed: {type: integer, format: int64}
     ResultAfterEvaluation:
       type: object
       properties:
@@ -4302,6 +5413,13 @@ components:
           description: Related locations across artifacts
           items: {$ref: '#/components/schemas/ArtifactLocation'}
       required: [category, description, relatedLocations, severity, suggestedFix]
+    LectureTranscriptionSegment:
+      type: object
+      properties:
+        startTime: {type: number, format: double}
+        endTime: {type: number, format: double}
+        text: {type: string}
+        slideNumber: {type: integer, format: int32}
     IndexedContentPresence:
       type: object
       properties:
@@ -4386,6 +5504,10 @@ components:
         results:
           type: array
           items: {$ref: '#/components/schemas/ResultAfterEvaluation'}
+    QuizBatchOverview:
+      type: object
+      properties:
+        started: {type: boolean}
     GradingCriterion:
       type: object
       properties:
@@ -4419,6 +5541,28 @@ components:
         dragItems:
           type: array
           items: {$ref: '#/components/schemas/DragItem'}
+    LectureDetailsAttachmentUnit:
+      allOf:
+      - {$ref: '#/components/schemas/LectureUnitDetails'}
+      - type: object
+        properties:
+          id: {type: integer, format: int64}
+          lecture: {$ref: '#/components/schemas/LectureDetailsLectureReference'}
+          name: {type: string}
+          releaseDate: {type: string, format: date-time}
+          completed: {type: boolean}
+          visibleToStudents: {type: boolean}
+          competencyLinks:
+            type: array
+            items: {$ref: '#/components/schemas/LectureDetailsCompetencyLink'}
+          attachment: {$ref: '#/components/schemas/LectureDetailsAttachment'}
+          description: {type: string}
+          videoSource: {type: string}
+          videoSourceType:
+            type: string
+            enum: [TUM_LIVE, YOUTUBE]
+          youtubeVideoId: {type: string}
+          type: {type: string}
     MultipleChoiceQuestionReEvaluate:
       required: [answerOptions, id, invalid, randomizeOrder, scoringType, title, type]
       type: object
@@ -4468,6 +5612,12 @@ components:
       type: object
       properties:
         jobId: {type: string}
+    OnlineResource:
+      type: object
+      properties:
+        url: {type: string}
+        title: {type: string}
+        description: {type: string}
     ExerciseGenerationStatus:
       type: object
       properties:
@@ -4663,6 +5813,16 @@ components:
       properties:
         draftProblemStatement: {type: string, description: Draft problem statement
             text}
+    LectureSlidesAttachment:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        link: {type: string}
+        name: {type: string}
+        releaseDate: {type: string, format: date-time}
+        displayPageNumbers:
+          type: array
+          items: {type: integer, format: int32}
     QuizQuestionGenerationRequest:
       type: object
       description: Request to generate quiz questions. Either topic or competencyIds
@@ -4708,6 +5868,14 @@ components:
         location: {type: string}
         tutorialGroupFreePeriod: {$ref: '#/components/schemas/TutorialGroupFreePeriod'}
         attendanceCount: {type: integer, format: int32}
+    Slide:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        slideNumber: {type: integer, format: int32}
+        hidden: {type: string, format: date-time}
+        attachmentVideoUnitId: {type: integer, format: int64}
+        exercise: {$ref: '#/components/schemas/SlideExercise'}
     ShortAnswerSubmittedAnswerAfterEvaluation:
       required: [type]
       type: object
@@ -4723,6 +5891,20 @@ components:
           type: string
           default: short-answer
           enum: [short-answer]
+    ResultOverview:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        completionDate: {type: string, format: date-time}
+        score: {type: number, format: double}
+        rated: {type: boolean}
+        successful: {type: boolean}
+        assessmentType:
+          type: string
+          enum: [AUTOMATIC, SEMI_AUTOMATIC, MANUAL, AUTOMATIC_ATHENA]
+        codeIssueCount: {type: integer, format: int32}
+        testCaseCount: {type: integer, format: int32}
+        passedTestCaseCount: {type: integer, format: int32}
     WorkerStatus:
       type: object
       properties:
@@ -4786,6 +5968,63 @@ components:
         userPrompt: {type: string, description: User prompt describing the problem
             statement requirements, maxLength: 1000, minLength: 1}
       required: [userPrompt]
+    ExerciseOverview:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: [text, programming, modeling, file-upload, quiz]
+        id: {type: integer, format: int64}
+        title: {type: string}
+        maxPoints: {type: number, format: double}
+        bonusPoints: {type: number, format: double}
+        releaseDate: {type: string, format: date-time}
+        startDate: {type: string, format: date-time}
+        dueDate: {type: string, format: date-time}
+        assessmentDueDate: {type: string, format: date-time}
+        assessmentType:
+          type: string
+          enum: [AUTOMATIC, SEMI_AUTOMATIC, MANUAL, AUTOMATIC_ATHENA]
+        difficulty:
+          type: string
+          enum: [EASY, MEDIUM, HARD]
+        mode:
+          type: string
+          enum: [INDIVIDUAL, TEAM]
+        teamMode: {type: boolean}
+        includedInOverallScore:
+          type: string
+          enum: [INCLUDED_COMPLETELY, INCLUDED_AS_BONUS, NOT_INCLUDED]
+        categories:
+          type: array
+          items: {type: string}
+          uniqueItems: true
+        presentationScoreEnabled: {type: boolean}
+        allowFeedbackRequests: {type: boolean}
+        allowOnlineEditor: {type: boolean}
+        allowOfflineIde: {type: boolean}
+        staticCodeAnalysisEnabled: {type: boolean}
+        allowOnlineIde: {type: boolean}
+        programmingLanguage:
+          type: string
+          enum: [EMPTY, JAVA, PYTHON, C, HASKELL, KOTLIN, VHDL, ASSEMBLER, SWIFT,
+            OCAML, JAVASCRIPT, C_SHARP, C_PLUS_PLUS, SQL, R, TYPESCRIPT, RUST, GO,
+            MATLAB, BASH, RUBY, POWERSHELL, ADA, DART, PHP]
+        buildAndTestStudentSubmissionsAfterDueDate: {type: string, format: date-time}
+        showTestNamesToStudents: {type: boolean}
+        maxStaticCodeAnalysisPenalty: {type: integer, format: int32}
+        quizEnded: {type: boolean}
+        quizBatches:
+          type: array
+          items: {$ref: '#/components/schemas/QuizBatchOverview'}
+          uniqueItems: true
+        studentAssignedTeamId: {type: integer, format: int64}
+        studentAssignedTeamIdComputed: {type: boolean}
+        exerciseVariantGroup: {$ref: '#/components/schemas/ExerciseVariantGroupReference'}
+        studentParticipations:
+          type: array
+          items: {$ref: '#/components/schemas/ParticipationOverview'}
+          uniqueItems: true
     TutorialGroupFreePeriod:
       type: object
       properties:
@@ -4901,6 +6140,14 @@ components:
           items: {$ref: '#/components/schemas/QuestionStatistics'}
         participantsRated: {type: integer, format: int32}
         participantsUnrated: {type: integer, format: int32}
+    LectureTranscription:
+      type: object
+      properties:
+        lectureUnitId: {type: integer, format: int64}
+        language: {type: string}
+        segments:
+          type: array
+          items: {$ref: '#/components/schemas/LectureTranscriptionSegment'}
     ExamWithIdAndCourse:
       type: object
       properties:
@@ -4948,6 +6195,23 @@ components:
           type: array
           items: {$ref: '#/components/schemas/AnswerOptionWithSolution'}
         singleChoice: {type: boolean}
+    LectureDetailsOnlineUnit:
+      allOf:
+      - {$ref: '#/components/schemas/LectureUnitDetails'}
+      - type: object
+        properties:
+          id: {type: integer, format: int64}
+          lecture: {$ref: '#/components/schemas/LectureDetailsLectureReference'}
+          name: {type: string}
+          releaseDate: {type: string, format: date-time}
+          completed: {type: boolean}
+          visibleToStudents: {type: boolean}
+          competencyLinks:
+            type: array
+            items: {$ref: '#/components/schemas/LectureDetailsCompetencyLink'}
+          description: {type: string}
+          source: {type: string}
+          type: {type: string}
     ShortAnswerSpotFromEditor:
       type: object
       properties:
@@ -5054,6 +6318,11 @@ components:
         registrationNumber: {type: string}
         firstName: {type: string}
         lastName: {type: string}
+    LectureUnitDetails:
+      discriminator: {propertyName: type}
+      properties:
+        type: {type: string}
+      required: [type]
     ShortAnswerSubmittedAnswerBeforeEvaluation:
       required: [type]
       type: object
@@ -5101,6 +6370,36 @@ components:
           additionalProperties: {type: string}
           description: Action-specific context parameters
       required: [actionType, problemStatementMarkdown]
+    HiddenPageInfo:
+      type: object
+      properties:
+        slideId: {type: string}
+        date: {type: string, format: date-time}
+        exerciseId: {type: integer, format: int64}
+    LectureUnitSplitInformation:
+      type: object
+      properties:
+        units:
+          type: array
+          items: {$ref: '#/components/schemas/LectureUnitSplit'}
+        numberOfPages: {type: integer, format: int32}
+        removeSlidesCommaSeparatedKeyPhrases: {type: string}
+    LectureDetailsAttachment:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        name: {type: string}
+        link: {type: string}
+        releaseDate: {type: string, format: date-time}
+        uploadDate: {type: string, format: date-time}
+        version: {type: integer, format: int32}
+        attachmentType:
+          type: string
+          enum: [FILE, URL]
+        studentVersion: {type: string}
+        displayPageNumbers:
+          type: array
+          items: {type: integer, format: int32}
     ShortAnswerSolutionReEvaluate:
       type: object
       properties:
@@ -5216,6 +6515,17 @@ components:
       properties:
         startTime: {type: string, format: date-time}
       required: [startTime]
+    SimpleLecture:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        title: {type: string}
+        description: {type: string}
+        startDate: {type: string, format: date-time}
+        endDate: {type: string, format: date-time}
+        isTutorialLecture: {type: boolean}
+        channelName: {type: string}
+        course: {$ref: '#/components/schemas/SimpleLectureCourse'}
     Channel:
       type: object
       properties:
@@ -5315,6 +6625,13 @@ components:
       properties:
         quizQuestionsType: {type: string}
       required: [quizQuestionsType]
+    LectureUnitForLearningPathNodeDetails:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        name: {type: string}
+        type: {type: string}
+      required: [name, type]
     DropLocationFromEditor:
       type: object
       properties:
@@ -5426,6 +6743,24 @@ components:
         text: {type: string}
         isCorrect: {type: boolean}
         spot: {$ref: '#/components/schemas/ShortAnswerSpot'}
+    LectureDetails:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        title: {type: string}
+        description: {type: string}
+        startDate: {type: string, format: date-time}
+        endDate: {type: string, format: date-time}
+        isTutorialLecture: {type: boolean}
+        course: {$ref: '#/components/schemas/LectureDetailsCourse'}
+        lectureUnits:
+          type: array
+          items:
+            oneOf:
+            - {$ref: '#/components/schemas/LectureDetailsAttachmentUnit'}
+            - {$ref: '#/components/schemas/LectureDetailsExerciseUnit'}
+            - {$ref: '#/components/schemas/LectureDetailsOnlineUnit'}
+            - {$ref: '#/components/schemas/LectureDetailsTextUnit'}
     QuizExerciseWithoutQuestions:
       type: object
       properties:
@@ -5530,6 +6865,10 @@ components:
         freePeriodId: {type: integer, format: int64}
         count: {type: integer, format: int64}
       required: [count, freePeriodId]
+    SlideExercise:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
     ShortAnswerSubmittedTextFromLiveClient:
       type: object
       properties:
@@ -5545,6 +6884,23 @@ components:
           description: Refinement results, one per input question in the same order
           items: {$ref: '#/components/schemas/QuizQuestionRefinementResponse'}
       required: [refinements]
+    LectureUnitCombinedStatus:
+      type: object
+      properties:
+        lectureUnitId: {type: integer, format: int64}
+        processingPhase:
+          type: string
+          enum: [IDLE, TRANSCRIBING, INGESTING, DONE, FAILED, SKIPPED]
+        retryCount: {type: integer, format: int32}
+        startedAt: {type: string, format: date-time}
+        processingErrorKey: {type: string}
+        transcriptionStatus:
+          type: string
+          enum: [PENDING, COMPLETED, FAILED]
+        stageName: {type: string}
+        stageProgress: {type: integer, format: int32}
+        stageTotal: {type: integer, format: int32}
+        lastHeartbeatAt: {type: string, format: date-time}
     ProblemStatementRefinementResponse:
       type: object
       description: Response containing refined problem statement
@@ -5579,6 +6935,22 @@ components:
         text: {type: string, maxLength: 255, minLength: 0}
         spotId: {type: integer, format: int64}
       required: [spotId, text]
+    LectureSlidesAttachmentVideoUnit:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        name: {type: string}
+        slides:
+          type: array
+          items: {$ref: '#/components/schemas/Slide'}
+        attachment: {$ref: '#/components/schemas/LectureSlidesAttachment'}
+        releaseDate: {type: string, format: date-time}
+        type: {type: string}
+        videoSource: {type: string}
+        videoSourceType:
+          type: string
+          enum: [TUM_LIVE, YOUTUBE]
+        youtubeVideoId: {type: string}
     QualityIssue:
       type: object
       description: A quality issue found in the problem statement

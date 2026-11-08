@@ -404,7 +404,7 @@ public class AttachmentVideoUnitResource {
      * @return the ResponseEntity with status 200 (ok) and with body filename of the uploaded file
      */
     @FeatureUsage(UserFeature.LECTURE_SLIDE_PROCESSING)
-    @PostMapping("lectures/{lectureId}/attachment-video-units/upload")
+    @PostMapping(value = "lectures/{lectureId}/attachment-video-units/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @EnforceAtLeastEditorInLecture
     public ResponseEntity<String> uploadSlidesForProcessing(@PathVariable Long lectureId, @RequestPart("file") MultipartFile file) {
         // time until the temporary file gets deleted. Must be greater or equal than MINUTES_UNTIL_DELETION in attachment-video-units.component.ts
@@ -532,7 +532,7 @@ public class AttachmentVideoUnitResource {
      * @return the ResponseEntity with status 200 (OK) and with body the updated attachmentUnit
      */
     @FeatureUsage(UserFeature.LECTURE_SLIDE_PROCESSING)
-    @PutMapping("lectures/{lectureId}/attachment-video-units/{attachmentVideoUnitId}/student-version")
+    @PutMapping(value = "lectures/{lectureId}/attachment-video-units/{attachmentVideoUnitId}/student-version", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @EnforceAtLeastEditorInLectureUnit(resourceIdFieldName = "attachmentVideoUnitId")
     public ResponseEntity<AttachmentVideoUnitDTO> updateAttachmentVideoUnitStudentVersion(@PathVariable Long lectureId, @PathVariable Long attachmentVideoUnitId,
             @RequestParam("studentVersion") MultipartFile studentVersionFile) {
