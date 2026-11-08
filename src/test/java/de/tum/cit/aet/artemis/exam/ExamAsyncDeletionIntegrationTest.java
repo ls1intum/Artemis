@@ -246,6 +246,51 @@ class ExamAsyncDeletionIntegrationTest extends AbstractSpringIntegrationIndepend
                 .anyMatch(message -> "exercises".equals(message.currentStep()) && message.totalItems() == 2 && message.itemsProcessed() == 2);
     }
 
+    /**
+     * The exercise that is deleted now must be named in every message of the step, also in the message that reports an exercise as done, otherwise the title flickers away
+     * in the progress dialog between two exercises. Only after the last exercise there is none.
+     * <p>
+     * The tracker sends at most one item message every 250 ms, apart from the first and the last one, so a fast deletion publishes few messages in between. The assertions hold
+     * for every message that is sent, whichever ones the throttling lets through.
+     */
+    private void assertTheCurrentExerciseIsNamedBetweenTwoExercises(List<EntityDeletionProgressDTO> messages, int total, List<String> exerciseTitles) {
+        List<EntityDeletionProgressDTO> exerciseMessages = messages.stream().filter(message -> "exercises".equals(message.currentStep()) && message.totalItems() == total).toList();
+        assertThat(exerciseMessages).as("the messages of the exercises step").isNotEmpty();
+        assertThat(exerciseMessages.getFirst().itemsProcessed()).as("the step starts before the first exercise is done").isZero();
+        assertThat(exerciseMessages.getFirst().currentItemTitle()).as("and names an exercise of the deletion").isIn(exerciseTitles);
+        assertThat(exerciseMessages.stream().filter(message -> message.itemsProcessed() < total)).as("while an exercise is left, one is named").isNotEmpty()
+                .allSatisfy(message -> assertThat(message.currentItemTitle()).as("after %d of %d exercises", message.itemsProcessed(), total).isIn(exerciseTitles));
+        assertThat(exerciseMessages.stream().filter(message -> message.itemsProcessed() == total)).as("after the last exercise none is named").isNotEmpty()
+                .allMatch(message -> message.currentItemTitle() == null);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testExamDeletionKeepsNamingTheCurrentExerciseBetweenTwoExercises() throws Exception {
+        Exam loadedExam = examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(exam.getId());
+        List<String> exerciseTitles = loadedExam.getExerciseGroups().stream().flatMap(group -> group.getExercises().stream()).map(Exercise::getTitle).toList();
+        assertThat(exerciseTitles).hasSize(10);
+
+        request.delete(examUrl(), HttpStatus.ACCEPTED);
+        asyncDeletionTestUtilService.awaitExamDeletion(exam.getId());
+
+        assertTheCurrentExerciseIsNamedBetweenTwoExercises(sentProgress(), 10, exerciseTitles);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testExerciseGroupDeletionKeepsNamingTheCurrentExerciseBetweenTwoExercises() throws Exception {
+        Exam loadedExam = examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(exam.getId());
+        ExerciseGroup group = loadedExam.getExerciseGroups().getFirst();
+        List<String> exerciseTitles = group.getExercises().stream().map(Exercise::getTitle).toList();
+        assertThat(exerciseTitles).hasSize(2);
+
+        request.delete(examUrl() + "/exercise-groups/" + group.getId(), HttpStatus.ACCEPTED);
+        asyncDeletionTestUtilService.awaitExerciseGroupDeletion(exam.getId(), group.getId());
+
+        assertTheCurrentExerciseIsNamedBetweenTwoExercises(sentProgress(), 2, exerciseTitles);
+    }
+
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testDeletingWhileTheExamIsBeingDeletedIsRejected() throws Exception {

@@ -320,10 +320,12 @@ public class ExamDeletionService {
      */
     private void deleteExercises(Collection<Exercise> exercises, boolean deleteBaseReposBuildPlans, DeletionStepReporter reporter, Map<Long, Long> participationCounts) {
         reporter.stepStarted(EntityDeletionWeights.STEP_EXERCISES);
-        int total = exercises.size();
+        List<Exercise> orderedExercises = List.copyOf(exercises);
+        int total = orderedExercises.size();
         int deleted = 0;
         double completedWeight = 0;
-        for (Exercise exercise : exercises) {
+        for (int index = 0; index < total; index++) {
+            Exercise exercise = orderedExercises.get(index);
             // An exercise that joined the exam or group after the deletion was accepted is not claimed yet.
             reporter.claimExercise(exercise.getId());
             boolean programming = exercise instanceof ProgrammingExercise;
@@ -342,7 +344,9 @@ public class ExamDeletionService {
             });
             deleted++;
             completedWeight += EntityDeletionWeights.exerciseWeight(programming, participations);
-            reporter.exercisesProcessed(deleted, total, null, completedWeight);
+            // Name the exercise that follows, so the title does not flicker away between two exercises. After the last one there is none.
+            String nextTitle = index + 1 < total ? orderedExercises.get(index + 1).getTitle() : null;
+            reporter.exercisesProcessed(deleted, total, nextTitle, completedWeight);
         }
         reporter.finishCurrentStep();
     }
