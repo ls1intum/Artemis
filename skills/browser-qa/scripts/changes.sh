@@ -38,8 +38,10 @@ printf 'id\tkind\tfile\tline\tsymbol\n'
 n=0
 git diff -U0 --no-color --find-renames "$mb" HEAD | while IFS= read -r l; do
     case "$l" in
+        '--- a/'*) old=${l#--- a/} ;;
+        '--- /dev/null') old= ;;
         '+++ b/'*) file=${l#+++ b/}; kind=$(kind_of "$file") ;;
-        '+++ /dev/null') file=deleted; kind=other ;;
+        '+++ /dev/null') file=$old; kind=$(kind_of "$file") ;;
         'rename to '*) file=${l#rename to } ;;
         '@@ '*)
             line=$(sed -E 's/^@@ -[0-9,]+ \+([0-9]+).*/\1/' <<<"$l")

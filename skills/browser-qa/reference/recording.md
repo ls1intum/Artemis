@@ -29,7 +29,7 @@ ffmpeg -y -loglevel error -i <run>/video/<batch>.<ext> \
 ffmpeg -i <run>/video/<batch>.trimmed.mp4 -f null - 2>&1 | grep -o 'time=[0-9:.]*' | tail -1
 ```
 
-Read the duration from the last `time=`. A trimmed clip runs about a quarter of the raw one. Do not convert `video_at` by dividing by four: screencast frame timing varies. Use the contact sheet below only to find roughly where each case sits, then step through the trimmed clip there and set `video_at` to the moment the case starts. A clip under 20 seconds for a batch of several cases has lost its steps: redo the trim. Dropping frames with `mpdecimate` and renumbering them with `setpts=N/FRAME_RATE/TB` closes every gap and shrinks a ten-minute batch to seconds.
+Read the duration from the last `time=`. A trimmed clip runs about a quarter of the raw one. Do not convert `video_at` by dividing by four: screencast frame timing varies. Use the contact sheet below only to find roughly where each case sits, then step through the trimmed clip there and set `video_at` to the moment the case starts. Dropping frames with `mpdecimate` and renumbering them with `setpts=N/FRAME_RATE/TB` closes every gap and shrinks a ten-minute batch to seconds.
 
 Then build a contact sheet that spans the whole trimmed clip, with N the duration in seconds divided by 24:
 
@@ -38,4 +38,4 @@ ffmpeg -y -loglevel error -i <run>/video/<batch>.trimmed.mp4 \
   -vf "fps=1/N,scale=320:-1,tile=6x4" -frames:v 1 <run>/video/<batch>-sheet.png
 ```
 
-The trim is done when you have read the sheet and named, per case of the batch, the moment that shows it, and you have checked a full-size frame of the last case (`-sseof -3 -frames:v 1`). A blank or frozen clip means the recording failed, and the batch is re-driven. Compress a trimmed clip over 10 MB with `-crf 30 -preset veryslow` instead of dropping it.
+The trim is done when you have read the sheet and named, per case of the batch, the moment that shows each of its steps and its expected state; a missing step means the trim lost it, so redo it, and you have checked a full-size frame of the last case (`-sseof -3 -frames:v 1`). A blank or frozen clip means the recording failed, and the batch is re-driven. Compress a trimmed clip over 10 MB with `-crf 30 -preset veryslow` instead of dropping it.

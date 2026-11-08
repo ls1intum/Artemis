@@ -21,10 +21,13 @@ const HOME = process.env.HOME || os.homedir();
 let FFMPEG = null;
 try { FFMPEG = require('ffmpeg-static'); } catch { FFMPEG = 'ffmpeg'; }
 
-// Chromium: explicit override, else newest revision in the Playwright cache
-// ($PLAYWRIGHT_BROWSERS_PATH, else the platform default).
-function findChromium() {
+// Chromium: CHROME_PATH if set; else the browser this playwright-core expects,
+// which Playwright resolves per platform and swaps for its headless shell when
+// headless; else, when that revision is not installed, the newest Chromium in
+// the Playwright cache. Resolved at launch, so importing never throws.
+function executablePath() {
   if (process.env.CHROME_PATH) return process.env.CHROME_PATH;
+  if (fs.existsSync(chromium.executablePath())) return undefined;
   const platform = process.platform;
   const defaultCache = {
     darwin: `${HOME}/Library/Caches/ms-playwright`,
@@ -47,9 +50,8 @@ function findChromium() {
       if (fs.existsSync(p)) return p;
     }
   }
-  throw new Error(`No chromium found in ${cache}. Set CHROME_PATH or install a Playwright browser.`);
+  throw new Error(`No Chromium found for this playwright-core or in ${cache}. Run \`npx playwright-core install chromium\` or set CHROME_PATH.`);
 }
-const CHROME = findChromium();
 
 const CURSOR_SCRIPT = `
 (() => {
@@ -104,7 +106,7 @@ const CURSOR_SCRIPT = `
  * so it never interrupts a recorded take.
  */
 export async function prepareAuth(username, password, baseURL = 'http://localhost:9000') {
-  const browser = await chromium.launch({ executablePath: CHROME, headless: true });
+  const browser = await chromium.launch({ executablePath: executablePath(), headless: true });
   try {
     return await signIn(browser, username, password, baseURL);
   } finally {
@@ -143,7 +145,7 @@ async function signIn(browser, username, password, baseURL) {
 
 export async function startSession({ name, outDir, baseURL = 'http://localhost:9000', viewport = { width: 1440, height: 810 }, headless = true, storageState = undefined }) {
   fs.mkdirSync(outDir, { recursive: true });
-  const browser = await chromium.launch({ executablePath: CHROME, headless });
+  const browser = await chromium.launch({ executablePath: executablePath(), headless });
   const context = await browser.newContext({
     baseURL,
     viewport,
