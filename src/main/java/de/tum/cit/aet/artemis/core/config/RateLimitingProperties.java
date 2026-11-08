@@ -154,7 +154,14 @@ public class RateLimitingProperties {
     }
 
     public void setOidcAuthorizationRequestsPerMinute(Integer oidcAuthorizationRequestsPerMinute) {
-        this.oidcAuthorizationRequestsPerMinute = oidcAuthorizationRequestsPerMinute;
+        // Use default value if oidcAuthorizationRequestsPerMinute is <= 0
+        // to prevent IllegalArgumentException for Bucket4j.
+        if (oidcAuthorizationRequestsPerMinute != null && oidcAuthorizationRequestsPerMinute <= 0) {
+            this.oidcAuthorizationRequestsPerMinute = 3000;
+        }
+        else {
+            this.oidcAuthorizationRequestsPerMinute = oidcAuthorizationRequestsPerMinute;
+        }
     }
 
     public Integer getProblemStatementRenderingRequestsPerMinute() {

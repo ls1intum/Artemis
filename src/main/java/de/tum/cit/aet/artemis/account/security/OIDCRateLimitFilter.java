@@ -1,6 +1,8 @@
 package de.tum.cit.aet.artemis.account.security;
 
 import java.io.IOException;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -8,18 +10,25 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 import org.springframework.http.HttpStatus;
+import org.springframework.util.AntPathMatcher;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import de.tum.cit.aet.artemis.admin.service.RateLimitService;
 import de.tum.cit.aet.artemis.core.exception.RateLimitExceededException;
 import de.tum.cit.aet.artemis.core.security.RateLimitType;
 import inet.ipaddr.IPAddress;
+import inet.ipaddr.IPAddressString;
 
 /**
  * Filter that enforces rate limiting on OIDC authorization initialization requests.
- * Intercepts requests matching `/oauth2/authorization` and checks the client's rate limit budget.
+ * Intercepts requests matching `/oauth2/authorization/**` and checks the client's rate limit budget.
  */
 public class OIDCRateLimitFilter extends OncePerRequestFilter {
+
+    // Safe fallback IP if client resolution fails or untrusted headers are encountered
+    private static final IPAddress FALLBACK_CLIENT_IP = new IPAddressString("127.0.0.1").getAddress();
+
+    private static final AntPathMatcher PATH_MATCHER = new AntPathMatcher();
 
     private final RateLimitService rateLimitService;
 
@@ -34,19 +43,39 @@ public class OIDCRateLimitFilter extends OncePerRequestFilter {
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
-        // This filter is triggered for /oauth2/authorization and /login/oauth2/code. Rate-limiting applies only for initialization endpoint, so we track it
+        // Decode URI to protect the rate-limit bypass via percent-encoding (e.g., %61uthorization)
         String requestUri = request.getRequestURI();
-        if (requestUri != null && requestUri.contains("/oauth2/authorization")) {
-            IPAddress clientId = rateLimitService.resolveClientId();
+        String path = requestUri;
+        if (requestUri != null) {
+            try {
+                path = URLDecoder.decode(requestUri, StandardCharsets.UTF_8);
+            }
+            catch (Exception ignored) {
+                path = requestUri;
+            }
+        }
+
+        // Filter should only be triggered for /oauth2/authorization/** requests
+        if (path != null && PATH_MATCHER.match("/oauth2/authorization/**", path)) {
+            IPAddress clientId = null;
+            try {
+                clientId = rateLimitService.resolveClientId();
+            }
+            catch (Exception ignored) {
+            }
+
+            if (clientId == null) {
+                clientId = FALLBACK_CLIENT_IP;
+            }
+
             try {
                 rateLimitService.enforcePerMinute(clientId, RateLimitType.OIDC_AUTHORIZATION);
             }
             catch (RateLimitExceededException e) {
-                long seconds = e.getRetryAfterSeconds();
+                long seconds = Math.max(1, e.getRetryAfterSeconds() + 1);
                 response.setStatus(HttpStatus.TOO_MANY_REQUESTS.value());
                 response.setHeader("Retry-After", String.valueOf(seconds));
                 response.getWriter().write("Rate limit exceeded. Try again in " + seconds + " seconds.");
-                // Break the filter chain, the request won't be stored and redirected
                 return;
             }
         }
