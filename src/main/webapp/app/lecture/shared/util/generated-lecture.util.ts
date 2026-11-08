@@ -1,10 +1,12 @@
 import dayjs, { Dayjs } from 'dayjs/esm';
 import { addPublicFilePrefix } from 'app/app.constants';
 import { convertDateFromClient, convertDateStringFromServer } from 'app/foundation/util/date.utils';
-import { hydrate } from 'app/foundation/util/deep-clone.util';
+import { cloneWith, deepClone, hydrate } from 'app/foundation/util/deep-clone.util';
 import { Course } from 'app/course/shared/entities/course.model';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
+import type { ExerciseOverview } from 'app/openapi/model/exercise-overview';
+import type { ExerciseUnitExerciseReference } from 'app/openapi/model/exercise-unit-exercise-reference';
 import { CompetencyLectureUnitLink, CourseCompetency } from 'app/atlas/shared/entities/competency.model';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { LectureForOverview } from 'app/lecture/shared/entities/lecture-for-overview.model';
@@ -71,7 +73,7 @@ export function toLecture(lecture: AnyGeneratedLecture): Lecture {
     result.startDate = convertDateStringFromServer(startDate);
     result.endDate = convertDateStringFromServer(endDate);
     if (course) {
-        result.course = hydrate(new Course(), course) as Course;
+        result.course = hydrate(new Course(), course);
     }
     if (lectureUnits) {
         result.lectureUnits = lectureUnits.map((unit) => toLectureUnit(unit));
@@ -147,19 +149,25 @@ function toSlide(slide: GeneratedSlide): Slide {
     const result = hydrate(new Slide(), fields);
     result.hidden = hidden ? dayjs(hidden).toDate() : undefined;
     if (exercise) {
-        result.exercise = { id: exercise.id } as Exercise;
+        const exerciseReference: Pick<Exercise, 'id'> = { id: exercise.id };
+        result.exercise = exerciseReference as Exercise;
     }
     return result;
 }
 
 function toCompetencyLink(link: AnyGeneratedCompetencyLink): CompetencyLectureUnitLink {
-    const competency = link.competency ? ({ ...link.competency } as CourseCompetency) : undefined;
+    // A Competency instance would add client defaults such as masteryThreshold to what the server sent.
+    const competency = link.competency ? (deepClone(link.competency) as CourseCompetency) : undefined;
     return new CompetencyLectureUnitLink(competency, undefined, link.weight ?? 0, link.generatedByAi ?? false);
 }
 
-/** Converts the exercise of an exercise unit the way the hand-written services did, so the exercise row reads the same fields. */
-function toExercise(exercise: object): Exercise {
-    const result = ExerciseService.convertExerciseDatesFromServer(structuredClone(exercise) as unknown as Exercise)!;
+/**
+ * Converts the exercise of an exercise unit into a plain object, as the server sent
+ * it, with dayjs dates and parsed categories, so the exercise row reads the same fields.
+ */
+function toExercise(exercise: ExerciseOverview | ExerciseUnitExerciseReference): Exercise {
+    const result: Exercise = deepClone(exercise as Exercise);
+    ExerciseService.convertExerciseDatesFromServer(result);
     ExerciseService.parseExerciseCategories(result);
     return result;
 }
@@ -202,7 +210,7 @@ export function toLectureSeriesCreateRequest(draft: { title: string; startDate?:
  */
 export function toLectureUnitRequest<T extends GeneratedTextUnit | GeneratedOnlineUnit | GeneratedExerciseUnit | GeneratedAttachmentVideoUnit>(unit: LectureUnit): T {
     const { releaseDate, competencyLinks, lecture, ...fields } = unit as LectureUnit & { exercise?: Exercise; attachment?: Attachment };
-    const request: Record<string, unknown> = { ...fields, releaseDate: convertDateFromClient(releaseDate) };
+    const request: Record<string, unknown> = cloneWith(fields, { releaseDate: convertDateFromClient(releaseDate) });
     if (lecture?.id !== undefined) {
         request.lecture = { id: lecture.id };
     }
@@ -234,5 +242,5 @@ export function toLectureUnitRequest<T extends GeneratedTextUnit | GeneratedOnli
  */
 export function toAttachmentRequest(attachment: Attachment): GeneratedAttachment {
     const { releaseDate, uploadDate, linkUrl: _linkUrl, attachmentVideoUnit: _unit, displayPageNumbers: _pages, ...fields } = attachment;
-    return { ...fields, releaseDate: convertDateFromClient(releaseDate), uploadDate: convertDateFromClient(uploadDate) };
+    return cloneWith(fields, { releaseDate: convertDateFromClient(releaseDate), uploadDate: convertDateFromClient(uploadDate) });
 }
