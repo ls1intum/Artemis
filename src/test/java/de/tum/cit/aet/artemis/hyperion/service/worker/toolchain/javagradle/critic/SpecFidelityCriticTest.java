@@ -174,7 +174,7 @@ class SpecFidelityCriticTest {
     private record BriefGoalRequestFixture(String brief) {
     }
 
-    private record GoalQuoteFixture(String quote) {
+    private record GoalQuoteFixture(String quote, BriefLearningGoals.ConstructorBaseline constructorBaseline) {
     }
 
     private record GoalInventoryFixture(List<GoalQuoteFixture> goals) {
@@ -359,7 +359,8 @@ class SpecFidelityCriticTest {
                 if (input.startsWith("{\"brief\":")) {
                     // These existing specification fixtures use one whole-brief goal. Dedicated coverage tests supply atomic inventories.
                     BriefGoalRequestFixture request = FIXTURE_MAPPER.readValue(input, BriefGoalRequestFixture.class);
-                    return exactRawResponse(FIXTURE_MAPPER.writeValueAsString(new GoalInventoryFixture(List.of(new GoalQuoteFixture(request.brief())))));
+                    return exactRawResponse(FIXTURE_MAPPER
+                            .writeValueAsString(new GoalInventoryFixture(List.of(new GoalQuoteFixture(request.brief(), BriefLearningGoals.ConstructorBaseline.UNSPECIFIED)))));
                 }
                 return responses.get(Math.min(responseIndex.getAndIncrement(), responses.size() - 1));
             });

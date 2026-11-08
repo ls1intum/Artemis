@@ -22,11 +22,30 @@ class BriefLearningGoalExtractorTest {
     private final BriefLearningGoalExtractor extractor = new BriefLearningGoalExtractor(reviewer, JsonMapper.builder().build());
 
     @Test
+    void anExplicitStartingStateIsRetainedWithItsSourceQuote() {
+        String brief = "Write a constructor for an existing class that had none.";
+        var result = extractor.parse("""
+                {"goals":[{"quote":"Write a constructor for an existing class that had none.","constructorBaseline":"NO_EXPLICIT_CONSTRUCTORS"}]}
+                """, brief);
+        assertThat(result).isNotNull();
+        assertThat(result.goals()).containsExactly(new BriefLearningGoals.Goal("G1", brief, BriefLearningGoals.ConstructorBaseline.NO_EXPLICIT_CONSTRUCTORS));
+    }
+
+    @Test
+    void aMissingStartingStateDecisionCannotSilentlyBecomeUnspecified() {
+        assertThat(extractor.parse("""
+                {"goals":[{"quote":"Add the first constructor."}]}
+                """, "Add the first constructor.")).isNull();
+    }
+
+    @Test
     void groundsWrappedGoalsInTheOriginalBriefAndAssignsTheirIdentities() {
         String brief = "Preserve arrival order; choose the holder with the\nsmallest count.";
-        BriefLearningGoals result = extractor.parse("""
-                {"goals":[{"quote":"Preserve arrival order"},{"quote":"choose the holder with the smallest count"}]}
-                """, brief);
+        BriefLearningGoals result = extractor.parse(
+                """
+                        {"goals":[{"quote":"Preserve arrival order","constructorBaseline":"UNSPECIFIED"},{"quote":"choose the holder with the smallest count","constructorBaseline":"UNSPECIFIED"}]}
+                        """,
+                brief);
 
         assertThat(result).isNotNull();
         assertThat(result.sourceBrief()).isEqualTo(brief);
@@ -37,14 +56,14 @@ class BriefLearningGoalExtractorTest {
     @Test
     void anInventedGoalInvalidatesTheInventoryInsteadOfLeavingAPartialScope() {
         assertThat(extractor.parse("""
-                {"goals":[{"quote":"Preserve arrival order"},{"quote":"sort holders alphabetically"}]}
+                {"goals":[{"quote":"Preserve arrival order","constructorBaseline":"UNSPECIFIED"},{"quote":"sort holders alphabetically","constructorBaseline":"UNSPECIFIED"}]}
                 """, "Preserve arrival order; choose the holder with the smallest count.")).isNull();
     }
 
     @Test
     void duplicateWrappedQuotesCannotMasqueradeAsDistinctGoals() {
         assertThat(extractor.parse("""
-                {"goals":[{"quote":"Preserve arrival order"},{"quote":"Preserve  arrival\\norder"}]}
+                {"goals":[{"quote":"Preserve arrival order","constructorBaseline":"UNSPECIFIED"},{"quote":"Preserve  arrival\\norder","constructorBaseline":"UNSPECIFIED"}]}
                 """, "Preserve arrival order.")).isNull();
     }
 
@@ -58,7 +77,7 @@ class BriefLearningGoalExtractorTest {
     void aMalformedInventoryCanBeCorrectedWithoutCandidateContext() {
         when(reviewer.configured()).thenReturn(true);
         when(reviewer.call(anyString(), anyString(), any(), any(), anyInt())).thenReturn("[]", """
-                {"goals":[{"quote":"Preserve arrival order"},{"quote":"Choose the smallest holder"}]}
+                {"goals":[{"quote":"Preserve arrival order","constructorBaseline":"UNSPECIFIED"},{"quote":"Choose the smallest holder","constructorBaseline":"UNSPECIFIED"}]}
                 """);
 
         var result = extractor.extract("Preserve arrival order. Choose the smallest holder.", null, () -> false);
@@ -72,9 +91,9 @@ class BriefLearningGoalExtractorTest {
     void anUngroundedResponseCanBeCorrectedButCannotBecomePartialScope() {
         when(reviewer.configured()).thenReturn(true);
         when(reviewer.call(anyString(), anyString(), any(), any(), anyInt())).thenReturn("""
-                {"goals":[{"quote":"Preserve arrival order"},{"quote":"Sort by surname"}]}
+                {"goals":[{"quote":"Preserve arrival order","constructorBaseline":"UNSPECIFIED"},{"quote":"Sort by surname","constructorBaseline":"UNSPECIFIED"}]}
                 """, """
-                {"goals":[{"quote":"Preserve arrival order"},{"quote":"Choose the smallest holder"}]}
+                {"goals":[{"quote":"Preserve arrival order","constructorBaseline":"UNSPECIFIED"},{"quote":"Choose the smallest holder","constructorBaseline":"UNSPECIFIED"}]}
                 """);
 
         var result = extractor.extract("Preserve arrival order. Choose the smallest holder.", null, () -> false);

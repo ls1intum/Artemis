@@ -909,10 +909,11 @@ class GenerationAttemptLoop {
 
     private SpecFidelityReport runSpecFidelityCritic(String problemStatement, @Nullable String adaptationChanges, @Nullable String repairDelta,
             @Nullable SpecFidelityReport previousReport, @Nullable String specSnapshotForReview, @Nullable String testPlanSnapshot) {
+        SpecFidelityReport report;
         try {
             List<String> testNames = GenerationOrchestrator.extractTaskBoundTestNames(problemStatement);
             Map<RepositoryRole, Map<String, String>> reviewArtifacts = GenerationReviewSupport.reviewArtifacts(producedFilesByType, baselineRepositoryFiles);
-            SpecFidelityReport report = adaptationChanges == null
+            report = adaptationChanges == null
                     ? specFidelityCritic.critique(reviewBrief, problemStatement, testNames, reviewArtifacts, usageSink, cancelled, previousReport, specSnapshotForReview,
                             repairDelta, testPlanSnapshot,
                             verification.templateFailureEvidence().stream().map(evidence -> new TestFailureEvidence(evidence.testName(), evidence.message())).toList())
@@ -920,16 +921,13 @@ class GenerationAttemptLoop {
             report = GenerationReviewSupport.completeReview(report, adaptationChanges != null && adaptationChanges.contains(GenerationOrchestrator.CHANGE_SUMMARY_TRUNCATED),
                     specFidelityCritic.detectMessagelessAssertions(producedFilesByType.getOrDefault(RepositoryRole.TESTS, Map.of())),
                     specFidelityCritic.detectUnenforceableTechniqueRules(specSnapshotForReview), specSnapshotForReview);
-            if (report.hasFindings()) {
-                emit(GenerationReviewSupport.reviewSummary(report));
-            }
-            return report;
         }
         catch (RuntimeException e) {
             log.warn("Spec-fidelity critic could not run for exercise ({})", e.getClass().getSimpleName());
-            return adaptationChanges == null ? SpecFidelityReport.qualityReviewUnavailable("The full-artifact reviewer failed before it could assess the candidate.")
+            report = adaptationChanges == null ? SpecFidelityReport.qualityReviewUnavailable("The full-artifact reviewer failed before it could assess the candidate.")
                     : SpecFidelityReport.adaptationScopeUnavailable("The adaptation-scope reviewer failed before it could assess every changed line.");
         }
+        return service.preserveBriefScaffolding(report, sessionId, specSnapshotForReview, producedFilesByType, progress);
     }
 
     private GenerationOutcome cancelledOutcome(AgentLoopResult cancelledResult) {

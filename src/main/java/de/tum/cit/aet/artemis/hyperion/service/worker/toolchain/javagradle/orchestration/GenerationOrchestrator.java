@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.orchestration;
 
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -44,6 +45,7 @@ import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.agent
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.agent.SandboxAgentTools;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.critic.SpecFidelityCritic;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification.ApprovedSpecRegistry;
+import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification.BriefScaffoldingGate;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification.DifferentialVerifier;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification.ExerciseIntegrityGate;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification.StageChecks;
@@ -113,6 +115,18 @@ public class GenerationOrchestrator {
         int maxGenerationAttempts = GenerationAttemptLoop.MAX_MECHANICAL_ATTEMPTS + maxSemanticRepairs + 1;
         this.attemptLoopDependencies = new GenerationAttemptLoop.Dependencies(workspace, agentLoopRunner, verifier, structuralOracleSeeder, stageCheckService, specFidelityCritic,
                 stagedGenerationRunner, transcriptWriter, stagedGenerationEnabled, maxTurns, maxGenerationAttempts, maxSemanticRepairs);
+    }
+
+    SpecFidelityReport preserveBriefScaffolding(SpecFidelityReport report, String sessionId, @Nullable String specification, Map<RepositoryRole, Map<String, String>> artifacts,
+            @Nullable GenerationProgressSink progress) {
+        List<SpecFidelityReport.Finding> findings = new ArrayList<>(report.findings());
+        findings.addAll(BriefScaffoldingGate.artifactFindings(approvedSpecs.learningGoals(sessionId).orElse(null), specification,
+                artifacts.getOrDefault(RepositoryRole.TEMPLATE, Map.of()), artifacts.getOrDefault(RepositoryRole.SOLUTION, Map.of())));
+        SpecFidelityReport combined = new SpecFidelityReport(findings);
+        if (combined.hasFindings()) {
+            emit(progress, GenerationReviewSupport.reviewSummary(combined));
+        }
+        return combined;
     }
 
     /**

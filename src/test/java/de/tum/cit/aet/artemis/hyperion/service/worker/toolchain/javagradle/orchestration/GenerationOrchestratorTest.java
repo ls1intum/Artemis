@@ -67,6 +67,7 @@ import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.Repos
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.agent.AgentSystemPrompt;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.agent.AgentTranscriptWriter;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.agent.GenerationStage;
+import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.critic.BriefLearningGoals;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.critic.ContractWitness;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.critic.SemanticMutant;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.critic.SpecFidelityCritic;
@@ -170,6 +171,31 @@ class GenerationOrchestratorTest {
     private GenerationOrchestrator newService(boolean stagedGenerationEnabled) {
         return new GenerationOrchestrator(sandbox, workspace, agentLoopRunner, verifier, systemPromptService, structuralOracleSeeder, specFidelityCritic, 100, 6,
                 stagedGenerationRunner, stagedGenerationEnabled, stageCheckService, new AgentTranscriptWriter(""), new ApprovedSpecRegistry());
+    }
+
+    @Test
+    void aReviewerOutageCannotEraseAKnownSourceStartingStateMismatch() {
+        String brief = "Add a constructor to the existing class that had none.";
+        ApprovedSpecRegistry registry = new ApprovedSpecRegistry();
+        registry.rememberLearningGoals(SESSION_ID,
+                new BriefLearningGoals(brief, List.of(new BriefLearningGoals.Goal("G1", brief, BriefLearningGoals.ConstructorBaseline.NO_EXPLICIT_CONSTRUCTORS))));
+        GenerationOrchestrator orchestrator = new GenerationOrchestrator(sandbox, workspace, agentLoopRunner, verifier, systemPromptService, structuralOracleSeeder,
+                specFidelityCritic, 100, 6, stagedGenerationRunner, true, stageCheckService, new AgentTranscriptWriter(""), registry);
+        String specification = """
+                ## Design
+                | Type | Template status |
+                | --- | --- |
+                | Counter | stubbed |
+                ## Public API
+                ```java
+                public class Counter { public Counter(int value); }
+                ```
+                """;
+
+        var result = orchestrator.preserveBriefScaffolding(SpecFidelityReport.qualityReviewUnavailable("Reviewer unavailable"), SESSION_ID, specification, Map.of(), null);
+
+        assertThat(result.findings()).extracting(SpecFidelityReport.Finding::kind).containsExactly(SpecFidelityReport.Kind.QUALITY_REVIEW_UNAVAILABLE,
+                SpecFidelityReport.Kind.SPECIFICATION_REVIEW_FINDING);
     }
 
     private static AgentLoopRunner.AgentLoopSession loopSession(AgentLoopResult result) {

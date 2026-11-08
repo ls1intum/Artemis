@@ -24,6 +24,7 @@ import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.hyperion.runtime.agent.ProviderFailureClass;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.critic.SpecFidelityCritic.SpecificationReview;
+import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification.BriefScaffoldingGate;
 
 /**
  * The pre-freeze specification review pass: one bounded, tool-free review of the mechanically valid candidate SPEC.md against the instructor brief and, when one exists, the
@@ -187,6 +188,14 @@ class SpecificationReviewCritic {
         }
         if (learningGoals == null) {
             return incompleteSpecificationReview("The brief-only learner-goal inventory was unavailable or not source-grounded.", previousReview);
+        }
+        BriefScaffoldingGate.Check scaffolding = BriefScaffoldingGate.checkSpecification(learningGoals, specification);
+        if (!scaffolding.complete()) {
+            return incompleteSpecificationReview(String.join("\n", scaffolding.findings()), previousReview).withBriefLearningGoals(learningGoals);
+        }
+        if (!scaffolding.findings().isEmpty()) {
+            return new SpecificationReview(true, false, true, scaffolding.findings(), "A source-owned starting-state requirement contradicts the proposed declarations.",
+                    "MISALIGNED", riskHistory(previousReview, scaffolding.findings()), learningGoals);
         }
         return reviewAgainstLearningGoals(brief, selectedConcept, specification, previousReview, usageSink, cancelled, learningGoals).withBriefLearningGoals(learningGoals);
     }

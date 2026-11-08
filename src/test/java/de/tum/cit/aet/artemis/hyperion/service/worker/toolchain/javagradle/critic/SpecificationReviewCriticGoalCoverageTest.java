@@ -46,9 +46,39 @@ class SpecificationReviewCriticGoalCoverageTest {
     @BeforeEach
     void configureBriefOnlyInventory() {
         when(reviewer.configured()).thenReturn(true);
+        when(reviewer.call(eq(GOAL_PROMPT), anyString(), any(), any(), anyInt())).thenReturn(
+                """
+                        {"goals":[{"quote":"Preserve arrival order.","constructorBaseline":"UNSPECIFIED"},{"quote":"Choose the holder with the smallest count.","constructorBaseline":"UNSPECIFIED"}]}
+                        """);
+    }
+
+    @Test
+    void aKnownStartingStateMismatchDoesNotDependOnAnotherModelVerdict() {
+        String brief = "Add a constructor to the existing class that had none.";
         when(reviewer.call(eq(GOAL_PROMPT), anyString(), any(), any(), anyInt())).thenReturn("""
-                {"goals":[{"quote":"Preserve arrival order."},{"quote":"Choose the holder with the smallest count."}]}
+                {"goals":[{"quote":"Add a constructor to the existing class that had none.","constructorBaseline":"NO_EXPLICIT_CONSTRUCTORS"}]}
                 """);
+        when(reviewer.call(eq(REVIEW_PROMPT), anyString(), any(), any(), anyInt())).thenThrow(new IllegalStateException("Reviewer unavailable"));
+        var review = critic.reviewSpecification(brief, """
+                ## Design
+                | Type | Template status |
+                | --- | --- |
+                | Counter | stubbed |
+                ## Public API
+                ```java
+                public class Counter {
+                    public Counter(int initial);
+                    public Counter();
+                }
+                ```
+                """, null, () -> false);
+
+        assertThat(review.complete()).isTrue();
+        assertThat(review.accepted()).isFalse();
+        assertThat(review.coherentRewriteRequired()).isTrue();
+        assertThat(review.findings()).singleElement().asString().contains("first explicit constructor");
+        assertThat(review.briefLearningGoals().goals().getFirst().constructorBaseline()).isEqualTo(BriefLearningGoals.ConstructorBaseline.NO_EXPLICIT_CONSTRUCTORS);
+        verify(reviewer, org.mockito.Mockito.never()).call(eq(REVIEW_PROMPT), anyString(), any(), any(), anyInt());
     }
 
     @Test

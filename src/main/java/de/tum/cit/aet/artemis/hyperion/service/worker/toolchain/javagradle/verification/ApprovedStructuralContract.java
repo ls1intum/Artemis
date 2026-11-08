@@ -186,6 +186,13 @@ final class ApprovedStructuralContract {
                 || type.getConstructors().stream().anyMatch(ApprovedStructuralContract::studentCreates)).map(JavaClass::getSimpleName).collect(Collectors.toSet());
     }
 
+    /** A first constructor is learner-created only when every declared constructor is absent from the starter. */
+    boolean hasConstructorlessStarter(String typeName) {
+        JavaClass type = types.get(typeName);
+        return type != null && !type.isInterface() && !type.isEnum() && !type.isRecord() && !type.getConstructors().isEmpty()
+                && type.getConstructors().stream().allMatch(ApprovedStructuralContract::studentCreates);
+    }
+
     List<String> templateDependencies(Set<String> templateTypes, Set<String> absentTypes) {
         List<String> conflicts = new ArrayList<>();
         for (String owner : templateTypes) {

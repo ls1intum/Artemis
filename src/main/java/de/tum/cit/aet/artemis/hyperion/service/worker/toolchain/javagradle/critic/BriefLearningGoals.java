@@ -14,12 +14,26 @@ public record BriefLearningGoals(String sourceBrief, List<Goal> goals) {
         goals = List.copyOf(goals);
     }
 
+    /** An explicit starting-state requirement, extracted before the proposed design is available. */
+    public enum ConstructorBaseline {
+        UNSPECIFIED, NO_EXPLICIT_CONSTRUCTORS
+    }
+
     /**
      * One stated learner goal, with whitespace normalized for line-wrapped briefs.
      *
-     * @param id    the server-assigned identity retained during specification repair
-     * @param quote the instructor's words, rather than a candidate-derived interpretation
+     * @param id                  the server-assigned identity retained during specification repair
+     * @param quote               the instructor's words, rather than a candidate-derived interpretation
+     * @param constructorBaseline whether the brief requires an existing class without explicit constructors
      */
-    public record Goal(String id, String quote) {
+    public record Goal(String id, String quote, ConstructorBaseline constructorBaseline) {
+
+        /**
+         * @param id    the retained goal identity
+         * @param quote the source-grounded goal without an additional constructor requirement
+         */
+        public Goal(String id, String quote) {
+            this(id, quote, ConstructorBaseline.UNSPECIFIED);
+        }
     }
 }

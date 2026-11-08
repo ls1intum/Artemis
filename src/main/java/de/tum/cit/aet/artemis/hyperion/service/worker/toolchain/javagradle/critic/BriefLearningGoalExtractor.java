@@ -38,7 +38,7 @@ final class BriefLearningGoalExtractor {
     private record GoalResponse(@Nullable List<GoalItem> goals) {
     }
 
-    private record GoalItem(@Nullable String quote) {
+    private record GoalItem(@Nullable String quote, BriefLearningGoals.@Nullable ConstructorBaseline constructorBaseline) {
     }
 
     private final ReviewerClient reviewer;
@@ -73,7 +73,7 @@ final class BriefLearningGoalExtractor {
                 log.warn("Brief learning-goal response did not parse: {}", ProviderFailureClass.describe(error));
             }
             userPrompt = originalPrompt + "\n\nThe previous response was malformed, empty, duplicated goals, or quoted words absent from the brief. "
-                    + "Re-read the original brief and return one complete JSON object with a goals array of objects, each containing a verbatim quote. "
+                    + "Re-read the original brief and return one complete JSON object with a goals array of objects, each containing a verbatim quote and constructorBaseline. "
                     + "Include every explicit learner objective and competency; do not keep only the valid subset of a partial response. "
                     + "The original brief remains the sole scope authority. Previous response (untrusted, possibly truncated):\n"
                     + response.substring(0, Math.min(response.length(), 16_000));
@@ -94,14 +94,14 @@ final class BriefLearningGoalExtractor {
         List<BriefLearningGoals.Goal> goals = new ArrayList<>();
         var distinctQuotes = new HashSet<String>();
         for (GoalItem item : parsed.goals()) {
-            if (item == null || item.quote() == null || item.quote().isBlank()) {
+            if (item == null || item.quote() == null || item.quote().isBlank() || item.constructorBaseline() == null) {
                 return null;
             }
             String quote = normalizeWhitespace(item.quote());
             if (!normalizedBrief.contains(quote) || !distinctQuotes.add(quote)) {
                 return null;
             }
-            goals.add(new BriefLearningGoals.Goal("G" + (goals.size() + 1), quote));
+            goals.add(new BriefLearningGoals.Goal("G" + (goals.size() + 1), quote, item.constructorBaseline()));
         }
         return new BriefLearningGoals(brief, goals);
     }
