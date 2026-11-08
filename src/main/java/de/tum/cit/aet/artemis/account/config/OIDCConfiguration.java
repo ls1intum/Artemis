@@ -24,6 +24,7 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
+import de.tum.cit.aet.artemis.account.repository.oidc.DistributedOIDCAuthorizationRequestRepository;
 import de.tum.cit.aet.artemis.account.security.OIDCAuthenticationFailureHandler;
 import de.tum.cit.aet.artemis.account.security.OIDCAuthenticationSuccessHandler;
 import de.tum.cit.aet.artemis.account.security.OIDCService;
@@ -50,6 +51,8 @@ public class OIDCConfiguration {
     private final OIDCAuthenticationSuccessHandler oidcAuthenticationSuccessHandler;
 
     private final OIDCAuthenticationFailureHandler oidcAuthenticationFailureHandler;
+
+    private final DistributedOIDCAuthorizationRequestRepository authorizationRequestRepository;
 
     private final Environment environment;
 
@@ -78,10 +81,12 @@ public class OIDCConfiguration {
     private String usernameClaimKey;
 
     public OIDCConfiguration(OIDCService oidcService, OIDCAuthenticationSuccessHandler oidcAuthenticationSuccessHandler,
-            OIDCAuthenticationFailureHandler oidcAuthenticationFailureHandler, Environment environment) {
+            OIDCAuthenticationFailureHandler oidcAuthenticationFailureHandler, DistributedOIDCAuthorizationRequestRepository authorizationRequestRepository,
+            Environment environment) {
         this.oidcService = oidcService;
         this.oidcAuthenticationSuccessHandler = oidcAuthenticationSuccessHandler;
         this.oidcAuthenticationFailureHandler = oidcAuthenticationFailureHandler;
+        this.authorizationRequestRepository = authorizationRequestRepository;
         this.environment = environment;
     }
 
@@ -130,32 +135,27 @@ public class OIDCConfiguration {
     protected SecurityFilterChain oidcFilterChain(final HttpSecurity http) throws Exception {
         var resolver = new DefaultOAuth2AuthorizationRequestResolver(clientRegistrationRepository(), "/oauth2/authorization");
 
-        // Extract rememberMe & redirect field parameters query and store it into session
+        // Keep the rememberMe, redirect and code challenge parameters with the authorization request, so the node that handles the callback can read them
         resolver.setAuthorizationRequestCustomizer(builder -> {
             var attrs = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
             if (attrs != null) {
                 var req = attrs.getRequest();
-                var session = req.getSession(true);
-                session.setAttribute(OIDCConstants.OIDC_REMEMBER_ME_SESSION_KEY, "true".equalsIgnoreCase(req.getParameter("rememberMe")));
-
+                boolean rememberMe = "true".equalsIgnoreCase(req.getParameter("rememberMe"));
                 String redirectTarget = req.getParameter("redirect");
-                if (redirectTarget != null && !redirectTarget.isBlank()) {
-                    session.setAttribute(OIDCConstants.OIDC_REDIRECT_TARGET_SESSION_KEY, redirectTarget);
-                }
-                else {
-                    session.removeAttribute(OIDCConstants.OIDC_REDIRECT_TARGET_SESSION_KEY);
-                }
-
                 String codeChallenge = req.getParameter("code_challenge");
                 if (codeChallenge == null || codeChallenge.isBlank()) {
                     codeChallenge = req.getParameter("codeChallenge");
                 }
-                if (codeChallenge != null && !codeChallenge.isBlank()) {
-                    session.setAttribute(OIDCConstants.OIDC_CODE_CHALLENGE_SESSION_KEY, codeChallenge);
-                }
-                else {
-                    session.removeAttribute(OIDCConstants.OIDC_CODE_CHALLENGE_SESSION_KEY);
-                }
+                String finalCodeChallenge = codeChallenge;
+                builder.attributes(attributes -> {
+                    attributes.put(OIDCConstants.OIDC_REMEMBER_ME_ATTRIBUTE, rememberMe);
+                    if (redirectTarget != null && !redirectTarget.isBlank()) {
+                        attributes.put(OIDCConstants.OIDC_REDIRECT_TARGET_ATTRIBUTE, redirectTarget);
+                    }
+                    if (finalCodeChallenge != null && !finalCodeChallenge.isBlank()) {
+                        attributes.put(OIDCConstants.OIDC_CODE_CHALLENGE_ATTRIBUTE, finalCodeChallenge);
+                    }
+                });
             }
         });
         // @formatter:off
@@ -164,8 +164,8 @@ public class OIDCConfiguration {
             // /login/oauth2/code/tum-login - when TUM sends the code
             .securityMatcher("/oauth2/authorization/**", "/login/oauth2/code/**")
 
-            // Session for redirects
-            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
+            // No HTTP session: it is local to one node, and the callback may reach another one. The authorization request is kept in the distributed store instead.
+            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 
             .authorizeHttpRequests(auth -> auth
                 .anyRequest().authenticated()
@@ -174,7 +174,7 @@ public class OIDCConfiguration {
             // Activate Spring Security OAuth2 Login
             .oauth2Login(oauth2 -> oauth2
                 .clientRegistrationRepository(clientRegistrationRepository())
-                .authorizationEndpoint(auth -> auth.authorizationRequestResolver(resolver))
+                .authorizationEndpoint(auth -> auth.authorizationRequestResolver(resolver).authorizationRequestRepository(authorizationRequestRepository))
                 .userInfoEndpoint(userInfo -> userInfo.oidcUserService(oidcService))
                 .successHandler(this.oidcAuthenticationSuccessHandler)
                 .failureHandler(this.oidcAuthenticationFailureHandler)

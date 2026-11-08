@@ -1277,6 +1277,31 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testExamAnnouncementHistory() throws Exception {
+        exam1.setVisibleDate(ZonedDateTime.now().minusHours(3));
+        examRepository.save(exam1);
+        String base = "/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/announcements";
+        var first = request.postWithPlainStringResponseBody(base, "First message", ExamWideAnnouncementEventDTO.class, HttpStatus.OK);
+        var second = request.postWithPlainStringResponseBody(base, "Second message", ExamWideAnnouncementEventDTO.class, HttpStatus.OK);
+        // History remains available after conduction, even when the exam is no longer visible.
+        exam1.setEndDate(ZonedDateTime.now().minusMinutes(1));
+        exam1.setVisibleDate(ZonedDateTime.now().plusHours(1));
+        examRepository.save(exam1);
+        var history = request.getList(base, HttpStatus.OK, ExamWideAnnouncementEventDTO.class);
+        assertThat(history).extracting(ExamWideAnnouncementEventDTO::id).containsExactly(second.id(), first.id());
+        assertThat(history).extracting(ExamWideAnnouncementEventDTO::text).containsExactly("Second message", "First message");
+        assertThat(history).allSatisfy(event -> assertThat(event.createdDate()).isNotNull());
+        request.get("/api/exam/courses/" + course1.getId() + "/exams/" + Long.MAX_VALUE + "/announcements", HttpStatus.NOT_FOUND, List.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testExamAnnouncementHistoryRejectsStudents() throws Exception {
+        request.get("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/announcements", HttpStatus.FORBIDDEN, List.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testExamsCanNotBeSentBeforeVisibleDate() throws Exception {
         exam1.setVisibleDate(ZonedDateTime.now().plusMinutes(1));
         exam1 = examRepository.save(exam1);

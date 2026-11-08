@@ -32,6 +32,8 @@ export class BonusExample {
 }
 
 export interface BonusResult {
+    /** The submitted source has not produced completed points yet; final bonus fields remain absent. */
+    pending?: boolean;
     bonusStrategy?: BonusStrategy;
     bonusFromTitle?: string;
     studentPointsOfBonusSource?: number | undefined;

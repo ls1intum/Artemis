@@ -10,7 +10,7 @@ import { ExamStudentsComponent } from 'app/exam/manage/students/exam-students.co
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { MockPipe, MockProvider } from 'ng-mocks';
 import dayjs from 'dayjs/esm';
-import { Observable, of, throwError } from 'rxjs';
+import { Observable, Subject, of, throwError } from 'rxjs';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { AccountService } from 'app/core/auth/account.service';
@@ -470,10 +470,21 @@ describe('ExamStudentsComponent', () => {
     });
 
     describe('registerAllStudentsFromCourse', () => {
+        it('should report a failed bulk registration without refreshing the student list', () => {
+            fixture.detectChanges();
+            vi.spyOn(examManagementService, 'addAllStudentsOfCourseToExam').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 400 })));
+            const refresh = vi.spyOn(component, 'reloadStudentsView');
+            vi.spyOn(fixture.debugElement.injector.get(TumAetUiConfirmationService), 'confirm').mockImplementation((options) => options.accept());
+            component.registerAllStudentsFromCourse();
+            expect(alertService.error).toHaveBeenCalled();
+            expect(refresh).not.toHaveBeenCalled();
+        });
+
         it('should call addAllStudentsOfCourseToExam and trigger reload on success', () => {
             fixture.detectChanges();
             const addSpy = vi.spyOn(examManagementService, 'addAllStudentsOfCourseToExam').mockReturnValue(of(new HttpResponse<void>()));
             const reloadSpy = vi.spyOn(component, 'reloadStudentsView').mockImplementation(() => {});
+            vi.spyOn(fixture.debugElement.injector.get(TumAetUiConfirmationService), 'confirm').mockImplementation((options) => options.accept());
 
             component.registerAllStudentsFromCourse();
 
@@ -483,6 +494,88 @@ describe('ExamStudentsComponent', () => {
     });
 
     describe('exam student registration', () => {
+        it('should prevent registration until statistics finish loading', () => {
+            const statistics = new Subject<ExamChecklist>();
+            vi.spyOn(TestBed.inject(ExamChecklistService), 'getExamStatistics').mockReturnValue(statistics);
+            fixture.detectChanges();
+            const open = vi.fn();
+            vi.spyOn(component, 'addStudentsModal').mockReturnValue({ open } as never);
+            const importOpen = vi.fn();
+            vi.spyOn(component, 'usersImportDialog').mockReturnValue({ open: importOpen } as never);
+            const register = vi.spyOn(examManagementService, 'addAllStudentsOfCourseToExam');
+            for (const index of [0, 1, 3]) {
+                component.manageStudentsMenuActions()[index].command();
+            }
+            expect(open).not.toHaveBeenCalled();
+            expect(importOpen).not.toHaveBeenCalled();
+            expect(register).not.toHaveBeenCalled();
+            expect(component.manageStudentsMenuActions().filter((item) => item.disabled).length).toBe(3);
+            statistics.next({ ...mockChecklist, numberOfGeneratedStudentExams: 0 });
+            statistics.complete();
+            component.openAddStudentsDialog();
+            expect(open).toHaveBeenCalledOnce();
+        });
+
+        it('should keep failed statistics closed and allow a retry before registration', () => {
+            const statistics = vi
+                .spyOn(TestBed.inject(ExamChecklistService), 'getExamStatistics')
+                .mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 500 })))
+                .mockReturnValue(of(mockChecklist));
+            fixture.detectChanges();
+            const open = vi.fn();
+            vi.spyOn(component, 'addStudentsModal').mockReturnValue({ open } as never);
+            const confirm = vi.spyOn(fixture.debugElement.injector.get(TumAetUiConfirmationService), 'confirm');
+            component.openAddStudentsDialog();
+            expect(open).not.toHaveBeenCalled();
+            expect(confirm).not.toHaveBeenCalled();
+            expect(component.statisticsLoadingFailed()).toBe(true);
+            component.retryExamStatistics();
+            component.openAddStudentsDialog();
+            expect(statistics).toHaveBeenCalledTimes(2);
+            expect(component.statisticsLoadingFailed()).toBe(false);
+            expect(confirm).toHaveBeenCalledOnce();
+            confirm.mock.calls[0][0].accept();
+            expect(open).toHaveBeenCalledOnce();
+        });
+
+        it('should confirm registration when student exams already exist', () => {
+            fixture.detectChanges();
+            component.studentExamCount.set(2);
+            const openSpy = vi.fn();
+            vi.spyOn(component, 'addStudentsModal').mockReturnValue({ open: openSpy } as never);
+            const confirmationService = fixture.debugElement.injector.get(TumAetUiConfirmationService);
+            const confirmSpy = vi.spyOn(confirmationService, 'confirm');
+            component.openAddStudentsDialog();
+            expect(openSpy).not.toHaveBeenCalled();
+            expect(confirmSpy).toHaveBeenCalledOnce();
+            confirmSpy.mock.calls[0][0].accept();
+            expect(openSpy).toHaveBeenCalledOnce();
+        });
+
+        it('should disable registration when the deadline arrives while the page is open', () => {
+            vi.useFakeTimers();
+            try {
+                fixture.detectChanges();
+                component.exam.update((exam) => ({ ...exam, endDate: dayjs().add(1, 'second') }));
+                component['scheduleRegistrationDeadline']();
+                expect(component.manageStudentsMenuActions()[0].disabled).toBe(false);
+                vi.advanceTimersByTime(1001);
+                expect(component.manageStudentsMenuActions()[0].disabled).toBe(true);
+            } finally {
+                vi.useRealTimers();
+            }
+        });
+
+        it('should reject registration and disable its menu actions after exam end', () => {
+            fixture.detectChanges();
+            component.exam.update((exam) => ({ ...exam, endDate: dayjs().subtract(1, 'minute') }));
+            const openSpy = vi.fn();
+            vi.spyOn(component, 'addStudentsModal').mockReturnValue({ open: openSpy } as never);
+            component.openAddStudentsDialog();
+            expect(openSpy).not.toHaveBeenCalled();
+            expect(component.manageStudentsMenuActions()[0].disabled).toBe(true);
+        });
+
         it('should search users through the exam management service', () => {
             fixture.detectChanges();
             const searchSpy = vi.spyOn(examManagementService, 'searchUsersForExamRegistration').mockReturnValue(of({ content: [], totalElements: 0 }));
@@ -546,6 +639,7 @@ describe('ExamStudentsComponent', () => {
 
         it('should open the add students dialog', () => {
             fixture.detectChanges();
+            component.studentExamCount.set(0);
             const openSpy = vi.fn();
             vi.spyOn(component, 'addStudentsModal').mockReturnValue({ open: openSpy } as never);
 
@@ -588,6 +682,9 @@ describe('ExamStudentsComponent', () => {
     describe('startExercises', () => {
         it('should call startExercises, show success alert, and reset isLoading', () => {
             fixture.detectChanges();
+            vi.mocked(examManagementService.getExerciseStartStatus).mockReturnValue(
+                of(new HttpResponse({ body: { finished: 2, failed: 0, overall: 2 } as ExamExerciseStartPreparationStatus })),
+            );
             vi.spyOn(examManagementService, 'startExercises').mockReturnValue(of(new HttpResponse({ body: null })));
             const successSpy = vi.spyOn(alertService, 'success');
 
@@ -753,7 +850,7 @@ describe('ExamStudentsComponent', () => {
             component.hasExamEnded.set(true);
         });
 
-        it('attendanceCheckPassed should be true when attended and all checks completed', () => {
+        it('attendanceCheckPassed accepts all confirmed checks without a signature after the exam', () => {
             const dto: ExamStudentDTO = {
                 id: 1,
                 didExamUserAttendExam: true,
@@ -761,15 +858,15 @@ describe('ExamStudentsComponent', () => {
                 didCheckImage: true,
                 didCheckName: true,
                 didCheckRegistrationNumber: true,
-                signingImagePath: '/path/to/image',
             };
             expect(component.attendanceCheckPassed(dto)).toBeTruthy();
         });
 
-        it('attendanceCheckFailed should be true when attended but a check is incomplete', () => {
+        it('attendanceCheckFailed warns for a started exam with partial checks', () => {
             const dto: ExamStudentDTO = {
                 id: 1,
-                didExamUserAttendExam: true,
+                didExamUserAttendExam: false,
+                started: true,
                 didCheckLogin: false,
                 didCheckImage: true,
                 didCheckName: true,
@@ -779,8 +876,23 @@ describe('ExamStudentsComponent', () => {
             expect(component.attendanceCheckFailed(dto)).toBeTruthy();
         });
 
+        it('does not label partial checks as absent or show a warning for an unstarted attempt', () => {
+            const dto: ExamStudentDTO = { id: 1, didExamUserAttendExam: false, didCheckLogin: true };
+            expect(component.didNotAttendExam(dto)).toBeFalsy();
+            expect(component.attendanceCheckFailed(dto)).toBeFalsy();
+            expect(component.attendanceCheckPassed(dto)).toBeFalsy();
+        });
+
         it('didNotAttendExam should be true when student did not attend', () => {
-            const dto: ExamStudentDTO = { id: 1, didExamUserAttendExam: false };
+            const dto: ExamStudentDTO = {
+                id: 1,
+                didExamUserAttendExam: false,
+                didCheckImage: false,
+                didCheckName: false,
+                didCheckLogin: false,
+                didCheckRegistrationNumber: false,
+                signingImagePath: '/retained-signature',
+            };
             expect(component.didNotAttendExam(dto)).toBeTruthy();
         });
 
@@ -832,7 +944,7 @@ describe('ExamStudentsComponent accessible names', () => {
     } as any as ActivatedRoute;
 
     const baseDto: ExamStudentDTO = { id: 1, userId: 1, login: 'student1', name: 'Student One', studentExamId: 123, progress: 'submitted' };
-    const failedDto: ExamStudentDTO = { ...baseDto, id: 1, login: 'failed', didExamUserAttendExam: true, didCheckLogin: false };
+    const failedDto: ExamStudentDTO = { ...baseDto, id: 1, login: 'failed', started: true, didExamUserAttendExam: false, didCheckLogin: true, didCheckImage: false };
     const passedDto: ExamStudentDTO = {
         ...baseDto,
         id: 2,
@@ -844,7 +956,17 @@ describe('ExamStudentsComponent accessible names', () => {
         didCheckRegistrationNumber: true,
         signingImagePath: '/path/to/image',
     };
-    const absentDto: ExamStudentDTO = { ...baseDto, id: 3, login: 'absent', studentExamId: undefined, didExamUserAttendExam: false };
+    const absentDto: ExamStudentDTO = {
+        ...baseDto,
+        id: 3,
+        login: 'absent',
+        studentExamId: undefined,
+        didExamUserAttendExam: false,
+        didCheckImage: false,
+        didCheckName: false,
+        didCheckLogin: false,
+        didCheckRegistrationNumber: false,
+    };
 
     let fixture: ComponentFixture<ExamStudentsComponent>;
 

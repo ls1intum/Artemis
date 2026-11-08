@@ -7,23 +7,33 @@
 </head>
 <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333333;">
     <p th:text="#{email.httpsCloneTip.greeting(${user.firstName != null ? user.firstName : user.login})}">Dear User,</p>
-    
-    <p th:text="#{email.httpsCloneTip.intro}">
-        We noticed that you recently accessed your exercise code using your main Artemis account password. Doing so can pose a security risk and requires entering your credentials repeatedly. We recommend using one of the following safer options instead:
+
+    <p th:text="#{email.httpsCloneTip.intro(${exerciseTitle}, ${courseTitle})}">
+        You just used your Artemis account password to access the repository of an exercise.
     </p>
 
-    <ul style="padding-left: 20px;">
-        <li style="margin-bottom: 12px;">
-            <strong th:text="#{email.httpsCloneTip.tokenTitle}">Token (Recommended for beginners):</strong>
-            <span th:text="#{email.httpsCloneTip.tokenDescription}">A token is a secure, temporary password generated specifically for your exercise. To use it, open the exercise, click the &lt;/&gt; Code button, ensure Token is selected, and copy the link. It already contains your exercise token, so you don't need to enter your personal account password.</span>
-        </li>
-        <li style="margin-bottom: 12px;">
-            <strong th:text="#{email.httpsCloneTip.sshTitle}">SSH Key (For advanced users):</strong>
-            <span th:text="#{email.httpsCloneTip.sshDescription}">SSH connects your computer using a secure digital key instead of passwords. If you are familiar with SSH, you can add your public key once in Account Settings &rarr; SSH to download and upload code without entering passwords each time.</span>
-        </li>
-    </ul>
+    <p th:if="${endDate != null}" style="font-weight: bold;" th:text="#{email.httpsCloneTip.endDate(${endDate})}">
+        Your Artemis administrators plan to stop accepting passwords for Git on a date.
+    </p>
 
-    <p style="margin-top: 20px;">
+    <p style="margin-top: 20px; font-weight: bold;" th:text="#{email.httpsCloneTip.stepsTitle}">How to switch your existing local repository</p>
+    <ol style="padding-left: 20px;">
+        <li style="margin-bottom: 12px;">
+            <span th:text="#{email.httpsCloneTip.step1}">Open the exercise in Artemis, click the Code button, choose Token and copy the address.</span>
+            <a th:href="${examExercise} ? @{|${baseUrl}/courses/${courseId}|} : @{|${baseUrl}/courses/${courseId}/exercises/${exerciseId}|}"
+               th:text="#{email.httpsCloneTip.exerciseLink}">Open the exercise in Artemis</a>
+        </li>
+        <li style="margin-bottom: 12px;">
+            <span th:text="#{email.httpsCloneTip.step2}">In your local repository, run this command with the copied address:</span>
+            <pre style="background: #f4f4f4; padding: 8px; margin: 8px 0;"><code>git remote set-url origin &lt;copied address&gt;</code></pre>
+        </li>
+        <li style="margin-bottom: 12px;" th:text="#{email.httpsCloneTip.step3}">
+            If your computer saved your password, remove that entry.
+        </li>
+    </ol>
+
+    <p>
+        <span th:text="#{email.httpsCloneTip.sshHint}">Prefer SSH? Add your public key once and clone with the SSH address.</span>
         <a th:href="@{|${baseUrl}/user-settings/ssh|}" th:text="#{email.httpsCloneTip.action}">Configure SSH Keys in Artemis</a>
     </p>
 

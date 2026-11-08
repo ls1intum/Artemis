@@ -748,6 +748,10 @@ export class GlobalSearchModalComponent implements OnDestroy {
 
     @HostListener('window:keydown', ['$event'])
     handleKeyboardEvent(event: KeyboardEvent) {
+        // Autofill, password managers and browser extensions dispatch keydown events that carry no key or no text as key, which are no shortcut of the user
+        if (typeof event.key !== 'string' || !event.key) {
+            return;
+        }
         if (this.isToggleShortcut(event)) {
             event.preventDefault();
             this.overlay.toggle();

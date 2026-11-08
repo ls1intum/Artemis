@@ -33,12 +33,13 @@ ci.yml                                                            (single entry 
 ├── test            ── uses ci-test.yml           (server + client + AI worker sandbox tests; deferred on draft PRs)
 ├── quality         ── uses ci-quality.yml        (server + client style/lint/type-check, Java analyses)
 ├── gradle-wrapper  ── uses ci-gradle-wrapper.yml (if has_gradle; wrapper-jar integrity)
-├── docs            ── uses ci-docs.yml           (if has_docs, or on every develop push)
+├── docs            ── uses ci-docs.yml           (if has_docs, or on every develop push; builds the site)
 ├── translation     ── uses ci-translation.yml    (if has_i18n)
 ├── workflows       ── uses ci-workflows.yml      (if .github changed; actionlint)
 ├── version-consistency ─ uses ci-version-consistency.yml (if has_version; build.gradle/openapi/README in sync)
 ├── bean-instantiations ─ uses ci-bean-instantiations.yml (if has_beans; boots the app, checks startup bean metrics)
 ├── skills          ── uses ci-skills.yml         (if has_skills; every path an agent skill cites still resolves)
+├── docs-checks     ── uses ci-docs-checks.yml    (always; sidebars, paths, class names, properties and labels in the docs exist, review dates, diagrams match their generator; advises which pages a PR may have made wrong)
 ├── terminology     ── uses ci-terminology.yml    (always, incl. docs-only PRs; repo-wide component-naming gate)
 ├── dead-code       ── uses ci-dead-code.yml      (always; unreachable Java classes + unreachable client files)
 ├── liquibase       ── uses ci-liquibase.yml      (if has_liquibase; changelogs, seed data and baseline replayed on PostgreSQL and MySQL)
@@ -369,7 +370,9 @@ These workflows are intentionally NOT folded into the umbrella:
 | `publish-hyperion-sandbox-image.yml` | Manual publication of independently versioned Hyperion toolchain images; separate from Artemis application releases. |
 | `test-mysql.yml` | Manual-only (`workflow_dispatch`). Sibling DB engine to PostgreSQL. |
 | `nightly-lti-interop.yml` | Scheduled default-branch interop check; not part of PR/push CI. |
+| `nightly-iris-e2e.yml`, `nightly-hyperion-e2e.yml` | Scheduled (daily, 02:00 and 04:00 UTC) and manually dispatchable E2E checks of the latest `develop` with a mocked LLM (Iris against the real Pyris service, Hyperion with a local mock); non-blocking monitoring, not part of PR/push CI. |
 | `dependency-submission.yml` | Submits the Gradle dependency graph on `develop` pushes that change a build file, weekly, and on demand (`workflow_dispatch`). Replaces the repository setting "Automatic dependency submission", which ran on every branch and pull request although GitHub discards a snapshot of any non-default branch. Keep that setting off. |
+| `docs-maintenance.yml` | Weekly `schedule:` cron (cannot live in a `workflow_call` child). Keeps one issue open for the pages that were not reviewed for a year and one for external links that no longer work, and closes them when the problem is gone. |
 | `deploy-documentation.yml` | **Split:** the automatic develop-push docs deploy is now ci.yml's `deploy-docs` job (reusing `ci-docs.yml`'s build); this file is the `workflow_dispatch` manual-redeploy fallback. Both share the `pages` concurrency group. |
 | `testserver-deployment.yml`, `prod-like-deployment.yml` | Manual deploy workflows. |
 | `pullrequest-coverage-reporter.yml` | **Fork PRs only.** Posts the coverage table for fork PRs (where an in-run token can't write); hardened against a `workflow_run` pwn-request. Internal PRs use `ci.yml`'s in-run `coverage-report` job instead, so the table appears at ~test time rather than after the run. |

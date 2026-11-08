@@ -8,6 +8,7 @@ import angular from 'angular-eslint';
 import tseslint from 'typescript-eslint';
 import eslint from '@eslint/js';
 import localRulesPlugin from './config/eslint/rules/index.mjs';
+import buttonInlineTemplates from './config/eslint/rules/button-inline-templates.mjs';
 
 // Builds `no-restricted-imports` patterns that block importing a sibling client layer
 // (e.g. `shared-ui` or `editor`) from another layer — covering both the absolute alias path
@@ -356,7 +357,8 @@ export default tseslint.config(
                 'error',
                 {
                     name: 'globalThis',
-                    message: 'Do not use globalThis in production. Use `window` for browser globals, and captureException from the error reporter for diagnostics instead of globalThis.console.',
+                    message:
+                        'Do not use globalThis in production. Use `window` for browser globals, and captureException from the error reporter for diagnostics instead of globalThis.console.',
                 },
             ],
         },
@@ -680,6 +682,18 @@ export default tseslint.config(
         },
     },
     {
+        // Product action semantics apply to external and extracted inline application templates.
+        files: ['src/main/webapp/app/**/*.html', 'src/main/webapp/app/**/*.button-intent'],
+        languageOptions: { parser: angularTemplateParser },
+        plugins: { localRules: localRulesPlugin },
+        rules: { 'localRules/enforce-button-intent': 'error' },
+    },
+    {
+        files: ['src/main/webapp/app/**/*.ts'],
+        ignores: ['**/*.spec.ts'],
+        processor: buttonInlineTemplates,
+    },
+    {
         // Forbid raw Tailwind color palette classes (e.g. text-green-500) and hand-written PrimeNG component root
         // classes (e.g. class="p-button") in ALL client templates: Tailwind + PrimeNG are loaded app-wide, so both
         // are wrong everywhere — use semantic brand tokens and real PrimeNG components instead. The stylelint
@@ -750,6 +764,14 @@ export default tseslint.config(
             'src/main/webapp/app/quiz/manage/statistics/question-statistics-chart/**/*.html',
             'packages/tum-aet-ui/src/lib/**/*.html',
             'src/main/webapp/app/exercise/**/*.html',
+            'src/main/webapp/app/programming/manage/detail/**/*.html',
+            'src/main/webapp/app/programming/manage/vcs-repository-access-log-view/**/*.html',
+            'src/main/webapp/app/quiz/manage/detail/**/*.html',
+            'src/main/webapp/app/quiz/manage/manage-buttons/**/*.html',
+            'src/main/webapp/app/quiz/manage/lifecyle-buttons/**/*.html',
+            'src/main/webapp/app/text/manage/detail/**/*.html',
+            'src/main/webapp/app/modeling/manage/detail/**/*.html',
+            'src/main/webapp/app/fileupload/manage/exercise-details/**/*.html',
             'src/main/webapp/app/assessment/**/*.html',
             'src/main/webapp/app/shared-ui/table-view/**/*.html',
             'src/main/webapp/app/shared-ui/components/buttons/button/**/*.html',

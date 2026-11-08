@@ -71,7 +71,36 @@ class PublicUsageStatisticsServiceTest {
         assertThat(semester.irisMessages()).isNull();
         assertThat(semester.tutorialGroups()).isNull();
         assertThat(semester.exams()).isNull();
+        assertThat(semester.examRegistrations()).isNull();
+        assertThat(semester.examParticipations()).isNull();
         assertThat(semester.competencies()).isNull();
+    }
+
+    @Test
+    void staffAndLectureUnits_comeFromTheRepositoryForTheCoursesOfTheSemester() {
+        givenOnlyTheNewestSemesterHasData();
+        when(repository.countSubmissionsByStudent(any())).thenReturn(List.of());
+        when(repository.countInstructors(THREE_COURSES)).thenReturn(4L);
+        when(repository.countTutors(THREE_COURSES)).thenReturn(11L);
+        when(repository.countLectureUnits(THREE_COURSES)).thenReturn(230L);
+
+        var semester = service.getUsageStatistics().semesters().getFirst();
+
+        assertThat(semester.instructors()).isEqualTo(4);
+        assertThat(semester.tutors()).isEqualTo(11);
+        assertThat(semester.lectureUnits()).isEqualTo(230);
+    }
+
+    @Test
+    void enrollments_areNotUniqueWhileStudentsAre() {
+        givenOnlyTheNewestSemesterHasData();
+        when(repository.countSubmissionsByStudent(any())).thenReturn(List.of());
+        when(repository.countStudentEnrollments(THREE_COURSES)).thenReturn(19L);
+
+        var semester = service.getUsageStatistics().semesters().getFirst();
+
+        assertThat(semester.students()).isEqualTo(7);
+        assertThat(semester.enrollments()).isEqualTo(19);
     }
 
     @Test
@@ -85,6 +114,8 @@ class PublicUsageStatisticsServiceTest {
         when(irisApi.countMessagesInCourses(THREE_COURSES)).thenReturn(120L);
         when(tutorialGroupApi.countTutorialGroups(THREE_COURSES)).thenReturn(9L);
         when(examApi.countRealExams(THREE_COURSES)).thenReturn(7L);
+        when(examApi.countRealExamRegistrations(THREE_COURSES)).thenReturn(640L);
+        when(examApi.countRealExamParticipations(THREE_COURSES)).thenReturn(512L);
         when(competencyApi.countCompetencies(THREE_COURSES)).thenReturn(21L);
         service = new PublicUsageStatisticsService(repository, profileService, Optional.of(irisApi), Optional.of(tutorialGroupApi), Optional.of(examApi),
                 Optional.of(competencyApi), BUILD_JOB_RETENTION_DAYS);
@@ -94,6 +125,8 @@ class PublicUsageStatisticsServiceTest {
         assertThat(semester.irisMessages()).isEqualTo(120);
         assertThat(semester.tutorialGroups()).isEqualTo(9);
         assertThat(semester.exams()).isEqualTo(7);
+        assertThat(semester.examRegistrations()).isEqualTo(640);
+        assertThat(semester.examParticipations()).isEqualTo(512);
         assertThat(semester.competencies()).isEqualTo(21);
     }
 
@@ -111,6 +144,8 @@ class PublicUsageStatisticsServiceTest {
         var onlyExams = service.getUsageStatistics().semesters().getFirst();
         // a module that is enabled without data publishes a real zero, not an absent value
         assertThat(onlyExams.exams()).isZero();
+        assertThat(onlyExams.examRegistrations()).isZero();
+        assertThat(onlyExams.examParticipations()).isZero();
         assertThat(onlyExams.competencies()).isNull();
 
         givenOnlyTheNewestSemesterHasData();
@@ -118,6 +153,7 @@ class PublicUsageStatisticsServiceTest {
                 BUILD_JOB_RETENTION_DAYS);
         var onlyCompetencies = service.getUsageStatistics().semesters().getFirst();
         assertThat(onlyCompetencies.exams()).isNull();
+        assertThat(onlyCompetencies.examRegistrations()).isNull();
         assertThat(onlyCompetencies.competencies()).isEqualTo(5);
     }
 

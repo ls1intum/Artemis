@@ -2,6 +2,7 @@
 id: aiworker
 title: AI Worker Operations
 sidebar_label: AI Worker Setup
+last_reviewed: 2026-11-03
 ---
 
 AI Worker runs bounded, explicitly installed workloads outside the Artemis server.
@@ -180,11 +181,11 @@ provider accounting is required. Content telemetry stays off unless explicitly a
 
 ## Capacity and administration
 
-Open **Administration → AI Generation**. The page is available when either
+Open **Administration → Monitoring → AI Generation**. The page is available when either
 whole-exercise generation is enabled or `artemis.aiworker.enabled=true` starts
 worker coordination for another workload. For Hyperion, there is no third
 enablement switch: an eligible generation core starts worker coordination
-automatically. The **Administration → Features** page shows the Hyperion and
+automatically. The **Administration → Configuration → Features** page shows the Hyperion and
 whole-exercise generation settings. The AI Generation page shows worker
 capacity. These are startup settings, not runtime switches.
 If coordination is disabled, the status endpoint returns 404 and the view reports that
