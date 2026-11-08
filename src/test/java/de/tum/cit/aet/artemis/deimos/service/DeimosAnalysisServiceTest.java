@@ -1619,6 +1619,25 @@ class DeimosAnalysisServiceTest {
     }
 
     @Test
+    void analyzeLabelsASubmissionWithoutCommitHashOrDate() throws Exception {
+        var participation = mockParticipation(906L);
+        var unexaminable = createSubmission(9060L, null, null);
+        var examinable = createSubmission(9061L, "commit01", null);
+        when(programmingSubmissionRepository.findByParticipationIdOrderBySubmissionDateAsc(906L)).thenReturn(List.of(unexaminable, examinable));
+        when(bareGitRepositoryService.getBareRepository(participation.getVcsRepositoryUri(), false)).thenReturn(bareRepository);
+        when(bareGitRepositoryService.getFirstCommitWithMessage(eq(bareRepository), any())).thenReturn("setup000");
+        when(deimosSnapshotReader.read(bareRepository, "setup000")).thenReturn(textSnapshot(Map.of()));
+        when(deimosSnapshotReader.read(bareRepository, "commit01")).thenReturn(textSnapshot(Map.of("src/Main.java", "class Main {}\n")));
+        when(deimosLlmClient.analyze(any())).thenReturn(new DeimosLlmResponse(false, "ordinary"));
+
+        DeimosBatchSummaryDTO summary = analyze(List.of(906L));
+
+        assertThat(summary.analyzedParticipations()).singleElement().satisfies(
+                analysis -> assertThat(analysis.omissions()).containsExactly(new DeimosOmission(DeimosOmissionReason.MISSING_COMMIT_HASH, null, "no commit hash, unknown")));
+        assertThat(capturedPayload()).contains("=== Snapshot 1 (commit01, unknown) ===");
+    }
+
+    @Test
     void analyzeRejectsAParticipationOfAnotherExerciseType() {
         when(studentParticipationRepository.findById(902L)).thenReturn(Optional.of(new StudentParticipation()));
 
@@ -1667,7 +1686,8 @@ class DeimosAnalysisServiceTest {
         String fresh = "fedcba9876543210fedcba9876543210";
         DeimosAnalysisService service = Mockito.spy(deimosAnalysisService);
         doReturn(leaked, fresh).when(service).generateSentinel();
-        stubHistory(905L, Map.of(), new Snapshot("commit01", Map.of("src/Leak.java", "// " + leaked + "\n")));
+        // In two files, because the scan reports a leaked sentinel once per participation.
+        stubHistory(905L, Map.of(), new Snapshot("commit01", Map.of("src/Leak.java", "// " + leaked + "\n", "src/Other.java", "// " + leaked + "\n")));
         when(deimosLlmClient.analyze(any())).thenReturn(new DeimosLlmResponse(false, "ordinary"));
 
         var logger = (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(DeimosAnalysisService.class);
@@ -1684,7 +1704,7 @@ class DeimosAnalysisServiceTest {
         }
 
         // Both checks report it: the scan of the submitted content, and the prompt builder that regenerates the sentinel.
-        assertThat(appender.list).extracting(ILoggingEvent::getFormattedMessage).contains(
+        assertThat(appender.list).extracting(ILoggingEvent::getFormattedMessage).containsOnlyOnce(
                 "The prompt sentinel of participation 905 occurs in its submitted content, which indicates a defect in Deimos",
                 "The prompt sentinel occurred in the payload of participation 905, regenerating it");
 

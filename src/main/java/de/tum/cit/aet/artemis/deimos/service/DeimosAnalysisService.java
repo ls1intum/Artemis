@@ -17,6 +17,7 @@ import java.io.IOException;
 import java.security.SecureRandom;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.HexFormat;
@@ -158,10 +159,7 @@ public class DeimosAnalysisService {
      */
     public DeimosBatchSummaryDTO analyze(String runId, DeimosTriggerType triggerType, DeimosBatchScope scope, ZonedDateTime from, ZonedDateTime to, List<Long> participationIds) {
         long analyzed = 0;
-        long manipulationAttemptCount = 0;
-        long maliciousCount = 0;
-        long incompletelyCheckedCount = 0;
-        long benignCount = 0;
+        Map<DeimosVerdict, Long> verdictCounts = new EnumMap<>(DeimosVerdict.class);
         long failed = 0;
         List<ParticipationAnalysis> analyzedParticipations = new ArrayList<>();
         List<FailedAnalysis> failedAnalyses = new ArrayList<>();
@@ -171,12 +169,7 @@ public class DeimosAnalysisService {
             if (outcome.analysis() != null) {
                 analyzedParticipations.add(outcome.analysis());
                 analyzed++;
-                switch (outcome.analysis().verdict()) {
-                    case MANIPULATION_ATTEMPT -> manipulationAttemptCount++;
-                    case MALICIOUS -> maliciousCount++;
-                    case INCOMPLETELY_CHECKED -> incompletelyCheckedCount++;
-                    case BENIGN -> benignCount++;
-                }
+                verdictCounts.merge(outcome.analysis().verdict(), 1L, Long::sum);
             }
             else {
                 failedAnalyses.add(outcome.failure());
@@ -197,8 +190,10 @@ public class DeimosAnalysisService {
             }
         }
 
-        return new DeimosBatchSummaryDTO(runId, triggerType.name(), scope.name(), from, to, participationIds.size(), analyzed, manipulationAttemptCount, maliciousCount,
-                incompletelyCheckedCount, benignCount, failed, List.copyOf(analyzedParticipations), List.copyOf(failedAnalyses));
+        return new DeimosBatchSummaryDTO(runId, triggerType.name(), scope.name(), from, to, participationIds.size(), analyzed,
+                verdictCounts.getOrDefault(DeimosVerdict.MANIPULATION_ATTEMPT, 0L), verdictCounts.getOrDefault(DeimosVerdict.MALICIOUS, 0L),
+                verdictCounts.getOrDefault(DeimosVerdict.INCOMPLETELY_CHECKED, 0L), verdictCounts.getOrDefault(DeimosVerdict.BENIGN, 0L), failed,
+                List.copyOf(analyzedParticipations), List.copyOf(failedAnalyses));
     }
 
     /**
@@ -582,8 +577,9 @@ public class DeimosAnalysisService {
             boolean cumulativeIsRedundant = emittedSnapshots == 1 && omittedSnapshots == 0 && !evidence.hasTextOmissions();
             String cumulativeSection = cumulativeIsRedundant ? "" : cumulativeSection(cumulativeHeader, cumulativeBudget);
             // Only alongside other content: a history that changed nothing but binary files and links, without any other
-            // notice, is reported without asking the model, so this notice alone must not turn it into a payload.
-            if (!nonTextNotice.isEmpty() && (!sb.isEmpty() || !cumulativeSection.isEmpty())) {
+            // notice, is reported without asking the model, so this notice alone must not turn it into a payload. With no
+            // snapshot section and no other notice no text changed, so the final state is empty as well.
+            if (!nonTextNotice.isEmpty() && !sb.isEmpty()) {
                 sb.append(nonTextNotice);
             }
             sb.append(cumulativeSection);
@@ -659,7 +655,7 @@ public class DeimosAnalysisService {
             }
             for (Map.Entry<String, String> file : new TreeMap<>(current.textFiles()).entrySet()) {
                 String content = file.getValue();
-                if (content != null && !content.equals(previousFiles.get(file.getKey()))) {
+                if (!content.equals(previousFiles.get(file.getKey()))) {
                     scanTextFile(file.getKey(), content, snapshotLabel);
                 }
             }
@@ -718,7 +714,8 @@ public class DeimosAnalysisService {
         for (Map.Entry<String, ObjectId> entry : new TreeMap<>(current.otherFiles()).entrySet()) {
             ObjectId objectId = entry.getValue();
             boolean changed = !objectId.equals(previousOtherFiles.get(entry.getKey())) && !objectId.equals(template.otherFiles().get(entry.getKey()));
-            if (changed && evidence.omissions.add(new RecordedOmission(DeimosOmissionReason.NON_TEXT_FILE, entry.getKey(), snapshot))) {
+            if (changed) {
+                evidence.omissions.add(new RecordedOmission(DeimosOmissionReason.NON_TEXT_FILE, entry.getKey(), snapshot));
                 recorded++;
             }
         }

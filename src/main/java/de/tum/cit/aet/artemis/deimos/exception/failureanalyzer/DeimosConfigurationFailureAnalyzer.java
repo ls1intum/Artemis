@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.deimos.exception.failureAnalyzer;
+package de.tum.cit.aet.artemis.deimos.exception.failureanalyzer;
 
 import java.util.stream.Collectors;
 

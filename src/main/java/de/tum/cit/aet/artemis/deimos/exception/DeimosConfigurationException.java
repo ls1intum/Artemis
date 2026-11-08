@@ -3,7 +3,7 @@ package de.tum.cit.aet.artemis.deimos.exception;
 import java.io.Serial;
 import java.util.List;
 
-import de.tum.cit.aet.artemis.deimos.exception.failureAnalyzer.DeimosConfigurationFailureAnalyzer;
+import de.tum.cit.aet.artemis.deimos.exception.failureanalyzer.DeimosConfigurationFailureAnalyzer;
 
 /**
  * Exception thrown when the Deimos configuration is invalid or incomplete.

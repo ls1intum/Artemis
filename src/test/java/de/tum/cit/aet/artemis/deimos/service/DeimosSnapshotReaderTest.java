@@ -38,13 +38,15 @@ class DeimosSnapshotReaderTest {
             FileUtils.writeByteArrayToFile(workingTree.resolve("RUN.BAT").toFile(), "@echo off\r\nrem \0\r\necho run\r\n".getBytes(StandardCharsets.UTF_8));
             // Without a binary extension a file stays text even with a NUL byte, so such a byte cannot hide it either.
             FileUtils.writeByteArrayToFile(workingTree.resolve("gradlew").toFile(), "#!/bin/sh\n# \0\necho wrapper\n".getBytes(StandardCharsets.UTF_8));
+            // A binary extension alone does not hide a file: its content has to be binary as well.
+            FileUtils.writeStringToFile(workingTree.resolve("notes.bin").toFile(), "plain text\n", StandardCharsets.UTF_8);
             byte[] logo = new byte[] { (byte) 0x89, 'P', 'N', 'G', 0, 0, 0, 13 };
             FileUtils.writeByteArrayToFile(workingTree.resolve("logo.png").toFile(), logo);
             String commitHash = commitAll(git);
 
             DeimosSnapshotReader.TextSnapshot snapshot = deimosSnapshotReader.read(git.getRepository(), commitHash);
 
-            assertThat(snapshot.textFiles()).containsOnlyKeys("Main.java", "build.sh", "RUN.BAT", "gradlew").containsEntry("build.sh", "#!/bin/sh\necho build\n");
+            assertThat(snapshot.textFiles()).containsOnlyKeys("Main.java", "build.sh", "RUN.BAT", "gradlew", "notes.bin").containsEntry("build.sh", "#!/bin/sh\necho build\n");
             assertThat(snapshot.otherFiles()).containsExactly(entry("logo.png", blobId(logo)));
         }
     }

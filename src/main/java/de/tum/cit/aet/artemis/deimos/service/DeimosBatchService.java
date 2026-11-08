@@ -214,10 +214,7 @@ public class DeimosBatchService {
         List<DeimosMaliciousParticipationLink> maliciousParticipationLinks = new ArrayList<>();
         List<DeimosIncompletelyCheckedLink> incompletelyCheckedLinks = new ArrayList<>();
         for (DeimosBatchSummaryDTO.ParticipationAnalysis participationAnalysis : summary.analyzedParticipations()) {
-            if (participationAnalysis.verdict() == DeimosVerdict.BENIGN) {
-                continue;
-            }
-            if (participationAnalysis.exerciseId() <= 0) {
+            if (participationAnalysis.verdict() != DeimosVerdict.BENIGN && participationAnalysis.exerciseId() <= 0) {
                 log.warn("Omitting deep link in Deimos completion email: participation {} has no exercise id", participationAnalysis.participationId());
                 continue;
             }

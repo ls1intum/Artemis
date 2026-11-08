@@ -341,6 +341,53 @@ class DeimosBatchServiceTest {
     }
 
     @Test
+    void notificationKeepsTheModelRationaleOfAManipulationAttempt() {
+        ZonedDateTime from = FIXED_NOW.minusDays(1);
+        ZonedDateTime to = FIXED_NOW;
+        var finding = new DeimosManipulationFinding("src/Attack.java", 3, "abcdef12, 2026-01-15T10:00Z");
+        // The model answered, so there is a rationale to show and no failure to explain.
+        var manipulation = new DeimosBatchSummaryDTO.ParticipationAnalysis(314L, 55L, DeimosVerdict.MANIPULATION_ATTEMPT, true, " forged marker ", null, List.of(finding), 1,
+                List.of(), 0);
+        when(deimosBatchParticipationRepository.countDistinctParticipationIdsForCourseInRange(7L, from, to)).thenReturn(1L);
+        when(deimosBatchParticipationRepository.findParticipationIdsForCourseInRange(eq(7L), eq(from), eq(to), any(Pageable.class))).thenReturn(new SliceImpl<>(List.of(314L)));
+        when(courseRepository.getCourseTitle(7L)).thenReturn("Course 7");
+        when(deimosAnalysisService.analyze(any(), any(), any(), any(), any(), any()))
+                .thenReturn(new DeimosBatchSummaryDTO("run-12", "MANUAL", "COURSE", from, to, 1, 1, 1, 0, 0, 0, 0, List.of(manipulation), List.of()));
+
+        deimosBatchService.triggerCourseBatch(7L, new DeimosBatchRequestDTO(from, to), createTriggerUser());
+
+        assertThat(captureEmailData().manipulationAttemptLinks()).singleElement().satisfies(link -> {
+            assertThat(link.llmMalicious()).isTrue();
+            assertThat(link.rationale()).isEqualTo("forged marker");
+            assertThat(link.failureTranslationKey()).isNull();
+        });
+    }
+
+    @Test
+    void notificationReportsAFailureWithoutCategoryAsOther() {
+        ZonedDateTime from = FIXED_NOW.minusDays(1);
+        ZonedDateTime to = FIXED_NOW;
+        var failure = new DeimosBatchSummaryDTO.FailedAnalysis(315L, null, "unknown");
+        when(deimosBatchParticipationRepository.countDistinctParticipationIdsForCourseInRange(7L, from, to)).thenReturn(1L);
+        when(deimosBatchParticipationRepository.findParticipationIdsForCourseInRange(eq(7L), eq(from), eq(to), any(Pageable.class))).thenReturn(new SliceImpl<>(List.of(315L)));
+        when(courseRepository.getCourseTitle(7L)).thenReturn("Course 7");
+        when(deimosAnalysisService.analyze(any(), any(), any(), any(), any(), any()))
+                .thenReturn(new DeimosBatchSummaryDTO("run-13", "MANUAL", "COURSE", from, to, 1, 0, 0, 0, 0, 0, 1, List.of(), List.of(failure)));
+
+        deimosBatchService.triggerCourseBatch(7L, new DeimosBatchRequestDTO(from, to), createTriggerUser());
+
+        var emailData = captureEmailData();
+        assertThat(emailData.failedAnalysisDetails()).singleElement().satisfies(detail -> {
+            assertThat(detail.failureType()).isEqualTo(DeimosFailureType.OTHER);
+            assertThat(detail.translationKey()).isEqualTo("email.deimos.analysisComplete.failureType.OTHER");
+        });
+        assertThat(emailData.failureBreakdown()).singleElement().satisfies(entry -> {
+            assertThat(entry.failureType()).isEqualTo(DeimosFailureType.OTHER);
+            assertThat(entry.count()).isEqualTo(1);
+        });
+    }
+
+    @Test
     void notificationLeavesOutAParticipationWithoutExerciseButKeepsTheOthers() {
         ZonedDateTime from = FIXED_NOW.minusDays(1);
         ZonedDateTime to = FIXED_NOW;

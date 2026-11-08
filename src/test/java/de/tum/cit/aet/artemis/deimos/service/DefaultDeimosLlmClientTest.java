@@ -9,6 +9,7 @@ import static org.mockito.Mockito.when;
 
 import java.io.IOException;
 import java.net.SocketTimeoutException;
+import java.util.concurrent.TimeoutException;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
@@ -120,7 +121,7 @@ class DefaultDeimosLlmClientTest {
 
     @ParameterizedTest
     @NullAndEmptySource
-    @ValueSource(strings = { "   ", "I cannot answer that.", "[]", "{\"unrelated\": true}", "{ broken json" })
+    @ValueSource(strings = { "   ", "I cannot answer that.", "[]", "null", "{\"unrelated\": true}", "{ broken json" })
     void shouldRejectUnusableResponses(String content) {
         assertThat(DefaultDeimosLlmClient.parseVerdict(content == null ? "" : content)).isEmpty();
     }
@@ -332,8 +333,41 @@ class DefaultDeimosLlmClientTest {
     }
 
     @Test
-    void shouldClassifyATimeoutMessageAsTimeout() {
-        assertThat(callFailingWith(new RuntimeException("Read timed out")).getFailureType()).isEqualTo(DeimosFailureType.LLM_TIMEOUT);
+    void shouldClassifyAConcurrencyTimeoutCauseAsTimeout() {
+        var failure = new RuntimeException("wrapper", new TimeoutException("deadline"));
+
+        assertThat(callFailingWith(failure).getFailureType()).isEqualTo(DeimosFailureType.LLM_TIMEOUT);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "Read timed out", "Connection timeout" })
+    void shouldClassifyATimeoutMessageAsTimeout(String message) {
+        assertThat(callFailingWith(new RuntimeException(message)).getFailureType()).isEqualTo(DeimosFailureType.LLM_TIMEOUT);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "Rate limit exceeded", "Too many requests from this key" })
+    void shouldClassifyARateLimitMessageWithoutStatusCode(String message) {
+        assertThat(callFailingWith(new RuntimeException(message)).getFailureType()).isEqualTo(DeimosFailureType.LLM_RATE_LIMITED);
+    }
+
+    @ParameterizedTest
+    @CsvSource({ "31, LLM_TIMEOUT", "32, LLM_ERROR" })
+    void shouldOnlyFollowACauseChainUpToItsDepthLimit(int wrappers, DeimosFailureType expected) {
+        var failure = new RuntimeException("wrapper", new SocketTimeoutException("read"));
+        for (int i = 1; i < wrappers; i++) {
+            failure = new RuntimeException("wrapper", failure);
+        }
+
+        assertThat(callFailingWith(failure).getFailureType()).isEqualTo(expected);
+    }
+
+    @Test
+    void shouldIgnoreAClosingBraceBeforeTheFirstObject() {
+        var verdict = DefaultDeimosLlmClient.parseVerdict("Stray } first: {\"malicious\": true, \"rationale\": \"found\"}");
+
+        assertThat(verdict).isPresent();
+        assertThat(verdict.get().rationale()).isEqualTo("found");
     }
 
     @Test

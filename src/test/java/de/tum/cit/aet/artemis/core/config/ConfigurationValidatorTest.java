@@ -22,7 +22,7 @@ import org.springframework.core.env.Environment;
 import de.tum.cit.aet.artemis.core.exception.InsecureDefaultCredentialException;
 import de.tum.cit.aet.artemis.deimos.config.DeimosLimits;
 import de.tum.cit.aet.artemis.deimos.exception.DeimosConfigurationException;
-import de.tum.cit.aet.artemis.deimos.exception.failureAnalyzer.DeimosConfigurationFailureAnalyzer;
+import de.tum.cit.aet.artemis.deimos.exception.failureanalyzer.DeimosConfigurationFailureAnalyzer;
 import de.tum.cit.aet.artemis.globalsearch.config.SupportedVectorizer;
 import de.tum.cit.aet.artemis.globalsearch.config.WeaviateConfigurationProperties;
 import de.tum.cit.aet.artemis.globalsearch.exception.WeaviateConfigurationException;
@@ -182,7 +182,7 @@ class ConfigurationValidatorTest {
         }
 
         @ParameterizedTest
-        @ValueSource(strings = { "mailto:someone@example.com", "llm.example.com", "ftp://llm.example.com", "file:///tmp/llm" })
+        @ValueSource(strings = { "mailto:someone@example.com", "llm.example.com", "ftp://llm.example.com", "file:///tmp/llm", "https:///v1", "https://llm_example.com" })
         void testInvalidBaseUrlShouldFailValidation(String baseUrl) {
             ConfigurationValidator validator = createDeimosValidator(true, baseUrl, VALID_DEIMOS_MODEL, VALID_DEIMOS_COMPLETIONS_PATH, 90, 3);
 

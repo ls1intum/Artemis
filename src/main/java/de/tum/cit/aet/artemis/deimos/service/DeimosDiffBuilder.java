@@ -320,7 +320,8 @@ final class DeimosDiffBuilder {
         }
         int removedNeeded = removed.isEmpty() ? 0 : utf8Length(removed) + 1;
         int addedNeeded = added.isEmpty() ? 0 : utf8Length(added) + 1;
-        int removedShare = (int) Math.min(removedNeeded, Math.max(remaining / 2, remaining - addedNeeded));
+        int guaranteedRemovedShare = (int) Math.min(remaining / 2, removedNeeded);
+        int removedShare = Math.clamp(remaining - addedNeeded, guaranteedRemovedShare, removedNeeded);
         int addedShare = (int) Math.min(addedNeeded, remaining - removedShare);
         return header + sampleLine(removed, removedShare) + sampleLine(added, addedShare);
     }
@@ -369,7 +370,7 @@ final class DeimosDiffBuilder {
         // Minified sources and one-line JSON have no line break to cut at, so a purely line-based truncation would
         // emit nothing at all and hand the model an empty diff. Fall back to a hard cut on a character boundary so
         // at least the beginning of the change stays visible.
-        if (sb.isEmpty() && !text.isEmpty()) {
+        if (sb.isEmpty()) {
             return truncateAtCharacterBoundary(text, maxBytes);
         }
         return sb.toString();

@@ -207,9 +207,8 @@ public class DefaultDeimosLlmClient implements DeimosLlmClient {
             }
             else if (currentChar == '}' && depth > 0) {
                 depth--;
-                if (depth == 0 && start >= 0) {
+                if (depth == 0) {
                     objects.add(text.substring(start, i + 1));
-                    start = -1;
                 }
             }
             i++;

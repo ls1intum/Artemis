@@ -133,9 +133,8 @@ public class DeimosLlmConfiguration {
             return false;
         }
         try {
-            URI uri = URI.create(completionsPath);
-            return uri.getScheme() == null && uri.getRawAuthority() == null && uri.getRawQuery() == null && uri.getRawFragment() == null
-                    && completionsPath.equals(uri.getRawPath());
+            // The raw path is the whole value only if there is no scheme, authority, query or fragment.
+            return completionsPath.equals(URI.create(completionsPath).getRawPath());
         }
         catch (IllegalArgumentException _) {
             return false;
