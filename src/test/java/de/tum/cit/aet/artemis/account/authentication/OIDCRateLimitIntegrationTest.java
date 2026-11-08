@@ -5,8 +5,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import org.junit.jupiter.api.Test;
-import org.springframework.test.annotation.DirtiesContext;
-import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
 
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalVCSamlTest;
 
@@ -14,10 +14,14 @@ import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalVCSamlTe
  * Integration tests for OIDC rate limiting functionality.
  * Verifies rate limits, exempt addresses, and feature toggles on the OIDC authorization endpoint.
  */
-@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
-@TestPropertySource(properties = { "artemis.rate-limiting.enabled=true", "artemis.rate-limiting.oidc-authorization-requests-per-minute=1",
-        "artemis.rate-limiting.exempt-addresses=192.168.1.100" })
 class OIDCRateLimitIntegrationTest extends AbstractSpringIntegrationLocalVCSamlTest {
+
+    @DynamicPropertySource
+    static void rateLimitingProperties(DynamicPropertyRegistry registry) {
+        registry.add("artemis.rate-limiting.enabled", () -> "true");
+        registry.add("artemis.rate-limiting.oidc-authorization-requests-per-minute", () -> "1");
+        registry.add("artemis.rate-limiting.exempt-addresses", () -> "192.168.1.100");
+    }
 
     @Test
     void testOidcAuthorization_WithinLimit_ShouldSucceed() throws Exception {

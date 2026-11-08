@@ -4,17 +4,21 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import org.junit.jupiter.api.Test;
-import org.springframework.test.annotation.DirtiesContext;
-import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
 
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalVCSamlTest;
 
 /**
  * Integration tests for OIDC rate limiting feature toggle when disabled.
  */
-@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
-@TestPropertySource(properties = { "artemis.rate-limiting.enabled=false", "artemis.rate-limiting.oidc-authorization-requests-per-minute=1" })
 class OIDCRateLimitDisabledIntegrationTest extends AbstractSpringIntegrationLocalVCSamlTest {
+
+    @DynamicPropertySource
+    static void rateLimitingProperties(DynamicPropertyRegistry registry) {
+        registry.add("artemis.rate-limiting.enabled", () -> "false");
+        registry.add("artemis.rate-limiting.oidc-authorization-requests-per-minute", () -> "1");
+    }
 
     @Test
     void testOidcAuthorization_FeatureToggleDisabled_ShouldBypassLimit() throws Exception {
