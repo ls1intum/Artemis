@@ -41,6 +41,7 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.dto.EntityDeletionProgressDTO;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseTestRepository;
+import de.tum.cit.aet.artemis.exercise.service.DeletionTarget;
 import de.tum.cit.aet.artemis.exercise.service.EntityDeletionProgressService;
 import de.tum.cit.aet.artemis.exercise.util.AsyncDeletionTestUtilService;
 import de.tum.cit.aet.artemis.exercise.web.ExerciseWebsocketTopics;
@@ -121,18 +122,31 @@ class ExamAsyncDeletionIntegrationTest extends AbstractSpringIntegrationIndepend
     }
 
     /**
+     * Waits inside a deletion job until the test releases it. A deletion job cannot throw a checked exception, so an interruption ends it as a failure.
+     */
+    private static void awaitUninterruptibly(CountDownLatch release) {
+        try {
+            release.await(30, TimeUnit.SECONDS);
+        }
+        catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new IllegalStateException("The wait for the release of the deletion was interrupted", e);
+        }
+    }
+
+    /**
      * Holds the scope of the exam and the given further scopes, like the deletion of an exam holds the scopes of its exercises.
      */
     private CountDownLatch startBlockedExamDeletion(List<String> additionalScopeKeys) throws InterruptedException {
         var running = new CountDownLatch(1);
         var release = new CountDownLatch(1);
-        entityDeletionProgressService.startAsync(EntityDeletionProgressService.examScopeKey(exam.getId()), additionalScopeKeys, EntityDeletionType.EXAM, exam.getId(),
-                ExamWebsocketTopics.DELETION_PROGRESS.at(course.getId(), exam.getId()), 5, 5.0, () -> {
-                }, tracker -> {
-                    tracker.startStep("exercises");
-                    running.countDown();
-                    release.await(30, TimeUnit.SECONDS);
-                });
+        var target = new DeletionTarget(EntityDeletionType.EXAM, exam.getId(), ExamWebsocketTopics.DELETION_PROGRESS.at(course.getId(), exam.getId()));
+        entityDeletionProgressService.startAsync(EntityDeletionProgressService.examScopeKey(exam.getId()), additionalScopeKeys, target, 5, 5.0, () -> {
+        }, tracker -> {
+            tracker.startStep("exercises");
+            running.countDown();
+            awaitUninterruptibly(release);
+        });
         assertThat(running.await(30, TimeUnit.SECONDS)).as("the blocked deletion started").isTrue();
         return release;
     }
@@ -143,13 +157,13 @@ class ExamAsyncDeletionIntegrationTest extends AbstractSpringIntegrationIndepend
     private CountDownLatch startBlockedExerciseDeletion(long exerciseId) throws InterruptedException {
         var running = new CountDownLatch(1);
         var release = new CountDownLatch(1);
-        entityDeletionProgressService.startAsync(EntityDeletionProgressService.exerciseScopeKey(exerciseId), List.of(), EntityDeletionType.EXERCISE, exerciseId,
-                ExerciseWebsocketTopics.DELETION_PROGRESS.at(exerciseId), 3, 3.0, () -> {
-                }, tracker -> {
-                    tracker.startStep("participations");
-                    running.countDown();
-                    release.await(30, TimeUnit.SECONDS);
-                });
+        var target = new DeletionTarget(EntityDeletionType.EXERCISE, exerciseId, ExerciseWebsocketTopics.DELETION_PROGRESS.at(exerciseId));
+        entityDeletionProgressService.startAsync(EntityDeletionProgressService.exerciseScopeKey(exerciseId), List.of(), target, 3, 3.0, () -> {
+        }, tracker -> {
+            tracker.startStep("participations");
+            running.countDown();
+            awaitUninterruptibly(release);
+        });
         assertThat(running.await(30, TimeUnit.SECONDS)).as("the blocked deletion started").isTrue();
         return release;
     }

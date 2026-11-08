@@ -24,7 +24,8 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
 import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { Subject, of, throwError } from 'rxjs';
-import { EventManager } from 'app/foundation/service/event-manager.service';
+import { EventManager, EventWithContent } from 'app/foundation/service/event-manager.service';
+import { EXAM_DELETED_EVENT, ExamDeletedEventContent } from 'app/exam/shared/entities/exam-deleted-event.model';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { ArtemisDurationFromSecondsPipe } from 'app/foundation/pipes/artemis-duration-from-seconds.pipe';
@@ -311,9 +312,14 @@ describe('ExamDetailComponent', () => {
 
         // THEN
         expect(service.delete).toHaveBeenCalledOnce();
-        expect(broadcastSpy).toHaveBeenCalledOnce();
-        expect(broadcastSpy).toHaveBeenCalledWith({ name: 'examListModification', content: 'dummy' });
+        expect(broadcastSpy).toHaveBeenCalledTimes(2);
+        // The exam is dropped from the shared list before the list is read again and before the page is left, so the overview that is navigated to
+        // never shows (or asks for the statistics of) the deleted exam.
+        expect(broadcastSpy).toHaveBeenNthCalledWith(1, new EventWithContent<ExamDeletedEventContent>(EXAM_DELETED_EVENT, { examId: exam.id! }));
+        expect(broadcastSpy).toHaveBeenNthCalledWith(2, { name: 'examListModification', content: 'dummy' });
         expect(router.navigate).toHaveBeenCalledOnce();
+        const navigateOrder = vi.mocked(router.navigate).mock.invocationCallOrder[0];
+        expect(broadcastSpy.mock.invocationCallOrder.every((order) => order < navigateOrder)).toBe(true);
     });
 
     it('should publish the error message to the reset dialog when resetting the exam fails', () => {
@@ -412,6 +418,7 @@ describe('ExamDetailComponent', () => {
             weightedProgressPercent: 100,
         });
 
+        expect(broadcastSpy).toHaveBeenCalledWith(new EventWithContent<ExamDeletedEventContent>(EXAM_DELETED_EVENT, { examId: 1 }));
         expect(broadcastSpy).toHaveBeenCalledWith({ name: 'examListModification', content: 'dummy' });
         expect(navigateSpy).not.toHaveBeenCalled();
     });

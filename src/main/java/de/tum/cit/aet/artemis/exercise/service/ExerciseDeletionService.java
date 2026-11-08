@@ -261,29 +261,35 @@ public class ExerciseDeletionService {
         // An exam or an exercise group that is deleted holds the scope of this exercise, so this request is refused with a conflict meanwhile.
         // Set before the acceptance runs, so a failure in the middle of it is undone as well.
         AtomicBoolean acceptanceStarted = new AtomicBoolean();
+        boolean started = false;
         try {
-            entityDeletionProgressService.startAsync(EntityDeletionProgressService.exerciseScopeKey(exerciseId), List.of(), EntityDeletionType.EXERCISE, exerciseId,
-                    ExerciseWebsocketTopics.DELETION_PROGRESS.at(exerciseId), stepWeights.size(), EntityDeletionWeights.total(stepWeights), () -> {
+            var target = new DeletionTarget(EntityDeletionType.EXERCISE, exerciseId, ExerciseWebsocketTopics.DELETION_PROGRESS.at(exerciseId));
+            entityDeletionProgressService.startAsync(EntityDeletionProgressService.exerciseScopeKey(exerciseId), List.of(), target, stepWeights.size(),
+                    EntityDeletionWeights.total(stepWeights), () -> {
                         acceptanceStarted.set(true);
                         entityDeletionProgressService.rememberCourse(EntityDeletionProgressService.exerciseScopeKey(exerciseId), courseId);
                         onAccepted.run();
                     }, tracker -> {
+                        boolean deleted = false;
                         try {
                             var reporter = new DeletionStepReporter(tracker, stepWeights);
                             delete(exerciseId, deleteBaseReposBuildPlans, reporter);
                             reporter.finishCurrentStep();
+                            deleted = true;
                         }
-                        catch (Exception | Error failure) {
-                            undoAcceptance(exerciseId, onNotDeleted);
-                            throw failure;
+                        finally {
+                            // Whatever ended the job, also an Error, undoes what the acceptance did.
+                            if (!deleted) {
+                                undoAcceptance(exerciseId, onNotDeleted);
+                            }
                         }
                     });
+            started = true;
         }
-        catch (RuntimeException | Error failure) {
-            if (acceptanceStarted.get()) {
+        finally {
+            if (!started && acceptanceStarted.get()) {
                 undoAcceptance(exerciseId, onNotDeleted);
             }
-            throw failure;
         }
     }
 

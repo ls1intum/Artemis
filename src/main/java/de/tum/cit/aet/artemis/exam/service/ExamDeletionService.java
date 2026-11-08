@@ -52,6 +52,7 @@ import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.service.DeletionProgressListener;
 import de.tum.cit.aet.artemis.exercise.service.DeletionStepReporter;
+import de.tum.cit.aet.artemis.exercise.service.DeletionTarget;
 import de.tum.cit.aet.artemis.exercise.service.EntityDeletionProgressService;
 import de.tum.cit.aet.artemis.exercise.service.EntityDeletionWeights;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDeletionService;
@@ -181,9 +182,9 @@ public class ExamDeletionService {
         Map<String, Double> stepWeights = EntityDeletionWeights.examStepWeights(studentExamRepository.countTestRunsByExamId(examId),
                 exercisesWeight(exercises, participationCounts), examRepository.countStudentExamsByExamId(examId), examUserRepository.countByExamId(examId));
         // The exam also holds the scope of each of its exercises, so none of them can be deleted on its own meanwhile, and the request is refused if one of them is deleted now.
-        entityDeletionProgressService.startAsync(EntityDeletionProgressService.examScopeKey(examId), exerciseScopeKeys(exercises), EntityDeletionType.EXAM, examId,
-                ExamWebsocketTopics.DELETION_PROGRESS.at(courseId, examId), stepWeights.size(), EntityDeletionWeights.total(stepWeights), () -> auditDeletion(examId, userLogin),
-                tracker -> {
+        var target = new DeletionTarget(EntityDeletionType.EXAM, examId, ExamWebsocketTopics.DELETION_PROGRESS.at(courseId, examId));
+        entityDeletionProgressService.startAsync(EntityDeletionProgressService.examScopeKey(examId), exerciseScopeKeys(exercises), target, stepWeights.size(),
+                EntityDeletionWeights.total(stepWeights), () -> auditDeletion(examId, userLogin), tracker -> {
                     var reporter = new DeletionStepReporter(tracker, stepWeights);
                     // The registrations disappear with the exam, but their files do not, so they have to be known before the deletion.
                     List<ExamUser> examUsers = examUserRepository.findAllByExamId(examId);
@@ -225,8 +226,9 @@ public class ExamDeletionService {
         List<ExerciseDeletionInfoDTO> exercises = exerciseGroupRepository.findExerciseDeletionInfoByExerciseGroupId(exerciseGroupId);
         Map<Long, Long> participationCounts = countParticipations(exercises);
         Map<String, Double> stepWeights = EntityDeletionWeights.exerciseGroupStepWeights(exercisesWeight(exercises, participationCounts));
-        entityDeletionProgressService.startAsync(EntityDeletionProgressService.examScopeKey(examId), exerciseScopeKeys(exercises), EntityDeletionType.EXERCISE_GROUP,
-                exerciseGroupId, ExamWebsocketTopics.DELETION_PROGRESS.at(courseId, examId), stepWeights.size(), EntityDeletionWeights.total(stepWeights), onAccepted, tracker -> {
+        var target = new DeletionTarget(EntityDeletionType.EXERCISE_GROUP, exerciseGroupId, ExamWebsocketTopics.DELETION_PROGRESS.at(courseId, examId));
+        entityDeletionProgressService.startAsync(EntityDeletionProgressService.examScopeKey(examId), exerciseScopeKeys(exercises), target, stepWeights.size(),
+                EntityDeletionWeights.total(stepWeights), onAccepted, tracker -> {
                     var reporter = new DeletionStepReporter(tracker, stepWeights);
                     ExerciseGroup exerciseGroup = exerciseGroupRepository.findByIdWithExercisesElseThrow(exerciseGroupId);
                     deleteExercises(exerciseGroup.getExercises(), deleteBaseReposBuildPlans, reporter, participationCounts);

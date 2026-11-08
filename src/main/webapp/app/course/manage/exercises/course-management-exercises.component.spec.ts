@@ -495,7 +495,7 @@ describe('Course Management Exercises Component', () => {
             const reloadSpy = vi.spyOn(courseManagementService, 'findWithExercises');
             const idsBefore = comp.exercises().map((exercise) => exercise.id);
 
-            comp.onExerciseDeletionOutcomeUnknown();
+            comp.reloadCourseExercises();
 
             expect(reloadSpy).toHaveBeenCalledOnce();
             expect(comp.exercises().map((exercise) => exercise.id)).toEqual(idsBefore);
@@ -743,7 +743,7 @@ describe('Course Management Exercises Component', () => {
 
             expect(comp.showEditSelected()).toBe(true);
             expect(comp.editSelectedData()).toEqual(comp.selectedProgrammingExercises());
-            comp['onEditSelectedSaved']();
+            comp.reloadCourseExercises();
             expect(reloadSpy).toHaveBeenCalled();
         });
 

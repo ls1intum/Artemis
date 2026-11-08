@@ -538,8 +538,11 @@ export class CourseManagementExercisesComponent implements OnInit {
         this.showEditSelected.set(true);
     }
 
-    /** After the "edit selected" modal saved, reload so the updated dates show in the table and cards. */
-    protected onEditSelectedSaved(): void {
+    /**
+     * Reads the exercises of the course from the server again. Used after the "edit selected" modal saved, so the updated dates show in the table and cards,
+     * and after a deletion ended with an unknown outcome, when nothing is announced or removed locally and the server tells what is left.
+     */
+    reloadCourseExercises(): void {
         const courseId = this.course()?.id;
         if (courseId !== undefined) {
             this.loadCourseExercises(courseId);
@@ -603,14 +606,6 @@ export class CourseManagementExercisesComponent implements OnInit {
         const exercise = this.exercises().find((candidate) => candidate.id === exerciseId);
         if (exercise) {
             this.onExerciseDeleted(exercise);
-        }
-    }
-
-    /** It is not known how a deletion ended, so nothing is announced or removed locally: the exercises are read from the server again. */
-    onExerciseDeletionOutcomeUnknown(): void {
-        const courseId = this.course()?.id;
-        if (courseId !== undefined) {
-            this.loadCourseExercises(courseId);
         }
     }
 

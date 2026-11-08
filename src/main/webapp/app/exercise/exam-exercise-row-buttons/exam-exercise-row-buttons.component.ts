@@ -64,7 +64,7 @@ export class ExamExerciseRowButtonsComponent {
     readonly latestIndividualEndDate = input<dayjs.Dayjs>();
     readonly onDeleteExercise = output<void>();
     /** Emitted when it is not known how a deletion ended; the table is reloaded from the server instead of removing the exercise. */
-    readonly onDeletionOutcomeUnknown = output<void>();
+    readonly deletionOutcomeUnknown = output<void>();
     /**
      * Width (px) the actions column must reserve to keep the always-visible test-run warning plus the ellipsis
      * trigger on screen; 0 when there is none. Mirrors `ExerciseActionsComponent.quizActionsMinWidth` so a shared
@@ -362,7 +362,7 @@ export class ExamExerciseRowButtonsComponent {
                 } else if (isDeletionOutcomeUnknown(progress)) {
                     // Not known how it ended: only refresh the list, which shows the real state, instead of announcing a deletion.
                     this.eventManager.broadcast({ name: eventName, content: 'Refresh after an unknown deletion outcome' });
-                    this.onDeletionOutcomeUnknown.emit();
+                    this.deletionOutcomeUnknown.emit();
                 }
                 // A failed deletion is reported by the progress dialog; this only ends the confirmation dialog.
                 this.dialogErrorSource.next('');

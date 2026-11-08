@@ -7,7 +7,9 @@ import { Subject, forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
 import { EntityDeletionService } from 'app/shared-ui/delete-dialog/service/entity-deletion.service';
-import { exerciseGroupDeletionTarget, isDeletionCompleted, isDeletionOutcomeUnknown } from 'app/shared-ui/delete-dialog/entity-deletion-target.util';
+import { exerciseGroupDeletionTarget, isDeletionCompleted, isDeletionOutcomeUnknown, trackAlive } from 'app/shared-ui/delete-dialog/entity-deletion-target.util';
+import { EntityDeletionProgress, EntityDeletionType } from 'app/shared-ui/delete-dialog/entity-deletion-progress.model';
+import { EXAM_DELETED_EVENT, ExamDeletedEventContent } from 'app/exam/shared/entities/exam-deleted-event.model';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -17,7 +19,7 @@ import { Course } from 'app/course/shared/entities/course.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import dayjs from 'dayjs/esm';
 import { AlertService } from 'app/foundation/service/alert.service';
-import { EventManager } from 'app/foundation/service/event-manager.service';
+import { EventManager, EventWithContent } from 'app/foundation/service/event-manager.service';
 import { faAngleDown, faAngleUp, faFileImport, faLayerGroup, faPen, faPlus, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { ExamImportComponent } from 'app/exam/manage/exams/exam-import/exam-import.component';
 import { ExamExerciseImportDialogComponent } from 'app/exam/manage/exercise-groups/exercise-import-dialog/exam-exercise-import-dialog.component';
@@ -66,6 +68,7 @@ export class ExerciseGroupsComponent implements OnInit {
     private alertService = inject(AlertService);
     private router = inject(Router);
     private profileService = inject(ProfileService);
+    private readonly isAlive = trackAlive(this.destroyRef);
 
     readonly courseId = signal<number>(undefined!);
     course = signal<Course | undefined>(undefined);
@@ -151,6 +154,7 @@ export class ExerciseGroupsComponent implements OnInit {
                 this.exerciseGroups.set(this.exam()!.exerciseGroups);
                 this.course.set(this.exam()!.course);
                 this.latestIndividualEndDate.set(examInfoDTO ? examInfoDTO.body!.latestIndividualEndDate : undefined);
+                this.resumeRunningDeletion();
             },
             error: (res: HttpErrorResponse) => onError(this.alertService, res),
         });
@@ -231,23 +235,64 @@ export class ExerciseGroupsComponent implements OnInit {
         const request$ = this.exerciseGroupService.delete(courseId, examId, exerciseGroupId, event.deleteStudentReposBuildPlans, event.deleteBaseReposBuildPlans);
         this.entityDeletionService.delete(exerciseGroupDeletionTarget(courseId, examId, exerciseGroupId, title), request$).subscribe({
             next: (progress) => {
-                if (isDeletionCompleted(progress)) {
-                    this.eventManager.broadcast({
-                        name: 'exerciseGroupOverviewModification',
-                        content: 'Deleted an exercise group',
-                    });
-                    this.exerciseGroups.set(this.exerciseGroups()?.filter((exerciseGroup) => exerciseGroup.id !== exerciseGroupId));
-                }
-                if (isDeletionCompleted(progress) || isDeletionOutcomeUnknown(progress)) {
-                    // The exam only reports its latest operation. When another operation replaced ours before the end was seen, the outcome is
-                    // unknown: nothing is announced and the groups are read from the server, which tells how it really ended.
-                    this.reloadExerciseGroups();
-                }
+                this.onGroupDeletionEnded(progress, exerciseGroupId);
                 // A failed deletion is reported by the progress dialog; this only ends the confirmation dialog.
                 this.dialogErrorSource.next('');
             },
             error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
         });
+    }
+
+    /**
+     * Shows the progress of a deletion in this exam that is already running, e.g. after the page was reloaded or another instructor started it:
+     * of an exercise group, or of the exam itself.
+     */
+    private resumeRunningDeletion(): void {
+        const exam = this.exam();
+        if (!exam?.course?.isAtLeastInstructor) {
+            return;
+        }
+        this.entityDeletionService
+            .resumeInExam(
+                this.courseId(),
+                this.examId(),
+                (entityType, entityId) => (entityType === EntityDeletionType.EXAM ? exam.title : this.exerciseGroups()?.find((group) => group.id === entityId)?.title),
+                this.destroyRef,
+            )
+            .subscribe((progress) =>
+                progress.entityType === EntityDeletionType.EXAM ? this.onExamDeletionEnded(progress) : this.onGroupDeletionEnded(progress, progress.entityId),
+            );
+    }
+
+    private onGroupDeletionEnded(progress: EntityDeletionProgress, exerciseGroupId: number): void {
+        if (isDeletionCompleted(progress)) {
+            this.eventManager.broadcast({
+                name: 'exerciseGroupOverviewModification',
+                content: 'Deleted an exercise group',
+            });
+            this.exerciseGroups.set(this.exerciseGroups()?.filter((exerciseGroup) => exerciseGroup.id !== exerciseGroupId));
+        }
+        if (isDeletionCompleted(progress) || isDeletionOutcomeUnknown(progress)) {
+            // The exam only reports its latest operation. When another operation replaced ours before the end was seen, the outcome is
+            // unknown: nothing is announced and the groups are read from the server, which tells how it really ended.
+            this.reloadExerciseGroups();
+        }
+    }
+
+    /** The exam that this page belongs to is being deleted: handled like the exam detail page does, and the page is left once the exam is gone. */
+    private onExamDeletionEnded(progress: EntityDeletionProgress): void {
+        if (isDeletionCompleted(progress)) {
+            // Drop the exam from the shared exam list first, then read it again, then leave: the overview must not show a deleted exam.
+            this.eventManager.broadcast(new EventWithContent<ExamDeletedEventContent>(EXAM_DELETED_EVENT, { examId: progress.entityId }));
+            this.eventManager.broadcast({ name: 'examListModification', content: 'dummy' });
+            if (this.isAlive() && this.examId() === progress.entityId) {
+                void this.router.navigate(['/course-management', this.courseId(), 'exams']);
+            }
+        } else if (isDeletionOutcomeUnknown(progress)) {
+            // Not known how it ended: only refresh what is shown, which tells whether the exam still exists.
+            this.eventManager.broadcast({ name: 'examListModification', content: 'Refresh after an unknown deletion outcome' });
+            this.reloadExerciseGroups();
+        }
     }
 
     /**

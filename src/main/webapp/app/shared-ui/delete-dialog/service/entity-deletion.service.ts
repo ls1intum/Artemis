@@ -16,6 +16,7 @@ import {
     isTerminalDeletionStatus,
 } from 'app/shared-ui/delete-dialog/entity-deletion-progress.model';
 import { EntityDeletionProgressDialogComponent } from 'app/shared-ui/delete-dialog/component/entity-deletion-progress-dialog.component';
+import { examDeletionTarget, exerciseGroupDeletionTarget } from 'app/shared-ui/delete-dialog/entity-deletion-target.util';
 
 /** How often the status endpoint is read while a deletion runs, as a fallback for a websocket message that was missed. */
 export const DELETION_STATUS_POLL_INTERVAL_MS = 5000;
@@ -127,22 +128,14 @@ export class EntityDeletionService {
         }
         const result$ = new ReplaySubject<EntityDeletionProgress>(1);
         let attached = false;
-        const until$ =
-            lifetime instanceof Observable
-                ? lifetime
-                : new Observable<void>((subscriber) =>
-                      lifetime.onDestroy(() => {
-                          subscriber.next();
-                          subscriber.complete();
-                      }),
-                  );
+        const until$ = this.lifetimeEnd(lifetime);
         this.http
             .get<EntityDeletionProgress>(this.statusUrl(target), { observe: 'response', context: this.silentContext() })
             .pipe(takeUntil(until$))
             .subscribe({
                 next: (response) => {
                     const progress = response.body;
-                    if (response.status !== 200 || !progress || progress.status !== EntityDeletionStatus.IN_PROGRESS) {
+                    if (response.status !== 200 || progress?.status !== EntityDeletionStatus.IN_PROGRESS) {
                         return;
                     }
                     if (progress.entityType !== target.entityType || progress.entityId !== target.entityId) {
@@ -174,6 +167,71 @@ export class EntityDeletionService {
                 },
             });
         return result$.asObservable();
+    }
+
+    /**
+     * Shows the progress dialog of a deletion inside an exam that is already running, for a page that lists the exercise groups of the exam.
+     * <p>
+     * The exam reports one status for everything that is deleted in it, so the deleted thing is only known from that status: an exercise group
+     * of this exam or the exam itself. The titles are looked up by the caller, which knows the loaded groups. Otherwise this behaves like
+     * {@link resume}, which it uses to follow the deletion that was found.
+     *
+     * @param courseId the course of the exam
+     * @param examId the exam that may have a running deletion
+     * @param titleOf the title of the exercise group or of the exam with the given id, if the caller knows it
+     * @param lifetime see {@link resume}
+     * @return emits the final progress, whose type and id tell what was deleted, when the deletion that was found ended; completes without a
+     *         value if none was running
+     */
+    resumeInExam(
+        courseId: number,
+        examId: number,
+        titleOf: (entityType: EntityDeletionType, entityId: number) => string | undefined,
+        lifetime: DestroyRef | Observable<unknown>,
+    ): Observable<EntityDeletionProgress> {
+        const result$ = new ReplaySubject<EntityDeletionProgress>(1);
+        let following = false;
+        this.http
+            .get<EntityDeletionProgress>(this.statusUrl(examDeletionTarget(courseId, examId, undefined)), { observe: 'response', context: this.silentContext() })
+            .pipe(takeUntil(this.lifetimeEnd(lifetime)))
+            .subscribe({
+                next: (response) => {
+                    const progress = response.body;
+                    if (response.status !== 200 || progress?.status !== EntityDeletionStatus.IN_PROGRESS) {
+                        return;
+                    }
+                    let target: EntityDeletionTarget;
+                    if (progress.entityType === EntityDeletionType.EXERCISE_GROUP) {
+                        target = exerciseGroupDeletionTarget(courseId, examId, progress.entityId, titleOf(progress.entityType, progress.entityId));
+                    } else if (progress.entityType === EntityDeletionType.EXAM && progress.entityId === examId) {
+                        target = examDeletionTarget(courseId, examId, titleOf(progress.entityType, progress.entityId));
+                    } else {
+                        return;
+                    }
+                    following = true;
+                    this.resume(target, lifetime).subscribe(result$);
+                },
+                error: () => result$.complete(),
+                // The status is a single response, so without a running deletion to follow there is nothing left to wait for.
+                complete: () => {
+                    if (!following) {
+                        result$.complete();
+                    }
+                },
+            });
+        return result$.asObservable();
+    }
+
+    /** Emits when the caller no longer wants the result of a check that is on its way: when its owner is destroyed, or when the given observable emits. */
+    private lifetimeEnd(lifetime: DestroyRef | Observable<unknown>): Observable<unknown> {
+        return lifetime instanceof Observable
+            ? lifetime
+            : new Observable<void>((subscriber) =>
+                  lifetime.onDestroy(() => {
+                      subscriber.next();
+                      subscriber.complete();
+                  }),
+              );
     }
 
     /** Websocket topic that carries the progress of the given deletion. */

@@ -1,4 +1,5 @@
-<div data-testid="entity-deletion-progress" [attr.data-status]="progress()?.status ?? 'PREPARING'" role="status" aria-live="polite">
+<!-- <output> is a polite live region with the status role by itself, so the state changes of the deletion are announced without extra attributes. -->
+<output class="block" data-testid="entity-deletion-progress" [attr.data-status]="progress()?.status ?? 'PREPARING'">
     <div class="mb-4 flex items-center">
         @if (isCompleted()) {
             <fa-icon [icon]="faCheckCircle" size="lg" class="me-2 text-state-success" />
@@ -60,4 +61,4 @@
             </button>
         </div>
     }
-</div>
+</output>

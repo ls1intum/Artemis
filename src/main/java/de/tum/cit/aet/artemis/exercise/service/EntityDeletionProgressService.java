@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -28,11 +29,9 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
-import de.tum.cit.aet.artemis.core.security.websocket.WebsocketDestination;
 import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
 import de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap;
 import de.tum.cit.aet.artemis.exercise.domain.EntityDeletionStatus;
-import de.tum.cit.aet.artemis.exercise.domain.EntityDeletionType;
 import de.tum.cit.aet.artemis.exercise.dto.EntityDeletionProgressDTO;
 
 /**
@@ -129,9 +128,7 @@ public class EntityDeletionProgressService {
      *
      * @param scopeKey            the scope of the deletion, under which its status is kept, see {@link #exerciseScopeKey(long)} and {@link #examScopeKey(long)}
      * @param additionalScopeKeys further scopes the deletion holds, for example the scopes of the exercises of an exam
-     * @param entityType          the kind of entity that is deleted
-     * @param entityId            the id of the entity that is deleted
-     * @param destination         the websocket destination the progress is sent to
+     * @param target              the entity that is deleted and the websocket destination the progress is sent to
      * @param totalSteps          the number of steps the job reports
      * @param totalWeight         the sum of the weights of all steps, which the job reports to the tracker
      * @param onAccepted          runs in the calling thread once the claims are taken and before the job starts, for example to audit the request or to cancel the schedule of a
@@ -139,25 +136,27 @@ public class EntityDeletionProgressService {
      * @param job                 the work to do in the background
      * @throws ConflictException if another deletion holds one of the scopes
      */
-    public void startAsync(String scopeKey, List<String> additionalScopeKeys, EntityDeletionType entityType, long entityId, WebsocketDestination destination, int totalSteps,
-            double totalWeight, Runnable onAccepted, DeletionJob job) {
-        EntityDeletionClaim claim = acquireClaims(scopeKey, additionalScopeKeys, entityType, entityId, destination, totalSteps);
+    public void startAsync(String scopeKey, List<String> additionalScopeKeys, DeletionTarget target, int totalSteps, double totalWeight, Runnable onAccepted, DeletionJob job) {
+        EntityDeletionClaim claim = acquireClaims(scopeKey, additionalScopeKeys, target, totalSteps);
         boolean statusPublished = false;
+        boolean scheduled = false;
         try {
             onAccepted.run();
-            sendAndStore(claim, newStatus(claim, EntityDeletionStatus.IN_PROGRESS, null, 0, 0, 0, null, 0.0, null));
+            sendAndStore(claim, newStatus(claim, EntityDeletionStatus.IN_PROGRESS, ProgressReport.NOTHING_DONE, null));
             statusPublished = true;
             deletionExecutor.execute(() -> runJob(claim, totalWeight, job));
+            scheduled = true;
         }
-        catch (RuntimeException | Error failure) {
-            if (statusPublished) {
-                // Clients already saw the deletion start, so they have to learn that it did not.
-                finish(claim, newStatus(claim, EntityDeletionStatus.FAILED, null, 0, 0, 0, null, 0.0, GENERIC_ERROR_MESSAGE));
+        finally {
+            // Whatever stopped the start, also an Error, has to release the claims, and clients that already saw the deletion start have to learn that it did not.
+            if (!scheduled) {
+                if (statusPublished) {
+                    finish(claim, newStatus(claim, EntityDeletionStatus.FAILED, ProgressReport.NOTHING_DONE, GENERIC_ERROR_MESSAGE));
+                }
+                else {
+                    releaseClaims(claim);
+                }
             }
-            else {
-                releaseClaims(claim);
-            }
-            throw failure;
         }
     }
 
@@ -235,18 +234,18 @@ public class EntityDeletionProgressService {
         return singleLine.length() <= MAX_ERROR_MESSAGE_LENGTH ? singleLine : singleLine.substring(0, MAX_ERROR_MESSAGE_LENGTH - 3) + "...";
     }
 
-    private EntityDeletionClaim acquireClaims(String scopeKey, List<String> additionalScopeKeys, EntityDeletionType entityType, long entityId, WebsocketDestination destination,
-            int totalSteps) {
-        EntityDeletionClaim claim = new EntityDeletionClaim(scopeKey, List.copyOf(additionalScopeKeys), entityType, entityId, destination, totalSteps, ZonedDateTime.now(),
-                UUID.randomUUID());
+    private EntityDeletionClaim acquireClaims(String scopeKey, List<String> additionalScopeKeys, DeletionTarget target, int totalSteps) {
+        EntityDeletionClaim claim = new EntityDeletionClaim(scopeKey, List.copyOf(additionalScopeKeys), target.entityType(), target.entityId(), target.destination(), totalSteps,
+                ZonedDateTime.now(ZoneId.systemDefault()), UUID.randomUUID());
         String token = claim.ownerToken().toString();
         List<String> taken = new ArrayList<>();
+        boolean acquired = false;
         try {
             for (String key : claim.allScopeKeys()) {
                 claims.lock(key);
                 try {
                     if (claims.putIfAbsent(key, token) != null) {
-                        throw new ConflictException("Another deletion is already in progress", entityType.name(), "deletionInProgress");
+                        throw new ConflictException("Another deletion is already in progress", target.entityType().name(), "deletionInProgress");
                     }
                     taken.add(key);
                 }
@@ -256,10 +255,13 @@ public class EntityDeletionProgressService {
             }
             ScheduledFuture<?> renewal = taskScheduler.scheduleAtFixedRate(() -> renewClaims(claim), Instant.now().plus(CLAIM_RENEWAL_INTERVAL), CLAIM_RENEWAL_INTERVAL);
             claimRenewals.put(claim, renewal);
+            acquired = true;
         }
-        catch (RuntimeException | Error failure) {
-            removeClaims(claim, taken);
-            throw failure;
+        finally {
+            // Whatever stopped the acquisition, also an Error, must not leave the claims that were already taken behind.
+            if (!acquired) {
+                removeClaims(claim, taken);
+            }
         }
         return claim;
     }
@@ -270,27 +272,25 @@ public class EntityDeletionProgressService {
         SecurityUtils.runAsSystem(() -> {
             DeletionProgressTracker tracker = new DeletionProgressTracker(this, claim, totalWeight);
             boolean deleted = false;
+            boolean failureReported = false;
             try {
                 job.run(tracker);
                 deleted = true;
             }
-            catch (Throwable failure) {
+            catch (RuntimeException failure) {
                 log.error("Failed to delete {} {}", claim.entityType(), claim.entityId(), failure);
-                try {
-                    finish(claim, newStatus(claim, EntityDeletionStatus.FAILED, tracker.currentStep(), tracker.stepsCompleted(), claim.totalSteps(), 0, null,
-                            tracker.percentOfCompleted(), describeFailure(failure)));
-                }
-                catch (RuntimeException | Error reportingFailure) {
-                    failure.addSuppressed(reportingFailure);
-                }
-                if (failure instanceof Error error) {
-                    throw error;
-                }
+                reportFailed(claim, tracker, describeFailure(failure));
+                failureReported = true;
             }
             finally {
                 try {
                     if (deleted) {
                         reportCompleted(claim);
+                    }
+                    else if (!failureReported) {
+                        // The job ended with an Error, which is not caught here and goes on after the cleanup. Clients still have to learn that the deletion failed.
+                        log.error("The deletion of {} {} ended abnormally", claim.entityType(), claim.entityId());
+                        reportFailed(claim, tracker, GENERIC_ERROR_MESSAGE);
                     }
                 }
                 finally {
@@ -301,30 +301,57 @@ public class EntityDeletionProgressService {
     }
 
     /**
+     * Publishes the failed outcome. A failure of the status store or the messaging must not hide the failure of the deletion, so it is only logged.
+     */
+    private void reportFailed(EntityDeletionClaim claim, DeletionProgressTracker tracker, String errorMessage) {
+        try {
+            ProgressReport report = new ProgressReport(tracker.currentStep(), tracker.stepsCompleted(), claim.totalSteps(), 0, null, tracker.percentOfCompleted());
+            finish(claim, newStatus(claim, EntityDeletionStatus.FAILED, report, errorMessage));
+        }
+        catch (RuntimeException reportingFailure) {
+            log.warn("The failure of the deletion of {} {} could not be reported", claim.entityType(), claim.entityId(), reportingFailure);
+        }
+    }
+
+    /**
      * Publishes the successful outcome. The entity is gone at this point, so a failure of the status store or the messaging must never be turned into a failed deletion. The
      * claims are released by the caller, and clients that miss the message find the entity gone.
      */
     private void reportCompleted(EntityDeletionClaim claim) {
         try {
-            finish(claim, newStatus(claim, EntityDeletionStatus.COMPLETED, null, claim.totalSteps(), claim.totalSteps(), 0, null, 100.0, null));
+            ProgressReport report = new ProgressReport(null, claim.totalSteps(), claim.totalSteps(), 0, null, 100.0);
+            finish(claim, newStatus(claim, EntityDeletionStatus.COMPLETED, report, null));
         }
-        catch (RuntimeException | Error reportingFailure) {
+        catch (RuntimeException reportingFailure) {
             log.error("Deleted {} {}, but its completion could not be reported", claim.entityType(), claim.entityId(), reportingFailure);
         }
     }
 
-    void updateProgress(EntityDeletionClaim claim, String currentStep, int stepsCompleted, int itemsProcessed, int totalItems, String currentItemTitle, double percent,
-            boolean verifyAllClaims) {
+    void updateProgress(EntityDeletionClaim claim, ProgressReport report, boolean verifyAllClaims) {
         // Renews the claims as well, and stops a worker that lost one of them, so a stale worker cannot go on deleting while another deletion runs.
         verifyClaims(claim, verifyAllClaims);
-        sendAndStore(claim, newStatus(claim, EntityDeletionStatus.IN_PROGRESS, currentStep, stepsCompleted, itemsProcessed, totalItems, currentItemTitle, percent, null));
+        sendAndStore(claim, newStatus(claim, EntityDeletionStatus.IN_PROGRESS, report, null));
     }
 
-    private EntityDeletionProgressDTO newStatus(EntityDeletionClaim claim, EntityDeletionStatus status, String currentStep, int stepsCompleted, int itemsProcessed, int totalItems,
-            String currentItemTitle, double percent, String errorMessage) {
-        int steps = status == EntityDeletionStatus.COMPLETED ? claim.totalSteps() : stepsCompleted;
-        return new EntityDeletionProgressDTO(claim.entityType(), claim.entityId(), status, currentStep, steps, claim.totalSteps(), itemsProcessed, totalItems, currentItemTitle,
-                percent, claim.startedAt(), ZonedDateTime.now(), errorMessage);
+    /**
+     * What a deletion has done so far, as it is reported to the clients.
+     *
+     * @param currentStep      the stable key of the step that runs, or null
+     * @param stepsCompleted   the number of steps that are done
+     * @param itemsProcessed   the items of the current step that are done
+     * @param totalItems       all items of the current step
+     * @param currentItemTitle the title of the item that is processed now, or null
+     * @param percent          the weighted progress in percent
+     */
+    record ProgressReport(String currentStep, int stepsCompleted, int itemsProcessed, int totalItems, String currentItemTitle, double percent) {
+
+        static final ProgressReport NOTHING_DONE = new ProgressReport(null, 0, 0, 0, null, 0.0);
+    }
+
+    private EntityDeletionProgressDTO newStatus(EntityDeletionClaim claim, EntityDeletionStatus status, ProgressReport report, String errorMessage) {
+        int steps = status == EntityDeletionStatus.COMPLETED ? claim.totalSteps() : report.stepsCompleted();
+        return new EntityDeletionProgressDTO(claim.entityType(), claim.entityId(), status, report.currentStep(), steps, claim.totalSteps(), report.itemsProcessed(),
+                report.totalItems(), report.currentItemTitle(), report.percent(), claim.startedAt(), ZonedDateTime.now(ZoneId.systemDefault()), errorMessage);
     }
 
     /**
@@ -445,8 +472,8 @@ public class EntityDeletionProgressService {
             if (status != null && status.status() == EntityDeletionStatus.IN_PROGRESS) {
                 statuses.put(claim.scopeKey(),
                         new EntityDeletionProgressDTO(status.entityType(), status.entityId(), status.status(), status.currentStep(), status.stepsCompleted(), status.totalSteps(),
-                                status.itemsProcessed(), status.totalItems(), status.currentItemTitle(), status.weightedProgressPercent(), status.startedAt(), ZonedDateTime.now(),
-                                status.errorMessage()));
+                                status.itemsProcessed(), status.totalItems(), status.currentItemTitle(), status.weightedProgressPercent(), status.startedAt(),
+                                ZonedDateTime.now(ZoneId.systemDefault()), status.errorMessage()));
             }
         }
         finally {

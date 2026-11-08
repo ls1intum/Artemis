@@ -840,4 +840,113 @@ describe('EntityDeletionService', () => {
             expect(completed).toBe(true);
         });
     });
+
+    describe('resumeInExam', () => {
+        const statusUrl = 'api/exam/courses/1/exams/3/deletion-progress';
+        const titleOf = vi.fn((entityType: EntityDeletionType, entityId: number) => (entityType === EntityDeletionType.EXAM ? 'Final' : `Group ${entityId}`));
+
+        beforeEach(() => titleOf.mockClear());
+
+        it('follows the exercise group that the exam reports as being deleted, with the title the caller knows, and reports how it ends', () => {
+            const results: EntityDeletionProgress[] = [];
+            service.resumeInExam(1, 3, titleOf, destroyRef).subscribe((value) => results.push(value));
+
+            // the exam reports one status for everything in it; the second read is the one of the run that follows the group
+            const running = progress(EntityDeletionStatus.IN_PROGRESS, { entityType: EntityDeletionType.EXERCISE_GROUP, entityId: 9, currentStep: 'exercises' });
+            httpMock.expectOne(statusUrl).flush(running);
+            httpMock.expectOne(statusUrl).flush(running);
+
+            expect(titleOf).toHaveBeenCalledWith(EntityDeletionType.EXERCISE_GROUP, 9);
+            expect(dialogOpen).toHaveBeenCalledOnce();
+            expect(dialogOpen.mock.calls[0][1].data.target.entityType).toBe(EntityDeletionType.EXERCISE_GROUP);
+            expect(dialogOpen.mock.calls[0][1].data.target.title).toBe('Group 9');
+            topic$.next(progress(EntityDeletionStatus.COMPLETED, { entityType: EntityDeletionType.EXERCISE_GROUP, entityId: 9 }));
+            expect(results).toHaveLength(1);
+            expect(results[0].entityType).toBe(EntityDeletionType.EXERCISE_GROUP);
+            expect(alertService.success).toHaveBeenCalledWith('artemisApp.exerciseGroup.deleted', { param: 'Group 9' });
+        });
+
+        it('follows the deletion of the exam itself when the exam reports it', () => {
+            const results: EntityDeletionProgress[] = [];
+            service.resumeInExam(1, 3, titleOf, destroyRef).subscribe((value) => results.push(value));
+
+            const running = progress(EntityDeletionStatus.IN_PROGRESS, { entityType: EntityDeletionType.EXAM, entityId: 3 });
+            httpMock.expectOne(statusUrl).flush(running);
+            httpMock.expectOne(statusUrl).flush(running);
+
+            expect(dialogOpen.mock.calls[0][1].data.target.entityType).toBe(EntityDeletionType.EXAM);
+            expect(dialogOpen.mock.calls[0][1].data.target.title).toBe('Final');
+            topic$.next(progress(EntityDeletionStatus.COMPLETED, { entityType: EntityDeletionType.EXAM, entityId: 3 }));
+            expect(results).toHaveLength(1);
+            expect(results[0].entityType).toBe(EntityDeletionType.EXAM);
+        });
+
+        it('opens no dialog when the exam reports the deletion of another exam', () => {
+            let completed = false;
+            service.resumeInExam(1, 3, titleOf, destroyRef).subscribe({ complete: () => (completed = true) });
+
+            httpMock.expectOne(statusUrl).flush(progress(EntityDeletionStatus.IN_PROGRESS, { entityType: EntityDeletionType.EXAM, entityId: 4 }));
+
+            expect(dialogOpen).not.toHaveBeenCalled();
+            expect(completed).toBe(true);
+        });
+
+        it.each([EntityDeletionStatus.COMPLETED, EntityDeletionStatus.FAILED])('opens no dialog for a deletion that already ended as %s', (status) => {
+            let completed = false;
+            service.resumeInExam(1, 3, titleOf, destroyRef).subscribe({ complete: () => (completed = true) });
+
+            httpMock.expectOne(statusUrl).flush(progress(status, { entityType: EntityDeletionType.EXERCISE_GROUP, entityId: 9 }));
+
+            expect(dialogOpen).not.toHaveBeenCalled();
+            expect(completed).toBe(true);
+        });
+
+        it('completes without a value and opens no dialog when no deletion is known (204)', () => {
+            let completed = false;
+            const results: EntityDeletionProgress[] = [];
+            service.resumeInExam(1, 3, titleOf, destroyRef).subscribe({ next: (value) => results.push(value), complete: () => (completed = true) });
+
+            httpMock.expectOne(statusUrl).flush(null, { status: 204, statusText: 'No Content' });
+
+            expect(completed).toBe(true);
+            expect(results).toHaveLength(0);
+            expect(dialogOpen).not.toHaveBeenCalled();
+            expect(topic$.observed).toBe(false);
+        });
+
+        it('reads the status silently and stays quiet when it cannot be read', () => {
+            let completed = false;
+            service.resumeInExam(1, 3, titleOf, destroyRef).subscribe({ complete: () => (completed = true) });
+
+            const request = httpMock.expectOne(statusUrl);
+            expect(request.request.context.get(SKIP_HTTP_ERROR_ALERT)).toBe(true);
+            request.flush(null, { status: 500, statusText: 'Server Error' });
+
+            expect(completed).toBe(true);
+            expect(dialogOpen).not.toHaveBeenCalled();
+            expect(alertService.error).not.toHaveBeenCalled();
+        });
+
+        it('cancels the status request and opens no dialog when the caller is destroyed first', () => {
+            let completed = false;
+            service.resumeInExam(1, 3, titleOf, destroyRef).subscribe({ complete: () => (completed = true) });
+            const request = httpMock.expectOne(statusUrl);
+
+            destroyCallbacks.forEach((callback) => callback());
+
+            expect(request.cancelled).toBe(true);
+            expect(completed).toBe(true);
+            expect(dialogOpen).not.toHaveBeenCalled();
+        });
+
+        it('cancels the status request when the observable that ends the check emits', () => {
+            const ended$ = new Subject<void>();
+            service.resumeInExam(1, 3, titleOf, ended$).subscribe();
+            const request = httpMock.expectOne(statusUrl);
+
+            ended$.next();
+
+            expect(request.cancelled).toBe(true);
+        });
+    });
 });

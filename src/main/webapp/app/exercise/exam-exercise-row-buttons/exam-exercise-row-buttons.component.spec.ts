@@ -328,7 +328,7 @@ describe('ExamExerciseRowButtonsComponent', () => {
             });
             it('should ask the table to reload instead of removing the exercise when it is not known how the background deletion ended', () => {
                 (TestBed.inject(EntityDeletionService) as unknown as MockEntityDeletionService).status = EntityDeletionStatus.UNKNOWN;
-                const unknownEmitSpy = vi.spyOn(component.onDeletionOutcomeUnknown, 'emit');
+                const unknownEmitSpy = vi.spyOn(component.deletionOutcomeUnknown, 'emit');
                 deleteTextExerciseStub.mockReturnValue(of({}));
                 setExerciseInput(fixture, textExercise);
                 component.deleteExercise();

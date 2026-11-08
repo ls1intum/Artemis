@@ -1,6 +1,6 @@
 import { EMPTY, Observable, map, take } from 'rxjs';
 import { vi } from 'vitest';
-import { EntityDeletionProgress, EntityDeletionStatus, EntityDeletionTarget } from 'app/shared-ui/delete-dialog/entity-deletion-progress.model';
+import { EntityDeletionProgress, EntityDeletionStatus, EntityDeletionTarget, EntityDeletionType } from 'app/shared-ui/delete-dialog/entity-deletion-progress.model';
 
 /**
  * Stands in for the EntityDeletionService in component specs: the delete request is sent as usual and the deletion ends right away with
@@ -20,6 +20,16 @@ export class MockEntityDeletionService {
 
     /** Finds no running deletion. The lifetime the caller passed is recorded in the calls. */
     resume = vi.fn<(target: EntityDeletionTarget, lifetime: unknown) => Observable<EntityDeletionProgress>>(() => EMPTY);
+
+    /** Finds no running deletion in the exam either. The callers' arguments are recorded in the calls. */
+    resumeInExam = vi.fn<
+        (
+            courseId: number,
+            examId: number,
+            titleOf: (entityType: EntityDeletionType, entityId: number) => string | undefined,
+            lifetime: unknown,
+        ) => Observable<EntityDeletionProgress>
+    >(() => EMPTY);
 
     private finalProgress(target: EntityDeletionTarget): EntityDeletionProgress {
         return {

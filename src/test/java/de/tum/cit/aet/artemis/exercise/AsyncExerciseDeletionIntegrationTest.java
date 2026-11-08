@@ -40,6 +40,7 @@ import de.tum.cit.aet.artemis.exercise.repository.ExerciseTestRepository;
 import de.tum.cit.aet.artemis.exercise.service.DeletionJob;
 import de.tum.cit.aet.artemis.exercise.service.DeletionProgressListener;
 import de.tum.cit.aet.artemis.exercise.service.DeletionStepReporter;
+import de.tum.cit.aet.artemis.exercise.service.DeletionTarget;
 import de.tum.cit.aet.artemis.exercise.service.EntityDeletionProgressService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDeletionService;
 import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
@@ -121,9 +122,22 @@ class AsyncExerciseDeletionIntegrationTest extends AbstractSpringIntegrationInde
         }, job);
     }
 
+    /**
+     * Waits inside a deletion job until the test releases it. A deletion job cannot throw a checked exception, so an interruption ends it as a failure.
+     */
+    private static void awaitUninterruptibly(CountDownLatch release) {
+        try {
+            release.await(30, TimeUnit.SECONDS);
+        }
+        catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new IllegalStateException("The wait for the release of the deletion was interrupted", e);
+        }
+    }
+
     private void startHolding(String scopeKey, List<String> additionalScopeKeys, int totalSteps, Runnable onAccepted, DeletionJob job) {
-        entityDeletionProgressService.startAsync(scopeKey, additionalScopeKeys, EntityDeletionType.EXERCISE, exercise.getId(),
-                ExerciseWebsocketTopics.DELETION_PROGRESS.at(exercise.getId()), totalSteps, totalSteps, onAccepted, job);
+        var target = new DeletionTarget(EntityDeletionType.EXERCISE, exercise.getId(), ExerciseWebsocketTopics.DELETION_PROGRESS.at(exercise.getId()));
+        entityDeletionProgressService.startAsync(scopeKey, additionalScopeKeys, target, totalSteps, totalSteps, onAccepted, job);
     }
 
     /**
@@ -136,7 +150,7 @@ class AsyncExerciseDeletionIntegrationTest extends AbstractSpringIntegrationInde
         }, tracker -> {
             tracker.startStep(step);
             running.countDown();
-            release.await(30, TimeUnit.SECONDS);
+            awaitUninterruptibly(release);
         });
         assertThat(running.await(30, TimeUnit.SECONDS)).as("the blocked deletion started").isTrue();
         return release;
@@ -430,12 +444,12 @@ class AsyncExerciseDeletionIntegrationTest extends AbstractSpringIntegrationInde
         // a request that is refused because the quiz is already being deleted must not cancel the schedule of a quiz that still exists
         var running = new CountDownLatch(1);
         var release = new CountDownLatch(1);
-        entityDeletionProgressService.startAsync(EntityDeletionProgressService.exerciseScopeKey(quiz.getId()), List.of(), EntityDeletionType.EXERCISE, quiz.getId(),
-                ExerciseWebsocketTopics.DELETION_PROGRESS.at(quiz.getId()), 1, 1.0, () -> {
-                }, tracker -> {
-                    running.countDown();
-                    release.await(30, TimeUnit.SECONDS);
-                });
+        var target = new DeletionTarget(EntityDeletionType.EXERCISE, quiz.getId(), ExerciseWebsocketTopics.DELETION_PROGRESS.at(quiz.getId()));
+        entityDeletionProgressService.startAsync(EntityDeletionProgressService.exerciseScopeKey(quiz.getId()), List.of(), target, 1, 1.0, () -> {
+        }, tracker -> {
+            running.countDown();
+            awaitUninterruptibly(release);
+        });
         assertThat(running.await(30, TimeUnit.SECONDS)).isTrue();
         try {
             request.delete(quizUrl, HttpStatus.CONFLICT);
@@ -488,7 +502,7 @@ class AsyncExerciseDeletionIntegrationTest extends AbstractSpringIntegrationInde
         }, tracker -> {
             tracker.startStep("channel");
             running.countDown();
-            release.await(30, TimeUnit.SECONDS);
+            awaitUninterruptibly(release);
             tracker.startStep("participations");
         });
         assertThat(running.await(30, TimeUnit.SECONDS)).isTrue();
@@ -513,10 +527,10 @@ class AsyncExerciseDeletionIntegrationTest extends AbstractSpringIntegrationInde
             // claiming it again is no conflict with the own claim
             tracker.claimExercise(lateExerciseId);
             try {
-                entityDeletionProgressService.startAsync(lateKey, List.of(), EntityDeletionType.EXERCISE, lateExerciseId,
-                        ExerciseWebsocketTopics.DELETION_PROGRESS.at(lateExerciseId), 1, 1.0, () -> {
-                        }, other -> {
-                        });
+                var lateTarget = new DeletionTarget(EntityDeletionType.EXERCISE, lateExerciseId, ExerciseWebsocketTopics.DELETION_PROGRESS.at(lateExerciseId));
+                entityDeletionProgressService.startAsync(lateKey, List.of(), lateTarget, 1, 1.0, () -> {
+                }, other -> {
+                });
             }
             catch (ConflictException e) {
                 refusedWhileClaimed.set(true);
@@ -527,9 +541,9 @@ class AsyncExerciseDeletionIntegrationTest extends AbstractSpringIntegrationInde
 
         // the claim is released with the others, so the exercise can be deleted on its own afterwards
         var deletedOnItsOwn = new CountDownLatch(1);
-        entityDeletionProgressService.startAsync(lateKey, List.of(), EntityDeletionType.EXERCISE, lateExerciseId, ExerciseWebsocketTopics.DELETION_PROGRESS.at(lateExerciseId), 1,
-                1.0, () -> {
-                }, tracker -> deletedOnItsOwn.countDown());
+        var lateTarget = new DeletionTarget(EntityDeletionType.EXERCISE, lateExerciseId, ExerciseWebsocketTopics.DELETION_PROGRESS.at(lateExerciseId));
+        entityDeletionProgressService.startAsync(lateKey, List.of(), lateTarget, 1, 1.0, () -> {
+        }, tracker -> deletedOnItsOwn.countDown());
         assertThat(deletedOnItsOwn.await(30, TimeUnit.SECONDS)).isTrue();
         awaitCompleted(lateKey);
     }

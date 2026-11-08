@@ -27,7 +27,8 @@ import { ExamChecklistComponent } from '../exam-checklist-component/exam-checkli
 import { CourseTitleBarActionsDirective } from 'app/course/shared/directives/course-title-bar-actions.directive';
 import { CourseTitleBarTitleDirective } from 'app/course/shared/directives/course-title-bar-title.directive';
 import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
-import { EventManager } from 'app/foundation/service/event-manager.service';
+import { EventManager, EventWithContent } from 'app/foundation/service/event-manager.service';
+import { EXAM_DELETED_EVENT, ExamDeletedEventContent } from 'app/exam/shared/entities/exam-deleted-event.model';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 @Component({
@@ -219,6 +220,11 @@ export class ExamDetailComponent implements OnInit, OnDestroy {
 
     private onDeletionEnded(progress: EntityDeletionProgress, courseId: number, deletedExamId: number | undefined): void {
         if (isDeletionCompleted(progress)) {
+            // The exam list is shared with the overview this page navigates to: drop the exam from it first, so the overview never shows (and asks for
+            // the statistics of) an exam that is gone, then read the list from the server again.
+            if (deletedExamId !== undefined) {
+                this.eventManager.broadcast(new EventWithContent<ExamDeletedEventContent>(EXAM_DELETED_EVENT, { examId: deletedExamId }));
+            }
             this.eventManager.broadcast({ name: 'examListModification', content: 'dummy' });
             // Only leave the page while it still shows the deleted exam.
             if (this.isAlive() && this.exam().id === deletedExamId) {

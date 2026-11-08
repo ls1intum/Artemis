@@ -43,7 +43,7 @@ public class DeletionProgressTracker {
         int stepsCompleted = stepsStarted;
         stepsStarted++;
         lastFullClaimCheckNanos = System.nanoTime();
-        progressService.updateProgress(claim, stepKey, stepsCompleted, 0, 0, null, percentOf(0), true);
+        progressService.updateProgress(claim, new EntityDeletionProgressService.ProgressReport(stepKey, stepsCompleted, 0, 0, null, percentOf(0)), true);
     }
 
     /**
@@ -75,7 +75,8 @@ public class DeletionProgressTracker {
         if (verifyAllClaims) {
             lastFullClaimCheckNanos = now;
         }
-        progressService.updateProgress(claim, currentStep, Math.max(stepsStarted - 1, 0), itemsProcessed, totalItems, itemTitle, percentOf(partialWeight), verifyAllClaims);
+        var report = new EntityDeletionProgressService.ProgressReport(currentStep, Math.max(stepsStarted - 1, 0), itemsProcessed, totalItems, itemTitle, percentOf(partialWeight));
+        progressService.updateProgress(claim, report, verifyAllClaims);
     }
 
     /**
