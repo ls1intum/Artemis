@@ -130,8 +130,13 @@ public record AgentVerifyReport(int solutionTests, boolean solutionPassed, List<
             appendBuildDiagnostic(builder, "Solution", solutionBuildDiagnostic);
         }
         else {
-            // The blocking reason for failing solution tests already carries their evidence (see renderFailureEvidence), so it is not repeated here.
             builder.append("Solution FAILS: ").append(renderNames(solutionFailedNames)).append(" — your reference solution must pass every test.\n");
+        }
+        String solutionEvidence = solutionPassed ? "" : renderFailureEvidence("Solution", solutionFailureEvidence);
+        builder.append(solutionEvidence);
+        if (!solutionEvidence.isEmpty()) {
+            builder.append("Check each failing assertion against the approved specification and the test's arranged inputs. Repair an incorrect test rather than changing correct "
+                    + "behavior to satisfy it; do not change expected values merely to make the build pass.\n");
         }
         appendReflectionClassLookupGuidance(builder, solutionFailureEvidence);
         appendReflectionConstructorGuidance(builder, solutionFailureEvidence);
@@ -156,7 +161,9 @@ public record AgentVerifyReport(int solutionTests, boolean solutionPassed, List<
         else {
             builder.append("Template: all required gradable tests fail; supplied-behavior preservation checks pass.\n");
         }
-        builder.append(renderFailureEvidence("Template", templateFailureEvidence));
+        if (!templateFailed) {
+            builder.append(renderFailureEvidence("Template", templateFailureEvidence));
+        }
 
         Set<String> excludedBindings = java.util.stream.Stream.concat(hiddenTestNames.stream(), preservationTestNames.stream())
                 .map(ProblemStatementBindingChecker::normalizeTestName).collect(java.util.stream.Collectors.toSet());
@@ -204,7 +211,12 @@ public record AgentVerifyReport(int solutionTests, boolean solutionPassed, List<
             builder.append(
                     "MECHANICAL PRECHECK: FAIL — fix the above, then run verify again. Authoritative post-loop verification determines save eligibility; quality review may request repairs or flag instructor review.");
             if (!blockingReasons.isEmpty()) {
-                builder.append("\nWhy: - ").append(String.join("\n- ", blockingReasons));
+                List<String> remainingReasons = blockingReasons.stream()
+                        .map(reason -> solutionEvidence.isEmpty() ? reason : reason.replace(solutionEvidence.stripTrailing(), "").stripTrailing())
+                        .filter(reason -> !reason.isBlank()).toList();
+                if (!remainingReasons.isEmpty()) {
+                    builder.append("\nWhy: - ").append(String.join("\n- ", remainingReasons));
+                }
             }
         }
         return builder.toString();

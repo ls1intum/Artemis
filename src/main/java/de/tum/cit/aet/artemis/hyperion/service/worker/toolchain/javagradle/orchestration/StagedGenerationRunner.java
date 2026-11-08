@@ -571,7 +571,9 @@ public class StagedGenerationRunner {
                     assessmentRedesignUsed = true;
                     assessmentVerified = false;
                     reentriesRemaining--;
-                    assessmentRedesignFeedback = SpecificationReviewPrompts.assessmentRedesignPrompt(gate.observation());
+                    assessmentRedesignFeedback = gate.outcome() == StageCheckResult.Outcome.OWNERSHIP_CONFLICT
+                            ? SpecificationReviewPrompts.ownershipRepairPrompt(gate.observation())
+                            : SpecificationReviewPrompts.assessmentRedesignPrompt(gate.observation());
                     if (conversation != null) {
                         archivedConversation.addAll(conversation);
                         conversation = null;

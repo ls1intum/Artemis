@@ -57,17 +57,28 @@ class AgentVerifyReportTest {
         assertThat(AgentVerifyReport.renderFailureEvidence("Solution", List.of())).isEmpty();
     }
 
-    /** The blocking reason for failing solution tests carries their evidence, so the observation must not spend its bounded tool-response budget on a second copy. */
     @Test
-    void solutionFailureEvidenceIsRenderedOnlyThroughItsBlockingReason() {
+    void solutionFailureEvidencePrecedesStarterFeedbackWithoutDuplicatingItsBlockingReason() {
         var failure = new AgentVerifyReport.TestFailureEvidence("addsInterest", "expected: <105.0> but was: <100.0>");
         String reason = "The solution does not pass its own tests (1 failing of 1).\n" + AgentVerifyReport.renderFailureEvidence("Solution", List.of(failure));
-        AgentVerifyReport report = new AgentVerifyReport(1, false, List.of("addsInterest"), List.of(failure), 1, true, true, List.of(), List.of(), List.of("addsInterest"),
-                List.of(), List.of(), false, List.of(reason));
+        var expectedStarterFailure = new AgentVerifyReport.TestFailureEvidence("addsInterest", "expected starter failure");
+        AgentVerifyReport report = new AgentVerifyReport(1, false, List.of("addsInterest"), List.of(failure), 1, true, true, List.of(expectedStarterFailure), List.of(),
+                List.of("addsInterest"), List.of(), List.of(), false, List.of(reason));
 
         String observation = report.toObservation();
 
-        assertThat(observation).containsOnlyOnce("addsInterest: expected: <105.0> but was: <100.0>").contains("Solution FAILS: [addsInterest]");
+        assertThat(observation).containsOnlyOnce("addsInterest: expected: <105.0> but was: <100.0>").contains("Solution FAILS: [addsInterest]")
+                .doesNotContain(expectedStarterFailure.message());
+        assertThat(observation.indexOf(failure.message())).isLessThan(observation.indexOf("Template:"));
+    }
+
+    @Test
+    void failedStarterPolicyStillReportsItsFailureEvidence() {
+        var failure = new AgentVerifyReport.TestFailureEvidence("keepsSuppliedBalance", "expected: <10> but was: <0>");
+        AgentVerifyReport report = new AgentVerifyReport(1, true, List.of(), List.of(), 1, true, false, List.of(failure), List.of(), List.of("keepsSuppliedBalance"), List.of(),
+                List.of(), false, List.of("supplied behavior changed"));
+
+        assertThat(report.toTestsStageObservation()).contains(failure.testName(), failure.message());
     }
 
     @Test

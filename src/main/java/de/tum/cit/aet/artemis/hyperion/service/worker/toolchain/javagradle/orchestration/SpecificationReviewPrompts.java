@@ -60,6 +60,17 @@ final class SpecificationReviewPrompts {
                 List.of(finding));
     }
 
+    static String ownershipRepairPrompt(String executedEvidence) {
+        return semanticSpecRefinementPrompt(executedEvidence) + """
+
+                This repair resolves a supplied-code ownership conflict, not an assessment bypass. Make the starter compile while preserving the brief's learner responsibilities.
+                Reconcile supplied demonstrations, ownership rows and their public API without adding learner work merely to satisfy supplied callers. Preserve unaffected rules,
+                edge-case results, ordering choices and worked-example inputs. Do not redesign an unrelated operation or replace its accepted semantics with a different policy.
+                Recalculate examples against their actual setup; an example that contradicts an unaffected rule must be corrected to that rule. Rebuild the affected artifacts
+                against the revised ownership contract and keep every mandatory verification gate.
+                """;
+    }
+
     static String assessmentRedesignPrompt(String executedEvidence) {
         return executedEvidence
                 + """
