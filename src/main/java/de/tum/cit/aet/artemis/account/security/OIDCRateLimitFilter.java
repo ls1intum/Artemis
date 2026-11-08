@@ -16,7 +16,9 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import de.tum.cit.aet.artemis.admin.service.RateLimitService;
 import de.tum.cit.aet.artemis.core.exception.RateLimitExceededException;
 import de.tum.cit.aet.artemis.core.security.RateLimitType;
+import de.tum.cit.aet.artemis.core.util.HttpRequestUtils;
 import inet.ipaddr.IPAddress;
+import inet.ipaddr.IPAddressString;
 
 /**
  * Filter that enforces rate limiting on OIDC authorization initialization requests.
@@ -60,6 +62,18 @@ public class OIDCRateLimitFilter extends OncePerRequestFilter {
         if (path != null && PATH_MATCHER.match("/oauth2/authorization/**", path)) {
             IPAddress clientId = null;
             clientId = rateLimitService.resolveClientId();
+
+            // If clientId is zero because of port -> parse the port too
+            if (clientId == null && request != null) {
+                String ipString = HttpRequestUtils.getIpStringFromRequest(request);
+                if (ipString == null || ipString.isBlank()) {
+                    ipString = request.getRemoteAddr();
+                }
+                if (ipString != null && !ipString.isBlank()) {
+                    clientId = parseIpWithPort(ipString.trim());
+                }
+            }
+
             // if clientId can not be resolved -> reject the request
             if (clientId == null) {
                 response.setStatus(HttpStatus.BAD_REQUEST.value());
@@ -80,5 +94,34 @@ public class OIDCRateLimitFilter extends OncePerRequestFilter {
         }
 
         filterChain.doFilter(request, response);
+    }
+
+    /**
+     * Parses an IP address string that may include a port (IPv4 host:port or [IPv6]:port),
+     * returning a valid IPAddress object.
+     */
+    private IPAddress parseIpWithPort(String ipString) {
+        if (ipString == null) {
+            return null;
+        }
+        String host = ipString;
+        if (host.startsWith("[")) {
+            int bracketEnd = host.indexOf(']');
+            if (bracketEnd != -1) {
+                host = host.substring(1, bracketEnd);
+            }
+        }
+        else {
+            int lastColon = host.lastIndexOf(':');
+            if (lastColon != -1 && host.indexOf(':') == lastColon) {
+                host = host.substring(0, lastColon);
+            }
+        }
+
+        IPAddress address = new IPAddressString(host).getAddress();
+        if (address == null) {
+            address = new IPAddressString(ipString).getAddress();
+        }
+        return address;
     }
 }

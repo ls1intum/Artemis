@@ -57,4 +57,22 @@ class OIDCRateLimitIntegrationTest extends AbstractSpringIntegrationLocalVCSamlT
             return req;
         })).andExpect(status().is3xxRedirection());
     }
+
+    @Test
+    void testOidcAuthorization_IpWithPort_ShouldSucceed() throws Exception {
+        // IP with port should be parsed and not be blocked with 400
+        request.performMvcRequest(get("/oauth2/authorization/oidc").header("X-Forwarded-For", "192.168.1.105:54321").with(req -> {
+            req.setRemoteAddr("192.168.1.105:54321");
+            return req;
+        })).andExpect(status().is3xxRedirection());
+    }
+
+    @Test
+    void testOidcAuthorization_UnresolvableIp_ShouldReturn400() throws Exception {
+        // Incorrect IP should be rejected with Bad Request
+        request.performMvcRequest(get("/oauth2/authorization/oidc").header("X-Forwarded-For", "invalid-ip-format-string").with(req -> {
+            req.setRemoteAddr("");
+            return req;
+        })).andExpect(status().isBadRequest());
+    }
 }
