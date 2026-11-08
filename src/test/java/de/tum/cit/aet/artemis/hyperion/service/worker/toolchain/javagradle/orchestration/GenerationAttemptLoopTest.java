@@ -118,6 +118,7 @@ class GenerationAttemptLoopTest {
     @BeforeEach
     void setUp() {
         service = mock(GenerationOrchestrator.class);
+        when(service.preserveBriefScaffolding(any(), anyString(), any(), any(), any())).thenAnswer(invocation -> invocation.getArgument(0));
         workspace = mock(GenerationWorkspace.class);
         agentLoopRunner = mock(AgentLoopRunner.class);
         verifier = mock(DifferentialVerifier.class);
