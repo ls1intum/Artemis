@@ -16,7 +16,6 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import de.tum.cit.aet.artemis.admin.service.RateLimitService;
 import de.tum.cit.aet.artemis.core.exception.RateLimitExceededException;
 import de.tum.cit.aet.artemis.core.security.RateLimitType;
-import de.tum.cit.aet.artemis.core.util.HttpRequestUtils;
 import inet.ipaddr.IPAddress;
 import inet.ipaddr.IPAddressString;
 
@@ -61,20 +60,14 @@ public class OIDCRateLimitFilter extends OncePerRequestFilter {
         // Filter should only be triggered for /oauth2/authorization/** requests
         if (path != null && PATH_MATCHER.match("/oauth2/authorization/**", path)) {
             IPAddress clientId = null;
-            clientId = rateLimitService.resolveClientId();
 
-            // If clientId is zero because of port -> parse the port too
-            if (clientId == null && request != null) {
-                String ipString = HttpRequestUtils.getIpStringFromRequest(request);
-                if (ipString == null || ipString.isBlank()) {
-                    ipString = request.getRemoteAddr();
-                }
-                if (ipString != null && !ipString.isBlank()) {
-                    clientId = parseIpWithPort(ipString.trim());
-                }
+            // Resolve the client identity strictly from the trusted peer (remoteAddr),
+            // avoiding untrusted forwarding headers (like X-Forwarded-For) that can be spoofed.
+            if (request != null && request.getRemoteAddr() != null && !request.getRemoteAddr().isBlank()) {
+                clientId = parseIpWithPort(request.getRemoteAddr().trim());
             }
 
-            // if clientId can not be resolved -> reject the request
+            // If clientId cannot be resolved -> reject the request with HTTP 400
             if (clientId == null) {
                 response.setStatus(HttpStatus.BAD_REQUEST.value());
                 response.getWriter().write("Unable to resolve valid client IP address.");
