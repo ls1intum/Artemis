@@ -6,6 +6,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BooleanSupplier;
@@ -419,7 +420,7 @@ public class AgentLoopRunner {
                             messagesAtLastCall, toolDefinitionTokens));
                     continue;
                 }
-                var pendingCompletion = tools.pendingCompletionFeedback();
+                Optional<String> pendingCompletion = tools == null ? Optional.empty() : tools.pendingCompletionFeedback();
                 if (pendingCompletion.isPresent()) {
                     previousReplyCutOffWithoutAction = false;
                     emit(stepListener, "The stage still needs its files and explicit submission.");
