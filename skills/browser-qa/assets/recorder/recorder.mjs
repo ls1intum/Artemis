@@ -53,8 +53,8 @@ function cachedChromium() {
 // loopback baseURL, and type credentials only into a page on that same origin,
 // so a redirect to another host never receives them.
 function isLocal(baseURL) {
-  const host = new URL(baseURL).hostname;
-  return host === 'localhost' || host === '[::1]' || /^127\.\d+\.\d+\.\d+$/.test(host);
+  const host = new URL(baseURL).hostname.replace(/\.$/, '');
+  return host === 'localhost' || host.endsWith('.localhost') || host === '[::1]' || /^127\.\d+\.\d+\.\d+$/.test(host);
 }
 
 const sessionBaseURLs = new WeakMap();
@@ -312,6 +312,13 @@ export async function login(page, username, password) {
   await page.locator('#username').waitFor({ state: 'visible', timeout: 30000 });
   assertOnOrigin(page);
   await humanType(page, '#username', username);
+  // The sign-in form may be two-step (username -> Continue -> password) or single-step.
+  const continueButton = page.locator('button:has-text("Continue"), button:has-text("Weiter")');
+  if (await continueButton.count() && !(await page.locator('#password').isVisible())) {
+    await humanClick(page, continueButton.first());
+  }
+  await page.locator('#password').waitFor({ state: 'visible', timeout: 20000 });
+  assertOnOrigin(page);
   await humanType(page, '#password', password);
   await humanClick(page, 'button[type="submit"]');
   await page.waitForURL(url => !url.pathname.startsWith('/sign-in'), { timeout: 30000 });

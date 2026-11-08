@@ -39,14 +39,19 @@ printf 'id\tkind\tfile\tline\tsymbol\n'
 # file's own diff is read for "@@" lines only; with -U0 every content line
 # starts with +, - or \, so no content line can pass for a hunk header.
 n=0
-git diff -z --name-status --find-renames "$mb" HEAD | while IFS= read -r -d '' status; do
+git diff -z --name-status --no-ext-diff --find-renames "$mb" HEAD | while IFS= read -r -d '' status; do
     IFS= read -r -d '' path
     paths=("$path")
     case "$status" in R* | C*) IFS= read -r -d '' path; paths+=("$path") ;; esac
+    for p in "${paths[@]}"; do
+        case "$p" in *$'\t'* | *$'\n'*) echo "changes.sh: path with a tab or newline is not supported: ${p@Q}" >&2; exit 1 ;; esac
+    done
     kind=$(kind_of "$path")
     if [ "$status" = D ]; then
         printf 'D-%s\t%s\t%s\t0\tfile deleted\n' "$(basename "$path")" "$kind" "$path"
     fi
+    patch=$(git --literal-pathspecs diff -U0 --no-color --no-ext-diff --no-textconv --find-renames "$mb" HEAD -- "${paths[@]}") ||
+        { echo "changes.sh: git diff failed for ${paths[*]@Q}" >&2; exit 1; }
     hunks=0
     while IFS= read -r l; do
         case "$l" in
@@ -57,7 +62,7 @@ git diff -z --name-status --find-renames "$mb" HEAD | while IFS= read -r -d '' s
                 printf 'C%03d\t%s\t%s\t%s\t%s\n' "$n" "$kind" "$path" "$line" "$sym"
                 ;;
         esac
-    done < <(git diff -U0 --no-color --find-renames "$mb" HEAD -- "${paths[@]}")
+    done <<<"$patch"
     if [ "$hunks" = 0 ] && [ "$status" != D ]; then
         n=$((n + 1))
         printf 'C%03d\t%s\t%s\t0\t%s\n' "$n" "$kind" "$path" "no text hunk (binary, mode or pure rename)"
