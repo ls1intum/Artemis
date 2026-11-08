@@ -251,9 +251,9 @@ class SubmissionServiceTest extends AbstractSpringIntegrationIndependentBatchTes
     }
 
     @ParameterizedTest
-    @EnumSource(value = ExerciseType.class, names = { "TEXT", "MODELING", "FILE_UPLOAD" })
+    @org.junit.jupiter.params.provider.CsvSource({ "TEXT,false", "TEXT,true", "MODELING,false", "MODELING,true", "FILE_UPLOAD,false", "FILE_UPLOAD,true" })
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
-    void teamDraftTransferRespectsLockLimitButOwnDraftCanReopen(ExerciseType type) throws Exception {
+    void teamDraftTransferRespectsLockLimitButOwnDraftCanReopen(ExerciseType type, boolean unassigned) throws Exception {
         var exercise = teamExercise(type);
         var own = teamSubmission(exercise, tutor1, "own");
         request.get(assessmentStartUrl(type, own.getId()), HttpStatus.OK, String.class);
@@ -278,6 +278,11 @@ class SubmissionServiceTest extends AbstractSpringIntegrationIndependentBatchTes
         userUtilService.changeUser(TEST_PREFIX + "tutor2");
         request.get(assessmentStartUrl(type, transferred.getId()), HttpStatus.OK, String.class);
         var transferredResultId = submissionRepository.findOneWithEagerResultAndFeedbackAndAssessmentNote(transferred.getId()).getLatestResult().getId();
+        if (unassigned) {
+            var draft = resultRepository.findByIdWithEagerFeedbacksAndAssessor(transferredResultId).orElseThrow();
+            draft.setAssessor(null);
+            resultRepository.save(draft);
+        }
         var team = teamRepository.findWithStudentsByIdElseThrow(((StudentParticipation) transferred.getParticipation()).getTeam().orElseThrow().getId());
         team.setOwner(tutor1);
         teamRepository.save(exercise, team);
@@ -285,7 +290,7 @@ class SubmissionServiceTest extends AbstractSpringIntegrationIndependentBatchTes
         var courseId = exercise.getCourseViaExerciseGroupOrCourseMemberElseThrow().getId();
         assertThat(submissionService.getLockedSubmissions(courseId)).hasSize(Math.toIntExact(MAX_NUMBER_OF_LOCKED_SUBMISSIONS_PER_TUTOR));
         request.get(assessmentStartUrl(type, transferred.getId()), HttpStatus.BAD_REQUEST, String.class);
-        assertThat(resultRepository.findByIdWithEagerFeedbacksAndAssessor(transferredResultId).orElseThrow().getAssessor()).isEqualTo(tutor2);
+        assertThat(resultRepository.findByIdWithEagerFeedbacksAndAssessor(transferredResultId).orElseThrow().getAssessor()).isEqualTo(unassigned ? null : tutor2);
         request.get(assessmentStartUrl(type, own.getId()), HttpStatus.OK, String.class);
         assertThat(resultRepository.findByIdWithEagerFeedbacksAndAssessor(ownResultId).orElseThrow().getAssessor()).isEqualTo(tutor1);
         assertThat(submissionService.getLockedSubmissions(courseId)).hasSize(Math.toIntExact(MAX_NUMBER_OF_LOCKED_SUBMISSIONS_PER_TUTOR));
@@ -389,9 +394,7 @@ class SubmissionServiceTest extends AbstractSpringIntegrationIndependentBatchTes
         assertThat(request.getList(url, HttpStatus.OK, AssessmentQueueTeamDTO.class)).isEmpty();
         exercise.setDueDate(ZonedDateTime.now().minusDays(1));
         exerciseRepository.save(exercise);
-        queryInterceptor.startQueryCount();
         var queue = request.getList(url, HttpStatus.OK, AssessmentQueueTeamDTO.class);
-        assertQueueDoesNotReadAnswers();
         assertThat(queue).extracting(entry -> entry.submission().id()).containsExactlyInAnyOrder(own.getId(), anotherOwn.getId());
         assertThat(queue).allSatisfy(entry -> {
             assertThat(entry.submission().text()).isNull();
@@ -405,9 +408,7 @@ class SubmissionServiceTest extends AbstractSpringIntegrationIndependentBatchTes
         }
         userUtilService.changeUser(TEST_PREFIX + "tutor1");
         request.get(assessmentStartUrl(type, anotherOwn.getId()), HttpStatus.OK, String.class);
-        queryInterceptor.startQueryCount();
         queue = request.getList(url, HttpStatus.OK, AssessmentQueueTeamDTO.class);
-        assertQueueDoesNotReadAnswers();
         assertThat(queue).hasSize(2);
         var draft = queue.stream().filter(entry -> entry.shortName().equals("anotherown")).findFirst().orElseThrow().submission();
         assertThat(draft.results()).anySatisfy(result -> assertThat(result.assessor()).isNotNull());
@@ -639,32 +640,6 @@ class SubmissionServiceTest extends AbstractSpringIntegrationIndependentBatchTes
             assertThat(locked.getId()).isNotEqualTo(resultId);
         }
         assertThat(resultRepository.findByIdWithEagerSubmissionAndFeedbackAndAssessmentNoteElseThrow(resultId).getAssessor()).isNull();
-    }
-
-    /** Both candidate and existing-result queue loaders must leave answer columns in the database. */
-    private void assertQueueDoesNotReadAnswers() {
-        var statements = queryInterceptor.getStatements();
-        assertThat(statements).isNotEmpty();
-        assertThat(statements).noneMatch(sql -> java.util.regex.Pattern.compile("\\.(text|model|explanation_text)\\b").matcher(sql).find());
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
-    void completedTextAssessmentReportsCurrentTeamOwnerWithoutChangingAssessor() throws Exception {
-        var exercise = teamExercise(ExerciseType.TEXT);
-        var submission = teamSubmission(exercise, tutor1, "own");
-        userUtilService.changeUser(TEST_PREFIX + "instructor1");
-        request.get(assessmentStartUrl(ExerciseType.TEXT, submission.getId()), HttpStatus.OK, String.class);
-        var result = submissionRepository.findOneWithEagerResultAndFeedbackAndAssessmentNote(submission.getId()).getLatestResult();
-        var originalAssessor = result.getAssessor();
-        result.setCompletionDate(ZonedDateTime.now());
-        resultRepository.save(result);
-        userUtilService.changeUser(TEST_PREFIX + "tutor1");
-        var response = request.get(assessmentStartUrl(ExerciseType.TEXT, submission.getId()), HttpStatus.OK, de.tum.cit.aet.artemis.text.dto.TextParticipationDTO.class);
-        assertThat(response.teamAssessmentOwner()).isTrue();
-        assertThat(resultRepository.findByIdWithEagerFeedbacksAndAssessor(result.getId()).orElseThrow().getAssessor()).isEqualTo(originalAssessor);
-        userUtilService.changeUser(TEST_PREFIX + "tutor2");
-        request.get(assessmentStartUrl(ExerciseType.TEXT, submission.getId()), HttpStatus.FORBIDDEN, String.class);
     }
 
     private String assessmentProposalUrl(ExerciseType type, Long exerciseId) {

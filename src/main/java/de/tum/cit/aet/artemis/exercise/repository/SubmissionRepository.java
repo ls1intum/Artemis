@@ -26,8 +26,6 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
-import de.tum.cit.aet.artemis.exercise.dto.AssessmentQueueResultDTO;
-import de.tum.cit.aet.artemis.exercise.dto.AssessmentQueueSubmissionDTO;
 import de.tum.cit.aet.artemis.exercise.dto.SubmissionOwnerDTO;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadSubmission;
@@ -47,30 +45,6 @@ import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 @Lazy
 @Repository
 public interface SubmissionRepository extends ArtemisJpaRepository<Submission, Long> {
-
-    /** Loads only scalar submission and participation metadata for the assessment queue. */
-    @Query("""
-            SELECT new de.tum.cit.aet.artemis.exercise.dto.AssessmentQueueSubmissionDTO(
-                s.id, s.submitted, s.type, s.exampleSubmission, s.submissionDate,
-                CASE WHEN TYPE(s) = TextSubmission THEN 'text' WHEN TYPE(s) = ModelingSubmission THEN 'modeling'
-                    WHEN TYPE(s) = FileUploadSubmission THEN 'file-upload' WHEN TYPE(s) = ProgrammingSubmission THEN 'programming' ELSE 'quiz' END,
-                p.id, p.testRun, p.initializationState, p.initializationDate, p.individualDueDate, team.name,
-                TREAT(s AS ProgrammingSubmission).buildFailed, TREAT(s AS ProgrammingSubmission).commitHash, TREAT(s AS TextSubmission).language)
-            FROM Submission s JOIN StudentParticipation p ON p.id = s.participation.id LEFT JOIN p.team team
-            WHERE s.id IN :submissionIds
-            """)
-    List<AssessmentQueueSubmissionDTO> findAssessmentQueueSubmissionMetadata(@Param("submissionIds") List<Long> submissionIds);
-
-    /** Loads result status and assessor names without initializing submitted answers. */
-    @Query("""
-            SELECT new de.tum.cit.aet.artemis.exercise.dto.AssessmentQueueResultDTO(
-                r.submission.id, r.id, r.completionDate, r.successful, r.score, r.rated, r.assessmentType, r.correctionRound,
-                r.hasComplaint, r.exampleResult, r.testCaseCount, r.passedTestCaseCount, r.codeIssueCount, a.id, a.login, a.firstName, a.lastName)
-            FROM Result r LEFT JOIN r.assessor a
-            WHERE r.submission.id IN :submissionIds
-            ORDER BY r.id
-            """)
-    List<AssessmentQueueResultDTO> findAssessmentQueueResultMetadata(@Param("submissionIds") List<Long> submissionIds);
 
     /**
      * Reads who a submission belongs to, without loading the submission entity.

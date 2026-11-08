@@ -690,7 +690,7 @@ public class SubmissionService {
         if (result.getAssessor() == null || submission.getParticipation().getExercise().isTeamMode() && submission.getParticipation() instanceof StudentParticipation participation
                 && participation.getTeam().isPresent() && result.getCompletionDate() == null) {
             var user = userRepository.getUser();
-            if (result.getAssessor() != null && !result.getAssessor().getId().equals(user.getId())) {
+            if (result.getAssessor() == null || !result.getAssessor().getId().equals(user.getId())) {
                 checkSubmissionLockLimit(submission.getParticipation().getExercise().getCourseViaExerciseGroupOrCourseMemberElseThrow().getId());
             }
             result.setAssessor(user);

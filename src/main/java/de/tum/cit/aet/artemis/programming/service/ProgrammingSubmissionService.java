@@ -493,7 +493,11 @@ public class ProgrammingSubmissionService extends SubmissionService {
         if (submission.getParticipation().getExercise().isTeamMode() && submission.getParticipation() instanceof StudentParticipation participation
                 && participation.getTeam().isPresent() && assignedResult != null && (assignedResult.getAssessor() != null || assignedResult.isManual())) {
             if (assignedResult.getCompletionDate() == null) {
-                assignedResult.setAssessor(userRepository.getUser());
+                var user = userRepository.getUser();
+                if (assignedResult.getAssessor() == null || !assignedResult.getAssessor().getId().equals(user.getId())) {
+                    checkSubmissionLockLimit(submission.getParticipation().getExercise().getCourseViaExerciseGroupOrCourseMemberElseThrow().getId());
+                }
+                assignedResult.setAssessor(user);
                 resultRepository.save(assignedResult);
             }
             return Optional.of(assignedResult);

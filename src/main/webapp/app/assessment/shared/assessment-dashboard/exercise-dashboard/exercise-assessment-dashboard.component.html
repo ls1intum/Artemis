@@ -510,7 +510,7 @@
                                                                     >
                                                                         {{ team.shortName }}
                                                                     </a>
-                                                                } @else if (!exercise().teamMode || isTestRun()) {
+                                                                } @else if (exercise().teamMode || isTestRun()) {
                                                                     {{ submission.id }}
                                                                 }
                                                             </td>
