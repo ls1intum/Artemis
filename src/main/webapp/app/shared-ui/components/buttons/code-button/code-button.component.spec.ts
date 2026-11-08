@@ -138,6 +138,13 @@ describe('CodeButtonComponent', () => {
         }
     }
 
+    it('keeps Code focused on repository access without a browser editor action', async () => {
+        createComponent(false);
+        await fixture.whenStable();
+        expect(document.querySelector('[data-testid="edit-repository-button"]')).toBeNull();
+        expect(document.querySelector('[data-testid="open-repository-button"]')?.getAttribute('href')).toBe('/courses/1/exercises/42/repository');
+    });
+
     it('should defer resource loading until the popover trigger is clicked', async () => {
         createComponent(false, ProgrammingLanguage.JAVA, repositoryUri, { returnedTokenType: 'participation-token', participationId: 7 }, false);
 

@@ -17,6 +17,7 @@ import de.tum.cit.aet.artemis.account.api.dtos.DemoUsers;
 import de.tum.cit.aet.artemis.assessment.api.AssessmentDemoApi;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.api.ExamDemoApi;
+import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.fileupload.api.FileUploadDemoApi;
@@ -85,7 +86,11 @@ public class DemoExerciseSeedingService {
         DemoAreas.seed("file upload exercises", () -> fileUploadDemoApi.ifPresent(api -> algorithms.add(api.createDemo(course))));
         DemoAreas.seed("quiz exercises", () -> algorithms.addAll(quizDemoApi.createDemo(course, users.students())));
         DemoAreas.seed("programming exercises", () -> programmingDemoApi.createDemo(course).ifPresent(algorithms::add));
-        DemoAreas.seed("exam", () -> examDemoApi.ifPresent(api -> api.createDemo(course, examExerciseCreators())));
+        DemoAreas.seed("exam", () -> examDemoApi.ifPresent(api -> {
+            Exam exam = api.createDemo(course, examExerciseCreators());
+            // The grading key of the exam, which the instructor sets up with the exam in the grading tab.
+            DemoAreas.seed("exam grading scale", () -> assessmentDemoApi.createDemoExamGradingScale(exam));
+        }));
 
         return new DemoExercises(architecture, algorithms, modeling, communication);
     }

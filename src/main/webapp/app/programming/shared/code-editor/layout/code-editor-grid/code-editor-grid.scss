@@ -61,7 +61,9 @@
 
         .editor-center {
             flex: 1 1 auto;
-            min-width: 0; /* let center shrink */
+
+            /* Even at phone widths, reserve the card's borders so they cannot overlap the neighbouring divider. */
+            min-width: 2px;
 
             .card {
                 height: 100%;
@@ -73,6 +75,10 @@
             display: flex;
             flex-flow: row nowrap;
             width: 500px;
+
+            /* The panel must not keep the width of its widest line (the task wizard has padding and does not wrap its title): the panel
+               would then take the room of the editor, whose card overflows the divider next to it in a narrow window. */
+            min-width: 0;
 
             .instructions-wrapper__content {
                 overflow: hidden;
