@@ -21,7 +21,10 @@ import org.junit.jupiter.api.io.TempDir;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
+import de.tum.cit.aet.artemis.localvc.service.LocalVCAccessLogRecorderService;
+import de.tum.cit.aet.artemis.localvc.service.LocalVCPushProcessingService;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCServletService;
+import de.tum.cit.aet.artemis.localvc.service.PasswordAuthenticationNoticeService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseMutationGuardService;
 
@@ -36,7 +39,7 @@ class SshGitCommandTest {
         try (Repository repository = FileRepositoryBuilder.create(repositoryPath.toFile())) {
             repository.create(true);
         }
-        LocalVCServletService localVCServletService = mock(LocalVCServletService.class);
+        LocalVCPushProcessingService pushProcessingService = mock(LocalVCPushProcessingService.class);
         ProgrammingExercise exercise = new ProgrammingExercise();
         exercise.setId(1L);
         User user = new User();
@@ -44,10 +47,11 @@ class SshGitCommandTest {
         AtomicBoolean released = new AtomicBoolean();
         var lease = new ProgrammingExerciseMutationGuardService.MutationLease(() -> released.set(true));
         GitLocationResolver resolver = (_, _, _, _) -> repositoryPath;
-        SshGitCommand command = new SshGitCommand(resolver, "git-receive-pack 'exercise.git'", null, localVCServletService);
+        SshGitCommand command = new SshGitCommand(resolver, "git-receive-pack 'exercise.git'", null, mock(LocalVCServletService.class), mock(LocalVCAccessLogRecorderService.class),
+                pushProcessingService, mock(PasswordAuthenticationNoticeService.class));
         when(session.getAttribute(SshConstants.USER_KEY)).thenReturn(user);
         when(session.getAttribute(SshConstants.REPOSITORY_EXERCISE_KEY)).thenReturn(exercise);
-        when(localVCServletService.claimProgrammingExerciseMutation(org.mockito.ArgumentMatchers.any(Repository.class), org.mockito.ArgumentMatchers.same(exercise)))
+        when(pushProcessingService.claimProgrammingExerciseMutation(org.mockito.ArgumentMatchers.any(Repository.class), org.mockito.ArgumentMatchers.same(exercise)))
                 .thenReturn(lease);
         command.setSession(session);
         command.setOutputStream(new ByteArrayOutputStream());
@@ -65,7 +69,7 @@ class SshGitCommandTest {
         command.run();
 
         assertThat(released).isTrue();
-        verify(localVCServletService).claimProgrammingExerciseMutation(org.mockito.ArgumentMatchers.any(Repository.class), org.mockito.ArgumentMatchers.same(exercise));
+        verify(pushProcessingService).claimProgrammingExerciseMutation(org.mockito.ArgumentMatchers.any(Repository.class), org.mockito.ArgumentMatchers.same(exercise));
     }
 
     @Test
@@ -74,16 +78,17 @@ class SshGitCommandTest {
         try (Repository repository = FileRepositoryBuilder.create(repositoryPath.toFile())) {
             repository.create(true);
         }
-        LocalVCServletService localVCServletService = mock(LocalVCServletService.class);
+        LocalVCPushProcessingService pushProcessingService = mock(LocalVCPushProcessingService.class);
         ProgrammingExercise exercise = new ProgrammingExercise();
         User user = new User();
         ServerSession session = mock(ServerSession.class);
         ExitCallback exitCallback = mock(ExitCallback.class);
         ByteArrayOutputStream error = new ByteArrayOutputStream();
-        SshGitCommand command = new SshGitCommand((_, _, _, _) -> repositoryPath, "git-receive-pack 'conflict.git'", null, localVCServletService);
+        SshGitCommand command = new SshGitCommand((_, _, _, _) -> repositoryPath, "git-receive-pack 'conflict.git'", null, mock(LocalVCServletService.class),
+                mock(LocalVCAccessLogRecorderService.class), pushProcessingService, mock(PasswordAuthenticationNoticeService.class));
         when(session.getAttribute(SshConstants.USER_KEY)).thenReturn(user);
         when(session.getAttribute(SshConstants.REPOSITORY_EXERCISE_KEY)).thenReturn(exercise);
-        when(localVCServletService.claimProgrammingExerciseMutation(org.mockito.ArgumentMatchers.any(Repository.class), org.mockito.ArgumentMatchers.same(exercise)))
+        when(pushProcessingService.claimProgrammingExerciseMutation(org.mockito.ArgumentMatchers.any(Repository.class), org.mockito.ArgumentMatchers.same(exercise)))
                 .thenThrow(new ConflictException("Exercise generation is running", "programmingExercise", "exerciseGenerationRunning"));
         command.setSession(session);
         command.setInputStream(InputStream.nullInputStream());
