@@ -28,6 +28,10 @@ public class LocalVCPostPushHook implements PostReceiveHook {
 
     private final LocalVCServletService localVCServletService;
 
+    private final LocalVCPushProcessingService pushProcessingService;
+
+    private final PasswordAuthenticationNoticeService passwordAuthenticationNoticeService;
+
     private final ProgrammingExerciseParticipation participation;
 
     private final ProgrammingExercise exercise;
@@ -38,8 +42,11 @@ public class LocalVCPostPushHook implements PostReceiveHook {
 
     private final Supplier<AuthenticationMechanism> authenticationMechanism;
 
-    public LocalVCPostPushHook(LocalVCServletService localVCServletService, ServerSession serverSession, @NonNull User user) {
+    public LocalVCPostPushHook(LocalVCServletService localVCServletService, LocalVCPushProcessingService pushProcessingService,
+            PasswordAuthenticationNoticeService passwordAuthenticationNoticeService, ServerSession serverSession, @NonNull User user) {
         this.localVCServletService = localVCServletService;
+        this.pushProcessingService = pushProcessingService;
+        this.passwordAuthenticationNoticeService = passwordAuthenticationNoticeService;
         this.participation = serverSession.getAttribute(SshConstants.PARTICIPATION_KEY);
         this.exercise = serverSession.getAttribute(SshConstants.REPOSITORY_EXERCISE_KEY);
         this.vcsAccessLog = serverSession.getAttribute(SshConstants.VCS_ACCESS_LOG_KEY);
@@ -51,8 +58,11 @@ public class LocalVCPostPushHook implements PostReceiveHook {
      * @param authenticationMechanism reads how the push authenticated. JGit creates the hook before the push filter authorizes the request, so the value is only read when the hook
      *                                    runs.
      */
-    public LocalVCPostPushHook(LocalVCServletService localVCServletService, @NonNull User user, Supplier<AuthenticationMechanism> authenticationMechanism) {
+    public LocalVCPostPushHook(LocalVCServletService localVCServletService, LocalVCPushProcessingService pushProcessingService,
+            PasswordAuthenticationNoticeService passwordAuthenticationNoticeService, @NonNull User user, Supplier<AuthenticationMechanism> authenticationMechanism) {
         this.localVCServletService = localVCServletService;
+        this.pushProcessingService = pushProcessingService;
+        this.passwordAuthenticationNoticeService = passwordAuthenticationNoticeService;
         this.user = user;
         this.authenticationMechanism = authenticationMechanism;
         // For HTTPs we are unable to store the attributes in the session or request unfortunately
@@ -72,7 +82,7 @@ public class LocalVCPostPushHook implements PostReceiveHook {
 
         // Said before anything else, so that a push that updates nothing or is rejected below still tells the user.
         if (authenticationMechanism.get() == AuthenticationMechanism.PASSWORD) {
-            receivePack.sendMessage(localVCServletService.getPasswordAuthenticationPushNotice());
+            receivePack.sendMessage(passwordAuthenticationNoticeService.getPasswordAuthenticationPushNotice());
         }
 
         // The PreReceiveHook already checked that there is exactly one command and rejects the push otherwise.
@@ -101,7 +111,7 @@ public class LocalVCPostPushHook implements PostReceiveHook {
         Repository repository = receivePack.getRepository();
 
         try {
-            localVCServletService.processNewPush(commitHash, repository, user, Optional.ofNullable(exercise), Optional.ofNullable(participation),
+            pushProcessingService.processNewPush(commitHash, repository, user, Optional.ofNullable(exercise), Optional.ofNullable(participation),
                     Optional.ofNullable(vcsAccessLog));
         }
         catch (LocalCIException e) {

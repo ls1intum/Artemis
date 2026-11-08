@@ -49,7 +49,9 @@ overrides:
   # Kept on the 4.x line (consumers require ^4; 5.x is an API break).
   js-yaml: '4.3.2'
   launch-editor: '2.14.2'
-  minimatch: '10.2.6'
+  # Must stay >= 11.0.1, which fixed GHSA-g3hv-75wg-m249 (denial of service through globparts amplification).
+  # The 10.x line never got the fix, and every consumer (eslint, typescript-estree) asks for a range that does not reach 11.
+  minimatch: '11.0.5'
   # Reached via postcss, whose range allows the patched release pinned here
   # (GHSA: custom generators can loop indefinitely when size is zero).
   nanoid: '3.3.20'
