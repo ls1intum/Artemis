@@ -111,6 +111,14 @@
                 }
             },
             "examSummary": {
+                "partialTestExamResult": "This partial result and theoretical grade use only automatically assessed exercises. Manually assessed exercises have not been graded.",
+                "notAutomaticallyAssessed": "Not automatically assessed",
+                "theoreticalGrade": "Theoretical grade:",
+                "theoreticalGradeBeforeBonus": "Theoretical grade before bonus:",
+                "theoreticalGradeAfterBonus": "Theoretical grade after bonus:",
+                "automaticResultsPending": "Automatic assessment is still running. The total points and theoretical grade will appear when the results are ready.",
+                "bonusResultPending": "The bonus source is still being assessed. Your points and grade before bonus are available; the final bonus grade will appear when the source results are ready.",
+                "automaticResultPending": "Assessment pending",
                 "backToOverview": "Back to overview",
                 "examResults": "Exam Results",
                 "generalInformation": "General Information",
@@ -663,7 +671,7 @@
                     "Submitted": "Submitted",
                     "DidNotAttend": "Did not attend",
                     "AttendanceNotChecked": "Attendance check failed",
-                    "AttendanceChecked": "Attendance check passed"
+                    "AttendanceChecked": "Attendance checked"
                 },
                 "menu": {
                     "manageStudents": "Students",
@@ -677,6 +685,17 @@
                     "uploadImages": "Upload images",
                     "distribute": "Distribute students",
                     "verifyAttendance": "Verify attendance"
+                },
+                "statisticsFailed": "Exam statistics could not be loaded. Retry before registering students.",
+                "registrationClosed": "Registration is closed because the exam has ended.",
+                "registrationAfterGeneration": "Student exams have already been generated. Newly registered students will receive their own exam automatically. Exercises will also be prepared if preparation has already started. Continue?",
+                "manualAttendance": {
+                    "checked": "Check completed",
+                    "incomplete": "Check incomplete",
+                    "reloadFailed": "Attendance could not be refreshed. Reload the current records before making further changes.",
+                    "title": "Attendance decision",
+                    "present": "Present (all identity checks confirmed)",
+                    "absent": "Absent (all identity checks cleared)"
                 },
                 "addDialog": {
                     "title": "Add Students",
@@ -891,6 +910,9 @@
                 "typeNameToConfirm": "Please type in the name of the exam to confirm:"
             },
             "announcementCreate": {
+                "history": "Past announcements",
+                "historyEmpty": "No announcements have been sent.",
+                "historyFailed": "The announcement history could not be loaded.",
                 "button": "Create Announcement",
                 "title": "Make Live Exam Announcement",
                 "task": "Enter your announcement below.",

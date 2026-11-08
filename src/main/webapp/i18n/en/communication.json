@@ -6,7 +6,7 @@
             "imagePreviewTitle": "Image preview",
             "imagePreviewAlt": "Enlarged image",
             "postNumberInformation": "{{ number }} match(es)",
-            "newMessage": "New message",
+            "askQuestion": "Ask question",
             "newAnnouncement": "New announcement",
             "collapseNewMessage": "Hide",
             "reply": "Reply",
