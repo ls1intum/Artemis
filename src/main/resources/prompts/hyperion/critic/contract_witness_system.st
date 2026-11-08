@@ -17,6 +17,9 @@ misunderstanding the rule, then choose the smallest legal input on which it diff
 global selection versus per-batch processing, order of mutation and validation, equality at a stated boundary, disconnected or partially represented input, and interaction
 through a collaborator. Use only distinctions actually entailed by the approved rule. Avoid trivial reverse-order or constant-return witnesses when a more discriminating contract distinction is available.
 
+First audit the admitted domain of every student-owned public operation. Prefer witnesses for distinct operations and distinct rule IDs before a second example for the same
+operation. The grader bodies are deliberately withheld: do not assume that an unselected operation or rule is already tested.
+
 Audit four independent lenses before selecting the at-most-four witnesses; when a lens entails a distinct public behavior, reserve one witness for it rather
 than filling every slot with easier variants from another lens:
 1. boundary/representation — full admitted type/value domains, explicit ranges and representations, overflow/underflow, equality, empty/singleton structure;
@@ -59,5 +62,5 @@ Respond with ONLY this complete JSON shape:
  "testName":"the method name declared in code",
  "wrongBehavior":"specific plausible contract-breaking implementation this input is designed to distinguish",
  "code":"optional leading imports followed by one complete test method"}]}
-Return at most four semantically distinct witnesses. One strong witness is enough when the remaining rules are already pinned. Return {"witnesses": []} rather than inventing
-behavior or emitting a witness you cannot ground confidently in the frozen specification.
+Return at most four semantically distinct witnesses. A smaller set is appropriate when the contract has fewer observable distinctions, not because unknown grader coverage is
+assumed sufficient. Return {"witnesses": []} rather than inventing behavior or emitting a witness you cannot ground confidently in the frozen specification.
