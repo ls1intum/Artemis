@@ -59,7 +59,16 @@ public class NodeRegistryService {
 
     private final String instanceId;
 
-    public NodeRegistryService(Optional<DistributedDataProvider> distributedDataProvider, @Value("${eureka.instance.instanceId:}") String instanceId) {
+    /**
+     * The instance id is a human-readable node name. Hazelcast deployments set it through {@code eureka.instance.instanceId}, which they need for discovery anyway;
+     * Redis deployments have no Eureka, so it falls back to {@code spring.data.redis.client-name}, which is unique per node there. The Eureka key can go together
+     * with Hazelcast in Artemis 11.
+     *
+     * @param distributedDataProvider the distributed data provider, if any
+     * @param instanceId              the human-readable name of this node
+     */
+    public NodeRegistryService(Optional<DistributedDataProvider> distributedDataProvider,
+            @Value("${eureka.instance.instanceId:${spring.data.redis.client-name:}}") String instanceId) {
         this.distributedDataProvider = distributedDataProvider;
         this.instanceId = instanceId;
     }

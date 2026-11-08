@@ -2,7 +2,7 @@
 id: distributed-data
 title: Distributed Data with Redis or Valkey
 sidebar_label: Distributed Data with Redis or Valkey
-last_reviewed: 2026-11-03
+last_reviewed: 2026-11-08
 ---
 
 import Callout from "../../../src/components/Callout/Callout";
@@ -142,3 +142,7 @@ installation's normal change procedure.
 Artemis nodes using Redis discover shared state through Redis and do not use Eureka to form the distributed-data
 cluster. A Redis deployment therefore does not need a JHipster Registry. This differs from Hazelcast, where Artemis
 uses the registry to discover cluster members.
+
+Without Eureka, a Redis node also needs no `eureka.instance.instanceId`. Artemis names each node after its
+`spring.data.redis.client-name` instead, for example in the node overview of the WebSocket administration page. An
+`eureka.instance.instanceId` that is still configured takes precedence.
