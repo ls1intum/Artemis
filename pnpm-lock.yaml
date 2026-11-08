@@ -381,6 +381,7 @@ overrides:
 patchedDependencies:
   braces@3.0.3: d5329670db5eefc81f5515f35df5a73eedc746914db0236eba1dcc2ecb5d5a86
   eslint@10.14.0: 19b47d956993254d1aa65b78cf56f3610dcc1b47812cbe4f7eb39ec71f894424
+  folder-hash@4.1.4: 307d428e9d4ce733ae91c539de1740c72a98c029f3f0a053db1a502f44f6178b
   y-monaco@0.1.6: 1a00e34927c55b253e6e6b255e784e82ec872964b52270523a1b085f442fc69e
 
 importers:
@@ -645,7 +646,7 @@ importers:
         version: 10.6.6(eslint@10.14.0(patch_hash=19b47d956993254d1aa65b78cf56f3610dcc1b47812cbe4f7eb39ec71f894424)(jiti@2.7.0)(supports-color@10.2.2))(supports-color@10.2.2)(typescript@6.0.3)
       folder-hash:
         specifier: 4.1.4
-        version: 4.1.4(supports-color@10.2.2)
+        version: 4.1.4(patch_hash=307d428e9d4ce733ae91c539de1740c72a98c029f3f0a053db1a502f44f6178b)(supports-color@10.2.2)
       husky:
         specifier: 9.1.7
         version: 9.1.7
@@ -10845,7 +10846,7 @@ snapshots:
 
   flatted@3.4.4: {}
 
-  folder-hash@4.1.4(supports-color@10.2.2):
+  folder-hash@4.1.4(patch_hash=307d428e9d4ce733ae91c539de1740c72a98c029f3f0a053db1a502f44f6178b)(supports-color@10.2.2):
     dependencies:
       debug: 4.4.3(supports-color@10.2.2)
       minimatch: 11.0.5

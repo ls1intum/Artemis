@@ -238,6 +238,9 @@ patchedDependencies:
   # Remove after an upstream fix: https://github.com/micromatch/braces/issues/70
   braces@3.0.3: config/pnpm/patches/braces@3.0.3.patch
   'eslint@10.14.0': 'config/pnpm/patches/eslint+10.14.0.patch'
+  # folder-hash calls minimatch.makeRe, which minimatch 11 removed. minimatch is pinned to 11 above (GHSA-g3hv-75wg-m249),
+  # and folder-hash is only used by supporting_scripts/client/prebuild.mjs. Remove once folder-hash supports minimatch 11.
+  folder-hash@4.1.4: config/pnpm/patches/folder-hash@4.1.4.patch
   y-monaco@0.1.6: config/pnpm/patches/y-monaco@0.1.6.patch
 
 # Allowlist of dependencies permitted to run install-time build / lifecycle scripts.
