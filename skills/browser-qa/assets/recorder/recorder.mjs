@@ -49,10 +49,21 @@ function cachedChromium() {
   return undefined;
 }
 
-// Local stacks often serve a self-signed certificate. Accept one only on this
-// machine, so credentials never go to a remote host whose certificate fails.
+// Local stacks often serve a self-signed certificate. Accept one only for a
+// loopback baseURL, and type credentials only into a page on that same origin,
+// so a redirect to another host never receives them.
 function isLocal(baseURL) {
-  return ['localhost', '127.0.0.1', '[::1]'].includes(new URL(baseURL).hostname);
+  const host = new URL(baseURL).hostname;
+  return host === 'localhost' || host === '[::1]' || /^127\.\d+\.\d+\.\d+$/.test(host);
+}
+
+const sessionBaseURLs = new WeakMap();
+
+function assertOnOrigin(page, baseURL = sessionBaseURLs.get(page.context())) {
+  if (!baseURL) throw new Error('Refusing to type credentials: no baseURL known for this page');
+  const want = new URL(baseURL).origin;
+  const have = new URL(page.url()).origin;
+  if (have !== want) throw new Error(`Refusing to type credentials: page is on ${have}, expected ${want}`);
 }
 
 // Chromium: CHROME_PATH if set; else whatever this playwright-core launches by
@@ -138,10 +149,12 @@ async function signIn(browser, username, password, baseURL) {
   // The sign-in form may be two-step (username -> Continue -> password) or single-step; handle both.
   const usernameField = page.locator('#username, input[name="username"], input').first();
   await usernameField.waitFor({ state: 'visible', timeout: 60000 });
+  assertOnOrigin(page, baseURL);
   await usernameField.fill(username);
   const continueButton = page.locator('button:has-text("Continue"), button:has-text("Weiter")');
   if (await continueButton.count()) { await continueButton.first().click(); }
   await page.locator('#password').waitFor({ state: 'visible', timeout: 20000 });
+  assertOnOrigin(page, baseURL);
   await page.fill('#password', password);
   // Judge sign-in by the auth calls, not by the landing route, which differs between branches.
   const authResponse = page.waitForResponse(r => r.url().includes('/api/core/public/authenticate'), { timeout: 30000 });
@@ -173,6 +186,7 @@ export async function startSession({ name, outDir, baseURL = 'http://localhost:9
       ignoreHTTPSErrors: isLocal(baseURL),
       storageState,
     });
+    sessionBaseURLs.set(context, baseURL);
     await context.addInitScript(CURSOR_SCRIPT);
     page = await context.newPage();
   } catch (error) {
@@ -296,9 +310,10 @@ export async function probeToasts(page, label, events) {
 export async function login(page, username, password) {
   await page.goto('/sign-in', { waitUntil: 'networkidle' });
   await page.locator('#username').waitFor({ state: 'visible', timeout: 30000 });
+  assertOnOrigin(page);
   await humanType(page, '#username', username);
   await humanType(page, '#password', password);
   await humanClick(page, 'button[type="submit"]');
-  await page.waitForURL(/courses|course-management/, { timeout: 30000 });
+  await page.waitForURL(url => !url.pathname.startsWith('/sign-in'), { timeout: 30000 });
   await page.waitForTimeout(1000);
 }

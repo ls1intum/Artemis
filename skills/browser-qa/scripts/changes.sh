@@ -35,31 +35,31 @@ kind_of() {
 }
 
 printf 'id\tkind\tfile\tline\tsymbol\n'
+# Git names each changed file NUL-delimited, so paths need no unquoting. Each
+# file's own diff is read for "@@" lines only; with -U0 every content line
+# starts with +, - or \, so no content line can pass for a hunk header.
 n=0
-# File headers sit between "diff --git" and the first "@@"; inside a hunk, a line
-# such as "+++ b/x" is content.
-header=0
-git -c core.quotePath=false diff -U0 --no-color --find-renames --src-prefix=a/ --dst-prefix=b/ "$mb" HEAD | while IFS= read -r l; do
-    if [ "$header" = 1 ]; then
-        case "$l" in
-            '--- a/'*) old=${l#--- a/} ;;
-            '--- /dev/null') old= ;;
-            '+++ b/'*) file=${l#+++ b/}; kind=$(kind_of "$file") ;;
-            '+++ /dev/null') file=$old; kind=$(kind_of "$file") ;;
-            'rename to '*) file=${l#rename to } ;;
-        esac
+git diff -z --name-status --find-renames "$mb" HEAD | while IFS= read -r -d '' status; do
+    IFS= read -r -d '' path
+    paths=("$path")
+    case "$status" in R* | C*) IFS= read -r -d '' path; paths+=("$path") ;; esac
+    kind=$(kind_of "$path")
+    if [ "$status" = D ]; then
+        printf 'D-%s\t%s\t%s\t0\tfile deleted\n' "$(basename "$path")" "$kind" "$path"
     fi
-    case "$l" in
-        'diff --git '*) header=1 ;;
-        '@@ '*)
-            header=0
-            line=$(sed -E 's/^@@ -[0-9,]+ \+([0-9]+).*/\1/' <<<"$l")
-            sym=$(sed -E 's/^@@ [^@]+ @@ ?//' <<<"$l" | tr '\t' ' ' | cut -c1-160)
-            n=$((n + 1))
-            printf 'C%03d\t%s\t%s\t%s\t%s\n' "$n" "$kind" "$file" "$line" "$sym"
-            ;;
-    esac
-done
-git -c core.quotePath=false diff --no-color --diff-filter=D --name-only "$mb" HEAD | while IFS= read -r f; do
-    printf 'D-%s\t%s\t%s\t0\tfile deleted\n' "$(basename "$f")" "$(kind_of "$f")" "$f"
+    hunks=0
+    while IFS= read -r l; do
+        case "$l" in
+            '@@ '*)
+                line=$(sed -E 's/^@@ -[0-9,]+ \+([0-9]+).*/\1/' <<<"$l")
+                sym=$(sed -E 's/^@@ [^@]+ @@ ?//' <<<"$l" | tr '\t' ' ' | cut -c1-160)
+                n=$((n + 1)); hunks=$((hunks + 1))
+                printf 'C%03d\t%s\t%s\t%s\t%s\n' "$n" "$kind" "$path" "$line" "$sym"
+                ;;
+        esac
+    done < <(git diff -U0 --no-color --find-renames "$mb" HEAD -- "${paths[@]}")
+    if [ "$hunks" = 0 ] && [ "$status" != D ]; then
+        n=$((n + 1))
+        printf 'C%03d\t%s\t%s\t0\t%s\n' "$n" "$kind" "$path" "no text hunk (binary, mode or pure rename)"
+    fi
 done
