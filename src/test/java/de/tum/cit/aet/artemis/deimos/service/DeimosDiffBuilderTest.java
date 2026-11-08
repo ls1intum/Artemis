@@ -173,6 +173,96 @@ class DeimosDiffBuilderTest {
     }
 
     @Test
+    void showsTheBeginningOfBothSidesWhenTheFirstChangedLineDoesNotFit() {
+        String diff = "@@ -1 +1 @@\n-" + "a".repeat(300) + "\n+" + "b".repeat(300) + "\n";
+
+        String truncated = DeimosDiffBuilder.truncateDiff(diff, 100);
+
+        // 12 bytes of header, then 44 bytes for each side: its marker, 42 characters and the line break.
+        assertThat(truncated).isEqualTo("@@ -1 +1 @@\n-" + "a".repeat(42) + "\n+" + "b".repeat(42) + "\n");
+    }
+
+    @Test
+    void givesAShortSideItsWholeLineAndTheRestToTheOther() {
+        String diff = "@@ -1 +1 @@\n-" + "a".repeat(300) + "\n+x\n";
+
+        String truncated = DeimosDiffBuilder.truncateDiff(diff, 100);
+
+        assertThat(truncated).isEqualTo("@@ -1 +1 @@\n-" + "a".repeat(83) + "\n+x\n");
+    }
+
+    @Test
+    void givesTheWholeBudgetToTheOnlySideOfAnAddedFile() {
+        String diff = "@@ -0,0 +1 @@\n+" + "c".repeat(300) + "\n";
+
+        String truncated = DeimosDiffBuilder.truncateDiff(diff, 50);
+
+        assertThat(truncated).isEqualTo("@@ -0,0 +1 @@\n+" + "c".repeat(34) + "\n");
+    }
+
+    @Test
+    void skipsContextAndTheMissingNewlineMarkerWhenSampling() {
+        String diff = "@@ -1,3 +1,3 @@\n " + "k".repeat(90) + "\n-" + "a".repeat(300) + "\n\\ No newline at end of file\n+" + "b".repeat(300) + "\n\\ No newline at end of file\n";
+
+        String truncated = DeimosDiffBuilder.truncateDiff(diff, 120);
+
+        assertThat(truncated).isEqualTo("@@ -1,3 +1,3 @@\n-" + "a".repeat(50) + "\n+" + "b".repeat(50) + "\n");
+    }
+
+    @Test
+    void neverSplitsACharacterWhenSampling() {
+        String diff = "@@ -1 +1 @@\n-" + "ä".repeat(100) + "\n+" + "😀".repeat(100) + "\n";
+
+        String truncated = DeimosDiffBuilder.truncateDiff(diff, 40);
+
+        // 14 bytes per side: the marker, six two-byte characters and the line break; three four-byte characters fit in 13.
+        assertThat(truncated).isEqualTo("@@ -1 +1 @@\n-" + "ä".repeat(6) + "\n+" + "😀".repeat(3) + "\n");
+        assertThat(utf8(truncated)).isLessThanOrEqualTo(40);
+    }
+
+    @ParameterizedTest
+    @CsvSource({ "13", "15" })
+    void keepsTheLineCutWhenTheBudgetDoesNotHoldBothSides(int maxBytes) {
+        String diff = "@@ -1 +1 @@\n-" + "a".repeat(300) + "\n+" + "b".repeat(300) + "\n";
+
+        assertThat(DeimosDiffBuilder.truncateDiff(diff, maxBytes)).isEqualTo(DeimosDiffBuilder.truncateAtLineBoundary(diff, maxBytes)).isEqualTo("@@ -1 +1 @@\n");
+    }
+
+    @Test
+    void keepsTheCharacterCutWhenNotEvenTheHunkHeaderFits() {
+        String diff = "@@ -1 +1 @@\n-" + "a".repeat(300) + "\n+" + "b".repeat(300) + "\n";
+
+        assertThat(DeimosDiffBuilder.truncateDiff(diff, 5)).isEqualTo("@@ -\n");
+    }
+
+    @Test
+    void samplesOnlyTheFirstHunk() {
+        String diff = "@@ -1 +0,0 @@\n-" + "a".repeat(300) + "\n@@ -5,0 +5 @@\n+zzz\n";
+
+        String truncated = DeimosDiffBuilder.truncateDiff(diff, 60);
+
+        assertThat(truncated).isEqualTo("@@ -1 +0,0 @@\n-" + "a".repeat(44) + "\n");
+    }
+
+    @Test
+    void keepsCarriageReturnsAsContentWhenSampling() {
+        String diff = "@@ -1 +1 @@\n-" + "a\r".repeat(150) + "\n+" + "b\r".repeat(150) + "\n";
+
+        String truncated = DeimosDiffBuilder.truncateDiff(diff, 32);
+
+        // Ten bytes per side: a carriage return is an ordinary character of the line, not a line break to cut at.
+        assertThat(truncated).isEqualTo("@@ -1 +1 @@\n-a\ra\ra\ra\r\n+b\rb\rb\rb\r\n");
+    }
+
+    @Test
+    void keepsTheCutForTinyBudgets() {
+        String diff = "@@ -1 +1 @@\n-" + "a".repeat(300) + "\n+" + "b".repeat(300) + "\n";
+
+        assertThat(DeimosDiffBuilder.truncateDiff(diff, 0)).isEmpty();
+        assertThat(DeimosDiffBuilder.truncateDiff(diff, 1)).isEqualTo("\n");
+    }
+
+    @Test
     void reportsMixedOmissionsInPathOrder() throws Exception {
         var builder = new DeimosDiffBuilder(200, 60);
         var base = Map.of("a.txt", "x\n", "b.txt", "x\n", "c.txt", "x\n");
@@ -184,6 +274,44 @@ class DeimosDiffBuilderTest {
 
         assertThat(result.omissions()).containsExactly(new DiffOmission(DeimosOmissionReason.FILE_INPUT_LIMIT, "a.txt"),
                 new DiffOmission(DeimosOmissionReason.FILE_DIFF_LIMIT, "b.txt"), new DiffOmission(DeimosOmissionReason.PAYLOAD_LIMIT, "c.txt"));
+    }
+
+    @Test
+    void keepsTheCutOfATextWithoutHunkHeader() {
+        assertThat(DeimosDiffBuilder.truncateDiff(" context only", 5)).isEqualTo(" con\n");
+    }
+
+    @Test
+    void keepsTheLineCutWhenItAlreadyShowsAChange() {
+        String diff = "@@ -1,2 +1,2 @@\n-short\n+" + "b".repeat(300) + "\n";
+
+        assertThat(DeimosDiffBuilder.truncateDiff(diff, 100)).isEqualTo("@@ -1,2 +1,2 @@\n-short\n");
+    }
+
+    @ParameterizedTest
+    @CsvSource({ "0, FILE_DIFF_LIMIT", "1, PAYLOAD_LIMIT" })
+    void showsBothSidesOfAMinifiedFileUnderEitherLimit(int capAboveRemaining, DeimosOmissionReason expectedReason) throws Exception {
+        String headers = "--- a/app.min.js" + NL + "+++ b/app.min.js" + NL;
+        int remainingDiffBytes = 300;
+        long budget = RESERVED + utf8(headers) + utf8(NL) + remainingDiffBytes;
+        var builder = new DeimosDiffBuilder(10_000, remainingDiffBytes + capAboveRemaining);
+
+        DiffResult result = builder.buildDiff(Map.of("app.min.js", "var a=" + "1".repeat(2000) + ";"), Map.of("app.min.js", "var b=" + "2".repeat(2000) + ";"), budget);
+
+        assertThat(result.text()).startsWith(headers + "@@ -1 +1 @@\n-var a=111").contains("\n+var b=222").endsWith("[... diff truncated at the 300 byte limit ...]");
+        assertThat(utf8(result.text())).isLessThanOrEqualTo((int) budget - RESERVED);
+        assertThat(result.omissions()).containsExactly(new DiffOmission(expectedReason, "app.min.js"));
+    }
+
+    @Test
+    void showsTheBeginningOfADeletedMinifiedFile() throws Exception {
+        var builder = new DeimosDiffBuilder(10_000, 200);
+
+        DiffResult result = builder.buildDiff(Map.of("data.json", "{\"k\":\"" + "v".repeat(2000) + "\"}"), Map.of(), 10_000);
+
+        assertThat(result.text()).startsWith("--- a/data.json" + NL + "+++ /dev/null" + NL + "@@ -1 +0,0 @@\n-{\"k\":\"vvv");
+        assertThat(result.text().substring(result.text().indexOf("@@"))).doesNotContain("\n+");
+        assertThat(result.omissions()).containsExactly(new DiffOmission(DeimosOmissionReason.FILE_DIFF_LIMIT, "data.json"));
     }
 
     private static int utf8(String value) {

@@ -123,7 +123,7 @@ keeps the two in line.
 | Property under `artemis.deimos.payload` | Default | Purpose |
 | --- | --- | --- |
 | `max-file-input-bytes` | 256 KiB | Files larger than this are not diffed at all |
-| `max-file-diff-bytes` | 32 KiB | Per-file diff cap, truncated at a line boundary |
+| `max-file-diff-bytes` | 32 KiB | Per-file diff cap, truncated at a line boundary; when the first changed line alone exceeds it, the beginnings of the first removed and the first added line share the space |
 | `max-payload-bytes` | 128 KiB | Hard bound on the untrusted history, notices and headers included; the prompt text around it is not counted |
 | `final-state-reserved-bytes` | 32 KiB | Held back from the incremental loop so the cumulative diff always has room |
 

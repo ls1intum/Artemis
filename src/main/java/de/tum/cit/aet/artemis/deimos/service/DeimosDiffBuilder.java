@@ -4,6 +4,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeSet;
@@ -183,7 +184,7 @@ final class DeimosDiffBuilder {
         List<DiffOmission> truncation = List.of();
         if (utf8Length(unifiedDiff) > allowedDiffBytes) {
             String truncationNotice = "[... diff truncated at the " + allowedDiffBytes + " byte limit ...]" + System.lineSeparator();
-            body = truncateAtLineBoundary(unifiedDiff, Math.max(0, allowedDiffBytes - utf8Length(truncationNotice))) + truncationNotice;
+            body = truncateDiff(unifiedDiff, Math.max(0, allowedDiffBytes - utf8Length(truncationNotice))) + truncationNotice;
             // Attributed to the limit that actually bound: the per-file cap only when it was the smaller of the two.
             DeimosOmissionReason reason = maxFileDiffBytes <= remainingDiffBytes ? DeimosOmissionReason.FILE_DIFF_LIMIT : DeimosOmissionReason.PAYLOAD_LIMIT;
             truncation = List.of(new DiffOmission(reason, path));
@@ -264,6 +265,84 @@ final class DeimosDiffBuilder {
 
     static int utf8Length(String value) {
         return value.getBytes(StandardCharsets.UTF_8).length;
+    }
+
+    /**
+     * Truncates a unified diff to at most {@code maxBytes} UTF-8 bytes, keeping some of the change itself.
+     * <p>
+     * Cutting at line boundaries keeps whole lines only. When the first changed line alone exceeds the budget, as in a
+     * minified source or one-line JSON, that would leave nothing but the hunk header, and the model would see that the
+     * file changed but not how. The beginning of the first removed and the first added line is shown instead, each cut
+     * at a character boundary and sharing the budget, so the model sees both what was there and what the student wrote.
+     *
+     * @param unifiedDiff the diff hunks, without file headers
+     * @param maxBytes    the byte budget
+     * @return the truncated diff
+     */
+    static String truncateDiff(String unifiedDiff, int maxBytes) {
+        String byLines = truncateAtLineBoundary(unifiedDiff, maxBytes);
+        if (containsChangedLine(byLines)) {
+            return byLines;
+        }
+        String sample = sampleFirstChange(unifiedDiff, maxBytes);
+        return sample.isEmpty() ? byLines : sample;
+    }
+
+    private static boolean containsChangedLine(String diff) {
+        return diffLines(diff).stream().anyMatch(line -> line.startsWith("-") || line.startsWith("+"));
+    }
+
+    /**
+     * Renders the first hunk header followed by the beginning of the first removed and the first added line of that hunk.
+     * A line shorter than its half of the budget leaves the rest to the other one.
+     *
+     * @param unifiedDiff the diff hunks, without file headers
+     * @param maxBytes    the byte budget
+     * @return the sample, or empty if the budget does not hold the header and a prefix of every sampled line
+     */
+    private static String sampleFirstChange(String unifiedDiff, int maxBytes) {
+        List<String> lines = diffLines(unifiedDiff);
+        int headerIndex = indexOfHunkHeader(lines, 0);
+        if (headerIndex < 0) {
+            return "";
+        }
+        int hunkEnd = indexOfHunkHeader(lines, headerIndex + 1);
+        List<String> hunk = lines.subList(headerIndex + 1, hunkEnd < 0 ? lines.size() : hunkEnd);
+        String removed = hunk.stream().filter(line -> line.startsWith("-")).findFirst().orElse("");
+        String added = hunk.stream().filter(line -> line.startsWith("+")).findFirst().orElse("");
+
+        String header = lines.get(headerIndex) + "\n";
+        long remaining = (long) maxBytes - utf8Length(header);
+        // At least the marker and the line break of every sampled line has to fit.
+        int sampledLines = (removed.isEmpty() ? 0 : 1) + (added.isEmpty() ? 0 : 1);
+        if (remaining < 2L * sampledLines) {
+            return "";
+        }
+        int removedNeeded = removed.isEmpty() ? 0 : utf8Length(removed) + 1;
+        int addedNeeded = added.isEmpty() ? 0 : utf8Length(added) + 1;
+        int removedShare = (int) Math.min(removedNeeded, Math.max(remaining / 2, remaining - addedNeeded));
+        int addedShare = (int) Math.min(addedNeeded, remaining - removedShare);
+        return header + sampleLine(removed, removedShare) + sampleLine(added, addedShare);
+    }
+
+    /**
+     * Splits at line feeds only, like JGit's output: a carriage return belongs to the content of a line.
+     */
+    private static List<String> diffLines(String diff) {
+        return Arrays.asList(diff.split("\n", -1));
+    }
+
+    private static int indexOfHunkHeader(List<String> lines, int from) {
+        for (int i = from; i < lines.size(); i++) {
+            if (lines.get(i).startsWith("@@")) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    private static String sampleLine(String line, int maxBytes) {
+        return line.isEmpty() ? "" : truncateAtCharacterBoundary(line, maxBytes);
     }
 
     /**
