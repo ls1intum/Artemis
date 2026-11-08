@@ -2,21 +2,17 @@ import { LectureUnitApi } from 'app/openapi/api/lecture-unit-api';
 import type { LectureUnitCombinedStatus } from 'app/openapi/model/lecture-unit-combined-status';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { LectureUnit, LectureUnitType } from 'app/lecture/shared/entities/lecture-unit/lectureUnit.model';
-import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { HttpErrorResponse } from '@angular/common/http';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { LectureUnitCompletionEvent } from 'app/lecture/overview/course-lectures/details/course-lecture-details.component';
 import { onError } from 'app/foundation/util/global.utils';
 import { Service, inject } from '@angular/core';
 import { AttachmentVideoUnit, TranscriptionStatus } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
-import { AttachmentService } from 'app/lecture/manage/services/attachment.service';
 import { ExerciseUnit } from 'app/lecture/shared/entities/lecture-unit/exerciseUnit.model';
-import { ExerciseService } from 'app/exercise/services/exercise.service';
-import { convertDateFromServer } from 'app/foundation/util/date.utils';
 
 @Service()
 export class LectureUnitService {
     private lectureUnitApi = inject(LectureUnitApi);
-    private attachmentService = inject(AttachmentService);
     private alertService = inject(AlertService);
 
     completeLectureUnit(lecture: Lecture, event: LectureUnitCompletionEvent, onSuccess?: () => void): void {
@@ -30,24 +26,6 @@ export class LectureUnitService {
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),
             });
         }
-    }
-
-    convertLectureUnitResponseDatesFromServer<T extends LectureUnit>(res: HttpResponse<T>): HttpResponse<T> {
-        if (res.body) {
-            // Convert the unit's own release date for every type so the raw ISO string from the server never reaches the date picker (e.g. when editing an attachment/video unit).
-            res.body.releaseDate = convertDateFromServer(res.body.releaseDate);
-            if (res.body.type === LectureUnitType.ATTACHMENT_VIDEO) {
-                if ((res.body as AttachmentVideoUnit).attachment) {
-                    (res.body as AttachmentVideoUnit).attachment = this.attachmentService.convertAttachmentFromServer((res.body as AttachmentVideoUnit).attachment);
-                }
-            } else if (res.body.type === LectureUnitType.EXERCISE) {
-                if ((res.body as ExerciseUnit).exercise) {
-                    (res.body as ExerciseUnit).exercise = ExerciseService.convertExerciseDatesFromServer((res.body as ExerciseUnit).exercise);
-                    ExerciseService.parseExerciseCategories((res.body as ExerciseUnit).exercise);
-                }
-            }
-        }
-        return res;
     }
 
     getLectureUnitName(lectureUnit: LectureUnit) {

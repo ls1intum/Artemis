@@ -1,24 +1,21 @@
 import { MockInstance, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { Component, input } from '@angular/core';
-import {
-    AttachmentVideoUnitsComponent,
-    LectureUnitDTOS,
-    LectureUnitInformationDTO,
-} from 'app/lecture/manage/lecture-units/attachment-video-units/attachment-video-units.component';
+import { AttachmentVideoUnitsComponent, SplitUnit } from 'app/lecture/manage/lecture-units/attachment-video-units/attachment-video-units.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { of, throwError } from 'rxjs';
-import { AttachmentVideoUnitService } from 'app/lecture/manage/lecture-units/services/attachment-video-unit.service';
+import { AttachmentVideoUnitApi } from 'app/openapi/api/attachment-video-unit-api';
+import type { LectureUnitSplitInformation } from 'app/openapi/model/lecture-unit-split-information';
 import { MockRouterLinkDirective } from 'test/helpers/mocks/directive/mock-router-link.directive';
-import { MockAttachmentVideoUnitsService } from 'test/helpers/mocks/service/mock-attachment-video-units.service';
+import { MockAttachmentVideoUnitApi } from 'test/helpers/mocks/service/mock-attachment-video-unit-api';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { TranslateService } from '@ngx-translate/core';
 import dayjs from 'dayjs/esm';
-import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { HttpErrorResponse } from '@angular/common/http';
 import { LectureUnitApi } from 'app/openapi/api/lecture-unit-api';
 import { FormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -30,38 +27,26 @@ class LectureUnitLayoutStubComponent {
     isLoading = input(false);
 }
 
-type AttachmentVideoUnitsInfoResponseType = {
-    unitName: string;
-    releaseDate?: dayjs.Dayjs;
-    startPage: number;
-    endPage: number;
-};
-
-type AttachmentVideoUnitsResponseType = {
-    units: AttachmentVideoUnitsInfoResponseType[];
-    numberOfPages: number;
-};
-
 describe('AttachmentVideoUnitsComponent', () => {
     let attachmentVideoUnitsComponentFixture: ComponentFixture<AttachmentVideoUnitsComponent>;
     let attachmentVideoUnitsComponent: AttachmentVideoUnitsComponent;
 
-    let attachmentVideoUnitService: AttachmentVideoUnitService;
+    let attachmentVideoUnitApi: AttachmentVideoUnitApi;
     let router: Router;
 
-    const unit1: AttachmentVideoUnitsInfoResponseType = {
+    const unit1: SplitUnit = {
         unitName: 'Unit 1',
         releaseDate: dayjs().year(2022).month(3).date(5),
         startPage: 1,
         endPage: 20,
     };
-    const unit2: AttachmentVideoUnitsInfoResponseType = {
+    const unit2: SplitUnit = {
         unitName: 'Unit 2',
         releaseDate: dayjs().year(2022).month(3).date(5),
         startPage: 21,
         endPage: 40,
     };
-    const unit3: AttachmentVideoUnitsInfoResponseType = {
+    const unit3: SplitUnit = {
         unitName: 'Unit 3',
         releaseDate: dayjs().year(2022).month(3).date(5),
         startPage: 41,
@@ -86,8 +71,8 @@ describe('AttachmentVideoUnitsComponent', () => {
                 MockProvider(LectureUnitApi),
                 { provide: TranslateService, useClass: MockTranslateService },
                 {
-                    provide: AttachmentVideoUnitService,
-                    useClass: MockAttachmentVideoUnitsService,
+                    provide: AttachmentVideoUnitApi,
+                    useClass: MockAttachmentVideoUnitApi,
                 },
                 {
                     provide: ActivatedRoute,
@@ -137,7 +122,7 @@ describe('AttachmentVideoUnitsComponent', () => {
         attachmentVideoUnitsComponent.units.set(units);
         attachmentVideoUnitsComponent.numberOfPages.set(numberOfPages);
 
-        attachmentVideoUnitService = TestBed.inject(AttachmentVideoUnitService);
+        attachmentVideoUnitApi = TestBed.inject(AttachmentVideoUnitApi);
         router = TestBed.inject(Router);
     });
 
@@ -150,24 +135,15 @@ describe('AttachmentVideoUnitsComponent', () => {
     });
 
     it('should create attachment video units', async () => {
-        const lectureUnitInformation: LectureUnitInformationDTO = {
-            units: units,
+        const lectureUnitInformation: LectureUnitSplitInformation = {
+            units: units.map((unit) => ({ ...unit, releaseDate: unit.releaseDate!.toJSON() })),
             numberOfPages: numberOfPages,
             removeSlidesCommaSeparatedKeyPhrases: '',
         };
         const filename = 'filename-on-server';
         attachmentVideoUnitsComponent.filename = filename;
 
-        const responseBody: AttachmentVideoUnitsResponseType = {
-            units,
-            numberOfPages,
-        };
-
-        const attachmentVideoUnitsResponse: HttpResponse<AttachmentVideoUnitsResponseType> = new HttpResponse({
-            body: responseBody,
-            status: 201,
-        });
-        const createAttachmentVideoUnitStub = vi.spyOn(attachmentVideoUnitService, 'createUnits').mockReturnValue(of(attachmentVideoUnitsResponse));
+        const createAttachmentVideoUnitStub = vi.spyOn(attachmentVideoUnitApi, 'createAttachmentVideoUnits').mockReturnValue(of([]));
         const navigateSpy = vi.spyOn(router, 'navigate');
 
         attachmentVideoUnitsComponent.createAttachmentVideoUnits();
@@ -248,12 +224,8 @@ describe('AttachmentVideoUnitsComponent', () => {
         const expectedSlideIndexes = [1, 2, 3];
         // slide indexes are increased by 1 for display in the client
         const expectedSlideNumbers = expectedSlideIndexes.map((n) => n + 1);
-        const expectedResponse: HttpResponse<Array<number>> = new HttpResponse({
-            body: expectedSlideIndexes,
-            status: 200,
-        });
         attachmentVideoUnitsComponent.searchTerm = 'key, phrases';
-        const getSlidesToRemoveSpy = vi.spyOn(attachmentVideoUnitService, 'getSlidesToRemove').mockReturnValue(of(expectedResponse));
+        const getSlidesToRemoveSpy = vi.spyOn(attachmentVideoUnitApi, 'getSlidesToRemove').mockReturnValue(of(expectedSlideIndexes));
         await new Promise((resolve) => setTimeout(resolve, 1000));
         expect(getSlidesToRemoveSpy).toHaveBeenCalledTimes(1);
         expect(attachmentVideoUnitsComponent.removedSlidesNumbers()).toEqual(expectedSlideNumbers);
@@ -262,7 +234,7 @@ describe('AttachmentVideoUnitsComponent', () => {
     it('should not get slides to remove if query is empty', async () => {
         attachmentVideoUnitsComponent.removedSlidesNumbers.set([1, 2, 3]);
         attachmentVideoUnitsComponent.searchTerm = '';
-        const getSlidesToRemoveSpy = vi.spyOn(attachmentVideoUnitService, 'getSlidesToRemove');
+        const getSlidesToRemoveSpy = vi.spyOn(attachmentVideoUnitApi, 'getSlidesToRemove');
         await new Promise((resolve) => setTimeout(resolve, 1000));
         expect(getSlidesToRemoveSpy).not.toHaveBeenCalled();
         expect(attachmentVideoUnitsComponent.removedSlidesNumbers()).toEqual([]);
@@ -271,21 +243,8 @@ describe('AttachmentVideoUnitsComponent', () => {
     it('should start uploading file again after timeout', async () => {
         vi.useFakeTimers();
 
-        const response1: HttpResponse<string> = new HttpResponse({
-            body: 'filename-on-server',
-            status: 200,
-        });
-        const response2: HttpResponse<LectureUnitInformationDTO> = new HttpResponse({
-            body: {
-                units: [],
-                numberOfPages: 1,
-                removeSlidesCommaSeparatedKeyPhrases: '',
-            },
-            status: 200,
-        });
-
-        const uploadSlidesSpy = vi.spyOn(attachmentVideoUnitService, 'uploadSlidesForProcessing').mockReturnValue(of(response1));
-        attachmentVideoUnitService.getSplitUnitsData = vi.fn().mockReturnValue(of(response2));
+        const uploadSlidesSpy = vi.spyOn(attachmentVideoUnitApi, 'uploadSlidesForProcessing').mockReturnValue(of('filename-on-server'));
+        attachmentVideoUnitApi.getAttachmentVideoUnitsData = vi.fn().mockReturnValue(of({ units: [], numberOfPages: 1, removeSlidesCommaSeparatedKeyPhrases: '' }));
         attachmentVideoUnitsComponent.ngOnInit();
         attachmentVideoUnitsComponentFixture.detectChanges();
 
@@ -300,8 +259,8 @@ describe('AttachmentVideoUnitsComponent', () => {
     });
 
     it('should say how many sections Artemis found and offer to create that many items', () => {
-        vi.spyOn(attachmentVideoUnitService, 'getSplitUnitsData').mockReturnValue(
-            of(new HttpResponse<LectureUnitInformationDTO>({ body: { units, numberOfPages, removeSlidesCommaSeparatedKeyPhrases: '' } })),
+        vi.spyOn(attachmentVideoUnitApi, 'getAttachmentVideoUnitsData').mockReturnValue(
+            of({ units: units.map((unit) => ({ ...unit, releaseDate: unit.releaseDate!.toJSON() })), numberOfPages, removeSlidesCommaSeparatedKeyPhrases: '' }),
         );
 
         attachmentVideoUnitsComponent.ngOnInit();
@@ -318,12 +277,12 @@ describe('AttachmentVideoUnitsComponent', () => {
     });
 
     it('should turn the release dates of the proposal into dates for the date pickers', () => {
-        const proposal = {
+        const proposal: LectureUnitSplitInformation = {
             units: [{ unitName: 'Introduction', releaseDate: '2026-10-01T08:00:00Z', startPage: 1, endPage: 3 }],
             numberOfPages: 9,
             removeSlidesCommaSeparatedKeyPhrases: '',
         };
-        vi.spyOn(attachmentVideoUnitService, 'getSplitUnitsData').mockReturnValue(of(new HttpResponse({ body: proposal as unknown as LectureUnitInformationDTO })));
+        vi.spyOn(attachmentVideoUnitApi, 'getAttachmentVideoUnitsData').mockReturnValue(of(proposal));
 
         attachmentVideoUnitsComponent.ngOnInit();
         attachmentVideoUnitsComponentFixture.detectChanges();
@@ -348,7 +307,7 @@ describe('AttachmentVideoUnitsComponent', () => {
         expect(summary.text()).toContain('artemisApp.attachmentVideoUnit.createAttachmentVideoUnits.noUnitDetected');
 
         // Once the user added a row, the result is only information.
-        attachmentVideoUnitsComponent.units.set([{ unitName: 'Introduction', startPage: 1, endPage: 3 } as LectureUnitDTOS]);
+        attachmentVideoUnitsComponent.units.set([{ unitName: 'Introduction', startPage: 1, endPage: 3 } as SplitUnit]);
         attachmentVideoUnitsComponentFixture.detectChanges();
         expect(attachmentVideoUnitsComponentFixture.debugElement.query(By.css('[data-testid="split-summary"]')).componentInstance.severity()).toBe('info');
     });
@@ -370,7 +329,7 @@ describe('AttachmentVideoUnitsComponent', () => {
     });
 
     it('should not blame a missing outline slide when the proposal could not be loaded', () => {
-        vi.spyOn(attachmentVideoUnitService, 'getSplitUnitsData').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
+        vi.spyOn(attachmentVideoUnitApi, 'getAttachmentVideoUnitsData').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
         // A page that opens has neither items nor a number of slides until the proposal arrives.
         attachmentVideoUnitsComponent.units.set([]);
         attachmentVideoUnitsComponent.numberOfPages.set(undefined!);
@@ -383,7 +342,7 @@ describe('AttachmentVideoUnitsComponent', () => {
 
     it('should let the user try again when the items cannot be created', () => {
         attachmentVideoUnitsComponent.filename = 'filename-on-server';
-        vi.spyOn(attachmentVideoUnitService, 'createUnits').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 400 })));
+        vi.spyOn(attachmentVideoUnitApi, 'createAttachmentVideoUnits').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 400 })));
         const navigateSpy = vi.spyOn(router, 'navigate');
 
         attachmentVideoUnitsComponent.createAttachmentVideoUnits();
@@ -395,7 +354,7 @@ describe('AttachmentVideoUnitsComponent', () => {
     describe('when the lecture editor opened the page', () => {
         let navigateSpy: MockInstance<Router['navigate']>;
         let deleteSpy: MockInstance<LectureUnitApi['deleteLectureUnit']>;
-        let createSpy: MockInstance<AttachmentVideoUnitService['createUnits']>;
+        let createSpy: MockInstance<AttachmentVideoUnitApi['createAttachmentVideoUnits']>;
         let backSpy: MockInstance<Location['back']>;
         let replaceStateSpy: MockInstance<Location['replaceState']>;
 
@@ -421,7 +380,7 @@ describe('AttachmentVideoUnitsComponent', () => {
 
         beforeEach(() => {
             deleteSpy = vi.spyOn(TestBed.inject(LectureUnitApi), 'deleteLectureUnit').mockReturnValue(of(undefined));
-            createSpy = vi.spyOn(attachmentVideoUnitService, 'createUnits');
+            createSpy = vi.spyOn(attachmentVideoUnitApi, 'createAttachmentVideoUnits');
             navigateSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
             backSpy = vi.spyOn(TestBed.inject(Location), 'back').mockImplementation(() => {});
             replaceStateSpy = vi.spyOn(TestBed.inject(Location), 'replaceState').mockImplementation(() => {});
@@ -509,7 +468,7 @@ describe('AttachmentVideoUnitsComponent', () => {
         });
 
         it('should continue the split with the file of the history entry after a reload', () => {
-            const uploadSpy = vi.spyOn(attachmentVideoUnitService, 'uploadSlidesForProcessing');
+            const uploadSpy = vi.spyOn(attachmentVideoUnitApi, 'uploadSlidesForProcessing');
             const warningSpy = vi.spyOn(TestBed.inject(AlertService), 'warning');
 
             open({ sourceUnit: { id: 9, name: 'Slides' } }, true);

@@ -733,7 +733,7 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
         this.lectureTranscriptionService
             .getTranscription(id)
             .pipe(
-                map((dto) => dto?.segments?.filter((segment): segment is TranscriptSegment => this.isValidTranscriptSegment(segment)) ?? []),
+                map((transcription) => transcription?.segments?.filter((segment): segment is TranscriptSegment => this.isValidTranscriptSegment(segment)) ?? []),
                 takeUntilDestroyed(this.destroyRef),
             )
             .subscribe({

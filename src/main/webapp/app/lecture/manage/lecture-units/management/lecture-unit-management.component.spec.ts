@@ -16,7 +16,7 @@ import { LectureService } from 'app/lecture/manage/services/lecture.service';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { TextUnit } from 'app/lecture/shared/entities/lecture-unit/textUnit.model';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
-import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { HttpErrorResponse } from '@angular/common/http';
 import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
 import { HasAnyAuthorityDirective } from 'app/foundation/auth/has-any-authority.directive';
 import { Subject, of } from 'rxjs';
@@ -654,7 +654,7 @@ describe('LectureUnitManagementComponent', () => {
             createdUnit.id = 42;
             createdUnit.name = 'Test File';
 
-            const createSpy = vi.spyOn(attachmentVideoUnitService, 'createAttachmentVideoUnitFromFile').mockReturnValue(of(new HttpResponse({ body: createdUnit, status: 201 })));
+            const createSpy = vi.spyOn(attachmentVideoUnitService, 'createAttachmentVideoUnitFromFile').mockReturnValue(of(createdUnit));
             const successSpy = vi.spyOn(alertService, 'success');
 
             lectureUnitManagementComponent.lecture.set(lecture);
@@ -674,7 +674,7 @@ describe('LectureUnitManagementComponent', () => {
             const createdUnit = new AttachmentVideoUnit();
             createdUnit.id = 99;
 
-            vi.spyOn(attachmentVideoUnitService, 'createAttachmentVideoUnitFromFile').mockReturnValue(of(new HttpResponse({ body: createdUnit, status: 201 })));
+            vi.spyOn(attachmentVideoUnitService, 'createAttachmentVideoUnitFromFile').mockReturnValue(of(createdUnit));
 
             lectureUnitManagementComponent.lecture.set(lecture);
             // resolvedLectureId is already set from route in ngOnInit
@@ -702,7 +702,7 @@ describe('LectureUnitManagementComponent', () => {
                 callCount++;
                 const unit = new AttachmentVideoUnit();
                 unit.id = callCount;
-                return of(new HttpResponse({ body: unit, status: 201 }));
+                return of(unit);
             });
             const successSpy = vi.spyOn(alertService, 'success');
 
@@ -768,7 +768,7 @@ describe('LectureUnitManagementComponent', () => {
             const createdUnit = new AttachmentVideoUnit();
             createdUnit.id = 99;
 
-            vi.spyOn(attachmentVideoUnitService, 'createAttachmentVideoUnitFromFile').mockReturnValue(of(new HttpResponse({ body: createdUnit, status: 201 })));
+            vi.spyOn(attachmentVideoUnitService, 'createAttachmentVideoUnitFromFile').mockReturnValue(of(createdUnit));
 
             // Lecture without course
             const lectureWithoutCourse = new Lecture();
@@ -786,7 +786,7 @@ describe('LectureUnitManagementComponent', () => {
             const createdUnit = new AttachmentVideoUnit();
             createdUnit.id = 1;
 
-            vi.spyOn(attachmentVideoUnitService, 'createAttachmentVideoUnitFromFile').mockReturnValue(of(new HttpResponse({ body: createdUnit, status: 201 })));
+            vi.spyOn(attachmentVideoUnitService, 'createAttachmentVideoUnitFromFile').mockReturnValue(of(createdUnit));
 
             lectureUnitManagementComponent.lecture.set(lecture);
             // resolvedLectureId is already set from route in ngOnInit
@@ -809,7 +809,7 @@ describe('LectureUnitManagementComponent', () => {
                 callCount++;
                 const unit = new AttachmentVideoUnit();
                 unit.id = callCount * 10; // 10, 20, 30
-                return of(new HttpResponse({ body: unit, status: 201 }));
+                return of(unit);
             });
 
             lectureUnitManagementComponent.lecture.set(lecture);

@@ -17,7 +17,6 @@ export class AttachmentVideoUnit extends LectureUnit {
     public videoSource?: string;
     public videoSourceType?: 'TUM_LIVE' | 'YOUTUBE' | null;
     public youtubeVideoId?: string | null;
-    public transcriptionProperties?: LectureTranscriptionDTO;
     public attachmentUpdateIntent?: AttachmentUpdateIntent;
 
     constructor() {
@@ -29,17 +28,4 @@ export enum TranscriptionStatus {
     PENDING = 'PENDING',
     COMPLETED = 'COMPLETED',
     FAILED = 'FAILED',
-}
-
-export interface LectureTranscriptionDTO {
-    lectureUnitId: number;
-    language: string;
-    segments: TranscriptionSegment[];
-}
-
-export interface TranscriptionSegment {
-    text?: string;
-    startTime?: number;
-    endTime?: number;
-    slideNumber?: number;
 }

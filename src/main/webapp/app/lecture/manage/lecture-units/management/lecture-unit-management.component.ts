@@ -4,7 +4,7 @@ import { outputFromObservable, toObservable } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { LectureService } from 'app/lecture/manage/services/lecture.service';
-import { concatMap, finalize, map } from 'rxjs/operators';
+import { concatMap, finalize } from 'rxjs/operators';
 import { HttpErrorResponse } from '@angular/common/http';
 import { LectureUnit, LectureUnitType } from 'app/lecture/shared/entities/lecture-unit/lectureUnit.model';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -621,10 +621,7 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
         let lastCreatedUnit: AttachmentVideoUnit | undefined;
 
         from(files)
-            .pipe(
-                concatMap((file) => this.createAttachmentUnitFromFile(file)),
-                map((response) => response.body as AttachmentVideoUnit),
-            )
+            .pipe(concatMap((file) => this.createAttachmentUnitFromFile(file)))
             .subscribe({
                 next: (unit) => {
                     lastCreatedUnit = unit;

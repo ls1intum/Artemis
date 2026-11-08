@@ -3,14 +3,13 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { onError } from 'app/foundation/util/global.utils';
 import { ActivatedRoute, Router } from '@angular/router';
 import { filter, finalize, switchMap, take } from 'rxjs/operators';
-import { AttachmentVideoUnitService } from 'app/lecture/manage/lecture-units/services/attachment-video-unit.service';
+import { AttachmentVideoUnitService, withFileName } from 'app/lecture/manage/lecture-units/services/attachment-video-unit.service';
 import { AttachmentUpdateIntent, AttachmentVideoUnit } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
-import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { HttpErrorResponse } from '@angular/common/http';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { AttachmentVideoUnitFormComponent, AttachmentVideoUnitFormData } from 'app/lecture/manage/lecture-units/attachment-video-unit-form/attachment-video-unit-form.component';
 import { Attachment, AttachmentType } from 'app/lecture/shared/entities/attachment.model';
 import { combineLatest } from 'rxjs';
-import { objectToJsonBlob } from 'app/foundation/util/blob-util';
 import { LectureUnitLayoutComponent } from '../lecture-unit-layout/lecture-unit-layout.component';
 import { hydrate } from 'app/foundation/util/deep-clone.util';
 
@@ -60,11 +59,7 @@ export class EditAttachmentVideoUnitComponent implements OnInit {
                 finalize(() => this.isLoading.set(false)),
             )
             .subscribe({
-                next: (attachmentVideoUnitResponse: HttpResponse<AttachmentVideoUnit>) => {
-                    const unit = attachmentVideoUnitResponse.body;
-                    if (!unit) {
-                        return;
-                    }
+                next: (unit: AttachmentVideoUnit) => {
                     const attach = unit.attachment || {};
                     // breaking the connection to prevent errors in deserialization. will be reconnected on the server side
                     unit.attachment = undefined;
@@ -126,18 +121,15 @@ export class EditAttachmentVideoUnitComponent implements OnInit {
 
         this.isLoading.set(true);
 
-        const formData = new FormData();
-        if (hasUpload) {
-            formData.append('file', file, fileName);
-        }
         // A video-only unit has no attachment to update until a file is uploaded.
-        if (currentAttachment.id !== undefined || hasUpload) {
-            formData.append('attachment', objectToJsonBlob(updatedAttachment));
-        }
-        formData.append('attachmentVideoUnit', objectToJsonBlob(updatedUnit));
+        const sendsAttachment = currentAttachment.id !== undefined || hasUpload;
 
         this.attachmentVideoUnitService
-            .update(lectureId, currentUnit.id, formData, this.notificationText() || undefined)
+            .update(lectureId, currentUnit.id, updatedUnit, {
+                attachment: sendsAttachment ? updatedAttachment : undefined,
+                file: hasUpload ? withFileName(file, fileName) : undefined,
+                notificationText: this.notificationText() || undefined,
+            })
             .pipe(
                 takeUntilDestroyed(this.destroyRef),
                 finalize(() => this.isLoading.set(false)),

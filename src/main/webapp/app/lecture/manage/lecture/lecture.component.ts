@@ -1,6 +1,6 @@
 import dayjs from 'dayjs/esm';
 import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
-import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { HttpErrorResponse } from '@angular/common/http';
 import { concatMap, map, toArray } from 'rxjs/operators';
 import { LectureService } from '../services/lecture.service';
 import { LectureApi } from 'app/openapi/api/lecture-api';
@@ -271,14 +271,14 @@ export class LectureComponent implements OnInit, OnDestroy {
                     return from(files).pipe(
                         concatMap((file) => this.createAttachmentUnit(createdLecture.id!, file)),
                         toArray(),
-                        map((responses) => ({ lecture: createdLecture, responses })),
+                        map((units) => ({ lecture: createdLecture, units })),
                     );
                 }),
             )
             .subscribe({
-                next: ({ lecture: createdLecture, responses }) => {
+                next: ({ lecture: createdLecture, units }) => {
                     this.isUploadingPdfs.set(false);
-                    this.openEditorWithConfirmation(createdLecture.id!, true, files, responses);
+                    this.openEditorWithConfirmation(createdLecture.id!, true, files, units);
                 },
                 error: (error: HttpErrorResponse) => {
                     this.isUploadingPdfs.set(false);
@@ -299,9 +299,9 @@ export class LectureComponent implements OnInit, OnDestroy {
                 toArray(),
             )
             .subscribe({
-                next: (responses) => {
+                next: (units) => {
                     this.isUploadingPdfs.set(false);
-                    this.openEditorWithConfirmation(lectureId, false, files, responses);
+                    this.openEditorWithConfirmation(lectureId, false, files, units);
                 },
                 error: (error: HttpErrorResponse) => {
                     this.isUploadingPdfs.set(false);
@@ -314,11 +314,8 @@ export class LectureComponent implements OnInit, OnDestroy {
      * Opens the lecture editor, which confirms the upload there until the user dismisses it: a notification that disappears after a few seconds
      * is too easily missed while the page changes underneath it.
      */
-    private openEditorWithConfirmation(lectureId: number, lectureCreated: boolean, files: File[], responses: HttpResponse<AttachmentVideoUnit>[]): void {
-        const releaseDates = responses
-            .map((response) => response.body?.releaseDate)
-            .filter((releaseDate) => !!releaseDate)
-            .map((releaseDate) => dayjs(releaseDate));
+    private openEditorWithConfirmation(lectureId: number, lectureCreated: boolean, files: File[], units: AttachmentVideoUnit[]): void {
+        const releaseDates = units.map((unit) => unit.releaseDate).filter((releaseDate): releaseDate is dayjs.Dayjs => !!releaseDate);
         const earliestReleaseDate = releaseDates.reduce<dayjs.Dayjs | undefined>((earliest, date) => (!earliest || date.isBefore(earliest) ? date : earliest), undefined);
         const confirmation: PdfUploadConfirmation = {
             lectureCreated,

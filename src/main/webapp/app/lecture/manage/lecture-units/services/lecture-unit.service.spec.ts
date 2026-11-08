@@ -1,11 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { HttpResponse, provideHttpClient } from '@angular/common/http';
+import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { LectureUnitService, ProcessingPhase, toProcessingStatus, toTranscriptionStatus } from 'app/lecture/manage/lecture-units/services/lecture-unit.service';
 import { TranscriptionStatus } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
-import { LectureUnit } from 'app/lecture/shared/entities/lecture-unit/lectureUnit.model';
 import dayjs from 'dayjs/esm';
 import { AttachmentVideoUnit } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
 import { TextUnit } from 'app/lecture/shared/entities/lecture-unit/textUnit.model';
@@ -124,41 +123,6 @@ describe('LectureUnitService', () => {
         exerciseUnit.visibleToStudents = false;
         service.completeLectureUnit(lecture, { lectureUnit: exerciseUnit, completed: false });
         httpMock.expectNone({ method: 'POST', url: '/api/lecture/lectures/5/lecture-units/42/completion?completed=false' });
-    });
-
-    it('should convert lecture unit response dates from server for attachment video unit', () => {
-        const response = new HttpResponse<AttachmentVideoUnit>({ body: attachmentVideoUnit });
-        const result = service.convertLectureUnitResponseDatesFromServer(response);
-        expect(result.body).toBeDefined();
-    });
-
-    it('should convert the release date of an attachment video unit from server so the date picker never receives a raw ISO string', () => {
-        // The server sends the release date as an ISO string; without conversion the edit form would display the raw timestamp (see issue #13259).
-        (attachmentVideoUnit as any).releaseDate = '2026-07-15T13:39:00+02:00';
-        const response = new HttpResponse<AttachmentVideoUnit>({ body: attachmentVideoUnit });
-
-        const result = service.convertLectureUnitResponseDatesFromServer(response);
-
-        expect(dayjs.isDayjs(result.body!.releaseDate)).toBe(true);
-        expect(result.body!.releaseDate!.isSame(dayjs('2026-07-15T13:39:00+02:00'))).toBe(true);
-    });
-
-    it('should convert lecture unit response dates from server for exercise unit', () => {
-        const response = new HttpResponse<ExerciseUnit>({ body: exerciseUnit });
-        const result = service.convertLectureUnitResponseDatesFromServer(response);
-        expect(result.body).toBeDefined();
-    });
-
-    it('should convert lecture unit response dates from server for text unit', () => {
-        const response = new HttpResponse<TextUnit>({ body: textUnit });
-        const result = service.convertLectureUnitResponseDatesFromServer(response);
-        expect(result.body).toBeDefined();
-    });
-
-    it('should handle empty response body when converting dates from server', () => {
-        const response = new HttpResponse<LectureUnit>({ body: null });
-        const result = service.convertLectureUnitResponseDatesFromServer(response);
-        expect(result.body).toBeNull();
     });
 });
 

@@ -21,7 +21,6 @@ import {
 import { LectureUnit, LectureUnitType } from 'app/lecture/shared/entities/lecture-unit/lectureUnit.model';
 import { onError } from 'app/foundation/util/global.utils';
 import { Attachment, AttachmentType } from 'app/lecture/shared/entities/attachment.model';
-import { objectToJsonBlob } from 'app/foundation/util/blob-util';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
 import { LectureUnitManagementComponent } from 'app/lecture/manage/lecture-units/management/lecture-unit-management.component';
 import { TextUnitApi } from 'app/openapi/api/text-unit-api';
@@ -29,13 +28,13 @@ import { OnlineUnitApi } from 'app/openapi/api/online-unit-api';
 import { toLectureUnitRequest } from 'app/lecture/shared/util/generated-lecture.util';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { HttpContext, HttpErrorResponse } from '@angular/common/http';
-import { AttachmentVideoUnitService } from 'app/lecture/manage/lecture-units/services/attachment-video-unit.service';
+import { AttachmentVideoUnitService, withFileName } from 'app/lecture/manage/lecture-units/services/attachment-video-unit.service';
 import dayjs from 'dayjs/esm';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { UnitCreationCardComponent } from 'app/lecture/manage/lecture-units/unit-creation-card/unit-creation-card.component';
 import { CreateExerciseUnitComponent } from 'app/lecture/manage/lecture-units/create-exercise-unit/create-exercise-unit.component';
-import { concatMap, filter, finalize, map } from 'rxjs/operators';
+import { concatMap, finalize, map } from 'rxjs/operators';
 import { Observable, defer, from } from 'rxjs';
 import { PdfDropZoneComponent } from '../pdf-drop-zone/pdf-drop-zone.component';
 import { CompetencyLectureUnitLink } from 'app/atlas/shared/entities/competency.model';
@@ -371,14 +370,15 @@ export class LectureUpdateUnitsComponent implements OnInit {
         attachmentVideoUnit.videoSource = videoSource || undefined;
         attachmentVideoUnit.competencyLinks = competencyLinks;
 
-        const formData = new FormData();
-        if (file && fileName && file.size > 0) {
-            formData.append('file', file, fileName);
-            formData.append('attachment', objectToJsonBlob(this.attachmentForUpload(new Attachment(), name, releaseDate)));
-        }
-        formData.append('attachmentVideoUnit', objectToJsonBlob(attachmentVideoUnit));
-
-        this.trackCreation(this.attachmentVideoUnitService.create(formData, this.lecture().id!)).subscribe({
+        const upload = !!file && !!fileName && file.size > 0;
+        this.trackCreation(
+            this.attachmentVideoUnitService.create(
+                this.lecture().id!,
+                attachmentVideoUnit,
+                upload ? this.attachmentForUpload(new Attachment(), name, releaseDate) : undefined,
+                upload ? withFileName(file, fileName) : undefined,
+            ),
+        ).subscribe({
             next: () => this.onUnitCreated(),
             error: (res: HttpErrorResponse | Error) => {
                 if (res instanceof Error) {
@@ -893,24 +893,32 @@ export class LectureUpdateUnitsComponent implements OnInit {
         attachmentVideoUnit.videoSource = options.withVideoSource ? videoSource || undefined : savedUnit.videoSource;
         attachmentVideoUnit.attachmentUpdateIntent = withUpload ? AttachmentUpdateIntent.FILE_UPLOAD : AttachmentUpdateIntent.NO_FILE_CHANGE;
 
-        const formData = new FormData();
-        if (withUpload) {
-            const attachmentToUpdate = attachment ? deepClone(attachment) : new Attachment();
+        const attachmentToUpdate = withUpload ? (attachment ? deepClone(attachment) : new Attachment()) : undefined;
+        if (attachmentToUpdate) {
             attachmentToUpdate.attachmentVideoUnit = undefined;
-            formData.append('file', file, fileName);
-            formData.append('attachment', objectToJsonBlob(this.attachmentForUpload(attachmentToUpdate, name, releaseDate)));
         }
-        formData.append('attachmentVideoUnit', objectToJsonBlob(attachmentVideoUnit));
         // The server notifies students whenever a notification text is sent; an empty one notifies them without a message of the editor.
         const notificationText = withUpload && notifyStudents ? '' : undefined;
 
-        return this.attachmentVideoUnitService.update(this.lecture().id!, attachmentVideoUnit.id!, formData, notificationText, AUTOSAVE_REQUEST_CONTEXT()).pipe(
-            map((response) => {
-                // The response has the new version and link of an uploaded file.
-                attachmentVideoUnit.attachment = response.body?.attachment ?? attachment;
-                return attachmentVideoUnit;
-            }),
-        );
+        return this.attachmentVideoUnitService
+            .update(
+                this.lecture().id!,
+                attachmentVideoUnit.id!,
+                attachmentVideoUnit,
+                {
+                    attachment: attachmentToUpdate && this.attachmentForUpload(attachmentToUpdate, name, releaseDate),
+                    file: withUpload ? withFileName(file, fileName) : undefined,
+                    notificationText,
+                },
+                AUTOSAVE_REQUEST_CONTEXT(),
+            )
+            .pipe(
+                map((updated) => {
+                    // The response has the new version and link of an uploaded file.
+                    attachmentVideoUnit.attachment = updated.attachment ?? attachment;
+                    return attachmentVideoUnit;
+                }),
+            );
     }
 
     /**
@@ -1036,11 +1044,7 @@ export class LectureUpdateUnitsComponent implements OnInit {
         let lastCreatedUnit: AttachmentVideoUnit | undefined;
 
         from(files)
-            .pipe(
-                concatMap((file) => this.createAttachmentUnitFromFile(file)),
-                filter((response) => response.body != null),
-                map((response) => response.body as AttachmentVideoUnit),
-            )
+            .pipe(concatMap((file) => this.createAttachmentUnitFromFile(file)))
             .subscribe({
                 next: (unit) => {
                     lastCreatedUnit = unit;

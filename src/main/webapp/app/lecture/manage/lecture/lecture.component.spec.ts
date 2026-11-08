@@ -14,7 +14,7 @@ import { LectureService } from 'app/lecture/manage/services/lecture.service';
 import { LectureApi } from 'app/openapi/api/lecture-api';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
-import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
+import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
 import { of, throwError } from 'rxjs';
 import { MockRouterLinkDirective } from 'test/helpers/mocks/directive/mock-router-link.directive';
 import { DocumentationButtonComponent } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
@@ -384,11 +384,11 @@ describe('Lecture', () => {
             return new File(['content'], name, { type: 'application/pdf' });
         }
 
-        function unitReleasedAt(releaseDate?: string): HttpResponse<AttachmentVideoUnit> {
+        function unitReleasedAt(releaseDate?: string): AttachmentVideoUnit {
             const unit = new AttachmentVideoUnit();
             unit.id = 1;
             unit.releaseDate = releaseDate ? dayjs(releaseDate) : undefined;
-            return new HttpResponse({ body: unit, status: 201 });
+            return unit;
         }
 
         async function dropAndChoose(files: File[], target: PdfUploadTarget): Promise<void> {
