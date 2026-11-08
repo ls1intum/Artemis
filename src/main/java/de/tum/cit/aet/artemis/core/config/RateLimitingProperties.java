@@ -153,6 +153,11 @@ public class RateLimitingProperties {
         return oidcAuthorizationRequestsPerMinute;
     }
 
+    /**
+     * Sets the requests per minute for unauthenticated oidc flow initiation.
+     *
+     * @param oidcAuthorizationRequestsPerMinute the requests per minute limit
+     */
     public void setOidcAuthorizationRequestsPerMinute(Integer oidcAuthorizationRequestsPerMinute) {
         // Use default value if oidcAuthorizationRequestsPerMinute is <= 0
         // to prevent IllegalArgumentException for Bucket4j.
