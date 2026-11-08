@@ -207,7 +207,7 @@ export class CourseManagementPage {
         if ((await progress.getAttribute('data-status')) === 'FAILED') {
             throw new Error(`The deletion of the course failed: ${(await progress.innerText()).replace(/\s+/g, ' ')}`);
         }
-        await this.page.getByRole('dialog').getByRole('button', { name: 'Close' }).click();
+        await this.page.getByTestId('course-operation-close').click();
         await expect(progress).toBeHidden();
     }
 

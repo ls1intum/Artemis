@@ -47,5 +47,13 @@
                 {{ bufferedProgress()?.errorMessage }}
             </div>
         }
+
+        @if (isCompleted() || isFailed()) {
+            <div class="mt-3 d-flex justify-content-end">
+                <button tumAetUiButton severity="secondary" type="button" data-testid="course-operation-close" (click)="onClose()">
+                    {{ 'artemisApp.deletionProgress.dismiss' | artemisTranslate }}
+                </button>
+            </div>
+        }
     </div>
 </p-dialog>
