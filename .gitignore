@@ -199,6 +199,7 @@ data-exports/
 !/deployment/docker/.docker-data/artemis-mysql-data/.gitkeep
 /deployment/docker/.docker-data/artemis-postgres-data/*
 !/deployment/docker/.docker-data/artemis-postgres-data/.gitkeep
+/deployment/docker/.docker-data/redis-data/
 /deployment/docker/.docker-data/weaviate-data/*
 !/deployment/docker/.docker-data/weaviate-data/.gitkeep
 

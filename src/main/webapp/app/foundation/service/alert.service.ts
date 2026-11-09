@@ -1,4 +1,5 @@
 import { SecurityContext, Service, inject, signal } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
 import { DomSanitizer } from '@angular/platform-browser';
 import { TranslateService } from '@ngx-translate/core';
 import { translationNotFoundMessage } from 'app/core/config/translation.config';
@@ -168,6 +169,45 @@ export class AlertService {
                     }
             }
         });
+    }
+
+    /**
+     * Whether the handling of `artemisApp.httpError` shows an alert for the given rejected request. A caller that reports a rejection itself uses this
+     * to avoid showing the same failure twice. It decides like the listener in the constructor, branch by branch, so change both together.
+     */
+    showsHttpErrorAlert(httpErrorResponse: HttpErrorResponse): boolean {
+        if (httpErrorResponse.error?.skipAlert) {
+            return false;
+        }
+        switch (httpErrorResponse.status) {
+            case 0:
+                return true;
+            case 400: {
+                let errorHeader: string | null = null;
+                for (const entry of httpErrorResponse.headers?.keys() ?? []) {
+                    if (entry.toLowerCase().endsWith('app-error')) {
+                        errorHeader = httpErrorResponse.headers.get(entry);
+                    }
+                }
+                if (errorHeader && !this.translateService.instant(errorHeader).startsWith(translationNotFoundMessage)) {
+                    return true;
+                }
+                if (httpErrorResponse.error?.fieldErrors) {
+                    // One alert per field error, so none for an empty list.
+                    return Array.isArray(httpErrorResponse.error.fieldErrors) && httpErrorResponse.error.fieldErrors.length > 0;
+                }
+                if (httpErrorResponse.error?.title) {
+                    return !this.badRequestErrorKeysToSkip.includes(httpErrorResponse.error.errorKey);
+                }
+                return false;
+            }
+            case 403:
+                return !this.conflictErrorKeysToSkip.includes(httpErrorResponse.error?.errorKey);
+            case 404:
+                return false;
+            default:
+                return !!httpErrorResponse.error?.title;
+        }
     }
 
     closeAll(): void {

@@ -53,6 +53,12 @@ public class ExamWebsocketTopics implements WebsocketTopicProvider {
             WebsocketTopicAccess.custom(ExamWebsocketTopics.class, ExamWebsocketTopics::isInstructorOfExam));
 
     /**
+     * Progress of deleting an exam or one of its exercise groups in the background, for the instructors of the course.
+     */
+    public static final WebsocketTopic DELETION_PROGRESS = WebsocketTopic.of("/topic/courses/{courseId}/exams/{examId}/deletion-progress",
+            WebsocketTopicAccess.custom(ExamWebsocketTopics.class, ExamWebsocketTopics::isInstructorOfCourseAndExam));
+
+    /**
      * Progress of an exam import, for the instructor who started it.
      */
     public static final WebsocketUserTopic IMPORT_PROGRESS = WebsocketUserTopic.of("/topic/exam-import/{importId}");
@@ -80,6 +86,13 @@ public class ExamWebsocketTopics implements WebsocketTopicProvider {
 
     private boolean isInstructorOfExam(WebsocketSubscription subscription) {
         return isInstructorInCourseOfExam(subscription.id("examId"), subscription);
+    }
+
+    private boolean isInstructorOfCourseAndExam(WebsocketSubscription subscription) {
+        long courseId = subscription.id("courseId");
+        long examId = subscription.id("examId");
+        // The exam has to belong to the course in the destination, otherwise an instructor of any course could name a foreign exam.
+        return examRepository.findCourseIdById(examId).filter(examCourseId -> examCourseId == courseId).isPresent() && isInstructorInCourseOfExam(examId, subscription);
     }
 
     private boolean isAtLeastTutorOfExam(WebsocketSubscription subscription) {

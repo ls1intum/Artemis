@@ -646,11 +646,10 @@ public class FileUploadExerciseResource {
     }
 
     /**
-     * DELETE /file-upload-exercises/:exerciseId : delete the "id"
-     * fileUploadExercise.
+     * DELETE /file-upload-exercises/:exerciseId : delete the "id" fileUploadExercise in the background. The progress is sent over the websocket topic of the exercise.
      *
      * @param exerciseId the id of the fileUploadExercise to delete
-     * @return the ResponseEntity with status 200 (OK)
+     * @return the ResponseEntity with status 202 (Accepted), or 409 (Conflict) if the exercise is already being deleted
      */
     @DeleteMapping("file-upload-exercises/{exerciseId}")
     @EnforceAtLeastInstructorInExercise
@@ -658,21 +657,24 @@ public class FileUploadExerciseResource {
         log.info("REST request to delete FileUploadExercise : {}", exerciseId);
         var exercise = fileUploadExerciseRepository.findByIdElseThrow(exerciseId);
         User user = userRepository.getUserWithAuthorities();
+        var course = exercise.getCourseViaExerciseGroupOrCourseMemberElseThrow();
 
-        // Notify AtlasML about the exercise deletion before actual deletion
-        atlasMLApi.ifPresent(api -> {
-            try {
-                api.saveExerciseWithCompetencies(exercise, OperationTypeDTO.DELETE);
-            }
-            catch (Exception e) {
-                log.warn("Failed to notify AtlasML about exercise deletion: {}", e.getMessage());
-            }
-        });
         // note: we use the exercise service here, because this one makes sure to clean
         // up all lazy references correctly.
-        exerciseService.logDeletion(exercise, exercise.getCourseViaExerciseGroupOrCourseMemberElseThrow(), user);
-        exerciseDeletionService.delete(exerciseId, false);
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, exercise.getTitle())).build();
+        // AtlasML is notified and the request is audited only once the deletion is accepted, so a request that is refused because the exercise is already being deleted does
+        // neither. The notification still precedes the actual deletion.
+        exerciseDeletionService.startAsyncDeletion(exercise, false, () -> {
+            atlasMLApi.ifPresent(api -> {
+                try {
+                    api.saveExerciseWithCompetencies(exercise, OperationTypeDTO.DELETE);
+                }
+                catch (Exception e) {
+                    log.warn("Failed to notify AtlasML about exercise deletion: {}", e.getMessage());
+                }
+            });
+            exerciseService.logDeletion(exercise, course, user);
+        });
+        return ResponseEntity.accepted().build();
     }
 
     /**
