@@ -1,5 +1,5 @@
 @if (programmingExercise(); as exercise) {
-    <div class="mx-auto w-full max-w-7xl px-4! py-6!" data-testid="programming-exercise-detail">
+    <div class="mx-auto w-full max-w-7xl -mt-2 px-0!" data-testid="programming-exercise-detail">
         <jhi-exercise-detail-header [exercise]="exercise" [documentationType]="documentationType">
             <ng-container detailHeaderSecondary>
                 @if (exercise.isAtLeastEditor) {
@@ -76,6 +76,20 @@
                     >
                         <fa-icon [icon]="faWrench" /><span jhiTranslate="entity.action.edit"></span>
                     </a>
+                    @if (exercise.templateParticipation?.id) {
+                        <a
+                            tumAetUiButton
+                            severity="warn"
+                            size="small"
+                            [routerLink]="[baseResource(), 'code-editor', RepositoryType.TEMPLATE, exercise.templateParticipation!.id!]"
+                            [jhiFeatureToggleLink]="FeatureToggle.ProgrammingExercises"
+                            [attr.aria-label]="'entity.action.editInEditor' | artemisTranslate"
+                            [tumAetUiTooltip]="'entity.action.editInEditor' | artemisTranslate"
+                            data-testid="edit-in-editor-action"
+                        >
+                            <fa-icon [icon]="faPencilAlt" /><span jhiTranslate="entity.action.editInEditor"></span>
+                        </a>
+                    }
                     <a
                         tumAetUiButton
                         severity="warn"
@@ -86,7 +100,7 @@
                     >
                         <fa-icon [icon]="faFileSignature" /><span jhiTranslate="artemisApp.programmingExercise.configureGrading.shortTitle"></span>
                     </a>
-                    <jhi-create-variant-with-ai-button [exercise]="exercise" styleClass="min-w-0 flex-1 @7xl:flex-none [&>tumaet-ui-button]:w-full" />
+                    <jhi-create-variant-with-ai-button [exercise]="exercise" styleClass="min-w-0 flex-1 [&>tumaet-ui-button]:w-full" />
                 }
             </ng-container>
             <ng-container detailMoreActions>
@@ -151,61 +165,63 @@
             </ng-template>
             <jhi-detail-overview-list
                 [sections]="exerciseDetailSections()"
+                [footerSection]="
+                    exercise.isAtLeastEditor || (exercise.course && exercise.isAtLeastInstructor)
+                        ? { headline: 'artemisApp.exerciseDetail.administration', content: administrationActions }
+                        : undefined
+                "
                 [sectionActions]="{ 'artemisApp.programmingExercise.wizardMode.detailedSteps.problemStepTitle': competencyActions }"
             />
         }
 
-        @if (exercise.isAtLeastEditor || (exercise.course && exercise.isAtLeastInstructor)) {
-            <section class="mt-8! border-t border-border pt-6!" aria-labelledby="programming-exercise-administration">
-                <h2 id="programming-exercise-administration" class="mb-4! text-lg font-semibold" jhiTranslate="artemisApp.exerciseDetail.administration"></h2>
-                <div class="flex flex-wrap items-center gap-2">
-                    @if (exercise.isAtLeastInstructor && deimosModuleEnabled) {
-                        <jhi-button
-                            [jhiFeatureToggleHide]="FeatureToggle.Deimos"
-                            [btnType]="ButtonType.SECONDARY"
-                            [btnSize]="ButtonSize.SMALL"
-                            [title]="'artemisApp.deimos.button.exerciseTrigger'"
-                            (onClick)="openDeimosBatchDialog()"
-                        />
-                    }
-                    @if (exercise.isAtLeastEditor) {
-                        <button type="button" jhiProgrammingExerciseResetButton [programmingExercise]="exercise" [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises">
-                            <fa-icon [icon]="faUndo" /><span jhiTranslate="entity.action.reset"></span>
-                        </button>
-                    }
-                    @if (exercise.course && exercise.isAtLeastInstructor) {
-                        <button
-                            type="button"
-                            jhiDeleteButton
-                            [entityTitle]="exercise.title || ''"
-                            entitySummaryTitle="artemisApp.exercise.delete.summary.title"
-                            [fetchEntitySummary]="fetchExerciseDeletionSummary()"
-                            deleteQuestion="artemisApp.programmingExercise.delete.questionLocalVC.single"
-                            [translateValues]="{
-                                courseTitle: exercise.course.title,
-                                courseType: exercise.course.testCourse
-                                    ? ('artemisApp.exercise.delete.testCourse' | artemisTranslate)
-                                    : ('artemisApp.exercise.delete.realCourse' | artemisTranslate),
-                            }"
-                            (delete)="deleteProgrammingExercise($event)"
-                            [dialogError]="dialogError$"
-                            [additionalChecks]="
-                                localCIEnabled()
-                                    ? {}
-                                    : {
-                                          deleteStudentReposBuildPlans: 'artemisApp.programmingExercise.delete.studentReposBuildPlans',
-                                          deleteBaseReposBuildPlans: 'artemisApp.programmingExercise.delete.baseReposBuildPlans',
-                                      }
-                            "
-                            deleteConfirmationText="artemisApp.exercise.delete.typeNameToConfirm"
-                            [renderButtonText]="false"
-                        >
-                            <fa-icon [icon]="faTrash" /><span jhiTranslate="entity.action.delete"></span>
-                        </button>
-                    }
-                </div>
-            </section>
-        }
+        <ng-template #administrationActions>
+            <div class="flex flex-wrap items-center gap-2">
+                @if (exercise.isAtLeastInstructor && deimosModuleEnabled) {
+                    <jhi-button
+                        [jhiFeatureToggleHide]="FeatureToggle.Deimos"
+                        [btnType]="ButtonType.SECONDARY"
+                        [btnSize]="ButtonSize.SMALL"
+                        [title]="'artemisApp.deimos.button.exerciseTrigger'"
+                        (onClick)="openDeimosBatchDialog()"
+                    />
+                }
+                @if (exercise.isAtLeastEditor) {
+                    <button type="button" jhiProgrammingExerciseResetButton [programmingExercise]="exercise" [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises">
+                        <fa-icon [icon]="faUndo" /><span jhiTranslate="entity.action.reset"></span>
+                    </button>
+                }
+                @if (exercise.course && exercise.isAtLeastInstructor) {
+                    <button
+                        type="button"
+                        jhiDeleteButton
+                        [entityTitle]="exercise.title || ''"
+                        entitySummaryTitle="artemisApp.exercise.delete.summary.title"
+                        [fetchCategorizedEntitySummary]="fetchExerciseDeletionSummary()"
+                        deleteQuestion="artemisApp.programmingExercise.delete.questionLocalVC.single"
+                        [translateValues]="{
+                            courseTitle: exercise.course.title,
+                            courseType: exercise.course.testCourse
+                                ? ('artemisApp.exercise.delete.testCourse' | artemisTranslate)
+                                : ('artemisApp.exercise.delete.realCourse' | artemisTranslate),
+                        }"
+                        (delete)="deleteProgrammingExercise($event)"
+                        [dialogError]="dialogError$"
+                        [additionalChecks]="
+                            localCIEnabled()
+                                ? {}
+                                : {
+                                      deleteStudentReposBuildPlans: 'artemisApp.programmingExercise.delete.studentReposBuildPlans',
+                                      deleteBaseReposBuildPlans: 'artemisApp.programmingExercise.delete.baseReposBuildPlans',
+                                  }
+                        "
+                        deleteConfirmationText="artemisApp.exercise.delete.typeNameToConfirm"
+                        [renderButtonText]="false"
+                    >
+                        <fa-icon [icon]="faTrash" /><span jhiTranslate="entity.action.delete"></span>
+                    </button>
+                }
+            </div>
+        </ng-template>
         <jhi-deimos-date-range-modal
             #deimosDateRangeModal
             [titleTranslationKey]="'artemisApp.deimos.modal.title.exercise'"

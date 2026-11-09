@@ -246,6 +246,7 @@
                                 [attr.data-message-id]="message.id"
                                 animate.enter="message-entering"
                                 [class.animate-enabled]="message.id !== undefined && animatingMessageIds().has(message.id)"
+                                [class.interim-message]="isIntermediateAssistantMessage(message)"
                                 [style.transform-origin]="message.sender === IrisSender.USER ? 'bottom right' : 'bottom left'"
                             >
                                 @if (message.sender === IrisSender.USER) {
@@ -270,10 +271,7 @@
                                 @if (message.sender === IrisSender.LLM) {
                                     <div class="llm-message-wrapper">
                                         @if (getActivities(message).length) {
-                                            <details class="activity-trail">
-                                                <summary>{{ activityTrailSummary(getActivities(message)) }}</summary>
-                                                <jhi-iris-activity-feed [activities]="getActivities(message)" mode="trail" />
-                                            </details>
+                                            <jhi-iris-activity-feed [activities]="getActivities(message)" mode="trail" />
                                         }
                                         @for (content of message.content; track content.id ?? $index) {
                                             @if (isMcqSetContent(content)) {

@@ -12,7 +12,21 @@
         (resizeEnd)="onResizeEnd()"
     >
         <!-- Native HTML5 video element for hls.js -->
-        <video #videoRef id="video-player" class="video-player" controls preload="auto" playsinline></video>
+        <video
+            #videoRef
+            id="video-player"
+            class="video-player"
+            controls
+            preload="auto"
+            playsinline
+            (pointermove)="onVideoInteraction()"
+            (focus)="onVideoInteraction()"
+            (keydown)="onVideoInteraction()"
+            (play)="onVideoPlaybackChange()"
+            (pause)="onVideoPlaybackChange()"
+            (seeking)="onVideoPlaybackChange()"
+            (ratechange)="onVideoPlaybackChange()"
+        ></video>
     </div>
 
     <!-- Resizer divider sits between the video and transcript columns (not over the video), matching the previous

@@ -51,7 +51,7 @@ const test = artemisTest.extend<{ composer: Composer; expandedToolbar: boolean; 
             await courseManagementAPIRequests.deleteCourse(course, admin);
         }
     },
-    mentionUsers: async ({ composer, login, courseManagementAPIRequests, userManagementAPIRequests }, use) => {
+    mentionUsers: async ({ composer, login, courseManagementAPIRequests, communicationAPIRequests, userManagementAPIRequests }, use) => {
         const users: string[] = [];
         const prefix = `mention-${generateUUID().slice(0, 8)}`;
         try {
@@ -61,7 +61,9 @@ const test = artemisTest.extend<{ composer: Composer; expandedToolbar: boolean; 
                 const response = await userManagementAPIRequests.createUser(username, username, UserRole.Student);
                 expect(response.status()).toBe(201);
                 users.push(username);
-                await courseManagementAPIRequests.addStudentToCourse(composer.course, { username, password: username });
+                const student = { username, password: username };
+                await courseManagementAPIRequests.addStudentToCourse(composer.course, student);
+                await communicationAPIRequests.joinUserIntoChannel(composer.course, composer.channel.id!, student);
             }
             await use({ users, prefix });
         } finally {
@@ -1712,7 +1714,9 @@ test.describe('Formatted message editor native editing', { tag: '@fast' }, () =>
         let responseReady!: () => void;
         const realResponseReady = new Promise<void>((resolve) => (responseReady = resolve));
         await page.route(
-            (url) => url.pathname === `/api/course/courses/${composer.course.id}/members/search` && url.searchParams.get('loginOrName') === query,
+            (url) =>
+                url.pathname === `/api/communication/courses/${composer.course.id}/conversations/${composer.channel.id}/members/mentions` &&
+                url.searchParams.get('loginOrName') === query,
             async (route) => {
                 const response = await route.fetch();
                 expect(response.ok()).toBe(true);
@@ -1749,7 +1753,9 @@ test.describe('Formatted message editor native editing', { tag: '@fast' }, () =>
             if (state === 'loading') {
                 const gate = new Promise<void>((resolve) => (release = resolve));
                 await page.route(
-                    (url) => url.pathname === `/api/course/courses/${composer.course.id}/members/search` && url.searchParams.get('loginOrName') === query,
+                    (url) =>
+                        url.pathname === `/api/communication/courses/${composer.course.id}/conversations/${composer.channel.id}/members/mentions` &&
+                        url.searchParams.get('loginOrName') === query,
                     async (route) => {
                         const response = await route.fetch();
                         await gate;

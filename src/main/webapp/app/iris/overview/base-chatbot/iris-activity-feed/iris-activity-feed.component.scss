@@ -1,125 +1,111 @@
-// Vertical stepper for Iris tool activities. Each activity is a circular node (white
-// check on a solid primary fill when finished, dashed outline while running); nodes are
-// stacked and joined by a vertical connector, with the full label to the right of each
-// node. Stacking vertically lets every label show in full without truncation.
+// A group of Iris steps, kept quiet so it does not compete with the answer: one muted
+// summary line with a small caret, which opens a thin bordered list with one row per step.
 
-$stepper-node-size: 1.5rem;
-
-// Vertical gap between one node and the next; the connector fills this space.
-$stepper-step-gap: 0.85rem;
-$stepper-accent: var(--primary);
-
-.iris-activity-stepper {
-    display: flex;
-    flex-direction: column;
-    width: min(800px, 100%);
-    margin-inline: auto;
-    color: var(--bs-body-color);
+:host {
+    display: block;
 }
 
-.stepper-step {
-    display: flex;
-    align-items: flex-start;
-    gap: 0.6rem;
-}
-
-// Left column: the node with the vertical connector running down to the next step.
-.stepper-rail {
-    display: flex;
-    flex: 0 0 auto;
-    flex-direction: column;
-    align-items: center;
-
-    // Stretch to the full step height so the connector can reach the next node.
-    align-self: stretch;
-}
-
-.stepper-node {
-    display: inline-flex;
-    flex: 0 0 auto;
-    align-items: center;
-    justify-content: center;
-    width: $stepper-node-size;
-    height: $stepper-node-size;
-    border: 2px solid $stepper-accent;
-    border-radius: 50%;
-    background: $stepper-accent;
-    color: var(--white);
-    font-size: 0.7rem;
-    transition:
-        background 0.2s ease,
-        border-color 0.2s ease;
-
-    // Running stage: dashed outline, faded fill, spinner icon.
-    .running & {
-        border-style: dashed;
-        background: color-mix(in srgb, #{$stepper-accent} 8%, transparent);
-        color: $stepper-accent;
-    }
-
-    // Failed stage: muted, so it reads as "did not complete".
-    .failed & {
-        border-color: var(--iris-label-color);
-        background: var(--iris-label-color);
-        color: var(--white);
-    }
-}
-
-.stepper-icon {
-    line-height: 1;
-}
-
-// Vertical connector from a node down to the next step. Grows to fill the remaining rail
-// height so it butts directly against this node and the next one, with no gap.
-.stepper-connector {
-    flex: 1 0 auto;
-    width: 0;
-    min-height: $stepper-step-gap;
-    border-left: 2px solid $stepper-accent;
-
-    .running & {
-        border-left-style: dashed;
-    }
-
-    .failed & {
-        border-left-color: var(--iris-label-color);
-    }
-}
-
-// Full-width label to the right of the node — shown in full, no truncation. Vertically
-// centred against the node.
-.stepper-label {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.35rem;
-    align-items: baseline;
-    min-width: 0;
-
-    // Align the label's first line with the node centre.
-    min-height: $stepper-node-size;
-    padding-block: calc((#{$stepper-node-size} - 1.2em) / 2);
+.iris-activity-group {
     color: var(--iris-label-color);
-    font-size: 0.75rem;
-    line-height: 1.2;
+    font-size: 0.875rem;
+
+    // A long tool name or detail must wrap instead of widening the message.
     overflow-wrap: anywhere;
 }
 
-// Optional per-activity detail (e.g. the tool argument). Shown in full — it may wrap onto
-// as many lines as needed, never truncated (min-width: 0 + the label's overflow-wrap).
-.stepper-label-detail {
-    min-width: 0;
-    color: var(--iris-label-color);
-    opacity: 0.85;
+.iris-activity-summary {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    width: fit-content;
+    padding-block: 2px;
+    border-radius: 4px;
+    list-style: none;
+    cursor: pointer;
+    user-select: none;
+    transition: color 0.15s ease;
+
+    &::-webkit-details-marker {
+        display: none;
+    }
+
+    &:hover {
+        color: var(--bs-body-color);
+    }
+
+    &:focus-visible {
+        outline: 2px solid var(--primary);
+        outline-offset: 2px;
+    }
 }
 
-.stepper-label-duration {
+.iris-activity-summary-spinner {
+    font-size: 0.75rem;
+}
+
+.iris-activity-summary-caret {
+    font-size: 0.7rem;
+    transition: transform 0.15s ease;
+
+    .iris-activity-group[open] > .iris-activity-summary & {
+        transform: rotate(90deg);
+    }
+}
+
+.iris-activity-list {
+    width: fit-content;
+    min-width: min(20rem, 100%);
+    max-width: 100%;
+    margin: 0.4rem 0 0;
+    padding: 0;
+    border: 1px solid var(--bs-border-color);
+    border-radius: 8px;
+    list-style: none;
+}
+
+.iris-activity-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.5rem;
+    padding: 0.4rem 0.75rem;
+    font-size: 0.8125rem;
+    line-height: 1.3;
+
+    & + & {
+        border-top: 1px solid var(--bs-border-color);
+    }
+}
+
+.iris-activity-icon {
     flex: 0 0 auto;
-    color: var(--iris-label-color);
-    opacity: 0.75;
+    width: 0.8rem;
+    font-size: 0.7rem;
+    opacity: 0.8;
+
+    .failed & {
+        color: var(--bs-danger);
+        opacity: 1;
+    }
+}
+
+// Detail (for example the search query) is shown in full and may wrap.
+.iris-activity-detail {
+    min-width: 0;
+    opacity: 0.8;
+    overflow-wrap: anywhere;
+}
+
+.iris-activity-duration {
+    flex: 0 0 auto;
+    margin-inline-start: auto;
+    opacity: 0.7;
+    font-variant-numeric: tabular-nums;
 }
 
 @media (prefers-reduced-motion: reduce) {
-    .stepper-node {
+    .iris-activity-summary,
+    .iris-activity-summary-caret {
         transition: none;
     }
 }

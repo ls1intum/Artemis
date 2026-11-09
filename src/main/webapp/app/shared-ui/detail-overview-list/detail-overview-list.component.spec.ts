@@ -8,24 +8,32 @@ import { of, throwError } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { UMLModel } from '@tumaet/apollon';
 import { Detail } from 'app/shared-ui/detail-overview-list/detail.model';
-import { Router } from '@angular/router';
+import { provideRouter } from '@angular/router';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
-import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { Component } from '@angular/core';
+import { Component, signal } from '@angular/core';
+import { By } from '@angular/platform-browser';
+import { DetailOverviewNavigationBarComponent } from '../detail-overview-navigation-bar/detail-overview-navigation-bar.component';
 
 @Component({
     imports: [DetailOverviewListComponent],
     template: `
         <ng-template #tools><button type="button" (click)="actions = actions + 1">Suggest competencies</button></ng-template>
-        <jhi-detail-overview-list [sections]="sections" [sectionActions]="{ 'headline.1': tools }" />
+        <ng-template #administration><button type="button" (click)="resets = resets + 1">Reset</button></ng-template>
+        <jhi-detail-overview-list
+            [sections]="sections"
+            [sectionActions]="{ 'headline.1': tools }"
+            [footerSection]="canAdminister() ? { headline: 'artemisApp.exerciseDetail.administration', content: administration } : undefined"
+        />
     `,
 })
 class SectionActionsHostComponent {
     readonly sections = sections;
     actions = 0;
+    readonly canAdminister = signal(false);
+    resets = 0;
 }
 
 const sections: DetailOverviewSection[] = [
@@ -52,7 +60,7 @@ describe('DetailOverviewList', () => {
         TestBed.configureTestingModule({
             providers: [
                 { provide: AlertService, useClass: MockAlertService },
-                { provide: Router, useClass: MockRouter },
+                provideRouter([]),
                 { provide: ProfileService, useClass: MockProfileService },
                 { provide: ModelingExerciseService, useValue: { convertToPdf: vi.fn() } },
                 { provide: TranslateService, useClass: MockTranslateService },
@@ -87,6 +95,30 @@ describe('DetailOverviewList', () => {
         expect(element.querySelector('dl')?.textContent).toContain('text');
         button.click();
         expect(host.componentInstance.actions).toBe(1);
+    });
+
+    it('includes the permitted administration section in navigation and renders working actions below the details', () => {
+        fixture.componentRef.setInput('sections', sections);
+        const host = TestBed.createComponent(SectionActionsHostComponent);
+        host.componentInstance.canAdminister.set(true);
+        host.detectChanges();
+        const element = host.nativeElement as HTMLElement;
+        const heading = element.querySelector('#artemisApp-exerciseDetail-administration');
+        expect(heading?.tagName).toBe('H2');
+        expect(element.querySelectorAll('.detail-section-heading h2')).toHaveLength(2);
+        const navigation = host.debugElement.query(By.directive(DetailOverviewNavigationBarComponent)).componentInstance as DetailOverviewNavigationBarComponent;
+        expect(navigation.sectionHeadlines().at(-1)).toEqual({ id: 'artemisApp-exerciseDetail-administration', translationKey: 'artemisApp.exerciseDetail.administration' });
+        const reset = element.querySelector('.section-detail-list:last-of-type button') as HTMLButtonElement;
+        expect(reset.textContent).toBe('Reset');
+        expect(element.querySelector('dl')!.compareDocumentPosition(reset) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+        reset.click();
+        expect(host.componentInstance.resets).toBe(1);
+
+        host.componentInstance.canAdminister.set(false);
+        host.detectChanges();
+        expect(element.querySelector('#artemisApp-exerciseDetail-administration')).toBeNull();
+        expect(element.textContent).not.toContain('Reset');
+        expect(host.debugElement.query(By.directive(DetailOverviewNavigationBarComponent))).toBeNull();
     });
 
     it('should escape all falsy values', () => {
