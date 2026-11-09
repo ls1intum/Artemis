@@ -719,10 +719,10 @@ class GenerationAttemptLoop {
         specFidelityReport = preserveDesignAuthorityState(specFidelityReport);
         specFidelityReport = adoptExecutableCounterexamples(specFidelityReport, artifacts, specDocumentSnapshot);
         recordReviewRound(attempt);
-        boolean killedSurvivingMutant = candidateBeforeCurrentRepair != null && executableEvidence.mutantsKilledByCurrentRepair() > 0;
+        boolean repairedExecutedDefect = candidateBeforeCurrentRepair != null && executableEvidence.hasExecutedRepairProgress();
         if (candidateBeforeCurrentRepair != null && (executableEvidence.hasRegressions()
                 || !RepairRoundScheduler.hasPrimaryReviewUnavailableFinding(specFidelityReport) && !RepairRoundScheduler.repairImproved(candidateBeforeCurrentRepair.reviewReport(),
-                        GenerationReviewSupport.withUndrainedSurvivors(specFidelityReport, executableEvidence.survivorsWithoutVerdict()), killedSurvivingMutant))) {
+                        GenerationReviewSupport.withUndrainedSurvivors(specFidelityReport, executableEvidence.survivorsWithoutVerdict()), repairedExecutedDefect))) {
             CandidateSnapshot retained = candidateBeforeCurrentRepair;
             candidateBeforeCurrentRepair = null;
             lastMechanicallyVerifiedCandidate = retained;
@@ -730,9 +730,10 @@ class GenerationAttemptLoop {
             emit("The repair did not reduce the reviewed blockers without introducing another one; retaining the previous reviewed checkpoint.");
             return service.preserveCandidate(retained, sandbox, sessionId, workspaceSeed);
         }
-        if (killedSurvivingMutant) {
-            emit("The repair killed " + executableEvidence.mutantsKilledByCurrentRepair()
-                    + " environment-proven mutant(s); keeping the repaired candidate and carrying any new review findings " + "forward on it.");
+        if (repairedExecutedDefect) {
+            emit("The repair killed " + executableEvidence.mutantsKilledByCurrentRepair() + " environment-proven mutant(s) and fixed "
+                    + executableEvidence.referenceDefectsFixedByCurrentRepair()
+                    + " source-approved reference defect(s); keeping the repaired candidate and carrying new review findings forward on it.");
         }
         promoteReviewedCandidate(artifacts, specDocumentSnapshot);
         if (cancelled.getAsBoolean()) {
@@ -766,14 +767,15 @@ class GenerationAttemptLoop {
     }
 
     /**
-     * Promotes the candidate once its review and executable probes have run. A repair whose primary review did not return a verdict is promoted only if it killed a surviving
-     * mutant, because the older checkpoint provably grades less; such a candidate is mechanically verified, not fully reviewed, and carries the unavailable review as a
+     * Promotes the candidate once its review and executable probes have run. A repair whose primary review did not return a verdict is promoted only if execution proves a grader
+     * or
+     * reference fix, because the older checkpoint is demonstrably worse; such a candidate is mechanically verified, not fully reviewed, and carries the unavailable review as a
      * finding. Clearing the repair predecessor here is part of the invariant: a later deadline must preserve the candidate that was just verified and reviewed, while
      * {@link #applySemanticRepair} records it again if another repair actually starts.
      */
     private void promoteReviewedCandidate(CandidateArtifacts artifacts, @Nullable String specDocumentSnapshot) {
-        // A repair that killed a surviving mutant is promoted even without a primary verdict: the older checkpoint provably grades less.
-        if (candidateBeforeCurrentRepair != null && executableEvidence.mutantsKilledByCurrentRepair() == 0
+        // A proven grader or reference fix remains useful when text review is unavailable; its unresolved review findings stay attached.
+        if (candidateBeforeCurrentRepair != null && !executableEvidence.hasExecutedRepairProgress()
                 && RepairRoundScheduler.hasPrimaryReviewUnavailableFinding(specFidelityReport)) {
             emit("The repaired candidate passed mechanical verification, but its primary quality review did not complete; retaining the previously reviewed checkpoint ("
                     + candidateBeforeCurrentRepair.verification().testCount() + " tests).");

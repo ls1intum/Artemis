@@ -32,6 +32,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InOrder;
 import org.mockito.Mockito;
@@ -1666,6 +1667,91 @@ class GenerationAttemptLoopTest {
                 .thenReturn(new GenerationWorkspace.RepositoryExtraction(Map.of("test/SchedulerTest.java", "package p; class SchedulerTest {}"), false));
         when(workspace.extractRepository(any(), anyString(), Mockito.eq(RepositoryRole.SOLUTION), any()))
                 .thenReturn(new GenerationWorkspace.RepositoryExtraction(Map.of("src/Scheduler.java", "class Scheduler {}"), false));
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = { false, true })
+    void anExecutedReferenceFixKeepsTheImprovedCandidateDespiteChangedOrUnavailableTextReview(boolean reviewerUnavailable) {
+        stubSchedulerFixture();
+        String original = "class Scheduler { int choose() { return 1; } }";
+        String repaired = "class Scheduler { int choose() { return 0; } }";
+        when(workspace.extractRepository(any(), anyString(), Mockito.eq(RepositoryRole.SOLUTION), any())).thenReturn(
+                new GenerationWorkspace.RepositoryExtraction(Map.of("src/Scheduler.java", original), false),
+                new GenerationWorkspace.RepositoryExtraction(Map.of("src/Scheduler.java", repaired), false));
+        SpecFidelityReport nextReview = reviewerUnavailable ? SpecFidelityReport.qualityReviewUnavailable("provider unavailable")
+                : reportWithRequirements("A different statement concern needs instructor review");
+        when(specFidelityCritic.critique(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any())).thenReturn(SpecFidelityReport.empty(), nextReview);
+        ContractWitness witness = new ContractWitness("R1", "boundary", "@Test void boundary() { assertEquals(0, choose()); }", "returns one at the admitted boundary");
+        SpecFidelityReport.Finding defect = new SpecFidelityReport.Finding(SpecFidelityReport.Kind.CONTRACT_CONTRADICTION,
+                "Reference solution violates R1 in executable witness boundary", "Independent review grounded the executed assertion failure.");
+        when(specFidelityCritic.authorContractWitnesses(anyString(), anyString(), anyString(), any(), any())).thenReturn(List.of(witness), List.of());
+        when(verifier.evaluateContractWitnesses(any(), anyString(), any(), any(), any(), any(), any())).thenReturn(
+                List.of(new ContractWitnessOutcome(witness, ContractWitnessOutcome.Disposition.REFERENCE_TEST_FAILED, "expected zero")),
+                List.of(new ContractWitnessOutcome(witness, ContractWitnessOutcome.Disposition.REFERENCE_PASSED_STARTER_FAILED, "")));
+        when(specFidelityCritic.adjudicateReferenceWitnesses(anyString(), anyString(), any(), any(), any()))
+                .thenReturn(new SpecFidelityCritic.ReferenceWitnessReview(List.of(defect), List.of(witness)), SpecFidelityCritic.ReferenceWitnessReview.empty());
+
+        GenerationAttemptLoop loop = newGenerateLoop(2, 1);
+        loop.run();
+
+        assertThat(loop.lastMechanicallyVerifiedCandidate().producedFiles().get(RepositoryRole.SOLUTION)).containsEntry("src/Scheduler.java", repaired);
+        assertThat(loop.lastMechanicallyVerifiedCandidate().reviewReport().findings()).containsAll(nextReview.findings());
+        assertThat(loop.lastMechanicallyVerifiedCandidate().reviewReport().findings()).doesNotContain(defect);
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = ContractWitnessOutcome.Disposition.class, names = { "REFERENCE_TEST_FAILED", "INCONCLUSIVE" })
+    void aReferenceRepairNeedsAConclusivePassBeforeItCanReplaceTheCheckpoint(ContractWitnessOutcome.Disposition recheck) {
+        stubSchedulerFixture();
+        String original = "class Scheduler { int choose() { return 1; } }";
+        when(workspace.extractRepository(any(), anyString(), Mockito.eq(RepositoryRole.SOLUTION), any())).thenReturn(
+                new GenerationWorkspace.RepositoryExtraction(Map.of("src/Scheduler.java", original), false),
+                new GenerationWorkspace.RepositoryExtraction(Map.of("src/Scheduler.java", "class Scheduler { int choose() { return 0; } }"), false));
+        when(specFidelityCritic.critique(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any())).thenReturn(SpecFidelityReport.empty(),
+                reportWithRequirements("Another contract concern"));
+        ContractWitness witness = new ContractWitness("R1", "boundary", "@Test void boundary() { assertEquals(0, choose()); }", "wrong boundary result");
+        SpecFidelityReport.Finding defect = new SpecFidelityReport.Finding(SpecFidelityReport.Kind.CONTRACT_CONTRADICTION, "Reference boundary fails", "Source-approved failure");
+        when(specFidelityCritic.authorContractWitnesses(anyString(), anyString(), anyString(), any(), any())).thenReturn(List.of(witness), List.of());
+        when(verifier.evaluateContractWitnesses(any(), anyString(), any(), any(), any(), any(), any())).thenReturn(
+                List.of(new ContractWitnessOutcome(witness, ContractWitnessOutcome.Disposition.REFERENCE_TEST_FAILED, "expected zero")),
+                List.of(new ContractWitnessOutcome(witness, recheck, "no passing reference evidence")));
+        when(specFidelityCritic.adjudicateReferenceWitnesses(anyString(), anyString(), any(), any(), any()))
+                .thenReturn(new SpecFidelityCritic.ReferenceWitnessReview(List.of(defect), List.of(witness)));
+
+        GenerationAttemptLoop loop = newGenerateLoop(2, 1);
+        loop.run();
+
+        assertThat(loop.lastMechanicallyVerifiedCandidate().producedFiles().get(RepositoryRole.SOLUTION)).containsEntry("src/Scheduler.java", original);
+        assertThat(loop.lastMechanicallyVerifiedCandidate().reviewReport().findings()).anyMatch(SpecFidelityReport.Finding::isBlocking);
+    }
+
+    @Test
+    void fixingOneReferenceDefectCannotRegressAPreviouslySourceApprovedPassingWitness() {
+        stubSchedulerFixture();
+        String original = "class Scheduler { int choose() { return 1; } int other() { return 2; } }";
+        when(workspace.extractRepository(any(), anyString(), Mockito.eq(RepositoryRole.SOLUTION), any())).thenReturn(
+                new GenerationWorkspace.RepositoryExtraction(Map.of("src/Scheduler.java", original), false),
+                new GenerationWorkspace.RepositoryExtraction(Map.of("src/Scheduler.java", "class Scheduler { int choose() { return 0; } int other() { return 0; } }"), false));
+        ContractWitness failing = new ContractWitness("R1", "boundary", "@Test void boundary() { assertEquals(0, choose()); }", "wrong boundary result");
+        ContractWitness passing = new ContractWitness("R2", "existingBehavior", "@Test void existingBehavior() { assertEquals(2, other()); }", "existing contract behavior");
+        SpecFidelityReport.Finding firstDefect = new SpecFidelityReport.Finding(SpecFidelityReport.Kind.CONTRACT_CONTRADICTION, "Reference boundary fails", "Grounded R1 failure");
+        SpecFidelityReport.Finding regression = new SpecFidelityReport.Finding(SpecFidelityReport.Kind.CONTRACT_CONTRADICTION, "Reference existing behavior fails",
+                "Grounded R2 failure");
+        when(specFidelityCritic.authorContractWitnesses(anyString(), anyString(), anyString(), any(), any())).thenReturn(List.of(failing, passing), List.of());
+        when(verifier.evaluateContractWitnesses(any(), anyString(), any(), any(), any(), any(), any())).thenReturn(
+                List.of(new ContractWitnessOutcome(failing, ContractWitnessOutcome.Disposition.REFERENCE_TEST_FAILED, "expected zero"),
+                        new ContractWitnessOutcome(passing, ContractWitnessOutcome.Disposition.REFERENCE_PASSED_STARTER_FAILED, "")),
+                List.of(new ContractWitnessOutcome(failing, ContractWitnessOutcome.Disposition.REFERENCE_PASSED_STARTER_FAILED, ""),
+                        new ContractWitnessOutcome(passing, ContractWitnessOutcome.Disposition.REFERENCE_TEST_FAILED, "expected two")));
+        when(specFidelityCritic.adjudicateReferenceWitnesses(anyString(), anyString(), any(), any(), any())).thenReturn(
+                new SpecFidelityCritic.ReferenceWitnessReview(List.of(firstDefect), List.of(failing), List.of(passing), List.of(), List.of(), List.of()),
+                new SpecFidelityCritic.ReferenceWitnessReview(List.of(regression), List.of(passing)));
+
+        GenerationAttemptLoop loop = newGenerateLoop(2, 1);
+        loop.run();
+
+        assertThat(loop.lastMechanicallyVerifiedCandidate().producedFiles().get(RepositoryRole.SOLUTION)).containsEntry("src/Scheduler.java", original);
+        assertThat(loop.terminationReason()).isEqualTo(TerminationReason.REPAIR_DID_NOT_IMPROVE);
     }
 
     @Test

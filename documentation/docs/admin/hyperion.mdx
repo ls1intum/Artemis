@@ -376,6 +376,12 @@ with no accepted semantic-mutant proposal can receive one proposal correction be
 any mutation history exists. An unexecuted hypothesis remains a review item, never an
 execution-proven defect or a resolved finding.
 
+A repair that makes a previously failing, independently approved reference witness pass
+counts as executed progress, just as killing a previously surviving mutant does. The
+repaired checkpoint keeps its review findings when text review changes or is unavailable.
+A failed or inconclusive reference recheck earns no repair credit. Regressing a previously
+approved passing witness prevents promotion even if another reference defect was fixed.
+
 A surviving model-authored mutant also needs independent contract approval before it can
 require a grader repair. The reviewer checks the whole counterexample interaction against
 Rules, Worked Examples and Public API, without the reference implementation or decision

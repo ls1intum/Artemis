@@ -88,6 +88,10 @@ final class ExecutableEvidenceLedger {
 
     private SpecFidelityReport assessmentFindings = SpecFidelityReport.empty();
 
+    private final Set<String> repairedReferenceWitnesses = new java.util.LinkedHashSet<>();
+
+    private final Set<String> regressedReferenceWitnesses = new java.util.LinkedHashSet<>();
+
     private List<ContractWitness> referenceWitnessesAwaitingPass = List.of();
 
     private List<ContractWitness> referenceWitnessesAwaitingAdjudication = List.of();
@@ -366,6 +370,20 @@ final class ExecutableEvidenceLedger {
                 .of(pendingWitnessNames, pendingReferenceAdjudicationNames, pendingAdoptionAdjudicationNames, approvedAdoptionNames).flatMap(Set::stream)
                 .collect(Collectors.toSet());
         witnessOutcomes = repairWitnessCompilation(witnessOutcomes, retainedWitnessNames, specDocumentSnapshot, testsFiles, solutionFiles, seededStructuralTests, restoreCandidate);
+        for (ContractWitnessOutcome outcome : witnessOutcomes) {
+            String name = outcome.witness().testName();
+            boolean referencePassed = outcome.disposition() == ContractWitnessOutcome.Disposition.REFERENCE_PASSED_STARTER_FAILED
+                    || outcome.disposition() == ContractWitnessOutcome.Disposition.REFERENCE_PASSED_STARTER_NOT_FAILED;
+            if (referencePassed) {
+                if (pendingWitnessNames.contains(name)) {
+                    repairedReferenceWitnesses.add(name);
+                }
+                regressedReferenceWitnesses.remove(name);
+            }
+            else if (approvedAdoptionNames.contains(name) && outcome.disposition() == ContractWitnessOutcome.Disposition.REFERENCE_TEST_FAILED) {
+                regressedReferenceWitnesses.add(name);
+            }
+        }
         List<ContractWitnessOutcome> proposedAdjudications = ReferenceWitnessEvidence.adjudicationCandidates(freshMutantOutcomes, witnessOutcomes, pendingWitnessNames,
                 approvedAdoptionNames, mutatedRules);
         SpecFidelityCritic.ReferenceWitnessReview referenceReview = proposedAdjudications.isEmpty() ? SpecFidelityCritic.ReferenceWitnessReview.empty()
@@ -525,17 +543,29 @@ final class ExecutableEvidenceLedger {
      */
     void beginRepair(boolean repairsExecutableOracle) {
         evidence.beginRepair();
+        repairedReferenceWitnesses.clear();
+        regressedReferenceWitnesses.clear();
         repairTargets = repairsExecutableOracle ? evidence.surviving() : List.of();
     }
 
     /** A conclusive regression from verification or review blocks promotion, even when another target was killed. */
     boolean hasRegressions() {
-        return !evidence.regressions().isEmpty();
+        return !evidence.regressions().isEmpty() || !regressedReferenceWitnesses.isEmpty();
     }
 
-    /** Tracked survivors a candidate's suite killed since the current repair began, from the acceptance recheck and the review alike. */
+    /** Number of previously surviving mutants killed since this repair began. */
     int mutantsKilledByCurrentRepair() {
         return evidence.killsSinceRepairBegan();
+    }
+
+    /** Number of source-approved reference failures whose exact witnesses now pass. */
+    int referenceDefectsFixedByCurrentRepair() {
+        return repairedReferenceWitnesses.size();
+    }
+
+    /** Progress proved by executing a prior surviving mutant or the exact source-approved witness that previously failed the reference. */
+    boolean hasExecutedRepairProgress() {
+        return evidence.killsSinceRepairBegan() > 0 || !repairedReferenceWitnesses.isEmpty();
     }
 
     /** The survivors the repair-progress comparison must still count: those without a verdict, or every survivor when no executable review ran. */

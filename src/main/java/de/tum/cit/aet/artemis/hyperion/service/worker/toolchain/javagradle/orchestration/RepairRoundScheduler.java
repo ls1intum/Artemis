@@ -172,7 +172,8 @@ class RepairRoundScheduler {
 
     /**
      * Whether a semantic repair made progress. Executed evidence decides first; a repair whose suite lets a previously killed mutant survive again never reaches this
-     * comparison, because verification rejects it. A repair that killed a previously surviving mutant improved, even if a freshly authored mutant now survives: that survivor is
+     * comparison, because verification rejects it. A repair that fixed an executed reference failure or killed a previously surviving mutant improved, even if a freshly authored
+     * mutant now survives: that survivor is
      * new evidence, not a loss, and becomes the next oracle
      * target within the round budget, while text-only blockers raised beside the kill stay on the repaired candidate, because a re-review re-rolls text verdicts. Fewer
      * executed blockers is progress too; a prior survivor without a fresh verdict must be in {@code current} so that losing its evidence never reads as draining it. Otherwise the
@@ -180,10 +181,10 @@ class RepairRoundScheduler {
      * surface can address and that is unchanged on both sides (a contested specification or concept, for example) is ignored there: no repair could have drained it, so it
      * must not turn a round that drained nothing else, such as a witness adoption, into a regression.
      *
-     * @param killedSurvivingMutant whether the repaired suite killed at least one mutant the previous candidate's suite let survive
+     * @param repairedExecutedDefect whether execution proved a reference fix or a kill of a mutant the previous candidate's suite let survive
      */
-    static boolean repairImproved(SpecFidelityReport previous, SpecFidelityReport current, boolean killedSurvivingMutant) {
-        if (killedSurvivingMutant || candidateBlockingFindingIdentities(current, true).size() < candidateBlockingFindingIdentities(previous, true).size()) {
+    static boolean repairImproved(SpecFidelityReport previous, SpecFidelityReport current, boolean repairedExecutedDefect) {
+        if (repairedExecutedDefect || candidateBlockingFindingIdentities(current, true).size() < candidateBlockingFindingIdentities(previous, true).size()) {
             return true;
         }
         Set<String> previousBlockers = candidateBlockingFindingIdentities(previous, false);
