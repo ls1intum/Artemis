@@ -183,8 +183,8 @@ See [Images from a private registry](/admin/production-setup/localci-build-envir
 **What is the pull policy for images?** A build agent pulls an image only when it does not have it. A changed tag is not noticed, so use versioned tags.
 See [Pull policy](/admin/production-setup/localci-build-environment#pull-policy).
 
-**How well can nodes be added, and does it scale automatically?** A build agent joins a running cluster within seconds. There is no built-in autoscaler, and the experimental
-[Kubernetes runner](/admin/production-setup/build-runners) lets a cluster schedule the builds. See [Operating build agents](/admin/production-setup/multiple-artemis-instances#operating-build-agents).
+**How well can nodes be added, and does it scale automatically?** A build agent joins a running cluster within seconds. There is no built-in autoscaler, but the Helm chart of the experimental
+[Kubernetes runner](/admin/production-setup/build-runners) can scale the build agents with the queue. See [Operating build agents](/admin/production-setup/multiple-artemis-instances#operating-build-agents).
 
 **What happens to the queue when students spam pushes?** Every push is a build, and the queue is ordered by priority and arrival. Instructors can cap the submissions per student with a
 Lock Repository [submission policy](/instructor/exercises/programming-exercise/grade-and-verify#submission-policy-configuration). See [When many students push at once](/admin/scaling#when-many-students-push-at-once).
@@ -240,6 +240,7 @@ Gaps in comparison with Jenkins. The documentation states each one as it is toda
   of all exercises. Administrators use the image or the default phases instead.
 - **No configurable pull policy.** The Docker runner pulls an image only when it is missing, and reads registry credentials from the Docker configuration of the agent host without credential helpers.
   An explicit registry credential setting and a policy to always check for a newer image are not available.
-- **No built-in autoscaling.** Artemis exposes the queue and the agents, but starting and stopping agents is left to the environment. The experimental
-  [Kubernetes runner](/admin/production-setup/build-runners) lets a cluster schedule the builds, but its Helm chart has a fixed number of build agents and no scaling rule.
+- **No built-in autoscaling.** Artemis exposes the queue and the agents, but starting and stopping agents is left to the environment. The Helm chart of the experimental
+  [Kubernetes runner](/admin/production-setup/build-runners) can scale the build agents with the queue through KEDA and Prometheus, see
+  [Operating LocalCI on Kubernetes](/admin/production-setup/localci-on-kubernetes#automatically). Scaling down can interrupt a running build, which is then run again.
 - **Choices at exercise creation.** The Java project type (Maven or Gradle) is chosen per exercise. An installation-wide default would shorten the creation form for institutions that use one build tool.

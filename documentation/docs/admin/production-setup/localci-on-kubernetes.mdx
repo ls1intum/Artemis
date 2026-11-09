@@ -16,8 +16,8 @@ The installation itself is described in [Deploying](/admin/production-setup/buil
 
 <Callout variant={CalloutVariant.warning}>
 
-  The Kubernetes runner and the chart are a proof of concept. They have not been through a production deployment. The chart provides no autoscaling, no high availability for
-  PostgreSQL, the broker or the registry, no network policies, no resource quotas and no backups. This page says where each of these is left to you.
+  The Kubernetes runner and the chart are a proof of concept. They have not been through a production deployment. The chart provides no high availability for
+  PostgreSQL, the broker or the registry, no network policies, no resource quotas and no backups. Autoscaling of the build agents is optional and needs KEDA and Prometheus. This page says where each of these is left to you.
 
 </Callout>
 
@@ -93,7 +93,11 @@ The leader is always a single pod. If it is unavailable, no scheduled task runs 
 
 ## Scaling
 
-Scaling is manual. Change the value in the values file and run `helm upgrade`, so that the chart stays the single source of truth. A replica count that is changed with `kubectl scale` is not recorded in the release.
+The build agent controllers can be scaled by hand or automatically. The core nodes are always scaled by hand.
+
+### Manually
+
+Change the value in the values file and run `helm upgrade`, so that the chart stays the single source of truth. A replica count that is changed with `kubectl scale` is not recorded in the release.
 
 - **More build capacity:** raise `buildAgents.replicaCount`. A new controller registers with the cluster within seconds and takes jobs at once. Make sure the build nodes have room first.
 - **Less build capacity:** lower `buildAgents.replicaCount`. The StatefulSet removes the highest ordinal first. A build that runs on a removed controller is put back into the queue and runs again on another agent,
@@ -103,7 +107,31 @@ Scaling is manual. Change the value in the values file and run `helm upgrade`, s
 
 The values to decide with are the queue and the utilization on the Build Agents page, and the gauges `artemis.global.localci.queued`, `running`, `agents` and `maxConcurrentBuilds`.
 The core pods carry the annotations `prometheus.io/scrape`, `prometheus.io/path` (`/management/prometheus`) and `prometheus.io/port` for a Prometheus that honors them.
-If the cluster has a node autoscaler, it can add build nodes when build Pods wait for resources, but the number of controllers, and with it the number of concurrent builds, stays what the values say.
+
+### Automatically
+
+With `buildAgents.autoscaling.enabled: true` the chart creates a [KEDA](https://keda.sh) `ScaledObject` for the build agent controllers. It needs KEDA in the cluster and a Prometheus that scrapes the core pods,
+and the chart installs neither.
+
+```yaml
+buildAgents:
+  concurrentBuildsPerAgent: 2
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 10
+    prometheus:
+      serverAddress: http://prometheus-server.monitoring.svc:80
+```
+
+- **Target.** The number of controllers that the queue needs: `ceil((queued + running builds) / concurrentBuildsPerAgent)`, from the cluster-wide gauges `artemis.global.localci.queued` and `running`,
+  limited to `minReplicas` and `maxReplicas`. `autoscaling.prometheus.query` replaces the default query.
+- **Replica count.** The StatefulSet no longer sets `replicas`, so `buildAgents.replicaCount` is ignored and `helm upgrade` does not reset the count.
+- **Speed.** Controllers are added quickly (four per minute by default) and removed slowly (one every five minutes, after ten minutes below the target). The `scaleUp` and `scaleDown` values change this.
+- **Missing metric.** A missing series is an error and not zero, so a broken scrape leaves the count unchanged instead of scaling down while builds wait.
+- **Scale-down.** The controller with the highest ordinal is removed, whether it is busy or not. Its builds are put back into the queue and run again, at most five times. The slow scale-down keeps this rare, but it cannot rule it out.
+- **Capacity.** `maxReplicas × concurrentBuildsPerAgent` builds must fit on the build nodes, otherwise the additional build Pods wait for resources. A cluster node autoscaler can add the nodes when Pods wait,
+  but it does not change the number of controllers.
 
 ## Updating
 
