@@ -79,13 +79,13 @@
                                         {{ numberOfTutorAssessedSubmissions() }} ({{ tutorSubmissionPercentage() }}%)
                                     </td>
                                 </tr>
-                                <tr>
+                                <tr data-testid="exercise-assessments-row">
                                     <th
                                         class="!border-b !border-surface px-6 py-2.5 text-start font-normal align-middle"
                                         scope="row"
                                         jhiTranslate="artemisApp.assessmentDashboard.assessments"
                                     ></th>
-                                    <td class="!border-b !border-surface whitespace-nowrap px-6 py-2.5 text-end align-middle">{{ totalNumberOfAssessments() }}</td>
+                                    <td class="!border-b !border-surface whitespace-nowrap px-6 py-2.5 text-end align-middle">{{ assessmentInformationTotal() }}</td>
                                     <td class="!border-b !border-surface whitespace-nowrap px-6 py-2.5 text-end align-middle">{{ numberOfTutorAssessments() }}</td>
                                 </tr>
                                 @if (complaintsEnabled()) {

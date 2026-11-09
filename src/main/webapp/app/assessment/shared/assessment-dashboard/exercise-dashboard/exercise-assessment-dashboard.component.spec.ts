@@ -330,6 +330,7 @@ describe('ExerciseAssessmentDashboardComponent', () => {
 
         comp.isExamMode.set(true);
         comp.numberOfAssessmentsOfCorrectionRounds.set([Object.assign(new DueDateStat(), { inTime: 2 }), new DueDateStat()]);
+        comp.numberOfLockedAssessmentByOtherTutorsOfCorrectionRound.set([Object.assign(new DueDateStat(), { inTime: 1 }), new DueDateStat()]);
         expect(comp.totalAssessmentSlots()).toBe(10);
         expect(comp.openAssessments()).toBe(7);
         expect(comp.assessedPercentage()).toBe(20);
@@ -341,6 +342,37 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         comp.tutorParticipationStatus.set(status);
         fixture.detectChanges();
         expect(fixture.nativeElement.querySelector('[data-testid="test-run-instructions"]')).not.toBeNull();
+    });
+
+    it('should exclude unfinished test runs from the real exam progress split', () => {
+        comp.isExamMode.set(true);
+        comp.numberOfSubmissions.set(Object.assign(new DueDateStat(), { inTime: 2 }));
+        comp.numberOfAssessmentsOfCorrectionRounds.set([new DueDateStat()]);
+        comp.numberOfLockedAssessmentByOtherTutorsOfCorrectionRound.set([new DueDateStat()]);
+        comp.statsForDashboard.set(Object.assign(new StatsForDashboard(), { totalNumberOfAssessmentLocks: 1 }));
+        const draft = { id: 1, participation: { testRun: true }, results: [{ correctionRound: 0, assessor: { id: 1 } }] };
+        comp.assessedSubmissionsByRound.set([[draft]]);
+        expect(comp.inProgressAssessments()).toBe(0);
+        expect(comp.openAssessments()).toBe(2);
+        comp.assessedSubmissionsByRound.set([[{ ...draft, participation: { testRun: false } }]]);
+        expect(comp.inProgressAssessments()).toBe(1);
+        expect(comp.openAssessments()).toBe(1);
+        comp.numberOfLockedAssessmentByOtherTutorsOfCorrectionRound.set([Object.assign(new DueDateStat(), { inTime: 1 })]);
+        expect(comp.inProgressAssessments()).toBe(2);
+        expect(comp.openAssessments()).toBe(0);
+    });
+
+    it('should render completed correction rounds in the exam assessment information row', () => {
+        fixture.detectChanges();
+        comp.isExamMode.set(true);
+        comp.totalNumberOfAssessments.set(5);
+        comp.numberOfAssessmentsOfCorrectionRounds.set([Object.assign(new DueDateStat(), { inTime: 5 }), Object.assign(new DueDateStat(), { inTime: 5 })]);
+        fixture.detectChanges();
+        const total = fixture.nativeElement.querySelector('[data-testid="exercise-assessments-row"] td');
+        expect(total.textContent.trim()).toBe('10');
+        comp.isExamMode.set(false);
+        fixture.detectChanges();
+        expect(total.textContent.trim()).toBe('5');
     });
 
     it('should show fully completed progress for a two-round exam', () => {

@@ -1,3 +1,4 @@
+import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { AssessmentProgressComponent } from '../assessment-progress.component';
 import { TumAetUiButtonDirective, TumAetUiMessageComponent, TumAetUiPanelComponent, TumAetUiTableDirective, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 import { Component, DestroyRef, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
@@ -247,18 +248,35 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, OnDestroy {
         const correctionRounds = this.isExamMode() ? this.correctionRoundIndices().length : 1;
         return this.numberOfSubmissions().total * correctionRounds;
     });
+    readonly assessmentInformationTotal = computed(() =>
+        this.isExamMode() ? this.numberOfAssessmentsOfCorrectionRounds().reduce((total, round) => total + round.inTime, 0) : this.totalNumberOfAssessments(),
+    );
     readonly completedAssessments = computed(() => {
         if (this.showsComplaintProgress()) {
             return this.statsForDashboard().numberOfComplaints - this.statsForDashboard().numberOfOpenComplaints;
         }
-        if (this.isExamMode()) {
-            return this.numberOfAssessmentsOfCorrectionRounds().reduce((total, round) => total + round.inTime, 0);
-        }
-        return this.totalNumberOfAssessments();
+        return this.assessmentInformationTotal();
     });
-    readonly inProgressAssessments = computed(() =>
-        this.showsComplaintProgress() ? 0 : Math.min(Math.max(0, this.totalAssessmentSlots() - this.completedAssessments()), this.statsForDashboard().totalNumberOfAssessmentLocks),
-    );
+    readonly inProgressAssessments = computed(() => {
+        if (this.showsComplaintProgress()) {
+            return 0;
+        }
+        let locks = this.statsForDashboard().totalNumberOfAssessmentLocks;
+        if (this.isExamMode()) {
+            const otherTutorLocks = this.numberOfLockedAssessmentByOtherTutorsOfCorrectionRound().reduce((total, round) => total + round.inTime, 0);
+            const ownLocks = this.assessedSubmissionsByRound().reduce(
+                (total, submissions, correctionRound) =>
+                    total +
+                    submissions.filter((submission) => {
+                        const result = getSubmissionResultByCorrectionRound(submission, correctionRound);
+                        return !(submission.participation as StudentParticipation)?.testRun && !!result?.assessor && !result.completionDate;
+                    }).length,
+                0,
+            );
+            locks = otherTutorLocks + ownLocks;
+        }
+        return Math.min(Math.max(0, this.totalAssessmentSlots() - this.completedAssessments()), locks);
+    });
     readonly openAssessments = computed(() => Math.max(0, this.totalAssessmentSlots() - this.completedAssessments() - this.inProgressAssessments()));
     readonly assessedPercentage = computed(() =>
         this.totalAssessmentSlots() > 0 ? Math.min(100, Math.floor((100 * this.completedAssessments()) / this.totalAssessmentSlots())) : 0,
