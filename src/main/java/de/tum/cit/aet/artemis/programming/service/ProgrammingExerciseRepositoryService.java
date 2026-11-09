@@ -117,22 +117,7 @@ public class ProgrammingExerciseRepositoryService {
 
     /**
      * Set up the exercise template by determining the files needed for the template and copying them. Commit and push the changes to all repositories for this programming
-     * exercise.
-     *
-     * @param programmingExercise the programming exercise that should be set up
-     * @param buildConfig         its build configuration, which is stored separately and read by the caller
-     * @param exerciseCreator     the User that performed the action (used as Git commit author)
-     * @param emptyRepositories   if true, clear sources in template, solution, and test repositories after setup
-     * @throws GitAPIException If committing, or pushing to the repo throws an exception.
-     */
-    void setupExerciseTemplate(final ProgrammingExercise programmingExercise, final ProgrammingExerciseBuildConfig buildConfig, final User exerciseCreator,
-            boolean emptyRepositories) throws GitAPIException {
-        setupExerciseTemplate(programmingExercise, buildConfig, exerciseCreator, emptyRepositories, null);
-    }
-
-    /**
-     * Set up the exercise template like {@link #setupExerciseTemplate(ProgrammingExercise, ProgrammingExerciseBuildConfig, User, boolean)} and apply a
-     * Security Framework choice to the tests repository before its first commit, so the initial builds run once with the chosen setting.
+     * exercise. A Security Framework choice is applied to the tests repository before its first commit, so the initial builds run once with the chosen setting.
      *
      * @param programmingExercise     the programming exercise that should be set up
      * @param buildConfig             its build configuration, which is stored separately and read by the caller
