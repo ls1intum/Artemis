@@ -46,8 +46,8 @@ export class PresentationAssessmentManagementPage {
         }
         for (const [index, criterion] of (configuration.criteria ?? []).entries()) {
             await this.page.getByTestId(index === 0 ? 'rubric-add-first-criterion' : 'rubric-add-criterion').click();
-            await this.page.locator(`#rubric-criterion-name-${index}`).fill(criterion.name);
-            await this.page.locator(`#rubric-criterion-weight-${index}`).fill(String(criterion.weight));
+            await this.page.getByTestId(`rubric-criterion-name-${index}`).fill(criterion.name);
+            await this.page.getByTestId(`rubric-criterion-weight-${index}`).locator('input').fill(String(criterion.weight));
         }
         const created = this.page.waitForResponse((response) => response.request().method() === 'POST' && response.url().endsWith('/presentation-assessments'));
         await this.page.getByTestId('save-presentation-button').click();

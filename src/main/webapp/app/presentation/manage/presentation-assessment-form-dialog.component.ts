@@ -150,13 +150,13 @@ export class PresentationAssessmentFormDialogComponent {
         this.editForm.controls.gradingMethod.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => this.applyControlStates());
     }
 
-    readonly filterExercises = (event: TumAetUiAutoCompleteSearchEvent): void => {
+    filterExercises(event: TumAetUiAutoCompleteSearchEvent): void {
         const query = event.query.trim().toLocaleLowerCase();
         this.filteredExercises.set(query ? this.exercises().filter((exercise) => exercise.title?.toLocaleLowerCase().includes(query)) : this.exercises());
-    };
+    }
 
     /** Moves to the next step of creating once the current one is valid; otherwise shows its errors. */
-    readonly continue = (): void => {
+    continue(): void {
         const controls = this.editForm.controls;
         if (this.step() === 'details') {
             if (controls.title.invalid || controls.exercise.invalid || controls.description.invalid) {
@@ -173,17 +173,17 @@ export class PresentationAssessmentFormDialogComponent {
             }
             this.step.set('configuration');
         }
-    };
+    }
 
-    readonly back = (): void => {
+    back(): void {
         this.step.update((step) => (step === 'configuration' ? 'method' : 'details'));
-    };
+    }
 
     protected isStepComplete(candidate: PresentationFormStep): boolean {
         return this.steps().indexOf(candidate) < this.steps().indexOf(this.step());
     }
 
-    readonly save = (): void => {
+    save(): void {
         const createsRubric = !this.isEdit() && this.selectedGradingMethod() === PresentationGradingMethod.RUBRIC;
         if (this.isSaving() || this.editForm.invalid || (createsRubric && this.rubricForm.invalid)) {
             this.editForm.markAllAsTouched();
@@ -194,18 +194,18 @@ export class PresentationAssessmentFormDialogComponent {
             return;
         }
         this.saved.emit({ presentationAssessment: this.createFromForm() });
-    };
+    }
 
-    readonly cancel = (): void => {
+    cancel(): void {
         this.cancelled.emit();
-    };
+    }
 
-    readonly requestDelete = (): void => {
+    requestDelete(): void {
         const presentationAssessment = this.presentationAssessment();
         if (presentationAssessment?.id) {
             this.deleteRequested.emit(presentationAssessment);
         }
-    };
+    }
 
     /** The method of an existing presentation is fixed, and only a presentation graded by score has max. points. */
     private applyControlStates(): void {
@@ -225,7 +225,7 @@ export class PresentationAssessmentFormDialogComponent {
         }
     }
 
-    private readonly createFromForm = (): PresentationAssessment => {
+    private createFromForm(): PresentationAssessment {
         const formValue = this.editForm.getRawValue();
         const gradingMethod = formValue.gradingMethod ?? undefined;
         return {
@@ -238,5 +238,5 @@ export class PresentationAssessmentFormDialogComponent {
             exerciseId: formValue.exercise?.id ?? (this.editForm.controls.exercise.pristine ? this.presentationAssessment()?.exerciseId : undefined),
             rubricCriteria: !this.isEdit() && gradingMethod === PresentationGradingMethod.RUBRIC ? readRubricForm(this.rubricForm) : undefined,
         };
-    };
+    }
 }

@@ -364,16 +364,16 @@ describe('PresentationAssessmentManagementComponent', () => {
         expect(component.totalStudentRows()).toBe(1);
     });
 
-    it('should only consider an assigned numeric score as assessed', async () => {
+    it.each([
+        { result: { resultPoints: undefined }, assessed: false },
+        { result: { resultPoints: 0 }, assessed: true },
+        { result: { passed: false }, assessed: true },
+        { result: { rubricScore: 0 }, assessed: true },
+    ])('should consider an instance with $result as assessed: $assessed', async ({ result, assessed }) => {
         presentationAssessmentService.findStudentRows.mockReturnValue(
             of(
                 new HttpResponse({
-                    body: [
-                        {
-                            presentationAssessment,
-                            instance: { id: 11, presentationDate, resultPoints: undefined, student: { login: 'student1' } },
-                        },
-                    ],
+                    body: [{ presentationAssessment, instance: { id: 11, presentationDate, student: { login: 'student1' }, ...result } }],
                     headers: new HttpHeaders({ 'X-Total-Count': '1' }),
                 }),
             ),
@@ -381,25 +381,8 @@ describe('PresentationAssessmentManagementComponent', () => {
         component.retryLoading();
         fixture.detectChanges();
         await fixture.whenStable();
-        expect(component.studentRows()[0].assessed).toBe(false);
 
-        presentationAssessmentService.findStudentRows.mockReturnValue(
-            of(
-                new HttpResponse({
-                    body: [
-                        {
-                            presentationAssessment,
-                            instance: { id: 11, presentationDate, resultPoints: 0, student: { login: 'student1' } },
-                        },
-                    ],
-                    headers: new HttpHeaders({ 'X-Total-Count': '1' }),
-                }),
-            ),
-        );
-        component.retryLoading();
-        fixture.detectChanges();
-        await fixture.whenStable();
-        expect(component.studentRows()[0].assessed).toBe(true);
+        expect(component.studentRows()[0].assessed).toBe(assessed);
     });
 
     it.each([

@@ -82,7 +82,10 @@
                     ></textarea>
                     @if (rating.controls.comment.hasError('maxlength')) {
                         <tumaet-ui-message severity="error">
-                            <span jhiTranslate="artemisApp.presentationAssessment.remarkTooLong" [translateValues]="{ max: 1000 }"></span>
+                            <span
+                                jhiTranslate="artemisApp.presentationAssessment.remarkTooLong"
+                                [translateValues]="{ max: rating.controls.comment.getError('maxlength').requiredLength }"
+                            ></span>
                         </tumaet-ui-message>
                     }
                 </div>

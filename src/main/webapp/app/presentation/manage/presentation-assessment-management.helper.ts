@@ -66,13 +66,6 @@ export function createPresentationSidebarData(
     };
 }
 
-const isSet = (value: unknown): boolean => value !== undefined && value !== null;
-
-/** An instance is assessed once it has a result; only the field of its grading method can be set. */
-export function hasResult(instance: PresentationAssessmentInstance): boolean {
-    return isSet(instance.resultPoints) || isSet(instance.passed) || isSet(instance.rubricScore);
-}
-
 function toSidebarItem(assessment: PresentationAssessment, courseId: number, linkIcon?: IconDefinition): SidebarCardElement {
     return {
         id: assessment.id!,

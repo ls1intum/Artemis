@@ -11,6 +11,7 @@ import { roundValueSpecifiedByCourseSettings } from 'app/foundation/util/utils';
 import { Course } from 'app/course/shared/entities/course.model';
 import { PresentationRubricCriterion } from 'app/presentation/shared/entities/presentation-assessment.model';
 import { rubricLevelKey } from 'app/presentation/shared/presentation-rubric.util';
+import { levelPositionsHighestFirst } from 'app/presentation/shared/presentation.util';
 import { RatingForm, RatingsForm, rubricPreviewScore } from 'app/presentation/manage/presentation-rubric-rating-form';
 
 @Component({
@@ -28,9 +29,8 @@ export class PresentationRubricGradingComponent {
     protected readonly faCircleInfo = faCircleInfo;
     protected readonly rubricLevelKey = rubricLevelKey;
 
-    /** The level positions of a criterion, highest first, as the rating scale is read from best to worst. */
     protected positionsHighestFirst(criterion: PresentationRubricCriterion): number[] {
-        return criterion.levels.map((_, position) => position).reverse();
+        return levelPositionsHighestFirst(criterion.levels.length);
     }
 
     protected selectLevel(rating: RatingForm, levelId: number | undefined): void {

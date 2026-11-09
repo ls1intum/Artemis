@@ -81,7 +81,8 @@ describe('presentation rubric rating form', () => {
 
         form.at(2).controls.levelId.setValue(32);
 
-        // 50 % · 3/4 + 30 % · 2/2 + 20 % · 1/4, the example of the plan
+        // score = Σ weight · position / (level count − 1), with position 0 for the lowest level
+        //       = 50 % · 3/4 + 30 % · 2/2 + 20 % · 1/4 = 72.5 %
         expect(rubricPreviewScore(criteria, form)).toBe(72.5);
     });
 });

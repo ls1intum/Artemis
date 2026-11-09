@@ -51,7 +51,7 @@ describe('PresentationAssessmentInstanceFormDialogComponent', () => {
         fixture = TestBed.createComponent(PresentationAssessmentInstanceFormDialogComponent);
         component = fixture.componentInstance;
         fixture.componentRef.setInput('courseId', 1);
-        fixture.componentRef.setInput('presentationAssessment', { id: 42, maxPoints: 20 });
+        fixture.componentRef.setInput('presentationAssessment', { id: 42, gradingMethod: PresentationGradingMethod.SCORE, maxPoints: 20 });
         fixture.componentRef.setInput('instance', { id: 11, presentationDate, student: { login: 'student1' } });
         fixture.componentRef.setInput('initialAssignedStudents', [new User(undefined, 'student1')]);
         component.saved.subscribe(saved);

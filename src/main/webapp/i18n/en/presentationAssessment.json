@@ -18,10 +18,10 @@
             "pointsOf": "of",
             "generalRemark": "General remark",
             "placeholder": {
-                "title": "e.g. System Architecture Review",
+                "title": "Title",
                 "maxPoints": "0",
                 "resultPoints": "0.0",
-                "description": "Add context or instructions for students.",
+                "description": "Enter a description",
                 "remark": "Add a remark",
                 "generalRemark": "Add overall feedback for the student."
             },
@@ -188,10 +188,10 @@
                 },
                 "validation": {
                     "empty": "Add at least one criterion",
-                    "weightSum": "Total weight must equal 100%",
+                    "weightSum": "Total weight must equal {{ requiredTotal }} %",
                     "weightSumDetail": "The current total is {{ total }} %. Adjust the weights before saving.",
                     "nameRequired": "Please enter a name.",
-                    "weightRange": "Please enter a whole number from 1 to 100.",
+                    "weightRange": "Please enter a whole number from 1 to {{ max }}.",
                     "levelDescriptionTooLong": "A level description exceeds {{ max }} characters. Open the scale to shorten it."
                 }
             }

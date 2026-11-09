@@ -1,6 +1,7 @@
 import { FormArray, FormControl, FormGroup, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
 
 import { PresentationRubricCriterion, PresentationRubricRating } from 'app/presentation/shared/entities/presentation-assessment.model';
+import { MAX_COMMENT_LENGTH } from 'app/presentation/shared/presentation-rubric.util';
 
 export type RatingForm = FormGroup<{
     levelId: FormControl<number | undefined>;
@@ -35,7 +36,7 @@ export function createRatingsForm(criteria: PresentationRubricCriterion[], ratin
             return new FormGroup({
                 // An unrated criterion has no level; a state object keeps that undefined, passed directly FormControl would replace it with null
                 levelId: new FormControl<number | undefined>({ value: rating?.levelId, disabled: false }, { nonNullable: true }),
-                comment: new FormControl(rating?.comment ?? '', { nonNullable: true, validators: [Validators.maxLength(1000)] }),
+                comment: new FormControl(rating?.comment ?? '', { nonNullable: true, validators: [Validators.maxLength(MAX_COMMENT_LENGTH)] }),
             });
         }),
         { validators: ratingsValidator(required) },

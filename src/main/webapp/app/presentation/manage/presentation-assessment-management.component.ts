@@ -62,8 +62,8 @@ import {
     PresentationTypeFilter,
     PresentationViewMode,
     createPresentationSidebarData,
-    hasResult,
 } from 'app/presentation/manage/presentation-assessment-management.helper';
+import { isSet } from 'app/presentation/shared/presentation.util';
 
 const presentationSidebarCollapseStateRecord: Record<string, boolean> = { standalone: false, linkedToExercise: false };
 const PRESENTATION_SIDEBAR_COLLAPSE_STATE = presentationSidebarCollapseStateRecord as CollapseState;
@@ -79,6 +79,11 @@ function studentRowKey(row: PresentationStudentRow): string {
 function studentDisplayName(row: PresentationStudentRow): string {
     const fullName = `${row.student.firstName ?? ''} ${row.student.lastName ?? ''}`.trim();
     return row.student.name || fullName || row.studentLogin;
+}
+
+/** An instance is assessed once it has a result; only the field of its grading method can be set. */
+function hasResult(instance: PresentationAssessmentInstance): boolean {
+    return isSet(instance.resultPoints) || isSet(instance.passed) || isSet(instance.rubricScore);
 }
 
 function decorateStudentRow(row: PresentationStudentRow): PresentationStudentTableRow {
@@ -613,6 +618,7 @@ export class PresentationAssessmentManagementComponent implements OnInit {
 
     private openPresentationDialog(presentationAssessment?: PresentationAssessment): void {
         this.dialogPresentationAssessment.set(presentationAssessment);
+        this.presentationDialogWide.set(false);
         this.presentationDialogVisible.set(true);
     }
 

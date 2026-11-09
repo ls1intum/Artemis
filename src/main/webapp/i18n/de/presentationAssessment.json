@@ -18,10 +18,10 @@
             "pointsOf": "von",
             "generalRemark": "Allgemeine Anmerkung",
             "placeholder": {
-                "title": "z. B. Review der Systemarchitektur",
+                "title": "Titel",
                 "maxPoints": "0",
                 "resultPoints": "0.0",
-                "description": "Füge Kontext oder Hinweise für Studierende hinzu.",
+                "description": "Beschreibung eingeben",
                 "remark": "Füge eine Anmerkung hinzu",
                 "generalRemark": "Füge eine Rückmeldung zur gesamten Präsentation hinzu."
             },
@@ -188,10 +188,10 @@
                 },
                 "validation": {
                     "empty": "Füge mindestens ein Kriterium hinzu",
-                    "weightSum": "Das Gesamtgewicht muss genau 100 % betragen",
+                    "weightSum": "Das Gesamtgewicht muss genau {{ requiredTotal }} % betragen",
                     "weightSumDetail": "Aktuell sind es {{ total }} %. Passe die Gewichte vor dem Speichern an.",
                     "nameRequired": "Bitte gib einen Namen ein.",
-                    "weightRange": "Bitte gib eine ganze Zahl von 1 bis 100 ein.",
+                    "weightRange": "Bitte gib eine ganze Zahl von 1 bis {{ max }} ein.",
                     "levelDescriptionTooLong": "Eine Stufenbeschreibung ist länger als {{ max }} Zeichen. Öffne die Skala, um sie zu kürzen."
                 }
             }

@@ -1,7 +1,7 @@
 import { AbstractControl, FormArray, FormControl, FormGroup, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
 
 import { PresentationRubricCriterion, PresentationRubricLevel, PresentationRubricScale } from 'app/presentation/shared/entities/presentation-assessment.model';
-import { RUBRIC_WEIGHT_SUM, rubricLevelCount } from 'app/presentation/shared/presentation-rubric.util';
+import { MAX_DESCRIPTION_LENGTH, MAX_NAME_LENGTH, RUBRIC_WEIGHT_SUM, rubricLevelCount } from 'app/presentation/shared/presentation-rubric.util';
 
 export type RubricLevelForm = FormGroup<{
     id: FormControl<number | undefined>;
@@ -49,8 +49,8 @@ export function createCriterionForm(criterion?: Partial<PresentationRubricCriter
     return new FormGroup({
         // A state object keeps an undefined value; passed directly, FormControl would replace it with null
         id: new FormControl<number | undefined>({ value: criterion?.id, disabled: false }, { nonNullable: true }),
-        name: new FormControl(criterion?.name ?? '', { nonNullable: true, validators: [Validators.required, notBlank, Validators.maxLength(255)] }),
-        description: new FormControl(criterion?.description ?? '', { nonNullable: true, validators: [Validators.maxLength(1000)] }),
+        name: new FormControl(criterion?.name ?? '', { nonNullable: true, validators: [Validators.required, notBlank, Validators.maxLength(MAX_NAME_LENGTH)] }),
+        description: new FormControl(criterion?.description ?? '', { nonNullable: true, validators: [Validators.maxLength(MAX_DESCRIPTION_LENGTH)] }),
         weight: new FormControl<number | undefined>(
             { value: criterion?.weight, disabled: false },
             { nonNullable: true, validators: [Validators.required, Validators.min(1), Validators.max(RUBRIC_WEIGHT_SUM)] },
@@ -68,7 +68,7 @@ export function createLevelForms(scale: PresentationRubricScale, levels: Present
             (_, position) =>
                 new FormGroup({
                     id: new FormControl<number | undefined>({ value: levels[position]?.id, disabled: false }, { nonNullable: true }),
-                    description: new FormControl(levels[position]?.description ?? '', { nonNullable: true, validators: [Validators.maxLength(1000)] }),
+                    description: new FormControl(levels[position]?.description ?? '', { nonNullable: true, validators: [Validators.maxLength(MAX_DESCRIPTION_LENGTH)] }),
                 }),
         ),
     );

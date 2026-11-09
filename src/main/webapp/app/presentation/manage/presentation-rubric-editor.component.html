@@ -36,7 +36,7 @@
                 </tumaet-ui-message>
             } @else if (form().hasError('rubricWeightSum')) {
                 <tumaet-ui-message severity="error" data-testid="rubric-weight-sum-error">
-                    <strong jhiTranslate="artemisApp.presentationAssessment.rubric.validation.weightSum"></strong>
+                    <strong jhiTranslate="artemisApp.presentationAssessment.rubric.validation.weightSum" [translateValues]="{ requiredTotal: weightSum }"></strong>
                     <span jhiTranslate="artemisApp.presentationAssessment.rubric.validation.weightSumDetail" [translateValues]="{ total: totalWeight() }"></span>
                 </tumaet-ui-message>
             }
@@ -90,6 +90,7 @@
                             type="text"
                             formControlName="name"
                             required
+                            [attr.data-testid]="'rubric-criterion-name-' + index"
                         />
                         @if (criterion.controls.name.invalid && criterion.controls.name.touched) {
                             <tumaet-ui-message severity="error">
@@ -110,7 +111,10 @@
                         />
                         @if (criterion.controls.description.hasError('maxlength')) {
                             <tumaet-ui-message severity="error" [attr.data-testid]="'rubric-criterion-description-error-' + index">
-                                <span jhiTranslate="artemisApp.presentationAssessment.descriptionTooLong" [translateValues]="{ max: 1000 }"></span>
+                                <span
+                                    jhiTranslate="artemisApp.presentationAssessment.descriptionTooLong"
+                                    [translateValues]="{ max: criterion.controls.description.getError('maxlength').requiredLength }"
+                                ></span>
                             </tumaet-ui-message>
                         }
                     </div>
@@ -120,10 +124,18 @@
                             <span jhiTranslate="artemisApp.presentationAssessment.rubric.weight"></span>
                             <span class="text-state-danger" aria-hidden="true"> *</span>
                         </label>
-                        <tumaet-ui-input-number [inputId]="'rubric-criterion-weight-' + index" fluid [min]="1" [max]="weightSum" suffix=" %" formControlName="weight" />
+                        <tumaet-ui-input-number
+                            [inputId]="'rubric-criterion-weight-' + index"
+                            fluid
+                            [min]="1"
+                            [max]="weightSum"
+                            suffix=" %"
+                            formControlName="weight"
+                            [attr.data-testid]="'rubric-criterion-weight-' + index"
+                        />
                         @if (criterion.controls.weight.invalid && criterion.controls.weight.touched) {
                             <tumaet-ui-message severity="error">
-                                <span jhiTranslate="artemisApp.presentationAssessment.rubric.validation.weightRange"></span>
+                                <span jhiTranslate="artemisApp.presentationAssessment.rubric.validation.weightRange" [translateValues]="{ max: weightSum }"></span>
                             </tumaet-ui-message>
                         }
                     </div>
@@ -166,7 +178,10 @@
                         </div>
                         @if (!isExpanded(criterion) && criterion.controls.levels.invalid) {
                             <tumaet-ui-message severity="error" [attr.data-testid]="'rubric-levels-error-' + index">
-                                <span jhiTranslate="artemisApp.presentationAssessment.rubric.validation.levelDescriptionTooLong" [translateValues]="{ max: 1000 }"></span>
+                                <span
+                                    jhiTranslate="artemisApp.presentationAssessment.rubric.validation.levelDescriptionTooLong"
+                                    [translateValues]="{ max: maxDescriptionLength }"
+                                ></span>
                             </tumaet-ui-message>
                         }
                     </div>
@@ -214,7 +229,10 @@
                                     />
                                     @if (criterion.controls.levels.at(position).controls.description.hasError('maxlength')) {
                                         <tumaet-ui-message class="col-span-full sm:col-start-3" severity="error">
-                                            <span jhiTranslate="artemisApp.presentationAssessment.descriptionTooLong" [translateValues]="{ max: 1000 }"></span>
+                                            <span
+                                                jhiTranslate="artemisApp.presentationAssessment.descriptionTooLong"
+                                                [translateValues]="{ max: criterion.controls.levels.at(position).controls.description.getError('maxlength').requiredLength }"
+                                            ></span>
                                         </tumaet-ui-message>
                                     }
                                 </ng-container>

@@ -38,6 +38,7 @@ import { PointsInputComponent } from 'app/shared-ui/tum-aet-ui-integration/point
 import { PresentationAssessmentService } from 'app/presentation/manage/presentation-assessment.service';
 import { PresentationRubricGradingComponent } from 'app/presentation/manage/presentation-rubric-grading.component';
 import { countUnrated, createRatingsForm, readRatingsForm } from 'app/presentation/manage/presentation-rubric-rating-form';
+import { isSet } from 'app/presentation/shared/presentation.util';
 
 const resultPointsDoNotExceedMaxPoints: ValidatorFn = (control: AbstractControl): ValidationErrors | null => {
     const resultPoints = control.get('resultPoints')?.value;
@@ -53,7 +54,6 @@ const RESULT_POINTS_UPPER_BOUND = 10000;
 const MIN_PRESENTATION_DATE = dayjs('1970-01-01T00:00:00');
 const minimumPresentationDate: ValidatorFn = (control: AbstractControl): ValidationErrors | null =>
     control.value && dayjs(control.value).isBefore(MIN_PRESENTATION_DATE) ? { minDate: true } : null;
-const isSet = (value: unknown): boolean => value !== undefined && value !== null;
 const OUTCOMES = [
     { key: 'passed', value: true, icon: faCheck },
     { key: 'failed', value: false, icon: faXmark },
@@ -245,8 +245,7 @@ export class PresentationAssessmentInstanceFormDialogComponent {
         const gradingMethod = this.gradingMethod();
         const data = {
             presentationDate: combinedPresentationDate,
-            resultPoints:
-                gradingMethod === PresentationGradingMethod.PASS_FAIL || gradingMethod === PresentationGradingMethod.RUBRIC ? undefined : (value.resultPoints ?? undefined),
+            resultPoints: gradingMethod === PresentationGradingMethod.SCORE ? (value.resultPoints ?? undefined) : undefined,
             passed: gradingMethod === PresentationGradingMethod.PASS_FAIL ? (value.passed ?? undefined) : undefined,
             ratings: ratingsForm ? readRatingsForm(this.criteria(), ratingsForm) : undefined,
             language: value.language,

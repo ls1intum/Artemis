@@ -58,7 +58,10 @@
             ></textarea>
             @if (editForm.controls.description.hasError('maxlength')) {
                 <tumaet-ui-message severity="error" id="presentation-assessment-description-error" role="alert" data-testid="presentation-description-error">
-                    <span jhiTranslate="artemisApp.presentationAssessment.descriptionTooLong" [translateValues]="{ max: 1000 }"></span>
+                    <span
+                        jhiTranslate="artemisApp.presentationAssessment.descriptionTooLong"
+                        [translateValues]="{ max: editForm.controls.description.getError('maxlength').requiredLength }"
+                    ></span>
                 </tumaet-ui-message>
             }
         </div>

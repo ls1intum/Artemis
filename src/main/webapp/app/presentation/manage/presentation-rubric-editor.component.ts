@@ -22,7 +22,8 @@ import {
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { PresentationRubricScale } from 'app/presentation/shared/entities/presentation-assessment.model';
-import { MAX_RUBRIC_CRITERIA, RUBRIC_WEIGHT_SUM, rubricLevelCount, rubricLevelKey } from 'app/presentation/shared/presentation-rubric.util';
+import { MAX_DESCRIPTION_LENGTH, MAX_RUBRIC_CRITERIA, RUBRIC_WEIGHT_SUM, rubricLevelCount, rubricLevelKey } from 'app/presentation/shared/presentation-rubric.util';
+import { levelPositionsHighestFirst } from 'app/presentation/shared/presentation.util';
 import { RubricCriterionForm, RubricForm, createCriterionForm, createLevelForms, rubricTotalWeight } from 'app/presentation/manage/presentation-rubric-form';
 
 @Component({
@@ -63,6 +64,7 @@ export class PresentationRubricEditorComponent {
     protected readonly faTableCellsLarge = faTableCellsLarge;
     protected readonly faTrash = faTrash;
     protected readonly maxCriteria = MAX_RUBRIC_CRITERIA;
+    protected readonly maxDescriptionLength = MAX_DESCRIPTION_LENGTH;
     protected readonly weightSum = RUBRIC_WEIGHT_SUM;
     protected readonly rubricLevelCount = rubricLevelCount;
     protected readonly rubricLevelKey = rubricLevelKey;
@@ -93,9 +95,8 @@ export class PresentationRubricEditorComponent {
         return this.expandedCriteria().has(criterion);
     }
 
-    /** The level positions of a criterion, highest first, as the rating scale is read from best to worst. */
     protected positionsHighestFirst(criterion: RubricCriterionForm): number[] {
-        return criterion.controls.levels.controls.map((_, position) => position).reverse();
+        return levelPositionsHighestFirst(criterion.controls.levels.length);
     }
 
     protected toggleLevels(criterion: RubricCriterionForm): void {
