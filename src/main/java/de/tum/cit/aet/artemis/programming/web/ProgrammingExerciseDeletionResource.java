@@ -6,7 +6,6 @@ import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
@@ -30,7 +29,6 @@ import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
-import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDeletionService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionService;
@@ -54,9 +52,6 @@ public class ProgrammingExerciseDeletionResource {
     private static final Logger log = LoggerFactory.getLogger(ProgrammingExerciseDeletionResource.class);
 
     private static final String ENTITY_NAME = "programmingExercise";
-
-    @Value("${jhipster.clientApp.name}")
-    private String applicationName;
 
     private final AuthorizationCheckService authCheckService;
 
@@ -92,12 +87,12 @@ public class ProgrammingExerciseDeletionResource {
     }
 
     /**
-     * DELETE /programming-exercises/:id : delete the "id" programmingExercise.
+     * DELETE /programming-exercises/:id : delete the "id" programmingExercise in the background. The progress is sent over the websocket topic of the exercise.
      *
      * @param exerciseId                the id of the programmingExercise to delete
      * @param deleteBaseReposBuildPlans boolean which states whether the base repos and build plans should be deleted as well, this is true by default because for LocalVC and
      *                                      LocalCI, it does not make sense to keep these artifacts
-     * @return the ResponseEntity with status 200 (OK) when programming exercise has been successfully deleted or with status 404 (Not Found)
+     * @return the ResponseEntity with status 202 (Accepted) when the deletion is scheduled, 404 (Not Found), or 409 (Conflict) if the exercise is already being deleted
      */
     @DeleteMapping("programming-exercises/{exerciseId}")
     @EnforceAtLeastInstructorInExercise
@@ -106,10 +101,11 @@ public class ProgrammingExerciseDeletionResource {
         log.info("REST request to delete ProgrammingExercise : {}", exerciseId);
         var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationCategoriesAndCompetenciesElseThrow(exerciseId);
         User user = userRepository.getUserWithAuthorities();
-        exerciseService.logDeletion(programmingExercise, programmingExercise.getCourseViaExerciseGroupOrCourseMemberElseThrow(), user);
-        exerciseDeletionService.delete(exerciseId, deleteBaseReposBuildPlans);
+        var course = programmingExercise.getCourseViaExerciseGroupOrCourseMemberElseThrow();
+        // The request is audited only once the deletion is accepted, so a request that is refused because the exercise is already being deleted is not logged as a deletion.
+        exerciseDeletionService.startAsyncDeletion(programmingExercise, deleteBaseReposBuildPlans, () -> exerciseService.logDeletion(programmingExercise, course, user));
 
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, programmingExercise.getTitle())).build();
+        return ResponseEntity.accepted().build();
     }
 
     /**

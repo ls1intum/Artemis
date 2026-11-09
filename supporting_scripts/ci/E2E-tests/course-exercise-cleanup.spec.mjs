@@ -30,9 +30,13 @@ function loadTypeScript(path, imports = {}) {
 
 // Creation-only dependencies do not participate in deletion. Keep the real endpoint constants
 // and deletion methods, replacing only the request boundary exercised below.
+const timeouts = loadTypeScript('support/timeouts.ts');
+// Deletions are accepted with 202 and finish in the background; the real helper that follows them is used, only its requests are faked.
+const deletion = loadTypeScript('support/deletion.ts', { './timeouts': timeouts });
 const { ExerciseAPIRequests } = loadTypeScript('support/requests/ExerciseAPIRequests.ts', {
     '../constants': loadTypeScript('support/constants.ts'),
-    '../timeouts': loadTypeScript('support/timeouts.ts'),
+    '../timeouts': timeouts,
+    '../deletion': deletion,
     '../utils': {},
     'app/programming/shared/entities/programming-exercise-build.config': {},
     '../../fixtures/fixtures': {},
@@ -65,6 +69,8 @@ function resources({ failCreate, deletionFailures = new Map() } = {}) {
     };
     const exerciseAPIRequests = new ExerciseAPIRequests({
         request: {
+            // The status endpoint of a deleted exercise answers 404, which ends the wait for the background deletion.
+            get: async () => ({ status: () => 404, text: async () => '' }),
             delete: async (url) => {
                 const [, kind, , rawId] = url.split('/');
                 const id = Number(rawId);
@@ -72,7 +78,7 @@ function resources({ failCreate, deletionFailures = new Map() } = {}) {
                 attempted.push(id);
                 const failure = deletionFailures.get(id);
                 if (failure instanceof Error) throw failure;
-                const status = failure ?? 200;
+                const status = failure ?? 202;
                 if (status >= 200 && status < 300) remaining.delete(id);
                 return { ok: () => status >= 200 && status < 300, status: () => status };
             },
@@ -155,9 +161,10 @@ describe.each([
     ['deleteQuizExercise', 'api/quiz/quiz-exercises/17', 'quiz'],
     ['deleteTextExercise', 'api/text/text-exercises/17', 'text'],
 ])('%s response validation', (method, endpoint, kind) => {
-    it.each([200, 204, 302, 400, 403, 404, 500])('validates HTTP %i from the deletion endpoint', async (status) => {
+    it.each([200, 202, 204, 302, 400, 403, 404, 500])('validates HTTP %i from the deletion endpoint', async (status) => {
         const requests = new ExerciseAPIRequests({
             request: {
+                get: async () => ({ status: () => 404, text: async () => '' }),
                 delete: async (url) => {
                     expect(url).toBe(endpoint);
                     return { ok: () => status >= 200 && status < 300, status: () => status };
@@ -166,5 +173,18 @@ describe.each([
         });
         if (status >= 200 && status < 300) await expect(requests[method](17)).resolves.toBeUndefined();
         else await expect(requests[method](17)).rejects.toThrow(`Failed to delete ${kind} exercise 17: ${status}`);
+    });
+
+    it('reports an accepted deletion that fails in the background with the reason of the server', async () => {
+        const requests = new ExerciseAPIRequests({
+            request: {
+                get: async () => ({
+                    status: () => 200,
+                    json: async () => ({ entityType: 'EXERCISE', entityId: 17, status: 'FAILED', errorMessage: 'repository is locked' }),
+                }),
+                delete: async () => ({ ok: () => true, status: () => 202 }),
+            },
+        });
+        await expect(requests[method](17)).rejects.toThrow('Failed to delete exercise 17: repository is locked');
     });
 });

@@ -4,7 +4,7 @@ import { Subject, of, throwError } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ExamDeleteDialogComponent } from 'app/exam/shared/delete-dialog/exam-delete-dialog.component';
-import { ActionType, EntitySummary } from 'app/shared-ui/delete-dialog/delete-dialog.model';
+import { ActionType, EntitySummaryCategory } from 'app/shared-ui/delete-dialog/delete-dialog.model';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { MockAlertService } from 'test/helpers/mocks/service/mock-alert.service';
@@ -86,36 +86,64 @@ describe('ExamDeleteDialogComponent', () => {
         expect(component.confirmEntityName).toBe('');
     });
 
-    it('should list the summary of the entity', () => {
-        const summary: EntitySummary = { 'summary.students': 5, 'summary.hidden': undefined };
-        fixture.componentRef.setInput('fetchEntitySummary', of(summary));
+    it('should list the categories of a categorized summary', () => {
+        const categories: EntitySummaryCategory[] = [
+            { titleKey: 'category.structure', items: [{ labelKey: 'summary.groups', value: 2 }] },
+            { titleKey: 'category.work', items: [{ labelKey: 'summary.participations', value: 500, highlight: true }] },
+        ];
+        fixture.componentRef.setInput('fetchCategorizedEntitySummary', of(categories));
         open();
 
         expect(component.isLoadingSummary()).toBe(false);
-        expect(component.summaryKeys()).toEqual(['summary.students']);
+        expect(component.categorizedSummary()).toEqual(categories);
+        const summary = fixture.nativeElement.ownerDocument.querySelector('[data-testid="delete-dialog-summary"]') as HTMLElement;
+        expect(summary.textContent).toContain('2');
+        expect(summary.textContent).toContain('500');
     });
 
-    it('should show that the summary is loading until it arrives', () => {
-        const summary$ = new Subject<EntitySummary>();
-        fixture.componentRef.setInput('fetchEntitySummary', summary$);
+    it('should warn when a categorized summary lists a large amount of data', () => {
+        fixture.componentRef.setInput(
+            'fetchCategorizedEntitySummary',
+            of([{ titleKey: 'category.work', items: [{ labelKey: 'summary.participations', value: 500, highlight: true }] }]),
+        );
         open();
-        expect(component.isLoadingSummary()).toBe(true);
 
-        summary$.next({ 'summary.students': 1 });
-        expect(component.isLoadingSummary()).toBe(false);
+        expect(component.hasLargeCount()).toBe(true);
+        expect(fixture.nativeElement.ownerDocument.querySelector('[data-testid="delete-dialog-large-count-warning"]')).not.toBeNull();
     });
 
-    it('should alert and stop loading when the summary cannot be fetched', () => {
+    it('should not warn when a categorized summary lists only small amounts', () => {
+        fixture.componentRef.setInput(
+            'fetchCategorizedEntitySummary',
+            of([{ titleKey: 'category.work', items: [{ labelKey: 'summary.participations', value: 5, highlight: false }] }]),
+        );
+        open();
+
+        expect(component.hasLargeCount()).toBe(false);
+        expect(fixture.nativeElement.ownerDocument.querySelector('[data-testid="delete-dialog-large-count-warning"]')).toBeNull();
+    });
+
+    it('should alert and stop loading when the categorized summary cannot be fetched', () => {
         const errorSpy = vi.spyOn(alertService, 'error');
         fixture.componentRef.setInput(
-            'fetchEntitySummary',
+            'fetchCategorizedEntitySummary',
             throwError(() => new HttpErrorResponse({ status: 500, statusText: 'failed' })),
         );
         open();
 
         expect(component.isLoadingSummary()).toBe(false);
-        expect(component.summaryKeys()).toEqual([]);
+        expect(component.categorizedSummary()).toBeUndefined();
         expect(errorSpy).toHaveBeenCalledWith('error.unexpectedError', { error: expect.any(String) });
+    });
+
+    it('should show that the summary is loading until it arrives', () => {
+        const summary$ = new Subject<EntitySummaryCategory[]>();
+        fixture.componentRef.setInput('fetchCategorizedEntitySummary', summary$);
+        open();
+        expect(component.isLoadingSummary()).toBe(true);
+
+        summary$.next([{ titleKey: 'category.work', items: [{ labelKey: 'summary.students', value: 1 }] }]);
+        expect(component.isLoadingSummary()).toBe(false);
     });
 
     it('should close the dialog and report the extra checks on confirm', () => {

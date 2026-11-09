@@ -11,6 +11,7 @@ const DEFAULT_BUILD_RESULT_TIMEOUT = 120000; // 120 seconds
 const DEFAULT_BUILD_FINISH_TIMEOUT = 300000; // 300 seconds
 const DEFAULT_EXAM_DASHBOARD_TIMEOUT = 120000; // 120 seconds
 const DEFAULT_RELOAD_RENDER_TIMEOUT = 30000; // 30 seconds
+const DEFAULT_DELETION_COMPLETION_TIMEOUT = 180000; // 180 seconds
 
 /**
  * Reads a timeout from the environment, falling back to the default unless the value is a clean positive integer
@@ -74,6 +75,14 @@ export const EXAM_DASHBOARD_TIMEOUT = readTimeoutMs('EXAM_DASHBOARD_TIMEOUT_MS',
  * Environment variable: RELOAD_RENDER_TIMEOUT_MS
  */
 export const RELOAD_RENDER_TIMEOUT = readTimeoutMs('RELOAD_RENDER_TIMEOUT_MS', DEFAULT_RELOAD_RENDER_TIMEOUT);
+
+/**
+ * Timeout for an exercise, exam or exercise group deletion to finish in the background after the server accepted it (202).
+ * The wait follows the progress the server reports and ends as soon as the deletion completed or failed, so the timeout only
+ * matters for a deletion that is stuck; programming exercises with many repositories and exams with many exercises are the slow cases.
+ * Environment variable: DELETION_COMPLETION_TIMEOUT_MS
+ */
+export const DELETION_COMPLETION_TIMEOUT = readTimeoutMs('DELETION_COMPLETION_TIMEOUT_MS', DEFAULT_DELETION_COMPLETION_TIMEOUT);
 
 /**
  * Interval between polling attempts (shared across all polling operations).

@@ -21,6 +21,8 @@ import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ExamWideAnnouncementEvent } from 'app/exam/overview/services/exam-participation-live-events.service';
 import { EntityTitleService, EntityType } from 'app/core/navbar/entity-title.service';
 import { ExamDeletionSummaryDTO } from 'app/exam/shared/entities/exam-deletion-summary.model';
+import { EntitySummaryCategory } from 'app/shared-ui/delete-dialog/delete-dialog.model';
+import { buildExamDeletionSummary } from 'app/exam/manage/services/exam-deletion-summary.util';
 import { ExamUpdateDTO, toExamUpdateDTO } from 'app/exam/manage/services/exam-update-dto.model';
 import { ExportExamUserDTO } from 'app/exam/manage/students/export-users/students-export.model';
 import { ExamExerciseStartPreparationStatus } from 'app/exam/manage/services/exam-exercise-start-preparation-status.model';
@@ -271,12 +273,14 @@ export class ExamManagementService {
     }
 
     /**
-     * Returns a summary for the exam providing information potentially relevant for the deletion.
+     * Returns what is deleted together with the exam, grouped into categories for the delete dialog.
      * @param courseId The course id.
      * @param examId The exam id.
      */
-    getDeletionSummary(courseId: number, examId: number): Observable<HttpResponse<ExamDeletionSummaryDTO>> {
-        return this.http.get<ExamDeletionSummaryDTO>(`${this.resourceUrl}/${courseId}/exams/${examId}/deletion-summary`, { observe: 'response' });
+    getDeletionSummary(courseId: number, examId: number): Observable<EntitySummaryCategory[]> {
+        return this.http
+            .get<ExamDeletionSummaryDTO>(`${this.resourceUrl}/${courseId}/exams/${examId}/deletion-summary`, { observe: 'response' })
+            .pipe(map((response) => (response.body ? buildExamDeletionSummary(response.body) : [])));
     }
 
     /**
