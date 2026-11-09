@@ -211,6 +211,7 @@ export class TeamService implements ITeamService, OnDestroy {
             .pipe(map((res: TeamArrayResponse) => TeamService.convertTeamArrayResponseDatesFromServer(res)));
     }
 
+    /** Loads the team assessment queue and converts its dates without claiming submissions. */
     findAssessmentQueueTeams(exerciseId: number, correctionRound = 0): Observable<AssessmentQueueTeam[]> {
         return this.http.get<AssessmentQueueTeam[]>(`api/exercise/exercises/${exerciseId}/assessment-queue-teams`, { params: { 'correction-round': correctionRound } }).pipe(
             map((teams) => {

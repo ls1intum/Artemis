@@ -37,7 +37,6 @@ import de.tum.cit.aet.artemis.athena.api.AthenaApi;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
-import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
@@ -372,25 +371,24 @@ public class ProgrammingSubmissionService extends SubmissionService {
      * Here hibernate sets all automatic results to null, therefore we must filter all those out. This way the client can access the submissions'
      * single result.
      *
-     * @param exercise        - the exercise we are looking for
+     * @param exerciseId      - the id of the exercise we are looking for
      * @param correctionRound - the correctionRound for which the submissions should be fetched for
      * @param tutor           - the tutor we are interested in
      * @param examMode        - flag should be set to ignore the test run submissions
      * @return an unmodifiable list of programming submissions
      */
-    public List<ProgrammingSubmission> getAllProgrammingSubmissionsAssessedByTutorForCorrectionRoundAndExercise(Exercise exercise, User tutor, boolean examMode,
+    public List<ProgrammingSubmission> getAllProgrammingSubmissionsAssessedByTutorForCorrectionRoundAndExercise(long exerciseId, User tutor, boolean examMode,
             int correctionRound) {
         List<Submission> submissions;
         if (examMode) {
-            var participations = studentParticipationRepository.findAllByParticipationExerciseIdAndResultAssessorAndCorrectionRoundIgnoreTestRuns(exercise.getId(), tutor);
+            var participations = studentParticipationRepository.findAllByParticipationExerciseIdAndResultAssessorAndCorrectionRoundIgnoreTestRuns(exerciseId, tutor);
             // Latest submission might be illegal
             submissions = participations.stream().map(StudentParticipation::findLatestSubmission).filter(Optional::isPresent).map(Optional::get)
                     // filter out the submissions that don't have a result (but a null value) for the correctionRound
                     .filter(submission -> submission.hasResultForCorrectionRound(correctionRound)).toList();
         }
         else {
-            submissions = submissionRepository.findAllByParticipationExerciseIdAndAssessorOrCurrentTeamOwnerIgnoreTestRuns(exercise.getId(), tutor,
-                    exercise.isTeamMode() && authCheckService.isAtLeastInstructorForExercise(exercise, tutor));
+            submissions = submissionRepository.findAllByParticipationExerciseIdAndResultAssessorIgnoreTestRuns(exerciseId, tutor);
             // automatic results are null in the received results list. We need to filter them out for the client to display the dashboard correctly
             submissions.forEach(Submission::removeNullResults);
         }
@@ -477,12 +475,15 @@ public class ProgrammingSubmissionService extends SubmissionService {
      */
     public ProgrammingSubmission lockAndGetProgrammingSubmission(Long submissionId, int correctionRound) {
         ProgrammingSubmission programmingSubmission = programmingSubmissionRepository.findByIdWithResultsFeedbacksAssessor(submissionId);
+        if (programmingSubmission.getParticipation().getExercise().isTeamMode()) {
+            programmingSubmission = programmingSubmissionRepository.findTeamAssessmentById(submissionId).orElseThrow();
+        }
         var manualResult = lockSubmission(programmingSubmission, correctionRound);
         return (ProgrammingSubmission) manualResult.getSubmission();
     }
 
     /**
-     * Reuses an existing team result and assigns unfinished drafts to the current authorized assessor.
+     * Reuses existing team results, claiming only drafts without an assessor.
      *
      * @param submission      the submission whose result may be reused
      * @param correctionRound the requested correction round
@@ -492,12 +493,9 @@ public class ProgrammingSubmissionService extends SubmissionService {
         var assignedResult = submission.getResultForCorrectionRound(correctionRound);
         if (submission.getParticipation().getExercise().isTeamMode() && submission.getParticipation() instanceof StudentParticipation participation
                 && participation.getTeam().isPresent() && assignedResult != null && (assignedResult.getAssessor() != null || assignedResult.isManual())) {
-            if (assignedResult.getCompletionDate() == null) {
-                var user = userRepository.getUser();
-                if (assignedResult.getAssessor() == null || !assignedResult.getAssessor().getId().equals(user.getId())) {
-                    checkSubmissionLockLimit(submission.getParticipation().getExercise().getCourseViaExerciseGroupOrCourseMemberElseThrow().getId());
-                }
-                assignedResult.setAssessor(user);
+            if (assignedResult.getCompletionDate() == null && assignedResult.getAssessor() == null) {
+                checkSubmissionLockLimit(submission.getParticipation().getExercise().getCourseViaExerciseGroupOrCourseMemberElseThrow().getId());
+                assignedResult.setAssessor(userRepository.getUser());
                 resultRepository.save(assignedResult);
             }
             return Optional.of(assignedResult);
@@ -539,16 +537,12 @@ public class ProgrammingSubmissionService extends SubmissionService {
             optionalExistingResult = Optional.ofNullable(submission.getResultForCorrectionRound(correctionRound - 1));
         }
 
-        // Create a new manual result and try to reuse the existing submission with the latest commit hash
-        ProgrammingSubmission existingSubmission = getOrCreateSubmissionWithLastCommitHashForParticipation((ProgrammingExerciseStudentParticipation) submission.getParticipation(),
-                SubmissionType.MANUAL);
-        // Resolving the latest commit can select a different submission whose assessment is already assigned.
-        authCheckService.checkTeamAssessmentAccessElseThrow(existingSubmission);
-        assignedResult = reuseTeamAssessmentResult(existingSubmission, correctionRound);
-        if (assignedResult.isPresent()) {
-            return assignedResult.get();
+        // Team assessment links identify the selected commit; individual assessments retain latest-commit resolution.
+        if (submission.getParticipation().getExercise().isTeamMode()) {
+            checkSubmissionLockLimit(submission.getParticipation().getExercise().getCourseViaExerciseGroupOrCourseMemberElseThrow().getId());
         }
-        checkSubmissionLockLimit(existingSubmission.getParticipation().getExercise().getCourseViaExerciseGroupOrCourseMemberElseThrow().getId());
+        ProgrammingSubmission existingSubmission = submission.getParticipation().getExercise().isTeamMode() ? (ProgrammingSubmission) submission
+                : getOrCreateSubmissionWithLastCommitHashForParticipation((ProgrammingExerciseStudentParticipation) submission.getParticipation(), SubmissionType.MANUAL);
         Result newResult = saveNewEmptyResult(existingSubmission);
         newResult.setAssessor(userRepository.getUser());
         newResult.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);

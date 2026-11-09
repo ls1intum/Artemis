@@ -11,10 +11,12 @@ import java.util.Optional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.EntityGraph;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
@@ -172,6 +174,29 @@ public interface TeamRepository extends ArtemisJpaRepository<Team, Long> {
         team = save(team);
         return findWithStudentsByIdElseThrow(team.getId());
     }
+
+    /** Saves a tutor change and transfers only unfinished manual assessments across the course's matching teams. */
+    @Transactional
+    default Team saveWithTutorChange(Exercise exercise, Team team) {
+        Team saved = save(exercise, team);
+        var instances = findAllByExerciseCourseIdAndShortName(exercise.getCourseViaExerciseGroupOrCourseMemberElseThrow().getId(), saved.getShortName());
+        instances.forEach(instance -> instance.setOwner(saved.getOwner()));
+        saveAll(instances);
+        reassignDraftAssessors(instances.stream().map(Team::getId).toList(), saved.getOwner());
+        return saved;
+    }
+
+    /** Transfers draft responsibility without changing completed results, feedback, or notes. */
+    @Modifying(flushAutomatically = true)
+    @Query("""
+            UPDATE Result r SET r.assessor = :owner
+            WHERE r.completionDate IS NULL
+                AND r.assessmentType IN (de.tum.cit.aet.artemis.assessment.domain.AssessmentType.MANUAL,
+                    de.tum.cit.aet.artemis.assessment.domain.AssessmentType.SEMI_AUTOMATIC)
+                AND r.submission.id IN (SELECT submission.id FROM StudentParticipation p JOIN p.submissions submission
+                    WHERE p.team.id IN :teamIds AND p.testRun = FALSE AND p.exercise.mode = de.tum.cit.aet.artemis.exercise.domain.ExerciseMode.TEAM)
+            """)
+    void reassignDraftAssessors(@Param("teamIds") List<Long> teamIds, @Param("owner") User owner);
 
     /**
      * Checks for each student in the given team whether they already belong to a different team

@@ -6,6 +6,8 @@ import static de.tum.cit.aet.artemis.core.util.StringUtil.stripIllegalCharacters
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -41,6 +43,8 @@ import org.springframework.web.server.ResponseStatusException;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.assessment.domain.Result;
+import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.assessment.repository.TeamScoreRepository;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
@@ -58,12 +62,11 @@ import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
-import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.dto.AssessmentQueueSubmissionDTO;
 import de.tum.cit.aet.artemis.exercise.dto.AssessmentQueueTeamDTO;
 import de.tum.cit.aet.artemis.exercise.dto.CourseWithTeamExercisesDTO;
-import de.tum.cit.aet.artemis.exercise.dto.SubmissionResponseDTO;
 import de.tum.cit.aet.artemis.exercise.dto.TeamImportDTO;
 import de.tum.cit.aet.artemis.exercise.dto.TeamImportStrategyType;
 import de.tum.cit.aet.artemis.exercise.dto.TeamInputDTO;
@@ -124,10 +127,14 @@ public class TeamResource {
 
     private final SubmissionRepository submissionRepository;
 
+    private final ResultRepository resultRepository;
+
     public TeamResource(TeamRepository teamRepository, TeamService teamService, TeamWebsocketService teamWebsocketService, CourseRepository courseRepository,
             ExerciseRepository exerciseRepository, UserRepository userRepository, AuthorizationCheckService authCheckService,
             ParticipationDeletionService participationDeletionService, SubmissionService submissionService, AuditEventRepository auditEventRepository,
-            StudentParticipationRepository studentParticipationRepository, TeamScoreRepository teamScoreRepository, SubmissionRepository submissionRepository) {
+            StudentParticipationRepository studentParticipationRepository, TeamScoreRepository teamScoreRepository, SubmissionRepository submissionRepository,
+            ResultRepository resultRepository) {
+        this.resultRepository = resultRepository;
         this.submissionRepository = submissionRepository;
         this.teamRepository = teamRepository;
         this.teamService = teamService;
@@ -271,14 +278,7 @@ public class TeamResource {
         existingTeam.setOwner(newOwner);
 
         // Save the existing managed team (includes check for conflicts that no student is assigned to multiple teams for an exercise)
-        Team savedTeam = teamRepository.save(exercise, existingTeam);
-
-        // Propagate team owner change to other instances of this team in the course
-        if (ownerWasChanged) {
-            List<Team> teamInstances = teamRepository.findAllByExerciseCourseIdAndShortName(exercise.getCourseViaExerciseGroupOrCourseMember().getId(), savedTeam.getShortName());
-            teamInstances.forEach(teamInstance -> teamInstance.setOwner(savedTeam.getOwner()));
-            teamRepository.saveAll(teamInstances);
-        }
+        Team savedTeam = ownerWasChanged ? teamRepository.saveWithTutorChange(exercise, existingTeam) : teamRepository.save(exercise, existingTeam);
 
         savedTeam.filterSensitiveInformation();
         savedTeam.getStudents().forEach(student -> student.setVisibleRegistrationNumber(student.getRegistrationNumber()));
@@ -350,7 +350,7 @@ public class TeamResource {
         var user = userRepository.getUserWithAuthorities();
         Long teamOwnerId = authCheckService.isAtLeastInstructorForExercise(exercise, user) ? null : user.getId();
         var participations = studentParticipationRepository.findTeamAssessmentQueueParticipations(exerciseId, teamOwnerId, correctionRound);
-        Map<Long, Submission> submissions = new HashMap<>();
+        Map<Long, AssessmentQueueSubmissionDTO> submissions = new HashMap<>();
         boolean canStartAssessment = true;
         try {
             submissionService.checkIfExerciseDueDateIsReached(exercise);
@@ -360,16 +360,21 @@ public class TeamResource {
             canStartAssessment = false;
         }
         if (canStartAssessment && (!(exercise instanceof ProgrammingExercise programmingExercise) || programmingExercise.areManualResultsAllowed())) {
-            submissionService.getAssessableSubmissions(exercise, exercise.isExamExercise(), correctionRound)
-                    .forEach(submission -> submissions.put(submission.getParticipation().getId(), submission));
+            var candidates = exercise.isExamExercise() ? studentParticipationRepository.findExamTeamQueueCandidates(exerciseId, correctionRound, teamOwnerId, user.getId())
+                    : studentParticipationRepository.findCourseTeamQueueCandidates(exerciseId, ZonedDateTime.now(ZoneOffset.UTC), teamOwnerId);
+            candidates.forEach(submission -> submissions.put(submission.participationId(), submission));
         }
         var existingIds = participations.stream().map(entry -> entry.submissionId()).filter(Objects::nonNull).toList();
         if (!existingIds.isEmpty()) {
-            submissionRepository.findBySubmissionIdsWithEagerResults(existingIds).forEach(submission -> submissions.putIfAbsent(submission.getParticipation().getId(), submission));
+            submissionRepository.findTeamQueueMetadata(existingIds).forEach(submission -> submissions.putIfAbsent(submission.participationId(), submission));
         }
+        var selectedIds = submissions.values().stream().map(AssessmentQueueSubmissionDTO::id).toList();
+        var results = selectedIds.isEmpty() ? List.<Result>of() : resultRepository.findTeamQueueResults(selectedIds);
+        var resultsBySubmission = results.stream().collect(Collectors.groupingBy(result -> result.getSubmission().getId()));
         return ResponseEntity.ok(participations.stream().filter(entry -> submissions.containsKey(entry.participationId())).map(entry -> {
             var submission = submissions.get(entry.participationId());
-            return new AssessmentQueueTeamDTO(entry.participationId(), entry.teamId(), entry.shortName(), SubmissionResponseDTO.forAssessmentQueue(submission));
+            return new AssessmentQueueTeamDTO(entry.participationId(), entry.teamId(), entry.shortName(),
+                    submission.toResponse(resultsBySubmission.getOrDefault(submission.id(), List.of())));
         }).toList());
     }
 

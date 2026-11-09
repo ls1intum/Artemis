@@ -44,7 +44,6 @@ import de.tum.cit.aet.artemis.assessment.service.TutorLeaderboardService;
 import de.tum.cit.aet.artemis.core.dto.DueDateStat;
 import de.tum.cit.aet.artemis.core.dto.StatsForDashboardDTO;
 import de.tum.cit.aet.artemis.core.dto.TutorLeaderboardDTO;
-import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.util.TimeUtil;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.dto.CourseManagementDetailViewDTO;
@@ -99,15 +98,11 @@ public class CourseStatsService {
 
     private final LLMTokenUsageTraceRepository llmTokenUsageTraceRepository;
 
-    private final AuthorizationCheckService authCheckService;
-
     public CourseStatsService(CourseRepository courseRepository, StatisticsRepository statisticsRepository, UserRepository userRepository, ExerciseRepository exerciseRepository,
             ResultRepository resultRepository, SubmissionRepository submissionRepository, PresentationPointsCalculationService presentationPointsCalculationService,
             ComplaintService complaintService, TutorLeaderboardService tutorLeaderboardService, ParticipantScoreRepository participantScoreRepository,
             StudentParticipationRepository studentParticipationRepository, ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository,
-            ProgrammingExerciseRepository programmingExerciseRepository, RatingRepository ratingRepository, LLMTokenUsageTraceRepository llmTokenUsageTraceRepository,
-            AuthorizationCheckService authCheckService) {
-        this.authCheckService = authCheckService;
+            ProgrammingExerciseRepository programmingExerciseRepository, RatingRepository ratingRepository, LLMTokenUsageTraceRepository llmTokenUsageTraceRepository) {
         this.courseRepository = courseRepository;
         this.statisticsRepository = statisticsRepository;
         this.userRepository = userRepository;
@@ -345,8 +340,7 @@ public class CourseStatsService {
         stats.setNumberOfComplaints(numberOfComplaints);
         final long numberOfComplaintResponses = complaintService.countComplaintResponsesByExerciseIds(courseExerciseIds);
         stats.setNumberOfOpenComplaints(numberOfComplaints - numberOfComplaintResponses);
-        final long numberOfAssessmentLocks = submissionRepository.countLockedSubmissionsByUserIdAndCourseId(userRepository.getUserWithAuthorities().getId(), course.getId(),
-                authCheckService.isCurrentUserAdminAccessEnabled());
+        final long numberOfAssessmentLocks = submissionRepository.countLockedSubmissionsByUserIdAndCourseId(userRepository.getUserWithAuthorities().getId(), course.getId());
         stats.setNumberOfAssessmentLocks(numberOfAssessmentLocks);
         final long totalNumberOfAssessmentLocks = submissionRepository.countLockedSubmissionsByExerciseIds(courseExerciseIds);
         stats.setTotalNumberOfAssessmentLocks(totalNumberOfAssessmentLocks);

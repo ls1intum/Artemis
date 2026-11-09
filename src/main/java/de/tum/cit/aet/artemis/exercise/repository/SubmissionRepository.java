@@ -26,6 +26,7 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
+import de.tum.cit.aet.artemis.exercise.dto.AssessmentQueueSubmissionDTO;
 import de.tum.cit.aet.artemis.exercise.dto.SubmissionOwnerDTO;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadSubmission;
@@ -158,9 +159,8 @@ public interface SubmissionRepository extends ArtemisJpaRepository<Submission, L
      * Get the number of currently locked submissions for a specific user in the given course. These are all submissions for which the user started, but has not yet finished the
      * assessment.
      *
-     * @param userId      the id of the user
-     * @param courseId    the id of the course
-     * @param adminAccess whether the caller has active administrator access
+     * @param userId   the id of the user
+     * @param courseId the id of the course
      * @return the number of currently locked submissions for a specific user in the given course
      */
     @Query("""
@@ -170,12 +170,8 @@ public interface SubmissionRepository extends ArtemisJpaRepository<Submission, L
             WHERE r.assessor.id = :userId
                 AND r.completionDate IS NULL
                 AND s.participation.exercise.course.id = :courseId
-                AND (:adminAccess = TRUE OR EXISTS (SELECT ucr FROM UserCourseRole ucr WHERE ucr.user.id = :userId AND ucr.course.id = :courseId
-                    AND ucr.role = de.tum.cit.aet.artemis.core.domain.CourseRole.INSTRUCTOR) OR s.participation.exercise.mode <> de.tum.cit.aet.artemis.exercise.domain.ExerciseMode.TEAM
-                    OR EXISTS (SELECT p.id FROM StudentParticipation p WHERE p.id = s.participation.id AND p.team.owner.id = :userId)
-                    OR EXISTS (SELECT practice.id FROM StudentParticipation practice WHERE practice.id = s.participation.id AND practice.testRun = TRUE AND practice.team IS NULL))
             """)
-    long countLockedSubmissionsByUserIdAndCourseId(@Param("userId") Long userId, @Param("courseId") Long courseId, @Param("adminAccess") boolean adminAccess);
+    long countLockedSubmissionsByUserIdAndCourseId(@Param("userId") Long userId, @Param("courseId") Long courseId);
 
     /**
      * Get the number of currently locked submissions for a specific user in the given exam. These are all submissions for which the user started, but has not yet finished the
@@ -236,9 +232,8 @@ public interface SubmissionRepository extends ArtemisJpaRepository<Submission, L
      * Get currently locked submissions for a specific user in the given course.
      * These are all submissions for which the user started, but has not yet finished the assessment.
      *
-     * @param userId      the id of the user
-     * @param courseId    the id of the course
-     * @param adminAccess whether the caller has active administrator access
+     * @param userId   the id of the user
+     * @param courseId the id of the course
      * @return currently locked submissions for a specific user in the given course
      */
     @Query("""
@@ -248,12 +243,8 @@ public interface SubmissionRepository extends ArtemisJpaRepository<Submission, L
             WHERE r.assessor.id = :userId
                 AND r.completionDate IS NULL
                 AND submission.participation.exercise.course.id = :courseId
-                AND (:adminAccess = TRUE OR EXISTS (SELECT ucr FROM UserCourseRole ucr WHERE ucr.user.id = :userId AND ucr.course.id = :courseId
-                    AND ucr.role = de.tum.cit.aet.artemis.core.domain.CourseRole.INSTRUCTOR) OR submission.participation.exercise.mode <> de.tum.cit.aet.artemis.exercise.domain.ExerciseMode.TEAM
-                    OR EXISTS (SELECT p.id FROM StudentParticipation p WHERE p.id = submission.participation.id AND p.team.owner.id = :userId)
-                    OR EXISTS (SELECT practice.id FROM StudentParticipation practice WHERE practice.id = submission.participation.id AND practice.testRun = TRUE AND practice.team IS NULL))
             """)
-    List<Submission> getLockedSubmissionsAndResultsByUserIdAndCourseId(@Param("userId") Long userId, @Param("courseId") Long courseId, @Param("adminAccess") boolean adminAccess);
+    List<Submission> getLockedSubmissionsAndResultsByUserIdAndCourseId(@Param("userId") Long userId, @Param("courseId") Long courseId);
 
     /**
      * Get all currently locked submissions across the given exercises (used for an exam).
@@ -424,32 +415,25 @@ public interface SubmissionRepository extends ArtemisJpaRepository<Submission, L
     List<ExerciseMapEntryDTO> countByExerciseIdsSubmittedAfterDueDate(@Param("exerciseIds") Set<Long> exerciseIds);
 
     /**
-     * Returns non-test-run submissions assessed by the caller, plus unfinished assessments of teams currently owned by the caller.
-     * For team exercises, a former team tutor's assessments are excluded unless the caller is an instructor. The instructor flag preserves
-     * the caller's own assessments regardless of team ownership; it does not return every instructor-accessible assessment.
-     * The fetched results are restricted by the query's assessor and ownership conditions and must not be treated as the submission's complete result history.
+     * Returns submissions for an exercise. Returns only a submission that has a result with a matching assessor. Since the results list may also contain
+     * automatic results but those results do not have an assessor, hibernate simply sets null values for them. Make sure to use a different query if you need
+     * your submission to have all its results set.
      *
-     * @param exerciseId the exercise whose submissions we are interested in
-     * @param assessor   the caller whose assessments and current teams we are interested in
-     * @param instructor whether the caller has at least instructor access to the exercise
+     * @param exerciseId the exercise id we are interested in
+     * @param assessor   the assessor we are interested in
      * @param <T>        the type of the submission
-     * @return submissions matching the caller's assessor or current-team ownership conditions
+     * @return the submissions belonging to the exercise id, which have been assessed by the given assessor
      */
     @Query("""
             SELECT DISTINCT submission
             FROM Submission submission
                 LEFT JOIN FETCH submission.results r
-                LEFT JOIN FETCH r.assessor
-                LEFT JOIN StudentParticipation participation ON participation.id = submission.participation.id
-                LEFT JOIN participation.team team
+                LEFT JOIN FETCH r.assessor a
             WHERE submission.participation.exercise.id = :exerciseId
+                AND :assessor = a
                 AND submission.participation.testRun = FALSE
-                AND ((r.assessor = :assessor AND (submission.participation.exercise.mode <> de.tum.cit.aet.artemis.exercise.domain.ExerciseMode.TEAM OR team.id IS NULL OR team.owner = :assessor OR :instructor = TRUE))
-                    OR (r.assessor IS NOT NULL AND submission.participation.exercise.mode = de.tum.cit.aet.artemis.exercise.domain.ExerciseMode.TEAM AND team.owner = :assessor
-                        AND r.completionDate IS NULL))
             """)
-    <T extends Submission> List<T> findAllByParticipationExerciseIdAndAssessorOrCurrentTeamOwnerIgnoreTestRuns(@Param("exerciseId") Long exerciseId,
-            @Param("assessor") User assessor, @Param("instructor") boolean instructor);
+    <T extends Submission> List<T> findAllByParticipationExerciseIdAndResultAssessorIgnoreTestRuns(@Param("exerciseId") Long exerciseId, @Param("assessor") User assessor);
 
     @Query("""
             SELECT DISTINCT submission
@@ -630,4 +614,17 @@ public interface SubmissionRepository extends ArtemisJpaRepository<Submission, L
                  )
             """)
     Optional<Submission> findLatestSubmissionByParticipationId(@Param("participationId") long participationId);
+
+    /** Selects existing queue submissions without answer bodies. */
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.exercise.dto.AssessmentQueueSubmissionDTO(s.id, s.submitted, s.type, s.exampleSubmission, s.submissionDate,
+                TYPE(s), p.id, p.initializationState, p.initializationDate, p.individualDueDate, team.name,
+                programming.buildFailed, programming.commitHash, text.language)
+            FROM Submission s JOIN StudentParticipation p ON p.id = s.participation.id JOIN p.team team
+            LEFT JOIN ProgrammingSubmission programming ON programming.id = s.id
+                LEFT JOIN TextSubmission text ON text.id = s.id
+            WHERE s.id IN :ids
+            """)
+    List<AssessmentQueueSubmissionDTO> findTeamQueueMetadata(@Param("ids") List<Long> ids);
+
 }

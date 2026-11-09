@@ -671,6 +671,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, OnDestroy {
             });
     }
 
+    /** Selects the existing assessment request for the exercise type and mode. */
     private getTutorAssessedSubmissionsForCorrectionRound(correctionRound: number): Observable<HttpResponse<Submission[]>> {
         let submissionsObservable: Observable<HttpResponse<Submission[]>> = of();
         if (this.isTestRun()) {
@@ -795,6 +796,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, OnDestroy {
         });
     }
 
+    /** Loads team queue metadata without claiming assessment locks. */
     private loadTeamQueueForCorrectionRound(correctionRound: number): void {
         this.teamService
             .findAssessmentQueueTeams(this.exerciseId(), correctionRound)
@@ -822,6 +824,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, OnDestroy {
             });
     }
 
+    /** Returns the submissions displayed as unassessed in this correction round. */
     getUnassessedSubmissionsForRound(correctionRound: number): readonly Submission[] {
         if (this.isTestRun()) {
             return [];

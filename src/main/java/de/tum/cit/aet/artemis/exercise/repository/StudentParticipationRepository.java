@@ -46,6 +46,7 @@ import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.exercise.domain.participation.IdToPresentationScoreSum;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.dto.AssessmentPublicationRecipientDTO;
+import de.tum.cit.aet.artemis.exercise.dto.AssessmentQueueSubmissionDTO;
 import de.tum.cit.aet.artemis.exercise.dto.CourseGradeScoreDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ExamGradeScoreDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ParticipationOverviewRowDTO;
@@ -1027,19 +1028,16 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
      *
      * @param correctionRound the correction round the fetched results should belong to
      * @param exerciseId      the exercise id the participations should belong to
-     * @param teamOwnerId     restrict candidates to this team tutor, or null for unrestricted assessment
      * @return a list of participations including their submitted submissions that do not have a manual result
      */
     // NOTE: we should not fetch too elements here so we leave out feedback and test cases, otherwise the query will be very slow
     @Query("""
             SELECT DISTINCT p
             FROM StudentParticipation p
-                LEFT JOIN p.team team
                 LEFT JOIN FETCH p.submissions submission
                 LEFT JOIN FETCH submission.results result
                 LEFT JOIN FETCH result.assessor
             WHERE p.exercise.id = :exerciseId
-                AND (:teamOwnerId IS NULL OR team.owner.id = :teamOwnerId)
                 AND p.testRun = FALSE
                 AND 0L = (
                     SELECT COUNT(r2)
@@ -1074,29 +1072,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                 AND submission.id = (SELECT MAX(s3.id) FROM p.submissions s3)
             """)
     List<StudentParticipation> findByExerciseIdWithLatestSubmissionWithoutManualResultsAndIgnoreTestRunParticipation(@Param("exerciseId") long exerciseId,
-            @Param("correctionRound") long correctionRound, @Param("teamOwnerId") Long teamOwnerId);
-
-    /**
-     * Selects team labels and the latest assessed submission for one correction round without loading histories.
-     *
-     * @param exerciseId      the exercise id
-     * @param teamOwnerId     the team owner, or null for all teams
-     * @param correctionRound the displayed correction round
-     * @return one metadata row per participation
-     */
-    @Query("""
-            SELECT new de.tum.cit.aet.artemis.exercise.dto.TeamAssessmentQueueEntryDTO(p.id, team.id, team.shortName,
-                (SELECT MAX(s.id) FROM Submission s JOIN s.results r WHERE s.participation.id = p.id AND r.correctionRound = :correctionRound
-                    AND r.assessmentType IN (
-                        de.tum.cit.aet.artemis.assessment.domain.AssessmentType.MANUAL,
-                        de.tum.cit.aet.artemis.assessment.domain.AssessmentType.SEMI_AUTOMATIC)))
-            FROM StudentParticipation p JOIN p.team team
-            WHERE p.exercise.id = :exerciseId AND p.testRun = FALSE
-                AND (:teamOwnerId IS NULL OR team.owner.id = :teamOwnerId)
-            ORDER BY p.id
-            """)
-    List<TeamAssessmentQueueEntryDTO> findTeamAssessmentQueueParticipations(@Param("exerciseId") long exerciseId, @Param("teamOwnerId") Long teamOwnerId,
-            @Param("correctionRound") int correctionRound);
+            @Param("correctionRound") long correctionRound);
 
     Set<StudentParticipation> findDistinctAllByExerciseIdInAndStudentId(Set<Long> exerciseIds, Long studentId);
 
@@ -1104,11 +1080,9 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
     @Query("""
             SELECT DISTINCT p
             FROM StudentParticipation p
-                LEFT JOIN p.team team
                 LEFT JOIN FETCH p.submissions s
                 LEFT JOIN FETCH s.results r
             WHERE p.exercise.id = :exerciseId
-                AND (:teamOwnerId IS NULL OR team.owner.id = :teamOwnerId)
                 AND (p.individualDueDate IS NULL OR p.individualDueDate <= :now)
                 AND p.testRun = FALSE
                 AND NOT EXISTS (
@@ -1124,7 +1098,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                 AND s.id = (SELECT MAX(s3.id) FROM p.submissions s3)
             """)
     List<StudentParticipation> findByExerciseIdWithLatestSubmissionWithoutManualResultsWithPassedIndividualDueDateIgnoreTestRuns(@Param("exerciseId") long exerciseId,
-            @Param("now") ZonedDateTime now, @Param("teamOwnerId") Long teamOwnerId);
+            @Param("now") ZonedDateTime now);
 
     @Query("""
             SELECT p
@@ -2388,5 +2362,108 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
             OR p.initializationState = de.tum.cit.aet.artemis.exercise.domain.InitializationState.FINISHED)
             """)
     long countInitializedParticipationsByExerciseIdAndExamIdIgnoreTestRuns(@Param("exerciseId") long exerciseId, @Param("examId") long examId);
+
+    /**
+     * Selects team labels and the latest assessed submission for one correction round without loading histories.
+     *
+     * @param exerciseId      the exercise id
+     * @param teamOwnerId     the team owner, or null for all teams
+     * @param correctionRound the displayed correction round
+     * @return one metadata row per participation
+     */
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.exercise.dto.TeamAssessmentQueueEntryDTO(p.id, team.id, team.shortName,
+                (SELECT MAX(s.id) FROM Submission s JOIN s.results r WHERE s.participation.id = p.id AND r.correctionRound = :correctionRound
+                    AND r.assessmentType IN (
+                        de.tum.cit.aet.artemis.assessment.domain.AssessmentType.MANUAL,
+                        de.tum.cit.aet.artemis.assessment.domain.AssessmentType.SEMI_AUTOMATIC)))
+            FROM StudentParticipation p JOIN p.team team
+            WHERE p.exercise.id = :exerciseId AND p.testRun = FALSE
+                AND (:teamOwnerId IS NULL OR team.owner.id = :teamOwnerId)
+            ORDER BY p.id
+            """)
+    List<TeamAssessmentQueueEntryDTO> findTeamAssessmentQueueParticipations(@Param("exerciseId") long exerciseId, @Param("teamOwnerId") Long teamOwnerId,
+            @Param("correctionRound") int correctionRound);
+
+    /** Selects eligible team queue candidates without answer bodies. */
+    @Query("""
+            SELECT DISTINCT new de.tum.cit.aet.artemis.exercise.dto.AssessmentQueueSubmissionDTO(s.id, s.submitted, s.type, s.exampleSubmission, s.submissionDate,
+                TYPE(s), p.id, p.initializationState, p.initializationDate, p.individualDueDate, team.name,
+                programming.buildFailed, programming.commitHash, text.language)
+            FROM StudentParticipation p
+                LEFT JOIN p.team team
+                LEFT JOIN p.submissions s
+                LEFT JOIN ProgrammingSubmission programming ON programming.id = s.id
+                LEFT JOIN TextSubmission text ON text.id = s.id
+                LEFT JOIN s.results result
+                LEFT JOIN result.assessor
+            WHERE p.exercise.id = :exerciseId
+                AND (:teamOwnerId IS NULL OR team.owner.id = :teamOwnerId)
+                AND p.testRun = FALSE
+                AND 0L = (
+                    SELECT COUNT(r2)
+                    FROM Result r2
+                    WHERE r2.assessor IS NOT NULL
+                        AND (r2.rated IS NULL OR r2.rated = FALSE)
+                        AND r2.submission = s
+                )
+                AND :correctionRound = (
+                    SELECT COUNT(r)
+                    FROM Result r
+                    WHERE r.assessor IS NOT NULL
+                        AND r.rated = TRUE
+                        AND r.submission = s
+                        AND r.completionDate IS NOT NULL
+                        AND r.assessmentType IN (
+                            de.tum.cit.aet.artemis.assessment.domain.AssessmentType.MANUAL,
+                            de.tum.cit.aet.artemis.assessment.domain.AssessmentType.SEMI_AUTOMATIC
+                        )
+                        AND (p.exercise.dueDate IS NULL OR r.submission.submissionDate <= p.exercise.dueDate)
+                )
+                AND :correctionRound = (
+                    SELECT COUNT(prs)
+                    FROM Submission s2 JOIN s2.results prs
+                    WHERE s2.participation = p
+                      AND prs.assessmentType IN (
+                            de.tum.cit.aet.artemis.assessment.domain.AssessmentType.MANUAL,
+                            de.tum.cit.aet.artemis.assessment.domain.AssessmentType.SEMI_AUTOMATIC
+                        )
+                )
+                AND (:correctionRound = 0 OR NOT EXISTS (SELECT previous.id FROM Result previous WHERE previous.submission.id = s.id
+                    AND previous.correctionRound = :correctionRound - 1 AND previous.assessor.id = :assessorId))
+                AND s.submitted = TRUE
+                AND s.id = (SELECT MAX(s3.id) FROM p.submissions s3)
+            """)
+    List<AssessmentQueueSubmissionDTO> findExamTeamQueueCandidates(@Param("exerciseId") long exerciseId, @Param("correctionRound") long correctionRound,
+            @Param("teamOwnerId") Long teamOwnerId, @Param("assessorId") Long assessorId);
+
+    /** Selects eligible team queue candidates without answer bodies. */
+    @Query("""
+            SELECT DISTINCT new de.tum.cit.aet.artemis.exercise.dto.AssessmentQueueSubmissionDTO(s.id, s.submitted, s.type, s.exampleSubmission, s.submissionDate,
+                TYPE(s), p.id, p.initializationState, p.initializationDate, p.individualDueDate, team.name,
+                programming.buildFailed, programming.commitHash, text.language)
+            FROM StudentParticipation p
+                LEFT JOIN p.team team
+                LEFT JOIN p.submissions s
+                LEFT JOIN ProgrammingSubmission programming ON programming.id = s.id
+                LEFT JOIN TextSubmission text ON text.id = s.id
+                LEFT JOIN s.results r
+            WHERE p.exercise.id = :exerciseId
+                AND (:teamOwnerId IS NULL OR team.owner.id = :teamOwnerId)
+                AND (p.individualDueDate IS NULL OR p.individualDueDate <= :now)
+                AND p.testRun = FALSE
+                AND NOT EXISTS (
+                    SELECT prs
+                    FROM Submission s2 JOIN s2.results prs
+                    WHERE s2.participation = p
+                      AND prs.assessmentType IN (
+                          de.tum.cit.aet.artemis.assessment.domain.AssessmentType.MANUAL,
+                          de.tum.cit.aet.artemis.assessment.domain.AssessmentType.SEMI_AUTOMATIC
+                      )
+                )
+                AND s.submitted = TRUE
+                AND s.id = (SELECT MAX(s3.id) FROM p.submissions s3)
+            """)
+    List<AssessmentQueueSubmissionDTO> findCourseTeamQueueCandidates(@Param("exerciseId") long exerciseId, @Param("now") ZonedDateTime now, @Param("teamOwnerId") Long teamOwnerId);
 
 }

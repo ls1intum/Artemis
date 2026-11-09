@@ -997,4 +997,11 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
                )
             """)
     Set<Result> findLatestResultsByParticipationIds(@Param("participationIds") Set<Long> participationIds);
+
+    /** Loads queue result metadata and assessors without submission answer bodies. */
+    @Query("""
+            SELECT r FROM Result r LEFT JOIN FETCH r.assessor WHERE r.submission.id IN :ids
+            """)
+    List<Result> findTeamQueueResults(@Param("ids") List<Long> ids);
+
 }
