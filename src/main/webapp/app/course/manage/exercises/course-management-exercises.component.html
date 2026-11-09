@@ -97,6 +97,8 @@
                                     jhiDeleteButton
                                     [renderButtonStyle]="false"
                                     deleteQuestion="artemisApp.exerciseActions.deleteMultipleExercisesQuestion"
+                                    entitySummaryTitle="artemisApp.exercise.delete.summary.title"
+                                    [fetchCategorizedEntitySummary]="fetchSelectedExercisesDeletionSummary()"
                                     [translateValues]="{
                                         courseTitle: course()?.title,
                                         courseType: course()?.testCourse
@@ -191,6 +193,7 @@
                             (groupChange)="onTableGroupChange($event)"
                             (exerciseUpdated)="onExerciseUpdated($event)"
                             (exerciseDeleted)="onExerciseDeleted($event)"
+                            (exerciseDeletionOutcomeUnknown)="reloadCourseExercises()"
                             (selectionToggle)="toggleSelection($event)"
                             (selectionAllChange)="onTableSelectionAllChange(card, $event)"
                         />
@@ -282,5 +285,5 @@
         <jhi-exercise-group-edit-modal [(visible)]="showGroupEdit" [group]="group" [isNew]="groupEditIsNew()" (saved)="onGroupEditSaved($event)" />
     }
     <jhi-consistency-check [(visible)]="showConsistencyCheck" [exercisesToCheck]="consistencyExercises()" />
-    <jhi-programming-exercise-edit-selected [(visible)]="showEditSelected" [selectedProgrammingExercises]="editSelectedData()" (saved)="onEditSelectedSaved()" />
+    <jhi-programming-exercise-edit-selected [(visible)]="showEditSelected" [selectedProgrammingExercises]="editSelectedData()" (saved)="reloadCourseExercises()" />
 }
