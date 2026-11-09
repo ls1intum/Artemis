@@ -822,6 +822,31 @@ class DifferentialVerifierTest {
         assertThat(result.reasons()).anyMatch(reason -> reason.contains("Duplicate test names"));
     }
 
+    @ParameterizedTest
+    @ValueSource(booleans = { false, true })
+    void everyAuthoringSelfCheckRejectsTheSameUnseededGraderAsFinalVerification(boolean testsStage) {
+        List<String> names = List.of(DEFAULT_BOUND_NAMES);
+        String unseeded = "package de.test; class SortTest { void sorts() { int pivot = new Random().nextInt(); } }";
+        ScriptedSandbox sandbox = new ScriptedSandbox(resultWithFails(0, names, List.of()), resultWithFails(1, names, names), PROBLEM_STATEMENT_WITH_TASK)
+                .withRepositories(Map.of(), Map.of(), withHarness(Map.of("test/de/test/SortTest.java", unseeded)));
+        DifferentialVerifier verifier = newVerifier();
+
+        AgentVerifyReport report = testsStage ? verifier.selfCheckTestsStage(sandbox, "s", input(), harness(), SeededStructuralTests.EMPTY)
+                : verifier.selfCheck(sandbox, "s", input(), harness(), false, SeededStructuralTests.EMPTY);
+
+        assertThat(report.solutionPassed()).isTrue();
+        assertThat(report.templateFailed()).isTrue();
+        assertThat(report.wouldBeAccepted()).isFalse();
+        assertThat(report.blockingReasons()).anyMatch(reason -> reason.contains("unseeded randomness") && reason.contains("SortTest.java"));
+
+        sandbox.withRepositories(Map.of(), Map.of(), withHarness(Map.of("test/de/test/SortTest.java", unseeded.replace("new Random()", "new Random(42)"))));
+        AgentVerifyReport corrected = testsStage ? verifier.selfCheckTestsStage(sandbox, "s", input(), harness(), SeededStructuralTests.EMPTY)
+                : verifier.selfCheck(sandbox, "s", input(), harness(), false, SeededStructuralTests.EMPTY);
+
+        assertThat(corrected.wouldBeAccepted()).isTrue();
+        assertThat(corrected.blockingReasons()).noneMatch(reason -> reason.contains("unseeded randomness"));
+    }
+
     @Test
     void invalidPlanCannotMisclassifyExpectedStarterFailuresAsBrokenStudentScaffolding() {
         List<String> names = List.of(DEFAULT_BOUND_NAMES);

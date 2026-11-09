@@ -390,8 +390,10 @@ visibility; a fresh hidden variant requires a distinct JUnit method.
 
 Optional assessment probes run on the complete candidate after statement authoring,
 where their evidence is bound to the verified draft. The TESTS-stage gate still
-checks compilation, reference/starter grading and the grading plan; it does not
-repeat the optional probes before a complete draft can be checkpointed.
+checks compilation, reference/starter grading and the grading plan. It and the
+in-session `verify` tool apply the same unseeded-randomness check as final verification,
+so a test rejected for unstable grading cannot receive a passing precheck. The stage
+does not repeat the optional probes before a complete draft can be checkpointed.
 Each completed assessment result is added to the matching immutable checkpoint
 before the next probe starts. A later build or sandbox failure keeps the completed
 findings; unfinished checks remain unverified. Mutant rechecks first establish the

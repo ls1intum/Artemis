@@ -291,8 +291,8 @@ public class DifferentialVerifier {
 
     /**
      * The in-loop self-check the agent's {@code verify} tool calls: the same pristine builds, production parse and actionable gates as {@link #verify}, rendered as an
-     * agent-readable {@link AgentVerifyReport}. It skips the sandbox-free integrity gates, so {@code wouldBeAccepted} covers the differential and actionable gates only and proves
-     * nothing about semantic quality. {@code includeStatementChecks} is false for the tests-stage entry point, which reports on test artifacts only.
+     * agent-readable {@link AgentVerifyReport}. It includes inspectable test-integrity gates, including deterministic grading, but cannot establish semantic quality or gates
+     * requiring complete baseline snapshots. {@code includeStatementChecks} is false for the tests-stage entry point, which reports on test artifacts only.
      */
     private AgentVerifyReport selfCheck(InteractiveSandbox sandbox, String sessionId, GenerationInput exercise, Map<String, String> seedTestsFiles, boolean adaptation,
             boolean includeStatementChecks, SeededStructuralTests seededStructuralTests) {
@@ -328,6 +328,9 @@ public class DifferentialVerifier {
         List<String> sourceReadingTestReasons = ExerciseIntegrityGate.sourceReadingTestReasons(testsRepositoryFiles);
         boolean testsReadNoSources = sourceReadingTestReasons.isEmpty();
         reasons.addAll(sourceReadingTestReasons);
+        List<String> nondeterministicTestReasons = ExerciseIntegrityGate.nondeterministicGradedTestReasons(testsRepositoryFiles);
+        boolean gradedTestsDeterministic = nondeterministicTestReasons.isEmpty();
+        reasons.addAll(nondeterministicTestReasons);
 
         List<String> contractSpecifications = contractSpecifications(sandbox, sessionId);
         List<String> approvedSpecificationReasons = contractSpecifications.stream()
@@ -347,17 +350,16 @@ public class DifferentialVerifier {
                 .flatMap(spec -> ApprovedOwnershipGate.templateTodoSeamReasons(spec, templateFiles, testsRepositoryFiles).stream()).distinct().toList();
         boolean templateTodoSeamsHold = templateTodoSeamReasons.isEmpty();
         reasons.addAll(templateTodoSeamReasons);
-        boolean gatesApartFromSolutionHold = javaAresConventionsHold && testsReadNoSources && approvedSpecificationHolds && approvedTestPlanHolds && statementTraceabilityHolds
-                && templateTodoSeamsHold;
+        boolean gatesApartFromSolutionHold = javaAresConventionsHold && testsReadNoSources && gradedTestsDeterministic && approvedSpecificationHolds && approvedTestPlanHolds
+                && statementTraceabilityHolds && templateTodoSeamsHold;
         reasons.addAll(DifferentialBuildChecks.structuralSeedingDefectReasons(solution, seededStructuralTestNames, contractSpecifications, solutionFiles, exercise.packageName(),
                 (includeStatementChecks ? analysis.actionableGatesPassApartFromSolution() : analysis.testArtifactGatesPassApartFromSolution()) && gatesApartFromSolutionHold));
 
         return new AgentVerifyReport(solution.tests(), solutionPassed, List.copyOf(solution.testFailedNames()), solution.failureEvidence(), template.tests(), templateCompiled,
                 analysis.templateFailed(), template.failureEvidence(), templateWronglyPassing, List.copyOf(solution.testNames()),
                 includeStatementChecks ? analysis.unresolvedTaskBindings() : List.of(), analysis.possiblyDeadFiles(),
-                (includeStatementChecks ? analysis.actionableGatesPass() : analysis.testArtifactGatesPass()) && javaAresConventionsHold && testsReadNoSources
-                        && approvedSpecificationHolds && approvedTestPlanHolds && statementTraceabilityHolds && templateTodoSeamsHold,
-                reasons, List.copyOf(readHiddenTestNames(sandbox, sessionId, baselineHiddenTestNames)), solution.buildDiagnostic(), template.buildDiagnostic(),
+                (includeStatementChecks ? analysis.actionableGatesPass() : analysis.testArtifactGatesPass()) && gatesApartFromSolutionHold, reasons,
+                List.copyOf(readHiddenTestNames(sandbox, sessionId, baselineHiddenTestNames)), solution.buildDiagnostic(), template.buildDiagnostic(),
                 analysis.preservationTestNames(), analysis.gradingPlanValid());
     }
 
