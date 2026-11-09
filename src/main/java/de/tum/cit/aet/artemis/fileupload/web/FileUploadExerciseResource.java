@@ -48,6 +48,7 @@ import de.tum.cit.aet.artemis.atlas.dto.atlasml.SaveCompetencyRequestDTO.Operati
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
+import de.tum.cit.aet.artemis.core.dto.SortingOrder;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
@@ -93,6 +94,9 @@ import de.tum.cit.aet.artemis.fileupload.service.FileUploadSubmissionExportServi
 import de.tum.cit.aet.artemis.lecture.api.SlideApi;
 import de.tum.cit.aet.artemis.notification.service.notifications.GroupNotificationScheduleService;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismDetectionConfigHelper;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 
 /**
  * REST controller for managing FileUploadExercise.
@@ -213,6 +217,7 @@ public class FileUploadExerciseResource {
     @PostMapping("file-upload-exercises")
     @EnforceAtLeastStudent
     @ManualConfig
+    @ApiResponse(responseCode = "201", description = "The created exercise")
     public ResponseEntity<FileUploadExerciseDTO> createFileUploadExercise(@RequestBody FileUploadExerciseInputDTO inputDTO) throws URISyntaxException {
         log.debug("REST request to save FileUploadExercise : {}", inputDTO);
         if (inputDTO.id() != null) {
@@ -288,7 +293,7 @@ public class FileUploadExerciseResource {
      *
      * @param sourceId The ID of the original exercise which should get imported
      * @param inputDTO The new exercise containing values that should get overwritten in the imported exercise, s.a. the title or difficulty
-     * @return The imported exercise (200), a not found error (404) if the template
+     * @return The imported exercise (201), a not found error (404) if the template
      *         does not exist, or a forbidden error
      *         (403) if the user is not at least an editor in the target course.
      * @throws URISyntaxException When the URI of the response entity is invalid
@@ -296,6 +301,7 @@ public class FileUploadExerciseResource {
     @PostMapping("file-upload-exercises/import")
     @EnforceAtLeastStudent
     @ManualConfig
+    @ApiResponse(responseCode = "201", description = "The imported exercise")
     public ResponseEntity<FileUploadExerciseDTO> importFileUploadExercise(@RequestParam long sourceId, @RequestBody FileUploadExerciseInputDTO inputDTO) throws URISyntaxException {
         if (sourceId <= 0 || (inputDTO.courseId() == null && inputDTO.exerciseGroupId() == null)) {
             throw new BadRequestAlertException("Either the courseId or exerciseGroupId must be set for an import", ENTITY_NAME, "noCourseIdOrExerciseGroupId");
@@ -369,17 +375,27 @@ public class FileUploadExerciseResource {
      * result is pageable since there
      * might be hundreds of exercises in the DB.
      *
-     * @param search         The pageable search containing the page size, page
-     *                           number and query string
-     * @param isCourseFilter Whether to search in the courses for exercises
-     * @param isExamFilter   Whether to search in the groups for exercises
+     * @param page           the zero-based page number
+     * @param pageSize       the maximum number of exercises on one page
+     * @param sortingOrder   the sort direction
+     * @param sortedColumn   the exercise field used for sorting
+     * @param searchTerm     the title or id fragment to find
+     * @param isCourseFilter whether to include course exercises
+     * @param isExamFilter   whether to include exam exercises
      * @return The desired page, sorted and matching the given query
      */
     @GetMapping("file-upload-exercises")
     @EnforceAtLeastStudent
     @ManualConfig
-    public ResponseEntity<SearchResultPageDTO<FileUploadExerciseDTO>> getAllExercisesOnPage(SearchTermPageableSearchDTO<String> search,
-            @RequestParam(defaultValue = "true") Boolean isCourseFilter, @RequestParam(defaultValue = "true") Boolean isExamFilter) {
+    public ResponseEntity<SearchResultPageDTO<FileUploadExerciseDTO>> getAllExercisesOnPage(@RequestParam int page, @RequestParam int pageSize,
+            @RequestParam SortingOrder sortingOrder, @RequestParam String sortedColumn, @RequestParam(defaultValue = "") String searchTerm,
+            @RequestParam(defaultValue = "true") boolean isCourseFilter, @RequestParam(defaultValue = "true") boolean isExamFilter) {
+        SearchTermPageableSearchDTO<String> search = new SearchTermPageableSearchDTO<>();
+        search.setPage(page);
+        search.setPageSize(pageSize);
+        search.setSortingOrder(sortingOrder);
+        search.setSortedColumn(sortedColumn);
+        search.setSearchTerm(searchTerm);
         final var user = userRepository.getUserWithAuthorities();
         var result = fileUploadExerciseService.getAllOnPageWithSize(search, isCourseFilter, isExamFilter, user);
         List<FileUploadExerciseDTO> exercises = result.getResultsOnPage().stream().map(FileUploadExerciseDTO::forSearch).toList();
@@ -681,11 +697,12 @@ public class FileUploadExerciseResource {
      *
      * @param exerciseId              the id of the exercise to get the repos from
      * @param submissionExportOptions the options that should be used for the export
-     * @return ResponseEntity with status
+     * @return ResponseEntity with status 200 and the zip file of the submissions
      */
     @PostMapping("file-upload-exercises/{exerciseId}/export-submissions")
     @EnforceAtLeastInstructorInExercise
     @FeatureToggle(Feature.Exports)
+    @ApiResponse(responseCode = "200", description = "The zip file of the submissions; its name is in the filename header", content = @Content(mediaType = "application/octet-stream", schema = @Schema(type = "string", format = "binary")))
     public ResponseEntity<Resource> exportSubmissions(@PathVariable long exerciseId, @RequestBody SubmissionExportOptionsDTO submissionExportOptions) {
         Path zipFilePath = fileUploadSubmissionExportService.exportStudentSubmissionsElseThrow(exerciseId, submissionExportOptions);
         return ResponseUtil.ok(zipFilePath);
@@ -700,6 +717,7 @@ public class FileUploadExerciseResource {
     @GetMapping("file-upload-exercises/{exerciseId}/export")
     @EnforceAtLeastInstructorInExercise
     @FeatureToggle(Feature.Exports)
+    @ApiResponse(responseCode = "200", description = "The zip file of the exercise; its name is in the filename header", content = @Content(mediaType = "application/octet-stream", schema = @Schema(type = "string", format = "binary")))
     public ResponseEntity<Resource> exportExercise(@PathVariable long exerciseId) {
         FileUploadExercise fileUploadExercise = fileUploadExerciseRepository.findWithCategoriesAndGradingCriteriaByIdElseThrow(exerciseId);
         try {
