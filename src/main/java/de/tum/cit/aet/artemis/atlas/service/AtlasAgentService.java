@@ -171,10 +171,7 @@ public class AtlasAgentService {
             BatchRelationPreviewResponseDTO batchRelationPreview = CompetencyMappingToolsService.getBatchRelationPreview();
             RelationGraphPreviewDTO relationGraphPreview = CompetencyMappingToolsService.getRelationGraphPreview();
 
-            ExerciseCompetencyMappingDTO exerciseMappingPreview = ExerciseMappingToolsService.getExerciseMappingPreview();
-            if (exerciseMappingPreview == null) {
-                exerciseMappingPreview = atlasAgentSessionCacheService.getCachedExerciseMappingPreview(sessionId);
-            }
+            ExerciseCompetencyMappingDTO exerciseMappingPreview = getAvailableExerciseMappingPreview(sessionId);
 
             List<CompetencyRelationPreviewDTO> relationPreviews = previewService.convertToRelationPreviewsList(singleRelationPreview, batchRelationPreview);
             RelationGraphPreviewDTO graphForDto = relationGraphPreview;
@@ -583,11 +580,7 @@ public class AtlasAgentService {
                 return new AtlasAgentChatResponseDTO(combinedResponse, ZonedDateTime.now(), competencyModifiedInCurrentRequest.get(), null, relationPreviews, graphPreview, null);
             }
             case EXERCISE_MAPPER -> {
-                // Fall back to Hazelcast when ThreadLocal is empty (cross-node execution)
-                ExerciseCompetencyMappingDTO exercisePreview = ExerciseMappingToolsService.getExerciseMappingPreview();
-                if (exercisePreview == null) {
-                    exercisePreview = atlasAgentSessionCacheService.getCachedExerciseMappingPreview(sessionId);
-                }
+                ExerciseCompetencyMappingDTO exercisePreview = getAvailableExerciseMappingPreview(sessionId);
                 log.info("delegateToNextStepAgent: EXERCISE_MAPPER produced exercisePreview={}", exercisePreview != null);
                 previewService.addAssistantMessageToMemory(sessionId, combinedResponse);
                 if (exercisePreview != null) {
@@ -601,6 +594,20 @@ public class AtlasAgentService {
                 return new AtlasAgentChatResponseDTO(delegationResponse, ZonedDateTime.now(), competencyModifiedInCurrentRequest.get(), null, null, null, null);
             }
         }
+    }
+
+    /**
+     * Retrieves the latest usable mapping preview, avoiding both retained and cached data after a failed replacement.
+     *
+     * @param sessionId the session whose cached preview can be used when no local preview exists
+     * @return the available preview, or null while the latest attempt remains unsuccessful
+     */
+    private ExerciseCompetencyMappingDTO getAvailableExerciseMappingPreview(String sessionId) {
+        if (ExerciseMappingToolsService.hasRejectedExerciseMappingPreview()) {
+            return null;
+        }
+        ExerciseCompetencyMappingDTO preview = ExerciseMappingToolsService.getExerciseMappingPreview();
+        return preview != null ? preview : atlasAgentSessionCacheService.getCachedExerciseMappingPreview(sessionId);
     }
 
     /**

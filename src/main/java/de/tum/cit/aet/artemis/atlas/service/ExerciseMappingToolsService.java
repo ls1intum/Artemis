@@ -109,6 +109,9 @@ public class ExerciseMappingToolsService {
      */
     private static final ThreadLocal<ExerciseCompetencyMappingDTO> exerciseMappingPreview = new ThreadLocal<>();
 
+    /** Suppresses a retained preview when its latest replacement failed, until another preview succeeds. */
+    private static final ThreadLocal<Boolean> exerciseMappingPreviewRejected = new ThreadLocal<>();
+
     /**
      * ThreadLocal storage for user-selected exercise mappings (from the client approval payload).
      * When set, {@link #saveExerciseCompetencyMappings} uses these instead of the LLM-provided mappings,
@@ -229,6 +232,7 @@ public class ExerciseMappingToolsService {
             @ToolParam(description = "List of competency mappings with competencyId, weight (0.25/0.5/1.0) and suggested.") List<ExerciseCompetencyMappingOperation> mappings,
             @ToolParam(description = "If true, display only (no action buttons)") Boolean viewOnly) {
 
+        exerciseMappingPreviewRejected.set(true);
         try {
             log.info("Generating exercise mapping preview for exercise {} in course {}", exerciseId, courseId);
 
@@ -242,6 +246,9 @@ public class ExerciseMappingToolsService {
             if (mappings == null) {
                 return error("mappings is required. Provide the competency mappings list and retry the preview.");
             }
+            if (mappings.stream().anyMatch(mapping -> mapping == null || mapping.getCompetencyId() == null)) {
+                return error("Every mapping must include a competencyId. Call getCourseCompetencies and retry the preview with valid competency IDs.");
+            }
 
             long suggestedCount = mappings.stream().filter(mapping -> Boolean.TRUE.equals(mapping.getSuggested())).map(ExerciseCompetencyMappingOperation::getCompetencyId)
                     .distinct().count();
@@ -250,17 +257,23 @@ public class ExerciseMappingToolsService {
                         + "and set suggested=false for the others, then retry the preview.");
             }
 
+            // Validate every requested competency against the course in one bulk lookup before publishing a preview.
+            List<Long> allCompetencyIds = mappings.stream().map(ExerciseCompetencyMappingOperation::getCompetencyId).toList();
+            Map<Long, CourseCompetency> competencyById = courseCompetencyRepository.findAllById(allCompetencyIds).stream()
+                    .collect(Collectors.toMap(CourseCompetency::getId, competency -> competency));
+            if (allCompetencyIds.stream().anyMatch(id -> {
+                CourseCompetency competency = competencyById.get(id);
+                return competency == null || competency.getCourse() == null || !courseId.equals(competency.getCourse().getId());
+            })) {
+                return error("Every competency must exist in the specified course. Call getCourseCompetencies and retry the preview with valid competency IDs.");
+            }
+
             List<CompetencyExerciseLink> existingLinks = competencyExerciseLinkRepository.findByExerciseIdWithCompetency(exerciseId);
             Set<Long> existingCompetencyIds = existingLinks.stream().map(link -> link.getCompetency().getId()).collect(Collectors.toSet());
 
-            // Bulk-load titles to avoid N+1 queries
-            List<Long> allCompetencyIds = mappings.stream().map(ExerciseCompetencyMappingOperation::getCompetencyId).toList();
-            Map<Long, String> titleById = courseCompetencyRepository.findAllById(allCompetencyIds).stream()
-                    .collect(Collectors.toMap(CourseCompetency::getId, CourseCompetency::getTitle));
-
             ExerciseCompetencyMappingDTO preview = new ExerciseCompetencyMappingDTO(exercise.getId(), exercise.getTitle(), mappings.stream().map(op -> {
-                return new ExerciseCompetencyMappingDTO.CompetencyMappingOptionDTO(op.getCompetencyId(), titleById.getOrDefault(op.getCompetencyId(), "Unknown Competency"),
-                        op.getWeight(), existingCompetencyIds.contains(op.getCompetencyId()), Boolean.TRUE.equals(op.getSuggested()));
+                return new ExerciseCompetencyMappingDTO.CompetencyMappingOptionDTO(op.getCompetencyId(), competencyById.get(op.getCompetencyId()).getTitle(), op.getWeight(),
+                        existingCompetencyIds.contains(op.getCompetencyId()), Boolean.TRUE.equals(op.getSuggested()));
             }).toList(), viewOnly != null && viewOnly);
 
             exerciseMappingPreview.set(preview);
@@ -271,6 +284,7 @@ public class ExerciseMappingToolsService {
                 sessionCacheService.cacheExerciseMappingPreview(sessionId, preview);
             }
 
+            exerciseMappingPreviewRejected.remove();
             return success("Preview generated successfully for exercise-to-competency mapping.");
 
         }
@@ -401,11 +415,21 @@ public class ExerciseMappingToolsService {
     }
 
     /**
+     * Indicates that the latest preview attempt failed, so response assembly must not reuse retained or cached mappings.
+     *
+     * @return whether an unsuccessful replacement is awaiting a successful retry
+     */
+    public static boolean hasRejectedExerciseMappingPreview() {
+        return Boolean.TRUE.equals(exerciseMappingPreviewRejected.get());
+    }
+
+    /**
      * Clear the ThreadLocal preview data.
      * Should be called after preview has been consumed by the client.
      */
     public static void clearExerciseMappingPreview() {
         exerciseMappingPreview.remove();
+        exerciseMappingPreviewRejected.remove();
         currentSessionId.remove();
     }
 

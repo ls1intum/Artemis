@@ -7,6 +7,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.LongStream;
@@ -28,6 +29,7 @@ import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
+import de.tum.cit.aet.artemis.atlas.domain.competency.Prerequisite;
 import de.tum.cit.aet.artemis.atlas.dto.atlasAgent.ExerciseCompetencyMappingDTO;
 import de.tum.cit.aet.artemis.atlas.repository.CourseCompetencyRepository;
 import de.tum.cit.aet.artemis.atlas.test_repository.CompetencyExerciseLinkTestRepository;
@@ -233,10 +235,14 @@ class ExerciseMappingToolsServiceTest {
 
     @Test
     void preview_countsDistinctSuggestedCompetenciesWithoutChangingDuplicateHandling() {
+        var competency3 = new Competency();
+        competency3.setId(3L);
+        competency3.setTitle("Complexity Analysis");
+        competency3.setCourse(course);
         when(courseRepository.findById(10L)).thenReturn(Optional.of(course));
         when(exerciseRepository.findWithCompetenciesById(42L)).thenReturn(Optional.of(exercise));
         when(competencyExerciseLinkRepository.findByExerciseIdWithCompetency(42L)).thenReturn(List.of());
-        when(courseCompetencyRepository.findAllById(List.of(1L, 2L, 3L, 1L))).thenReturn(List.of(competency1, competency2));
+        when(courseCompetencyRepository.findAllById(List.of(1L, 2L, 3L, 1L))).thenReturn(List.of(competency1, competency2, competency3));
         var mappings = List.of(previewMapping(1L, true), previewMapping(2L, true), previewMapping(3L, true), previewMapping(1L, true));
 
         assertThat(service.previewExerciseCompetencyMapping(10L, 42L, mappings, false)).contains("Preview generated successfully");
@@ -420,14 +426,19 @@ class ExerciseMappingToolsServiceTest {
         when(courseRepository.findById(10L)).thenReturn(Optional.of(course));
         when(exerciseRepository.findWithCompetenciesById(42L)).thenReturn(Optional.of(exercise));
         when(competencyExerciseLinkRepository.findByExerciseIdWithCompetency(42L)).thenReturn(List.of());
-        when(courseCompetencyRepository.findAllById(any())).thenReturn(List.of());
+        when(courseCompetencyRepository.findAllById(any())).thenReturn(List.of(competency1));
 
         var mappings = List.of(new ExerciseMappingToolsService.ExerciseCompetencyMappingOperation(1L, 0.5, false, false));
-        service.previewExerciseCompetencyMapping(10L, 42L, mappings, false);
+        assertThat(service.previewExerciseCompetencyMapping(10L, 42L, mappings, false)).contains("Preview generated successfully");
         assertThat(ExerciseMappingToolsService.getExerciseMappingPreview()).isNotNull();
+        assertThat(ExerciseMappingToolsService.hasRejectedExerciseMappingPreview()).isFalse();
+
+        service.previewExerciseCompetencyMapping(10L, 42L, null, false);
+        assertThat(ExerciseMappingToolsService.hasRejectedExerciseMappingPreview()).isTrue();
 
         ExerciseMappingToolsService.clearExerciseMappingPreview();
         assertThat(ExerciseMappingToolsService.getExerciseMappingPreview()).isNull();
+        assertThat(ExerciseMappingToolsService.hasRejectedExerciseMappingPreview()).isFalse();
     }
 
     @Test
@@ -464,21 +475,75 @@ class ExerciseMappingToolsServiceTest {
     }
 
     @Test
-    void previewCachesUnknownCompetencyAndDefaultsMissingFlags() {
+    void previewCachesSameCoursePrerequisiteAndDefaultsMissingFlags() {
+        var prerequisite = new Prerequisite();
+        prerequisite.setId(99L);
+        prerequisite.setTitle("Basic Programming");
+        prerequisite.setCourse(course);
         when(courseRepository.findById(10L)).thenReturn(Optional.of(course));
         when(exerciseRepository.findWithCompetenciesById(42L)).thenReturn(Optional.of(exercise));
         when(competencyExerciseLinkRepository.findByExerciseIdWithCompetency(42L)).thenReturn(List.of());
-        when(courseCompetencyRepository.findAllById(List.of(99L))).thenReturn(List.of());
+        when(courseCompetencyRepository.findAllById(List.of(99L))).thenReturn(List.of(prerequisite));
         ExerciseMappingToolsService.setCurrentSessionId("mapping-session");
         var operation = new ExerciseMappingToolsService.ExerciseCompetencyMappingOperation(99L, 0.5, false, null);
 
         assertThat(service.previewExerciseCompetencyMapping(10L, 42L, List.of(operation), null)).contains("Preview generated successfully");
 
         var preview = ExerciseMappingToolsService.getExerciseMappingPreview();
-        assertThat(preview.competencies().getFirst().competencyTitle()).isEqualTo("Unknown Competency");
+        assertThat(preview.competencies().getFirst().competencyId()).isEqualTo(99L);
+        assertThat(preview.competencies().getFirst().competencyTitle()).isEqualTo("Basic Programming");
         assertThat(preview.competencies().getFirst().suggested()).isFalse();
         assertThat(preview.viewOnly()).isFalse();
         verify(sessionCacheService).cacheExerciseMappingPreview("mapping-session", preview);
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = { false, true })
+    void previewRejectsMissingOrForeignCompetenciesWithoutPublishingAnyMappings(boolean foreignCompetency) {
+        when(courseRepository.findById(10L)).thenReturn(Optional.of(course));
+        when(exerciseRepository.findWithCompetenciesById(42L)).thenReturn(Optional.of(exercise));
+        if (foreignCompetency) {
+            var foreignCourse = new Course();
+            foreignCourse.setId(11L);
+            var foreign = new Competency();
+            foreign.setId(99L);
+            foreign.setTitle("Private course competency");
+            foreign.setCourse(foreignCourse);
+            when(courseCompetencyRepository.findAllById(List.of(1L, 99L))).thenReturn(List.of(competency1, foreign));
+        }
+        else {
+            when(courseCompetencyRepository.findAllById(List.of(1L, 99L))).thenReturn(List.of(competency1));
+        }
+        ExerciseMappingToolsService.setCurrentSessionId("mapping-session");
+
+        JsonNode result = objectMapper.readTree(service.previewExerciseCompetencyMapping(10L, 42L, List.of(previewMapping(1L, true), previewMapping(99L, false)), false));
+
+        assertThat(result.get("success").asBoolean()).isFalse();
+        assertThat(result.get("error").asString()).contains("Every competency must exist in the specified course", "getCourseCompetencies", "retry the preview")
+                .doesNotContain("Private course competency");
+        assertThat(ExerciseMappingToolsService.getExerciseMappingPreview()).isNull();
+        verifyNoMoreInteractions(sessionCacheService);
+        verify(competencyExerciseLinkRepository, never()).findByExerciseIdWithCompetency(42L);
+        verify(competencyExerciseLinkRepository, never()).saveAll(any());
+        verify(competencyExerciseLinkRepository, never()).deleteAll(any(Iterable.class));
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = { false, true })
+    void previewRejectsNullMappingOrCompetencyIdWithAnActionableError(boolean nullMapping) {
+        when(courseRepository.findById(10L)).thenReturn(Optional.of(course));
+        when(exerciseRepository.findWithCompetenciesById(42L)).thenReturn(Optional.of(exercise));
+        ExerciseMappingToolsService.setCurrentSessionId("mapping-session");
+        var mappings = nullMapping ? Collections.<ExerciseMappingToolsService.ExerciseCompetencyMappingOperation>singletonList(null)
+                : List.of(new ExerciseMappingToolsService.ExerciseCompetencyMappingOperation(null, 0.5, false, false));
+
+        JsonNode result = objectMapper.readTree(service.previewExerciseCompetencyMapping(10L, 42L, mappings, false));
+
+        assertThat(result.get("success").asBoolean()).isFalse();
+        assertThat(result.get("error").asString()).contains("Every mapping must include a competencyId", "getCourseCompetencies", "retry the preview");
+        assertThat(ExerciseMappingToolsService.getExerciseMappingPreview()).isNull();
+        verify(courseCompetencyRepository, never()).findAllById(any());
+        verifyNoMoreInteractions(sessionCacheService);
     }
 
     @Test
