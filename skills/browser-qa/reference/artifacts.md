@@ -4,7 +4,7 @@ Every file lives in the chosen durable run dir outside the checkout. Write JSON 
 
 ## inventory.tsv
 
-Written by `skills/browser-qa/scripts/changes.sh`. Columns `id kind file line symbol`, one row per changed hunk (`C001`...) plus one per deleted file (`D-<name>`). Rows of kind `test` and `docs` count as traced without a claim. Never edit it; regenerate it when the head moves.
+Written by `skills/browser-qa/scripts/changes.sh`. Columns `id kind file line symbol`, one row per changed hunk (`C001`...) plus one per deleted file (`D-<path>`, the full repository path). Rows of kind `test` and `docs` count as traced without a claim. Never edit it; regenerate it when the head moves.
 
 ## traces/<slice>.md
 

@@ -184,6 +184,13 @@ export async function startSession({ name, outDir, baseURL = 'http://localhost:9
       storageState,
     });
     sessionBaseURLs.set(context, baseURL);
+    if (storageState) {
+      // A stored sign-in only counts if it holds on this exact origin
+      // (cookies for localhost do not apply to 127.0.0.1, for example).
+      const account = await context.request.get('/api/core/public/account');
+      const login = account.ok() ? (await account.json()).login : undefined;
+      if (!login) throw new Error(`storageState does not authenticate on ${new URL(baseURL).origin}: account endpoint returned ${account.status()}`);
+    }
     await context.addInitScript(CURSOR_SCRIPT);
     page = await context.newPage();
   } catch (error) {
@@ -304,10 +311,12 @@ export async function probeToasts(page, label, events) {
 }
 
 /** Sign in through the real login form (only when the login itself is the flow on camera). */
-export async function login(page, username, password) {
+// baseURL is the trusted origin to type credentials into; it defaults to the
+// startSession baseURL of the page's context.
+export async function login(page, username, password, baseURL = sessionBaseURLs.get(page.context())) {
   await page.goto('/sign-in', { waitUntil: 'networkidle' });
   await page.locator('#username').waitFor({ state: 'visible', timeout: 30000 });
-  assertOnOrigin(page);
+  assertOnOrigin(page, baseURL);
   await humanType(page, '#username', username);
   // The sign-in form may be two-step (username -> Continue -> password) or single-step.
   const continueButton = page.locator('#continue-button, button:has-text("Continue"), button:has-text("Weiter"), button:has-text("Fortfahren")');
@@ -315,7 +324,7 @@ export async function login(page, username, password) {
     await humanClick(page, continueButton.first());
   }
   await page.locator('#password').waitFor({ state: 'visible', timeout: 20000 });
-  assertOnOrigin(page);
+  assertOnOrigin(page, baseURL);
   await humanType(page, '#password', password);
   await humanClick(page, 'button[type="submit"]');
   await page.waitForURL(url => !url.pathname.startsWith('/sign-in'), { timeout: 30000 });

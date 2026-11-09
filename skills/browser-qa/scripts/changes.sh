@@ -49,7 +49,7 @@ git diff -z --name-status --no-ext-diff --find-renames "$mb" HEAD | while IFS= r
     done
     kind=$(kind_of "$path")
     if [ "$status" = D ]; then
-        printf 'D-%s\t%s\t%s\t0\tfile deleted\n' "$(basename "$path")" "$kind" "$path"
+        printf 'D-%s\t%s\t%s\t0\tfile deleted\n' "$path" "$kind" "$path"
     fi
     hunks=$(
         git --literal-pathspecs diff -U0 --no-color --no-ext-diff --no-textconv --find-renames "$mb" HEAD -- "${paths[@]}" |
