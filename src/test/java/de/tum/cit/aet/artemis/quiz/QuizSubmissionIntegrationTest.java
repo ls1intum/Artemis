@@ -71,6 +71,7 @@ import de.tum.cit.aet.artemis.exercise.dto.ParticipationSearchDTO;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.exercise.test_repository.ParticipationTestRepository;
 import de.tum.cit.aet.artemis.exercise.test_repository.SubmissionTestRepository;
+import de.tum.cit.aet.artemis.exercise.util.AsyncDeletionTestUtilService;
 import de.tum.cit.aet.artemis.quiz.domain.AnswerOption;
 import de.tum.cit.aet.artemis.quiz.domain.DragAndDropMapping;
 import de.tum.cit.aet.artemis.quiz.domain.DragAndDropQuestion;
@@ -120,6 +121,9 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
     private static final int NUMBER_OF_STUDENTS = 4;
 
     private static final int NUMBER_OF_TUTORS = 1;
+
+    @Autowired
+    private AsyncDeletionTestUtilService asyncDeletionTestUtilService;
 
     @Autowired
     private JsonMapper jsonMapper;
@@ -283,7 +287,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void shouldBackfillLegacyCompletionDateThroughMigrationWhenCalculatingStatisticsOnDemand() throws Exception {
         QuizExercise quizExercise = quizExerciseService.save(setupQuizExerciseParameters());
         ZonedDateTime submissionDate = ZonedDateTime.now().minusDays(1);
@@ -306,7 +310,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void shouldUseLatestResultPerRatingAndTreatNullRatedAsUnratedWhenCalculatingStatisticsOnDemand() throws Exception {
         QuizExercise quizExercise = quizExerciseService.save(setupQuizExerciseParameters());
         ZonedDateTime tiedCompletionDate = ZonedDateTime.now().minusMinutes(1);
@@ -377,7 +381,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void shouldIncludeCoursePracticeAndExcludeExamTestRunsWhenCalculatingStatisticsOnDemand() throws Exception {
         ZonedDateTime completionDate = ZonedDateTime.now().minusMinutes(1);
         QuizExercise coursePracticeQuizExercise = quizExerciseService.save(setupQuizExerciseParameters());
@@ -697,7 +701,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testQuizSubmitPreview_forbidden_otherTa() throws Exception {
         // createCourse() enrolls only no-prefix users; TEST_PREFIX + "tutor1" has no UCR entry → FORBIDDEN
         Course course = courseUtilService.createCourse();
@@ -709,21 +713,21 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testQuizSubmitPreview_badRequest_noQuiz() throws Exception {
         request.postWithResponseBody("/api/quiz/exercises/" + 11223344 + "/submissions/preview",
                 new QuizSubmissionFromStudentDTO(Set.of(new MultipleChoiceSubmittedAnswerFromStudentDTO(1L, Set.of(1L)))), Result.class, HttpStatus.FORBIDDEN);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testQuizSubmitPractice_badRequest_noQuiz() throws Exception {
         request.postWithResponseBody("/api/quiz/exercises/" + 11223344 + "/submissions/practice",
                 new QuizSubmissionFromStudentDTO(Set.of(new MultipleChoiceSubmittedAnswerFromStudentDTO(1L, Set.of(1L)))), Result.class, HttpStatus.FORBIDDEN);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testQuizSubmitPreview_badRequest_submissionId() throws Exception {
         QuizExercise quizExercise = quizExerciseUtilService.createEnrolledQuiz(TEST_PREFIX, ZonedDateTime.now().minusSeconds(4), null, QuizMode.SYNCHRONIZED);
         quizExercise = quizExerciseService.save(quizExercise);
@@ -733,7 +737,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     @EnumSource(QuizMode.class)
     void testQuizSubmitPreview(QuizMode quizMode) throws Exception {
         QuizExercise quizExercise = quizExerciseUtilService.createEnrolledQuiz(TEST_PREFIX, ZonedDateTime.now().minusSeconds(4), null, quizMode);
@@ -776,7 +780,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     @EnumSource(QuizMode.class)
     void testQuizSubmitPreview_badRequest_missingSubmittedAnswer(QuizMode quizMode) throws Exception {
         QuizExercise quizExercise = quizExerciseUtilService.createEnrolledQuiz(TEST_PREFIX, ZonedDateTime.now().minusSeconds(4), null, quizMode);
@@ -814,7 +818,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     @EnumSource(QuizMode.class)
     void testQuizSubmitPreview_badRequest_duplicateSubmittedAnswer(QuizMode quizMode) throws Exception {
         QuizExercise quizExercise = quizExerciseUtilService.createEnrolledQuiz(TEST_PREFIX, ZonedDateTime.now().minusSeconds(4), null, quizMode);
@@ -833,7 +837,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testQuizSubmitScheduledAndDeleted() throws Exception {
         Course course = courseUtilService.createEnrolledCourse(TEST_PREFIX);
         String publishQuizPath = "/topic/courses/" + course.getId() + "/quizExercises";
@@ -887,7 +891,8 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
         await().until(() -> participantScoreScheduleService.isIdle());
 
         // ...delete the quiz
-        request.delete("/api/quiz/quiz-exercises/" + quizExercise.getId(), HttpStatus.OK);
+        request.delete("/api/quiz/quiz-exercises/" + quizExercise.getId(), HttpStatus.ACCEPTED);
+        asyncDeletionTestUtilService.awaitExerciseDeletion(quizExercise.getId());
 
         QuizExercise finalQuizExercise = quizExercise;
         await().until(() -> exerciseRepository.findById(finalQuizExercise.getId()).isEmpty());
@@ -1046,7 +1051,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testDeleteQuizResult_asInstructor() throws Exception {
         QuizExercise quizExercise = quizExerciseService.save(setupQuizExerciseParameters());
         Submission quizSubmission = createSubmittedQuizSubmissionWithResult(quizExercise, TEST_PREFIX + "student1");
@@ -1063,7 +1068,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testReEvaluateRemovingAnsweredQuestion_afterDeletingTheOnlyResult() throws Exception {
         QuizExercise quizExercise = quizExerciseService.save(setupQuizExerciseParameters());
         Submission quizSubmission = createSubmittedQuizSubmissionWithResult(quizExercise, TEST_PREFIX + "student1");
@@ -1084,7 +1089,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testDeleteQuizResult_asTutor_forbidden() throws Exception {
         Submission quizSubmission = createSubmittedQuizSubmissionWithResult(quizExerciseService.save(setupQuizExerciseParameters()), TEST_PREFIX + "student1");
         Result result = quizSubmission.getLatestResult();

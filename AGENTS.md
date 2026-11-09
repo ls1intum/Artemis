@@ -43,6 +43,9 @@ These are Artemis-specific rules. The linked guidelines give reasons and excepti
 - Jackson 3 uses `tools.jackson`; annotations remain `com.fasterxml.jackson.annotation`. Inject
   the configured `JsonMapper` in Spring beans; see the [REST API guideline](documentation/docs/developer/guidelines/rest-api.mdx)
   for other contexts.
+- Read and write JSON through records, never through the Jackson tree model (`JsonNode`, `ObjectNode`,
+  `ArrayNode`, `readTree`, `valueToTree`, `createObjectNode`) in production code, without exceptions.
+  [REST API guideline](documentation/docs/developer/guidelines/rest-api.mdx#use-records-not-the-tree-model)
 - Every websocket destination is a declared topic: a `WebsocketTopic` with its `WebsocketTopicAccess`
   rule, or a `WebsocketUserTopic`, as a constant of the module's `web/<Module>WebsocketTopics` class.
   Send only through `WebsocketMessagingService` with `TOPIC.at(...)`. Clients send only to `/app/...`
@@ -103,6 +106,11 @@ These are Artemis-specific rules. The linked guidelines give reasons and excepti
   READMEs stay beside their tools. Do not create a top-level `docs/` directory.
 - When writing documentation, follow the [documentation guideline](documentation/docs/developer/guidelines/documentation.mdx).
   Register new pages in the matching sidebar and link them from related pages.
+- Add documentation and screenshots only when they help users complete a task or understand a decision.
+  Do not document cosmetic layout details merely to satisfy a checklist.
+- Screenshots in documentation and PRs must be captured from a running Artemis instance with realistic data
+  and the actual theme and background colours. Never use synthetic, AI-generated, mocked or isolated-component
+  screenshots, or override theme colours or recolour a capture. Automated browser capture of the real application is allowed.
 - Do not commit plans, design specs or scratch notes. Keep working notes in the issue or PR;
   maintained documentation belongs on the documentation site.
 

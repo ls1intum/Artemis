@@ -5,7 +5,7 @@ import { Router } from '@angular/router';
 import { BehaviorSubject, Observable, Subject, of, switchMap, throwError } from 'rxjs';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { MockProvider } from 'ng-mocks';
-import { ScienceCourseConsent, ScienceSettingsService } from 'app/account/user/settings/science-settings/science-settings.service';
+import { ScienceCourseConsent, ScienceSettingsService } from 'app/account/user/settings/profile/science-settings/science-settings.service';
 import { FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { ScienceEventType } from 'app/foundation/science/science.model';
 import { ScienceService } from 'app/foundation/science/science.service';

@@ -141,9 +141,17 @@ describe('ProgrammingExerciseParticipation Service', () => {
             files.set('file1', 'content1');
             files.set('file2', 'content2');
             service.getParticipationRepositoryFilesWithContentAtCommitForCommitDetailsView(exerciseId, participationId, commitId, repositoryType).subscribe();
-            const expectedURL = `${resourceUrl}${exerciseId}/files-content-commit-details?commitId=${commitId}&repositoryType=${repositoryType}&participationId=${participationId}`;
+            const expectedURL = `${resourceUrl}${exerciseId}/files-content-commit-details/for-editor?commitId=${commitId}&repositoryType=${repositoryType}`;
             const req = httpMock.expectOne({ method: 'GET', url: expectedURL });
             req.flush(files);
+        });
+
+        it('keeps USER repository context on participation content without an editor selector', () => {
+            service.getParticipationRepositoryFilesWithContentAtCommitForCommitDetailsView(123, 42, 'commitId', 'USER').subscribe((files) => {
+                expect(files).toEqual(new Map([['src/Main.java', 'owner content']]));
+            });
+            const req = httpMock.expectOne({ method: 'GET', url: `${resourceUrl}123/files-content-commit-details?commitId=commitId&participationId=42` });
+            req.flush({ 'src/Main.java': 'owner content' });
         });
 
         it('getSelectedParticipationRepositoryFilesAtCommit', () => {
@@ -224,7 +232,7 @@ describe('ProgrammingExerciseParticipation Service', () => {
 
         service.getParticipationRepositoryFilesWithContentAtCommitForCommitDetailsView(exerciseId, undefined, commitId, repositoryType).subscribe();
 
-        const expectedURL = `${resourceUrl}${exerciseId}/files-content-commit-details?commitId=${commitId}&repositoryType=${repositoryType}`;
+        const expectedURL = `${resourceUrl}${exerciseId}/files-content-commit-details/for-editor?commitId=${commitId}&repositoryType=${repositoryType}`;
         const req = httpMock.expectOne({ method: 'GET', url: expectedURL });
         req.flush(files);
     });

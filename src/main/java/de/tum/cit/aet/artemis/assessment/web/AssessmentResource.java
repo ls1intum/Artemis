@@ -33,6 +33,8 @@ public abstract class AssessmentResource {
 
     private static final Logger log = LoggerFactory.getLogger(AssessmentResource.class);
 
+    private final String entityName;
+
     protected final AuthorizationCheckService authCheckService;
 
     protected final UserRepository userRepository;
@@ -47,8 +49,10 @@ public abstract class AssessmentResource {
 
     protected final SubmissionRepository submissionRepository;
 
-    public AssessmentResource(AuthorizationCheckService authCheckService, UserRepository userRepository, ExerciseRepository exerciseRepository, AssessmentService assessmentService,
-            ResultRepository resultRepository, ExampleSubmissionRepository exampleSubmissionRepository, SubmissionRepository submissionRepository) {
+    public AssessmentResource(String entityName, AuthorizationCheckService authCheckService, UserRepository userRepository, ExerciseRepository exerciseRepository,
+            AssessmentService assessmentService, ResultRepository resultRepository, ExampleSubmissionRepository exampleSubmissionRepository,
+            SubmissionRepository submissionRepository) {
+        this.entityName = entityName;
         this.authCheckService = authCheckService;
         this.userRepository = userRepository;
         this.exerciseRepository = exerciseRepository;
@@ -58,38 +62,51 @@ public abstract class AssessmentResource {
         this.submissionRepository = submissionRepository;
     }
 
-    protected abstract String getEntityName();
-
     /**
-     * Get the result of the submission with the given id. Returns a 403 Forbidden response if the user is not allowed to retrieve the assessment. The user is not allowed
-     * to retrieve the assessment if they are not a student of the corresponding course, the submission is not their submission, the result is not finished or the assessment due
-     * date of the corresponding exercise is in the future (or not set).
+     * Get the latest result using an endpoint-selected owner or instructor audience. Owner reads require current course access, ownership and a published, finished result.
+     * Instructor reads retain the existing result eligibility and test-run exception.
      *
-     * @param submissionId the id of the submission that should be sent to the client
+     * @param submissionId   the id of the submission that should be sent to the client
+     * @param instructorView whether the endpoint selects the instructor audience
      * @return the assessment of the given id
      */
-    public ResponseEntity<Result> getAssessmentBySubmissionId(Long submissionId) {
+    protected ResponseEntity<Result> getAssessmentBySubmissionId(Long submissionId, boolean instructorView) {
         log.debug("REST request to get assessment for submission with id {}", submissionId);
-        Submission submission = submissionRepository.findOneWithEagerResultAndFeedbackAndAssessmentNoteAndTeamStudents(submissionId);
-        StudentParticipation participation = (StudentParticipation) submission.getParticipation();
+        Submission submission = loadSubmissionForAssessment(submissionId);
+        if (!(submission.getParticipation() instanceof StudentParticipation participation)) {
+            throw new AccessForbiddenException();
+        }
         Exercise exercise = participation.getExercise();
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(instructorView ? Role.INSTRUCTOR : Role.STUDENT, exercise, null);
+        if (!instructorView && !authCheckService.isOwnerOfParticipation(participation)) {
+            throw new AccessForbiddenException();
+        }
 
         Result result = submission.getLatestResult();
         if (result == null) {
             throw new EntityNotFoundException("Result with submission", submissionId);
         }
 
-        if (!authCheckService.isUserAllowedToGetResult(exercise, participation, result)) {
+        if (!authCheckService.isUserAllowedToGetResult(exercise, participation, result, instructorView)) {
             throw new AccessForbiddenException();
         }
 
-        // remove sensitive information for students
-        if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
+        if (!instructorView) {
             exercise.filterSensitiveInformation();
             result.filterSensitiveInformation();
         }
 
         return ResponseEntity.ok(result);
+    }
+
+    /**
+     * Loads the latest-result assessment context, shared with explicit modeling read audiences.
+     *
+     * @param submissionId the submission to load
+     * @return the submission with results, feedback and ownership context
+     */
+    protected Submission loadSubmissionForAssessment(Long submissionId) {
+        return submissionRepository.findOneWithEagerResultAndFeedbackAndAssessmentNoteAndTeamStudents(submissionId);
     }
 
     /**
@@ -156,9 +173,14 @@ public abstract class AssessmentResource {
      */
     protected ResponseEntity<Result> getExampleAssessment(long exerciseId, long submissionId) {
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
-        final var exampleSubmission = exampleSubmissionRepository.findBySubmissionIdWithResultsElseThrow(submissionId);
-
         var user = userRepository.getUserWithAuthorities();
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, user);
+
+        final var exampleSubmission = exampleSubmissionRepository.findBySubmissionIdWithResultsElseThrow(submissionId);
+        if (!exampleSubmission.getExercise().getId().equals(exerciseId)) {
+            throw new BadRequestAlertException("The exercise id in the path does not match the exercise id of the example submission", "exampleSubmission", "idsNotMatching");
+        }
+
         var isAtLeastEditor = authCheckService.isAtLeastEditorForExercise(exercise, user);
         var isAtLeastTutor = authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user);
         // It is allowed to get the example assessment, if the user is at least an editor or
@@ -199,13 +221,22 @@ public abstract class AssessmentResource {
     void validateExercise(Exercise exercise) throws BadRequestAlertException {
         Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
         if (course == null) {
-            throw new BadRequestAlertException("The course belonging to this exercise or its exercise group and exam does not exist", getEntityName(), "courseNotFound");
+            throw new BadRequestAlertException("The course belonging to this exercise or its exercise group and exam does not exist", entityName, "courseNotFound");
         }
     }
 
     protected ResponseEntity<Void> cancelAssessment(long submissionId, @Nullable Long resultId) {
         log.debug("REST request to cancel assessment of submission {} and result {}", submissionId, resultId);
         Submission submission = submissionRepository.findByIdWithResultsElseThrow(submissionId);
+        // Examples and programming template/solution submissions are not ordinary student assessments.
+        if (!(submission.getParticipation() instanceof StudentParticipation studentParticipation)) {
+            throw new AccessForbiddenException();
+        }
+        // The caller has to be a tutor of the course before anything about the assessment state is revealed.
+        User user = userRepository.getUserWithAuthorities();
+        long exerciseId = studentParticipation.getExercise().getId();
+        Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
+        checkAuthorization(exercise, user);
         // Release the result the caller named. A submission can hold one result per correction round, and the caller is
         // the only one that knows which round its button belongs to: resolving it here always released the newest round,
         // so "cancel assessment of correction round 1" released round 2 instead and round 1 stayed locked (#13396).
@@ -246,11 +277,6 @@ public abstract class AssessmentResource {
             // if there is no result everything is fine
             return ResponseEntity.ok().build();
         }
-        User user = userRepository.getUserWithAuthorities();
-        StudentParticipation studentParticipation = (StudentParticipation) submission.getParticipation();
-        long exerciseId = studentParticipation.getExercise().getId();
-        Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
-        checkAuthorization(exercise, user);
         boolean isAtLeastInstructor = authCheckService.isAtLeastInstructorForExercise(exercise, user);
         boolean isAssessorOfResult = resultForAuthorization.getAssessor() != null && user.getId().equals(resultForAuthorization.getAssessor().getId());
         if (!(isAtLeastInstructor || isAssessorOfResult)) {
@@ -265,13 +291,16 @@ public abstract class AssessmentResource {
         log.info("REST request by user: {} to delete result {}", userRepository.getUser().getLogin(), resultId);
         // check authentication
         Submission submission = submissionRepository.findByIdWithResultsElseThrow(submissionId);
-        Result result = resultRepository.findByIdWithEagerFeedbacksElseThrow(resultId);
         Participation participation = submission.getParticipation();
-        if (!participation.getId().equals(participationId)) {
-            throw new BadRequestAlertException("participationId in path does not match the id of the participation to submission " + submissionId + "!", "Participation", "400");
+        if (participation == null) {
+            throw new AccessForbiddenException();
         }
         Exercise exercise = exerciseRepository.findByIdElseThrow(participation.getExercise().getId());
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, null);
+        Result result = resultRepository.findByIdWithEagerFeedbacksElseThrow(resultId);
+        if (!participation.getId().equals(participationId)) {
+            throw new BadRequestAlertException("participationId in path does not match the id of the participation to submission " + submissionId + "!", "Participation", "400");
+        }
 
         if (!submission.getResults().contains(result)) {
             throw new BadRequestAlertException("The specified result does not belong to the submission.", "Result", "invalidResultId");

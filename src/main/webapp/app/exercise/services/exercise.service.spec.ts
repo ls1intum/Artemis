@@ -27,7 +27,7 @@ import { ProgrammingExercise } from 'app/programming/shared/entities/programming
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { EntityTitleService } from 'app/core/navbar/entity-title.service';
 import { ExerciseDeletionSummaryDTO } from 'app/exercise/shared/entities/exercise-deletion-summary.model';
-import { EntitySummary } from 'app/shared-ui/delete-dialog/delete-dialog.model';
+import { EntitySummaryCategory } from 'app/shared-ui/delete-dialog/delete-dialog.model';
 import { ExerciseTitle } from 'app/exercise/shared/entities/exercise/exercise-title.model';
 
 describe('Exercise Service', () => {
@@ -95,6 +95,19 @@ describe('Exercise Service', () => {
         httpMock.verify();
     });
 
+    it.each([
+        [ExerciseType.PROGRAMMING, 'api/programming/programming-exercises/5/export-instructor-exercise'],
+        [ExerciseType.TEXT, 'api/text/text-exercises/5/export'],
+        [ExerciseType.MODELING, 'api/modeling/modeling-exercises/5/export'],
+        [ExerciseType.FILE_UPLOAD, 'api/fileupload/file-upload-exercises/5/export'],
+        [ExerciseType.QUIZ, 'api/quiz/quiz-exercises/5/export'],
+    ])('should export a %s exercise to a file', (type, url) => {
+        service.exportToFile({ id: 5, type } as Exercise).subscribe();
+        const request = httpMock.expectOne({ method: 'GET', url });
+        expect(request.request.responseType).toBe('blob');
+        request.flush(new Blob(['zip']));
+    });
+
     it('should fetch only the exercise title projection for selection lists', () => {
         const titles: ExerciseTitle[] = [
             { id: 1, title: 'Text title', type: ExerciseType.TEXT },
@@ -110,6 +123,35 @@ describe('Exercise Service', () => {
 
         expect(received).toEqual(titles);
         expect(received?.map(({ id, title, type }) => ({ id, title, type }))).toEqual(titles);
+    });
+
+    it.each([
+        ['findForStaff', 'for-staff'],
+        ['findForExamAssessment', 'for-exam-assessment'],
+        ['findForExamManagement', 'for-exam-management'],
+    ] as const)('should use the explicit %s route and preserve conversion', (method, suffix) => {
+        let received: Exercise | undefined;
+        service[method](42).subscribe((response) => (received = response.body ?? undefined));
+        const request = httpMock.expectOne({ method: 'GET', url: `api/exercise/exercises/42/${suffix}` });
+        request.flush({
+            id: 42,
+            type: ExerciseType.TEXT,
+            releaseDate: '2026-01-01T10:00:00Z',
+            categories: [JSON.stringify({ category: 'staff', color: '#123456' })],
+            gradingInstructions: 'grading',
+        });
+        expect(dayjs.isDayjs(received?.releaseDate)).toBe(true);
+        expect(received?.gradingInstructions).toBe('grading');
+        expect(received?.categories).toEqual([new ExerciseCategory('staff', '#123456')]);
+    });
+
+    it.each([false, true])('should select accessible course titles from known course membership: staff=%s', (staff) => {
+        vi.spyOn(TestBed.inject(AccountService), 'isAtLeastTutorInCourseWithId').mockReturnValue(staff);
+        let received: ExerciseTitle[] | undefined;
+        service.getTitlesForAccessibleCourse(7).subscribe((titles) => (received = titles));
+        const request = httpMock.expectOne({ method: 'GET', url: `api/exercise/courses/7/exercise-titles${staff ? '/for-staff' : ''}` });
+        request.flush([{ id: 1, title: 'Title', type: ExerciseType.TEXT }]);
+        expect(received?.[0].title).toBe('Title');
     });
 
     it('should reject equal dates', () => {
@@ -595,110 +637,152 @@ describe('Exercise Service', () => {
 
     describe('getDeletionSummary', () => {
         const exerciseId = 128;
+        const prefix = 'artemisApp.exercise.delete.summary';
 
-        it('should fetch and transform deletion summary for programming exercise', () => {
-            const testExercise = { id: exerciseId, type: ExerciseType.PROGRAMMING } as Exercise;
-            const dto: ExerciseDeletionSummaryDTO = {
+        function fetchSummary(exercise: Exercise, dto: ExerciseDeletionSummaryDTO): EntitySummaryCategory[] | undefined {
+            let result: EntitySummaryCategory[] | undefined;
+            service.getDeletionSummary(exercise).subscribe((summary) => (result = summary));
+            httpMock.expectOne({ url: `api/exercise/exercises/${exerciseId}/deletion-summary`, method: 'GET' }).flush(dto);
+            return result;
+        }
+
+        it('should group everything that is deleted with a programming exercise into readable categories', () => {
+            const result = fetchSummary({ id: exerciseId, type: ExerciseType.PROGRAMMING } as Exercise, {
                 numberOfStudentParticipations: 50,
-                numberOfBuilds: 100,
+                numberOfSubmissions: 70,
+                numberOfResults: 60,
                 numberOfAssessments: 25,
+                numberOfComplaints: 2,
+                numberOfPlagiarismComparisons: 4,
                 numberOfCommunicationPosts: 10,
                 numberOfAnswerPosts: 5,
-            };
-
-            let result: EntitySummary | undefined;
-            service.getDeletionSummary(testExercise).subscribe((summary) => (result = summary));
-
-            const testRequest = httpMock.expectOne({
-                url: `api/exercise/exercises/${exerciseId}/deletion-summary`,
-                method: 'GET',
+                numberOfExampleSubmissions: 1,
+                numberOfCompetencyLinks: 3,
+                numberOfLectureUnitLinks: 2,
+                numberOfBuilds: 100,
             });
 
-            testRequest.flush(dto);
-
-            expect(result).toEqual({
-                'artemisApp.exercise.delete.summary.numberOfStudentParticipations': 50,
-                'artemisApp.exercise.delete.summary.numberOfBuilds': 100,
-                'artemisApp.exercise.delete.summary.numberOfAssessments': 25,
-                'artemisApp.exercise.delete.summary.numberOfCommunicationPosts': 10,
-                'artemisApp.exercise.delete.summary.numberOfAnswerPosts': 5,
-            });
+            expect(result!.map((category) => category.titleKey)).toEqual([
+                `${prefix}.category.studentWork`,
+                `${prefix}.category.assessment`,
+                `${prefix}.category.plagiarism`,
+                `${prefix}.category.communication`,
+                `${prefix}.category.content`,
+                `${prefix}.category.infrastructure`,
+            ]);
+            expect(result![0].items).toEqual([
+                { labelKey: `${prefix}.numberOfStudentParticipations`, value: 50, highlight: false },
+                { labelKey: `${prefix}.numberOfSubmissions`, value: 70, highlight: false },
+            ]);
+            // builds are no student work that would be lost, so they are never emphasised
+            expect(result![5].items).toEqual([{ labelKey: `${prefix}.numberOfBuilds`, value: 100, highlight: false, neverHighlight: true }]);
         });
 
-        it('should exclude numberOfBuilds for non-programming exercises', () => {
-            const testExercise = { id: exerciseId, type: ExerciseType.TEXT } as Exercise;
-            const dto: ExerciseDeletionSummaryDTO = {
+        it('should leave out builds for non-programming exercises and rows without data', () => {
+            const result = fetchSummary({ id: exerciseId, type: ExerciseType.TEXT } as Exercise, {
                 numberOfStudentParticipations: 30,
                 numberOfBuilds: 50,
                 numberOfAssessments: 20,
-                numberOfCommunicationPosts: 8,
-                numberOfAnswerPosts: 3,
-            };
-
-            let result: EntitySummary | undefined;
-            service.getDeletionSummary(testExercise).subscribe((summary) => (result = summary));
-
-            const testRequest = httpMock.expectOne({
-                url: `api/exercise/exercises/${exerciseId}/deletion-summary`,
-                method: 'GET',
             });
 
-            testRequest.flush(dto);
-
-            expect(result).toEqual({
-                'artemisApp.exercise.delete.summary.numberOfStudentParticipations': 30,
-                'artemisApp.exercise.delete.summary.numberOfAssessments': 20,
-                'artemisApp.exercise.delete.summary.numberOfCommunicationPosts': 8,
-                'artemisApp.exercise.delete.summary.numberOfAnswerPosts': 3,
-            });
-            expect(result).not.toHaveProperty('artemisApp.exercise.delete.summary.numberOfBuilds');
+            expect(result!.map((category) => category.titleKey)).toEqual([`${prefix}.category.studentWork`, `${prefix}.category.assessment`]);
+            expect(result!.flatMap((category) => category.items.map((item) => item.labelKey))).not.toContain(`${prefix}.numberOfBuilds`);
         });
 
-        it('should exclude numberOfBuilds and numberOfAssessments for quiz exercises', () => {
-            const testExercise = { id: exerciseId, type: ExerciseType.QUIZ } as Exercise;
-            const dto: ExerciseDeletionSummaryDTO = {
-                numberOfStudentParticipations: 0,
-                numberOfBuilds: 0,
-                numberOfAssessments: 0,
-                numberOfCommunicationPosts: 0,
-                numberOfAnswerPosts: 0,
-            };
-
-            let result: EntitySummary | undefined;
-            service.getDeletionSummary(testExercise).subscribe((summary) => (result = summary));
-
-            const testRequest = httpMock.expectOne({
-                url: `api/exercise/exercises/${exerciseId}/deletion-summary`,
-                method: 'GET',
+        it('should leave out builds and manual assessments for quiz exercises', () => {
+            const result = fetchSummary({ id: exerciseId, type: ExerciseType.QUIZ } as Exercise, {
+                numberOfStudentParticipations: 3,
+                numberOfBuilds: 5,
+                numberOfAssessments: 7,
+                numberOfResults: 3,
             });
 
-            testRequest.flush(dto);
-
-            expect(result).toEqual({
-                'artemisApp.exercise.delete.summary.numberOfStudentParticipations': 0,
-                'artemisApp.exercise.delete.summary.numberOfCommunicationPosts': 0,
-                'artemisApp.exercise.delete.summary.numberOfAnswerPosts': 0,
-            });
-            expect(result).not.toHaveProperty('artemisApp.exercise.delete.summary.numberOfBuilds');
-            expect(result).not.toHaveProperty('artemisApp.exercise.delete.summary.numberOfAssessments');
+            const labels = result!.flatMap((category) => category.items.map((item) => item.labelKey));
+            expect(labels).toEqual([`${prefix}.numberOfStudentParticipations`, `${prefix}.numberOfResults`]);
         });
 
-        it('should return empty object for exercise without id', () => {
-            const testExercise = { type: ExerciseType.TEXT } as Exercise;
-
-            let result: EntitySummary | undefined;
-            service.getDeletionSummary(testExercise).subscribe((summary) => (result = summary));
-
-            expect(result).toEqual({});
+        it('should return no categories when nothing would be deleted', () => {
+            expect(fetchSummary({ id: exerciseId, type: ExerciseType.TEXT } as Exercise, {})).toEqual([]);
         });
 
-        it('should return empty object for exercise without type', () => {
-            const testExercise = { id: exerciseId } as Exercise;
+        it('should return no categories for exercise without id', () => {
+            let result: EntitySummaryCategory[] | undefined;
+            service.getDeletionSummary({ type: ExerciseType.TEXT } as Exercise).subscribe((summary) => (result = summary));
 
-            let result: EntitySummary | undefined;
-            service.getDeletionSummary(testExercise).subscribe((summary) => (result = summary));
-
-            expect(result).toEqual({});
+            expect(result).toEqual([]);
         });
+
+        it('should return no categories for exercise without type', () => {
+            let result: EntitySummaryCategory[] | undefined;
+            service.getDeletionSummary({ id: exerciseId } as Exercise).subscribe((summary) => (result = summary));
+
+            expect(result).toEqual([]);
+        });
+    });
+
+    it('loads the generic exercise projection and converts exercise dates and categories', () => {
+        let received: Exercise | undefined;
+        service.find(42).subscribe((response) => (received = response.body ?? undefined));
+        const request = httpMock.expectOne({ method: 'GET', url: 'api/exercise/exercises/42' });
+        const dates = {
+            releaseDate: '2026-01-01T10:00:00Z',
+            startDate: '2026-01-02T10:00:00Z',
+            dueDate: '2026-01-03T10:00:00Z',
+            assessmentDueDate: '2026-01-04T10:00:00Z',
+            exampleSolutionPublicationDate: '2026-01-05T10:00:00Z',
+        };
+        request.flush({
+            id: 42,
+            type: ExerciseType.TEXT,
+            releaseDate: dates.releaseDate,
+            categories: [JSON.stringify({ category: 'shared', color: '#123456' })],
+            exerciseVariantGroup: { id: 9, ...dates },
+        });
+
+        expect(received?.id).toBe(42);
+        expect(dayjs.isDayjs(received?.releaseDate)).toBe(true);
+        expect(received?.categories).toEqual([new ExerciseCategory('shared', '#123456')]);
+        // Exam and exercise-list consumers also convert the shared group timeline through this public mapper.
+        ExerciseService.convertExercisesDateFromServer([received!]);
+        for (const [key, value] of Object.entries(dates)) {
+            const converted = received?.exerciseVariantGroup?.[key as keyof typeof dates];
+            expect(dayjs.isDayjs(converted)).toBe(true);
+            expect(converted?.toISOString()).toBe(dayjs(value).toISOString());
+        }
+    });
+
+    it('serializes a detached exercise without shipping its course graph or participation data', () => {
+        const source = new TextExercise(undefined, undefined);
+        source.id = 7;
+        source.releaseDate = dayjs('2026-01-01T10:00:00Z');
+        source.course = { id: 1, exercises: [new TextExercise(undefined, undefined)], lectures: [{ id: 2 }] };
+        source.studentParticipations = [{ id: 3 }];
+        source.categories = [new ExerciseCategory('Practice', '#123456')];
+        const converted = ExerciseService.convertExerciseFromClient(source);
+        expect(converted).not.toBe(source);
+        expect(converted.course).toMatchObject({ id: 1, exercises: [], lectures: [] });
+        expect(converted.studentParticipations).toEqual([]);
+        expect(converted.categories).toEqual([JSON.stringify(new ExerciseCategory('Practice', '#123456'))]);
+        expect(source.course.exercises).toHaveLength(1);
+        expect(source.course.lectures).toHaveLength(1);
+        expect(source.studentParticipations).toEqual([{ id: 3 }]);
+        expect(dayjs.isDayjs(source.releaseDate)).toBe(true);
+    });
+
+    it('loads upcoming exercises with converted dates for the administrator overview', () => {
+        service.getUpcomingExercises().subscribe((response) => {
+            expect(response.body?.[0].id).toBe(7);
+            expect(response.body?.[0].dueDate?.toISOString()).toBe('2026-01-01T10:00:00.000Z');
+        });
+        httpMock.expectOne({ method: 'GET', url: 'api/exercise/admin/exercises/upcoming' }).flush([{ id: 7, type: ExerciseType.TEXT, dueDate: '2026-01-01T10:00:00Z' }]);
+    });
+
+    it('uses the release date before the start date when deciding student visibility', () => {
+        const ex = new TextExercise(undefined, undefined);
+        expect(ExerciseService.isExerciseVisibleToStudents(ex)).toBe(false);
+        ex.startDate = dayjs().subtract(1, 'day');
+        expect(ExerciseService.isExerciseVisibleToStudents(ex)).toBe(true);
+        ex.releaseDate = dayjs().add(1, 'day');
+        expect(ExerciseService.isExerciseVisibleToStudents(ex)).toBe(false);
     });
 });

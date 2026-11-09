@@ -367,14 +367,14 @@ class IrisChatSessionResourceTest extends AbstractIrisChatSessionTest {
     // =========================================================================
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void getCurrent_tutorCanAccess() throws Exception {
         var response = request.postWithResponseBody(currentUrl(IrisChatMode.COURSE_CHAT, course.getId()), null, IrisChatSessionResponseDTO.class, HttpStatus.OK);
         assertThat(response.id()).isNotNull();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void createSession_instructorCanCreate() throws Exception {
         var response = request.postWithResponseBody(createUrl(course.getId()), null, IrisChatSessionResponseDTO.class, HttpStatus.CREATED);
         assertThat(response.id()).isNotNull();

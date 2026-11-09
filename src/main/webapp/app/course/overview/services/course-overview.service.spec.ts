@@ -448,6 +448,23 @@ describe('CourseOverviewService', () => {
             expect(groupTrack).not.toBe(exerciseTrack);
         });
 
+        it('hands every exercise card the accuracy of the scores of the course, because the exercises of the overview carry no course', () => {
+            const first: Exercise = { id: 1, title: 'First', dueDate: dayjs().add(1, 'day') } as Exercise;
+            const second: Exercise = { id: 2, title: 'Second', dueDate: dayjs().add(2, 'days') } as Exercise;
+            const course = { accuracyOfScores: 2 };
+
+            const { ungroupedData, groupedData } = courseOverviewService.buildGroupedExerciseData([first, second], course);
+
+            expect(ungroupedData.map((card) => card.course)).toEqual([course, course]);
+            expect(Object.values(groupedData).flatMap((timeGroup) => timeGroup.entityData.map((card) => card.course))).toEqual([course, course]);
+        });
+
+        it('leaves the course of an exercise card unset without a course', () => {
+            const exercise: Exercise = { id: 1, title: 'First', dueDate: dayjs().add(1, 'day') } as Exercise;
+
+            expect(courseOverviewService.mapExerciseToSidebarCardElement(exercise).course).toBeUndefined();
+        });
+
         it('keeps the members on the group card so it stays searchable and selectable, without rendering them', () => {
             const reference = { id: 7, title: 'Variant Group' };
             const variantA: Exercise = { id: 20, title: 'Variant A', dueDate: dayjs().add(1, 'day'), exerciseVariantGroup: reference } as Exercise;
@@ -716,6 +733,44 @@ describe('CourseOverviewService', () => {
             expect(result.attendanceChipColor).toBe('var(--yellow)');
             expect(result.subtitleLeft).toBe('Oct 25, 2025');
             expect(result.subtitleRight).toBe('14:00–16:00');
+        });
+
+        it('should use the server-computed average attendance when the list payload carries no sessions', () => {
+            // The tutorial group list endpoint sends averageAttendance (also to students) but never the sessions.
+            const tutorialGroup = new TutorialGroup();
+            tutorialGroup.id = 4;
+            tutorialGroup.title = 'T04';
+            tutorialGroup.capacity = 30;
+            tutorialGroup.averageAttendance = 20;
+            const result = courseOverviewService.mapTutorialGroupToSidebarCardElement(tutorialGroup);
+
+            expect(result.attendanceText).toBe('Ø 67%');
+            expect(result.attendanceChipColor).toBe('var(--green)');
+        });
+
+        it('should prefer the average attendance over the registrations when staff receive both', () => {
+            const tutorialGroup = new TutorialGroup();
+            tutorialGroup.id = 5;
+            tutorialGroup.title = 'T05';
+            tutorialGroup.capacity = 20;
+            tutorialGroup.averageAttendance = 10;
+            tutorialGroup.numberOfRegisteredUsers = 18;
+            const result = courseOverviewService.mapTutorialGroupToSidebarCardElement(tutorialGroup);
+
+            expect(result.attendanceText).toBe('Ø 50%');
+            expect(result.attendanceChipColor).toBe('var(--green)');
+        });
+
+        it('should not divide by a capacity of zero when an average attendance is present', () => {
+            const tutorialGroup = new TutorialGroup();
+            tutorialGroup.id = 6;
+            tutorialGroup.title = 'T06';
+            tutorialGroup.capacity = 0;
+            tutorialGroup.averageAttendance = 5;
+            const result = courseOverviewService.mapTutorialGroupToSidebarCardElement(tutorialGroup);
+
+            expect(result.attendanceText).toBeUndefined();
+            expect(result.attendanceChipColor).toBeUndefined();
         });
 
         it('should compute attendance from registered users and capacity when no attendance data', () => {

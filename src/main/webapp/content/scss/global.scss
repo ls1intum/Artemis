@@ -22,6 +22,9 @@
 @import 'primeicons/primeicons.css';
 @import '@angular/cdk/a11y-prebuilt.css';
 
+// Transitional Bootstrap buttons share the TUM AET UI palette and sizing.
+@import 'button-colors';
+
 // Smooth transition between themes. SVG is excluded: `background` is not rendered on SVG elements,
 // so the transition can never be seen there, yet it still marks every node of an SVG subtree as
 // running a paint transition - which is enough to keep a surface on a stale raster.
@@ -144,25 +147,8 @@ a.disabled {
     white-space: nowrap;
 }
 
-/* Default the color to white even on bootstrap 5 */
-.btn-primary,
-.btn-primary:hover,
-.btn-primary:disabled,
-.btn-info,
-.btn-info:hover,
-.btn-success,
-.btn-success:hover {
-    color: $colored-btn-font !important;
-}
-
 a.btn {
     -webkit-appearance: none !important;
-}
-
-.btn-default {
-    color: $default-btn-font;
-    background-color: $default-btn-background;
-    border-color: $default-btn-border;
 }
 
 .popover {
@@ -847,6 +833,12 @@ Course Info Bar
     // this class is required for rendering post references in between of post content without having linebreaks
     .inline-paragraph {
         margin-bottom: 0 !important;
+        display: inline;
+    }
+
+    // A posting renders as one document, so its last paragraph (not the one before a reference) stays inline for the "(edited)" label
+    &.posting-markdown > p:last-child {
+        margin-bottom: 0;
         display: inline;
     }
 
@@ -2038,6 +2030,43 @@ ngb-typeahead-window.dropdown-menu.show {
 
         &:last-child {
             margin-bottom: 0;
+        }
+    }
+}
+
+// Print the standalone grading key at full width in normal document flow.
+@media print {
+    body:has(jhi-grade-key-overview) {
+        min-width: 0 !important;
+
+        .sticky-top-navbar,
+        jhi-course-title-bar,
+        .layout-container > .sidebar,
+        jhi-page-ribbon,
+        jhi-footer {
+            display: none !important;
+        }
+
+        .page-wrapper,
+        .sidebar-wrapper,
+        .layout-container,
+        .layout-content,
+        .course-body-container,
+        .page-content-card {
+            display: block !important;
+            position: static !important;
+            width: auto !important;
+            min-width: 0 !important;
+            height: auto !important;
+            min-height: 0 !important;
+            max-height: none !important;
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+
+        .grading-key-overview {
+            width: 100% !important;
+            max-width: none !important;
         }
     }
 }

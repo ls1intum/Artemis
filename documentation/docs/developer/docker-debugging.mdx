@@ -2,6 +2,7 @@
 id: docker-debugging
 title: Debugging Artemis in Docker
 sidebar_label: Docker Debugging
+last_reviewed: 2026-11-03
 ---
 
 import Callout from "../../src/components/Callout/Callout";
@@ -59,15 +60,27 @@ docker compose -f <docker compose file name> up -d
 If the server fails to start with Liquibase errors, you can run the following command to reset the database:
 
 <Callout variant={CalloutVariant.danger}>
-    This command **deletes all data** in the `artemis` database by dropping it. Make sure you have a backup if you need to preserve existing data.
+    This command **deletes all data** in the `Artemis` database by dropping it. Make sure you have a backup if you need to preserve existing data.
 </Callout>
 
-```bash
-docker exec -i artemis-mysql mysql -u root -p'' -e "DROP DATABASE artemis;"
-```
+1. Stop the Artemis server, because PostgreSQL refuses to drop a database while a session is connected to it. Keep the PostgreSQL container running:
 
-Afterward, you can start the server again with the same command as under
-[Start the Docker Compose File](#start-the-docker-compose-file).
+   ```bash
+   docker stop artemis-app
+   ```
+
+2. Drop the database and create it again. The PostgreSQL connection URL of Artemis does not create the database, and restarting the PostgreSQL container with its existing data volume does not run the initialization again:
+
+   ```bash
+   docker exec -i artemis-postgres psql -U Artemis -d postgres -c 'DROP DATABASE "Artemis";'
+   docker exec -i artemis-postgres psql -U Artemis -d postgres -c 'CREATE DATABASE "Artemis" OWNER "Artemis";'
+   ```
+
+3. Start the Artemis server again, for example with `docker start artemis-app`, or with the same command as under
+   [Start the Docker Compose File](#start-the-docker-compose-file). Liquibase then creates the schema from scratch.
+
+For a MySQL setup (deprecated, removed in Artemis 11), stop the server and use `docker exec -i artemis-mysql mysql -u root -p'' -e "DROP DATABASE Artemis;"` instead.
+The MySQL connection URL contains `createDatabaseIfNotExist=true`, so the next start of the server creates the database again.
 
 ## Start the Remote Debugger
 

@@ -17,6 +17,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Clock;
@@ -172,6 +173,7 @@ import de.tum.cit.aet.artemis.exercise.service.ParticipationService;
 import de.tum.cit.aet.artemis.exercise.team.TeamUtilService;
 import de.tum.cit.aet.artemis.exercise.test_repository.ParticipationTestRepository;
 import de.tum.cit.aet.artemis.exercise.test_repository.SubmissionTestRepository;
+import de.tum.cit.aet.artemis.exercise.util.AsyncDeletionTestUtilService;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadSubmission;
@@ -228,6 +230,9 @@ public class CourseTestService {
 
     @Value("${artemis.course-archives-path}")
     private Path courseArchivesDirPath;
+
+    @Autowired
+    private AsyncDeletionTestUtilService asyncDeletionTestUtilService;
 
     @Autowired
     private CourseTestRepository courseRepo;
@@ -658,8 +663,10 @@ public class CourseTestService {
     }
 
     // Test
-    public void testGetSupportedTimeZonesAsStudentIsForbidden() throws Exception {
-        request.getList("/api/course/time-zones", HttpStatus.FORBIDDEN, String.class);
+    public void testGetSupportedTimeZonesAsStudent() throws Exception {
+        // the time zones are static data, so every authenticated user may read them
+        List<String> timeZones = request.getList("/api/course/time-zones", HttpStatus.OK, String.class);
+        assertThat(timeZones).contains("UTC", "Europe/Berlin");
     }
 
     // Test
@@ -780,7 +787,8 @@ public class CourseTestService {
             if (!course.getExercises().isEmpty()) {
                 groupNotificationService.notifyStudentAndEditorAndInstructorGroupAboutExerciseUpdate(course.getExercises().iterator().next(), null);
             }
-            request.delete("/api/admin/courses/" + course.getId(), HttpStatus.OK);
+            request.delete("/api/admin/courses/" + course.getId(), HttpStatus.ACCEPTED);
+            asyncDeletionTestUtilService.awaitCourseDeletion(course.getId());
         }
 
         // Verify exercises are removed from Weaviate after course deletion
@@ -1055,6 +1063,19 @@ public class CourseTestService {
     }
 
     // Test
+    public void testCreateCourseWithRejectedCourseImageCreatesNoCourse() throws Exception {
+        Course course = CourseFactory.generateCourse(null, null, null, new HashSet<>());
+        CourseCreateDTO dto = toCourseCreateDTO(course);
+        var coursePart = new MockMultipartFile("course", "", MediaType.APPLICATION_JSON_VALUE, objectMapper.writeValueAsString(dto).getBytes());
+        var iconPart = new MockMultipartFile("file", "placeholderName.png", MediaType.IMAGE_PNG_VALUE, "<svg xmlns=\"http://www.w3.org/2000/svg\"/>".getBytes());
+
+        request.performMvcRequest(MockMvcRequestBuilders.multipart(HttpMethod.POST, "/api/admin/courses").file(coursePart).file(iconPart)).andExpect(status().isBadRequest());
+
+        // A course left behind would block a retry, since its short name is taken
+        assertThat(courseRepo.findAllByShortName(course.getShortName())).isEmpty();
+    }
+
+    // Test
     public void testCreateAndUpdateCourseWithPersistentCourseImageOnUpdate() throws Exception {
         Course createdCourse = createCourseWithCourseImageAndReturn();
 
@@ -1092,7 +1113,9 @@ public class CourseTestService {
 
     // Test
     public void testGetCourseWithoutPermission() throws Exception {
-        request.getList("/api/course/courses", HttpStatus.FORBIDDEN, CourseManagementDTO.class);
+        // the list only contains the courses in which the user is at least tutor, so a student gets an empty list
+        List<CourseManagementDTO> courses = request.getList("/api/course/courses", HttpStatus.OK, CourseManagementDTO.class);
+        assertThat(courses).isEmpty();
     }
 
     // Test
@@ -2110,7 +2133,7 @@ public class CourseTestService {
         List<Course> testCourses = courseUtilService.createEnrolledCoursesWithExercisesAndLectures(userPrefix, false, 0);
         for (Course testCourse : testCourses) {
             CourseWithExercisesDTO courseWithExercises = request.get("/api/course/courses/" + testCourse.getId() + "/with-exercises", HttpStatus.OK, CourseWithExercisesDTO.class);
-            CourseManagementDTO courseOnly = request.get("/api/course/courses/" + testCourse.getId(), HttpStatus.OK, CourseManagementDTO.class);
+            CourseManagementDTO courseOnly = request.get("/api/course/courses/" + testCourse.getId() + "/for-instructor", HttpStatus.OK, CourseManagementDTO.class);
 
             // Check course properties on courseOnly
             assertThat(courseOnly.endDate()).as("End date is after start date").isAfter(courseOnly.startDate());
@@ -3380,7 +3403,9 @@ public class CourseTestService {
         course = courseRepo.saveWithDefaultConfigurations(course);
         OnlineCourseConfiguration configuration = saveOnlineConfiguration(course, "prefix");
 
-        request.delete("/api/admin/courses/" + course.getId(), HttpStatus.OK);
+        request.delete("/api/admin/courses/" + course.getId(), HttpStatus.ACCEPTED);
+
+        asyncDeletionTestUtilService.awaitCourseDeletion(course.getId());
 
         assertThat(onlineCourseConfigurationRepository.findById(configuration.getId())).isNotPresent();
     }
@@ -3500,7 +3525,7 @@ public class CourseTestService {
         var coursePart = new MockMultipartFile("course", "", MediaType.APPLICATION_JSON_VALUE, objectMapper.writeValueAsString(dto).getBytes());
         var builder = MockMvcRequestBuilders.multipart(HttpMethod.POST, "/api/admin/courses").file(coursePart);
         if (fileContent != null) {
-            var filePart = new MockMultipartFile("file", "placeholderName.png", MediaType.IMAGE_PNG_VALUE, fileContent.getBytes());
+            var filePart = new MockMultipartFile("file", "placeholderName.png", MediaType.IMAGE_PNG_VALUE, pngImage(fileContent));
             builder.file(filePart);
         }
         return builder.contentType(MediaType.MULTIPART_FORM_DATA_VALUE);
@@ -3531,10 +3556,24 @@ public class CourseTestService {
         var coursePart = new MockMultipartFile("course", "", MediaType.APPLICATION_JSON_VALUE, objectMapper.writeValueAsString(course).getBytes());
         var builder = MockMvcRequestBuilders.multipart(HttpMethod.PUT, "/api/course/courses/" + id).file(coursePart);
         if (fileContent != null) {
-            var filePart = new MockMultipartFile("file", "placeholderName.png", MediaType.IMAGE_PNG_VALUE, fileContent.getBytes());
+            var filePart = new MockMultipartFile("file", "placeholderName.png", MediaType.IMAGE_PNG_VALUE, pngImage(fileContent));
             builder.file(filePart);
         }
         return builder.contentType(MediaType.MULTIPART_FORM_DATA_VALUE);
+    }
+
+    /**
+     * The server only stores a course icon whose content starts like a PNG image, so the marker follows a PNG signature.
+     *
+     * @param marker the content that tells icons apart
+     * @return bytes the server accepts as a PNG image
+     */
+    private static byte[] pngImage(String marker) {
+        byte[] signature = { (byte) 0x89, 'P', 'N', 'G', '\r', '\n', 0x1A, '\n' };
+        byte[] content = marker.getBytes(StandardCharsets.UTF_8);
+        byte[] image = Arrays.copyOf(signature, signature.length + content.length);
+        System.arraycopy(content, 0, image, signature.length, content.length);
+        return image;
     }
 
     /**
@@ -3564,7 +3603,7 @@ public class CourseTestService {
      */
     public void testEditCourseRemoveExistingIcon() throws Exception {
         Course course = courseUtilService.createEnrolledCourse(userPrefix);
-        byte[] iconBytes = "icon".getBytes();
+        byte[] iconBytes = pngImage("icon");
         MockMultipartFile iconFile = new MockMultipartFile("file", "icon.png", MediaType.APPLICATION_JSON_VALUE, iconBytes);
         CourseManagementDTO savedCourseWithFile = request.putWithMultipartFile("/api/course/courses/" + course.getId(), course, "course", iconFile, CourseManagementDTO.class,
                 HttpStatus.OK, null);
@@ -3602,7 +3641,14 @@ public class CourseTestService {
 
     // Test
     public void testGetCoursesForImportWithoutPermission() throws Exception {
-        request.getList("/api/course/courses/for-import", HttpStatus.FORBIDDEN, CourseForImportDTO.class);
+        // the list only contains the courses in which the user is at least editor, so a course without a role of the user is never offered
+        Course foreignCourse = courseUtilService.createCourse();
+        var searchTerm = pageableSearchUtilService.configureSearch("Course");
+
+        SearchResultPageDTO<CourseForImportDTO> result = request.getSearchResult("/api/course/courses/for-import", HttpStatus.OK, CourseForImportDTO.class,
+                pageableSearchUtilService.searchMapping(searchTerm));
+
+        assertThat(result.getResultsOnPage()).noneMatch(course -> Objects.equals(course.id(), foreignCourse.getId()));
     }
 
     // Test

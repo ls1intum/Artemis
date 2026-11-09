@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { ProgrammingBuildNotificationsComponent } from 'app/programming/overview/build-notifications/programming-build-notifications.component';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
@@ -100,8 +101,14 @@ describe('ExerciseHeaderComponent', () => {
         // than rendered because the real ones reach all the way down to the result history's PrimeNG dialog service;
         // what the header owns is the decision to show them, which the mock still reports.
         TestBed.overrideComponent(ExerciseHeaderComponent, {
-            remove: { imports: [ParticipationModeToggleComponent, ExerciseHeadersInformationComponent] },
-            add: { imports: [MockComponent(ParticipationModeToggleComponent), MockComponent(ExerciseHeadersInformationComponent)] },
+            remove: { imports: [ParticipationModeToggleComponent, ExerciseHeadersInformationComponent, ProgrammingBuildNotificationsComponent] },
+            add: {
+                imports: [
+                    MockComponent(ParticipationModeToggleComponent),
+                    MockComponent(ExerciseHeadersInformationComponent),
+                    MockComponent(ProgrammingBuildNotificationsComponent),
+                ],
+            },
         });
 
         // Mock complex child imports of ExerciseHeaderActionsComponent to avoid deep dependency chains
@@ -126,6 +133,29 @@ describe('ExerciseHeaderComponent', () => {
 
     afterEach(() => {
         globalThis.ResizeObserver = originalResizeObserver;
+    });
+
+    it('binds build notifications to the active graded or practice participation', () => {
+        const exercise = new ProgrammingExercise(undefined, undefined);
+        exercise.id = 1;
+        const graded = new StudentParticipation();
+        graded.id = 2;
+        const practice = new StudentParticipation();
+        practice.id = 3;
+        practice.testRun = true;
+        fixture.componentRef.setInput('exercise', exercise);
+        fixture.componentRef.setInput('courseId', 5);
+        fixture.componentRef.setInput('studentParticipation', graded);
+        fixture.componentRef.setInput('practiceParticipation', practice);
+        fixture.detectChanges();
+        const notifications = fixture.debugElement.query(By.directive(ProgrammingBuildNotificationsComponent)).componentInstance as ProgrammingBuildNotificationsComponent;
+        expect(notifications.participation()).toBe(graded);
+        fixture.componentInstance.participationMode.set('practice');
+        fixture.detectChanges();
+        expect(notifications.participation()).toBe(practice);
+        fixture.componentInstance.participationMode.set('graded');
+        fixture.detectChanges();
+        expect(notifications.participation()).toBe(graded);
     });
 
     it('should hide submit button when the due date has passed', () => {
@@ -376,7 +406,7 @@ describe('ExerciseHeaderComponent', () => {
 
         // The bar itself is the title row now; there is no inner row element to reach for.
         const titleRow = fixture.debugElement.query(By.css('#exercise-header')).nativeElement as HTMLElement;
-        const sidebarToggle = titleRow.querySelector('.btn-sidebar-collapse');
+        const sidebarToggle = titleRow.querySelector('[data-testid="course-sidebar-toggle"]');
         const heading = titleRow.querySelector('h5');
 
         expect(sidebarToggle).not.toBeNull();
@@ -395,7 +425,7 @@ describe('ExerciseHeaderComponent', () => {
         fixture.componentRef.setInput('isSidebarCollapsed', false);
         fixture.detectChanges();
 
-        expect(fixture.debugElement.query(By.css('.btn-sidebar-collapse'))).toBeNull();
+        expect(fixture.debugElement.query(By.css('[data-testid="course-sidebar-toggle"]'))).toBeNull();
     });
 
     it('should emit toggleSidebar when the sidebar collapse button is clicked', () => {
@@ -410,7 +440,7 @@ describe('ExerciseHeaderComponent', () => {
         fixture.componentRef.setInput('isSidebarCollapsed', true);
         fixture.detectChanges();
 
-        fixture.debugElement.query(By.css('.btn-sidebar-collapse')).triggerEventHandler('click');
+        fixture.debugElement.query(By.css('[data-testid="course-sidebar-toggle"]')).triggerEventHandler('click');
 
         expect(emitSpy).toHaveBeenCalledOnce();
     });
@@ -426,7 +456,7 @@ describe('ExerciseHeaderComponent', () => {
         fixture.componentRef.setInput('isSidebarCollapsed', true);
         fixture.detectChanges();
 
-        expect(fixture.debugElement.query(By.css('.btn-sidebar-collapse')).classes['is-collapsed']).toBeTruthy();
+        expect(fixture.debugElement.query(By.css('[data-testid="course-sidebar-toggle"]')).classes['is-collapsed']).toBeTruthy();
     });
 
     describe('live Athena completion', () => {

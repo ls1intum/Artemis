@@ -47,7 +47,7 @@ test.describe('Exam archive and cleanup with a student', { tag: '@slow' }, () =>
         await examAPIRequests.generateMissingIndividualExams(exam);
         // Preparing the exercises creates the repository of the student.
         await examAPIRequests.prepareExerciseStartForExam(exam);
-        const before = await exerciseAPIRequests.getProgrammingExerciseParticipation(exercise.id!);
+        const before = await exerciseAPIRequests.getProgrammingExerciseParticipation(exercise.id!, 'exam');
         expect(before.repositoryUri, 'the student has a repository').toBeTruthy();
 
         // The exam is over, so it can be archived.
@@ -84,7 +84,7 @@ test.describe('Exam archive and cleanup with a student', { tag: '@slow' }, () =>
         expect((await cleanedUp).status()).toBe(200);
 
         await login(admin);
-        const after = await exerciseAPIRequests.getProgrammingExerciseParticipation(exercise.id!);
+        const after = await exerciseAPIRequests.getProgrammingExerciseParticipation(exercise.id!, 'exam');
         expect(after.repositoryUri ?? '', 'the repository of the student is gone').toBe('');
         expect((await examAPIRequests.getExam(exam)).examArchivePath, 'the archive is still recorded').toBeTruthy();
         await login(instructor, `/course-management/${course.id}/exams/${exam.id}`);

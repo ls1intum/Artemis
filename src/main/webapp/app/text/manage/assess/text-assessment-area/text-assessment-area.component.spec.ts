@@ -7,6 +7,7 @@ import { ErrorHandler } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TextAssessmentAreaComponent } from 'app/text/manage/assess/text-assessment-area/text-assessment-area.component';
 import { TextBlockAssessmentCardComponent } from 'app/text/manage/assess/textblock-assessment-card/text-block-assessment-card.component';
+import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
 import { TextBlockRef } from 'app/text/shared/entities/text-block-ref.model';
 import { By } from '@angular/platform-browser';
 import { MockProvider } from 'ng-mocks';
@@ -84,6 +85,53 @@ describe('TextAssessmentAreaComponent', () => {
             const all = fixture.debugElement.queryAll(By.directive(TextBlockAssessmentCardComponent));
             expect(all).toHaveLength(i);
         }
+    });
+
+    it('should warn on every use beyond an instruction limit and clear the hints after removal or reassignment', () => {
+        const first = TextBlockRef.new();
+        const second = TextBlockRef.new();
+        first.initFeedback();
+        second.initFeedback();
+        first.feedback!.gradingInstruction = Object.assign(new GradingInstruction(), { id: 1, usageCount: 1, credits: -1 });
+        second.feedback!.gradingInstruction = first.feedback!.gradingInstruction;
+        fixture.componentRef.setInput('textBlockRefs', [first, second]);
+        fixture.componentRef.setInput('allFeedbacks', [first.feedback!, second.feedback!]);
+        fixture.detectChanges();
+
+        expect(fixture.nativeElement.querySelectorAll('[data-testid="grading-instruction-usage-warning"]')).toHaveLength(2);
+
+        component.autoTextBlockAssessment.set(false);
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelectorAll('[data-testid="grading-instruction-usage-warning"]')).toHaveLength(2);
+        component.autoTextBlockAssessment.set(true);
+        fixture.detectChanges();
+
+        second.feedback!.gradingInstruction = Object.assign(new GradingInstruction(), { id: 2, usageCount: 1, credits: 1 });
+        component.textBlockRefsChangeEmit();
+        fixture.componentRef.setInput('allFeedbacks', [first.feedback!, second.feedback!]);
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelectorAll('[data-testid="grading-instruction-usage-warning"]')).toHaveLength(0);
+
+        second.feedback!.gradingInstruction = first.feedback!.gradingInstruction;
+        component.textBlockRefsChangeEmit();
+        fixture.componentRef.setInput('allFeedbacks', [first.feedback!, second.feedback!]);
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelectorAll('[data-testid="grading-instruction-usage-warning"]')).toHaveLength(2);
+
+        fixture.componentRef.setInput('textBlockRefs', [first]);
+        fixture.componentRef.setInput('allFeedbacks', [first.feedback!]);
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelectorAll('[data-testid="grading-instruction-usage-warning"]')).toHaveLength(0);
+    });
+
+    it('should include unreferenced feedback when checking the limit of a referenced instruction', () => {
+        const ref = TextBlockRef.new();
+        ref.initFeedback();
+        ref.feedback!.gradingInstruction = Object.assign(new GradingInstruction(), { id: 1, usageCount: 1 });
+        fixture.componentRef.setInput('textBlockRefs', [ref]);
+        fixture.componentRef.setInput('allFeedbacks', [ref.feedback!, { gradingInstruction: { id: 1, usageCount: 1 } }]);
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelectorAll('[data-testid="grading-instruction-usage-warning"]')).toHaveLength(1);
     });
 
     it('should toggle on alt', () => {

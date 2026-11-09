@@ -2,6 +2,15 @@
     <div>
         <h3 class="mt-6! mb-[12px]! text-base! font-semibold!" data-testid="exam-summary-heading" jhiTranslate="artemisApp.exam.examSummary.points.overview"></h3>
 
+        @if (hasManuallyAssessedExercises()) {
+            <p class="mb-3! text-sm" data-testid="test-exam-partial-result" jhiTranslate="artemisApp.exam.examSummary.partialTestExamResult"></p>
+        }
+        @if (pendingExerciseIds().size > 0) {
+            <p class="mb-3! text-sm" data-testid="test-exam-results-pending" jhiTranslate="artemisApp.exam.examSummary.automaticResultsPending"></p>
+        }
+        @if (bonusPending()) {
+            <p class="mb-3! text-sm" data-testid="test-exam-bonus-pending" jhiTranslate="artemisApp.exam.examSummary.bonusResultPending"></p>
+        }
         <jhi-collapsible-card [isCardContentCollapsed]="isCollapsed['grading-table']" [toggleCollapse]="toggleCollapse('grading-table')">
             <div class="header truncate text-base font-semibold" jhiTranslate="artemisApp.exam.examSummary.resultTable"></div>
 
@@ -53,7 +62,13 @@
                                         <td class="text-center">{{ exerciseService.isIncludedInScore(exercise) }}</td>
                                     }
                                     <td class="text-center" data-testid="exercise-achieved-points">
-                                        {{ achievedPointsForExercise(exercise.id!) }}
+                                        @if (pendingExerciseIds().has(exercise.id!)) {
+                                            <span jhiTranslate="artemisApp.exam.examSummary.automaticResultPending"></span>
+                                        } @else if (manuallyAssessedExerciseIds().has(exercise.id!)) {
+                                            <span jhiTranslate="artemisApp.exam.examSummary.notAutomaticallyAssessed"></span>
+                                        } @else {
+                                            {{ achievedPointsForExercise(exercise.id!) }}
+                                        }
                                     </td>
                                     <td class="text-center" data-testid="exercise-max-points">
                                         @if (exercise.maxPoints !== undefined) {
@@ -61,7 +76,12 @@
                                         }
                                     </td>
                                     <td class="text-center" data-testid="exercise-achieved-percentage">
-                                        @if (exerciseInfos()[exercise.id!] !== undefined && exerciseInfos()[exercise.id!].achievedPercentage !== undefined) {
+                                        @if (
+                                            !pendingExerciseIds().has(exercise.id!) &&
+                                            !manuallyAssessedExerciseIds().has(exercise.id!) &&
+                                            exerciseInfos()[exercise.id!] !== undefined &&
+                                            exerciseInfos()[exercise.id!].achievedPercentage !== undefined
+                                        ) {
                                             <span [class]="exerciseInfos()[exercise.id!].colorClass"> {{ exerciseInfos()[exercise.id!].achievedPercentage }} % </span>
                                         } @else {
                                             -
@@ -79,86 +99,102 @@
                                 </tr>
                             }
                         </tbody>
-                        <tfoot class="border-t-2! border-(--tumaet-ui-border-color)!">
-                            <tr>
-                                <th scope="row" colspan="2" jhiTranslate="artemisApp.exam.examSummary.points.total"></th>
-                                @if (showIncludedInScoreColumn()) {
-                                    <td class="text-center">-</td>
-                                }
-                                <td class="font-bold text-center">
-                                    {{ overallAchievedPoints() }}
-                                </td>
-                                <td class="font-bold text-center">
-                                    {{ maxPoints() }}
-                                </td>
-                                <td class="font-bold text-center">
-                                    @if (studentExamWithGrade().studentResult.overallScoreAchieved !== undefined) {
-                                        <span [class]="overallScoreTextColorClass()"> {{ overallAchievedPercentageRoundedByCourseSettings() }} % </span>
-                                    } @else {
-                                        <jhi-no-data />
+                        @if (hasAutomaticScore()) {
+                            <tfoot class="border-t-2! border-(--tumaet-ui-border-color)!">
+                                <tr>
+                                    <th scope="row" colspan="2" jhiTranslate="artemisApp.exam.examSummary.points.total"></th>
+                                    @if (showIncludedInScoreColumn()) {
+                                        <td class="text-center">-</td>
                                     }
-                                </td>
-                                @if (studentExamWithGrade()?.maxBonusPoints) {
                                     <td class="font-bold text-center">
-                                        {{ studentExamWithGrade()?.maxBonusPoints }}
+                                        {{ overallAchievedPoints() }}
                                     </td>
-                                }
-                            </tr>
-                        </tfoot>
+                                    <td class="font-bold text-center">
+                                        {{ maxPoints() }}
+                                    </td>
+                                    <td class="font-bold text-center">
+                                        @if (studentExamWithGrade().studentResult.overallScoreAchieved !== undefined) {
+                                            <span [class]="overallScoreTextColorClass()"> {{ overallAchievedPercentageRoundedByCourseSettings() }} % </span>
+                                        } @else {
+                                            <jhi-no-data />
+                                        }
+                                    </td>
+                                    @if (studentExamWithGrade()?.maxBonusPoints) {
+                                        <td class="font-bold text-center">
+                                            {{ studentExamWithGrade()?.maxBonusPoints }}
+                                        </td>
+                                    }
+                                </tr>
+                            </tfoot>
+                        }
                     </table>
                 </div>
-                <div class="mt-4! flex flex-col gap-1 px-2" data-testid="exam-result-points-summary">
-                    @if (studentExamWithGrade()?.maxBonusPoints) {
-                        <p class="m-0 text-sm" data-testid="exam-result-points-sentence">
-                            {{
-                                'artemisApp.exam.examSummary.points.youAchievedWithBonus'
-                                    | artemisTranslate
-                                        : {
-                                              achievedPoints: overallAchievedPoints(),
-                                              normalPoints: maxPoints(),
-                                          }
-                            }}
-                        </p>
-                    } @else {
-                        <p class="m-0 text-sm" data-testid="exam-result-points-sentence">
-                            {{
-                                'artemisApp.exam.examSummary.points.youAchieved'
-                                    | artemisTranslate
-                                        : {
-                                              achievedPoints: overallAchievedPoints(),
-                                              normalPoints: maxPoints(),
-                                          }
-                            }}
-                        </p>
-                    }
-                    @if (studentExamWithGrade().studentResult.gradeWithBonus !== undefined) {
-                        <p class="m-0 text-sm" data-testid="exam-result-bonus-sentence">
-                            {{
-                                'artemisApp.exam.examSummary.points.youAchievedFromBonus.' + studentExamWithGrade().studentResult.gradeWithBonus!.bonusStrategy
-                                    | artemisTranslate
-                                        : {
-                                              achievedBonus: studentExamWithGrade().studentResult.gradeWithBonus!.bonusGrade,
-                                              bonusFromTitle: studentExamWithGrade().studentResult.gradeWithBonus!.bonusFromTitle,
-                                          }
-                            }}
-                        </p>
-                    }
-                    @if (studentExamWithGrade()?.studentResult?.gradeWithBonus?.finalGrade) {
-                        <p class="m-0 text-base font-semibold" data-testid="exam-result-grade-before-bonus">
-                            <span jhiTranslate="artemisApp.exam.examSummary.gradeBeforeBonus"></span>
-                            {{ studentExamWithGrade().studentResult.overallGrade }}
-                        </p>
-                        <p class="m-0 text-base font-semibold" data-testid="exam-result-grade-after-bonus">
-                            <span jhiTranslate="artemisApp.exam.examSummary.gradeAfterBonus"></span>
-                            {{ studentExamWithGrade().studentResult.gradeWithBonus?.finalGrade }}
-                        </p>
-                    } @else if (gradingScaleExists()) {
-                        <p class="m-0 text-base font-semibold" data-testid="exam-result-grade">
-                            <span jhiTranslate="artemisApp.exam.examSummary.grade"></span>
-                            {{ studentExamWithGrade().studentResult.overallGrade }}
-                        </p>
-                    }
-                </div>
+                @if (hasAutomaticScore()) {
+                    <div class="mt-4! flex flex-col gap-1 px-2" data-testid="exam-result-points-summary">
+                        @if (studentExamWithGrade()?.maxBonusPoints) {
+                            <p class="m-0 text-sm" data-testid="exam-result-points-sentence">
+                                {{
+                                    'artemisApp.exam.examSummary.points.youAchievedWithBonus'
+                                        | artemisTranslate
+                                            : {
+                                                  achievedPoints: overallAchievedPoints(),
+                                                  normalPoints: maxPoints(),
+                                              }
+                                }}
+                            </p>
+                        } @else {
+                            <p class="m-0 text-sm" data-testid="exam-result-points-sentence">
+                                {{
+                                    'artemisApp.exam.examSummary.points.youAchieved'
+                                        | artemisTranslate
+                                            : {
+                                                  achievedPoints: overallAchievedPoints(),
+                                                  normalPoints: maxPoints(),
+                                              }
+                                }}
+                            </p>
+                        }
+                        @if (studentExamWithGrade().studentResult.gradeWithBonus !== undefined && !bonusPending()) {
+                            <p class="m-0 text-sm" data-testid="exam-result-bonus-sentence">
+                                {{
+                                    'artemisApp.exam.examSummary.points.youAchievedFromBonus.' + studentExamWithGrade().studentResult.gradeWithBonus!.bonusStrategy
+                                        | artemisTranslate
+                                            : {
+                                                  achievedBonus: studentExamWithGrade().studentResult.gradeWithBonus!.bonusGrade,
+                                                  bonusFromTitle: studentExamWithGrade().studentResult.gradeWithBonus!.bonusFromTitle,
+                                              }
+                                }}
+                            </p>
+                        }
+                        @if (studentExamWithGrade()?.studentResult?.gradeWithBonus?.finalGrade) {
+                            <p class="m-0 text-base font-semibold" data-testid="exam-result-grade-before-bonus">
+                                @if (isTestExam()) {
+                                    <span jhiTranslate="artemisApp.exam.examSummary.theoreticalGradeBeforeBonus"></span>
+                                } @else {
+                                    <span jhiTranslate="artemisApp.exam.examSummary.gradeBeforeBonus"></span>
+                                }
+                                {{ studentExamWithGrade().studentResult.overallGrade }}
+                            </p>
+                            <p class="m-0 text-base font-semibold" data-testid="exam-result-grade-after-bonus">
+                                @if (isTestExam()) {
+                                    <span jhiTranslate="artemisApp.exam.examSummary.theoreticalGradeAfterBonus"></span>
+                                } @else {
+                                    <span jhiTranslate="artemisApp.exam.examSummary.gradeAfterBonus"></span>
+                                }
+                                {{ studentExamWithGrade().studentResult.gradeWithBonus?.finalGrade }}
+                            </p>
+                        } @else if (gradingScaleExists()) {
+                            <p class="m-0 text-base font-semibold" data-testid="exam-result-grade">
+                                @if (isTestExam()) {
+                                    <span jhiTranslate="artemisApp.exam.examSummary.theoreticalGrade"></span>
+                                } @else {
+                                    <span jhiTranslate="artemisApp.exam.examSummary.grade"></span>
+                                }
+                                {{ studentExamWithGrade().studentResult.overallGrade }}
+                            </p>
+                        }
+                    </div>
+                }
             </div>
         </jhi-collapsible-card>
 
@@ -170,7 +206,7 @@
                 </div>
 
                 <div class="collapsible-content">
-                    <jhi-grade-key-table [studentGradeOrBonusPointsOrGradeBonus]="grade()" />
+                    <jhi-grade-key-table [purpose]="gradingKeyPurpose()" [studentGradeOrBonusPointsOrGradeBonus]="grade()" />
                 </div>
             </jhi-collapsible-card>
 

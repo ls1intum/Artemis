@@ -29,6 +29,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { MockComponent } from 'ng-mocks';
 import { ProgrammingExerciseInstructionComponent } from 'app/programming/shared/instructions-render/programming-exercise-instruction.component';
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
+import { ComplaintsStudentViewComponent } from 'app/assessment/overview/complaints-for-students/complaints-student-view.component';
 
 const user = { id: 1, name: 'Test User' } as User;
 
@@ -252,5 +253,17 @@ describe('ProgrammingExamSummaryComponent', () => {
             expect(complaintView.classList).not.toContain('mb-2');
             expect(complaintView.classList).not.toContain('ml-4');
         });
+    });
+
+    it.each([false, true])('should let the complaint section read the complaint as staff only in the instructor view (%s)', (instructorView) => {
+        fixture.componentRef.setInput('exercise', { ...programmingExercise, allowComplaintsForAutomaticAssessments: true } as ProgrammingExercise);
+        fixture.componentRef.setInput('isAfterStudentReviewStart', true);
+        fixture.componentRef.setInput('instructorView', instructorView);
+        programmingSubmission.results = [result];
+        fixture.detectChanges();
+
+        const complaintView = fixture.debugElement.query(By.directive(ComplaintsStudentViewComponent));
+        expect(complaintView).not.toBeNull();
+        expect(complaintView.componentInstance.forStaff()).toBe(instructorView);
     });
 });

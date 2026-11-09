@@ -18,7 +18,7 @@ import { Course } from 'app/course/shared/entities/course.model';
 import { CourseUnenrollmentModalComponent } from 'app/course/overview/course-unenrollment-modal/course-unenrollment-modal.component';
 import { CourseTitleBarComponent } from 'app/course/shared/course-title-bar/course-title-bar.component';
 import { CourseTitleBarService } from 'app/course/shared/services/course-title-bar.service';
-import { ScienceSettingsService } from 'app/account/user/settings/science-settings/science-settings.service';
+import { ScienceSettingsService } from 'app/account/user/settings/profile/science-settings/science-settings.service';
 import { ScienceService } from 'app/foundation/science/science.service';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TumAetUiButtonDirective, TumAetUiDialogComponent } from '@tumaet/ui-angular';

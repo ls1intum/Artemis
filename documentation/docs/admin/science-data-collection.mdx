@@ -18,19 +18,19 @@ Each event is one row in the `science_event` table: the login of the student, a 
 and the id of the resource the event is about. The content of a submission, a message or an answer is never part of
 an event.
 
-| Event type | Recorded when a student | Resource id |
-| --- | --- | --- |
-| `LECTURE__OPEN` | opens a lecture | the lecture |
-| `LECTURE__OPEN_UNIT` | opens a lecture unit | the lecture unit |
-| `EXERCISE__OPEN` | opens an exercise | the exercise |
-| `COMPETENCY__OPEN` | opens the details of a competency | the competency |
-| `COMPETENCY__OPEN_OVERVIEW` | opens the competency overview of a course | the course |
-| `LEARNING_PATH__OPEN` | opens their learning path | the learning path |
-| `LEARNING_PATH__OPEN_NAVIGATION` | opens the learning path navigation | the learning path |
-| `LEARNING_PATH__NAV_NEXT`, `LEARNING_PATH__NAV_PREV` | moves to the next or the previous learning object | the learning path |
-| `LEARNING_PATH__OPEN_GRAPH` | opens the competency graph of their learning path | the learning path |
-| `IRIS__ENTRYPOINT_IMPRESSION` | is shown the Iris entry point in the course sidebar | the course |
-| `IRIS__OPENED_SIDEBAR` | opens Iris from the course sidebar | the course |
+| Event type                                           | Recorded when a student                             | Resource id       |
+| ---------------------------------------------------- | --------------------------------------------------- | ----------------- |
+| `LECTURE__OPEN`                                      | opens a lecture                                     | the lecture       |
+| `LECTURE__OPEN_UNIT`                                 | opens a lecture unit                                | the lecture unit  |
+| `EXERCISE__OPEN`                                     | opens an exercise                                   | the exercise      |
+| `COMPETENCY__OPEN`                                   | opens the details of a competency                   | the competency    |
+| `COMPETENCY__OPEN_OVERVIEW`                          | opens the competency overview of a course           | the course        |
+| `LEARNING_PATH__OPEN`                                | opens their learning path                           | the learning path |
+| `LEARNING_PATH__OPEN_NAVIGATION`                     | opens the learning path navigation                  | the learning path |
+| `LEARNING_PATH__NAV_NEXT`, `LEARNING_PATH__NAV_PREV` | moves to the next or the previous learning object   | the learning path |
+| `LEARNING_PATH__OPEN_GRAPH`                          | opens the competency graph of their learning path   | the learning path |
+| `IRIS__ENTRYPOINT_IMPRESSION`                        | is shown the Iris entry point in the course sidebar | the course        |
+| `IRIS__OPENED_SIDEBAR`                               | opens Iris from the course sidebar                  | the course        |
 
 Three further types record decisions rather than interactions, and the server writes them itself:
 `SCIENCE__OPT_IN` and `SCIENCE__OPT_OUT` when a student agrees or declines in a course, and `SCIENCE__DATA_DELETED`
@@ -128,7 +128,7 @@ when the courses or events they describe are.
 
 ## Deleting science data
 
-Students delete their own interaction data per course under **User Settings → Science**. The deletion removes their
+Students delete their own interaction data per course under **User Settings → Profile**. The deletion removes their
 interaction events in that course and, if any were removed, records a `SCIENCE__DATA_DELETED` marker; their
 consent decision and the decision markers stay. It does not change the decision, so a student who is still
 contributing continues to be recorded.
@@ -147,7 +147,7 @@ markers are renamed with them, so the events remain part of later research expor
 
 **Re-enabling a course resumes the earlier consent.** Students who agreed before the course was disabled are recorded
 again as soon as it is enabled, without being asked a second time. If the purpose of the collection changed in
-between, tell the students in the course, so that they can withdraw under **User Settings → Science**.
+between, tell the students in the course, so that they can withdraw under **User Settings → Profile**.
 
 **Anonymizing an account keeps its consent decisions.** Where an account is anonymized instead of deleted, its login
 is replaced by a random one and its science events are renamed with it, while its consent rows stay attached to the

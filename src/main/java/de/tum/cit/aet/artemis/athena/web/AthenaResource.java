@@ -23,9 +23,11 @@ import de.tum.cit.aet.artemis.athena.dto.ProgrammingFeedbackDTO;
 import de.tum.cit.aet.artemis.athena.dto.TextFeedbackDTO;
 import de.tum.cit.aet.artemis.athena.service.AthenaFeedbackSuggestionsService;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.exception.NetworkingException;
 import de.tum.cit.aet.artemis.core.security.Role;
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
+import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
+import de.tum.cit.aet.artemis.core.security.annotations.ManualConfig;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
@@ -118,6 +120,10 @@ public class AthenaResource {
         }
 
         final var submission = submissionFetcher.apply(submissionId);
+        // the role of the user in the course of the exercise only covers the submission if it belongs to that exercise
+        if (submission.getParticipation() == null || submission.getParticipation().getExercise() == null || submission.getParticipation().getExercise().getId() != exerciseId) {
+            throw new ConflictException("Exercise id " + exerciseId + " does not match submission's exercise id", "Exercise", "exerciseIdDoesNotMatch");
+        }
         final var user = userRepository.getUser();
 
         try {
@@ -136,7 +142,8 @@ public class AthenaResource {
      * @return 200 Ok if successful with the corresponding result as body
      */
     @GetMapping("text-exercises/{exerciseId}/submissions/{submissionId}/feedback-suggestions")
-    @EnforceAtLeastTutor
+    @EnforceAtLeastStudent
+    @ManualConfig
     public ResponseEntity<List<TextFeedbackDTO>> getTextFeedbackSuggestions(@PathVariable long exerciseId, @PathVariable long submissionId) {
         var api = textRepositoryApi.orElseThrow(() -> new TextApiNotPresentException(TextApi.class));
         var submissionApi = textSubmissionApi.orElseThrow(() -> new TextApiNotPresentException(TextSubmissionApi.class));
@@ -153,7 +160,8 @@ public class AthenaResource {
      * @return 200 Ok if successful with the corresponding result as body
      */
     @GetMapping("programming-exercises/{exerciseId}/submissions/{submissionId}/feedback-suggestions")
-    @EnforceAtLeastTutor
+    @EnforceAtLeastStudent
+    @ManualConfig
     public ResponseEntity<List<ProgrammingFeedbackDTO>> getProgrammingFeedbackSuggestions(@PathVariable long exerciseId, @PathVariable long submissionId) {
         return getFeedbackSuggestions(exerciseId, submissionId, programmingExerciseRepository::findByIdElseThrow, programmingSubmissionRepository::findByIdElseThrow,
                 athenaFeedbackSuggestionsService::getProgrammingFeedbackSuggestions);
@@ -167,7 +175,8 @@ public class AthenaResource {
      * @return 200 Ok if successful with the corresponding result as body
      */
     @GetMapping("modeling-exercises/{exerciseId}/submissions/{submissionId}/feedback-suggestions")
-    @EnforceAtLeastTutor
+    @EnforceAtLeastStudent
+    @ManualConfig
     public ResponseEntity<List<ModelingFeedbackDTO>> getModelingFeedbackSuggestions(@PathVariable long exerciseId, @PathVariable long submissionId) {
         var exerciseApi = modelingRepositoryApi.orElseThrow(() -> new ModelingApiNotPresentException(ModelingRepositoryApi.class));
         var submissionApi = modelingSubmissionApi.orElseThrow(() -> new ModelingApiNotPresentException(ModelingSubmissionApi.class));

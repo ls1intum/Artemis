@@ -15,6 +15,12 @@ artemis:
   data-export-path: ./data-exports                # a folder in which data exports are stored. In a multi node setup, this folder should be in a shared file system area (e.g. based on NFS), because the node that serves a download is rarely the one that created the export
   build-logs-path: ./build-logs                   # a folder in which the complete log of every build job is stored, keyed by build job id, for download
   failed-build-logs-path: ./failed-build-logs     # a folder in which the build logs of failed builds are stored, keyed by submission id, to serve the build output panel, Iris and Hyperion. In a multi node setup, this folder should be in a shared file system area (e.g. based on NFS)
+  # Lets users create personal access tokens with which coding agents call a limited set of REST endpoints on their behalf.
+  # Disabled by default: while false, the token endpoints do not exist and a request with a token is rejected with 401.
+  # Administrators can never use tokens, whatever this is set to.
+  agent-access:
+    enabled: false
+    max-lifetime-in-days: 90 # the longest a token may live; users can pick a shorter lifetime when they create one
   bcrypt-salt-rounds: 11  # The number of salt rounds for the bcrypt password hashing. Lower numbers make it faster but more unsecure and vice versa.
   # Please use the bcrypt benchmark tool to determine the best number of rounds for your system. https://github.com/ls1intum/bcrypt-Benchmark
   user-management:
@@ -79,10 +85,13 @@ artemis:
     #      Each agent generates its own key pair at startup and publishes only the public key - nothing to distribute or rotate.
     #   2. build job clone tokens: the automatic fallback over https when build-agent-use-ssh is false, and it needs no configuration at all.
     #   3. build-agent-git-username / build-agent-git-password: Jenkins with LocalVC only. A node running local CI refuses to start with either set.
+    # REMOVE_IN_ARTEMIS_11 (Jenkins): option 3 goes away with Jenkins support
     # See documentation/docs/admin/production-setup/security.mdx#build-agent-authentication.
     # build-agent-use-ssh: true
     default-branch: main            # The branch that should be used as default branch for all newly created repositories. This does NOT have to be equal to the default branch of the VCS
     repository-authentication-mechanisms: token,ssh,password # the order of authentication mechanisms in the code button pop up. Removing parts removes them from the drop-down
+    # password-authentication-end-date: 2027-01-15  # ISO date on which you plan to stop accepting account passwords for Git. Only announced in the email and the push message sent to users who still use a password; Artemis does not reject passwords on that day
+  # REMOVE_IN_ARTEMIS_11 (Jenkins): user, password, token, url, vcs-credentials, artemis-authentication-token-* and build-timeout are Jenkins-only keys
   continuous-integration:
     user: <username>                # e.g. ga12abc
     password: <password>
@@ -125,7 +134,7 @@ artemis:
       drain-interval: PT30S # Pause between two runs of the job that works off the queue
       drain-batch-size: 200 # Most mails one run of the job sends
   rate-limiting:
-    enabled: false
+    enabled: true # The limit for client error reports cannot be disabled
     account-management-requests-per-minute: 5
     authentication-requests-per-minute: 30
     login-options-requests-per-minute: 30

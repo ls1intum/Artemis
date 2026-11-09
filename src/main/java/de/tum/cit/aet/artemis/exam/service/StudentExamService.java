@@ -437,7 +437,9 @@ public class StudentExamService {
         // connect the exercises and student participations correctly and make sure all relevant associations are available
         for (Exercise exercise : studentExam.getExercises()) {
             // add participation with submission and result to each exercise
-            examService.filterParticipationForExercise(studentExam, exercise, participations, true);
+            if (exercise != null) {
+                examService.filterParticipationForExercise(studentExam, exercise, participations, ExamReadAudience.INSTRUCTOR);
+            }
         }
 
         studentExam.getUser().setVisibleRegistrationNumber();
@@ -657,7 +659,7 @@ public class StudentExamService {
      * Sets up the participations and submissions for the given exercises of one student exam.
      * <p>
      * Takes the few values it reads rather than the student exam entity, so that the bulk preparation in
-     * {@link #startExercises(Long, List)} can feed it from a projection instead of loading the whole exam graph.
+     * {@link #startExercises(Long)} can feed it from a projection instead of loading the whole exam graph.
      *
      * @param studentExamId           the id of the student exam the participations belong to, used for logging only
      * @param student                 the student to create the participations for
@@ -705,34 +707,18 @@ public class StudentExamService {
     }
 
     /**
-     * Starts all the exercises only for a specific list of student exams.
-     *
-     * @param examId         exam to which the student exams belong
-     * @param studentExamIds the ids of student exams for which to start exercises
-     * @return a future that will yield the number of generated participations
-     */
-    public CompletableFuture<Integer> startExercisesForStudentExams(Long examId, List<Long> studentExamIds) {
-        return this.startExercises(examId, studentExamIds);
-    }
-
-    /**
      * Starts all the exercises of all the student exams of an exam
      *
      * @param examId exam to which the student exams belong
      * @return a future that will yield the number of generated participations
      */
     public CompletableFuture<Integer> startExercises(Long examId) {
-        return this.startExercises(examId, null);
-    }
-
-    private CompletableFuture<Integer> startExercises(Long examId, List<Long> studentExamIds) {
         boolean testExam = examRepository.findIsTestExamById(examId).orElseThrow(() -> new EntityNotFoundException("Exam", examId));
 
         // One row per (student exam, exercise) pair, carrying ids and the student's login only. Loading the exam with its
         // student exams and their exercises instead would repeat the exam row and the full exercise row once per student
         // exam, which for a large exam transfers megabytes to convey a few kilobytes of distinct data.
-        var exerciseStartData = studentExamIds == null ? studentExamRepository.findExerciseStartDataByExamId(examId)
-                : studentExamRepository.findExerciseStartDataByExamIdAndStudentExamIds(examId, studentExamIds);
+        var exerciseStartData = studentExamRepository.findExerciseStartDataByExamId(examId);
         var exercisesById = loadExercisesForPreparation(exerciseStartData);
         // Which students are already set up, asked once per exercise rather than once per student and exercise. Test runs
         // are not prepared here, so only the graded participations count.
@@ -882,7 +868,15 @@ public class StudentExamService {
     public StudentExam generateIndividualStudentExam(Exam exam, User student) {
         long start = System.nanoTime();
         Exam examWithExercises = examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(exam.getId());
-        StudentExam studentExam = studentExamRepository.createRandomStudentExams(examWithExercises, Set.of(student.getId())).getFirst();
+        StudentExam studentExam;
+        var existing = examWithExercises.isTestExam() ? Optional.<StudentExam>empty()
+                : studentExamRepository.findWithExercisesByUserIdAndExamId(student.getId(), exam.getId(), false);
+        if (existing.isPresent()) {
+            studentExam = existing.get();
+        }
+        else {
+            studentExam = studentExamRepository.createRandomStudentExams(examWithExercises, Set.of(student.getId())).getFirst();
+        }
         // The bulk paths never read the user back, so creation only writes the foreign key and leaves a stub behind.
         // This one hands its student exam to a caller that returns it to the client, so it gets the real user it
         // already holds. Safe to set here: the save ran in its own transaction, so this entity is detached and no

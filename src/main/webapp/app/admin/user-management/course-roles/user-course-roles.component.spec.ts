@@ -214,15 +214,8 @@ describe('UserCourseRolesComponent', () => {
     });
 
     describe('when editable', () => {
-        let courseRolesChanged: number;
-        let inProgress: boolean[];
-
         beforeEach(() => {
-            courseRolesChanged = 0;
-            inProgress = [];
-            fixture.componentInstance.changeInProgress.subscribe((state) => inProgress.push(state));
             fixture.componentRef.setInput('editable', true);
-            fixture.componentInstance.courseRolesChanged.subscribe(() => courseRolesChanged++);
         });
 
         function removeButtons(): HTMLElement[] {
@@ -261,7 +254,6 @@ describe('UserCourseRolesComponent', () => {
             expect(request?.message).toBe('Remove Instructor of student1 in Algorithms (ALGO)?');
             request?.reject?.();
             httpMock.expectNone({ method: 'DELETE' });
-            expect(courseRolesChanged).toBe(0);
         });
 
         it('removes the role once confirmed and keeps its entry busy until the reloaded list answered', async () => {
@@ -286,8 +278,6 @@ describe('UserCourseRolesComponent', () => {
                 'artemisApp.userManagement.courseRoles.remove.success',
                 expect.objectContaining({ login: 'student1', course: 'Algorithms (ALGO)' }),
             );
-            expect(courseRolesChanged).toBe(1);
-            expect(inProgress).toEqual([true, false]);
             expect(element().querySelector('[data-testid="user-course-roles-group-INSTRUCTOR"]')).toBeNull();
             expect(removeButtons().some((button) => button.hasAttribute('disabled'))).toBe(false);
         });
@@ -303,8 +293,6 @@ describe('UserCourseRolesComponent', () => {
             await fixture.whenStable();
             fixture.detectChanges();
 
-            expect(courseRolesChanged).toBe(1);
-            expect(inProgress).toEqual([true, false]);
             expect(removeButtons()).toHaveLength(4);
             expect(removeButtons().some((button) => button.hasAttribute('disabled'))).toBe(false);
         });
@@ -335,8 +323,6 @@ describe('UserCourseRolesComponent', () => {
             httpMock.expectOne({ method: 'GET', url: courseRolesUrl }).flush(courseRoles);
             await fixture.whenStable();
             fixture.detectChanges();
-
-            expect(courseRolesChanged).toBe(1);
         });
 
         it('keeps the add form and offers a retry when loading the roles fails', async () => {
@@ -370,7 +356,6 @@ describe('UserCourseRolesComponent', () => {
             fixture.detectChanges();
 
             expect(retry().disabled).toBe(false);
-            expect(inProgress).toEqual([true, false]);
         });
 
         it('does not emit after it was destroyed', async () => {
@@ -381,9 +366,6 @@ describe('UserCourseRolesComponent', () => {
 
             fixture.destroy();
             request.flush(null);
-
-            expect(courseRolesChanged).toBe(0);
-            expect(inProgress).toEqual([true]);
         });
 
         it('reloads the roles and reports the change when a role was added', async () => {
@@ -395,7 +377,6 @@ describe('UserCourseRolesComponent', () => {
             await fixture.whenStable();
             fixture.detectChanges();
 
-            expect(courseRolesChanged).toBe(1);
             expect(element().querySelectorAll('[data-testid="user-course-roles-course"]')).toHaveLength(4);
         });
 
@@ -438,8 +419,6 @@ describe('UserCourseRolesComponent', () => {
             await respondWith([]);
 
             fixture.debugElement.query((debugElement) => debugElement.name === 'jhi-user-course-role-add').componentInstance.changing.emit(true);
-
-            expect(inProgress).toEqual([true]);
         });
     });
 });

@@ -2,6 +2,7 @@
 id: multiple-artemis-instances
 title: Multiple Artemis Instances
 sidebar_label: Multiple Artemis Instances
+last_reviewed: 2026-11-08
 ---
 
 import Callout from "../../../src/components/Callout/Callout";
@@ -12,7 +13,6 @@ import buildAgentViewImg from "./assets/distributed-setup/build_agent_view.png"
 import deploymentBrokerImg from "./assets/distributed-setup/deployment_broker.drawio.png"
 import deploymentHazelcastImg from "./assets/distributed-setup/deployment_hazelcast.drawio.png"
 import multiInstanceSetupSimpleImg from "./assets/distributed-setup/deployment_after_simple.drawio.png"
-import multiNodeSetupImg from "./assets/distributed-setup/multi-node-setup.drawio.png"
 import registryImg from "./assets/distributed-setup/registry.png"
 import runConfigImg from "./assets/distributed-setup/run-config.png"
 import singleInstanceSetupImg from "./assets/distributed-setup/deployment_before.drawio.png"
@@ -100,11 +100,11 @@ eureka:
         enabled: true
         service-url:
             defaultZone: {{ artemis_eureka_urls }}
-instance:
-    prefer-ip-address: true
-    ip-address: {{ artemis_ip_address }}
-    appname: Artemis
-    instanceId: Artemis:{{ artemis_eureka_instance_id }}
+    instance:
+        prefer-ip-address: true
+        ip-address: {{ artemis_ip_address }}
+        appname: Artemis
+        instanceId: Artemis:{{ artemis_eureka_instance_id }}
 
 logging:
     file:
@@ -694,10 +694,10 @@ Artemis also ships a proof-of-concept Kubernetes runner that executes each build
 build-agent pods need no Docker socket. [LocalCI Build Runners](/admin/production-setup/build-runners) compares both and documents
 how to configure and deploy them.
 
-Build agents run as [Hazelcast Lite Members](https://docs.hazelcast.com/hazelcast/5.3/maintain-cluster/lite-members) and require a full member, in our case a core node, to be running.
-Thus, before starting a build agent make sure that at least the primary node is running. You can then add and remove build agents to the cluster as desired.
+With Hazelcast, build agents run as [Hazelcast Lite Members](https://docs.hazelcast.com/hazelcast/5.3/maintain-cluster/lite-members) and require a full member, in our case a core node, to be running. With Redis or Valkey, build agents connect to the Redis or Valkey store that the core nodes use instead.
+Thus, before starting a build agent make sure that at least the primary node (or the Redis or Valkey store) is running. You can then add and remove build agents to the cluster as desired.
 
-You can verify that a build agent has been successfully added to the cluster by checking the Build Agent View in the Server Administration.
+You can verify that a build agent has been successfully added to the cluster by checking the Build Agents page under **Administration → Build System**.
 It may take a few seconds for the build agent to show up:
 
 <Image
@@ -738,27 +738,21 @@ You should now be able to see all instances in the registry interface at http://
 
 ### Running multiple instances locally with Docker
 
-You can also run multiple instances of Artemis locally using Docker. This will start 3 Artemis instances, each running
+You can also run multiple instances of Artemis locally using Docker. This will start 2 Artemis instances, each running
 in its own container. A load balancer (nginx) will be used to distribute the requests to the different instances. The
 load balancer will be running in a separate container and will be accessible on ports 80/443 of the host system. The
-instances will be registered in the registry service running on a separate container. The instances will use the registry
-service to discover each other and form a Hazelcast cluster. Further details can be found in [Database Cache](#database-cache). The
+instances share their state through Valkey on the Redis [distributed data provider](/admin/production-setup/distributed-data),
+so they need no registry service and form no Hazelcast cluster. Further details can be found in [Database Cache](#database-cache). The
 instances will also use a ActiveMQ Artemis broker to synchronize WebSocket messages. Further details can be found in [WebSockets](#websockets). In summary, the setup will look like this:
 
-* 3 Artemis instances:
+* 2 Artemis instances:
     * artemis-app-node-1: using following spring profile: `prod,localvc,localci,core,scheduling,docker`
-    * artemis-app-node-2: using following profile: `prod,localvc,localci,buildagent,core,docker`
-    * artemis-app-node-3: using following profile: `prod,buildagent`
-* A MySQL database addressable on port 3306 of the host system
+    * artemis-app-node-2: using following profile: `localvc,localci,buildagent,core,prod,docker`
+* A PostgreSQL database addressable on port 5432 of the host system
 * A Load balancer (nginx) addressable on ports 80/443 of the host system: `http(s)://localhost`.
-* A Registry service addressable on port 8761 of the host system: http://localhost:8761
+* Valkey, addressable on port 6379 of the loopback interface of the host system. Only the user `artemis` can connect,
+    with the password in `REDIS_PASSWORD` (`artemis` unless set).
 * An ActiveMQ broker
-
-<Image
-    src={multiNodeSetupImg}
-    size={ImageSize.large}
-    alt={"Component diagram of a Artemis multi-instance deployment and how it connects to the required support services."}
-/>
 
 <Callout variant={CalloutVariant.info}>
     You don't have to start the client manually. The client files are served by the Artemis instances and can be
@@ -767,7 +761,7 @@ instances will also use a ActiveMQ Artemis broker to synchronize WebSocket messa
 
 These instances run under the `prod` profile, and `deployment/docker/artemis/config/prod-multinode.env` therefore does not contain a
 JWT signing key: a key committed to the repository would be readable by everyone. Export one before starting the
-containers, so that all three instances share it:
+containers, so that both instances share it:
 
 ```bash
 export ARTEMIS_E2E_JWT_SECRET="$(openssl rand -base64 64 | tr -d '\n')"
@@ -783,15 +777,6 @@ Set `INFO_TESTSERVER=false` for a production installation: its core nodes refuse
 its scheduling node includes them in the [telemetry](/admin/telemetry) report, the administrator's name only when
 `artemis.telemetry.sendAdminDetails` is enabled.
 Keep these shared values in that file rather than in `node1.env`, so every core node receives the same identity.
-
-<Callout variant={CalloutVariant.info}>
-    You may run into the following error when starting the containers
-    `No member group is available to assign partition ownership...`. This issue should resolve itself after a few
-    minutes. Otherwise, you can first start the following containers:
-    `docker compose --env-file .env -f deployment/docker/test-server-multi-node-mysql-localci.yml up mysql jhipster-registry activemq-broker artemis-app-node-1`.
-    After these containers are up and running, you can start the remaining containers:
-    `docker compose --env-file .env -f deployment/docker/test-server-multi-node-mysql-localci.yml up artemis-app-node-2 artemis-app-node-3 nginx`.
-</Callout>
 
 
 #### Linux setup
@@ -825,10 +810,10 @@ Keep these shared values in that file rather than in `node1.env`, so every core 
 3. Start the docker containers by running the following command:
 
     ```bash
-    docker compose --env-file .env -f deployment/docker/test-server-multi-node-mysql-localci.yml up
+    docker compose --env-file .env -f deployment/docker/test-server-multi-node-postgresql-localci.yml up
     ```
 
-4. You can now access artemis on `http(s)://localhost` and the registry on http://localhost:8761.
+4. You can now access artemis on `http(s)://localhost`.
 
 
 #### Windows setup
@@ -845,10 +830,10 @@ Keep these shared values in that file rather than in `node1.env`, so every core 
 2. Start the docker containers by running the following command:
 
     ```yaml
-    docker compose --env-file .env -f deployment/docker/test-server-multi-node-mysql-localci.yml up
+    docker compose --env-file .env -f deployment/docker/test-server-multi-node-postgresql-localci.yml up
     ```
 
-3. You can now access artemis on `http(s)://localhost` and the registry on http://localhost:8761.
+3. You can now access artemis on `http(s)://localhost`.
 
 
 #### MacOS setup
@@ -859,7 +844,7 @@ Keep these shared values in that file rather than in `node1.env`, so every core 
 2. Start the docker containers by running
 
     ```bash
-    docker compose --env-file .env -f deployment/docker/test-server-multi-node-mysql-localci.yml up
+    docker compose --env-file .env -f deployment/docker/test-server-multi-node-postgresql-localci.yml up
     ```
 
-3. You can now access artemis on `http(s)://localhost` and the registry on http://localhost:8761.
+3. You can now access artemis on `http(s)://localhost`.

@@ -7,6 +7,7 @@
             "no": "No",
             "you": "You",
             "emptyList": "No items available",
+            "serverNotReachable": "Server not reachable",
             "filterOptions": "Filter options",
             "noMatchingOptions": "No matching options",
             "selectedCount": "{{ count }} selected",
@@ -22,7 +23,9 @@
             "expandMenu": "Expand menu (Ctrl + M)",
             "collapseMenu": "Collapse menu (Ctrl + M)",
             "enabled": "Enabled",
-            "disabled": "Disabled"
+            "disabled": "Disabled",
+            "resizePanels": "Resize panels",
+            "selectAllRows": "Select all rows"
         },
         "weekdays": {
             "monday": "Monday",
@@ -193,7 +196,7 @@
             "courses": "Courses",
             "student": "Student",
             "course": "Management",
-            "courseRequests": "Request a new Course",
+            "courseRequests": "Request new course",
             "entities": {
                 "main": "Entities",
                 "course": "Course",
@@ -308,6 +311,7 @@
                     "metrics": "Metrics",
                     "statistics": "Statistics",
                     "featureUsage": "Feature Usage",
+                    "errorAnalysis": "Error Analysis",
                     "websocket": "Websocket",
                     "buildAgents": "Build Agents",
                     "buildQueue": "Build Overview",
@@ -561,7 +565,10 @@
             "value": "Value"
         },
         "delete": {
-            "title": "Confirm delete operation"
+            "title": "Confirm delete operation",
+            "summary": {
+                "largeCountWarning": "This deletes a large amount of data. Please check the numbers below carefully before you confirm."
+            }
         },
         "unlink": {
             "title": "Confirm unlink operation"

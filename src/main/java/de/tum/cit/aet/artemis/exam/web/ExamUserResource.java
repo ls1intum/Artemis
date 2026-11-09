@@ -1,7 +1,12 @@
 package de.tum.cit.aet.artemis.exam.web;
 
 import java.nio.file.Path;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 import jakarta.validation.Valid;
@@ -10,6 +15,8 @@ import jakarta.validation.constraints.Min;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.boot.actuate.audit.AuditEvent;
+import org.springframework.boot.actuate.audit.AuditEventRepository;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.data.domain.Page;
@@ -20,6 +27,8 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestPart;
@@ -29,12 +38,13 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.FilePathType;
+import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.dto.UserForRegistrationDTO;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
+import de.tum.cit.aet.artemis.core.security.annotations.ManualConfig;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
@@ -44,6 +54,7 @@ import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.core.web.util.PaginationUtil;
 import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
 import de.tum.cit.aet.artemis.exam.domain.ExamUser;
+import de.tum.cit.aet.artemis.exam.dto.ExamAttendanceUpdateDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamStudentDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamStudentSearchDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamUserAttendanceCheckDTO;
@@ -77,13 +88,16 @@ public class ExamUserResource {
 
     private final ExamUserService examUserService;
 
+    private final AuditEventRepository auditEventRepository;
+
     public ExamUserResource(ExamUserService examUserService, UserRepository userRepository, FileService fileService, ExamAccessService examAccessService,
-            ExamUserRepository examUserRepository) {
+            ExamUserRepository examUserRepository, AuditEventRepository auditEventRepository) {
         this.userRepository = userRepository;
         this.fileService = fileService;
         this.examUserRepository = examUserRepository;
         this.examAccessService = examAccessService;
         this.examUserService = examUserService;
+        this.auditEventRepository = auditEventRepository;
     }
 
     /**
@@ -97,7 +111,8 @@ public class ExamUserResource {
      */
     @FeatureUsage(UserFeature.EXAM_ATTENDANCE)
     @PostMapping("courses/{courseId}/exams/{examId}/exam-users")
-    @EnforceAtLeastTutor
+    @EnforceAtLeastStudent
+    @ManualConfig
     public ResponseEntity<ExamUserDTO> updateExamUser(@RequestPart ExamUserDTO examUserDTO, @RequestPart(value = "file", required = false) MultipartFile signatureFile,
             @PathVariable Long courseId, @PathVariable Long examId) {
         log.debug("REST request to update {} as exam user to exam : {}", examUserDTO.login(), examId);
@@ -108,6 +123,7 @@ public class ExamUserResource {
 
         ExamUser examUser = examUserRepository.findByExamIdAndUserId(examId, student.getId())
                 .orElseThrow(() -> new EntityNotFoundException("Exam user with login: \"" + examUserDTO.login() + "\" does not exist"));
+        Map<String, Object> auditData = attendanceAuditData(examUser, courseId);
 
         if (signatureFile != null) {
             String oldPathString = examUser.getSigningImagePath();
@@ -129,6 +145,7 @@ public class ExamUserResource {
         examUser.setActualSeat(examUserDTO.seat());
         examUser.setActualRoom(examUserDTO.room());
         examUser = examUserRepository.save(examUser);
+        auditAttendanceUpdate(examUser, auditData, signatureFile != null);
 
         ExamUserDTO.ExamUserDetailsDTO examUserDetails = ExamUserDTO.ExamUserDetailsDTO.fromUser(examUser.getUser());
 
@@ -148,7 +165,8 @@ public class ExamUserResource {
      * @return list of not found student matriculation numbers ResponseEntity with status 200 (OK)
      */
     @PostMapping("courses/{courseId}/exams/{examId}/exam-users-save-images")
-    @EnforceAtLeastInstructor
+    @EnforceAtLeastStudent
+    @ManualConfig
     public ResponseEntity<ExamUsersNotFoundDTO> saveUsersImages(@PathVariable Long courseId, @PathVariable Long examId, @RequestParam("file") MultipartFile file) {
         log.debug("REST request to parse pdf : {}", file.getOriginalFilename());
         examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
@@ -158,17 +176,79 @@ public class ExamUserResource {
     /**
      * GET courses/{courseId}/exams/{examId}/verify-exam-users : Retrieves a list of students who started the exam but did not sign
      *
-     * @param courseId the id of the course
-     * @param examId   the id of the exam
+     * @param courseId   the id of the course
+     * @param examId     the id of the exam
+     * @param includeAll include every registered student, also students with a complete attendance check
      * @return list of students who did not sign ResponseEntity with status 200 (OK)
      */
     @FeatureUsage(UserFeature.EXAM_ATTENDANCE)
     @GetMapping("courses/{courseId}/exams/{examId}/verify-exam-users")
-    @EnforceAtLeastInstructor
-    public ResponseEntity<Set<ExamUserAttendanceCheckDTO>> getAllWhoDidNotSign(@PathVariable Long courseId, @PathVariable Long examId) {
+    @EnforceAtLeastStudent
+    @ManualConfig
+    public ResponseEntity<Set<ExamUserAttendanceCheckDTO>> getAllWhoDidNotSign(@PathVariable Long courseId, @PathVariable Long examId,
+            @RequestParam(defaultValue = "false") boolean includeAll) {
         log.debug("REST request to get all students who did not sign for exam with id: {}", examId);
         examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
-        return ResponseEntity.ok().body(examUserRepository.findAllExamUsersWhoDidNotSign(examId));
+        return ResponseEntity.ok().body(examUserRepository.findForAttendanceCheck(examId, includeAll));
+    }
+
+    /**
+     * Confirms or clears the identity checks after conduction without requiring or changing a signature.
+     *
+     * @param courseId   the course containing the exam
+     * @param examId     the exam containing the registration
+     * @param examUserId the registration to update
+     * @param update     whether to confirm or clear the identity checks
+     * @return an empty response
+     */
+    @FeatureUsage(UserFeature.EXAM_ATTENDANCE)
+    @PutMapping("courses/{courseId}/exams/{examId}/exam-users/{examUserId}/attendance")
+    @EnforceAtLeastStudent
+    @ManualConfig
+    public ResponseEntity<Void> updateAttendance(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long examUserId,
+            @Valid @RequestBody ExamAttendanceUpdateDTO update) {
+        examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
+        ExamUser examUser = examUserRepository.findWithExamById(examUserId).filter(registration -> registration.getExam().getId().equals(examId))
+                .orElseThrow(() -> new EntityNotFoundException("Exam user not found in the requested exam"));
+        var exam = examUser.getExam();
+        if (exam.isTestExam() || ZonedDateTime.now(ZoneOffset.UTC).isBefore(exam.getEndDate())) {
+            throw new BadRequestAlertException("Attendance can only be corrected after a real exam has ended", "exam", "attendanceCorrectionNotAllowed");
+        }
+        Map<String, Object> auditData = attendanceAuditData(examUser, courseId);
+        examUser.setDidCheckImage(update.attended());
+        examUser.setDidCheckName(update.attended());
+        examUser.setDidCheckLogin(update.attended());
+        examUser.setDidCheckRegistrationNumber(update.attended());
+        examUser = examUserRepository.save(examUser);
+        auditAttendanceUpdate(examUser, auditData, false);
+        return ResponseEntity.noContent().build();
+    }
+
+    private Map<String, Object> attendanceAuditData(ExamUser examUser, long courseId) {
+        Map<String, Object> data = new HashMap<>();
+        data.put("courseId", courseId);
+        data.put("examId", examUser.getExam().getId());
+        data.put("examUserId", examUser.getId());
+        data.put("studentId", examUser.getUser().getId());
+        data.put("studentLogin", examUser.getUser().getLogin());
+        addAttendanceCheckAuditValues(data, "old", examUser);
+        return data;
+    }
+
+    private void auditAttendanceUpdate(ExamUser examUser, Map<String, Object> data, boolean signatureChanged) {
+        addAttendanceCheckAuditValues(data, "new", examUser);
+        data.put("signatureChanged", signatureChanged);
+        String actor = SecurityUtils.getCurrentUserLogin().orElseThrow(() -> new EntityNotFoundException("No current user login found"));
+        auditEventRepository.add(new AuditEvent(actor, Constants.UPDATE_EXAM_ATTENDANCE, data));
+    }
+
+    private void addAttendanceCheckAuditValues(Map<String, Object> data, String prefix, ExamUser examUser) {
+        data.put(prefix + "DidCheckImage", examUser.getDidCheckImage());
+        data.put(prefix + "DidCheckName", examUser.getDidCheckName());
+        data.put(prefix + "DidCheckLogin", examUser.getDidCheckLogin());
+        data.put(prefix + "DidCheckRegistrationNumber", examUser.getDidCheckRegistrationNumber());
+        data.put(prefix + "Room", Objects.toString(examUser.getActualRoom(), ""));
+        data.put(prefix + "Seat", Objects.toString(examUser.getActualSeat(), ""));
     }
 
     /**
@@ -198,7 +278,8 @@ public class ExamUserResource {
      * @return ResponseEntity containing a page of {@link ExamStudentDTO} with status 200 (OK) and pagination headers
      */
     @GetMapping("courses/{courseId}/exams/{examId}/exam-students/paged")
-    @EnforceAtLeastTutor
+    @EnforceAtLeastStudent
+    @ManualConfig
     public ResponseEntity<List<ExamStudentDTO>> getExamStudentsPaged(@PathVariable long courseId, @PathVariable long examId, @Valid ExamStudentSearchDTO search) {
         log.debug("REST request to get paged exam-students for exam: {}", examId);
         examAccessService.checkCourseAndExamAccessForTeachingAssistantElseThrow(courseId, examId);
@@ -215,7 +296,8 @@ public class ExamUserResource {
      * @return export information for all exam users
      */
     @GetMapping("courses/{courseId}/exams/{examId}/export-students")
-    @EnforceAtLeastInstructor
+    @EnforceAtLeastStudent
+    @ManualConfig
     public ResponseEntity<List<ExportExamUserDTO>> exportExamUsers(@PathVariable Long courseId, @PathVariable Long examId) {
         log.debug("REST request to export exam users for exam with id: {}", examId);
 
@@ -237,7 +319,8 @@ public class ExamUserResource {
      * @return a page of {@link UserForRegistrationDTO} with {@code X-Total-Count} and Link pagination headers
      */
     @GetMapping("courses/{courseId}/exams/{examId}/students/search")
-    @EnforceAtLeastInstructor
+    @EnforceAtLeastStudent
+    @ManualConfig
     public ResponseEntity<List<UserForRegistrationDTO>> searchStudentsForExamRegistration(@PathVariable Long courseId, @PathVariable Long examId, @RequestParam String searchTerm,
             @RequestParam(defaultValue = "0") @Min(0) int page, @RequestParam(defaultValue = "10") @Min(1) @Max(200) int size) {
         log.debug("REST request to search users for exam {} registration with term: {}", examId, searchTerm);

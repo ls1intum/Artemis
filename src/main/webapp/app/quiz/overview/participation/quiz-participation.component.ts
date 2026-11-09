@@ -1,3 +1,4 @@
+import { isExamExerciseRoute } from 'app/exercise/util/exercise-detail-route-context';
 import { QuizAnswerSelection } from 'app/quiz/shared/util/quiz-answer-selection';
 import { BreakpointObserver } from '@angular/cdk/layout';
 import { Component, ElementRef, OnDestroy, OnInit, effect, inject, input, output, signal, viewChild, viewChildren } from '@angular/core';
@@ -40,7 +41,7 @@ import { roundValueSpecifiedByCourseSettings } from 'app/foundation/util/utils';
 import { getIsMobileSignal, onError } from 'app/foundation/util/global.utils';
 import { AUTOSAVE_CHECK_INTERVAL, AUTOSAVE_EXERCISE_INTERVAL, UI_RELOAD_TIME } from 'app/foundation/constants/exercise-exam-constants';
 import { debounce } from 'lodash-es';
-import { captureException } from '@sentry/angular';
+import { captureException } from 'app/core/error-reporting/capture-exception';
 import { getCourseFromExercise, hasDueDatePassed } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { faCircleNotch, faSync } from '@fortawesome/free-solid-svg-icons';
 import { ArtemisServerDateService } from 'app/foundation/service/server-date.service';
@@ -391,14 +392,14 @@ export class QuizParticipationComponent extends QuizParticipationBase implements
      * loads quiz exercise and starts preview mode
      */
     initPreview() {
-        this.quizExerciseService.find(this.quizId).subscribe({
+        (isExamExerciseRoute(this.route.snapshot) ? this.quizExerciseService.findForExam(this.quizId) : this.quizExerciseService.find(this.quizId)).subscribe({
             next: (quizExercise) => this.startQuizPreviewOrPractice(quizExercise),
             error: (error: HttpErrorResponse) => onError(this.alertService, error),
         });
     }
 
     initShowSolution() {
-        this.quizExerciseService.find(this.quizId).subscribe({
+        (isExamExerciseRoute(this.route.snapshot) ? this.quizExerciseService.findForExam(this.quizId) : this.quizExerciseService.find(this.quizId)).subscribe({
             next: (quizExercise) => {
                 this.quizExercise.set(quizExercise);
                 this.initQuiz();

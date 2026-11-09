@@ -16,6 +16,7 @@ ext {
         "fileupload"    :          ["INSTRUCTION": 0.924, "CLASS":  1],
         "hyperion"      :          ["INSTRUCTION": 0.848, "CLASS":  3],
         "iris"          :          ["INSTRUCTION": 0.836, "CLASS": 17],
+        // REMOVE_IN_ARTEMIS_11 (Jenkins): remove this module threshold with the jenkins module
         "jenkins"       :          ["INSTRUCTION": 0.888, "CLASS":  3],
         "lecture"       :          ["INSTRUCTION": 0.900, "CLASS":  1],
         "localci"       :          ["INSTRUCTION": 0.860, "CLASS":  3],
@@ -44,7 +45,7 @@ ext {
 }
 
 jacoco {
-    toolVersion = "0.8.15"
+    toolVersion = "0.8.16"
 }
 
 jacocoTestReport {

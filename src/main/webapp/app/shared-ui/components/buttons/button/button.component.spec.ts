@@ -6,7 +6,7 @@ import { FeatureToggleDirective } from 'app/foundation/feature-toggle/feature-to
 import { MockTranslateService, TranslatePipeMock } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { MockDirective } from 'ng-mocks';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 import { TranslateService } from '@ngx-translate/core';
 import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 import { provideHttpClient } from '@angular/common/http';
@@ -21,7 +21,14 @@ describe('ButtonComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [MockDirective(NgbTooltip), FontAwesomeTestingModule, ButtonComponent, FeatureToggleDirective, TranslatePipeMock, MockDirective(TranslateDirective)],
+            imports: [
+                MockDirective(TumAetUiTooltipDirective),
+                FontAwesomeTestingModule,
+                ButtonComponent,
+                FeatureToggleDirective,
+                TranslatePipeMock,
+                MockDirective(TranslateDirective),
+            ],
             providers: [{ provide: TranslateService, useClass: MockTranslateService }, provideHttpClient()],
         })
             .compileComponents()

@@ -27,9 +27,11 @@ import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
+import de.tum.cit.aet.artemis.exercise.util.AsyncDeletionTestUtilService;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizSubmission;
 import de.tum.cit.aet.artemis.quiz.service.QuizExerciseService;
+import de.tum.cit.aet.artemis.quiz.test_repository.QuizExerciseTestRepository;
 import de.tum.cit.aet.artemis.quiz.test_repository.QuizSubmissionTestRepository;
 import de.tum.cit.aet.artemis.quiz.util.QuizExerciseFactory;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
@@ -39,6 +41,9 @@ class ExamQuizServiceTest extends AbstractSpringIntegrationIndependentTest {
     private static final String TEST_PREFIX = "eqservicetest";
 
     private static final String OTHER_PREFIX = TEST_PREFIX + "other";
+
+    @Autowired
+    private AsyncDeletionTestUtilService asyncDeletionTestUtilService;
 
     @Autowired
     private StudentExamService studentExamService;
@@ -51,6 +56,9 @@ class ExamQuizServiceTest extends AbstractSpringIntegrationIndependentTest {
 
     @Autowired
     private QuizSubmissionTestRepository quizSubmissionRepository;
+
+    @Autowired
+    private QuizExerciseTestRepository quizExerciseTestRepository;
 
     @Autowired
     private ExerciseGroupRepository exerciseGroupRepository;
@@ -106,13 +114,13 @@ class ExamQuizServiceTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void evaluateQuiz_asStudent_PreAuth_forbidden() throws Exception {
         evaluateQuiz_authorization_forbidden();
     }
 
     @Test
-    @WithMockUser(username = OTHER_PREFIX + "instructor6", roles = "INSTRUCTOR")
+    @WithMockUser(username = OTHER_PREFIX + "instructor6", roles = "USER")
     void evaluateQuiz_asInstructorNotInCourse_forbidden() throws Exception {
         evaluateQuiz_authorization_forbidden();
     }
@@ -129,7 +137,7 @@ class ExamQuizServiceTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void evaluateQuiz_testExam_forbidden() throws Exception {
         exam.setTestExam(true);
         exam.setEndDate(ZonedDateTime.now().minusMinutes(30));
@@ -142,7 +150,7 @@ class ExamQuizServiceTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void evaluateQuiz_notOver_badRequest() throws Exception {
         exam = examRepository.save(exam);
         exerciseGroup = exerciseGroupRepository.save(exerciseGroup);
@@ -153,7 +161,7 @@ class ExamQuizServiceTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void evaluateQuiz() throws Exception {
         exam = examUtilService.registerUsersForExamAndSaveExam(exam, TEST_PREFIX, NUMBER_OF_STUDENTS);
 
@@ -194,11 +202,14 @@ class ExamQuizServiceTest extends AbstractSpringIntegrationIndependentTest {
         studentExamRepository.deleteAllInBatch(studentExamRepository.findByExamId(exam.getId()));
 
         // Make sure delete also works if so many objects have been created before
-        request.delete("/api/exam/courses/" + course.getId() + "/exams/" + exam.getId(), HttpStatus.OK);
+        request.delete("/api/exam/courses/" + course.getId() + "/exams/" + exam.getId(), HttpStatus.ACCEPTED);
+        asyncDeletionTestUtilService.awaitExamDeletion(exam.getId());
+        assertThat(examRepository.findById(exam.getId())).isEmpty();
+        assertThat(quizExerciseTestRepository.findById(quizExercise.getId())).isEmpty();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void evaluateQuizWithNoSubmissions() throws Exception {
         exam = examUtilService.registerUsersForExamAndSaveExam(exam, TEST_PREFIX, NUMBER_OF_STUDENTS);
 
@@ -240,7 +251,10 @@ class ExamQuizServiceTest extends AbstractSpringIntegrationIndependentTest {
         studentExamRepository.deleteAllInBatch(studentExamRepository.findByExamId(exam.getId()));
 
         // Make sure delete also works if so many objects have been created before
-        request.delete("/api/exam/courses/" + course.getId() + "/exams/" + exam.getId(), HttpStatus.OK);
+        request.delete("/api/exam/courses/" + course.getId() + "/exams/" + exam.getId(), HttpStatus.ACCEPTED);
+        asyncDeletionTestUtilService.awaitExamDeletion(exam.getId());
+        assertThat(examRepository.findById(exam.getId())).isEmpty();
+        assertThat(quizExerciseTestRepository.findById(quizExercise.getId())).isEmpty();
     }
 
     private void waitForParticipantScores() {
@@ -249,7 +263,7 @@ class ExamQuizServiceTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void evaluateQuizWithMultipleSubmissions() throws Exception {
         exam = examUtilService.registerUsersForExamAndSaveExam(exam, TEST_PREFIX, NUMBER_OF_STUDENTS);
 
@@ -297,11 +311,14 @@ class ExamQuizServiceTest extends AbstractSpringIntegrationIndependentTest {
         studentExamRepository.deleteAllInBatch(studentExamRepository.findByExamId(exam.getId()));
 
         // Make sure delete also works if so many objects have been created before
-        request.delete("/api/exam/courses/" + course.getId() + "/exams/" + exam.getId(), HttpStatus.OK);
+        request.delete("/api/exam/courses/" + course.getId() + "/exams/" + exam.getId(), HttpStatus.ACCEPTED);
+        asyncDeletionTestUtilService.awaitExamDeletion(exam.getId());
+        assertThat(examRepository.findById(exam.getId())).isEmpty();
+        assertThat(quizExerciseTestRepository.findById(quizExercise.getId())).isEmpty();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void evaluateQuiz_twice() throws Exception {
         exam = examUtilService.registerUsersForExamAndSaveExam(exam, TEST_PREFIX, NUMBER_OF_STUDENTS);
 
@@ -348,7 +365,10 @@ class ExamQuizServiceTest extends AbstractSpringIntegrationIndependentTest {
         studentExamRepository.deleteAllInBatch(studentExamRepository.findByExamId(exam.getId()));
 
         // Make sure delete also works if so many objects have been created before
-        request.delete("/api/exam/courses/" + course.getId() + "/exams/" + exam.getId(), HttpStatus.OK);
+        request.delete("/api/exam/courses/" + course.getId() + "/exams/" + exam.getId(), HttpStatus.ACCEPTED);
+        asyncDeletionTestUtilService.awaitExamDeletion(exam.getId());
+        assertThat(examRepository.findById(exam.getId())).isEmpty();
+        assertThat(quizExerciseTestRepository.findById(quizExercise.getId())).isEmpty();
     }
 
     private void checkEvaluationResults(QuizExercise quizExercise) {

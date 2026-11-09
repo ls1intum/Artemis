@@ -34,7 +34,10 @@ import org.springframework.web.bind.annotation.RestController;
 import de.tum.cit.aet.artemis.core.domain.FeatureInteraction;
 import de.tum.cit.aet.artemis.core.dto.SharingInfoDTO;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
+import de.tum.cit.aet.artemis.core.security.Role;
+import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
+import de.tum.cit.aet.artemis.core.security.annotations.ManualConfig;
+import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.service.featureusage.UsageInteraction;
 import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
@@ -43,6 +46,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.dto.ImportProgrammingExerciseRequestDTO;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseResponseDTO;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.service.sharing.ExerciseSharingService;
 import de.tum.cit.aet.artemis.programming.service.sharing.ProgrammingExerciseImportFromSharingService;
 import de.tum.cit.aet.artemis.programming.service.sharing.SharingConnectorService;
@@ -110,13 +114,20 @@ public class ExerciseSharingResource {
 
     private final ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
 
+    private final ProgrammingExerciseRepository programmingExerciseRepository;
+
+    private final AuthorizationCheckService authorizationCheckService;
+
     public ExerciseSharingResource(ExerciseSharingService exerciseSharingService, SharingConnectorService sharingConnectorService,
             ProgrammingExerciseImportFromSharingService programmingExerciseImportFromSharingService,
-            ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository) {
+            ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository, ProgrammingExerciseRepository programmingExerciseRepository,
+            AuthorizationCheckService authorizationCheckService) {
         this.exerciseSharingService = exerciseSharingService;
         this.programmingExerciseImportFromSharingService = programmingExerciseImportFromSharingService;
         this.sharingConnectorService = sharingConnectorService;
         this.programmingExerciseBuildConfigRepository = programmingExerciseBuildConfigRepository;
+        this.programmingExerciseRepository = programmingExerciseRepository;
+        this.authorizationCheckService = authorizationCheckService;
     }
 
     /**
@@ -138,7 +149,7 @@ public class ExerciseSharingResource {
      *         does not exist; {@code 400 Bad Request} on checksum failure
      */
     @GetMapping("import/basket")
-    @EnforceAtLeastEditor
+    @EnforceAtLeastStudent
     public ResponseEntity<ShoppingBasket> loadShoppingBasket(@RequestParam String basketToken, @RequestParam String returnURL, @RequestParam String apiBaseURL,
             @RequestParam String checksum) {
         if (SecretChecksumCalculator.checkChecksum(Map.of("returnURL", returnURL, "apiBaseURL", apiBaseURL), sharingConnectorService.getSharingApiKey(), checksum)) {
@@ -163,7 +174,8 @@ public class ExerciseSharingResource {
      *         missing; {@code 500 Internal Server Error} on import failures (e.g., VCS operations, IO/URI issues)
      */
     @PostMapping("setup-import")
-    @EnforceAtLeastEditor
+    @EnforceAtLeastStudent
+    @ManualConfig
     public ResponseEntity<ProgrammingExerciseResponseDTO> setUpFromSharingImport(@RequestBody SharingSetupInfoDTO sharingSetupInfo) {
         // The whole import is driven by the basket reference; without it the service would dereference null.
         if (sharingSetupInfo.sharingInfo() == null) {
@@ -195,7 +207,7 @@ public class ExerciseSharingResource {
     // TODO: we should NOT use a POST request for a GET Operation
     @UsageInteraction(FeatureInteraction.VIEW)
     @PostMapping("import/basket/exercise-details")
-    @EnforceAtLeastEditor
+    @EnforceAtLeastStudent
     public ResponseEntity<ImportProgrammingExerciseRequestDTO> getExerciseDetails(@RequestBody SharingInfoDTO sharingInfo) {
         if (!sharingInfo.checkChecksum(sharingConnectorService.getSharingApiKey())) {
             return ResponseEntity.badRequest().build();
@@ -219,8 +231,12 @@ public class ExerciseSharingResource {
      *         {@code 500 Internal Server Error} if export fails
      */
     @PostMapping(SHARING_EXPORT_RESOURCE_PATH)
-    @EnforceAtLeastEditor
+    @EnforceAtLeastStudent
+    @ManualConfig
     public ResponseEntity<String> exportExerciseToSharing(@RequestBody String callBackUrl, @RequestParam(name = "exerciseId") Long exerciseId) {
+        // The security configuration permits this path for the token protected download below, so the role is enforced here
+        ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
+        authorizationCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, exercise, null);
         try {
             URI uriRedirect = exerciseSharingService.exportExerciseToSharing(exerciseId).toURI();
             uriRedirect = UriBuilder.fromUri(uriRedirect).queryParam("callBack", callBackUrl).build();

@@ -143,7 +143,7 @@ describe('TeamStudentSearchComponent', () => {
         expect(searchNoResultsSpy).toHaveBeenCalledWith(undefined);
     });
 
-    it('should disable typeahead buttons for students already pending or assigned to another team', async () => {
+    it('should disable suggestions for students already pending or assigned to another team', async () => {
         const pendingStudent = {
             id: mockTeamStudents[0].id,
             login: mockTeamStudents[0].login,
@@ -163,18 +163,18 @@ describe('TeamStudentSearchComponent', () => {
             assignedTeamId: mockTeam.id,
         } as TeamSearchUser;
         const users = [pendingStudent, assignedToOtherTeamStudent, sameTeamStudent];
-        const typeaheadButtons = [{ setAttribute: vi.fn() }, { setAttribute: vi.fn() }, { setAttribute: vi.fn() }];
-        vi.spyOn(component as unknown as { readonly typeaheadButtons: typeof typeaheadButtons }, 'typeaheadButtons', 'get').mockReturnValue(typeaheadButtons);
         vi.spyOn(teamService, 'searchInCourseForExerciseTeam').mockReturnValue(of(new HttpResponse({ body: users })));
         fixture.componentRef.setInput('studentsFromPendingTeam', [pendingStudent as User]);
 
-        const result = await runSearch('ga12abc');
+        component.requestSearch('ga12abc');
+        await vi.advanceTimersByTimeAsync(200);
+        fixture.detectChanges();
 
-        expect(result).toEqual(users);
-        expect(typeaheadButtons[0].setAttribute).toHaveBeenCalledOnce();
-        expect(typeaheadButtons[0].setAttribute).toHaveBeenCalledWith('disabled', '');
-        expect(typeaheadButtons[1].setAttribute).toHaveBeenCalledOnce();
-        expect(typeaheadButtons[1].setAttribute).toHaveBeenCalledWith('disabled', '');
-        expect(typeaheadButtons[2].setAttribute).not.toHaveBeenCalled();
+        expect(component.suggestions().map((option) => option.disabled)).toEqual([true, true, false]);
+        const selectSpy = vi.spyOn(component.selectStudent, 'emit');
+        component.selectOption({ value: component.suggestions()[0] });
+        expect(selectSpy).not.toHaveBeenCalled();
+        component.selectOption({ value: component.suggestions()[2] });
+        expect(selectSpy).toHaveBeenCalledWith(sameTeamStudent);
     });
 });

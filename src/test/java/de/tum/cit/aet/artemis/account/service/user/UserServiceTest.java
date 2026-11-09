@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.account.service.user;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.util.HashSet;
 import java.util.List;
@@ -9,7 +10,10 @@ import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import de.tum.cit.aet.artemis.account.domain.Authority;
@@ -19,6 +23,7 @@ import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.account.util.UserUtilService;
 import de.tum.cit.aet.artemis.core.dto.StudentDTO;
 import de.tum.cit.aet.artemis.core.dto.vm.ManagedUserVM;
+import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationJenkinsLocalVCTest;
 
@@ -139,6 +144,62 @@ class UserServiceTest extends AbstractSpringIntegrationJenkinsLocalVCTest {
 
         // Cleanup
         userRepository.delete(admin);
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = { false, true })
+    void testApplicationReady_conflictingAdminEmailPreservesBothAccounts(boolean adminHasEmail) {
+        String adminLogin = TEST_PREFIX + "conflictingadmin";
+        String ownerLogin = TEST_PREFIX + "emailowner";
+        String ownerEmail = "userservice-owner@example.com";
+        String existingAdminEmail = adminHasEmail ? "userservice-admin@example.com" : null;
+        Object originalUsername = ReflectionTestUtils.getField(userService, "artemisInternalAdminUsername");
+        Object originalPassword = ReflectionTestUtils.getField(userService, "artemisInternalAdminPassword");
+        Object originalEmail = ReflectionTestUtils.getField(userService, "artemisInternalAdminEmail");
+        var originalAuthentication = SecurityContextHolder.getContext().getAuthentication();
+
+        try {
+            User emailOwner = userUtilService.createAndSaveUserWithEmail(ownerLogin, ownerEmail);
+            emailOwner.setAuthorities(new HashSet<>(Set.of(Authority.USER_AUTHORITY)));
+            emailOwner = userRepository.saveAndFlush(emailOwner);
+            String ownerPassword = emailOwner.getPassword();
+            User existingAdmin = userUtilService.createAndSaveUserWithEmail(adminLogin, existingAdminEmail);
+            existingAdmin.setInternal(true);
+            existingAdmin.setActivated(false);
+            existingAdmin.setAuthorities(new HashSet<>(Set.of(Authority.ADMIN_AUTHORITY, Authority.USER_AUTHORITY)));
+            existingAdmin = userRepository.saveAndFlush(existingAdmin);
+            long usersBefore = userRepository.count();
+            ReflectionTestUtils.setField(userService, "artemisInternalAdminUsername", Optional.of(adminLogin));
+            ReflectionTestUtils.setField(userService, "artemisInternalAdminPassword", Optional.of("configured_admin_password_123"));
+            ReflectionTestUtils.setField(userService, "artemisInternalAdminEmail", Optional.of("USERSERVICE-OWNER@EXAMPLE.COM"));
+
+            userService.applicationReady();
+
+            User storedAdmin = userRepository.findOneWithAuthoritiesByLogin(adminLogin).orElseThrow();
+            assertThat(storedAdmin.getId()).isEqualTo(existingAdmin.getId());
+            assertThat(storedAdmin.getLogin()).isEqualTo(adminLogin);
+            assertThat(storedAdmin.getEmail()).isEqualTo(existingAdminEmail);
+            assertThat(storedAdmin.isInternal()).isTrue();
+            assertThat(storedAdmin.getActivated()).isTrue();
+            assertThat(storedAdmin.getAuthorities()).extracting(Authority::getName).containsExactlyInAnyOrder("ROLE_SUPER_ADMIN", "ROLE_USER");
+
+            User storedOwner = userRepository.findOneWithAuthoritiesByLogin(ownerLogin).orElseThrow();
+            assertThat(storedOwner.getId()).isEqualTo(emailOwner.getId());
+            assertThat(storedOwner.getLogin()).isEqualTo(ownerLogin);
+            assertThat(storedOwner.getEmail()).isEqualTo(ownerEmail);
+            assertThat(storedOwner.getPassword()).isEqualTo(ownerPassword);
+            assertThat(storedOwner.getAuthorities()).extracting(Authority::getName).containsExactly("ROLE_USER");
+            assertThat(userRepository.findOneByEmailIgnoreCase(ownerEmail)).get().extracting(User::getId).isEqualTo(emailOwner.getId());
+            assertThat(userRepository.count()).isEqualTo(usersBefore);
+        }
+        finally {
+            ReflectionTestUtils.setField(userService, "artemisInternalAdminUsername", originalUsername);
+            ReflectionTestUtils.setField(userService, "artemisInternalAdminPassword", originalPassword);
+            ReflectionTestUtils.setField(userService, "artemisInternalAdminEmail", originalEmail);
+            SecurityContextHolder.getContext().setAuthentication(originalAuthentication);
+            userRepository.findOneByLogin(adminLogin).ifPresent(userRepository::delete);
+            userRepository.findOneByLogin(ownerLogin).ifPresent(userRepository::delete);
+        }
     }
 
     @Test
@@ -269,4 +330,13 @@ class UserServiceTest extends AbstractSpringIntegrationJenkinsLocalVCTest {
         long userCountAfter = userRepository.count();
         assertThat(userCountAfter).isEqualTo(userCountBefore);
     }
+
+    @Test
+    void usernameAndPasswordBoundsRejectInvalidInput() {
+        assertThatThrownBy(() -> userService.checkUsernameAndPasswordValidityElseThrow("a", null)).isInstanceOf(AccessForbiddenException.class).hasMessageContaining("at least");
+        assertThatThrownBy(() -> userService.checkUsernameAndPasswordValidityElseThrow("a".repeat(256), null)).isInstanceOf(AccessForbiddenException.class)
+                .hasMessageContaining("less than");
+        userService.checkUsernameAndPasswordValidityElseThrow(TEST_PREFIX + "student1", null);
+    }
+
 }

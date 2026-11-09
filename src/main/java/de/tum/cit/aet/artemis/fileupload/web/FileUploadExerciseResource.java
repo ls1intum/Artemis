@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.fileupload.web;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.FILE_ENDING_PATTERN;
 
+import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
@@ -48,13 +49,18 @@ import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepos
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
+import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
+import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
 import de.tum.cit.aet.artemis.core.security.Role;
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
+import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
+import de.tum.cit.aet.artemis.core.security.annotations.ManualConfig;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastTutorInCourse;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastEditorInExercise;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastInstructorInExercise;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastTutorInExercise;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
@@ -63,7 +69,6 @@ import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.core.util.ResponseUtil;
 import de.tum.cit.aet.artemis.course.domain.Course;
-import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.course.service.CourseService;
 import de.tum.cit.aet.artemis.exercise.dto.SubmissionExportOptionsDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
@@ -83,6 +88,7 @@ import de.tum.cit.aet.artemis.fileupload.dto.UpdateFileUploadExerciseDTO;
 import de.tum.cit.aet.artemis.fileupload.repository.FileUploadExerciseRepository;
 import de.tum.cit.aet.artemis.fileupload.service.FileUploadExerciseImportService;
 import de.tum.cit.aet.artemis.fileupload.service.FileUploadExerciseService;
+import de.tum.cit.aet.artemis.fileupload.service.FileUploadExerciseWithSubmissionsExportService;
 import de.tum.cit.aet.artemis.fileupload.service.FileUploadSubmissionExportService;
 import de.tum.cit.aet.artemis.lecture.api.SlideApi;
 import de.tum.cit.aet.artemis.notification.service.notifications.GroupNotificationScheduleService;
@@ -124,8 +130,6 @@ public class FileUploadExerciseResource {
 
     private final CourseService courseService;
 
-    private final CourseRepository courseRepository;
-
     private final ParticipationRepository participationRepository;
 
     private final AuthorizationCheckService authCheckService;
@@ -158,15 +162,18 @@ public class FileUploadExerciseResource {
 
     private final ExerciseVariantGroupService exerciseVariantGroupService;
 
+    private final FileUploadExerciseWithSubmissionsExportService fileUploadExerciseWithSubmissionsExportService;
+
     public FileUploadExerciseResource(FileUploadExerciseRepository fileUploadExerciseRepository, UserRepository userRepository, AuthorizationCheckService authCheckService,
             CourseService courseService, ExerciseService exerciseService, ExerciseDeletionService exerciseDeletionService,
-            FileUploadSubmissionExportService fileUploadSubmissionExportService, GradingCriterionRepository gradingCriterionRepository, CourseRepository courseRepository,
+            FileUploadSubmissionExportService fileUploadSubmissionExportService, GradingCriterionRepository gradingCriterionRepository,
             ParticipationRepository participationRepository, GroupNotificationScheduleService groupNotificationScheduleService,
             FileUploadExerciseImportService fileUploadExerciseImportService, FileUploadExerciseService fileUploadExerciseService, ChannelService channelService,
             ExerciseVersionService exerciseVersionService, ChannelRepository channelRepository, Optional<CompetencyProgressApi> competencyProgressApi, Optional<SlideApi> slideApi,
             Optional<AtlasMLApi> atlasMLApi, Optional<CompetencyApi> competencyApi, CompetencyExerciseLinkService competencyExerciseLinkService,
             ExerciseVariantGroupService exerciseVariantGroupService, TeamAssignmentConfigRepository teamAssignmentConfigRepository,
-            PlagiarismDetectionConfigRepository plagiarismDetectionConfigRepository, ExerciseConfigurationService exerciseConfigurationService) {
+            PlagiarismDetectionConfigRepository plagiarismDetectionConfigRepository, ExerciseConfigurationService exerciseConfigurationService,
+            FileUploadExerciseWithSubmissionsExportService fileUploadExerciseWithSubmissionsExportService) {
         this.teamAssignmentConfigRepository = teamAssignmentConfigRepository;
         this.plagiarismDetectionConfigRepository = plagiarismDetectionConfigRepository;
         this.exerciseConfigurationService = exerciseConfigurationService;
@@ -179,7 +186,6 @@ public class FileUploadExerciseResource {
         this.exerciseDeletionService = exerciseDeletionService;
         this.gradingCriterionRepository = gradingCriterionRepository;
         this.fileUploadSubmissionExportService = fileUploadSubmissionExportService;
-        this.courseRepository = courseRepository;
         this.participationRepository = participationRepository;
         this.fileUploadExerciseImportService = fileUploadExerciseImportService;
         this.fileUploadExerciseService = fileUploadExerciseService;
@@ -192,6 +198,7 @@ public class FileUploadExerciseResource {
         this.competencyApi = competencyApi;
         this.competencyExerciseLinkService = competencyExerciseLinkService;
         this.exerciseVariantGroupService = exerciseVariantGroupService;
+        this.fileUploadExerciseWithSubmissionsExportService = fileUploadExerciseWithSubmissionsExportService;
     }
 
     /**
@@ -204,7 +211,8 @@ public class FileUploadExerciseResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping("file-upload-exercises")
-    @EnforceAtLeastEditor
+    @EnforceAtLeastStudent
+    @ManualConfig
     public ResponseEntity<FileUploadExerciseDTO> createFileUploadExercise(@RequestBody FileUploadExerciseInputDTO inputDTO) throws URISyntaxException {
         log.debug("REST request to save FileUploadExercise : {}", inputDTO);
         if (inputDTO.id() != null) {
@@ -214,6 +222,7 @@ public class FileUploadExerciseResource {
         FileUploadExercise fileUploadExercise = inputDTO.toEntity();
         // File upload exercises are always assessed manually.
         fileUploadExercise.setAssessmentType(AssessmentType.MANUAL);
+        fileUploadExercise.validateTitle();
         // validates general settings: points, dates
         fileUploadExercise.validateGeneralSettings();
         // Validate the new file upload exercise
@@ -285,7 +294,8 @@ public class FileUploadExerciseResource {
      * @throws URISyntaxException When the URI of the response entity is invalid
      */
     @PostMapping("file-upload-exercises/import")
-    @EnforceAtLeastEditor
+    @EnforceAtLeastStudent
+    @ManualConfig
     public ResponseEntity<FileUploadExerciseDTO> importFileUploadExercise(@RequestParam long sourceId, @RequestBody FileUploadExerciseInputDTO inputDTO) throws URISyntaxException {
         if (sourceId <= 0 || (inputDTO.courseId() == null && inputDTO.exerciseGroupId() == null)) {
             throw new BadRequestAlertException("Either the courseId or exerciseGroupId must be set for an import", ENTITY_NAME, "noCourseIdOrExerciseGroupId");
@@ -366,7 +376,8 @@ public class FileUploadExerciseResource {
      * @return The desired page, sorted and matching the given query
      */
     @GetMapping("file-upload-exercises")
-    @EnforceAtLeastEditor
+    @EnforceAtLeastStudent
+    @ManualConfig
     public ResponseEntity<SearchResultPageDTO<FileUploadExerciseDTO>> getAllExercisesOnPage(SearchTermPageableSearchDTO<String> search,
             @RequestParam(defaultValue = "true") Boolean isCourseFilter, @RequestParam(defaultValue = "true") Boolean isExamFilter) {
         final var user = userRepository.getUserWithAuthorities();
@@ -388,7 +399,7 @@ public class FileUploadExerciseResource {
      *         couldn't be updated
      */
     @PutMapping("file-upload-exercises/{exerciseId}")
-    @EnforceAtLeastEditor
+    @EnforceAtLeastEditorInExercise
     public ResponseEntity<FileUploadExerciseDTO> updateFileUploadExercise(@RequestBody UpdateFileUploadExerciseDTO updateFileUploadExerciseDTO,
             @RequestParam(value = "notificationText", required = false) String notificationText, @PathVariable Long exerciseId) {
         log.debug("REST request to update FileUploadExercise : {}", updateFileUploadExerciseDTO);
@@ -406,9 +417,7 @@ public class FileUploadExerciseResource {
         Course course = courseService.retrieveCourseOfLoadedExercise(fileUploadExerciseBeforeUpdate);
         validateCourseId(updateFileUploadExerciseDTO, fileUploadExerciseBeforeUpdate, course);
 
-        // Check that the user is authorized to update the exercise
         User user = userRepository.getUserWithAuthorities();
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, user);
 
         return doUpdateFileUploadExercise(updateFileUploadExerciseDTO, fileUploadExerciseBeforeUpdate, notificationText, user);
     }
@@ -556,11 +565,9 @@ public class FileUploadExerciseResource {
      *         fileUploadExercises in body
      */
     @GetMapping(value = "courses/{courseId}/file-upload-exercises")
-    @EnforceAtLeastTutor
+    @EnforceAtLeastTutorInCourse
     public ResponseEntity<List<FileUploadExerciseDTO>> getFileUploadExercisesForCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all ProgrammingExercises for the course with id : {}", courseId);
-        Course course = courseRepository.findByIdElseThrow(courseId);
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, null);
         List<FileUploadExercise> exercises = fileUploadExerciseRepository.findByCourseIdWithCategories(courseId);
         return ResponseEntity.ok(exercises.stream().map(FileUploadExerciseDTO::forCourseList).toList());
     }
@@ -573,20 +580,29 @@ public class FileUploadExerciseResource {
      *         fileUploadExercise, or with status 404 (Not Found)
      */
     @GetMapping("file-upload-exercises/{exerciseId}")
-    @EnforceAtLeastTutor
+    @EnforceAtLeastTutorInExercise
     public ResponseEntity<FileUploadExerciseDTO> getFileUploadExercise(@PathVariable Long exerciseId) {
-        // TODO: Split this route in two: One for normal and one for exam exercises
+        return loadFileUploadExerciseDetails(exerciseId, false);
+    }
+
+    /**
+     * Retrieves management details of an exam file upload exercise.
+     *
+     * @param exerciseId the id of the exam exercise to retrieve
+     * @return the full management details of the exam exercise
+     */
+    @GetMapping("file-upload-exercises/{exerciseId}/for-exam")
+    @EnforceAtLeastEditorInExercise
+    public ResponseEntity<FileUploadExerciseDTO> getFileUploadExerciseForExam(@PathVariable Long exerciseId) {
+        return loadFileUploadExerciseDetails(exerciseId, true);
+    }
+
+    private ResponseEntity<FileUploadExerciseDTO> loadFileUploadExerciseDetails(Long exerciseId, boolean forExam) {
         log.debug("REST request to get FileUploadExercise : {}", exerciseId);
         var exercise = loadFileUploadExercise(exerciseId);
-        // If the exercise belongs to an exam, only editors or above are allowed to
-        // access it, otherwise also TA have access
-        if (exercise.isExamExercise()) {
-            authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, exercise, null);
+        if (forExam ? !exercise.isExamExercise() : !exercise.isCourseExercise()) {
+            throw new AccessForbiddenException("The exercise does not belong to the requested course or exam context");
         }
-        else {
-            authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, null);
-        }
-
         return ResponseEntity.ok(FileUploadExerciseDTO.of(enrichFileUploadExerciseForResponse(exercise)));
     }
 
@@ -630,34 +646,35 @@ public class FileUploadExerciseResource {
     }
 
     /**
-     * DELETE /file-upload-exercises/:exerciseId : delete the "id"
-     * fileUploadExercise.
+     * DELETE /file-upload-exercises/:exerciseId : delete the "id" fileUploadExercise in the background. The progress is sent over the websocket topic of the exercise.
      *
      * @param exerciseId the id of the fileUploadExercise to delete
-     * @return the ResponseEntity with status 200 (OK)
+     * @return the ResponseEntity with status 202 (Accepted), or 409 (Conflict) if the exercise is already being deleted
      */
     @DeleteMapping("file-upload-exercises/{exerciseId}")
-    @EnforceAtLeastInstructor
+    @EnforceAtLeastInstructorInExercise
     public ResponseEntity<Void> deleteFileUploadExercise(@PathVariable Long exerciseId) {
         log.info("REST request to delete FileUploadExercise : {}", exerciseId);
         var exercise = fileUploadExerciseRepository.findByIdElseThrow(exerciseId);
         User user = userRepository.getUserWithAuthorities();
+        var course = exercise.getCourseViaExerciseGroupOrCourseMemberElseThrow();
 
-        // Notify AtlasML about the exercise deletion before actual deletion
-        atlasMLApi.ifPresent(api -> {
-            try {
-                api.saveExerciseWithCompetencies(exercise, OperationTypeDTO.DELETE);
-            }
-            catch (Exception e) {
-                log.warn("Failed to notify AtlasML about exercise deletion: {}", e.getMessage());
-            }
-        });
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, user);
         // note: we use the exercise service here, because this one makes sure to clean
         // up all lazy references correctly.
-        exerciseService.logDeletion(exercise, exercise.getCourseViaExerciseGroupOrCourseMemberElseThrow(), user);
-        exerciseDeletionService.delete(exerciseId, false);
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, exercise.getTitle())).build();
+        // AtlasML is notified and the request is audited only once the deletion is accepted, so a request that is refused because the exercise is already being deleted does
+        // neither. The notification still precedes the actual deletion.
+        exerciseDeletionService.startAsyncDeletion(exercise, false, () -> {
+            atlasMLApi.ifPresent(api -> {
+                try {
+                    api.saveExerciseWithCompetencies(exercise, OperationTypeDTO.DELETE);
+                }
+                catch (Exception e) {
+                    log.warn("Failed to notify AtlasML about exercise deletion: {}", e.getMessage());
+                }
+            });
+            exerciseService.logDeletion(exercise, course, user);
+        });
+        return ResponseEntity.accepted().build();
     }
 
     /**
@@ -669,14 +686,31 @@ public class FileUploadExerciseResource {
      * @return ResponseEntity with status
      */
     @PostMapping("file-upload-exercises/{exerciseId}/export-submissions")
-    @EnforceAtLeastInstructor
+    @EnforceAtLeastInstructorInExercise
     @FeatureToggle(Feature.Exports)
     public ResponseEntity<Resource> exportSubmissions(@PathVariable long exerciseId, @RequestBody SubmissionExportOptionsDTO submissionExportOptions) {
-        var exercise = fileUploadExerciseRepository.findByIdElseThrow(exerciseId);
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, null);
-
         Path zipFilePath = fileUploadSubmissionExportService.exportStudentSubmissionsElseThrow(exerciseId, submissionExportOptions);
         return ResponseUtil.ok(zipFilePath);
+    }
+
+    /**
+     * GET /file-upload-exercises/:exerciseId/export : sends the exercise definition as zip, without any submissions
+     *
+     * @param exerciseId the id of the file upload exercise to export
+     * @return ResponseEntity with the zip file containing the exercise details, the problem statement and its embedded files
+     */
+    @GetMapping("file-upload-exercises/{exerciseId}/export")
+    @EnforceAtLeastInstructorInExercise
+    @FeatureToggle(Feature.Exports)
+    public ResponseEntity<Resource> exportExercise(@PathVariable long exerciseId) {
+        FileUploadExercise fileUploadExercise = fileUploadExerciseRepository.findWithCategoriesAndGradingCriteriaByIdElseThrow(exerciseId);
+        try {
+            return ResponseUtil.ok(fileUploadExerciseWithSubmissionsExportService.exportExerciseForDownload(fileUploadExercise));
+        }
+        catch (IOException e) {
+            log.error("Error while exporting file upload exercise with id {} for instructor", exerciseId, e);
+            throw new InternalServerErrorException("Error while exporting file upload exercise with id " + exerciseId + " for instructor");
+        }
     }
 
     /**
@@ -702,7 +736,7 @@ public class FileUploadExerciseResource {
      * @return the updated exercise, or 400/409/500 on error
      */
     @PutMapping("file-upload-exercises/{exerciseId}/re-evaluate")
-    @EnforceAtLeastEditor
+    @EnforceAtLeastEditorInExercise
     public ResponseEntity<FileUploadExerciseDTO> reEvaluateAndUpdateFileUploadExercise(@PathVariable long exerciseId,
             @RequestBody UpdateFileUploadExerciseDTO updateFileUploadExerciseDTO,
             @RequestParam(value = "deleteFeedback", required = false) Boolean deleteFeedbackAfterGradingInstructionUpdate) {
@@ -718,7 +752,6 @@ public class FileUploadExerciseResource {
         validateCourseId(updateFileUploadExerciseDTO, existingExercise, course);
 
         var user = userRepository.getUserWithAuthorities();
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, user);
 
         // Capture ALL original values BEFORE update() mutates the entity via L1 cache.
         final Double originalMaxPoints = existingExercise.getMaxPoints();

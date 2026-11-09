@@ -1,16 +1,16 @@
+import { TumAetUiDialogService, TumAetUiTagComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+
 import { Component, computed, effect, inject, input, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { map } from 'rxjs/operators';
 
-import { TooltipModule } from 'primeng/tooltip';
-import { TagModule } from 'primeng/tag';
-import { DialogService } from 'primeng/dynamicdialog';
 import { TranslateService } from '@ngx-translate/core';
 import { Router } from '@angular/router';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import dayjs from 'dayjs/esm';
 import { Participation, getExercise } from 'app/exercise/shared/entities/participation/participation.model';
 import { Exercise, ExerciseType, getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { CourseScoreAccuracy } from 'app/foundation/util/utils';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
@@ -43,12 +43,12 @@ import { FeedbackComponent } from 'app/exercise/feedback/feedback.component';
     templateUrl: './result.component.html',
     styleUrls: ['./result.component.scss'],
     imports: [
+        TumAetUiTagComponent,
+        TumAetUiTooltipDirective,
         ResultProgressBarComponent,
         FaIconComponent,
         TranslateDirective,
         NgClass,
-        TooltipModule,
-        TagModule,
         UpperCasePipe,
         ArtemisDatePipe,
         ArtemisTranslatePipe,
@@ -58,7 +58,7 @@ import { FeedbackComponent } from 'app/exercise/feedback/feedback.component';
 })
 export class ResultComponent {
     private translateService = inject(TranslateService);
-    private dialogService = inject(DialogService);
+    private dialogService = inject(TumAetUiDialogService);
     private exerciseService = inject(ExerciseService);
     private exerciseCacheService = inject(ExerciseCacheService, { optional: true });
     private resultService = inject(ResultService);
@@ -72,6 +72,11 @@ export class ResultComponent {
     readonly participation = input<Participation>();
     readonly result = input<Result>();
     readonly exercise = input<Exercise>();
+    /**
+     * The course of the exercise, for an exercise that carries no course, such as the exercises of the course overview. The accuracy of the score comes from it. A course that the
+     * exercise carries takes precedence.
+     */
+    readonly course = input<CourseScoreAccuracy>();
     readonly isBuilding = input(false);
     readonly isQueued = input(false);
     readonly short = input(true);
@@ -154,7 +159,7 @@ export class ResultComponent {
         this.currentLang(); // Recompute the translated text when the language changes.
         const status = this.templateStatus();
         return status === ResultTemplateStatus.LATE || this.displayableResult()
-            ? this.resultService.getResultString(this.result(), this.resolvedExercise(), this.resolvedParticipation(), this.short())
+            ? this.resultService.getResultString(this.result(), this.resolvedExercise(), this.resolvedParticipation(), this.short(), this.course())
             : '';
     });
 
@@ -304,19 +309,13 @@ export class ResultComponent {
 
         this.dialogService.open(FeedbackComponent, {
             header: this.translateService.instant('artemisApp.result.detail.feedback'),
-            width: '80rem',
-            breakpoints: {
-                '1400px': '75vw',
-                '1200px': '85vw',
-                '992px': '95vw',
-            },
-            modal: true,
+            size: 'large',
             closable: true,
             closeOnEscape: true,
             dismissableMask: true,
             // Don't auto-focus the first focusable element on show: in a long feedback list it is often
             // a link below the fold, which the browser scrolls into view and makes the modal open scrolled down.
-            focusOnShow: false,
+            autoFocus: 'dialog',
             inputValues: {
                 exercise,
                 result,

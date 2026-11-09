@@ -1,4 +1,6 @@
-import { ActivatedRouteSnapshot, Resolve } from '@angular/router';
+import { exerciseForImportFromFile } from 'app/exercise/import/import-from-file-navigation';
+import { isExamExerciseRoute } from 'app/exercise/util/exercise-detail-route-context';
+import { ActivatedRouteSnapshot, Resolve, Router } from '@angular/router';
 
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { Service, inject } from '@angular/core';
@@ -14,6 +16,7 @@ import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-g
 @Service()
 export class TextExerciseResolver implements Resolve<TextExercise> {
     private textExerciseService = inject(TextExerciseService);
+    private router = inject(Router);
     private courseService = inject(CourseManagementService);
     private exerciseGroupService = inject(ExerciseGroupService);
 
@@ -23,7 +26,11 @@ export class TextExerciseResolver implements Resolve<TextExercise> {
      */
     resolve(route: ActivatedRouteSnapshot) {
         if (route.params['exerciseId']) {
-            return this.textExerciseService.find(route.params['exerciseId'], true).pipe(
+            return (
+                isExamExerciseRoute(route)
+                    ? this.textExerciseService.findForExam(route.params['exerciseId'], true)
+                    : this.textExerciseService.find(route.params['exerciseId'], true)
+            ).pipe(
                 filter((res) => !!res.body),
                 map((textExercise: HttpResponse<TextExercise>) => textExercise.body!),
             );
@@ -31,12 +38,18 @@ export class TextExerciseResolver implements Resolve<TextExercise> {
             if (route.params['examId'] && route.params['exerciseGroupId']) {
                 return this.exerciseGroupService.find(route.params['courseId'], route.params['examId'], route.params['exerciseGroupId']).pipe(
                     filter((res) => !!res.body),
-                    map((exerciseGroup: HttpResponse<ExerciseGroup>) => new TextExercise(undefined, exerciseGroup.body || undefined)),
+                    map(
+                        (exerciseGroup: HttpResponse<ExerciseGroup>) =>
+                            exerciseForImportFromFile<TextExercise>(this.router, undefined, exerciseGroup.body!) ?? new TextExercise(undefined, exerciseGroup.body || undefined),
+                    ),
                 );
             } else {
-                return this.courseService.find(route.params['courseId']).pipe(
+                return this.courseService.findForManagement(route.params['courseId']).pipe(
                     filter((res) => !!res.body),
-                    map((course: HttpResponse<Course>) => new TextExercise(course.body || undefined, undefined)),
+                    map(
+                        (course: HttpResponse<Course>) =>
+                            exerciseForImportFromFile<TextExercise>(this.router, course.body!, undefined) ?? new TextExercise(course.body || undefined, undefined),
+                    ),
                 );
             }
         }

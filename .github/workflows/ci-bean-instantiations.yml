@@ -30,7 +30,10 @@ jobs:
       # TitleCacheConfiguration at startup.
       # 160 rather than 159 since the reliable mail delivery: the mail sending service reaches the
       # mail retry queue and the test account e-mail service at startup.
-      MAX_INSTANTIATED_BEANS: 160
+      # 165 rather than 160 since the split of LocalVCServletService: the servlet service injects five new startup beans (the repository
+      # resolver, the access log recorder, the build agent authentication, the push processing and the password authentication notice).
+      # Measured with the command below: 158 edges before the split and 163 after it.
+      MAX_INSTANTIATED_BEANS: 165
       MIN_DEFERRED_CHAIN_LENGTH: 1
 
     steps:
@@ -111,7 +114,7 @@ jobs:
           java-version: '${{ env.java }}'
           # `cache: 'gradle'` is the legacy path; `setup-gradle@v6` below owns Gradle caching.
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
+        uses: gradle/actions/setup-gradle@8da46b539cd8fe6ab27ca75128919a18d757604c # v6.4.1
 
       - name: Build application
         shell: bash

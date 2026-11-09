@@ -22,6 +22,8 @@ import { AlertService } from 'app/foundation/service/alert.service';
 import { TumAetUiButtonDirective, TumAetUiCardComponent, TumAetUiTableDirective } from '@tumaet/ui-angular';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
+import { ActivatedRoute } from '@angular/router';
+import { AccountService } from 'app/core/auth/account.service';
 
 /**
  * Component for managing exam rooms.
@@ -47,6 +49,8 @@ export class ExamRoomsComponent implements OnInit {
     private readonly sortService = inject(SortService);
     private readonly translateService = inject(TranslateService);
     private readonly alertService = inject(AlertService);
+    private readonly route = inject(ActivatedRoute);
+    private readonly accountService = inject(AccountService);
 
     private readonly baseTranslationPath = 'artemisApp.examRooms.management';
 
@@ -56,6 +60,9 @@ export class ExamRoomsComponent implements OnInit {
     private actionStatus: WritableSignal<'uploading' | 'uploadSuccess' | 'deleting' | 'deletionSuccess' | undefined> = signal(undefined);
     private actionInformation: WritableSignal<ExamRoomUploadInformationDTO | ExamRoomDeletionSummaryDTO | undefined> = signal(undefined);
     private overview: WritableSignal<ExamRoomOverviewDTO | undefined> = signal(undefined);
+
+    /** Only administrators upload room data and clean up the rooms; instructors view the overview in the context of an exam. */
+    readonly isAdmin: boolean = this.accountService.isAdmin();
 
     readonly hasSelectedFile: Signal<boolean> = computed(() => !!this.selectedFile());
     readonly selectedFileName: Signal<string | undefined> = computed(() => this.selectedFile()?.name?.trim());
@@ -99,7 +106,9 @@ export class ExamRoomsComponent implements OnInit {
      * Makes a REST request to fetch a new exam room overview and displays it
      */
     loadExamRoomOverview(): void {
-        this.examRoomsService.getRoomOverview().subscribe({
+        const { courseId, examId } = this.route.snapshot.queryParams;
+        const overview$ = courseId && examId ? this.examRoomsService.getRoomOverview(Number(courseId), Number(examId)) : this.examRoomsService.getRoomOverview();
+        overview$.subscribe({
             next: (examRoomOverviewResponse: HttpResponse<ExamRoomOverviewDTO>) => {
                 this.overview.set(examRoomOverviewResponse.body as ExamRoomOverviewDTO);
                 this.sortRows();

@@ -20,6 +20,7 @@ import de.tum.cit.aet.artemis.core.domain.AiSelectionDecision;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenAlertException;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
+import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisJsonMessageContent;
@@ -352,10 +353,10 @@ class IrisChatSessionServiceTest extends AbstractIrisChatSessionTest {
             var markers = irisMessageRepository.findAllBySessionIdOrderBySentAtAscIdAsc(session.getId()).stream().filter(m -> m.getSender() == IrisMessageSender.CTXSWAP).toList();
             assertThat(markers).hasSize(1);
             var markerContent = (IrisJsonMessageContent) markers.getFirst().getContent().getFirst();
-            assertThat(markerContent.getJsonNode().get("transition").asString()).isEqualTo("added");
-            assertThat(markerContent.getJsonNode().get("entityMode").asString()).isEqualTo(IrisChatMode.LECTURE_CHAT.name());
-            assertThat(markerContent.getJsonNode().get("entityId").asLong()).isEqualTo(lecture.getId());
-            assertThat(markerContent.getJsonNode().get("name").asString()).isEqualTo(lecture.getTitle());
+            assertThat(JsonObjectMapper.get().readTree(markerContent.getContentAsString()).get("transition").asString()).isEqualTo("added");
+            assertThat(JsonObjectMapper.get().readTree(markerContent.getContentAsString()).get("entityMode").asString()).isEqualTo(IrisChatMode.LECTURE_CHAT.name());
+            assertThat(JsonObjectMapper.get().readTree(markerContent.getContentAsString()).get("entityId").asLong()).isEqualTo(lecture.getId());
+            assertThat(JsonObjectMapper.get().readTree(markerContent.getContentAsString()).get("name").asString()).isEqualTo(lecture.getTitle());
         }
 
         @Test
@@ -368,10 +369,10 @@ class IrisChatSessionServiceTest extends AbstractIrisChatSessionTest {
             var markers = irisMessageRepository.findAllBySessionIdOrderBySentAtAscIdAsc(session.getId()).stream().filter(m -> m.getSender() == IrisMessageSender.CTXSWAP).toList();
             assertThat(markers).hasSize(1);
             var markerContent = (IrisJsonMessageContent) markers.getFirst().getContent().getFirst();
-            assertThat(markerContent.getJsonNode().get("transition").asString()).isEqualTo("removed");
-            assertThat(markerContent.getJsonNode().has("entityMode")).isFalse();
-            assertThat(markerContent.getJsonNode().has("entityId")).isFalse();
-            assertThat(markerContent.getJsonNode().has("name")).isFalse();
+            assertThat(JsonObjectMapper.get().readTree(markerContent.getContentAsString()).get("transition").asString()).isEqualTo("removed");
+            assertThat(JsonObjectMapper.get().readTree(markerContent.getContentAsString()).has("entityMode")).isFalse();
+            assertThat(JsonObjectMapper.get().readTree(markerContent.getContentAsString()).has("entityId")).isFalse();
+            assertThat(JsonObjectMapper.get().readTree(markerContent.getContentAsString()).has("name")).isFalse();
         }
 
         @Test
@@ -384,10 +385,10 @@ class IrisChatSessionServiceTest extends AbstractIrisChatSessionTest {
             var markers = irisMessageRepository.findAllBySessionIdOrderBySentAtAscIdAsc(session.getId()).stream().filter(m -> m.getSender() == IrisMessageSender.CTXSWAP).toList();
             assertThat(markers).hasSize(1);
             var markerContent = (IrisJsonMessageContent) markers.getFirst().getContent().getFirst();
-            assertThat(markerContent.getJsonNode().get("transition").asString()).isEqualTo("changed");
-            assertThat(markerContent.getJsonNode().get("entityMode").asString()).isEqualTo(IrisChatMode.TEXT_EXERCISE_CHAT.name());
-            assertThat(markerContent.getJsonNode().get("entityId").asLong()).isEqualTo(textExercise.getId());
-            assertThat(markerContent.getJsonNode().get("name").asString()).isEqualTo(textExercise.getTitle());
+            assertThat(JsonObjectMapper.get().readTree(markerContent.getContentAsString()).get("transition").asString()).isEqualTo("changed");
+            assertThat(JsonObjectMapper.get().readTree(markerContent.getContentAsString()).get("entityMode").asString()).isEqualTo(IrisChatMode.TEXT_EXERCISE_CHAT.name());
+            assertThat(JsonObjectMapper.get().readTree(markerContent.getContentAsString()).get("entityId").asLong()).isEqualTo(textExercise.getId());
+            assertThat(JsonObjectMapper.get().readTree(markerContent.getContentAsString()).get("name").asString()).isEqualTo(textExercise.getTitle());
         }
 
         @Test

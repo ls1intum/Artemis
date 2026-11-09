@@ -84,7 +84,7 @@ class TutorLeaderboardServiceIntegrationTest extends AbstractSpringIntegrationIn
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testLeaderboardData_forCourseWithExercises() {
         Long[] exerciseIds = { exercise.getId() };
         var leaderboardData = tutorLeaderboardService.getCourseLeaderboard(course, new HashSet<>(Arrays.asList(exerciseIds)));
@@ -92,7 +92,7 @@ class TutorLeaderboardServiceIntegrationTest extends AbstractSpringIntegrationIn
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testLeaderboardData_forExercise() {
         var leaderboardData = tutorLeaderboardService.getExerciseLeaderboard(exercise);
         assertLeaderboardData(leaderboardData);

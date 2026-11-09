@@ -6,7 +6,7 @@ import { Subject, catchError, combineLatest, map, of, startWith, switchMap } fro
 import { SKIP_HTTP_ERROR_ALERT } from 'app/core/interceptor/errorhandler.interceptor';
 import { ScienceEventDTO, ScienceEventType } from 'app/foundation/science/science.model';
 import { FeatureToggle, FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
-import { ScienceCourseConsent, ScienceSettingsService } from 'app/account/user/settings/science-settings/science-settings.service';
+import { ScienceCourseConsent, ScienceSettingsService } from 'app/account/user/settings/profile/science-settings/science-settings.service';
 
 /**
  * Holds the science consent of the course on screen and logs interaction events against it.

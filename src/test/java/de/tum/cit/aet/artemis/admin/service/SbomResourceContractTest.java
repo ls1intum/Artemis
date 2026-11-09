@@ -38,8 +38,8 @@ class SbomResourceContractTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = { "{}", "{\"components\":{}}", "{\"components\":[]}", "{\"components\":null}" })
-    void missingOrNonArrayComponentCollectionsProduceAnEmptyInventory(String json) {
+    @ValueSource(strings = { "{}", "{\"components\":[]}", "{\"components\":null}" })
+    void missingOrEmptyComponentCollectionsProduceAnEmptyInventory(String json) {
         var parsed = parse(json);
         assertThat(parsed.components()).isEmpty();
         assertThat(parsed.version()).isOne();
@@ -47,8 +47,8 @@ class SbomResourceContractTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = { "{}", "{\"licenses\":{}}", "{\"licenses\":null}", "{\"licenses\":[]}" })
-    void missingOrMalformedLicenseCollectionsDoNotInventALicense(String component) {
+    @ValueSource(strings = { "{}", "{\"licenses\":null}", "{\"licenses\":[]}" })
+    void missingOrEmptyLicenseCollectionsDoNotInventALicense(String component) {
         var parsed = parse("{\"version\":2,\"metadata\":{},\"components\":[" + component + "]}");
         assertThat(parsed.version()).isEqualTo(2);
         assertThat(parsed.metadata()).isNotNull();
@@ -56,6 +56,12 @@ class SbomResourceContractTest {
         assertThat(parsed.metadata().componentName()).isNull();
         assertThat(parsed.metadata().version()).isNull();
         assertThat(parsed.components()).containsExactly(new SbomComponentDTO(null, null, null, null, null, List.of(), null));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "{\"components\":{}}", "{\"components\":[{\"licenses\":{}}]}" })
+    void aCollectionThatIsNotAnArrayMakesTheDocumentUnreadable(String json) {
+        assertThat(parse(json)).isNull();
     }
 
     @ParameterizedTest

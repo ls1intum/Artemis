@@ -2,6 +2,7 @@
 id: integrated-code-lifecycle-setup
 title: Integrated Code Lifecycle Setup
 sidebar_label: Integrated Code Lifecycle Setup
+last_reviewed: 2026-11-03
 ---
 
 import TumLiveVideo from "../../../src/components/TumLiveVideo/TumLiveVideo";
@@ -51,6 +52,18 @@ eureka:
 
 The values configured here are sufficient for a basic Artemis setup that allows for running programming exercises with Integrated Code Lifecycle.
 The `repository-authentication-mechanisms` field configures the repository authentication mechanisms (password, token, or SSH).
+
+Users who access a repository with their account password get an email (at most one per day) and a message in the terminal when they push, asking them to switch to a token or an SSH key.
+To tell them by when, set the date on which you plan to stop accepting passwords:
+
+```yaml
+artemis:
+    version-control:
+        password-authentication-end-date: 2027-01-15 # ISO date, empty by default
+```
+
+The date only appears in the email and the push message. Artemis does not reject passwords on that day, so removing `password` from `repository-authentication-mechanisms`
+(which hides it in the Code button) does not stop password authentication either. A malformed date stops Artemis from starting.
 
 If you are running Artemis on Windows, you also need to add a property `artemis.continuous-integration.docker-connection-uri` with the value `tcp://localhost:2375` as shown above.
 If you are running Artemis inside of a docker container, use `tcp://host.docker.internal:2375` instead.
@@ -132,7 +145,7 @@ Please read [Run the server via a run configuration in IntelliJ](/developer/setu
 
 You can now test the setup:
 
-To create a course with registered users, you can use the scripts from `supporting_scripts/course-setup-quickstart`.
+To create a course with registered users, you can use the scripts from `supporting_scripts/course-scripts/quick-course-setup`.
 
 - Create a course and a programming exercise.
 
@@ -151,14 +164,14 @@ For unauthorized access, your Git client will display the respective error messa
 
 ## Setup with Docker Compose
 
-You can also use Docker Compose to set up Integrated Code Lifecycle. Using the following command, you can start the Artemis and MySQL containers:
+You can also use Docker Compose to set up Integrated Code Lifecycle. Using the following command, you can start the Artemis and PostgreSQL containers:
 
 ```bash
-docker compose --env-file .env -f deployment/docker/artemis-dev-local-vc-local-ci-mysql.yml up
+docker compose --env-file .env -f deployment/docker/artemis-dev-local-vc-local-ci-postgres.yml up
 ```
 
 <Callout variant={CalloutVariant.info}>
-  **Unix systems:** When running the Artemis container on a Unix system, you will have to give the user running the container permission to access the Docker socket by adding them to the `docker` group. You can do this by changing the value of `services.artemis-app.group_add` in the `deployment/docker/artemis-dev-local-vc-local-ci-mysql.yml` file to the group ID of the `docker` group on your system. You can find the group ID by running `getent group docker | cut -d: -f3`. The default value is `999`.
+  **Unix systems:** When running the Artemis container on a Linux system with a native Docker daemon, you will have to give the user running the container permission to access the Docker socket. Pass the group ID of the `docker` group of the host in the environment variable `ARTEMIS_DOCKER_GROUP_ID`, which `services.artemis-app.group_add` in `deployment/docker/artemis-dev-local-vc-local-ci-postgres.yml` reads, for example `ARTEMIS_DOCKER_GROUP_ID=$(getent group docker | cut -d: -f3) docker compose --env-file .env -f deployment/docker/artemis-dev-local-vc-local-ci-postgres.yml up`. The default value is `0`, which works with Docker Desktop on macOS and Windows.
 </Callout>
 
 <Callout variant={CalloutVariant.info}>
