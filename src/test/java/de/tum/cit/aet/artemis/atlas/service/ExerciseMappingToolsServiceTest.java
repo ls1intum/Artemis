@@ -246,6 +246,57 @@ class ExerciseMappingToolsServiceTest {
                 .extracting(ExerciseCompetencyMappingDTO.CompetencyMappingOptionDTO::competencyId).containsExactly(1L, 2L, 3L, 1L);
     }
 
+    @Test
+    void preview_missingMappingsIdentifiesTheRequiredArgumentWithoutCreatingAPreview() {
+        when(courseRepository.findById(10L)).thenReturn(Optional.of(course));
+        when(exerciseRepository.findWithCompetenciesById(42L)).thenReturn(Optional.of(exercise));
+
+        JsonNode result = objectMapper.readTree(service.previewExerciseCompetencyMapping(10L, 42L, null, false));
+
+        assertThat(result.get("success").asBoolean()).isFalse();
+        assertThat(result.get("error").asString()).startsWith("mappings is required").contains("retry the preview");
+        assertThat(ExerciseMappingToolsService.getExerciseMappingPreview()).isNull();
+        verifyNoMoreInteractions(sessionCacheService);
+        verify(competencyExerciseLinkRepository, never()).saveAll(any());
+        verify(competencyExerciseLinkRepository, never()).deleteAll(any(Iterable.class));
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = { false, true })
+    void preview_missingMappingsPreservesPreviousPreviewAndCache(boolean viewOnly) {
+        when(courseRepository.findById(10L)).thenReturn(Optional.of(course));
+        when(exerciseRepository.findWithCompetenciesById(42L)).thenReturn(Optional.of(exercise));
+        when(competencyExerciseLinkRepository.findByExerciseIdWithCompetency(42L)).thenReturn(List.of());
+        when(courseCompetencyRepository.findAllById(List.of(1L))).thenReturn(List.of(competency1));
+        ExerciseMappingToolsService.setCurrentSessionId("mapping-session");
+        service.previewExerciseCompetencyMapping(10L, 42L, List.of(previewMapping(1L, true)), false);
+        var previousPreview = ExerciseMappingToolsService.getExerciseMappingPreview();
+
+        JsonNode result = objectMapper.readTree(service.previewExerciseCompetencyMapping(10L, 42L, null, viewOnly));
+
+        assertThat(result.get("success").asBoolean()).isFalse();
+        assertThat(result.get("error").asString()).startsWith("mappings is required").contains("retry the preview");
+        assertThat(ExerciseMappingToolsService.getExerciseMappingPreview()).isSameAs(previousPreview);
+        verify(sessionCacheService).cacheExerciseMappingPreview("mapping-session", previousPreview);
+        verifyNoMoreInteractions(sessionCacheService);
+        verify(competencyExerciseLinkRepository, never()).saveAll(any());
+        verify(competencyExerciseLinkRepository, never()).deleteAll(any(Iterable.class));
+    }
+
+    @Test
+    void preview_acceptsAnExplicitlyEmptyMappingsList() {
+        when(courseRepository.findById(10L)).thenReturn(Optional.of(course));
+        when(exerciseRepository.findWithCompetenciesById(42L)).thenReturn(Optional.of(exercise));
+        when(competencyExerciseLinkRepository.findByExerciseIdWithCompetency(42L)).thenReturn(List.of());
+        when(courseCompetencyRepository.findAllById(List.of())).thenReturn(List.of());
+
+        assertThat(service.previewExerciseCompetencyMapping(10L, 42L, List.of(), false)).contains("Preview generated successfully");
+
+        var preview = ExerciseMappingToolsService.getExerciseMappingPreview();
+        assertThat(preview.exerciseId()).isEqualTo(42L);
+        assertThat(preview.competencies()).isEmpty();
+    }
+
     private static ExerciseMappingToolsService.ExerciseCompetencyMappingOperation previewMapping(long competencyId, Boolean suggested) {
         return new ExerciseMappingToolsService.ExerciseCompetencyMappingOperation(competencyId, 0.5, false, suggested);
     }

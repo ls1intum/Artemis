@@ -239,6 +239,10 @@ public class ExerciseMappingToolsService {
 
             Exercise exercise = loadAndValidateExercise(exerciseId, courseId);
 
+            if (mappings == null) {
+                return error("mappings is required. Provide the competency mappings list and retry the preview.");
+            }
+
             long suggestedCount = mappings.stream().filter(mapping -> Boolean.TRUE.equals(mapping.getSuggested())).map(ExerciseCompetencyMappingOperation::getCompetencyId)
                     .distinct().count();
             if (suggestedCount > 3) {
