@@ -77,7 +77,7 @@ test.describe('Exam creation/deletion', { tag: '@fast' }, () => {
         test('Deletes an existing exam', async ({ page, examDetails, examManagement }) => {
             await page.goto(`/course-management/${course.id}/exams/${exam.id!}`);
             const response = await examDetails.deleteExam(exam.title!);
-            expect(response.status()).toBe(200);
+            expect(response.status()).toBe(202);
 
             // The user is taken back to the exam list, which no longer offers the exam ...
             await page.waitForURL(`**/course-management/${course.id}/exams`);

@@ -23,6 +23,13 @@ import de.tum.cit.aet.artemis.exam.domain.event.ExamWideAnnouncementEvent;
 @Repository
 public interface ExamLiveEventRepository extends ArtemisJpaRepository<ExamLiveEvent, Long> {
 
+    @Query("""
+            SELECT COUNT(event)
+            FROM ExamLiveEvent event
+            WHERE event.examId = :examId
+            """)
+    long countByExamId(@Param("examId") long examId);
+
     /**
      * Find all events for the given student exam plus all global events for the exam in reverse creation order.
      *
