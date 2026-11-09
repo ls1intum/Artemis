@@ -184,6 +184,23 @@ class CompetencyMappingToolsServiceTest {
     }
 
     @Test
+    void suggestRelations_requiresIsConvertedUnlessMirroredExtendsExists() {
+        when(atlasMLApi.suggestCompetencyRelations(123L)).thenReturn(new SuggestCompetencyRelationsResponseDTO(List.of(new AtlasMLCompetencyRelationDTO(1L, 2L, "REQUIRES"),
+                new AtlasMLCompetencyRelationDTO(3L, 4L, "REQUIRES"), new AtlasMLCompetencyRelationDTO(4L, 3L, "EXTENDS"))));
+
+        JsonNode json = objectMapper.readTree(service.suggestRelationMappingsUsingML(123L));
+        assertThat(json.get("count").asInt()).isEqualTo(2);
+        JsonNode converted = json.get("suggestions").get(0);
+        assertThat(converted.get("tailCompetencyId").asLong()).isEqualTo(2L);
+        assertThat(converted.get("headCompetencyId").asLong()).isEqualTo(1L);
+        assertThat(converted.get("relationType").asString()).isEqualTo("ASSUMES");
+        JsonNode mirrored = json.get("suggestions").get(1);
+        assertThat(mirrored.get("tailCompetencyId").asLong()).isEqualTo(4L);
+        assertThat(mirrored.get("headCompetencyId").asLong()).isEqualTo(3L);
+        assertThat(mirrored.get("relationType").asString()).isEqualTo("EXTENDS");
+    }
+
+    @Test
     void suggestRelations_mlFailure_returnsError() throws Exception {
         when(atlasMLApi.suggestCompetencyRelations(123L)).thenThrow(new RuntimeException("boom"));
 
@@ -311,7 +328,7 @@ class CompetencyMappingToolsServiceTest {
                 sessionCacheService, Optional.of(atlasMLApi), authorizationCheckService, userRepository);
         assertThat(service.suggestRelationMappingsUsingML(123L)).contains("No relation suggestions");
         when(atlasMLApi.suggestCompetencyRelations(123L)).thenReturn(new SuggestCompetencyRelationsResponseDTO(null), new SuggestCompetencyRelationsResponseDTO(List.of()),
-                new SuggestCompetencyRelationsResponseDTO(List.of(new AtlasMLCompetencyRelationDTO(1L, 2L, "INVALID"), new AtlasMLCompetencyRelationDTO(2L, 1L, "REQUIRES"))));
+                new SuggestCompetencyRelationsResponseDTO(List.of(new AtlasMLCompetencyRelationDTO(1L, 2L, "INVALID"))));
         assertThat(service.suggestRelationMappingsUsingML(123L)).contains("No relation suggestions");
         assertThat(service.suggestRelationMappingsUsingML(123L)).contains("No relation suggestions");
         assertThat(service.suggestRelationMappingsUsingML(123L)).contains("No valid relation suggestions");

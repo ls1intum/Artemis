@@ -245,11 +245,18 @@ public class CompetencyMappingToolsService {
             }
 
             List<CompetencyRelationDTO> suggestedRelations = new ArrayList<>();
+            Set<AtlasMLCompetencyRelationDTO> rawRelations = new HashSet<>(suggestionsResponse.relations());
             for (AtlasMLCompetencyRelationDTO atlasMLRelation : suggestionsResponse.relations()) {
+                if ("REQUIRES".equals(atlasMLRelation.relationType())) {
+                    // Prefer the mirrored EXTENDS when present; otherwise preserve the prerequisite direction as ASSUMES.
+                    var mirrored = new AtlasMLCompetencyRelationDTO(atlasMLRelation.headId(), atlasMLRelation.tailId(), "EXTENDS");
+                    if (!rawRelations.contains(mirrored)) {
+                        suggestedRelations.add(new CompetencyRelationDTO(null, atlasMLRelation.headId(), atlasMLRelation.tailId(), RelationType.ASSUMES));
+                    }
+                    continue;
+                }
                 RelationType relationType;
                 try {
-                    // AtlasML's REQUIRES ("the tail is a prerequisite of the head") is the converse of ASSUMES, so it is skipped
-                    // here instead of mapped; AtlasML always sends the mirrored EXTENDS for the same pair.
                     relationType = RelationType.valueOf(atlasMLRelation.relationType());
                 }
                 catch (IllegalArgumentException e) {
