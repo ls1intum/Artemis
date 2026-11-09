@@ -3,6 +3,7 @@ import { TestBed, inject } from '@angular/core/testing';
 import { MissingTranslationHandler, TranslateService, provideTranslateService } from '@ngx-translate/core';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { missingTranslationHandler } from 'app/core/config/translation.config';
+import { captureException } from 'app/core/error-reporting/capture-exception';
 import { Alert, AlertCreationProperties, AlertService, AlertType } from 'app/foundation/service/alert.service';
 import { EventManager } from 'app/foundation/service/event-manager.service';
 import englishUserManagement from 'src/main/webapp/i18n/en/user-management.json';
@@ -11,6 +12,8 @@ import englishErrors from 'src/main/webapp/i18n/en/error.json';
 import germanErrors from 'src/main/webapp/i18n/de/error.json';
 import enQuizSubmission from 'src/main/webapp/i18n/en/quizSubmission.json';
 import deQuizSubmission from 'src/main/webapp/i18n/de/quizSubmission.json';
+
+vi.mock('app/core/error-reporting/capture-exception', () => ({ captureException: vi.fn() }));
 
 describe('Alert Service Test', () => {
     const alertSample = {
@@ -200,11 +203,70 @@ describe('Alert Service Test', () => {
         expect(service.get()[0].message).toBe('Server not reachable');
     });
 
+    it('should show the translation of the server not being reachable once the translations are loaded', () => {
+        TestBed.inject(TranslateService).setTranslation('en', { 'global.generic.serverNotReachable': 'Der Server ist nicht erreichbar' }, true);
+
+        eventManager.broadcast({ name: 'artemisApp.httpError', content: { status: 0 } });
+
+        expect(service.get()[0].message).toBe('Der Server ist nicht erreichbar');
+    });
+
+    it('should not report a missing translation if the server is not reachable, because the translations may not be loadable either', () => {
+        vi.mocked(captureException).mockClear();
+
+        eventManager.broadcast({ name: 'artemisApp.httpError', content: { status: 0 } });
+
+        expect(service.get()[0].message).toBe('Server not reachable');
+        expect(captureException).not.toHaveBeenCalled();
+    });
+
     it('should not display an alert on status 404', () => {
         // GIVEN
         eventManager.broadcast({ name: 'artemisApp.httpError', content: { status: 404 } });
         // THEN
         expect(service.get()).toHaveLength(0);
+    });
+
+    describe('showsHttpErrorAlert', () => {
+        const rejection = (status: number, body?: unknown, headers?: Record<string, string>) => new HttpErrorResponse({ status, error: body, headers: new HttpHeaders(headers) });
+
+        // Each case is also sent through the real listener, so the decision cannot drift away from what the alert handling really does.
+        it.each([
+            { description: 'the server is not reachable', error: rejection(0), alerted: true },
+            {
+                description: 'a bad request has an error header with a known translation',
+                error: rejection(400, undefined, { 'x-artemisapp-error': 'Error Message' }),
+                alerted: true,
+            },
+            {
+                description: 'a bad request has an error header without a translation',
+                error: rejection(400, undefined, { 'x-artemisapp-error': 'error.unknown.key' }),
+                alerted: false,
+            },
+            { description: 'a bad request has field errors', error: rejection(400, { fieldErrors: [{ field: 'a', objectName: 'foo', message: 'Min' }] }), alerted: true },
+            { description: 'a bad request has an empty list of field errors', error: rejection(400, { fieldErrors: [], title: 'Bad Request' }), alerted: false },
+            { description: 'a bad request has only a title', error: rejection(400, { title: 'Bad Request', message: 'Bad Request' }), alerted: true },
+            { description: 'a bad request has a title whose key is skipped', error: rejection(400, { title: 'Bad Request', errorKey: 'courseShortNameExists' }), alerted: false },
+            { description: 'a bad request has nothing to show', error: rejection(400, {}), alerted: false },
+            { description: 'access is denied', error: rejection(403), alerted: true },
+            { description: 'access is denied with a key whose alert is skipped', error: rejection(403, { errorKey: 'cannotRegisterStaff' }), alerted: false },
+            { description: 'the resource was not found', error: rejection(404, { title: 'Not Found' }), alerted: false },
+            { description: 'a server error has a title', error: rejection(500, { title: 'Error Message', message: 'Error Message' }), alerted: true },
+            { description: 'a server error has an error header but no title', error: rejection(500, undefined, { 'x-artemisapp-error': 'Error Message' }), alerted: false },
+            {
+                description: 'a gateway error has field errors but no title',
+                error: rejection(502, { fieldErrors: [{ field: 'a', objectName: 'foo', message: 'Min' }] }),
+                alerted: false,
+            },
+            { description: 'a gateway error is the plain page of a proxy', error: rejection(502, '<html>Bad Gateway</html>'), alerted: false },
+            { description: 'the server asked for no alert', error: rejection(500, { skipAlert: true, title: 'Error Message' }), alerted: false },
+        ])('is $alerted when $description', ({ error, alerted }) => {
+            expect(service.showsHttpErrorAlert(error)).toBe(alerted);
+
+            eventManager.broadcast({ name: 'artemisApp.httpError', content: error });
+
+            expect(service.get().length > 0).toBe(alerted);
+        });
     });
 
     it.each([

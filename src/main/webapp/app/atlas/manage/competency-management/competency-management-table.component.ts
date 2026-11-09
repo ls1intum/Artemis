@@ -1,3 +1,4 @@
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
 import dayjs from 'dayjs/esm';
 import { Component, DestroyRef, computed, effect, inject, input, output, signal } from '@angular/core';
 import { CompetencyService } from 'app/atlas/manage/services/competency.service';
@@ -36,6 +37,7 @@ import { SortByDirective } from 'app/foundation/sort/directive/sort-by.directive
     templateUrl: './competency-management-table.component.html',
     styleUrl: './competency-management-table.component.scss',
     imports: [
+        TumAetUiButtonDirective,
         NgbDropdown,
         NgbDropdownMenu,
         NgbDropdownToggle,

@@ -42,6 +42,9 @@ public final class ErrorAnalysisBuffer {
 
     private static final Pattern EMAIL = Pattern.compile("[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}");
 
+    /** The login of a user in {@code user=<login>}, as Spring logs it for a session. The login belongs to one person and splits a group into one group per person. */
+    private static final Pattern USER = Pattern.compile("\\buser=[^\\s,\\]}]+");
+
     private static final Pattern UUID = Pattern.compile("\\b[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}\\b");
 
     private static final Pattern NUMBER = Pattern.compile("\\d+");
@@ -168,6 +171,7 @@ public final class ErrorAnalysisBuffer {
     static String toPattern(String message) {
         String bounded = bound(message);
         String pattern = EMAIL.matcher(bounded).replaceAll("<email>");
+        pattern = USER.matcher(pattern).replaceAll("user=<user>");
         pattern = UUID.matcher(pattern).replaceAll("<uuid>");
         pattern = NUMBER.matcher(pattern).replaceAll("<n>");
         pattern = WHITESPACE.matcher(pattern).replaceAll(" ").strip();

@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.fileupload.web;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.FILE_ENDING_PATTERN;
 
+import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
@@ -52,6 +53,7 @@ import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
+import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.ManualConfig;
@@ -86,6 +88,7 @@ import de.tum.cit.aet.artemis.fileupload.dto.UpdateFileUploadExerciseDTO;
 import de.tum.cit.aet.artemis.fileupload.repository.FileUploadExerciseRepository;
 import de.tum.cit.aet.artemis.fileupload.service.FileUploadExerciseImportService;
 import de.tum.cit.aet.artemis.fileupload.service.FileUploadExerciseService;
+import de.tum.cit.aet.artemis.fileupload.service.FileUploadExerciseWithSubmissionsExportService;
 import de.tum.cit.aet.artemis.fileupload.service.FileUploadSubmissionExportService;
 import de.tum.cit.aet.artemis.lecture.api.SlideApi;
 import de.tum.cit.aet.artemis.notification.service.notifications.GroupNotificationScheduleService;
@@ -159,6 +162,8 @@ public class FileUploadExerciseResource {
 
     private final ExerciseVariantGroupService exerciseVariantGroupService;
 
+    private final FileUploadExerciseWithSubmissionsExportService fileUploadExerciseWithSubmissionsExportService;
+
     public FileUploadExerciseResource(FileUploadExerciseRepository fileUploadExerciseRepository, UserRepository userRepository, AuthorizationCheckService authCheckService,
             CourseService courseService, ExerciseService exerciseService, ExerciseDeletionService exerciseDeletionService,
             FileUploadSubmissionExportService fileUploadSubmissionExportService, GradingCriterionRepository gradingCriterionRepository,
@@ -167,7 +172,8 @@ public class FileUploadExerciseResource {
             ExerciseVersionService exerciseVersionService, ChannelRepository channelRepository, Optional<CompetencyProgressApi> competencyProgressApi, Optional<SlideApi> slideApi,
             Optional<AtlasMLApi> atlasMLApi, Optional<CompetencyApi> competencyApi, CompetencyExerciseLinkService competencyExerciseLinkService,
             ExerciseVariantGroupService exerciseVariantGroupService, TeamAssignmentConfigRepository teamAssignmentConfigRepository,
-            PlagiarismDetectionConfigRepository plagiarismDetectionConfigRepository, ExerciseConfigurationService exerciseConfigurationService) {
+            PlagiarismDetectionConfigRepository plagiarismDetectionConfigRepository, ExerciseConfigurationService exerciseConfigurationService,
+            FileUploadExerciseWithSubmissionsExportService fileUploadExerciseWithSubmissionsExportService) {
         this.teamAssignmentConfigRepository = teamAssignmentConfigRepository;
         this.plagiarismDetectionConfigRepository = plagiarismDetectionConfigRepository;
         this.exerciseConfigurationService = exerciseConfigurationService;
@@ -192,6 +198,7 @@ public class FileUploadExerciseResource {
         this.competencyApi = competencyApi;
         this.competencyExerciseLinkService = competencyExerciseLinkService;
         this.exerciseVariantGroupService = exerciseVariantGroupService;
+        this.fileUploadExerciseWithSubmissionsExportService = fileUploadExerciseWithSubmissionsExportService;
     }
 
     /**
@@ -639,11 +646,10 @@ public class FileUploadExerciseResource {
     }
 
     /**
-     * DELETE /file-upload-exercises/:exerciseId : delete the "id"
-     * fileUploadExercise.
+     * DELETE /file-upload-exercises/:exerciseId : delete the "id" fileUploadExercise in the background. The progress is sent over the websocket topic of the exercise.
      *
      * @param exerciseId the id of the fileUploadExercise to delete
-     * @return the ResponseEntity with status 200 (OK)
+     * @return the ResponseEntity with status 202 (Accepted), or 409 (Conflict) if the exercise is already being deleted
      */
     @DeleteMapping("file-upload-exercises/{exerciseId}")
     @EnforceAtLeastInstructorInExercise
@@ -651,21 +657,24 @@ public class FileUploadExerciseResource {
         log.info("REST request to delete FileUploadExercise : {}", exerciseId);
         var exercise = fileUploadExerciseRepository.findByIdElseThrow(exerciseId);
         User user = userRepository.getUserWithAuthorities();
+        var course = exercise.getCourseViaExerciseGroupOrCourseMemberElseThrow();
 
-        // Notify AtlasML about the exercise deletion before actual deletion
-        atlasMLApi.ifPresent(api -> {
-            try {
-                api.saveExerciseWithCompetencies(exercise, OperationTypeDTO.DELETE);
-            }
-            catch (Exception e) {
-                log.warn("Failed to notify AtlasML about exercise deletion: {}", e.getMessage());
-            }
-        });
         // note: we use the exercise service here, because this one makes sure to clean
         // up all lazy references correctly.
-        exerciseService.logDeletion(exercise, exercise.getCourseViaExerciseGroupOrCourseMemberElseThrow(), user);
-        exerciseDeletionService.delete(exerciseId, false);
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, exercise.getTitle())).build();
+        // AtlasML is notified and the request is audited only once the deletion is accepted, so a request that is refused because the exercise is already being deleted does
+        // neither. The notification still precedes the actual deletion.
+        exerciseDeletionService.startAsyncDeletion(exercise, false, () -> {
+            atlasMLApi.ifPresent(api -> {
+                try {
+                    api.saveExerciseWithCompetencies(exercise, OperationTypeDTO.DELETE);
+                }
+                catch (Exception e) {
+                    log.warn("Failed to notify AtlasML about exercise deletion: {}", e.getMessage());
+                }
+            });
+            exerciseService.logDeletion(exercise, course, user);
+        });
+        return ResponseEntity.accepted().build();
     }
 
     /**
@@ -682,6 +691,26 @@ public class FileUploadExerciseResource {
     public ResponseEntity<Resource> exportSubmissions(@PathVariable long exerciseId, @RequestBody SubmissionExportOptionsDTO submissionExportOptions) {
         Path zipFilePath = fileUploadSubmissionExportService.exportStudentSubmissionsElseThrow(exerciseId, submissionExportOptions);
         return ResponseUtil.ok(zipFilePath);
+    }
+
+    /**
+     * GET /file-upload-exercises/:exerciseId/export : sends the exercise definition as zip, without any submissions
+     *
+     * @param exerciseId the id of the file upload exercise to export
+     * @return ResponseEntity with the zip file containing the exercise details, the problem statement and its embedded files
+     */
+    @GetMapping("file-upload-exercises/{exerciseId}/export")
+    @EnforceAtLeastInstructorInExercise
+    @FeatureToggle(Feature.Exports)
+    public ResponseEntity<Resource> exportExercise(@PathVariable long exerciseId) {
+        FileUploadExercise fileUploadExercise = fileUploadExerciseRepository.findWithCategoriesAndGradingCriteriaByIdElseThrow(exerciseId);
+        try {
+            return ResponseUtil.ok(fileUploadExerciseWithSubmissionsExportService.exportExerciseForDownload(fileUploadExercise));
+        }
+        catch (IOException e) {
+            log.error("Error while exporting file upload exercise with id {} for instructor", exerciseId, e);
+            throw new InternalServerErrorException("Error while exporting file upload exercise with id " + exerciseId + " for instructor");
+        }
     }
 
     /**

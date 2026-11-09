@@ -30,6 +30,8 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
             <!-- Use the UI kit's theme-specific warning contrast for readable text and icons. -->
             <span class="inline-flex flex-col items-start gap-1 {{ styleClass() }}" [attr.title]="blocker() || '' | artemisTranslate" data-testid="create-variant-ai">
                 <tumaet-ui-button
+                    data-button-intent="authoring"
+                    data-button-intent-reason="Opens variant authoring, matching the documented course and exam variant actions"
                     class="min-w-0 [&_button]:h-full! [&_button]:min-w-0! [&_button]:whitespace-normal!"
                     severity="warn"
                     variant="solid"

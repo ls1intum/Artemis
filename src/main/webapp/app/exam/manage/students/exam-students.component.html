@@ -22,6 +22,13 @@
         />
     </div>
 
+    @if (statisticsLoadingFailed()) {
+        <div class="flex items-center gap-2" role="alert">
+            <span class="text-state-danger" jhiTranslate="artemisApp.examManagement.examStudents.statisticsFailed"></span>
+            <button tumAetUiButton type="button" severity="secondary" (click)="retryExamStatistics()" jhiTranslate="entity.action.retry"></button>
+        </div>
+    }
+
     <div class="flex min-h-0 flex-1 flex-col" data-testid="exam-students-table">
         <tumaet-ui-table
             [columns]="columns()"

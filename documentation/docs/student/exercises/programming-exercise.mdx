@@ -2,7 +2,7 @@
 id: programming-exercise
 title: Programming Exercise
 sidebar_label: Programming Exercise
-last_reviewed: 2026-11-03
+last_reviewed: 2026-11-07
 ---
 
 import Callout from "../../../src/components/Callout/Callout";
@@ -11,6 +11,8 @@ import Image, {ImageSize} from "../../../src/components/Image/Image";
 
 import exerciseWorkflow from './assets/programming/ExerciseWorkflow.png';
 import onlineEditor from './assets/programming/OnlineEditor.png';
+import buildNotificationsLight from './assets/programming/build-notifications-light.png';
+import buildNotificationsDark from './assets/programming/build-notifications-dark.png';
 
 ## Overview
 
@@ -150,6 +152,25 @@ After submitting your solution, you will see test results that indicate which pa
 - **Hidden tests**: Some tests may only be visible after the due date to prevent hardcoding solutions
 
 The test results also show your current score based on the weight of the passed tests.
+
+### Build Notifications
+
+While you keep a programming exercise open, the browser tab icon shows a clock badge when your submission is queued or building.
+If a result arrives while you are in another tab or application, the icon shows an envelope badge.
+The envelope means a result is available, including when tests fail or your code does not compile.
+Returning to the tab restores the normal Artemis icon once the result has arrived; while a build is still running, the clock stays.
+
+To receive system notifications as well, select the bell button in the exercise header and allow notifications when your browser asks.
+Select the button again to turn them off. This preference applies to your account in this browser.
+If notifications are blocked, allow them in your browser's site settings.
+System notification availability and sound depend on your browser, operating system and notification settings.
+On iOS and iPadOS, system notifications require Artemis to be added to the Home Screen.
+
+<Image src={buildNotificationsLight} alt="Programming exercise header with browser build notifications enabled, in the light theme" size={ImageSize.large} />
+<Image src={buildNotificationsDark} alt="Programming exercise header with browser build notifications enabled, in the dark theme" size={ImageSize.large} />
+
+Build notifications stop when you leave the exercise or close its tab. You can read more about other notification types on the
+[Notifications](../communication-support/notifications.mdx) page.
 
 ### Build Failures
 
