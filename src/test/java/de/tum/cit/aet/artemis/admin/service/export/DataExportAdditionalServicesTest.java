@@ -495,7 +495,7 @@ class DataExportAdditionalServicesTest extends AbstractSpringIntegrationIndepend
             return assessment;
         }
 
-        /** The rubric of the example in the plan: content 50 % on five points, delivery 30 % on three points, slides 20 % on five points. */
+        /** A rubric with three criteria of different weights and scales: content 50 % on five points, delivery 30 % on three points, slides 20 % on five points. */
         private List<PresentationRubricCriterion> createRubric(PresentationAssessment assessment) {
             return List.of(createCriterion(assessment, 0, "Content", 50, PresentationRubricScale.FIVE_POINT),
                     createCriterion(assessment, 1, "Delivery", 30, PresentationRubricScale.THREE_POINT),

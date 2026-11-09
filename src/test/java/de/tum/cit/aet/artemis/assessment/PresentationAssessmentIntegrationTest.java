@@ -44,9 +44,7 @@ import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
 import de.tum.cit.aet.artemis.course.domain.Course;
-import de.tum.cit.aet.artemis.course.domain.CourseConfiguration;
 import de.tum.cit.aet.artemis.course.dto.CourseManagementDTO;
-import de.tum.cit.aet.artemis.course.repository.CourseConfigurationRepository;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.exercise.util.AsyncDeletionTestUtilService;
@@ -74,9 +72,6 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
     private CourseTestRepository courseRepository;
 
     @Autowired
-    private CourseConfigurationRepository courseConfigurationRepository;
-
-    @Autowired
     private TextExerciseUtilService textExerciseUtilService;
 
     @Autowired
@@ -100,8 +95,8 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
         userUtilService.addUsers(TEST_PREFIX, 2, 1, 1, 1);
         course = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
         otherCourse = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
-        setPresentationAssessmentsEnabled(course, true);
-        setPresentationAssessmentsEnabled(otherCourse, true);
+        courseUtilService.setPresentationAssessmentsEnabled(course, true);
+        courseUtilService.setPresentationAssessmentsEnabled(otherCourse, true);
 
         presentationAssessment = new PresentationAssessment();
         presentationAssessment.setCourse(course);
@@ -649,7 +644,7 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void getPresentationAssessments_withCourseSettingDisabled_shouldReturnForbidden() throws Exception {
-        setPresentationAssessmentsEnabled(course, false);
+        courseUtilService.setPresentationAssessmentsEnabled(course, false);
 
         request.getList(getBaseUrl(course), HttpStatus.FORBIDDEN, PresentationAssessmentDTO.class);
     }
@@ -675,17 +670,11 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void getCourse_asTutor_shouldTellThatPresentationAssessmentsAreDisabled() throws Exception {
-        setPresentationAssessmentsEnabled(course, false);
+        courseUtilService.setPresentationAssessmentsEnabled(course, false);
 
         CourseManagementDTO loadedCourse = request.get("/api/course/courses/" + course.getId() + "/for-tutor", HttpStatus.OK, CourseManagementDTO.class);
 
         assertThat(loadedCourse.presentationAssessmentsEnabled()).isFalse();
-    }
-
-    private void setPresentationAssessmentsEnabled(Course course, boolean enabled) {
-        CourseConfiguration courseConfiguration = courseConfigurationRepository.findByCourseId(course.getId()).orElseThrow();
-        courseConfiguration.setPresentationAssessmentsEnabled(enabled);
-        course.setCourseConfiguration(courseConfigurationRepository.save(courseConfiguration));
     }
 
     @Test

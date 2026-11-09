@@ -55,8 +55,6 @@ import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
 import de.tum.cit.aet.artemis.course.domain.Course;
-import de.tum.cit.aet.artemis.course.domain.CourseConfiguration;
-import de.tum.cit.aet.artemis.course.repository.CourseConfigurationRepository;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
 /**
@@ -97,9 +95,6 @@ class PresentationGradingMethodIntegrationTest extends AbstractSpringIntegration
     private CourseTestRepository courseRepository;
 
     @Autowired
-    private CourseConfigurationRepository courseConfigurationRepository;
-
-    @Autowired
     private FeatureToggleService featureToggleService;
 
     private Course course;
@@ -112,8 +107,8 @@ class PresentationGradingMethodIntegrationTest extends AbstractSpringIntegration
         userUtilService.addUsers(TEST_PREFIX, STUDENT_COUNT, 1, 1, 1);
         course = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
         otherCourse = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
-        enablePresentationAssessments(course);
-        enablePresentationAssessments(otherCourse);
+        courseUtilService.setPresentationAssessmentsEnabled(course, true);
+        courseUtilService.setPresentationAssessmentsEnabled(otherCourse, true);
     }
 
     @AfterEach
@@ -434,6 +429,15 @@ class PresentationGradingMethodIntegrationTest extends AbstractSpringIntegration
         }
 
         @Test
+        @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+        void withCourseSettingDisabled_shouldBeForbidden() throws Exception {
+            long presentationId = createRubricPresentationAsInstructor();
+            courseUtilService.setPresentationAssessmentsEnabled(course, false);
+
+            request.get(assessmentUrl(course, presentationId) + "/rubric", HttpStatus.FORBIDDEN, PresentationRubricDTO.class);
+        }
+
+        @Test
         @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void viaTheUrlOfAnotherCourse_shouldNotBeFound() throws Exception {
             PresentationAssessmentDTO created = createPresentation(PresentationGradingMethod.RUBRIC, null, standardRubric());
@@ -534,7 +538,8 @@ class PresentationGradingMethodIntegrationTest extends AbstractSpringIntegration
 
             PresentationAssessmentInstanceDTO instance = createInstances(presentationId, List.of(student(1)), null, null, ratings).getFirst();
 
-            // 50 % · 3/4 + 30 % · 2/2 + 20 % · 1/4, the example of the plan
+            // score = Σ weight · position / (level count − 1), with position 0 for the lowest level
+            // = 50 % · 3/4 + 30 % · 2/2 + 20 % · 1/4 = 72.5 %
             assertThat(instance.rubricScore()).isEqualTo(72.5);
             assertThat(getRatings(presentationId, instance.id())).containsExactlyElementsOf(ratings);
         }
@@ -667,6 +672,16 @@ class PresentationGradingMethodIntegrationTest extends AbstractSpringIntegration
         void ratings_asStudent_shouldBeForbidden() throws Exception {
             long presentationId = createRubricPresentationAsInstructor();
             long instanceId = presentationAssessmentService.saveInstances(course.getId(), presentationId, batch(List.of(student(1)), null, null, null)).getFirst().getId();
+
+            request.getList(instanceUrl(presentationId, instanceId) + "/ratings", HttpStatus.FORBIDDEN, PresentationRubricRatingDTO.class);
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+        void ratings_withCourseSettingDisabled_shouldBeForbidden() throws Exception {
+            long presentationId = createRubricPresentationAsInstructor();
+            long instanceId = presentationAssessmentService.saveInstances(course.getId(), presentationId, batch(List.of(student(1)), null, null, null)).getFirst().getId();
+            courseUtilService.setPresentationAssessmentsEnabled(course, false);
 
             request.getList(instanceUrl(presentationId, instanceId) + "/ratings", HttpStatus.FORBIDDEN, PresentationRubricRatingDTO.class);
         }
@@ -910,7 +925,7 @@ class PresentationGradingMethodIntegrationTest extends AbstractSpringIntegration
 
     /** Ratings that refer to no rubric, for requests that must be rejected before the ratings are resolved. */
     private static List<PresentationRubricRatingDTO> unresolvedRatings() {
-        return List.of(new PresentationRubricRatingDTO(1L, 1L, null));
+        return List.of(new PresentationRubricRatingDTO(Long.MAX_VALUE, Long.MAX_VALUE, null));
     }
 
     private static List<PresentationRubricRatingDTO> withComments(List<PresentationRubricRatingDTO> ratings, String... comments) {
@@ -952,7 +967,7 @@ class PresentationGradingMethodIntegrationTest extends AbstractSpringIntegration
                 criteria);
     }
 
-    /** The rubric of the example in the plan: content 50 % on five points, delivery 30 % on three points, slides 20 % on five points. */
+    /** A rubric with three criteria of different weights and scales: content 50 % on five points, delivery 30 % on three points, slides 20 % on five points. */
     private static List<PresentationRubricCriterionDTO> standardRubric() {
         return List.of(criterion("Content", 50, PresentationRubricScale.FIVE_POINT), criterion("Delivery", 30, PresentationRubricScale.THREE_POINT),
                 criterion("Slides", 20, PresentationRubricScale.FIVE_POINT));
@@ -986,12 +1001,6 @@ class PresentationGradingMethodIntegrationTest extends AbstractSpringIntegration
 
     private static String student(int number) {
         return TEST_PREFIX + "student" + number;
-    }
-
-    private void enablePresentationAssessments(Course course) {
-        CourseConfiguration courseConfiguration = courseConfigurationRepository.findByCourseId(course.getId()).orElseThrow();
-        courseConfiguration.setPresentationAssessmentsEnabled(true);
-        course.setCourseConfiguration(courseConfigurationRepository.save(courseConfiguration));
     }
 
     private static String baseUrl(Course course) {
