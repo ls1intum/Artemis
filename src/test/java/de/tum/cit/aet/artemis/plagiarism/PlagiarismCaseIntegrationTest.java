@@ -34,6 +34,7 @@ import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismComparison;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismResult;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismSubmission;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismVerdict;
+import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismCaseDTO;
 import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismCaseDetailDTO;
 import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismCaseInfoDTO;
 import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismCaseOverviewDTO;
@@ -171,6 +172,42 @@ class PlagiarismCaseIntegrationTest extends AbstractSpringIntegrationIndependent
             assertThat(plagiarismCase.exercise().id()).as("should include exercise summary").isEqualTo(textExercise.getId());
             assertThat(plagiarismCase.student().visibleRegistrationNumber()).as("should not expose hidden registration numbers").isNull();
         });
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetPlagiarismCasesForCourseScores_forbidden_student() throws Exception {
+        request.getList("/api/plagiarism/courses/" + course.getId() + "/plagiarism-cases/for-scores", HttpStatus.FORBIDDEN, PlagiarismCaseDTO.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void testGetPlagiarismCasesForCourseScores_forbidden_tutor() throws Exception {
+        request.getList("/api/plagiarism/courses/" + course.getId() + "/plagiarism-cases/for-scores", HttpStatus.FORBIDDEN, PlagiarismCaseDTO.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
+    void testGetPlagiarismCasesForCourseScores_forbidden_editor() throws Exception {
+        request.getList("/api/plagiarism/courses/" + course.getId() + "/plagiarism-cases/for-scores", HttpStatus.FORBIDDEN, PlagiarismCaseDTO.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testGetPlagiarismCasesForCourseScores() throws Exception {
+        plagiarismCase1.setVerdict(PlagiarismVerdict.PLAGIARISM);
+        plagiarismCaseRepository.save(plagiarismCase1);
+
+        var plagiarismCasesResponse = request.getList("/api/plagiarism/courses/" + course.getId() + "/plagiarism-cases/for-scores", HttpStatus.OK, PlagiarismCaseDTO.class);
+
+        assertThat(plagiarismCasesResponse).as("should only contain the cases of the course exercises").extracting(PlagiarismCaseDTO::id)
+                .containsExactlyInAnyOrderElementsOf(coursePlagiarismCases.stream().map(PlagiarismCase::getId).toList());
+        assertThat(plagiarismCasesResponse).filteredOn(plagiarismCase -> plagiarismCase.id().equals(plagiarismCase1.getId())).singleElement().satisfies(plagiarismCase -> {
+            assertThat(plagiarismCase.verdict()).isEqualTo(PlagiarismVerdict.PLAGIARISM);
+            assertThat(plagiarismCase.studentId()).isEqualTo(plagiarismCase1.getStudent().getId());
+        });
+        assertThat(plagiarismCasesResponse).filteredOn(plagiarismCase -> !plagiarismCase.id().equals(plagiarismCase1.getId()))
+                .allSatisfy(plagiarismCase -> assertThat(plagiarismCase.verdict()).isNull());
     }
 
     @Test
