@@ -11,6 +11,13 @@
     <div class="mt-4 flex justify-center">
         <tumaet-ui-progress-spinner [ariaLabel]="'loading' | artemisTranslate" data-testid="science-consent-loading" />
     </div>
+} @else if (loadFailed()) {
+    <div class="mt-4" data-testid="science-consent-load-failed">
+        <p jhiTranslate="artemisApp.userSettings.scienceSettingsPage.loadFailed"></p>
+        <button type="button" tumAetUiButton severity="secondary" variant="outlined" data-testid="science-consent-retry" (click)="loadConsents()">
+            <span jhiTranslate="entity.action.retry"></span>
+        </button>
+    </div>
 } @else {
     <tumaet-ui-list class="mt-4 block" [ariaLabel]="'artemisApp.userSettings.scienceSettingsPage.title' | artemisTranslate" data-testid="science-consent-list">
         @for (consent of consents(); track consent.courseId) {

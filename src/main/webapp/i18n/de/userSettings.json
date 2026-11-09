@@ -89,6 +89,7 @@
                 "deleteDataQuestion": "Möchtest du deine Kursinteraktionsdaten für {{ courseTitle }} löschen? Zustimmungs-Audit-Ereignisse bleiben erhalten.",
                 "deleteDataSuccess": "Deine Kursinteraktionsdaten für {{ courseTitle }} wurden gelöscht.",
                 "thisCourse": "diesen Kurs",
+                "loadFailed": "Deine Entscheidungen zur Erhebung von Kursinteraktionsdaten konnten nicht geladen werden. Versuche es erneut, um den aktuellen Stand zu sehen.",
                 "empty": "Es sind keine Kurse für die Erhebung von Kursinteraktionsdaten konfiguriert.",
                 "featureDisabled": "Die Erhebung von Kursinteraktionsdaten ist derzeit plattformweit deaktiviert. Deine bisherigen Entscheidungen bleiben erhalten und gelten wieder, sobald sie reaktiviert wird."
             },

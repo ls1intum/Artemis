@@ -89,6 +89,7 @@
                 "deleteDataQuestion": "Delete your science interaction data for {{ courseTitle }}? Consent audit events will be retained.",
                 "deleteDataSuccess": "Your science interaction data for {{ courseTitle }} has been deleted.",
                 "thisCourse": "this course",
+                "loadFailed": "Your science data collection decisions could not be loaded. Try again to see their current status.",
                 "empty": "No courses are configured for science data collection.",
                 "featureDisabled": "Science data collection is currently disabled for the whole platform. Your existing decisions are kept and take effect again as soon as it is re-enabled."
             },

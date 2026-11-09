@@ -52,6 +52,7 @@ export class ScienceSettingsComponent implements OnInit {
     readonly consents = signal<ScienceCourseConsent[]>([]);
     /** True until this page's own response arrived, so nothing but the spinner shows before it. */
     readonly loading = signal(true);
+    readonly loadFailed = signal(false);
     readonly scienceFeatureActive = signal(true);
     /** The courses whose decision is being stored. Their switch is locked, so two saves can never overtake each other. */
     readonly savingCourseIds = signal<ReadonlySet<number>>(new Set());
@@ -71,6 +72,7 @@ export class ScienceSettingsComponent implements OnInit {
                               // Inside the switchMap, so a failed load does not end the stream and a later reload still works.
                               catchError((error) => {
                                   this.loading.set(false);
+                                  this.loadFailed.set(true);
                                   this.alertService.error('error.unexpectedError', { error: error.message });
                                   return EMPTY;
                               }),
@@ -81,6 +83,7 @@ export class ScienceSettingsComponent implements OnInit {
             )
             .subscribe((consents) => {
                 this.consents.set(consents);
+                this.loadFailed.set(false);
                 this.loading.set(false);
             });
 
@@ -94,7 +97,7 @@ export class ScienceSettingsComponent implements OnInit {
     }
 
     /** Loads the consents while the feature is on; switched off, it cancels a running load and shows the message. */
-    private loadConsents(): void {
+    loadConsents(): void {
         const featureActive = this.scienceFeatureActive();
         this.loading.set(featureActive);
         this.loads.next(featureActive);

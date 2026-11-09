@@ -255,6 +255,31 @@ describe('ScienceSettingsComponent', () => {
         expect(component.consents()[0].active).toBe(true);
     });
 
+    it('should hide unconfirmed decisions when a save and its recovery load fail, until a retry succeeds', async () => {
+        vi.spyOn(scienceSettingsService, 'getConsents')
+            .mockReturnValueOnce(of([activeConsent]))
+            .mockReturnValueOnce(throwError(() => new Error('reload failed')))
+            .mockReturnValueOnce(of([activeConsent]));
+        vi.spyOn(scienceSettingsService, 'saveConsentForCourse').mockReturnValue(throwError(() => new Error('save failed')));
+        fixture.detectChanges();
+
+        component.toggleConsent(activeConsent, false);
+        fixture.detectChanges();
+
+        expect(query('science-consent-load-failed')).not.toBeNull();
+        expect(query('science-consent-toggle')).toBeNull();
+        expect(query('science-consent-empty')).toBeNull();
+
+        query('science-consent-retry').click();
+        fixture.detectChanges();
+
+        await fixture.whenStable();
+        fixture.detectChanges();
+        expect(query('science-consent-load-failed')).toBeNull();
+        expect(fixture.nativeElement.querySelector('[data-testid="science-consent-toggle"] input').checked).toBe(true);
+        expect(scienceSettingsService.getConsents).toHaveBeenCalledTimes(3);
+    });
+
     it('should not delete science data before the confirmation is accepted', () => {
         vi.spyOn(scienceSettingsService, 'deleteScienceDataForCourse').mockReturnValue(of(undefined));
         fixture.detectChanges();
