@@ -118,20 +118,21 @@ If the cluster has a node autoscaler, it can add build nodes when build Pods wai
 1. Back up the database and the shared storage.
 2. Pause the build agents on the Build Agents page and wait until their builds have finished.
 3. Stop all core nodes and build agents, and wait until they are gone. Otherwise the new leader can migrate the database while old members still serve requests against the old schema.
-   The StatefulSets are named `<release>-leader`, `<release>-member` (only with more than one core node) and `<release>-build-agent`:
+   Use the namespace and the release of your installation. List the StatefulSets of the release with `kubectl -n <namespace> get statefulsets`. Their names end in `-leader`, `-member` (only with more than one core node)
+   and `-build-agent`, and start with the full name of the release. Scale each one that exists:
 
    ```bash
-   kubectl -n artemis scale statefulset artemis-build-agent --replicas=0
-   kubectl -n artemis scale statefulset artemis-member --replicas=0
-   kubectl -n artemis scale statefulset artemis-leader --replicas=0
-   kubectl -n artemis get pods
+   kubectl -n <namespace> scale statefulset <fullname>-build-agent --replicas=0
+   kubectl -n <namespace> scale statefulset <fullname>-member --replicas=0
+   kubectl -n <namespace> scale statefulset <fullname>-leader --replicas=0
+   kubectl -n <namespace> get pods
    ```
 
-   Repeat the last command until no core node and no build agent pod is left. PostgreSQL, the registry and the broker keep running.
-4. Update with a single core node and no build agents:
+   Skip the member command when there is no member StatefulSet. Repeat the last command until no core node and no build agent pod is left. PostgreSQL, the registry and the broker keep running.
+4. Update the same release with a single core node and no build agents:
 
    ```bash
-   helm upgrade artemis ./deployment/helm/artemis --namespace artemis \
+   helm upgrade <release> ./deployment/helm/artemis --namespace <namespace> \
      --values my-values.yaml \
      --set artemis.replicaCount=1 --set buildAgents.replicaCount=0 \
      --wait --timeout 25m

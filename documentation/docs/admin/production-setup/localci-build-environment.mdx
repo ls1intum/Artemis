@@ -26,7 +26,7 @@ The build agent clones the repositories itself and copies them into the containe
 | Working directory | `/var/tmp/testing-dir`. The repositories are checked out below it, see [checkout paths](/instructor/exercises/programming-exercise/configure-the-build#edit-repositories-checkout-paths-optional). |
 | Script | One bash script that Artemis generates from the build phases of the exercise. Every phase is a function that runs in its own `bash` process, in the order of the phases. `set -e` is active, so the first failing command ends the phase. |
 | Resources | Per build `--cpus 2`, `--memory 2g`, `--memory-swap 2g` and `--pids-limit 1000`, unless the exercise requests other CPU and memory values within your limits, see [Container Resource Restrictions](/admin/production-setup/programming-exercise-adjustments#container-resource-restrictions). |
-| Time | The build timeout of the exercise, at most `build-timeout-seconds.max` (240 seconds by default). The time for pulling the image is deducted from it, but only approximately: the timeout is checked in steps of 250 milliseconds, so a build that pulls the image for the first time can time out slightly before its budget is used up. |
+| Time | The build timeout of the exercise, at most `build-timeout-seconds.max` (240 seconds by default). Image pulls are generally excluded from this timeout, but because the timeout is checked in steps of 250 milliseconds, part of a pull can count towards it. A pull has its own limits, see [Pull policy](#pull-policy). |
 | Result files | Collected from the result paths of the phases after the script has finished, and parsed by Artemis. |
 
 ### Detecting that a script runs in LocalCI
@@ -77,8 +77,11 @@ therefore only affects what the **build script and the student code** can reach.
   forbids it for the test phase. A build that needs a download first and isolation afterwards has to get its dependencies another way,
   see [Dependencies and Maven configuration](#dependencies-and-maven-configuration).
 - An exercise that selects no network uses the **default network of Docker**, which allows outbound connections. There is no setting for a different default
-  for all exercises of an installation. The exception are the builds that [Hyperion](/admin/hyperion) triggers to synchronize the test cases of an exercise. They always run with
+  for all exercises of an installation. The exceptions are the builds that [Hyperion](/admin/hyperion) triggers to synchronize the test cases of an exercise. They always run with
   the network `none` and without the environment variables of the exercise, so a dependency that is not in the image or in an offline cache cannot be downloaded there.
+- Do not rely on the network `none` as the only isolation boundary on Kubernetes. The Kubernetes runner enforces it with firewall rules in the Pod, and a build that runs as root keeps the default
+  capabilities of the container, among them `CAP_NET_RAW`, which allows packet sockets that do not pass through those rules. Where the network of student code must be restricted, enforce the egress
+  independently, for example with a network policy in the build namespace, see [Operating LocalCI on Kubernetes](/admin/production-setup/localci-on-kubernetes#what-is-left-to-the-cluster).
 - Instructors select a network per exercise, from the list in `artemis.continuous-integration.container-flags-limit.allowed-custom-networks`.
   `none` disables the network completely, and is the default entry of that list. Other entries must exist on every build agent host.
   See [Custom Docker Networks](/admin/production-setup/programming-exercise-adjustments#custom-docker-networks).
