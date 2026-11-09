@@ -303,7 +303,8 @@ public class PresentationRubricService {
     private static void validateContent(List<PresentationRubricCriterionDTO> criteria) {
         int weightSum = criteria.stream().mapToInt(PresentationRubricCriterionDTO::weight).sum();
         if (weightSum != REQUIRED_WEIGHT_SUM) {
-            throw new BadRequestAlertException("The weights of the rubric criteria must add up to 100 percent", PresentationAssessment.ENTITY_NAME, "rubricWeightSumInvalid");
+            throw new BadRequestAlertException("The weights of the rubric criteria must add up to " + REQUIRED_WEIGHT_SUM + " percent", PresentationAssessment.ENTITY_NAME,
+                    "rubricWeightSumInvalid");
         }
         for (PresentationRubricCriterionDTO criterion : criteria) {
             if (criterion.levels().size() != criterion.scale().getLevelCount()) {

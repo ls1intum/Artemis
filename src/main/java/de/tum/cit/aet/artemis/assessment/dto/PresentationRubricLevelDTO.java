@@ -4,9 +4,11 @@ import jakarta.validation.constraints.Size;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import de.tum.cit.aet.artemis.assessment.domain.PresentationRubricCriterion;
+
 /**
  * A level of the scale of a presentation rubric criterion, from the lowest to the highest. Its position is its index in the scale.
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record PresentationRubricLevelDTO(Long id, @Size(max = 1000) String description) {
+public record PresentationRubricLevelDTO(Long id, @Size(max = PresentationRubricCriterion.MAX_DESCRIPTION_LENGTH) String description) {
 }

@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.assessment.dto;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.MAX_RUBRIC_CRITERIA;
+
 import java.util.List;
 
 import jakarta.validation.Valid;
@@ -25,7 +27,7 @@ import de.tum.cit.aet.artemis.assessment.domain.PresentationGradingMethod;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record PresentationAssessmentDTO(Long id, @NotBlank @Size(max = 255) String title, @Size(max = 1000) String description, @NotNull PresentationGradingMethod gradingMethod,
         @DecimalMin(value = "0", inclusive = false) @DecimalMax("10000") @Digits(integer = 5, fraction = 3) Double maxPoints, Long courseId, Long exerciseId, String exerciseTitle,
-        @Nullable @Size(min = 1, max = 20) List<@NotNull @Valid PresentationRubricCriterionDTO> rubricCriteria) {
+        @Nullable @Size(min = 1, max = MAX_RUBRIC_CRITERIA) List<@NotNull @Valid PresentationRubricCriterionDTO> rubricCriteria) {
 
     public PresentationAssessmentDTO(Long id, String title, String description, PresentationGradingMethod gradingMethod, Double maxPoints, Long courseId, Long exerciseId,
             String exerciseTitle) {

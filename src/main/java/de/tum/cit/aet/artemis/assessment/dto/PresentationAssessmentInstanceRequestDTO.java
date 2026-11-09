@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.assessment.dto;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.MAX_RUBRIC_CRITERIA;
+
 import java.time.ZonedDateTime;
 import java.util.List;
 
@@ -29,5 +31,5 @@ public record PresentationAssessmentInstanceRequestDTO(Long id, @NotNull ZonedDa
         @PositiveOrZero @DecimalMax("10000") @Digits(integer = 5, fraction = 3) Double resultPoints, Boolean passed, @NotBlank String studentLogin,
         @NotBlank @Size(max = 10) String language, @NotNull PresentationAssessmentMode mode, @Size(max = 255) String location,
         @Size(max = 1000) @Pattern(regexp = "^https?://\\S+$", flags = Pattern.Flag.CASE_INSENSITIVE) String meetingLink, @Size(max = 1000) String remark,
-        @Nullable @Size(min = 1, max = 20) List<@NotNull @Valid PresentationRubricRatingDTO> ratings) {
+        @Nullable @Size(min = 1, max = MAX_RUBRIC_CRITERIA) List<@NotNull @Valid PresentationRubricRatingDTO> ratings) {
 }

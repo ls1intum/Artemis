@@ -21,6 +21,12 @@ public class PresentationRubricCriterion extends DomainObject {
 
     public static final String ENTITY_NAME = "presentationRubricCriterion";
 
+    /** The longest name of a criterion. Keep in sync with MAX_NAME_LENGTH in presentation-rubric.util.ts. */
+    public static final int MAX_NAME_LENGTH = 255;
+
+    /** The longest description of a criterion or a level. Keep in sync with MAX_DESCRIPTION_LENGTH in presentation-rubric.util.ts. */
+    public static final int MAX_DESCRIPTION_LENGTH = 1000;
+
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "presentation_assessment_id", nullable = false)
     @Parent
@@ -29,10 +35,10 @@ public class PresentationRubricCriterion extends DomainObject {
     @Column(name = "position", nullable = false)
     private int position;
 
-    @Column(name = "name", nullable = false)
+    @Column(name = "name", nullable = false, length = MAX_NAME_LENGTH)
     private String name;
 
-    @Column(name = "description", length = 1000)
+    @Column(name = "description", length = MAX_DESCRIPTION_LENGTH)
     private String description;
 
     @Column(name = "weight", nullable = false)

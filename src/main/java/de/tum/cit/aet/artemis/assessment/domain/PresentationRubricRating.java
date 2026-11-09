@@ -19,6 +19,9 @@ public class PresentationRubricRating extends DomainObject {
 
     public static final String ENTITY_NAME = "presentationRubricRating";
 
+    /** The longest comment of a rating. Keep in sync with MAX_COMMENT_LENGTH in presentation-rubric.util.ts. */
+    public static final int MAX_COMMENT_LENGTH = 1000;
+
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "instance_id", nullable = false)
     @Parent
@@ -32,7 +35,7 @@ public class PresentationRubricRating extends DomainObject {
     @JoinColumn(name = "level_id", nullable = false)
     private PresentationRubricLevel level;
 
-    @Column(name = "comment", length = 1000)
+    @Column(name = "comment", length = MAX_COMMENT_LENGTH)
     private String comment;
 
     public PresentationAssessmentInstance getInstance() {

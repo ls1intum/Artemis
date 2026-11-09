@@ -27,7 +27,7 @@ public class PresentationRubricLevel extends DomainObject {
     @Column(name = "position", nullable = false)
     private int position;
 
-    @Column(name = "description", length = 1000)
+    @Column(name = "description", length = PresentationRubricCriterion.MAX_DESCRIPTION_LENGTH)
     private String description;
 
     public PresentationRubricCriterion getCriterion() {
