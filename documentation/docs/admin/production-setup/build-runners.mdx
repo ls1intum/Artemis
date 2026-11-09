@@ -25,6 +25,9 @@ consecutive-failure auto-pause, build logs, result and static-code-analysis pars
 views in the administration section. Repositories are cloned by the agent either way, so git credentials never reach
 the build. Changing the runner changes only where the build script runs.
 
+What the build sees inside the container, which user runs it, and where images come from is described in
+[LocalCI Build Environment](/admin/production-setup/localci-build-environment).
+
 The exercise-visible feature set is the same with two exceptions, both rejected with an explicit build error rather
 than silently ignored: named Docker networks and a custom memory swap. See
 [what is not the same](#what-is-not-the-same) for the operational settings that differ.
@@ -308,6 +311,11 @@ exercise builds across two build workers. It refuses to touch any kubectl contex
 It expects Docker Desktop 4.51 or newer with the `kind` provisioner, exactly three nodes, the containerd image store,
 and at least 8 CPUs and 24 GiB assigned. `deployment/helm/artemis/CLUSTER-SETUP.md` documents the individual commands
 (`build`, `up`, `status`, `test`, `logs`, `down`) and the diagnostics.
+
+### Operating
+
+Configuration beyond the install, sizing, scaling, updates and monitoring of an installation that uses the chart are described in
+[Operating LocalCI on Kubernetes](/admin/production-setup/localci-on-kubernetes).
 
 ### Troubleshooting
 
