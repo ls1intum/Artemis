@@ -9,7 +9,15 @@ The gauges are cluster-wide values that every core node reports, so max() takes 
 Queued plus running builds is the number of build slots that are needed at the moment. Dividing by the concurrent builds
 of one controller, which is the threshold with an AverageValue metric, gives the number of controllers.
 */ -}}
-{{- $defaultQuery := "max(artemis_global_localci_queued) + max(artemis_global_localci_running)" -}}
+{{- /*
+The selector scopes both gauges to this installation. A Prometheus that scrapes several installations would otherwise
+scale these controllers with the backlog of another one.
+*/ -}}
+{{- $selector := ($autoscaling.prometheus.selector | default "" | trim) -}}
+{{- if and (not $autoscaling.prometheus.query) (not $selector) -}}
+{{- fail "buildAgents.autoscaling.prometheus.selector is required when buildAgents.autoscaling.prometheus.query is not set. It scopes the queue metrics to this installation, for example namespace=\"artemis\"" -}}
+{{- end -}}
+{{- $defaultQuery := printf "max(artemis_global_localci_queued{%s}) + max(artemis_global_localci_running{%s})" $selector $selector -}}
 apiVersion: keda.sh/v1alpha1
 kind: ScaledObject
 metadata:

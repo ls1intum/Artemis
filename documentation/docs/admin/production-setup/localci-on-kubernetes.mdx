@@ -111,9 +111,21 @@ The core pods carry the annotations `prometheus.io/scrape`, `prometheus.io/path`
 ### Automatically
 
 With `buildAgents.autoscaling.enabled: true` the chart creates a [KEDA](https://keda.sh) `ScaledObject` for the build agent controllers. It needs KEDA in the cluster and a Prometheus that scrapes the core pods,
-and the chart installs neither.
+and the chart installs neither. Two settings make the metrics usable:
+
+1. **Scope the query to this installation.** A Prometheus often scrapes several Artemis installations, for example production and a test installation. Without a scope, the backlog of one installation
+   would scale the controllers of the other, and the metrics of the other would hide a missing scrape. `buildAgents.autoscaling.prometheus.selector` holds label matchers that select the metrics of this installation,
+   and the chart refuses to render without it, unless you set your own `query`. Which labels exist depends on the scrape configuration of your Prometheus, so use labels that identify this installation,
+   for example the namespace of the core pods.
+2. **Allow Prometheus to scrape Artemis.** `/management/prometheus` only answers requests from the addresses in `spring.prometheus.monitoringIp`, which is `127.0.0.1` by default, and the chart does not change it.
+   Without the setting, the scrape of the core pods is denied and KEDA has no metrics. Set it for the core nodes through `artemis.extraEnv` to the **source IP addresses of Prometheus**, comma-separated and
+   as exact addresses, not as ranges. Use the addresses that the core pods see, which are the address of the Prometheus pod unless your network translates them.
 
 ```yaml
+artemis:
+  extraEnv:
+    - name: SPRING_PROMETHEUS_MONITORINGIP
+      value: "10.42.1.15"
 buildAgents:
   concurrentBuildsPerAgent: 2
   autoscaling:
@@ -122,10 +134,11 @@ buildAgents:
     maxReplicas: 10
     prometheus:
       serverAddress: http://prometheus-server.monitoring.svc:80
+      selector: namespace="artemis"
 ```
 
 - **Target.** The number of controllers that the queue needs: `ceil((queued + running builds) / concurrentBuildsPerAgent)`, from the cluster-wide gauges `artemis.global.localci.queued` and `running`,
-  limited to `minReplicas` and `maxReplicas`. `autoscaling.prometheus.query` replaces the default query.
+  limited to `minReplicas` and `maxReplicas`. `autoscaling.prometheus.query` replaces the default query, which is built from the selector.
 - **Replica count.** The StatefulSet no longer sets `replicas`, so `buildAgents.replicaCount` is ignored and `helm upgrade` does not reset the count.
 - **Speed.** Controllers are added quickly (four per minute by default) and removed slowly (one every five minutes, after ten minutes below the target). The `scaleUp` and `scaleDown` values change this.
 - **Missing metric.** A missing series is an error and not zero, so a broken scrape leaves the count unchanged instead of scaling down while builds wait.

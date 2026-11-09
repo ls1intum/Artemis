@@ -92,7 +92,16 @@ By default the number of build-agent controllers is `buildAgents.replicaCount`. 
 
 Prerequisites: KEDA in the cluster, and a Prometheus that scrapes the core pods. They carry the `prometheus.io/*` annotations. The chart installs neither.
 
+- **Scope the query.** `buildAgents.autoscaling.prometheus.selector` selects the metrics of this installation with label matchers. Without it, a Prometheus that scrapes several Artemis installations would
+  scale these controllers with the backlog of another one. The chart refuses to render without it, unless you set your own `query`. The available labels depend on the scrape configuration of your Prometheus.
+- **Allow the scrape.** `/management/prometheus` only answers requests from `spring.prometheus.monitoringIp`, which is `127.0.0.1` by default and is not changed by the chart. Set it through
+  `artemis.extraEnv` to the exact source IP addresses of Prometheus, comma-separated. Otherwise the scrape is denied and KEDA has no metrics.
+
 ```yaml
+artemis:
+  extraEnv:
+    - name: SPRING_PROMETHEUS_MONITORINGIP
+      value: "10.42.1.15"
 buildAgents:
   concurrentBuildsPerAgent: 2
   autoscaling:
@@ -101,6 +110,7 @@ buildAgents:
     maxReplicas: 10
     prometheus:
       serverAddress: http://prometheus-server.monitoring.svc:80
+      selector: namespace="artemis"
 ```
 
 The target is `ceil((queued + running builds) / concurrentBuildsPerAgent)`, read from the cluster-wide gauges `artemis.global.localci.queued` and `running`, limited to

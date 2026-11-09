@@ -197,8 +197,15 @@ buildAgents:
     prometheus:
       # REQUIRED when enabled. For example http://prometheus-server.monitoring.svc:80
       serverAddress: ""
-      # Optional override of the PromQL query. The default reads the gauges of the core nodes. They report
-      # cluster-wide values, so max() avoids counting them once per core node.
+      # PromQL label matchers that select the metrics of THIS installation, without the braces. REQUIRED unless
+      # `query` is set. A Prometheus often scrapes several Artemis installations, and without a selector the backlog
+      # of another installation would scale these controllers, and its metrics would hide a missing scrape here.
+      # Which labels exist depends on the scrape configuration of your Prometheus. Use labels that identify this
+      # installation, for example the namespace of the core pods: namespace="artemis"
+      selector: ""
+      # Optional override of the whole PromQL query, instead of the default built from `selector`. The default reads
+      # the gauges of the core nodes. They report cluster-wide values, so max() avoids counting them once per core
+      # node.
       query: ""
     scaleUp:
       # At most this many controllers are added per period.
