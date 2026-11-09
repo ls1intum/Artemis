@@ -1,0 +1,178 @@
+---
+id: localci-on-kubernetes
+title: Operating LocalCI on Kubernetes
+sidebar_label: LocalCI on Kubernetes
+description: Configure, size, scale, update and monitor an Artemis installation that runs LocalCI builds as Kubernetes Jobs, using the Helm chart in the repository.
+last_reviewed: 2026-11-09
+---
+
+import Callout from "../../../src/components/Callout/Callout";
+import {CalloutVariant} from "../../../src/components/Callout/Callout.types";
+
+This page covers the day-to-day operation of an installation that uses the [Kubernetes runner](/admin/production-setup/build-runners#kubernetes-runner)
+and the Helm chart `deployment/helm/artemis`: which component does what, where each setting goes, how to size and scale the installation, how to update it, and what to monitor.
+The installation itself is described in [Deploying](/admin/production-setup/build-runners#deploying) in the build runners guide, and the chart's own
+`README.md` and `CLUSTER-SETUP.md` document the lifecycle commands of the local acceptance cluster.
+
+<Callout variant={CalloutVariant.warning}>
+
+  The Kubernetes runner and the chart are a proof of concept. They have not been through a production deployment. The chart provides no autoscaling, no high availability for
+  PostgreSQL, the broker or the registry, no network policies, no resource quotas and no backups. This page says where each of these is left to you.
+
+</Callout>
+
+## What the chart deploys
+
+| Component | Kind | Purpose |
+| --- | --- | --- |
+| Leader core | StatefulSet, one pod | An Artemis core node that also runs the `scheduling` profile, so that scheduled tasks run once. |
+| Member cores | StatefulSet, `artemis.replicaCount - 1` pods | Further core nodes. They serve HTTP and git and join the leader's cluster. |
+| Build agent controllers | StatefulSet in the Artemis namespace, `buildAgents.replicaCount` pods | Take jobs from the shared queue and create one Kubernetes Job per build. They never run student code. |
+| Build Jobs | Jobs in `buildAgents.namespace` | One per build. They run the exercise image and a trusted helper container. |
+| PostgreSQL | StatefulSet, optional | The database. Disable it with `postgresql.deploy: false` to use an external one. |
+| JHipster Registry | Deployment | The service registry through which core nodes find each other. |
+| ActiveMQ | Deployment, optional | The relay for WebSocket messages between core nodes. |
+| Gateway resources | Gateway API objects, optional | HTTP, HTTPS and git over SSH. |
+
+The pod name of a build agent controller is its identity: it becomes the short name of the build agent and the ownership label on every Job it creates.
+This is why the controllers are a StatefulSet and not a Deployment, and why the names are stable across restarts.
+
+## Configuring Artemis
+
+Three places hold configuration, depending on what the setting is.
+
+| What | Where |
+| --- | --- |
+| Settings that the chart knows | The values file, see the sections `artemis`, `buildAgents`, `postgresql`, `registry`, `broker`, `gateway` and `sharedStorage` in `values.yaml`. |
+| Secrets and the installation metadata | The values `artemis.config.admin.password`, `artemis.config.jwtBase64Secret`, `postgresql.auth.password`, `registry.password`, `broker.auth.password` and `artemis.config.operator.*`. The chart does not render without them. |
+| Any other Artemis property of the core nodes | `artemis.extraEnv`, a list of environment variables, and `artemis.extraProfiles` for additional Spring profiles. |
+
+An Artemis property becomes an environment variable by upper-casing it and removing the dashes and dots, for example
+`artemis.continuous-integration.concurrent-result-processing-size` becomes `ARTEMIS_CONTINUOUSINTEGRATION_CONCURRENTRESULTPROCESSINGSIZE`, which is how the chart's own ConfigMap sets its values.
+Use it for settings from the [Settings at a glance](/admin/production-setup/localci-build-environment#settings-at-a-glance) table that apply to core nodes:
+
+```yaml
+artemis:
+  extraEnv:
+    - name: ARTEMIS_CONTINUOUSINTEGRATION_BUILDTIMEOUTSECONDS_MAX
+      value: "300"
+```
+
+`artemis.extraEnv` applies to the core nodes only. The settings of the build agent controllers are the values under `buildAgents`, which the chart maps to the properties below
+`artemis.continuous-integration.kubernetes`, to the number of concurrent builds, and to the agent's resources. Settings such as the maximum build timeout must be equal on core nodes and
+build agents, see [Which setting goes on which node](/admin/production-setup/multiple-artemis-instances#which-setting-goes-on-which-node). The chart has no hook for further agent-only environment variables, so
+a setting of that kind needs a change to the chart.
+
+Every pod runs with the `prod` profile and therefore refuses to start with a credential that Artemis publishes as an example. The shared build agent git credential is deliberately not
+configurable: every node runs LocalCI, and the build agents authenticate with the clone token of the job they run.
+
+## Sizing
+
+### Build capacity
+
+The number of builds that run at the same time is
+
+```text
+buildAgents.replicaCount × buildAgents.concurrentBuildsPerAgent
+```
+
+With the defaults of two controllers and one build each, that is two builds. Each running build is a Pod on the **build nodes**, and it requests the resources of the exercise or, when the exercise
+sets none, `buildAgents.defaultResources` (2 CPUs, 2 GiB of memory and 4 GiB of ephemeral storage by default). The build nodes therefore need room for the maximum number of concurrent builds
+times these values, in addition to what else runs on them. The controllers themselves are small, see `buildAgents.controllerResources` (250 millicores and 512 MiB requested).
+A build whose Pod cannot be scheduled waits for resources, and the wait counts against `pod-start-timeout-seconds`, not against the build timeout.
+
+Choose the number of controllers from the peak, using the sizing table in [Scaling Artemis](/admin/scaling#a-starting-point-for-sizing), and raise `concurrentBuildsPerAgent` only together with the capacity
+of the build nodes. Keep build workloads on their own nodes with `buildAgents.workloadNodeSelector` and `workloadTolerations`, so that they cannot take the memory of core nodes.
+
+### Core nodes
+
+`artemis.replicaCount` is the total number of core nodes, one leader plus the members. The defaults request 1 CPU and 2.5 GiB of memory with a 4 GB heap, and allow up to 2 CPUs and 5 GiB.
+Memory limits the core nodes before processor, see [Scaling Artemis](/admin/scaling#a-starting-point-for-sizing).
+More than one core node needs a `ReadWriteMany` storage class for `sharedStorage`, because all cores mount the same `/opt/artemis/data`.
+The leader is always a single pod. If it is unavailable, no scheduled task runs until it is back, while the members keep serving users.
+
+## Scaling
+
+Scaling is manual. Change the value in the values file and run `helm upgrade`, so that the chart stays the single source of truth. A replica count that is changed with `kubectl scale` is not recorded in the release.
+
+- **More build capacity:** raise `buildAgents.replicaCount`. A new controller registers with the cluster within seconds and takes jobs at once. Make sure the build nodes have room first.
+- **Less build capacity:** lower `buildAgents.replicaCount`. The StatefulSet removes the highest ordinal first. A build that runs on a removed controller is put back into the queue and runs again on another agent,
+  at most five times, see [Operating build agents](/admin/production-setup/multiple-artemis-instances#operating-build-agents). To avoid the repetition, pause the agent on the Build Agents page
+  and wait for its builds to finish before you lower the count.
+- **More core capacity:** raise `artemis.replicaCount`. A new member waits for the leader to be ready and then joins the cluster.
+
+The values to decide with are the queue and the utilization on the Build Agents page, and the gauges `artemis.global.localci.queued`, `running`, `agents` and `maxConcurrentBuilds`.
+The core pods carry the annotations `prometheus.io/scrape`, `prometheus.io/path` (`/management/prometheus`) and `prometheus.io/port` for a Prometheus that honors them.
+If the cluster has a node autoscaler, it can add build nodes when build Pods wait for resources, but the number of controllers, and with it the number of concurrent builds, stays what the values say.
+
+## Updating
+
+<Callout variant={CalloutVariant.warning}>
+
+  The chart does not set an update strategy, so Kubernetes updates the StatefulSets as a rolling update and the leader, the members and the build agents change independently of each other.
+  That contradicts the rule of [Deploying a New Version](/admin/production-setup/multiple-artemis-instances#deploying-a-new-version): no instance may serve traffic against a database schema it was not built for.
+  For a release that contains database migrations, use the staged procedure below.
+
+</Callout>
+
+1. Back up the database and the shared storage, and make sure that `my-values.yaml` below holds **all** values of the installation. A value that is missing from it falls back to the chart default
+   in both upgrades, so the leader could, for example, mount a new, empty volume instead of the existing shared storage. If you have no such file, export the current values and add the new image tags:
+
+   ```bash
+   helm get values <release> --namespace <namespace> --output yaml > my-values.yaml
+   ```
+2. Pause the build agents on the Build Agents page and wait until their builds have finished.
+3. Stop all core nodes and build agents, and wait until they are gone. Otherwise the new leader can migrate the database while old members still serve requests against the old schema.
+   Use the namespace and the release of your installation. List the StatefulSets of the release with `kubectl -n <namespace> get statefulsets -l app.kubernetes.io/instance=<release>`, which also works when the
+   release uses `fullnameOverride`. Their names end in `-leader`, `-member` (only with more than one core node) and `-build-agent`. Scale each one that exists, with `<name>` as listed:
+
+   ```bash
+   kubectl -n <namespace> scale statefulset <name>-build-agent --replicas=0
+   kubectl -n <namespace> scale statefulset <name>-member --replicas=0
+   kubectl -n <namespace> scale statefulset <name>-leader --replicas=0
+   kubectl -n <namespace> get pods
+   ```
+
+   Skip the member command when there is no member StatefulSet. Repeat the last command until no core node and no build agent pod is left. PostgreSQL, the registry and the broker keep running.
+4. Update the same release with a single core node and no build agents:
+
+   ```bash
+   helm upgrade <release> ./deployment/helm/artemis --namespace <namespace> \
+     --values my-values.yaml \
+     --set artemis.replicaCount=1 --set buildAgents.replicaCount=0 \
+     --wait --timeout 25m
+   ```
+
+   The leader starts alone and applies the Liquibase migrations. The command returns when it is ready.
+5. Run the same command with the same `my-values.yaml`, without the two `--set` options. This restores the intended replica counts, and the members and the build agents start with the new version.
+6. The new build agents start unpaused and take builds as soon as they are ready, so there is nothing to resume. Check the Build Agents page for the number of agents and their status, and trigger a build.
+
+Take the image tags from the values file and use versioned tags, for the Artemis image and for the helper image. For a release without database migrations, a plain `helm upgrade` is enough.
+Rolling back an Artemis version after a migration needs the backup of step 1, see the warning in [Deploying a New Version](/admin/production-setup/multiple-artemis-instances#deploying-a-new-version).
+
+With Hazelcast, the chart default, the queue lives in the memory of the cluster. Builds that are queued when all nodes stop are not kept, and the missing-build check puts them back into the queue after the restart.
+
+## Monitoring
+
+| What | How |
+| --- | --- |
+| Pods and their readiness | `kubectl -n artemis get pods -o wide`. The probes use `/management/health/readiness`. |
+| Build Jobs | `kubectl -n artemis-builds get jobs,pods` shows the builds that are running. The agent deletes a Job and its Pods as soon as it has parsed the result, so a finished build is not kept. `buildAgents.jobTtlSeconds` (300) is only a fallback for Jobs that were left behind, for example when a controller restarted mid-build. Read the output of a finished build in its stored build log in Artemis. |
+| Build log of a running build | `kubectl -n artemis-builds logs job/<name> -c builder` |
+| Controllers and runner version | **Administration → Build System → Build Agents**. The **Build Runner** row shows `Kubernetes` and its version. |
+| Queue and capacity | The same page, and the gauges `artemis.global.localci.queued`, `running`, `agents` and `maxConcurrentBuilds`. |
+| Permissions | The two `kubectl auth can-i` checks in [On an existing cluster](/admin/production-setup/build-runners#on-an-existing-cluster). |
+
+Failure patterns and their causes are listed under [Troubleshooting](/admin/production-setup/build-runners#troubleshooting) in the build runners guide.
+
+## What is left to the cluster
+
+The chart sets none of the following. Add them according to your requirements.
+
+- **Resource quotas and limit ranges** for `buildAgents.namespace`. A quota there caps the concurrent builds independently of the number of controllers, and a build Pod that exceeds it fails to start.
+- **Network policies.** Build Pods run student code. Restrict what they may reach beyond the isolation that the exercise's network setting provides, see [Network access](/admin/production-setup/localci-build-environment#network-access).
+- **Pod Security.** The build namespace is labeled `privileged` through `buildAgents.podSecurityLevel`, because exercise images run as root and the network isolation container needs `NET_ADMIN`.
+- **High availability and backups** of PostgreSQL, the broker and the registry. The bundled PostgreSQL is a single instance, and the registry and the broker are single pods. Use managed services where availability matters.
+- **Backups of the shared storage.** It holds the LocalVC repositories, uploads, exports and build logs.
+- **TLS and ingress.** The chart creates Gateway API resources, and a certificate can come from cert-manager through `gateway.tls.certManagerClusterIssuer`.
+- **Secret management.** The values file holds the secrets in plain text unless you inject them another way.
