@@ -33,6 +33,8 @@ class RepairRoundScheduler {
 
     private final Set<RepairSurface> repairedSurfaces = EnumSet.noneOf(RepairSurface.class);
 
+    private final Set<RepairSurface> unchangedSurfaces = EnumSet.noneOf(RepairSurface.class);
+
     @Nullable
     private RepairSurface currentSurface;
 
@@ -71,7 +73,18 @@ class RepairRoundScheduler {
     }
 
     Optional<SemanticRepairBatch> nextRepairBatch(SpecFidelityReport report) {
-        return SemanticRepairBatch.next(report, repairedSurfaces, currentSurface, consecutiveRoundsOnSurface);
+        SpecFidelityReport remaining = new SpecFidelityReport(
+                report.findings().stream().filter(finding -> !unchangedSurfaces.contains(SemanticRepairBatch.surfaceFor(finding.kind()))).toList());
+        return SemanticRepairBatch.next(remaining, repairedSurfaces, currentSurface, consecutiveRoundsOnSurface);
+    }
+
+    /** An unchanged repair must not consume another surface's opportunity to address the same candidate. */
+    boolean skipUnchangedSurface(SpecFidelityReport report) {
+        if (currentSurface == null || budgetExhausted()) {
+            return false;
+        }
+        unchangedSurfaces.add(currentSurface);
+        return nextRepairBatch(report).isPresent();
     }
 
     void recordRepairRound(RepairSurface surface) {
@@ -96,6 +109,7 @@ class RepairRoundScheduler {
     }
 
     RepairRound recordReviewRound(SpecFidelityReport report, int attempt) {
+        unchangedSurfaces.clear();
         Set<String> currentIdentities = findingIdentities(report);
         int carriedOver = (int) currentIdentities.stream().filter(previousRoundFindingIdentities::contains).count();
         int drained = (int) previousRoundFindingIdentities.stream().filter(identity -> !currentIdentities.contains(identity)).count();

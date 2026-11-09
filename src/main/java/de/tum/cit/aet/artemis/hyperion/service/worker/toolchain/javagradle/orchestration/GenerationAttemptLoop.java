@@ -699,6 +699,10 @@ class GenerationAttemptLoop {
             specFidelityReport = candidateBeforeCurrentRepair.reviewReport();
             lastMechanicallyVerifiedCandidate = candidateBeforeCurrentRepair;
             candidateBeforeCurrentRepair = null;
+            if (repairScheduler.skipUnchangedSurface(schedulingReport())) {
+                emit("This repair made no artifact changes; preserving its evidence and trying a different pending repair scope within the remaining budget.");
+                return null;
+            }
             terminationReason = TerminationReason.REPAIR_DID_NOT_IMPROVE;
             emit("The semantic repair made no artifact changes; retaining the previous environment evidence and review and stopping further identical repairs.");
             return service.preserveCandidate(lastMechanicallyVerifiedCandidate, sandbox, sessionId, workspaceSeed);

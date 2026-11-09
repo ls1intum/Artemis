@@ -11,6 +11,33 @@ import org.junit.jupiter.params.provider.ValueSource;
 
 class AgentVerifyReportTest {
 
+    @ParameterizedTest
+    @ValueSource(booleans = { false, true })
+    void starterFeedbackShowsFailingPreservationChecksWithoutExpectedStudentWorkFailures(boolean includeStatementGuidance) {
+        var expected = new AgentVerifyReport.TestFailureEvidence("testClass[Extension]", "ClassNotFoundException: Extension");
+        var preservation = new AgentVerifyReport.TestFailureEvidence("keepsSuppliedBalance", "expected: <10> but was: <0>");
+        var report = new AgentVerifyReport(3, true, List.of(), List.of(), 3, true, false, List.of(expected, preservation), List.of("rejectsBrokenWork"),
+                List.of(expected.testName(), preservation.testName(), "rejectsBrokenWork"), List.of(), List.of(), false, List.of("starter passes assessed work"), List.of(), "", "",
+                List.of(preservation.testName()));
+
+        String observation = includeStatementGuidance ? report.toObservation() : report.toTestsStageObservation();
+
+        assertThat(observation).contains("Template WRONGLY PASSES", "rejectsBrokenWork", preservation.message()).doesNotContain(expected.message());
+        assertThat(report.templateFailureEvidence()).containsExactly(expected, preservation);
+        assertThat(report.wouldBeAccepted()).isFalse();
+    }
+
+    @Test
+    void expectedMissingDeclarationsAreNotRepairTargetsWhenAnotherGradedTestPassesOnTheStarter() {
+        var expected = new AgentVerifyReport.TestFailureEvidence("testClass[Extension]", "ClassNotFoundException: Extension");
+        var report = new AgentVerifyReport(2, true, List.of(), List.of(), 2, true, false, List.of(expected), List.of("rejectsBrokenWork"),
+                List.of(expected.testName(), "rejectsBrokenWork"), List.of(), List.of(), false, List.of("starter passes assessed work"));
+
+        assertThat(report.toTestsStageObservation()).contains("Template WRONGLY PASSES", "rejectsBrokenWork", "MECHANICAL PRECHECK: FAIL").doesNotContain(expected.message(),
+                "Template failure evidence");
+        assertThat(report.templateFailureEvidence()).containsExactly(expected);
+    }
+
     @Test
     void anInvalidPlanDoesNotTurnExpectedMissingDeclarationsOrPreservationPassesIntoRepairTargets() {
         var missingClass = new AgentVerifyReport.TestFailureEvidence("testClass[Token]", "ClassNotFoundException: Token");
@@ -89,7 +116,7 @@ class AgentVerifyReportTest {
     void failedStarterPolicyStillReportsItsFailureEvidence() {
         var failure = new AgentVerifyReport.TestFailureEvidence("keepsSuppliedBalance", "expected: <10> but was: <0>");
         AgentVerifyReport report = new AgentVerifyReport(1, true, List.of(), List.of(), 1, true, false, List.of(failure), List.of(), List.of("keepsSuppliedBalance"), List.of(),
-                List.of(), false, List.of("supplied behavior changed"));
+                List.of(), false, List.of("supplied behavior changed"), List.of(), "", "", List.of("keepsSuppliedBalance"));
 
         assertThat(report.toTestsStageObservation()).contains(failure.testName(), failure.message());
     }

@@ -177,7 +177,10 @@ public record AgentVerifyReport(int solutionTests, boolean solutionPassed, List<
             builder.append("Template: all required gradable tests fail; supplied-behavior preservation checks pass.\n");
         }
         if (gradingPlanValid && !templateFailed) {
-            builder.append(renderFailureEvidence("Template", templateFailureEvidence));
+            Set<String> preservationNames = preservationTestNames.stream().map(ProblemStatementBindingChecker::normalizeTestName).collect(java.util.stream.Collectors.toSet());
+            List<TestFailureEvidence> brokenPreservation = templateFailureEvidence.stream()
+                    .filter(evidence -> preservationNames.contains(ProblemStatementBindingChecker.normalizeTestName(evidence.testName()))).toList();
+            builder.append(renderFailureEvidence("Template", brokenPreservation));
         }
 
         Set<String> excludedBindings = java.util.stream.Stream.concat(hiddenTestNames.stream(), preservationTestNames.stream())

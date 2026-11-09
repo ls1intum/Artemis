@@ -1023,8 +1023,15 @@ class GenerationAttemptLoopTest {
         assertThat(loop.terminationReason()).isEqualTo(TerminationReason.REVIEW_UNAVAILABLE);
     }
 
-    @Test
-    void contractThenOracleRepairKillsTheRevalidatedMutantAndConverges() {
+    @ParameterizedTest
+    @ValueSource(booleans = { true, false })
+    void aContractRepairCannotStarveTheExecutedOracleRepair(boolean contractChanged) {
+        AtomicInteger sessions = new AtomicInteger();
+        when(agentLoopRunner.runSession(anyString(), any(), anyString(), any(), anyInt(), any(), any(), any())).thenAnswer(invocation -> {
+            sessions.incrementAndGet();
+            return loopSession(completed());
+        });
+        when(workspace.extractProblemStatement(any(), anyString())).thenAnswer(invocation -> "PROBLEM STATEMENT " + (sessions.get() == 2 && !contractChanged ? 1 : sessions.get()));
         sandbox.withFile(SPEC_PATH, "## Rules\n| R1 | honor every prerequisite |");
         when(workspace.extractRepository(any(), anyString(), Mockito.eq(RepositoryRole.TESTS), any()))
                 .thenReturn(new GenerationWorkspace.RepositoryExtraction(Map.of("test/SchedulerTest.java", "package p; class SchedulerTest {}"), false));
@@ -1038,8 +1045,8 @@ class GenerationAttemptLoopTest {
         when(specFidelityCritic.authorSemanticMutants(anyString(), any(), any(), any(), any(), any())).thenReturn(List.of(mutant), List.of(), List.of());
         when(verifier.evaluateSemanticMutants(any(), anyString(), any(), any(), any(), any(), any(), any()))
                 .thenReturn(List.of(new SemanticMutantOutcome(mutant, Disposition.SURVIVED_GRADED_SUITE)), List.of(), List.of());
-        when(verifier.checkSemanticMutants(any(), anyString(), any(), any(), any(), any(), any())).thenReturn(
-                List.of(new SemanticMutantOutcome(mutant, Disposition.SURVIVED_GRADED_SUITE)), List.of(new SemanticMutantOutcome(mutant, Disposition.KILLED_BY_GRADED_SUITE)));
+        when(verifier.checkSemanticMutants(any(), anyString(), any(), any(), any(), any(), any()))
+                .thenAnswer(invocation -> List.of(new SemanticMutantOutcome(mutant, sessions.get() < 3 ? Disposition.SURVIVED_GRADED_SUITE : Disposition.KILLED_BY_GRADED_SUITE)));
 
         GenerationAttemptLoop loop = newGenerateLoop(3, 2);
         loop.run();
@@ -1047,7 +1054,8 @@ class GenerationAttemptLoopTest {
         InOrder scopes = Mockito.inOrder(baseTools);
         scopes.verify(baseTools).enterRepairScope(Set.of("solution", "template", "tests", "test-plan.json", "problem-statement.md"));
         scopes.verify(baseTools).enterRepairScope(Set.of("tests", "test-plan.json", "problem-statement.md"));
-        verify(verifier, times(2)).checkSemanticMutants(any(), anyString(), any(), any(), any(), any(), any());
+        assertThat(sessions.get()).isEqualTo(3);
+        assertThat(loop.lastMechanicallyVerifiedCandidate().problemStatement()).isEqualTo("PROBLEM STATEMENT 3");
         assertThat(loop.specFidelityReport().findings()).noneMatch(SpecFidelityReport.Finding::isBlocking);
         assertThat(loop.terminationReason()).isEqualTo(TerminationReason.CONVERGED);
     }

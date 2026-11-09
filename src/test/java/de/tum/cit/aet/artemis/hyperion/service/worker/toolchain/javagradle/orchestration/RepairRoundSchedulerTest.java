@@ -43,6 +43,35 @@ class RepairRoundSchedulerTest {
         return report(SpecFidelityReport.Kind.EXECUTABLE_WEAK_TEST_ORACLE, SpecFidelityReport.Kind.TEMPLATE_QUALITY_GAP);
     }
 
+    @Test
+    void unchangedScopesStaySkippedUntilAChangedCandidateIsReviewed() {
+        RepairRoundScheduler scheduler = new RepairRoundScheduler(4);
+        SpecFidelityReport findings = report(SpecFidelityReport.Kind.HIDDEN_GRADED_REQUIREMENT, SpecFidelityReport.Kind.EXECUTABLE_WEAK_TEST_ORACLE);
+        scheduler.recordRepairRound(RepairSurface.CONTRACT);
+
+        assertThat(scheduler.skipUnchangedSurface(findings)).isTrue();
+        assertThat(scheduler.nextRepairBatch(findings).orElseThrow().surface()).isEqualTo(RepairSurface.ORACLE);
+        assertThat(scheduler.nextRepairBatch(findings).orElseThrow().surface()).isEqualTo(RepairSurface.ORACLE);
+        scheduler.recordRepairRound(RepairSurface.ORACLE);
+        assertThat(scheduler.skipUnchangedSurface(findings)).isFalse();
+        assertThat(scheduler.nextRepairBatch(findings)).isEmpty();
+        assertThat(findings.findings()).hasSize(2);
+
+        scheduler.recordReviewRound(findings, 3);
+
+        assertThat(scheduler.nextRepairBatch(findings).orElseThrow().surface()).isEqualTo(RepairSurface.CONTRACT);
+    }
+
+    @Test
+    void skippingAnUnchangedScopeDoesNotGrantAdditionalBudget() {
+        RepairRoundScheduler scheduler = new RepairRoundScheduler(1);
+        scheduler.recordRepairRound(RepairSurface.ORACLE);
+
+        assertThat(scheduler.skipUnchangedSurface(oracleAndScaffoldBlockers())).isFalse();
+        assertThat(scheduler.roundsStarted()).isEqualTo(1);
+        assertThat(scheduler.budgetExhausted()).isTrue();
+    }
+
     /** Asks the scheduler for a batch once per review and records each answer as a repair round, as the attempt loop does, stopping at the first unschedulable round. */
     private static List<RepairSurface> scheduleRounds(RepairRoundScheduler scheduler, List<SpecFidelityReport> reviews) {
         List<RepairSurface> scheduled = new ArrayList<>();
