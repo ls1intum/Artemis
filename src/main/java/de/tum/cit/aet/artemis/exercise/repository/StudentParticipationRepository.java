@@ -2377,12 +2377,12 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                     AND r.assessmentType IN (
                         de.tum.cit.aet.artemis.assessment.domain.AssessmentType.MANUAL,
                         de.tum.cit.aet.artemis.assessment.domain.AssessmentType.SEMI_AUTOMATIC)
-                    AND s.submissionDate = (
+                    AND (s.submissionDate IS NULL OR s.submissionDate = (
                         SELECT MAX(newer.submissionDate) FROM Submission newer JOIN newer.results newerResult
                         WHERE newer.participation.id = p.id AND newerResult.correctionRound = :correctionRound
                             AND newerResult.assessmentType IN (
                                 de.tum.cit.aet.artemis.assessment.domain.AssessmentType.MANUAL,
-                                de.tum.cit.aet.artemis.assessment.domain.AssessmentType.SEMI_AUTOMATIC))))
+                                de.tum.cit.aet.artemis.assessment.domain.AssessmentType.SEMI_AUTOMATIC)))))
             FROM StudentParticipation p JOIN p.team team
             WHERE p.exercise.id = :exerciseId AND p.testRun = FALSE
                 AND (:teamOwnerId IS NULL OR team.owner.id = :teamOwnerId)

@@ -637,7 +637,7 @@ class SubmissionServiceTest extends AbstractSpringIntegrationIndependentBatchTes
     @ParameterizedTest
     @org.junit.jupiter.params.provider.CsvSource({ "false,false", "true,false", "false,true" })
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
-    void programmingTeamQueueSelectsLatestCandidateByDate(boolean sameDate, boolean nullDate) {
+    void programmingTeamQueueSelectsLatestCandidateByDate(boolean sameDate, boolean nullDate) throws Exception {
         var exercise = teamExercise(ExerciseType.PROGRAMMING);
         var first = teamSubmission(exercise, tutor1, "own");
         var second = participationUtilService.addSubmission((StudentParticipation) first.getParticipation(), new ProgrammingSubmission());
@@ -647,6 +647,29 @@ class SubmissionServiceTest extends AbstractSpringIntegrationIndependentBatchTes
         assertThat(second.getId()).isGreaterThan(first.getId());
         assertThat(studentParticipationRepository.findCourseTeamQueueCandidates(exercise.getId(), ZonedDateTime.now(), tutor1.getId())).extracting(candidate -> candidate.id())
                 .containsExactly(sameDate || nullDate ? second.getId() : first.getId());
+        var selectedId = sameDate || nullDate ? second.getId() : first.getId();
+        var queueUrl = "/api/exercise/exercises/" + exercise.getId() + "/assessment-queue-teams";
+        assertThat(request.getList(queueUrl, HttpStatus.OK, AssessmentQueueTeamDTO.class)).extracting(entry -> entry.submission().id()).containsExactly(selectedId);
+        request.get(assessmentStartUrl(ExerciseType.PROGRAMMING, selectedId), HttpStatus.OK, String.class);
+        var queue = request.getList(queueUrl, HttpStatus.OK, AssessmentQueueTeamDTO.class);
+        assertThat(queue).extracting(entry -> entry.submission().id()).containsExactly(selectedId);
+        assertThat(queue.getFirst().submission().results()).anySatisfy(result -> {
+            assertThat(result.assessmentType()).isEqualTo(AssessmentType.SEMI_AUTOMATIC);
+            assertThat(result.assessor().id()).isEqualTo(tutor1.getId());
+            assertThat(result.completionDate()).isNull();
+        });
+        if (nullDate) {
+            var team = teamRepository.findWithStudentsByIdElseThrow(((StudentParticipation) first.getParticipation()).getTeam().orElseThrow().getId());
+            team.setOwner(tutor2);
+            teamRepository.saveWithTutorChange(exercise, team);
+            userUtilService.changeUser(TEST_PREFIX + "tutor2");
+            queue = request.getList(queueUrl, HttpStatus.OK, AssessmentQueueTeamDTO.class);
+            assertThat(queue).extracting(entry -> entry.submission().id()).containsExactly(selectedId);
+            assertThat(queue.getFirst().submission().results()).anySatisfy(result -> {
+                assertThat(result.assessmentType()).isEqualTo(AssessmentType.SEMI_AUTOMATIC);
+                assertThat(result.assessor().id()).isEqualTo(tutor2.getId());
+            });
+        }
     }
 
     /** Starting from a stale queue cannot bypass an extended team or exercise deadline. */
