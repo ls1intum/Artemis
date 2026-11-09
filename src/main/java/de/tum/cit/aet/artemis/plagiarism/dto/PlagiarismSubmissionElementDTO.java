@@ -5,6 +5,7 @@ import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismSubmissionElement;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
  * @param length    where the token ends, counted in characters from its start and without line breaks. Only correct
@@ -14,7 +15,9 @@ import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismSubmissionElement;
  * @param endColumn the column the token ends at, or null for such a result
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record PlagiarismSubmissionElementDTO(Long id, int column, int line, @Nullable String file, int length, @Nullable Integer endLine, @Nullable Integer endColumn) {
+public record PlagiarismSubmissionElementDTO(@Schema(requiredMode = Schema.RequiredMode.REQUIRED) Long id, @Schema(requiredMode = Schema.RequiredMode.REQUIRED) int column,
+        @Schema(requiredMode = Schema.RequiredMode.REQUIRED) int line, @Nullable String file, @Schema(requiredMode = Schema.RequiredMode.REQUIRED) int length,
+        @Nullable Integer endLine, @Nullable Integer endColumn) {
 
     /**
      * @param element the element to convert, may be null

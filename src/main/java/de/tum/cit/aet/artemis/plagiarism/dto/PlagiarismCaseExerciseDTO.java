@@ -12,10 +12,12 @@ import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismDetectionConfig;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record PlagiarismCaseExerciseDTO(Long id, String title, @Nullable String shortName, ExerciseType type, @Nullable ZonedDateTime dueDate, @Nullable Long courseId,
-        @Nullable String courseTitle, @Nullable Long examId, @Nullable String examTitle, @Nullable Integer continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod) {
+public record PlagiarismCaseExerciseDTO(@Schema(requiredMode = Schema.RequiredMode.REQUIRED) Long id, String title, @Nullable String shortName,
+        @Schema(requiredMode = Schema.RequiredMode.REQUIRED) ExerciseType type, @Nullable ZonedDateTime dueDate, @Nullable Long courseId, @Nullable String courseTitle,
+        @Nullable Long examId, @Nullable String examTitle, @Nullable Integer continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod) {
 
     /**
      * JPQL constructor that accepts the raw entity class produced by Hibernate's {@code TYPE(...)} function.

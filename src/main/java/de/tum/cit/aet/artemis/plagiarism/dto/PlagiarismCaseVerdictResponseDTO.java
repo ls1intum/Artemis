@@ -8,10 +8,12 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCase;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismVerdict;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record PlagiarismCaseVerdictResponseDTO(PlagiarismVerdict verdict, @Nullable String verdictMessage, int verdictPointDeduction, PlagiarismCaseUserDTO verdictBy,
-        ZonedDateTime verdictDate) {
+public record PlagiarismCaseVerdictResponseDTO(@Schema(requiredMode = Schema.RequiredMode.REQUIRED) PlagiarismVerdict verdict, @Nullable String verdictMessage,
+        @Schema(requiredMode = Schema.RequiredMode.REQUIRED) int verdictPointDeduction, @Schema(requiredMode = Schema.RequiredMode.REQUIRED) PlagiarismCaseUserDTO verdictBy,
+        @Schema(requiredMode = Schema.RequiredMode.REQUIRED) ZonedDateTime verdictDate) {
 
     /**
      * Maps the verdict part of a plagiarism case entity to the response DTO returned after saving a verdict.
