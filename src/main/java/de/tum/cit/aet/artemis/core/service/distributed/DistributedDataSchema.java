@@ -108,7 +108,15 @@ public final class DistributedDataSchema {
     public static final List<CarriedOverStructure> V1_TO_V2_WIRE_COMPATIBLE_STRUCTURES = List.of(new CarriedOverStructure("buildJobQueue", StructureKind.PRIORITY_QUEUE),
             new CarriedOverStructure("processingJobs", StructureKind.MAP), new CarriedOverStructure("buildResultQueue", StructureKind.QUEUE),
             new CarriedOverStructure("deferredBuildResultQueue", StructureKind.QUEUE), new CarriedOverStructure("pyris-job-map", StructureKind.EXPIRING_MAP),
-            new CarriedOverStructure("pyris-job-map-v2", StructureKind.EXPIRING_MAP));
+            new CarriedOverStructure("pyris-job-map-v2", StructureKind.EXPIRING_MAP),
+            // Keep the originating browser tab and immutable material versions with the chat and search runs they describe.
+            new CarriedOverStructure("pyris-chat-job-client-id-map", StructureKind.EXPIRING_MAP),
+            new CarriedOverStructure("pyris-chat-material-version-map", StructureKind.EXPIRING_MAP),
+            new CarriedOverStructure("pyris-global-search-material-version-map", StructureKind.EXPIRING_MAP),
+            // A retained struggle run must keep its single-flight reservation, scoped cancellation lookup and admission charge.
+            new CarriedOverStructure("struggle-inflight-map", StructureKind.EXPIRING_MAP), new CarriedOverStructure("struggle-cooldown-map", StructureKind.EXPIRING_MAP),
+            // The previous boot id cannot be reconstructed if Pyris restarted while Artemis was stopped.
+            new CarriedOverStructure("pyris-restart-watch", StructureKind.MAP));
 
     private DistributedDataSchema() {
     }

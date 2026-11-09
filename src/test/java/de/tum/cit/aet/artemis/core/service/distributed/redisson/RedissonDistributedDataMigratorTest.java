@@ -393,6 +393,54 @@ class RedissonDistributedDataMigratorTest {
         assertThat(redissonClient.getKeys().getKeysByPattern("artemis:v1:*")).isEmpty();
     }
 
+    @Test
+    void testV1ToV2KeepsChatAndSearchContextWithItsRemainingLifetime() {
+        assertExpiringV1EntriesSurvive(List.of(new ExpiringEntry("pyris-chat-job-client-id-map", "chat-job", "browser-tab-7"),
+                new ExpiringEntry("pyris-chat-material-version-map", "chat-job", "[{\"lectureUnitId\":42,\"attachmentVersion\":3}]"),
+                new ExpiringEntry("pyris-global-search-material-version-map", "student:search-job", "[{\"lectureUnitId\":42,\"videoVersion\":5}]")));
+    }
+
+    @Test
+    void testV1ToV2KeepsStruggleReservationsAndAdmissionChargesWithTheirRemainingLifetime() {
+        assertExpiringV1EntriesSurvive(List.of(new ExpiringEntry("struggle-inflight-map", "student:exercise", "struggle-run"),
+                new ExpiringEntry("struggle-cooldown-map", "student:exercise:decide", "admission-token")));
+    }
+
+    private void assertExpiringV1EntriesSurvive(List<ExpiringEntry> entries) {
+        claimVersion(1);
+        long lifetime = Duration.ofMinutes(17).toMillis();
+        for (ExpiringEntry entry : entries) {
+            redissonClient.getMapCache(keyFor(1, entry.name())).put(entry.key(), entry.value(), lifetime, TimeUnit.MILLISECONDS);
+            // An interrupted migration can have written a target entry without removing its source yet.
+            redissonClient.getMapCache(keyFor(2, entry.name())).put(entry.key(), entry.value(), lifetime, TimeUnit.MILLISECONDS);
+        }
+
+        migrationService().migrateToCurrentVersion();
+        migrationService().migrateToCurrentVersion();
+
+        for (ExpiringEntry entry : entries) {
+            RMapCache<String, String> migrated = redissonClient.getMapCache(keyFor(2, entry.name()));
+            assertThat(migrated.readAllMap()).containsOnly(entry(entry.key(), entry.value()));
+            assertThat(migrated.remainTimeToLive(entry.key())).isPositive().isLessThanOrEqualTo(lifetime);
+            assertThat(redissonClient.getMapCache(keyFor(1, entry.name())).isExists()).isFalse();
+        }
+        assertThat(storedVersion()).isEqualTo("2");
+    }
+
+    private record ExpiringEntry(String name, String key, String value) {
+    }
+
+    @Test
+    void testV1ToV2KeepsThePreviousPyrisBootIdForRestartRecovery() {
+        claimVersion(1);
+        redissonClient.getMap(keyFor(1, "pyris-restart-watch")).put("bootId", "previous-pyris-process");
+
+        migrationService().migrateToCurrentVersion();
+
+        assertThat(redissonClient.<String, String>getMap(keyFor(2, "pyris-restart-watch")).readAllMap()).containsOnly(entry("bootId", "previous-pyris-process"));
+        assertThat(redissonClient.getMap(keyFor(1, "pyris-restart-watch")).isExists()).isFalse();
+    }
+
     /**
      * A toggle is written to v2 before it is removed from v1, so a crash in between leaves it in both. The rerun has to
      * overwrite the v2 entry, not add a second one under another encoding.

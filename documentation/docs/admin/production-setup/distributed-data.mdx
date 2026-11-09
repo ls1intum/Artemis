@@ -2,7 +2,7 @@
 id: distributed-data
 title: Distributed Data with Redis or Valkey
 sidebar_label: Distributed Data with Redis or Valkey
-last_reviewed: 2026-11-06
+last_reviewed: 2026-11-07
 ---
 
 import Callout from "../../../src/components/Callout/Callout";
@@ -70,6 +70,11 @@ The schema `1` to `2` migration preserves `buildJobQueue`, `processingJobs`, `bu
 `deferredBuildResultQueue`, and the current Iris job map, `pyris-job-map-v2`. It also removes the obsolete `AtlasML`
 feature toggle and rewrites the keys of `features`, because stored keys identify a toggle by its position in the
 list of features. Every other runtime toggle keeps its value.
+
+Iris job state moves together: `pyris-chat-job-client-id-map` retains client correlation,
+`pyris-chat-material-version-map` and `pyris-global-search-material-version-map` retain stale-result checks, and
+`pyris-restart-watch` retains restart recovery. `struggle-inflight-map` and `struggle-cooldown-map` retain the
+in-flight and cooldown guards for proactive tutoring. Expiring entries keep their remaining lifetime.
 
 `deferredBuildResultQueue` was introduced after schema `1`. It holds results awaiting exercise result-processing admission;
 future schema migrations must preserve it alongside `buildResultQueue`. Deferred results remain visible in the admin
