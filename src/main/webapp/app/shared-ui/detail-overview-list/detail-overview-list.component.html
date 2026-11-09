@@ -78,6 +78,7 @@
                                             type="button"
                                             (click)="downloadApollonDiagramAsPDf(detail.data.umlModel, detail.data.title)"
                                             tumAetUiButton
+                                            severity="secondary"
                                             class="m-2"
                                             jhiTranslate="entity.action.export"
                                         ></button>
@@ -125,4 +126,12 @@
         }
     </dl>
     <ng-template #noData><jhi-no-data /></ng-template>
+}
+@if (footerSection(); as section) {
+    <div class="detail-section-heading">
+        <h2 class="section-headline" [id]="headlinesRecord()[section.headline]">{{ section.headline | artemisTranslate }}</h2>
+    </div>
+    <div class="section-detail-list">
+        <ng-container *ngTemplateOutlet="section.content" />
+    </div>
 }

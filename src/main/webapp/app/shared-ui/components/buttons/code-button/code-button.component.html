@@ -1,6 +1,7 @@
 <button
     type="button"
     tumAetUiButton
+    [severity]="severity()"
     [attr.aria-label]="'artemisApp.exerciseActions.code' | artemisTranslate"
     [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
     [forceDisabled]="disabled()"
@@ -23,21 +24,6 @@
 >
     <div class="w-130 max-w-[calc(100vw-2rem)]">
         @let state = loadingState();
-        @if (state.status !== 'complete' && repositoryEditorLink(); as editorLink) {
-            <div class="p-3!">
-                <a
-                    tumAetUiButton
-                    severity="warn"
-                    size="small"
-                    [routerLink]="editorLink"
-                    [jhiFeatureToggleLink]="FeatureToggle.ProgrammingExercises"
-                    data-testid="edit-repository-button"
-                >
-                    <fa-icon [icon]="faPencilAlt" aria-hidden="true" />
-                    <span>{{ 'entity.action.editInEditor' | artemisTranslate }}</span>
-                </a>
-            </div>
-        }
         @if (state.status === 'idle' || state.status === 'loading') {
             <div class="flex h-40 w-full items-center justify-center">
                 <fa-icon [icon]="faCircleNotch" animation="spin" data-testid="code-button-popover-loading" />
@@ -45,7 +31,6 @@
         } @else if (state.status === 'complete') {
             <jhi-code-button-popover-content
                 [repositoryViewLink]="repositoryViewLink()"
-                [repositoryEditorLink]="repositoryEditorLink()"
                 [authenticationMethodData]="state.authenticationMethodData"
                 [preferredIde]="state.preferredIde"
                 [theiaLinkData]="state.theiaLinkData"

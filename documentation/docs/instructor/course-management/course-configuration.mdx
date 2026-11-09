@@ -2,7 +2,7 @@
 id: course-configuration
 title: Course Configuration
 sidebar_label: Course Configuration
-last_reviewed: 2026-11-05
+last_reviewed: 2026-11-08
 ---
 
 import Callout from "../../../src/components/Callout/Callout";
@@ -195,3 +195,15 @@ Both switches cover text, modeling and programming exercises, but a programming 
 semi-automatically, with manual assessment enabled alongside the tests. There is no per-exercise switch: every
 exercise in the course follows these two, as far as its type supports them. See
 [AI-Assisted Feedback](/instructor/assessment-grading/ai-feedback) for the details.
+
+## Deleting a Course
+
+Administrators delete a course on its **Settings** page. The confirmation dialog first lists what the deletion removes
+with the course, such as users, exercises, exams, lectures, student work, posts and builds, and asks you to type the
+course title.
+
+The deletion runs in the background. After you confirm, a progress dialog shows the current step and how far the
+deletion is. Large courses with many student repositories can take several minutes, and the request no longer has to
+wait for them, so it does not time out. If you reload the page while the deletion runs, the progress dialog opens again.
+When the deletion is completed, close the dialog to return to your courses. While a deletion, an archive or a reset of
+the course is running, no other one of these can be started for it.

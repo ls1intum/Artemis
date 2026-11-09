@@ -108,14 +108,27 @@ public class ParticipationDeletionService {
      * @param recalculateCompetencyProgress specify if the competency progress should be recalculated
      */
     public void deleteAllByExercise(Exercise exercise, boolean recalculateCompetencyProgress) {
+        deleteAllByExercise(exercise, recalculateCompetencyProgress, DeletionProgressListener.none());
+    }
+
+    /**
+     * Delete all participations belonging to the given exercise and report how many are deleted.
+     *
+     * @param exercise                      the exercise
+     * @param recalculateCompetencyProgress specify if the competency progress should be recalculated
+     * @param progressListener              told after every deleted participation
+     */
+    public void deleteAllByExercise(Exercise exercise, boolean recalculateCompetencyProgress, DeletionProgressListener progressListener) {
         var participationsToDelete = studentParticipationRepository.findByExerciseId(exercise.getId());
         log.info("Request to delete all {} participations of exercise with id : {}", participationsToDelete.size(), exercise.getId());
 
         // First remove all participant scores, as we are deleting all participations for the exercise
         participantScoreRepository.deleteAllByExerciseId(exercise.getId());
 
+        int deleted = 0;
         for (StudentParticipation participation : participationsToDelete) {
             delete(participation.getId(), false);
+            progressListener.itemsProcessed(++deleted, participationsToDelete.size());
         }
 
         // The async ParticipantScoreScheduleService (on the scheduling node) may re-create a participant score

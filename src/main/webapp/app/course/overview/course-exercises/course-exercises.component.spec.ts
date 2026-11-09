@@ -323,6 +323,17 @@ describe('CourseExercisesComponent', () => {
         expect(exerciseServiceStub).toHaveBeenCalledWith(2);
     });
 
+    it('should hand the sidebar cards the accuracy of the scores of the course, because its exercises carry no course', () => {
+        course.accuracyOfScores = 2;
+        (component as any)._course.set(course);
+
+        component.processExercises(course.exercises!);
+
+        const cards = (component as any)._sidebarExercises() as { course?: { accuracyOfScores?: number } }[];
+        expect(cards.length).toBeGreaterThan(0);
+        expect(cards.every((card) => card.course?.accuracyOfScores === 2)).toBe(true);
+    });
+
     it('should update sidebar participation data when a websocket participation change is received', () => {
         const initialParticipation = new StudentParticipation();
         initialParticipation.id = 1;

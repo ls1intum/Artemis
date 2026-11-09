@@ -13,7 +13,8 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { FormsModule } from '@angular/forms';
 import { CourseForImportDTO } from 'app/course/shared/entities/course.model';
 import { DialogModule } from 'primeng/dialog';
-import { ButtonModule } from 'primeng/button';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { CheckboxModule } from 'primeng/checkbox';
 import { TableModule } from 'primeng/table';
 import { InputTextModule } from 'primeng/inputtext';
@@ -69,7 +70,8 @@ describe('CourseMaterialImportDialogComponent', () => {
                 CourseMaterialImportDialogComponent,
                 FormsModule,
                 MockModule(DialogModule),
-                MockModule(ButtonModule),
+                TumAetUiButtonDirective,
+                FaIconComponent,
                 MockModule(CheckboxModule),
                 MockModule(TableModule),
                 MockModule(InputTextModule),
@@ -88,7 +90,8 @@ describe('CourseMaterialImportDialogComponent', () => {
                     imports: [
                         FormsModule,
                         MockModule(DialogModule),
-                        MockModule(ButtonModule),
+                        TumAetUiButtonDirective,
+                        FaIconComponent,
                         MockModule(CheckboxModule),
                         MockModule(TableModule),
                         MockModule(InputTextModule),

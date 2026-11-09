@@ -3,14 +3,15 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { HttpErrorResponse } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
 import { Observable, Subscription } from 'rxjs';
-import { faCheck, faTimes, faTrash, faUndo } from '@fortawesome/free-solid-svg-icons';
+import { faCheck, faExclamationTriangle, faTimes, faTrash, faUndo } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TumAetUiButtonDirective, TumAetUiCheckboxComponent, TumAetUiDialogComponent } from '@tumaet/ui-angular';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ConfirmEntityNameComponent } from 'app/shared-ui/confirm-entity-name/confirm-entity-name.component';
-import { ActionType, EntitySummary } from 'app/shared-ui/delete-dialog/delete-dialog.model';
+import { ActionType, EntitySummaryCategory } from 'app/shared-ui/delete-dialog/delete-dialog.model';
+import { hasLargeSummaryCount } from 'app/shared-ui/delete-dialog/entity-summary.util';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 /** Header translation key of the dialog for each action. */
@@ -68,7 +69,8 @@ export class ExamDeleteDialogComponent {
     readonly deleteConfirmationText = input<string>();
     /** Translation key of the title above the summary. */
     readonly entitySummaryTitle = input<string>();
-    readonly fetchEntitySummary = input<Observable<EntitySummary>>();
+    /** Summary of what the action removes, grouped into categories. */
+    readonly fetchCategorizedEntitySummary = input<Observable<EntitySummaryCategory[]>>();
     /** Extra checks, as the name of the check mapped to the translation key of its label. */
     readonly additionalChecks = input<Record<string, string>>();
     readonly actionType = input<ActionType>(ActionType.Delete);
@@ -80,7 +82,9 @@ export class ExamDeleteDialogComponent {
     readonly confirmed = output<Record<string, boolean>>();
 
     readonly isLoadingSummary = signal(false);
-    readonly entitySummary = signal<EntitySummary | undefined>(undefined);
+    readonly categorizedSummary = signal<EntitySummaryCategory[] | undefined>(undefined);
+    readonly hasLargeCount = computed(() => hasLargeSummaryCount(this.categorizedSummary()));
+    protected readonly faExclamationTriangle = faExclamationTriangle;
     readonly checkValues = signal<Record<string, boolean>>({});
     confirmEntityName = '';
 
@@ -103,10 +107,6 @@ export class ExamDeleteDialogComponent {
     readonly additionalCheckKeys = computed(() => {
         const checks = this.additionalChecks() ?? {};
         return Object.keys(checks).filter((key) => !!checks[key]);
-    });
-    readonly summaryKeys = computed(() => {
-        const summary = this.entitySummary() ?? {};
-        return Object.keys(summary).filter((key) => summary[key] !== undefined);
     });
     readonly translationValues = computed(() => cloneWith(this.translateValues(), { title: this.entityTitle() }));
     readonly needsEntityName = computed(() => {
@@ -166,16 +166,16 @@ export class ExamDeleteDialogComponent {
 
     private loadSummary(): void {
         this.summarySubscription?.unsubscribe();
-        this.entitySummary.set(undefined);
-        const summary$ = this.fetchEntitySummary();
-        if (!summary$) {
+        this.categorizedSummary.set(undefined);
+        const categorized$ = this.fetchCategorizedEntitySummary();
+        if (!categorized$) {
             this.isLoadingSummary.set(false);
             return;
         }
         this.isLoadingSummary.set(true);
-        this.summarySubscription = summary$.subscribe({
-            next: (summary) => {
-                this.entitySummary.set(summary);
+        this.summarySubscription = categorized$.subscribe({
+            next: (categories) => {
+                this.categorizedSummary.set(categories);
                 this.isLoadingSummary.set(false);
             },
             error: (error: HttpErrorResponse) => {

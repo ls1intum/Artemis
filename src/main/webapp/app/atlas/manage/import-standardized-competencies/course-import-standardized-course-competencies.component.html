@@ -13,6 +13,7 @@
     <div class="d-flex flex-wrap align-items-center mt-3 mb-2">
         <h3 class="me-3 mb-0" jhiTranslate="artemisApp.standardizedCompetency.title"></h3>
         <jhi-button
+            [btnType]="ButtonType.SECONDARY"
             class="me-1"
             [btnSize]="ButtonSize.SMALL"
             [icon]="faMinimize"
@@ -20,6 +21,7 @@
             tooltip="artemisApp.standardizedCompetency.manage.collapseButtonTooltip"
         />
         <jhi-button
+            [btnType]="ButtonType.SECONDARY"
             [btnSize]="ButtonSize.SMALL"
             [icon]="faMaximize"
             (onClick)="knowledgeAreaTreeComponent?.expandAll()"
@@ -124,6 +126,7 @@
         }
         <jhi-button [btnType]="ButtonType.SECONDARY" [title]="'entity.action.cancel'" [icon]="faBan" (onClick)="cancel()" />
         <jhi-button
+            [btnType]="ButtonType.SECONDARY"
             [disabled]="!this.selectedCompetencies.length"
             [isLoading]="isLoading()"
             [icon]="faFileImport"

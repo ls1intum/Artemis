@@ -35,7 +35,7 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation
 import de.tum.cit.aet.artemis.exercise.service.ParticipationAuthorizationCheckService;
 import de.tum.cit.aet.artemis.exercise.test_repository.ParticipationTestRepository;
 import de.tum.cit.aet.artemis.localvc.service.GitService;
-import de.tum.cit.aet.artemis.localvc.service.LocalVCServletService;
+import de.tum.cit.aet.artemis.localvc.service.LocalVCPushProcessingService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
@@ -105,7 +105,7 @@ class RepositoryProgrammingExerciseParticipationResourceTest {
     private RepositoryAccessService repositoryAccessService;
 
     @Mock
-    private LocalVCServletService localVCServletService;
+    private LocalVCPushProcessingService localVCPushProcessingService;
 
     @Mock
     private RepositoryParticipationService repositoryParticipationService;
@@ -125,7 +125,7 @@ class RepositoryProgrammingExerciseParticipationResourceTest {
     void setUp() {
         resource = new RepositoryProgrammingExerciseParticipationResource(userRepository, authCheckService, participationAuthCheckService, gitService, repositoryService,
                 participationService, programmingExerciseRepository, participationRepository, buildLogService, programmingSubmissionRepository, submissionPolicyRepository,
-                repositoryAccessService, Optional.of(localVCServletService), repositoryParticipationService,
+                repositoryAccessService, Optional.of(localVCPushProcessingService), repositoryParticipationService,
                 org.mockito.Mockito.mock(de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseMutationGuardService.class));
         exercise = new ProgrammingExercise();
         exercise.setId(EXERCISE_ID);
@@ -400,7 +400,7 @@ class RepositoryProgrammingExerciseParticipationResourceTest {
         when(repositoryService.savePreliminaryCodeEditorAccessLog(repository, user, PARTICIPATION_ID)).thenReturn(Optional.empty());
 
         assertThat(resource.commitChanges(PARTICIPATION_ID).getStatusCode()).isEqualTo(HttpStatus.OK);
-        verify(localVCServletService).processNewPush(eq(null), eq(repository), eq(user), any(), any(), eq(Optional.empty()), eq("commit-hash"));
+        verify(localVCPushProcessingService).processNewPush(eq(null), eq(repository), eq(user), any(), any(), eq(Optional.empty()), eq("commit-hash"));
     }
 
     @Test
