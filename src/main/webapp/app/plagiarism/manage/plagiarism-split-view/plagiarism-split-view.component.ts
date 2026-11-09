@@ -5,7 +5,6 @@ import { Subject } from 'rxjs';
 import { Exercise, ExerciseType, getCourseId } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { PlagiarismSubmission } from 'app/plagiarism/shared/entities/PlagiarismSubmission';
 import { PlagiarismCasesService } from 'app/plagiarism/shared/services/plagiarism-cases.service';
-import { HttpResponse } from '@angular/common/http';
 import { SimpleMatch } from 'app/plagiarism/shared/entities/PlagiarismMatch';
 import dayjs from 'dayjs/esm';
 import { PlagiarismFileElement } from 'app/plagiarism/shared/entities/PlagiarismFileElement';
@@ -98,8 +97,11 @@ export class PlagiarismSplitViewComponent implements OnInit, OnDestroy {
                 return;
             }
             untracked(() => {
-                this.plagiarismCasesService.getPlagiarismComparisonForSplitView(courseId, comparison.id).subscribe((resp: HttpResponse<PlagiarismComparison>) => {
-                    const plagiarismComparison = resp.body!;
+                this.plagiarismCasesService.getPlagiarismComparisonForSplitView(courseId, comparison.id).subscribe((plagiarismComparison) => {
+                    // Nothing to show for a comparison the server sent without one of its two submissions.
+                    if (!plagiarismComparison) {
+                        return;
+                    }
                     const sortByStudentLogin = this.sortByStudentLogin();
                     if (sortByStudentLogin && sortByStudentLogin === plagiarismComparison.submissionB.studentLogin) {
                         this.swapSubmissions(plagiarismComparison);

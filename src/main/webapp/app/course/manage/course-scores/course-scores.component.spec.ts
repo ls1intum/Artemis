@@ -244,7 +244,7 @@ describe('CourseScoresComponent', () => {
         vi.spyOn(gradingService, 'findGradingScaleForCourse').mockReturnValue(
             of(new HttpResponse<GradingScaleDTO>({ body: toGradingScaleDTO(gradingScaleWithGradedPresentations) })),
         );
-        vi.spyOn(plagiarismCasesService, 'getCoursePlagiarismCasesForScores').mockReturnValue(of(new HttpResponse<PlagiarismCaseDTO[]>({ body: [] })));
+        vi.spyOn(plagiarismCasesService, 'getCoursePlagiarismCasesForScores').mockReturnValue(of([]));
         fixture.detectChanges();
     };
 
@@ -359,7 +359,7 @@ describe('CourseScoresComponent', () => {
 
     it('should group exercises and calculate exercise max score', () => {
         vi.spyOn(courseManagementService, 'findWithExercises').mockReturnValue(of(new HttpResponse({ body: course })));
-        vi.spyOn(plagiarismCasesService, 'getCoursePlagiarismCasesForScores').mockReturnValue(of(new HttpResponse<PlagiarismCaseDTO[]>({ body: [] })));
+        vi.spyOn(plagiarismCasesService, 'getCoursePlagiarismCasesForScores').mockReturnValue(of([]));
         fixture.detectChanges();
 
         expect(component.gradeScores()).toEqual(courseGradeInformation.gradeScores);
@@ -419,7 +419,7 @@ describe('CourseScoresComponent', () => {
 
         vi.spyOn(courseManagementService, 'findWithExercises').mockReturnValue(of(new HttpResponse({ body: variantCourse })));
         vi.spyOn(courseManagementService, 'findGradeScores').mockReturnValue(of(variantGradeInfo));
-        vi.spyOn(plagiarismCasesService, 'getCoursePlagiarismCasesForScores').mockReturnValue(of(new HttpResponse<PlagiarismCaseDTO[]>({ body: [] })));
+        vi.spyOn(plagiarismCasesService, 'getCoursePlagiarismCasesForScores').mockReturnValue(of([]));
 
         fixture.detectChanges();
 
@@ -463,7 +463,7 @@ describe('CourseScoresComponent', () => {
         vi.spyOn(gradingService, 'findGradingScaleForCourse').mockReturnValue(
             of(new HttpResponse<GradingScaleDTO>({ body: toGradingScaleDTO(gradingScaleWithGradedPresentations) })),
         );
-        vi.spyOn(plagiarismCasesService, 'getCoursePlagiarismCasesForScores').mockReturnValue(of(new HttpResponse<PlagiarismCaseDTO[]>({ body: [] })));
+        vi.spyOn(plagiarismCasesService, 'getCoursePlagiarismCasesForScores').mockReturnValue(of([]));
 
         fixture.detectChanges();
 
@@ -504,7 +504,7 @@ describe('CourseScoresComponent', () => {
         };
         vi.spyOn(courseManagementService, 'findWithExercises').mockReturnValue(of(new HttpResponse({ body: variantCourse })));
         vi.spyOn(courseManagementService, 'findGradeScores').mockReturnValue(of(variantGradeInfo));
-        vi.spyOn(plagiarismCasesService, 'getCoursePlagiarismCasesForScores').mockReturnValue(of(new HttpResponse<PlagiarismCaseDTO[]>({ body: [] })));
+        vi.spyOn(plagiarismCasesService, 'getCoursePlagiarismCasesForScores').mockReturnValue(of([]));
         fixture.detectChanges();
 
         expect(component.variantCapReducesPoints()).toBe(false);
@@ -536,7 +536,7 @@ describe('CourseScoresComponent', () => {
         };
         vi.spyOn(courseManagementService, 'findWithExercises').mockReturnValue(of(new HttpResponse({ body: variantCourse })));
         vi.spyOn(courseManagementService, 'findGradeScores').mockReturnValue(of(variantGradeInfo));
-        vi.spyOn(plagiarismCasesService, 'getCoursePlagiarismCasesForScores').mockReturnValue(of(new HttpResponse<PlagiarismCaseDTO[]>({ body: [] })));
+        vi.spyOn(plagiarismCasesService, 'getCoursePlagiarismCasesForScores').mockReturnValue(of([]));
         fixture.detectChanges();
 
         const exportAsExcelStub = vi.spyOn(component, 'exportAsExcel').mockImplementation(() => {});
@@ -581,7 +581,7 @@ describe('CourseScoresComponent', () => {
 
         vi.spyOn(courseManagementService, 'findWithExercises').mockReturnValue(of(new HttpResponse({ body: variantCourse })));
         vi.spyOn(courseManagementService, 'findGradeScores').mockReturnValue(of(variantGradeInfo));
-        vi.spyOn(plagiarismCasesService, 'getCoursePlagiarismCasesForScores').mockReturnValue(of(new HttpResponse<PlagiarismCaseDTO[]>({ body: [] })));
+        vi.spyOn(plagiarismCasesService, 'getCoursePlagiarismCasesForScores').mockReturnValue(of([]));
 
         fixture.detectChanges();
 
@@ -594,7 +594,7 @@ describe('CourseScoresComponent', () => {
     it('should omit student statistics with no participations', () => {
         vi.spyOn(courseManagementService, 'findWithExercises').mockReturnValue(of(new HttpResponse({ body: course })));
         vi.spyOn(courseManagementService, 'findGradeScores').mockReturnValue(of({} as CourseGradeInformationDTO));
-        vi.spyOn(plagiarismCasesService, 'getCoursePlagiarismCasesForScores').mockReturnValue(of(new HttpResponse<PlagiarismCaseDTO[]>({ body: [] })));
+        vi.spyOn(plagiarismCasesService, 'getCoursePlagiarismCasesForScores').mockReturnValue(of([]));
 
         fixture.detectChanges();
 
@@ -608,17 +608,13 @@ describe('CourseScoresComponent', () => {
         const matchingGradeStep = gradingScale.gradeSteps[0];
         vi.spyOn(gradingService, 'findMatchingGradeStep').mockReturnValue(matchingGradeStep);
         vi.spyOn(plagiarismCasesService, 'getCoursePlagiarismCasesForScores').mockReturnValue(
-            of(
-                new HttpResponse<PlagiarismCaseDTO[]>({
-                    body: [
-                        {
-                            id: 10,
-                            verdict: PlagiarismVerdict.PLAGIARISM,
-                            studentId: participation1.student!.id,
-                        },
-                    ],
-                }),
-            ),
+            of<PlagiarismCaseDTO[]>([
+                {
+                    id: 10,
+                    verdict: PlagiarismVerdict.PLAGIARISM,
+                    studentId: participation1.student!.id,
+                },
+            ]),
         );
 
         fixture.detectChanges();

@@ -3,14 +3,13 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { PlagiarismCasesInstructorViewComponent } from 'app/plagiarism/manage/instructor-view/plagiarism-cases-instructor-view.component';
 import { PlagiarismCasesService } from 'app/plagiarism/shared/services/plagiarism-cases.service';
 import { ActivatedRoute, ActivatedRouteSnapshot, RouterModule, convertToParamMap } from '@angular/router';
-import { Observable, of } from 'rxjs';
-import { HttpResponse, provideHttpClient } from '@angular/common/http';
+import { of } from 'rxjs';
+import { provideHttpClient } from '@angular/common/http';
 import { PlagiarismCase } from 'app/plagiarism/shared/entities/PlagiarismCase';
 import { TranslateService } from '@ngx-translate/core';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { PlagiarismVerdict } from 'app/plagiarism/shared/entities/PlagiarismVerdict';
 import * as DownloadUtil from 'app/foundation/util/download.util';
-import dayjs from 'dayjs/esm';
 import { DocumentationButtonComponent } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
 import { MockComponent } from 'ng-mocks';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -37,7 +36,8 @@ describe('Plagiarism Cases Instructor View Component', () => {
 
     let route: ActivatedRoute;
 
-    const date = dayjs();
+    // The server sends ISO 8601 strings; the CSV export writes them as they are.
+    const date = '2026-11-03T10:00:00.000Z';
 
     const exercise1 = {
         id: 1,
@@ -121,9 +121,7 @@ describe('Plagiarism Cases Instructor View Component', () => {
         fixture = TestBed.createComponent(PlagiarismCasesInstructorViewComponent);
         component = fixture.componentInstance;
         plagiarismCasesService = TestBed.inject(PlagiarismCasesService);
-        vi.spyOn(plagiarismCasesService, 'getCoursePlagiarismCasesForInstructor').mockReturnValue(
-            of({ body: [plagiarismCase1, plagiarismCase2, plagiarismCase3, plagiarismCase4] }) as Observable<HttpResponse<PlagiarismCase[]>>,
-        );
+        vi.spyOn(plagiarismCasesService, 'getCoursePlagiarismCasesForInstructor').mockReturnValue(of([plagiarismCase1, plagiarismCase2, plagiarismCase3, plagiarismCase4]));
     });
 
     afterEach(() => {

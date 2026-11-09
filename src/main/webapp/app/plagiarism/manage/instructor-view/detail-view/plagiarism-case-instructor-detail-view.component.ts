@@ -6,7 +6,6 @@ import { PlagiarismCase, PlagiarismCaseVerdictResponse } from 'app/plagiarism/sh
 import { PlagiarismCasesService } from 'app/plagiarism/shared/services/plagiarism-cases.service';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
-import { HttpResponse } from '@angular/common/http';
 import { getExerciseUrlSegment } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { PlagiarismVerdict } from 'app/plagiarism/shared/entities/PlagiarismVerdict';
 import { CommunicationService } from 'app/communication/service/communication.service';
@@ -110,8 +109,7 @@ export class PlagiarismCaseInstructorDetailViewComponent implements OnInit, OnDe
         this.courseId.set(Number(this.route.snapshot.paramMap.get('courseId')));
         this.plagiarismCaseId = Number(this.route.snapshot.paramMap.get('plagiarismCaseId'));
         this.plagiarismCasesService.getPlagiarismCaseDetailForInstructor(this.courseId(), this.plagiarismCaseId).subscribe({
-            next: (res: HttpResponse<PlagiarismCase>) => {
-                const plagiarismCase = res.body!;
+            next: (plagiarismCase: PlagiarismCase) => {
                 this.plagiarismCase.set(plagiarismCase);
 
                 this.verdictMessage.set(plagiarismCase.verdictMessage ?? '');
@@ -157,13 +155,13 @@ export class PlagiarismCaseInstructorDetailViewComponent implements OnInit, OnDe
                 verdictPointDeduction: this.verdictPointDeduction(),
             })
             .subscribe({
-                next: (res: HttpResponse<PlagiarismCaseVerdictResponse>) => {
+                next: (response: PlagiarismCaseVerdictResponse) => {
                     this.plagiarismCase.update((plagiarismCase) =>
                         cloneWith(plagiarismCase, {
-                            verdict: res.body!.verdict,
-                            verdictPointDeduction: res.body!.verdictPointDeduction!,
-                            verdictBy: res.body!.verdictBy,
-                            verdictDate: res.body!.verdictDate,
+                            verdict: response.verdict,
+                            verdictPointDeduction: response.verdictPointDeduction,
+                            verdictBy: response.verdictBy,
+                            verdictDate: response.verdictDate,
                         }),
                     );
                 },
@@ -184,13 +182,13 @@ export class PlagiarismCaseInstructorDetailViewComponent implements OnInit, OnDe
                 verdictMessage: this.verdictMessage(),
             })
             .subscribe({
-                next: (res: HttpResponse<PlagiarismCaseVerdictResponse>) => {
+                next: (response: PlagiarismCaseVerdictResponse) => {
                     this.plagiarismCase.update((plagiarismCase) =>
                         cloneWith(plagiarismCase, {
-                            verdict: res.body!.verdict,
-                            verdictMessage: res.body!.verdictMessage!,
-                            verdictBy: res.body!.verdictBy,
-                            verdictDate: res.body!.verdictDate,
+                            verdict: response.verdict,
+                            verdictMessage: response.verdictMessage,
+                            verdictBy: response.verdictBy,
+                            verdictDate: response.verdictDate,
                         }),
                     );
                 },
@@ -205,9 +203,9 @@ export class PlagiarismCaseInstructorDetailViewComponent implements OnInit, OnDe
             throw new Error('Cannot call saveVerdict before student is notified');
         }
         this.plagiarismCasesService.saveVerdict(this.courseId(), this.plagiarismCaseId, { verdict: PlagiarismVerdict.PLAGIARISM }).subscribe({
-            next: (res: HttpResponse<PlagiarismCaseVerdictResponse>) => {
+            next: (response: PlagiarismCaseVerdictResponse) => {
                 this.plagiarismCase.update((plagiarismCase) =>
-                    cloneWith(plagiarismCase, { verdict: res.body!.verdict, verdictBy: res.body!.verdictBy, verdictDate: res.body!.verdictDate }),
+                    cloneWith(plagiarismCase, { verdict: response.verdict, verdictBy: response.verdictBy, verdictDate: response.verdictDate }),
                 );
             },
         });
@@ -221,9 +219,9 @@ export class PlagiarismCaseInstructorDetailViewComponent implements OnInit, OnDe
             throw new Error('Cannot call saveNoPlagiarismVerdict before student is notified');
         }
         this.plagiarismCasesService.saveVerdict(this.courseId(), this.plagiarismCaseId, { verdict: PlagiarismVerdict.NO_PLAGIARISM }).subscribe({
-            next: (res: HttpResponse<PlagiarismCaseVerdictResponse>) => {
+            next: (response: PlagiarismCaseVerdictResponse) => {
                 this.plagiarismCase.update((plagiarismCase) =>
-                    cloneWith(plagiarismCase, { verdict: res.body!.verdict, verdictBy: res.body!.verdictBy, verdictDate: res.body!.verdictDate }),
+                    cloneWith(plagiarismCase, { verdict: response.verdict, verdictBy: response.verdictBy, verdictDate: response.verdictDate }),
                 );
             },
         });

@@ -12,9 +12,9 @@ export interface PlagiarismSubmission {
     id: number;
 
     /**
-     * Login of the student who created the submission.
+     * Login of the student who created the submission. Undefined when the server has none, for example for a deleted user.
      */
-    studentLogin: string;
+    studentLogin?: string;
 
     /**
      * List of elements the related submission consists of.

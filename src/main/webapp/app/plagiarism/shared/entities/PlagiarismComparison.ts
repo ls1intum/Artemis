@@ -42,5 +42,6 @@ export class PlagiarismComparison {
 export interface PlagiarismComparisonSummary {
     id: number;
     similarity: number;
-    status: PlagiarismStatus;
+    /** Undefined when the server has no status stored for the comparison. */
+    status?: PlagiarismStatus;
 }

@@ -4,7 +4,6 @@ import { PlagiarismCaseReviewComponent } from 'app/plagiarism/shared/review/plag
 import { PlagiarismCase } from 'app/plagiarism/shared/entities/PlagiarismCase';
 import { PlagiarismCasesService } from 'app/plagiarism/shared/services/plagiarism-cases.service';
 import { ActivatedRoute, Params, RouterLink } from '@angular/router';
-import { HttpResponse } from '@angular/common/http';
 
 import { Subscription, combineLatest } from 'rxjs';
 import { CommunicationService } from 'app/communication/service/communication.service';
@@ -62,8 +61,7 @@ export class PlagiarismCaseStudentDetailViewComponent implements OnInit, OnDestr
                 return;
             }
             this.plagiarismCasesService.getPlagiarismCaseDetailForStudent(this.courseId, this.plagiarismCaseId).subscribe({
-                next: (res: HttpResponse<PlagiarismCase>) => {
-                    const plagiarismCase = res.body!;
+                next: (plagiarismCase: PlagiarismCase) => {
                     this.plagiarismCase.set(plagiarismCase);
 
                     const examId = plagiarismCase.exercise?.examId;
