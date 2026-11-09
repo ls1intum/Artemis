@@ -5,7 +5,7 @@ Topology:
   - PostgreSQL:        {{ if .Values.postgresql.deploy }}bundled{{ else }}external ({{ .Values.postgresql.external.host }}){{ end }}
   - JHipster Registry: bundled (Eureka discovery)
   - ActiveMQ broker:   {{ if .Values.broker.deploy }}bundled (STOMP relay){{ else }}external{{ end }}
-  - LocalCI agents:    {{ if .Values.buildAgents.enabled }}{{ .Values.buildAgents.replicaCount }} Kubernetes controller(s), {{ .Values.buildAgents.concurrentBuildsPerAgent }} concurrent build(s) each{{ else }}disabled{{ end }}
+  - LocalCI agents:    {{ if .Values.buildAgents.enabled }}{{ if include "artemis.buildAgentAutoscalingEnabled" . }}{{ .Values.buildAgents.autoscaling.minReplicas }} to {{ .Values.buildAgents.autoscaling.maxReplicas }} Kubernetes controller(s), scaled by KEDA{{ else }}{{ .Values.buildAgents.replicaCount }} Kubernetes controller(s){{ end }}, {{ .Values.buildAgents.concurrentBuildsPerAgent }} concurrent build(s) each{{ else }}disabled{{ end }}
 
 URL:
   {{ include "artemis.serverUrl" . }}
