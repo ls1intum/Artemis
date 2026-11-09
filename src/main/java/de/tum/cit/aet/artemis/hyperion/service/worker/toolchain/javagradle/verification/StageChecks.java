@@ -809,11 +809,10 @@ public class StageChecks {
 
     private static StageCheckResult failedTestPlan(String reason, AgentVerifyReport report, Set<String> seededStructuralTestNames) {
         List<String> behavioralNames = report.exactTestNames().stream().filter(name -> !seededStructuralTestNames.contains(name)).toList();
-        return new StageCheckResult(false,
-                reason + "\nThese are the verified behavioral test names: " + behavioralNames
-                        + ". Copy them verbatim into test-plan.json; do not add a class prefix unless it appears here. "
-                        + "Repair the plan rather than inspecting Gradle internals. Server-seeded structural checks are managed separately: " + seededStructuralTestNames + ".",
-                report);
+        return new StageCheckResult(false, reason + "\nThese are the verified behavioral test names: " + behavioralNames
+                + ". Copy them verbatim into test-plan.json; do not add a class prefix unless it appears here. "
+                + "Each executed test has exactly one plan entry and one visibility. A fresh hidden variant needs a distinct JUnit method; duplicating a name does not create another test. "
+                + "Repair the plan rather than inspecting Gradle internals. Server-seeded structural checks are managed separately: " + seededStructuralTestNames + ".", report);
     }
 
     private StageCheckResult checkStatement(InteractiveSandbox sandbox, String sessionId, @Nullable AgentVerifyReport lastTestsReport, Set<String> seededStructuralTestNames) {

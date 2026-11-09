@@ -382,6 +382,12 @@ Rules, Worked Examples and Public API, without the reference implementation or d
 notes. Discrimination alone does not justify an extra requirement. Rejected assertions are
 not added; unavailable authority remains an explicit review finding across later repairs.
 
+An invalid grading plan is reported separately from starter-code assessment. Until the
+plan can be parsed, the verifier keeps the build results and reports starter-policy
+assessment as unavailable. Expected missing learner-created declarations do not justify
+adding those declarations to the starter. Each executed test has one plan entry and one
+visibility; a fresh hidden variant requires a distinct JUnit method.
+
 Optional assessment probes run on the complete candidate after statement authoring,
 where their evidence is bound to the verified draft. The TESTS-stage gate still
 checks compilation, reference/starter grading and the grading plan; it does not

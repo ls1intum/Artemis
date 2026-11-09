@@ -358,7 +358,7 @@ public class DifferentialVerifier {
                 (includeStatementChecks ? analysis.actionableGatesPass() : analysis.testArtifactGatesPass()) && javaAresConventionsHold && testsReadNoSources
                         && approvedSpecificationHolds && approvedTestPlanHolds && statementTraceabilityHolds && templateTodoSeamsHold,
                 reasons, List.copyOf(readHiddenTestNames(sandbox, sessionId, baselineHiddenTestNames)), solution.buildDiagnostic(), template.buildDiagnostic(),
-                analysis.preservationTestNames());
+                analysis.preservationTestNames(), analysis.gradingPlanValid());
     }
 
     /**
@@ -606,7 +606,7 @@ public class DifferentialVerifier {
         actionableReasons.addAll(statementReasons);
         return new DifferentialAnalysis(solution, template, solutionPassed, templateFailed, testArtifactGatesPass, actionableGatesPass, testArtifactGatesPassApartFromSolution,
                 testArtifactGatesPassApartFromSolution && statementGatesPass, List.copyOf(reasons), List.copyOf(actionableReasons), unresolvedTaskBindings, possiblyDeadFiles,
-                gradableTestsPassingOnTemplate, preservationTestNames.stream().sorted().toList());
+                gradableTestsPassingOnTemplate, preservationTestNames.stream().sorted().toList(), planValid);
     }
 
     /**
@@ -617,7 +617,7 @@ public class DifferentialVerifier {
     private record DifferentialAnalysis(BuildSummary solution, BuildSummary template, boolean solutionPassed, boolean templateFailed, boolean testArtifactGatesPass,
             boolean actionableGatesPass, boolean testArtifactGatesPassApartFromSolution, boolean actionableGatesPassApartFromSolution, List<String> testArtifactReasons,
             List<String> actionableReasons, List<String> unresolvedTaskBindings, List<String> possiblyDeadFiles, List<String> gradableTestsPassingOnTemplate,
-            List<String> preservationTestNames) {
+            List<String> preservationTestNames, boolean gradingPlanValid) {
     }
 
     /**

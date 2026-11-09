@@ -27,11 +27,12 @@ import java.util.regex.Pattern;
  * @param solutionBuildDiagnostic bounded build output for failures outside individual solution tests
  * @param templateBuildDiagnostic bounded build output shown when the template ran no tests
  * @param preservationTestNames   visible zero-credit checks of supplied behavior; never student-task bindings
+ * @param gradingPlanValid        whether the grading plan could be parsed, so expected starter failures can be classified
  */
 public record AgentVerifyReport(int solutionTests, boolean solutionPassed, List<String> solutionFailedNames, List<TestFailureEvidence> solutionFailureEvidence, int templateTests,
         boolean templateCompiled, boolean templateFailed, List<TestFailureEvidence> templateFailureEvidence, List<String> templateWronglyPassing, List<String> exactTestNames,
         List<String> unresolvedTaskBindings, List<String> possiblyDeadFiles, boolean wouldBeAccepted, List<String> blockingReasons, List<String> hiddenTestNames,
-        String solutionBuildDiagnostic, String templateBuildDiagnostic, List<String> preservationTestNames) {
+        String solutionBuildDiagnostic, String templateBuildDiagnostic, List<String> preservationTestNames, boolean gradingPlanValid) {
 
     /** The longest list rendered inline before it is truncated with a remaining-count, so a huge suite never floods the agent's context. */
     private static final int MAX_RENDERED_NAMES = 40;
@@ -49,6 +50,15 @@ public record AgentVerifyReport(int solutionTests, boolean solutionPassed, List<
     private static final Pattern WHITESPACE = Pattern.compile("\\s+");
 
     private static final String ARES_CONSTRUCTOR_MISMATCH = "does not have a constructor with the arguments";
+
+    public AgentVerifyReport(int solutionTests, boolean solutionPassed, List<String> solutionFailedNames, List<TestFailureEvidence> solutionFailureEvidence, int templateTests,
+            boolean templateCompiled, boolean templateFailed, List<TestFailureEvidence> templateFailureEvidence, List<String> templateWronglyPassing, List<String> exactTestNames,
+            List<String> unresolvedTaskBindings, List<String> possiblyDeadFiles, boolean wouldBeAccepted, List<String> blockingReasons, List<String> hiddenTestNames,
+            String solutionBuildDiagnostic, String templateBuildDiagnostic, List<String> preservationTestNames) {
+        this(solutionTests, solutionPassed, solutionFailedNames, solutionFailureEvidence, templateTests, templateCompiled, templateFailed, templateFailureEvidence,
+                templateWronglyPassing, exactTestNames, unresolvedTaskBindings, possiblyDeadFiles, wouldBeAccepted, blockingReasons, hiddenTestNames, solutionBuildDiagnostic,
+                templateBuildDiagnostic, preservationTestNames, true);
+    }
 
     public AgentVerifyReport(int solutionTests, boolean solutionPassed, List<String> solutionFailedNames, List<TestFailureEvidence> solutionFailureEvidence, int templateTests,
             boolean templateCompiled, boolean templateFailed, List<TestFailureEvidence> templateFailureEvidence, List<String> templateWronglyPassing, List<String> exactTestNames,
@@ -145,6 +155,11 @@ public record AgentVerifyReport(int solutionTests, boolean solutionPassed, List<
             builder.append("Template: did NOT compile (ran no tests). Restore a compile-safe starter while preserving supplied behavior and the assigned student work.\n");
             appendBuildDiagnostic(builder, "Template", templateBuildDiagnostic);
         }
+        else if (!gradingPlanValid) {
+            builder.append("Template: compiled and ran ").append(templateTests)
+                    .append(" tests. Starter-policy assessment is unavailable because test-plan.json is invalid. Fix the grading plan before interpreting starter failures. ")
+                    .append("Missing learner-created declarations may be expected; do not add them to the starter to resolve a grading-plan error.\n");
+        }
         else if (!templateWronglyPassing.isEmpty()) {
             builder.append("Template WRONGLY PASSES (these assessed student-work tests must FAIL; preserve unrelated supplied behavior): ")
                     .append(renderNames(templateWronglyPassing)).append('\n');
@@ -161,7 +176,7 @@ public record AgentVerifyReport(int solutionTests, boolean solutionPassed, List<
         else {
             builder.append("Template: all required gradable tests fail; supplied-behavior preservation checks pass.\n");
         }
-        if (!templateFailed) {
+        if (gradingPlanValid && !templateFailed) {
             builder.append(renderFailureEvidence("Template", templateFailureEvidence));
         }
 

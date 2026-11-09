@@ -12,6 +12,19 @@ import org.junit.jupiter.params.provider.ValueSource;
 class AgentVerifyReportTest {
 
     @Test
+    void anInvalidPlanDoesNotTurnExpectedMissingDeclarationsOrPreservationPassesIntoRepairTargets() {
+        var missingClass = new AgentVerifyReport.TestFailureEvidence("testClass[Token]", "ClassNotFoundException: Token");
+        AgentVerifyReport report = new AgentVerifyReport(2, true, List.of(), List.of(), 2, true, false, List.of(missingClass), List.of("providedConstructor"),
+                List.of("testClass[Token]", "providedConstructor"), List.of(), List.of(), false, List.of("Invalid test-plan.json: duplicate test name"), List.of(), "", "",
+                List.of(), false);
+
+        assertThat(report.toTestsStageObservation()).contains("Starter-policy assessment is unavailable", "Invalid test-plan.json", "compiled and ran 2 tests")
+                .doesNotContain("Template WRONGLY PASSES", "Template does not satisfy", "ClassNotFoundException");
+        assertThat(report.templateFailureEvidence()).containsExactly(missingClass);
+        assertThat(report.wouldBeAccepted()).isFalse();
+    }
+
+    @Test
     void testsStageDefersTaskBindingGuidance() {
         AgentVerifyReport report = new AgentVerifyReport(1, true, List.of(), 1, true, true, List.of(), List.of("calculatesCost"), List.of(), List.of(), true, List.of());
 

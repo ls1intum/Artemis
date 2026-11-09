@@ -823,6 +823,37 @@ class DifferentialVerifierTest {
     }
 
     @Test
+    void invalidPlanCannotMisclassifyExpectedStarterFailuresAsBrokenStudentScaffolding() {
+        List<String> names = List.of(DEFAULT_BOUND_NAMES);
+        String duplicatePlan = """
+                {"tests":[
+                {"name":"sortsUnsortedArray","seamWeightTier":3,"visibility":"ALWAYS"},
+                {"name":"sortsUnsortedArray","seamWeightTier":3,"visibility":"AFTER_DUE_DATE"},
+                {"name":"sortsArrayWithDuplicates","seamWeightTier":3,"visibility":"ALWAYS"}]}
+                """;
+        ScriptedSandbox sandbox = new ScriptedSandbox(resultWithFails(0, names, List.of()), resultWithFails(1, names, names), PROBLEM_STATEMENT_WITH_TASK)
+                .withTestPlan(duplicatePlan);
+        DifferentialVerifier verifier = newVerifier();
+
+        AgentVerifyReport invalid = verifier.selfCheck(sandbox, "s", input(), harness(), false, SeededStructuralTests.EMPTY);
+
+        assertThat(invalid.solutionPassed()).isTrue();
+        assertThat(invalid.templateCompiled()).isTrue();
+        assertThat(invalid.gradingPlanValid()).isFalse();
+        assertThat(invalid.wouldBeAccepted()).isFalse();
+        assertThat(invalid.blockingReasons()).anyMatch(reason -> reason.contains("test names more than once"));
+        assertThat(invalid.toTestsStageObservation()).contains("Starter-policy assessment is unavailable", "test-plan.json")
+                .doesNotContain("Template does not satisfy the starter policy", "Template failure evidence");
+
+        sandbox.withTestPlan(FULL_PLAN_FOR_DEFAULT_BOUND_NAMES);
+        AgentVerifyReport corrected = verifier.selfCheck(sandbox, "s", input(), harness(), false, SeededStructuralTests.EMPTY);
+
+        assertThat(corrected.gradingPlanValid()).isTrue();
+        assertThat(corrected.templateFailed()).isTrue();
+        assertThat(corrected.wouldBeAccepted()).isTrue();
+    }
+
+    @Test
     void shouldRejectWhenStudentProseLeaksGraderMechanics() {
         String leaky = PROBLEM_STATEMENT_WITH_TASK + "\nEach method should raise NotImplementedError in the template file to make the tests fail.";
         VerificationResult result = verify(result(5, 0, 0, 0), result(5, 3, 0, 1), leaky);
