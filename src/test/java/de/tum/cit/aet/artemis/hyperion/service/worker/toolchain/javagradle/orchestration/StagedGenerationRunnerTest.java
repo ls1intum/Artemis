@@ -319,6 +319,36 @@ class StagedGenerationRunnerTest {
     }
 
     @Test
+    void mechanicalSpecificationProgressCanReachTheRemainingStagesAfterThreeCorrections() {
+        var settings = new HyperionGenerationSettings("pilot", null, 180, Duration.ofHours(2), 6_000_000, true, "FRESH", 131_072, null, false, false);
+        var reviewer = mockSpecificationReviewer();
+        when(reviewer.reviewSpecification(anyString(), anyString(), any(), any()))
+                .thenReturn(new SpecFidelityCritic.SpecificationReview(true, List.of("The approved learning goal still needs a coherent correction.")));
+        when(reviewer.reviewSpecification(anyString(), any(), anyString(), any(), any(), any())).thenReturn(new SpecFidelityCritic.SpecificationReview(true, List.of()));
+        runner = new StagedGenerationRunner(agentLoopRunner, systemPromptService, stageCheckService, new AgentTranscriptWriter(""), approvedSpecs, reviewer, "FRESH")
+                .forSettings(settings, agentLoopRunner, reviewer);
+        AtomicInteger calls = new AtomicInteger();
+        when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenAnswer(invocation -> {
+            sandbox.specMarkdown = switch (calls.incrementAndGet()) {
+                case 1 -> "## Rules\nR1. Computes a result.";
+                case 2 -> VALID_SPEC_DOCUMENT + "\n@startuml";
+                case 3 -> VALID_SPEC_DOCUMENT.replace("| R1 | 3 | 9 |", "");
+                case 4 -> VALID_SPEC_DOCUMENT.replace("| Calculator | computes the result | stubbed |", "");
+                default -> VALID_SPEC_DOCUMENT;
+            };
+            return completed(1, "current edit");
+        });
+        when(verifier.selfCheckTestsStage(any(), anyString(), any(), anyMap(), any())).thenReturn(passingReport("testFoo"));
+        AgentLoopResult result = run(NEVER_CANCELLED, () -> SeededStructuralTests.EMPTY);
+        assertThat(result.status()).isEqualTo(AgentLoopResult.Status.COMPLETED);
+        assertThat(approvedSpecs.approved("s")).contains(VALID_SPEC_DOCUMENT);
+        assertThat(calls).hasValue(8);
+        verify(reviewer).reviewSpecification(eq("brief"), isNull(), anyString(), any(), any(), any());
+        verify(baseTools).enterStage(GenerationStage.TESTS);
+        verify(baseTools).enterStage(GenerationStage.STATEMENT);
+    }
+
+    @Test
     void aLargeConfiguredBudgetReachesExecutableAuthoringWithoutAHiddenCap() {
         var settings = new HyperionGenerationSettings("pilot", null, 180, Duration.ofHours(2), 6_000_000, true, "FRESH", 200_000, null, false, false);
         runner = runner.forSettings(settings, agentLoopRunner, null);

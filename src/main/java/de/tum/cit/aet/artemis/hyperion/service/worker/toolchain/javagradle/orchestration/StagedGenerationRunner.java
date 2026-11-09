@@ -70,7 +70,7 @@ public class StagedGenerationRunner {
 
     private static final int STATEMENT_TURN_RESERVE = STAGE_BASE_BUDGETS[2];
 
-    private static final int MIN_STAGE_BUDGET = 3;
+    static final int MIN_STAGE_BUDGET = 3;
 
     private static final String CONCEPT_REPLACEMENT_FEEDBACK = """
             After the previous concept was instantiated and reviewed, its central interaction could not satisfy the requested learning objective, difficulty, domain grounding,
@@ -381,6 +381,7 @@ public class StagedGenerationRunner {
         boolean assessmentRedesignUsed = continuation != null;
         boolean canContinueTests = continuation == null || continuation.stage() == GenerationStage.SPEC;
         boolean assessmentVerified = false;
+        var mechanicalSpecRepairs = new SpecificationRepairBudget();
         String assessmentRedesignFeedback = continuation != null && continuation.stage() == GenerationStage.SPEC ? continuation.feedback() : null;
         baseTools.configureStructuralOracleRefresh(structuralSeedHook);
         var executionContractReview = new ExecutableSpecificationReview(specificationReviewer, sourceBrief, transcriptWriter, exercise.id(), usageSink,
@@ -612,6 +613,7 @@ public class StagedGenerationRunner {
                         assessmentVerified = true;
                     }
                     if (stage == GenerationStage.SPEC) {
+                        mechanicalSpecRepairs.acceptedSpecification();
                         String specSnapshot = Objects.requireNonNullElse(GenerationWorkspace.readRootArtifact(sandbox, sessionId, "SPEC.md"), "");
                         if (specSnapshot.isBlank()) {
                             String failure = "SPEC.md passed its consistency gate but could not be read back for semantic review and approval. Generation stopped before downstream "
@@ -823,16 +825,17 @@ public class StagedGenerationRunner {
 
                 log.info("Staged generation gate failed at stage {} for exercise {}: {}", stage, exercise.id(), gate.observation());
                 if (stage == GenerationStage.SPEC) {
-                    if (semanticSpecRefinementsUsed >= MAX_SEMANTIC_SPEC_REFINEMENTS || allocatablePool(stage, remainingPool) < MIN_STAGE_BUDGET) {
+                    int refinement = mechanicalSpecRepairs.allocate(gate, allocatablePool(stage, remainingPool), remainingPool - STAGE_BASE_BUDGETS[1] - STATEMENT_TURN_RESERVE
+                            - (MAX_SEMANTIC_SPEC_REFINEMENTS - semanticSpecRefinementsUsed) * SEMANTIC_SPEC_REFINEMENT_BUDGET);
+                    if (refinement == 0) {
                         return finishWithCause(exercise, AgentLoopResult.Status.ERROR, totalTurns, lastFinalMessage, gate.observation(), archivedConversation, conversation,
                                 unresolvedSpecificationFindings);
                     }
-                    semanticSpecRefinementsUsed++;
                     gateFeedback = semanticSpecFeedback == null ? gate.observation()
                             : SpecificationReviewPrompts.semanticSpecCorrectionPrompt(semanticSpecFeedback, gate.observation());
                     semanticSpecFeedback = null;
                     emit(progress, "Phase " + (index + 1) + "/" + STAGE_ORDER.size() + ": refining the specification after its review or consistency check");
-                    allocation = allocateStageBudget(SEMANTIC_SPEC_REFINEMENT_BUDGET, 0, allocatablePool(stage, remainingPool));
+                    allocation = refinement;
                     continue;
                 }
                 if (stage == GenerationStage.TESTS && assessmentRedesignUsed && canContinueTests && result.status() == AgentLoopResult.Status.BUDGET_EXHAUSTED) {

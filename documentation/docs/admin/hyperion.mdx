@@ -344,6 +344,15 @@ on the artifact-repair path. If the review is unavailable or correction cannot f
 a mechanically valid draft keeps its unresolved findings for instructor review.
 A failed mandatory build remains a failure.
 
+Mechanical SPEC corrections use a separate allowance from semantic review. The first
+three corrections keep the existing small-run behavior. Further corrections can use
+spare job turns when the server's ordered checks show progress, with at most three
+stalled rounds. Rewording a diagnostic or regressing to an earlier check does not reset
+that limit. Additional corrections reserve the base executable and statement budgets plus
+the remaining semantic-correction allowance;
+they do not increase the job's turn, token or time limits. A revised contract starts
+fresh progress tracking without renewing its initial turn allowance.
+
 The configured `artemis.hyperion.agent.max-turns` is a **job-wide authoring limit**,
 shared by concept selection, stages, continuations and repair attempts. There is no
 hidden 83-turn staged cap and a retry does not receive a new full allocation.
