@@ -19,6 +19,24 @@ The OIDC ecosystem leverages Spring Security's OAuth2 Client libraries to inject
 
 The login does not use an HTTP session. When it starts, Artemis stores the pending authorization request, with its `state` and `nonce`, in the distributed data store for 10 minutes, so the callback of the identity provider can reach any node. A load balancer does not need sticky sessions for OIDC. The browser receives the `state` in the HTTP-only `oidc-state` cookie, and Artemis accepts a callback only if its `state` matches that cookie. Each authorization request can be used once. The cookie is `Secure` like the session cookie, so `jhipster.security.authentication.jwt.cookie-secure: false` also allows OIDC logins on a deployment reached over plain HTTP.
 
+## Rate Limiting Behind a Reverse Proxy
+
+The unauthenticated `/oauth2/authorization/oidc` endpoint is rate-limited per client address to protect the distributed authorization-request store. The OIDC filter uses the address resolved by the servlet container (`request.getRemoteAddr()`) rather than trusting `X-Forwarded-For` directly.
+
+If a reverse proxy is not trusted by Tomcat, all its users can appear under the proxy's address and share one OIDC rate-limit bucket. A busy campus or a single abusive client can then prevent others from starting login. With `server.forward-headers-strategy: native`, configure `server.tomcat.remoteip.internal-proxies` to include any reverse proxy outside Tomcat's default trusted ranges. For example, for a proxy whose address is `203.0.113.10`:
+
+```yaml
+server:
+  forward-headers-strategy: native
+  tomcat:
+    remoteip:
+      internal-proxies: "203\\.0\\.113\\.10"
+```
+
+Replace the example with the actual proxy address and account for all trusted proxies in the deployment. Trust only proxies under your control: they must sanitize forwarding headers, and untrusted clients must not be able to reach Artemis directly. Restricting Tomcat's default trust of private addresses may also be necessary in deployments with untrusted internal clients. The `artemis.continuous-integration.build-agent-network.trusted-proxies` setting does **not** configure Tomcat's address resolution for OIDC.
+
+Do **not** add the reverse proxy to `artemis.rate-limiting.exempt-addresses` to avoid shared buckets: doing so exempts every client represented by that address. Where many legitimate users share a source address behind NAT, adjust `artemis.rate-limiting.oidc-authorization-requests-per-minute` to accommodate expected login peaks.
+
 ## Configuration Specification
 
 The structure of the OIDC infrastructure configuration (standardized inside `application-oidc.yml`) dictates how Artemis bonds with the university identity pool:

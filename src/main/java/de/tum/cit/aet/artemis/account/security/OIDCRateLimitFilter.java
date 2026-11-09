@@ -14,7 +14,6 @@ import org.springframework.util.AntPathMatcher;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import de.tum.cit.aet.artemis.admin.service.RateLimitService;
-import de.tum.cit.aet.artemis.core.config.RateLimitingProperties;
 import de.tum.cit.aet.artemis.core.exception.RateLimitExceededException;
 import de.tum.cit.aet.artemis.core.security.RateLimitType;
 import inet.ipaddr.IPAddress;
@@ -30,17 +29,13 @@ public class OIDCRateLimitFilter extends OncePerRequestFilter {
 
     private final RateLimitService rateLimitService;
 
-    private final RateLimitingProperties rateLimitingProperties;
-
     /**
      * Instantiates a new OIDC rate limit filter.
      *
-     * @param rateLimitService       the rate limit service used to check budgets
-     * @param rateLimitingProperties the rate limiting properties containing feature toggles
+     * @param rateLimitService the rate limit service used to check budgets
      */
-    public OIDCRateLimitFilter(RateLimitService rateLimitService, RateLimitingProperties rateLimitingProperties) {
+    public OIDCRateLimitFilter(RateLimitService rateLimitService) {
         this.rateLimitService = rateLimitService;
-        this.rateLimitingProperties = rateLimitingProperties;
     }
 
     @Override
@@ -65,7 +60,7 @@ public class OIDCRateLimitFilter extends OncePerRequestFilter {
         // Filter should only be triggered for /oauth2/authorization/** requests
         if (path != null && PATH_MATCHER.match("/oauth2/authorization/**", path)) {
             // Skip address resolution and enforcement entirely if rate limiting is disabled
-            if (!rateLimitingProperties.isEnabled()) {
+            if (!rateLimitService.isRateLimitingEnabled(RateLimitType.OIDC_AUTHORIZATION)) {
                 filterChain.doFilter(request, response);
                 return;
             }

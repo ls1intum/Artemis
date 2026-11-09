@@ -31,7 +31,6 @@ import de.tum.cit.aet.artemis.account.security.OIDCAuthenticationSuccessHandler;
 import de.tum.cit.aet.artemis.account.security.OIDCRateLimitFilter;
 import de.tum.cit.aet.artemis.account.security.OIDCService;
 import de.tum.cit.aet.artemis.admin.service.RateLimitService;
-import de.tum.cit.aet.artemis.core.config.RateLimitingProperties;
 
 /**
  * Describes the security configuration for OpenID Connect (OIDC) authentication.
@@ -59,8 +58,6 @@ public class OIDCConfiguration {
     private final DistributedOIDCAuthorizationRequestRepository authorizationRequestRepository;
 
     private final RateLimitService rateLimitService;
-
-    private final RateLimitingProperties rateLimitingProperties;
 
     private final Environment environment;
 
@@ -90,13 +87,12 @@ public class OIDCConfiguration {
 
     public OIDCConfiguration(OIDCService oidcService, OIDCAuthenticationSuccessHandler oidcAuthenticationSuccessHandler,
             OIDCAuthenticationFailureHandler oidcAuthenticationFailureHandler, DistributedOIDCAuthorizationRequestRepository authorizationRequestRepository,
-            RateLimitService rateLimitService, RateLimitingProperties rateLimitingProperties, Environment environment) {
+            RateLimitService rateLimitService, Environment environment) {
         this.oidcService = oidcService;
         this.oidcAuthenticationSuccessHandler = oidcAuthenticationSuccessHandler;
         this.oidcAuthenticationFailureHandler = oidcAuthenticationFailureHandler;
         this.authorizationRequestRepository = authorizationRequestRepository;
         this.rateLimitService = rateLimitService;
-        this.rateLimitingProperties = rateLimitingProperties;
         this.environment = environment;
     }
 
@@ -169,7 +165,7 @@ public class OIDCConfiguration {
             }
         });
 
-        OIDCRateLimitFilter oidcRateLimitFilter = new OIDCRateLimitFilter(rateLimitService, rateLimitingProperties);
+        OIDCRateLimitFilter oidcRateLimitFilter = new OIDCRateLimitFilter(rateLimitService);
         // @formatter:off
         http
             // /oauth2/authorization/tum-login - user starts the authentication

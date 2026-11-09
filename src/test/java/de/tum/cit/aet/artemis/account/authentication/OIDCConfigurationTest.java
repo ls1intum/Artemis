@@ -26,7 +26,6 @@ import de.tum.cit.aet.artemis.account.security.OIDCAuthenticationFailureHandler;
 import de.tum.cit.aet.artemis.account.security.OIDCAuthenticationSuccessHandler;
 import de.tum.cit.aet.artemis.account.security.OIDCService;
 import de.tum.cit.aet.artemis.admin.service.RateLimitService;
-import de.tum.cit.aet.artemis.core.config.RateLimitingProperties;
 
 /**
  * Isolated configuration tests ensuring that OIDC beans and the custom SecurityFilterChain
@@ -65,11 +64,6 @@ class OIDCConfigurationTest {
         @Bean
         RateLimitService rateLimitService() {
             return Mockito.mock(RateLimitService.class);
-        }
-
-        @Bean
-        RateLimitingProperties rateLimitingProperties() {
-            return Mockito.mock(RateLimitingProperties.class);
         }
     }
 

@@ -27,4 +27,12 @@ class OIDCRateLimitDisabledIntegrationTest extends AbstractSpringIntegrationLoca
 
         request.performMvcRequest(get("/oauth2/authorization/oidc")).andExpect(status().is3xxRedirection());
     }
+
+    @Test
+    void testOidcAuthorization_DisabledWithInvalidRemoteAddress_ShouldStillRedirect() throws Exception {
+        request.performMvcRequest(get("/oauth2/authorization/oidc").with(req -> {
+            req.setRemoteAddr("invalid-ip-address");
+            return req;
+        })).andExpect(status().is3xxRedirection());
+    }
 }
