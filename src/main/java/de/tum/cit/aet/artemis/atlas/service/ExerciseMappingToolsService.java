@@ -220,6 +220,8 @@ public class ExerciseMappingToolsService {
             Shows which competencies will be linked to the exercise with their weights (LOW=0.25, MEDIUM=0.5, HIGH=1.0).
             Existing mappings are automatically marked as 'alreadyMapped'.
             The preview is displayed to the user for confirmation before applying changes.
+            Before choosing suggested flags and weights, call getExerciseContent for this exercise and getCourseCompetencies.
+            Base suggestions on the expected student work in that learning content, not on the exercise title alone.
             Set suggested=true only for the 1-3 competencies that best match the exercise.
             """)
     public String previewExerciseCompetencyMapping(@ToolParam(description = "The ID of the course") Long courseId,

@@ -116,7 +116,23 @@ public final class DistributedDataSchema {
             // A retained struggle run must keep its single-flight reservation, scoped cancellation lookup and admission charge.
             new CarriedOverStructure("struggle-inflight-map", StructureKind.EXPIRING_MAP), new CarriedOverStructure("struggle-cooldown-map", StructureKind.EXPIRING_MAP),
             // The previous boot id cannot be reconstructed if Pyris restarted while Artemis was stopped.
-            new CarriedOverStructure("pyris-restart-watch", StructureKind.MAP));
+            new CarriedOverStructure("pyris-restart-watch", StructureKind.MAP),
+            // Keep generation and uncertain-save reservations until explicit recovery, together with cancellation and unaccounted-spend guards.
+            new CarriedOverStructure("hyperion-exercise-generation-jobs", StructureKind.MAP), new CarriedOverStructure("hyperion-live-save-coordination", StructureKind.MAP),
+            new CarriedOverStructure("hyperion-exercise-generation-cancellations", StructureKind.EXPIRING_MAP),
+            new CarriedOverStructure("hyperion-generation-token-budget-reservations", StructureKind.EXPIRING_MAP),
+            // Retained replay and unsaved candidates have no database equivalent; carry their remaining lifetime without restarting the retention window.
+            new CarriedOverStructure("hyperion-exercise-generation-transcripts", StructureKind.EXPIRING_MAP),
+            new CarriedOverStructure("hyperion-exercise-generation-file-changes", StructureKind.EXPIRING_MAP),
+            new CarriedOverStructure("hyperion-exercise-generation-artifacts", StructureKind.EXPIRING_MAP),
+            new CarriedOverStructure("hyperion-exercise-generation-usage", StructureKind.EXPIRING_MAP),
+            // Activity, latest-mutation ownership, its owner index and cursor must agree for history and undo to remain available.
+            new CarriedOverStructure("hyperion-authoring-activity", StructureKind.EXPIRING_MAP),
+            new CarriedOverStructure("hyperion-authoring-latest-mutation", StructureKind.EXPIRING_MAP),
+            new CarriedOverStructure("hyperion-authoring-owner-runs", StructureKind.EXPIRING_MAP),
+            new CarriedOverStructure("hyperion-authoring-activity-sequence", StructureKind.MAP),
+            // Terminal variant jobs retain their output and the only pointer to a provisioned exercise whose cleanup failed.
+            new CarriedOverStructure("hyperion-exercise-variant-jobs", StructureKind.EXPIRING_MAP));
 
     private DistributedDataSchema() {
     }

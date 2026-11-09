@@ -11,9 +11,11 @@ import static org.assertj.core.api.Assertions.entry;
 
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HexFormat;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import org.junit.jupiter.api.AfterAll;
@@ -21,6 +23,8 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIf;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.redisson.Redisson;
 import org.redisson.api.RMap;
 import org.redisson.api.RMapCache;
@@ -38,6 +42,22 @@ import com.redis.testcontainers.RedisContainer;
 import de.tum.cit.aet.artemis.core.service.distributed.DistributedDataSchema.CarriedOverStructure;
 import de.tum.cit.aet.artemis.core.service.distributed.DistributedDataSchema.StructureKind;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
+import de.tum.cit.aet.artemis.hyperion.domain.AuthoringRun;
+import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationArtifactCompleteness;
+import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationEventDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationFileChangeDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationRetainedArtifactsDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationRetainedFileDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.GenerationMode;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.history.GenerationRunStoreService.Mutation;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.history.GenerationRunStoreService.RunReference;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationJobService.JobArtifacts;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationJobService.JobFileChangeIndex;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationJobService.JobInfo;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationJobService.JobTranscript;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationLiveSaveService.LiveSaveSlot;
+import de.tum.cit.aet.artemis.hyperion.service.variants.VariantJob;
+import de.tum.cit.aet.artemis.hyperion.service.variants.VariantJobPhase;
 import de.tum.cit.aet.artemis.shared.ValkeyTestContainerFactory;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufUtil;
@@ -107,6 +127,55 @@ class RedissonDistributedDataMigratorTest {
 
         assertThat(storedVersion()).isEqualTo(String.valueOf(VERSION));
         assertThat(redissonClient.<String>getBucket(RELEASE_KEY, StringCodec.INSTANCE).get()).isEqualTo("1.2.3");
+    }
+
+    /** A crash after the first drain but before its version write leaves no plain keys to identify the source. */
+    @Test
+    void testResumesTheFirstMigrationAfterEveryPlainKeyWasDrained() throws Exception {
+        redissonClient.getQueue(keyFor(1, "buildResultQueue")).add("result-moved-to-v1");
+        rawFeatures(1).put(v1FeatureKey(8), encodedToggle(true));
+
+        migrationService().migrateToCurrentVersion();
+
+        assertThat(redissonClient.getQueue(keyFor(2, "buildResultQueue")).readAll()).containsExactly("result-moved-to-v1");
+        assertThat(redissonClient.<Feature, Boolean>getMap(keyFor(2, "features")).readAllMap()).containsOnly(entry(Feature.AtlasAgent, true));
+        assertThat(redissonClient.getKeys().getKeysByPattern("artemis:v1:*")).isEmpty();
+        assertThat(storedVersion()).isEqualTo("2");
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = { false, true })
+    void testResumesUnrecordedMigrationsWithPartlyMovedNumberedData(boolean hasUnversionedData) throws Exception {
+        List<String> expectedResults = new ArrayList<>(List.of("waiting-in-v1", "already-in-v2"));
+        if (hasUnversionedData) {
+            redissonClient.getQueue("buildResultQueue").add("still-unversioned");
+            expectedResults.add("still-unversioned");
+        }
+        redissonClient.getQueue(keyFor(1, "buildResultQueue")).add("waiting-in-v1");
+        redissonClient.getQueue(keyFor(2, "buildResultQueue")).add("already-in-v2");
+        rawFeatures(1).put(v1FeatureKey(8), encodedToggle(true));
+        redissonClient.getMap(keyFor(2, "features")).put(Feature.Memiris, Boolean.FALSE);
+
+        migrationService().migrateToCurrentVersion();
+        migrationService().migrateToCurrentVersion();
+
+        assertThat(redissonClient.getQueue(keyFor(2, "buildResultQueue")).readAll()).containsExactlyInAnyOrderElementsOf(expectedResults);
+        assertThat(redissonClient.<Feature, Boolean>getMap(keyFor(2, "features")).readAllMap()).containsOnly(entry(Feature.AtlasAgent, true), entry(Feature.Memiris, false));
+        assertThat(redissonClient.getQueue("buildResultQueue")).isEmpty();
+        assertThat(redissonClient.getKeys().getKeysByPattern("artemis:v1:*")).isEmpty();
+        assertThat(storedVersion()).isEqualTo("2");
+    }
+
+    @Test
+    void testRecordsTheVersionWithoutReencodingAnAlreadyDrainedTarget() {
+        redissonClient.getQueue(keyFor(2, "buildResultQueue")).add("already-in-v2");
+        redissonClient.getMap(keyFor(2, "features")).put(Feature.AtlasAgent, Boolean.TRUE);
+
+        migrationService().migrateToCurrentVersion();
+
+        assertThat(redissonClient.getQueue(keyFor(2, "buildResultQueue")).readAll()).containsExactly("already-in-v2");
+        assertThat(redissonClient.<Feature, Boolean>getMap(keyFor(2, "features")).readAllMap()).containsOnly(entry(Feature.AtlasAgent, true));
+        assertThat(storedVersion()).isEqualTo("2");
     }
 
     @Test
@@ -411,6 +480,7 @@ class RedissonDistributedDataMigratorTest {
         long lifetime = Duration.ofMinutes(17).toMillis();
         for (ExpiringEntry entry : entries) {
             redissonClient.getMapCache(keyFor(1, entry.name())).put(entry.key(), entry.value(), lifetime, TimeUnit.MILLISECONDS);
+            redissonClient.getMapCache(keyFor(1, entry.name())).put(entry.key() + "-source-only", entry.value() + "-source-only", lifetime, TimeUnit.MILLISECONDS);
             // An interrupted migration can have written a target entry without removing its source yet.
             redissonClient.getMapCache(keyFor(2, entry.name())).put(entry.key(), entry.value(), lifetime, TimeUnit.MILLISECONDS);
         }
@@ -420,14 +490,102 @@ class RedissonDistributedDataMigratorTest {
 
         for (ExpiringEntry entry : entries) {
             RMapCache<String, String> migrated = redissonClient.getMapCache(keyFor(2, entry.name()));
-            assertThat(migrated.readAllMap()).containsOnly(entry(entry.key(), entry.value()));
+            assertThat(migrated.readAllMap()).containsOnly(entry(entry.key(), entry.value()), entry(entry.key() + "-source-only", entry.value() + "-source-only"));
             assertThat(migrated.remainTimeToLive(entry.key())).isPositive().isLessThanOrEqualTo(lifetime);
+            assertThat(migrated.remainTimeToLive(entry.key() + "-source-only")).isPositive().isLessThanOrEqualTo(lifetime);
             assertThat(redissonClient.getMapCache(keyFor(1, entry.name())).isExists()).isFalse();
         }
         assertThat(storedVersion()).isEqualTo("2");
     }
 
     private record ExpiringEntry(String name, String key, String value) {
+    }
+
+    @Test
+    void testV1ToV2KeepsTerminalGenerationReplayAndUnsavedArtifacts() throws Exception {
+        Instant finishedAt = Instant.parse("2026-11-09T09:00:00Z");
+        var terminalEvent = new ExerciseGenerationEventDTO(ExerciseGenerationEventDTO.Type.DONE, "Review unsaved candidate", ExerciseGenerationEventDTO.Phase.REVIEWING,
+                ExerciseGenerationEventDTO.CompletionStatus.PARTIAL, null, false, null, null, ExerciseGenerationEventDTO.TerminationReason.ATTEMPT_CAP_REACHED, null, null, null,
+                finishedAt);
+        var transcript = new JobTranscript("generation-42", "instructor", 42L, GenerationMode.GENERATE, List.of(terminalEvent), true, "Retained specification", "balanced");
+        var fileChange = new ExerciseGenerationFileChangeDTO(ExerciseGenerationFileChangeDTO.TYPE, "solution/Main.java", "solution", "write", 3, finishedAt);
+        var artifacts = new ExerciseGenerationRetainedArtifactsDTO("generation-42", ExerciseGenerationArtifactCompleteness.COMPLETE, "Retained problem statement",
+                "Retained specification", List.of(new ExerciseGenerationRetainedFileDTO("solution", "Main.java", "class Main {}")));
+        Object usage = ReflectionTestUtils.invokeMethod(Class.forName("de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationJobReplayStore$JobUsage"),
+                "empty");
+
+        assertExpiringV1ValuesSurvive(List.of(new ExpiringValue("hyperion-exercise-generation-transcripts", "42", transcript),
+                new ExpiringValue("hyperion-exercise-generation-file-changes", "42", new JobFileChangeIndex("generation-42", "instructor", List.of(fileChange))),
+                new ExpiringValue("hyperion-exercise-generation-artifacts", "42", new JobArtifacts("generation-42", "instructor", artifacts)),
+                new ExpiringValue("hyperion-exercise-generation-usage", "generation-42", usage)));
+    }
+
+    @Test
+    void testV1ToV2KeepsAuthoringHistoryAndItsCursor() {
+        AuthoringRun run = new AuthoringRun();
+        run.setId(19L);
+        run.setJobId("generation-42");
+        run.setExerciseId(42L);
+        run.setOwnerId(7L);
+        run.setKind(AuthoringRun.Kind.ADAPT);
+        run.setStatus(AuthoringRun.Status.SAVED);
+        run.setBeforeVersionId(100L);
+        run.setAfterVersionId(101L);
+        redissonClient.getMap(keyFor(1, "hyperion-authoring-activity-sequence")).put("next", 20L);
+
+        assertExpiringV1ValuesSurvive(List.of(new ExpiringValue("hyperion-authoring-activity", "generation-42", run),
+                new ExpiringValue("hyperion-authoring-latest-mutation", 42L, new Mutation("generation-42", 19L)),
+                new ExpiringValue("hyperion-authoring-owner-runs", 7L, List.of(new RunReference(19L, "generation-42")))));
+
+        assertThat(redissonClient.<String, Long>getMap(keyFor(2, "hyperion-authoring-activity-sequence")).readAllMap()).containsOnly(entry("next", 20L));
+    }
+
+    @Test
+    void testV1ToV2KeepsUncertainSavesReservationsAndFailedVariantCleanup() throws Exception {
+        Instant startedAt = Instant.parse("2026-11-09T08:00:00Z");
+        JobInfo reservation = new JobInfo("revert-42", "instructor", 42L, startedAt, null, "old-node", startedAt, false, "budget-42");
+        LiveSaveSlot liveSave = new LiveSaveSlot("save-42", "old-node", startedAt, Map.of("reader-42", "old-node"));
+        redissonClient.getMap(keyFor(1, "hyperion-exercise-generation-jobs")).put("42", reservation);
+        redissonClient.getMap(keyFor(1, "hyperion-live-save-coordination")).put("42", liveSave);
+        var budgetType = Class.forName("de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.HyperionGenerationBudgetService$TokenBudgetReservation");
+        var budgetConstructor = budgetType.getDeclaredConstructor(Long.class, Long.class, long.class);
+        budgetConstructor.setAccessible(true);
+        Object budgetReservation = budgetConstructor.newInstance(7L, 3L, 1200L);
+        VariantJob variant = new VariantJob();
+        variant.setJobId("variant-42");
+        variant.setPhase(VariantJobPhase.FAILED);
+        variant.setVariantExerciseId(43L);
+        variant.setFailureDetail("Provisioned clone cleanup requires retry");
+
+        assertExpiringV1ValuesSurvive(List.of(new ExpiringValue("hyperion-exercise-generation-cancellations", "generation-42", Boolean.TRUE),
+                new ExpiringValue("hyperion-generation-token-budget-reservations", "budget-42", budgetReservation),
+                new ExpiringValue("hyperion-exercise-variant-jobs", "variant-42", variant)));
+
+        assertThat(redissonClient.<String, JobInfo>getMap(keyFor(2, "hyperion-exercise-generation-jobs")).readAllMap()).containsOnly(entry("42", reservation));
+        assertThat(redissonClient.<String, LiveSaveSlot>getMap(keyFor(2, "hyperion-live-save-coordination")).readAllMap()).containsOnly(entry("42", liveSave));
+    }
+
+    private void assertExpiringV1ValuesSurvive(List<ExpiringValue> entries) {
+        claimVersion(1);
+        long lifetime = Duration.ofMinutes(17).toMillis();
+        for (ExpiringValue entry : entries) {
+            redissonClient.getMapCache(keyFor(1, entry.name())).put(entry.key(), entry.value(), lifetime, TimeUnit.MILLISECONDS);
+        }
+
+        migrationService().migrateToCurrentVersion();
+        migrationService().migrateToCurrentVersion();
+
+        for (ExpiringValue entry : entries) {
+            RMapCache<Object, Object> migrated = redissonClient.getMapCache(keyFor(2, entry.name()));
+            assertThat(migrated.readAllKeySet()).containsExactly(entry.key());
+            assertThat(migrated.get(entry.key())).usingRecursiveComparison().isEqualTo(entry.value());
+            assertThat(migrated.remainTimeToLive(entry.key())).isPositive().isLessThanOrEqualTo(lifetime);
+            assertThat(redissonClient.getMapCache(keyFor(1, entry.name())).isExists()).isFalse();
+        }
+        assertThat(storedVersion()).isEqualTo("2");
+    }
+
+    private record ExpiringValue(String name, Object key, Object value) {
     }
 
     @Test

@@ -131,8 +131,8 @@ class ExerciseMappingToolsServiceTest {
         when(competencyExerciseLinkRepository.findByExerciseIdWithCompetency(42L)).thenReturn(List.of());
         when(courseCompetencyRepository.findAllById(List.of(1L, 2L))).thenReturn(List.of(competency1, competency2));
 
-        var mappings = List.of(new ExerciseMappingToolsService.ExerciseCompetencyMappingOperation(1L, 1.0, false, true),
-                new ExerciseMappingToolsService.ExerciseCompetencyMappingOperation(2L, 0.5, false, false));
+        var mappings = List.of(new ExerciseMappingToolsService.ExerciseCompetencyMappingOperation(1L, 1.0, false, false),
+                new ExerciseMappingToolsService.ExerciseCompetencyMappingOperation(2L, 0.5, false, true));
 
         String result = service.previewExerciseCompetencyMapping(10L, 42L, mappings, false);
 
@@ -141,8 +141,8 @@ class ExerciseMappingToolsServiceTest {
         ExerciseCompetencyMappingDTO preview = ExerciseMappingToolsService.getExerciseMappingPreview();
         assertThat(preview).isNotNull();
         assertThat(preview.exerciseId()).isEqualTo(42L);
-        assertThat(preview.competencies().get(0).suggested()).isTrue();
-        assertThat(preview.competencies().get(1).suggested()).isFalse();
+        assertThat(preview.competencies()).filteredOn(option -> option.competencyId().equals(1L)).singleElement().satisfies(option -> assertThat(option.suggested()).isFalse());
+        assertThat(preview.competencies()).filteredOn(option -> option.competencyId().equals(2L)).singleElement().satisfies(option -> assertThat(option.suggested()).isTrue());
         assertThat(preview.viewOnly()).isFalse();
     }
 

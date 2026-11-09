@@ -2,7 +2,7 @@
 id: distributed-data
 title: Distributed Data with Redis or Valkey
 sidebar_label: Distributed Data with Redis or Valkey
-last_reviewed: 2026-11-07
+last_reviewed: 2026-11-09
 ---
 
 import Callout from "../../../src/components/Callout/Callout";
@@ -76,6 +76,20 @@ Iris job state moves together: `pyris-chat-job-client-id-map` retains client cor
 `pyris-restart-watch` retains restart recovery. `struggle-inflight-map` and `struggle-cooldown-map` retain the
 in-flight and cooldown guards for proactive tutoring. Expiring entries keep their remaining lifetime.
 
+Hyperion authoring state also moves together. The migration preserves:
+
+| Structures | Why they are preserved |
+|---|---|
+| `hyperion-exercise-generation-jobs`, `hyperion-live-save-coordination` | Retain generation, undo and uncertain-save reservations that require explicit recovery. |
+| `hyperion-exercise-generation-cancellations`, `hyperion-generation-token-budget-reservations` | Keep cancellation decisions and conservative charges for provider usage that could not be accounted for completely. |
+| `hyperion-exercise-generation-transcripts`, `hyperion-exercise-generation-file-changes`, `hyperion-exercise-generation-artifacts`, `hyperion-exercise-generation-usage` | Retain reconnect replay, unsaved generated candidates and their usage account, which cannot be reconstructed from saved exercises. |
+| `hyperion-authoring-activity`, `hyperion-authoring-latest-mutation`, `hyperion-authoring-owner-runs`, `hyperion-authoring-activity-sequence` | Keep authoring history, pagination and the latest mutation's undo references consistent. |
+| `hyperion-exercise-variant-jobs` | Retain variant results and links to provisioned exercises, including those whose cleanup failed. |
+
+Expiring Hyperion entries keep their remaining lifetime; the upgrade does not restart their retention window.
+Moving a reservation does not restart its worker or clear an interrupted save. Inspect and reconcile retained
+reservations using the [Hyperion save and recovery procedure](/admin/hyperion#save-cancellation-and-recovery).
+
 `deferredBuildResultQueue` was introduced after schema `1`. It holds results awaiting exercise result-processing admission;
 future schema migrations must preserve it alongside `buildResultQueue`. Deferred results remain visible in the admin
 result-queue listing and are retried every five seconds without queue-listener events. The admin clear operation
@@ -97,14 +111,16 @@ build-agent registrations, websocket presence, caches, and topic messages. A use
 progress, for example an LTI launch, may need to retry it after the maintenance window.
 
 Entries are moved incrementally, and the schema version is published only after migration finishes. If the migrating
-node stops, start it again with the same new release. The migration resumes safely.
+node stops, start it again with the same new release. The migration resumes safely. If the schema metadata is missing,
+Artemis replays the whole adjacent migration path from version `0`, including over empty source structures, so data
+already moved into an intermediate namespace is recovered rather than skipped.
 
 ## Verify the migration
 
 The first new node logs messages similar to:
 
 ```text
-Distributed store predates schema versions, treating its contents as version 0
+Distributed store carries no schema version, replaying migrations from version 0
 Migrating distributed data from schema version 0 to 1
 Distributed data is now at schema version 1
 Migrating distributed data from schema version 1 to 2

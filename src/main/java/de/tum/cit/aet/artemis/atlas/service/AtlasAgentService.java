@@ -732,11 +732,13 @@ public class AtlasAgentService {
     private String buildExerciseMapperInstruction(@Nullable Long exerciseId, @Nullable String exerciseTitle) {
         if (exerciseId != null && exerciseTitle != null && !exerciseTitle.isBlank()) {
             return "Map the competencies from the previous step to the exercise below. " + "EXERCISE_ID: " + exerciseId + " | EXERCISE_TITLE: " + exerciseTitle + ". "
-                    + "Call getCourseCompetencies to get competency IDs, then call " + "previewExerciseCompetencyMapping with viewOnly=false to show the interactive preview. "
+                    + "Call getExerciseContent to inspect its learning content and getCourseCompetencies to get competency IDs before choosing suggested flags and weights. Then call "
+                    + "previewExerciseCompetencyMapping with viewOnly=false to show the interactive preview. "
                     + "Do NOT ask the user how they want to adjust mappings - the preview UI is interactive and handles that.";
         }
         // Fallback if exercise was not embedded in the plan marker (should not happen in normal flow)
-        return "Map the competencies from the previous step to exercises in the course. " + "Call getCourseCompetencies to get competency IDs, then call "
+        return "Map the competencies from the previous step to exercises in the course. "
+                + "Call getExerciseContent for the selected exercise and getCourseCompetencies to get competency IDs before choosing suggested flags and weights. Then call "
                 + "previewExerciseCompetencyMapping with viewOnly=false to show the interactive preview. "
                 + "Do NOT ask the user how they want to adjust mappings - the preview UI is interactive and handles that.";
     }

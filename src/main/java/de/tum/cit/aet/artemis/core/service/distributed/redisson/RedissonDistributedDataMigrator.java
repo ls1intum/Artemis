@@ -126,15 +126,10 @@ class RedissonDistributedDataMigrator {
         Integer storedVersion = readStoredVersion(versionBucket);
 
         if (storedVersion == null) {
-            // A store that predates this change carries no version key, but it does carry the structures the release
-            // running before it wrote. Claiming it for the current version without moving them would leave a queued
-            // build, an in-flight result or a flipped feature toggle stranded under a key nothing reads again.
-            if (!holdsUnversionedData()) {
-                log.info("Distributed store carries no schema version and no data yet, claiming it for version {}", targetVersion);
-                recordVersion(versionBucket, targetVersion);
-                return;
-            }
-            log.info("Distributed store predates schema versions, treating its contents as version {}", UNVERSIONED);
+            // The first drain can empty every plain key before its version is recorded. A restart must therefore
+            // replay the complete adjacent path even when only numbered namespaces remain. Replaying empty sources
+            // is safe, including when a later step already moved some or all entries into the target namespace.
+            log.info("Distributed store carries no schema version, replaying migrations from version {}", UNVERSIONED);
             storedVersion = UNVERSIONED;
         }
         if (storedVersion == targetVersion) {
@@ -175,15 +170,6 @@ class RedissonDistributedDataMigrator {
             sourceVersion = step.toVersion();
         }
         return plan;
-    }
-
-    /**
-     * @return whether any structure that has to survive a bump already exists under its plain, unprefixed name, which
-     *         is what tells an unversioned store apart from an empty one
-     */
-    private boolean holdsUnversionedData() {
-        String[] names = LEGACY_TO_V1_STRUCTURES.stream().map(CarriedOverStructure::name).toArray(String[]::new);
-        return redissonClient.getKeys().countExists(names) > 0;
     }
 
     /**
