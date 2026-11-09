@@ -180,8 +180,8 @@ export class ExerciseActionBarComponent {
 
     /**
      * The inline main buttons with their per-item render state precomputed, so the template reads plain fields instead of
-     * calling `signatureOf(...)` and `hiddenIds().has(...)` on every change-detection cycle. `context` is built here too
-     * so the `ngTemplateOutlet` binding keeps a stable object identity across cycles.
+     * calling `signatureOf(...)`, `hiddenIds().has(...)` or translating the tooltip on every change-detection cycle.
+     * `context` is built here too so the `ngTemplateOutlet` binding keeps a stable object identity across cycles.
      */
     protected readonly inlineActions = computed(() => {
         // The signature embeds a translated label, so re-derive it on a language switch.
@@ -191,7 +191,7 @@ export class ExerciseActionBarComponent {
             action,
             signature: this.signatureOf(action),
             hidden: hidden.has(action.id),
-            context: { $implicit: action, inMenu: false },
+            context: { $implicit: action, inMenu: false, tooltip: this.tooltipOf(action, false) },
         }));
     });
 
@@ -202,6 +202,12 @@ export class ExerciseActionBarComponent {
         const inlineIds = this.inlineIds();
         const hidden = this.hiddenIds();
         return this.items().filter((action) => !inlineIds.includes(action.id) || hidden.has(action.id));
+    });
+
+    /** Template contexts for the menu entries, precomputed for the same reason as {@link inlineActions}. */
+    protected readonly menuActions = computed(() => {
+        this.languageVersion();
+        return this.hiddenActions().map((action) => ({ $implicit: action, inMenu: true, tooltip: this.tooltipOf(action, true) }));
     });
 
     constructor() {
@@ -303,7 +309,7 @@ export class ExerciseActionBarComponent {
     }
 
     /** An inline button's tooltip names it; a disabled action, inline or in the menu, explains why instead. */
-    protected tooltipOf(action: ActionItem, inMenu: boolean): string {
+    private tooltipOf(action: ActionItem, inMenu: boolean): string {
         if (action.disabled && action.disabledTooltip) {
             return this.translateService.instant(action.disabledTooltip);
         }

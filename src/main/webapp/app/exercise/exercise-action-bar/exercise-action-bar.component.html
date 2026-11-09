@@ -26,27 +26,29 @@
         [tumAetUiPopoverTrigger]="menu"
         [tumAetUiTooltip]="'artemisApp.exerciseManagement.moreActions' | artemisTranslate"
         tumAetUiTooltipPlacement="top"
+        tumAetUiTooltipDescribesHost="false"
         [attr.aria-label]="'artemisApp.exerciseManagement.moreActions' | artemisTranslate"
     >
         <fa-icon [icon]="faEllipsis" />
     </button>
     <tumaet-ui-popover #menu placement="bottom" [ariaLabel]="'artemisApp.exerciseManagement.moreActions' | artemisTranslate">
         <div class="action-menu flex flex-col">
-            @for (action of hiddenActions(); track action.id) {
-                <ng-container [ngTemplateOutlet]="actionTpl" [ngTemplateOutletContext]="{ $implicit: action, inMenu: true }" />
+            @for (context of menuActions(); track context.$implicit.id) {
+                <ng-container [ngTemplateOutlet]="actionTpl" [ngTemplateOutletContext]="context" />
             }
         </div>
     </tumaet-ui-popover>
 </div>
 
 <!-- Inline, an action is an outlined icon button whose label is its tooltip and accessible name; in the menu it is a
-     plain row with icon and label, coloured only when destructive. -->
-<ng-template #actionTpl let-action let-inMenu="inMenu">
+     plain row with icon and label, coloured only when destructive. The tooltip describes its host only when it explains a
+     disabled action; otherwise it repeats the aria-label, which would be announced twice. -->
+<ng-template #actionTpl let-action let-inMenu="inMenu" let-tooltip="tooltip">
     @switch (action.kind) {
         @case ('delete') {
             <!-- A disabled native button gets no hover, so the tooltip sits on a wrapper; the kit button disables its own
                  pointer events, letting the hover reach the wrapper. -->
-            <span class="inline-flex" [class.w-full]="inMenu" [tumAetUiTooltip]="tooltipOf(action, inMenu)" tumAetUiTooltipPlacement="top">
+            <span class="inline-flex" [class.w-full]="inMenu" [tumAetUiTooltip]="tooltip" tumAetUiTooltipPlacement="top" [tumAetUiTooltipDescribesHost]="!!action.disabled">
                 <button
                     type="button"
                     tumAetUiButton
@@ -77,7 +79,7 @@
         }
         @case ('button') {
             <!-- Wrapped for the same reason as the delete button above. -->
-            <span class="inline-flex" [class.w-full]="inMenu" [tumAetUiTooltip]="tooltipOf(action, inMenu)" tumAetUiTooltipPlacement="top">
+            <span class="inline-flex" [class.w-full]="inMenu" [tumAetUiTooltip]="tooltip" tumAetUiTooltipPlacement="top" [tumAetUiTooltipDescribesHost]="!!action.disabled">
                 <button
                     tumAetUiButton
                     type="button"
@@ -110,8 +112,9 @@
                 [attr.aria-disabled]="action.disabled || undefined"
                 [attr.tabindex]="action.disabled ? -1 : undefined"
                 [style.pointer-events]="action.disabled ? 'auto' : undefined"
-                [tumAetUiTooltip]="tooltipOf(action, inMenu)"
+                [tumAetUiTooltip]="tooltip"
                 tumAetUiTooltipPlacement="top"
+                [tumAetUiTooltipDescribesHost]="!!action.disabled"
                 (click)="closeMenuIfOpen(inMenu)"
             >
                 <ng-container [ngTemplateOutlet]="contentTpl" [ngTemplateOutletContext]="{ $implicit: action, inMenu }" />

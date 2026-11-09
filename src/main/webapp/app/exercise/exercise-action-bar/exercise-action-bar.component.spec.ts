@@ -82,7 +82,8 @@ describe('ExerciseActionBarComponent', () => {
     });
 
     describe('disabled tooltip', () => {
-        const tooltipTextOf = () => fixture.debugElement.query(By.css('a[data-testid="exercise-action-edit"]')).injector.get(TumAetUiTooltipDirective).content();
+        const tooltipOf = () => fixture.debugElement.query(By.css('a[data-testid="exercise-action-edit"]')).injector.get(TumAetUiTooltipDirective);
+        const tooltipTextOf = () => tooltipOf().content();
 
         it('explains a disabled inline action and otherwise names it', () => {
             const action: ActionItem = { ...buildActions(['edit'])[0], disabledTooltip: 'tooltip.key' };
@@ -90,11 +91,15 @@ describe('ExerciseActionBarComponent', () => {
             fixture.componentRef.setInput('items', [{ ...action, disabled: true }]);
             fixture.detectChanges();
             expect(tooltipTextOf()).toBe('tooltip.key');
+            // The reason is new information, so it describes the action.
+            expect(tooltipOf().describesHost()).toBe(true);
 
             // Same action, still carrying disabledTooltip, but usable — it must not explain a restriction that is gone.
             fixture.componentRef.setInput('items', [{ ...action, disabled: false }]);
             fixture.detectChanges();
             expect(tooltipTextOf()).toBe('label.edit');
+            // The name already is the aria-label; describing the action with it again would announce it twice.
+            expect(tooltipOf().describesHost()).toBe(false);
         });
 
         it('puts the tooltip of a disabled inline delete on its wrapper, which still receives hover', () => {
