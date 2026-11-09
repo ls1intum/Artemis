@@ -11,7 +11,8 @@ import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { TextExerciseService } from 'app/text/manage/text-exercise/service/text-exercise.service';
-import { of } from 'rxjs';
+import { Observable, Subject, of } from 'rxjs';
+import { EventManager } from 'app/foundation/service/event-manager.service';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ModelingExerciseService } from 'app/modeling/manage/services/modeling-exercise.service';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -22,6 +23,9 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
+import { EntityDeletionProgress, EntityDeletionStatus, EntityDeletionType } from 'app/shared-ui/delete-dialog/entity-deletion-progress.model';
+import { EntityDeletionService } from 'app/shared-ui/delete-dialog/service/entity-deletion.service';
+import { MockEntityDeletionService } from 'test/helpers/mocks/service/mock-entity-deletion.service';
 
 describe('Exercise detail common actions Component', () => {
     let comp: NonProgrammingExerciseDetailCommonActionsComponent;
@@ -33,6 +37,7 @@ describe('Exercise detail common actions Component', () => {
         await TestBed.configureTestingModule({
             imports: [NonProgrammingExerciseDetailCommonActionsComponent],
             providers: [
+                { provide: EntityDeletionService, useClass: MockEntityDeletionService },
                 MockProvider(TextExerciseService),
                 { provide: FileUploadExerciseService, useClass: MockFileUploadExerciseService },
                 MockProvider(ModelingExerciseService),
@@ -196,6 +201,176 @@ describe('Exercise detail common actions Component', () => {
         comp.deleteExercise();
         expect(deleteModelingExerciseService).toHaveBeenCalledOnce();
     });
+
+    it('should leave the page of the exercise only when the background deletion completed', () => {
+        const deletionService = TestBed.inject(EntityDeletionService) as unknown as MockEntityDeletionService;
+        const router = TestBed.inject(Router);
+        const navigateSpy = vi.spyOn(router, 'navigateByUrl').mockResolvedValue(true);
+        vi.spyOn(TestBed.inject(TextExerciseService), 'delete').mockReturnValue(of({} as HttpResponse<any>));
+        fixture.componentRef.setInput('course', course);
+        fixture.componentRef.setInput('exercise', new TextExercise({ id: 123 }, undefined));
+
+        deletionService.status = EntityDeletionStatus.FAILED;
+        comp.deleteExercise();
+        expect(navigateSpy).not.toHaveBeenCalled();
+
+        deletionService.status = EntityDeletionStatus.COMPLETED;
+        comp.deleteExercise();
+        expect(navigateSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should not leave the page when the deletion ends after the reused component moved on to another exercise', () => {
+        const deletionService = TestBed.inject(EntityDeletionService) as unknown as MockEntityDeletionService;
+        const ended$ = new Subject<EntityDeletionProgress>();
+        deletionService.delete.mockReturnValueOnce(ended$);
+        const router = TestBed.inject(Router);
+        const navigateSpy = vi.spyOn(router, 'navigateByUrl').mockResolvedValue(true);
+        const broadcastSpy = vi.spyOn(TestBed.inject(EventManager), 'broadcast');
+        vi.spyOn(TestBed.inject(TextExerciseService), 'delete').mockReturnValue(of({} as HttpResponse<any>));
+        const deletedExercise = new TextExercise(undefined, undefined);
+        deletedExercise.id = 123;
+        const otherExercise = new TextExercise(undefined, undefined);
+        otherExercise.id = 456;
+        fixture.componentRef.setInput('course', course);
+        fixture.componentRef.setInput('exercise', deletedExercise);
+        comp.deleteExercise();
+
+        fixture.componentRef.setInput('exercise', otherExercise);
+        ended$.next({
+            entityType: EntityDeletionType.EXERCISE,
+            entityId: 123,
+            status: EntityDeletionStatus.COMPLETED,
+            stepsCompleted: 1,
+            totalSteps: 1,
+            itemsProcessed: 0,
+            totalItems: 0,
+            weightedProgressPercent: 100,
+        });
+
+        expect(broadcastSpy).toHaveBeenCalled();
+        expect(navigateSpy).not.toHaveBeenCalled();
+    });
+
+    it('should show the progress of a deletion that is already running when an instructor opens the page', () => {
+        const deletionService = TestBed.inject(EntityDeletionService) as unknown as MockEntityDeletionService;
+        const exercise = new TextExercise({ id: 123 }, undefined);
+        exercise.id = 5;
+        exercise.isAtLeastInstructor = true;
+        fixture.componentRef.setInput('course', course);
+        fixture.componentRef.setInput('exercise', exercise);
+
+        comp.ngOnInit();
+
+        expect(deletionService.resume).toHaveBeenCalledWith(expect.objectContaining({ entityType: EntityDeletionType.EXERCISE, entityId: 5 }), expect.anything());
+    });
+
+    it('should end the pending check for a running deletion when the reused component shows another exercise', () => {
+        const deletionService = TestBed.inject(EntityDeletionService) as unknown as MockEntityDeletionService;
+        const first = new TextExercise({ id: 123 }, undefined);
+        first.id = 5;
+        first.isAtLeastInstructor = true;
+        const second = new TextExercise({ id: 123 }, undefined);
+        second.id = 6;
+        second.isAtLeastInstructor = true;
+        fixture.componentRef.setInput('course', course);
+        fixture.componentRef.setInput('exercise', first);
+        fixture.detectChanges();
+        expect(deletionService.resume).toHaveBeenCalledOnce();
+        let checkEnded = false;
+        (deletionService.resume.mock.calls[0][1] as Observable<unknown>).subscribe(() => (checkEnded = true));
+        fixture.detectChanges();
+        expect(checkEnded).toBe(false);
+
+        // the status response of the first exercise must not open its dialog over the second one
+        fixture.componentRef.setInput('exercise', second);
+        fixture.detectChanges();
+
+        expect(checkEnded).toBe(true);
+    });
+
+    it('should look for a running deletion of the other exercise when the reused component shows it', () => {
+        const deletionService = TestBed.inject(EntityDeletionService) as unknown as MockEntityDeletionService;
+        const first = new TextExercise({ id: 123 }, undefined);
+        first.id = 5;
+        first.isAtLeastInstructor = true;
+        const second = new TextExercise({ id: 123 }, undefined);
+        second.id = 6;
+        second.isAtLeastInstructor = true;
+        fixture.componentRef.setInput('course', course);
+        fixture.componentRef.setInput('exercise', first);
+        fixture.detectChanges();
+        expect(deletionService.resume).toHaveBeenCalledOnce();
+
+        fixture.componentRef.setInput('exercise', second);
+        fixture.detectChanges();
+
+        // Another instructor may be deleting the exercise that is shown now: its progress and its completion must not be missed.
+        expect(deletionService.resume).toHaveBeenCalledTimes(2);
+        expect(deletionService.resume.mock.calls[1][0]).toEqual(expect.objectContaining({ entityType: EntityDeletionType.EXERCISE, entityId: 6 }));
+    });
+
+    it('should not look for a running deletion of the other exercise when the user is no instructor of it', () => {
+        const deletionService = TestBed.inject(EntityDeletionService) as unknown as MockEntityDeletionService;
+        const first = new TextExercise({ id: 123 }, undefined);
+        first.id = 5;
+        first.isAtLeastInstructor = true;
+        const second = new TextExercise({ id: 123 }, undefined);
+        second.id = 6;
+        second.isAtLeastInstructor = false;
+        fixture.componentRef.setInput('course', course);
+        fixture.componentRef.setInput('exercise', first);
+        fixture.detectChanges();
+
+        fixture.componentRef.setInput('exercise', second);
+        fixture.detectChanges();
+
+        expect(deletionService.resume).toHaveBeenCalledOnce();
+    });
+
+    it('should end the pending check for a running deletion when the component is destroyed', () => {
+        const deletionService = TestBed.inject(EntityDeletionService) as unknown as MockEntityDeletionService;
+        const exercise = new TextExercise({ id: 123 }, undefined);
+        exercise.id = 5;
+        exercise.isAtLeastInstructor = true;
+        fixture.componentRef.setInput('course', course);
+        fixture.componentRef.setInput('exercise', exercise);
+        fixture.detectChanges();
+        let checkEnded = false;
+        (deletionService.resume.mock.calls[0][1] as Observable<unknown>).subscribe(() => (checkEnded = true));
+
+        fixture.destroy();
+
+        expect(checkEnded).toBe(true);
+    });
+
+    it('should only refresh the list and stay on the page when the outcome of the deletion is unknown', () => {
+        const deletionService = TestBed.inject(EntityDeletionService) as unknown as MockEntityDeletionService;
+        const router = TestBed.inject(Router);
+        const navigateSpy = vi.spyOn(router, 'navigateByUrl').mockResolvedValue(true);
+        const broadcastSpy = vi.spyOn(TestBed.inject(EventManager), 'broadcast');
+        vi.spyOn(TestBed.inject(TextExerciseService), 'delete').mockReturnValue(of({} as HttpResponse<any>));
+        fixture.componentRef.setInput('course', course);
+        fixture.componentRef.setInput('exercise', new TextExercise({ id: 123 }, undefined));
+        deletionService.status = EntityDeletionStatus.UNKNOWN;
+
+        comp.deleteExercise();
+
+        expect(navigateSpy).not.toHaveBeenCalled();
+        expect(broadcastSpy).toHaveBeenCalledOnce();
+        expect(broadcastSpy).toHaveBeenCalledWith(expect.objectContaining({ name: 'textExerciseListModification', content: expect.not.stringContaining('Deleted') }));
+    });
+
+    it('should not look for a running deletion when the user is no instructor', () => {
+        const deletionService = TestBed.inject(EntityDeletionService) as unknown as MockEntityDeletionService;
+        const exercise = new TextExercise({ id: 123 }, undefined);
+        exercise.isAtLeastInstructor = false;
+        fixture.componentRef.setInput('course', course);
+        fixture.componentRef.setInput('exercise', exercise);
+
+        comp.ngOnInit();
+
+        expect(deletionService.resume).not.toHaveBeenCalled();
+    });
 });
 
 describe('Exercise detail common action rendering', () => {
@@ -204,6 +379,7 @@ describe('Exercise detail common action rendering', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             providers: [
+                { provide: EntityDeletionService, useClass: MockEntityDeletionService },
                 provideHttpClient(),
                 provideRouter([]),
                 MockProvider(TextExerciseService),

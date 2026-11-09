@@ -44,6 +44,7 @@ import de.tum.cit.aet.artemis.exam.test_repository.StudentExamTestRepository;
 import de.tum.cit.aet.artemis.exam.util.ExamFactory;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
+import de.tum.cit.aet.artemis.exercise.util.AsyncDeletionTestUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalVCTest;
 
 class ExamRegistrationIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {
@@ -54,6 +55,9 @@ class ExamRegistrationIntegrationTest extends AbstractSpringIntegrationLocalCILo
     private static final String OTHER_PREFIX = "examregistrationother";
 
     public static final String STUDENT_111 = TEST_PREFIX + "student111";
+
+    @Autowired
+    private AsyncDeletionTestUtilService asyncDeletionTestUtilService;
 
     @Autowired
     private ExamTestRepository examRepository;
@@ -413,7 +417,8 @@ class ExamRegistrationIntegrationTest extends AbstractSpringIntegrationLocalCILo
         }
 
         // Make sure delete also works if so many objects have been created before
-        request.delete("/api/exam/courses/" + course1.getId() + "/exams/" + savedExam.getId(), HttpStatus.OK);
+        request.delete("/api/exam/courses/" + course1.getId() + "/exams/" + savedExam.getId(), HttpStatus.ACCEPTED);
+        asyncDeletionTestUtilService.awaitExamDeletion(savedExam.getId());
     }
 
     @Test
