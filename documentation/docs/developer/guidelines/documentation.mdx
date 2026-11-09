@@ -2,7 +2,7 @@
 id: documentation
 title: Writing Documentation
 sidebar_label: Documentation
-last_reviewed: 2026-11-04
+last_reviewed: 2026-11-07
 ---
 
 import Callout from "../../../src/components/Callout/Callout";
@@ -28,6 +28,10 @@ Documentation lives under `documentation/docs/`, split by audience: `admin/`, `i
 `developer/`, `about/`. Write for the audience of the folder. An instructor page explains what an instructor
 configures; a student page explains what a student sees and does. When both need to know about the same feature,
 write two pages and link them, rather than one page that describes the other side's screens.
+
+Document what helps the reader complete a task or understand a decision. A visual refinement does not by itself
+need a documentation change: do not add prose or screenshots merely to describe centered text, responsive widths,
+spacing or theme colours. Explain such details only when users need them to operate the feature.
 
 A new page is only reachable once it is listed in the matching `documentation/sidebar-*.ts`. Add it there and link
 it from the related pages in the same change.
@@ -127,6 +131,18 @@ to every page — see [Terminology](/developer/guidelines/terminology).
 
 ## Screenshots
 
+**Add a screenshot only when it helps explain the feature or workflow.** Do not add images just to satisfy a
+documentation checklist; omit them when the existing explanation is sufficient.
+
+**Capture the running application.** Screenshots in documentation and pull requests must come from a real
+Artemis instance with realistic course, exercise and participant data. Automated browser capture of the real
+application is welcome. Never substitute AI-generated images, drawn mockups, standalone HTML recreations or
+isolated component renders for application screenshots.
+
+**Preserve the actual theme and background.** Capture the application's light or dark theme as rendered. Do not
+override theme colours for the capture, recolour the image or replace its background to imitate the application. A crop
+may focus on the relevant content, but must preserve the captured interface and its colours.
+
 Use the `Image` component rather than a raw `<img>` tag, so that every figure gets the same frame, sizing and
 caption treatment:
 
@@ -163,18 +179,20 @@ accumulate invisibly; they are never noticed until someone measures.
 
 ### Generated screenshots
 
-A screenshot that can be rendered again from the demo course does not have to be recaptured by hand.
+These are automated browser captures of the running Artemis application with its demo course, not synthetic
+images. A screenshot that can be captured again from the demo course does not have to be recaptured by hand.
 `documentation/screenshots/manifest.json` describes such a screenshot, and `src/test/playwright/docs-screenshots` renders every entry in a
 light theme, in English and with reduced motion. An entry has these fields:
 
 | Field | Meaning |
 | --- | --- |
 | `image`, `pages` | The image below `documentation/docs` and the pages that show it. |
-| `user` | A demo user: `student`, `tutor`, `instructor`, or `participant`. The `participant` is a student whom no other image shows, so that an entry can start an exercise or a quiz without changing the pages of the others. |
-| `route` | The route, with `{courseId}` for the demo course and `{exercise:Title}`, `{exam:Title}` or `{lecture:Title}` for the id of the item of the demo course with that title. |
+| `user` | A demo user: `student`, `tutor`, `instructor`, `participant`, or `uploader`. The `participant` and the `uploader` are students whom no other image shows, so that an entry can start an exercise, a quiz or a learning path without changing the pages of the others. The `uploader` never submits anything, for the image of an exercise before the submission. |
+| `route` | The route, with `{courseId}` for the demo course and `{exercise:Title}`, `{exam:Title}`, `{lecture:Title}` or `{competency:Title}` for the id of the item of the demo course with that title. |
 | `viewport`, `deviceScaleFactor` | The size of the browser window and its pixel density. |
 | `selector` or `clip` | A crop of the page: the element that the image shows (a CSS selector), or a box `{x, y, width, height}` in CSS pixels. Without either, the image is the whole window. A page that scrolls inside the window shows only the part that fits, so a `selector` of a tall element needs a `viewport` that is tall enough. |
 | `padding` | With `selector`: CSS pixels around the element, so that the border of a field at its edge is not cut off. |
+| `until` | With `selector`: the image runs from the top of `selector` to the top of this element, for one section of a long form whose sections have no common wrapper. Needs a tall viewport. |
 | `waitFor` | A CSS selector that has to be visible before the image is taken, for content that loads late. |
 | `steps` | What happens before the image is taken, in order: `fill` (`{selector, value}`), `click`, `clickIfPresent` (for an action that exists only the first time, such as starting an exercise), `check`, `select` (`{selector, label}`), `upload` (`{selector, file}`, a file below the repository root, such as one of `documentation/screenshots/fixtures`) and `waitFor`. A selector is a Playwright selector, so `text=Start exercise` works. |
 | `hide` | CSS selectors of elements that cover the content, such as a sticky footer. They become invisible and keep their space. |
@@ -219,7 +237,7 @@ that you keep. The script needs Docker, JDK 25 and Node and takes about eight mi
 `docs-maintenance.yml` needs no stack and lists the images whose `source` files changed after the image (`--stale`) in an issue of its own, which tells you
 which images to look at first.
 
-The manifest covers 78 images of the student and instructor guides. They show the one demo course, "Introduction to Software Engineering", so
+The manifest covers 125 images of the student and instructor guides. They show the one demo course, "Introduction to Software Engineering", so
 the same users, exercises, lectures and exam run through the whole documentation. **An image has to show what the text around it says.** A screenshot
 does not have to reproduce the older hand-made image pixel by pixel, but it has to show the same screen and the controls that the text names. When the
 demo course cannot show them (an iPad app, the exercise list during an exam, the test cases of a programming exercise), the image

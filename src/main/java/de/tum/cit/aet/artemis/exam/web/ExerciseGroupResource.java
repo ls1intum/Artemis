@@ -10,7 +10,6 @@ import jakarta.validation.constraints.NotNull;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.actuate.audit.AuditEvent;
 import org.springframework.boot.actuate.audit.AuditEventRepository;
 import org.springframework.context.annotation.Conditional;
@@ -36,24 +35,25 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.ManualConfig;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
-import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.dto.ExamExerciseGroupAssignmentDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExerciseGroupCreateDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExerciseGroupDTO;
+import de.tum.cit.aet.artemis.exam.dto.ExerciseGroupDeletionSummaryDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExerciseGroupImportDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExerciseGroupImportResultDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExerciseGroupUpdateDTO;
 import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
 import de.tum.cit.aet.artemis.exam.repository.ExerciseGroupRepository;
 import de.tum.cit.aet.artemis.exam.service.ExamAccessService;
+import de.tum.cit.aet.artemis.exam.service.ExamDeletionService;
+import de.tum.cit.aet.artemis.exam.service.ExamDeletionSummaryService;
 import de.tum.cit.aet.artemis.exam.service.ExamImportService;
 import de.tum.cit.aet.artemis.exam.service.ExerciseGroupService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
-import de.tum.cit.aet.artemis.exercise.service.ExerciseDeletionService;
 
 /**
  * REST controller for managing ExerciseGroup.
@@ -69,9 +69,6 @@ public class ExerciseGroupResource {
 
     private static final String ENTITY_NAME = "exerciseGroup";
 
-    @Value("${jhipster.clientApp.name}")
-    private String applicationName;
-
     private final ExerciseGroupRepository exerciseGroupRepository;
 
     private final ExamRepository examRepository;
@@ -80,7 +77,9 @@ public class ExerciseGroupResource {
 
     private final UserRepository userRepository;
 
-    private final ExerciseDeletionService exerciseDeletionService;
+    private final ExamDeletionService examDeletionService;
+
+    private final ExamDeletionSummaryService examDeletionSummaryService;
 
     private final AuditEventRepository auditEventRepository;
 
@@ -91,13 +90,14 @@ public class ExerciseGroupResource {
     private final ExerciseGroupService exerciseGroupService;
 
     public ExerciseGroupResource(ExerciseGroupRepository exerciseGroupRepository, ExamAccessService examAccessService, UserRepository userRepository,
-            ExerciseDeletionService exerciseDeletionService, AuditEventRepository auditEventRepository, ExamRepository examRepository, ExamImportService examImportService,
-            ExerciseRepository exerciseRepository, ExerciseGroupService exerciseGroupService) {
+            ExamDeletionService examDeletionService, ExamDeletionSummaryService examDeletionSummaryService, AuditEventRepository auditEventRepository,
+            ExamRepository examRepository, ExamImportService examImportService, ExerciseRepository exerciseRepository, ExerciseGroupService exerciseGroupService) {
         this.exerciseGroupRepository = exerciseGroupRepository;
         this.examRepository = examRepository;
         this.examAccessService = examAccessService;
         this.userRepository = userRepository;
-        this.exerciseDeletionService = exerciseDeletionService;
+        this.examDeletionService = examDeletionService;
+        this.examDeletionSummaryService = examDeletionSummaryService;
         this.auditEventRepository = auditEventRepository;
         this.examImportService = examImportService;
         this.exerciseRepository = exerciseRepository;
@@ -288,14 +288,15 @@ public class ExerciseGroupResource {
     }
 
     /**
-     * DELETE /courses/{courseId}/exams/{examId}/exercise-groups/{exerciseGroupId} : Delete the exercise group with the given id.
+     * DELETE /courses/{courseId}/exams/{examId}/exercise-groups/{exerciseGroupId} : Delete the exercise group with the given id in the background. The progress is sent over the
+     * websocket topic of the exam.
      *
      * @param courseId                  the course to which the exercise group belongs to
      * @param examId                    the exam to which the exercise group belongs to
      * @param exerciseGroupId           the id of the exercise group to delete
      * @param deleteBaseReposBuildPlans boolean which states whether the base repos and build plans should be deleted as well, this is true by default because for LocalVC and
      *                                      LocalCI, it does not make sense to keep these artifacts
-     * @return the ResponseEntity with status 200 (OK)
+     * @return the ResponseEntity with status 202 (Accepted), or 409 (Conflict) if the exam, or one of its exercise groups, is already being deleted
      */
     @DeleteMapping("courses/{courseId}/exams/{examId}/exercise-groups/{exerciseGroupId}")
     @EnforceAtLeastStudent
@@ -308,23 +309,33 @@ public class ExerciseGroupResource {
         examAccessService.checkCourseAndExamAndExerciseGroupAccessElseThrow(Role.INSTRUCTOR, courseId, examId, exerciseGroup);
 
         User user = userRepository.getUser();
-        AuditEvent auditEvent = new AuditEvent(user.getLogin(), Constants.DELETE_EXERCISE_GROUP, "exerciseGroup=" + exerciseGroup.getTitle());
-        auditEventRepository.add(auditEvent);
-        log.info("User {} has requested to delete the exercise group {}", user.getLogin(), exerciseGroup.getTitle());
 
-        for (Exercise exercise : exerciseGroup.getExercises()) {
-            exerciseDeletionService.delete(exercise.getId(), deleteBaseReposBuildPlans);
-        }
+        // The exercises and the exercise group are deleted in the background. The request is audited only once the deletion is accepted, so a request that is refused because
+        // the exam or the exercise group is already being deleted is not logged as a deletion.
+        examDeletionService.startAsyncExerciseGroupDeletion(courseId, examId, exerciseGroupId, deleteBaseReposBuildPlans, () -> {
+            AuditEvent auditEvent = new AuditEvent(user.getLogin(), Constants.DELETE_EXERCISE_GROUP, "exerciseGroup=" + exerciseGroup.getTitle());
+            auditEventRepository.add(auditEvent);
+            log.info("User {} has requested to delete the exercise group {}", user.getLogin(), exerciseGroup.getTitle());
+        });
 
-        // Remove the exercise group by removing it from the list of exercise groups of the corresponding exam.
-        // This is necessary as @OrderColumn (exercise_group_order) needs continuous values. Otherwise the client will
-        // receive null values for the gaps in exam.getExerciseGroups().
-        Exam exam = examRepository.findByIdWithExerciseGroupsElseThrow(examId);
-        List<ExerciseGroup> filteredExerciseGroups = exam.getExerciseGroups();
-        filteredExerciseGroups.removeIf(exGroup -> exGroup.getId().equals(exerciseGroupId));
-        exam.setExerciseGroups(filteredExerciseGroups);
-        examRepository.save(exam);
+        return ResponseEntity.accepted().build();
+    }
 
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, exerciseGroup.getTitle())).build();
+    /**
+     * GET /courses/{courseId}/exams/{examId}/exercise-groups/{exerciseGroupId}/deletion-summary : Get a summary of what deleting the exercise group removes.
+     *
+     * @param courseId        the course to which the exercise group belongs to
+     * @param examId          the exam to which the exercise group belongs to
+     * @param exerciseGroupId the id of the exercise group
+     * @return the ResponseEntity with status 200 (OK) and with body a summary of the deletion of the exercise group
+     */
+    @GetMapping("courses/{courseId}/exams/{examId}/exercise-groups/{exerciseGroupId}/deletion-summary")
+    @EnforceAtLeastStudent
+    @ManualConfig
+    public ResponseEntity<ExerciseGroupDeletionSummaryDTO> getDeletionSummary(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long exerciseGroupId) {
+        log.debug("REST request to get deletion summary for exercise group : {}", exerciseGroupId);
+        ExerciseGroup exerciseGroup = exerciseGroupRepository.findByIdWithExercisesElseThrow(exerciseGroupId);
+        examAccessService.checkCourseAndExamAndExerciseGroupAccessElseThrow(Role.INSTRUCTOR, courseId, examId, exerciseGroup);
+        return ResponseEntity.ok(examDeletionSummaryService.getExerciseGroupDeletionSummary(exerciseGroupId));
     }
 }

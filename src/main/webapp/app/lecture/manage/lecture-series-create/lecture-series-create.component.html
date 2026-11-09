@@ -29,7 +29,7 @@
                     type="button"
                     tumAetUiButton
                     variant="outlined"
-                    severity="secondary"
+                    severity="danger"
                     size="small"
                     class="initial-lecture-delete-button"
                     (click)="removeInitialLecture(initialLecture)"
@@ -49,9 +49,8 @@
                         type="button"
                         tumAetUiButton
                         variant="outlined"
-                        severity="secondary"
+                        severity="primary"
                         size="small"
-                        class="primary-on-hover"
                         (click)="addInitialLecture()"
                         [attr.aria-label]="'Add Initial Lecture ' + (index + 2)"
                     >
@@ -86,11 +85,11 @@
                             <span class="draft-title">{{ draft.dto.title }}</span>
                             <button
                                 tumAetUiButton
-                                severity="secondary"
+                                severity="warn"
                                 variant="text"
                                 size="small"
                                 type="button"
-                                class="draft-action primary-on-hover"
+                                class="draft-action"
                                 (click)="draftEditModal.open(draft)"
                                 [attr.aria-label]="'Edit ' + draft.dto.title"
                             >
@@ -98,11 +97,11 @@
                             </button>
                             <button
                                 tumAetUiButton
-                                severity="secondary"
+                                severity="danger"
                                 variant="text"
                                 size="small"
                                 type="button"
-                                class="draft-action primary-on-hover"
+                                class="draft-action"
                                 (click)="deleteLectureDraft(draft)"
                                 [attr.aria-label]="'Delete ' + draft.dto.title"
                             >

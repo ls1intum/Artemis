@@ -2,7 +2,7 @@
 id: grade-and-publish
 title: Grade an Exam and Publish Results
 sidebar_label: Grade and Publish
-last_reviewed: 2026-11-03
+last_reviewed: 2026-11-06
 ---
 
 import Callout from "../../../src/components/Callout/Callout";
@@ -75,6 +75,8 @@ distort an average badly:
 the exercises they were assigned, their score per exercise, overall exam points and score, grade before any bonus,
 presentation score, and whether they submitted and passed. The file also carries the aggregated per-exercise
 statistics — number of participations and average score.
+
+For test exams, each attempt is scored from its own automatically assessed exercises. The score export includes **Maximum Exam Points** for each attempt, so the points and percentage use the same automatic subtotal even when attempts have different maxima.
 
 Three things appear only when they apply: bonus grades and the final grade when a bonus is configured, plagiarism
 verdicts when the exam has at least one, and plagiarism verdicts from the bonus source when that has one.

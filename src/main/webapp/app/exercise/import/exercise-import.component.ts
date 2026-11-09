@@ -30,6 +30,8 @@ import { AlertService } from 'app/foundation/service/alert.service';
 export interface ExerciseImportDialogData {
     exerciseType: ExerciseType;
     programmingLanguage?: ProgrammingLanguage;
+    /** The course to import into, for the import from a file. */
+    courseId?: number;
 }
 
 /** The row the user asked a preview for, together with the complete quiz loaded for it. */
