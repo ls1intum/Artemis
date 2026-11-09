@@ -40,61 +40,80 @@ public class OIDCRateLimitFilter extends OncePerRequestFilter {
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
+        // Filter should only be triggered for /oauth2/authorization/** requests. If not the case or rate limit is disabled -> ignore request
+        if (!isOidcAuthorizationRequest(request) || !rateLimitService.isRateLimitingEnabled(RateLimitType.OIDC_AUTHORIZATION)) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+        // Resolve the client address strictly through the trusted proxy boundary of the servlet container (remoteAddr)
+        IPAddress clientId = resolveClientAddress(request.getRemoteAddr());
+
+        // If clientId cannot be resolved, reject with Bad Request
+        if (clientId == null) {
+            response.setStatus(HttpStatus.BAD_REQUEST.value());
+            response.getWriter().write("Unable to resolve valid client IP address.");
+            return;
+        }
+
+        if (!enforceRateLimit(clientId, response)) {
+            return;
+        }
+
+        filterChain.doFilter(request, response);
+    }
+
+    private boolean isOidcAuthorizationRequest(HttpServletRequest request) {
         // Decode URI to protect the rate-limit bypass via percent-encoding (e.g., %61uthorization)
         String requestUri = request.getRequestURI();
         String contextPath = request.getContextPath();
+
         if (contextPath != null && requestUri != null && requestUri.startsWith(contextPath)) {
             requestUri = requestUri.substring(contextPath.length());
         }
 
-        String path = requestUri;
-        if (requestUri != null) {
-            try {
-                path = URLDecoder.decode(requestUri, StandardCharsets.UTF_8);
-            }
-            catch (Exception ignored) {
-                path = requestUri;
-            }
+        if (requestUri == null) {
+            return false;
         }
 
-        // Filter should only be triggered for /oauth2/authorization/** requests
-        if (path != null && PATH_MATCHER.match("/oauth2/authorization/**", path)) {
-            // Skip address resolution and enforcement entirely if rate limiting is disabled
-            if (!rateLimitService.isRateLimitingEnabled(RateLimitType.OIDC_AUTHORIZATION)) {
-                filterChain.doFilter(request, response);
-                return;
-            }
-
-            IPAddress clientId = null;
-
-            // Resolve the client address strictly through the trusted proxy boundary of the servlet container (remoteAddr)
-            if (request != null && request.getRemoteAddr() != null && !request.getRemoteAddr().isBlank()) {
-                clientId = parseIpWithPort(request.getRemoteAddr().trim());
-                if (clientId != null && clientId.isIPv4Convertible()) {
-                    clientId = clientId.toIPv4();
-                }
-            }
-
-            // If clientId cannot be resolved, reject with Bad Request
-            if (clientId == null) {
-                response.setStatus(HttpStatus.BAD_REQUEST.value());
-                response.getWriter().write("Unable to resolve valid client IP address.");
-                return;
-            }
-
-            try {
-                rateLimitService.enforcePerMinute(clientId, RateLimitType.OIDC_AUTHORIZATION);
-            }
-            catch (RateLimitExceededException e) {
-                long seconds = Math.max(1, e.getRetryAfterSeconds() + 1);
-                response.setStatus(HttpStatus.TOO_MANY_REQUESTS.value());
-                response.setHeader("Retry-After", String.valueOf(seconds));
-                response.getWriter().write("Rate limit exceeded. Try again in " + seconds + " seconds.");
-                return;
-            }
+        String path;
+        try {
+            path = URLDecoder.decode(requestUri, StandardCharsets.UTF_8);
+        }
+        catch (Exception _) {
+            path = requestUri;
         }
 
-        filterChain.doFilter(request, response);
+        return PATH_MATCHER.match("/oauth2/authorization/**", path);
+    }
+
+    private IPAddress resolveClientAddress(String remoteAddr) {
+        if (remoteAddr == null || remoteAddr.isBlank()) {
+            return null;
+        }
+
+        IPAddress address = parseIpWithPort(remoteAddr.trim());
+
+        if (address != null && address.isIPv4Convertible()) {
+            return address.toIPv4();
+        }
+
+        return address;
+    }
+
+    private boolean enforceRateLimit(IPAddress clientId, HttpServletResponse response) throws IOException {
+        try {
+            rateLimitService.enforcePerMinute(clientId, RateLimitType.OIDC_AUTHORIZATION);
+            return true;
+        }
+        catch (RateLimitExceededException e) {
+            long seconds = Math.max(1, e.getRetryAfterSeconds() + 1);
+
+            response.setStatus(HttpStatus.TOO_MANY_REQUESTS.value());
+            response.setHeader("Retry-After", String.valueOf(seconds));
+            response.getWriter().write("Rate limit exceeded. Try again in " + seconds + " seconds.");
+
+            return false;
+        }
     }
 
     /**
