@@ -216,8 +216,7 @@ export class FileUploadExamSubmissionComponent extends ExamSubmissionComponent i
                 }),
             )
             .subscribe({
-                next: (res) => {
-                    const submissionFromServer = res.body!;
+                next: (submissionFromServer) => {
                     submission.filePath = submissionFromServer.filePath;
                     submission.filePathUrl = addPublicFilePrefix(submissionFromServer.filePath);
                     submission.isSynced = true;

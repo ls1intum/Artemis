@@ -33,7 +33,7 @@ import { AssessmentNotPossibleYetComponent } from 'app/assessment/shared/assessm
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { getExerciseDashboardLink, getLinkToSubmissionAssessment } from 'app/foundation/util/navigation.utils';
 import dayjs from 'dayjs/esm';
-import { filter, finalize } from 'rxjs/operators';
+import { finalize } from 'rxjs/operators';
 import { AssessmentLayoutComponent } from 'app/assessment/manage/assessment-layout/assessment-layout.component';
 import { ResizeableContainerComponent } from 'app/shared-ui/resizeable-container/resizeable-container.component';
 import { ScoreDisplayComponent } from 'app/exercise/score-display/score-display.component';
@@ -233,25 +233,20 @@ export class FileUploadAssessmentComponent implements OnInit {
     }
 
     private loadSubmission(submissionId: number): void {
-        this.fileUploadSubmissionService
-            .get(submissionId, this.correctionRound(), this.resultId)
-            .pipe(filter((res) => !!res.body))
-            .subscribe({
-                next: (res) => {
-                    if (res.body) {
-                        this.initializePropertiesFromSubmission(res.body);
-                        this.validateAssessment();
-                    }
-                },
-                error: (error: HttpErrorResponse) => {
-                    this.loadingInitialSubmission.set(false);
-                    if (error.error && error.error.errorKey === 'lockedSubmissionsLimitReached') {
-                        this.navigateBack();
-                    } else if (!this.explainIfAssessmentNotPossibleYet(error)) {
-                        onError(this.alertService, error);
-                    }
-                },
-            });
+        this.fileUploadSubmissionService.get(submissionId, this.correctionRound(), this.resultId).subscribe({
+            next: (submission) => {
+                this.initializePropertiesFromSubmission(submission);
+                this.validateAssessment();
+            },
+            error: (error: HttpErrorResponse) => {
+                this.loadingInitialSubmission.set(false);
+                if (error.error && error.error.errorKey === 'lockedSubmissionsLimitReached') {
+                    this.navigateBack();
+                } else if (!this.explainIfAssessmentNotPossibleYet(error)) {
+                    onError(this.alertService, error);
+                }
+            },
+        });
     }
 
     /**
@@ -624,12 +619,10 @@ export class FileUploadAssessmentComponent implements OnInit {
             .updateAssessmentAfterComplaint(feedbacks, complaintResponse, submissionId, this.result()?.assessmentNote?.note)
             .pipe(finalize(() => this.isLoading.set(false)))
             .subscribe({
-                next: (response) => {
+                next: (result) => {
                     assessmentAfterComplaint.onSuccess();
-                    if (response.body) {
-                        this.result.set(response.body);
-                        this.updateParticipationWithResult();
-                    }
+                    this.result.set(result);
+                    this.updateParticipationWithResult();
                     this.alertService.closeAll();
                     this.alertService.success('artemisApp.assessment.messages.updateAfterComplaintSuccessful');
                 },
