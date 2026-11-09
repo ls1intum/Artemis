@@ -26,7 +26,7 @@ The build agent clones the repositories itself and copies them into the containe
 | Working directory | `/var/tmp/testing-dir`. The repositories are checked out below it, see [checkout paths](/instructor/exercises/programming-exercise/configure-the-build#edit-repositories-checkout-paths-optional). |
 | Script | One bash script that Artemis generates from the build phases of the exercise. Every phase is a function that runs in its own `bash` process, in the order of the phases. `set -e` is active, so the first failing command ends the phase. |
 | Resources | Per build `--cpus 2`, `--memory 2g`, `--memory-swap 2g` and `--pids-limit 1000`, unless the exercise requests other CPU and memory values within your limits, see [Container Resource Restrictions](/admin/production-setup/programming-exercise-adjustments#container-resource-restrictions). |
-| Time | The build timeout of the exercise, at most `build-timeout-seconds.max` (240 seconds by default). Pulling the image does not count towards it. |
+| Time | The build timeout of the exercise, at most `build-timeout-seconds.max` (240 seconds by default). The time for pulling the image is deducted from it, but only approximately: the timeout is checked in steps of 250 milliseconds, so a build that pulls the image for the first time can time out slightly before its budget is used up. |
 | Result files | Collected from the result paths of the phases after the script has finished, and parsed by Artemis. |
 
 ### Detecting that a script runs in LocalCI
@@ -77,7 +77,8 @@ therefore only affects what the **build script and the student code** can reach.
   forbids it for the test phase. A build that needs a download first and isolation afterwards has to get its dependencies another way,
   see [Dependencies and Maven configuration](#dependencies-and-maven-configuration).
 - An exercise that selects no network uses the **default network of Docker**, which allows outbound connections. There is no setting for a different default
-  for all exercises of an installation.
+  for all exercises of an installation. The exception are the builds that [Hyperion](/admin/hyperion) triggers to synchronize the test cases of an exercise. They always run with
+  the network `none` and without the environment variables of the exercise, so a dependency that is not in the image or in an offline cache cannot be downloaded there.
 - Instructors select a network per exercise, from the list in `artemis.continuous-integration.container-flags-limit.allowed-custom-networks`.
   `none` disables the network completely, and is the default entry of that list. Other entries must exist on every build agent host.
   See [Custom Docker Networks](/admin/production-setup/programming-exercise-adjustments#custom-docker-networks).
@@ -105,17 +106,19 @@ Exercises that already exist keep the image that they stored.
 ### Images from a private registry
 
 The Docker runner pulls with the credentials of the **Docker daemon connection of the build agent**. The Docker client library inside Artemis reads the `auths` entries of
-`config.json` in the Docker configuration directory of the user that runs the agent (`~/.docker`, or the directory in the environment variable `DOCKER_CONFIG`).
+`config.json` in the Docker configuration directory of the user who runs the agent (`~/.docker`, or the directory in the environment variable `DOCKER_CONFIG`).
 Log in as that user on every build agent host:
 
 ```bash
 docker login registry.example.org
 ```
 
-Three details decide whether this works:
+Four details decide whether this works:
 
-- The login must end up in `config.json` itself. Artemis does **not** run Docker credential helpers, so a `credsStore` or `credHelpers` entry (the default on Docker Desktop and some Linux packages)
-  keeps the password where Artemis cannot read it. Remove the helper from `config.json` before you log in, or write the `auths` entry yourself.
+- The login must end up in `config.json` itself, as an entry below `auths`. Artemis does **not** run Docker credential helpers, so a `credsStore` or `credHelpers` entry (the default on Docker Desktop and some Linux packages)
+  keeps the password where Artemis cannot read it. Removing the entry does not always help, because Docker can still pick an installed helper on its own. After the login, check that the registry
+  appears below `auths` with a credential, and write that entry yourself if it does not.
+- The Docker client of the build agent reads the configuration when it is created. **Restart the build agent** after you log in or rotate the credential, otherwise pulls of images that are not on the host yet can fail.
 - A build agent that runs **in a container** has its own filesystem. Mount a `config.json` into it and set `DOCKER_CONFIG` to the directory, because a login on the host does not reach the container.
 - Use a pull-only token for the registry, because the credentials are readable by anyone who can read the Docker configuration of that user.
 

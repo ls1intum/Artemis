@@ -497,7 +497,7 @@ It helps protect authentication and account management endpoints from brute-forc
 - Enforces limits for REST authentication, WebAuthn, and Git operations
 - Returns HTTP **429 Too Many Requests** with `Retry-After` header
 - Allows per-category configuration of requests per minute
-- Automatically excludes build agents from rate limiting
+- Excludes build agents that are registered with an address. An agent that clones over HTTPS without one has its own budget for clone tokens (`build-agent-clone-token-requests-per-minute`, 30 by default)
 
 
 ### Configuring the Rate Limit

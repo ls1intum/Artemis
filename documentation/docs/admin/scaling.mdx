@@ -225,19 +225,21 @@ Every build runs the same amount of work, so the way to keep the queue short is 
 
 | Priority | Which builds |
 | --- | --- |
-| 1 | Builds during an exam |
-| 2 | Builds of normal exercises, including test exams and test runs |
-| 3 | Builds of optional exercises, and builds after the due date (for example practice mode) |
+| 1 | Builds during the working period of an exam |
+| 2 | Builds of normal exercises, and of test exams and exam test runs |
+| 3 | Builds of optional exercises, and builds after the due date, which includes an exam after its working period and the practice mode |
 | 4 | Builds that an instructor triggers for a whole exercise with **Trigger All** |
 
-Courses that are marked as a test course add 5 to every priority, so their builds always wait behind real courses.
-A flood of pushes to one normal exercise therefore delays the builds of other normal exercises that are submitted after it, but never exam builds.
+Courses that are marked as a test course add 5 to every priority, so their builds wait behind the builds of real courses. This includes exams in a test course, which can end up at priority 6.
+Because the number decides first, a flood of pushes to one normal exercise delays the builds of other normal exercises that are submitted after it, and builds of a lower priority such as practice mode.
+It does not delay the builds of a regular exam in a real course during its working period.
 Builds triggered in bulk are throttled so that they cannot fill the queue, see [Bulk builds](/admin/production-setup/integrated-code-lifecycle-setup#bulk-builds).
 
 **What limits the damage.**
 
 - The authentication of git operations is [rate limited per client IP](/admin/production-setup/security#rate-limiting), in the same bucket as logins,
-  so a script that clones or pushes in a tight loop is slowed down. Build agents are excluded. The limit is configurable with `artemis.rate-limiting.authentication-requests-per-minute` (30 by default),
+  so a script that clones or pushes in a tight loop is slowed down. Build agents are excluded when they are registered with an address. An agent that clones over HTTPS without a registered address has
+  a budget of its own for its clone tokens (`artemis.rate-limiting.build-agent-clone-token-requests-per-minute`), and when it uses that up, its requests can count against the shared limit. The limit is configurable with `artemis.rate-limiting.authentication-requests-per-minute` (30 by default),
   and `artemis.rate-limiting.enabled: false` switches rate limiting off. A campus network that puts many students behind one address shares this limit:
   if a whole lecture hall pushes at a deadline, raise it, or students see HTTP 429 errors that have nothing to do with the build queue.
 - The number of **concurrent builds per agent** and the build timeout bound how much work a build can take. A student program that never ends occupies a slot only until the timeout, 240 seconds at most by default.
@@ -251,6 +253,7 @@ Builds triggered in bulk are throttled so that they cannot fill the queue, see [
 and lower the build timeout of exercises that do not need the maximum, because a short timeout turns slots over faster.
 Tell students that a result for their last push can take a while at the deadline, and that pushing again does not make it faster.
 
+## What to scale when
 
 When an installation already exists and something is slow, match the symptom to the resource rather than
 adding capacity everywhere. The middle column is what to check before spending money.

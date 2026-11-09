@@ -117,7 +117,18 @@ If the cluster has a node autoscaler, it can add build nodes when build Pods wai
 
 1. Back up the database and the shared storage.
 2. Pause the build agents on the Build Agents page and wait until their builds have finished.
-3. Update with a single core node and no build agents:
+3. Stop all core nodes and build agents, and wait until they are gone. Otherwise the new leader can migrate the database while old members still serve requests against the old schema.
+   The StatefulSets are named `<release>-leader`, `<release>-member` (only with more than one core node) and `<release>-build-agent`:
+
+   ```bash
+   kubectl -n artemis scale statefulset artemis-build-agent --replicas=0
+   kubectl -n artemis scale statefulset artemis-member --replicas=0
+   kubectl -n artemis scale statefulset artemis-leader --replicas=0
+   kubectl -n artemis get pods
+   ```
+
+   Repeat the last command until no core node and no build agent pod is left. PostgreSQL, the registry and the broker keep running.
+4. Update with a single core node and no build agents:
 
    ```bash
    helm upgrade artemis ./deployment/helm/artemis --namespace artemis \
@@ -127,8 +138,8 @@ If the cluster has a node autoscaler, it can add build nodes when build Pods wai
    ```
 
    The leader starts alone and applies the Liquibase migrations. The command returns when it is ready.
-4. Run the same command with your real values, without the two `--set` options. The members and the build agents start with the new version.
-5. Resume the build agents, check the Build Agents page, and trigger a build.
+5. Run the same command with your real values, without the two `--set` options. The members and the build agents start with the new version.
+6. The new build agents start unpaused and take builds as soon as they are ready, so there is nothing to resume. Check the Build Agents page for the number of agents and their status, and trigger a build.
 
 Take the image tags from the values file and use versioned tags, for the Artemis image and for the helper image. For a release without database migrations, a plain `helm upgrade` is enough.
 Rolling back an Artemis version after a migration needs the backup of step 1, see the warning in [Deploying a New Version](/admin/production-setup/multiple-artemis-instances#deploying-a-new-version).
