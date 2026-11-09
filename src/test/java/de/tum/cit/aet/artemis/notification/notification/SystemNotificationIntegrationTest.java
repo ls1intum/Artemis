@@ -239,6 +239,28 @@ class SystemNotificationIntegrationTest extends AbstractSpringIntegrationIndepen
         assertThat(systemNotificationRepo.findById(systemNotification.getId())).get().extracting(SystemNotification::getText).isEqualTo(originalText);
     }
 
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
+    void testCreateSystemNotification_titleTooLong_badRequest() throws Exception {
+        long countBefore = systemNotificationRepo.count();
+        SystemNotificationUpdateDTO dto = new SystemNotificationUpdateDTO(null, "a".repeat(51), "text", ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(1),
+                SystemNotificationType.WARNING);
+        request.post("/api/notification/admin/system-notifications", dto, HttpStatus.BAD_REQUEST);
+        assertThat(systemNotificationRepo.count()).isEqualTo(countBefore);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
+    void testUpdateSystemNotification_titleTooLong_badRequest() throws Exception {
+        String originalTitle = "original title";
+        systemNotification.setTitle(originalTitle);
+        systemNotificationRepo.save(systemNotification);
+        SystemNotificationUpdateDTO dto = new SystemNotificationUpdateDTO(systemNotification.getId(), "a".repeat(51), "text", ZonedDateTime.now().minusDays(1),
+                ZonedDateTime.now().plusDays(1), SystemNotificationType.WARNING);
+        request.put("/api/notification/admin/system-notifications", dto, HttpStatus.BAD_REQUEST);
+        assertThat(systemNotificationRepo.findById(systemNotification.getId())).get().extracting(SystemNotification::getTitle).isEqualTo(originalTitle);
+    }
+
     /**
      * Generates a SystemNotification with the given arguments.
      *

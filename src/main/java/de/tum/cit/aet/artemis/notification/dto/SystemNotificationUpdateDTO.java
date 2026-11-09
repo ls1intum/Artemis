@@ -18,8 +18,8 @@ import de.tum.cit.aet.artemis.notification.domain.notification.SystemNotificatio
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record SystemNotificationUpdateDTO(@Nullable Long id, @Nullable String title, @Size(max = 2000) @Nullable String text, @Nullable ZonedDateTime notificationDate,
-        @Nullable ZonedDateTime expireDate, @Nullable SystemNotificationType type) {
+public record SystemNotificationUpdateDTO(@Nullable Long id, @Size(max = 50) @Nullable String title, @Size(max = 2000) @Nullable String text,
+        @Nullable ZonedDateTime notificationDate, @Nullable ZonedDateTime expireDate, @Nullable SystemNotificationType type) {
 
     /**
      * Creates a SystemNotificationUpdateDTO from the given SystemNotification domain object.
