@@ -1,3 +1,4 @@
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
 import { isExamExerciseRoute } from 'app/exercise/util/exercise-detail-route-context';
 import { Component, OnDestroy, OnInit, inject, input, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -24,7 +25,18 @@ import { quizCountdown } from 'app/quiz/shared/util/quiz-time.util';
     templateUrl: './quiz-statistics-footer.component.html',
     providers: [QuizStatisticUtil, ShortAnswerQuestionUtil],
     styleUrls: ['./quiz-statistics-footer.component.scss', '../../../shared/quiz.scss'],
-    imports: [NgbDropdown, NgbDropdownToggle, FaIconComponent, TranslateDirective, NgbDropdownMenu, RouterLink, NgClass, JhiConnectionStatusComponent, TruncatePipe],
+    imports: [
+        TumAetUiButtonDirective,
+        NgbDropdown,
+        NgbDropdownToggle,
+        FaIconComponent,
+        TranslateDirective,
+        NgbDropdownMenu,
+        RouterLink,
+        NgClass,
+        JhiConnectionStatusComponent,
+        TruncatePipe,
+    ],
 })
 export class QuizStatisticsFooterComponent implements OnInit, OnDestroy {
     private route = inject(ActivatedRoute);

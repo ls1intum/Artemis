@@ -2,7 +2,7 @@
 id: after-the-exam
 title: After the Exam
 sidebar_label: After the Exam
-last_reviewed: 2026-11-03
+last_reviewed: 2026-11-06
 ---
 
 import Callout from "../../../src/components/Callout/Callout";
@@ -17,6 +17,8 @@ import examExampleSolutionModeling from '../assets/exams/exam_example_solution_m
 import studentGrade from '../assets/exams/student_grade.png';
 import studentGradeWithBonus from '../assets/exams/student_grade_with_bonus.png';
 import studentGradeKey from '../assets/exams/student_grade_key.png';
+
+import testExamPartialResult from '../assets/exams/test_exam_partial_result.png';
 
 ## Your Summary
 
@@ -52,6 +54,18 @@ hand — then that review is open to complaint like any other.
 A later **Export PDF** includes your score, your complaints and the responses to them.
 
 <TumLiveVideo src="53405" title="Participating in Exams in Artemis" />
+
+## Results in Test Exams
+
+After submitting a test exam, the summary shows the points earned on its automatically assessed exercises. If a grading key is configured, it also shows a theoretical grade. Each attempt uses its own submissions.
+
+If a programming submission is still being assessed, the summary marks it as pending and waits to show the total points and theoretical grade. The summary updates automatically when the assessment finishes.
+
+When a test exam includes manually assessed exercises, the overview identifies the result as partial: those exercises contribute neither earned points nor maximum points to this calculation. Their answers remain visible for review. A test exam containing only manually assessed exercises has no automatic score or theoretical grade.
+
+When a test exam supplies a bonus, the newest of your submitted attempts determines that bonus. A newer unfinished attempt and instructor test runs do not replace it. While the source assessment is pending, the target exam shows your points and grade before bonus and refreshes the final bonus grade automatically when the source results are ready.
+
+<Image src={testExamPartialResult} alt="Test exam result with 8.4 of 10.5 automatic points, a theoretical grade, and ungraded manual exercises" size={ImageSize.large} caption="A partial test exam result with an applied bonus" />
 
 ## AI Feedback in Test Exams
 

@@ -241,6 +241,21 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
             """)
     long countTestRunsByExamId(@Param("examId") Long examId);
 
+    /**
+     * Counts the student exams of real exams (no test runs) that contain at least one of the given exercises.
+     *
+     * @param exerciseIds the ids of the exercises
+     * @return the number of student exams
+     */
+    @Query("""
+            SELECT COUNT(DISTINCT se)
+            FROM StudentExam se
+                JOIN se.exercises ex
+            WHERE ex.id IN :exerciseIds
+                AND (se.testRun IS NULL OR se.testRun = FALSE)
+            """)
+    long countRealStudentExamsContainingExercises(@Param("exerciseIds") Collection<Long> exerciseIds);
+
     @Query("""
             SELECT COUNT(se)
             FROM StudentExam se
@@ -348,27 +363,6 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
             ORDER BY studentExam.id, exercise.id
             """)
     List<StudentExamExerciseStartDTO> findExerciseStartDataByExamId(@Param("examId") long examId);
-
-    /**
-     * The same rows as {@link #findExerciseStartDataByExamId}, restricted to the given student exams. Ids that do not
-     * belong to the exam, and ids of test runs, simply do not match, so callers cannot prepare exercises across exams
-     * or interfere with a test run.
-     *
-     * @param examId         the id of the exam
-     * @param studentExamIds the ids of the student exams to read
-     * @return one row per exercise of every requested student exam that belongs to the exam
-     */
-    @Query("""
-            SELECT new de.tum.cit.aet.artemis.exam.dto.StudentExamExerciseStartDTO(studentExam.id, student.id, student.login, exercise.id)
-            FROM StudentExam studentExam
-                JOIN studentExam.user student
-                JOIN studentExam.exercises exercise
-            WHERE studentExam.exam.id = :examId
-                AND studentExam.id IN :studentExamIds
-                AND (studentExam.testRun IS NULL OR studentExam.testRun = FALSE)
-            ORDER BY studentExam.id, exercise.id
-            """)
-    List<StudentExamExerciseStartDTO> findExerciseStartDataByExamIdAndStudentExamIds(@Param("examId") long examId, @Param("studentExamIds") Collection<Long> studentExamIds);
 
     Optional<StudentExam> findFirstByExamIdAndUserIdOrderByCreatedDateDesc(long examId, long userId);
 

@@ -5,7 +5,12 @@
     @if (searchedCourseCompetencies().resultsOnPage?.length) {
         <jhi-import-competencies-table [content]="searchedCourseCompetencies()" [search]="search" (searchChange)="searchChange($event)">
             <ng-template let-competency="competency">
-                <jhi-button title="entity.action.select" (onClick)="selectCompetency(competency)" [disabled]="disabledIds().includes(competency.id!)" />
+                <jhi-button
+                    [btnType]="ButtonType.SECONDARY"
+                    title="entity.action.select"
+                    (onClick)="selectCompetency(competency)"
+                    [disabled]="disabledIds().includes(competency.id!)"
+                />
             </ng-template>
         </jhi-import-competencies-table>
     } @else {
@@ -42,6 +47,7 @@
         <div>
             <jhi-button id="cancelButton" [btnType]="ButtonType.SECONDARY" [title]="'entity.action.cancel'" [icon]="faBan" (onClick)="onCancel()" />
             <jhi-button
+                [btnType]="ButtonType.SECONDARY"
                 id="importButton"
                 [title]="'entity.action.import'"
                 [icon]="faFileImport"

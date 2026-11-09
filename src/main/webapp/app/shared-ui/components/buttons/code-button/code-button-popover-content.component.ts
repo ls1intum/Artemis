@@ -1,7 +1,7 @@
 import { Component, SecurityContext, computed, inject, input, linkedSignal, model, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faCaretDown, faCheck, faCodeBranch, faExternalLink, faLaptopCode, faPencilAlt, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
+import { faCaretDown, faCheck, faCodeBranch, faExternalLink, faLaptopCode, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { faCopy } from '@fortawesome/free-regular-svg-icons';
 import {
     TumAetUiButtonDirective,
@@ -21,8 +21,6 @@ import { Ide } from 'app/account/user/settings/exercises/ide-preferences/ide.mod
 import { ExternalCloningService } from 'app/programming/shared/services/external-cloning.service';
 import { TheiaService } from 'app/programming/shared/services/theia.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { FeatureToggleLinkDirective } from 'app/foundation/feature-toggle/feature-toggle-link.directive';
-import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
 
 export type NonEmptyArray<T> = readonly [T, ...T[]];
 export type SshKeyState = { status: 'missing' } | { status: 'configured'; hasExpiredKeys: boolean };
@@ -39,7 +37,6 @@ export type TheiaLinkData = { theiaPortalURL: string; theiaImage: string; reposi
     templateUrl: './code-button-popover-content.component.html',
     imports: [
         TranslateDirective,
-        FeatureToggleLinkDirective,
         FaIconComponent,
         TumAetUiButtonDirective,
         TumAetUiMenuComponent,
@@ -66,13 +63,10 @@ export class CodeButtonPopoverContentComponent {
     protected readonly faExternalLink = faExternalLink;
     protected readonly faLaptopCode = faLaptopCode;
     protected readonly faQuestionCircle = faQuestionCircle;
-    protected readonly faPencilAlt = faPencilAlt;
-    protected readonly FeatureToggle = FeatureToggle;
     protected readonly RepositoryAuthenticationMethod = RepositoryAuthenticationMethod;
     protected readonly sshSettingsUrl = `${window.location.origin}/user-settings/credentials`;
 
     readonly repositoryViewLink = input.required<(string | number)[]>();
-    readonly repositoryEditorLink = input<(string | number)[]>();
     readonly authenticationMethodData = input.required<NonEmptyArray<AuthenticationMethodData>>();
     readonly preferredIde = input.required<Ide>();
     readonly theiaLinkData = input<TheiaLinkData>();

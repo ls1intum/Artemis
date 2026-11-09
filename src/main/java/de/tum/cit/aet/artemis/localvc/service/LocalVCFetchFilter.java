@@ -30,10 +30,13 @@ public class LocalVCFetchFilter extends OncePerRequestFilter {
 
     private final LocalVCServletService localVCServletService;
 
+    private final LocalVCAccessLogRecorderService accessLogRecorder;
+
     private final LocalVCUsageTrackingService usageTrackingService;
 
-    public LocalVCFetchFilter(LocalVCServletService localVCServletService, LocalVCUsageTrackingService usageTrackingService) {
+    public LocalVCFetchFilter(LocalVCServletService localVCServletService, LocalVCAccessLogRecorderService accessLogRecorder, LocalVCUsageTrackingService usageTrackingService) {
         this.localVCServletService = localVCServletService;
+        this.accessLogRecorder = accessLogRecorder;
         this.usageTrackingService = usageTrackingService;
     }
 
@@ -73,7 +76,7 @@ public class LocalVCFetchFilter extends OncePerRequestFilter {
         catch (AuthenticationException e) {
             // intercept failed authentication to log it in the VCS access log
             log.warn("LocalVC fetch authentication failed for {} ({}: {})", servletRequest.getRequestURI(), e.getClass().getSimpleName(), e.getMessage());
-            localVCServletService.createVCSAccessLogForFailedAuthenticationAttempt(servletRequest);
+            accessLogRecorder.createVCSAccessLogForFailedAuthenticationAttempt(servletRequest);
             throw e;
         }
 
