@@ -17,6 +17,8 @@ import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import de.tum.cit.aet.artemis.aiworker.dto.SandboxExecResultDTO;
 import de.tum.cit.aet.artemis.hyperion.protocol.GenerationBuildTool;
@@ -247,6 +249,22 @@ class StageChecksTest {
         sandbox.spec += "\n" + "Additional contract explanation.\n".repeat(2_000);
         assertThat(sandbox.spec.length()).isGreaterThan(50_000);
 
+        assertThat(check(GenerationStage.SPEC).passed()).isTrue();
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "given", "stubbed" })
+    void qualifiedSuppliedAndStubbedRowsFailAtTheNamingGateBeforePublicApiParsing(String status) {
+        String validSpec = specWithDesign("| Learner | computes | stubbed |\n| Calculator | support | " + status + " |\n");
+        sandbox.spec = validSpec.replace("| Calculator |", "| de.test.Calculator |");
+
+        StageCheckResult rejected = check(GenerationStage.SPEC);
+
+        assertThat(rejected.passed()).isFalse();
+        assertThat(rejected.specificationCheck()).isEqualTo(StageCheckResult.SpecificationCheck.TYPE_NAMES);
+        assertThat(approvedSpecs.approved("s")).isEmpty();
+
+        sandbox.spec = validSpec;
         assertThat(check(GenerationStage.SPEC).passed()).isTrue();
     }
 

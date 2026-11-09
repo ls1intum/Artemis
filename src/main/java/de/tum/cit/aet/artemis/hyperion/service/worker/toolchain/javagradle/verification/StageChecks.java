@@ -235,13 +235,12 @@ public class StageChecks {
             return StageCheckResult.failedSpecification(StageCheckResult.SpecificationCheck.UNIQUE_TYPES, "The Design table declares the same type more than once: "
                     + duplicateDesignTypes + ". Keep one authoritative row per type so template ownership cannot contradict itself.");
         }
-        List<String> unenforceableCreatedTypes = designRows.stream().filter(row -> "student-creates".equals(row.status())).map(DesignRow::type)
-                .filter(type -> !isEnforceableTypeName(type)).toList();
-        if (!unenforceableCreatedTypes.isEmpty()) {
+        List<String> invalidDesignTypes = designRows.stream().map(DesignRow::type).filter(type -> !isEnforceableTypeName(type)).toList();
+        if (!invalidDesignTypes.isEmpty()) {
             return StageCheckResult.failedSpecification(StageCheckResult.SpecificationCheck.TYPE_NAMES,
-                    "These '## Design' rows are marked 'student-creates' but their Type cell is not a bare type name the later gates can look for: " + unenforceableCreatedTypes
-                            + ". Write one bare type name per row (no generics, package prefix, emphasis, parenthetical, or second type in the same cell) — "
-                            + "otherwise nothing can enforce that the template omits it.");
+                    "These '## Design' Type cells are not exact simple Java type names: " + invalidDesignTypes
+                            + ". Use one bare name per row for given, stubbed, and student-created types (no generics, package prefix, emphasis, parenthetical, or second type). "
+                            + "Keep package declarations in the Java Public API blocks; correct the Design cells, not the Java type declarations.");
         }
         Set<String> studentCreatedTypes = designRows.stream().filter(row -> "student-creates".equals(row.status())).map(DesignRow::type).filter(StageChecks::isEnforceableTypeName)
                 .collect(Collectors.toSet());

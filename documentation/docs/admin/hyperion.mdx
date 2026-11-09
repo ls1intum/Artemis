@@ -382,6 +382,11 @@ Rules, Worked Examples and Public API, without the reference implementation or d
 notes. Discrimination alone does not justify an extra requirement. Rejected assertions are
 not added; unavailable authority remains an explicit review finding across later repairs.
 
+The SPEC gate checks simple Java type names in every Design row before matching the
+Public API, including supplied and stubbed types. Package declarations belong in the
+Java API blocks. A qualified Design name is reported as a naming error so the author
+can correct that metadata without rewriting a valid Java declaration.
+
 An invalid grading plan is reported separately from starter-code assessment. Until the
 plan can be parsed, the verifier keeps the build results and reports starter-policy
 assessment as unavailable. Expected missing learner-created declarations do not justify
