@@ -150,7 +150,8 @@ buildAgents:
   plus the budgets for the pod start, the result collection and the grace period. A retry can therefore run next to it and use extra build capacity for that time. A controller that starts again under the same name
   removes the Jobs it no longer tracks. The slow scale-down keeps all of this rare, but it cannot rule it out.
 - **Paused controllers.** A paused controller counts as a replica but takes no builds, and the scaler adds no capacity for it. Pausing is a maintenance action, and a new controller would start unpaused and override it.
-  Builds that are queued while all controllers are paused wait until a controller is resumed.
+  Builds queued while all controllers are paused can start on a new controller without a resume action: when the queue raises the target above the current replica count, KEDA starts a controller, and it starts unpaused.
+  With a paused controller that stays at the current count, the builds wait until a controller is resumed.
 - **Capacity.** `maxReplicas × concurrentBuildsPerAgent` builds must fit on the build nodes, otherwise the additional build Pods wait for resources. A cluster node autoscaler can add the nodes when Pods wait,
   but it does not change the number of controllers.
 

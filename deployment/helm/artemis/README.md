@@ -128,5 +128,6 @@ has reconciled it. The controllers above the first one are removed, and their ru
 their builds have finished, as in the update procedure of the documentation, and set `minReplicas` to the capacity you want to keep.
 
 **Paused controllers.** A paused controller counts as a replica but takes no builds, and the scaler adds no capacity for it. Pausing is a maintenance action, and a new controller would start unpaused
-and override it. Builds that are queued while all controllers are paused wait until a controller is resumed.
+and override it. Builds queued while all controllers are paused can start on a new controller without a resume action: when the queue raises the target above the current replica count,
+KEDA starts a controller, and it starts unpaused.
 All values are documented in `values.yaml`.
