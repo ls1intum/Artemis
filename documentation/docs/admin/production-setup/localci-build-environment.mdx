@@ -183,8 +183,18 @@ What is **not** adjustable is the frame around the phases: one container per bui
 ### Which template a new exercise gets
 
 The default phases are chosen by language and project type, and by whether static code analysis and sequential test runs are on.
-For Java without a project type, Artemis assumes plain Maven. The file name is the project type with `_static` and `_sequential` appended for these options, for example
-`templates/phases/java/plain_maven_static.yaml`. The same name is used for the other languages in `templates/phases/<language>`.
+For Java without a project type, Artemis assumes plain Maven. The base of the file name comes from the project type, and `_static` and `_sequential` are appended for these options,
+for example `templates/phases/java/plain_maven_static.yaml`. The files of every language are in `templates/phases/<language>`. The base name is not always the name of the project type:
+
+| Project type | Base of the file name |
+| --- | --- |
+| `MAVEN_BLACKBOX` | `plain_maven_blackbox` |
+| `MAVEN_MAVEN` (Maven with an exemplary dependency) | `plain_maven`, because the dependency only changes the exercise and solution repositories |
+| `GRADLE_GRADLE` (Gradle with an exemplary dependency) | `plain_gradle` |
+| Any other project type | The name of the project type in lower case, for example `plain_gradle` or `gcc` |
+| No project type | `default` |
+
+An override with a base name that Artemis does not select, such as `maven_maven.yaml`, is never used. Take the name from the files that already exist for the language.
 Templates are read when the core node starts, so restart it after you change one. The change affects exercises that are created afterwards.
 A template file is a list of phases, for example:
 
@@ -202,7 +212,7 @@ A template file is a list of phases, for example:
 Build logs are kept per build job, up to `artemis.continuous-integration.build-logs.max-lines-per-job` lines (10,000 by default),
 each at most `max-chars-per-line` characters (1,024 by default, which is also the maximum of the Docker client).
 Both are set in `application-buildagent.yml`, see [Build Log Configuration](/admin/production-setup/programming-exercise-adjustments#build-log-configuration).
-The **first** lines of a build are kept and everything after the limit is dropped, with the note `Truncated build logs...`. A longer line is cut after `max-chars-per-line` characters.
+The **first** lines of a build are kept and everything after the limit is dropped **silently**, without a note. A log that ends early therefore does not mean that the build stopped. A longer line is cut after `max-chars-per-line` characters.
 The limits exist to bound memory on the build agent, so raise `max-lines-per-job` only if exercises with very verbose output need it, and then watch the memory of the agents.
 The test results themselves do not come from the log but from the result files, so a truncated log does not lose feedback.
 

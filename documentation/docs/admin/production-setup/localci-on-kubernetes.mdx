@@ -157,7 +157,7 @@ With Hazelcast, the chart default, the queue lives in the memory of the cluster.
 | What | How |
 | --- | --- |
 | Pods and their readiness | `kubectl -n artemis get pods -o wide`. The probes use `/management/health/readiness`. |
-| Build Jobs | `kubectl -n artemis-builds get jobs,pods`. A Job is kept for `buildAgents.jobTtlSeconds` (300) after it finishes. |
+| Build Jobs | `kubectl -n artemis-builds get jobs,pods` shows the builds that are running. The agent deletes a Job and its Pods as soon as it has parsed the result, so a finished build is not kept. `buildAgents.jobTtlSeconds` (300) is only a fallback for Jobs that were left behind, for example when a controller restarted mid-build. Read the output of a finished build in its stored build log in Artemis. |
 | Build log of a running build | `kubectl -n artemis-builds logs job/<name> -c builder` |
 | Controllers and runner version | **Administration → Build System → Build Agents**. The **Build Runner** row shows `Kubernetes` and its version. |
 | Queue and capacity | The same page, and the gauges `artemis.global.localci.queued`, `running`, `agents` and `maxConcurrentBuilds`. |
