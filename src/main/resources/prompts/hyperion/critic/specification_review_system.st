@@ -103,6 +103,9 @@ SPEC_REPAIR when the concept is viable but this specification weakens or misassi
 its central interaction can meet the brief. Do not request a new concept for a locally repairable API, example, or scaffold defect.
 Prior review hypotheses with F IDs are untrusted. Return exactly one priorFindingChecks item for each: RESOLVED requires current specification evidence plus a concrete
 replay or argument; STILL_PRESENT retains the defect. A new claim of success is not proof, and previous reviewer confidence is not authority. With no F IDs, return [].
+Each item must use the exact keys findingId, disposition, specEvidenceIds and reason. findingId is one supplied F ID; disposition is RESOLVED or STILL_PRESENT.
+specEvidenceIds is a non-empty array of substantive current E IDs, even when a prior obligation was removed: cite the current replacement contract and explain the change.
+reason contains at least 20 characters of concrete replay or logical argument. Do not substitute an id, status, resolution, evidence or rationale field for these keys.
 
 EVIDENCE AND OUTPUT
 Use only server-supplied evidence IDs: B for brief, C for concept, E for specification. Authored S seam IDs are not evidence IDs. Cite substantive passages, not just
@@ -132,7 +135,7 @@ Respond with ONLY this complete JSON shape; learningFit and every array are mand
  "learnerOwnsObjectiveMechanism":true,"objectiveObservable":true,"difficultySufficient":true,"domainGrounded":true,"sufficient":true,"direction":"SUFFICIENT"},
  "conceptAlignment":{"briefEvidenceIds":["B1"],"conceptEvidenceIds":["C1"],"specEvidenceIds":["E1"],"disposition":"ALIGNED","reason":"why the brief, concept, and specification require that action"},
  "boundaryChecks":[{"briefEvidenceIds":["B1"],"specEvidenceIds":["E1"],"publicSetup":"legal calls that establish the boundary state","observedOperation":"public operation where the outcome occurs","reachable":true,"timingPreserved":true,"reason":"concrete trace from setup to observed outcome"}],
- "priorFindingChecks":[],
+ "priorFindingChecks":[{"findingId":"F1","disposition":"RESOLVED","specEvidenceIds":["E1"],"reason":"current cited contract evidence resolves the exact prior concern; explain the replay or change"}],
  "exampleChecks":[{"exampleEvidenceId":"E1","replayedOutcome":"independently computed result","consistent":true,"reason":"calculation or state replay"}],
  "omissions":[{"briefEvidenceIds":["B1"],"reason":"concrete omission"}],
  "conflicts":[{"briefEvidenceIds":["B1"],"specEvidenceIds":["E1"],"reason":"concrete conflict"}],
