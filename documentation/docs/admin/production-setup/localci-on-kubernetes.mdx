@@ -162,17 +162,24 @@ buildAgents:
    ```
 
    Skip the member command when there is no member StatefulSet. Repeat the last command until no core node and no build agent pod is left. PostgreSQL, the registry and the broker keep running.
+
+   With [automatic scaling](#automatically), KEDA would start the build agents again. Instead of scaling the build agent StatefulSet, pin it to zero through the `ScaledObject`, which has the same name:
+
+   ```bash
+   kubectl -n <namespace> annotate scaledobject <name>-build-agent autoscaling.keda.sh/paused-replicas="0"
+   ```
 4. Update the same release with a single core node and no build agents:
 
    ```bash
    helm upgrade <release> ./deployment/helm/artemis --namespace <namespace> \
      --values my-values.yaml \
      --set artemis.replicaCount=1 --set buildAgents.replicaCount=0 \
+     --set buildAgents.autoscaling.enabled=false \
      --wait --timeout 25m
    ```
 
-   The leader starts alone and applies the Liquibase migrations. The command returns when it is ready.
-5. Run the same command with the same `my-values.yaml`, without the two `--set` options. This restores the intended replica counts, and the members and the build agents start with the new version.
+   The leader starts alone and applies the Liquibase migrations. The command returns when it is ready. The `buildAgents.autoscaling.enabled` option removes the `ScaledObject` for this step and is only needed with automatic scaling.
+5. Run the same command with the same `my-values.yaml`, without the `--set` options. This restores the intended replica counts, and the members and the build agents start with the new version. With automatic scaling the `ScaledObject` is created again.
 6. The new build agents start unpaused and take builds as soon as they are ready, so there is nothing to resume. Check the Build Agents page for the number of agents and their status, and trigger a build.
 
 Take the image tags from the values file and use versioned tags, for the Artemis image and for the helper image. For a release without database migrations, a plain `helm upgrade` is enough.
