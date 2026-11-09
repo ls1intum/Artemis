@@ -5,6 +5,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import jakarta.servlet.FilterChain;
@@ -155,6 +156,115 @@ class OIDCRateLimitFilterTest {
 
         verify(chain).doFilter(request, response);
         assertThat(response.getStatus()).isEqualTo(200);
+    }
+
+    @Test
+    void percentEncodedOidcAuthorizationPathIsRateLimited() throws Exception {
+        var request = new MockHttpServletRequest("GET", "/oauth2/%61uthorization/oidc");
+        request.setRemoteAddr("invalid-ip-format-string");
+        var response = new MockHttpServletResponse();
+        FilterChain chain = mock(FilterChain.class);
+
+        filter.doFilter(request, response, chain);
+
+        assertThat(response.getStatus()).isEqualTo(400);
+        verifyNoInteractions(chain);
+    }
+
+    @Test
+    void contextPathIsRemovedBeforeMatchingOidcAuthorization() throws Exception {
+        var request = new MockHttpServletRequest("GET", "/artemis/oauth2/authorization/oidc");
+        request.setContextPath("/artemis");
+        request.setRemoteAddr("invalid-ip-format-string");
+        var response = new MockHttpServletResponse();
+        FilterChain chain = mock(FilterChain.class);
+
+        filter.doFilter(request, response, chain);
+
+        assertThat(response.getStatus()).isEqualTo(400);
+        verifyNoInteractions(chain);
+    }
+
+    @Test
+    void malformedPercentEncodingFallsBackToRawUri() throws Exception {
+        var request = new MockHttpServletRequest("GET", "/oauth2/authorization/%ZZ");
+        request.setRemoteAddr("invalid-ip-format-string");
+        var response = new MockHttpServletResponse();
+        FilterChain chain = mock(FilterChain.class);
+
+        filter.doFilter(request, response, chain);
+
+        // URL decoding fails, but the raw URI still matches the OIDC authorization path.
+        assertThat(response.getStatus()).isEqualTo(400);
+        verifyNoInteractions(chain);
+    }
+
+    @Test
+    void nullRequestUriDoesNotTriggerRateLimiting() throws Exception {
+        var request = new MockHttpServletRequest("GET", "/oauth2/authorization/oidc");
+        request.setRequestURI(null);
+        request.setRemoteAddr("invalid-ip-format-string");
+        var response = new MockHttpServletResponse();
+        FilterChain chain = mock(FilterChain.class);
+
+        filter.doFilter(request, response, chain);
+
+        assertThat(response.getStatus()).isEqualTo(200);
+        verify(chain).doFilter(request, response);
+    }
+
+    @Test
+    void nullOrBlankRemoteAddressReturns400() throws Exception {
+        for (String remoteAddr : new String[] { null, "", "   " }) {
+            var request = request(remoteAddr);
+            var response = new MockHttpServletResponse();
+            FilterChain chain = mock(FilterChain.class);
+
+            filter.doFilter(request, response, chain);
+
+            assertThat(response.getStatus()).isEqualTo(400);
+            verifyNoInteractions(chain);
+        }
+    }
+
+    @Test
+    void bracketedIpv6WithPortIsAccepted() throws Exception {
+        var request = request("[2001:db8::1]:54321");
+        var response = new MockHttpServletResponse();
+        FilterChain chain = mock(FilterChain.class);
+
+        filter.doFilter(request, response, chain);
+
+        assertThat(response.getStatus()).isEqualTo(200);
+        verify(chain).doFilter(request, response);
+    }
+
+    @Test
+    void plainIpv6AddressIsAccepted() throws Exception {
+        var request = request("2001:db8::2");
+        var response = new MockHttpServletResponse();
+        FilterChain chain = mock(FilterChain.class);
+
+        filter.doFilter(request, response, chain);
+
+        assertThat(response.getStatus()).isEqualTo(200);
+        verify(chain).doFilter(request, response);
+    }
+
+    @Test
+    void ipv4MappedIpv6UsesTheSameBucketAsIpv4() throws Exception {
+        var first = request("::ffff:192.168.1.109");
+        var second = request("192.168.1.109");
+        var firstResponse = new MockHttpServletResponse();
+        var secondResponse = new MockHttpServletResponse();
+        FilterChain chain = mock(FilterChain.class);
+
+        filter.doFilter(first, firstResponse, chain);
+        filter.doFilter(second, secondResponse, chain);
+
+        assertThat(firstResponse.getStatus()).isEqualTo(200);
+        assertThat(secondResponse.getStatus()).isEqualTo(429);
+        verify(chain).doFilter(first, firstResponse);
     }
 
     private void assertBypassesInvalidAddress() throws Exception {
