@@ -14,6 +14,7 @@ import org.springframework.util.AntPathMatcher;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import de.tum.cit.aet.artemis.admin.service.RateLimitService;
+import de.tum.cit.aet.artemis.core.config.RateLimitingProperties;
 import de.tum.cit.aet.artemis.core.exception.RateLimitExceededException;
 import de.tum.cit.aet.artemis.core.security.RateLimitType;
 import inet.ipaddr.IPAddress;
@@ -29,13 +30,17 @@ public class OIDCRateLimitFilter extends OncePerRequestFilter {
 
     private final RateLimitService rateLimitService;
 
+    private final RateLimitingProperties rateLimitingProperties;
+
     /**
      * Instantiates a new OIDC rate limit filter.
      *
-     * @param rateLimitService the rate limit service used to check budgets and resolve client addresses
+     * @param rateLimitService       the rate limit service used to check budgets
+     * @param rateLimitingProperties the rate limiting properties containing feature toggles
      */
-    public OIDCRateLimitFilter(RateLimitService rateLimitService) {
+    public OIDCRateLimitFilter(RateLimitService rateLimitService, RateLimitingProperties rateLimitingProperties) {
         this.rateLimitService = rateLimitService;
+        this.rateLimitingProperties = rateLimitingProperties;
     }
 
     @Override
@@ -59,20 +64,23 @@ public class OIDCRateLimitFilter extends OncePerRequestFilter {
 
         // Filter should only be triggered for /oauth2/authorization/** requests
         if (path != null && PATH_MATCHER.match("/oauth2/authorization/**", path)) {
+            // Skip address resolution and enforcement entirely if rate limiting is disabled
+            if (!rateLimitingProperties.isEnabled()) {
+                filterChain.doFilter(request, response);
+                return;
+            }
+
             IPAddress clientId = null;
 
-            clientId = rateLimitService.resolveClientId();
-            // Fallback to remote address
-            if (clientId == null && request != null && request.getRemoteAddr() != null && !request.getRemoteAddr().isBlank()) {
+            // Resolve the client address strictly through the trusted proxy boundary of the servlet container (remoteAddr)
+            if (request != null && request.getRemoteAddr() != null && !request.getRemoteAddr().isBlank()) {
                 clientId = parseIpWithPort(request.getRemoteAddr().trim());
+                if (clientId != null && clientId.isIPv4Convertible()) {
+                    clientId = clientId.toIPv4();
+                }
             }
 
-            // IPv4-mapped IPv6 address normalization
-            if (clientId != null && clientId.isIPv4Convertible()) {
-                clientId = clientId.toIPv4();
-            }
-
-            // Otherwise, reject with bad request
+            // If clientId cannot be resolved, reject with Bad Request
             if (clientId == null) {
                 response.setStatus(HttpStatus.BAD_REQUEST.value());
                 response.getWriter().write("Unable to resolve valid client IP address.");
