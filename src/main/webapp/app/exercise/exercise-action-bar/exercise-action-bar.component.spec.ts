@@ -84,6 +84,11 @@ describe('ExerciseActionBarComponent', () => {
     describe('disabled tooltip', () => {
         const tooltipOf = () => fixture.debugElement.query(By.css('a[data-testid="exercise-action-edit"]')).injector.get(TumAetUiTooltipDirective);
         const tooltipTextOf = () => tooltipOf().content();
+        /** The text of the permanent description the element points to, or undefined without one. */
+        const descriptionOf = (element: HTMLElement) => {
+            const id = element.getAttribute('aria-describedby');
+            return id ? (fixture.nativeElement.querySelector(`#${id}`)?.textContent ?? undefined) : undefined;
+        };
 
         it('explains a disabled inline action and otherwise names it', () => {
             const action: ActionItem = { ...buildActions(['edit'])[0], disabledTooltip: 'tooltip.key' };
@@ -91,18 +96,21 @@ describe('ExerciseActionBarComponent', () => {
             fixture.componentRef.setInput('items', [{ ...action, disabled: true }]);
             fixture.detectChanges();
             expect(tooltipTextOf()).toBe('tooltip.key');
-            // The reason is new information, so it describes the action.
-            expect(tooltipOf().describesHost()).toBe(true);
+            // The reason stays available to screen readers without the tooltip, which only exists while shown.
+            const link: HTMLElement = fixture.nativeElement.querySelector('[data-testid="exercise-action-edit"]');
+            expect(descriptionOf(link)).toBe('tooltip.key');
+            expect(tooltipOf().describesHost()).toBe(false);
 
             // Same action, still carrying disabledTooltip, but usable — it must not explain a restriction that is gone.
             fixture.componentRef.setInput('items', [{ ...action, disabled: false }]);
             fixture.detectChanges();
             expect(tooltipTextOf()).toBe('label.edit');
             // The name already is the aria-label; describing the action with it again would announce it twice.
+            expect(descriptionOf(link)).toBeUndefined();
             expect(tooltipOf().describesHost()).toBe(false);
         });
 
-        it('puts the tooltip of a disabled inline delete on its wrapper, which still receives hover', () => {
+        it('puts the tooltip of a disabled inline delete on its wrapper and describes the button with the reason', () => {
             const action: ActionItem = {
                 id: 'delete',
                 labelKey: 'label.delete',
@@ -119,6 +127,7 @@ describe('ExerciseActionBarComponent', () => {
             const button = fixture.debugElement.query(By.css('[data-testid="exercise-action-delete"]'));
             expect(button.nativeElement.disabled).toBe(true);
             expect(button.parent!.injector.get(TumAetUiTooltipDirective).content()).toBe('tooltip.key');
+            expect(descriptionOf(button.nativeElement)).toBe('tooltip.key');
         });
     });
 

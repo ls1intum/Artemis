@@ -33,6 +33,8 @@ const GAP_PX = 4;
 const ELLIPSIS_WIDTH_PX = 34;
 const SAFETY_MARGIN_PX = 8;
 
+let nextBarId = 0;
+
 /**
  * Element width in fractional CSS pixels. Unlike `offsetWidth`/`clientWidth`, `getBoundingClientRect` keeps the
  * fraction, so summing many button widths stays exact at non-100% zoom and never understates the total enough to clip
@@ -94,6 +96,9 @@ export class ExerciseActionBarComponent {
     readonly columnMinWidthChange = output<number>();
 
     protected readonly faEllipsis = faEllipsis;
+
+    /** Makes the ids of the disabled-reason descriptions unique across the rows of a table. */
+    private readonly barId = nextBarId++;
 
     private readonly menu = viewChild<TumAetUiPopoverComponent>('menu');
     /** The full-width action row; its width minus the reserved content is the budget for the collapsible main buttons. */
@@ -191,7 +196,7 @@ export class ExerciseActionBarComponent {
             action,
             signature: this.signatureOf(action),
             hidden: hidden.has(action.id),
-            context: { $implicit: action, inMenu: false, tooltip: this.tooltipOf(action, false) },
+            context: this.contextOf(action, false),
         }));
     });
 
@@ -207,7 +212,7 @@ export class ExerciseActionBarComponent {
     /** Template contexts for the menu entries, precomputed for the same reason as {@link inlineActions}. */
     protected readonly menuActions = computed(() => {
         this.languageVersion();
-        return this.hiddenActions().map((action) => ({ $implicit: action, inMenu: true, tooltip: this.tooltipOf(action, true) }));
+        return this.hiddenActions().map((action) => this.contextOf(action, true));
     });
 
     constructor() {
@@ -306,6 +311,15 @@ export class ExerciseActionBarComponent {
             // Land the show/hide on this frame (the callback runs after layout, before paint), as the row observer does.
             this.changeDetectorRef.detectChanges();
         }
+    }
+
+    /**
+     * The template context of an action. A disabled action with a reason gets the id of a permanent, visually hidden
+     * description: its tooltip only exists while shown, and a disabled control never receives focus to show it.
+     */
+    private contextOf(action: ActionItem, inMenu: boolean) {
+        const reasonId = action.disabled && action.disabledTooltip ? `exercise-action-reason-${this.barId}-${action.id}-${inMenu ? 'menu' : 'inline'}` : undefined;
+        return { $implicit: action, inMenu, tooltip: this.tooltipOf(action, inMenu), reasonId };
     }
 
     /** An inline button's tooltip names it; a disabled action, inline or in the menu, explains why instead. */
