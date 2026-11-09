@@ -43,6 +43,7 @@ import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilServi
 import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
 import de.tum.cit.aet.artemis.exercise.team.TeamUtilService;
 import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
+import de.tum.cit.aet.artemis.exercise.util.AsyncDeletionTestUtilService;
 import de.tum.cit.aet.artemis.lecture.domain.ExerciseUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitRepository;
@@ -83,6 +84,9 @@ class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationLocalCILo
     private Exam exam;
 
     private User student1;
+
+    @Autowired
+    private AsyncDeletionTestUtilService asyncDeletionTestUtilService;
 
     @Autowired
     private TeamRepository teamRepository;
@@ -236,7 +240,8 @@ class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationLocalCILo
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void deleteExercise_asInstructorOfCourse_shouldDeleteExercise() throws Exception {
-        request.delete("/api/text/text-exercises/" + idOfIndividualTextExercise, HttpStatus.OK);
+        request.delete("/api/text/text-exercises/" + idOfIndividualTextExercise, HttpStatus.ACCEPTED);
+        asyncDeletionTestUtilService.awaitExerciseDeletion(idOfIndividualTextExercise);
         assertThat(exerciseRepository.existsById(idOfIndividualTextExercise)).isFalse();
         assertThat(lectureUnitRepository.existsById(idOfExerciseUnit)).isFalse();
     }
@@ -244,7 +249,8 @@ class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationLocalCILo
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void deleteCourse_asAdmin_shouldDeleteExercise() throws Exception {
-        request.delete("/api/admin/courses/" + courseId, HttpStatus.OK);
+        request.delete("/api/admin/courses/" + courseId, HttpStatus.ACCEPTED);
+        asyncDeletionTestUtilService.awaitCourseDeletion(courseId);
         assertThat(courseRepository.existsById(courseId)).isFalse();
         assertThat(exerciseRepository.existsById(idOfIndividualTextExercise)).isFalse();
         assertThat(exerciseRepository.existsById(idOfTeamTextExercise)).isFalse();

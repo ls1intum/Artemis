@@ -70,6 +70,7 @@ import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilServi
 import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
 import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.exercise.test_repository.SubmissionTestRepository;
+import de.tum.cit.aet.artemis.exercise.util.AsyncDeletionTestUtilService;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseIntegrationTestService;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.modeling.domain.DiagramType;
@@ -92,6 +93,9 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
 
     /** Tutor/instructor not enrolled in the test course; exercises the wrong-course branches. */
     private static final String OTHER_PREFIX = "modelingexerciseother";
+
+    @Autowired
+    private AsyncDeletionTestUtilService asyncDeletionTestUtilService;
 
     @Autowired
     private ModelingExerciseUtilService modelingExerciseUtilService;
@@ -454,7 +458,8 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testDeleteModelingExercise_asInstructor() throws Exception {
         long exerciseId = classExercise.getId();
-        request.delete("/api/modeling/modeling-exercises/" + exerciseId, HttpStatus.OK);
+        request.delete("/api/modeling/modeling-exercises/" + exerciseId, HttpStatus.ACCEPTED);
+        asyncDeletionTestUtilService.awaitExerciseDeletion(exerciseId);
         assertThat(modelingExerciseTestRepository.findById(exerciseId)).as("exercise was deleted").isEmpty();
         assertExerciseNotInWeaviate(weaviateService, exerciseId);
         request.delete("/api/modeling/modeling-exercises/" + exerciseId, HttpStatus.FORBIDDEN);
@@ -466,7 +471,8 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
         classExercise.setCompetencyLinks(Set.of(new CompetencyExerciseLink(competency, classExercise, 1)));
         modelingExerciseTestRepository.save(classExercise);
 
-        request.delete("/api/modeling/modeling-exercises/" + classExercise.getId(), HttpStatus.OK);
+        request.delete("/api/modeling/modeling-exercises/" + classExercise.getId(), HttpStatus.ACCEPTED);
+        asyncDeletionTestUtilService.awaitExerciseDeletion(classExercise.getId());
 
         verify(competencyProgressApi).updateProgressByCompetencyAsync(eq(competency));
     }
@@ -478,7 +484,8 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
         ModelingExercise modelingExercise = modelingExerciseTestRepository.findByCourseIdWithCategories(course.getId()).getFirst();
         Channel exerciseChannel = conversationUtilService.addChannelToExercise(modelingExercise);
 
-        request.delete("/api/modeling/modeling-exercises/" + modelingExercise.getId(), HttpStatus.OK);
+        request.delete("/api/modeling/modeling-exercises/" + modelingExercise.getId(), HttpStatus.ACCEPTED);
+        asyncDeletionTestUtilService.awaitExerciseDeletion(modelingExercise.getId());
 
         Optional<Channel> exerciseChannelAfterDelete = channelRepository.findById(exerciseChannel.getId());
         assertThat(exerciseChannelAfterDelete).isEmpty();
@@ -498,7 +505,8 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
 
         assertThat(tutorParticipationRepository.findByAssessedExercise(classExercise)).isNotEmpty();
 
-        request.delete("/api/modeling/modeling-exercises/" + classExercise.getId(), HttpStatus.OK);
+        request.delete("/api/modeling/modeling-exercises/" + classExercise.getId(), HttpStatus.ACCEPTED);
+        asyncDeletionTestUtilService.awaitExerciseDeletion(classExercise.getId());
 
         assertThat(modelingExerciseTestRepository.findById(classExercise.getId())).as("exercise was deleted").isEmpty();
         assertThat(tutorParticipationRepository.findByAssessedExercise(classExercise)).isEmpty();
@@ -1600,7 +1608,8 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
             request.putWithResponseBody("/api/modeling/modeling-exercises", UpdateModelingExerciseDTO.of(created), ModelingExerciseResponseDTO.class, HttpStatus.OK);
 
             // Delete
-            request.delete("/api/modeling/modeling-exercises/" + created.getId(), HttpStatus.OK);
+            request.delete("/api/modeling/modeling-exercises/" + created.getId(), HttpStatus.ACCEPTED);
+            asyncDeletionTestUtilService.awaitExerciseDeletion(created.getId());
         }
         finally {
             featureToggleService.disableFeature(Feature.AtlasML);
