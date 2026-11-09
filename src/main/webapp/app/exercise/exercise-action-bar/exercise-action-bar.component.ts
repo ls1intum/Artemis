@@ -30,9 +30,8 @@ import { ActionItem } from 'app/exercise/exercise-action-bar/exercise-action-bar
 // Flex gap (gap-1 = 0.25rem) between items, the fixed ellipsis-trigger width (see SCSS `.action-more`), and a small
 // safety margin so a button is always collapsed slightly before it would be clipped — never shown partially.
 const GAP_PX = 4;
-const ELLIPSIS_WIDTH_PX = 40;
+const ELLIPSIS_WIDTH_PX = 34;
 const SAFETY_MARGIN_PX = 8;
-const EXTRA_ACTION_PRIORITY = 1000;
 
 /**
  * Element width in fractional CSS pixels. Unlike `offsetWidth`/`clientWidth`, `getBoundingClientRect` keeps the
@@ -44,9 +43,9 @@ function widthOf(element: HTMLElement): number {
 }
 
 /**
- * Owned, data-driven collapsible action row: renders {@link ActionItem}s inline (Delete/Edit/Participations kept longest via
- * {@link keepPriorityIds}) and folds whatever doesn't fit into a trailing ellipsis menu, based on measured button
- * widths and the row's available width.
+ * Owned, data-driven action row: renders the {@link inlineIds} actions (Participations, Edit, Delete) as icon buttons and
+ * every other {@link ActionItem} in a trailing ellipsis menu. Inline buttons that don't fit the row's available width
+ * fold into the menu too, based on measured button widths.
  *
  * Both exercise row-action components render through this bar — `ExerciseActionsComponent` (course exercises) and
  * `ExamExerciseRowButtonsComponent` (exam exercises) — so they look and collapse identically; only the `ActionItem[]`
@@ -83,11 +82,10 @@ export class ExerciseActionBarComponent {
     /** Whether the `[actionBarReserved]`-projected prefix renders anything, so the separator next to it only shows when needed. */
     readonly hasReservedContent = input<boolean>(false);
     /**
-     * Ids kept inline longest when the row runs out of width (in priority order); any id not listed shares the next
-     * priority tier, in original display order (the collapse sort is stable). Defaults to the exercise-management
-     * table's convention: Delete, Edit, Participations.
+     * Ids shown as inline icon buttons, in the order they stay inline when the row runs out of width; every other
+     * action always sits in the ellipsis menu.
      */
-    readonly keepPriorityIds = input<string[]>(['delete', 'edit', 'participations']);
+    readonly inlineIds = input<string[]>(['delete', 'edit', 'participations']);
     /**
      * Width (px) the actions column must reserve to keep this row's always-visible reserved content plus the ellipsis
      * trigger on screen; 0 when there is no reserved content. A shared table column floors itself at the max reported
@@ -124,10 +122,8 @@ export class ExerciseActionBarComponent {
      */
     private destroyed = false;
 
-    private readonly keepPriorityOf = (action: ActionItem): number => {
-        const index = this.keepPriorityIds().indexOf(action.id);
-        return index === -1 ? EXTRA_ACTION_PRIORITY : index;
-    };
+    /** The actions eligible for an inline icon button, in display order. */
+    private readonly inlineCandidates = computed<ActionItem[]>(() => this.items().filter((action) => this.inlineIds().includes(action.id)));
 
     /** Signature that determines a button's rendered width: same signature ⇒ same width. Uses the translated label so a
      * language switch or a changed label re-measures. */
@@ -135,14 +131,16 @@ export class ExerciseActionBarComponent {
         return `${action.id}|${this.translateService.instant(action.labelKey)}`;
     }
 
+    /** Whether some actions always sit in the menu, so the ellipsis trigger shows regardless of the row width. */
+    private readonly hasMenuOnlyActions = computed<boolean>(() => this.inlineCandidates().length < this.items().length);
+
     /**
-     * Ids of the main actions that do not fit and are collapsed into the ellipsis menu. Computed from the cached button
+     * Ids of the inline actions that do not fit and are collapsed into the ellipsis menu. Computed from the cached button
      * widths and the available width — the DOM stays stable, only the buttons' `display` toggles, so resizing never
-     * recreates button elements. Collapses in ascending keep-priority order so the highest-priority ids stay visible
-     * longest.
+     * recreates button elements. Collapses in reverse {@link inlineIds} order so the first ids stay visible longest.
      */
     readonly hiddenIds = computed<ReadonlySet<string>>(() => {
-        const actions = this.items();
+        const actions = this.inlineCandidates();
         const widths = this.buttonWidths();
         const available = this.availableWidth() - SAFETY_MARGIN_PX;
         // Not yet measured (or sized): show everything until widths/width are known.
@@ -152,18 +150,20 @@ export class ExerciseActionBarComponent {
         const widthOfAction = (action: ActionItem) => widths.get(this.signatureOf(action)) ?? 0;
         // N buttons laid out with N-1 gaps between them.
         const widthForCount = (count: number) => (count <= 0 ? 0 : (count - 1) * GAP_PX);
+        const ellipsisWidth = ELLIPSIS_WIDTH_PX + GAP_PX;
 
-        // Everything fits inline: no ellipsis, no hiding.
+        // Everything fits inline (next to the ellipsis, if menu-only actions need it): no hiding.
         const totalAll = actions.reduce((sum, action) => sum + widthOfAction(action), 0) + widthForCount(actions.length);
-        if (totalAll <= available) {
+        if (totalAll + (this.hasMenuOnlyActions() ? ellipsisWidth : 0) <= available) {
             return new Set();
         }
 
         // Collapsing: reserve the ellipsis (plus the gap before it) and keep buttons in priority order, stopping at
         // the first that no longer fits. The template still renders the kept buttons in their original display order
         // (only their `display` toggles).
-        const budget = available - ELLIPSIS_WIDTH_PX - GAP_PX;
-        const byPriority = [...actions].sort((a, b) => this.keepPriorityOf(a) - this.keepPriorityOf(b));
+        const budget = available - ellipsisWidth;
+        const inlineIds = this.inlineIds();
+        const byPriority = [...actions].sort((a, b) => inlineIds.indexOf(a.id) - inlineIds.indexOf(b.id));
         const keptIds = new Set<string>();
         let used = 0;
         for (const action of byPriority) {
@@ -187,7 +187,7 @@ export class ExerciseActionBarComponent {
         // The signature embeds a translated label, so re-derive it on a language switch.
         this.languageVersion();
         const hidden = this.hiddenIds();
-        return this.items().map((action) => ({
+        return this.inlineCandidates().map((action) => ({
             action,
             signature: this.signatureOf(action),
             hidden: hidden.has(action.id),
@@ -195,10 +195,14 @@ export class ExerciseActionBarComponent {
         }));
     });
 
-    readonly hasOverflow = computed<boolean>(() => this.hiddenIds().size > 0);
+    readonly hasOverflow = computed<boolean>(() => this.hasMenuOnlyActions() || this.hiddenIds().size > 0);
 
-    /** The collapsed actions, shown in the ellipsis menu. */
-    readonly hiddenActions = computed<ActionItem[]>(() => this.items().filter((action) => this.hiddenIds().has(action.id)));
+    /** The menu-only and collapsed inline actions, shown in the ellipsis menu in display order. */
+    readonly hiddenActions = computed<ActionItem[]>(() => {
+        const inlineIds = this.inlineIds();
+        const hidden = this.hiddenIds();
+        return this.items().filter((action) => !inlineIds.includes(action.id) || hidden.has(action.id));
+    });
 
     constructor() {
         this.destroyRef.onDestroy(() => {
@@ -252,7 +256,7 @@ export class ExerciseActionBarComponent {
             // also seeds a brand-new signature after a language switch. The elements persist across a collapse (only
             // their `display` toggles), so this does not re-run on every resize.
             this.languageVersion();
-            this.items();
+            this.inlineCandidates();
             const elements = this.inlineItems();
             this.buttonObserver.disconnect();
             for (const ref of elements) {
@@ -296,6 +300,14 @@ export class ExerciseActionBarComponent {
             // Land the show/hide on this frame (the callback runs after layout, before paint), as the row observer does.
             this.changeDetectorRef.detectChanges();
         }
+    }
+
+    /** An inline button's tooltip names it; a disabled action, inline or in the menu, explains why instead. */
+    protected tooltipOf(action: ActionItem, inMenu: boolean): string {
+        if (action.disabled && action.disabledTooltip) {
+            return this.translateService.instant(action.disabledTooltip);
+        }
+        return inMenu ? '' : this.translateService.instant(action.labelKey);
     }
 
     protected runAction(item: ActionItem): void {

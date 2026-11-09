@@ -8,7 +8,7 @@
         }
     </span>
 
-    <!-- Main buttons: all rendered once (stable DOM). Overflowing ones get `hidden` and appear in the menu instead;
+    <!-- Inline icon buttons: all rendered once (stable DOM). Overflowing ones get `hidden` and appear in the menu instead;
          resizing only toggles that class, it never recreates buttons. -->
     @for (item of inlineActions(); track item.action.id) {
         <span #inlineItem class="inline-item" [attr.data-signature]="item.signature" [class.hidden]="item.hidden">
@@ -24,13 +24,14 @@
         class="action-more"
         [class.hidden]="!hasOverflow()"
         [tumAetUiPopoverTrigger]="menu"
-        [title]="'artemisApp.exerciseManagement.moreActions' | artemisTranslate"
+        [tumAetUiTooltip]="'artemisApp.exerciseManagement.moreActions' | artemisTranslate"
+        tumAetUiTooltipPlacement="top"
         [attr.aria-label]="'artemisApp.exerciseManagement.moreActions' | artemisTranslate"
     >
         <fa-icon [icon]="faEllipsis" />
     </button>
     <tumaet-ui-popover #menu placement="bottom" [ariaLabel]="'artemisApp.exerciseManagement.moreActions' | artemisTranslate">
-        <div class="action-menu flex flex-col gap-1">
+        <div class="action-menu flex flex-col">
             @for (action of hiddenActions(); track action.id) {
                 <ng-container [ngTemplateOutlet]="actionTpl" [ngTemplateOutletContext]="{ $implicit: action, inMenu: true }" />
             }
@@ -38,6 +39,8 @@
     </tumaet-ui-popover>
 </div>
 
+<!-- Inline, an action is an outlined icon button whose label is its tooltip and accessible name; in the menu it is a
+     plain row with icon and label, coloured only when destructive. -->
 <ng-template #actionTpl let-action let-inMenu="inMenu">
     @switch (action.kind) {
         @case ('delete') {
@@ -51,6 +54,7 @@
                 [renderButtonText]="false"
                 [renderButtonStyle]="false"
                 [severity]="action.severity"
+                [variant]="inMenu ? 'text' : 'outlined'"
                 size="small"
                 [disabled]="!!action.disabled"
                 [entityTitle]="action.delete!.entityTitle"
@@ -62,10 +66,13 @@
                 [additionalChecks]="action.delete!.additionalChecks"
                 (delete)="onDelete(action, $event)"
                 [dialogError]="action.delete!.dialogError"
-                [class.text-start]="inMenu"
-                [class.w-full]="inMenu"
+                [class.action-icon]="!inMenu"
+                [class.action-menu-item]="inMenu"
+                [attr.aria-label]="inMenu ? undefined : (action.labelKey | artemisTranslate)"
+                [tumAetUiTooltip]="tooltipOf(action, inMenu)"
+                tumAetUiTooltipPlacement="top"
             >
-                <fa-icon [icon]="action.icon" /><span class="ms-1" [jhiTranslate]="action.labelKey"></span>
+                <ng-container [ngTemplateOutlet]="contentTpl" [ngTemplateOutletContext]="{ $implicit: action, inMenu }" />
             </button>
         }
         @case ('button') {
@@ -73,14 +80,18 @@
                 tumAetUiButton
                 type="button"
                 [attr.data-testid]="'exercise-action-' + action.id"
-                [severity]="action.severity"
+                [severity]="inMenu ? 'secondary' : action.severity"
+                [variant]="inMenu ? 'text' : 'outlined'"
                 [disabled]="!!action.disabled"
                 size="small"
-                [class.text-start]="inMenu"
-                [class.w-full]="inMenu"
+                [class.action-icon]="!inMenu"
+                [class.action-menu-item]="inMenu"
+                [attr.aria-label]="inMenu ? undefined : (action.labelKey | artemisTranslate)"
+                [tumAetUiTooltip]="tooltipOf(action, inMenu)"
+                tumAetUiTooltipPlacement="top"
                 (click)="runAction(action)"
             >
-                <fa-icon [icon]="action.icon" /><span class="ms-1" [jhiTranslate]="action.labelKey"></span>
+                <ng-container [ngTemplateOutlet]="contentTpl" [ngTemplateOutletContext]="{ $implicit: action, inMenu }" />
             </button>
         }
         @default {
@@ -88,20 +99,29 @@
                 tumAetUiButton
                 [attr.data-testid]="'exercise-action-' + action.id"
                 [routerLink]="action.disabled ? undefined : action.link"
-                [severity]="action.severity"
+                [severity]="inMenu ? 'secondary' : action.severity"
+                [variant]="inMenu ? 'text' : 'outlined'"
                 size="small"
                 [class.opacity-60]="action.disabled"
-                [class.text-start]="inMenu"
-                [class.w-full]="inMenu"
+                [class.action-icon]="!inMenu"
+                [class.action-menu-item]="inMenu"
+                [attr.aria-label]="inMenu ? undefined : (action.labelKey | artemisTranslate)"
                 [attr.aria-disabled]="action.disabled || undefined"
                 [attr.tabindex]="action.disabled ? -1 : undefined"
                 [style.pointer-events]="action.disabled ? 'auto' : undefined"
-                [tumAetUiTooltip]="action.disabled && action.disabledTooltip ? (action.disabledTooltip | artemisTranslate) : ''"
+                [tumAetUiTooltip]="tooltipOf(action, inMenu)"
                 tumAetUiTooltipPlacement="top"
                 (click)="closeMenuIfOpen(inMenu)"
             >
-                <fa-icon [icon]="action.icon" /><span class="ms-1" [jhiTranslate]="action.labelKey"></span>
+                <ng-container [ngTemplateOutlet]="contentTpl" [ngTemplateOutletContext]="{ $implicit: action, inMenu }" />
             </a>
         }
+    }
+</ng-template>
+
+<ng-template #contentTpl let-action let-inMenu="inMenu">
+    <fa-icon [icon]="action.icon" [fixedWidth]="true" />
+    @if (inMenu) {
+        <span [jhiTranslate]="action.labelKey"></span>
     }
 </ng-template>
