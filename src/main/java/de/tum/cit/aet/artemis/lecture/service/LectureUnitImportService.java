@@ -106,7 +106,6 @@ public class LectureUnitImportService {
                 attachmentVideoUnit.setName(importedAttachmentVideoUnit.getName());
                 attachmentVideoUnit.setReleaseDate(importedAttachmentVideoUnit.getReleaseDate());
                 attachmentVideoUnit.setDescription(importedAttachmentVideoUnit.getDescription());
-                attachmentVideoUnit.setVideoSource(importedAttachmentVideoUnit.getVideoSource());
                 // The link as the unit has it now, not as the import loaded it: a TUM.Live upload may have replaced it meanwhile, and the cleanup must see the copy.
                 attachmentVideoUnit = attachmentVideoUnitRepository.saveCopyWithCurrentVideoSource(attachmentVideoUnit, importedAttachmentVideoUnit.getId());
 

@@ -256,6 +256,21 @@ class TumLiveUploadIntegrationTest extends AbstractSpringIntegrationIndependentT
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void anImportCopiesNoLinkOfAUnitDeletedMeanwhile() {
+        unit.setVideoSource(WATCH_PAGE);
+        unit = attachmentVideoUnitRepository.saveWithVideoSource(unit);
+        Lecture loaded = lectureRepository.findByIdWithLectureUnitsElseThrow(lecture.getId());
+
+        // The unit is deleted after the import loaded the lecture, and its deletion may have deleted the video in TUM.Live.
+        attachmentVideoUnitRepository.deleteById(unit.getId());
+        Lecture imported = lectureImportService.importLecture(loaded, lecture.getCourse(), true);
+
+        var copies = lectureRepository.findByIdWithLectureUnitsElseThrow(imported.getId()).getLectureUnits();
+        assertThat(copies).singleElement().satisfies(copy -> assertThat(attachmentVideoUnitRepository.findById(copy.getId()).orElseThrow().getVideoSource()).isNull());
+    }
+
+    @Test
     void theLinksOfAllUnitsAreReadInEverySpelling() {
         // MySQL treats links that differ only in letter case as equal; only the lowercase path is a TUM.Live watch page.
         String path = "/algo/" + (700_000 + unit.getId()) + "?video_only=1";

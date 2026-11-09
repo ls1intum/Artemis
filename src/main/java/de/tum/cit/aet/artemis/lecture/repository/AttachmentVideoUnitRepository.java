@@ -277,15 +277,16 @@ public interface AttachmentVideoUnitRepository extends ArtemisJpaRepository<Atta
 
     /**
      * Saves the copy of a unit with the video URL the unit has now. The unit stays locked until the copy is saved, so a TUM.Live upload that replaces the unit's
-     * video either happens before and the copy gets the new URL, or after, when the cleanup of the old video finds the copy.
+     * video either happens before and the copy gets the new URL, or after, when the cleanup of the old video finds the copy. A unit deleted meanwhile leaves the
+     * copy without video, as its deletion may have deleted the video in TUM.Live.
      *
-     * @param copy         the new unit; keeps its URL if the unit is gone
+     * @param copy         the new unit
      * @param sourceUnitId the unit it copies
      * @return the saved copy
      */
     @Transactional // ok because the unit is locked until its copy is saved
     default AttachmentVideoUnit saveCopyWithCurrentVideoSource(AttachmentVideoUnit copy, long sourceUnitId) {
-        findForUpdateById(sourceUnitId).ifPresent(source -> copy.setVideoSource(source.getVideoSource()));
+        copy.setVideoSource(findForUpdateById(sourceUnitId).map(AttachmentVideoUnit::getVideoSource).orElse(null));
         return save(copy);
     }
 
