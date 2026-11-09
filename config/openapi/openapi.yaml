@@ -367,6 +367,50 @@ paths:
           content:
             application/json:
               schema: {$ref: '#/components/schemas/QuizSubmissionBeforeEvaluation'}
+  /api/plagiarism/courses/{courseId}/plagiarism-comparisons/{comparisonId}/status:
+    put:
+      tags: [plagiarism]
+      operationId: updatePlagiarismComparisonStatus
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: comparisonId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/PlagiarismComparisonStatus'}
+        required: true
+      responses:
+        '200': {description: OK}
+  /api/plagiarism/courses/{courseId}/plagiarism-cases/{plagiarismCaseId}/verdict:
+    put:
+      tags: [plagiarism-case]
+      operationId: savePlagiarismCaseVerdict
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: plagiarismCaseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/PlagiarismVerdict'}
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/PlagiarismCaseVerdictResponse'}
   /api/hyperion/courses/{courseId}/quiz-question-pool/settings:
     get:
       tags: [hyperion-quiz-question-pool]
@@ -1851,6 +1895,21 @@ paths:
           content:
             application/json:
               schema: {$ref: '#/components/schemas/StudentQuizParticipation'}
+  /api/quiz/quiz-exercises/{exerciseId}/export:
+    get:
+      tags: [quiz-exercise]
+      operationId: exportExercise
+      parameters:
+      - name: exerciseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {type: string, format: binary}
   /api/quiz/exams/{examId}/quiz-exercises:
     get:
       tags: [quiz-exercise-retrieval]
@@ -1883,6 +1942,195 @@ paths:
           content:
             application/json:
               schema: {$ref: '#/components/schemas/LeaderboardWithCurrentUserEntry'}
+  /api/plagiarism/exercises/{exerciseId}/potential-plagiarism-count:
+    get:
+      tags: [plagiarism]
+      operationId: getNumberOfPotentialPlagiarismCasesForExercise
+      parameters:
+      - name: exerciseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {type: integer, format: int64}
+  /api/plagiarism/courses/{courseId}/plagiarism-comparisons/{comparisonId}/for-split-view:
+    get:
+      tags: [plagiarism]
+      operationId: getPlagiarismComparisonForSplitView
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: comparisonId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/PlagiarismComparison'}
+  /api/plagiarism/courses/{courseId}/plagiarism-cases:
+    get:
+      tags: [plagiarism-case]
+      operationId: getPlagiarismCasesForExercisesForStudent
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: exerciseId
+        in: query
+        required: true
+        schema:
+          type: array
+          items: {type: integer, format: int64}
+          uniqueItems: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {$ref: '#/components/schemas/PlagiarismCaseInfo'}
+  /api/plagiarism/courses/{courseId}/plagiarism-cases/{plagiarismCaseId}/for-student:
+    get:
+      tags: [plagiarism-case]
+      operationId: getPlagiarismCaseForStudent
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: plagiarismCaseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/PlagiarismCaseDetail'}
+  /api/plagiarism/courses/{courseId}/plagiarism-cases/{plagiarismCaseId}/for-instructor:
+    get:
+      tags: [plagiarism-case]
+      operationId: getPlagiarismCaseForInstructor
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: plagiarismCaseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/PlagiarismCaseDetail'}
+  /api/plagiarism/courses/{courseId}/plagiarism-cases/for-scores:
+    get:
+      tags: [plagiarism-case]
+      operationId: getPlagiarismCasesForCourseScores
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/PlagiarismCase'}
+  /api/plagiarism/courses/{courseId}/plagiarism-cases/for-instructor:
+    get:
+      tags: [plagiarism-case]
+      operationId: getPlagiarismCasesForCourseForInstructor
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/PlagiarismCaseOverview'}
+  /api/plagiarism/courses/{courseId}/exercises/{exerciseId}/plagiarism-cases-count:
+    get:
+      tags: [plagiarism-case]
+      operationId: getNumberOfPlagiarismCasesForExercise
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: exerciseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {type: integer, format: int64}
+  /api/plagiarism/courses/{courseId}/exercises/{exerciseId}/plagiarism-case:
+    get:
+      tags: [plagiarism-case]
+      operationId: getPlagiarismCaseForExerciseForStudent
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: exerciseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/PlagiarismCaseInfo'}
+  /api/plagiarism/courses/{courseId}/exams/{examId}/plagiarism-cases/for-instructor:
+    get:
+      tags: [plagiarism-case]
+      operationId: getPlagiarismCasesForExamForInstructor
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: examId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/PlagiarismCaseOverview'}
   /api/hyperion/variant-jobs:
     get:
       tags: [hyperion-exercise-variant]
@@ -2296,6 +2544,25 @@ paths:
         schema: {type: integer, format: int64}
       responses:
         '200': {description: OK}
+  /api/plagiarism/exercises/{exerciseId}/plagiarism-results/{plagiarismResultId}/plagiarism-comparisons:
+    delete:
+      tags: [plagiarism]
+      operationId: deletePlagiarismComparisons
+      parameters:
+      - name: exerciseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: plagiarismResultId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: deleteAll
+        in: query
+        required: true
+        schema: {type: boolean}
+      responses:
+        '200': {description: OK}
   /api/hyperion/programming-exercises/{exerciseId}/generate-exercise/jobs/{jobId}:
     delete:
       tags: [hyperion-exercise-generation]
@@ -2452,6 +2719,27 @@ components:
         timestamp: {type: string, format: date-time, description: The moment the change
             was produced}
       required: [action, path, repo, timestamp, turn, type]
+    PlagiarismCaseDetail:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        exercise: {$ref: '#/components/schemas/PlagiarismCaseExercise'}
+        student: {$ref: '#/components/schemas/PlagiarismCaseUser'}
+        post: {$ref: '#/components/schemas/PlagiarismCasePostSummary'}
+        verdict:
+          type: string
+          enum: [PLAGIARISM, POINT_DEDUCTION, WARNING, NO_PLAGIARISM]
+        verdictDate: {type: string, format: date-time}
+        verdictBy: {$ref: '#/components/schemas/PlagiarismCaseUser'}
+        plagiarismSubmissionCount: {type: integer, format: int32}
+        createdByContinuousPlagiarismControl: {type: boolean}
+        verdictMessage: {type: string}
+        verdictPointDeduction: {type: integer, format: int32}
+        plagiarismSubmissions:
+          type: array
+          items: {$ref: '#/components/schemas/PlagiarismSubmissionForCase'}
+      required: [createdByContinuousPlagiarismControl, exercise, id, plagiarismSubmissionCount,
+        verdictPointDeduction]
     QuizSubmissionBeforeEvaluation:
       type: object
       properties:
@@ -2666,6 +2954,21 @@ components:
         completion: {type: integer, format: int64, description: Completion token length,
           example: 3753}
         total: {type: integer, format: int64, description: Total token length, example: 13957}
+    PlagiarismComparison:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        submissionA: {$ref: '#/components/schemas/PlagiarismSubmission'}
+        submissionB: {$ref: '#/components/schemas/PlagiarismSubmission'}
+        matches:
+          type: array
+          items: {$ref: '#/components/schemas/PlagiarismMatch'}
+          uniqueItems: true
+        similarity: {type: number, format: double}
+        status:
+          type: string
+          enum: [CONFIRMED, DENIED, NONE]
+      required: [id, similarity]
     DragAndDropSubmittedAnswerBeforeEvaluation:
       required: [type]
       type: object
@@ -3011,6 +3314,15 @@ components:
           items: {$ref: '#/components/schemas/QuizQuestionCreate'}
           minItems: 1
       required: [includedInOverallScore, mode, quizMode, quizQuestions, title]
+    PlagiarismCaseInfo:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        verdict:
+          type: string
+          enum: [PLAGIARISM, POINT_DEDUCTION, WARNING, NO_PLAGIARISM]
+        createdByContinuousPlagiarismControl: {type: boolean}
+      required: [createdByContinuousPlagiarismControl, id]
     LeaderboardWithCurrentUserEntry:
       type: object
       properties:
@@ -3021,6 +3333,32 @@ components:
         currentUserEntry: {$ref: '#/components/schemas/LeaderboardEntry'}
         currentTime: {type: string, format: date-time}
       required: [currentTime, currentUserEntry, leaderboardEntries]
+    PlagiarismCaseOverview:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        exercise: {$ref: '#/components/schemas/PlagiarismCaseExercise'}
+        student: {$ref: '#/components/schemas/PlagiarismCaseUser'}
+        post: {$ref: '#/components/schemas/PlagiarismCasePostSummary'}
+        verdict:
+          type: string
+          enum: [PLAGIARISM, POINT_DEDUCTION, WARNING, NO_PLAGIARISM]
+        verdictDate: {type: string, format: date-time}
+        verdictBy: {$ref: '#/components/schemas/PlagiarismCaseUser'}
+        plagiarismSubmissionCount: {type: integer, format: int32}
+        createdByContinuousPlagiarismControl: {type: boolean}
+        hasStudentAnswer: {type: boolean}
+      required: [createdByContinuousPlagiarismControl, exercise, hasStudentAnswer,
+        id, plagiarismSubmissionCount]
+    PlagiarismComparisonSummary:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        similarity: {type: number, format: double}
+        status:
+          type: string
+          enum: [CONFIRMED, DENIED, NONE]
+      required: [id, similarity]
     QuizExerciseForCourse:
       type: object
       properties:
@@ -3212,6 +3550,13 @@ components:
         end: {type: string}
         reason: {type: string}
       required: [end, start]
+    PlagiarismComparisonStatus:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [CONFIRMED, DENIED, NONE]
+      required: [status]
     QuizQuestionTraining:
       type: object
       properties:
@@ -3498,6 +3843,16 @@ components:
         id: {type: integer, format: int64}
         invalid: {type: boolean}
       required: [id, invalid]
+    PlagiarismSubmissionForCase:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        submissionId: {type: integer, format: int64}
+        studentLogin: {type: string}
+        size: {type: integer, format: int32}
+        score: {type: number, format: double}
+        plagiarismComparison: {$ref: '#/components/schemas/PlagiarismComparisonSummary'}
+      required: [id, size, submissionId]
     CompetencyLink:
       type: object
       properties:
@@ -3874,6 +4229,12 @@ components:
         location: {type: string}
         facilitator: {type: string}
       required: [startDate, title, type]
+    PlagiarismCasePostSummary:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        creationDate: {type: string, format: date-time}
+      required: [id]
     QuizSearchExerciseGroup:
       type: object
       properties:
@@ -4360,6 +4721,23 @@ components:
         additionalContext: {type: string, description: Optional exercise-specific
             context appended to the default prompt, maxLength: 200000, minLength: 0}
       required: [bonusPoints, maxPoints, problemStatement]
+    PlagiarismCaseExercise:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        title: {type: string}
+        shortName: {type: string}
+        type:
+          type: string
+          enum: [text, programming, modeling, file-upload, quiz]
+        dueDate: {type: string, format: date-time}
+        courseId: {type: integer, format: int64}
+        courseTitle: {type: string}
+        examId: {type: integer, format: int64}
+        examTitle: {type: string}
+        continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod: {type: integer,
+          format: int32}
+      required: [id, type]
     ProblemStatementRewriteResponse:
       type: object
       description: Response containing rewritten problem statement
@@ -4723,6 +5101,13 @@ components:
           type: string
           default: short-answer
           enum: [short-answer]
+    PlagiarismMatch:
+      type: object
+      properties:
+        startA: {type: integer, format: int32}
+        startB: {type: integer, format: int32}
+        length: {type: integer, format: int32}
+      required: [length, startA, startB]
     WorkerStatus:
       type: object
       properties:
@@ -4901,6 +5286,15 @@ components:
           items: {$ref: '#/components/schemas/QuestionStatistics'}
         participantsRated: {type: integer, format: int32}
         participantsUnrated: {type: integer, format: int32}
+    PlagiarismVerdict:
+      type: object
+      properties:
+        verdict:
+          type: string
+          enum: [PLAGIARISM, POINT_DEDUCTION, WARNING, NO_PLAGIARISM]
+        verdictMessage: {type: string, maxLength: 1000, minLength: 0}
+        verdictPointDeduction: {type: integer, format: int32}
+      required: [verdict]
     ExamWithIdAndCourse:
       type: object
       properties:
@@ -4956,6 +5350,14 @@ components:
         width: {type: integer, format: int32}
         spotNr: {type: integer, format: int32}
       required: [spotNr]
+    PlagiarismCaseUser:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        login: {type: string}
+        name: {type: string}
+        visibleRegistrationNumber: {type: string}
+      required: [id]
     ExerciseGenerationRequest:
       type: object
       properties:
@@ -4972,6 +5374,15 @@ components:
         maxTokens: {type: integer, format: int64, exclusiveMinimum: 0}
         maxJobDuration: {type: string, format: duration}
       required: [mode]
+    PlagiarismCase:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        verdict:
+          type: string
+          enum: [PLAGIARISM, POINT_DEDUCTION, WARNING, NO_PLAGIARISM]
+        studentId: {type: integer, format: int64}
+      required: [id]
     QuizExerciseForStudentResponse:
       discriminator:
         propertyName: quizQuestionsType
@@ -5101,6 +5512,17 @@ components:
           additionalProperties: {type: string}
           description: Action-specific context parameters
       required: [actionType, problemStatementMarkdown]
+    PlagiarismCaseVerdictResponse:
+      type: object
+      properties:
+        verdict:
+          type: string
+          enum: [PLAGIARISM, POINT_DEDUCTION, WARNING, NO_PLAGIARISM]
+        verdictMessage: {type: string}
+        verdictPointDeduction: {type: integer, format: int32}
+        verdictBy: {$ref: '#/components/schemas/PlagiarismCaseUser'}
+        verdictDate: {type: string, format: date-time}
+      required: [verdict, verdictBy, verdictDate, verdictPointDeduction]
     ShortAnswerSolutionReEvaluate:
       type: object
       properties:
@@ -5109,6 +5531,17 @@ components:
         text: {type: string, minLength: 1}
         invalid: {type: boolean}
       required: [invalid, text]
+    PlagiarismSubmissionElement:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        column: {type: integer, format: int32}
+        line: {type: integer, format: int32}
+        file: {type: string}
+        length: {type: integer, format: int32}
+        endLine: {type: integer, format: int32}
+        endColumn: {type: integer, format: int32}
+      required: [column, id, length, line]
     CreateOrUpdateTutorialGroupRequest:
       type: object
       properties:
@@ -5186,6 +5619,18 @@ components:
         students:
           type: array
           items: {$ref: '#/components/schemas/StudentExport'}
+    PlagiarismSubmission:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        submissionId: {type: integer, format: int64}
+        studentLogin: {type: string}
+        elements:
+          type: array
+          items: {$ref: '#/components/schemas/PlagiarismSubmissionElement'}
+        size: {type: integer, format: int32}
+        score: {type: number, format: double}
+      required: [id, size, submissionId]
     CodeGenerationJobStart:
       type: object
       properties:
