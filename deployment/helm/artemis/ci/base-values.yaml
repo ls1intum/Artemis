@@ -1,0 +1,21 @@
+# Values that make the chart render, for supporting_scripts/check_helm_chart.sh. Nothing here is a real secret or a real host.
+artemis:
+  config:
+    serverUrl: https://artemis.example.org
+    admin:
+      password: not-a-real-admin-password
+    jwtBase64Secret: bm90LWEtcmVhbC1qd3Qtc2VjcmV0
+    operator:
+      name: Example operator
+      adminName: Example administrator
+      universityName: Example university
+postgresql:
+  auth:
+    password: not-a-real-password
+registry:
+  password: not-a-real-password
+broker:
+  auth:
+    password: not-a-real-password
+gateway:
+  enabled: false
