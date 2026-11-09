@@ -74,8 +74,9 @@ image and container cleanup schedules.
 <Callout variant={CalloutVariant.warning}>
 
   The Kubernetes runner is a proof of concept. It supports everything a normal programming exercise build needs, but it
-  has not been through a production deployment. Runtime sandboxes such as gVisor or Kata, autoscaling, external secret
-  management, and highly available data services are deliberately out of scope and are left to the deployment.
+  has not been through a production deployment. Runtime sandboxes such as gVisor or Kata, external secret
+  management, and highly available data services are deliberately out of scope and are left to the deployment. The Helm chart can scale the build agents with the queue, see
+  [Operating LocalCI on Kubernetes](/admin/production-setup/localci-on-kubernetes#automatically).
 
 </Callout>
 

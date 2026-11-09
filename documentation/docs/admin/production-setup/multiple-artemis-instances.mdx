@@ -742,14 +742,13 @@ The agent only needs a connection to the [distributed data provider](/admin/prod
 
 **Scaling automatically.** Artemis has **no autoscaler** of its own: the number of build agents is the number that you start. The Build Agents page shows the length of the queue and the utilization of
 each agent, and agents can join and leave at any time. The metrics of the Artemis nodes expose the same numbers as the gauges `artemis.global.localci.queued`, `running`, `agents`
-and `maxConcurrentBuilds`, which a monitoring system such as Prometheus can scrape. A scaling rule in your own orchestration or virtualization environment has to watch the queue and start or stop agent nodes
+and `maxConcurrentBuilds`, which a monitoring system such as Prometheus can scrape. A scaling rule in your own orchestration or virtualization environment has to watch the queue and start or stop agent nodes.
 Fix the number of concurrent builds per agent with `specify-concurrent-builds: true`, so that every added agent adds a known capacity.
 
 An orchestrator is easiest with the experimental [Kubernetes runner](/admin/production-setup/build-runners#kubernetes-runner). It runs every build as a Kubernetes Job, so the
-cluster schedules the build Pods itself, and a cluster autoscaler can add nodes when Pods wait for resources. The Helm chart runs the build agents as a StatefulSet with a fixed
-`buildAgents.replicaCount` and ships no scaling rule. Both the number of agents, which bounds the concurrent builds, and any autoscaling are therefore configured in the cluster.
-The runner is a proof of concept and has not been through a production deployment. Sizing, scaling and updates with the chart are described in
-[Operating LocalCI on Kubernetes](/admin/production-setup/localci-on-kubernetes).
+cluster schedules the build Pods itself, and a cluster autoscaler can add nodes when Pods wait for resources. The Helm chart can also scale the build agent controllers
+with the queue, using KEDA and Prometheus, see [Operating LocalCI on Kubernetes](/admin/production-setup/localci-on-kubernetes#automatically). The runner is a proof of concept and has not been
+through a production deployment.
 
 **Removing build agents.** Pause the agent on the Build Agents page, wait until its running builds have finished, then stop it.
 A paused agent takes no new jobs. If builds are still running after `pause-grace-period-seconds` (60 seconds by default), the agent cancels them and puts them back into the queue.
