@@ -54,12 +54,53 @@ function cachedChromium() {
 // caller opts in with ignoreHTTPSErrors for a local stack with a self-signed
 // certificate.
 const sessionBaseURLs = new WeakMap();
+const CONTINUE_BUTTON = '#continue-button, button:has-text("Continue"), button:has-text("Weiter"), button:has-text("Fortfahren")';
 
 function assertOnOrigin(page, baseURL = sessionBaseURLs.get(page.context())) {
   if (!baseURL) throw new Error('Refusing to type credentials: no baseURL known for this page');
   const want = new URL(baseURL).origin;
   const have = new URL(page.url()).origin;
   if (have !== want) throw new Error(`Refusing to type credentials: page is on ${have}, expected ${want}`);
+}
+
+// While credentials are typed, abort any top-level navigation to another origin,
+// so a redirect mid-typing cannot carry the page, and the keystrokes, elsewhere.
+// Returns a function that lifts the guard.
+async function guardOrigin(page, baseURL) {
+  const want = new URL(baseURL).origin;
+  let blocked;
+  const handler = route => {
+    const request = route.request();
+    if (request.isNavigationRequest() && request.frame() === page.mainFrame() && new URL(request.url()).origin !== want) {
+      blocked = request.url();
+      return route.abort('blockedbyclient');
+    }
+    return route.fallback();
+  };
+  await page.route('**/*', handler);
+  return {
+    check() { if (blocked) throw new Error(`Refusing to type credentials: page tried to leave ${want} for ${blocked}`); },
+    async lift() { await page.unroute('**/*', handler); },
+  };
+}
+
+// Runs fn, which types and submits credentials, under the origin guard, then
+// lifts it so the app can navigate freely after sign-in.
+async function withOriginGuard(page, baseURL, fn) {
+  assertOnOrigin(page, baseURL);
+  const guard = await guardOrigin(page, baseURL);
+  try {
+    try {
+      await fn(guard);
+    } catch (error) {
+      guard.check(); // a blocked redirect explains the failure better than a timeout
+      throw error;
+    }
+    guard.check();
+    assertOnOrigin(page, baseURL);
+  } finally {
+    await guard.lift();
+  }
 }
 
 // Chromium: CHROME_PATH if set; else whatever this playwright-core launches by
@@ -145,18 +186,22 @@ async function signIn(browser, username, password, baseURL, ignoreHTTPSErrors) {
   // The sign-in form may be two-step (username -> Continue -> password) or single-step; handle both.
   const usernameField = page.locator('#username, input[name="username"], input').first();
   await usernameField.waitFor({ state: 'visible', timeout: 60000 });
-  assertOnOrigin(page, baseURL);
-  await usernameField.fill(username);
-  // The sign-in form may be two-step (username -> Continue -> password) or single-step.
-  const continueButton = page.locator('#continue-button, button:has-text("Continue"), button:has-text("Weiter"), button:has-text("Fortfahren")');
-  if (await continueButton.count() && !(await page.locator('#password').isVisible())) { await continueButton.first().click(); }
-  await page.locator('#password').waitFor({ state: 'visible', timeout: 20000 });
-  assertOnOrigin(page, baseURL);
-  await page.fill('#password', password);
-  // Judge sign-in by the auth calls, not by the landing route, which differs between branches.
-  const authResponse = page.waitForResponse(r => r.url().includes('/api/core/public/authenticate'), { timeout: 30000 });
-  await page.locator('button[type="submit"]').last().click();
-  const auth = await authResponse;
+  let auth;
+  await withOriginGuard(page, baseURL, async guard => {
+    await usernameField.fill(username);
+    // The sign-in form may be two-step (username -> Continue -> password) or single-step.
+    const continueButton = page.locator(CONTINUE_BUTTON);
+    if (await continueButton.count() && !(await page.locator('#password').isVisible())) { await continueButton.first().click(); }
+    await page.locator('#password').waitFor({ state: 'visible', timeout: 20000 });
+    guard.check();
+    assertOnOrigin(page, baseURL);
+    await page.fill('#password', password);
+    // Judge sign-in by the auth calls, not by the landing route, which differs between branches.
+    [auth] = await Promise.all([
+      page.waitForResponse(r => r.url().includes('/api/core/public/authenticate'), { timeout: 30000 }),
+      page.locator('button[type="submit"]').last().click(),
+    ]);
+  });
   if (!auth.ok()) throw new Error(`Sign-in as ${username} failed: HTTP ${auth.status()}`);
   const account = await context.request.get('/api/core/public/account');
   const login = account.ok() ? (await account.json()).login : undefined;
@@ -170,7 +215,8 @@ async function signIn(browser, username, password, baseURL, ignoreHTTPSErrors) {
   return context.storageState();
 }
 
-export async function startSession({ name, outDir, baseURL = 'http://localhost:9000', viewport = { width: 1440, height: 810 }, headless = true, storageState = undefined, ignoreHTTPSErrors = false }) {
+export async function startSession({ name, outDir, baseURL = 'http://localhost:9000', viewport = { width: 1440, height: 810 }, headless = true, storageState = undefined, user = undefined, ignoreHTTPSErrors = false }) {
+  if (storageState && !user) throw new Error('startSession: pass the planned account as `user` together with storageState');
   fs.mkdirSync(outDir, { recursive: true });
   const browser = await launchChromium(headless);
   let context;
@@ -190,6 +236,7 @@ export async function startSession({ name, outDir, baseURL = 'http://localhost:9
       const account = await context.request.get('/api/core/public/account');
       const login = account.ok() ? (await account.json()).login : undefined;
       if (!login) throw new Error(`storageState does not authenticate on ${new URL(baseURL).origin}: account endpoint returned ${account.status()}`);
+      if (login !== user) throw new Error(`storageState belongs to ${login}, but this batch is planned for ${user}`);
     }
     await context.addInitScript(CURSOR_SCRIPT);
     page = await context.newPage();
@@ -314,19 +361,25 @@ export async function probeToasts(page, label, events) {
 // baseURL is the trusted origin to type credentials into; it defaults to the
 // startSession baseURL of the page's context.
 export async function login(page, username, password, baseURL = sessionBaseURLs.get(page.context())) {
+  if (!baseURL) throw new Error('Refusing to type credentials: no baseURL known for this page');
   await page.goto('/sign-in', { waitUntil: 'networkidle' });
   await page.locator('#username').waitFor({ state: 'visible', timeout: 30000 });
-  assertOnOrigin(page, baseURL);
-  await humanType(page, '#username', username);
-  // The sign-in form may be two-step (username -> Continue -> password) or single-step.
-  const continueButton = page.locator('#continue-button, button:has-text("Continue"), button:has-text("Weiter"), button:has-text("Fortfahren")');
-  if (await continueButton.count() && !(await page.locator('#password').isVisible())) {
-    await humanClick(page, continueButton.first());
-  }
-  await page.locator('#password').waitFor({ state: 'visible', timeout: 20000 });
-  assertOnOrigin(page, baseURL);
-  await humanType(page, '#password', password);
-  await humanClick(page, 'button[type="submit"]');
+  await withOriginGuard(page, baseURL, async guard => {
+    await humanType(page, '#username', username);
+    // The sign-in form may be two-step (username -> Continue -> password) or single-step.
+    const continueButton = page.locator(CONTINUE_BUTTON);
+    if (await continueButton.count() && !(await page.locator('#password').isVisible())) {
+      await humanClick(page, continueButton.first());
+    }
+    await page.locator('#password').waitFor({ state: 'visible', timeout: 20000 });
+    guard.check();
+    assertOnOrigin(page, baseURL);
+    await humanType(page, '#password', password);
+    await Promise.all([
+      page.waitForResponse(r => r.url().includes('/api/core/public/authenticate'), { timeout: 30000 }),
+      humanClick(page, 'button[type="submit"]'),
+    ]);
+  });
   await page.waitForURL(url => !url.pathname.startsWith('/sign-in'), { timeout: 30000 });
   await page.waitForTimeout(1000);
 }

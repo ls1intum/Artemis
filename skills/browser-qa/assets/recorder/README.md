@@ -22,7 +22,7 @@ import { startSession, prepareAuth, login, humanClick, humanType, pause, probeTo
 
 const base = 'http://localhost:9000'; // the client URL under test
 const state = await prepareAuth('artemis_test_user_16', 'artemis_test_user_16', base); // off camera
-const s = await startSession({ name: '<batch>', outDir: '<run>/video', baseURL: base, storageState: state });
+const s = await startSession({ name: '<batch>', outDir: '<run>/video', baseURL: base, storageState: state, user: 'artemis_test_user_16' });
 await s.page.goto('/course-management/<courseId>/lectures');
 await humanClick(s.page, 'a:has-text("Edit")');
 await humanType(s.page, '#title', 'Renamed');
@@ -31,8 +31,8 @@ s.note('<case> permission check, 403 expected');
 const { mp4, webm, events } = await s.finish();
 ```
 
-- `startSession` records the whole browser context, so sign in first with `prepareAuth`, which handles the two-step sign-in form and suppresses the passkey reminder. Given a `storageState`, `startSession` checks that it authenticates on its own `baseURL` and throws otherwise, so use the same host for both. To record a sign-in on camera, call `login(page, username, password)`.
-- `prepareAuth` and `login` refuse to type credentials into a page on another origin than their `baseURL`. `login` takes the `startSession` `baseURL` unless you pass one as the fourth argument. `humanType` does no such check.
+- `startSession` records the whole browser context, so sign in first with `prepareAuth`, which handles the two-step sign-in form and suppresses the passkey reminder. Given a `storageState`, `startSession` needs the planned account as `user`, and throws unless the state signs in as that user on its own `baseURL`. Use the same host for both. To record a sign-in on camera, call `login(page, username, password)`.
+- `prepareAuth` and `login` refuse to type credentials into a page on another origin than their `baseURL`, and block navigation to another origin while they type. `login` takes the `startSession` `baseURL` unless you pass one as the fourth argument. `humanType` does no such check.
 - Certificate errors fail by default. For a local stack with a self-signed certificate, pass `{ ignoreHTTPSErrors: true }` as the fourth argument of `prepareAuth` and as an option of `startSession`.
 - `humanClick` moves the cursor visibly, then clicks. `humanType` clears the field and types key by key. Add `pause(page, 800..1500)` after each state change so it stays readable.
 - `s.events` records console errors and warnings, page errors, and fetch, XHR and document response statuses. `finish()` writes them to `<name>.events.json` next to the video. Authentication and account responses are excluded.
