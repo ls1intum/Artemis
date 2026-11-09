@@ -239,7 +239,7 @@ Builds triggered in bulk are throttled so that they cannot fill the queue, see [
 
 - The authentication of git operations is [rate limited per client IP](/admin/production-setup/security#rate-limiting), in a bucket of its own, separate from the logins,
   so a script that clones or pushes in a tight loop is slowed down, and a lecture hall that pushes cannot keep its students from logging in. Build agents are excluded when they are registered with an address. An agent that clones over HTTPS without a registered address has
-  a budget of its own for its clone tokens (`artemis.rate-limiting.build-agent-clone-token-requests-per-minute`), and when it uses that up, its requests can count against the git limit. The limit is configurable with `artemis.rate-limiting.git-authentication-requests-per-minute` (30 by default),
+  a budget of its own for its clone-token checks (`artemis.rate-limiting.build-agent-clone-token-requests-per-minute`). Only a check that declines the token consumes this budget, and a successful check does not. When the budget is used up, its requests can count against the git limit. The limit is configurable with `artemis.rate-limiting.git-authentication-requests-per-minute` (30 by default),
   and `artemis.rate-limiting.enabled: false` switches rate limiting off. A campus network that puts many students behind one address shares this limit:
   if a whole lecture hall pushes at a deadline, raise it, or students see HTTP 429 errors that have nothing to do with the build queue.
 - The number of **concurrent builds per agent** and the build timeout bound how much work a build can take. A student program that never ends occupies a slot only until the timeout, 240 seconds at most by default.
