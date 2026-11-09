@@ -726,10 +726,10 @@ public class StageChecks {
         List<String> dependencies = new ArrayList<>(ApprovedOwnershipGate.givenTypeStudentCreatedDependencies(designTableRows(approved), specStudentCreatedTypes(approved),
                 sources.templateFiles(), sources.solutionFiles()));
         if (report != null) {
-            dependencies.addAll(ApprovedOwnershipGate.givenCallsToAbsentMethods(approved, sources.templateFiles(), sources.solutionFiles(), report));
+            dependencies.addAll(ApprovedOwnershipGate.givenCallsToAbsentMembers(approved, sources.templateFiles(), sources.solutionFiles(), report));
         }
         return dependencies.isEmpty() ? Optional.empty()
-                : Optional.of("The approved supplied types depend on learner-created types or methods absent from the starter: " + dependencies
+                : Optional.of("The approved supplied types depend on learner-created types, methods or constructors absent from the starter: " + dependencies
                         + ". A given type must be complete and identical in both repositories, so this contract cannot produce a compilable starter as written. "
                         + "Return the complete contract to specification review. Preserve the brief's learner responsibilities; reconcile ownership, supplied demonstrations, "
                         + "rules and grading together. Do not turn supplied support into extra learner TODOs by changing only its Design row.");

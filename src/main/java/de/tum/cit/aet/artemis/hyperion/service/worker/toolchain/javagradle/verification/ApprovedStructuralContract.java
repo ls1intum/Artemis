@@ -203,6 +203,12 @@ final class ApprovedStructuralContract {
                         .equals(parameters.replace(" ", "")));
     }
 
+    boolean studentCreatesConstructor(String owner, String parameters) {
+        JavaClass type = types.get(owner);
+        return type != null && type.getConstructors().stream().filter(ApprovedStructuralContract::studentCreates).anyMatch(constructor -> constructor.getParameters().stream()
+                .map(parameter -> parameter.getType().getGenericCanonicalName()).collect(Collectors.joining(",")).equals(parameters.replace(" ", "")));
+    }
+
     /** A first constructor is learner-created only when every declared constructor is absent from the starter. */
     boolean hasConstructorlessStarter(String typeName) {
         JavaClass type = types.get(typeName);

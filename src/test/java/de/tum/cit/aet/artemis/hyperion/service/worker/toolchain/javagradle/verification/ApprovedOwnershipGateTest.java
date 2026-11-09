@@ -2,13 +2,24 @@ package de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.veri
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.stream.Stream;
 
+import javax.tools.Diagnostic;
+import javax.tools.DiagnosticCollector;
+import javax.tools.JavaFileObject;
+import javax.tools.ToolProvider;
+
+import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
+import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -56,7 +67,7 @@ class ApprovedOwnershipGateTest {
                 [ERROR]   symbol:   method calculate(int)
                 [ERROR]   location: variable calculator of type example.Calculator
                 """);
-        assertThat(ApprovedOwnershipGate.givenCallsToAbsentMethods(MEMBER_OWNERSHIP_SPEC, GIVEN_CALLER, memberSolution(), report))
+        assertThat(ApprovedOwnershipGate.givenCallsToAbsentMembers(MEMBER_OWNERSHIP_SPEC, GIVEN_CALLER, memberSolution(), report))
                 .containsExactly("Demo->Calculator.calculate(int)");
     }
 
@@ -67,7 +78,7 @@ class ApprovedOwnershipGateTest {
         String[] parts = mismatch.split("\\|");
         AgentVerifyReport report = missingMethodReport(
                 "/tmp/hyperion-verify.abc/" + parts[2] + ".java:1: error: cannot find symbol\n  symbol: method " + parts[0] + "\n  location: class " + parts[1] + "\n");
-        assertThat(ApprovedOwnershipGate.givenCallsToAbsentMethods(MEMBER_OWNERSHIP_SPEC, GIVEN_CALLER, memberSolution(), report)).isEmpty();
+        assertThat(ApprovedOwnershipGate.givenCallsToAbsentMembers(MEMBER_OWNERSHIP_SPEC, GIVEN_CALLER, memberSolution(), report)).isEmpty();
     }
 
     @Test
@@ -77,9 +88,67 @@ class ApprovedOwnershipGateTest {
                   symbol: method calculate(int)
                   location: class example.Calculator
                 """);
-        assertThat(ApprovedOwnershipGate.givenCallsToAbsentMethods(MEMBER_OWNERSHIP_SPEC.replace("/** @studentCreates */", ""), GIVEN_CALLER, memberSolution(), report)).isEmpty();
-        assertThat(ApprovedOwnershipGate.givenCallsToAbsentMethods(MEMBER_OWNERSHIP_SPEC, Map.of("src/Demo.java", GIVEN_CALLER.get("src/Demo.java") + " // changed"),
+        assertThat(ApprovedOwnershipGate.givenCallsToAbsentMembers(MEMBER_OWNERSHIP_SPEC.replace("/** @studentCreates */", ""), GIVEN_CALLER, memberSolution(), report)).isEmpty();
+        assertThat(ApprovedOwnershipGate.givenCallsToAbsentMembers(MEMBER_OWNERSHIP_SPEC, Map.of("src/Demo.java", GIVEN_CALLER.get("src/Demo.java") + " // changed"),
                 memberSolution(), report)).isEmpty();
+    }
+
+    @Test
+    void aSuppliedCallerOfALearnerCreatedConstructorNeedsContractRepair() {
+        String specification = MEMBER_OWNERSHIP_SPEC.replace("public int calculate(int input);", "public Calculator(int input);").replace("public int run();",
+                "public Calculator run();");
+        String caller = "package example; public class Demo { public Calculator run() { return new Calculator(2); } }";
+        Map<String, String> starter = Map.of("src/Demo.java", caller, "src/Calculator.java", "package example; public class Calculator {}");
+        Map<String, String> reference = Map.of("src/Demo.java", caller, "src/Calculator.java", "package example; public class Calculator { public Calculator(int input) {} }");
+        var report = missingMethodReport("""
+                /tmp/hyperion-verify.abc/assignment/src/Demo.java:1: error: constructor Calculator in class example.Calculator cannot be applied to given types;
+                    return new Calculator(2);
+                           ^
+                  required: no arguments
+                  found: int
+                  reason: actual and formal argument lists differ in length
+                """);
+        assertThat(ApprovedOwnershipGate.givenCallsToAbsentMembers(specification, starter, reference, report)).containsExactly("Demo->Calculator(int)");
+        assertThat(ApprovedOwnershipGate.givenCallsToAbsentMembers(specification.replace("/** @studentCreates */", ""), starter, reference, report)).isEmpty();
+        assertThat(ApprovedOwnershipGate.givenCallsToAbsentMembers(specification, starter, reference,
+                missingMethodReport(report.templateBuildDiagnostic().replace("found: int", "found: double")))).isEmpty();
+        assertThat(ApprovedOwnershipGate.givenCallsToAbsentMembers(specification, starter, reference,
+                missingMethodReport(report.templateBuildDiagnostic().replace("class example.Calculator", "class unrelated.Calculator")))).isEmpty();
+        assertThat(ApprovedOwnershipGate.givenCallsToAbsentMembers(specification, starter, reference,
+                missingMethodReport(report.templateBuildDiagnostic().replace("assignment/src/Demo", "src/test/Demo")))).isEmpty();
+        assertThat(ApprovedOwnershipGate.givenCallsToAbsentMembers(specification, starter,
+                Map.of("src/Demo.java", caller + " // changed", "src/Calculator.java", reference.get("src/Calculator.java")), report)).isEmpty();
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "int", "String", "java.lang.String" })
+    void actualCompilerConstructorDiagnosticsIdentifyOnlyTheApprovedLearnerMember(String parameterType, @TempDir Path directory) throws Exception {
+        String specification = MEMBER_OWNERSHIP_SPEC.replace("public int calculate(int input);", "public Calculator(" + parameterType + " input);").replace("public int run();",
+                "public Calculator run();");
+        String argument = "int".equals(parameterType) ? "2" : "\"sample\"";
+        String caller = "package example; public class Demo { public Calculator run() { return new Calculator(" + argument + "); } }";
+        String suppliedOwner = "package example; public class Calculator {}";
+        Path sources = directory.resolve("assignment/src");
+        Files.createDirectories(sources);
+        Path demo = sources.resolve("Demo.java");
+        Path calculator = sources.resolve("Calculator.java");
+        FileUtils.writeStringToFile(demo.toFile(), caller, StandardCharsets.UTF_8);
+        FileUtils.writeStringToFile(calculator.toFile(), suppliedOwner, StandardCharsets.UTF_8);
+        var compiler = ToolProvider.getSystemJavaCompiler();
+        var diagnostics = new DiagnosticCollector<JavaFileObject>();
+        try (var manager = compiler.getStandardFileManager(diagnostics, Locale.ROOT, StandardCharsets.UTF_8)) {
+            assertThat(compiler
+                    .getTask(null, manager, diagnostics, List.of("-proc:none", "-d", directory.toString()), null, manager.getJavaFileObjectsFromPaths(List.of(demo, calculator)))
+                    .call()).isFalse();
+        }
+        String diagnostic = diagnostics.getDiagnostics().stream().filter(item -> item.getKind() == Diagnostic.Kind.ERROR)
+                .map(item -> item.getSource().toUri().getPath() + ":" + item.getLineNumber() + ": error: " + item.getMessage(Locale.ROOT))
+                .collect(java.util.stream.Collectors.joining("\n"));
+        Map<String, String> starter = Map.of("src/Demo.java", caller, "src/Calculator.java", suppliedOwner);
+        Map<String, String> reference = Map.of("src/Demo.java", caller, "src/Calculator.java",
+                "package example; public class Calculator { public Calculator(" + parameterType + " input) {} }");
+        assertThat(ApprovedOwnershipGate.givenCallsToAbsentMembers(specification, starter, reference, missingMethodReport(diagnostic)))
+                .as("the actual English JDK compiler diagnostic: %s", diagnostic).hasSize(1);
     }
 
     private static Map<String, String> map(String... kv) {

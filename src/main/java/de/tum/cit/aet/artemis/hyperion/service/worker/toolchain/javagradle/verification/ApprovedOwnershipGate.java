@@ -33,6 +33,10 @@ public final class ApprovedOwnershipGate {
     private static final Pattern MISSING_METHOD = Pattern.compile("(?m)^([^\\r\\n]*?/([\\w$]+)\\.java):(?:\\[\\d+,\\d+]|\\d+):?[^\\n]*cannot find symbol\\R"
             + "(?:[^\\n]*\\R){0,2}?[^\\n]*symbol:\\s*method\\s+([\\w$]+)\\(([^\\r\\n]*)\\)\\R" + "[^\\n]*location:\\s*(?:variable\\s+[\\w$]+\\s+of\\s+type|class)\\s+([\\w.$]+)");
 
+    private static final Pattern MISSING_CONSTRUCTOR = Pattern.compile(
+            "(?m)^([^\\r\\n]*?/([\\w$]+)\\.java):(?:\\[\\d+,\\d+]|\\d+):?[^\\r\\n]*constructor\\s+([\\w$]+)\\s+in\\s+class\\s+([\\w.$]+)\\s+cannot be applied to given types;\\R"
+                    + "(?:[^\\n]*\\R){0,4}?[^\\n]*required:[^\\r\\n]*\\R[^\\n]*found:\\s*([^\\r\\n]*)");
+
     /** A to-do comment: a line comment, a block or doc comment opening, or a continuation line of one, whose text starts with the to-do marker. */
     private static final Pattern TODO_COMMENT = Pattern.compile("(?m)(?://|/\\*+|^\\s*\\*)\\s*TODO\\b");
 
@@ -229,7 +233,7 @@ public final class ApprovedOwnershipGate {
      * A successful reference build and an identical given caller distinguish an impossible starter contract from an ordinary authoring error. Unrecognized compiler
      * diagnostics stay on the mechanical repair path; this evidence can request specification review but never authorizes saving or adding a forbidden starter member.
      */
-    static List<String> givenCallsToAbsentMethods(String specification, Map<String, String> templateFiles, Map<String, String> solutionFiles, AgentVerifyReport report) {
+    static List<String> givenCallsToAbsentMembers(String specification, Map<String, String> templateFiles, Map<String, String> solutionFiles, AgentVerifyReport report) {
         if (!report.solutionPassed() || report.templateCompiled()) {
             return List.of();
         }
@@ -246,23 +250,43 @@ public final class ApprovedOwnershipGate {
             String caller = missing.group(2);
             String qualifiedOwner = missing.group(5);
             String owner = qualifiedOwner.substring(qualifiedOwner.lastIndexOf('.') + 1);
-            if (!given.contains(caller) || !canonicalGivenFileMatches(caller, templateFiles, solutionFiles)
-                    || !parsed.contract().studentCreatesMethod(owner, missing.group(3), missing.group(4))) {
-                continue;
+            if (parsed.contract().studentCreatesMethod(owner, missing.group(3), missing.group(4))
+                    && confirmedGivenCaller(missing.group(1), caller, qualifiedOwner, given, templateFiles, solutionFiles)) {
+                conflicts.add(caller + "->" + owner + "." + missing.group(3) + "(" + missing.group(4) + ")");
             }
-            String callerPath = canonicalJavaFiles(templateFiles, caller, "/" + caller + JAVA_SUFFIX).getFirst().getKey();
-            if (!missing.group(1).endsWith("/assignment/" + callerPath)) {
-                continue;
+        }
+        Matcher constructor = MISSING_CONSTRUCTOR.matcher(report.templateBuildDiagnostic());
+        while (constructor.find()) {
+            String qualifiedOwner = constructor.group(4);
+            String owner = qualifiedOwner.substring(qualifiedOwner.lastIndexOf('.') + 1);
+            String parameters = constructor.group(5).strip();
+            if ("no arguments".equals(parameters)) {
+                parameters = "";
             }
-            List<Map.Entry<String, String>> owners = canonicalJavaFiles(solutionFiles, owner, "/" + owner + JAVA_SUFFIX);
-            if (owners.size() == 1) {
-                String ownerPackage = javaPackage(JavaSourceInspector.maskCommentsAndLiterals(owners.getFirst().getValue()));
-                if (qualifiedOwner.equals(ownerPackage.isEmpty() ? owner : ownerPackage + "." + owner)) {
-                    conflicts.add(caller + "->" + owner + "." + missing.group(3) + "(" + missing.group(4) + ")");
-                }
+            if (owner.equals(constructor.group(3)) && parsed.contract().studentCreatesConstructor(owner, parameters)
+                    && confirmedGivenCaller(constructor.group(1), constructor.group(2), qualifiedOwner, given, templateFiles, solutionFiles)) {
+                conflicts.add(constructor.group(2) + "->" + owner + "(" + parameters + ")");
             }
         }
         return List.copyOf(conflicts);
+    }
+
+    private static boolean confirmedGivenCaller(String diagnosticPath, String caller, String qualifiedOwner, Set<String> given, Map<String, String> templateFiles,
+            Map<String, String> solutionFiles) {
+        if (!given.contains(caller) || !canonicalGivenFileMatches(caller, templateFiles, solutionFiles)) {
+            return false;
+        }
+        String callerPath = canonicalJavaFiles(templateFiles, caller, "/" + caller + JAVA_SUFFIX).getFirst().getKey();
+        if (!diagnosticPath.endsWith("/assignment/" + callerPath)) {
+            return false;
+        }
+        String owner = qualifiedOwner.substring(qualifiedOwner.lastIndexOf('.') + 1);
+        List<Map.Entry<String, String>> owners = canonicalJavaFiles(solutionFiles, owner, "/" + owner + JAVA_SUFFIX);
+        if (owners.size() != 1) {
+            return false;
+        }
+        String ownerPackage = javaPackage(JavaSourceInspector.maskCommentsAndLiterals(owners.getFirst().getValue()));
+        return qualifiedOwner.equals(ownerPackage.isEmpty() ? owner : ownerPackage + "." + owner);
     }
 
     private static final Pattern PACKAGE_DECLARATION = Pattern.compile("(?m)^\\s*package\\s+([\\w.]+)\\s*;");

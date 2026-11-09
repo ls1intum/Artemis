@@ -316,7 +316,10 @@ that single redesign, while retaining the existing draft and its findings. A fai
 redesign returns the earlier draft. It does not turn that draft into a qualified result.
 
 The same bounded specification review handles a supplied type that depends on a
-learner-created type absent from the starter. The controller does not silently change
+learner-created type absent from the starter. A successful reference build and an
+unchanged supplied caller can also prove a dependency on an omitted learner-created
+method or constructor. Unrecognized compiler diagnostics stay on the code-repair path.
+The controller does not silently change
 that supplied type into extra learner work. It reopens the complete specification,
 then checks the revised ownership, responsibilities and grading before statement
 authoring. An unrelated failing reference test does not postpone this contract review.
