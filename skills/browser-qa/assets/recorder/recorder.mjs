@@ -63,15 +63,17 @@ function assertOnOrigin(page, baseURL = sessionBaseURLs.get(page.context())) {
   if (have !== want) throw new Error(`Refusing to type credentials: page is on ${have}, expected ${want}`);
 }
 
-// While credentials are typed, abort any top-level navigation to another origin,
-// so a redirect mid-typing cannot carry the page, and the keystrokes, elsewhere.
-// Returns a function that lifts the guard.
+// While credentials are typed and submitted, abort every top-level navigation.
+// The sign-in form changes steps and submits through script, so it never needs
+// one. Blocking all of them, not only cross-origin ones, also stops a
+// same-origin request that a server would redirect elsewhere, since Playwright
+// does not route redirect targets. Returns check() and lift().
 async function guardOrigin(page, baseURL) {
   const want = new URL(baseURL).origin;
   let blocked;
   const handler = route => {
     const request = route.request();
-    if (request.isNavigationRequest() && request.frame() === page.mainFrame() && new URL(request.url()).origin !== want) {
+    if (request.isNavigationRequest() && request.frame() === page.mainFrame()) {
       blocked = request.url();
       return route.abort('blockedbyclient');
     }
@@ -79,7 +81,7 @@ async function guardOrigin(page, baseURL) {
   };
   await page.route('**/*', handler);
   return {
-    check() { if (blocked) throw new Error(`Refusing to type credentials: page tried to leave ${want} for ${blocked}`); },
+    check() { if (blocked) throw new Error(`Refusing to type credentials: page tried to leave the ${want} sign-in form for ${blocked}`); },
     async lift() { await page.unroute('**/*', handler); },
   };
 }
