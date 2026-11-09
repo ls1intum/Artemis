@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.lecture.domain;
 
+import java.time.Duration;
 import java.time.ZonedDateTime;
 
 import jakarta.persistence.Column;
@@ -18,6 +19,12 @@ import de.tum.cit.aet.artemis.core.domain.DomainObject;
 @AggregateRoot("An obligation towards TUM.Live that outlives the unit, lecture and course it came from.")
 public class TumLiveRecordingCleanup extends DomainObject {
 
+    /**
+     * How long a lecture a unit showed waits before its deletion: a lecture import that read the unit's link before can save its copy meanwhile, and the cleanup
+     * then finds the copy and keeps the lecture.
+     */
+    public static final Duration SHOWN_LECTURE_DELAY = Duration.ofHours(1);
+
     /** The course the lecture was uploaded for: if the course was connected to TUM.Live again, its new grant can delete it. */
     @Column(name = "course_id", nullable = false)
     private long courseId;
@@ -30,6 +37,10 @@ public class TumLiveRecordingCleanup extends DomainObject {
 
     @Column(name = "external_ref", nullable = false, length = 64)
     private String externalRef;
+
+    /** The TUM.Live lecture, if it was known: its recording stays while a lecture unit still shows it, for example one imported into another lecture. */
+    @Column(name = "stream_id")
+    private Long streamId;
 
     @Column(name = "next_attempt_at", nullable = false)
     private ZonedDateTime nextAttemptAt;
@@ -52,6 +63,10 @@ public class TumLiveRecordingCleanup extends DomainObject {
 
     public String getExternalRef() {
         return externalRef;
+    }
+
+    public Long getStreamId() {
+        return streamId;
     }
 
     public ZonedDateTime getNextAttemptAt() {

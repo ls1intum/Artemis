@@ -22,6 +22,7 @@ import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.lecture.config.LectureEnabled;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
+import de.tum.cit.aet.artemis.lecture.domain.TumLiveRecordingCleanup;
 import de.tum.cit.aet.artemis.lecture.domain.TumLiveUnitUpload;
 import de.tum.cit.aet.artemis.lecture.dto.TumLiveUploadedUnitDTO;
 
@@ -92,11 +93,11 @@ public interface TumLiveUnitUploadRepository extends ArtemisJpaRepository<TumLiv
 
     @Modifying
     @Query(nativeQuery = true, value = """
-            INSERT INTO tum_live_recording_cleanup (course_id, integration_id, grant_id, external_ref, next_attempt_at)
-            VALUES (:courseId, :integrationId, :grantId, :externalRef, :nextAttemptAt)
+            INSERT INTO tum_live_recording_cleanup (course_id, integration_id, grant_id, external_ref, stream_id, next_attempt_at)
+            VALUES (:courseId, :integrationId, :grantId, :externalRef, :streamId, :nextAttemptAt)
             """)
     void insertCleanup(@Param("courseId") long courseId, @Param("integrationId") long integrationId, @Param("grantId") long grantId, @Param("externalRef") String externalRef,
-            @Param("nextAttemptAt") ZonedDateTime nextAttemptAt);
+            @Param("streamId") Long streamId, @Param("nextAttemptAt") ZonedDateTime nextAttemptAt);
 
     /**
      * Rows of units that were deleted, without a pending upload: left by a unit deleted without asking about TUM.Live (for example with its course), or by a
@@ -157,7 +158,7 @@ public interface TumLiveUnitUploadRepository extends ArtemisJpaRepository<TumLiv
             if (upload.getPendingGrantId() == grantId) {
                 return upload;
             }
-            insertCleanup(upload.getCourseId(), upload.getIntegrationId(), upload.getPendingGrantId(), upload.getPendingRef(), now);
+            insertCleanup(upload.getCourseId(), upload.getIntegrationId(), upload.getPendingGrantId(), upload.getPendingRef(), upload.getPendingStreamId(), now);
             upload.clearPending();
         }
         upload.startPending(newRef, grantId, courseSlug, unit.getVideoSource(), now);
@@ -198,7 +199,7 @@ public interface TumLiveUnitUploadRepository extends ArtemisJpaRepository<TumLiv
             return false;
         }
         TumLiveUnitUpload upload = pending.get();
-        insertCleanup(upload.getCourseId(), upload.getIntegrationId(), upload.getPendingGrantId(), ref, now);
+        insertCleanup(upload.getCourseId(), upload.getIntegrationId(), upload.getPendingGrantId(), ref, upload.getPendingStreamId(), now);
         upload.clearPending();
         upload.setLastError(reason);
         // Kept also when the unit is gone: its deletion may still release the attached recording, and the cleanup removes the row later.
@@ -231,7 +232,8 @@ public interface TumLiveUnitUploadRepository extends ArtemisJpaRepository<TumLiv
         }
         updateVideoSource(lectureUnitId, newVideoSource);
         if (upload.getCurrentRef() != null) {
-            insertCleanup(upload.getCourseId(), upload.getIntegrationId(), upload.getCurrentGrantId(), upload.getCurrentRef(), now);
+            insertCleanup(upload.getCourseId(), upload.getIntegrationId(), upload.getCurrentGrantId(), upload.getCurrentRef(), upload.getCurrentStreamId(),
+                    now.plus(TumLiveRecordingCleanup.SHOWN_LECTURE_DELAY));
         }
         upload.promotePending();
         upload.setLastError(null);
@@ -273,10 +275,11 @@ public interface TumLiveUnitUploadRepository extends ArtemisJpaRepository<TumLiv
         findAttachmentVideoUnitForUpdateById(lectureUnitId);
         findForUpdateByLectureUnitId(lectureUnitId).ifPresent(upload -> {
             if (upload.getPendingRef() != null) {
-                insertCleanup(upload.getCourseId(), upload.getIntegrationId(), upload.getPendingGrantId(), upload.getPendingRef(), now);
+                insertCleanup(upload.getCourseId(), upload.getIntegrationId(), upload.getPendingGrantId(), upload.getPendingRef(), upload.getPendingStreamId(), now);
             }
             if (deleteRecording && upload.getCurrentRef() != null) {
-                insertCleanup(upload.getCourseId(), upload.getIntegrationId(), upload.getCurrentGrantId(), upload.getCurrentRef(), now);
+                insertCleanup(upload.getCourseId(), upload.getIntegrationId(), upload.getCurrentGrantId(), upload.getCurrentRef(), upload.getCurrentStreamId(),
+                        now.plus(TumLiveRecordingCleanup.SHOWN_LECTURE_DELAY));
             }
             delete(upload);
         });

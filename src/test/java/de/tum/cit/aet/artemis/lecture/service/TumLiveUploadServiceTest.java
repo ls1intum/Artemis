@@ -268,6 +268,71 @@ class TumLiveUploadServiceTest {
                 eq("TUM.Live answered 409 CONFLICT"));
     }
 
+    private static TumLiveRecordingCleanup cleanupOfLecture55() {
+        var cleanup = cleanup();
+        ReflectionTestUtils.setField(cleanup, "streamId", 55L);
+        return cleanup;
+    }
+
+    /** A unit imported into another lecture copied the link of lecture 55, in a spelling only parsing recognizes; another unit shows lecture 556. */
+    private void anImportedUnitStillShowsLecture55() {
+        when(unitRepository.findAllLectureUnitSources()).thenReturn(List.of("https://tum.live/w/algo/556", "https://tum.live/w/algo/%35%35?video_only=1"));
+        when(api.findStreamId("https://tum.live/w/algo/556")).thenReturn(Optional.of(556L));
+        when(api.findStreamId("https://tum.live/w/algo/%35%35?video_only=1")).thenReturn(Optional.of(55L));
+    }
+
+    @Test
+    void aRecordingAUnitStillShowsIsKeptAndCheckedAgainDaily() {
+        when(cleanupRepository.findTop50ByNextAttemptAtLessThanEqualOrderByNextAttemptAtAsc(any())).thenReturn(List.of(cleanupOfLecture55()));
+        anImportedUnitStillShowsLecture55();
+        var before = ZonedDateTime.now();
+
+        service.processCleanups();
+
+        verify(api, never()).deleteUpload(anyLong(), anyString());
+        verify(cleanupRepository, never()).deleteConfirmed(anyLong());
+        verify(cleanupRepository).postpone(eq(5L), argThat(next -> next.isAfter(before.plusHours(23))), eq("A lecture unit still shows this video."));
+    }
+
+    @Test
+    void aRecordingIsDeletedWhenOnlyLinksToOtherLecturesMatch() {
+        when(cleanupRepository.findTop50ByNextAttemptAtLessThanEqualOrderByNextAttemptAtAsc(any())).thenReturn(List.of(cleanupOfLecture55()));
+        when(unitRepository.findAllLectureUnitSources()).thenReturn(List.of("https://tum.live/w/algo/556", "https://example.com/videos/55"));
+        when(api.findStreamId("https://tum.live/w/algo/556")).thenReturn(Optional.of(556L));
+
+        service.processCleanups();
+
+        verify(api).deleteUpload(23, REF);
+        verify(cleanupRepository).deleteConfirmed(5L);
+    }
+
+    @Test
+    void theLinksOfTheUnitsAreReadOnlyForEntriesWithAKnownLecture() {
+        when(cleanupRepository.findTop50ByNextAttemptAtLessThanEqualOrderByNextAttemptAtAsc(any())).thenReturn(List.of(cleanup()));
+
+        service.processCleanups();
+
+        verify(unitRepository, never()).findAllLectureUnitSources();
+        verify(api).deleteUpload(23, REF);
+    }
+
+    @Test
+    void aRecordingAUnitStillShowsStaysQueuedWhenTheGrantIsRevoked() {
+        var second = cleanup();
+        second.setId(6L);
+        ReflectionTestUtils.setField(second, "externalRef", "reference-b-0000");
+        when(uploadRepository.findByCourseIdAndPendingGrantId(7L, 23L)).thenReturn(List.of());
+        when(cleanupRepository.findTop50ByGrantIdAndIdGreaterThanOrderByIdAsc(23L, 0L)).thenReturn(List.of(cleanupOfLecture55(), second));
+        anImportedUnitStillShowsLecture55();
+
+        service.deleteUnattachedUploadsBeforeRevocation(new GocastGrantRevokingEvent(7, 17, 23));
+
+        verify(api, never()).deleteUpload(23, REF);
+        verify(cleanupRepository, never()).deleteConfirmed(5L);
+        verify(api).deleteUpload(23, "reference-b-0000");
+        verify(cleanupRepository).deleteConfirmed(6L);
+    }
+
     @Test
     void anUploadIsForgottenWhenTheUnitsLinkShowsAnotherVideo() {
         when(api.findStreamId("https://www.youtube.com/watch?v=x")).thenReturn(Optional.empty());

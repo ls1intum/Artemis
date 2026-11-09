@@ -57,6 +57,8 @@ public class TumLiveUploadService {
     /** When a deletion is tried again after TUM.Live could not be reached, so a failing entry does not keep the entries after it from being tried. */
     private static final Duration UNAVAILABLE_RETRY = Duration.ofMinutes(5);
 
+    private static final String STILL_SHOWN = "A lecture unit still shows this video.";
+
     private static final SecureRandom RANDOM = new SecureRandom();
 
     private final TumLiveUnitUploadRepository uploadRepository;
@@ -237,7 +239,8 @@ public class TumLiveUploadService {
 
     /**
      * Deletes uploaded lectures Artemis no longer uses in TUM.Live. An entry stays until TUM.Live confirms; a refused one is kept with the reason and retried daily.
-     * When the grant it was uploaded through is revoked, the course's current grant of the same integration deletes it, if the course was connected again.
+     * When the grant it was uploaded through is revoked, the course's current grant of the same integration deletes it, if the course was connected again. A
+     * lecture a unit still shows, for example one imported into another lecture, stays and is checked again daily.
      */
     public void processCleanups() {
         if (gocastBindingApi.isEmpty()) {
@@ -245,7 +248,13 @@ public class TumLiveUploadService {
         }
         GocastBindingApi api = gocastBindingApi.get();
         ZonedDateTime now = ZonedDateTime.now();
-        for (TumLiveRecordingCleanup cleanup : cleanupRepository.findTop50ByNextAttemptAtLessThanEqualOrderByNextAttemptAtAsc(now)) {
+        List<TumLiveRecordingCleanup> due = cleanupRepository.findTop50ByNextAttemptAtLessThanEqualOrderByNextAttemptAtAsc(now);
+        Set<Long> shown = shownLectures(api, due);
+        for (TumLiveRecordingCleanup cleanup : due) {
+            if (cleanup.getStreamId() != null && shown.contains(cleanup.getStreamId())) {
+                cleanupRepository.postpone(cleanup.getId(), now.plus(BLOCKED_RETRY), STILL_SHOWN);
+                continue;
+            }
             try {
                 deleteUpload(api, cleanup);
                 cleanupRepository.deleteConfirmed(cleanup.getId());
@@ -279,6 +288,17 @@ public class TumLiveUploadService {
         rowsOfDeletedUnitsFoundBefore.set(Set.copyOf(found));
     }
 
+    /**
+     * The TUM.Live lectures lecture units still show, read once for the given queued entries: an imported unit copies the video link, so a recording can outlive
+     * the unit it was uploaded for.
+     */
+    private Set<Long> shownLectures(GocastBindingApi api, Collection<TumLiveRecordingCleanup> cleanups) {
+        if (cleanups.stream().allMatch(cleanup -> cleanup.getStreamId() == null)) {
+            return Set.of();
+        }
+        return attachmentVideoUnitRepository.findAllLectureUnitSources().stream().map(api::findStreamId).flatMap(Optional::stream).collect(Collectors.toSet());
+    }
+
     private void deleteUpload(GocastBindingApi api, TumLiveRecordingCleanup cleanup) {
         try {
             api.deleteUpload(cleanup.getGrantId(), cleanup.getExternalRef());
@@ -297,7 +317,7 @@ public class TumLiveUploadService {
     /**
      * Before a course is disconnected from TUM.Live, deletes there what its uploads through this grant left unattached, while the grant still works: pending
      * uploads and all queued deletions, in batches of 50. Each takes one request to TUM.Live, so a long queue delays the disconnection; an unavailable TUM.Live
-     * ends it early. Attached recordings stay. A failure is logged and does not stop the disconnection; the queue keeps what is left.
+     * ends it early. Attached recordings stay, and so do queued ones a unit still shows. A failure is logged and does not stop the disconnection; the queue keeps what is left.
      *
      * @param event the grant about to be revoked
      */
@@ -315,8 +335,13 @@ public class TumLiveUploadService {
             List<TumLiveRecordingCleanup> batch;
             do {
                 batch = cleanupRepository.findTop50ByGrantIdAndIdGreaterThanOrderByIdAsc(event.grantId(), lastId);
+                Set<Long> shown = shownLectures(gocastBindingApi.get(), batch);
                 for (TumLiveRecordingCleanup cleanup : batch) {
                     lastId = cleanup.getId();
+                    if (cleanup.getStreamId() != null && shown.contains(cleanup.getStreamId())) {
+                        // Stays queued; the regular cleanup checks it again.
+                        continue;
+                    }
                     if (!deleteBeforeRevocation(event.grantId(), cleanup)) {
                         // TUM.Live is unavailable: the disconnection should not wait for every remaining entry to time out.
                         return;

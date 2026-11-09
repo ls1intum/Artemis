@@ -28,6 +28,7 @@ import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.TumLiveRecordingCleanup;
 import de.tum.cit.aet.artemis.lecture.repository.TumLiveRecordingCleanupRepository;
 import de.tum.cit.aet.artemis.lecture.repository.TumLiveUnitUploadRepository;
+import de.tum.cit.aet.artemis.lecture.service.LectureImportService;
 import de.tum.cit.aet.artemis.lecture.test_repository.AttachmentVideoUnitTestRepository;
 import de.tum.cit.aet.artemis.lecture.test_repository.LectureTestRepository;
 import de.tum.cit.aet.artemis.lecture.util.LectureUtilService;
@@ -61,6 +62,9 @@ class TumLiveUploadIntegrationTest extends AbstractSpringIntegrationIndependentT
 
     @Autowired
     private LectureTestRepository lectureRepository;
+
+    @Autowired
+    private LectureImportService lectureImportService;
 
     private Lecture lecture;
 
@@ -131,6 +135,8 @@ class TumLiveUploadIntegrationTest extends AbstractSpringIntegrationIndependentT
         assertThat(started.getPendingRef()).isEqualTo(ref("second"));
         assertThat(started.getPendingGrantId()).isEqualTo(24);
         assertThat(queued(ref("first"))).isTrue();
+        assertThat(cleanupRepository.findAll()).filteredOn(cleanup -> ref("first").equals(cleanup.getExternalRef())).singleElement()
+                .satisfies(cleanup -> assertThat(cleanup.getNextAttemptAt()).as("no unit showed it, so it is deleted right away").isBefore(now.plusMinutes(1)));
     }
 
     @Test
@@ -193,6 +199,73 @@ class TumLiveUploadIntegrationTest extends AbstractSpringIntegrationIndependentT
         assertThat(uploadRepository.findUploadedUnitsByCourseId(courseId())).isEmpty();
         assertThat(uploadRepository.findByLectureUnitId(unit.getId()).orElseThrow().getCurrentRef()).isNull();
         assertThat(queued(ref("first"))).as("the recording stays in TUM.Live").isFalse();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
+    void anEditFromALinkThatDiffersOnlyInLetterCaseIsRejected() throws Exception {
+        // MySQL compares strings without letter case; paths and video ids are case-sensitive.
+        unit.setVideoSource("https://example.com/videos/abc");
+        unit = attachmentVideoUnitRepository.saveWithVideoSource(unit);
+
+        // The form was loaded before another editor changed the link from ".../Abc" to ".../abc".
+        updateUnit("Renamed", YOUTUBE, "https://example.com/videos/Abc");
+
+        assertThat(videoSource()).isEqualTo("https://example.com/videos/abc");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void replacingAnUploadKeepsTheLectureAnImportedUnitStillShows() {
+        var now = ZonedDateTime.now();
+        // An id of this test only, as other tests leave links to lecture 55 behind.
+        long oldLecture = 500_000 + unit.getId();
+        String oldWatchPage = "https://tum.live/w/algo/" + oldLecture + "?video_only=1";
+        uploadRepository.startPending(unit.getId(), 17, 23, "algo", ref("first"), now);
+        uploadRepository.recordPendingStream(unit.getId(), ref("first"), oldLecture);
+        uploadRepository.attachPending(unit.getId(), ref("first"), oldWatchPage, now);
+        lectureImportService.importLecture(lectureRepository.findByIdWithLectureUnitsElseThrow(lecture.getId()), lecture.getCourse(), true);
+
+        uploadRepository.startPending(unit.getId(), 17, 23, "algo", ref("second"), now);
+        uploadRepository.recordPendingStream(unit.getId(), ref("second"), 56);
+        uploadRepository.attachPending(unit.getId(), ref("second"), "https://tum.live/w/algo/56", now);
+
+        // The old lecture is queued with its TUM.Live id, after a delay for imports still running, and the cleanup finds the imported unit that still shows it.
+        assertThat(cleanupRepository.findAll()).filteredOn(cleanup -> ref("first").equals(cleanup.getExternalRef())).singleElement().satisfies(cleanup -> {
+            assertThat(cleanup.getStreamId()).isEqualTo(oldLecture);
+            assertThat(cleanup.getNextAttemptAt()).isAfter(now.plusMinutes(59));
+        });
+        assertThat(attachmentVideoUnitRepository.findAllLectureUnitSources()).as("the imported unit").contains(oldWatchPage);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void anImportCopiesTheLinkTheUnitHasWhenTheCopyIsSaved() {
+        unit.setVideoSource(WATCH_PAGE);
+        unit = attachmentVideoUnitRepository.saveWithVideoSource(unit);
+        Lecture loaded = lectureRepository.findByIdWithLectureUnitsElseThrow(lecture.getId());
+        String replacement = "https://tum.live/w/algo/" + (600_000 + unit.getId());
+
+        // A TUM.Live upload replaces the video after the import loaded the lecture.
+        attachmentVideoUnitRepository.overwriteVideoSource(unit.getId(), replacement);
+        Lecture imported = lectureImportService.importLecture(loaded, lecture.getCourse(), true);
+
+        var copies = lectureRepository.findByIdWithLectureUnitsElseThrow(imported.getId()).getLectureUnits();
+        assertThat(copies).singleElement()
+                .satisfies(copy -> assertThat(attachmentVideoUnitRepository.findById(copy.getId()).orElseThrow().getVideoSource()).isEqualTo(replacement));
+    }
+
+    @Test
+    void theLinksOfAllUnitsAreReadInEverySpelling() {
+        // MySQL treats links that differ only in letter case as equal; only the lowercase path is a TUM.Live watch page.
+        String path = "/algo/" + (700_000 + unit.getId()) + "?video_only=1";
+        unit.setVideoSource("https://tum.live/W" + path);
+        unit = attachmentVideoUnitRepository.saveWithVideoSource(unit);
+        AttachmentVideoUnit other = lectureUtilService.createAttachmentVideoUnitWithoutAttachment(lecture);
+        other.setVideoSource("https://tum.live/w" + path);
+        attachmentVideoUnitRepository.saveWithVideoSource(other);
+
+        assertThat(attachmentVideoUnitRepository.findAllLectureUnitSources()).contains("https://tum.live/W" + path, "https://tum.live/w" + path);
     }
 
     @Test

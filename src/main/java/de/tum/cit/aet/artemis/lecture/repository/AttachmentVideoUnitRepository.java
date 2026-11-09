@@ -6,10 +6,13 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
+import jakarta.persistence.LockModeType;
+
 import org.jspecify.annotations.NonNull;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -241,42 +244,58 @@ public interface AttachmentVideoUnitRepository extends ArtemisJpaRepository<Atta
             """)
     List<IngestionJobIdentityDTO> findTutorialLectureUnitIdentities(@Param("ids") Collection<Long> ids);
 
-    /**
-     * Sets the video URL of a unit that has none, as an edit saw it. A blank URL, which older saves stored for a removed link, counts as none.
-     *
-     * @param attachmentVideoUnitId the unit
-     * @param videoSource           the new URL
-     * @return 1 if it was written, 0 if the unit has a URL by now
-     */
-    @Transactional // ok because of modifying query
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT unit FROM AttachmentVideoUnit unit WHERE unit.id = :attachmentVideoUnitId")
+    Optional<AttachmentVideoUnit> findForUpdateById(@Param("attachmentVideoUnitId") long attachmentVideoUnitId);
+
     @Modifying
-    @Query("UPDATE AttachmentVideoUnit unit SET unit.videoSource = :videoSource WHERE unit.id = :attachmentVideoUnitId AND (unit.videoSource IS NULL OR TRIM(unit.videoSource) = '')")
-    int updateVideoSourceIfNull(@Param("attachmentVideoUnitId") long attachmentVideoUnitId, @Param("videoSource") String videoSource);
+    @Query("UPDATE AttachmentVideoUnit unit SET unit.videoSource = :videoSource WHERE unit.id = :attachmentVideoUnitId")
+    void updateVideoSource(@Param("attachmentVideoUnitId") long attachmentVideoUnitId, @Param("videoSource") String videoSource);
 
     /**
-     * Changes the video URL of a unit if it is still the one an edit saw.
+     * Changes the video URL of a unit if it is still the one an edit loaded, so the edit does not overwrite a video a TUM.Live upload attached meanwhile. The URLs
+     * are compared exactly in Java, as the database may ignore their letter case.
      *
      * @param attachmentVideoUnitId the unit
-     * @param expectedVideoSource   the URL the edit loaded
-     * @param videoSource           the new URL
-     * @return 1 if it was written, 0 if the URL changed meanwhile
-     */
-    @Transactional // ok because of modifying query
-    @Modifying
-    @Query("UPDATE AttachmentVideoUnit unit SET unit.videoSource = :videoSource WHERE unit.id = :attachmentVideoUnitId AND unit.videoSource = :expectedVideoSource")
-    int updateVideoSourceIfEquals(@Param("attachmentVideoUnitId") long attachmentVideoUnitId, @Param("expectedVideoSource") String expectedVideoSource,
-            @Param("videoSource") String videoSource);
-
-    /**
-     * Changes the video URL of a unit if it is still the one an edit loaded, so the edit does not overwrite a video a TUM.Live upload attached meanwhile.
-     *
-     * @param attachmentVideoUnitId the unit
-     * @param expectedVideoSource   the URL the edit loaded, or null
+     * @param expectedVideoSource   the URL the edit loaded, or null if it loaded none; a blank URL, which older saves stored for a removed link, counts as none
      * @param videoSource           the new URL, or null
      * @return whether it was written
      */
+    @Transactional // ok because the unit is locked while its URL is compared and written
     default boolean updateVideoSourceIfUnchanged(long attachmentVideoUnitId, String expectedVideoSource, String videoSource) {
-        return (expectedVideoSource == null ? updateVideoSourceIfNull(attachmentVideoUnitId, videoSource)
-                : updateVideoSourceIfEquals(attachmentVideoUnitId, expectedVideoSource, videoSource)) == 1;
+        Optional<AttachmentVideoUnit> unit = findForUpdateById(attachmentVideoUnitId);
+        if (unit.isEmpty()) {
+            return false;
+        }
+        String current = unit.get().getVideoSource();
+        boolean unchanged = expectedVideoSource == null ? current == null || current.isBlank() : expectedVideoSource.equals(current);
+        if (unchanged) {
+            updateVideoSource(attachmentVideoUnitId, videoSource);
+        }
+        return unchanged;
     }
+
+    /**
+     * Saves the copy of a unit with the video URL the unit has now. The unit stays locked until the copy is saved, so a TUM.Live upload that replaces the unit's
+     * video either happens before and the copy gets the new URL, or after, when the cleanup of the old video finds the copy.
+     *
+     * @param copy         the new unit; keeps its URL if the unit is gone
+     * @param sourceUnitId the unit it copies
+     * @return the saved copy
+     */
+    @Transactional // ok because the unit is locked until its copy is saved
+    default AttachmentVideoUnit saveCopyWithCurrentVideoSource(AttachmentVideoUnit copy, long sourceUnitId) {
+        findForUpdateById(sourceUnitId).ifPresent(source -> copy.setVideoSource(source.getVideoSource()));
+        return save(copy);
+    }
+
+    /**
+     * The links of all lecture units, to find the TUM.Live lectures units still show. Attachment video units and online units keep their link in the same column.
+     * All of them, as a TUM.Live link has many spellings (letter case, leading zeros, percent-encoding) that only parsing it recognizes. Not distinct, as MySQL
+     * would treat links that differ only in letter case as one.
+     *
+     * @return the links
+     */
+    @Query(nativeQuery = true, value = "SELECT lecture_unit.source FROM lecture_unit WHERE lecture_unit.source IS NOT NULL")
+    List<String> findAllLectureUnitSources();
 }

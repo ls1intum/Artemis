@@ -54,6 +54,7 @@
             <column name="external_ref" type="VARCHAR(64)">
                 <constraints nullable="false"/>
             </column>
+            <column name="stream_id" type="BIGINT"/>
             <column name="next_attempt_at" type="DATETIME(3)">
                 <constraints nullable="false"/>
             </column>

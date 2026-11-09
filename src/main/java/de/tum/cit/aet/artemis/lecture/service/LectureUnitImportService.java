@@ -25,6 +25,7 @@ import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 import de.tum.cit.aet.artemis.lecture.domain.OnlineUnit;
 import de.tum.cit.aet.artemis.lecture.domain.TextUnit;
 import de.tum.cit.aet.artemis.lecture.repository.AttachmentRepository;
+import de.tum.cit.aet.artemis.lecture.repository.AttachmentVideoUnitRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitRepository;
 
 @Conditional(LectureEnabled.class)
@@ -38,14 +39,17 @@ public class LectureUnitImportService {
 
     private final AttachmentRepository attachmentRepository;
 
+    private final AttachmentVideoUnitRepository attachmentVideoUnitRepository;
+
     private final SlideSplitterService slideSplitterService;
 
     private final Optional<LectureContentProcessingApi> contentProcessingApi;
 
-    public LectureUnitImportService(LectureUnitRepository lectureUnitRepository, AttachmentRepository attachmentRepository, SlideSplitterService slideSplitterService,
-            Optional<LectureContentProcessingApi> contentProcessingApi) {
+    public LectureUnitImportService(LectureUnitRepository lectureUnitRepository, AttachmentRepository attachmentRepository,
+            AttachmentVideoUnitRepository attachmentVideoUnitRepository, SlideSplitterService slideSplitterService, Optional<LectureContentProcessingApi> contentProcessingApi) {
         this.lectureUnitRepository = lectureUnitRepository;
         this.attachmentRepository = attachmentRepository;
+        this.attachmentVideoUnitRepository = attachmentVideoUnitRepository;
         this.slideSplitterService = slideSplitterService;
         this.contentProcessingApi = contentProcessingApi;
     }
@@ -103,7 +107,8 @@ public class LectureUnitImportService {
                 attachmentVideoUnit.setReleaseDate(importedAttachmentVideoUnit.getReleaseDate());
                 attachmentVideoUnit.setDescription(importedAttachmentVideoUnit.getDescription());
                 attachmentVideoUnit.setVideoSource(importedAttachmentVideoUnit.getVideoSource());
-                attachmentVideoUnit = lectureUnitRepository.save(attachmentVideoUnit);
+                // The link as the unit has it now, not as the import loaded it: a TUM.Live upload may have replaced it meanwhile, and the cleanup must see the copy.
+                attachmentVideoUnit = attachmentVideoUnitRepository.saveCopyWithCurrentVideoSource(attachmentVideoUnit, importedAttachmentVideoUnit.getId());
 
                 if (importedAttachmentVideoUnit.getAttachment() != null) {
                     Attachment attachment = importAttachment(attachmentVideoUnit.getId(), importedAttachmentVideoUnit.getAttachment());
