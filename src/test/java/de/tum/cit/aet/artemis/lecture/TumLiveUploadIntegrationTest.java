@@ -121,7 +121,23 @@ class TumLiveUploadIntegrationTest extends AbstractSpringIntegrationIndependentT
 
         assertThat(videoSource()).isEqualTo("https://tum.live/w/algo/56");
         assertThat(queued(ref("first"))).isTrue();
-        assertThat(cleanupRepository.findAll()).allSatisfy(cleanup -> assertThat(cleanup.getCourseId()).as("for a later grant of the course").isEqualTo(courseId()));
+        assertThat(cleanupRepository.findAll()).filteredOn(cleanup -> ref("first").equals(cleanup.getExternalRef())).singleElement()
+                .satisfies(cleanup -> assertThat(cleanup.getCourseId()).as("for a later grant of the course").isEqualTo(courseId()));
+    }
+
+    @Test
+    void anUploadStartedOnABlankLinkIsAttachedAfterAnOlderSaveRemovedIt() {
+        // An older save stored a removed link as "", and a later one as null.
+        unit.setVideoSource("");
+        unit = attachmentVideoUnitRepository.saveWithVideoSource(unit);
+        var now = ZonedDateTime.now();
+        uploadRepository.startPending(unit.getId(), 17, 23, "algo", ref("first"), now);
+        attachmentVideoUnitRepository.overwriteVideoSource(unit.getId(), null);
+
+        assertThat(uploadRepository.attachPending(unit.getId(), ref("first"), WATCH_PAGE, now)).isTrue();
+
+        assertThat(videoSource()).isEqualTo(WATCH_PAGE);
+        assertThat(queued(ref("first"))).isFalse();
     }
 
     @Test

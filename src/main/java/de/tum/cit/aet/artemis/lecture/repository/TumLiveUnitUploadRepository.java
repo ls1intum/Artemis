@@ -226,7 +226,8 @@ public interface TumLiveUnitUploadRepository extends ArtemisJpaRepository<TumLiv
         }
         TumLiveUnitUpload upload = pending.get();
         String videoSource = unit.map(AttachmentVideoUnit::getVideoSource).orElse(null);
-        if (unit.isEmpty() || !Objects.equals(videoSource, upload.getExpectedVideoSource())) {
+        // A blank URL, which older saves stored for a removed link, counts as none.
+        if (unit.isEmpty() || !Objects.equals(noneIfBlank(videoSource), noneIfBlank(upload.getExpectedVideoSource()))) {
             discardPending(lectureUnitId, ref, REPLACED_BY_EDIT, now);
             return false;
         }
@@ -283,5 +284,9 @@ public interface TumLiveUnitUploadRepository extends ArtemisJpaRepository<TumLiv
             }
             delete(upload);
         });
+    }
+
+    private static String noneIfBlank(String videoSource) {
+        return videoSource == null || videoSource.isBlank() ? null : videoSource;
     }
 }

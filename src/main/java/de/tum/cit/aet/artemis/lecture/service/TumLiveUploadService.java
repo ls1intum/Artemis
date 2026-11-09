@@ -251,11 +251,11 @@ public class TumLiveUploadService {
         List<TumLiveRecordingCleanup> due = cleanupRepository.findTop50ByNextAttemptAtLessThanEqualOrderByNextAttemptAtAsc(now);
         Set<Long> shown = shownLectures(api, due);
         for (TumLiveRecordingCleanup cleanup : due) {
-            if (cleanup.getStreamId() != null && shown.contains(cleanup.getStreamId())) {
-                cleanupRepository.postpone(cleanup.getId(), now.plus(BLOCKED_RETRY), STILL_SHOWN);
-                continue;
-            }
             try {
+                if (cleanup.getStreamId() != null && shown.contains(cleanup.getStreamId())) {
+                    cleanupRepository.postpone(cleanup.getId(), now.plus(BLOCKED_RETRY), STILL_SHOWN);
+                    continue;
+                }
                 deleteUpload(api, cleanup);
                 cleanupRepository.deleteConfirmed(cleanup.getId());
             }
@@ -269,6 +269,11 @@ public class TumLiveUploadService {
                     // TUM.Live is unavailable: try again soon, after the entries that come next.
                     cleanupRepository.postpone(cleanup.getId(), now.plus(UNAVAILABLE_RETRY), cleanup.getBlockedReason());
                 }
+            }
+            catch (RuntimeException exception) {
+                // For example the course's connection could not be read: the entry must not hold up the ones after it.
+                log.warn("Could not delete the uploaded lecture {} of grant {}; retrying soon", cleanup.getExternalRef(), cleanup.getGrantId(), exception);
+                cleanupRepository.postpone(cleanup.getId(), now.plus(UNAVAILABLE_RETRY), cleanup.getBlockedReason());
             }
         }
         purgeRowsOfDeletedUnits();
@@ -333,12 +338,16 @@ public class TumLiveUploadService {
             }
             long lastId = 0;
             List<TumLiveRecordingCleanup> batch;
+            // Read once, when the first entry with a known lecture comes up.
+            Set<Long> shown = null;
             do {
                 batch = cleanupRepository.findTop50ByGrantIdAndIdGreaterThanOrderByIdAsc(event.grantId(), lastId);
-                Set<Long> shown = shownLectures(gocastBindingApi.get(), batch);
+                if (shown == null && batch.stream().anyMatch(cleanup -> cleanup.getStreamId() != null)) {
+                    shown = shownLectures(gocastBindingApi.get(), batch);
+                }
                 for (TumLiveRecordingCleanup cleanup : batch) {
                     lastId = cleanup.getId();
-                    if (cleanup.getStreamId() != null && shown.contains(cleanup.getStreamId())) {
+                    if (shown != null && cleanup.getStreamId() != null && shown.contains(cleanup.getStreamId())) {
                         // Stays queued; the regular cleanup checks it again.
                         continue;
                     }

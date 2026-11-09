@@ -188,7 +188,7 @@ public class AttachmentVideoUnitService {
         // The video URL changes only if the client changed it, and only if the unit still has the URL the client loaded: a TUM.Live upload may have been attached
         // meanwhile, and a form opened before must not take it away. The client sends an empty loaded URL as "". A client that does not send it at all edits
         // against the URL the unit has now, as before.
-        String formVideoSource = updateUnitDTO.loadedVideoSource() == null ? existingAttachmentVideoUnit.getVideoSource() : blankToNull(updateUnitDTO.loadedVideoSource());
+        String formVideoSource = blankToNull(updateUnitDTO.loadedVideoSource() == null ? existingAttachmentVideoUnit.getVideoSource() : updateUnitDTO.loadedVideoSource());
         boolean videoSourceEdited = !Objects.equals(blankToNull(updateUnitDTO.videoSource()), formVideoSource);
         existingAttachmentVideoUnit.setVideoSource(videoSourceEdited ? blankToNull(updateUnitDTO.videoSource()) : existingAttachmentVideoUnit.getVideoSource());
         boolean hasUploadedFile = updateFile != null && !updateFile.isEmpty();

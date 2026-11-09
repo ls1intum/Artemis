@@ -317,6 +317,43 @@ class TumLiveUploadServiceTest {
     }
 
     @Test
+    void aFailingEntryDoesNotHoldUpTheOthers() {
+        var second = cleanup();
+        second.setId(6L);
+        ReflectionTestUtils.setField(second, "externalRef", "reference-b-0000");
+        when(cleanupRepository.findTop50ByNextAttemptAtLessThanEqualOrderByNextAttemptAtAsc(any())).thenReturn(List.of(cleanup(), second));
+        // TUM.Live does not know the first one, and the fallback cannot read the course's connection.
+        doThrow(new GocastIntegrationException("unknown", HttpStatus.NOT_FOUND)).when(api).deleteUpload(23, REF);
+        when(api.findUploadConnection(7L)).thenThrow(new IllegalStateException("database unavailable"));
+        var before = ZonedDateTime.now();
+
+        service.processCleanups();
+
+        verify(cleanupRepository).postpone(eq(5L), argThat(next -> next.isAfter(before.plusMinutes(4)) && next.isBefore(before.plusHours(1))), eq(null));
+        verify(api).deleteUpload(23, "reference-b-0000");
+        verify(cleanupRepository).deleteConfirmed(6L);
+        verify(uploadRepository).findIdsWithoutUnitAndPendingUpload();
+    }
+
+    @Test
+    void theLinksOfTheUnitsAreReadOnceBeforeTheGrantIsRevoked() {
+        var second = cleanupOfLecture55();
+        second.setId(6L);
+        ReflectionTestUtils.setField(second, "externalRef", "reference-b-0000");
+        ReflectionTestUtils.setField(second, "streamId", 556L);
+        when(uploadRepository.findByCourseIdAndPendingGrantId(7L, 23L)).thenReturn(List.of());
+        when(cleanupRepository.findTop50ByGrantIdAndIdGreaterThanOrderByIdAsc(23L, 0L)).thenReturn(List.of(cleanupOfLecture55()));
+        when(cleanupRepository.findTop50ByGrantIdAndIdGreaterThanOrderByIdAsc(23L, 5L)).thenReturn(List.of(second));
+        anImportedUnitStillShowsLecture55();
+
+        service.deleteUnattachedUploadsBeforeRevocation(new GocastGrantRevokingEvent(7, 17, 23));
+
+        verify(unitRepository).findAllLectureUnitSources();
+        verify(api, never()).deleteUpload(23, REF);
+        verify(api, never()).deleteUpload(23, "reference-b-0000");
+    }
+
+    @Test
     void aRecordingAUnitStillShowsStaysQueuedWhenTheGrantIsRevoked() {
         var second = cleanup();
         second.setId(6L);
