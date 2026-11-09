@@ -96,6 +96,25 @@ describe('ExerciseActionBarComponent', () => {
             fixture.detectChanges();
             expect(tooltipTextOf()).toBe('label.edit');
         });
+
+        it('puts the tooltip of a disabled inline delete on its wrapper, which still receives hover', () => {
+            const action: ActionItem = {
+                id: 'delete',
+                labelKey: 'label.delete',
+                icon: faTrash,
+                severity: 'danger',
+                kind: 'delete',
+                disabled: true,
+                disabledTooltip: 'tooltip.key',
+                delete: { entityTitle: 'x', deleteQuestion: 'q', deleteConfirmationText: 'c', dialogError: of(''), onDelete: vi.fn() },
+            };
+            fixture.componentRef.setInput('items', [action]);
+            fixture.detectChanges();
+
+            const button = fixture.debugElement.query(By.css('[data-testid="exercise-action-delete"]'));
+            expect(button.nativeElement.disabled).toBe(true);
+            expect(button.parent!.injector.get(TumAetUiTooltipDirective).content()).toBe('tooltip.key');
+        });
     });
 
     it('disables the native action button while pending and restores its callback when enabled', () => {

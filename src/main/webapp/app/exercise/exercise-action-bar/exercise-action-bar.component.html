@@ -44,55 +44,56 @@
 <ng-template #actionTpl let-action let-inMenu="inMenu">
     @switch (action.kind) {
         @case ('delete') {
-            <!-- No tooltip on the disabled state here: a disabled native button swallows pointer events. The link
-                 branch below can show one because it keeps pointer-events enabled. -->
-            <button
-                type="button"
-                tumAetUiButton
-                jhiDeleteButton
-                [attr.data-testid]="'exercise-action-' + action.id"
-                [renderButtonText]="false"
-                [renderButtonStyle]="false"
-                [severity]="action.severity"
-                [variant]="inMenu ? 'text' : 'outlined'"
-                size="small"
-                [disabled]="!!action.disabled"
-                [entityTitle]="action.delete!.entityTitle"
-                [entitySummaryTitle]="action.delete!.entitySummaryTitle"
-                [fetchCategorizedEntitySummary]="action.delete!.fetchCategorizedEntitySummary"
-                [deleteQuestion]="action.delete!.deleteQuestion"
-                [deleteConfirmationText]="action.delete!.deleteConfirmationText"
-                [translateValues]="action.delete!.translateValues"
-                [additionalChecks]="action.delete!.additionalChecks"
-                (delete)="onDelete(action, $event)"
-                [dialogError]="action.delete!.dialogError"
-                [class.action-icon]="!inMenu"
-                [class.action-menu-item]="inMenu"
-                [attr.aria-label]="inMenu ? undefined : (action.labelKey | artemisTranslate)"
-                [tumAetUiTooltip]="tooltipOf(action, inMenu)"
-                tumAetUiTooltipPlacement="top"
-            >
-                <ng-container [ngTemplateOutlet]="contentTpl" [ngTemplateOutletContext]="{ $implicit: action, inMenu }" />
-            </button>
+            <!-- A disabled native button gets no hover, so the tooltip sits on a wrapper; the kit button disables its own
+                 pointer events, letting the hover reach the wrapper. -->
+            <span class="inline-flex" [class.w-full]="inMenu" [tumAetUiTooltip]="tooltipOf(action, inMenu)" tumAetUiTooltipPlacement="top">
+                <button
+                    type="button"
+                    tumAetUiButton
+                    jhiDeleteButton
+                    [attr.data-testid]="'exercise-action-' + action.id"
+                    [renderButtonText]="false"
+                    [renderButtonStyle]="false"
+                    [severity]="action.severity"
+                    [variant]="inMenu ? 'text' : 'outlined'"
+                    size="small"
+                    [disabled]="!!action.disabled"
+                    [entityTitle]="action.delete!.entityTitle"
+                    [entitySummaryTitle]="action.delete!.entitySummaryTitle"
+                    [fetchCategorizedEntitySummary]="action.delete!.fetchCategorizedEntitySummary"
+                    [deleteQuestion]="action.delete!.deleteQuestion"
+                    [deleteConfirmationText]="action.delete!.deleteConfirmationText"
+                    [translateValues]="action.delete!.translateValues"
+                    [additionalChecks]="action.delete!.additionalChecks"
+                    (delete)="onDelete(action, $event)"
+                    [dialogError]="action.delete!.dialogError"
+                    [class.action-icon]="!inMenu"
+                    [class.action-menu-item]="inMenu"
+                    [attr.aria-label]="inMenu ? undefined : (action.labelKey | artemisTranslate)"
+                >
+                    <ng-container [ngTemplateOutlet]="contentTpl" [ngTemplateOutletContext]="{ $implicit: action, inMenu }" />
+                </button>
+            </span>
         }
         @case ('button') {
-            <button
-                tumAetUiButton
-                type="button"
-                [attr.data-testid]="'exercise-action-' + action.id"
-                [severity]="inMenu ? 'secondary' : action.severity"
-                [variant]="inMenu ? 'text' : 'outlined'"
-                [disabled]="!!action.disabled"
-                size="small"
-                [class.action-icon]="!inMenu"
-                [class.action-menu-item]="inMenu"
-                [attr.aria-label]="inMenu ? undefined : (action.labelKey | artemisTranslate)"
-                [tumAetUiTooltip]="tooltipOf(action, inMenu)"
-                tumAetUiTooltipPlacement="top"
-                (click)="runAction(action)"
-            >
-                <ng-container [ngTemplateOutlet]="contentTpl" [ngTemplateOutletContext]="{ $implicit: action, inMenu }" />
-            </button>
+            <!-- Wrapped for the same reason as the delete button above. -->
+            <span class="inline-flex" [class.w-full]="inMenu" [tumAetUiTooltip]="tooltipOf(action, inMenu)" tumAetUiTooltipPlacement="top">
+                <button
+                    tumAetUiButton
+                    type="button"
+                    [attr.data-testid]="'exercise-action-' + action.id"
+                    [severity]="inMenu ? 'secondary' : action.severity"
+                    [variant]="inMenu ? 'text' : 'outlined'"
+                    [disabled]="!!action.disabled"
+                    size="small"
+                    [class.action-icon]="!inMenu"
+                    [class.action-menu-item]="inMenu"
+                    [attr.aria-label]="inMenu ? undefined : (action.labelKey | artemisTranslate)"
+                    (click)="runAction(action)"
+                >
+                    <ng-container [ngTemplateOutlet]="contentTpl" [ngTemplateOutletContext]="{ $implicit: action, inMenu }" />
+                </button>
+            </span>
         }
         @default {
             <a
