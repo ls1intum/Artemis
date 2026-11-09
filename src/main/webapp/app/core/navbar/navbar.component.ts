@@ -413,7 +413,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
             return;
         }
 
-        const path = fullURI.split('?')[0].replace(/\/+$/, '');
+        const path = fullURI.split(/[?#]/)[0].replace(/\/+$/, '');
         if (!path.startsWith('/course-management/') || path === '/course-management/new') {
             return;
         }
@@ -427,13 +427,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
             this.lastRouteUrlSegment = 'course-management';
 
             // The course management segment is represented by the course overview breadcrumb above.
-            let uri = fullURI.substring(currentPath.length);
-
-            // Remove any query parameters
-            const questionMark = uri.indexOf('?');
-            if (questionMark >= 0) {
-                uri = uri.substring(0, questionMark);
-            }
+            const uri = fullURI.substring(currentPath.length);
 
             // Go through all segments of the route starting from the root
             for (const segment of uri.split('/')) {
