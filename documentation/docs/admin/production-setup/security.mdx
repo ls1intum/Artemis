@@ -528,7 +528,8 @@ artemis:
 
   The bucket is separate from the login so that students who push from a lecture hall behind one address cannot use up the logins of everyone else on it. Raise it where many students share one address,
   for example behind a campus NAT. It starts at the same 30 as the login, and git over HTTP can verify a password like a login does, so raise it deliberately and not to an arbitrary value.
-  **When you upgrade:** git used to share `authentication-requests-per-minute`. If you raised that value for git, set the git setting to it as well, see [10.7 in the Upgrade Guide](/admin/upgrade-guide#107-rate-limit-of-git-operations).
+  **When you upgrade:** git used to share `authentication-requests-per-minute`, and one address could make 30 requests of both kinds in total. Now it can make up to 30 logins and up to 30 git authentications.
+  Review the git setting on every installation, whether you raised, lowered or never set the login limit, see [10.7 in the Upgrade Guide](/admin/upgrade-guide#107-rate-limit-of-git-operations).
 - [Client error reports](/admin/client-error-reports) of clients that are not signed in
 
 We plan to add the rate-limit to more endpoints (like Oauth2) in the future.
