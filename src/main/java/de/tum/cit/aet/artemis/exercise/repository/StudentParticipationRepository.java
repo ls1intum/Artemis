@@ -2376,7 +2376,13 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                 (SELECT MAX(s.id) FROM Submission s JOIN s.results r WHERE s.participation.id = p.id AND r.correctionRound = :correctionRound
                     AND r.assessmentType IN (
                         de.tum.cit.aet.artemis.assessment.domain.AssessmentType.MANUAL,
-                        de.tum.cit.aet.artemis.assessment.domain.AssessmentType.SEMI_AUTOMATIC)))
+                        de.tum.cit.aet.artemis.assessment.domain.AssessmentType.SEMI_AUTOMATIC)
+                    AND s.submissionDate = (
+                        SELECT MAX(newer.submissionDate) FROM Submission newer JOIN newer.results newerResult
+                        WHERE newer.participation.id = p.id AND newerResult.correctionRound = :correctionRound
+                            AND newerResult.assessmentType IN (
+                                de.tum.cit.aet.artemis.assessment.domain.AssessmentType.MANUAL,
+                                de.tum.cit.aet.artemis.assessment.domain.AssessmentType.SEMI_AUTOMATIC))))
             FROM StudentParticipation p JOIN p.team team
             WHERE p.exercise.id = :exerciseId AND p.testRun = FALSE
                 AND (:teamOwnerId IS NULL OR team.owner.id = :teamOwnerId)
@@ -2462,7 +2468,12 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                       )
                 )
                 AND s.submitted = TRUE
-                AND s.id = (SELECT MAX(s3.id) FROM p.submissions s3)
+                AND s.id = (
+                    SELECT MAX(s3.id) FROM p.submissions s3
+                    WHERE programming.id IS NULL
+                        OR EXISTS (SELECT undated.id FROM p.submissions undated WHERE undated.submissionDate IS NULL)
+                        OR s3.submissionDate = (SELECT MAX(dated.submissionDate) FROM p.submissions dated)
+                )
             """)
     List<AssessmentQueueSubmissionDTO> findCourseTeamQueueCandidates(@Param("exerciseId") long exerciseId, @Param("now") ZonedDateTime now, @Param("teamOwnerId") Long teamOwnerId);
 

@@ -34,6 +34,7 @@ import de.tum.cit.aet.artemis.core.dto.DueDateStat;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
+import de.tum.cit.aet.artemis.exercise.dto.AssessmentQueueResultDTO;
 import de.tum.cit.aet.artemis.exercise.dto.CorrectionRoundResultDTO;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 
@@ -1000,8 +1001,12 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
 
     /** Loads queue result metadata and assessors without submission answer bodies. */
     @Query("""
-            SELECT r FROM Result r LEFT JOIN FETCH r.assessor WHERE r.submission.id IN :ids
+            SELECT new de.tum.cit.aet.artemis.exercise.dto.AssessmentQueueResultDTO(
+                r.submission.id, r.id, r.completionDate, r.successful, r.score, r.rated, r.assessmentType, r.correctionRound,
+                r.hasComplaint, r.exampleResult, r.testCaseCount, r.passedTestCaseCount, r.codeIssueCount,
+                assessor.id, assessor.login, assessor.firstName, assessor.lastName)
+            FROM Result r LEFT JOIN r.assessor assessor WHERE r.submission.id IN :ids
             """)
-    List<Result> findTeamQueueResults(@Param("ids") List<Long> ids);
+    List<AssessmentQueueResultDTO> findTeamQueueResults(@Param("ids") List<Long> ids);
 
 }

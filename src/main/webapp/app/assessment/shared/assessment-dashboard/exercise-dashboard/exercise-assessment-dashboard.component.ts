@@ -878,6 +878,15 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, OnDestroy {
         this.alertService.error(error);
     }
 
+    /** Matches the text editor's draft lock without changing other exercise types. */
+    canContinueTeamTextAssessment(submission: Submission, correctionRound: number): boolean {
+        if (!this.exercise().teamMode || this.isTestRun() || this.exercise().type !== ExerciseType.TEXT) {
+            return true;
+        }
+        const result = getSubmissionResultByCorrectionRound(submission, correctionRound);
+        return !!result?.completionDate || !result?.assessor || !!this.exercise().isAtLeastInstructor || result.assessor.id === this.tutor()?.id;
+    }
+
     /**
      * Calculates the status of a submission by inspecting the result. Returns true if the submission is a draft, or false if it is done
      * @param submission which to check

@@ -392,6 +392,50 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         expect(modelingSubmissionStubWithoutAssessment).not.toHaveBeenCalled();
     });
 
+    it.each([
+        [false, 12, false, 0],
+        [false, 10, false, 1],
+        [false, undefined, false, 1],
+        [true, 12, false, 1],
+        [false, 12, true, 0],
+    ])('matches text draft Continue access: instructor=%s, assessor=%s, completed=%s', (isInstructor, assessorId, completed, expectedLinks) => {
+        const exercise = deepClone(modelingExercise) as TextExercise;
+        exercise.type = ExerciseType.TEXT;
+        exercise.teamMode = true;
+        exercise.exerciseGroup = undefined;
+        exercise.isAtLeastInstructor = isInstructor;
+        exerciseServiceGetForTutorsStub.mockReturnValue(of(new HttpResponse({ body: exercise, headers: new HttpHeaders() })));
+        vi.spyOn(teamService, 'findAssessmentQueueTeams').mockReturnValue(
+            of([
+                {
+                    participationId: 42,
+                    id: 32,
+                    shortName: 'team-a',
+                    submission: {
+                        id: 43,
+                        participation: { id: 42 },
+                        results: [
+                            {
+                                id: 44,
+                                correctionRound: 0,
+                                assessmentType: AssessmentType.MANUAL,
+                                assessor: assessorId === undefined ? undefined : { id: assessorId, login: 'reviewer' },
+                                completionDate: completed ? dayjs() : undefined,
+                            },
+                        ],
+                    } as Submission,
+                },
+            ]),
+        );
+        accountService.userIdentity.set({ id: 10, login: 'tutor1' } as User);
+        fixture.detectChanges();
+        comp.tutorParticipationStatus.set(TutorParticipationStatus.TRAINED);
+        comp.numberOfAssessmentsOfCorrectionRounds.update((rounds) => rounds.slice(0, 1));
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelectorAll('#continue-assessment')).toHaveLength(expectedLinks);
+        expect(!!fixture.nativeElement.querySelector('[data-testid="assessment-queue-assessor"]')).toBe(assessorId !== undefined);
+    });
+
     it('should hide the complaints shortcut when the course has complaints disabled', () => {
         accountService.userIdentity.set({ id: 10, login: 'tutor1' } as User);
         exerciseServiceGetStatsForTutorsStub.mockReturnValue(

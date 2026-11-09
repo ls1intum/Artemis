@@ -5,7 +5,6 @@ import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
@@ -28,10 +27,10 @@ public record AssessmentQueueSubmissionDTO(Long id, Boolean submitted, Submissio
     }
 
     /** Builds the queue response using scalar metadata and separately loaded results. */
-    public SubmissionResponseDTO toResponse(List<Result> results) {
+    public SubmissionResponseDTO toResponse(List<AssessmentQueueResultDTO> results) {
         var participation = new SubmissionResponseDTO.SubmissionParticipationDTO(participationId, "programming".equals(submissionExerciseType) ? "programming" : "student", false,
                 initializationState, initializationDate, individualDueDate, participantName, null);
         return new SubmissionResponseDTO(id, submitted, type, exampleSubmission, submissionDate, submissionExerciseType, participation,
-                results.stream().map(SubmissionResponseDTO.SubmissionResultDTO::of).toList(), buildFailed, commitHash, null, language, null);
+                results.stream().map(AssessmentQueueResultDTO::toResponse).toList(), buildFailed, commitHash, null, language, null);
     }
 }

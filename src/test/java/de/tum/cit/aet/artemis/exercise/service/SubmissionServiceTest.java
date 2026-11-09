@@ -225,6 +225,9 @@ class SubmissionServiceTest extends AbstractSpringIntegrationIndependentBatchTes
         manualResult.setExerciseId(exercise.getId());
         manualResult.setCorrectionRound(0);
         manualResult.setAssessmentType(assessmentType);
+        manualResult.setAssessor(tutor1);
+        manualResult.setScore(75.0);
+        manualResult.setRated(true);
         resultRepository.save(manualResult);
         var newerSubmission = participationUtilService.addSubmission((StudentParticipation) submission.getParticipation(), new TextSubmission().text("Later answer"));
         var newerAthenaResult = new Result();
@@ -240,7 +243,67 @@ class SubmissionServiceTest extends AbstractSpringIntegrationIndependentBatchTes
         var displayed = queue.getFirst().submission().results().stream().filter(result -> result.assessmentType() == assessmentType).findFirst().orElseThrow();
         assertThat(displayed.correctionRound()).isZero();
         assertThat(displayed.completionDate()).isNull();
+        assertThat(displayed.score()).isEqualTo(75.0);
+        assertThat(displayed.rated()).isTrue();
+        assertThat(displayed.assessor().id()).isEqualTo(tutor1.getId());
+        assertThat(displayed.assessor().name()).isEqualTo(tutor1.getName());
         assertThat(queue.getFirst().submission().id()).isEqualTo(submission.getId());
+    }
+
+    /** The queue orders assessed work by submission date, using IDs only to break date ties. */
+    @ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(booleans = { false, true })
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void teamQueueSelectsLatestAssessedSubmissionByDate(boolean sameDate) {
+        var exercise = teamExercise(ExerciseType.TEXT);
+        var first = teamSubmission(exercise, tutor1, "own");
+        var second = participationUtilService.addSubmission((StudentParticipation) first.getParticipation(), new TextSubmission().text("Other answer"));
+        second.setSubmissionDate(sameDate ? first.getSubmissionDate() : first.getSubmissionDate().minusDays(1));
+        submissionRepository.save(second);
+        for (var submission : List.of(first, second)) {
+            var result = new Result();
+            result.setSubmission(submission);
+            result.setExerciseId(exercise.getId());
+            result.setCorrectionRound(0);
+            result.setAssessmentType(AssessmentType.MANUAL);
+            resultRepository.save(result);
+        }
+        assertThat(second.getId()).isGreaterThan(first.getId());
+        assertThat(studentParticipationRepository.findTeamAssessmentQueueParticipations(exercise.getId(), tutor1.getId(), 0)).extracting(entry -> entry.submissionId())
+                .containsExactly(sameDate ? second.getId() : first.getId());
+    }
+
+    /** Opening a completed team result cannot claim it, including when the tutor has no lock capacity. */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void completedTeamTextResultRemainsUnassignedAtLockLimit() {
+        var exercise = teamExercise(ExerciseType.TEXT);
+        var completedSubmission = teamSubmission(exercise, tutor1, "own");
+        for (int i = 0; i < MAX_NUMBER_OF_LOCKED_SUBMISSIONS_PER_TUTOR; i++) {
+            var draft = participationUtilService.addSubmission((StudentParticipation) completedSubmission.getParticipation(), new TextSubmission().text("Draft"));
+            var result = new Result();
+            result.setSubmission(draft);
+            result.setExerciseId(exercise.getId());
+            result.setAssessmentType(AssessmentType.MANUAL);
+            result.setCorrectionRound(0);
+            result.setAssessor(tutor1);
+            resultRepository.save(result);
+        }
+        var completed = new Result();
+        completed.setSubmission(completedSubmission);
+        completed.setExerciseId(exercise.getId());
+        completed.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
+        completed.setCorrectionRound(0);
+        completed.setCompletionDate(ZonedDateTime.now());
+        resultRepository.save(completed);
+        var locked = submissionService.lockSubmission(submissionRepository.findOneWithEagerResultAndFeedbackAndAssessmentNote(completedSubmission.getId()), 0);
+        assertThat(locked.getId()).isEqualTo(completed.getId());
+        var saved = resultRepository.findByIdWithEagerFeedbacksAndAssessor(completed.getId()).orElseThrow();
+        assertThat(saved.getAssessor()).isNull();
+        assertThat(saved.getAssessmentType()).isEqualTo(AssessmentType.SEMI_AUTOMATIC);
+        assertThat(saved.getCompletionDate()).isNotNull();
+        assertThat(submissionService.getLockedSubmissions(exercise.getCourseViaExerciseGroupOrCourseMemberElseThrow().getId()))
+                .hasSize(Math.toIntExact(MAX_NUMBER_OF_LOCKED_SUBMISSIONS_PER_TUTOR));
     }
 
     @ParameterizedTest
@@ -329,6 +392,11 @@ class SubmissionServiceTest extends AbstractSpringIntegrationIndependentBatchTes
         request.put("/api/exercise/exercises/" + text.getId() + "/teams/" + team.getId(), de.tum.cit.aet.artemis.exercise.dto.TeamInputDTO.of(team), HttpStatus.OK);
         assertThat(resultRepository.findByIdWithEagerFeedbacksAndAssessor(completed.getId()).orElseThrow().getAssessor()).isEqualTo(tutor1);
         assertThat(resultRepository.findByIdWithEagerFeedbacksAndAssessor(draft.getId()).orElseThrow().getAssessor()).isEqualTo(tutor2);
+        userUtilService.changeUser(TEST_PREFIX + "tutor1");
+        var cancelUrl = "/api/text/participations/" + textSubmission.getParticipation().getId() + "/submissions/" + textSubmission.getId() + "/cancel-assessment";
+        request.post(cancelUrl, null, HttpStatus.FORBIDDEN);
+        request.post(cancelUrl + "?resultId=" + completed.getId(), null, HttpStatus.FORBIDDEN);
+        assertThat(resultRepository.findByIdWithEagerFeedbacksAndAssessor(completed.getId())).isPresent();
     }
 
     @ParameterizedTest
@@ -565,6 +633,42 @@ class SubmissionServiceTest extends AbstractSpringIntegrationIndependentBatchTes
         assertThat(resaved.getAssessor()).isEqualTo(transfer ? tutor2 : tutor1);
     }
 
+    /** Programming queue candidates use dates, except that legacy null dates retain ID ordering. */
+    @ParameterizedTest
+    @org.junit.jupiter.params.provider.CsvSource({ "false,false", "true,false", "false,true" })
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void programmingTeamQueueSelectsLatestCandidateByDate(boolean sameDate, boolean nullDate) {
+        var exercise = teamExercise(ExerciseType.PROGRAMMING);
+        var first = teamSubmission(exercise, tutor1, "own");
+        var second = participationUtilService.addSubmission((StudentParticipation) first.getParticipation(), new ProgrammingSubmission());
+        second.setSubmitted(true);
+        second.setSubmissionDate(nullDate ? null : sameDate ? first.getSubmissionDate() : first.getSubmissionDate().minusDays(1));
+        submissionRepository.save(second);
+        assertThat(second.getId()).isGreaterThan(first.getId());
+        assertThat(studentParticipationRepository.findCourseTeamQueueCandidates(exercise.getId(), ZonedDateTime.now(), tutor1.getId())).extracting(candidate -> candidate.id())
+                .containsExactly(sameDate || nullDate ? second.getId() : first.getId());
+    }
+
+    /** Starting from a stale queue cannot bypass an extended team or exercise deadline. */
+    @ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(booleans = { false, true })
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void programmingTeamStartRechecksDeadlines(boolean individualDeadline) throws Exception {
+        var exercise = teamExercise(ExerciseType.PROGRAMMING);
+        var submission = teamSubmission(exercise, tutor1, "own");
+        if (individualDeadline) {
+            var participation = (StudentParticipation) submission.getParticipation();
+            participation.setIndividualDueDate(ZonedDateTime.now().plusDays(1));
+            studentParticipationRepository.save(participation);
+        }
+        else {
+            exercise.setDueDate(ZonedDateTime.now().plusDays(1));
+            exerciseRepository.save(exercise);
+        }
+        request.get(assessmentStartUrl(ExerciseType.PROGRAMMING, submission.getId()), HttpStatus.FORBIDDEN, String.class);
+        assertThat(submissionRepository.findOneWithEagerResultAndFeedbackAndAssessmentNote(submission.getId()).getManualResults()).isEmpty();
+    }
+
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void programmingReclaimsUnassignedManualDraft() throws Exception {
@@ -579,8 +683,9 @@ class SubmissionServiceTest extends AbstractSpringIntegrationIndependentBatchTes
         note.setNote("Unassigned saved draft");
         draft.setAssessmentNote(note);
         resultRepository.save(draft);
-        var reclaimed = programmingSubmissionService.lockAndGetProgrammingSubmission(original.getId(), 0);
-        assertThat(reclaimed.getResultForCorrectionRound(0).getId()).isEqualTo(resultId);
+        var reclaimed = request.get(assessmentStartUrl(ExerciseType.PROGRAMMING, original.getId()), HttpStatus.OK,
+                de.tum.cit.aet.artemis.programming.dto.ProgrammingSubmissionForTutorAssessmentDTO.class);
+        assertThat(reclaimed.results()).extracting(result -> result.id()).contains(resultId);
         var saved = resultRepository.findByIdWithEagerSubmissionAndFeedbackAndAssessmentNoteElseThrow(resultId);
         assertThat(saved.getAssessor()).isEqualTo(tutor1);
         assertThat(saved.getAssessmentNote().getNote()).isEqualTo("Unassigned saved draft");

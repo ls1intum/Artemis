@@ -46,6 +46,7 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
+import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
@@ -433,6 +434,12 @@ public class ProgrammingSubmissionResource {
         // At max 1 for course exercises and at max 2 results in exams with 2 correction rounds enabled.
         // The second (or third) result for complaint responses is not created here.
         if (numberOfManualResults < correctionRound + 1 && numberOfManualResults < numberOfEnabledCorrectionRounds) {
+            if (programmingExercise.isTeamMode() && participation instanceof StudentParticipation studentParticipation && !studentParticipation.isTestRun()) {
+                programmingSubmissionService.checkIfExerciseDueDateIsReached(programmingExercise);
+                if (ExerciseDateService.getDueDate(participation).isPresent() && exerciseDateService.isBeforeDueDate(participation)) {
+                    throw new AccessForbiddenException("The team's submission deadline has not passed yet.");
+                }
+            }
             if (!programmingExercise.isTeamMode()) {
                 programmingSubmissionService.checkSubmissionLockLimit(programmingExercise.getCourseViaExerciseGroupOrCourseMember().getId());
             }

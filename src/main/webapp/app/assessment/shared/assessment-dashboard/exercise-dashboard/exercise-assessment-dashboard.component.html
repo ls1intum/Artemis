@@ -588,7 +588,10 @@
                                                                         <span jhiTranslate="artemisApp.result.assessor"></span>: {{ assessor.name || assessor.login }}
                                                                     </span>
                                                                 }
-                                                                @if ((isTestRun() && complaints().length === 0) || !isTestRun()) {
+                                                                @if (
+                                                                    ((isTestRun() && complaints().length === 0) || !isTestRun()) &&
+                                                                    canContinueTeamTextAssessment(submission, correctionRound)
+                                                                ) {
                                                                     <span [tumAetUiTooltip]="assessmentNotPossibleYetTooltip()">
                                                                         @if (submission && calculateSubmissionStatusIsDraft(submission, correctionRound)) {
                                                                             <a

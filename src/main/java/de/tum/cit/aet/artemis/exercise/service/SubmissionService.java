@@ -667,8 +667,7 @@ public class SubmissionService {
     }
 
     /**
-     * Soft locks the submission to prevent other tutors from receiving and assessing it. We set the assessor and save the result to soft lock the assessment in the client, i.e.
-     * the client will not allow tutors to assess a submission when an assessor is already assigned. If no result exists for this submission we create one first.
+     * Claims an unfinished submission for assessment, creating a result if necessary. Completed team results are returned unchanged.
      *
      * @param submission      the submission to lock
      * @param correctionRound the correction round to lock the submission for, must not be negative
@@ -679,6 +678,9 @@ public class SubmissionService {
         checkCorrectionRoundIsNotNegativeElseThrow(correctionRound);
         authCheckService.checkTeamAssessmentAccessElseThrow(submission);
         Result result = submission.getResultForCorrectionRound(correctionRound);
+        if (submission.getParticipation().getExercise().isTeamMode() && result != null && result.getCompletionDate() != null) {
+            return result;
+        }
         if (submission.getParticipation().getExercise().isTeamMode() && submission.getParticipation() instanceof StudentParticipation participation
                 && participation.getTeam().isPresent() && (result == null || result.getCompletionDate() == null && result.getAssessor() == null)) {
             checkSubmissionLockLimit(submission.getParticipation().getExercise().getCourseViaExerciseGroupOrCourseMemberElseThrow().getId());
@@ -695,9 +697,7 @@ public class SubmissionService {
             result.setAssessor(userRepository.getUser());
         }
 
-        // The round this result belongs to is stored on the result itself. This is the one place where a manual result
-        // for a correction round is created or claimed, and the round the tutor asked for takes precedence over the one
-        // Submission.addResult would derive.
+        // The requested correction round takes precedence over the round derived by Submission.addResult.
         result.setCorrectionRound(correctionRound);
         result.setAssessmentType(AssessmentType.MANUAL);
         // Deliberately keep (and return) the object the submission's result set already holds instead of the

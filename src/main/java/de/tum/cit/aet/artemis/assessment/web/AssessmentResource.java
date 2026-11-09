@@ -237,6 +237,7 @@ public abstract class AssessmentResource {
         long exerciseId = studentParticipation.getExercise().getId();
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         checkAuthorization(exercise, user);
+        authCheckService.checkTeamAssessmentAccessElseThrow(submission);
         // Release the result the caller named. A submission can hold one result per correction round, and the caller is
         // the only one that knows which round its button belongs to: resolving it here always released the newest round,
         // so "cancel assessment of correction round 1" released round 2 instead and round 1 stayed locked (#13396).

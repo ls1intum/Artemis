@@ -43,7 +43,6 @@ import org.springframework.web.server.ResponseStatusException;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
-import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.assessment.repository.TeamScoreRepository;
 import de.tum.cit.aet.artemis.core.config.Constants;
@@ -64,6 +63,7 @@ import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.dto.AssessmentQueueResultDTO;
 import de.tum.cit.aet.artemis.exercise.dto.AssessmentQueueSubmissionDTO;
 import de.tum.cit.aet.artemis.exercise.dto.AssessmentQueueTeamDTO;
 import de.tum.cit.aet.artemis.exercise.dto.CourseWithTeamExercisesDTO;
@@ -369,8 +369,8 @@ public class TeamResource {
             submissionRepository.findTeamQueueMetadata(existingIds).forEach(submission -> submissions.putIfAbsent(submission.participationId(), submission));
         }
         var selectedIds = submissions.values().stream().map(AssessmentQueueSubmissionDTO::id).toList();
-        var results = selectedIds.isEmpty() ? List.<Result>of() : resultRepository.findTeamQueueResults(selectedIds);
-        var resultsBySubmission = results.stream().collect(Collectors.groupingBy(result -> result.getSubmission().getId()));
+        var results = selectedIds.isEmpty() ? List.<AssessmentQueueResultDTO>of() : resultRepository.findTeamQueueResults(selectedIds);
+        var resultsBySubmission = results.stream().collect(Collectors.groupingBy(AssessmentQueueResultDTO::submissionId));
         return ResponseEntity.ok(participations.stream().filter(entry -> submissions.containsKey(entry.participationId())).map(entry -> {
             var submission = submissions.get(entry.participationId());
             return new AssessmentQueueTeamDTO(entry.participationId(), entry.teamId(), entry.shortName(),
