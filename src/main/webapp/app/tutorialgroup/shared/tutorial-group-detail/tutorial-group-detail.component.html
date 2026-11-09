@@ -59,7 +59,7 @@
             </a>
         }
         @if (loggedInUserAccessLevel() >= TutorialGroupDetailManagementAccessLevel.EDITOR_OF_GROUP) {
-            <a tumAetUiButton size="small" severity="secondary" variant="outlined" [routerLink]="['edit']" data-testid="edit-button">
+            <a tumAetUiButton size="small" severity="warn" variant="outlined" [routerLink]="['edit']" data-testid="edit-button">
                 <fa-icon [icon]="faPenToSquare" />
                 <span jhiTranslate="entity.action.edit"></span>
             </a>
@@ -273,7 +273,7 @@
                                         <button
                                             tumAetUiButton
                                             size="small"
-                                            severity="secondary"
+                                            severity="warn"
                                             variant="text"
                                             type="button"
                                             [tumAetUiTooltip]="editSessionButtonTooltipLabel()"
@@ -288,7 +288,7 @@
                                             <button
                                                 tumAetUiButton
                                                 size="small"
-                                                severity="secondary"
+                                                severity="success"
                                                 variant="text"
                                                 type="button"
                                                 [tumAetUiTooltip]="activateSessionButtonTooltipLabel()"
@@ -303,7 +303,7 @@
                                             <button
                                                 tumAetUiButton
                                                 size="small"
-                                                severity="secondary"
+                                                severity="danger"
                                                 variant="text"
                                                 type="button"
                                                 [tumAetUiTooltip]="cancelSessionButtonTooltipLabel()"

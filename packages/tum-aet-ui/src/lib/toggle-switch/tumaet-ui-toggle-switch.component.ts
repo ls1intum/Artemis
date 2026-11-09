@@ -1,4 +1,17 @@
-import { ChangeDetectionStrategy, Component, HostAttributeToken, booleanAttribute, computed, forwardRef, inject, input, output, signal } from '@angular/core';
+import {
+    ChangeDetectionStrategy,
+    Component,
+    ElementRef,
+    HostAttributeToken,
+    booleanAttribute,
+    computed,
+    forwardRef,
+    inject,
+    input,
+    output,
+    signal,
+    viewChild,
+} from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 
 @Component({
@@ -29,6 +42,7 @@ export class TumAetUiToggleSwitchComponent implements ControlValueAccessor {
     readonly changed = output<boolean>();
 
     protected readonly checked = signal(false);
+    private readonly nativeInput = viewChild<ElementRef<HTMLInputElement>>('nativeInput');
     private readonly cvaDisabled = signal(false);
     protected readonly effectiveDisabled = computed(() => this.disabled() || this.cvaDisabled());
     protected readonly effectiveAriaLabel = computed(() => this.ariaLabel() ?? this.hostAriaLabel);
@@ -56,6 +70,11 @@ export class TumAetUiToggleSwitchComponent implements ControlValueAccessor {
 
     writeValue(value: boolean): void {
         this.checked.set(!!value);
+        // A click changes the native input before a render; writing back the value last rendered would leave the [checked] binding unchanged
+        const nativeInput = this.nativeInput()?.nativeElement;
+        if (nativeInput) {
+            nativeInput.checked = !!value;
+        }
     }
 
     registerOnChange(fn: (value: boolean) => void): void {

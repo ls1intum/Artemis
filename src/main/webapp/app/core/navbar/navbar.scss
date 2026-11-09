@@ -288,3 +288,23 @@ a:not(.btn, .tumaet-ui-btn, .tab-link):hover {
         display: none;
     }
 }
+
+.mobile-course-enrollment {
+    display: none;
+
+    @media (max-width: 767.98px) {
+        display: list-item;
+    }
+}
+
+.mobile-course-enrollment-link {
+    display: block;
+    padding: 0.5rem 1rem;
+    color: inherit;
+    text-decoration: none;
+
+    &:hover,
+    &:focus-visible {
+        background-color: var(--hover-slightly-darker-body-bg);
+    }
+}

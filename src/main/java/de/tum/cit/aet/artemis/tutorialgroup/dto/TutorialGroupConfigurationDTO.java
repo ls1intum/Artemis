@@ -45,7 +45,7 @@ import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupsConfiguration;
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record TutorialGroupConfigurationDTO(Long id, @NotBlank String tutorialPeriodStartInclusive, @NotBlank String tutorialPeriodEndInclusive,
-        @NotNull Boolean useTutorialGroupChannels, @NotNull Boolean usePublicTutorialGroupChannels, @Valid Set<TutorialGroupFreePeriodDTO> tutorialGroupFreePeriods) {
+        @NotNull Boolean useTutorialGroupChannels, @NotNull Boolean usePublicTutorialGroupChannels, @Valid Set<TutorialGroupConfigurationFreePeriodDTO> tutorialGroupFreePeriods) {
 
     public static final String TUTORIAL_FREE_PERIOD_ENTITY_NAME = "tutorialGroupFreePeriod";
 
@@ -66,7 +66,7 @@ public record TutorialGroupConfigurationDTO(Long id, @NotBlank String tutorialPe
      * @param reason optional reason for the free period
      */
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    public record TutorialGroupFreePeriodDTO(Long id, @NotNull String start, @NotNull String end, String reason) {
+    public record TutorialGroupConfigurationFreePeriodDTO(Long id, @NotNull String start, @NotNull String end, String reason) {
 
         /**
          * Creates a DTO from the given {@link TutorialGroupFreePeriod} entity.
@@ -75,8 +75,8 @@ public record TutorialGroupConfigurationDTO(Long id, @NotBlank String tutorialPe
          * @return a DTO representation of the entity
          * @throws BadRequestAlertException if the entity contains invalid date values
          */
-        public static TutorialGroupFreePeriodDTO of(@NonNull TutorialGroupFreePeriod freePeriod) {
-            return new TutorialGroupFreePeriodDTO(freePeriod.getId(), freePeriod.getStart().toString(), freePeriod.getEnd().toString(), freePeriod.getReason());
+        public static TutorialGroupConfigurationFreePeriodDTO of(@NonNull TutorialGroupFreePeriod freePeriod) {
+            return new TutorialGroupConfigurationFreePeriodDTO(freePeriod.getId(), freePeriod.getStart().toString(), freePeriod.getEnd().toString(), freePeriod.getReason());
         }
     }
 
@@ -88,10 +88,10 @@ public record TutorialGroupConfigurationDTO(Long id, @NotBlank String tutorialPe
      */
     public static TutorialGroupConfigurationDTO of(@NonNull TutorialGroupsConfiguration config) {
         Set<TutorialGroupFreePeriod> freePeriods = config.getTutorialGroupFreePeriods();
-        Set<TutorialGroupFreePeriodDTO> freePeriodDTOs = Set.of();
+        Set<TutorialGroupConfigurationFreePeriodDTO> freePeriodDTOs = Set.of();
 
         if (freePeriods != null && Hibernate.isInitialized(freePeriods)) {
-            freePeriodDTOs = freePeriods.stream().map(TutorialGroupFreePeriodDTO::of).collect(Collectors.toSet());
+            freePeriodDTOs = freePeriods.stream().map(TutorialGroupConfigurationFreePeriodDTO::of).collect(Collectors.toSet());
         }
         return new TutorialGroupConfigurationDTO(config.getId(), config.getTutorialPeriodStartInclusive(), config.getTutorialPeriodEndInclusive(),
                 config.getUseTutorialGroupChannels(), config.getUsePublicTutorialGroupChannels(), freePeriodDTOs);

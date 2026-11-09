@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.modeling.web;
 
+import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
@@ -13,7 +14,6 @@ import java.util.stream.Collectors;
 import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.core.io.Resource;
@@ -44,6 +44,7 @@ import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
+import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.allowedScopes.AgentDraftRules;
 import de.tum.cit.aet.artemis.core.security.allowedScopes.AgentScope;
@@ -59,7 +60,6 @@ import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
-import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.core.util.ResponseUtil;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
@@ -89,6 +89,7 @@ import de.tum.cit.aet.artemis.modeling.dto.UpdateModelingExerciseDTO;
 import de.tum.cit.aet.artemis.modeling.repository.ModelingExerciseRepository;
 import de.tum.cit.aet.artemis.modeling.service.ModelingExerciseImportService;
 import de.tum.cit.aet.artemis.modeling.service.ModelingExerciseService;
+import de.tum.cit.aet.artemis.modeling.service.ModelingExerciseWithSubmissionsExportService;
 import de.tum.cit.aet.artemis.notification.service.notifications.GroupNotificationScheduleService;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismDetectionConfig;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismDetectionConfigHelper;
@@ -109,9 +110,6 @@ public class ModelingExerciseResource {
     private static final Logger log = LoggerFactory.getLogger(ModelingExerciseResource.class);
 
     private static final String ENTITY_NAME = "modelingExercise";
-
-    @Value("${jhipster.clientApp.name}")
-    private String applicationName;
 
     private final ModelingExerciseRepository modelingExerciseRepository;
 
@@ -165,6 +163,8 @@ public class ModelingExerciseResource {
 
     private final ExerciseVariantGroupService exerciseVariantGroupService;
 
+    private final ModelingExerciseWithSubmissionsExportService modelingExerciseWithSubmissionsExportService;
+
     public ModelingExerciseResource(ModelingExerciseRepository modelingExerciseRepository, UserRepository userRepository, CourseService courseService,
             AuthorizationCheckService authCheckService, CourseRepository courseRepository, ParticipationRepository participationRepository,
             ModelingExerciseService modelingExerciseService, ExerciseDeletionService exerciseDeletionService, ModelingExerciseImportService modelingExerciseImportService,
@@ -173,7 +173,8 @@ public class ModelingExerciseResource {
             ExerciseVersionService exerciseVersionService, Optional<CompetencyProgressApi> competencyProgressApi, Optional<SlideApi> slideApi, Optional<AtlasMLApi> atlasMLApi,
             Optional<CompetencyApi> competencyApi, CompetencyExerciseLinkService competencyExerciseLinkService, Optional<ExerciseGroupApi> exerciseGroupApi,
             ExerciseVariantGroupService exerciseVariantGroupService, TeamAssignmentConfigRepository teamAssignmentConfigRepository,
-            PlagiarismDetectionConfigRepository plagiarismDetectionConfigRepository, ExerciseConfigurationService exerciseConfigurationService) {
+            PlagiarismDetectionConfigRepository plagiarismDetectionConfigRepository, ExerciseConfigurationService exerciseConfigurationService,
+            ModelingExerciseWithSubmissionsExportService modelingExerciseWithSubmissionsExportService) {
         this.teamAssignmentConfigRepository = teamAssignmentConfigRepository;
         this.plagiarismDetectionConfigRepository = plagiarismDetectionConfigRepository;
         this.exerciseConfigurationService = exerciseConfigurationService;
@@ -200,6 +201,7 @@ public class ModelingExerciseResource {
         this.competencyExerciseLinkService = competencyExerciseLinkService;
         this.exerciseGroupApi = exerciseGroupApi;
         this.exerciseVariantGroupService = exerciseVariantGroupService;
+        this.modelingExerciseWithSubmissionsExportService = modelingExerciseWithSubmissionsExportService;
     }
 
     // TODO: most of these calls should be done in the context of a course
@@ -236,6 +238,7 @@ public class ModelingExerciseResource {
         if (modelingExercise.getTitle() == null) {
             throw new BadRequestAlertException("A new modeling exercise needs a title", ENTITY_NAME, "missingtitle");
         }
+        modelingExercise.validateTitle();
         // validates general settings: points, dates
         modelingExercise.validateGeneralSettings();
         // Valid exercises have set either a course or an exerciseGroup
@@ -465,10 +468,10 @@ public class ModelingExerciseResource {
     }
 
     /**
-     * DELETE modeling-exercises/:id : delete the "id" modelingExercise.
+     * DELETE modeling-exercises/:id : delete the "id" modelingExercise in the background. The progress is sent over the websocket topic of the exercise.
      *
      * @param exerciseId the id of the modelingExercise to delete
-     * @return the ResponseEntity with status 200 (OK)
+     * @return the ResponseEntity with status 202 (Accepted), or 409 (Conflict) if the exercise is already being deleted
      */
     @DeleteMapping("modeling-exercises/{exerciseId}")
     @EnforceAtLeastInstructorInExercise
@@ -477,20 +480,23 @@ public class ModelingExerciseResource {
         var modelingExercise = modelingExerciseRepository.findByIdElseThrow(exerciseId);
 
         User user = userRepository.getUserWithAuthorities();
-        // Notify AtlasML about the modeling exercise deletion before actual deletion
-        atlasMLApi.ifPresent(api -> {
-            try {
-                api.saveExerciseWithCompetencies(modelingExercise, OperationTypeDTO.DELETE);
-            }
-            catch (Exception e) {
-                log.warn("Failed to notify AtlasML about modeling exercise deletion: {}", e.getMessage());
-            }
-        });
+        var course = modelingExercise.getCourseViaExerciseGroupOrCourseMemberElseThrow();
         // note: we use the exercise service here, because this one makes sure to clean
         // up all lazy references correctly.
-        exerciseService.logDeletion(modelingExercise, modelingExercise.getCourseViaExerciseGroupOrCourseMemberElseThrow(), user);
-        exerciseDeletionService.delete(exerciseId, false);
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, modelingExercise.getTitle())).build();
+        // AtlasML is notified and the request is audited only once the deletion is accepted, so a request that is refused because the exercise is already being deleted does
+        // neither. The notification still precedes the actual deletion.
+        exerciseDeletionService.startAsyncDeletion(modelingExercise, false, () -> {
+            atlasMLApi.ifPresent(api -> {
+                try {
+                    api.saveExerciseWithCompetencies(modelingExercise, OperationTypeDTO.DELETE);
+                }
+                catch (Exception e) {
+                    log.warn("Failed to notify AtlasML about modeling exercise deletion: {}", e.getMessage());
+                }
+            });
+            exerciseService.logDeletion(modelingExercise, course, user);
+        });
+        return ResponseEntity.accepted().build();
     }
 
     /**
@@ -558,6 +564,26 @@ public class ModelingExerciseResource {
     public ResponseEntity<Resource> exportSubmissions(@PathVariable long exerciseId, @RequestBody SubmissionExportOptionsDTO submissionExportOptions) {
         Path zipFilePath = modelingSubmissionExportService.exportStudentSubmissionsElseThrow(exerciseId, submissionExportOptions);
         return ResponseUtil.ok(zipFilePath);
+    }
+
+    /**
+     * GET modeling-exercises/:exerciseId/export : sends the exercise definition as zip, without any submissions
+     *
+     * @param exerciseId the id of the modeling exercise to export
+     * @return ResponseEntity with the zip file containing the exercise details, the problem statement and its embedded files
+     */
+    @GetMapping("modeling-exercises/{exerciseId}/export")
+    @EnforceAtLeastInstructorInExercise
+    @FeatureToggle(Feature.Exports)
+    public ResponseEntity<Resource> exportExercise(@PathVariable long exerciseId) {
+        ModelingExercise modelingExercise = modelingExerciseRepository.findWithCategoriesAndGradingCriteriaByIdElseThrow(exerciseId);
+        try {
+            return ResponseUtil.ok(modelingExerciseWithSubmissionsExportService.exportExerciseForDownload(modelingExercise));
+        }
+        catch (IOException e) {
+            log.error("Error while exporting modeling exercise with id {} for instructor", exerciseId, e);
+            throw new InternalServerErrorException("Error while exporting modeling exercise with id " + exerciseId + " for instructor");
+        }
     }
 
     /**

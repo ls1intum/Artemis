@@ -9,8 +9,8 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { EventManager } from 'app/foundation/service/event-manager.service';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { TranslateService } from '@ngx-translate/core';
-import { WebauthnService } from 'app/account/user/settings/passkey-settings/webauthn.service';
-import { WebauthnApiService } from 'app/account/user/settings/passkey-settings/webauthn-api.service';
+import { WebauthnService } from 'app/account/user/settings/credentials/passkey-settings/webauthn.service';
+import { WebauthnApiService } from 'app/account/user/settings/credentials/passkey-settings/webauthn-api.service';
 import { MockComponent, MockDirective, MockProvider } from 'ng-mocks';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -515,6 +515,54 @@ describe('HomeComponent', () => {
             (window as any).PublicKeyCredential = undefined;
 
             await expect(component.prefillPasskeysIfPossible()).resolves.not.toThrow();
+        });
+
+        describe('refocus of the username field', () => {
+            /** Starts the conditional mediation and returns the callback that the browser-side flow calls once it is active. */
+            async function startMediationAndGetRefocus(): Promise<() => void> {
+                component.isPasskeyEnabled.set(true);
+                const startSpy = vi.spyOn(webauthnService, 'startConditionalMediation');
+                (window as any).PublicKeyCredential = {
+                    isConditionalMediationAvailable: vi.fn().mockResolvedValue(true),
+                };
+                await component.prefillPasskeysIfPossible();
+                return startSpy.mock.calls[0][1] as () => void;
+            }
+
+            beforeEach(() => {
+                vi.useFakeTimers();
+            });
+
+            afterEach(() => {
+                vi.useRealTimers();
+            });
+
+            it('should focus the username field again while it is focused and empty', async () => {
+                const refocus = await startMediationAndGetRefocus();
+                const input: HTMLInputElement = component.usernameInput()!.nativeElement;
+                component.username = '';
+                input.focus();
+                const blurSpy = vi.spyOn(input, 'blur');
+                const focusSpy = vi.spyOn(input, 'focus');
+
+                refocus();
+                vi.runAllTimers();
+
+                expect(blurSpy).toHaveBeenCalledOnce();
+                expect(focusSpy).toHaveBeenCalledOnce();
+            });
+
+            it('should do nothing without an error once the username field is gone', async () => {
+                const refocus = await startMediationAndGetRefocus();
+                // the user continued to the next stage, which replaces the field of the first one
+                component.currentStage.set(2);
+                fixture.detectChanges();
+                expect(component.usernameInput()).toBeUndefined();
+
+                refocus();
+
+                expect(() => vi.runAllTimers()).not.toThrow();
+            });
         });
     });
 

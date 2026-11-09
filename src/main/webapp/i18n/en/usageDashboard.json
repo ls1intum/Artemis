@@ -7,12 +7,35 @@
             "error": "The usage numbers could not be loaded. Please try again later.",
             "empty": "There are not enough courses yet to show usage numbers.",
             "semesterSelection": "Select a semester",
+            "sections": {
+                "courses": "Courses and students",
+                "exercises": "Exercises and submissions",
+                "exams": "Exams"
+            },
             "courses": "Courses",
             "students": "Students",
+            "enrollments": "Course enrollments",
+            "instructors": "Instructors",
+            "tutors": "Tutors",
             "activeStudents": "Active students",
             "submissions": "Submissions",
             "exercises": "Exercises",
             "lectures": "Lectures",
+            "lectureUnits": "Lecture units",
+            "tutorialGroups": "Tutorial groups",
+            "exams": "Exams",
+            "examRegistrations": "Exam registrations",
+            "examParticipations": "Exam participations",
+            "competencies": "Competencies",
+            "builds": "Builds",
+            "averageBuildDuration": "Average build duration",
+            "communication": "Communication",
+            "communicationAndIris": "Communication and Iris",
+            "posts": "Posts",
+            "replies": "Replies",
+            "reactions": "Reactions",
+            "faqs": "FAQs",
+            "irisMessages": "Iris messages",
             "exercisesByType": "Exercises by type",
             "activeStudentsTrend": "Active students per semester",
             "exerciseTypes": {
@@ -22,13 +45,33 @@
                 "modeling": "Modeling",
                 "file-upload": "File upload"
             },
-            "definitions": {
-                "title": "How these numbers are counted",
-                "course": "A course counts if it is no test course, has at least 5 students and starts in the semester. Semesters with fewer than 3 such courses are not shown.",
-                "students": "Students are unique people enrolled as student in at least one counted course.",
-                "activeStudents": "Active students are counted students who made at least one submission in an exercise or exam of these courses.",
-                "privacy": "Only totals are shown, never single courses or people, and results based on too few courses are hidden. The numbers are refreshed about once per hour."
-            }
+            "hints": {
+                "courses": "Courses that are no test course, have at least 5 students and start in the semester.",
+                "students": "Unique people enrolled as student in at least one of these courses.",
+                "enrollments": "Not unique: a student of three of these courses is counted three times.",
+                "instructors": "Unique people with the instructor role in at least one of these courses.",
+                "tutors": "Unique people with the tutor or editor role in at least one of these courses. Someone who is also an instructor in another course is counted in both numbers.",
+                "lectures": "Lectures of these courses.",
+                "lectureUnits": "Text, video, attachment, online and exercise units of these lectures.",
+                "competencies": "Competencies of these courses, without prerequisites. Only shown if the instance offers competencies.",
+                "tutorialGroups": "Tutorial groups of these courses, whenever they took place.",
+                "exercises": "Exercises of these courses, including exam exercises.",
+                "activeStudents": "Counted students who made at least one submission in an exercise or exam of these courses.",
+                "submissions": "Submissions of the counted students and of all teams in these courses, whenever they were made.",
+                "builds": "Finished builds, whenever they ran. Only shown if the instance builds with local CI. Build jobs are deleted after one year by default, so builds are only shown for semesters that started within that period.",
+                "averageBuildDuration": "Average duration of the successful builds.",
+                "exams": "Real exams of these courses. Test exams, and exams whose title starts with \"test\" or \"mock\", are not counted. Only shown if the instance offers exams.",
+                "examRegistrations": "Not unique: a student registered for three of these exams is counted three times.",
+                "examParticipations": "Not unique: students who started the exam. A student who took three of these exams is counted three times.",
+                "communication": "Totals over the courses of the semester, whenever they happened, including what tutors, instructors and the system did.",
+                "posts": "Posts in channels, group chats and direct messages.",
+                "replies": "Replies to posts, without the drafts of Iris that no tutor has verified yet.",
+                "reactions": "Reactions to posts and replies.",
+                "faqs": "Published FAQs of these courses.",
+                "irisMessages": "Messages that users sent to Iris plus the answers of Iris. Only shown if the instance offers Iris."
+            },
+            "hintsLabel": "More information about {{ name }}",
+            "footer": "Only totals are shown, never single courses or people, and semesters with fewer than 3 counted courses are hidden. The numbers are refreshed about once per hour."
         }
     }
 }
