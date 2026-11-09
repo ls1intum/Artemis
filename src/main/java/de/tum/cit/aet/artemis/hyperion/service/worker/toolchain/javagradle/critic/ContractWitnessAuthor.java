@@ -45,7 +45,7 @@ class ContractWitnessAuthor {
     private static final Pattern TEST_METHOD_DECLARATION = Pattern.compile(
             "(?m)^[ \\t]*+(?:[\\w<>,?\\[\\].$]++[ \\t]++(?!\\())++(?!(?:if|for|while|switch|catch|synchronized)(?![\\w$]))([A-Za-z_$][A-Za-z0-9_$]*+)[ \\t]*+\\((?:[^;{}()]++|\\((?:[^;{}()]++|\\([^;{}()]*+\\))*+\\))*+\\)\\s*+(?:throws\\s[^{;]*+)?\\{");
 
-    private static final Pattern WITNESS_CONTRACT_SECTION = Pattern.compile("^## (Rules|Worked Examples|Public API)[ \\t]*\\r?$.*?(?=^## |\\z)",
+    private static final Pattern WITNESS_CONTRACT_SECTION = Pattern.compile("^## (Rules|Worked Examples|Public API)[ \\t]*\\r?$.*?(?=(?:^## )|\\z)",
             Pattern.MULTILINE | Pattern.DOTALL);
 
     private static final Pattern PACKAGE_DECLARATION = Pattern.compile("(?m)^[ \\t]*package[ \\t]+[\\w.$]+[ \\t]*;");
@@ -192,7 +192,7 @@ class ContractWitnessAuthor {
 
     private List<ContractWitness> parseContractWitnesses(@Nullable String text, String specificationContract, String testSources, Map<String, ContractWitness> originals) {
         if (text == null || text.isBlank()) {
-            throw new IllegalStateException("Contract-witness authoring returned no response");
+            return List.of();
         }
         ContractWitnessResponse parsed;
         try {

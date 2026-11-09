@@ -175,7 +175,11 @@ class SpecFidelityCriticTest {
     private record BriefGoalRequestFixture(String brief) {
     }
 
-    private record GoalQuoteFixture(String quote, BriefLearningGoals.ConstructorBaseline constructorBaseline) {
+    private record GoalQuoteFixture(String quote, BriefLearningGoals.ConstructorBaseline constructorBaseline, BriefLearningGoals.LearnerArtifact learnerArtifact) {
+
+        GoalQuoteFixture(String quote, BriefLearningGoals.ConstructorBaseline constructorBaseline) {
+            this(quote, constructorBaseline, BriefLearningGoals.LearnerArtifact.UNSPECIFIED);
+        }
     }
 
     private record GoalInventoryFixture(List<GoalQuoteFixture> goals) {
@@ -3124,4 +3128,18 @@ class SpecFidelityCriticTest {
         verify(chatModel, atLeastOnce()).call(prompts.capture());
         assertThat(prompts.getAllValues()).isNotEmpty().allSatisfy(prompt -> assertThat(prompt.getOptions().getModel()).isEqualTo("bean-model"));
     }
+
+    @Test
+    void anAbsentWitnessReplyGetsOneCorrectionWithoutCertifyingAnEmptyReview() {
+        ReviewerClient reviewer = mock(ReviewerClient.class);
+        when(reviewer.configured()).thenReturn(true);
+        when(reviewer.call(anyString(), anyString(), any(), any(), anyInt())).thenReturn(null, """
+                {"witnesses":[{"rule":"R1","testName":"testBoundary","code":"@Test void testBoundary() { assertEquals(1, 1); }","wrongBehavior":"An incorrect boundary"}]}
+                """);
+        ContractWitnessAuthor author = new ContractWitnessAuthor(reviewer, JsonMapper.builder().build());
+        assertThat(author.authorContractWitnesses(SPEC_WITH_RULES, "class Test {}", "class Solution {}", Map.of(), null, () -> false)).extracting(ContractWitness::testName)
+                .containsExactly("testBoundary");
+        verify(reviewer, times(2)).call(anyString(), anyString(), any(), any(), anyInt());
+    }
+
 }

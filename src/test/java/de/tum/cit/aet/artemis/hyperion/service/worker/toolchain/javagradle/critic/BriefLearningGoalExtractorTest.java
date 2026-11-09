@@ -25,7 +25,7 @@ class BriefLearningGoalExtractorTest {
     void anExplicitStartingStateIsRetainedWithItsSourceQuote() {
         String brief = "Write a constructor for an existing class that had none.";
         var result = extractor.parse("""
-                {"goals":[{"quote":"Write a constructor for an existing class that had none.","constructorBaseline":"NO_EXPLICIT_CONSTRUCTORS"}]}
+                {"goals":[{"quote":"Write a constructor for an existing class that had none.","constructorBaseline":"NO_EXPLICIT_CONSTRUCTORS","learnerArtifact":"UNSPECIFIED"}]}
                 """, brief);
         assertThat(result).isNotNull();
         assertThat(result.goals()).containsExactly(new BriefLearningGoals.Goal("G1", brief, BriefLearningGoals.ConstructorBaseline.NO_EXPLICIT_CONSTRUCTORS));
@@ -43,7 +43,7 @@ class BriefLearningGoalExtractorTest {
         String brief = "Preserve arrival order; choose the holder with the\nsmallest count.";
         BriefLearningGoals result = extractor.parse(
                 """
-                        {"goals":[{"quote":"Preserve arrival order","constructorBaseline":"UNSPECIFIED"},{"quote":"choose the holder with the smallest count","constructorBaseline":"UNSPECIFIED"}]}
+                        {"goals":[{"quote":"Preserve arrival order","constructorBaseline":"UNSPECIFIED","learnerArtifact":"UNSPECIFIED"},{"quote":"choose the holder with the smallest count","constructorBaseline":"UNSPECIFIED","learnerArtifact":"UNSPECIFIED"}]}
                         """,
                 brief);
 
@@ -55,16 +55,20 @@ class BriefLearningGoalExtractorTest {
 
     @Test
     void anInventedGoalInvalidatesTheInventoryInsteadOfLeavingAPartialScope() {
-        assertThat(extractor.parse("""
-                {"goals":[{"quote":"Preserve arrival order","constructorBaseline":"UNSPECIFIED"},{"quote":"sort holders alphabetically","constructorBaseline":"UNSPECIFIED"}]}
-                """, "Preserve arrival order; choose the holder with the smallest count.")).isNull();
+        assertThat(extractor.parse(
+                """
+                        {"goals":[{"quote":"Preserve arrival order","constructorBaseline":"UNSPECIFIED","learnerArtifact":"UNSPECIFIED"},{"quote":"sort holders alphabetically","constructorBaseline":"UNSPECIFIED","learnerArtifact":"UNSPECIFIED"}]}
+                        """,
+                "Preserve arrival order; choose the holder with the smallest count.")).isNull();
     }
 
     @Test
     void duplicateWrappedQuotesCannotMasqueradeAsDistinctGoals() {
-        assertThat(extractor.parse("""
-                {"goals":[{"quote":"Preserve arrival order","constructorBaseline":"UNSPECIFIED"},{"quote":"Preserve  arrival\\norder","constructorBaseline":"UNSPECIFIED"}]}
-                """, "Preserve arrival order.")).isNull();
+        assertThat(extractor.parse(
+                """
+                        {"goals":[{"quote":"Preserve arrival order","constructorBaseline":"UNSPECIFIED","learnerArtifact":"UNSPECIFIED"},{"quote":"Preserve  arrival\\norder","constructorBaseline":"UNSPECIFIED","learnerArtifact":"UNSPECIFIED"}]}
+                        """,
+                "Preserve arrival order.")).isNull();
     }
 
     @ParameterizedTest
@@ -76,9 +80,10 @@ class BriefLearningGoalExtractorTest {
     @Test
     void aMalformedInventoryCanBeCorrectedWithoutCandidateContext() {
         when(reviewer.configured()).thenReturn(true);
-        when(reviewer.call(anyString(), anyString(), any(), any(), anyInt())).thenReturn("[]", """
-                {"goals":[{"quote":"Preserve arrival order","constructorBaseline":"UNSPECIFIED"},{"quote":"Choose the smallest holder","constructorBaseline":"UNSPECIFIED"}]}
-                """);
+        when(reviewer.call(anyString(), anyString(), any(), any(), anyInt())).thenReturn("[]",
+                """
+                        {"goals":[{"quote":"Preserve arrival order","constructorBaseline":"UNSPECIFIED","learnerArtifact":"UNSPECIFIED"},{"quote":"Choose the smallest holder","constructorBaseline":"UNSPECIFIED","learnerArtifact":"UNSPECIFIED"}]}
+                        """);
 
         var result = extractor.extract("Preserve arrival order. Choose the smallest holder.", null, () -> false);
 
@@ -90,11 +95,13 @@ class BriefLearningGoalExtractorTest {
     @Test
     void anUngroundedResponseCanBeCorrectedButCannotBecomePartialScope() {
         when(reviewer.configured()).thenReturn(true);
-        when(reviewer.call(anyString(), anyString(), any(), any(), anyInt())).thenReturn("""
-                {"goals":[{"quote":"Preserve arrival order","constructorBaseline":"UNSPECIFIED"},{"quote":"Sort by surname","constructorBaseline":"UNSPECIFIED"}]}
-                """, """
-                {"goals":[{"quote":"Preserve arrival order","constructorBaseline":"UNSPECIFIED"},{"quote":"Choose the smallest holder","constructorBaseline":"UNSPECIFIED"}]}
-                """);
+        when(reviewer.call(anyString(), anyString(), any(), any(), anyInt())).thenReturn(
+                """
+                        {"goals":[{"quote":"Preserve arrival order","constructorBaseline":"UNSPECIFIED","learnerArtifact":"UNSPECIFIED"},{"quote":"Sort by surname","constructorBaseline":"UNSPECIFIED","learnerArtifact":"UNSPECIFIED"}]}
+                        """,
+                """
+                        {"goals":[{"quote":"Preserve arrival order","constructorBaseline":"UNSPECIFIED","learnerArtifact":"UNSPECIFIED"},{"quote":"Choose the smallest holder","constructorBaseline":"UNSPECIFIED","learnerArtifact":"UNSPECIFIED"}]}
+                        """);
 
         var result = extractor.extract("Preserve arrival order. Choose the smallest holder.", null, () -> false);
 
@@ -123,4 +130,22 @@ class BriefLearningGoalExtractorTest {
         assertThat(extractor.extract("Preserve arrival order.", null, () -> false)).isNull();
         verify(reviewer, times(2)).call(anyString(), anyString(), any(), any(), anyInt());
     }
+
+    @Test
+    void testAuthoringIntentIsRetainedBeforeTheCandidateCanReplaceItWithImplementation() {
+        String brief = "Write unit tests that detect faults.";
+        var result = extractor.parse("""
+                {"goals":[{"quote":"Write unit tests that detect faults.","constructorBaseline":"UNSPECIFIED","learnerArtifact":"TEST_SUITE"}]}
+                """, brief);
+        assertThat(result).isNotNull();
+        assertThat(result.goals().getFirst().learnerArtifact()).isEqualTo(BriefLearningGoals.LearnerArtifact.TEST_SUITE);
+    }
+
+    @Test
+    void missingArtifactIntentCannotSilentlyBecomeAnImplementationGoal() {
+        assertThat(extractor.parse("""
+                {"goals":[{"quote":"Write unit tests.","constructorBaseline":"UNSPECIFIED"}]}
+                """, "Write unit tests.")).isNull();
+    }
+
 }

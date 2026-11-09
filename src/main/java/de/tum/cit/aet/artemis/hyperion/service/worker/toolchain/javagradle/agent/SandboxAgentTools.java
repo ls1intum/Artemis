@@ -171,6 +171,8 @@ public class SandboxAgentTools implements SubmitVetoAware, AuthoringProgress {
      */
     private final AtomicReference<AgentVerifyReport> lastTestsReport = new AtomicReference<>();
 
+    private final AtomicReference<AgentVerifyReport> firstReferenceTestFailure = new AtomicReference<>();
+
     public SandboxAgentTools(InteractiveSandbox sandbox, String sessionId, DifferentialVerifier verifier, GenerationInput exercise) {
         this(sandbox, sessionId, verifier, exercise, Map.of(), false, null);
     }
@@ -535,12 +537,12 @@ public class SandboxAgentTools implements SubmitVetoAware, AuthoringProgress {
             return "ERROR: no command provided. Put the shell command in the \"command\" field as a single string, e.g. {\"command\": \"ls -R\"}.";
         }
         // Rejected up front rather than run: the shell's failure on an argv array reads to the model like a problem with the command, so it retries the same array form.
-        if (isRenderedArgvArray(command)) {
+        if (AgentShellCommand.isRenderedArgvArray(command)) {
             return SandboxPathPolicy
                     .deniedCommand("The command must be a single shell string, e.g. {\"command\":\"ls -R\"}. You sent a JSON array, which I cannot run. Re-send it as one string.");
         }
         // `apply_patch` is not installed, so the shell would exit 127 and leave the workspace unchanged while the model believes the edit landed. Reject it loudly instead.
-        if (isApplyPatchInvocation(command)) {
+        if (AgentShellCommand.isApplyPatchInvocation(command)) {
             return SandboxPathPolicy.deniedCommand("apply_patch is NOT available. Use write_file (new file / full rewrite) or edit_file (exact unique snippet) instead.");
         }
         if (SandboxPathPolicy.mutatesManagedBuildInfrastructure(command)) {
@@ -636,6 +638,9 @@ public class SandboxAgentTools implements SubmitVetoAware, AuthoringProgress {
     public void enterStage(GenerationStage stage) {
         this.repairWritableRoots.set(null);
         this.currentStage = stage;
+        if (stage == GenerationStage.SPEC) {
+            firstReferenceTestFailure.set(null);
+        }
         resetVerificationProgress();
     }
 
@@ -806,6 +811,18 @@ public class SandboxAgentTools implements SubmitVetoAware, AuthoringProgress {
      */
     public void recordLastTestsReport(@Nullable AgentVerifyReport report) {
         this.lastTestsReport.set(report);
+        if (report != null && report.solutionTests() > 0 && !report.solutionPassed() && !report.solutionFailureEvidence().isEmpty()) {
+            firstReferenceTestFailure.compareAndSet(null, report);
+        }
+    }
+
+    /**
+     * Returns the first executed reference test failure for the current contract, even if later edits made its grader pass.
+     *
+     * @return the native report, or empty before any such failure
+     */
+    public Optional<AgentVerifyReport> firstReferenceTestFailure() {
+        return Optional.ofNullable(firstReferenceTestFailure.get());
     }
 
     private void resetVerificationProgress() {
@@ -932,7 +949,7 @@ public class SandboxAgentTools implements SubmitVetoAware, AuthoringProgress {
         StageCheckResult result = stageCheckService.check(stage, sandbox, sessionId, exercise, seedTestsFiles, lastTestsReport.get(), seededStructuralTests.get());
         recordVerification(result.passed(), result.report());
         if (stage == GenerationStage.TESTS && result.report() != null) {
-            lastTestsReport.set(result.report());
+            recordLastTestsReport(result.report());
         }
         if (result.passed()) {
             dirtySinceLastPassingCheck = false;
@@ -950,38 +967,6 @@ public class SandboxAgentTools implements SubmitVetoAware, AuthoringProgress {
         }
         String verdict = result.passed() ? "MECHANICAL PRECHECK: PASS" : "MECHANICAL PRECHECK: FAIL";
         return observation == null || observation.isBlank() ? verdict : verdict + "\n" + observation;
-    }
-
-    /**
-     * Matches the first shell word rather than a substring, so a command that merely mentions the name ({@code grep apply_patch}) still runs. A path prefix and a trailing
-     * heredoc are tolerated.
-     */
-    static boolean isApplyPatchInvocation(String command) {
-        String trimmed = command.strip();
-        int firstWordEnd = trimmed.length();
-        for (int i = 0; i < trimmed.length(); i++) {
-            char c = trimmed.charAt(i);
-            if (c == ' ' || c == '\t' || c == '\n' || c == '<' || c == '\r') {
-                firstWordEnd = i;
-                break;
-            }
-        }
-        String firstWord = trimmed.substring(0, firstWordEnd);
-        int lastSlash = firstWord.lastIndexOf('/');
-        String program = lastSlash >= 0 ? firstWord.substring(lastSlash + 1) : firstWord;
-        return "apply_patch".equals(program);
-    }
-
-    /**
-     * Whether the command is the {@code List.toString()} render of a JSON argv array (e.g. {@code [bash, -lc, ls -R]}), which is what arrives when the model sends
-     * {@code {"command":[...]}}
-     * instead of a shell string. A POSIX {@code [ -f x ]} test has a space after the bracket and a single-element {@code [foo]} has no comma, so neither is caught.
-     */
-    static boolean isRenderedArgvArray(String command) {
-        String stripped = command.strip();
-        int comma = stripped.indexOf(',', 2);
-        return stripped.length() >= 4 && stripped.charAt(0) == '[' && " \t\n\u000B\f\r".indexOf(stripped.charAt(1)) < 0 && stripped.endsWith("]") && comma >= 0
-                && comma < stripped.length() - 1;
     }
 
     static boolean mutatesManagedBuildInfrastructure(String command) {

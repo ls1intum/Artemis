@@ -48,7 +48,8 @@ public final class BriefScaffoldingGate {
      */
     public static Check checkSpecification(BriefLearningGoals goals, String specification) {
         List<BriefLearningGoals.Goal> required = constructorGoals(goals);
-        if (required.isEmpty()) {
+        boolean learnerTestsRequired = goals.goals().stream().anyMatch(goal -> goal.learnerArtifact() == BriefLearningGoals.LearnerArtifact.TEST_SUITE);
+        if (required.isEmpty() && !learnerTestsRequired) {
             return new Check(true, List.of());
         }
         List<StageChecks.DesignRow> rows = StageChecks.designTableRows(specification);
@@ -62,6 +63,15 @@ public final class BriefScaffoldingGate {
         Set<String> learnerOwners = rows.stream().filter(row -> "stubbed".equals(row.status()) || parsed.contract().studentCreatedMemberOwners().contains(row.type()))
                 .map(StageChecks.DesignRow::type).filter(starterTypes::contains).collect(Collectors.toSet());
         List<String> findings = new ArrayList<>();
+        if (learnerTestsRequired) {
+            Set<String> writableTypes = rows.stream().filter(row -> "stubbed".equals(row.status()) || "student-creates".equals(row.status())).map(StageChecks.DesignRow::type)
+                    .collect(Collectors.toSet());
+            if (parsed.contract().learnerTestOwners(writableTypes).isEmpty()) {
+                findings.add("The brief assigns test authoring to the learner, but the Public API contains no learner-owned JUnit test method. "
+                        + "Declare the learner's test methods in a stubbed or student-created type, or mark those methods @studentCreates. "
+                        + "A fully supplied test class and implementation-only grading do not assess learner-written tests. Preserve every original goal and define its grading seam.");
+            }
+        }
         for (BriefLearningGoals.Goal goal : required) {
             Set<String> targets = targets(goal, types, learnerOwners);
             if (targets.size() > 1) {
@@ -85,7 +95,8 @@ public final class BriefScaffoldingGate {
      */
     public static List<SpecFidelityReport.Finding> artifactFindings(@Nullable BriefLearningGoals goals, @Nullable String specification, Map<String, String> template,
             Map<String, String> solution) {
-        if (goals == null || constructorGoals(goals).isEmpty()) {
+        if (goals == null || goals.goals().stream()
+                .allMatch(goal -> goal.constructorBaseline() == ConstructorBaseline.UNSPECIFIED && goal.learnerArtifact() != BriefLearningGoals.LearnerArtifact.TEST_SUITE)) {
             return List.of();
         }
         String frozenSpecification = specification == null ? "" : specification;
@@ -95,7 +106,17 @@ public final class BriefScaffoldingGate {
         }
         if (!planned.findings().isEmpty()) {
             return planned.findings().stream().map(detail -> new SpecFidelityReport.Finding(SpecFidelityReport.Kind.SPECIFICATION_REVIEW_FINDING,
-                    "The compiled specification changes the instructor's required starting class", detail)).toList();
+                    "The compiled specification changes the instructor's required learner work", detail)).toList();
+        }
+        boolean learnerTestsRequired = goals.goals().stream().anyMatch(goal -> goal.learnerArtifact() == BriefLearningGoals.LearnerArtifact.TEST_SUITE);
+        if (learnerTestsRequired && solution.entrySet().stream().filter(entry -> entry.getKey().endsWith(".java"))
+                .noneMatch(entry -> !JavaSourceInspector.studentTestVariants(entry.getValue(), template.getOrDefault(entry.getKey(), "")).isEmpty())) {
+            return SpecFidelityReport.qualityReviewUnavailable("The brief requires learner-authored tests, but no changed executable JUnit test body could be established "
+                    + "between the starter and reference. Supplied instructor assertions cannot satisfy this goal; confirm learner ownership and runtime grading before study use.")
+                    .findings();
+        }
+        if (constructorGoals(goals).isEmpty()) {
+            return List.of();
         }
         try {
             Map<String, SourceType> starterTypes = sourceTypes(template);

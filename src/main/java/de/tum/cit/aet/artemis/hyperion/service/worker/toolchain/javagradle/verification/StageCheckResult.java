@@ -12,7 +12,7 @@ import org.jspecify.annotations.Nullable;
 public record StageCheckResult(Outcome outcome, String observation, @Nullable AgentVerifyReport report) {
 
     public enum Outcome {
-        PASSED, ARTIFACT_FAILURE, ASSESSMENT_FAILURE, OWNERSHIP_CONFLICT
+        PASSED, ARTIFACT_FAILURE, ASSESSMENT_FAILURE, OWNERSHIP_CONFLICT, SPECIFICATION_CONFLICT
     }
 
     public StageCheckResult(boolean passed, String observation, @Nullable AgentVerifyReport report) {
@@ -24,7 +24,7 @@ public record StageCheckResult(Outcome outcome, String observation, @Nullable Ag
     }
 
     public boolean contractRedesignRequired() {
-        return outcome == Outcome.ASSESSMENT_FAILURE || outcome == Outcome.OWNERSHIP_CONFLICT;
+        return outcome == Outcome.ASSESSMENT_FAILURE || outcome == Outcome.OWNERSHIP_CONFLICT || outcome == Outcome.SPECIFICATION_CONFLICT;
     }
 
     public static StageCheckResult redesignRequired(String observation, AgentVerifyReport report) {
@@ -33,6 +33,10 @@ public record StageCheckResult(Outcome outcome, String observation, @Nullable Ag
 
     public static StageCheckResult ownershipRedesignRequired(String observation, @Nullable AgentVerifyReport report) {
         return new StageCheckResult(Outcome.OWNERSHIP_CONFLICT, observation, report);
+    }
+
+    public static StageCheckResult specificationRedesignRequired(String observation, AgentVerifyReport report) {
+        return new StageCheckResult(Outcome.SPECIFICATION_CONFLICT, observation, report);
     }
 
     public static StageCheckResult passed(String observation) {

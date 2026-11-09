@@ -91,4 +91,69 @@ class BriefScaffoldingGateTest {
                 .replace("```\n", "public class Gauge { /** @studentCreates */ public Gauge(int value); }\n```\n");
         assertThat(BriefScaffoldingGate.checkSpecification(GOALS, specification).complete()).isFalse();
     }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "given", "stubbed", "student-creates" })
+    void learnerTestAuthoringCannotBeReplacedBySuppliedTests(String ownership) {
+        String brief = "Write unit tests that detect faults.";
+        var goals = new BriefLearningGoals(brief,
+                List.of(new BriefLearningGoals.Goal("G1", brief, ConstructorBaseline.UNSPECIFIED, BriefLearningGoals.LearnerArtifact.TEST_SUITE)));
+        String specification = """
+                ## Design
+                | Type | Template status |
+                | --- | --- |
+                | Checks | %s |
+                ## Public API
+                ```java
+                import org.junit.jupiter.api.Test;
+                public class Checks {
+                    @Test public void rejectsFault();
+                }
+                ```
+                """.formatted(ownership);
+        var result = BriefScaffoldingGate.checkSpecification(goals, specification);
+        assertThat(result.complete()).isTrue();
+        if ("given".equals(ownership)) {
+            assertThat(result.findings()).singleElement().asString().contains("no learner-owned JUnit test method");
+        }
+        else {
+            assertThat(result.findings()).isEmpty();
+        }
+    }
+
+    @Test
+    void anImplementationStubCannotSatisfyATestAuthoringGoal() {
+        String brief = "Write unit tests.";
+        var goals = new BriefLearningGoals(brief,
+                List.of(new BriefLearningGoals.Goal("G1", brief, ConstructorBaseline.UNSPECIFIED, BriefLearningGoals.LearnerArtifact.TEST_SUITE)));
+        assertThat(BriefScaffoldingGate.checkSpecification(goals, specification("public Meter();")).findings()).singleElement().asString()
+                .contains("no learner-owned JUnit test method");
+    }
+
+    @Test
+    void declaredLearnerTestsThatAreSuppliedUnchangedCannotSilentlySatisfyTheGoal() {
+        String brief = "Write unit tests.";
+        var goals = new BriefLearningGoals(brief,
+                List.of(new BriefLearningGoals.Goal("G1", brief, ConstructorBaseline.UNSPECIFIED, BriefLearningGoals.LearnerArtifact.TEST_SUITE)));
+        String specification = """
+                ## Design
+                | Type | Template status |
+                | --- | --- |
+                | Checks | stubbed |
+                ## Public API
+                ```java
+                import org.junit.jupiter.api.Test;
+                public class Checks { @Test public void verifiesResult(); }
+                ```
+                """;
+        String source = "import org.junit.jupiter.api.Test; public class Checks { @Test public void verifiesResult() { org.junit.jupiter.api.Assertions.assertTrue(true); } }";
+        var findings = BriefScaffoldingGate.artifactFindings(goals, specification, Map.of("src/Checks.java", source), Map.of("src/Checks.java", source));
+        assertThat(findings).singleElement().satisfies(finding -> {
+            assertThat(finding.kind()).isEqualTo(SpecFidelityReport.Kind.QUALITY_REVIEW_UNAVAILABLE);
+            assertThat(finding.detail()).contains("no changed executable JUnit test body");
+        });
+        String starter = source.replace("org.junit.jupiter.api.Assertions.assertTrue(true);", "");
+        assertThat(BriefScaffoldingGate.artifactFindings(goals, specification, Map.of("src/Checks.java", starter), Map.of("src/Checks.java", source))).isEmpty();
+    }
+
 }

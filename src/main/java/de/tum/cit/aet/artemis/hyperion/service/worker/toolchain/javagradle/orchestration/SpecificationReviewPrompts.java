@@ -60,6 +60,13 @@ final class SpecificationReviewPrompts {
                 List.of(finding));
     }
 
+    static String contractConsistencyRepairPrompt(String evidence) {
+        return "An execution-informed review found a defect in the approved learning contract. Preserve the instructor brief and its original learner goals. "
+                + "Revise the conflicting rules, worked examples, learner ownership and assessment together; do not add per-example exceptions to an implementation, "
+                + "copy an erroneous expected value into code, or remove a learner goal to make grading pass. Reconcile the quoted evidence, then submit the complete SPEC.\n"
+                + evidence;
+    }
+
     static String ownershipRepairPrompt(String executedEvidence) {
         return semanticSpecRefinementPrompt(executedEvidence) + """
 

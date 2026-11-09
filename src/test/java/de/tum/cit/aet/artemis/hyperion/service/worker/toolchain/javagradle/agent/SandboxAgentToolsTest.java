@@ -38,6 +38,33 @@ class SandboxAgentToolsTest {
     private static final String GITHUB_SENTINEL = "ghp_" + "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghij";
 
     @Test
+    void firstExecutedReferenceFailureSurvivesLaterPassesUntilTheContractIsReopened() {
+        SandboxAgentTools tools = new SandboxAgentTools(new FakeInteractiveSandbox(), "s");
+        tools.enterStage(GenerationStage.TESTS);
+        var failed = new AgentVerifyReport(1, false, List.of("checksRule"), List.of(new AgentVerifyReport.TestFailureEvidence("checksRule", "expected 4 but was 3")), 1, true, true,
+                List.of(), List.of(), List.of("checksRule"), List.of(), List.of(), false, List.of());
+        var passed = new AgentVerifyReport(1, true, List.of(), 1, true, true, List.of(), List.of("checksRule"), List.of(), List.of(), true, List.of());
+
+        tools.recordLastTestsReport(failed);
+        tools.recordLastTestsReport(passed);
+        tools.enterStage(GenerationStage.TESTS);
+        assertThat(tools.firstReferenceTestFailure()).contains(failed);
+        tools.enterStage(GenerationStage.SPEC);
+        assertThat(tools.firstReferenceTestFailure()).isEmpty();
+    }
+
+    @Test
+    void compilationFailuresDoNotMasqueradeAsExecutedReferenceFailures() {
+        SandboxAgentTools tools = new SandboxAgentTools(new FakeInteractiveSandbox(), "s");
+        tools.enterStage(GenerationStage.TESTS);
+        var failed = new AgentVerifyReport(0, false, List.of(), 0, false, false, List.of(), List.of(), List.of(), List.of(), false, List.of("compilation failed"));
+
+        tools.recordLastTestsReport(failed);
+
+        assertThat(tools.firstReferenceTestFailure()).isEmpty();
+    }
+
+    @Test
     void workspaceRelativePath_rejectsTraversalQuotesAndShellMetacharacters() {
         assertThat(SandboxAgentTools.workspaceRelativePath("solution/src/Calculator.java")).isEqualTo("solution/src/Calculator.java");
         assertThat(SandboxAgentTools.workspaceRelativePath("/workspace/solution/A.java")).isEqualTo("solution/A.java");
@@ -874,27 +901,27 @@ class SandboxAgentToolsTest {
 
     @Test
     void isApplyPatchInvocation_matchesOnlyTheFirstProgramWord() {
-        assertThat(SandboxAgentTools.isApplyPatchInvocation("apply_patch")).isTrue();
-        assertThat(SandboxAgentTools.isApplyPatchInvocation("  apply_patch <<'EOF'")).isTrue();
-        assertThat(SandboxAgentTools.isApplyPatchInvocation("./apply_patch foo")).isTrue();
-        assertThat(SandboxAgentTools.isApplyPatchInvocation("/usr/bin/apply_patch")).isTrue();
-        assertThat(SandboxAgentTools.isApplyPatchInvocation("apply_patch<<'EOF'")).isTrue();
-        assertThat(SandboxAgentTools.isApplyPatchInvocation("grep apply_patch x")).isFalse();
-        assertThat(SandboxAgentTools.isApplyPatchInvocation("echo apply_patch")).isFalse();
-        assertThat(SandboxAgentTools.isApplyPatchInvocation("sh verify.sh solution")).isFalse();
+        assertThat(AgentShellCommand.isApplyPatchInvocation("apply_patch")).isTrue();
+        assertThat(AgentShellCommand.isApplyPatchInvocation("  apply_patch <<'EOF'")).isTrue();
+        assertThat(AgentShellCommand.isApplyPatchInvocation("./apply_patch foo")).isTrue();
+        assertThat(AgentShellCommand.isApplyPatchInvocation("/usr/bin/apply_patch")).isTrue();
+        assertThat(AgentShellCommand.isApplyPatchInvocation("apply_patch<<'EOF'")).isTrue();
+        assertThat(AgentShellCommand.isApplyPatchInvocation("grep apply_patch x")).isFalse();
+        assertThat(AgentShellCommand.isApplyPatchInvocation("echo apply_patch")).isFalse();
+        assertThat(AgentShellCommand.isApplyPatchInvocation("sh verify.sh solution")).isFalse();
     }
 
     @Test
     void isRenderedArgvArray_matchesTheArgvArrayFormButNotAPosixTest() {
-        assertThat(SandboxAgentTools.isRenderedArgvArray("[bash, -lc, ls -R]")).isTrue();
-        assertThat(SandboxAgentTools.isRenderedArgvArray("  [sh, -c, sh verify.sh solution]  ")).isTrue();
-        assertThat(SandboxAgentTools.isRenderedArgvArray("[ls -R, grep foo]")).isTrue();
+        assertThat(AgentShellCommand.isRenderedArgvArray("[bash, -lc, ls -R]")).isTrue();
+        assertThat(AgentShellCommand.isRenderedArgvArray("  [sh, -c, sh verify.sh solution]  ")).isTrue();
+        assertThat(AgentShellCommand.isRenderedArgvArray("[ls -R, grep foo]")).isTrue();
         // POSIX test (space after the bracket): does not match.
-        assertThat(SandboxAgentTools.isRenderedArgvArray("[ -f solution/pom.xml ]")).isFalse();
-        assertThat(SandboxAgentTools.isRenderedArgvArray("[ -d tests ] && echo y")).isFalse();
-        assertThat(SandboxAgentTools.isRenderedArgvArray("[ls]")).isFalse();
-        assertThat(SandboxAgentTools.isRenderedArgvArray("ls -R solution template tests")).isFalse();
-        assertThat(SandboxAgentTools.isRenderedArgvArray("grep -n 'a,b' tests/Foo.java")).isFalse();
+        assertThat(AgentShellCommand.isRenderedArgvArray("[ -f solution/pom.xml ]")).isFalse();
+        assertThat(AgentShellCommand.isRenderedArgvArray("[ -d tests ] && echo y")).isFalse();
+        assertThat(AgentShellCommand.isRenderedArgvArray("[ls]")).isFalse();
+        assertThat(AgentShellCommand.isRenderedArgvArray("ls -R solution template tests")).isFalse();
+        assertThat(AgentShellCommand.isRenderedArgvArray("grep -n 'a,b' tests/Foo.java")).isFalse();
     }
 
     @Test

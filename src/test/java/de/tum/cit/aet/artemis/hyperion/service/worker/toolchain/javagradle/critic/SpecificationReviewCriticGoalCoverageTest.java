@@ -14,6 +14,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.mockito.ArgumentCaptor;
 
 import tools.jackson.databind.json.JsonMapper;
 
@@ -48,15 +49,31 @@ class SpecificationReviewCriticGoalCoverageTest {
         when(reviewer.configured()).thenReturn(true);
         when(reviewer.call(eq(GOAL_PROMPT), anyString(), any(), any(), anyInt())).thenReturn(
                 """
-                        {"goals":[{"quote":"Preserve arrival order.","constructorBaseline":"UNSPECIFIED"},{"quote":"Choose the holder with the smallest count.","constructorBaseline":"UNSPECIFIED"}]}
+                        {"goals":[{"quote":"Preserve arrival order.","constructorBaseline":"UNSPECIFIED","learnerArtifact":"UNSPECIFIED"},{"quote":"Choose the holder with the smallest count.","constructorBaseline":"UNSPECIFIED","learnerArtifact":"UNSPECIFIED"}]}
                         """);
+    }
+
+    @Test
+    void executionObservationsReachTheCorrectionWithoutReplacingTheBriefOwnedGoals() {
+        String observation = "Native grader checks queue insertion only; no check observes holder selection.";
+        when(reviewer.call(eq(REVIEW_PROMPT), anyString(), any(), any(), anyInt())).thenReturn("{malformed", verdict(COVERED_FIRST_GOAL + "," + UNCOVERED_SECOND_GOAL, "[]"));
+
+        var review = critic.reviewSpecification(BRIEF, null, SPECIFICATION, null, observation, null, () -> false);
+
+        assertThat(review.complete()).isTrue();
+        assertThat(review.accepted()).isFalse();
+        assertThat(review.findings()).singleElement().asString().contains("G2", "Choose the holder with the smallest count");
+        assertThat(review.briefLearningGoals().sourceBrief()).isEqualTo(BRIEF);
+        var prompts = ArgumentCaptor.forClass(String.class);
+        verify(reviewer, times(2)).call(eq(REVIEW_PROMPT), prompts.capture(), any(), any(), anyInt());
+        assertThat(prompts.getAllValues()).allSatisfy(prompt -> assertThat(prompt).contains(observation));
     }
 
     @Test
     void aKnownStartingStateMismatchDoesNotDependOnAnotherModelVerdict() {
         String brief = "Add a constructor to the existing class that had none.";
         when(reviewer.call(eq(GOAL_PROMPT), anyString(), any(), any(), anyInt())).thenReturn("""
-                {"goals":[{"quote":"Add a constructor to the existing class that had none.","constructorBaseline":"NO_EXPLICIT_CONSTRUCTORS"}]}
+                {"goals":[{"quote":"Add a constructor to the existing class that had none.","constructorBaseline":"NO_EXPLICIT_CONSTRUCTORS","learnerArtifact":"UNSPECIFIED"}]}
                 """);
         when(reviewer.call(eq(REVIEW_PROMPT), anyString(), any(), any(), anyInt())).thenThrow(new IllegalStateException("Reviewer unavailable"));
         var review = critic.reviewSpecification(brief, """

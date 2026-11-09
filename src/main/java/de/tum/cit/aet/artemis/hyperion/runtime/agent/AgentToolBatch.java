@@ -220,7 +220,7 @@ final class AgentToolBatch {
         if (!WORKSPACE_MUTATING_TOOLS.contains(response.name()) || isErrorResponse(response.responseData())) {
             return false;
         }
-        String result = response.responseData() == null ? "" : response.responseData().stripLeading();
+        String result = response.responseData().stripLeading();
         return !result.startsWith("No change:") && !result.startsWith("\"No change:");
     }
 

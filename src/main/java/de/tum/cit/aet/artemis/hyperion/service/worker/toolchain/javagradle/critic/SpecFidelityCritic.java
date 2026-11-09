@@ -326,6 +326,24 @@ public class SpecFidelityCritic {
         return ensureGradeableSpecification(specification, specificationCritic.reviewSpecification(brief, selectedConcept, specification, previousReview, usageSink, cancelled));
     }
 
+    /**
+     * Rechecks the frozen contract against native assessment observations without treating a grader's expectation as rule authority.
+     *
+     * @param brief             authoritative instructor requirements
+     * @param selectedConcept   selected design provenance, or null
+     * @param specification     frozen contract to check
+     * @param previousReview    prior grounded findings and original learner goals
+     * @param executionEvidence bounded native build and grading observations
+     * @param usageSink         shared provider-usage accounting
+     * @param cancelled         authoring stop signal
+     * @return a grounded contract verdict; incomplete review never certifies consistency
+     */
+    public SpecificationReview reviewSpecificationWithExecution(String brief, @Nullable String selectedConcept, String specification, @Nullable SpecificationReview previousReview,
+            String executionEvidence, @Nullable Consumer<ChatResponse> usageSink, BooleanSupplier cancelled) {
+        return ensureGradeableSpecification(specification,
+                specificationCritic.reviewSpecification(brief, selectedConcept, specification, previousReview, executionEvidence, usageSink, cancelled));
+    }
+
     /** Keeps a missed exact-technique mandate from becoming a known-but-ungraded requirement downstream: a frozen correctness rule must be enforceable by the assessment mode. */
     private static SpecificationReview ensureGradeableSpecification(String specification, SpecificationReview review) {
         List<String> techniqueMandates = ExerciseIntegrityGate.techniqueMandatesInRules(specification);

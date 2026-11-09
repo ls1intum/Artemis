@@ -2,7 +2,7 @@
 id: hyperion
 title: Hyperion Service
 sidebar_label: Hyperion Setup
-last_reviewed: 2026-11-08
+last_reviewed: 2026-11-09
 ---
 
 import { CalloutVariant } from '../../src/components/Callout/Callout.types';
@@ -321,6 +321,25 @@ that supplied type into extra learner work. It reopens the complete specificatio
 then checks the revised ownership, responsibilities and grading before statement
 authoring. An unrelated failing reference test does not postpone this contract review.
 An unresolved ownership conflict cannot become a verified checkpoint.
+
+The brief-only goal inventory also records whether the learner must author tests.
+Before freezing the contract, a declaration check requires learner-owned JUnit methods
+for that goal. Fully supplied tests cannot satisfy it; their runtime assessment still
+needs the executable learner-test checks.
+
+Before the executable stage finishes, an execution-informed review checks the frozen
+contract against the original learner goals and the actual assessment. It retains
+the first executed reference-test failure even if later edits make the grader pass.
+Expected test values are observations, not new requirements. A grounded conflict
+between rules, examples, learner ownership or assessment can use the same single
+contract-redesign allowance. The controller reviews the whole contract before
+accepting executable artifacts under its revised meaning.
+
+This review runs at most once per unchanged specification in a staged invocation
+and uses the existing provider, token and time limits. Compiler failures alone stay
+on the artifact-repair path. If the review is unavailable or correction cannot finish,
+a mechanically valid draft keeps its unresolved findings for instructor review.
+A failed mandatory build remains a failure.
 
 The configured `artemis.hyperion.agent.max-turns` is a **job-wide authoring limit**,
 shared by concept selection, stages, continuations and repair attempts. There is no

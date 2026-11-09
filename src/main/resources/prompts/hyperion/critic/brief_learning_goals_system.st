@@ -11,5 +11,8 @@ For every goal, set constructorBaseline to NO_EXPLICIT_CONSTRUCTORS only when th
 has no constructor. That is a requirement on the supplied starting class, not merely the absence of one overload. Otherwise use UNSPECIFIED. Do not infer this
 requirement from ordinary constructor implementation, overloading, delegation, prerequisites, or an unspecified starting point.
 
-Return only JSON, including constructorBaseline on every goal:
-{"goals":[{"quote":"verbatim requested learning objective or competency","constructorBaseline":"UNSPECIFIED"}]}
+Set learnerArtifact to TEST_SUITE only when this goal explicitly assigns writing or completing unit tests or assertions to the learner.
+Using instructor tests to check an implementation is not test authoring. Otherwise use UNSPECIFIED. Candidate code and its ownership claims are absent.
+
+Return only JSON, including constructorBaseline and learnerArtifact on every goal:
+{"goals":[{"quote":"verbatim requested learning objective or competency","constructorBaseline":"UNSPECIFIED","learnerArtifact":"UNSPECIFIED"}]}

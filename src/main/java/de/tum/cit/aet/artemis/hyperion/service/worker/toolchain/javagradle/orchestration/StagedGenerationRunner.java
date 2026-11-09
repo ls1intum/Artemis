@@ -383,6 +383,8 @@ public class StagedGenerationRunner {
         boolean assessmentVerified = false;
         String assessmentRedesignFeedback = continuation != null && continuation.stage() == GenerationStage.SPEC ? continuation.feedback() : null;
         baseTools.configureStructuralOracleRefresh(structuralSeedHook);
+        var executionContractReview = new ExecutableSpecificationReview(specificationReviewer, sourceBrief, transcriptWriter, exercise.id(), usageSink,
+                () -> cancelled.getAsBoolean() || wallClockExceeded(startedAt), progress);
 
         boolean continuationApproved = continuation == null
                 || (continuation.stage() == GenerationStage.SPEC ? approvedSpecs.assessmentReopened(sessionId) && approvedSpecs.approved(sessionId).isEmpty()
@@ -550,6 +552,17 @@ public class StagedGenerationRunner {
                     baseTools.recordLastTestsReport(gate.report());
                 }
 
+                boolean contractReviewBudget = specStageApplies && !assessmentRedesignUsed && reentriesRemaining > 0 && !wallClockExceeded(startedAt)
+                        && allocatablePool(GenerationStage.SPEC, remainingPool) >= MIN_STAGE_BUDGET;
+                var contractReview = executionContractReview.check(stage, approvedSpecs.approved(sessionId).orElse(null), selectedConcept, previousSpecificationReview, gate,
+                        baseTools.firstReferenceTestFailure().orElse(null), contractReviewBudget);
+                gate = contractReview.gate();
+                if (contractReview.review() != null) {
+                    previousSpecificationReview = contractReview.review();
+                }
+                unresolvedSpecificationFindings = java.util.stream.Stream.concat(unresolvedSpecificationFindings.stream(), contractReview.unresolvedFindings().stream()).distinct()
+                        .toList();
+
                 if (gate.contractRedesignRequired()) {
                     if (cancelled.getAsBoolean()) {
                         return finish(exercise, AgentLoopResult.Status.CANCELLED, totalTurns, lastFinalMessage, archivedConversation, conversation,
@@ -571,9 +584,11 @@ public class StagedGenerationRunner {
                     assessmentRedesignUsed = true;
                     assessmentVerified = false;
                     reentriesRemaining--;
-                    assessmentRedesignFeedback = gate.outcome() == StageCheckResult.Outcome.OWNERSHIP_CONFLICT
-                            ? SpecificationReviewPrompts.ownershipRepairPrompt(gate.observation())
-                            : SpecificationReviewPrompts.assessmentRedesignPrompt(gate.observation());
+                    assessmentRedesignFeedback = switch (gate.outcome()) {
+                        case OWNERSHIP_CONFLICT -> SpecificationReviewPrompts.ownershipRepairPrompt(gate.observation());
+                        case SPECIFICATION_CONFLICT -> SpecificationReviewPrompts.contractConsistencyRepairPrompt(gate.observation());
+                        default -> SpecificationReviewPrompts.assessmentRedesignPrompt(gate.observation());
+                    };
                     if (conversation != null) {
                         archivedConversation.addAll(conversation);
                         conversation = null;

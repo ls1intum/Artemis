@@ -186,6 +186,15 @@ final class ApprovedStructuralContract {
                 || type.getConstructors().stream().anyMatch(ApprovedStructuralContract::studentCreates)).map(JavaClass::getSimpleName).collect(Collectors.toSet());
     }
 
+    Set<String> learnerTestOwners(Set<String> writableTypes) {
+        Set<String> testAnnotations = Set.of("org.junit.jupiter.api.Test", "org.junit.jupiter.api.RepeatedTest", "org.junit.jupiter.api.TestFactory",
+                "org.junit.jupiter.api.TestTemplate", "org.junit.jupiter.params.ParameterizedTest");
+        return types.values().stream()
+                .filter(type -> type.getMethods().stream().filter(method -> writableTypes.contains(type.getSimpleName()) || studentCreates(method))
+                        .anyMatch(method -> method.getAnnotations().stream().anyMatch(annotation -> testAnnotations.contains(annotation.getType().getFullyQualifiedName()))))
+                .map(JavaClass::getSimpleName).collect(Collectors.toSet());
+    }
+
     /** Matches the compiler's resolved signature conservatively; an unknown spelling is not evidence for changing the contract. */
     boolean studentCreatesMethod(String owner, String methodName, String parameters) {
         JavaClass type = types.get(owner);
