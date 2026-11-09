@@ -133,6 +133,7 @@
                                         [exerciseGroupId]="group().id!"
                                         [latestIndividualEndDate]="latestIndividualEndDate()"
                                         (onDeleteExercise)="exerciseDeleted.emit(exercise)"
+                                        (deletionOutcomeUnknown)="exerciseDeletionOutcomeUnknown.emit()"
                                         (actionsMinWidth)="onActionsMinWidth($event)"
                                     />
                                 }

@@ -97,6 +97,8 @@ export class TumAetUiAutoCompleteComponent implements ControlValueAccessor {
     readonly removeAriaLabel = input<string>();
     /** Message shown when a completed search returns no suggestions. */
     readonly emptyMessage = input<string>();
+    /** Message shown below the suggestions inside the panel, for example that only the first matches are listed. */
+    readonly footerMessage = input<string>();
     /** Requests suggestions for the current text query. */
     readonly searchRequested = output<TumAetUiAutoCompleteSearchEvent>();
     readonly optionSelected = output<TumAetUiAutoCompleteOptionEvent>();

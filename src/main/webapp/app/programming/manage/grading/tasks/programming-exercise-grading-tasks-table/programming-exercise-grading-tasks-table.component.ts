@@ -1,3 +1,4 @@
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
 import { Component, OnInit, inject, input, signal } from '@angular/core';
 import { ProgrammingExerciseTaskService } from 'app/programming/manage/grading/tasks/programming-exercise-task.service';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
@@ -9,7 +10,6 @@ import { Observable, Subject } from 'rxjs';
 import { ProgrammingExerciseTestCase } from 'app/programming/shared/entities/programming-exercise-test-case.model';
 import { isExamExercise } from 'app/foundation/util/utils';
 import { ProgrammingExerciseServerSideTask } from 'app/programming/shared/entities/programming-exercise-task.model';
-import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FormsModule } from '@angular/forms';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
@@ -28,7 +28,7 @@ type TaskComparator = (a: ProgrammingExerciseTask | ProgrammingExerciseTestCase,
     selector: 'jhi-programming-exercise-grading-tasks-table',
     templateUrl: './programming-exercise-grading-tasks-table.component.html',
     styleUrls: ['./programming-exercise-grading-tasks-table.scss'],
-    imports: [ButtonComponent, TranslateDirective, FormsModule, NgbTooltip, FaIconComponent, ProgrammingExerciseTaskComponent, ArtemisTranslatePipe],
+    imports: [TumAetUiButtonDirective, TranslateDirective, FormsModule, NgbTooltip, FaIconComponent, ProgrammingExerciseTaskComponent, ArtemisTranslatePipe],
 })
 export class ProgrammingExerciseGradingTasksTableComponent implements OnInit {
     private taskService = inject(ProgrammingExerciseTaskService);

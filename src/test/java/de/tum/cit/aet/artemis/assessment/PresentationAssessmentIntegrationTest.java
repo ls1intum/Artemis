@@ -49,6 +49,7 @@ import de.tum.cit.aet.artemis.course.dto.CourseManagementDTO;
 import de.tum.cit.aet.artemis.course.repository.CourseConfigurationRepository;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
+import de.tum.cit.aet.artemis.exercise.util.AsyncDeletionTestUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
 
@@ -59,6 +60,9 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
     private static final String BASE_URL = "/api/assessment/courses/";
 
     private static final ZonedDateTime FIXED_DATE = ZonedDateTime.parse("2026-07-31T13:26:00+02:00");
+
+    @Autowired
+    private AsyncDeletionTestUtilService asyncDeletionTestUtilService;
 
     @Autowired
     private PresentationAssessmentRepository presentationAssessmentRepository;
@@ -627,7 +631,8 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
         PresentationAssessment linkedAssessment = createSearchAssessment("Linked presentation", true);
         long exerciseId = linkedAssessment.getExercise().getId();
 
-        request.delete("/api/text/text-exercises/" + exerciseId, HttpStatus.OK);
+        request.delete("/api/text/text-exercises/" + exerciseId, HttpStatus.ACCEPTED);
+        asyncDeletionTestUtilService.awaitExerciseDeletion(exerciseId);
 
         PresentationAssessment reloaded = presentationAssessmentRepository.findById(linkedAssessment.getId()).orElseThrow();
         assertThat(reloaded.getExercise()).isNull();

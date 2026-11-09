@@ -6,7 +6,7 @@
             "imagePreviewTitle": "Bildvorschau",
             "imagePreviewAlt": "Vergrößertes Bild",
             "postNumberInformation": "{{ number }} Treffer",
-            "newMessage": "Neue Nachricht",
+            "askQuestion": "Frage stellen",
             "newAnnouncement": "Neue Ankündigung",
             "collapseNewMessage": "Einklappen",
             "reply": "Beantworten",

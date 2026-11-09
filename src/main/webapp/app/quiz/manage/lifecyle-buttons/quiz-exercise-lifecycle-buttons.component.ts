@@ -3,7 +3,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { QuizExercise, QuizMode, QuizStatus } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { ActionType } from 'app/shared-ui/delete-dialog/delete-dialog.model';
 import { AlertService } from 'app/foundation/service/alert.service';
-import { faBoxesStacked, faEye, faFileExport, faPlayCircle, faPlus, faSort, faStopCircle, faTable, faTimes, faWrench } from '@fortawesome/free-solid-svg-icons';
+import { faBoxesStacked, faEye, faPlayCircle, faPlus, faStopCircle } from '@fortawesome/free-solid-svg-icons';
 import { Subject } from 'rxjs';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -20,11 +20,10 @@ import { toQuizBatch } from 'app/quiz/shared/util/generated-quiz-exercise.util';
 @Component({
     selector: 'jhi-quiz-exercise-lifecycle-buttons',
     templateUrl: './quiz-exercise-lifecycle-buttons.component.html',
-    styleUrl: './quiz-exercise-lifecycle-buttons.component.scss',
     // flex-nowrap: keep the lifecycle buttons (e.g. Batches + End) on a single line rather than stacking them when space
     // is tight — they are a related action group, and the exercise-management table measures their inline width to size
     // the actions column (a wrap would mis-measure it).
-    host: { class: 'd-flex gap-1 align-items-center flex-nowrap' },
+    host: { class: 'flex flex-nowrap items-center gap-1 [&_button]:whitespace-nowrap' },
     imports: [
         FaIconComponent,
         TranslateDirective,
@@ -48,13 +47,8 @@ export class QuizExerciseLifecycleButtonsComponent {
 
     // Icons
     faBoxesStacked = faBoxesStacked;
-    faSort = faSort;
     faPlus = faPlus;
-    faTimes = faTimes;
     faEye = faEye;
-    faWrench = faWrench;
-    faTable = faTable;
-    faFileExport = faFileExport;
     faPlayCircle = faPlayCircle;
     faStopCircle = faStopCircle;
 

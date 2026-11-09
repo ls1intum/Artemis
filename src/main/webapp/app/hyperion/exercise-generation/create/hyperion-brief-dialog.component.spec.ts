@@ -8,6 +8,9 @@ import { Subject, of, throwError } from 'rxjs';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { MockEntityDeletionService } from 'test/helpers/mocks/service/mock-entity-deletion.service';
+import { EntityDeletionService } from 'app/shared-ui/delete-dialog/service/entity-deletion.service';
+import { EntityDeletionProgress, EntityDeletionStatus, EntityDeletionType } from 'app/shared-ui/delete-dialog/entity-deletion-progress.model';
 import { HyperionBriefDialogComponent } from 'app/hyperion/exercise-generation/create/hyperion-brief-dialog.component';
 import { HyperionExerciseGenerationService } from 'app/hyperion/exercise-generation/hyperion-exercise-generation.service';
 import { HyperionJobRegistryService } from 'app/hyperion/exercise-generation/state/hyperion-job-registry.service';
@@ -46,6 +49,7 @@ describe('HyperionBriefDialogComponent', () => {
                 provideHttpClientTesting(),
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: HyperionJobRegistryService, useValue: registry },
+                { provide: EntityDeletionService, useClass: MockEntityDeletionService },
             ],
         }).compileComponents();
 
@@ -340,6 +344,58 @@ describe('HyperionBriefDialogComponent', () => {
         expect(component.startError()).toBeUndefined();
         expect(component.brief()).toBe(BRIEF);
         expect(component.canGenerate()).toBe(true);
+    });
+
+    it('hands the draft to the background deletion and treats the accepted request as not finished', () => {
+        const deleted = vi.spyOn(component.exerciseDeleted, 'emit');
+        startFails();
+        const deletionService = TestBed.inject(EntityDeletionService) as unknown as MockEntityDeletionService;
+        const ended$ = new Subject<EntityDeletionProgress>();
+        deletionService.delete.mockReturnValueOnce(ended$);
+        vi.spyOn(programmingExerciseService, 'delete').mockReturnValue(of(new HttpResponse<void>({ status: 202 })));
+
+        component.deleteCreatedExercise();
+
+        expect(deletionService.delete).toHaveBeenCalledWith(
+            expect.objectContaining({ entityType: EntityDeletionType.EXERCISE, entityId: 42, title: 'AI draft exercise' }),
+            expect.anything(),
+            { silent: true },
+        );
+        // the request was accepted, but the deletion still runs: the draft stays, nothing is retried, nothing is announced as deleted
+        expect(component.deleting()).toBe(true);
+        expect(component.createdExercise()?.id).toBe(42);
+        expect(deleted).not.toHaveBeenCalled();
+        component.retryStart();
+        expect(generationService.generate).toHaveBeenCalledTimes(1);
+
+        ended$.next({
+            entityType: EntityDeletionType.EXERCISE,
+            entityId: 42,
+            status: EntityDeletionStatus.COMPLETED,
+            stepsCompleted: 1,
+            totalSteps: 1,
+            itemsProcessed: 0,
+            totalItems: 0,
+            weightedProgressPercent: 100,
+        });
+        expect(deleted).toHaveBeenCalledExactlyOnceWith(42);
+        expect(component.createdExercise()).toBeUndefined();
+    });
+
+    it('keeps the draft visible and offers another attempt when the background deletion failed', () => {
+        const deleted = vi.spyOn(component.exerciseDeleted, 'emit');
+        startFails();
+        const deletionService = TestBed.inject(EntityDeletionService) as unknown as MockEntityDeletionService;
+        deletionService.status = EntityDeletionStatus.FAILED;
+        vi.spyOn(programmingExerciseService, 'delete').mockReturnValue(of(new HttpResponse<void>({ status: 202 })));
+
+        component.deleteCreatedExercise();
+
+        expect(component.deleting()).toBe(false);
+        expect(component.deleteFailed()).toBe(true);
+        expect(deleted).not.toHaveBeenCalled();
+        expect(component.createdExercise()?.id).toBe(42);
+        expect(component.busy()).toBe(false);
     });
 
     it('keeps recovery available when deletion fails', () => {
