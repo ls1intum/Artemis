@@ -1,4 +1,4 @@
-import { AfterViewChecked, Component, DestroyRef, ElementRef, OnDestroy, OnInit, Renderer2, computed, inject, signal, viewChild } from '@angular/core';
+import { AfterViewChecked, Component, DestroyRef, ElementRef, OnDestroy, OnInit, computed, inject, signal, viewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { User } from 'app/account/user/user.model';
@@ -49,7 +49,6 @@ export class HomeComponent implements OnInit, AfterViewChecked, OnDestroy {
     private readonly accountService = inject(AccountService);
     private readonly loginService = inject(LoginService);
     private readonly sessionStorageService = inject(SessionStorageService);
-    private readonly renderer = inject(Renderer2);
     private readonly eventManager = inject(EventManager);
     private readonly profileService = inject(ProfileService);
     private readonly alertService = inject(AlertService);
@@ -175,7 +174,8 @@ export class HomeComponent implements OnInit, AfterViewChecked, OnDestroy {
     private refocusUsernameFieldForPasskeyAutofill(): void {
         // Allow one event-loop tick so the browser fully registers the conditional mediation.
         setTimeout(() => {
-            const usernameInput = this.renderer.selectRootElement('#username', true);
+            // The field is gone when the user already continued to the next stage or left the page, which is no error.
+            const usernameInput = this.usernameInput()?.nativeElement;
             if (!usernameInput) {
                 return;
             }

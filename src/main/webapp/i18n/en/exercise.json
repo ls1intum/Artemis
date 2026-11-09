@@ -27,12 +27,29 @@
                 "testCourse": "test course",
                 "realCourse": "real course",
                 "summary": {
-                    "title": "Exercise Summary",
-                    "numberOfStudentParticipations": "Number of Student Participations",
-                    "numberOfAssessments": "Number of Assessments",
-                    "numberOfCommunicationPosts": "Number of Communication Posts",
-                    "numberOfAnswerPosts": "Number of Answer Posts",
-                    "numberOfBuilds": "Number of Builds"
+                    "title": "What will be deleted",
+                    "category": {
+                        "studentWork": "Student work",
+                        "assessment": "Assessment",
+                        "plagiarism": "Plagiarism checks",
+                        "communication": "Communication",
+                        "content": "Exercise content and links",
+                        "infrastructure": "Infrastructure"
+                    },
+                    "numberOfStudentParticipations": "Student participations",
+                    "numberOfTeams": "Teams",
+                    "numberOfSubmissions": "Submissions",
+                    "numberOfStudentExams": "Student exams containing this exercise",
+                    "numberOfResults": "Results",
+                    "numberOfAssessments": "Manual assessments",
+                    "numberOfComplaints": "Complaints and feedback requests",
+                    "numberOfPlagiarismComparisons": "Plagiarism comparisons",
+                    "numberOfCommunicationPosts": "Posts in the exercise channel",
+                    "numberOfAnswerPosts": "Replies in the exercise channel",
+                    "numberOfExampleSubmissions": "Example submissions",
+                    "numberOfCompetencyLinks": "Linked competencies",
+                    "numberOfLectureUnitLinks": "Linked lecture units",
+                    "numberOfBuilds": "Build jobs"
                 }
             },
             "reset": {
@@ -84,7 +101,16 @@
             },
             "importFromFile": {
                 "tabTitle": "From file",
-                "notSupportedExerciseType": "The exercise type {{ exerciseType }} is not supported for importing from file."
+                "description": "Select a zip file that you downloaded with Export in the exercise overview of a course. Artemis then opens the exercise editor filled with the settings from the file, so you can review them before you save.",
+                "uploadForImport": "Import exercise from file",
+                "fileCountError": "Select exactly one file.",
+                "fileTooBigError": "The file {{ fileName }} is too large. The maximum file size is 20 MB.",
+                "fileTypeNotSupportedError": "The file type is not supported. Select a file with the extension .zip.",
+                "noExerciseDetailsJson": "The zip file does not contain exactly one JSON file with the exercise details.",
+                "exerciseTypeDoesntMatch": "The file does not contain an exercise of the selected type.",
+                "missingImage": "The zip file does not contain the image {{ fileName }}.",
+                "imageUploadFailed": "The image {{ fileName }} could not be uploaded.",
+                "importFailed": "The exercise import could not be prepared. Please try again."
             },
             "exercise": "Exercise",
             "results": "Results",
@@ -183,7 +209,6 @@
             "no": "No",
             "createAction": "Create",
             "importAction": "Import",
-            "exportAction": "Export",
             "difficulty": "Difficulty",
             "noLevel": "No Level",
             "easy": "Easy",

@@ -111,6 +111,14 @@
                 }
             },
             "examSummary": {
+                "partialTestExamResult": "Dieses Teilergebnis und die theoretische Note berücksichtigen nur automatisch bewertete Aufgaben. Manuell zu bewertende Aufgaben wurden nicht bewertet.",
+                "notAutomaticallyAssessed": "Nicht automatisch bewertet",
+                "theoreticalGrade": "Theoretische Note:",
+                "theoreticalGradeBeforeBonus": "Theoretische Note vor Bonus:",
+                "theoreticalGradeAfterBonus": "Theoretische Note nach Bonus:",
+                "automaticResultsPending": "Die automatische Bewertung läuft noch. Gesamtpunktzahl und theoretische Note werden angezeigt, sobald die Ergebnisse vorliegen.",
+                "bonusResultPending": "Die Bonusquelle wird noch bewertet. Ihre Punktzahl und Note vor Bonus sind verfügbar; die endgültige Note mit Bonus wird angezeigt, sobald die Ergebnisse der Bonusquelle vorliegen.",
+                "automaticResultPending": "Bewertung läuft",
                 "backToOverview": "Zurück zur Übersicht",
                 "examResults": "Prüfungsergebnisse",
                 "generalInformation": "Allgemeine Informationen",
@@ -663,7 +671,7 @@
                     "Submitted": "Eingereicht",
                     "DidNotAttend": "Nicht teilgenommen",
                     "AttendanceNotChecked": "Anwesenheitsprüfung fehlgeschlagen",
-                    "AttendanceChecked": "Anwesenheitsprüfung bestanden"
+                    "AttendanceChecked": "Anwesenheit geprüft"
                 },
                 "menu": {
                     "manageStudents": "Studierende",
@@ -677,6 +685,17 @@
                     "uploadImages": "Bilder hochladen",
                     "distribute": "Studierende verteilen",
                     "verifyAttendance": "Anwesenheit prüfen"
+                },
+                "statisticsFailed": "Die Prüfungsstatistik konnte nicht geladen werden. Lade sie vor der Anmeldung von Studierenden erneut.",
+                "registrationClosed": "Die Anmeldung ist geschlossen, da die Prüfung beendet ist.",
+                "registrationAfterGeneration": "Die individuellen Prüfungen wurden bereits generiert. Neu angemeldete Studierende erhalten automatisch eine eigene Prüfung. Falls die Vorbereitung bereits gestartet wurde, werden auch ihre Aufgaben vorbereitet. Fortfahren?",
+                "manualAttendance": {
+                    "checked": "Überprüfung abgeschlossen",
+                    "incomplete": "Überprüfung unvollständig",
+                    "reloadFailed": "Die Anwesenheit konnte nicht aktualisiert werden. Lade die aktuellen Einträge vor weiteren Änderungen erneut.",
+                    "title": "Anwesenheitsentscheidung",
+                    "present": "Anwesend (alle Identitätsprüfungen bestätigt)",
+                    "absent": "Abwesend (alle Identitätsprüfungen zurückgesetzt)"
                 },
                 "addDialog": {
                     "title": "Studierende hinzufügen",
@@ -724,7 +743,10 @@
                 "delete": {
                     "question": "Soll die Aufgabengruppe <strong>{{ title }}</strong> wirklich gelöscht werden? Alle zugehörigen Aufgaben werden ebenfalls gelöscht.",
                     "questionLocalVC": "Soll die Aufgabengruppe <strong>{{ title }}</strong> wirklich gelöscht werden? Alle zugehörigen Aufgaben werden gelöscht.<br>Alle Studierenden- Template-, Lösungs- und Test-Repositories sowie Build-Pläne werden ebenfalls gelöscht.<br>Achtung: Dies kann <strong class='text-danger'>NICHT</strong> rückgängig gemacht werden!<br>Es wird empfohlen die Repositories und Build-Pläne erst zu sichern! ",
-                    "typeNameToConfirm": "Bitte gib den Namen der Aufgabengruppe zur Bestätigung ein:"
+                    "typeNameToConfirm": "Bitte gib den Namen der Aufgabengruppe zur Bestätigung ein:",
+                    "summary": {
+                        "title": "Was gelöscht wird"
+                    }
                 },
                 "orderCouldNotBeSaved": "Die Reihenfolge konnte nicht gespeichert werden.",
                 "importModal": {
@@ -761,23 +783,39 @@
                 "question": "Soll die Klausur <strong>{{ title }}</strong> wirklich dauerhaft gelöscht werden? Alle zugehörigen Elemente werden gelöscht, inklusive der Klausuren der Studierenden. Diese Aktion kann NICHT rückgängig gemacht werden!",
                 "typeNameToConfirm": "Bitte gib den Namen der Klausur zur Bestätigung ein.",
                 "summary": {
-                    "title": "Klausur-Zusammenfassung",
-                    "numberExerciseGroups": "Anzahl der Aufgabengruppen",
-                    "numberProgrammingExercises": "Anzahl der Programmieraufgaben",
-                    "numberModelingExercises": "Anzahl der Modellierungsaufgaben",
-                    "numberTextExercises": "Anzahl der Textaufgaben",
-                    "numberFileUploadExercises": "Anzahl der Datei-Upload-Aufgaben",
-                    "numberQuizExercises": "Anzahl der Quiz-Aufgaben",
-                    "numberRepositories": "Anzahl der Repositories",
-                    "numberBuilds": "Anzahl der Builds",
-                    "numberRegisteredStudents": "Anzahl der angemeldeten Studierenden",
-                    "numberNotStartedExams": "Anzahl der Klausuren (nicht gestartet)",
-                    "numberStartedExams": "Anzahl der Klausuren",
-                    "numberSubmittedExams": "Anzahl der Klausuren (abgegeben)",
-                    "numberCommunicationPosts": "Anzahl der Kommunikationsbeiträge",
-                    "numberAnswerPosts": "Anzahl der Antwortbeiträge",
-                    "isTestExam": "Testklausur",
-                    "isTestCourse": "Testkurs"
+                    "title": "Was gelöscht wird",
+                    "category": {
+                        "structure": "Klausurstruktur",
+                        "students": "Studierende und Klausuren",
+                        "studentWork": "Studierendenleistungen",
+                        "assessment": "Bewertung",
+                        "plagiarism": "Plagiatsprüfungen",
+                        "communication": "Kommunikation",
+                        "infrastructure": "Infrastruktur"
+                    },
+                    "numberExerciseGroups": "Aufgabengruppen",
+                    "numberProgrammingExercises": "Programmieraufgaben",
+                    "numberQuizExercises": "Quiz-Aufgaben",
+                    "numberTextExercises": "Textaufgaben",
+                    "numberModelingExercises": "Modellierungsaufgaben",
+                    "numberFileUploadExercises": "Datei-Upload-Aufgaben",
+                    "numberRegisteredStudents": "Angemeldete Studierende",
+                    "numberNotStartedExams": "Klausuren von Studierenden (nicht gestartet)",
+                    "numberStartedExams": "Klausuren von Studierenden (gestartet)",
+                    "numberSubmittedExams": "Klausuren von Studierenden (abgegeben)",
+                    "numberTestRuns": "Testläufe",
+                    "numberExamSessions": "Klausursitzungen",
+                    "numberExamLiveEvents": "Live-Ereignisse und Ankündigungen",
+                    "numberStudentParticipations": "Teilnahmen von Studierenden",
+                    "numberSubmissions": "Abgaben",
+                    "numberResults": "Ergebnisse",
+                    "numberAssessments": "Manuelle Bewertungen",
+                    "numberComplaints": "Beschwerden und Feedback-Anfragen",
+                    "numberPlagiarismComparisons": "Plagiatsvergleiche",
+                    "numberCommunicationPosts": "Beiträge im Klausurkanal",
+                    "numberAnswerPosts": "Antworten im Klausurkanal",
+                    "numberBuilds": "Build-Jobs",
+                    "numberStudentExamsOfGroup": "Klausuren von Studierenden, die Aufgaben dieser Gruppe enthalten"
                 }
             },
             "reset": {
@@ -891,6 +929,9 @@
                 "typeNameToConfirm": "Bitte gib den Namen der Klausur zur Bestätigung ein."
             },
             "announcementCreate": {
+                "history": "Bisherige Ankündigungen",
+                "historyEmpty": "Es wurden noch keine Ankündigungen gesendet.",
+                "historyFailed": "Die bisherigen Ankündigungen konnten nicht geladen werden.",
                 "button": "Ankündigung erstellen",
                 "title": "Klausurweite Ankündigung erstellen",
                 "task": "Gib deine Ankündigung hier ein.",

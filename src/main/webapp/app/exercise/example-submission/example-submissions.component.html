@@ -15,7 +15,7 @@
                     </a>
                 }
                 @if (exercise().course!.isAtLeastEditor) {
-                    <button type="button" severity="primary" tumAetUiButton data-testid="import-example-submission" class="me-1 mb-1" (click)="openImportModal()">
+                    <button type="button" severity="secondary" tumAetUiButton data-testid="import-example-submission" class="me-1 mb-1" (click)="openImportModal()">
                         <fa-icon [icon]="faPlus" />
                         <fa-icon class="xl:hidden" [icon]="faFont" />
                         <span class="hidden xl:inline" jhiTranslate="artemisApp.exampleSubmission.useAsExampleSubmission"></span>

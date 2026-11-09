@@ -138,21 +138,11 @@ describe('CodeButtonComponent', () => {
         }
     }
 
-    it('forwards browser editing through Code even when the online IDE is disallowed', async () => {
+    it('keeps Code focused on repository access without a browser editor action', async () => {
         createComponent(false);
-        fixture.componentRef.setInput('repositoryEditorLink', ['/course-management/3/programming-exercises/12', 'code-editor', 'solution', 2]);
         await fixture.whenStable();
-        expect(document.querySelector('[data-testid="edit-repository-button"]')?.getAttribute('href')).toBe('/course-management/3/programming-exercises/12/code-editor/solution/2');
+        expect(document.querySelector('[data-testid="edit-repository-button"]')).toBeNull();
         expect(document.querySelector('[data-testid="open-repository-button"]')?.getAttribute('href')).toBe('/courses/1/exercises/42/repository');
-    });
-
-    it('retains browser editing when clone authentication cannot be loaded', async () => {
-        profileInfo.repositoryAuthenticationMechanisms = [];
-        createComponent(false);
-        fixture.componentRef.setInput('repositoryEditorLink', ['/course-management/3/programming-exercises/12', 'code-editor', 'template', 1]);
-        await fixture.whenStable();
-        expect(component['loadingState']().status).toBe('error');
-        expect(document.querySelector('[data-testid="edit-repository-button"]')?.getAttribute('href')).toBe('/course-management/3/programming-exercises/12/code-editor/template/1');
     });
 
     it('should defer resource loading until the popover trigger is clicked', async () => {
