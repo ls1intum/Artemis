@@ -729,6 +729,13 @@ public class AtlasAgentService {
         };
     }
 
+    /**
+     * Builds the plan-continuation brief, requiring a learning-content read before suggestions and weights are chosen.
+     *
+     * @param exerciseId    the exercise selected in the plan, if available
+     * @param exerciseTitle the plan's exercise title, if available
+     * @return mapping instructions with exercise context or a selection fallback
+     */
     private String buildExerciseMapperInstruction(@Nullable Long exerciseId, @Nullable String exerciseTitle) {
         if (exerciseId != null && exerciseTitle != null && !exerciseTitle.isBlank()) {
             return "Map the competencies from the previous step to the exercise below. " + "EXERCISE_ID: " + exerciseId + " | EXERCISE_TITLE: " + exerciseTitle + ". "

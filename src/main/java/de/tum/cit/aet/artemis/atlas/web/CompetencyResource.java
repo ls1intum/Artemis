@@ -231,6 +231,16 @@ public class CompetencyResource {
         return createCompetencies(courseId, competencies, true);
     }
 
+    /**
+     * Validates the complete batch before persisting it, sharing creation behavior between manual and AI recommendation routes.
+     * The calling route determines AI provenance instead of accepting that decision from the request body.
+     *
+     * @param courseId      the receiving course
+     * @param competencies  the requested competency definitions
+     * @param generatedByAi whether the calling route represents AI-generated recommendations
+     * @return the created competencies and their collection location
+     * @throws URISyntaxException if the collection location cannot be represented as a URI
+     */
     private ResponseEntity<List<CourseCompetencyResponseDTO>> createCompetencies(Long courseId, List<CourseCompetencyRequestDTO> competencies, boolean generatedByAi)
             throws URISyntaxException {
         log.debug("REST request to create Competencies : {}", competencies);

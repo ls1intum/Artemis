@@ -37,6 +37,14 @@ final class V1FeatureKeyCodec extends Kryo5Codec {
     /** The map-key encoding the provider writes with, see {@link BackwardCompatibleSerializationCodec#getMapKeyEncoder()}. */
     private final BackwardCompatibleSerializationCodec currentCodec = new BackwardCompatibleSerializationCodec();
 
+    /**
+     * Preserves Redisson's Kryo setup while replacing feature decoding with the frozen schema-v1 ordinal mapping.
+     *
+     * @param classLoader   the loader used to resolve encoded classes
+     * @param useReferences whether Kryo tracks object references
+     * @return a Kryo instance configured to read schema-v1 feature keys
+     * @throws ClassNotFoundException if Redisson cannot resolve a required serialization class
+     */
     @Override
     protected Kryo createKryo(ClassLoader classLoader, boolean useReferences) throws ClassNotFoundException {
         Kryo kryo = super.createKryo(classLoader, useReferences);
@@ -93,6 +101,15 @@ final class V1FeatureKeyCodec extends Kryo5Codec {
             throw new UnsupportedOperationException("Only reads version 1 keys");
         }
 
+        /**
+         * Resolves a stored ordinal through the v1 names instead of interpreting it against the current enum order.
+         *
+         * @param kryo  the active decoder
+         * @param input the stream positioned at the encoded enum value
+         * @param type  the feature type being decoded
+         * @return the retained feature, or {@code null} for a null value or removed constant
+         * @throws IllegalArgumentException if the ordinal is outside the frozen v1 feature order
+         */
         @Override
         public Feature read(Kryo kryo, Input input, Class<? extends Feature> type) {
             int position = input.readVarInt(true) - 1;

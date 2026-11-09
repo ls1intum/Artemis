@@ -4,15 +4,19 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.LongStream;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -23,6 +27,7 @@ import tools.jackson.databind.json.JsonMapper;
 import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
+import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
 import de.tum.cit.aet.artemis.atlas.dto.atlasAgent.ExerciseCompetencyMappingDTO;
 import de.tum.cit.aet.artemis.atlas.repository.CourseCompetencyRepository;
 import de.tum.cit.aet.artemis.atlas.test_repository.CompetencyExerciseLinkTestRepository;
@@ -163,6 +168,86 @@ class ExerciseMappingToolsServiceTest {
 
         ExerciseCompetencyMappingDTO preview = ExerciseMappingToolsService.getExerciseMappingPreview();
         assertThat(preview.competencies().get(0).alreadyMapped()).isTrue();
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = { false, true })
+    void preview_acceptsThreeSuggestionsAlongsideExistingMappingsAndMissingFlags(boolean viewOnly) {
+        var competencies = LongStream.rangeClosed(1, 5).<CourseCompetency>mapToObj(id -> {
+            var competency = new Competency();
+            competency.setId(id);
+            competency.setTitle("Competency " + id);
+            competency.setCourse(course);
+            return competency;
+        }).toList();
+        when(courseRepository.findById(10L)).thenReturn(Optional.of(course));
+        when(exerciseRepository.findWithCompetenciesById(42L)).thenReturn(Optional.of(exercise));
+        when(courseCompetencyRepository.findAllById(List.of(1L, 2L, 3L, 4L, 5L))).thenReturn(competencies);
+        when(competencyExerciseLinkRepository.findByExerciseIdWithCompetency(42L))
+                .thenReturn(List.of(new CompetencyExerciseLink(competencies.get(3), exercise, 0.5), new CompetencyExerciseLink(competencies.get(4), exercise, 0.5)));
+        var mappings = List.of(previewMapping(1L, true), previewMapping(2L, true), previewMapping(3L, true), previewMapping(4L, false), previewMapping(5L, null));
+
+        assertThat(service.previewExerciseCompetencyMapping(10L, 42L, mappings, viewOnly)).contains("Preview generated successfully");
+
+        var preview = ExerciseMappingToolsService.getExerciseMappingPreview();
+        assertThat(preview.viewOnly()).isEqualTo(viewOnly);
+        assertThat(preview.competencies()).hasSize(5).allSatisfy(option -> assertThat(option.weight()).isEqualTo(0.5));
+        assertThat(preview.competencies()).filteredOn(option -> Boolean.TRUE.equals(option.suggested()))
+                .extracting(ExerciseCompetencyMappingDTO.CompetencyMappingOptionDTO::competencyId).containsExactly(1L, 2L, 3L);
+        assertThat(preview.competencies()).filteredOn(option -> Boolean.TRUE.equals(option.alreadyMapped())).allSatisfy(option -> assertThat(option.suggested()).isFalse())
+                .extracting(ExerciseCompetencyMappingDTO.CompetencyMappingOptionDTO::competencyId).containsExactly(4L, 5L);
+        verify(competencyExerciseLinkRepository, never()).saveAll(any());
+        verify(competencyExerciseLinkRepository, never()).deleteAll(any(Iterable.class));
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = { false, true })
+    void preview_rejectsFourSuggestionsWithoutReplacingPreviousPreviewOrCache(boolean viewOnly) {
+        var existingLink = new CompetencyExerciseLink(competency1, exercise, 0.5);
+        when(courseRepository.findById(10L)).thenReturn(Optional.of(course));
+        when(exerciseRepository.findWithCompetenciesById(42L)).thenReturn(Optional.of(exercise));
+        when(competencyExerciseLinkRepository.findByExerciseIdWithCompetency(42L)).thenReturn(List.of(existingLink));
+        when(courseCompetencyRepository.findAllById(List.of(1L))).thenReturn(List.of(competency1));
+        ExerciseMappingToolsService.setCurrentSessionId("mapping-session");
+        assertThat(service.previewExerciseCompetencyMapping(10L, 42L, List.of(previewMapping(1L, false)), false)).contains("Preview generated successfully");
+        var previousPreview = ExerciseMappingToolsService.getExerciseMappingPreview();
+        var mappings = List.of(previewMapping(1L, true), previewMapping(2L, true), previewMapping(3L, true), previewMapping(4L, true));
+
+        JsonNode result = objectMapper.readTree(service.previewExerciseCompetencyMapping(10L, 42L, mappings, viewOnly));
+
+        assertThat(result.get("success").asBoolean()).isFalse();
+        assertThat(result.get("error").asString()).contains("at most 3", "suggested=false", "retry the preview");
+        assertThat(ExerciseMappingToolsService.getExerciseMappingPreview()).isSameAs(previousPreview);
+        assertThat(previousPreview.competencies()).singleElement().satisfies(option -> {
+            assertThat(option.competencyId()).isEqualTo(1L);
+            assertThat(option.alreadyMapped()).isTrue();
+            assertThat(option.suggested()).isFalse();
+        });
+        verify(sessionCacheService).cacheExerciseMappingPreview("mapping-session", previousPreview);
+        verifyNoMoreInteractions(sessionCacheService);
+        verify(competencyExerciseLinkRepository, never()).saveAll(any());
+        verify(competencyExerciseLinkRepository, never()).deleteAll(any(Iterable.class));
+        assertThat(existingLink.getWeight()).isEqualTo(0.5);
+        assertThat(existingLink.getCompetency()).isSameAs(competency1);
+    }
+
+    @Test
+    void preview_countsDistinctSuggestedCompetenciesWithoutChangingDuplicateHandling() {
+        when(courseRepository.findById(10L)).thenReturn(Optional.of(course));
+        when(exerciseRepository.findWithCompetenciesById(42L)).thenReturn(Optional.of(exercise));
+        when(competencyExerciseLinkRepository.findByExerciseIdWithCompetency(42L)).thenReturn(List.of());
+        when(courseCompetencyRepository.findAllById(List.of(1L, 2L, 3L, 1L))).thenReturn(List.of(competency1, competency2));
+        var mappings = List.of(previewMapping(1L, true), previewMapping(2L, true), previewMapping(3L, true), previewMapping(1L, true));
+
+        assertThat(service.previewExerciseCompetencyMapping(10L, 42L, mappings, false)).contains("Preview generated successfully");
+
+        var preview = ExerciseMappingToolsService.getExerciseMappingPreview();
+        assertThat(preview.competencies()).hasSize(4).allSatisfy(option -> assertThat(option.suggested()).isTrue())
+                .extracting(ExerciseCompetencyMappingDTO.CompetencyMappingOptionDTO::competencyId).containsExactly(1L, 2L, 3L, 1L);
+    }
+
+    private static ExerciseMappingToolsService.ExerciseCompetencyMappingOperation previewMapping(long competencyId, Boolean suggested) {
+        return new ExerciseMappingToolsService.ExerciseCompetencyMappingOperation(competencyId, 0.5, false, suggested);
     }
 
     @Test

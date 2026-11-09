@@ -76,6 +76,11 @@ Iris job state moves together: `pyris-chat-job-client-id-map` retains client cor
 `pyris-restart-watch` retains restart recovery. `struggle-inflight-map` and `struggle-cooldown-map` retain the
 in-flight and cooldown guards for proactive tutoring. Expiring entries keep their remaining lifetime.
 
+Atlas preserves `atlas-content-change-accumulator`, including pending exercise and lecture-unit changes, the last
+event time used for debouncing, and each course's daily orchestration count and date. Empty buckets with consumed
+quota are retained too, so an upgrade neither loses queued changes nor resets the daily cap. These entries have no
+expiry. The same data is preserved when missing schema metadata causes the migration path to be replayed.
+
 Hyperion authoring state also moves together. The migration preserves:
 
 | Structures | Why they are preserved |

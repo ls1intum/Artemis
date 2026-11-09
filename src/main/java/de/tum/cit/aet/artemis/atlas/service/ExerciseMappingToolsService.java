@@ -239,6 +239,13 @@ public class ExerciseMappingToolsService {
 
             Exercise exercise = loadAndValidateExercise(exerciseId, courseId);
 
+            long suggestedCount = mappings.stream().filter(mapping -> Boolean.TRUE.equals(mapping.getSuggested())).map(ExerciseCompetencyMappingOperation::getCompetencyId)
+                    .distinct().count();
+            if (suggestedCount > 3) {
+                return error("Suggest at most 3 competencies. Keep suggested=true only for the best learning-content matches "
+                        + "and set suggested=false for the others, then retry the preview.");
+            }
+
             List<CompetencyExerciseLink> existingLinks = competencyExerciseLinkRepository.findByExerciseIdWithCompetency(exerciseId);
             Set<Long> existingCompetencyIds = existingLinks.stream().map(link -> link.getCompetency().getId()).collect(Collectors.toSet());
 

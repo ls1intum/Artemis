@@ -12,10 +12,12 @@ import static org.assertj.core.api.Assertions.entry;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HexFormat;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import org.junit.jupiter.api.AfterAll;
@@ -39,6 +41,7 @@ import org.testcontainers.DockerClientFactory;
 
 import com.redis.testcontainers.RedisContainer;
 
+import de.tum.cit.aet.artemis.atlas.domain.competency.ContentChangeAccumulator;
 import de.tum.cit.aet.artemis.core.service.distributed.DistributedDataSchema.CarriedOverStructure;
 import de.tum.cit.aet.artemis.core.service.distributed.DistributedDataSchema.StructureKind;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
@@ -460,6 +463,49 @@ class RedissonDistributedDataMigratorTest {
         // Not carried over, and the whole v1 namespace is deleted once the step completes.
         assertThat(redissonClient.getMap(keyFor(2, "buildAgentInformation")).isEmpty()).isTrue();
         assertThat(redissonClient.getKeys().getKeysByPattern("artemis:v1:*")).isEmpty();
+    }
+
+    @Test
+    void testV1ToV2KeepsPendingAtlasContentChangesAndConsumedDailyQuota() {
+        claimVersion(1);
+        Instant lastEvent = Instant.parse("2026-11-09T10:15:30Z");
+        LocalDate quotaDate = LocalDate.of(2026, 11, 9);
+        var pending = new ContentChangeAccumulator(Set.of(11L, 12L), Set.of(21L, 22L), lastEvent, 4, quotaDate);
+        var quotaOnly = new ContentChangeAccumulator(Set.of(), Set.of(), lastEvent.minusSeconds(300), 10, quotaDate);
+        atlasAccumulatorMap(1).putAll(Map.of(41L, pending, 42L, quotaOnly));
+
+        migrationService().migrateToCurrentVersion();
+
+        assertThat(atlasAccumulatorMap(2).readAllMap()).containsOnly(entry(41L, pending), entry(42L, quotaOnly));
+        assertThat(atlasAccumulatorMap(2).remainTimeToLive()).isEqualTo(-1);
+        assertThat(atlasAccumulatorMap(1).isExists()).isFalse();
+        assertThat(storedVersion()).isEqualTo("2");
+    }
+
+    @Test
+    void testMissingSchemaMetadataRecoversAtlasAccumulatorWithoutLosingAlreadyMovedCourses() {
+        Instant lastEvent = Instant.parse("2026-11-09T10:15:30Z");
+        LocalDate quotaDate = LocalDate.of(2026, 11, 9);
+        var pending = new ContentChangeAccumulator(Set.of(11L), Set.of(21L), lastEvent, 4, quotaDate);
+        var copiedBeforeCrash = new ContentChangeAccumulator(Set.of(12L), Set.of(22L), lastEvent.minusSeconds(60), 5, quotaDate);
+        var alreadyMoved = new ContentChangeAccumulator(Set.of(13L), Set.of(23L), lastEvent.minusSeconds(120), 6, quotaDate);
+        var quotaOnly = new ContentChangeAccumulator(Set.of(), Set.of(), lastEvent.minusSeconds(300), 10, quotaDate);
+        atlasAccumulatorMap(1).putAll(Map.of(41L, pending, 42L, copiedBeforeCrash, 44L, quotaOnly));
+        atlasAccumulatorMap(2).putAll(Map.of(42L, copiedBeforeCrash, 43L, alreadyMoved));
+        // No unversioned data or metadata remains: restart must still run the 1-to-2 carry-over step.
+        assertThat(storedVersion()).isNull();
+
+        migrationService().migrateToCurrentVersion();
+        migrationService().migrateToCurrentVersion();
+
+        assertThat(atlasAccumulatorMap(2).readAllMap()).containsOnly(entry(41L, pending), entry(42L, copiedBeforeCrash), entry(43L, alreadyMoved), entry(44L, quotaOnly));
+        assertThat(atlasAccumulatorMap(2).remainTimeToLive()).isEqualTo(-1);
+        assertThat(atlasAccumulatorMap(1).isExists()).isFalse();
+        assertThat(storedVersion()).isEqualTo("2");
+    }
+
+    private static RMap<Long, ContentChangeAccumulator> atlasAccumulatorMap(int version) {
+        return redissonClient.getMap(keyFor(version, "atlas-content-change-accumulator"));
     }
 
     @Test

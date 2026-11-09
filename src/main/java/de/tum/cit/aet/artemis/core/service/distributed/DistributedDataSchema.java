@@ -117,6 +117,8 @@ public final class DistributedDataSchema {
             new CarriedOverStructure("struggle-inflight-map", StructureKind.EXPIRING_MAP), new CarriedOverStructure("struggle-cooldown-map", StructureKind.EXPIRING_MAP),
             // The previous boot id cannot be reconstructed if Pyris restarted while Artemis was stopped.
             new CarriedOverStructure("pyris-restart-watch", StructureKind.MAP),
+            // Pending content-change events and consumed daily orchestration quota exist only in this per-course map.
+            new CarriedOverStructure("atlas-content-change-accumulator", StructureKind.MAP),
             // Keep generation and uncertain-save reservations until explicit recovery, together with cancellation and unaccounted-spend guards.
             new CarriedOverStructure("hyperion-exercise-generation-jobs", StructureKind.MAP), new CarriedOverStructure("hyperion-live-save-coordination", StructureKind.MAP),
             new CarriedOverStructure("hyperion-exercise-generation-cancellations", StructureKind.EXPIRING_MAP),

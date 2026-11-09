@@ -121,6 +121,11 @@ class RedissonDistributedDataMigrator {
         }
     }
 
+    /**
+     * Resolves the recorded source version and validates the entire adjacent migration path before moving data.
+     * Missing metadata replays the path from version zero so partially drained intermediate namespaces are recovered.
+     * Each step publishes its version only after its data movement and cleanup have completed.
+     */
     private void migrateUnderLock() {
         RBucket<String> versionBucket = redissonClient.getBucket(VERSION_KEY, StringCodec.INSTANCE);
         Integer storedVersion = readStoredVersion(versionBucket);
@@ -154,6 +159,13 @@ class RedissonDistributedDataMigrator {
         }
     }
 
+    /**
+     * Builds a complete migration plan without mutating the store, rejecting gaps before an earlier step can run.
+     *
+     * @param storedVersion the schema version to migrate from
+     * @return the ordered adjacent steps leading to the target version
+     * @throws IllegalStateException if a required step is missing or skips a version
+     */
     private List<MigrationStep> migrationPlanFrom(int storedVersion) {
         List<MigrationStep> declaredSteps = migrationSteps();
         List<MigrationStep> plan = new ArrayList<>();
@@ -224,11 +236,26 @@ class RedissonDistributedDataMigrator {
                 new MigrationStep(1, 2, this::migrateV1ToV2));
     }
 
+    /**
+     * Moves the reviewed wire-compatible structures and then discards the source namespace's unlisted data.
+     * The transition must list every indispensable structure. Steps requiring a custom transformation must finish it before discarding their source instead.
+     *
+     * @param fromVersion the source namespace
+     * @param toVersion   the destination namespace
+     * @param structures  the state explicitly retained by this transition
+     */
     private void migrateWireCompatibleStructures(int fromVersion, int toVersion, List<CarriedOverStructure> structures) {
         carryOver(fromVersion, toVersion, structures);
         discardRemainderOf(fromVersion);
     }
 
+    /**
+     * Drains the declared structures without clearing other source keys, allowing a step to transform incompatible data afterward.
+     *
+     * @param fromVersion the source namespace
+     * @param toVersion   the destination namespace
+     * @param structures  structures whose key and value bytes are compatible with the destination
+     */
     private void carryOver(int fromVersion, int toVersion, List<CarriedOverStructure> structures) {
         for (CarriedOverStructure structure : structures) {
             long moved = drain(fromVersion, toVersion, structure);
@@ -327,6 +354,14 @@ class RedissonDistributedDataMigrator {
         return moved;
     }
 
+    /**
+     * Transfers map entries byte-for-byte, writing before removing so interrupted transfers can be replayed by overwriting duplicates.
+     * Existing target entries with other keys remain intact.
+     *
+     * @param source the map to drain
+     * @param target the destination map
+     * @return the number of transferred entries
+     */
     private long drainMap(RMap<byte[], byte[]> source, RMap<byte[], byte[]> target) {
         long moved = 0;
         // Iterating the key set and moving per key rather than reading the whole map keeps memory flat for a large
