@@ -7,7 +7,7 @@ import { DateDetailComponent } from 'app/shared-ui/detail-overview-list/componen
 import { LinkDetailComponent } from 'app/shared-ui/detail-overview-list/components/link-detail/link-detail.component';
 import { BooleanDetailComponent } from 'app/shared-ui/detail-overview-list/components/boolean-detail/boolean-detail.component';
 import { ExerciseCategoriesDetailComponent } from 'app/shared-ui/detail-overview-list/components/exercise-categories-detail/exercise-categories-detail.component';
-// The four programming-specific detail components are NOT imported statically.
+// The programming-specific detail components are NOT imported statically.
 // They are loaded via dynamic import() only when a detail row of that type is
 // actually present. This keeps non-programming pages (course, quiz, text, …)
 // free of the GitDiffReport / TriggerBuildButton / ResultComponent chain.
@@ -65,29 +65,9 @@ export class ExerciseDetailDirective implements OnInit, OnDestroy {
                 this.render(ExerciseCategoriesDetailComponent, shownDetail);
                 break;
             // Heavy programming components — dynamically imported only when this specific detail type is present.
-            case DetailType.ProgrammingRepositoryButtons: {
-                const component =
-                    await import('app/shared-ui/detail-overview-list/components/programming-repository-buttons-detail/programming-repository-buttons-detail.component').then(
-                        (m) => m.ProgrammingRepositoryButtonsDetailComponent,
-                    );
-                if (!destroyed) {
-                    this.render(component, shownDetail);
-                }
-                break;
-            }
-            case DetailType.ProgrammingAuxiliaryRepositoryButtons: {
-                const component =
-                    await import('app/shared-ui/detail-overview-list/components/programming-auxiliary-repository-buttons-detail/programming-auxiliary-repository-buttons-detail.component').then(
-                        (m) => m.ProgrammingAuxiliaryRepositoryButtonsDetailComponent,
-                    );
-                if (!destroyed) {
-                    this.render(component, shownDetail);
-                }
-                break;
-            }
-            case DetailType.ProgrammingTestStatus: {
-                const component = await import('app/shared-ui/detail-overview-list/components/programming-test-status-detail/programming-test-status-detail.component').then(
-                    (m) => m.ProgrammingTestStatusDetailComponent,
+            case DetailType.ProgrammingRepositoryBuildOverview: {
+                const component = await import('app/programming/manage/detail/repository-build-overview/programming-repository-build-overview.component').then(
+                    (m) => m.ProgrammingRepositoryBuildOverviewComponent,
                 );
                 if (!destroyed) {
                     this.render(component, shownDetail);

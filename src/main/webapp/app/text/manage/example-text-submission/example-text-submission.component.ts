@@ -1,3 +1,4 @@
+import { ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpResponse } from '@angular/common/http';
@@ -88,6 +89,7 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
     }
     SubmissionButtonStates = SubmissionButtonStates;
     AssessButtonStates = AssessButtonStates;
+    readonly ButtonType = ButtonType;
     UIStates = UIStates;
     readonly selectedMode = signal<ExampleSubmissionMode>(undefined!);
     ExampleSubmissionMode = ExampleSubmissionMode;

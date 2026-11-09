@@ -1,0 +1,68 @@
+{{- if and .Values.buildAgents.enabled (include "artemis.buildAgentAutoscalingEnabled" .) }}
+{{- $autoscaling := .Values.buildAgents.autoscaling -}}
+{{- $serverAddress := required "buildAgents.autoscaling.prometheus.serverAddress is required when buildAgents.autoscaling.enabled is true" ($autoscaling.prometheus.serverAddress | trim) -}}
+{{- if lt (int $autoscaling.maxReplicas) (int $autoscaling.minReplicas) -}}
+{{- fail "buildAgents.autoscaling.maxReplicas must not be lower than minReplicas" -}}
+{{- end -}}
+{{- /*
+The gauges are cluster-wide values that every core node reports, so max() takes one of them instead of adding them up.
+Queued plus running builds is the number of build slots that are needed at the moment. Dividing by the concurrent builds
+of one controller, which is the threshold with an AverageValue metric, gives the number of controllers.
+*/ -}}
+{{- /*
+The selector scopes both gauges to this installation. A Prometheus that scrapes several installations would otherwise
+scale these controllers with the backlog of another one.
+*/ -}}
+{{- $selector := ($autoscaling.prometheus.selector | default "" | trim) -}}
+{{- if and (not $autoscaling.prometheus.query) (not $selector) -}}
+{{- fail "buildAgents.autoscaling.prometheus.selector is required when buildAgents.autoscaling.prometheus.query is not set. It scopes the queue metrics to this installation, for example namespace=\"artemis\"" -}}
+{{- end -}}
+{{- $defaultQuery := printf "max(artemis_global_localci_queued{%s}) + max(artemis_global_localci_running{%s})" $selector $selector -}}
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: {{ include "artemis.buildAgentName" . }}
+  labels:
+    {{- include "artemis.labels" . | nindent 4 }}
+    app.kubernetes.io/component: build-agent
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: StatefulSet
+    name: {{ include "artemis.buildAgentName" . }}
+  minReplicaCount: {{ $autoscaling.minReplicas }}
+  maxReplicaCount: {{ $autoscaling.maxReplicas }}
+  {{- /*
+KEDA only uses the polling interval and the cooldown period when it scales between zero and one replica, and warns about
+both on every apply otherwise. The Kubernetes HorizontalPodAutoscaler that KEDA creates decides everything above that.
+*/}}
+  {{- if eq (int $autoscaling.minReplicas) 0 }}
+  pollingInterval: {{ $autoscaling.pollingIntervalSeconds }}
+  cooldownPeriod: {{ $autoscaling.cooldownPeriodSeconds }}
+  {{- end }}
+  advanced:
+    horizontalPodAutoscalerConfig:
+      behavior:
+        scaleUp:
+          stabilizationWindowSeconds: 0
+          policies:
+            - type: Pods
+              value: {{ $autoscaling.scaleUp.pods }}
+              periodSeconds: {{ $autoscaling.scaleUp.periodSeconds }}
+        scaleDown:
+          stabilizationWindowSeconds: {{ $autoscaling.scaleDown.stabilizationWindowSeconds }}
+          policies:
+            - type: Pods
+              value: {{ $autoscaling.scaleDown.pods }}
+              periodSeconds: {{ $autoscaling.scaleDown.periodSeconds }}
+  triggers:
+    - type: prometheus
+      metricType: AverageValue
+      metadata:
+        serverAddress: {{ $serverAddress | quote }}
+        query: {{ $autoscaling.prometheus.query | default $defaultQuery | quote }}
+        threshold: {{ .Values.buildAgents.concurrentBuildsPerAgent | quote }}
+        # A missing series, for example while Prometheus does not scrape the core pods, is an error and not zero.
+        # With zero KEDA would scale the controllers down to the minimum while builds are waiting.
+        ignoreNullValues: "false"
+{{- end }}

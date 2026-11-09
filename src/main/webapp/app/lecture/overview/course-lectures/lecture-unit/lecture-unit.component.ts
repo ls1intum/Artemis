@@ -1,4 +1,4 @@
-import { TumAetUiButtonDirective, TumAetUiTagComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective, TumAetUiButtonSeverity, TumAetUiTagComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 import { Component, ElementRef, Injector, OnDestroy, afterNextRender, computed, effect, inject, input, output, signal, untracked } from '@angular/core';
 import { IconDefinition, faCheckCircle, faCircle, faDownload, faExpand, faExternalLinkAlt } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
@@ -49,6 +49,7 @@ export class LectureUnitComponent implements OnDestroy {
 
     showViewIsolatedButton = input<boolean>(false);
     viewIsolatedButtonLabel = input<string>('artemisApp.textUnit.isolated');
+    viewIsolatedButtonSeverity = input<TumAetUiButtonSeverity>('success');
     viewIsolatedButtonIcon = input<IconDefinition>(faExternalLinkAlt);
     isPresentationMode = input.required<boolean>();
     readonly deepLink = input<LectureDeepLink | undefined>(undefined);

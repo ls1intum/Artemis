@@ -1,0 +1,32 @@
+- name: setup
+  script: |-
+    cp -R Tests ${studentParentWorkingDirectoryName}
+    cp Package.swift ${studentParentWorkingDirectoryName}
+- name: compile
+  script: |-
+    cd ${studentParentWorkingDirectoryName}
+    swift build
+- name: structural_tests
+  script: |-
+    cd ${studentParentWorkingDirectoryName}
+    status=0
+    swift test --filter 'AttributeTest|ClassTest|MethodTest' || status=$?
+    mv tests.xml structural-tests.xml
+    exit $status
+  resultPaths:
+    - '${studentParentWorkingDirectoryName}/structural-tests.xml'
+- name: behavior_tests
+  script: |-
+    cd ${studentParentWorkingDirectoryName}
+    status=0
+    swift test --filter 'SortingExampleBehaviorTest' || status=$?
+    mv tests.xml behavior-tests.xml
+    exit $status
+  resultPaths:
+    - '${studentParentWorkingDirectoryName}/behavior-tests.xml'
+- name: finalize
+  script: |-
+    # The used docker container is calling 'swift build' which creates files as root (e.g. tests.xml),
+    # so we need to allow everyone to access these files
+    chmod -R 777 .
+  forceRun: true

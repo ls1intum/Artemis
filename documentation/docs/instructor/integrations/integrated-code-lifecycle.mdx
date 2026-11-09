@@ -2,6 +2,7 @@
 id: integrated-code-lifecycle
 title: Integrated Code Lifecycle
 sidebar_label: Integrated Code Lifecycle
+last_reviewed: 2026-11-03
 ---
 
 import Image, { ImageSize } from '../../../src/components/Image/Image';
@@ -118,7 +119,7 @@ The table below displays the following information:
 
 The "Finished Build Jobs" section displays all build jobs that have concluded, whether successfully completed, with or without a result, failed, or cancelled.
 Information about finished build jobs is progressively loaded as the user navigates through the pages.
-Instructors can also access build logs with detailed information about the build execution by clicking on **View build logs**. This is particularly helpful for failed builds.
+Instructors can also access build logs with detailed information about the build execution in the **Build Logs** column of the table. This is particularly helpful for failed builds.
 The table provides the following information:
 
 <Image src={finishedBuildJobsImg} alt={'Finished Build Jobs'} size={ImageSize.large} />
@@ -229,7 +230,7 @@ This applies to all automatically provisioned tokens: your participation tokens 
 
 ### Instructor user access tokens
 
-Instructors can create a user access token in **Profile > Settings > VCS token**.
+Instructors can create a user access token in **User Settings → VCS Token**.
 This token is broader than a repository-scoped token: it can authenticate Git operations for all repositories that the user account is allowed to access.
 Use it when you need one token for several repositories or for automation. For everyday staff access to individual student assignment repositories, prefer the automatically provisioned repository-scoped token instead.
 
