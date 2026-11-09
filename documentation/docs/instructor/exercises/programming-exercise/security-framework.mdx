@@ -72,10 +72,12 @@ template, the solution and every student drop until the problem is fixed.
 - **Deactivate** switches the sandbox off instead, as described in [Deactivate the Sandbox](#deactivate-the-sandbox).
 
 An invalid path, a file that is too large and a file that is not a valid policy are not repaired automatically,
-because Artemis cannot tell what the file should contain. Fix them in the tests repository by hand.
+because Artemis cannot tell what the file should contain, so **Repair** is disabled for them. Fix them in the tests
+repository by hand.
 
-For an exercise that pins Ares 2.2.1, Artemis checks the policy file against the rules of that version, and it also
-requires the package in `theSupervisedCodeUsesTheFollowingPackage`. For any other version, Artemis only checks that
+For an exercise that pins Ares 2.2.1, Artemis checks the policy file against the rules of that version, requires the
+package in `theSupervisedCodeUsesTheFollowingPackage`, and rejects a path, package, class or host name longer than
+1024 characters. For any other version, Artemis only checks that
 the file is a YAML mapping, so **Active** does not guarantee that Ares accepts the policy. Check the template and
 solution results after you switch to another version.
 

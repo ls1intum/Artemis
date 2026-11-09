@@ -140,7 +140,7 @@
                                         type="button"
                                         tumAetUiButton
                                         size="small"
-                                        [disabled]="isBusy() || isSaving()"
+                                        [disabled]="isBusy() || isSaving() || hasUnrepairableProblem()"
                                         (click)="onRepair()"
                                         data-testid="security-repair"
                                         jhiTranslate="artemisApp.programmingExercise.security.repair"
@@ -217,6 +217,9 @@
                             @case (SecurityActivationStatus.MISCONFIGURED) {
                                 <fa-icon [icon]="faTriangleExclamation" />
                                 <span jhiTranslate="artemisApp.programmingExercise.security.sync.misconfigured"></span>
+                                @if (config().errorDetail) {
+                                    <span class="sf-error-detail" data-testid="security-error-detail">{{ config().errorDetail }}</span>
+                                }
                             }
                             @case (SecurityActivationStatus.ERROR) {
                                 <fa-icon [icon]="faTriangleExclamation" />

@@ -16,6 +16,7 @@ import { faCircleNotch, faQuestionCircle, faRotateRight, faTriangleExclamation }
 import { Observable } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 
+import { translationNotFoundMessage } from 'app/core/config/translation.config';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
@@ -236,7 +237,7 @@ export class ProgrammingExerciseSecurityComponent {
     readonly statusVariant = computed(() => (this.isStateUnknown() ? 'unknown' : this.status().toLowerCase()));
     /** Why the config is MISCONFIGURED or UNSUPPORTED, one translatable message per broken policy file or reason. */
     readonly problemMessages = computed(() => securityFrameworkProblemMessages(this.config()));
-    /** Whether a broken policy file exists that activating cannot repair, so Repair is expected to fail. */
+    /** Whether a broken policy file exists that activating cannot repair, so Repair is disabled. */
     readonly hasUnrepairableProblem = computed(() =>
         (this.config().policyFiles ?? []).some((file) => file.problem !== undefined && UNREPAIRABLE_POLICY_FILE_PROBLEMS.has(file.problem)),
     );
@@ -578,12 +579,14 @@ export class ProgrammingExerciseSecurityComponent {
      * The single place the component talks to the server: show the transient state immediately, then
      * settle to the returned config on success, or drop to ERROR on failure - keeping the failed
      * operation so the retry button re-runs exactly it. Defining the error contract here once means
-     * every action (activate, repair, deactivate, version change) handles failure identically.
+     * every action (activate, repair, deactivate, version change) handles failure identically. A failed action on a
+     * MISCONFIGURED exercise leaves it misconfigured, so Repair and Deactivate stay available and Repair doubles as the retry.
      */
     private runOperation(transientPatch: Partial<SecurityFrameworkConfig>, run: () => Observable<SecurityFrameworkConfig>): void {
         if (!this.isEditMode()) {
             return;
         }
+        const statusOnFailure = this.isMisconfigured() ? SecurityActivationStatus.MISCONFIGURED : SecurityActivationStatus.ERROR;
         this.pendingOperation = { transientPatch, run };
         this.patchConfig(cloneWith(transientPatch, { errorDetail: undefined }));
         run().subscribe({
@@ -594,13 +597,28 @@ export class ProgrammingExerciseSecurityComponent {
             error: (error: unknown) => {
                 const errorDetail =
                     error instanceof HttpErrorResponse
-                        ? (error.headers.get('X-artemisApp-message') ?? error.error?.title ?? error.error?.detail ?? error.error?.message ?? error.message)
+                        ? (this.translatedServerError(error) ??
+                          error.headers.get('X-artemisApp-message') ??
+                          error.error?.title ??
+                          error.error?.detail ??
+                          error.error?.message ??
+                          error.message)
                         : error instanceof Error
                           ? error.message
                           : String(error);
-                this.patchConfig({ status: SecurityActivationStatus.ERROR, errorDetail });
+                this.patchConfig({ status: statusOnFailure, errorDetail });
             },
         });
+    }
+
+    /** The server names the translation of its error in the message field; undefined if the translations do not contain it, and the English text is shown instead. */
+    private translatedServerError(error: HttpErrorResponse): string | undefined {
+        const translationKey = error.error?.message;
+        if (typeof translationKey !== 'string' || !translationKey.startsWith('error.')) {
+            return undefined;
+        }
+        const translated = this.translateService.instant(translationKey);
+        return translated.startsWith(translationNotFoundMessage) ? undefined : translated;
     }
 
     private patchConfig(patch: Partial<SecurityFrameworkConfig>): void {

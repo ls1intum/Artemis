@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Subject, of, throwError } from 'rxjs';
-import { provideHttpClient } from '@angular/common/http';
+import { HttpErrorResponse, HttpHeaders, provideHttpClient } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
 import { TumAetUiConfirmationRequest, TumAetUiConfirmationService } from '@tumaet/ui-angular';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -725,6 +725,75 @@ describe('ProgrammingExerciseSecurityComponent', () => {
             initEdit(misconfiguredConfig(SecurityPolicyFileProblem.MISSING));
             expect(comp.hasUnrepairableProblem()).toBe(false);
         });
+
+        it('stays MISCONFIGURED after a failed repair, so Deactivate remains available', () => {
+            initEdit(misconfiguredConfig(SecurityPolicyFileProblem.MISSING));
+            service.activate.mockReturnValue(throwError(() => new Error('REPAIR_FAILED')));
+
+            comp.onRepair();
+
+            expect(comp.status()).toBe(SecurityActivationStatus.MISCONFIGURED);
+            expect(comp.config().errorDetail).toBe('REPAIR_FAILED');
+            expect(comp.isBusy()).toBe(false);
+        });
+
+        it('stays MISCONFIGURED after a failed deactivation', () => {
+            initEdit(misconfiguredConfig(SecurityPolicyFileProblem.UNPARSEABLE));
+            service.deactivate.mockReturnValue(throwError(() => new Error('DEACTIVATE_FAILED')));
+            const request = captureConfirmation();
+
+            comp.onDeactivate();
+            request().accept();
+
+            expect(comp.status()).toBe(SecurityActivationStatus.MISCONFIGURED);
+            expect(comp.config().errorDetail).toBe('DEACTIVATE_FAILED');
+        });
+
+        it('clears the error of a failed repair when the next attempt succeeds', () => {
+            initEdit(misconfiguredConfig(SecurityPolicyFileProblem.MISSING));
+            service.activate.mockReturnValueOnce(throwError(() => new Error('REPAIR_FAILED')));
+            comp.onRepair();
+            service.activate.mockReturnValueOnce(of(activeConfig('3.3.0')));
+
+            comp.onRepair();
+
+            expect(comp.status()).toBe(SecurityActivationStatus.ACTIVE);
+            expect(comp.config().errorDetail).toBeUndefined();
+        });
+
+        describe('error detail of a refused request', () => {
+            const refusal = (message: unknown) =>
+                new HttpErrorResponse({ status: 400, error: { message }, headers: new HttpHeaders({ 'X-artemisApp-message': 'English text of the server' }) });
+
+            it('shows the translation the server names', () => {
+                initEdit(misconfiguredConfig(SecurityPolicyFileProblem.MISSING));
+                vi.spyOn(TestBed.inject(TranslateService), 'instant').mockReturnValue('Übersetzter Text');
+                service.activate.mockReturnValue(throwError(() => refusal('error.securityFrameworkPolicyNotRepairable')));
+
+                comp.onRepair();
+
+                expect(comp.config().errorDetail).toBe('Übersetzter Text');
+            });
+
+            it('falls back to the English text if the translation is missing', () => {
+                initEdit(misconfiguredConfig(SecurityPolicyFileProblem.MISSING));
+                vi.spyOn(TestBed.inject(TranslateService), 'instant').mockReturnValue('translation-not-found[error.unknown]');
+                service.activate.mockReturnValue(throwError(() => refusal('error.unknown')));
+
+                comp.onRepair();
+
+                expect(comp.config().errorDetail).toBe('English text of the server');
+            });
+
+            it('falls back to the English text if the server names no translation', () => {
+                initEdit(misconfiguredConfig(SecurityPolicyFileProblem.MISSING));
+                service.activate.mockReturnValue(throwError(() => refusal(undefined)));
+
+                comp.onRepair();
+
+                expect(comp.config().errorDetail).toBe('English text of the server');
+            });
+        });
     });
 
     it('lists the test classes missing in an active policy and the policy files that could not be checked', () => {
@@ -777,6 +846,30 @@ describe('ProgrammingExerciseSecurityComponent rendering', () => {
         expect(query(element, 'security-deactivate')).not.toBeNull();
         expect(query(element, 'security-activate-toggle')).toBeNull();
         expect(query(element, 'security-framework-version-select')).not.toBeNull();
+    });
+
+    it('disables Repair for a policy file it cannot repair and keeps Deactivate enabled', () => {
+        const element = renderEdit(misconfiguredConfig(SecurityPolicyFileProblem.UNPARSEABLE));
+        expect((query(element, 'security-repair') as HTMLButtonElement).disabled).toBe(true);
+        expect((query(element, 'security-deactivate') as HTMLButtonElement).disabled).toBe(false);
+    });
+
+    it('enables Repair for a missing policy file', () => {
+        const element = renderEdit(misconfiguredConfig(SecurityPolicyFileProblem.MISSING));
+        expect((query(element, 'security-repair') as HTMLButtonElement).disabled).toBe(false);
+    });
+
+    it('shows why a repair failed and keeps Repair and Deactivate', () => {
+        const element = renderEdit(misconfiguredConfig(SecurityPolicyFileProblem.MISSING));
+        service.activate.mockReturnValue(throwError(() => new Error('REPAIR_FAILED')));
+
+        (query(element, 'security-repair') as HTMLButtonElement).click();
+        fixture.detectChanges();
+
+        expect(query(element, 'security-error-detail')?.textContent).toContain('REPAIR_FAILED');
+        expect(query(element, 'security-repair')).not.toBeNull();
+        expect(query(element, 'security-deactivate')).not.toBeNull();
+        expect(query(element, 'security-retry')).toBeNull();
     });
 
     it('renders UNSUPPORTED with its reasons and neither a switch nor a version select', () => {

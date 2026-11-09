@@ -33,8 +33,9 @@ import org.yaml.snakeyaml.resolver.Resolver;
  * repository that pins it. Ares reads the file with the Jackson 2 YAML parser, which is built on the events of SnakeYAML. The server uses Jackson 3, whose
  * parser reads values such as {@code True}, {@code 1_000} or {@code 0x10} differently, so this class reads the same events and resolves them like Jackson 2.
  * <p>
- * There are two deliberate differences. A missing package is rejected, although the schema of Ares permits it, because Ares then fails when it builds the
- * tests. Placeholders such as <code>${PROJECT_ROOT}</code> are checked as written and not expanded, because their values depend on the build agent.
+ * There are three deliberate differences. A missing package is rejected, although the schema of Ares permits it, because Ares then fails when it builds the
+ * tests. Placeholders such as <code>${PROJECT_ROOT}</code> are checked as written and not expanded, because their values depend on the build agent. The
+ * patterns are possessive, which accepts the same values without recursing, and {@link #MAX_PATTERN_VALUE_LENGTH} stands in for the stack overflow in Ares.
  */
 final class SecurityPolicySchema {
 
@@ -47,9 +48,9 @@ final class SecurityPolicySchema {
 
     private static final String JAVA_TYPE_IDENTIFIER = "(?!(?:var|yield|record|sealed|permits)$)" + JAVA_IDENTIFIER;
 
-    private static final String JAVA_QUALIFIED_IDENTIFIER = JAVA_IDENTIFIER + "(?:\\." + JAVA_IDENTIFIER + ")*";
+    private static final String JAVA_QUALIFIED_IDENTIFIER = JAVA_IDENTIFIER + "(?:\\." + JAVA_IDENTIFIER + ")*+";
 
-    private static final String JAVA_CLASS_PATH = "(?:" + JAVA_IDENTIFIER + "\\.)*" + JAVA_TYPE_IDENTIFIER;
+    private static final String JAVA_CLASS_PATH = "(?:" + JAVA_IDENTIFIER + "\\.)*+" + JAVA_TYPE_IDENTIFIER;
 
     private static final String IPV4_COMPONENT = "(?:25[0-5]|2[0-4]\\d|1\\d{2}|[1-9]?\\d)";
 
@@ -65,7 +66,7 @@ final class SecurityPolicySchema {
 
     private static final String DNS_LABEL = "[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?";
 
-    private static final String DNS_NAME = "(?!\\d+\\.\\d+\\.\\d+\\.\\d+\\.?$)(?=.{1,253}\\.?$)" + DNS_LABEL + "(?:\\." + DNS_LABEL + ")*\\.?";
+    private static final String DNS_NAME = "(?!\\d+\\.\\d+\\.\\d+\\.\\d+\\.?$)(?=.{1,253}\\.?$)" + DNS_LABEL + "(?:\\." + DNS_LABEL + ")*+\\.?";
 
     private static final String RECOGNISED_PLACEHOLDER = "\\$\\{(?:PROJECT_ROOT|java\\.home|user\\.home|java\\.io\\.tmpdir)\\}";
 
@@ -78,7 +79,7 @@ final class SecurityPolicySchema {
     private static final Pattern JAVA_CLASS = Pattern.compile("^" + JAVA_CLASS_PATH + "$");
 
     private static final Pattern FILE_PATH = Pattern
-            .compile("^(?:\\*|(?=.+$)(?=.*\\S)(?!(?:.*[\\\\/])?\\.\\.(?:[\\\\/]|$))(?:(?:" + RECOGNISED_PLACEHOLDER + ")|(?!\\$\\{)[^*\\x00])+)$", Pattern.DOTALL);
+            .compile("^(?:\\*|(?=.+$)(?=.*\\S)(?!(?:.*[\\\\/])?\\.\\.(?:[\\\\/]|$))(?:(?:" + RECOGNISED_PLACEHOLDER + ")|(?!\\$\\{)[^*\\x00])++)$", Pattern.DOTALL);
 
     private static final Pattern HOST = Pattern.compile("^(?:\\*|localhost|" + IPV4_ADDRESS + "|" + IPV6_ADDRESS + "|" + DNS_NAME + ")$");
 
@@ -174,6 +175,12 @@ final class SecurityPolicySchema {
     /** The longest integer Jackson 2 reads by default. */
     private static final int MAX_INTEGER_LENGTH = 1000;
 
+    /**
+     * The longest value checked against a pattern. The patterns of Ares recurse once per repetition, so on a fresh JVM they overflow the stack of the test run at
+     * a value of about 2000 characters. The exact length depends on the JVM, so this limit lies safely below it. No usable value comes close to it.
+     */
+    static final int MAX_PATTERN_VALUE_LENGTH = 1024;
+
     private static final SecurityPolicyYaml.ReadPolicy INVALID_POLICY = new SecurityPolicyYaml.ReadPolicy(false, Optional.empty());
 
     private SecurityPolicySchema() {
@@ -198,8 +205,7 @@ final class SecurityPolicySchema {
             }
             return INVALID_POLICY;
         }
-        // The patterns copied from Ares recurse once per character, so a value of several thousand characters overflows the stack, in Ares as well.
-        catch (YAMLException | NumberFormatException | StackOverflowError e) {
+        catch (YAMLException | NumberFormatException e) {
             return INVALID_POLICY;
         }
     }
@@ -408,7 +414,7 @@ final class SecurityPolicySchema {
     }
 
     private static boolean isText(@Nullable Object value, Pattern pattern) {
-        return isNonBlankText(value) && pattern.matcher((String) value).matches();
+        return isNonBlankText(value) && ((String) value).length() <= MAX_PATTERN_VALUE_LENGTH && pattern.matcher((String) value).matches();
     }
 
     /**
