@@ -190,8 +190,10 @@ buildAgents:
     enabled: false
     minReplicas: 1
     maxReplicas: 10
-    # How often KEDA reads the metric, and how long it waits after the last active trigger before scaling to
-    # minReplicas.
+    # ONLY used with minReplicas: 0, and ignored otherwise. KEDA then reads the metric every pollingIntervalSeconds
+    # to wake the controllers up from zero, and waits cooldownPeriodSeconds after the last active trigger before it
+    # scales them to zero. Between one and maxReplicas, the Kubernetes HorizontalPodAutoscaler that KEDA creates
+    # decides, with the scaleUp and scaleDown behavior below.
     pollingIntervalSeconds: 30
     cooldownPeriodSeconds: 300
     prometheus:

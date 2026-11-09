@@ -32,8 +32,14 @@ spec:
     name: {{ include "artemis.buildAgentName" . }}
   minReplicaCount: {{ $autoscaling.minReplicas }}
   maxReplicaCount: {{ $autoscaling.maxReplicas }}
+  {{- /*
+KEDA only uses the polling interval and the cooldown period when it scales between zero and one replica, and warns about
+both on every apply otherwise. The Kubernetes HorizontalPodAutoscaler that KEDA creates decides everything above that.
+*/}}
+  {{- if eq (int $autoscaling.minReplicas) 0 }}
   pollingInterval: {{ $autoscaling.pollingIntervalSeconds }}
   cooldownPeriod: {{ $autoscaling.cooldownPeriodSeconds }}
+  {{- end }}
   advanced:
     horizontalPodAutoscalerConfig:
       behavior:
