@@ -115,16 +115,21 @@ If the cluster has a node autoscaler, it can add build nodes when build Pods wai
 
 </Callout>
 
-1. Back up the database and the shared storage.
-2. Pause the build agents on the Build Agents page and wait until their builds have finished.
-3. Stop all core nodes and build agents, and wait until they are gone. Otherwise the new leader can migrate the database while old members still serve requests against the old schema.
-   Use the namespace and the release of your installation. List the StatefulSets of the release with `kubectl -n <namespace> get statefulsets`. Their names end in `-leader`, `-member` (only with more than one core node)
-   and `-build-agent`, and start with the full name of the release. Scale each one that exists:
+1. Back up the database and the shared storage, and make sure that `my-values.yaml` below holds **all** values of the installation. A value that is missing from it falls back to the chart default
+   in both upgrades, so the leader could, for example, mount a new, empty volume instead of the existing shared storage. If you have no such file, export the current values and add the new image tags:
 
    ```bash
-   kubectl -n <namespace> scale statefulset <fullname>-build-agent --replicas=0
-   kubectl -n <namespace> scale statefulset <fullname>-member --replicas=0
-   kubectl -n <namespace> scale statefulset <fullname>-leader --replicas=0
+   helm get values <release> --namespace <namespace> --output yaml > my-values.yaml
+   ```
+2. Pause the build agents on the Build Agents page and wait until their builds have finished.
+3. Stop all core nodes and build agents, and wait until they are gone. Otherwise the new leader can migrate the database while old members still serve requests against the old schema.
+   Use the namespace and the release of your installation. List the StatefulSets of the release with `kubectl -n <namespace> get statefulsets -l app.kubernetes.io/instance=<release>`, which also works when the
+   release uses `fullnameOverride`. Their names end in `-leader`, `-member` (only with more than one core node) and `-build-agent`. Scale each one that exists, with `<name>` as listed:
+
+   ```bash
+   kubectl -n <namespace> scale statefulset <name>-build-agent --replicas=0
+   kubectl -n <namespace> scale statefulset <name>-member --replicas=0
+   kubectl -n <namespace> scale statefulset <name>-leader --replicas=0
    kubectl -n <namespace> get pods
    ```
 
@@ -139,7 +144,7 @@ If the cluster has a node autoscaler, it can add build nodes when build Pods wai
    ```
 
    The leader starts alone and applies the Liquibase migrations. The command returns when it is ready.
-5. Run the same command with your real values, without the two `--set` options. The members and the build agents start with the new version.
+5. Run the same command with the same `my-values.yaml`, without the two `--set` options. This restores the intended replica counts, and the members and the build agents start with the new version.
 6. The new build agents start unpaused and take builds as soon as they are ready, so there is nothing to resume. Check the Build Agents page for the number of agents and their status, and trigger a build.
 
 Take the image tags from the values file and use versioned tags, for the Artemis image and for the helper image. For a release without database migrations, a plain `helm upgrade` is enough.
