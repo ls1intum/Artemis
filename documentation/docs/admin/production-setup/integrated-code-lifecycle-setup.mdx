@@ -125,6 +125,9 @@ A bulk trigger also does not wait while no build agent is connected, because the
 
 A run lives on the core node that received the request. If that node restarts while a long run is waiting, the builds that were not queued yet are not queued later, and the instructor has to trigger them again.
 
+What a build sees in its container, how to use a private image registry and how to give builds a dependency mirror is described in
+[LocalCI Build Environment](/admin/production-setup/localci-build-environment).
+
 By default, every build runs in a Docker container on the build agent, which is what the rest of this page assumes.
 A production installation can instead let each build run as a Kubernetes Job; see
 [LocalCI Build Runners](/admin/production-setup/build-runners).
