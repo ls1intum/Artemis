@@ -60,8 +60,8 @@ class ReferenceWitnessCritic {
 
     SpecFidelityCritic.ReferenceWitnessReview adjudicate(String specification, String solutionSources, Map<String, String> templateStatuses, List<ContractWitnessOutcome> outcomes,
             @Nullable Consumer<ChatResponse> usageSink, BooleanSupplier cancelled) {
-        List<ContractWitnessOutcome> candidates = outcomes.stream()
-                .filter(outcome -> outcome.disposition() == Disposition.REFERENCE_TEST_FAILED || outcome.disposition() == Disposition.REFERENCE_PASSED_STARTER_FAILED).toList();
+        List<ContractWitnessOutcome> candidates = outcomes.stream().filter(outcome -> outcome.disposition() == Disposition.REFERENCE_TEST_FAILED || gradingCandidate(outcome))
+                .toList();
         if (candidates.isEmpty()) {
             return SpecFidelityCritic.ReferenceWitnessReview.empty();
         }
@@ -70,6 +70,7 @@ class ReferenceWitnessCritic {
         }
         requireReviewTextSafe("reference-witness/specification", specification);
         requireReviewTextSafe("reference-witness/solution", solutionSources);
+        specification = ContractWitnessAuthor.witnessContract(specification);
         if (!reviewer.configured()) {
             return unavailable("The independent contract-witness adjudicator is not configured.", candidates);
         }
@@ -167,9 +168,13 @@ class ReferenceWitnessCritic {
                 supported.add(witness);
                 continue;
             }
-            if (verdict == Verdict.SUPPORTED_GRADING_WITNESS && candidate.disposition() == Disposition.REFERENCE_PASSED_STARTER_FAILED
-                    && studentOwned(item.ownerType(), templateStatuses)) {
+            if (verdict == Verdict.SUPPORTED_GRADING_WITNESS && gradingCandidate(candidate) && studentOwned(item.ownerType(), templateStatuses)) {
                 ContractWitness witness = candidate.witness();
+                adoptable.add(witness);
+                if (candidate.disposition() == Disposition.REFERENCE_PASSED_MUTANT_FAILED) {
+                    // This proves no starter failure or missing coverage by itself. The caller retains the separate executed mutant outcome.
+                    continue;
+                }
                 findings.add(new SpecFidelityReport.Finding(SpecFidelityReport.Kind.CONTRACT_WITNESS_AVAILABLE,
                         "Rule " + witness.ruleId() + " has a source-approved executable witness " + witness.testName(),
                         "An independent reviewer grounded this assertion in the frozen specification quote \"" + truncate(item.sourceQuote().strip())
@@ -177,7 +182,6 @@ class ReferenceWitnessCritic {
                                 + "fails. Add it unless an existing assertion already distinguishes the same behavior. Reviewer rationale: " + truncate(item.reason().strip())
                                 + "\nThe author proposed it for this plausible wrong behavior, which the environment did not execute: " + witness.wrongBehavior() + "\nWitness:\n"
                                 + witness.code()));
-                adoptable.add(witness);
                 continue;
             }
             addUnresolved(candidate, unresolvedReference, unresolvedAdoption);
@@ -213,11 +217,14 @@ class ReferenceWitnessCritic {
         return "stubbed".equals(status) || "student-creates".equals(status);
     }
 
+    private static boolean gradingCandidate(ContractWitnessOutcome outcome) {
+        return outcome.disposition() == Disposition.REFERENCE_PASSED_STARTER_FAILED || outcome.disposition() == Disposition.REFERENCE_PASSED_MUTANT_FAILED;
+    }
+
     private static SpecFidelityCritic.ReferenceWitnessReview unavailable(String detail, List<ContractWitnessOutcome> candidates) {
         List<ContractWitness> unresolvedReference = candidates.stream().filter(outcome -> outcome.disposition() == Disposition.REFERENCE_TEST_FAILED)
                 .map(ContractWitnessOutcome::witness).distinct().toList();
-        List<ContractWitness> unresolvedAdoption = candidates.stream().filter(outcome -> outcome.disposition() == Disposition.REFERENCE_PASSED_STARTER_FAILED)
-                .map(ContractWitnessOutcome::witness).distinct().toList();
+        List<ContractWitness> unresolvedAdoption = candidates.stream().filter(ReferenceWitnessCritic::gradingCandidate).map(ContractWitnessOutcome::witness).distinct().toList();
         List<SpecFidelityReport.Finding> findings = unresolvedReference.isEmpty() ? List.of() : SpecFidelityReport.qualityReviewUnavailable(detail).findings();
         return new SpecFidelityCritic.ReferenceWitnessReview(findings, List.of(), List.of(), List.of(), unresolvedReference, unresolvedAdoption);
     }

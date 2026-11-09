@@ -6,6 +6,6 @@ import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.criti
 public record ContractWitnessOutcome(ContractWitness witness, Disposition disposition, String diagnostic) {
 
     public enum Disposition {
-        REFERENCE_PASSED_STARTER_FAILED, REFERENCE_PASSED_STARTER_NOT_FAILED, REFERENCE_TEST_FAILED, INCONCLUSIVE
+        REFERENCE_PASSED_STARTER_FAILED, REFERENCE_PASSED_STARTER_NOT_FAILED, REFERENCE_PASSED_MUTANT_FAILED, REFERENCE_TEST_FAILED, INCONCLUSIVE
     }
 }

@@ -160,7 +160,7 @@ class ContractWitnessAuthor {
         return rendered.toString().stripTrailing();
     }
 
-    private static String witnessContract(String specification) {
+    static String witnessContract(String specification) {
         // The contract's normative sections define expectations; author-selected risks and implementation rationale would prime an independent reviewer.
         Matcher sections = WITNESS_CONTRACT_SECTION.matcher(specification);
         StringBuilder contract = new StringBuilder();

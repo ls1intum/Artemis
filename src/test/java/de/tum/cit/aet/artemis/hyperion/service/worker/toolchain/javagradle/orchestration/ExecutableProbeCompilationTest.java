@@ -78,6 +78,8 @@ class ExecutableProbeCompilationTest {
         when(critic.repairProbeCompilation(anyString(), anyString(), anyList(), any(), any())).thenReturn(List.of(REPAIRED));
         when(verifier.evaluateSemanticMutants(any(), anyString(), any(), anyMap(), anyMap(), any(), eq(List.of(CORRECTED_MUTANT)), any()))
                 .thenReturn(List.of(new SemanticMutantOutcome(CORRECTED_MUTANT, Disposition.SURVIVED_GRADED_SUITE)));
+        when(critic.adjudicateReferenceWitnesses(anyString(), anyString(), anyList(), any(), any()))
+                .thenReturn(new SpecFidelityCritic.ReferenceWitnessReview(List.of(), List.of(), List.of(REPAIRED), List.of(), List.of(), List.of()));
 
         var report = review();
 
@@ -85,6 +87,28 @@ class ExecutableProbeCompilationTest {
         assertThat(report.findings()).noneMatch(finding -> finding.kind() == SpecFidelityReport.Kind.EXECUTABLE_EVIDENCE_UNAVAILABLE);
         assertThat(ledger.takeInconclusiveMutantProbes()).isZero();
         assertThat(FILES.get(RepositoryRole.SOLUTION)).containsEntry(MUTANT.solutionPath(), MUTANT.originalSolutionSource());
+    }
+
+    @Test
+    void unavailableMutantAuthoritySurvivesAnEmptyReviewAndClearsOnlyAfterAnActualDecision() {
+        when(verifier.evaluateSemanticMutants(any(), anyString(), any(), anyMap(), anyMap(), any(), eq(List.of(MUTANT)), any()))
+                .thenReturn(List.of(new SemanticMutantOutcome(MUTANT, Disposition.SURVIVED_GRADED_SUITE)));
+        var unavailable = review();
+        when(critic.authorSemanticMutants(anyString(), anyMap(), anyList(), anyList(), any(), any())).thenReturn(List.of());
+        var later = review();
+
+        for (var report : List.of(unavailable, later, ledger.withoutExecutableReview(SpecFidelityReport.empty()))) {
+            assertThat(report.findings()).extracting(finding -> finding.kind()).contains(SpecFidelityReport.Kind.EXECUTABLE_EVIDENCE_UNAVAILABLE)
+                    .doesNotContain(SpecFidelityReport.Kind.EXECUTABLE_WEAK_TEST_ORACLE);
+        }
+
+        when(critic.authorSemanticMutants(anyString(), anyMap(), anyList(), anyList(), any(), any())).thenReturn(List.of(MUTANT));
+        when(critic.adjudicateReferenceWitnesses(anyString(), anyString(), anyList(), any(), any()))
+                .thenReturn(new SpecFidelityCritic.ReferenceWitnessReview(List.of(), List.of(), List.of(BROKEN), List.of(), List.of(), List.of()));
+        var recovered = review();
+
+        assertThat(recovered.findings()).extracting(finding -> finding.kind()).contains(SpecFidelityReport.Kind.EXECUTABLE_WEAK_TEST_ORACLE)
+                .doesNotContain(SpecFidelityReport.Kind.EXECUTABLE_EVIDENCE_UNAVAILABLE);
     }
 
     @Test

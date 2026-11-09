@@ -105,6 +105,35 @@ class ReferenceWitnessCriticTest {
         return new ContractWitnessOutcome(witness, disposition, "Observed execution result");
     }
 
+    @Test
+    void mutantDiscriminationNeedsStudentOwnershipAndDoesNotClaimAStarterFailure() {
+        String row = VALID_ROWS.substring(VALID_ROWS.indexOf("{\"testName\":\"grading\""));
+        var outcome = outcome(GRADING, Disposition.REFERENCE_PASSED_MUTANT_FAILED);
+        var approved = review(row, List.of(outcome));
+        var suppliedOwner = review(row.replace("\"Selector\"", "\"GivenHelper\""), List.of(outcome));
+
+        assertThat(approved.adoptableWitnesses()).containsExactly(GRADING);
+        assertThat(approved.findings()).isEmpty();
+        assertThat(suppliedOwner.adoptableWitnesses()).isEmpty();
+        assertThat(suppliedOwner.unresolvedAdoptionWitnesses()).containsExactly(GRADING);
+    }
+
+    @Test
+    void implementationRationaleCannotSupplyAuthorityEvenWhenTheReviewerApprovesIt() {
+        String specification = "## Rules\nR1 returns a selected value.\n## Decision Ledger\nAlways allocate a new collection.";
+        ReviewerClient reviewer = mock(ReviewerClient.class);
+        when(reviewer.configured()).thenReturn(true);
+        when(reviewer.call(anyString(), anyString(), any(), any(), anyInt())).thenReturn("""
+                {"outcomes":[{"testName":"grading","verdict":"SUPPORTED_GRADING_WITNESS","sourceQuote":"Always allocate a new collection.",
+                "ownerType":"Selector","reason":"The reference makes this choice."}]}
+                """);
+        var review = new ReferenceWitnessCritic(reviewer, JsonMapper.builder().build()).adjudicate(specification, "", Map.of("Selector", "stubbed"),
+                List.of(outcome(GRADING, Disposition.REFERENCE_PASSED_MUTANT_FAILED)), null, () -> false);
+
+        assertThat(review.adoptableWitnesses()).isEmpty();
+        assertThat(review.unresolvedAdoptionWitnesses()).containsExactly(GRADING);
+    }
+
     private static SpecFidelityCritic.ReferenceWitnessReview review(String rows, List<ContractWitnessOutcome> outcomes) {
         ReviewerClient reviewer = mock(ReviewerClient.class);
         when(reviewer.configured()).thenReturn(true);

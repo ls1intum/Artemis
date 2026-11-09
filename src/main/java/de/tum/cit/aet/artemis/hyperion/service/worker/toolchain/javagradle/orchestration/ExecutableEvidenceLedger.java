@@ -81,6 +81,8 @@ final class ExecutableEvidenceLedger {
 
     private List<SemanticMutant.Exclusion> semanticMutantHistory = List.of();
 
+    private final Set<ContractWitness> mutantWitnessesWithoutAuthority = new java.util.LinkedHashSet<>();
+
     /** Mutant probes of the latest executable review that neither survived nor were killed; reported on the next review-round event, never as evidence. */
     private int inconclusiveMutantProbes;
 
@@ -338,10 +340,12 @@ final class ExecutableEvidenceLedger {
                         semanticMutantHistory, usageSink, cancelled).stream().filter(candidate -> !applicablePendingMutants.contains(candidate)).limit(freshCapacity).toList();
         List<SemanticMutantOutcome> freshMutantOutcomes = freshMutantCandidates.isEmpty() ? List.of()
                 : verifier.evaluateSemanticMutants(sandbox, sessionId, exercise, testsFiles, solutionFiles, seededStructuralTests, freshMutantCandidates, restoreCandidate);
+        freshMutantOutcomes = adjudicateMutantContracts(specDocumentSnapshot, freshMutantOutcomes, List.of());
         // Retain completed evidence before an optional compiler-feedback call can fail.
         List<SemanticMutantOutcome> initialFreshOutcomes = freshMutantOutcomes;
         initialFreshOutcomes.forEach(evidence::record);
         freshMutantOutcomes = repairMutantCompilation(freshMutantOutcomes, specDocumentSnapshot, testsFiles, solutionFiles, seededStructuralTests, restoreCandidate);
+        freshMutantOutcomes = adjudicateMutantContracts(specDocumentSnapshot, freshMutantOutcomes, initialFreshOutcomes);
         semanticMutantHistory = GenerationReviewSupport.rememberExecutedMutants(semanticMutantHistory, freshMutantOutcomes);
         freshMutantOutcomes.stream().filter(outcome -> !initialFreshOutcomes.contains(outcome)).forEach(evidence::record);
         List<SemanticMutantOutcome> mutantOutcomes = java.util.stream.Stream.of(pendingMutantOutcomes, transcriptOutcomes, freshMutantOutcomes).flatMap(List::stream).toList();
@@ -402,6 +406,20 @@ final class ExecutableEvidenceLedger {
         positiveWitnessesAwaitingAdjudication.stream().map(GenerationReviewSupport::positiveWitnessAdjudicationUnavailable).filter(finding -> !combined.contains(finding))
                 .forEach(combined::add);
         return preserveReferenceWitnessState(new SpecFidelityReport(List.copyOf(combined)));
+    }
+
+    private List<SemanticMutantOutcome> adjudicateMutantContracts(String specification, List<SemanticMutantOutcome> outcomes, List<SemanticMutantOutcome> alreadyReviewed) {
+        List<ContractWitnessOutcome> candidates = SemanticMutantAuthority.candidates(outcomes, alreadyReviewed);
+        if (candidates.isEmpty()) {
+            return outcomes;
+        }
+        SpecFidelityCritic.ReferenceWitnessReview authority = Optional
+                .ofNullable(specFidelityCritic.adjudicateReferenceWitnesses(specification, "", candidates, usageSink, cancelled))
+                .orElseGet(SpecFidelityCritic.ReferenceWitnessReview::empty);
+        SemanticMutantAuthority.Review review = SemanticMutantAuthority.reconcile(outcomes, candidates, authority);
+        candidates.forEach(candidate -> mutantWitnessesWithoutAuthority.remove(candidate.witness()));
+        mutantWitnessesWithoutAuthority.addAll(review.unresolvedWitnesses());
+        return review.outcomes();
     }
 
     private void retainUnadjudicated(List<SemanticMutantOutcome> mutants, List<ContractWitnessOutcome> witnesses) {
@@ -607,6 +625,9 @@ final class ExecutableEvidenceLedger {
 
     private SpecFidelityReport preserveReferenceWitnessState(SpecFidelityReport report) {
         SpecFidelityReport preserved = GenerationReviewSupport.preserveReferenceWitnessState(report, referenceWitnessesAwaitingPass, referenceWitnessesAwaitingAdjudication);
-        return GenerationReviewSupport.preservePositiveWitnessState(preserved, positiveWitnessesAwaitingAdjudication);
+        preserved = GenerationReviewSupport.preservePositiveWitnessState(preserved, positiveWitnessesAwaitingAdjudication);
+        List<SpecFidelityReport.Finding> findings = new ArrayList<>(preserved.findings());
+        SemanticMutantAuthority.unavailableFindings(mutantWitnessesWithoutAuthority.size()).stream().filter(finding -> !findings.contains(finding)).forEach(findings::add);
+        return new SpecFidelityReport(List.copyOf(findings));
     }
 }

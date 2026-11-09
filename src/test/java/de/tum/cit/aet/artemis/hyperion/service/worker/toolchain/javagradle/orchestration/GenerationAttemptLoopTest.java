@@ -125,6 +125,16 @@ class GenerationAttemptLoopTest {
         structuralOracleSeeder = mock(StructuralOracleSeeder.class);
         stageChecks = mock(StageChecks.class);
         specFidelityCritic = mock(SpecFidelityCritic.class);
+        // These fixtures model contract-valid mutants; individual tests replace this decision to exercise rejected or unavailable authority.
+        when(specFidelityCritic.adjudicateReferenceWitnesses(anyString(), anyString(), any(), any(), any())).thenAnswer(invocation -> {
+            List<ContractWitnessOutcome> outcomes = invocation.getArgument(2);
+            if (outcomes == null) {
+                return SpecFidelityCritic.ReferenceWitnessReview.empty(); // Mockito invokes the previous answer while a test replaces this stub.
+            }
+            return new SpecFidelityCritic.ReferenceWitnessReview(List.of(), List.of(), outcomes.stream()
+                    .filter(outcome -> outcome.disposition() == ContractWitnessOutcome.Disposition.REFERENCE_PASSED_MUTANT_FAILED).map(ContractWitnessOutcome::witness).toList(),
+                    List.of(), List.of(), List.of());
+        });
         stagedGenerationRunner = mock(StagedGenerationRunner.class);
         when(stagedGenerationRunner.withTurnLimit(anyInt())).thenReturn(stagedGenerationRunner);
         // A mock, not the shared fake: the repair scope is a write barrier with no reader, so the call carrying the scheduled surface's roots is the only observable form.
@@ -699,6 +709,13 @@ class GenerationAttemptLoopTest {
     void underAContestedSpecificationAnAdoptableWitnessDoesNotRideAlongWithAnOracleRepair() {
         ContractWitness witness = contestedSpecificationWithAdoptableWitness();
         SemanticMutant survivor = mutant("R2", "lexicalTie", "uses FIFO insertion order");
+        when(specFidelityCritic.adjudicateReferenceWitnesses(anyString(), anyString(), any(), any(), any())).thenAnswer(invocation -> {
+            List<ContractWitnessOutcome> outcomes = invocation.getArgument(2);
+            return approvedForAdoption(
+                    outcomes != null && outcomes.stream().anyMatch(outcome -> outcome.disposition() == ContractWitnessOutcome.Disposition.REFERENCE_PASSED_MUTANT_FAILED)
+                            ? survivor.counterexample()
+                            : witness);
+        });
         when(specFidelityCritic.authorSemanticMutants(anyString(), any(), any(), any(), any(), any())).thenReturn(List.of(survivor), List.of());
         when(verifier.evaluateSemanticMutants(any(), anyString(), any(), any(), any(), any(), any(), any()))
                 .thenReturn(List.of(new SemanticMutantOutcome(survivor, Disposition.SURVIVED_GRADED_SUITE)), List.of());
@@ -788,6 +805,28 @@ class GenerationAttemptLoopTest {
             assertThat(finding.isBlocking()).isFalse();
         });
         assertThat(loop.terminationReason()).isEqualTo(TerminationReason.CONVERGED);
+    }
+
+    @Test
+    void aDiscriminatingButUnsupportedWitnessCannotDriveAGraderRepair() {
+        sandbox.withFile(SPEC_PATH, "## Rules\n| R1 | returns a collection containing one value |");
+        when(workspace.extractRepository(any(), anyString(), Mockito.eq(RepositoryRole.TESTS), any()))
+                .thenReturn(new GenerationWorkspace.RepositoryExtraction(Map.of("test/SchedulerTest.java", "package p; class SchedulerTest {}"), false));
+        when(workspace.extractRepository(any(), anyString(), Mockito.eq(RepositoryRole.SOLUTION), any()))
+                .thenReturn(new GenerationWorkspace.RepositoryExtraction(Map.of("src/Scheduler.java", "class Scheduler {}"), false));
+        SemanticMutant mutant = mutant("R1", "requiresMutableResult", "assumes that a returned collection supports mutation");
+        when(specFidelityCritic.authorSemanticMutants(anyString(), any(), any(), any(), any(), any())).thenReturn(List.of(mutant));
+        when(verifier.evaluateSemanticMutants(any(), anyString(), any(), any(), any(), any(), any(), any()))
+                .thenReturn(List.of(new SemanticMutantOutcome(mutant, Disposition.SURVIVED_GRADED_SUITE)));
+        when(specFidelityCritic.adjudicateReferenceWitnesses(anyString(), anyString(), any(), any(), any()))
+                .thenReturn(new SpecFidelityCritic.ReferenceWitnessReview(List.of(), List.of(), List.of(), List.of(mutant.counterexample()), List.of(), List.of()));
+
+        GenerationAttemptLoop loop = newGenerateLoop(2, 1);
+        loop.run();
+
+        assertThat(loop.lastMechanicallyVerifiedCandidate()).isNotNull();
+        verify(baseTools, never()).enterRepairScope(any());
+        assertThat(loop.specFidelityReport().findings()).noneMatch(finding -> finding.kind() == SpecFidelityReport.Kind.EXECUTABLE_WEAK_TEST_ORACLE);
     }
 
     @Test

@@ -376,6 +376,12 @@ with no accepted semantic-mutant proposal can receive one proposal correction be
 any mutation history exists. An unexecuted hypothesis remains a review item, never an
 execution-proven defect or a resolved finding.
 
+A surviving model-authored mutant also needs independent contract approval before it can
+require a grader repair. The reviewer checks the whole counterexample interaction against
+Rules, Worked Examples and Public API, without the reference implementation or decision
+notes. Discrimination alone does not justify an extra requirement. Rejected assertions are
+not added; unavailable authority remains an explicit review finding across later repairs.
+
 Optional assessment probes run on the complete candidate after statement authoring,
 where their evidence is bound to the verified draft. The TESTS-stage gate still
 checks compilation, reference/starter grading and the grading plan; it does not

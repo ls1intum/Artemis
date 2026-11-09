@@ -101,8 +101,9 @@ class SemanticMutantAuthor {
         String exclusionPrompt = priorProposals.isBlank() ? ""
                 : "\n\nPRIOR ENVIRONMENT-EXECUTED PROPOSALS (novelty exclusions only; NOT requirements or contract evidence):\n" + priorProposals
                         + "\nDo not repeat a renamed, recoded, or numerically varied equivalent. Choose another applicable observable misconception or return fewer proposals.";
-        String prompt = "APPROVED SPECIFICATION (sole rule authority):\n" + specification.strip() + "\n\nPRISTINE REFERENCE SOLUTION:\n" + renderedSolution + targetPrompt
-                + exclusionPrompt;
+        String prompt = "APPROVED SPECIFICATION (sole rule authority):\n" + ContractWitnessAuthor.witnessContract(specification) + "\n\nAUTHORITATIVE TEMPLATE OWNERSHIP:\n"
+                + ContractWitnessAuthor.renderTemplateOwnership(SpecFidelityCritic.designTemplateStatuses(specification)) + "\n\nPRISTINE REFERENCE SOLUTION:\n" + renderedSolution
+                + targetPrompt + exclusionPrompt;
         String response = Objects.requireNonNullElse(reviewer.call(SYSTEM_PROMPT, prompt, usageSink, cancelled, MAX_OUTPUT_TOKENS), "");
         List<SemanticMutant> proposals = parse(response, specification, visibleSolutionFiles, visibleTargets);
         if (proposals.isEmpty() && !visibleTargets.isEmpty() && exclusions.isEmpty() && !cancelled.getAsBoolean()) {
