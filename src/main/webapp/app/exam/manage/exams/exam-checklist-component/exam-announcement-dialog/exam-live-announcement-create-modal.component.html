@@ -30,13 +30,27 @@
                 <fa-icon [icon]="faCheckCircle" class="text-state-success" />
                 <span jhiTranslate="artemisApp.examManagement.announcementCreate.sent"></span>
             </h2>
-            @if (announcement(); as announcement) {
+            @if (sentAnnouncement(); as announcement) {
                 <jhi-exam-live-event [event]="announcement" />
             }
         }
+        <section class="flex flex-col gap-2" data-testid="announcement-history">
+            <h3 class="my-0! text-lg font-semibold">{{ 'artemisApp.examManagement.announcementCreate.history' | artemisTranslate }}</h3>
+            @if (historyLoadingFailed()) {
+                <p class="text-state-danger" jhiTranslate="artemisApp.examManagement.announcementCreate.historyFailed"></p>
+            } @else if (pastAnnouncements().length === 0) {
+                <p jhiTranslate="artemisApp.examManagement.announcementCreate.historyEmpty"></p>
+            }
+            @for (event of pastAnnouncements(); track event.id) {
+                <article class="flex flex-col gap-1 border-t border-(--border-color) pt-2">
+                    <time [attr.datetime]="event.createdDate?.toISOString()">{{ event.createdDate | artemisDate: 'long' }}</time>
+                    <jhi-exam-live-event [event]="event" />
+                </article>
+            }
+        </section>
     </form>
     <ng-template #footer>
-        <button tumAetUiButton type="button" [severity]="status() === 'submitted' ? 'primary' : 'secondary'" (click)="clear()" jhiTranslate="entity.action.close"></button>
+        <button tumAetUiButton type="button" severity="secondary" (click)="clear()" jhiTranslate="entity.action.close"></button>
         @if (status() !== 'submitted') {
             <button
                 tumAetUiButton

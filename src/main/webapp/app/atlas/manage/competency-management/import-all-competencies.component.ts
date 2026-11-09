@@ -10,7 +10,7 @@ export interface ImportAllCompetenciesDialogData {
 }
 import { NgbTypeaheadModule } from '@ng-bootstrap/ng-bootstrap';
 import { PaginatorModule } from 'primeng/paginator';
-import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
+import { ButtonComponent, ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { SortByDirective } from 'app/foundation/sort/directive/sort-by.directive';
@@ -63,6 +63,8 @@ export type ImportAllFromCourseResult = {
     ],
 })
 export class ImportAllCompetenciesComponent extends ImportComponent<CourseForImportDTO> implements OnInit {
+    protected readonly ButtonType = ButtonType;
+
     //import relations by default
     protected importRelations = true;
 

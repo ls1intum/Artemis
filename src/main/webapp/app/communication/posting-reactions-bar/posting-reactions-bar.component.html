@@ -111,8 +111,11 @@
         <!-- Edit button -->
         @if (!isEmojiCount() && mayEdit()) {
             <button
+                tumAetUiButton
+                severity="warn"
+                variant="text"
+                size="small"
                 type="button"
-                class="reaction-button clickable px-2 fs-small"
                 data-testid="posting-reaction-edit"
                 (click)="editPosting()"
                 [ngbTooltip]="'artemisApp.communication.editPosting' | artemisTranslate"

@@ -911,6 +911,28 @@ describe('DragAndDropQuestionEditComponent', () => {
         cleanup();
     });
 
+    it('should add the imported background and drag item pictures as new files', () => {
+        const question = component.question();
+        question.backgroundFilePath = 'background.png';
+        const dragItem = new DragItem();
+        dragItem.pictureFilePath = 'item.png';
+        question.dragItems = [dragItem];
+        question.importedFiles = new Map([
+            ['background.png', new Blob(['background'])],
+            ['item.png', new Blob(['item'])],
+        ]);
+        addFileSpy.mockClear();
+
+        component.ngOnInit();
+
+        expect(addFileSpy).toHaveBeenCalledTimes(2);
+        // The files get fresh names, so the server stores them as new files instead of reusing those of the source exercise.
+        expect(question.backgroundFilePath).not.toBe('background.png');
+        expect(dragItem.pictureFilePath).not.toBe('item.png');
+        expect(addFileSpy).toHaveBeenCalledWith({ fileName: question.backgroundFilePath, file: expect.any(File) });
+        expect(addFileSpy).toHaveBeenCalledWith({ fileName: dragItem.pictureFilePath, file: expect.any(File) });
+    });
+
     it('should blank out background image', async () => {
         const dragAndDropQuestion = component.question();
         dragAndDropQuestion.backgroundFilePath = 'bg.png';

@@ -123,8 +123,7 @@
         </div>
     }
     @if (section() === 'administration' && course() && exercise.isAtLeastInstructor) {
-        <section class="mt-8! border-t border-border pt-6!" aria-labelledby="exercise-administration-heading">
-            <h3 id="exercise-administration-heading" class="mb-4! text-lg font-semibold" jhiTranslate="artemisApp.exerciseDetail.administration"></h3>
+        <div class="flex flex-wrap items-center gap-2">
             <button
                 type="button"
                 jhiDeleteButton
@@ -132,7 +131,7 @@
                 deleteQuestion="artemisApp.exercise.delete.question"
                 deleteConfirmationText="artemisApp.exercise.delete.typeNameToConfirm"
                 entitySummaryTitle="artemisApp.exercise.delete.summary.title"
-                [fetchEntitySummary]="fetchExerciseDeletionSummary()"
+                [fetchCategorizedEntitySummary]="fetchExerciseDeletionSummary()"
                 [translateValues]="{
                     courseTitle: course().title,
                     courseType: course().testCourse ? ('artemisApp.exercise.delete.testCourse' | artemisTranslate) : ('artemisApp.exercise.delete.realCourse' | artemisTranslate),
@@ -142,6 +141,6 @@
             >
                 <fa-icon [icon]="faTrash" />
             </button>
-        </section>
+        </div>
     }
 }

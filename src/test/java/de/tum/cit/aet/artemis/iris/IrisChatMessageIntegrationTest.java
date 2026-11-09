@@ -57,6 +57,7 @@ import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
+import de.tum.cit.aet.artemis.exercise.util.AsyncDeletionTestUtilService;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisJsonMessageContent;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageContent;
@@ -115,6 +116,9 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
 
     @Autowired
     private IrisMessageService irisMessageService;
+
+    @Autowired
+    private AsyncDeletionTestUtilService asyncDeletionTestUtilService;
 
     @Autowired
     private IrisSessionRepository irisSessionRepository;
@@ -783,7 +787,14 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
             case LECTURE_CHAT -> "/api/lecture/lectures/" + lecture.getId();
             default -> throw new IllegalArgumentException("Unsupported mode: " + mode);
         };
-        request.delete(url, HttpStatus.OK);
+        if (mode == IrisChatMode.TEXT_EXERCISE_CHAT) {
+            // an exercise is deleted in the background
+            request.delete(url, HttpStatus.ACCEPTED);
+            asyncDeletionTestUtilService.awaitExerciseDeletion(textExercise.getId());
+        }
+        else {
+            request.delete(url, HttpStatus.OK);
+        }
 
         assertThat(irisChatSessionRepository.findById(session.getId())).isEmpty();
         assertThat(irisMessageRepository.findAllBySessionIdOrderBySentAtAscIdAsc(session.getId())).isEmpty();
@@ -1004,7 +1015,8 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
             irisMessageService.saveMessage(IrisMessageFactory.createIrisMessageForSessionWithContent(session), session, IrisMessageSender.LLM);
 
             String url = "/api/programming/programming-exercises/" + programmingExercise.getId() + "?deleteStudentReposBuildPlans=false&deleteBaseReposBuildPlans=false";
-            request.delete(url, HttpStatus.OK);
+            request.delete(url, HttpStatus.ACCEPTED);
+            asyncDeletionTestUtilService.awaitExerciseDeletion(programmingExercise.getId());
 
             assertThat(irisChatSessionRepository.findById(session.getId())).isEmpty();
             assertThat(irisMessageRepository.findAllBySessionIdOrderBySentAtAscIdAsc(session.getId())).isEmpty();
