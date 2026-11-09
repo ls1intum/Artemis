@@ -865,13 +865,6 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
             """)
     long countStudentParticipationsByExerciseId(@Param("exerciseId") long exerciseId);
 
-    @Query("""
-            SELECT DISTINCT p.id
-            FROM ProgrammingExercise p
-            WHERE p.exerciseGroup.exam.id = :examId
-            """)
-    Set<Long> findProgrammingExerciseIdsByExamId(@Param("examId") long examId);
-
     /**
      * Defines the default entity graph for loading programming exercises along with related configurations.
      * <p>
