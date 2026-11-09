@@ -109,7 +109,8 @@ public interface PresentationAssessmentInstanceRepository extends ArtemisJpaRepo
      */
     @Query("""
             SELECT new de.tum.cit.aet.artemis.assessment.dto.PresentationAssessmentStatisticsDTO(
-                COUNT(instance), COUNT(instance.resultPoints) + COUNT(instance.passed) + COUNT(instance.rubricScore))
+                COUNT(instance),
+                COALESCE(SUM(CASE WHEN instance.resultPoints IS NOT NULL OR instance.passed IS NOT NULL OR instance.rubricScore IS NOT NULL THEN 1L ELSE 0L END), 0L))
             FROM PresentationAssessmentInstance instance
             WHERE instance.presentationAssessment.course.id = :courseId
             """)
