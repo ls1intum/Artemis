@@ -36,9 +36,9 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router } from '@angular/router';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
-import { of, throwError } from 'rxjs';
+import { Subject, of, throwError } from 'rxjs';
 import { ProgrammingExerciseDetailComponent } from 'app/programming/manage/detail/programming-exercise-detail.component';
-import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
+import { ProgrammingExercise, ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
 import { Course } from 'app/course/shared/entities/course.model';
 import { provideTranslateService } from '@ngx-translate/core';
@@ -73,6 +73,12 @@ import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.
 import { ExerciseDetailStatisticsComponent } from 'app/exercise/statistics/exercise-detail-statistic/exercise-detail-statistics.component';
 import { DetailOverviewListComponent } from 'app/shared-ui/detail-overview-list/detail-overview-list.component';
 import { DocumentationButtonComponent } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
+import { DialogService } from 'primeng/dynamicdialog';
+import * as downloadUtil from 'app/foundation/util/download.util';
+import { ProgrammingExerciseSharingService } from 'app/programming/manage/services/programming-exercise-sharing.service';
+import { EntityDeletionProgress, EntityDeletionStatus, EntityDeletionType } from 'app/shared-ui/delete-dialog/entity-deletion-progress.model';
+import { EntityDeletionService } from 'app/shared-ui/delete-dialog/service/entity-deletion.service';
+import { MockEntityDeletionService } from 'test/helpers/mocks/service/mock-entity-deletion.service';
 
 describe('ProgrammingExerciseDetailComponent', () => {
     let comp: ProgrammingExerciseDetailComponent;
@@ -123,6 +129,17 @@ describe('ProgrammingExerciseDetailComponent', () => {
         },
     } as unknown as RepositoryDiffInformation;
 
+    it('combines repository, checkout, result and comparison rows while retaining build configuration fields', () => {
+        const section = comp.getExerciseDetailsLanguageSection(mockProgrammingExercise);
+        const details = section.details.filter((detail) => !!detail);
+        expect(details.map((detail) => detail.type)).toContain('detail-repository-build-overview');
+        expect(
+            details.filter((detail) => ['detail-repository-buttons', 'detail-test-status', 'detail-checkout-directories', 'detail-diff-report'].includes(detail.type)),
+        ).toHaveLength(0);
+        expect(details.map((detail) => detail.title)).toContain('artemisApp.programmingExercise.programmingLanguage');
+        expect(details.map((detail) => detail.title)).toContain('artemisApp.programmingExercise.packageName');
+    });
+
     const exerciseStatistics = {
         averageScoreOfExercise: 50,
         maxPointsOfExercise: 10,
@@ -146,7 +163,9 @@ describe('ProgrammingExerciseDetailComponent', () => {
         TestBed.configureTestingModule({
             imports: [],
             providers: [
+                { provide: EntityDeletionService, useClass: MockEntityDeletionService },
                 MockProvider(AlertService),
+                MockProvider(DialogService),
                 MockProvider(ProgrammingLanguageFeatureService),
                 LocalStorageService,
                 SessionStorageService,
@@ -216,6 +235,119 @@ describe('ProgrammingExerciseDetailComponent', () => {
 
     afterEach(() => {
         vi.restoreAllMocks();
+    });
+
+    it('shows the saved title with its exercise type instead of the database ID', () => {
+        const exercise = new ProgrammingExercise(new Course(), undefined);
+        exercise.id = 21715;
+        exercise.title = 'H01E01 - Lectures';
+        comp.programmingExercise.set(exercise);
+        fixture.detectChanges();
+
+        const heading = fixture.nativeElement.querySelector('h1') as HTMLElement;
+        expect(heading).not.toBeNull();
+        expect(heading.textContent).toContain(exercise.title);
+        expect(heading.textContent).not.toContain('21715');
+        expect(heading.querySelector('fa-icon')).not.toBeNull();
+    });
+
+    it('keeps version history as a link and moves secondary actions into a small menu', () => {
+        const exercise = new ProgrammingExercise(new Course(), undefined);
+        exercise.id = 21715;
+        exercise.title = 'H01E01 - Lectures';
+        exercise.isAtLeastEditor = true;
+        comp.programmingExercise.set(exercise);
+        comp.baseResource.set('/course-management/1/programming-exercises/21715/');
+        fixture.detectChanges();
+
+        const history = fixture.nativeElement.querySelector('[data-testid="exercise-version-history"]') as HTMLAnchorElement;
+        expect(history?.tagName).toBe('A');
+        expect(router.createUrlTree).toHaveBeenCalledWith([comp.baseResource(), 'version-history'], expect.anything());
+        expect(fixture.nativeElement.querySelector('[data-testid="exercise-more-actions"]')).not.toBeNull();
+        expect(fixture.nativeElement.querySelector('[data-testid="edit-in-editor-action"]')).toBeNull();
+    });
+
+    it.each(['/course-management/1/programming-exercises/21715', '/course-management/1/exams/2/exercise-groups/3/programming-exercises/21715'])(
+        'provides direct editor access from the toolbar under %s',
+        (base) => {
+            const exercise = new ProgrammingExercise(new Course(), undefined);
+            exercise.id = 21715;
+            exercise.isAtLeastEditor = true;
+            exercise.templateParticipation = { id: 42 };
+            comp.programmingExercise.set(exercise);
+            comp.baseResource.set(base);
+            fixture.detectChanges();
+            const editor = fixture.nativeElement.querySelector('[data-testid="edit-in-editor-action"]') as HTMLAnchorElement;
+            expect(editor).not.toBeNull();
+            expect(editor.closest('[data-testid="exercise-editing-actions"]')).not.toBeNull();
+            expect(router.createUrlTree).toHaveBeenCalledWith([base, 'code-editor', 'TEMPLATE', 42], expect.anything());
+
+            comp.programmingExercise.set(Object.assign(new ProgrammingExercise(new Course(), undefined), { id: 21715, templateParticipation: { id: 42 } }));
+            fixture.detectChanges();
+            expect(fixture.nativeElement.querySelector('[data-testid="edit-in-editor-action"]')).toBeNull();
+        },
+    );
+
+    it('names the compact editing links when their visible labels are hidden', () => {
+        const exercise = new ProgrammingExercise(new Course(), undefined);
+        exercise.id = 21715;
+        exercise.isAtLeastEditor = true;
+        comp.programmingExercise.set(exercise);
+        fixture.detectChanges();
+        const links = fixture.nativeElement.querySelectorAll('[data-testid="exercise-editing-actions"] a') as NodeListOf<HTMLAnchorElement>;
+        expect(Array.from(links, (link) => link.getAttribute('aria-label'))).toEqual(['entity.action.edit', 'artemisApp.programmingExercise.configureGrading.shortTitle']);
+    });
+
+    it('omits More actions when the editor has no available secondary commands', () => {
+        const exercise = new ProgrammingExercise(new Course(), undefined);
+        exercise.id = 21715;
+        exercise.isAtLeastEditor = true;
+        exercise.programmingLanguage = ProgrammingLanguage.PYTHON;
+        comp.programmingExercise.set(exercise);
+        fixture.detectChanges();
+
+        expect(fixture.nativeElement.querySelector('[data-testid="exercise-more-actions"]')).toBeNull();
+    });
+
+    it('downloads the selected exercise and reports a failed download', () => {
+        comp.programmingExercise.set(mockProgrammingExercise);
+        const response = new HttpResponse({ body: new Blob(['exercise']) });
+        const exportExercise = vi
+            .spyOn(exerciseService, 'exportInstructorExercise')
+            .mockReturnValueOnce(of(response))
+            .mockReturnValueOnce(throwError(() => new Error('Failed')));
+        const download = vi.spyOn(downloadUtil, 'downloadZipFileFromResponse').mockImplementation(() => undefined);
+        const success = vi.spyOn(alertService, 'success');
+        const error = vi.spyOn(alertService, 'error');
+
+        comp.downloadExercise();
+
+        expect(exportExercise).toHaveBeenCalledWith(mockProgrammingExercise.id);
+        expect(download).toHaveBeenCalledExactlyOnceWith(response);
+        expect(success).toHaveBeenCalledWith('artemisApp.programmingExercise.export.successMessageExercise');
+
+        comp.downloadExercise();
+        expect(error).toHaveBeenCalledWith('error.exportFailed');
+    });
+
+    it('preserves sharing errors and does not export an unsaved exercise', () => {
+        const sharing = vi
+            .spyOn(TestBed.inject(ProgrammingExerciseSharingService), 'exportProgrammingExerciseToSharing')
+            .mockReturnValueOnce(of(new HttpResponse<string>({ body: null })))
+            .mockReturnValueOnce(throwError(() => new HttpErrorResponse({ error: { message: 'Sharing unavailable' } })));
+        const error = vi.spyOn(alertService, 'error');
+        comp.programmingExercise.set(mockProgrammingExercise);
+
+        comp.exportExerciseToSharing();
+        expect(sharing).toHaveBeenCalledWith(mockProgrammingExercise.id, window.location.href);
+        expect(error).toHaveBeenCalledWith('artemisApp.programmingExercise.sharing.error.noRedirect');
+
+        comp.exportExerciseToSharing();
+        expect(error).toHaveBeenCalledWith('artemisApp.programmingExercise.sharing.error.export', { message: 'Sharing unavailable' });
+
+        comp.programmingExercise.set(new ProgrammingExercise(undefined, undefined));
+        comp.exportExerciseToSharing();
+        expect(sharing).toHaveBeenCalledTimes(2);
     });
 
     it('should reload on participation change', async () => {
@@ -450,6 +582,82 @@ describe('ProgrammingExerciseDetailComponent', () => {
         comp.isExamExercise.set(true);
         comp.deleteProgrammingExercise({});
         expect(routerNavigateSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should stay on the page when the background deletion of the programming exercise failed', () => {
+        (TestBed.inject(EntityDeletionService) as unknown as MockEntityDeletionService).status = EntityDeletionStatus.FAILED;
+        const routerNavigateSpy = vi.spyOn(router, 'navigateByUrl');
+        vi.spyOn(exerciseService, 'delete').mockReturnValue(of(new HttpResponse({ body: null })));
+        comp.programmingExercise.set(mockProgrammingExercise);
+
+        comp.deleteProgrammingExercise({});
+
+        expect(routerNavigateSpy).not.toHaveBeenCalled();
+    });
+
+    it('should hand the programming exercise to the background deletion with the cleanup choices', () => {
+        const deleteSpy = vi.spyOn(exerciseService, 'delete').mockReturnValue(of(new HttpResponse({ body: null })));
+        comp.programmingExercise.set(mockProgrammingExercise);
+
+        comp.deleteProgrammingExercise({ deleteStudentReposBuildPlans: true, deleteBaseReposBuildPlans: false });
+
+        expect(deleteSpy).toHaveBeenCalledWith(mockProgrammingExercise.id, true, false);
+        const deletionService = TestBed.inject(EntityDeletionService) as unknown as MockEntityDeletionService;
+        expect(deletionService.delete).toHaveBeenCalledWith(
+            expect.objectContaining({ entityType: EntityDeletionType.EXERCISE, entityId: mockProgrammingExercise.id }),
+            expect.anything(),
+        );
+    });
+
+    it('should show the progress of a deletion that is already running when an instructor opens the page', () => {
+        const deletionService = TestBed.inject(EntityDeletionService) as unknown as MockEntityDeletionService;
+        comp.programmingExercise.set({ ...mockProgrammingExercise, isAtLeastInstructor: true } as ProgrammingExercise);
+
+        comp['resumeRunningDeletion']();
+
+        expect(deletionService.resume).toHaveBeenCalledWith(
+            expect.objectContaining({ entityType: EntityDeletionType.EXERCISE, entityId: mockProgrammingExercise.id }),
+            expect.anything(),
+        );
+    });
+
+    it('should not leave the page when the background deletion ends while the page shows another exercise', () => {
+        const deletionService = TestBed.inject(EntityDeletionService) as unknown as MockEntityDeletionService;
+        const ended$ = new Subject<EntityDeletionProgress>();
+        deletionService.delete.mockReturnValueOnce(ended$);
+        const routerNavigateSpy = vi.spyOn(router, 'navigateByUrl');
+        vi.spyOn(exerciseService, 'delete').mockReturnValue(of(new HttpResponse({ body: null })));
+        comp.programmingExercise.set(mockProgrammingExercise);
+        comp.deleteProgrammingExercise({});
+
+        comp.programmingExercise.set({ ...mockProgrammingExercise, id: mockProgrammingExercise.id! + 1 } as ProgrammingExercise);
+        ended$.next({
+            entityType: EntityDeletionType.EXERCISE,
+            entityId: mockProgrammingExercise.id!,
+            status: EntityDeletionStatus.COMPLETED,
+            stepsCompleted: 1,
+            totalSteps: 1,
+            itemsProcessed: 0,
+            totalItems: 0,
+            weightedProgressPercent: 100,
+        });
+
+        expect(routerNavigateSpy).not.toHaveBeenCalled();
+    });
+
+    it('should not write to the closed delete dialog subject when the deletion request fails after the user left the page', () => {
+        const deletionService = TestBed.inject(EntityDeletionService) as unknown as MockEntityDeletionService;
+        const failed$ = new Subject<EntityDeletionProgress>();
+        deletionService.delete.mockReturnValueOnce(failed$);
+        vi.spyOn(exerciseService, 'delete').mockReturnValue(of(new HttpResponse({ body: null })));
+        comp.programmingExercise.set(mockProgrammingExercise);
+        const dialogErrorNextSpy = vi.spyOn(comp['dialogErrorSource'], 'next');
+
+        comp.deleteProgrammingExercise({});
+        fixture.destroy();
+        failed$.error(new HttpErrorResponse({ status: 409, statusText: 'Conflict', url: '/api/programming/delete' }));
+
+        expect(dialogErrorNextSpy).not.toHaveBeenCalled();
     });
 
     it('should generate structure oracle', async () => {

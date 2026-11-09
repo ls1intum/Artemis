@@ -47,14 +47,14 @@ import { TumAetUiButtonDirective, TumAetUiMessageComponent, TumAetUiTagComponent
 import { RouterLink } from '@angular/router';
 import dayjs from 'dayjs/esm';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
-import { Subject, of } from 'rxjs';
+import { Subject, of, throwError } from 'rxjs';
 import { MockExamParticipationService } from 'test/helpers/mocks/service/mock-exam-participation.service';
 import { MockArtemisServerDateService } from 'test/helpers/mocks/service/mock-server-date.service';
 import { Course } from 'app/course/shared/entities/course.model';
 import * as ExamUtils from 'app/exam/overview/exam.utils';
 import { ProgrammingExamSummaryComponent } from 'app/exam/overview/summary/exercises/programming-exam-summary/programming-exam-summary.component';
 import { StudentExamService } from 'app/exam/manage/student-exams/student-exam.service';
-import { HttpResponse, provideHttpClient } from '@angular/common/http';
+import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -296,6 +296,333 @@ describe('ExamResultSummaryComponent', () => {
         expect(management).toHaveBeenCalledWith(1, studentExam.exam!.id, studentExam.id);
         expect(owner).not.toHaveBeenCalled();
         expect(component.studentExamGradeInfoDTO()).toEqual({ ...gradeInfo, studentExam });
+    });
+
+    it('should load the grade overview for a submitted test exam without a publication date', () => {
+        const submittedTestExam = { ...studentExamForTestExam, submitted: true };
+        fixture.componentRef.setInput('studentExam', submittedTestExam);
+        const owner = vi.spyOn(examParticipationService, 'loadStudentExamGradeInfoForSummary').mockReturnValue(of({ ...gradeInfo }));
+        fixture.detectChanges();
+        expect(owner).toHaveBeenCalledWith(1, testExam.id, submittedTestExam.id);
+        expect(component.studentExamGradeInfoDTO()).toBeDefined();
+    });
+
+    it.each([0, 500, 503])('recovers an initial owner grade request with status %s into pending polling', async (status) => {
+        vi.useFakeTimers();
+        try {
+            fixture.componentRef.setInput('studentExam', { ...studentExamForTestExam, submitted: true });
+            const pending = { ...gradeInfo, pendingExerciseIds: [programmingExercise.id!] };
+            const completed = { ...gradeInfo, pendingExerciseIds: [], studentResult: { ...gradeInfo.studentResult, overallPointsAchieved: 16 } };
+            const load = vi
+                .spyOn(examParticipationService, 'loadStudentExamGradeInfoForSummary')
+                .mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status })))
+                .mockReturnValueOnce(of(pending))
+                .mockReturnValue(of(completed));
+            fixture.detectChanges();
+            expect(component.studentExamGradeInfoDTO()).toBeUndefined();
+            await vi.advanceTimersByTimeAsync(2000);
+            fixture.detectChanges();
+            expect(fixture.nativeElement.querySelector('[data-testid="exam-summary-result-overview"]')).not.toBeNull();
+            expect(component.studentExamGradeInfoDTO()?.pendingExerciseIds).toHaveLength(1);
+            await vi.advanceTimersByTimeAsync(2000);
+            expect(component.studentExamGradeInfoDTO()?.studentResult.overallPointsAchieved).toBe(16);
+            await vi.advanceTimersByTimeAsync(60000);
+            expect(load).toHaveBeenCalledTimes(3);
+        } finally {
+            fixture.destroy();
+            vi.useRealTimers();
+        }
+    });
+
+    it('backs off initial transient failures and recovers a published real-exam summary', async () => {
+        vi.useFakeTimers();
+        try {
+            const load = vi.spyOn(examParticipationService, 'loadStudentExamGradeInfoForSummary').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 503 })));
+            fixture.detectChanges();
+            await vi.advanceTimersByTimeAsync(6000);
+            expect(load).toHaveBeenCalledTimes(4);
+            await vi.advanceTimersByTimeAsync(2000);
+            expect(load).toHaveBeenCalledTimes(4);
+            await vi.advanceTimersByTimeAsync(2000);
+            expect(load).toHaveBeenCalledTimes(5);
+            await vi.advanceTimersByTimeAsync(24000);
+            expect(load).toHaveBeenCalledTimes(7);
+            await vi.advanceTimersByTimeAsync(30000);
+            expect(load).toHaveBeenCalledTimes(8);
+            expect(component.studentExamGradeInfoDTO()).toBeUndefined();
+            load.mockReturnValue(of({ ...gradeInfo }));
+            await vi.advanceTimersByTimeAsync(29999);
+            expect(load).toHaveBeenCalledTimes(8);
+            await vi.advanceTimersByTimeAsync(1);
+            fixture.detectChanges();
+            expect(fixture.nativeElement.querySelector('[data-testid="exam-summary-result-overview"]')).not.toBeNull();
+            await vi.advanceTimersByTimeAsync(90000);
+            expect(load).toHaveBeenCalledTimes(9);
+        } finally {
+            fixture.destroy();
+            vi.useRealTimers();
+        }
+    });
+
+    it.each([401, 403])('does not retry an initial owner request with permanent status %s', async (status) => {
+        vi.useFakeTimers();
+        try {
+            fixture.componentRef.setInput('studentExam', { ...studentExamForTestExam, submitted: true });
+            const load = vi.spyOn(examParticipationService, 'loadStudentExamGradeInfoForSummary').mockReturnValue(throwError(() => new HttpErrorResponse({ status })));
+            fixture.detectChanges();
+            await vi.advanceTimersByTimeAsync(60000);
+            expect(load).toHaveBeenCalledOnce();
+            expect(component.studentExamGradeInfoDTO()).toBeUndefined();
+        } finally {
+            fixture.destroy();
+            vi.useRealTimers();
+        }
+    });
+
+    it.each(['attempt change', 'destroy'])('cancels an initial owner retry timer on %s', async (cancellation) => {
+        vi.useFakeTimers();
+        try {
+            fixture.componentRef.setInput('studentExam', { ...studentExamForTestExam, submitted: true });
+            const load = vi.spyOn(examParticipationService, 'loadStudentExamGradeInfoForSummary').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 0 })));
+            fixture.detectChanges();
+            if (cancellation === 'destroy') {
+                fixture.destroy();
+            } else {
+                fixture.componentRef.setInput('studentExam', { ...studentExamForTestExam, id: 999, submitted: true });
+                fixture.detectChanges();
+            }
+            await vi.advanceTimersByTimeAsync(60000);
+            expect(load).toHaveBeenCalledOnce();
+            expect(component.studentExamGradeInfoDTO()).toBeUndefined();
+        } finally {
+            fixture.destroy();
+            vi.useRealTimers();
+        }
+    });
+
+    it.each(['attempt change', 'destroy'])('unsubscribes an in-flight initial owner retry on %s', async (cancellation) => {
+        vi.useFakeTimers();
+        try {
+            fixture.componentRef.setInput('studentExam', { ...studentExamForTestExam, submitted: true });
+            const retryRequest = new Subject<StudentExamWithGradeDTO>();
+            const load = vi
+                .spyOn(examParticipationService, 'loadStudentExamGradeInfoForSummary')
+                .mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 500 })))
+                .mockReturnValue(retryRequest);
+            fixture.detectChanges();
+            await vi.advanceTimersByTimeAsync(2000);
+            expect(retryRequest.observed).toBe(true);
+            if (cancellation === 'destroy') {
+                fixture.destroy();
+            } else {
+                fixture.componentRef.setInput('studentExam', { ...studentExamForTestExam, id: 999, submitted: true });
+                fixture.detectChanges();
+            }
+            expect(retryRequest.observed).toBe(false);
+            retryRequest.next({ ...gradeInfo });
+            await vi.advanceTimersByTimeAsync(60000);
+            expect(load).toHaveBeenCalledTimes(2);
+            expect(component.studentExamGradeInfoDTO()).toBeUndefined();
+        } finally {
+            fixture.destroy();
+            vi.useRealTimers();
+        }
+    });
+
+    it('refreshes pending automatic results and stops after completion', async () => {
+        vi.useFakeTimers();
+        fixture.componentRef.setInput('studentExam', { ...studentExamForTestExam, submitted: true });
+        const pending = { ...gradeInfo, pendingExerciseIds: [programmingExercise.id!] };
+        const completed = { ...gradeInfo, pendingExerciseIds: [], studentResult: { ...gradeInfo.studentResult, overallPointsAchieved: 16 } };
+        const load = vi.spyOn(examParticipationService, 'loadStudentExamGradeInfoForSummary').mockReturnValueOnce(of(pending)).mockReturnValue(of(completed));
+        fixture.detectChanges();
+        expect(component.studentExamGradeInfoDTO()?.pendingExerciseIds).toEqual([programmingExercise.id!]);
+        await vi.advanceTimersByTimeAsync(2000);
+        expect(component.studentExamGradeInfoDTO()?.studentResult.overallPointsAchieved).toBe(16);
+        await vi.advanceTimersByTimeAsync(4000);
+        expect(load).toHaveBeenCalledTimes(2);
+        vi.useRealTimers();
+    });
+
+    it('backs off while automatic results stay pending', async () => {
+        vi.useFakeTimers();
+        fixture.componentRef.setInput('studentExam', { ...studentExamForTestExam, submitted: true });
+        const pending = { ...gradeInfo, pendingExerciseIds: [programmingExercise.id!] };
+        const load = vi.spyOn(examParticipationService, 'loadStudentExamGradeInfoForSummary').mockReturnValue(of(pending));
+        fixture.detectChanges();
+        await vi.advanceTimersByTimeAsync(6000);
+        expect(load).toHaveBeenCalledTimes(4);
+        await vi.advanceTimersByTimeAsync(2000);
+        expect(load).toHaveBeenCalledTimes(4);
+        await vi.advanceTimersByTimeAsync(2000);
+        expect(load).toHaveBeenCalledTimes(5);
+        vi.useRealTimers();
+    });
+
+    it.each([true, false])('refreshes a pending bonus source and stops after completion (test exam: %s)', async (testExam) => {
+        vi.useFakeTimers();
+        fixture.componentRef.setInput('studentExam', testExam ? { ...studentExamForTestExam, submitted: true } : studentExam);
+        const pending = { ...gradeInfo, pendingExerciseIds: [], studentResult: { ...gradeInfo.studentResult, gradeWithBonus: { pending: true } } };
+        const completed = { ...gradeInfo, pendingExerciseIds: [], studentResult: { ...gradeInfo.studentResult, gradeWithBonus: { pending: false, finalGrade: '1.0' } } };
+        const load = vi.spyOn(examParticipationService, 'loadStudentExamGradeInfoForSummary').mockReturnValueOnce(of(pending)).mockReturnValue(of(completed));
+        fixture.detectChanges();
+        expect(component.studentExamGradeInfoDTO()?.studentResult.gradeWithBonus?.pending).toBe(true);
+        await vi.advanceTimersByTimeAsync(2000);
+        expect(component.studentExamGradeInfoDTO()?.studentResult.gradeWithBonus?.finalGrade).toBe('1.0');
+        await vi.advanceTimersByTimeAsync(4000);
+        expect(load).toHaveBeenCalledTimes(2);
+        vi.useRealTimers();
+    });
+
+    it('does not poll a completed zero-point bonus source', async () => {
+        vi.useFakeTimers();
+        fixture.componentRef.setInput('studentExam', { ...studentExamForTestExam, submitted: true });
+        const load = vi.spyOn(examParticipationService, 'loadStudentExamGradeInfoForSummary').mockReturnValue(
+            of({
+                ...gradeInfo,
+                studentResult: { ...gradeInfo.studentResult, gradeWithBonus: { pending: false, studentPointsOfBonusSource: 0, bonusGrade: 0, finalGrade: '3.0' } },
+            }),
+        );
+        fixture.detectChanges();
+        await vi.advanceTimersByTimeAsync(10000);
+        expect(load).toHaveBeenCalledOnce();
+        expect(component.studentExamGradeInfoDTO()?.studentResult.gradeWithBonus?.studentPointsOfBonusSource).toBe(0);
+        vi.useRealTimers();
+    });
+
+    it('recovers from a failed pending-result refresh', async () => {
+        vi.useFakeTimers();
+        fixture.componentRef.setInput('studentExam', { ...studentExamForTestExam, submitted: true });
+        const pending = { ...gradeInfo, pendingExerciseIds: [programmingExercise.id!] };
+        const completed = { ...gradeInfo, pendingExerciseIds: [] };
+        const load = vi
+            .spyOn(examParticipationService, 'loadStudentExamGradeInfoForSummary')
+            .mockReturnValueOnce(of(pending))
+            .mockReturnValueOnce(throwError(() => new Error('offline')))
+            .mockReturnValue(of(completed));
+        fixture.detectChanges();
+        await vi.advanceTimersByTimeAsync(2000);
+        expect(component.studentExamGradeInfoDTO()?.pendingExerciseIds).toHaveLength(1);
+        await vi.advanceTimersByTimeAsync(2000);
+        expect(component.studentExamGradeInfoDTO()?.pendingExerciseIds).toHaveLength(0);
+        expect(load).toHaveBeenCalledTimes(3);
+        vi.useRealTimers();
+    });
+
+    it.each([400, 401, 403, 404, 409])('stops pending owner refreshes after a permanent HTTP %s response', async (status) => {
+        vi.useFakeTimers();
+        try {
+            fixture.componentRef.setInput('studentExam', { ...studentExamForTestExam, submitted: true });
+            const pending = { ...gradeInfo, pendingExerciseIds: [programmingExercise.id!] };
+            const load = vi
+                .spyOn(examParticipationService, 'loadStudentExamGradeInfoForSummary')
+                .mockReturnValueOnce(of(pending))
+                .mockReturnValue(throwError(() => new HttpErrorResponse({ status })));
+            fixture.detectChanges();
+            await vi.advanceTimersByTimeAsync(2000);
+            expect(component.studentExamGradeInfoDTO()?.pendingExerciseIds).toEqual([programmingExercise.id!]);
+            await vi.advanceTimersByTimeAsync(120000);
+            expect(load).toHaveBeenCalledTimes(2);
+        } finally {
+            fixture.destroy();
+            vi.useRealTimers();
+        }
+    });
+
+    it.each([401, 403])('stops pending instructor refreshes after HTTP %s without querying owner grades', async (status) => {
+        vi.useFakeTimers();
+        try {
+            fixture.componentRef.setInput('studentExam', { ...studentExamForTestExam, submitted: true });
+            fixture.componentRef.setInput('instructorView', true);
+            fixture.componentRef.setInput('managementGradeInfo', { ...gradeInfo, pendingExerciseIds: [programmingExercise.id!] });
+            const load = vi.spyOn(TestBed.inject(StudentExamService), 'find').mockReturnValue(throwError(() => new HttpErrorResponse({ status })));
+            const owner = vi.spyOn(examParticipationService, 'loadStudentExamGradeInfoForSummary');
+            fixture.detectChanges();
+            await vi.advanceTimersByTimeAsync(122000);
+            expect(load).toHaveBeenCalledOnce();
+            expect(owner).not.toHaveBeenCalled();
+        } finally {
+            fixture.destroy();
+            vi.useRealTimers();
+        }
+    });
+
+    it.each([0, 500, 503])('recovers pending owner grades after transient HTTP %s', async (status) => {
+        vi.useFakeTimers();
+        try {
+            fixture.componentRef.setInput('studentExam', { ...studentExamForTestExam, submitted: true });
+            const pending = { ...gradeInfo, pendingExerciseIds: [programmingExercise.id!] };
+            const load = vi
+                .spyOn(examParticipationService, 'loadStudentExamGradeInfoForSummary')
+                .mockReturnValueOnce(of(pending))
+                .mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status })))
+                .mockReturnValue(of({ ...gradeInfo, pendingExerciseIds: [] }));
+            fixture.detectChanges();
+            await vi.advanceTimersByTimeAsync(2000);
+            expect(component.studentExamGradeInfoDTO()?.pendingExerciseIds).toHaveLength(1);
+            await vi.advanceTimersByTimeAsync(2000);
+            expect(component.studentExamGradeInfoDTO()?.pendingExerciseIds).toHaveLength(0);
+            await vi.advanceTimersByTimeAsync(120000);
+            expect(load).toHaveBeenCalledTimes(3);
+        } finally {
+            fixture.destroy();
+            vi.useRealTimers();
+        }
+    });
+
+    it('refreshes supplied pending management grades through the instructor API', async () => {
+        vi.useFakeTimers();
+        fixture.componentRef.setInput('studentExam', { ...studentExamForTestExam, submitted: true });
+        fixture.componentRef.setInput('instructorView', true);
+        fixture.componentRef.setInput('managementGradeInfo', { ...gradeInfo, pendingExerciseIds: [programmingExercise.id!] });
+        vi.spyOn(TestBed.inject(StudentExamService), 'find').mockReturnValue(of(new HttpResponse({ body: { ...gradeInfo, pendingExerciseIds: [] } })));
+        const owner = vi.spyOn(examParticipationService, 'loadStudentExamGradeInfoForSummary');
+        fixture.detectChanges();
+        await vi.advanceTimersByTimeAsync(2000);
+        expect(component.studentExamGradeInfoDTO()?.pendingExerciseIds).toHaveLength(0);
+        expect(owner).not.toHaveBeenCalled();
+        vi.useRealTimers();
+    });
+
+    it('does not apply an old attempt refresh after the summary input changes', async () => {
+        vi.useFakeTimers();
+        fixture.componentRef.setInput('studentExam', { ...studentExamForTestExam, submitted: true });
+        const load = vi.spyOn(examParticipationService, 'loadStudentExamGradeInfoForSummary').mockReturnValue(of({ ...gradeInfo, pendingExerciseIds: [programmingExercise.id!] }));
+        fixture.detectChanges();
+        fixture.componentRef.setInput('studentExam', { ...studentExamForTestExam, id: 999, submitted: true });
+        fixture.detectChanges();
+        expect(component.studentExamGradeInfoDTO()).toBeUndefined();
+        await vi.advanceTimersByTimeAsync(4000);
+        expect(load).toHaveBeenCalledOnce();
+        vi.useRealTimers();
+    });
+
+    it('cancels pending-result polling when the summary is destroyed', async () => {
+        vi.useFakeTimers();
+        fixture.componentRef.setInput('studentExam', { ...studentExamForTestExam, submitted: true });
+        const load = vi.spyOn(examParticipationService, 'loadStudentExamGradeInfoForSummary').mockReturnValue(of({ ...gradeInfo, pendingExerciseIds: [programmingExercise.id!] }));
+        fixture.detectChanges();
+        fixture.destroy();
+        await vi.advanceTimersByTimeAsync(4000);
+        expect(load).toHaveBeenCalledOnce();
+        vi.useRealTimers();
+    });
+
+    it('never starts polling unpublished real-exam results', async () => {
+        vi.useFakeTimers();
+        fixture.componentRef.setInput('studentExam', { ...studentExam, exam: { ...exam, publishResultsDate: dayjs().add(1, 'day') } });
+        const load = vi.spyOn(examParticipationService, 'loadStudentExamGradeInfoForSummary');
+        fixture.detectChanges();
+        await vi.advanceTimersByTimeAsync(4000);
+        expect(load).not.toHaveBeenCalled();
+        vi.useRealTimers();
+    });
+
+    it('should not request grades while a test exam is still being conducted', () => {
+        fixture.componentRef.setInput('studentExam', { ...studentExamForTestExam, submitted: false });
+        const owner = vi.spyOn(examParticipationService, 'loadStudentExamGradeInfoForSummary');
+        fixture.detectChanges();
+        expect(owner).not.toHaveBeenCalled();
     });
 
     it('should retrieve grade info correctly', () => {

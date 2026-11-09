@@ -23,6 +23,7 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { LtiService } from 'app/foundation/service/lti.service';
 import { SidebarItem } from 'app/course/shared/course-sidebar/course-sidebar.component';
 import {
+    MODULE_FEATURE_ATHENA,
     MODULE_FEATURE_ATLAS,
     MODULE_FEATURE_HYPERION,
     MODULE_FEATURE_IRIS,
@@ -84,6 +85,7 @@ export abstract class BaseCourseContainerComponent implements OnInit, OnDestroy,
     lectureEnabled: boolean = false;
     irisEnabled: boolean = false;
     hyperionEnabled: boolean = false;
+    athenaEnabled: boolean = false;
     ltiEnabled: boolean = false;
     tutorialGroupEnabled: boolean = false;
     localCIActive: boolean = false;
@@ -163,6 +165,7 @@ export abstract class BaseCourseContainerComponent implements OnInit, OnDestroy,
         this.lectureEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_LECTURE);
         this.irisEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_IRIS);
         this.hyperionEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_HYPERION);
+        this.athenaEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATHENA);
         this.ltiEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_LTI);
         this.tutorialGroupEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_TUTORIALGROUP);
         this.localCIActive = this.profileService.isProfileActive(PROFILE_LOCALCI);

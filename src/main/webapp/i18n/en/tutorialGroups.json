@@ -236,8 +236,8 @@
                 },
                 "confirmSaveDialog": {
                     "header": "Save Group?",
-                    "message": "You made changes to the schedule. If you save, this will overwrite all existing sessions.",
-                    "acceptButtonLabel": "Save and Overwrite"
+                    "message": "You changed the schedule. Saving updates the sessions to match it: sessions that still occur keep their recorded attendance, and sessions that no longer occur are removed.",
+                    "acceptButtonLabel": "Save and Update"
                 }
             },
             "tutorialGroupDetail": {

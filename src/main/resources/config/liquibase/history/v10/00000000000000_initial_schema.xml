@@ -3692,6 +3692,7 @@
         <addUniqueConstraint tableName="quiz_training_leaderboard" columnNames="user_id, course_id" constraintName="uc_quiz_training_leaderboard_user_course"/>
         <addUniqueConstraint tableName="course_request" columnNames="short_name" constraintName="uk_course_request_short_name"/>
     </changeSet>
+    <!-- REMOVE_IN_ARTEMIS_11 (MySQL): the next changeset is the MySQL/H2 branch of the initial schema; drop the mysql dbms precondition (H2 only if H2 stays) -->
     <changeSet id="00000000000002" author="krusche">
         <preConditions onFail="MARK_RAN">
             <or>

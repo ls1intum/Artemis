@@ -145,6 +145,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
     readonly isExamStarted = signal(false);
     readonly currentCourse = this.courseStorageService.currentCourse;
     readonly currentRoute = getCurrentRouteSignal(this.router);
+    readonly navigationContextIndicatorData = computed(() => this.computeNavigationContextIndicatorData());
     readonly routeIsAtStudentCourseView = getSignalBasedOnRoute(this.router, this.isStudentCourseViewRoute);
     readonly routeIsAtCourseManagementView = getSignalBasedOnRoute(this.router, this.isCourseManagementViewRoute);
     readonly perspectiveSwitchLinks = computed(() => this.computePerspectiveSwitchLinks());
@@ -375,6 +376,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
         suspicious_sessions: 'artemisApp.examManagement.suspiciousBehavior.suspiciousSessions.title',
         exam_timeline: 'artemisApp.examTimeline.breadcrumb',
         iris_settings: 'artemisApp.iris.settings.title',
+        athena_settings: 'artemisApp.course.athenaConfig.settingsPage.title',
         generate: 'entity.action.generate',
         build_queue: 'global.menu.admin.sidebar.buildQueue',
         build_overview: 'artemisApp.buildQueue.title',
@@ -786,6 +788,27 @@ export class NavbarComponent implements OnInit, OnDestroy {
         return /(^|\/)course-management(\/|$)/.test(url.split('?')[0]);
     }
 
+    private computeNavigationContextIndicatorData(): NavigationContextIndicatorData | undefined {
+        const course = this.currentCourse();
+        if (course) {
+            return {
+                type: 'course',
+                routerLink: this.getCourseLink(course.id),
+                title: course.title,
+                imagePath: course.courseIconPath,
+            };
+        }
+
+        const path = this.currentRoute().split(/[?#]/)[0];
+        if (/^\/admin(?:\/|$)/.test(path)) {
+            return { type: 'administration', routerLink: '/admin', translationKey: 'global.menu.admin.main' };
+        }
+        if (/^\/user-settings(?:\/|$)/.test(path)) {
+            return { type: 'userSettings', routerLink: '/user-settings', translationKey: 'artemisApp.userSettings.userSettings' };
+        }
+        return undefined;
+    }
+
     private computePerspectiveSwitchLinks(): PerspectiveSwitchLinks | undefined {
         const currentRoute = this.currentRoute();
         const path = currentRoute.split(/[?#]/)[0];
@@ -1071,3 +1094,16 @@ interface PerspectiveRouteMapping {
     urlParts: string[];
     targetPath: string[];
 }
+
+type NavigationContextIndicatorData =
+    | {
+          type: 'course';
+          routerLink: (string | number)[] | undefined;
+          title: string | undefined;
+          imagePath: string | undefined;
+      }
+    | {
+          type: 'administration' | 'userSettings';
+          routerLink: string;
+          translationKey: string;
+      };

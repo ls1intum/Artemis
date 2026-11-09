@@ -1,9 +1,11 @@
+import { TumAetUiButtonDirective, TumAetUiDatePickerComponent, TumAetUiFormFieldComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 import { isExamExerciseRoute } from 'app/exercise/util/exercise-detail-route-context';
 import { JsonPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, DestroyRef, HostListener, OnInit, ViewEncapsulation, computed, inject, signal, viewChild, viewChildren } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ExerciseTitleChannelNameComponent } from 'app/exercise/exercise-title-channel-name/exercise-title-channel-name.component';
 import { QuizExerciseService } from '../service/quiz-exercise.service';
+import { EXERCISE_FOR_IMPORT_FROM_FILE } from 'app/exercise/import/import-from-file-navigation';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Location } from '@angular/common';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
@@ -15,7 +17,6 @@ import { DragAndDropQuestionUtil } from 'app/quiz/shared/service/drag-and-drop-q
 import { ShortAnswerQuestionUtil } from 'app/quiz/shared/service/short-answer-question-util.service';
 import { Duration } from '../interfaces/quiz-exercise-interfaces';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { TumAetUiDatePickerComponent, TumAetUiFormFieldComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 import { DialogService } from 'primeng/dynamicdialog';
 import dayjs from 'dayjs/esm';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -64,7 +65,6 @@ import { CompetencySelectionComponent } from 'app/atlas/shared/competency-select
 import { CalendarService } from 'app/calendar/shared/service/calendar.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MODULE_FEATURE_HYPERION } from 'app/app.constants';
-import { ButtonModule } from 'primeng/button';
 import { TextareaModule } from 'primeng/textarea';
 import { ExerciseGroupDateNoticeComponent } from 'app/exercise/exercise-group-date-notice/exercise-group-date-notice.component';
 import { ExerciseGroupTimelineLockComponent } from 'app/course/manage/exercises/group-timeline-lock/exercise-group-timeline-lock.component';
@@ -92,6 +92,7 @@ const MAX_TIMEOUT_DELAY = 2_147_483_647;
     styleUrls: ['./quiz-exercise-update.component.scss', '../../shared/quiz.scss'],
     encapsulation: ViewEncapsulation.None,
     imports: [
+        TumAetUiButtonDirective,
         TranslateDirective,
         DocumentationButtonComponent,
         FormsModule,
@@ -105,7 +106,6 @@ const MAX_TIMEOUT_DELAY = 2_147_483_647;
         FaIconComponent,
         ArtemisTranslatePipe,
         RouterLink,
-        ButtonModule,
         TextareaModule,
         CheckboxModule,
         InputTextModule,
@@ -314,6 +314,13 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
         }
 
         if (this.router.url.includes('/import')) {
+            this.isImport.set(true);
+        }
+        // A quiz read from a file arrives on the route of a new quiz and is then saved like an imported one.
+        const quizFromFile: QuizExercise | undefined = history.state?.[EXERCISE_FOR_IMPORT_FROM_FILE];
+        if (!quizId && quizFromFile) {
+            quizFromFile.quizQuestions ??= [];
+            this.quizExercise.set(quizFromFile);
             this.isImport.set(true);
         }
 

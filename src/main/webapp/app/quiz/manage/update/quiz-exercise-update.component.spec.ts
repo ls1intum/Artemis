@@ -608,6 +608,27 @@ describe('QuizExerciseUpdateComponent', () => {
             expect(comp.isImport()).toBeTruthy();
         });
 
+        it('should import a quiz read from a file on the route of a new quiz', async () => {
+            const snapshot = new ActivatedRouteSnapshot();
+            snapshot.params = { courseId: course.id };
+            vi.spyOn(snapshot, 'pathFromRoot', 'get').mockReturnValue([snapshot]);
+            await configureFreshFixture({ snapshot, queryParams: of({}) } as ActivatedRoute);
+            const fromFile = new QuizExercise(undefined, undefined);
+            fromFile.id = 9;
+            fromFile.title = 'From file';
+            fromFile.quizQuestions = [];
+            history.replaceState({ exerciseForImportFromFile: fromFile }, '');
+
+            comp.ngOnInit();
+            history.replaceState(null, '');
+
+            expect(quizExerciseServiceStub).not.toHaveBeenCalled();
+            expect(comp.isImport()).toBe(true);
+            expect(comp.quizExercise().title).toBe('From file');
+            expect(comp.quizExercise().id).toBeUndefined();
+            expect(comp.quizExercise().course).toEqual(course);
+        });
+
         it('should assign exerciseGroup to existing quizExercise in exam mode', async () => {
             const snapshot = new ActivatedRouteSnapshot();
             snapshot.params = { courseId: course.id, exerciseId: 456, examId: 1, exerciseGroupId: 2 };
