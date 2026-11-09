@@ -7,6 +7,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
  * DTO representing the exam context for a file upload exercise/submission.
@@ -15,7 +16,7 @@ import de.tum.cit.aet.artemis.exam.domain.Exam;
  * @param course the course context of the exam
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record FileUploadExamContextDTO(Long id, @Nullable FileUploadCourseContextDTO course) {
+public record FileUploadExamContextDTO(@Schema(requiredMode = Schema.RequiredMode.REQUIRED) Long id, @Nullable FileUploadCourseContextDTO course) {
 
     /**
      * Factory method to create a {@link FileUploadExamContextDTO} from an {@link Exam} entity.

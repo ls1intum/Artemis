@@ -5,6 +5,7 @@ import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.account.domain.User;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
  * DTO representing user details for file upload contexts (e.g. assessor, note creator).
@@ -17,7 +18,8 @@ import de.tum.cit.aet.artemis.account.domain.User;
  * @param imageUrl  the URL to the user's profile image
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record FileUploadUserDTO(Long id, String login, @Nullable String name, @Nullable String firstName, @Nullable String lastName, @Nullable String imageUrl) {
+public record FileUploadUserDTO(@Schema(requiredMode = Schema.RequiredMode.REQUIRED) Long id, @Schema(requiredMode = Schema.RequiredMode.REQUIRED) String login,
+        @Nullable String name, @Nullable String firstName, @Nullable String lastName, @Nullable String imageUrl) {
 
     /**
      * Factory method to create a {@link FileUploadUserDTO} from a {@link User} entity.

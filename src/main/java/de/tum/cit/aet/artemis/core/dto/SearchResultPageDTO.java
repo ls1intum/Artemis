@@ -7,6 +7,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
  * Wrapper for a search result which is paged <br>
@@ -25,8 +26,9 @@ public class SearchResultPageDTO<T> {
     private List<T> resultsOnPage = new ArrayList<>();
 
     /**
-     * The total number of available pages for the given search
+     * The total number of available pages for the given search. A primitive, so it is always serialized, also as {@code 0}.
      */
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     private int numberOfPages;
 
     public SearchResultPageDTO() {

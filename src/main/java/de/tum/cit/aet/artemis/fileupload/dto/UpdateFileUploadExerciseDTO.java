@@ -20,6 +20,7 @@ import de.tum.cit.aet.artemis.exercise.dto.CompetencyLinksHolderDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseMetadataDTO;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 import de.tum.cit.aet.artemis.lecture.dto.CompetencyLinkDTO;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
  * Data Transfer Object for updating a {@link FileUploadExercise}.
@@ -75,13 +76,13 @@ import de.tum.cit.aet.artemis.lecture.dto.CompetencyLinkDTO;
  * @param competencyLinks                        links to course competencies with weights
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record UpdateFileUploadExerciseDTO(long id, String title, @Nullable String channelName, @Nullable String shortName, @Nullable String problemStatement,
-        @Nullable Set<String> categories, @Nullable DifficultyLevel difficulty, @Nullable Double maxPoints, @Nullable Double bonusPoints,
-        @Nullable IncludedInOverallScore includedInOverallScore, @Nullable Boolean allowComplaintsForAutomaticAssessments, @Nullable Boolean presentationScoreEnabled,
-        @Nullable Boolean secondCorrectionEnabled, @Nullable String gradingInstructions, @Nullable ZonedDateTime releaseDate, @Nullable ZonedDateTime startDate,
-        @Nullable ZonedDateTime dueDate, @Nullable ZonedDateTime assessmentDueDate, @Nullable ZonedDateTime exampleSolutionPublicationDate, @Nullable String exampleSolution,
-        @Nullable String filePattern, @Nullable Long courseId, @Nullable Long exerciseGroupId, @Nullable List<GradingCriterionDTO> gradingCriteria,
-        @Nullable Set<CompetencyLinkDTO> competencyLinks) implements CompetencyLinksHolderDTO, ExerciseMetadataDTO {
+public record UpdateFileUploadExerciseDTO(@Schema(requiredMode = Schema.RequiredMode.REQUIRED) long id, @Schema(requiredMode = Schema.RequiredMode.REQUIRED) String title,
+        @Nullable String channelName, @Nullable String shortName, @Nullable String problemStatement, @Nullable Set<String> categories, @Nullable DifficultyLevel difficulty,
+        @Nullable Double maxPoints, @Nullable Double bonusPoints, @Nullable IncludedInOverallScore includedInOverallScore, @Nullable Boolean allowComplaintsForAutomaticAssessments,
+        @Nullable Boolean presentationScoreEnabled, @Nullable Boolean secondCorrectionEnabled, @Nullable String gradingInstructions, @Nullable ZonedDateTime releaseDate,
+        @Nullable ZonedDateTime startDate, @Nullable ZonedDateTime dueDate, @Nullable ZonedDateTime assessmentDueDate, @Nullable ZonedDateTime exampleSolutionPublicationDate,
+        @Nullable String exampleSolution, @Nullable String filePattern, @Nullable Long courseId, @Nullable Long exerciseGroupId,
+        @Nullable List<GradingCriterionDTO> gradingCriteria, @Nullable Set<CompetencyLinkDTO> competencyLinks) implements CompetencyLinksHolderDTO, ExerciseMetadataDTO {
 
     /**
      * Creates a DTO from a {@link FileUploadExercise} entity.

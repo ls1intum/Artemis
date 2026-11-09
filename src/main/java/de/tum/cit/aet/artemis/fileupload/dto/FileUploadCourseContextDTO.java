@@ -5,6 +5,7 @@ import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.course.domain.Course;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
  * DTO representing the course context for a file upload exercise/submission.
@@ -23,9 +24,11 @@ import de.tum.cit.aet.artemis.course.domain.Course;
  * @param requestMoreFeedbackEnabled     whether more-feedback requests are enabled
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record FileUploadCourseContextDTO(Long id, String title, String shortName, @Nullable Integer accuracyOfScores, @Nullable Integer maxComplaints,
-        @Nullable Integer maxTeamComplaints, int maxComplaintTimeDays, int maxRequestMoreFeedbackTimeDays, int maxComplaintTextLimit, int maxComplaintResponseTextLimit,
-        boolean complaintsEnabled, boolean requestMoreFeedbackEnabled) {
+public record FileUploadCourseContextDTO(@Schema(requiredMode = Schema.RequiredMode.REQUIRED) Long id, String title, String shortName, @Nullable Integer accuracyOfScores,
+        @Nullable Integer maxComplaints, @Nullable Integer maxTeamComplaints, @Schema(requiredMode = Schema.RequiredMode.REQUIRED) int maxComplaintTimeDays,
+        @Schema(requiredMode = Schema.RequiredMode.REQUIRED) int maxRequestMoreFeedbackTimeDays, @Schema(requiredMode = Schema.RequiredMode.REQUIRED) int maxComplaintTextLimit,
+        @Schema(requiredMode = Schema.RequiredMode.REQUIRED) int maxComplaintResponseTextLimit, @Schema(requiredMode = Schema.RequiredMode.REQUIRED) boolean complaintsEnabled,
+        @Schema(requiredMode = Schema.RequiredMode.REQUIRED) boolean requestMoreFeedbackEnabled) {
 
     /**
      * Factory method to create a {@link FileUploadCourseContextDTO} from a {@link Course} entity.

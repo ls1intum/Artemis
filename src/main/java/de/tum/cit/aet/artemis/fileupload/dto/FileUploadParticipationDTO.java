@@ -12,6 +12,7 @@ import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
  * DTO representing a participation in a file upload exercise.
@@ -30,9 +31,10 @@ import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
  * @param exercise              the exercise context of this participation
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record FileUploadParticipationDTO(Long id, @Nullable InitializationState initializationState, @Nullable ZonedDateTime initializationDate,
-        @Nullable ZonedDateTime individualDueDate, @Nullable Double presentationScore, @Nullable Integer submissionCount, String type, boolean testRun,
-        @Nullable String participantName, @Nullable String participantIdentifier, @Nullable Boolean isOwner, @Nullable FileUploadExerciseContextDTO exercise) {
+public record FileUploadParticipationDTO(@Schema(requiredMode = Schema.RequiredMode.REQUIRED) Long id, @Nullable InitializationState initializationState,
+        @Nullable ZonedDateTime initializationDate, @Nullable ZonedDateTime individualDueDate, @Nullable Double presentationScore, @Nullable Integer submissionCount,
+        @Schema(requiredMode = Schema.RequiredMode.REQUIRED) String type, @Schema(requiredMode = Schema.RequiredMode.REQUIRED) boolean testRun, @Nullable String participantName,
+        @Nullable String participantIdentifier, @Nullable Boolean isOwner, @Nullable FileUploadExerciseContextDTO exercise) {
 
     /**
      * Maps a participation with explicit participant identity visibility.
