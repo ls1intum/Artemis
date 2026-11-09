@@ -186,7 +186,8 @@ class CompetencyMappingToolsServiceTest {
     @Test
     void suggestRelations_requiresIsConvertedUnlessMirroredExtendsExists() {
         when(atlasMLApi.suggestCompetencyRelations(123L)).thenReturn(new SuggestCompetencyRelationsResponseDTO(List.of(new AtlasMLCompetencyRelationDTO(1L, 2L, "REQUIRES"),
-                new AtlasMLCompetencyRelationDTO(3L, 4L, "REQUIRES"), new AtlasMLCompetencyRelationDTO(4L, 3L, "EXTENDS"))));
+                new AtlasMLCompetencyRelationDTO(3L, 4L, "REQUIRES"), new AtlasMLCompetencyRelationDTO(4L, 3L, "EXTENDS"),
+                new AtlasMLCompetencyRelationDTO(1000L, 1000L, "REQUIRES"), new AtlasMLCompetencyRelationDTO(1001L, 1001L, "EXTENDS"))));
 
         JsonNode json = objectMapper.readTree(service.suggestRelationMappingsUsingML(123L));
         assertThat(json.get("count").asInt()).isEqualTo(2);
@@ -328,9 +329,11 @@ class CompetencyMappingToolsServiceTest {
                 sessionCacheService, Optional.of(atlasMLApi), authorizationCheckService, userRepository);
         assertThat(service.suggestRelationMappingsUsingML(123L)).contains("No relation suggestions");
         when(atlasMLApi.suggestCompetencyRelations(123L)).thenReturn(new SuggestCompetencyRelationsResponseDTO(null), new SuggestCompetencyRelationsResponseDTO(List.of()),
-                new SuggestCompetencyRelationsResponseDTO(List.of(new AtlasMLCompetencyRelationDTO(1L, 2L, "INVALID"))));
+                new SuggestCompetencyRelationsResponseDTO(List.of(new AtlasMLCompetencyRelationDTO(1L, 2L, "INVALID"))),
+                new SuggestCompetencyRelationsResponseDTO(List.of(new AtlasMLCompetencyRelationDTO(1000L, 1000L, "REQUIRES"))));
         assertThat(service.suggestRelationMappingsUsingML(123L)).contains("No relation suggestions");
         assertThat(service.suggestRelationMappingsUsingML(123L)).contains("No relation suggestions");
+        assertThat(service.suggestRelationMappingsUsingML(123L)).contains("No valid relation suggestions");
         assertThat(service.suggestRelationMappingsUsingML(123L)).contains("No valid relation suggestions");
     }
 }
