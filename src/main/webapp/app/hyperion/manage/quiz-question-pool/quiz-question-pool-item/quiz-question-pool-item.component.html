@@ -57,7 +57,7 @@
                 tumAetUiButton
                 type="button"
                 size="small"
-                [severity]="question.reviewState === 'APPROVED' ? 'primary' : 'secondary'"
+                severity="success"
                 [variant]="question.reviewState === 'APPROVED' ? 'solid' : 'outlined'"
                 [disabled]="view.busy"
                 [attr.data-testid]="'pool-approve-' + question.id"
