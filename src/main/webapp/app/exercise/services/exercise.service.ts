@@ -23,7 +23,8 @@ import { SafeHtml } from '@angular/platform-browser';
 import { PlagiarismCaseInfo } from 'app/plagiarism/shared/entities/PlagiarismCaseInfo';
 import { EntityTitleService, EntityType } from 'app/core/navbar/entity-title.service';
 import { ExerciseDeletionSummaryDTO } from 'app/exercise/shared/entities/exercise-deletion-summary.model';
-import { EntitySummary } from 'app/shared-ui/delete-dialog/delete-dialog.model';
+import { EntitySummaryCategory } from 'app/shared-ui/delete-dialog/delete-dialog.model';
+import { summaryCategories, summaryCategory, summaryItem } from 'app/shared-ui/delete-dialog/entity-summary.util';
 import { UMLModel } from '@tumaet/apollon';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
 import { validateStrictDateSequence } from 'app/exercise/util/exercise.utils';
@@ -129,6 +130,20 @@ export class ExerciseService {
     }
 
     /**
+     * Downloads the exercise as a zip file that the import from file reads. A programming exercise also carries its template,
+     * solution and test repositories.
+     * @param exercise the exercise to export
+     */
+    exportToFile(exercise: Exercise): Observable<HttpResponse<Blob>> {
+        const module = exercise.type === ExerciseType.FILE_UPLOAD ? 'fileupload' : exercise.type;
+        const url =
+            exercise.type === ExerciseType.PROGRAMMING
+                ? `api/programming/programming-exercises/${exercise.id}/export-instructor-exercise`
+                : `api/${module}/${exercise.type}-exercises/${exercise.id}/export`;
+        return this.http.get(url, { observe: 'response', responseType: 'blob' });
+    }
+
+    /**
      * Get exercise with exerciseId from server
      * @param exerciseId - Exercise that should be loaded
      */
@@ -198,48 +213,53 @@ export class ExerciseService {
     }
 
     /**
-     * Retrieves the deletion summary for an exercise.
+     * Retrieves what is deleted together with an exercise, grouped into categories for the delete dialog.
      *
      * @param exercise the exercise
-     * @returns an observable of the deletion summary as EntitySummary
+     * @returns an observable of the categories, which only contain rows for data that exists and is relevant for the exercise type
      */
-    getDeletionSummary(exercise: Exercise): Observable<EntitySummary> {
+    getDeletionSummary(exercise: Exercise): Observable<EntitySummaryCategory[]> {
         if (exercise.id === undefined || exercise.type === undefined) {
-            return of<EntitySummary>({});
+            return of<EntitySummaryCategory[]>([]);
         }
 
         return this.http.get<ExerciseDeletionSummaryDTO>(`${this.resourceUrl}/${exercise.id}/deletion-summary`, { observe: 'response' }).pipe(
             map((response) => {
                 const summary = response.body;
-                return summary ? this.createExerciseEntitySummary(summary, exercise.type!) : {};
+                return summary ? this.createExerciseEntitySummary(summary, exercise.type!) : [];
             }),
         );
     }
 
-    private createExerciseEntitySummary(dto: ExerciseDeletionSummaryDTO, exerciseType: ExerciseType): EntitySummary {
-        const numberOfStudentParticipations = 'artemisApp.exercise.delete.summary.numberOfStudentParticipations';
-        const numberOfBuilds = 'artemisApp.exercise.delete.summary.numberOfBuilds';
-        const numberOfAssessments = 'artemisApp.exercise.delete.summary.numberOfAssessments';
-        const numberOfCommunicationPosts = 'artemisApp.exercise.delete.summary.numberOfCommunicationPosts';
-        const numberOfAnswerPosts = 'artemisApp.exercise.delete.summary.numberOfAnswerPosts';
+    private createExerciseEntitySummary(dto: ExerciseDeletionSummaryDTO, exerciseType: ExerciseType): EntitySummaryCategory[] {
+        const prefix = 'artemisApp.exercise.delete.summary';
+        const isProgramming = exerciseType === ExerciseType.PROGRAMMING;
+        const isQuiz = exerciseType === ExerciseType.QUIZ;
 
-        const summary: EntitySummary = {
-            [numberOfStudentParticipations]: dto.numberOfStudentParticipations,
-            [numberOfBuilds]: dto.numberOfBuilds,
-            [numberOfAssessments]: dto.numberOfAssessments,
-            [numberOfCommunicationPosts]: dto.numberOfCommunicationPosts,
-            [numberOfAnswerPosts]: dto.numberOfAnswerPosts,
-        };
-
-        if (exerciseType !== ExerciseType.PROGRAMMING) {
-            delete summary[numberOfBuilds];
-        }
-
-        if (exerciseType === ExerciseType.QUIZ) {
-            delete summary[numberOfAssessments];
-        }
-
-        return summary;
+        return summaryCategories([
+            summaryCategory(`${prefix}.category.studentWork`, [
+                summaryItem(`${prefix}.numberOfStudentParticipations`, dto.numberOfStudentParticipations),
+                summaryItem(`${prefix}.numberOfTeams`, dto.numberOfTeams),
+                summaryItem(`${prefix}.numberOfSubmissions`, dto.numberOfSubmissions),
+                summaryItem(`${prefix}.numberOfStudentExams`, dto.numberOfStudentExams),
+            ]),
+            summaryCategory(`${prefix}.category.assessment`, [
+                summaryItem(`${prefix}.numberOfResults`, dto.numberOfResults),
+                summaryItem(`${prefix}.numberOfAssessments`, isQuiz ? undefined : dto.numberOfAssessments),
+                summaryItem(`${prefix}.numberOfComplaints`, dto.numberOfComplaints),
+            ]),
+            summaryCategory(`${prefix}.category.plagiarism`, [summaryItem(`${prefix}.numberOfPlagiarismComparisons`, dto.numberOfPlagiarismComparisons)]),
+            summaryCategory(`${prefix}.category.communication`, [
+                summaryItem(`${prefix}.numberOfCommunicationPosts`, dto.numberOfCommunicationPosts),
+                summaryItem(`${prefix}.numberOfAnswerPosts`, dto.numberOfAnswerPosts),
+            ]),
+            summaryCategory(`${prefix}.category.content`, [
+                summaryItem(`${prefix}.numberOfExampleSubmissions`, dto.numberOfExampleSubmissions),
+                summaryItem(`${prefix}.numberOfCompetencyLinks`, dto.numberOfCompetencyLinks),
+                summaryItem(`${prefix}.numberOfLectureUnitLinks`, dto.numberOfLectureUnitLinks),
+            ]),
+            summaryCategory(`${prefix}.category.infrastructure`, [summaryItem(`${prefix}.numberOfBuilds`, isProgramming ? dto.numberOfBuilds : undefined, true)]),
+        ]);
     }
 
     getUpcomingExercises(): Observable<EntityArrayResponseType> {

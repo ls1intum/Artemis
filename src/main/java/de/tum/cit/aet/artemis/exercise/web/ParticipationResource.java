@@ -250,6 +250,9 @@ public class ParticipationResource {
         log.debug("REST request to resume Exercise : {}", exerciseId);
         var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
         var participation = programmingExerciseStudentParticipationRepository.findWithTeamStudentsByIdElseThrow(participationId);
+        if (!participation.getExercise().getId().equals(programmingExercise.getId())) {
+            throw new BadRequestAlertException("Participation does not belong to the exercise", ENTITY_NAME, "participationExerciseMismatch");
+        }
         // explicitly set the exercise here to make sure that the templateParticipation and solutionParticipation are initialized in case they should be used again
         participation.setProgrammingExercise(programmingExercise);
         var participant = participation.getParticipant();

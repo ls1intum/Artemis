@@ -1,4 +1,4 @@
-<div class="mx-auto w-full max-w-7xl px-2 sm:px-4!">
+<div class="mx-auto w-full max-w-7xl -mt-2 px-0!">
     <div class="min-w-0">
         @if (modelingExercise()) {
             <div>
@@ -21,15 +21,23 @@
                         <jhi-atlas-orchestration-trigger [exercise]="modelingExercise()" [showLabel]="true" />
                     }
                 </ng-template>
-                <jhi-detail-overview-list [sections]="detailOverviewSections()" [sectionActions]="{ 'artemisApp.exercise.sections.problem': competencyActions }" />
-                @if (course(); as courseValue) {
-                    <jhi-non-programming-exercise-detail-common-actions
-                        section="administration"
-                        [isExamExercise]="isExamExercise()"
-                        [course]="courseValue"
-                        [exercise]="modelingExercise()"
-                    />
-                }
+                <jhi-detail-overview-list
+                    [footerSection]="
+                        course() && modelingExercise().isAtLeastInstructor ? { headline: 'artemisApp.exerciseDetail.administration', content: administrationActions } : undefined
+                    "
+                    [sections]="detailOverviewSections()"
+                    [sectionActions]="{ 'artemisApp.exercise.sections.problem': competencyActions }"
+                />
+                <ng-template #administrationActions>
+                    @if (course(); as courseValue) {
+                        <jhi-non-programming-exercise-detail-common-actions
+                            section="administration"
+                            [isExamExercise]="isExamExercise()"
+                            [course]="courseValue"
+                            [exercise]="modelingExercise()"
+                        />
+                    }
+                </ng-template>
             </div>
         }
     </div>

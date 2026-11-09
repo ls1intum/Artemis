@@ -236,7 +236,10 @@ export class WebauthnService {
             } else {
                 this.alertService.addErrorAlert('artemisApp.userSettings.passkeySettingsPage.error.login');
             }
-            captureException(error);
+            if (!isConditional) {
+                // A conditional flow is reported by its caller, with the context of the autofill.
+                this.reportFailure(error);
+            }
             throw error;
         }
     }
@@ -284,7 +287,25 @@ export class WebauthnService {
             return;
         }
 
-        captureException(new Error('Passkey autocomplete error', { cause: error }));
+        this.reportFailure(error, new Error('Passkey autocomplete error', { cause: error }));
+    }
+
+    /**
+     * Reports the failure of a passkey flow. When the browser or the system of the user ended the flow, nothing in the application can change that, so it is reported as
+     * information only: the user dismissed the dialog or it timed out (`NotAllowedError`), the browser could not reach a passkey provider or does not support the request
+     * (`NotSupportedError`), or the application replaced the request itself (`PasskeyAbortError` and `AbortError`).
+     *
+     * @param failure the error that ended the flow
+     * @param report what is reported, the failure itself unless it is wrapped to add context
+     */
+    private reportFailure(failure: unknown, report: unknown = failure): void {
+        const endedByBrowserOrSystem =
+            failure instanceof PasskeyAbortError || (failure instanceof DOMException && ['NotAllowedError', 'NotSupportedError', 'AbortError'].includes(failure.name));
+        if (endedByBrowserOrSystem) {
+            captureException(report, { severity: 'INFO' });
+        } else {
+            captureException(report);
+        }
     }
 
     private isUserCancelledPasskeyError(error: unknown): boolean {

@@ -38,7 +38,7 @@ public interface ProgrammingExerciseStudentParticipationRepository extends Artem
      * <p>
      * Includes results if:
      * <ul>
-     * <li>they are automatic,</li>
+     * <li>they are automatic, or finished AI feedback from Athena,</li>
      * <li>they are completed and the assessment due date is before {@code dateTime} (or not set), or</li>
      * <li>no result exists yet.</li>
      * </ul>

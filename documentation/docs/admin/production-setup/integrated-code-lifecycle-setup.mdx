@@ -53,6 +53,18 @@ eureka:
 The values configured here are sufficient for a basic Artemis setup that allows for running programming exercises with Integrated Code Lifecycle.
 The `repository-authentication-mechanisms` field configures the repository authentication mechanisms (password, token, or SSH).
 
+Users who access a repository with their account password get an email (at most one per day) and a message in the terminal when they push, asking them to switch to a token or an SSH key.
+To tell them by when, set the date on which you plan to stop accepting passwords:
+
+```yaml
+artemis:
+    version-control:
+        password-authentication-end-date: 2027-01-15 # ISO date, empty by default
+```
+
+The date only appears in the email and the push message. Artemis does not reject passwords on that day, so removing `password` from `repository-authentication-mechanisms`
+(which hides it in the Code button) does not stop password authentication either. A malformed date stops Artemis from starting.
+
 If you are running Artemis on Windows, you also need to add a property `artemis.continuous-integration.docker-connection-uri` with the value `tcp://localhost:2375` as shown above.
 If you are running Artemis inside of a docker container, use `tcp://host.docker.internal:2375` instead.
 Make sure that Artemis can access docker by activating the "Expose daemon on tcp://localhost:2375 without TLS" option under Settings > General in Docker Desktop.
