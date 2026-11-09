@@ -219,7 +219,7 @@ management:
 
 ## Configure the quiz question pool
 
-Hyperion can pre-generate a pool of multiple-choice questions per course, competency and linked lecture unit, each grounded in that unit's slides, transcript or text and judged by a second model call before an instructor reviews them. The pool uses the default chat model configured above unless you name other models here. Instructors do not choose models; they only decide how many questions the pool holds per lecture unit.
+Hyperion can pre-generate a pool of multiple-choice questions per course, competency and linked lecture unit, each grounded in that unit's slides, transcript or text and judged by a second model call before an instructor reviews them. The pool uses the default chat model configured above unless you name other models here. Instructors do not choose models; on the pool page they choose the question types, how many questions each lecture unit receives and the mix of difficulties.
 
 ```yaml
 artemis:
@@ -227,8 +227,6 @@ artemis:
     quiz-pool:
       generator-model: # model (Azure: deployment name) that generates pool questions; blank uses the default chat model
       judge-model: # model (Azure: deployment name) that judges generated questions; blank uses the default chat model
-      question-types: single-choice,multiple-choice # cells of the pool per competency, lecture unit and difficulty
-      difficulties: easy,medium,hard
       generation-batch-size: 8 # questions requested per generation call
       stale-claim-minutes: 30 # a claim older than this counts as abandoned by a dead node and is released at the next build
       max-material-characters: 60000 # characters of a lecture unit's text that a generation prompt receives at most
