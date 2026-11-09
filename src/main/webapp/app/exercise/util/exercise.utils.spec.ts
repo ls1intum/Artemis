@@ -395,6 +395,27 @@ describe('ExerciseUtils', () => {
             expect(result).toBe(savedExercise);
         });
 
+        it('should emit the exercise a service on the generated client returns without a response', () => {
+            const { command, service } = createCommand(EditType.UPDATE);
+            service.update.mockReturnValue(of(savedExercise));
+            let result: Exercise | undefined;
+
+            command.save(exercise, false).subscribe((saved) => (result = saved));
+
+            expect(result).toBe(savedExercise);
+        });
+
+        it('should emit nothing for a response without a body', () => {
+            const { command, service } = createCommand(EditType.CREATE);
+            service.create.mockReturnValue(of(new HttpResponse<Exercise>({ body: null })));
+            const next = vi.fn();
+
+            command.save(exercise, false).subscribe(next);
+
+            expect(service.create).toHaveBeenCalledOnce();
+            expect(next).not.toHaveBeenCalled();
+        });
+
         it('should import the exercise', () => {
             const { command, service } = createCommand(EditType.IMPORT);
 

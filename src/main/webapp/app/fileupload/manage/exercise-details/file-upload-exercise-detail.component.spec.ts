@@ -7,7 +7,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ActivatedRoute, ActivatedRouteSnapshot, Params, provideRouter } from '@angular/router';
 import { BehaviorSubject, Subscription, of, throwError } from 'rxjs';
-import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { HttpErrorResponse } from '@angular/common/http';
 import { provideTranslateService } from '@ngx-translate/core';
 import { MockComponent } from 'ng-mocks';
 
@@ -141,7 +141,7 @@ describe('FileUploadExerciseDetailComponent', () => {
         vi.spyOn(examSnapshot, 'pathFromRoot', 'get').mockReturnValue([examSnapshot]);
         route.snapshot = examSnapshot;
         const exercise = createExercise(undefined, new ExerciseGroup());
-        const examFind = vi.spyOn(fileUploadExerciseService, 'findForExam').mockReturnValue(of(new HttpResponse({ body: exercise })));
+        const examFind = vi.spyOn(fileUploadExerciseService, 'findForExam').mockReturnValue(of(exercise));
         const courseFind = vi.spyOn(fileUploadExerciseService, 'find');
         fixture = TestBed.createComponent(FileUploadExerciseDetailComponent);
         component = fixture.componentInstance;
@@ -156,7 +156,7 @@ describe('FileUploadExerciseDetailComponent', () => {
         it('should load exercise on init', async () => {
             const course = createCourse();
             const exercise = createExercise(course);
-            vi.spyOn(fileUploadExerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: exercise })));
+            vi.spyOn(fileUploadExerciseService, 'find').mockReturnValue(of(exercise));
 
             fixture = TestBed.createComponent(FileUploadExerciseDetailComponent);
             component = fixture.componentInstance;
@@ -169,7 +169,7 @@ describe('FileUploadExerciseDetailComponent', () => {
         it('should not be in exam mode for course exercise', async () => {
             const course = createCourse();
             const exercise = createExercise(course);
-            vi.spyOn(fileUploadExerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: exercise })));
+            vi.spyOn(fileUploadExerciseService, 'find').mockReturnValue(of(exercise));
 
             fixture = TestBed.createComponent(FileUploadExerciseDetailComponent);
             component = fixture.componentInstance;
@@ -182,7 +182,7 @@ describe('FileUploadExerciseDetailComponent', () => {
         it('should load statistics on init', async () => {
             const course = createCourse();
             const exercise = createExercise(course);
-            vi.spyOn(fileUploadExerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: exercise })));
+            vi.spyOn(fileUploadExerciseService, 'find').mockReturnValue(of(exercise));
 
             fixture = TestBed.createComponent(FileUploadExerciseDetailComponent);
             component = fixture.componentInstance;
@@ -196,7 +196,7 @@ describe('FileUploadExerciseDetailComponent', () => {
         it('should compute course from exercise', async () => {
             const course = createCourse(789);
             const exercise = createExercise(course);
-            vi.spyOn(fileUploadExerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: exercise })));
+            vi.spyOn(fileUploadExerciseService, 'find').mockReturnValue(of(exercise));
 
             fixture = TestBed.createComponent(FileUploadExerciseDetailComponent);
             component = fixture.componentInstance;
@@ -209,7 +209,7 @@ describe('FileUploadExerciseDetailComponent', () => {
         it('should generate exercise detail sections', async () => {
             const course = createCourse();
             const exercise = createExercise(course);
-            vi.spyOn(fileUploadExerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: exercise })));
+            vi.spyOn(fileUploadExerciseService, 'find').mockReturnValue(of(exercise));
 
             fixture = TestBed.createComponent(FileUploadExerciseDetailComponent);
             component = fixture.componentInstance;
@@ -230,7 +230,7 @@ describe('FileUploadExerciseDetailComponent', () => {
             exerciseGroup.id = 1;
             exerciseGroup.exam = exam;
             const exercise = createExercise(undefined, exerciseGroup);
-            vi.spyOn(fileUploadExerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: exercise })));
+            vi.spyOn(fileUploadExerciseService, 'find').mockReturnValue(of(exercise));
 
             fixture = TestBed.createComponent(FileUploadExerciseDetailComponent);
             component = fixture.componentInstance;
@@ -249,7 +249,7 @@ describe('FileUploadExerciseDetailComponent', () => {
             exerciseGroup.id = 1;
             exerciseGroup.exam = exam;
             const exercise = createExercise(undefined, exerciseGroup);
-            vi.spyOn(fileUploadExerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: exercise })));
+            vi.spyOn(fileUploadExerciseService, 'find').mockReturnValue(of(exercise));
 
             fixture = TestBed.createComponent(FileUploadExerciseDetailComponent);
             component = fixture.componentInstance;
@@ -277,7 +277,7 @@ describe('FileUploadExerciseDetailComponent', () => {
         it('should handle statistics loading error gracefully', async () => {
             const course = createCourse();
             const exercise = createExercise(course);
-            vi.spyOn(fileUploadExerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: exercise })));
+            vi.spyOn(fileUploadExerciseService, 'find').mockReturnValue(of(exercise));
             vi.spyOn(statisticsService, 'getExerciseStatistics').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
 
             fixture = TestBed.createComponent(FileUploadExerciseDetailComponent);
@@ -293,7 +293,7 @@ describe('FileUploadExerciseDetailComponent', () => {
         it('should reload exercise when event is triggered', async () => {
             const course = createCourse();
             const exercise = createExercise(course);
-            const findSpy = vi.spyOn(fileUploadExerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: exercise })));
+            const findSpy = vi.spyOn(fileUploadExerciseService, 'find').mockReturnValue(of(exercise));
             const eventManager = TestBed.inject(EventManager);
             let subscribedCallback: ((event: string | EventWithContent<unknown>) => void) | undefined;
             vi.spyOn(eventManager, 'subscribe').mockImplementation((name: string | string[], callback: (event: string | EventWithContent<unknown>) => void) => {
@@ -316,7 +316,7 @@ describe('FileUploadExerciseDetailComponent', () => {
             const course = createCourse();
             const exercise = createExercise(course);
             exercise.problemStatement = '# Test Problem';
-            vi.spyOn(fileUploadExerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: exercise })));
+            vi.spyOn(fileUploadExerciseService, 'find').mockReturnValue(of(exercise));
 
             fixture = TestBed.createComponent(FileUploadExerciseDetailComponent);
             component = fixture.componentInstance;
@@ -330,7 +330,7 @@ describe('FileUploadExerciseDetailComponent', () => {
             const course = createCourse();
             const exercise = createExercise(course);
             exercise.exampleSolution = '# Test Solution';
-            vi.spyOn(fileUploadExerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: exercise })));
+            vi.spyOn(fileUploadExerciseService, 'find').mockReturnValue(of(exercise));
 
             fixture = TestBed.createComponent(FileUploadExerciseDetailComponent);
             component = fixture.componentInstance;
@@ -344,7 +344,7 @@ describe('FileUploadExerciseDetailComponent', () => {
             const course = createCourse();
             const exercise = createExercise(course);
             exercise.gradingInstructions = '# Test Instructions';
-            vi.spyOn(fileUploadExerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: exercise })));
+            vi.spyOn(fileUploadExerciseService, 'find').mockReturnValue(of(exercise));
 
             fixture = TestBed.createComponent(FileUploadExerciseDetailComponent);
             component = fixture.componentInstance;
@@ -363,10 +363,7 @@ describe('FileUploadExerciseDetailComponent', () => {
             const exercise2 = createExercise(course);
             exercise2.id = 2;
 
-            const findSpy = vi
-                .spyOn(fileUploadExerciseService, 'find')
-                .mockReturnValueOnce(of(new HttpResponse({ body: exercise1 })))
-                .mockReturnValueOnce(of(new HttpResponse({ body: exercise2 })));
+            const findSpy = vi.spyOn(fileUploadExerciseService, 'find').mockReturnValueOnce(of(exercise1)).mockReturnValueOnce(of(exercise2));
 
             fixture = TestBed.createComponent(FileUploadExerciseDetailComponent);
             component = fixture.componentInstance;
@@ -409,7 +406,7 @@ describe('FileUploadExerciseDetailComponent', () => {
         it('should include grading section in details', async () => {
             const course = createCourse();
             const exercise = createExercise(course);
-            vi.spyOn(fileUploadExerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: exercise })));
+            vi.spyOn(fileUploadExerciseService, 'find').mockReturnValue(of(exercise));
 
             fixture = TestBed.createComponent(FileUploadExerciseDetailComponent);
             component = fixture.componentInstance;
@@ -430,7 +427,7 @@ describe('FileUploadExerciseDetailComponent', () => {
             const competency2 = { id: 2, title: 'Competency 2' } as CourseCompetency;
             exercise.competencyLinks = [{ competency: competency1 } as CompetencyExerciseLink, { competency: competency2 } as CompetencyExerciseLink];
 
-            vi.spyOn(fileUploadExerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: exercise })));
+            vi.spyOn(fileUploadExerciseService, 'find').mockReturnValue(of(exercise));
 
             fixture = TestBed.createComponent(FileUploadExerciseDetailComponent);
             component = fixture.componentInstance;
@@ -452,7 +449,7 @@ describe('FileUploadExerciseDetailComponent', () => {
             const exercise = createExercise(course);
             exercise.competencyLinks = [];
 
-            vi.spyOn(fileUploadExerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: exercise })));
+            vi.spyOn(fileUploadExerciseService, 'find').mockReturnValue(of(exercise));
 
             fixture = TestBed.createComponent(FileUploadExerciseDetailComponent);
             component = fixture.componentInstance;

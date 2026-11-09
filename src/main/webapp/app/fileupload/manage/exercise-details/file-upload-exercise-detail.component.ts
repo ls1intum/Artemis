@@ -110,10 +110,8 @@ export class FileUploadExerciseDetailComponent {
             if (!id) return;
 
             const exerciseSub = (isExamExerciseRoute(this.route.snapshot) ? this.fileUploadExerciseService.findForExam(id) : this.fileUploadExerciseService.find(id)).subscribe({
-                next: (res) => {
-                    if (res.body) {
-                        this.fileUploadExercise.set(res.body);
-                    }
+                next: (fileUploadExercise) => {
+                    this.fileUploadExercise.set(fileUploadExercise);
                 },
                 error: (error) => {
                     onError(this.alertService, error);

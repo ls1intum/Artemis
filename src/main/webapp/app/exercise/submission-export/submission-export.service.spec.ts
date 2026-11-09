@@ -3,7 +3,8 @@ import { TestBed } from '@angular/core/testing';
 import { SubmissionExportService } from 'app/exercise/submission-export/submission-export.service';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { provideHttpClient } from '@angular/common/http';
+import { HttpResponse, provideHttpClient } from '@angular/common/http';
+import dayjs from 'dayjs/esm';
 
 describe('Submission Export Service', () => {
     let service: SubmissionExportService;
@@ -38,15 +39,8 @@ describe('Submission Export Service', () => {
         expect(result).toBe('modeling/modeling-exercises/' + exerciseId);
     });
 
-    it('check exercise url for file upload exercise', () => {
-        const exerciseType = ExerciseType.FILE_UPLOAD;
-        const result = service.getExerciseUrl(exerciseType, exerciseId);
-
-        expect(result).toBe('fileupload/file-upload-exercises/' + exerciseId);
-    });
-
     it('check exercise url for unsupported exercise types', () => {
-        const exerciseTypes = [ExerciseType.QUIZ, ExerciseType.PROGRAMMING];
+        const exerciseTypes = [ExerciseType.QUIZ, ExerciseType.PROGRAMMING, ExerciseType.FILE_UPLOAD];
 
         for (const exerciseType of exerciseTypes) {
             expect(() => {
@@ -64,8 +58,48 @@ describe('Submission Export Service', () => {
                 participantIdentifierList: 'participant1,participant2,participant3',
             })
             .subscribe((resp) => (expectedResult = resp.ok));
-        const req = httpMock.expectOne({ method: 'POST' });
+        const req = httpMock.expectOne({ method: 'POST', url: 'api/text/text-exercises/1/export-submissions' });
+        expect(req.request.body.filterLateSubmissionsDate).toBeNull();
         req.flush(new Blob());
         expect(expectedResult).toBe(true);
+    });
+
+    it('should export file upload submissions through the generated client with an ISO late-submission date', () => {
+        let response: HttpResponse<Blob> | undefined;
+        service
+            .exportSubmissions(exerciseId, ExerciseType.FILE_UPLOAD, {
+                exportAllParticipants: false,
+                filterLateSubmissions: true,
+                filterLateSubmissionsDate: dayjs('2026-11-01T10:00:00Z'),
+                participantIdentifierList: 'student1,student2',
+            })
+            .subscribe((resp) => (response = resp));
+
+        const req = httpMock.expectOne({ method: 'POST', url: '/api/fileupload/file-upload-exercises/1/export-submissions' });
+        expect(req.request.responseType).toBe('blob');
+        expect(req.request.body).toEqual({
+            exportAllParticipants: false,
+            filterLateSubmissions: true,
+            filterLateSubmissionsDate: '2026-11-01T10:00:00.000Z',
+            participantIdentifierList: 'student1,student2',
+        });
+        req.flush(new Blob(['zip']), { headers: { filename: 'submissions.zip' } });
+
+        expect(response?.headers.get('filename')).toBe('submissions.zip');
+    });
+
+    it('should leave out a missing late-submission date of a file upload export', () => {
+        service
+            .exportSubmissions(exerciseId, ExerciseType.FILE_UPLOAD, {
+                exportAllParticipants: true,
+                filterLateSubmissions: false,
+                filterLateSubmissionsDate: null,
+                participantIdentifierList: '',
+            })
+            .subscribe();
+
+        const req = httpMock.expectOne({ method: 'POST', url: '/api/fileupload/file-upload-exercises/1/export-submissions' });
+        expect(req.request.body.filterLateSubmissionsDate).toBeUndefined();
+        req.flush(new Blob());
     });
 });

@@ -179,7 +179,7 @@ describe('Exercise detail common actions Component', () => {
         const modelingExerciseService = TestBed.inject(ModelingExerciseService);
 
         const deleteTextExerciseService = vi.spyOn(textExerciseService, 'delete').mockReturnValue(of({} as HttpResponse<any>));
-        const deleteFileUploadExerciseStub = vi.spyOn(fileUploadExerciseService, 'delete').mockReturnValue(of({} as HttpResponse<any>));
+        const deleteFileUploadExerciseStub = vi.spyOn(fileUploadExerciseService, 'delete').mockReturnValue(of(undefined));
         const deleteModelingExerciseService = vi.spyOn(modelingExerciseService, 'delete').mockReturnValue(of({} as HttpResponse<any>));
 
         fixture.componentRef.setInput('course', course);

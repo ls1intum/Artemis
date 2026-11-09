@@ -1,32 +1,27 @@
 import { Service, inject } from '@angular/core';
-import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 
 import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
-import { createRequestOption } from 'app/foundation/util/request.util';
 import { ExerciseServicable, ExerciseService, ExerciseUpdateRequestOptions } from 'app/exercise/services/exercise.service';
 import { toUpdateFileUploadExerciseDTO } from 'app/fileupload/shared/entities/update-file-upload-exercise-dto';
-import { FileUploadExerciseDto, fromFileUploadExerciseDTO, toFileUploadExerciseInputDTO } from 'app/fileupload/shared/entities/file-upload-exercise-dto';
-
-export type EntityResponseType = HttpResponse<FileUploadExercise>;
+import { fromFileUploadExerciseDTO, toFileUploadExerciseInputDTO } from 'app/fileupload/shared/entities/file-upload-exercise-dto';
+import { FileUploadExerciseApi } from 'app/openapi/api/file-upload-exercise-api';
+import { FileUploadExercise as FileUploadExerciseResponse } from 'app/openapi/model/file-upload-exercise';
 
 @Service()
 export class FileUploadExerciseService implements ExerciseServicable<FileUploadExercise> {
-    private http = inject(HttpClient);
+    private fileUploadExerciseApi = inject(FileUploadExerciseApi);
     private exerciseService = inject(ExerciseService);
-
-    private resourceUrl = 'api/fileupload/file-upload-exercises';
 
     /**
      * Sends request to create new file upload exercise
      * @param fileUploadExercise that will be sent to the server
      */
-    create(fileUploadExercise: FileUploadExercise): Observable<EntityResponseType> {
+    create(fileUploadExercise: FileUploadExercise): Observable<FileUploadExercise> {
         let copy = FileUploadExerciseService.formatFilePattern(fileUploadExercise);
         copy = ExerciseService.setBonusPointsConstrainedByIncludedInOverallScore(copy);
-        const dto = toFileUploadExerciseInputDTO(copy);
-        return this.http.post<FileUploadExerciseDto>(this.resourceUrl, dto, { observe: 'response' }).pipe(map((res) => this.processResponse(res)));
+        return this.processResponse(this.fileUploadExerciseApi.createFileUploadExercise(toFileUploadExerciseInputDTO(copy)));
     }
 
     /**
@@ -35,43 +30,34 @@ export class FileUploadExerciseService implements ExerciseServicable<FileUploadE
      * @param req request options passed to the server
      * @throws Error if the exercise does not have an id
      */
-    update(fileUploadExercise: FileUploadExercise, req?: ExerciseUpdateRequestOptions): Observable<EntityResponseType> {
+    update(fileUploadExercise: FileUploadExercise, req?: ExerciseUpdateRequestOptions): Observable<FileUploadExercise> {
         if (fileUploadExercise.id === undefined) {
             throw new Error('Cannot update exercise without an ID');
         }
-        const options = createRequestOption(req);
         const copy = FileUploadExerciseService.formatFilePattern(fileUploadExercise);
         const dto = toUpdateFileUploadExerciseDTO(copy);
-        return this.http
-            .put<FileUploadExerciseDto>(`${this.resourceUrl}/${fileUploadExercise.id}`, dto, { params: options, observe: 'response' })
-            .pipe(map((res) => this.processResponse(res)));
+        return this.processResponse(this.fileUploadExerciseApi.updateFileUploadExercise(fileUploadExercise.id, dto, req?.notificationText));
     }
 
     /**
      * Sends request to get exercise by its id
      * @param exerciseId id of the exercise
      */
-    find(exerciseId: number): Observable<EntityResponseType> {
-        return this.findDetails(exerciseId, false);
+    find(exerciseId: number): Observable<FileUploadExercise> {
+        return this.processResponse(this.fileUploadExerciseApi.getFileUploadExercise(exerciseId));
     }
 
-    /** Loads management details of an exam exercise with the same options and conversion as course details. */
-    findForExam(exerciseId: number): Observable<EntityResponseType> {
-        return this.findDetails(exerciseId, true);
-    }
-
-    private findDetails(exerciseId: number, exam: boolean): Observable<EntityResponseType> {
-        return this.http
-            .get<FileUploadExerciseDto>(`${this.resourceUrl}/${exerciseId}${exam ? '/for-exam' : ''}`, { observe: 'response' })
-            .pipe(map((res) => this.processResponse(res)));
+    /** Loads management details of an exam exercise with the same conversion as course details. */
+    findForExam(exerciseId: number): Observable<FileUploadExercise> {
+        return this.processResponse(this.fileUploadExerciseApi.getFileUploadExerciseForExam(exerciseId));
     }
 
     /**
      * Sends request to delete file upload exercise by its id
      * @param exerciseId id of the exercise
      */
-    delete(exerciseId: number): Observable<HttpResponse<void>> {
-        return this.http.delete<void>(`${this.resourceUrl}/${exerciseId}`, { observe: 'response' });
+    delete(exerciseId: number): Observable<void> {
+        return this.fileUploadExerciseApi.deleteFileUploadExercise(exerciseId);
     }
 
     /**
@@ -81,16 +67,13 @@ export class FileUploadExerciseService implements ExerciseServicable<FileUploadE
      * @param req optional request options
      * @throws Error if the exercise does not have an id
      */
-    reevaluateAndUpdate(fileUploadExercise: FileUploadExercise, req?: ExerciseUpdateRequestOptions): Observable<EntityResponseType> {
+    reevaluateAndUpdate(fileUploadExercise: FileUploadExercise, req?: ExerciseUpdateRequestOptions): Observable<FileUploadExercise> {
         if (fileUploadExercise.id === undefined) {
             throw new Error('Cannot re-evaluate exercise without an ID');
         }
-        const options = createRequestOption(req);
         const copy = FileUploadExerciseService.formatFilePattern(fileUploadExercise);
         const dto = toUpdateFileUploadExerciseDTO(copy);
-        return this.http
-            .put<FileUploadExerciseDto>(`${this.resourceUrl}/${fileUploadExercise.id}/re-evaluate`, dto, { params: options, observe: 'response' })
-            .pipe(map((res) => this.processResponse(res)));
+        return this.processResponse(this.fileUploadExerciseApi.reEvaluateAndUpdateFileUploadExercise(fileUploadExercise.id, dto, req?.deleteFeedback));
     }
 
     private static formatFilePattern(fileUploadExercise: FileUploadExercise): FileUploadExercise {
@@ -108,20 +91,15 @@ export class FileUploadExerciseService implements ExerciseServicable<FileUploadE
      * (like the old ID) will be handled by the server.
      * @throws Error if the exercise does not have an id
      */
-    import(adaptedSourceFileUploadExercise: FileUploadExercise) {
+    import(adaptedSourceFileUploadExercise: FileUploadExercise): Observable<FileUploadExercise> {
         if (adaptedSourceFileUploadExercise.id === undefined) {
             throw new Error('Cannot import exercise without an ID');
         }
-        let copy = adaptedSourceFileUploadExercise;
-        copy = ExerciseService.setBonusPointsConstrainedByIncludedInOverallScore(copy);
-        const dto = toFileUploadExerciseInputDTO(copy);
-        return this.http
-            .post<FileUploadExerciseDto>(`${this.resourceUrl}/import?sourceId=${adaptedSourceFileUploadExercise.id}`, dto, { observe: 'response' })
-            .pipe(map((res) => this.processResponse(res)));
+        const copy = ExerciseService.setBonusPointsConstrainedByIncludedInOverallScore(adaptedSourceFileUploadExercise);
+        return this.processResponse(this.fileUploadExerciseApi.importFileUploadExercise(adaptedSourceFileUploadExercise.id, toFileUploadExerciseInputDTO(copy)));
     }
 
-    private processResponse(response: HttpResponse<FileUploadExerciseDto>): EntityResponseType {
-        const adaptedResponse = response.clone({ body: response.body ? fromFileUploadExerciseDTO(response.body) : null });
-        return this.exerciseService.processExerciseEntityResponse(adaptedResponse);
+    private processResponse(response: Observable<FileUploadExerciseResponse>): Observable<FileUploadExercise> {
+        return response.pipe(map((dto) => this.exerciseService.processExerciseEntity(fromFileUploadExerciseDTO(dto))));
     }
 }

@@ -3,13 +3,15 @@ import dayjs from 'dayjs/esm';
 import { Competency, CompetencyExerciseLink } from 'app/atlas/shared/entities/competency.model';
 import { Course } from 'app/course/shared/entities/course.model';
 import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
-import { ExerciseMode, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { DifficultyLevel, ExerciseMode, ExerciseType, IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
+import { CourseInformationSharingConfiguration } from 'app/course/shared/entities/course.model';
 import { TeamAssignmentConfig } from 'app/exercise/shared/entities/team/team-assignment-config.model';
 import { GradingCriterion } from 'app/exercise/structured-grading-criterion/grading-criterion.model';
 import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
 import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
 import { fromFileUploadExerciseDTO, toCompetencyLinkDTO, toFileUploadExerciseInputDTO } from 'app/fileupload/shared/entities/file-upload-exercise-dto';
-import type { FileUploadExerciseDto } from 'app/fileupload/shared/entities/file-upload-exercise-dto';
+import type { FileUploadExercise as FileUploadExerciseResponse } from 'app/openapi/model/file-upload-exercise';
 import { toUpdateFileUploadExerciseDTO } from 'app/fileupload/shared/entities/update-file-upload-exercise-dto';
 import { parseJson } from 'app/foundation/util/json.util';
 
@@ -87,11 +89,14 @@ describe('FileUploadExercise DTO adapters', () => {
     });
 
     it('rebuilds dates and minimal exam context from the response contract', () => {
-        const dto: FileUploadExerciseDto = {
+        const dto: FileUploadExerciseResponse = {
             id: 56,
-            type: ExerciseType.FILE_UPLOAD,
+            type: 'file-upload',
             title: 'Exam upload',
-            mode: ExerciseMode.INDIVIDUAL,
+            mode: 'INDIVIDUAL',
+            difficulty: 'HARD',
+            includedInOverallScore: 'INCLUDED_AS_BONUS',
+            assessmentType: 'MANUAL',
             teamMode: false,
             gradingInstructionFeedbackUsed: true,
             releaseDate: '2026-02-01T08:00:00.000Z',
@@ -124,6 +129,11 @@ describe('FileUploadExercise DTO adapters', () => {
         expect(exercise.exerciseVariantGroup?.dueDate?.toISOString()).toBe('2026-02-03T08:00:00.000Z');
         expect(exercise.teamMode).toBe(false);
         expect(exercise.gradingInstructionFeedbackUsed).toBe(true);
+        expect(exercise.type).toBe(ExerciseType.FILE_UPLOAD);
+        expect(exercise.mode).toBe(ExerciseMode.INDIVIDUAL);
+        expect(exercise.difficulty).toBe(DifficultyLevel.HARD);
+        expect(exercise.includedInOverallScore).toBe(IncludedInOverallScore.INCLUDED_AS_BONUS);
+        expect(exercise.assessmentType).toBe(AssessmentType.MANUAL);
     });
 
     it('rebuilds full response associations including competency titles', () => {
@@ -135,16 +145,24 @@ describe('FileUploadExercise DTO adapters', () => {
             minimumScore: 10,
             minimumSize: 50,
         };
-        const dto: FileUploadExerciseDto = {
+        const dto: FileUploadExerciseResponse = {
             id: 56,
-            type: ExerciseType.FILE_UPLOAD,
+            type: 'file-upload',
             title: 'Team upload',
-            mode: ExerciseMode.TEAM,
+            mode: 'TEAM',
             teamMode: true,
             gradingInstructionFeedbackUsed: false,
             categories: [JSON.stringify({ category: 'Files', color: '#123456' }), 'invalid JSON'],
             teamAssignmentConfig: { id: 45, minTeamSize: 2, maxTeamSize: 4 },
-            course: { id: 12, title: 'Course', shortName: 'COURSE', testCourse: true, presentationScore: 2, accuracyOfScores: 1 },
+            course: {
+                id: 12,
+                title: 'Course',
+                shortName: 'COURSE',
+                testCourse: true,
+                presentationScore: 2,
+                accuracyOfScores: 1,
+                courseInformationSharingConfiguration: 'COMMUNICATION_ONLY',
+            },
             gradingCriteria: [
                 {
                     id: 67,
@@ -169,6 +187,8 @@ describe('FileUploadExercise DTO adapters', () => {
 
         expect(exercise.course).toBeInstanceOf(Course);
         expect(exercise.course).toMatchObject({ id: 12, title: 'Course', shortName: 'COURSE', testCourse: true, presentationScore: 2, accuracyOfScores: 1 });
+        expect(exercise.course?.courseInformationSharingConfiguration).toBe(CourseInformationSharingConfiguration.COMMUNICATION_ONLY);
+        expect(exercise.mode).toBe(ExerciseMode.TEAM);
         expect(exercise.categories).toEqual([new ExerciseCategory('Files', '#123456')]);
         expect(exercise.teamAssignmentConfig).toBeInstanceOf(TeamAssignmentConfig);
         expect(exercise.teamAssignmentConfig).toMatchObject({ id: 45, minTeamSize: 2, maxTeamSize: 4 });

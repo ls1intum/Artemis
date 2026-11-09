@@ -1,6 +1,6 @@
 import { Service, inject } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
-import { Observable, of } from 'rxjs';
+import { Observable, of, throwError } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
@@ -27,6 +27,7 @@ import { EntitySummary } from 'app/shared-ui/delete-dialog/delete-dialog.model';
 import { UMLModel } from '@tumaet/apollon';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
 import { validateStrictDateSequence } from 'app/exercise/util/exercise.utils';
+import { FileUploadExerciseApi } from 'app/openapi/api/file-upload-exercise-api';
 
 export type EntityResponseType = HttpResponse<Exercise>;
 export type EntityArrayResponseType = HttpResponse<Exercise[]>;
@@ -57,14 +58,20 @@ export type CourseExistingExerciseDetailsType = {
     shortNames?: Set<string>;
 };
 
+/**
+ * A save operation of an exercise service. Services on handwritten transport return the full response, services on the
+ * generated client return the exercise itself. Narrow this to {@code Observable<T>} once every implementer is generated.
+ */
+export type ExerciseSaveResult<T extends Exercise> = Observable<HttpResponse<T>> | Observable<T>;
+
 export interface ExerciseServicable<T extends Exercise> {
-    create(exercise: T): Observable<HttpResponse<T>>;
+    create(exercise: T): ExerciseSaveResult<T>;
 
-    import?(exercise: T): Observable<HttpResponse<T>>;
+    import?(exercise: T): ExerciseSaveResult<T>;
 
-    update(exercise: T, req?: ExerciseUpdateRequestOptions): Observable<HttpResponse<T>>;
+    update(exercise: T, req?: ExerciseUpdateRequestOptions): ExerciseSaveResult<T>;
 
-    reevaluateAndUpdate(exercise: T, req?: ExerciseUpdateRequestOptions): Observable<HttpResponse<T>>;
+    reevaluateAndUpdate(exercise: T, req?: ExerciseUpdateRequestOptions): ExerciseSaveResult<T>;
 }
 
 @Service()
@@ -73,6 +80,7 @@ export class ExerciseService {
     private accountService = inject(AccountService);
     private translateService = inject(TranslateService);
     private entityTitleService = inject(EntityTitleService);
+    private fileUploadExerciseApi = inject(FileUploadExerciseApi);
 
     public resourceUrl = 'api/exercise/exercises';
 
@@ -134,11 +142,16 @@ export class ExerciseService {
      * @param exercise the exercise to export
      */
     exportToFile(exercise: Exercise): Observable<HttpResponse<Blob>> {
-        const module = exercise.type === ExerciseType.FILE_UPLOAD ? 'fileupload' : exercise.type;
+        if (exercise.type === ExerciseType.FILE_UPLOAD) {
+            if (exercise.id === undefined) {
+                return throwError(() => new Error('Cannot export a file upload exercise without an ID'));
+            }
+            return this.fileUploadExerciseApi.exportExercise(exercise.id);
+        }
         const url =
             exercise.type === ExerciseType.PROGRAMMING
                 ? `api/programming/programming-exercises/${exercise.id}/export-instructor-exercise`
-                : `api/${module}/${exercise.type}-exercises/${exercise.id}/export`;
+                : `api/${exercise.type}/${exercise.type}-exercises/${exercise.id}/export`;
         return this.http.get(url, { observe: 'response', responseType: 'blob' });
     }
 
@@ -382,16 +395,24 @@ export class ExerciseService {
      */
     static convertExerciseResponseDatesFromServer<ERT extends EntityResponseType>(res: ERT): ERT {
         if (res.body) {
-            res.body.releaseDate = convertDateFromServer(res.body.releaseDate);
-            res.body.startDate = convertDateFromServer(res.body.startDate);
-            res.body.dueDate = convertDateFromServer(res.body.dueDate);
-            res.body.assessmentDueDate = convertDateFromServer(res.body.assessmentDueDate);
-            res.body.exampleSolutionPublicationDate = convertDateFromServer(res.body.exampleSolutionPublicationDate);
-            res.body.latestExamEndDate = convertDateFromServer(res.body.latestExamEndDate);
-            res.body.assessmentPossibleFrom = convertDateFromServer(res.body.assessmentPossibleFrom);
-            res.body.studentParticipations = ParticipationService.convertParticipationArrayDatesFromServer(res.body.studentParticipations);
+            ExerciseService.convertExerciseEntityDatesFromServer(res.body);
         }
         return res;
+    }
+
+    /**
+     * Converts the dates of an exercise received from the server in place, as {@link convertExerciseResponseDatesFromServer} does for a response.
+     * @param exercise the exercise whose dates are converted
+     */
+    private static convertExerciseEntityDatesFromServer(exercise: Exercise): void {
+        exercise.releaseDate = convertDateFromServer(exercise.releaseDate);
+        exercise.startDate = convertDateFromServer(exercise.startDate);
+        exercise.dueDate = convertDateFromServer(exercise.dueDate);
+        exercise.assessmentDueDate = convertDateFromServer(exercise.assessmentDueDate);
+        exercise.exampleSolutionPublicationDate = convertDateFromServer(exercise.exampleSolutionPublicationDate);
+        exercise.latestExamEndDate = convertDateFromServer(exercise.latestExamEndDate);
+        exercise.assessmentPossibleFrom = convertDateFromServer(exercise.assessmentPossibleFrom);
+        exercise.studentParticipations = ParticipationService.convertParticipationArrayDatesFromServer(exercise.studentParticipations);
     }
 
     /**
@@ -552,11 +573,24 @@ export class ExerciseService {
      * @param exerciseRes
      */
     public processExerciseEntityResponse(exerciseRes: EntityResponseType): EntityResponseType {
-        ExerciseService.convertExerciseResponseDatesFromServer(exerciseRes);
-        ExerciseService.convertExerciseCategoriesFromServer(exerciseRes);
-        this.setAccessRightsExerciseEntityResponseType(exerciseRes);
-        this.sendExerciseTitleToTitleService(exerciseRes?.body ?? undefined);
+        if (exerciseRes.body) {
+            this.processExerciseEntity(exerciseRes.body);
+        }
         return exerciseRes;
+    }
+
+    /**
+     * Applies the conversion steps of {@link processExerciseEntityResponse} to an exercise received without its response:
+     * converts its dates and categories in place, sets its access rights and reports its title to the title service.
+     * @param exercise the exercise received from the server
+     * @returns the same exercise
+     */
+    public processExerciseEntity<T extends Exercise>(exercise: T): T {
+        ExerciseService.convertExerciseEntityDatesFromServer(exercise);
+        ExerciseService.parseExerciseCategories(exercise);
+        this.accountService.setAccessRightsForExerciseAndReferencedCourse(exercise);
+        this.sendExerciseTitleToTitleService(exercise);
+        return exercise;
     }
 
     /**
