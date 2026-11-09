@@ -564,7 +564,10 @@
             "value": "Wert"
         },
         "delete": {
-            "title": "Löschen bestätigen"
+            "title": "Löschen bestätigen",
+            "summary": {
+                "largeCountWarning": "Es werden sehr viele Daten gelöscht. Bitte prüfe die folgenden Zahlen sorgfältig, bevor du bestätigst."
+            }
         },
         "unlink": {
             "title": "Trennen bestätigen"
