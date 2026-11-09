@@ -36,6 +36,7 @@ import { getTotalMaxPoints } from 'app/exercise/util/exercise.utils';
 import { getExerciseDashboardLink, getLinkToSubmissionAssessment, getLocalRepositoryLink } from 'app/foundation/util/navigation.utils';
 import { getLatestSubmissionResult } from 'app/exercise/shared/entities/submission/submission.model';
 import { isAllowedToModifyFeedback } from 'app/assessment/manage/services/assessment.service';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 import { breakCircularResultBackReferences } from 'app/exercise/result/result.utils';
 import { faCircleInfo, faClockRotateLeft, faExternalLink, faTimesCircle } from '@fortawesome/free-solid-svg-icons';
 import { AssessmentAfterComplaint } from 'app/assessment/manage/complaints-for-tutor/complaints-for-tutor.component';
@@ -576,8 +577,9 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
      * @param translationKey key for the alert to be shown on success
      */
     private handleSaveOrSubmit(submit: boolean | undefined, translationKey: string) {
-        this.avoidCircularStructure();
-        this.manualResultService.saveAssessment(this.participation().id!, this.manualResult()!, submit).subscribe({
+        const requestResult = deepClone(this.manualResult()!);
+        breakCircularResultBackReferences(requestResult);
+        this.manualResultService.saveAssessment(this.participation().id!, requestResult, submit).subscribe({
             next: (response) => this.handleSaveOrSubmitSuccessWithAlert(response, translationKey),
             error: (error: HttpErrorResponse) => {
                 if (!alertIfAssessmentNotPossibleYet(error, this.alertService, this.datePipe)) {
@@ -895,13 +897,6 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         // `equal: () => false`, so this still notifies without cloning (see the signal's declaration for why a
         // clone would break the code editor's inline feedback rendering).
         this.manualResult.set(manualResult);
-    }
-
-    private avoidCircularStructure() {
-        const manualResult = this.manualResult();
-        if (manualResult) {
-            breakCircularResultBackReferences(manualResult);
-        }
     }
 
     private calculateTotalScore() {

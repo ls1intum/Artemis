@@ -285,6 +285,45 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         expect(alertSpy).toHaveBeenCalledWith('artemisApp.programmingAssessment.saveInlineFeedbackFirst');
     });
 
+    it.each([false, true])('preserves live result references when a save or submit fails (%s)', async (submit) => {
+        const feedback = { id: 404, type: FeedbackType.MANUAL, reference: 'file:file1.java_line:1', detailText: 'Saved', result } as Feedback;
+        result.submission = submission;
+        result.feedbacks = [feedback];
+        submission.results = [result];
+        const liveResults = submission.results;
+        comp.participation.set(participation);
+        comp.exercise.set(exercise);
+        comp.submission.set(submission);
+        comp.manualResult.set(result);
+        const response = new Subject<HttpResponse<Result>>();
+        const save = vi.spyOn(programmingAssessmentManualResultService, 'saveAssessment').mockReturnValue(response);
+
+        if (submit) {
+            await comp.submit();
+        } else {
+            comp.save();
+        }
+
+        const request = save.mock.calls[0][1];
+        expect(request).not.toBe(result);
+        expect(request.submission).not.toBe(submission);
+        expect(request.submission?.results).toEqual([]);
+        expect(request.feedbacks?.[0]).not.toBe(feedback);
+        expect(request.feedbacks?.[0].result).toBeUndefined();
+        expect(comp.inlineFeedbackReadOnly()).toBe(true);
+        expect(submission.results).toBe(liveResults);
+        expect(feedback.result).toBe(result);
+
+        response.error(new HttpErrorResponse({ status: 500, error: { errorKey: 'saveFailed' } }));
+        await flushMicrotasks();
+
+        expect(comp.manualResult()).toBe(result);
+        expect(submission.results).toBe(liveResults);
+        expect(result.feedbacks).toEqual([feedback]);
+        expect(feedback.result).toBe(result);
+        expect(comp.inlineFeedbackReadOnly()).toBe(false);
+    });
+
     it('keeps inline feedback read-only until the assessment save response returns', async () => {
         comp.participation.set(participation);
         comp.exercise.set(exercise);
