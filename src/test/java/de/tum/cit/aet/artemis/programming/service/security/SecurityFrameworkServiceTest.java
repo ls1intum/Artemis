@@ -28,6 +28,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.UnaryOperator;
+import java.util.stream.Stream;
 
 import org.apache.commons.io.FileUtils;
 import org.assertj.core.api.ThrowableAssert.ThrowingCallable;
@@ -47,8 +48,12 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.io.Resource;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
@@ -94,6 +99,7 @@ class SecurityFrameworkServiceTest {
             thisPolicyFileCompliesToThePolicyVersion: 1
             regardingTheSupervisedCode:
               theFollowingProgrammingLanguageConfigurationIsUsed: JAVA_USING_GRADLE_ARCHUNIT_AND_ASPECTJ
+              theSupervisedCodeUsesTheFollowingPackage: "de.example"
               theFollowingClassesAreTestClasses:
                 - "de.example.SortingTest"
               theFollowingResourceAccessesArePermitted:
@@ -106,6 +112,9 @@ class SecurityFrameworkServiceTest {
                 regardingPackageImports: [ ]
                 regardingTimeouts: [ ]
             """;
+
+    /** Valid YAML that Ares 2.2.1 refuses, because the required fields are missing. */
+    private static final String PARTIAL_POLICY = "regardingTheSupervisedCode:\n  theFollowingClassesAreTestClasses:\n    - \"de.example.SortingTest\"\n";
 
     private static final String TEST_CLASS = """
             package de.example;
@@ -547,6 +556,128 @@ class SecurityFrameworkServiceTest {
 
         assertThat(readPushed(SecurityPolicyRepositoryFiles.POLICY_FILE_NAME)).hasValueSatisfying(policy -> assertThat(policy).contains("JAVA_USING_GRADLE_ARCHUNIT_AND_ASPECTJ")
                 .contains("theSupervisedCodeUsesTheFollowingPackage: \"de.example\"").contains("- \"de.example.SortingTest\"").contains("regardingFileSystemInteractions: [ ]"));
+    }
+
+    @Test
+    void aGeneratedPolicyTakesOnlyThePermissionsFromTheTemplate() throws Exception {
+        initRemote(false);
+
+        SecurityFrameworkConfigDTO config = securityFrameworkService.activate(exercise(ProgrammingLanguage.JAVA), "2.2.1", user);
+
+        assertThat(config.status()).isEqualTo(SecurityActivationStatus.ACTIVE.name());
+        String policy = readPushed(SecurityPolicyRepositoryFiles.POLICY_FILE_NAME).orElseThrow();
+        assertThat(SecurityPolicySchema.read(policy).valid()).isTrue();
+        assertThat(policy).contains("java.util.concurrent.ThreadLocalRandom").contains("org.apache.commons.lang3");
+        assertThat(policy).doesNotContain("AttributeTest").doesNotContain("packageName").doesNotContain("theMainClassInsideThisPackageIs");
+    }
+
+    private void useTemplatePolicy(Resource resource) throws IOException {
+        when(resourceLoaderService.getResource(any(Path.class))).thenAnswer(call -> {
+            Path path = call.getArgument(0, Path.class);
+            return path.endsWith(SecurityPolicyRepositoryFiles.POLICY_FILE_NAME) ? resource : new FileSystemResource(MAIN_RESOURCES.resolve(path));
+        });
+    }
+
+    @Test
+    void aReorderedTemplateStillProvidesItsPermissions() throws Exception {
+        initRemote(false);
+        useTemplatePolicy(new ByteArrayResource("""
+                thisPolicyFileCompliesToThePolicyVersion: 1
+                regardingTheSupervisedCode:
+                  theFollowingResourceAccessesArePermitted:
+                    regardingFileSystemInteractions: [ ]
+                    regardingNetworkConnections: [ ]
+                    regardingCommandExecutions: [ ]
+                    regardingThreadCreations: [ ]
+                    regardingPackageImports:
+                      - importTheFollowingPackage: "de.reordered"
+                    regardingTimeouts: [ ]
+                  theFollowingClassesAreTestClasses:
+                    - "de.example.StaleTest"
+                """.getBytes(StandardCharsets.UTF_8)));
+
+        securityFrameworkService.activate(exercise(ProgrammingLanguage.JAVA), "2.2.1", user);
+
+        assertThat(readPushed(SecurityPolicyRepositoryFiles.POLICY_FILE_NAME))
+                .hasValueSatisfying(policy -> assertThat(policy).contains("de.reordered").contains("- \"de.example.SortingTest\"").doesNotContain("StaleTest"));
+    }
+
+    static Stream<Arguments> unusableTemplates() {
+        return Stream.of(Arguments.of("unreadable", new FileSystemResource(Path.of("does-not-exist.yaml"))),
+                Arguments.of("without permissions", new ByteArrayResource("thisPolicyFileCompliesToThePolicyVersion: 1\n".getBytes(StandardCharsets.UTF_8))),
+                Arguments.of("with invalid permissions", new ByteArrayResource(
+                        "regardingTheSupervisedCode:\n  theFollowingResourceAccessesArePermitted:\n    regardingTimeouts: 1\n".getBytes(StandardCharsets.UTF_8))));
+    }
+
+    @ParameterizedTest(name = "{0}")
+    @MethodSource("unusableTemplates")
+    void anUnusableTemplateGeneratesAPolicyWithoutPermissions(String description, Resource template) throws Exception {
+        initRemote(false);
+        useTemplatePolicy(template);
+
+        SecurityFrameworkConfigDTO config = securityFrameworkService.activate(exercise(ProgrammingLanguage.JAVA), "2.2.1", user);
+
+        assertThat(config.status()).isEqualTo(SecurityActivationStatus.ACTIVE.name());
+        assertThat(readPushed(SecurityPolicyRepositoryFiles.POLICY_FILE_NAME)).hasValueSatisfying(policy -> assertThat(policy).contains("regardingThreadCreations: [ ]"));
+    }
+
+    private void pushPolicyAndVersion(String policy, String aresVersion) throws Exception {
+        pushCheckoutChange(checkout -> {
+            FileUtils.writeStringToFile(checkout.resolve(SecurityPolicyRepositoryFiles.POLICY_FILE_NAME).toFile(), policy, StandardCharsets.UTF_8);
+            FileUtils.writeStringToFile(checkout.resolve("build.gradle").toFile(), "ext {\n    aresVersion = '" + aresVersion + "'\n}\n", StandardCharsets.UTF_8);
+        });
+    }
+
+    private void assertPolicyNotRepairable(ThrowingCallable action) {
+        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(action).matches(exception -> "securityFrameworkPolicyNotRepairable".equals(exception.getErrorKey()));
+    }
+
+    @Test
+    void aPolicyAresRefusesIsMisconfiguredOnlyForTheVerifiedVersion() throws Exception {
+        ProgrammingExercise exercise = exercise(ProgrammingLanguage.JAVA);
+
+        pushPolicyAndVersion(PARTIAL_POLICY, "2.2.1");
+        assertThat(securityFrameworkService.getConfig(exercise).status()).isEqualTo(SecurityActivationStatus.MISCONFIGURED.name());
+
+        pushPolicyAndVersion(PARTIAL_POLICY, "2.3.0");
+        assertThat(securityFrameworkService.getConfig(exercise).status()).isEqualTo(SecurityActivationStatus.ACTIVE.name());
+    }
+
+    @Test
+    void anInvalidPolicyFromTheHistoryIsNeitherPushedNorReplaced() throws Exception {
+        pushPolicyAndVersion(PARTIAL_POLICY, "2.2.1");
+        ProgrammingExercise exercise = exercise(ProgrammingLanguage.JAVA);
+        securityFrameworkService.deactivate(exercise, user);
+        int commitsBefore = pushedCommitCount();
+
+        assertPolicyNotRepairable(() -> securityFrameworkService.activate(exercise, "2.2.1", user));
+
+        assertThat(pushedCommitCount()).isEqualTo(commitsBefore);
+        assertThat(readPushed(SecurityPolicyRepositoryFiles.POLICY_FILE_NAME)).isEmpty();
+    }
+
+    @Test
+    void changingToTheVerifiedVersionIsRefusedIfAresWouldRefuseThePolicy() throws Exception {
+        pushPolicyAndVersion(PARTIAL_POLICY, "2.3.0");
+        ProgrammingExercise exercise = exercise(ProgrammingLanguage.JAVA);
+        int commitsBefore = pushedCommitCount();
+
+        assertPolicyNotRepairable(() -> securityFrameworkService.updateFrameworkVersion(exercise, "2.2.1", user));
+        assertPolicyNotRepairable(() -> securityFrameworkService.activate(exercise, "2.2.1", user));
+
+        assertThat(pushedCommitCount()).isEqualTo(commitsBefore);
+        assertThat(readPushed("build.gradle")).hasValueSatisfying(content -> assertThat(content).contains("aresVersion = '2.3.0'"));
+    }
+
+    @Test
+    void activatingWithAnotherVersionChecksThePolicyAgainstThatVersion() throws Exception {
+        pushPolicyAndVersion(PARTIAL_POLICY, "2.2.1");
+        ProgrammingExercise exercise = exercise(ProgrammingLanguage.JAVA);
+
+        SecurityFrameworkConfigDTO config = securityFrameworkService.activate(exercise, "2.3.0", user);
+
+        assertThat(config.status()).isEqualTo(SecurityActivationStatus.ACTIVE.name());
+        assertThat(readPushed("build.gradle")).hasValueSatisfying(content -> assertThat(content).contains("aresVersion = '2.3.0'"));
     }
 
     @Test

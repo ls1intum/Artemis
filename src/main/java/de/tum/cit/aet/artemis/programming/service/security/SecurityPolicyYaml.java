@@ -75,7 +75,7 @@ final class SecurityPolicyYaml {
         return new ReadPolicy(true, testClasses(root));
     }
 
-    private static Optional<List<String>> testClasses(Map<?, ?> root) {
+    static Optional<List<String>> testClasses(Map<?, ?> root) {
         if (!(root.get(SUPERVISED_CODE_KEY) instanceof Map<?, ?> supervisedCode) || !(supervisedCode.get(TEST_CLASSES_KEY) instanceof List<?> entries)) {
             return Optional.empty();
         }
@@ -244,7 +244,7 @@ final class SecurityPolicyYaml {
         return rootCopy;
     }
 
-    private static Yaml newYaml() {
+    static Yaml newYaml() {
         LoaderOptions options = new LoaderOptions();
         options.setCodePointLimit(MAX_POLICY_SIZE);
         options.setMaxAliasesForCollections(10);

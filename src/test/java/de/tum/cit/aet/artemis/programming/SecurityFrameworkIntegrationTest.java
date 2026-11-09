@@ -34,10 +34,16 @@ class SecurityFrameworkIntegrationTest extends AbstractProgrammingIntegrationLoc
             thisPolicyFileCompliesToThePolicyVersion: 1
             regardingTheSupervisedCode:
               theFollowingProgrammingLanguageConfigurationIsUsed: JAVA_USING_GRADLE_ARCHUNIT_AND_ASPECTJ
+              theSupervisedCodeUsesTheFollowingPackage: "de.example"
               theFollowingClassesAreTestClasses:
                 - "de.example.SortingTest"
               theFollowingResourceAccessesArePermitted:
                 regardingFileSystemInteractions: [ ]
+                regardingNetworkConnections: [ ]
+                regardingCommandExecutions: [ ]
+                regardingThreadCreations: [ ]
+                regardingPackageImports: [ ]
+                regardingTimeouts: [ ]
             """;
 
     private static final String ACTIVE_ANNOTATION = "@de.tum.cit.ase.ares.api.Policy(value = \"SecurityPolicy.yaml\")";

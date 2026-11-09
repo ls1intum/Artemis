@@ -74,8 +74,9 @@ import de.tum.cit.aet.artemis.programming.service.security.SecurityPolicyReposit
  * Ares enabled, a new exercise starts out active.
  * <ul>
  * <li>Activating an inactive exercise switches the {@code @Policy} annotations back on as they were before the last deactivation, so a test class an
- * instructor had switched off stays off. It restores every policy file an active annotation needs from the repository history, or generates a default one
- * if the exercise never had it, and adds test classes the policy does not list yet. Activating a misconfigured exercise only repairs its policy files.</li>
+ * instructor had switched off stays off. It restores every policy file an active annotation needs from the repository history, or generates one with the
+ * permissions of the template if the history has none, and adds test classes the policy does not list yet. Activating a misconfigured exercise only repairs
+ * its policy files.</li>
  * <li>Deactivating deletes {@code SecurityPolicy.yaml} and adds {@code activated = false} to every {@code @Policy} annotation while keeping its other
  * arguments, so the student code is no longer sandboxed.</li>
  * <li>Changing the framework version pins another Ares version in the build file.</li>
@@ -101,6 +102,11 @@ public class SecurityFrameworkService {
      * its own versions.
      */
     private static final Map<ProjectType, Path> TEMPLATE_BUILD_FILES = templateBuildFiles();
+
+    /** The policy of the tests repository template for each build tool, whose permissions a generated policy takes over. */
+    private static final Map<BuildTool, Path> TEMPLATE_POLICY_FILES = Map.of(BuildTool.GRADLE,
+            Path.of("templates", "java", "test", "gradle", "projectTemplate", SecurityPolicyRepositoryFiles.POLICY_FILE_NAME), BuildTool.MAVEN,
+            Path.of("templates", "java", "test", "maven", "projectTemplate", SecurityPolicyRepositoryFiles.POLICY_FILE_NAME));
 
     /** Marks the commits of this service whose push processing it runs itself, so a retry can tell an unprocessed change of its own from any other commit. */
     private static final String COMMIT_TRAILER = "Changed-by: Artemis Security Framework";
@@ -309,6 +315,7 @@ public class SecurityFrameworkService {
                         "securityFrameworkNotActive");
             }
             SecurityPolicyRepositoryFiles.writeAresVersion(root, frameworkVersion);
+            requireUsablePolicyFiles(root);
         });
     }
 
@@ -403,10 +410,13 @@ public class SecurityFrameworkService {
 
     private void applyActivation(Repository repository, String frameworkVersion, Optional<String> packageName) {
         Path root = repository.getLocalPath();
-        SecurityFrameworkState state = requireSupported(SecurityPolicyRepositoryFiles.evaluate(root));
+        requireSupported(SecurityPolicyRepositoryFiles.evaluate(root));
         BuildTool buildTool = SecurityPolicyRepositoryFiles.detectBuildTool(root)
                 .orElseThrow(() -> new BadRequestAlertException("The Security Framework requires a Gradle or Maven test repository that uses Ares.", ENTITY_NAME,
                         "securityFrameworkUnsupportedProject"));
+        // The pinned version decides which rules a policy file has to satisfy, so it is written before the files are evaluated.
+        SecurityPolicyRepositoryFiles.writeAresVersion(root, frameworkVersion);
+        SecurityFrameworkState state = SecurityPolicyRepositoryFiles.evaluate(root);
         if (state.status() == SecurityActivationStatus.INACTIVE) {
             SecurityPolicyRepositoryFiles.setPolicyAnnotationsActive(root, annotationStatesBeforeLastDeactivation(repository));
             state = SecurityPolicyRepositoryFiles.evaluate(root);
@@ -414,12 +424,11 @@ public class SecurityFrameworkService {
         for (SecurityFrameworkState.PolicyFile policyFile : state.policyFiles()) {
             if (policyFile.problem() == SecurityFrameworkState.PolicyFileProblem.MISSING) {
                 String path = SecurityPolicyRepositoryFiles.validatePolicyPath(policyFile.policyPath()).orElseThrow();
-                String policy = findPreviousPolicy(repository, path).orElseGet(() -> SecurityPolicyRepositoryFiles.generateDefaultPolicy(root, buildTool, packageName));
+                String policy = findPreviousPolicy(repository, path).orElseGet(() -> generatePolicy(root, buildTool, packageName));
                 SecurityPolicyRepositoryFiles.writePolicy(root, path, policy);
             }
             else if (policyFile.problem() != null && policyFile.problem().breaksTheSandbox()) {
-                throw new BadRequestAlertException("The policy file " + policyFile.policyPath() + " cannot be repaired automatically (" + policyFile.problem() + ").", ENTITY_NAME,
-                        "securityFrameworkPolicyNotRepairable");
+                throw policyNotRepairable(policyFile);
             }
         }
         for (SecurityFrameworkState.PolicyFile policyFile : SecurityPolicyRepositoryFiles.evaluate(root).policyFiles()) {
@@ -427,7 +436,54 @@ public class SecurityFrameworkService {
                 SecurityPolicyRepositoryFiles.addTestClassesToPolicy(root, policyFile.policyPath(), policyFile.missingTestClasses());
             }
         }
-        SecurityPolicyRepositoryFiles.writeAresVersion(root, frameworkVersion);
+        requireUsablePolicyFiles(root);
+    }
+
+    /**
+     * Generates a policy for a repository that has none in its history, e.g. after a file import, which does not keep the history. It permits what the template
+     * of the build tool permits, because a policy without any permission fails the template's own solution. If that is not possible, it permits nothing.
+     */
+    private String generatePolicy(Path root, BuildTool buildTool, Optional<String> packageName) {
+        Optional<String> templatePermissions = readTemplatePermissions(buildTool);
+        if (templatePermissions.isPresent()) {
+            String policy = SecurityPolicyRepositoryFiles.generateDefaultPolicy(root, buildTool, packageName, templatePermissions.get());
+            if (SecurityPolicySchema.read(policy).valid()) {
+                return policy;
+            }
+            log.warn("The permissions of the {} template do not form a valid policy, generating a policy without permissions instead", buildTool);
+        }
+        return SecurityPolicyRepositoryFiles.generateDefaultPolicy(root, buildTool, packageName, SecurityPolicyRepositoryFiles.NO_RESOURCE_PERMISSIONS);
+    }
+
+    private Optional<String> readTemplatePermissions(BuildTool buildTool) {
+        try {
+            String template = resourceLoaderService.getResource(TEMPLATE_POLICY_FILES.get(buildTool)).getContentAsString(StandardCharsets.UTF_8);
+            Optional<String> permissions = SecurityPolicyRepositoryFiles.extractResourcePermissions(template);
+            if (permissions.isEmpty()) {
+                log.warn("The policy of the {} template does not list any permitted resource accesses", buildTool);
+            }
+            return permissions;
+        }
+        catch (IOException e) {
+            log.warn("Could not read the policy of the {} template", buildTool, e);
+            return Optional.empty();
+        }
+    }
+
+    /**
+     * The last check before a change is committed: a policy file that Ares cannot use, e.g. an invalid one restored from the history, is never pushed.
+     */
+    private static void requireUsablePolicyFiles(Path root) {
+        for (SecurityFrameworkState.PolicyFile policyFile : requireSupported(SecurityPolicyRepositoryFiles.evaluate(root)).policyFiles()) {
+            if (policyFile.problem() != null && policyFile.problem().breaksTheSandbox()) {
+                throw policyNotRepairable(policyFile);
+            }
+        }
+    }
+
+    private static BadRequestAlertException policyNotRepairable(SecurityFrameworkState.PolicyFile policyFile) {
+        return new BadRequestAlertException("The policy file " + policyFile.policyPath() + " cannot be repaired automatically (" + policyFile.problem() + ").", ENTITY_NAME,
+                "securityFrameworkPolicyNotRepairable");
     }
 
     private static void applyDeactivation(Repository repository) {

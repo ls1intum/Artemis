@@ -50,6 +50,19 @@ public final class SecurityPolicyRepositoryFiles {
     /** Name of the policy file at the root of the exercise-tests repository, as referenced by the template test classes. */
     public static final String POLICY_FILE_NAME = "SecurityPolicy.yaml";
 
+    private static final String RESOURCE_PERMISSIONS_LINE = "  theFollowingResourceAccessesArePermitted:";
+
+    /** The section of a generated policy that permits no resource access at all. */
+    public static final String NO_RESOURCE_PERMISSIONS = RESOURCE_PERMISSIONS_LINE + """
+
+                regardingFileSystemInteractions: [ ]
+                regardingNetworkConnections: [ ]
+                regardingCommandExecutions: [ ]
+                regardingThreadCreations: [ ]
+                regardingPackageImports: [ ]
+                regardingTimeouts: [ ]
+            """;
+
     private static final String GRADLE_BUILD_FILE = "build.gradle";
 
     private static final String MAVEN_BUILD_FILE = "pom.xml";
@@ -61,6 +74,8 @@ public final class SecurityPolicyRepositoryFiles {
     private static final String ARES_1_ARTIFACT = "artemis-java-test-sandbox";
 
     private static final Pattern WINDOWS_DRIVE = Pattern.compile("[A-Za-z]:");
+
+    private static final Pattern BLANK_OR_COMMENT_LINE = Pattern.compile("^[ \\t]*(#.*)?$");
 
     /** Directories that never contain test sources of the exercise, wherever they appear. */
     private static final Set<String> IGNORED_DIRECTORIES = Set.of(".git", ".gradle", ".idea", "node_modules");
@@ -142,7 +157,8 @@ public final class SecurityPolicyRepositoryFiles {
      * <li>{@code UNSUPPORTED} if the repository uses Ares in a way the Security Framework cannot manage reliably, see
      * {@link SecurityFrameworkState.UnsupportedReasonType};</li>
      * <li>{@code MISCONFIGURED} if an active {@code @Policy} annotation points to a policy file that is missing, invalid or unreadable, because Ares then fails
-     * the tests;</li>
+     * the tests. A repository that pins the Ares version {@link SecurityPolicySchema} was verified against has its policy files checked against the rules of
+     * that version; for any other version a file only has to be a YAML mapping, so {@code ACTIVE} does not establish that this Ares version accepts it;</li>
      * <li>{@code ACTIVE} if at least one test class has an active {@code @Policy} annotation;</li>
      * <li>{@code INACTIVE} otherwise.</li>
      * </ul>
@@ -188,8 +204,9 @@ public final class SecurityPolicyRepositoryFiles {
             annotation.policyPath().filter(path -> !path.isBlank())
                     .ifPresent(path -> classesByPolicyPath.computeIfAbsent(path, _ -> new ArrayList<>()).add(testClass.qualifiedName()));
         }
+        boolean verifiedAresVersion = parseAresVersion(buildFiles.gradleBuild(), buildFiles.mavenPom()).filter(SecurityPolicySchema.VERIFIED_ARES_VERSION::equals).isPresent();
         List<SecurityFrameworkState.PolicyFile> policyFiles = new ArrayList<>();
-        classesByPolicyPath.forEach((path, referencedBy) -> policyFiles.add(policyFile(path, referencedBy.stream().sorted().toList(), reader)));
+        classesByPolicyPath.forEach((path, referencedBy) -> policyFiles.add(policyFile(path, referencedBy.stream().sorted().toList(), reader, verifiedAresVersion)));
 
         SecurityActivationStatus status;
         if (policyFiles.stream().anyMatch(policyFile -> policyFile.problem() != null && policyFile.problem().breaksTheSandbox())) {
@@ -260,7 +277,7 @@ public final class SecurityPolicyRepositoryFiles {
         return reasons;
     }
 
-    private static SecurityFrameworkState.PolicyFile policyFile(String path, List<String> referencedBy, PolicyFileReader reader) {
+    private static SecurityFrameworkState.PolicyFile policyFile(String path, List<String> referencedBy, PolicyFileReader reader, boolean verifiedAresVersion) {
         Optional<String> validPath = validatePolicyPath(path);
         if (validPath.isEmpty()) {
             return new SecurityFrameworkState.PolicyFile(path, referencedBy, SecurityFrameworkState.PolicyFileProblem.INVALID_PATH, List.of());
@@ -269,7 +286,7 @@ public final class SecurityPolicyRepositoryFiles {
         if (content.problem() != null || content.content() == null) {
             return new SecurityFrameworkState.PolicyFile(path, referencedBy, content.problem(), List.of());
         }
-        SecurityPolicyYaml.ReadPolicy policy = SecurityPolicyYaml.read(content.content());
+        SecurityPolicyYaml.ReadPolicy policy = verifiedAresVersion ? SecurityPolicySchema.read(content.content()) : SecurityPolicyYaml.read(content.content());
         if (!policy.valid()) {
             return new SecurityFrameworkState.PolicyFile(path, referencedBy, SecurityFrameworkState.PolicyFileProblem.UNPARSEABLE, List.of());
         }
@@ -554,15 +571,42 @@ public final class SecurityPolicyRepositoryFiles {
     }
 
     /**
-     * Generates the default policy for the repository: no resource access is permitted, and every class that contains tests is registered as a test class
-     * so Ares does not treat it as student code.
+     * Takes the section of the permitted resource accesses from a policy of the Java templates, as written. It ends at the next line that is indented no
+     * deeper than the section's key.
      *
-     * @param repositoryRoot root of the checked-out exercise-tests repository
-     * @param buildTool      the build tool of the repository
-     * @param packageName    the package of the supervised student code, if the exercise has one
+     * @param templatePolicy the content of a template policy
+     * @return the section ready for {@link #generateDefaultPolicy}; empty if the policy has no such section
+     */
+    public static Optional<String> extractResourcePermissions(String templatePolicy) {
+        List<String> lines = templatePolicy.lines().toList();
+        int keyLine = lines.indexOf(RESOURCE_PERMISSIONS_LINE);
+        if (keyLine < 0) {
+            return Optional.empty();
+        }
+        int keyIndentation = RESOURCE_PERMISSIONS_LINE.length() - RESOURCE_PERMISSIONS_LINE.stripLeading().length();
+        StringBuilder section = new StringBuilder(RESOURCE_PERMISSIONS_LINE).append('\n');
+        for (String line : lines.subList(keyLine + 1, lines.size())) {
+            boolean endsSection = !BLANK_OR_COMMENT_LINE.matcher(line).matches() && line.length() - line.stripLeading().length() <= keyIndentation;
+            if (endsSection) {
+                break;
+            }
+            section.append(line).append('\n');
+        }
+        return Optional.of(section.toString());
+    }
+
+    /**
+     * Generates a policy for a repository that has none: every class that contains tests is registered as a test class so Ares does not treat it as student
+     * code.
+     *
+     * @param repositoryRoot      root of the checked-out exercise-tests repository
+     * @param buildTool           the build tool of the repository
+     * @param packageName         the package of the supervised student code, if the exercise has one
+     * @param resourcePermissions the section of the permitted resource accesses, either {@link #NO_RESOURCE_PERMISSIONS} or one from
+     *                                {@link #extractResourcePermissions}
      * @return the YAML content of the policy
      */
-    public static String generateDefaultPolicy(Path repositoryRoot, BuildTool buildTool, Optional<String> packageName) {
+    public static String generateDefaultPolicy(Path repositoryRoot, BuildTool buildTool, Optional<String> packageName, String resourcePermissions) {
         StringBuilder policy = new StringBuilder();
         policy.append("# Ares 2 security policy for the tests of this repository, generated by Artemis when the Security Framework was activated.\n");
         policy.append("# Docs: https://ls1intum.github.io/Ares2/instructor/policy-reference\n");
@@ -579,12 +623,7 @@ public final class SecurityPolicyRepositoryFiles {
             policy.append("  theFollowingClassesAreTestClasses:\n");
             testClasses.forEach(testClass -> policy.append("    - \"").append(testClass).append("\"\n"));
         }
-        policy.append("  theFollowingResourceAccessesArePermitted:\n");
-        for (String resource : List.of("regardingFileSystemInteractions", "regardingNetworkConnections", "regardingCommandExecutions", "regardingThreadCreations",
-                "regardingPackageImports", "regardingTimeouts")) {
-            policy.append("    ").append(resource).append(": [ ]\n");
-        }
-        return policy.toString();
+        return policy.append(resourcePermissions).toString();
     }
 
     /**

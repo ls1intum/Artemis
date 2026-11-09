@@ -46,10 +46,16 @@ class SecurityPolicyRepositoryFilesTest {
             thisPolicyFileCompliesToThePolicyVersion: 1
             regardingTheSupervisedCode:
               theFollowingProgrammingLanguageConfigurationIsUsed: JAVA_USING_GRADLE_ARCHUNIT_AND_ASPECTJ
+              theSupervisedCodeUsesTheFollowingPackage: "de.example"
               theFollowingClassesAreTestClasses:
                 - "de.example.SortingTest"
               theFollowingResourceAccessesArePermitted:
                 regardingFileSystemInteractions: [ ]
+                regardingNetworkConnections: [ ]
+                regardingCommandExecutions: [ ]
+                regardingThreadCreations: [ ]
+                regardingPackageImports: [ ]
+                regardingTimeouts: [ ]
             """;
 
     @TempDir
@@ -427,8 +433,38 @@ class SecurityPolicyRepositoryFilesTest {
         assertThat(onlyPolicyFileProblem()).isEqualTo(SecurityFrameworkState.PolicyFileProblem.UNPARSEABLE);
 
         FileUtils.writeStringToFile(root.resolve("SecurityPolicy.yaml").toFile(), "thisPolicyFileCompliesToThePolicyVersion: 1\n", StandardCharsets.UTF_8);
+        assertThat(onlyPolicyFileProblem()).isEqualTo(SecurityFrameworkState.PolicyFileProblem.UNPARSEABLE);
+
+        FileUtils.writeStringToFile(root.resolve("build.gradle").toFile(), "ext {\n    aresVersion = '2.3.0'\n}\n", StandardCharsets.UTF_8);
         assertThat(onlyPolicyFileProblem()).isEqualTo(SecurityFrameworkState.PolicyFileProblem.TEST_CLASS_LIST_NOT_FOUND);
         assertThat(SecurityPolicyRepositoryFiles.evaluate(root).status()).isEqualTo(SecurityActivationStatus.ACTIVE);
+    }
+
+    @Test
+    void extractsThePermissionsUpToTheNextKeyOfTheSameLevel() {
+        String template = """
+                regardingTheSupervisedCode:
+                  theFollowingResourceAccessesArePermitted:
+                    # a comment stays
+                    regardingTimeouts:
+
+                      - timeout: 1
+                  theFollowingClassesAreTestClasses: [ ]
+                """;
+
+        assertThat(SecurityPolicyRepositoryFiles.extractResourcePermissions(template))
+                .contains("  theFollowingResourceAccessesArePermitted:\n    # a comment stays\n    regardingTimeouts:\n\n      - timeout: 1\n");
+    }
+
+    @Test
+    void extractsThePermissionsUpToTheEndOfTheFile() {
+        assertThat(SecurityPolicyRepositoryFiles.extractResourcePermissions("a:\n  theFollowingResourceAccessesArePermitted:\r\n    regardingTimeouts: [ ]"))
+                .contains("  theFollowingResourceAccessesArePermitted:\n    regardingTimeouts: [ ]\n");
+    }
+
+    @Test
+    void findsNoPermissionsInAPolicyWithoutThem() {
+        assertThat(SecurityPolicyRepositoryFiles.extractResourcePermissions("thisPolicyFileCompliesToThePolicyVersion: 1\n")).isEmpty();
     }
 
     private SecurityFrameworkState.PolicyFileProblem onlyPolicyFileProblem() {

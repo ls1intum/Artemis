@@ -67,12 +67,17 @@ An active `@Policy` annotation points to a policy file that Ares cannot use: the
 invalid, it is too large, or it is not a valid policy. Ares then fails the tests on purpose, so the results of the
 template, the solution and every student drop until the problem is fixed.
 
-- **Repair** restores a missing policy file from the repository history, or generates a default policy if the
-  exercise never had one. The annotations stay as they are.
+- **Repair** restores a missing policy file from the repository history, or generates one with the permissions of the
+  Java template if the history has none. The annotations stay as they are.
 - **Deactivate** switches the sandbox off instead, as described in [Deactivate the Sandbox](#deactivate-the-sandbox).
 
 An invalid path, a file that is too large and a file that is not a valid policy are not repaired automatically,
 because Artemis cannot tell what the file should contain. Fix them in the tests repository by hand.
+
+For an exercise that pins Ares 2.2.1, Artemis checks the policy file against the rules of that version, and it also
+requires the package in `theSupervisedCodeUsesTheFollowingPackage`. For any other version, Artemis only checks that
+the file is a YAML mapping, so **Active** does not guarantee that Ares accepts the policy. Check the template and
+solution results after you switch to another version.
 
 ### Not Supported
 
@@ -123,13 +128,15 @@ Switching on **Activate Security Framework** creates one commit in the tests rep
 - switches the `@Policy` annotations back on as they were before the last deactivation. A test class you had
   switched off yourself stays off. Test classes added since then are switched on, and a renamed class counts as a
   new one.
-- restores the previous policy file from the repository history, or generates a default policy if the exercise
-  never had one.
+- restores the previous policy file from the repository history, or generates one if the history has none. A
+  generated policy lists the test classes of the repository and permits what the Java template permits: one thread
+  of `java.util.concurrent.ThreadLocalRandom` and imports from `org.apache.commons.lang3`.
 - adds test classes that are missing from the policy's `theFollowingClassesAreTestClasses`. It never removes an
   entry.
 - pins the selected framework version in the build file.
 
-The template and solution builds then run again.
+The template and solution builds then run again. If the restored policy file is not valid for the selected version,
+Artemis changes nothing and shows an error instead.
 
 ## Choose the Framework Version
 
@@ -162,6 +169,11 @@ The card is not available together with empty repositories for [AI-assisted code
 
 If your choice cannot be applied, for example because the imported tests use Ares 1, the import still completes
 with the tests unchanged, and a warning tells you why.
+
+A file import does not keep the repository history. If you export a deactivated exercise, which has no policy file,
+and activate it after importing the file, Artemis generates a policy as described in
+[Activate the Sandbox](#activate-the-sandbox). Permissions you added yourself are lost, and test classes you had
+switched off are switched on again. Add them back in the tests repository.
 
 ## Edit the Policy by Hand
 
