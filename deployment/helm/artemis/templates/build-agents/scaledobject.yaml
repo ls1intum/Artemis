@@ -1,4 +1,4 @@
-{{- if and .Values.buildAgents.enabled .Values.buildAgents.autoscaling.enabled }}
+{{- if and .Values.buildAgents.enabled (include "artemis.buildAgentAutoscalingEnabled" .) }}
 {{- $autoscaling := .Values.buildAgents.autoscaling -}}
 {{- $serverAddress := required "buildAgents.autoscaling.prometheus.serverAddress is required when buildAgents.autoscaling.enabled is true" ($autoscaling.prometheus.serverAddress | trim) -}}
 {{- if lt (int $autoscaling.maxReplicas) (int $autoscaling.minReplicas) -}}

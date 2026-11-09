@@ -117,6 +117,16 @@ The target is `ceil((queued + running builds) / concurrentBuildsPerAgent)`, read
 `minReplicas..maxReplicas`. A missing series is an error and not zero, so a broken scrape does not scale the agents down while builds wait.
 Scale-up is fast (4 controllers per minute by default) and scale-down is slow (one controller per five minutes after ten minutes below the target).
 
-Scaling down removes the controller with the highest ordinal, busy or not. A build that it was running is put back into the queue and runs again on another agent, at most five times.
+Scaling down removes the controller with the highest ordinal, busy or not. A build that it was running is put back into the queue and runs again on another agent, at most five times,
+and is marked failed after that. The Kubernetes Job of the removed controller is **not** stopped: the other controllers only clean up the Jobs of their own name, so it runs until it finishes
+or reaches its active deadline (the build timeout plus the pod start, result collection and grace budgets). A retry can therefore run next to it and use extra build capacity for that time.
+A controller that starts again under the same name removes the Jobs it no longer tracks.
 Make sure the build nodes can hold `maxReplicas × concurrentBuildsPerAgent` builds, otherwise the extra build Pods wait for resources.
+
+**Enabling autoscaling on an existing release.** The StatefulSet stops setting `replicas`, and Helm can then remove the field, which makes Kubernetes reset the StatefulSet to one replica until KEDA
+has reconciled it. The controllers above the first one are removed, and their running builds are interrupted. Enable autoscaling while no builds run: pause the build agents in Artemis and wait until
+their builds have finished, as in the update procedure of the documentation, and set `minReplicas` to the capacity you want to keep.
+
+**Paused controllers.** A paused controller counts as a replica but takes no builds, and the scaler adds no capacity for it. Pausing is a maintenance action, and a new controller would start unpaused
+and override it. Builds that are queued while all controllers are paused wait until a controller is resumed.
 All values are documented in `values.yaml`.

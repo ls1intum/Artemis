@@ -101,8 +101,8 @@ Change the value in the values file and run `helm upgrade`, so that the chart st
 
 - **More build capacity:** raise `buildAgents.replicaCount`. A new controller registers with the cluster within seconds and takes jobs at once. Make sure the build nodes have room first.
 - **Less build capacity:** lower `buildAgents.replicaCount`. The StatefulSet removes the highest ordinal first. A build that runs on a removed controller is put back into the queue and runs again on another agent,
-  at most five times, see [Operating build agents](/admin/production-setup/multiple-artemis-instances#operating-build-agents). To avoid the repetition, pause the agent on the Build Agents page
-  and wait for its builds to finish before you lower the count.
+  at most five times, see [Operating build agents](/admin/production-setup/multiple-artemis-instances#operating-build-agents). To avoid the repetition, and the extra load described under
+  [Automatically](#automatically), pause the agent on the Build Agents page and wait for its builds to finish before you lower the count.
 - **More core capacity:** raise `artemis.replicaCount`. A new member waits for the leader to be ready and then joins the cluster.
 
 The values to decide with are the queue and the utilization on the Build Agents page, and the gauges `artemis.global.localci.queued`, `running`, `agents` and `maxConcurrentBuilds`.
@@ -140,9 +140,17 @@ buildAgents:
 - **Target.** The number of controllers that the queue needs: `ceil((queued + running builds) / concurrentBuildsPerAgent)`, from the cluster-wide gauges `artemis.global.localci.queued` and `running`,
   limited to `minReplicas` and `maxReplicas`. `autoscaling.prometheus.query` replaces the default query, which is built from the selector.
 - **Replica count.** The StatefulSet no longer sets `replicas`, so `buildAgents.replicaCount` is ignored and `helm upgrade` does not reset the count.
+  The upgrade that **first** enables autoscaling on an existing release is the exception: Helm can remove the field, which makes Kubernetes reset the StatefulSet to one replica until KEDA has reconciled it.
+  The controllers above the first one are removed and their running builds are interrupted. Enable autoscaling while no builds run: pause the build agents, wait until their builds have finished,
+  as in [Updating](#updating), and set `minReplicas` to the capacity that you want to keep.
 - **Speed.** Controllers are added quickly (four per minute by default) and removed slowly (one every five minutes, after ten minutes below the target). The `scaleUp` and `scaleDown` values change this.
 - **Missing metric.** A missing series is an error and not zero, so a broken scrape leaves the count unchanged instead of scaling down while builds wait.
-- **Scale-down.** The controller with the highest ordinal is removed, whether it is busy or not. Its builds are put back into the queue and run again, at most five times. The slow scale-down keeps this rare, but it cannot rule it out.
+- **Scale-down.** The controller with the highest ordinal is removed, whether it is busy or not. Its builds are put back into the queue and run again, at most five times, and are marked failed after that.
+  The Kubernetes Job of the removed controller is **not** stopped. The other controllers only clean up the Jobs of their own name, so it runs until it finishes or reaches its active deadline, which is the build timeout
+  plus the budgets for the pod start, the result collection and the grace period. A retry can therefore run next to it and use extra build capacity for that time. A controller that starts again under the same name
+  removes the Jobs it no longer tracks. The slow scale-down keeps all of this rare, but it cannot rule it out.
+- **Paused controllers.** A paused controller counts as a replica but takes no builds, and the scaler adds no capacity for it. Pausing is a maintenance action, and a new controller would start unpaused and override it.
+  Builds that are queued while all controllers are paused wait until a controller is resumed.
 - **Capacity.** `maxReplicas × concurrentBuildsPerAgent` builds must fit on the build nodes, otherwise the additional build Pods wait for resources. A cluster node autoscaler can add the nodes when Pods wait,
   but it does not change the number of controllers.
 
