@@ -489,7 +489,7 @@ describe('CourseCompetencyRelationFormComponent', () => {
             expect(component.relationType()).toBe(CompetencyRelationType.EXTENDS);
         });
 
-        it('should drop REQUIRES and unknown suggestions and auto-select by the remaining suggestions', async () => {
+        it('should drop unsupported and self-relation suggestions and select the remaining suggestions', async () => {
             const kept = { tail_id: '3', head_id: '2', relation_type: 'EXTENDS' };
             // AtlasML's REQUIRES means "tail is a prerequisite of head", the converse of ASSUMES
             getSuggestedCompetencyRelationsSpy.mockResolvedValue({
@@ -498,13 +498,17 @@ describe('CourseCompetencyRelationFormComponent', () => {
                     kept,
                     { tail_id: '1', head_id: '3', relation_type: 'UNKNOWN' },
                     { tail_id: '1', head_id: '2', relation_type: 'toString' },
+                    { tail_id: '1', head_id: '1', relation_type: 'EXTENDS' },
+                    { tail_id: '2', head_id: '02', relation_type: 'MATCHES' },
                 ],
             });
 
             await component.fetchSuggestions();
+            fixture.detectChanges();
 
             expect(component.suggestedRelations()).toEqual([kept]);
             expect([...component.selectedSuggestions()]).toEqual([0]);
+            expect(fixture.nativeElement.querySelectorAll('.list-group-item')).toHaveLength(1);
         });
 
         it('should show import suggestions button when suggestions are loaded', async () => {
