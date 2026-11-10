@@ -288,7 +288,7 @@
             },
             "security": {
                 "title": "Security",
-                "description": "Ares 2 sandboxes the student code while the tests run. Java exercises start with it activated; deactivating it switches off all of Ares.",
+                "description": "Ares 2 sandboxes the student code while the tests run. Java exercises start with it activated; deactivating it switches off the sandbox and everything the security policy configures for the tests.",
                 "activateLabel": "Activate Security Framework",
                 "subtitle": "Programming Exercise Security Framework",
                 "frameworkVersion": "Framework version",
@@ -355,7 +355,7 @@
                 "deactivate": "Deactivate",
                 "deactivateConfirmation": {
                     "header": "Deactivate the Security Framework?",
-                    "message": "Deactivating creates a commit in the tests repository that deletes the security policy with all its settings, and the template and solution builds run again. This switches off all of Ares: the sandbox for student code and everything the policy configures for the tests, such as timeouts, hidden-test scheduling, output handling and failure reporting. Hidden tests are then protected only by the test visibility settings of Artemis, not by Ares. Activating again restores the last policy from the repository history, or generates a default policy if none is found.",
+                    "message": "Deactivating creates a commit in the tests repository that deletes the security policy with all its settings, and the template and solution builds run again. This switches off the sandbox for student code and everything the policy configures for the tests, such as hidden-test scheduling, output handling and failure reporting. Ares features the tests use directly, such as @StrictTimeout, keep working. Hidden tests are then protected only by the test visibility settings of Artemis, not by Ares. Activating again restores the last policy from the repository history, or generates a default policy if none is found.",
                     "aresLibraryStays": "The tests also use other parts of Ares ({{ apis }}), so the Ares library stays in the build file.",
                     "confirm": "Deactivate"
                 },

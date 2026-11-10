@@ -143,13 +143,6 @@ public final class AresCompatibilityManifest {
     }
 
     /**
-     * @return the releases the manifest lists, by their version
-     */
-    public Set<String> verifiedVersions() {
-        return releases.keySet();
-    }
-
-    /**
      * @param aresVersion an Ares release
      * @return what the release accepts; empty if the manifest does not list it
      */

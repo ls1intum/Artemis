@@ -177,6 +177,21 @@ describe('TumAetUiSelectComponent', () => {
             fixture.detectChanges();
             expect(emitSpy).toHaveBeenCalledWith('c');
         });
+
+        it('closes on Tab without selecting when the active option is disabled', () => {
+            component.writeValue('b');
+            fixture.detectChanges();
+            const emitSpy = vi.spyOn(component.selectionChange, 'emit');
+            openPanel();
+            expect(triggerButton().getAttribute('aria-activedescendant')).toBe(optionElements()[1].id);
+
+            triggerButton().dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab', bubbles: true }));
+            fixture.detectChanges();
+
+            expect(emitSpy).not.toHaveBeenCalled();
+            expect(listbox()).toBeNull();
+            expect(labelText()).toBe('Bravo');
+        });
     });
 
     it('keyboard: ArrowDown stops at the final option', () => {

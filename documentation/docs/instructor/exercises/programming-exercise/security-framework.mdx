@@ -132,9 +132,10 @@ its other features, such as structural tests, `@StrictTimeout` and the reflectio
 features the tests of the exercise use, for example `StrictTimeout` or `structural.ClassTestProvider`, because
 these tests would no longer compile without the library. The tests of the Java template use several of them.
 
-Deactivating switches off all of Ares, not only the restrictions on student code. Everything the policy configures
-for the tests no longer applies either: timeouts, the scheduling of hidden tests, output handling and failure
-reporting. Hidden tests are then protected only by the test visibility settings of Artemis, so check those before
+Deactivating switches off more than the restrictions on student code. Everything the policy configures for the tests
+no longer applies either, such as the scheduling of hidden tests, output handling and failure reporting. Ares
+features that the tests use directly keep working, because they do not depend on the policy: for example,
+`@StrictTimeout` still limits how long a test runs, and structural tests still run. Hidden tests are then protected only by the test visibility settings of Artemis, so check those before
 you deactivate. The dialog warns about this, because the settings in the deleted policy file are lost from the
 current state of the repository. Activating again restores the last policy from the repository history.
 
@@ -202,7 +203,9 @@ The card is not available together with empty repositories for [AI-assisted code
 If your choice cannot be applied, for example because the imported tests use Ares 1, the import still completes
 with the tests unchanged, and a warning tells you why.
 
-A file import does not keep the repository history. If you export a deactivated exercise, which has no policy file,
+A file import does not keep the repository history. Deactivating an existing exercise deletes its policy file, and
+an exercise created with the sandbox switched off keeps the template's policy file (see
+[When You Create an Exercise](#when-you-create-an-exercise)). If you export an exercise whose policy file was deleted
 and activate it after importing the file, Artemis generates a policy as described in
 [Activate the Sandbox](#activate-the-sandbox). Permissions you added yourself are lost, and test classes you had
 switched off are switched on again. Add them back in the tests repository.

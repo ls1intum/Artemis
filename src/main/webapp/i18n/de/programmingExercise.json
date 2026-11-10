@@ -288,7 +288,7 @@
             },
             "security": {
                 "title": "Sicherheit",
-                "description": "Ares 2 führt den Code der Studierenden während der Tests in einer Sandbox aus. Java-Aufgaben starten mit aktivierter Sandbox; beim Deaktivieren wird Ares vollständig abgeschaltet.",
+                "description": "Ares 2 führt den Code der Studierenden während der Tests in einer Sandbox aus. Java-Aufgaben starten mit aktivierter Sandbox; beim Deaktivieren werden die Sandbox und alles, was die Sicherheitsrichtlinie für die Tests festlegt, abgeschaltet.",
                 "activateLabel": "Security Framework aktivieren",
                 "subtitle": "Sicherheitsframework für Programmieraufgaben",
                 "frameworkVersion": "Framework-Version",
@@ -355,7 +355,7 @@
                 "deactivate": "Deaktivieren",
                 "deactivateConfirmation": {
                     "header": "Security Framework deaktivieren?",
-                    "message": "Beim Deaktivieren wird ein Commit im Test-Repository erstellt, der die Sicherheitsrichtlinie mit allen ihren Einstellungen löscht, und die Builds der Vorlage und der Lösung laufen erneut. Damit wird Ares vollständig abgeschaltet: die Sandbox für den Code der Studierenden und alles, was die Richtlinie für die Tests festlegt, etwa Timeouts, die Zeitsteuerung versteckter Tests, die Behandlung der Ausgabe und das Melden von Fehlern. Versteckte Tests schützen dann nur noch die Sichtbarkeitseinstellungen der Tests in Artemis, nicht Ares. Beim erneuten Aktivieren wird die letzte Richtlinie aus dem Verlauf des Repositorys wiederhergestellt oder eine Standardrichtlinie erzeugt, falls keine gefunden wird.",
+                    "message": "Beim Deaktivieren wird ein Commit im Test-Repository erstellt, der die Sicherheitsrichtlinie mit allen ihren Einstellungen löscht, und die Builds der Vorlage und der Lösung laufen erneut. Damit werden die Sandbox für den Code der Studierenden und alles, was die Richtlinie für die Tests festlegt, abgeschaltet, etwa die Zeitsteuerung versteckter Tests, die Behandlung der Ausgabe und das Melden von Fehlern. Ares-Funktionen, die die Tests direkt verwenden, etwa @StrictTimeout, funktionieren weiter. Versteckte Tests schützen dann nur noch die Sichtbarkeitseinstellungen der Tests in Artemis, nicht Ares. Beim erneuten Aktivieren wird die letzte Richtlinie aus dem Verlauf des Repositorys wiederhergestellt oder eine Standardrichtlinie erzeugt, falls keine gefunden wird.",
                     "aresLibraryStays": "Die Tests verwenden außerdem andere Teile von Ares ({{ apis }}), daher bleibt die Ares-Bibliothek in der Build-Datei.",
                     "confirm": "Deaktivieren"
                 },

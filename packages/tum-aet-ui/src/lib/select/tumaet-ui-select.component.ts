@@ -353,7 +353,7 @@ export class TumAetUiSelectComponent extends OptionControl implements ControlVal
                 this.close();
                 break;
             case 'Tab':
-                if (this.activeIndex() >= 0 && this.activeIndex() < count) {
+                if (this.activeIndex() >= 0 && this.activeIndex() < count && !this.isOptionDisabled(this.visibleOptions()[this.activeIndex()])) {
                     this.selectOption(this.visibleOptions()[this.activeIndex()]);
                 } else {
                     this.close(false);

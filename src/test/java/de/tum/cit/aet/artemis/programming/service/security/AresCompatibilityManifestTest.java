@@ -71,7 +71,6 @@ class AresCompatibilityManifestTest {
 
     @Test
     void theBundledManifestListsTheVersionTheSchemaWasVerifiedAgainst() {
-        assertThat(manifest.verifiedVersions()).contains(SecurityPolicySchema.VERIFIED_ARES_VERSION);
         assertThat(manifest.release(SecurityPolicySchema.VERIFIED_ARES_VERSION)).hasValueSatisfying(release -> {
             assertThat(release.minimumFormatVersion()).isEqualTo(1);
             assertThat(release.maximumFormatVersion()).isEqualTo(1);
