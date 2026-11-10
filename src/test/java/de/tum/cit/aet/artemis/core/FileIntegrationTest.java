@@ -94,6 +94,8 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
      */
     private static final String STORED_ATTACHMENT_FILENAME = "dummy.pdf";
 
+    private static final String STORED_STUDENT_VERSION_FILENAME = "student-version.pdf";
+
     @Autowired
     private AttachmentRepository attachmentRepo;
 
@@ -689,6 +691,22 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         callAndCheckMergeResult(lecture, 2);
     }
 
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testGetLecturePdfAttachmentsMerged_AttachmentNotYetReleasedWhileTheUnitIsAvailable() throws Exception {
+        Lecture lecture = createLectureWithLectureUnits();
+        // only the attachment of the first unit is released later, the unit itself is available
+        var unit = (AttachmentVideoUnit) lecture.getLectureUnits().stream().min(Comparator.comparing(LectureUnit::getId)).orElseThrow();
+        unit.getAttachment().setReleaseDate(ZonedDateTime.now().plusHours(2));
+        attachmentRepo.save(unit.getAttachment());
+
+        userUtilService.changeUser(TEST_PREFIX + "student1");
+        callAndCheckMergeResult(lecture, 2);
+
+        userUtilService.changeUser(TEST_PREFIX + "tutor1");
+        callAndCheckMergeResult(lecture, 5);
+    }
+
     private void adjustReleaseDateToFuture(Lecture lecture) {
         var unit = (AttachmentVideoUnit) lecture.getLectureUnits().stream().min(Comparator.comparing(LectureUnit::getId)).orElseThrow();
         var targetTime = ZonedDateTime.now().plusHours(2);
@@ -1240,6 +1258,13 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     private Attachment createLectureAttachmentWithStoredFile(byte[] content) throws IOException {
+        return createLectureAttachmentWithStoredFile(content, null);
+    }
+
+    /**
+     * Creates a lecture attachment with its stored file, and optionally a stored student version, i.e. the file without the pages the instructor hid.
+     */
+    private Attachment createLectureAttachmentWithStoredFile(byte[] content, byte[] studentVersionContent) throws IOException {
         Lecture lecture = lectureUtilService.createEnrolledCourseWithLecture(TEST_PREFIX, true);
         lecture = lectureRepo.save(lecture);
 
@@ -1249,11 +1274,161 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         attachment.setName("test-lecture-file");
         attachment.setAttachmentVideoUnit(attachmentVideoUnit);
         attachment.setLink(STORED_ATTACHMENT_FILENAME);
+        if (studentVersionContent != null) {
+            // the column is not updatable, so the reference has to be set before the attachment is inserted
+            attachment.setStudentVersion(STORED_STUDENT_VERSION_FILENAME);
+        }
         attachment = attachmentRepo.save(attachment);
         attachmentVideoUnit.setAttachment(attachment);
         attachmentVideoUnitRepo.save(attachmentVideoUnit);
         FileUtils.writeByteArrayToFile(new FileSystemLocation.LectureAttachment(lecture.getId(), STORED_ATTACHMENT_FILENAME).path().toFile(), content);
+        if (studentVersionContent != null) {
+            FileUtils.writeByteArrayToFile(new FileSystemLocation.StudentVersionSlides(attachmentVideoUnit.getId(), STORED_STUDENT_VERSION_FILENAME).path().toFile(),
+                    studentVersionContent);
+        }
         return attachment;
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetLectureAttachmentWithHiddenSlidesIsServedToStaffOnly() throws Exception {
+        byte[] content = "lecture attachment content".getBytes();
+        Attachment attachment = createLectureAttachmentWithStoredFile(content);
+        saveSlide(attachment.getAttachmentVideoUnit(), 1, ZonedDateTime.now().plusDays(1), false);
+        String url = "/api/core/files/attachments/lectures/" + attachment.getAttachmentVideoUnit().getLecture().getId() + "/" + attachment.getName() + ".pdf";
+
+        request.get(url, HttpStatus.NOT_FOUND, byte[].class);
+
+        userUtilService.changeUser(TEST_PREFIX + "tutor1");
+        assertThat(request.get(url, HttpStatus.OK, byte[].class)).isEqualTo(content);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetLectureAttachmentBeforeUnitRelease() throws Exception {
+        byte[] content = "lecture attachment content".getBytes();
+        Attachment attachment = createLectureAttachmentWithStoredFile(content);
+        AttachmentVideoUnit attachmentVideoUnit = attachment.getAttachmentVideoUnit();
+        attachmentVideoUnit.setReleaseDate(ZonedDateTime.now().plusDays(1));
+        attachmentVideoUnitRepo.save(attachmentVideoUnit);
+        String url = "/api/core/files/attachments/lectures/" + attachmentVideoUnit.getLecture().getId() + "/" + attachment.getName() + ".pdf";
+
+        request.get(url, HttpStatus.FORBIDDEN, byte[].class);
+
+        userUtilService.changeUser(TEST_PREFIX + "tutor1");
+        assertThat(request.get(url, HttpStatus.OK, byte[].class)).isEqualTo(content);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetSlideByIdBeforeAttachmentRelease() throws Exception {
+        AttachmentVideoUnit attachmentVideoUnit = createAttachmentVideoUnitWithStoredFile("slides".getBytes());
+        Attachment attachment = attachmentVideoUnit.getAttachment();
+        attachment.setReleaseDate(ZonedDateTime.now().plusDays(1));
+        attachmentRepo.save(attachment);
+        saveSlide(attachmentVideoUnit, 1, null, false);
+        byte[] image = "image".getBytes();
+        FileUtils.writeByteArrayToFile(new FileSystemLocation.Slide(attachmentVideoUnit.getId(), 1, "1.png").path().toFile(), image);
+        Slide slide = slideRepository.findAllByAttachmentVideoUnitId(attachmentVideoUnit.getId()).getFirst();
+        String url = "/api/core/files/slides/" + slide.getId();
+
+        request.get(url, HttpStatus.FORBIDDEN, byte[].class);
+
+        userUtilService.changeUser(TEST_PREFIX + "tutor1");
+        assertThat(request.get(url, HttpStatus.OK, byte[].class)).isEqualTo(image);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetLectureAttachmentServesTheStudentVersionToStudentsAndTheFullFileToStaff() throws Exception {
+        byte[] content = "full file".getBytes();
+        byte[] studentVersionContent = "file without the hidden pages".getBytes();
+        Attachment attachment = createLectureAttachmentWithStoredFile(content, studentVersionContent);
+        String url = "/api/core/files/attachments/lectures/" + attachment.getAttachmentVideoUnit().getLecture().getId() + "/" + attachment.getName() + ".pdf";
+
+        assertThat(request.get(url, HttpStatus.OK, byte[].class)).isEqualTo(studentVersionContent);
+
+        userUtilService.changeUser(TEST_PREFIX + "tutor1");
+        assertThat(request.get(url, HttpStatus.OK, byte[].class)).isEqualTo(content);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetSlideByIdBeforeUnitRelease() throws Exception {
+        AttachmentVideoUnit attachmentVideoUnit = createAttachmentVideoUnitWithStoredFile("slides".getBytes());
+        attachmentVideoUnit.setReleaseDate(ZonedDateTime.now().plusDays(1));
+        attachmentVideoUnitRepo.save(attachmentVideoUnit);
+        saveSlide(attachmentVideoUnit, 1, null, false);
+        byte[] image = "image".getBytes();
+        FileUtils.writeByteArrayToFile(new FileSystemLocation.Slide(attachmentVideoUnit.getId(), 1, "1.png").path().toFile(), image);
+        Slide slide = slideRepository.findAllByAttachmentVideoUnitId(attachmentVideoUnit.getId()).getFirst();
+        String url = "/api/core/files/slides/" + slide.getId();
+
+        request.get(url, HttpStatus.FORBIDDEN, byte[].class);
+
+        userUtilService.changeUser(TEST_PREFIX + "tutor1");
+        assertThat(request.get(url, HttpStatus.OK, byte[].class)).isEqualTo(image);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetSlideByIdAfterAttachmentRelease() throws Exception {
+        AttachmentVideoUnit attachmentVideoUnit = createAttachmentVideoUnitWithStoredFile("slides".getBytes());
+        saveSlide(attachmentVideoUnit, 1, null, false);
+        byte[] image = "image".getBytes();
+        FileUtils.writeByteArrayToFile(new FileSystemLocation.Slide(attachmentVideoUnit.getId(), 1, "1.png").path().toFile(), image);
+        Slide slide = slideRepository.findAllByAttachmentVideoUnitId(attachmentVideoUnit.getId()).getFirst();
+
+        assertThat(request.get("/api/core/files/slides/" + slide.getId(), HttpStatus.OK, byte[].class)).isEqualTo(image);
+    }
+
+    /**
+     * The unit is released later than its attachment, so only the date of the unit holds the content back. The routes of the single files all decide alike.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetSlideByNumberBeforeUnitRelease() throws Exception {
+        AttachmentVideoUnit attachmentVideoUnit = createUnitReleasedLaterThanItsAttachment();
+        saveSlide(attachmentVideoUnit, 1, null, false);
+        byte[] image = "image".getBytes();
+        FileUtils.writeByteArrayToFile(new FileSystemLocation.Slide(attachmentVideoUnit.getId(), 1, "1.png").path().toFile(), image);
+        String url = "/api/core/files/attachments/attachment-video-units/" + attachmentVideoUnit.getId() + "/slide/1";
+        String legacyUrl = "/api/core/files/attachments/attachment-unit/" + attachmentVideoUnit.getId() + "/slide/1";
+
+        request.get(url, HttpStatus.FORBIDDEN, byte[].class);
+        request.get(legacyUrl, HttpStatus.FORBIDDEN, byte[].class);
+
+        userUtilService.changeUser(TEST_PREFIX + "tutor1");
+        assertThat(request.get(url, HttpStatus.OK, byte[].class)).isEqualTo(image);
+        assertThat(request.get(legacyUrl, HttpStatus.OK, byte[].class)).isEqualTo(image);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetStudentVersionBeforeUnitRelease() throws Exception {
+        byte[] content = "attachment content".getBytes();
+        AttachmentVideoUnit attachmentVideoUnit = createUnitReleasedLaterThanItsAttachment(content);
+        String url = "/api/core/files/attachments/attachment-video-units/" + attachmentVideoUnit.getId() + "/student/dummy.pdf";
+        String legacyUrl = "/api/core/files/attachments/attachment-unit/" + attachmentVideoUnit.getId() + "/student/dummy.pdf";
+
+        request.get(url, HttpStatus.FORBIDDEN, byte[].class);
+        request.get(legacyUrl, HttpStatus.FORBIDDEN, byte[].class);
+
+        userUtilService.changeUser(TEST_PREFIX + "tutor1");
+        assertThat(request.get(url, HttpStatus.OK, byte[].class)).isEqualTo(content);
+    }
+
+    private AttachmentVideoUnit createUnitReleasedLaterThanItsAttachment() throws IOException {
+        return createUnitReleasedLaterThanItsAttachment("slides".getBytes());
+    }
+
+    private AttachmentVideoUnit createUnitReleasedLaterThanItsAttachment(byte[] content) throws IOException {
+        AttachmentVideoUnit attachmentVideoUnit = createAttachmentVideoUnitWithStoredFile(content);
+        Attachment attachment = attachmentVideoUnit.getAttachment();
+        attachment.setReleaseDate(null);
+        attachmentRepo.save(attachment);
+        attachmentVideoUnit.setReleaseDate(ZonedDateTime.now().plusDays(1));
+        return attachmentVideoUnitRepo.save(attachmentVideoUnit);
     }
 
     @Test

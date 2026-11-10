@@ -2,7 +2,7 @@
 id: access-rights
 title: Access Rights
 sidebar_label: Access Rights
-last_reviewed: 2026-11-03
+last_reviewed: 2026-11-10
 ---
 
 import Callout from "../../src/components/Callout/Callout";
@@ -144,6 +144,7 @@ The following visibility rules apply to **all exercise types**:
 **Assessment Results:**
 - Students can view their assessment results only after the assessment is finalized AND the assessment due date has passed
 - Assessor information is hidden from students until assessment is finalized
+- Long feedback texts follow the visibility of the result they belong to: students can open them once the assessment is completed and its due date has passed. Feedback configured as hidden, or as visible only after the due date, keeps that visibility. Exam results and their feedback are visible to students only after the results are published
 
 **Example Solution:**
 - Students can view the example solution only after it has been published (`isExampleSolutionPublished()`)
@@ -316,6 +317,10 @@ is unaffected; anonymous assessment snapshots remain available.
     **Practice** repositories also allow *WRITE* and *RESET* access after the due date.
 </Callout>
 
+**Test and auxiliary repositories:** Teaching Assistants can read and pull. Creating, renaming and deleting files, committing and resetting require the Editor role.
+
+**Resetting a repository:** Students can reset their own repository while it is not locked, and their practice repository after the due date. Editors and Instructors can also reset locked repositories and the repositories of other users. Teaching Assistants can reset their own repositories as listed above, but not those of other users. A reset to the graded participation requires a graded participation of the same exercise.
+
 #### Additional Visibility Rules for Programming Exercises
 
 **Test Case Visibility:**
@@ -394,6 +399,8 @@ Quiz exercises support three modes: **SYNCHRONIZED**, **BATCHED**, and **INDIVID
 **Practice Mode:**
 - All users can submit in practice mode only after the quiz has ended
 - For exam exercises, practice mode is only available for test exams
+- Quiz training offers the questions of a quiz only after the quiz due date has passed
+- Quiz exercises of an exam are started as part of the exam, not individually
 
 ### File Upload Exercises
 
@@ -509,6 +516,9 @@ Visibility conditions marked as "(if visible)" or "(if enrolled)" in the table a
 **Lecture Units and Attachments:**
 - Visible to students if `releaseDate` is `null` OR `releaseDate` is in the past
 - Teaching Assistants and above can see all units/attachments regardless of release date
+- The details, transcript, slides and files of a unit follow this rule: the unit is visible to students after its own release date, and its attachment after the release date of the attachment
+- Students receive the student version of an attachment, which leaves out hidden slides. If an attachment has hidden slides but no student version, it is not available to students
+- Teaching Assistants and above receive the full version, including hidden slides
 
 **Search Lectures:**
 - Non-admin users only see lectures from courses where they have at least Editor role
@@ -518,6 +528,35 @@ Visibility conditions marked as "(if visible)" or "(if enrolled)" in the table a
   All visibility control is managed at the lecture unit and attachment level via their `releaseDate` fields.
 </Callout>
 
+
+## Teams
+
+[//]: # (Refers to TeamResource.java: https://github.com/ls1intum/Artemis/blob/develop/src/main/java/de/tum/cit/aet/artemis/exercise/web/TeamResource.java)
+
+| Feature                        | Instructor | Editor | Teaching Assistant |
+|--------------------------------|------------|--------|--------------------|
+| View Teams of an Exercise      | ✔          | ✔      | ✔                  |
+| Create Team                    | ✔          | ✔      | ✔                  |
+| Update Team                    | ✔          | ✔      | ✔                  |
+| Import Teams from a List       | ✔          | ✔      |                    |
+| Import Teams from an Exercise  | ✔          | ✔      |                    |
+| Delete Team                    | ✔          |        |                    |
+
+- The students of a team must be students of the course. Members that already belong to a team stay valid when the team is updated.
+- The owner of a team can be any member of the course.
+- Teams can be imported only from another exercise of the same course.
+
+## Communication
+
+All communication features are scoped to a course.
+
+- Users that are added to a channel, a one-to-one chat or a group chat must be members of the course. When several users are added at once, logins that do not belong to a course member are ignored.
+- The channel moderator role can be granted only to members of the course.
+- Saved posts can be listed and changed only for courses the user is a member of.
+
+## Plagiarism Cases
+
+Answers to the posts of a plagiarism case can be written, edited and deleted by the Instructors of the course and by the student affected by the case. Other roles, including Teaching Assistants and Editors, cannot answer. The plagiarism case must belong to the course of the request.
 
 ## Exam
 
@@ -542,3 +581,8 @@ Visibility conditions marked as "(if visible)" or "(if enrolled)" in the table a
 | Test Run              | ✔          |        |                    |
 | Student Exams         | ✔          |        |                    |
 | Students              | ✔          |        |                    |
+
+**Participation:**
+- A student starts an exam exercise only through their own student exam: the exercise must be part of the student exam that the student has started and not yet handed in.
+- Instructors take part in exam exercises through test runs. A test run keeps its manual feedback visible to the instructor.
+- Students can see the results and the manual feedback of an exam exercise only after the results are published.

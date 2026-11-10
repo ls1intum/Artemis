@@ -78,21 +78,21 @@ public interface QuizQuestionRepository extends ArtemisJpaRepository<QuizQuestio
     @Query("""
             SELECT q
             FROM QuizQuestion q
-            WHERE q.id = :questionId AND q.exercise.course.id = :courseId
+            WHERE q.id = :questionId AND q.exercise.course.id = :courseId AND q.exercise.dueDate IS NOT NULL AND q.exercise.dueDate < :now
             """)
-    Optional<QuizQuestion> findByIdAndCourseId(@Param("questionId") long questionId, @Param("courseId") long courseId);
+    Optional<QuizQuestion> findByIdAndCourseIdWithDueDateBefore(@Param("questionId") long questionId, @Param("courseId") long courseId, @Param("now") ZonedDateTime now);
 
     /**
-     * Find a quiz question by id, scoped to a specific course. Use this in training-mode endpoints to ensure
-     * a student cannot submit (and receive solutions for) a question from a course they are not enrolled in,
-     * even if they pass that course's id in the path.
+     * Find a quiz question by id, scoped to a specific course and to quiz exercises whose due date has passed,
+     * i.e. the same set of questions that is offered for training.
      *
      * @param questionId the id of the quiz question
      * @param courseId   the id of the course the question's exercise must belong to
+     * @param now        the reference point in time for the due date comparison
      * @return the quiz question
-     * @throws de.tum.cit.aet.artemis.core.exception.EntityNotFoundException if no question with the given id exists in the course
+     * @throws de.tum.cit.aet.artemis.core.exception.EntityNotFoundException if no matching question exists in the course
      */
-    default QuizQuestion findByIdAndCourseIdElseThrow(long questionId, long courseId) {
-        return getValueElseThrow(findByIdAndCourseId(questionId, courseId), questionId);
+    default QuizQuestion findByIdAndCourseIdWithDueDateBeforeElseThrow(long questionId, long courseId, ZonedDateTime now) {
+        return getValueElseThrow(findByIdAndCourseIdWithDueDateBefore(questionId, courseId, now), questionId);
     }
 }
