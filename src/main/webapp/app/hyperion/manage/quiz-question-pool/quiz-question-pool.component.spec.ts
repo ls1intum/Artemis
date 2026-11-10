@@ -1009,6 +1009,42 @@ describe('QuizQuestionPoolComponent', () => {
         expect(component.pendingInQueue()).toBe(20);
     });
 
+    it('should not delete a question of a course that is no longer shown when the confirmation is accepted', () => {
+        const params = new Subject<Record<string, string>>();
+        setup({ isAtLeastEditor: true, isAtLeastInstructor: true }, params.asObservable());
+        params.next({ courseId: '1' });
+        const deleteSpy = vi.spyOn(poolService, 'deleteQuestion').mockReturnValue(of(undefined));
+        const warningSpy = vi.spyOn(alertService, 'warning');
+        const confirmationService = fixture.debugElement.injector.get(TumAetUiConfirmationService);
+
+        component.confirmDeleteQuestion(2);
+        params.next({ courseId: '2' });
+        confirmationService.request(undefined)!.accept();
+
+        expect(deleteSpy).not.toHaveBeenCalled();
+        expect(warningSpy).toHaveBeenCalledWith('artemisApp.hyperion.quizQuestionPool.list.deleteCourseChanged');
+    });
+
+    it('should not delete the pool of a course that is no longer shown when the typed confirmation is accepted', () => {
+        const params = new Subject<Record<string, string>>();
+        setup({ isAtLeastEditor: true, isAtLeastInstructor: true, title: 'Programming' }, params.asObservable());
+        params.next({ courseId: '1' });
+        const deleteDialogService = TestBed.inject(DeleteDialogService);
+        let confirm: (() => void) | undefined;
+        vi.spyOn(deleteDialogService, 'openDeleteDialog').mockImplementation((options) => {
+            confirm = options.delete as () => void;
+        });
+        const deleteSpy = vi.spyOn(poolService, 'deleteQuestions').mockReturnValue(of(3));
+        const warningSpy = vi.spyOn(alertService, 'warning');
+
+        component.confirmDeleteQuestions();
+        params.next({ courseId: '2' });
+        confirm!();
+
+        expect(deleteSpy).not.toHaveBeenCalled();
+        expect(warningSpy).toHaveBeenCalledWith('artemisApp.hyperion.quizQuestionPool.list.deleteCourseChanged');
+    });
+
     it('should explain a refused deletion while a build runs', () => {
         setup({ isAtLeastEditor: true, isAtLeastInstructor: true });
         vi.spyOn(poolService, 'deleteQuestion').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 409 })));

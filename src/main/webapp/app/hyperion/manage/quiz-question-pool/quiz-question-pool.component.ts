@@ -799,8 +799,12 @@ export class QuizQuestionPoolComponent implements OnInit, OnDestroy {
             });
     }
 
-    /** Asks for confirmation, then removes one question from the pool. */
+    /** Asks for confirmation, then removes one question from the pool of the course shown when the dialog opened. */
     confirmDeleteQuestion(questionId: number): void {
+        const courseId = this.courseId();
+        if (!courseId) {
+            return;
+        }
         this.confirmationService.confirm({
             header: this.translateService.instant('artemisApp.hyperion.quizQuestionPool.list.deleteConfirmHeader'),
             message: this.translateService.instant('artemisApp.hyperion.quizQuestionPool.list.deleteConfirmMessage'),
@@ -809,13 +813,16 @@ export class QuizQuestionPoolComponent implements OnInit, OnDestroy {
             acceptSeverity: 'danger',
             rejectLabel: this.translateService.instant('artemisApp.hyperion.quizQuestionPool.settings.cancel'),
             rejectSeverity: 'secondary',
-            accept: () => this.deleteQuestion(questionId),
+            accept: () => this.deleteQuestion(courseId, questionId),
         });
     }
 
-    private deleteQuestion(questionId: number): void {
-        const courseId = this.courseId();
-        if (!courseId || this.busyQuestionIds().has(questionId)) {
+    private deleteQuestion(courseId: number, questionId: number): void {
+        if (!this.isCurrent(courseId)) {
+            this.alertService.warning('artemisApp.hyperion.quizQuestionPool.list.deleteCourseChanged');
+            return;
+        }
+        if (this.busyQuestionIds().has(questionId)) {
             return;
         }
         this.busyQuestionIds.update((ids) => new Set([...ids, questionId]));
@@ -866,13 +873,15 @@ export class QuizQuestionPoolComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Opens the delete dialog for every question of one competency, or of the whole pool, and requires the course title.
+     * Opens the delete dialog for every question of one competency, or of the whole pool, and requires the course title. The deletion
+     * applies to the course shown when the dialog opened and is refused if another course is shown when it is confirmed.
      *
      * @param competencyId the competency to clear, or undefined for the whole pool
      */
     confirmDeleteQuestions(competencyId?: number): void {
         const course = this.course();
-        if (!course) {
+        const courseId = this.courseId();
+        if (!course || !courseId) {
             return;
         }
         const competency = competencyId === undefined ? undefined : this.competencyOptions().find((option) => option.id === competencyId);
@@ -885,13 +894,17 @@ export class QuizQuestionPoolComponent implements OnInit, OnDestroy {
             buttonType: ButtonType.ERROR,
             requireConfirmationOnlyForAdditionalChecks: false,
             dialogError: this.deleteError.asObservable(),
-            delete: () => this.deleteQuestions(competencyId),
+            delete: () => this.deleteQuestions(courseId, competencyId),
         });
     }
 
-    private deleteQuestions(competencyId?: number): void {
-        const courseId = this.courseId();
-        if (!courseId || this.isDeleting()) {
+    private deleteQuestions(courseId: number, competencyId?: number): void {
+        if (!this.isCurrent(courseId)) {
+            this.deleteError.next('');
+            this.alertService.warning('artemisApp.hyperion.quizQuestionPool.list.deleteCourseChanged');
+            return;
+        }
+        if (this.isDeleting()) {
             return;
         }
         this.isDeleting.set(true);

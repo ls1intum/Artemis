@@ -117,6 +117,7 @@
                     "allReviewed": "All flagged questions reviewed",
                     "needsReviewToggle": "Show or hide the flagged questions",
                     "deleteCompetency": "Delete the questions of this competency",
+                    "deleteCourseChanged": "Nothing was deleted because another course is shown now. Open the course again and repeat the deletion.",
                     "deleteBlocked": "Questions cannot be deleted while a build is running."
                 },
                 "errors": {

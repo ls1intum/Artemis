@@ -117,6 +117,7 @@
                     "allReviewed": "Alle markierten Fragen geprüft",
                     "needsReviewToggle": "Markierte Fragen ein- oder ausblenden",
                     "deleteCompetency": "Fragen dieser Kompetenz löschen",
+                    "deleteCourseChanged": "Es wurde nichts gelöscht, weil inzwischen ein anderer Kurs angezeigt wird. Öffne den Kurs erneut und wiederhole das Löschen.",
                     "deleteBlocked": "Während ein Lauf läuft, können keine Fragen gelöscht werden."
                 },
                 "errors": {
