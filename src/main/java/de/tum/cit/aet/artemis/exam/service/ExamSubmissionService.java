@@ -115,7 +115,15 @@ public class ExamSubmissionService {
         return isSubmissionInTime(exercise, studentExam, withGracePeriod);
     }
 
-    private Optional<StudentExam> findStudentExamForUser(User user, Exam exam) {
+    /**
+     * Finds the student exam of the user that the user may currently work on: the only student exam of a real exam, or the newest student exam that was not handed in of a test
+     * exam. The exercises of the student exam are loaded.
+     *
+     * @param user the user
+     * @param exam the exam
+     * @return the student exam of the user, if one exists
+     */
+    public Optional<StudentExam> findStudentExamForUser(User user, Exam exam) {
 
         Optional<StudentExam> optionalStudentExam;
         // Since multiple student exams for a test exam might exist, find the latest unsubmitted student exam based on the created date

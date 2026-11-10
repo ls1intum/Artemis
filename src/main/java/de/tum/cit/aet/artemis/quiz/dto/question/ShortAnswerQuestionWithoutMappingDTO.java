@@ -27,4 +27,16 @@ public record ShortAnswerQuestionWithoutMappingDTO(List<ShortAnswerSpotDTO> spot
                 question.getMatchLetterCase());
     }
 
+    /**
+     * Creates a DTO from the given question for use while a quiz is conducted: the spots and matching settings are
+     * included, the list of solutions is not.
+     *
+     * @param question the short answer question
+     * @return the DTO without solutions
+     */
+    public static ShortAnswerQuestionWithoutMappingDTO ofWithoutSolutions(ShortAnswerQuestion question) {
+        var spots = question.getSpots() == null ? List.<ShortAnswerSpotDTO>of() : question.getSpots().stream().map(ShortAnswerSpotDTO::of).toList();
+        return new ShortAnswerQuestionWithoutMappingDTO(spots.isEmpty() ? null : spots, null, question.getSimilarityValue(), question.getMatchLetterCase());
+    }
+
 }

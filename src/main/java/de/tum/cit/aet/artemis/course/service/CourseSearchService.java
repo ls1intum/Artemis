@@ -37,6 +37,11 @@ public class CourseSearchService {
     public List<User> searchOtherUsersNameInCourse(Course course, String nameOfUser) {
         List<User> searchResult = userRepository.searchByNameInCourse(course.getId(), nameOfUser);
         removeUserVariables(searchResult);
+        // the result is used to pick a user: it carries name and login, but no contact or registration data
+        searchResult.forEach(user -> {
+            user.setEmail(null);
+            user.setVisibleRegistrationNumber(null);
+        });
 
         // users should not find themselves
         User searchingUser = userRepository.getUser();

@@ -76,6 +76,20 @@ public class RateLimitService {
         log.debug("Rate limit check passed for client {} at {}, remaining tokens: {}", clientId, rpmType.name(), probe.getRemainingTokens());
     }
 
+    /**
+     * Gives one token back to the per-minute bucket of a client, for a check that spent a token before it could know the outcome.
+     * Does nothing when rate limiting is disabled; the bucket never holds more tokens than its capacity.
+     *
+     * @param clientId identifier for the client (typically an IP address)
+     * @param rpmType  the rate limit type to determine the RPM configuration
+     */
+    public void refundPerMinute(IPAddress clientId, RateLimitType rpmType) {
+        if (!configurationService.isRateLimitingEnabled() || !featureToggleService.isFeatureEnabled(Feature.RateLimit)) {
+            return;
+        }
+        getOrCreatePerMinuteBucket(clientId, rpmType, configurationService.getEffectiveRpm(rpmType)).addTokens(1);
+    }
+
     private Bucket getOrCreatePerMinuteBucket(IPAddress clientId, RateLimitType rpmType, int rpm) {
         BucketConfiguration cfg = perMinuteCfgCache.computeIfAbsent(rpm, RateLimitConfig::perMinute);
         // Include the rate-limit type in the bucket key so two types with the same RPM do not share a bucket.

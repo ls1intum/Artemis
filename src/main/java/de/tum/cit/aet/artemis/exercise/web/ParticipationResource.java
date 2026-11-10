@@ -28,6 +28,7 @@ import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenAlertException;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
 import de.tum.cit.aet.artemis.core.exception.NotImplementedAlertException;
 import de.tum.cit.aet.artemis.core.exception.ServiceUnavailableAlertException;
@@ -41,7 +42,7 @@ import de.tum.cit.aet.artemis.core.service.ModuleFeatureService;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
-import de.tum.cit.aet.artemis.exam.api.StudentExamApi;
+import de.tum.cit.aet.artemis.exam.api.ExamSubmissionApi;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
@@ -89,7 +90,7 @@ public class ParticipationResource {
 
     private final ParticipationAuthorizationService participationAuthorizationService;
 
-    private final Optional<StudentExamApi> studentExamApi;
+    private final Optional<ExamSubmissionApi> examSubmissionApi;
 
     private final ExerciseRepository exerciseRepository;
 
@@ -113,7 +114,7 @@ public class ParticipationResource {
             AuthorizationCheckService authCheckService, UserRepository userRepository, StudentParticipationRepository studentParticipationRepository, TeamRepository teamRepository,
             FeatureToggleService featureToggleService, ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository,
             SubmissionRepository submissionRepository, ExerciseDateService exerciseDateService, ParticipationAuthorizationService participationAuthorizationService,
-            Optional<StudentExamApi> studentExamApi, ModuleFeatureService moduleFeatureService, FeedbackRequestService feedbackRequestService) {
+            Optional<ExamSubmissionApi> examSubmissionApi, ModuleFeatureService moduleFeatureService, FeedbackRequestService feedbackRequestService) {
         this.participationService = participationService;
         this.exerciseRepository = exerciseRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
@@ -126,7 +127,7 @@ public class ParticipationResource {
         this.submissionRepository = submissionRepository;
         this.exerciseDateService = exerciseDateService;
         this.participationAuthorizationService = participationAuthorizationService;
-        this.studentExamApi = studentExamApi;
+        this.examSubmissionApi = examSubmissionApi;
         this.moduleFeatureService = moduleFeatureService;
         this.feedbackRequestService = feedbackRequestService;
     }
@@ -373,11 +374,23 @@ public class ParticipationResource {
         ZonedDateTime exerciseDueDate = exercise.getDueDate();
         // NOTE: course exercises can only have an individual due date when they already have started
         if (exercise.isExamExercise()) {
-            // NOTE: this is an absolute edge case because exam participations are generated before the exam starts and should not be started by the user
+            // NOTE: participations of exam exercises are normally prepared before the exam starts. The exam client calls this endpoint whenever the participation of an
+            // exercise was not prepared in advance (e.g. for a late start or a test exam attempt), so the caller has to be the owner of an open student exam that contains the
+            // exercise.
             exerciseDueDate = exercise.getExam().getEndDate();
-            var studentExam = studentExamApi.orElseThrow().findByExamIdAndUserId(exercise.getExam().getId(), user.getId());
-            if (studentExam.isPresent() && studentExam.get().getIndividualEndDate() != null) {
-                exerciseDueDate = studentExam.get().getIndividualEndDate();
+            var studentExam = examSubmissionApi.orElseThrow().findStudentExamForUser(user, exercise.getExam());
+            if (studentExam.isPresent()) {
+                var ownStudentExam = studentExam.get();
+                boolean handedIn = Boolean.TRUE.equals(ownStudentExam.isSubmitted()) || ownStudentExam.getSubmissionDate() != null;
+                if (!ownStudentExam.getExercises().contains(exercise) || handedIn) {
+                    throw new AccessForbiddenException("The exercise is not part of your open student exam.");
+                }
+                if (ownStudentExam.getIndividualEndDate() != null) {
+                    exerciseDueDate = ownStudentExam.getIndividualEndDate();
+                }
+            }
+            else if (!isExamTestRunOfInstructor(exercise, user)) {
+                throw new AccessForbiddenException("The exercise is not part of your open student exam.");
             }
         }
         boolean isDueDateInPast = exerciseDueDate != null && now().isAfter(exerciseDueDate);
@@ -393,6 +406,16 @@ public class ParticipationResource {
             }
         }
 
+    }
+
+    private boolean isExamTestRunOfInstructor(Exercise exercise, User user) {
+        try {
+            return examSubmissionApi.orElseThrow().isAllowedToSubmitDuringExam(exercise, user, false);
+        }
+        catch (EntityNotFoundException e) {
+            // neither a student exam nor a test run exists for this user
+            return false;
+        }
     }
 
     /**

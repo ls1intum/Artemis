@@ -134,9 +134,11 @@ public class QuizTrainingResource {
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
         ZonedDateTime answeredAt = TimeUtil.now();
 
-        // Look up the quiz question scoped to the authorized course so a student cannot submit (and receive
-        // solutions for) a question from a different course they have no role in by passing its id in the path.
-        QuizQuestion quizQuestion = quizQuestionRepository.findByIdAndCourseIdElseThrow(quizQuestionId, courseId);
+        // Resolve the question with the same criteria as the training question listing: it must belong to the
+        // course from the path and to a quiz exercise whose due date has passed. The listing evaluates the due date
+        // against ZonedDateTime.now(), so this lookup uses that clock too (not TimeUtil.now() as for answeredAt above),
+        // otherwise a question that is listed could be refused here, or the other way round.
+        QuizQuestion quizQuestion = quizQuestionRepository.findByIdAndCourseIdWithDueDateBeforeElseThrow(quizQuestionId, courseId, ZonedDateTime.now());
         SubmittedAnswer submittedAnswer = quizSubmissionService.convertSubmittedAnswerForTraining(submittedAnswerDTO, quizQuestion);
 
         SubmittedAnswerAfterEvaluationDTO result = quizTrainingService.submitForTraining(quizQuestion, user.getId(), courseId, submittedAnswer, isRated, answeredAt);

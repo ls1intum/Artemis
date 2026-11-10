@@ -1,6 +1,8 @@
 package de.tum.cit.aet.artemis.programming.service.sharing;
 
 import java.net.InetAddress;
+import java.net.MalformedURLException;
+import java.net.URI;
 import java.net.URL;
 import java.net.UnknownHostException;
 import java.time.Instant;
@@ -192,6 +194,45 @@ public class SharingConnectorService {
 
     public URL getSharingApiBaseUrlOrNull() {
         return sharingApiBaseUrl;
+    }
+
+    /**
+     * Checks that the given base URL addresses the Sharing Platform API this instance is connected to.
+     * <p>
+     * The connection is held per node. A node that has not been connected yet has no reference to compare with,
+     * so the check passes there and the callers rely on the checksum of the request.
+     *
+     * @param apiBaseUrl the base URL received with a request
+     * @return false if the URL is malformed or differs from the configured one, true otherwise
+     */
+    public boolean matchesConfiguredApiBaseUrl(String apiBaseUrl) {
+        URL configured = sharingApiBaseUrl;
+        if (configured == null) {
+            return true;
+        }
+        if (apiBaseUrl == null) {
+            return false;
+        }
+        try {
+            URL candidate = URI.create(apiBaseUrl).toURL();
+            return candidate.getProtocol().equalsIgnoreCase(configured.getProtocol()) && candidate.getHost().equalsIgnoreCase(configured.getHost())
+                    && effectivePort(candidate) == effectivePort(configured) && trimTrailingSlashes(candidate.getPath()).equals(trimTrailingSlashes(configured.getPath()));
+        }
+        catch (IllegalArgumentException | MalformedURLException e) {
+            return false;
+        }
+    }
+
+    private static int effectivePort(URL url) {
+        return url.getPort() == -1 ? url.getDefaultPort() : url.getPort();
+    }
+
+    private static String trimTrailingSlashes(String path) {
+        int end = path.length();
+        while (end > 0 && path.charAt(end - 1) == '/') {
+            end--;
+        }
+        return path.substring(0, end);
     }
 
     /**

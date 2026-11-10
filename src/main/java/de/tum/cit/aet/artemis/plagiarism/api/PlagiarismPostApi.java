@@ -53,4 +53,8 @@ public class PlagiarismPostApi extends AbstractPlagiarismApi {
     public void preCheckUserAndCourseForCommunicationOrMessaging(User user, Course course) {
         plagiarismPostService.preCheckUserAndCourseForCommunicationOrMessaging(user, course);
     }
+
+    public void checkUserMayInteractWithPostElseThrow(User user, Post post, Course course) {
+        plagiarismPostService.checkUserMayInteractWithPostElseThrow(user, post, course);
+    }
 }

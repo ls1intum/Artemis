@@ -36,6 +36,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInLecture.Enf
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInLectureUnit.EnforceAtLeastEditorInLectureUnit;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInLectureUnit.EnforceAtLeastInstructorInLectureUnit;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInLectureUnit.EnforceAtLeastStudentInLectureUnit;
+import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
 import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityWeaviateService;
@@ -87,10 +88,12 @@ public class LectureUnitResource {
 
     private final Optional<SearchableEntityWeaviateService> searchableEntityWeaviateService;
 
+    private final AuthorizationCheckService authorizationCheckService;
+
     public LectureUnitResource(UserRepository userRepository, LectureRepository lectureRepository, LectureUnitRepository lectureUnitRepository,
             LectureUnitService lectureUnitService, Optional<CompetencyProgressApi> competencyProgressApi, Optional<LectureContentProcessingService> lectureContentProcessingService,
             LectureUnitProcessingStateRepository processingStateRepository, LectureTranscriptionRepository transcriptionRepository,
-            Optional<SearchableEntityWeaviateService> searchableEntityWeaviateServiceOptional) {
+            Optional<SearchableEntityWeaviateService> searchableEntityWeaviateServiceOptional, AuthorizationCheckService authorizationCheckService) {
         this.userRepository = userRepository;
         this.lectureUnitRepository = lectureUnitRepository;
         this.lectureRepository = lectureRepository;
@@ -100,6 +103,7 @@ public class LectureUnitResource {
         this.processingStateRepository = processingStateRepository;
         this.transcriptionRepository = transcriptionRepository;
         this.searchableEntityWeaviateService = searchableEntityWeaviateServiceOptional;
+        this.authorizationCheckService = authorizationCheckService;
     }
 
     /**
@@ -229,7 +233,12 @@ public class LectureUnitResource {
     public ResponseEntity<LectureUnit> getLectureUnitById(@PathVariable @Valid long lectureUnitId) {
         log.debug("REST request to get lecture unit with id: {}", lectureUnitId);
         var lectureUnit = lectureUnitRepository.findByIdWithCompletedUsersElseThrow(lectureUnitId);
-        lectureUnit.setCompleted(lectureUnit.isCompletedFor(userRepository.getUser()));
+        // The unit has to be available for the requesting user, as for the units listed on the lecture details page
+        User user = userRepository.getUser();
+        if (!authorizationCheckService.isAllowedToSeeLectureUnit(lectureUnit, user)) {
+            throw new AccessForbiddenException("LectureUnit", lectureUnitId);
+        }
+        lectureUnit.setCompleted(lectureUnit.isCompletedFor(user));
         return ResponseEntity.ok(lectureUnit);
     }
 

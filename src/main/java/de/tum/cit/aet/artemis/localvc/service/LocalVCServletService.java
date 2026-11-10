@@ -1,7 +1,6 @@
 package de.tum.cit.aet.artemis.localvc.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALVC;
-import static de.tum.cit.aet.artemis.core.util.HttpRequestUtils.getIpStringFromRequest;
 import static de.tum.cit.aet.artemis.localvc.service.LocalVCPersonalAccessTokenManagementService.TOKEN_PREFIX;
 import static de.tum.cit.aet.artemis.localvc.service.LocalVCPersonalAccessTokenManagementService.VCS_ACCESS_TOKEN_LENGTH;
 
@@ -270,13 +269,11 @@ public class LocalVCServletService {
             }
         }
 
-        // Only count rate limit on /info/refs (the initial handshake request per git operation).
-        // The data transfer requests (git-upload-pack, git-receive-pack) reuse the same credentials
-        // and should not consume additional rate limit budget.
-        if (request.getRequestURI().endsWith("/info/refs")) {
-            String ipString = getIpStringFromRequest(request);
-            final IPAddress ipAddress = new IPAddressString(ipString).getAddress();
-            rateLimitService.enforcePerMinute(ipAddress, RateLimitType.AUTHENTICATION);
+        // The initial handshake request of an operation (/info/refs) always spends one token.
+        // The data transfer requests (git-upload-pack, git-receive-pack) reuse the credentials of the handshake, so they spend
+        // nothing here. A data transfer request that carries a wrong password is charged in authenticateUser instead.
+        if (isHandshakeRequest(request)) {
+            spendAuthenticationRateLimit(request);
         }
 
         LocalVCRepositoryUri localVCRepositoryUri = parseRepositoryUri(request);
@@ -286,7 +283,7 @@ public class LocalVCServletService {
 
         ProgrammingExercise exercise = getProgrammingExerciseOrThrow(projectKey);
 
-        User user = authenticateUser(authorizationHeader, exercise, localVCRepositoryUri);
+        User user = authenticateUser(request, authorizationHeader, exercise, localVCRepositoryUri);
 
         // Check that offline IDE usage is allowed.
         try {
@@ -455,7 +452,7 @@ public class LocalVCServletService {
      * @throws LocalVCAuthException    if an error occurs during authentication with the local version control system
      * @throws AuthenticationException if the authentication credentials are invalid or authentication fails
      */
-    private User authenticateUser(String authorizationHeader, ProgrammingExercise exercise, LocalVCRepositoryUri localVCRepositoryUri)
+    private User authenticateUser(HttpServletRequest request, String authorizationHeader, ProgrammingExercise exercise, LocalVCRepositoryUri localVCRepositoryUri)
             throws LocalVCAuthException, AuthenticationException {
 
         UsernameAndPassword usernameAndPassword = extractUsernameAndPassword(authorizationHeader);
@@ -507,10 +504,41 @@ public class LocalVCServletService {
 
         // if the user does not have an access token or used a password, we try to authenticate the user with it
         // Try to authenticate the user based on the configured options, this can include sending the data to an external system (e.g. LDAP) or using internal authentication.
+        // The handshake request was already counted. A data transfer request that skips the handshake and sends a password spends one token
+        // before the password is checked, so that parallel requests cannot all pass a budget check first. The token is given back when the password is
+        // correct, so a regular clone or push is not charged for its several requests.
+        boolean dataTransferRequest = !isHandshakeRequest(request);
+        if (dataTransferRequest) {
+            spendAuthenticationRateLimit(request);
+        }
         UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(username, passwordOrToken);
         authenticationManager.authenticate(authenticationToken);
+        if (dataTransferRequest) {
+            rateLimitService.refundPerMinute(resolveClientAddress(request), RateLimitType.AUTHENTICATION);
+        }
 
         return user;
+    }
+
+    private static boolean isHandshakeRequest(HttpServletRequest request) {
+        return request.getRequestURI().endsWith("/info/refs");
+    }
+
+    /**
+     * The address of the peer as the servlet container concluded it. A header sent by the client, such as X-Forwarded-For, does not choose the budget:
+     * the container believes the forwarding headers of its own proxies only.
+     */
+    private static IPAddress resolveClientAddress(HttpServletRequest request) {
+        return new IPAddressString(request.getRemoteAddr()).getAddress();
+    }
+
+    /**
+     * Spends one token of the authentication budget of the client address and throws once the budget is spent.
+     *
+     * @param request the request to charge
+     */
+    private void spendAuthenticationRateLimit(HttpServletRequest request) {
+        rateLimitService.enforcePerMinute(resolveClientAddress(request), RateLimitType.AUTHENTICATION);
     }
 
     /**

@@ -97,6 +97,10 @@ public class QuizParticipationResource {
         log.debug("REST request to start quiz exercise participation : {}", exerciseId);
         QuizExercise exercise = quizExerciseRepository.findByIdWithQuestionsElseThrow(exerciseId);
 
+        if (exercise.isExamExercise()) {
+            throw new BadRequestAlertException("The participation in a quiz of an exam is started through the exam", "quizExercise", "examQuizNotStartable");
+        }
+
         if (exercise.getReleaseDate() != null && exercise.getReleaseDate().isAfter(ZonedDateTime.now())) {
             throw new AccessForbiddenException("Students cannot start an exercise before the release date");
         }

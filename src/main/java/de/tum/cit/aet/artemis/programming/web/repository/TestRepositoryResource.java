@@ -65,7 +65,7 @@ public class TestRepositoryResource extends RepositoryResource {
     Repository getRepository(Long exerciseId, RepositoryActionType repositoryActionType, boolean pullOnGet, boolean writeAccess) throws GitAPIException {
         final var exercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
         User user = userRepository.getUserWithAuthorities();
-        repositoryAccessService.checkAccessTestOrAuxRepositoryElseThrow(false, exercise, user, "test");
+        repositoryAccessService.checkAccessTestOrAuxRepositoryElseThrow(repositoryActionType != RepositoryActionType.READ, exercise, user, "test");
         final var repoUri = exercise.getVcsTestRepositoryUri();
         return gitService.getOrCheckoutRepository(repoUri, pullOnGet, writeAccess);
     }

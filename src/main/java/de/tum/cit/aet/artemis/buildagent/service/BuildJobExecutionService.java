@@ -15,6 +15,7 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.regex.Pattern;
 
 import jakarta.annotation.PostConstruct;
 
@@ -75,6 +76,8 @@ public class BuildJobExecutionService {
     private final BuildLogsMap buildLogsMap;
 
     private static final int MAX_CLONE_RETRIES = 3;
+
+    private static final Pattern SAFE_BUILD_JOB_ID = Pattern.compile("[A-Za-z0-9_-]{1,100}");
 
     @Value("${artemis.version-control.default-branch:main}")
     private String defaultBranch;
@@ -152,6 +155,18 @@ public class BuildJobExecutionService {
     }
 
     /**
+     * Accepts only an id that cannot leave the checkout directory when it is used as a folder name.
+     *
+     * @param buildJobId the id of the queued build job
+     * @throws LocalCIException if the id is empty, too long or contains anything but letters, digits, '-' and '_'
+     */
+    static void validateBuildJobId(String buildJobId) {
+        if (buildJobId == null || !SAFE_BUILD_JOB_ID.matcher(buildJobId).matches()) {
+            throw new LocalCIException("The build job id is not valid");
+        }
+    }
+
+    /**
      * Orchestrates the execution of a build job in a Docker container. This method handles the preparation and configuration of the container,
      * including cloning the necessary repositories, checking out the appropriate branches, and preparing the environment for the build.
      * The method concludes by executing the build script within the Docker environment and parsing the results.
@@ -171,6 +186,8 @@ public class BuildJobExecutionService {
      * @throws LocalCIException If any error occurs during the preparation or execution of the build job.
      */
     public BuildResult runBuildJob(BuildJobQueueItem buildJob, String containerName) {
+        // The id names a folder below the checkout directory, so it is checked before anything is created or deleted.
+        validateBuildJobId(buildJob.id());
 
         String msg = "~~~~~~~~~~~~~~~~~~~~ Start Build Job " + buildJob.id() + " ~~~~~~~~~~~~~~~~~~~~";
         log.debug(msg);

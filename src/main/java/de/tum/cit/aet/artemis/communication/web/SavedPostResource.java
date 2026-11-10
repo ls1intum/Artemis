@@ -39,7 +39,9 @@ import de.tum.cit.aet.artemis.communication.service.AnswerMessageService;
 import de.tum.cit.aet.artemis.communication.service.SavedPostService;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
+import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
+import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 
 /**
@@ -65,13 +67,16 @@ public class SavedPostResource {
 
     private final AnswerMessageService answerMessageService;
 
+    private final AuthorizationCheckService authorizationCheckService;
+
     public SavedPostResource(SavedPostService savedPostService, PostRepository postRepository, AnswerPostRepository answerPostRepository, UserRepository userRepository,
-            AnswerMessageService answerMessageService) {
+            AnswerMessageService answerMessageService, AuthorizationCheckService authorizationCheckService) {
         this.savedPostService = savedPostService;
         this.postRepository = postRepository;
         this.answerPostRepository = answerPostRepository;
         this.userRepository = userRepository;
         this.answerMessageService = answerMessageService;
+        this.authorizationCheckService = authorizationCheckService;
     }
 
     /**
@@ -89,6 +94,7 @@ public class SavedPostResource {
         log.debug("GET getSavedPosts invoked for course {} and status {}", courseId, savedPostStatus);
         long start = System.nanoTime();
 
+        authorizationCheckService.checkIsAtLeastRoleInCourseElseThrow(Role.STUDENT, courseId);
         var savedPosts = savedPostService.getSavedPostsForCurrentUserByStatus(savedPostStatus);
 
         List<Post> posts = postRepository.findByIdIn(savedPosts.stream().filter(savedPost -> savedPost.getPostType() == PostingType.POST).map(SavedPost::getPostId).toList())
@@ -143,6 +149,8 @@ public class SavedPostResource {
         }
 
         var post = retrievePostingElseThrow(postId, postingType);
+        // the posting has to belong to a course the user is a member of
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, post.getCoursePostingBelongsTo(), user);
 
         savedPostService.savePostForCurrentUser(post);
 

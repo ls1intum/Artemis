@@ -436,6 +436,18 @@ public class ResultService {
     }
 
     private void filterSensitiveFeedbacksInExamExercise(Participation participation, Collection<Result> results, Exercise exercise) {
+        boolean shouldResultsBePublished = areExamResultsPublished(participation, exercise);
+        // Feedback of the assessment is shown together with the published results only. A test run is the exception: its summary shows what a student sees after publication.
+        boolean holdBackAssessment = !shouldResultsBePublished && !(participation instanceof StudentParticipation studentParticipation && studentParticipation.isTestRun());
+        for (Result result : results) {
+            if (Hibernate.isInitialized(result.getFeedbacks())) {
+                result.filterSensitiveFeedbacks(!shouldResultsBePublished);
+                result.getFeedbacks().removeIf(feedback -> holdBackAssessment && feedback.getType() != null && feedback.getType() != FeedbackType.AUTOMATIC);
+            }
+        }
+    }
+
+    private boolean areExamResultsPublished(Participation participation, Exercise exercise) {
         StudentExamApi api = studentExamApi.orElseThrow(() -> new ExamApiNotPresentException(StudentExamApi.class));
         Exam exam = exercise.getExerciseGroup().getExam();
         boolean shouldResultsBePublished = exam.resultsPublished();
@@ -445,11 +457,24 @@ public class ResultService {
                 shouldResultsBePublished = studentExamOptional.get().areResultsPublishedYet();
             }
         }
-        for (Result result : results) {
-            if (Hibernate.isInitialized(result.getFeedbacks())) {
-                result.filterSensitiveFeedbacks(!shouldResultsBePublished);
-            }
+        return shouldResultsBePublished;
+    }
+
+    /**
+     * Decides whether feedback marked {@code AFTER_DUE_DATE} is still withheld from the owner of the given participation. This is the same predicate the serialization
+     * filters apply, so that a single feedback item follows the visibility of the full result.
+     *
+     * @param participation  the participation the feedback belongs to; its exercise decides between the exam and the course rules
+     * @param assessmentType the assessment type of the result the feedback belongs to
+     * @return true if 'after due date' feedback has to be withheld
+     */
+    public boolean shouldHideAfterDueDateFeedback(Participation participation, AssessmentType assessmentType) {
+        Exercise exercise = participation.getExercise();
+        if (exercise.isExamExercise()) {
+            return !areExamResultsPublished(participation, exercise);
         }
+        // course exercises: hidden until this participation's own due date has passed, and for automatic results until the last student's individual due date has passed
+        return exerciseDateService.isBeforeDueDate(participation) || (AssessmentType.AUTOMATIC.equals(assessmentType) && exerciseDateService.isBeforeLatestDueDate(exercise));
     }
 
     /**

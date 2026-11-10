@@ -144,7 +144,8 @@ public class ProgrammingExerciseBuildConfigService {
         }
 
         boolean customDockerNetwork = dockerFlagsDTO.network() != null && !dockerFlagsDTO.network().isBlank();
-        if (customDockerNetwork && !allowedNetworks.contains(dockerFlagsDTO.network())) {
+        // Attaching a build to the network of the host or of another container is never accepted, whatever the configured list contains.
+        if (customDockerNetwork && (DockerRunConfig.sharesNetworkNamespace(dockerFlagsDTO.network()) || !allowedNetworks.contains(dockerFlagsDTO.network()))) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid network: " + dockerFlagsDTO.network());
         }
 

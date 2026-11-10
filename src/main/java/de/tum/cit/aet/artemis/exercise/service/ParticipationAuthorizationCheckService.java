@@ -14,10 +14,13 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
+import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.exam.api.ExamApi;
 import de.tum.cit.aet.artemis.exam.api.StudentExamApi;
 import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
+import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.domain.participation.ParticipationInterface;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
@@ -54,12 +57,15 @@ public class ParticipationAuthorizationCheckService {
 
     private final Optional<StudentExamApi> studentExamApi;
 
+    private final Optional<ExamApi> examApi;
+
     private final StudentParticipationRepository studentParticipationRepository;
 
     public ParticipationAuthorizationCheckService(UserRepository userRepository, ProgrammingExerciseRepository programmingExerciseRepository,
             AuthorizationCheckService authCheckService, TeamRepository teamRepository, ExerciseDateService exerciseDateService,
-            SubmissionPolicyRepository submissionPolicyRepository, SubmissionRepository submissionRepository, Optional<StudentExamApi> studentExamApi,
+            SubmissionPolicyRepository submissionPolicyRepository, SubmissionRepository submissionRepository, Optional<StudentExamApi> studentExamApi, Optional<ExamApi> examApi,
             StudentParticipationRepository studentParticipationRepository) {
+        this.examApi = examApi;
         this.userRepository = userRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.authCheckService = authCheckService;
@@ -183,6 +189,31 @@ public class ParticipationAuthorizationCheckService {
         // a teaching assistant, an editor or an instructor of the course, or in case they are an admin
         final Course course = participation.getExercise().getCourseViaExerciseGroupOrCourseMember();
         return authCheckService.isAtLeastTeachingAssistantInCourse(course, user);
+    }
+
+    /**
+     * Whether the results of the given student participation have to be hidden from its owner because the participation belongs to an exam exercise whose results the student
+     * may not see yet (the exam results are not published, or the student exam is still running). Read endpoints that serve a student participation of an exam exercise apply
+     * this before returning any result or feedback.
+     *
+     * @param participation the student participation whose results are about to be served
+     * @return true if the results must be hidden, false otherwise (also for course exercises, test exams and test runs)
+     */
+    public boolean shouldHideExamExerciseResults(StudentParticipation participation) {
+        // Test-run results are never hidden as a whole: the conductor is the instructor who created the test run.
+        if (participation.isTestRun()) {
+            return false;
+        }
+        Exercise exercise = participation.getExercise();
+        if (!exercise.isExamExercise() || exercise.isTestExamExercise()) {
+            return false;
+        }
+        ExamApi examApiValue = examApi.orElseThrow(() -> new ExamApiNotPresentException(ExamApi.class));
+        StudentExamApi studentExamApiValue = studentExamApi.orElseThrow(() -> new ExamApiNotPresentException(StudentExamApi.class));
+        User student = participation.getStudent().orElseThrow(() -> new EntityNotFoundException("Participation with id " + participation.getId() + " does not have a student!"));
+        // When no student exam exists for the participation (an inconsistency), the results are hidden rather than failing the read.
+        return studentExamApiValue.findByExerciseIdAndUserId(exercise.getId(), student.getId()).map(studentExam -> !examApiValue.shouldStudentSeeResult(studentExam, participation))
+                .orElse(true);
     }
 
     /**

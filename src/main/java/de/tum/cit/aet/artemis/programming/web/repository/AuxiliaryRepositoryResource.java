@@ -71,7 +71,7 @@ public class AuxiliaryRepositoryResource extends RepositoryResource {
     Repository getRepository(Long auxiliaryRepositoryId, RepositoryActionType repositoryActionType, boolean pullOnGet, boolean writeAccess) throws GitAPIException {
         final var auxiliaryRepository = auxiliaryRepositoryRepository.findByIdElseThrow(auxiliaryRepositoryId);
         User user = userRepository.getUserWithAuthorities();
-        repositoryAccessService.checkAccessTestOrAuxRepositoryElseThrow(false, auxiliaryRepository.getExercise(), user, "auxiliary");
+        repositoryAccessService.checkAccessTestOrAuxRepositoryElseThrow(repositoryActionType != RepositoryActionType.READ, auxiliaryRepository.getExercise(), user, "auxiliary");
         final var repoUri = auxiliaryRepository.getVcsRepositoryUri();
         return gitService.getOrCheckoutRepository(repoUri, pullOnGet, writeAccess);
     }

@@ -171,8 +171,10 @@ public class RepositoryAccessService {
             if (isAtLeastTeachingAssistant) {
                 return;
             }
-            if (plagiarismAccessApi.isEmpty()
-                    || plagiarismAccessApi.get().hasAccessToSubmission(programmingParticipation.getId(), user.getLogin(), (Participation) programmingParticipation)) {
+            boolean isAtLeastStudent = authorizationCheckService
+                    .isAtLeastStudentInCourse(programmingParticipation.getProgrammingExercise().getCourseViaExerciseGroupOrCourseMember(), user);
+            if (isAtLeastStudent && plagiarismAccessApi.isPresent()
+                    && plagiarismAccessApi.get().hasAccessToSubmission(programmingParticipation.getId(), user.getLogin(), (Participation) programmingParticipation)) {
                 return;
             }
         }

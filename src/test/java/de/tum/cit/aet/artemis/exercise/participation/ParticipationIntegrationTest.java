@@ -380,6 +380,12 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         request.postWithResponseBody("/api/exercise/exercises/" + textExercise.getId() + "/participations", null, StudentParticipation.class, HttpStatus.FORBIDDEN);
     }
 
+    private StudentExam addExerciseToOwnStudentExam(TextExercise examExercise, String studentLogin) {
+        StudentExam studentExam = examUtilService.addStudentExamWithUser(examExercise.getExam(), studentLogin);
+        studentExam.setExercises(new ArrayList<>(List.of(examExercise)));
+        return studentExamRepository.save(studentExam);
+    }
+
     /**
      * Students can start participations during the working time of the exam.
      */
@@ -390,6 +396,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         examTextExercise.getExam().setStartDate(ZonedDateTime.now().minusHours(2));
         examTextExercise.getExam().setEndDate(ZonedDateTime.now().plusHours(1));
         examTestRepository.save(examTextExercise.getExam());
+        addExerciseToOwnStudentExam(examTextExercise, TEST_PREFIX + "student1");
 
         StudentParticipation participation = request.postWithResponseBody("/api/exercise/exercises/" + examTextExercise.getId() + "/participations", null,
                 StudentParticipation.class, HttpStatus.CREATED);
@@ -409,6 +416,8 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         examTextExercise.getExam().setStartDate(ZonedDateTime.now().minusHours(2));
         examTextExercise.getExam().setEndDate(ZonedDateTime.now().minusHours(1));
         examTestRepository.save(examTextExercise.getExam());
+        // the exercise is part of the own student exam, so the end of the working time is what refuses the request
+        addExerciseToOwnStudentExam(examTextExercise, TEST_PREFIX + "student1");
 
         request.postWithResponseBody("/api/exercise/exercises/" + examTextExercise.getId() + "/participations", null, StudentParticipation.class, HttpStatus.FORBIDDEN);
     }
@@ -443,6 +452,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         StudentExam studentExam = examUtilService.addStudentExamWithUser(examTextExercise.getExam(), studentLogin);
         int threeHours = 3 * 60 * 60;
         studentExam.setWorkingTime(threeHours);
+        studentExam.setExercises(new ArrayList<>(List.of(examTextExercise)));
         studentExamRepository.save(studentExam);
 
         StudentParticipation participation = request.postWithResponseBody("/api/exercise/exercises/" + examTextExercise.getId() + "/participations", null,
@@ -471,6 +481,8 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         StudentExam studentExam = examUtilService.addStudentExamWithUser(examTextExercise.getExam(), studentLogin);
         int twoHours = 2 * 60 * 60;
         studentExam.setWorkingTime(twoHours);
+        // the exercise is part of the own student exam, so the end of the individual working time is what refuses the request
+        studentExam.setExercises(new ArrayList<>(List.of(examTextExercise)));
         studentExamRepository.save(studentExam);
 
         request.postWithResponseBody("/api/exercise/exercises/" + examTextExercise.getId() + "/participations", null, StudentParticipation.class, HttpStatus.FORBIDDEN);

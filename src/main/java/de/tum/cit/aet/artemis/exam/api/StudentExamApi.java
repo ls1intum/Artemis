@@ -77,10 +77,6 @@ public class StudentExamApi extends AbstractExamApi {
         return studentExamRepository.findAllWithExercisesByUserId(userId).stream().collect(Collectors.groupingBy(studentExam -> studentExam.getExam().getCourse()));
     }
 
-    public Optional<StudentExam> findByExamIdAndUserId(Long examId, Long userId) {
-        return studentExamRepository.findByExamIdAndUserId(examId, userId);
-    }
-
     public Set<Long> findRegisteredNonTestExamIdsByUserIdAndCourseIds(long userId, Collection<Long> courseIds) {
         return studentExamRepository.findRegisteredNonTestExamIdsByUserIdAndCourseIds(userId, courseIds);
     }

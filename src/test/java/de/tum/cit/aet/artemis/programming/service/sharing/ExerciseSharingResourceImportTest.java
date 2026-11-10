@@ -221,7 +221,7 @@ class ExerciseSharingResourceImportTest extends AbstractProgrammingIntegrationLo
 
         // last step: do Exercise Import
         requestUtilService.performMvcRequest(post("/api/programming/sharing/setup-import").contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(emptySetupInfo)).accept(MediaType.APPLICATION_JSON)).andExpect(status().is5xxServerError());
+                .content(objectMapper.writeValueAsString(emptySetupInfo)).accept(MediaType.APPLICATION_JSON)).andExpect(status().isBadRequest());
 
     }
 

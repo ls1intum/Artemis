@@ -11,6 +11,7 @@ import java.util.Optional;
 
 import jakarta.ws.rs.core.UriBuilder;
 
+import org.apache.commons.lang3.StringUtils;
 import org.codeability.sharing.plugins.api.ShoppingBasket;
 import org.codeability.sharing.plugins.api.util.SecretChecksumCalculator;
 import org.eclipse.jgit.api.errors.GitAPIException;
@@ -32,6 +33,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.core.dto.SharingInfoDTO;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
 import de.tum.cit.aet.artemis.core.web.util.ResponseUtil;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -57,6 +59,8 @@ import de.tum.cit.aet.artemis.programming.service.sharing.SharingSetupInfoDTO;
 public class ExerciseSharingResource {
 
     private static final Logger log = LoggerFactory.getLogger(ExerciseSharingResource.class);
+
+    private static final String ENTITY_NAME = "exerciseSharing";
 
     /**
      * FileInputStream wrapper that deletes the underlying temporary file on close.
@@ -126,12 +130,13 @@ public class ExerciseSharingResource {
     @EnforceAtLeastEditor
     public ResponseEntity<ShoppingBasket> loadShoppingBasket(@RequestParam String basketToken, @RequestParam String returnURL, @RequestParam String apiBaseURL,
             @RequestParam String checksum) {
-        if (SecretChecksumCalculator.checkChecksum(Map.of("returnURL", returnURL, "apiBaseURL", apiBaseURL), sharingConnectorService.getSharingApiKey(), checksum)) {
+        if (SecretChecksumCalculator.checkChecksum(Map.of("returnURL", returnURL, "apiBaseURL", apiBaseURL), sharingConnectorService.getSharingApiKey(), checksum)
+                && sharingConnectorService.matchesConfiguredApiBaseUrl(apiBaseURL)) {
             Optional<ShoppingBasket> sharingInfoDTO = exerciseSharingService.getBasketInfo(basketToken, apiBaseURL);
             return ResponseUtil.wrapOrNotFound(sharingInfoDTO);
         }
         else {
-            log.warn("Checksum validation failed for basketToken={}", basketToken);
+            log.warn("Validation of the sharing information failed for basketToken={}", basketToken);
             return ResponseEntity.badRequest().build();
         }
     }
@@ -144,12 +149,16 @@ public class ExerciseSharingResource {
      * </p>
      *
      * @param sharingSetupInfo details required to import (exercise metadata, templates, etc.)
-     * @return {@code 200 OK} with the created {@link ProgrammingExercise}; {@code 500 Internal Server Error}
-     *         on import failures (e.g., VCS operations, invalid payload, IO/URI issues)
+     * @return {@code 200 OK} with the created {@link ProgrammingExercise}; {@code 400 Bad Request} when the sharing
+     *         information does not validate; {@code 500 Internal Server Error} on import failures (e.g., VCS operations, invalid payload, IO/URI issues)
      */
     @PostMapping("setup-import")
     @EnforceAtLeastEditor
     public ResponseEntity<ProgrammingExercise> setUpFromSharingImport(@RequestBody SharingSetupInfoDTO sharingSetupInfo) {
+        // The checksum covers the platform URLs of the request, so only values issued by the connected platform are used for follow-up calls.
+        if (!isSharingInfoValid(sharingSetupInfo.sharingInfo())) {
+            throw new BadRequestAlertException("The sharing information is invalid", ENTITY_NAME, "sharingInfoInvalid");
+        }
         try {
             ProgrammingExercise exercise = programmingExerciseImportFromSharingService.importProgrammingExerciseFromSharing(sharingSetupInfo);
             return ResponseEntity.ok().body(exercise);
@@ -175,11 +184,24 @@ public class ExerciseSharingResource {
     @PostMapping("import/basket/exercise-details")
     @EnforceAtLeastEditor
     public ResponseEntity<ProgrammingExercise> getExerciseDetails(@RequestBody SharingInfoDTO sharingInfo) {
-        if (!sharingInfo.checkChecksum(sharingConnectorService.getSharingApiKey())) {
+        if (!isSharingInfoValid(sharingInfo)) {
             return ResponseEntity.badRequest().build();
         }
         ProgrammingExercise exerciseDetails = this.exerciseSharingService.getExerciseDetailsFromBasket(sharingInfo);
         return ResponseEntity.ok().body(exerciseDetails);
+    }
+
+    /**
+     * Whether the sharing information of a request is complete, signed with the shared secret, and refers to the Sharing Platform this instance is connected to.
+     * The follow-up calls to the platform use the base URL of the request, so each endpoint that makes them applies this one check.
+     *
+     * @param sharingInfo the sharing information of the request, may be null
+     * @return true if the follow-up calls may use it
+     */
+    private boolean isSharingInfoValid(SharingInfoDTO sharingInfo) {
+        return sharingInfo != null && StringUtils.isNotBlank(sharingInfo.returnURL()) && StringUtils.isNotBlank(sharingInfo.apiBaseURL())
+                && StringUtils.isNotBlank(sharingInfo.checksum()) && sharingInfo.checkChecksum(sharingConnectorService.getSharingApiKey())
+                && sharingConnectorService.matchesConfiguredApiBaseUrl(sharingInfo.apiBaseURL());
     }
 
     /**

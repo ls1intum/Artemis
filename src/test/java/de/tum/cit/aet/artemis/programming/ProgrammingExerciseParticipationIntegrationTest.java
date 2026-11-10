@@ -936,13 +936,13 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void checkResetRepository_exam_badRequest() throws Exception {
+    void checkResetRepository_exam_forbidden() throws Exception {
         programmingExercise = programmingExerciseUtilService.addEnrolledCourseExamExerciseGroupWithOneProgrammingExercise(TEST_PREFIX);
         programmingExerciseParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
         Exam exam = examRepository.findByIdWithExamUsersExerciseGroupsAndExercisesElseThrow(programmingExercise.getExam().getId());
         examUtilService.registerUsersForExamAndSaveExam(exam, TEST_PREFIX, 1);
         studentExamService.generateStudentExams(exam);
-        request.put("/api/programming/programming-exercise-participations/" + programmingExerciseParticipation.getId() + "/reset-repository", null, HttpStatus.BAD_REQUEST);
+        request.put("/api/programming/programming-exercise-participations/" + programmingExerciseParticipation.getId() + "/reset-repository", null, HttpStatus.FORBIDDEN);
     }
 
     /**

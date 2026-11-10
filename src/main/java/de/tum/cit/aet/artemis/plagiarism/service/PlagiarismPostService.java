@@ -21,6 +21,7 @@ import de.tum.cit.aet.artemis.communication.service.PostingService;
 import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -195,6 +196,30 @@ public class PlagiarismPostService extends PostingService {
         postRepository.deleteById(postId);
         preparePostForBroadcast(post);
         broadcastForPost(post, MetisCrudAction.DELETE, course.getId(), null);
+    }
+
+    /**
+     * Validates that the request parameters of a post interaction belong together: the user has to be a member of the course, and a post of a plagiarism case
+     * has to belong to that course and may only be used by the instructors of the course or the student affected by the case.
+     *
+     * @param user   the requesting user
+     * @param post   the post that is interacted with
+     * @param course the course from the request path
+     */
+    public void checkUserMayInteractWithPostElseThrow(User user, Post post, Course course) {
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
+        if (post.getPlagiarismCase() == null) {
+            throw new BadRequestAlertException("The post does not belong to a plagiarism case", PlagiarismPostCreationDTO.PLAGIARISM_POST_ENTITY_NAME, "postWithoutPlagiarismCase");
+        }
+        PlagiarismCase plagiarismCase = plagiarismCaseRepository.findByIdElseThrow(post.getPlagiarismCase().getId());
+        Course caseCourse = plagiarismCase.getExercise().getCourseViaExerciseGroupOrCourseMember();
+        if (caseCourse == null || !Objects.equals(caseCourse.getId(), course.getId())) {
+            throw new ConflictException("The plagiarism case does not belong to the given course", PlagiarismPostCreationDTO.PLAGIARISM_POST_ENTITY_NAME, "courseMismatch");
+        }
+        boolean isAffectedStudent = plagiarismCase.getStudent() != null && Objects.equals(plagiarismCase.getStudent().getId(), user.getId());
+        if (!isAffectedStudent && !authorizationCheckService.isAtLeastInstructorInCourse(caseCourse, user)) {
+            throw new AccessForbiddenException("Only instructors in the course or the students affected by the plagiarism case are allowed to use its posts");
+        }
     }
 
     /**

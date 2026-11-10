@@ -310,6 +310,11 @@ public class BuildLogEntryService {
      * @throws RuntimeException      If an I/O error occurs while writing the log file.
      */
     public void saveBuildLogsToFile(List<BuildLogDTO> buildLogEntries, String buildJobId, ProgrammingExercise programmingExercise) {
+        if (hasPathElements(buildJobId)) {
+            // the id names the file, and it arrives from the queue item of the build agent
+            log.warn("Not saving build logs for a build job ID containing a path separator or parent directory reference");
+            return;
+        }
         String courseShortName = programmingExercise.getCourseViaExerciseGroupOrCourseMember().getShortName();
         String exerciseShortName = programmingExercise.getShortName();
         Path exerciseLogsPath = buildLogsPath.resolve(courseShortName).resolve(exerciseShortName);
@@ -338,6 +343,10 @@ public class BuildLogEntryService {
         }
     }
 
+    private static boolean hasPathElements(String buildJobId) {
+        return buildJobId == null || buildJobId.contains("/") || buildJobId.contains("\\") || buildJobId.contains("..") || buildJobId.contains(":");
+    }
+
     /**
      * Retrieves the build logs for a specific build job from the file system as a {@link FileSystemResource}.
      *
@@ -350,7 +359,7 @@ public class BuildLogEntryService {
      * @return A {@link FileSystemResource} representing the log file if it exists, or {@code null} if the log file cannot be found.
      */
     public FileSystemResource retrieveBuildLogsFromFileForBuildJob(String buildJobId) {
-        if (buildJobId.contains("/") || buildJobId.contains("\\") || buildJobId.contains("..")) {
+        if (hasPathElements(buildJobId)) {
             log.warn("Invalid build job ID: {}", buildJobId);
             throw new IllegalArgumentException("Invalid build job ID");
         }

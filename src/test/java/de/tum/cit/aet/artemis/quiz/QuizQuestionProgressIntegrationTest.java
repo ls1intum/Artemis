@@ -280,12 +280,26 @@ class QuizQuestionProgressIntegrationTest extends AbstractSpringIntegrationIndep
         assertThat(quizQuestionProgressService.calculateRepetition(1, quizQuestionProgress.getProgressJson())).isEqualTo(2);
     }
 
+    /**
+     * Creates an enrolled course with one quiz exercise whose due date has passed, i.e. a quiz that is offered for training.
+     */
+    private Course addEnrolledCourseWithEndedQuizExercise(String title, String userPrefix) {
+        Course course = quizExerciseUtilService.addEnrolledCourseWithOneQuizExercise(title, userPrefix);
+        QuizExercise quizExercise = (QuizExercise) course.getExercises().stream().findFirst().orElseThrow();
+        quizExercise.setReleaseDate(ZonedDateTime.now().minusDays(2));
+        quizExercise.setDueDate(ZonedDateTime.now().minusDays(1));
+        quizExercise.setDuration(0);
+        quizExercise.getQuizBatches().forEach(quizBatch -> quizBatch.setStartTime(ZonedDateTime.now().minusDays(1)));
+        quizExerciseService.save(quizExercise);
+        return course;
+    }
+
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testSubmitForTraining() throws Exception {
         // Use a quiz exercise attached to the course so the training-submit endpoint can resolve the question
-        // through the course-scoped repository lookup (see QuizQuestionRepository#findByIdAndCourseIdElseThrow).
-        Course course = quizExerciseUtilService.addEnrolledCourseWithOneQuizExercise("Title", TEST_PREFIX);
+        // through the course-scoped repository lookup (see QuizQuestionRepository#findByIdAndCourseIdWithDueDateBeforeElseThrow).
+        Course course = addEnrolledCourseWithEndedQuizExercise("Title", TEST_PREFIX);
         QuizExercise quizExercise = (QuizExercise) course.getExercises().stream().findFirst().orElseThrow();
         MultipleChoiceQuestion mcQuestion = (MultipleChoiceQuestion) quizExercise.getQuizQuestions().stream().filter(MultipleChoiceQuestion.class::isInstance).findFirst()
                 .orElseThrow();
@@ -343,8 +357,8 @@ class QuizQuestionProgressIntegrationTest extends AbstractSpringIntegrationIndep
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testSubmitForTraining_questionFromOtherCourse_returns404() throws Exception {
-        Course courseA = quizExerciseUtilService.addEnrolledCourseWithOneQuizExercise("Course A Quiz", TEST_PREFIX);
-        Course courseB = quizExerciseUtilService.addEnrolledCourseWithOneQuizExercise("Course B Quiz", TEST_PREFIX);
+        Course courseA = addEnrolledCourseWithEndedQuizExercise("Course A Quiz", TEST_PREFIX);
+        Course courseB = addEnrolledCourseWithEndedQuizExercise("Course B Quiz", TEST_PREFIX);
         QuizExercise quizExerciseA = (QuizExercise) courseA.getExercises().stream().findFirst().orElseThrow();
         MultipleChoiceQuestion mcQuestionInCourseA = (MultipleChoiceQuestion) quizExerciseA.getQuizQuestions().stream().filter(MultipleChoiceQuestion.class::isInstance).findFirst()
                 .orElseThrow();
@@ -369,7 +383,7 @@ class QuizQuestionProgressIntegrationTest extends AbstractSpringIntegrationIndep
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testSubmitForTraining_typeMismatch_returns400() throws Exception {
-        Course course = quizExerciseUtilService.addEnrolledCourseWithOneQuizExercise("Title", TEST_PREFIX);
+        Course course = addEnrolledCourseWithEndedQuizExercise("Title", TEST_PREFIX);
         QuizExercise quizExercise = (QuizExercise) course.getExercises().stream().findFirst().orElseThrow();
         ShortAnswerQuestion saQuestion = (ShortAnswerQuestion) quizExercise.getQuizQuestions().stream().filter(ShortAnswerQuestion.class::isInstance).findFirst().orElseThrow();
         MultipleChoiceQuestion mcQuestion = (MultipleChoiceQuestion) quizExercise.getQuizQuestions().stream().filter(MultipleChoiceQuestion.class::isInstance).findFirst()
@@ -392,7 +406,7 @@ class QuizQuestionProgressIntegrationTest extends AbstractSpringIntegrationIndep
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testSubmitForTraining_dragAndDropQuestion() throws Exception {
-        Course course = quizExerciseUtilService.addEnrolledCourseWithOneQuizExercise("Title", TEST_PREFIX);
+        Course course = addEnrolledCourseWithEndedQuizExercise("Title", TEST_PREFIX);
         QuizExercise quizExercise = (QuizExercise) course.getExercises().stream().findFirst().orElseThrow();
         DragAndDropQuestion dndQuestion = (DragAndDropQuestion) quizExercise.getQuizQuestions().stream().filter(DragAndDropQuestion.class::isInstance).findFirst().orElseThrow();
 
@@ -420,7 +434,7 @@ class QuizQuestionProgressIntegrationTest extends AbstractSpringIntegrationIndep
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testSubmitForTraining_shortAnswerQuestion() throws Exception {
-        Course course = quizExerciseUtilService.addEnrolledCourseWithOneQuizExercise("Title", TEST_PREFIX);
+        Course course = addEnrolledCourseWithEndedQuizExercise("Title", TEST_PREFIX);
         QuizExercise quizExercise = (QuizExercise) course.getExercises().stream().findFirst().orElseThrow();
         ShortAnswerQuestion saQuestion = (ShortAnswerQuestion) quizExercise.getQuizQuestions().stream().filter(ShortAnswerQuestion.class::isInstance).findFirst().orElseThrow();
 
