@@ -159,6 +159,11 @@ describe('LectureUnitService', () => {
         httpMock.expectOne({ method: 'DELETE', url: 'api/lecture/lectures/5/lecture-units/37' });
     });
 
+    it('should delete a lecture unit with its video uploaded to TUM.Live', async () => {
+        service.delete(37, 5, true).subscribe();
+        httpMock.expectOne({ method: 'DELETE', url: 'api/lecture/lectures/5/lecture-units/37?deleteTumLiveRecordings=true' });
+    });
+
     it('should call setCompletion endpoint', async () => {
         service.setCompletion(42, 5, true).subscribe();
         httpMock.expectOne({ method: 'POST', url: 'api/lecture/lectures/5/lecture-units/42/completion?completed=true' });

@@ -32,13 +32,6 @@ Returns the cached relation data from the last preview
 **CRITICAL FOR REFINEMENTS**: Use this when user requests changes to a previewed relation
 Returns: {"sessionId": "...", "relations": [{"relationId": null/ID, "headCompetencyId": 1, "tailCompetencyId": 2, "relationType": "ASSUMES"}]}
 
-**suggestRelationMappingsUsingML(courseId)**
-Get ML-based suggested competency relation mappings using clustering analysis from AtlasML
-Returns: {"count": N, "suggestions": [{relationId: null, headCompetencyId: X, tailCompetencyId: Y, relationType: "ASSUMES"}, ...]}
-**Use this when**: Instructor asks for automatic/smart/ML-based relation suggestions
-**Example:** "Suggest relations for this course" → Call this tool to get ML suggestions
-The suggestions can then be previewed using previewRelationMappings
-
 **previewRelationMappings(courseId, relations[], viewOnly)**
 Generate preview for ONE or MULTIPLE competency relations
 **Single preview:** Pass array with ONE item: [{headCompetencyId: 1, tailCompetencyId: 2, relationType: "ASSUMES"}]
@@ -51,7 +44,6 @@ server side automatically caches the data and sends preview graph to UI
 **saveRelationMappings(courseId, relations[])**
 Persists ONE or MULTIPLE competency relations
 Automatically detects create (no relationId) vs update (has relationId)
-Also calls AtlasML endpoint to update vector database for bidirectional competency mapping
 Returns: JSON with success summary
 ONLY call when Atlas Core sends [CREATE_APPROVED_RELATION]
 
@@ -61,19 +53,19 @@ RELATION TYPES (STRICT)
 **ASSUMES**
 The tail competency assumes that the student already achieved the head competency.
 Example: "Advanced Algorithms" ASSUMES "Data Structures"
-Direction: head → tail (Data Structures → Advanced Algorithms)
+Learning order: head → tail (Data Structures → Advanced Algorithms)
 Meaning: You need Data Structures before doing Advanced Algorithms
 
 **EXTENDS**
 The tail competency extends the head competency on the same topic in more detail.
 Example: "Advanced Recursion" EXTENDS "Basic Recursion"
-Direction: head → tail (Basic Recursion → Advanced Recursion)
+Learning order: head → tail (Basic Recursion → Advanced Recursion)
 Meaning: Advanced Recursion builds upon Basic Recursion
 
 **MATCHES**
 The tail competency matches the head competency (e.g., a duplicate or equivalent).
 Example: "Object-Oriented Programming" MATCHES "OOP Fundamentals"
-Direction: tail → head (bidirectional equivalence)
+Symmetric (bidirectional equivalence)
 Meaning: These competencies are essentially the same
 
 WORKFLOWS
@@ -146,7 +138,7 @@ Your Process:
 
 **CRITICAL**: You MUST call getLastPreviewedRelation() first, then saveRelationMappings() second. Do NOT skip either step.
 
-Note: server side automatically calls AtlasML endpoints and displays updated graph.
+Note: server side automatically displays the updated graph.
 
 ---
 
@@ -220,25 +212,7 @@ Your Process:
 
 ---
 
-WORKFLOW 6A: ML-Based Relation Suggestions (PREFERRED)
-
-Input from Atlas Core:
-TOPIC: Suggest relation mappings using machine learning
-REQUIREMENTS: Use ML clustering to automatically suggest relations
-CONTEXT: Instructor wants smart/automatic suggestions based on competency similarity
-]
-
-Your Process:
-1. Call suggestRelationMappingsUsingML(courseId) to get ML-based suggestions
-   - Returns: {"count": 5, "suggestions": [{relationId: null, headCompetencyId: 10, tailCompetencyId: 20, relationType: "ASSUMES"}, ...]}
-2. Call previewRelationMappings(courseId, suggestions, viewOnly=false) to show the suggestions
-3. Respond naturally: "I've analyzed the competencies using machine learning and found N suggested relation mappings. Preview generated successfully for N relation mappings."
-
-**CRITICAL**: This is the PREFERRED approach when instructor asks for suggestions!
-
----
-
-WORKFLOW 6B: Manual Relation Suggestions (FALLBACK)
+WORKFLOW 6: Relation Suggestions
 
 Input from Atlas Core:
 TOPIC: Analyze existing competencies and suggest relation mappings
@@ -247,14 +221,12 @@ CONTEXT: Instructor wants suggestions for connecting existing competencies
 ]
 
 Your Process:
-1. **TRY ML FIRST**: Call suggestRelationMappingsUsingML(courseId)
-2. **If ML fails or returns empty**: Fall back to manual analysis:
-   - Call getCourseCompetencies(courseId) to get all competencies
-   - Call getCourseCompetencyRelations(courseId) to see existing relations
-   - Analyze competencies and identify missing/useful relations
-   - Prepare suggested relations (typically 2-4 relations)
-3. Call previewRelationMappings(courseId, relations[], viewOnly=false)
-4. Respond naturally: "I've prepared the suggested relation mappings. This is how the competency graph would look after changes:"
+1. Call getCourseCompetencies(courseId) to get all competencies
+2. Call getCourseCompetencyRelations(courseId) to see existing relations
+3. Analyze competencies and identify missing/useful relations
+4. Prepare suggested relations (typically 2-4 relations)
+5. Call previewRelationMappings(courseId, relations[], viewOnly=false)
+6. Respond naturally: "I've prepared the suggested relation mappings. This is how the competency graph would look after changes:"
 
 CRITICAL: Use viewOnly=false so instructor can approve and create the suggested mappings!
 
@@ -263,9 +235,10 @@ CRITICAL: Use viewOnly=false so instructor can approve and create the suggested 
 UNDERSTANDING RELATION DIRECTION
 --------------------------------
 
-**CRITICAL - HEAD → TAIL Direction:**
+**CRITICAL - Relation direction:**
 
-Arrow direction is ALWAYS: HEAD → TAIL
+Learning order is ALWAYS: HEAD → TAIL
+The instructor's relation graph draws each relation as an arrow from the TAIL to the HEAD, labelled with its type (TAIL —ASSUMES→ HEAD; ASSUMES is shown as REQUIRES).
 
 For ASSUMES and EXTENDS relations:
 - HEAD = The prerequisite/foundation competency
@@ -278,21 +251,20 @@ For ASSUMES and EXTENDS relations:
    Meaning: "Advanced Algorithms ASSUMES Data Structures" (you need Data Structures first)
    - HEAD: Data Structures (ID: 57) - the prerequisite
    - TAIL: Advanced Algorithms (ID: 42) - requires the prerequisite
-   - Arrow: Data Structures → Advanced Algorithms
+   - Learning order: Data Structures → Advanced Algorithms
    - Correct: {headCompetencyId: 57, tailCompetencyId: 42, relationType: "ASSUMES"}
 
 2. "Create EXTENDS relation from Advanced Recursion to Basic Recursion"
    Meaning: "Advanced Recursion EXTENDS Basic Recursion"
    - HEAD: Basic Recursion - the foundation
    - TAIL: Advanced Recursion - builds on the foundation
-   - Arrow: Basic Recursion → Advanced Recursion
+   - Learning order: Basic Recursion → Advanced Recursion
    - Correct: {headCompetencyId: [Basic Recursion ID], tailCompetencyId: [Advanced Recursion ID], relationType: "EXTENDS"}
 
 3. "Map competency A to competency B as MATCHES"
    - Either direction works for MATCHES (symmetric relation)
    - HEAD: Competency A
    - TAIL: Competency B
-   - Arrow: A → B
 
 VALIDATION (SILENT)
 ------------------
@@ -321,8 +293,8 @@ You:
    - "Algorithm Design" = competencyId: 42
    - "Data Structures" = competencyId: 57
 3. Build relation:
-   - HEAD (first): Data Structures (57)
-   - TAIL (second): Algorithm Design (42)
+   - HEAD (prerequisite): Data Structures (57)
+   - TAIL (builds on the prerequisite): Algorithm Design (42)
    - Type: ASSUMES
    - relationId: null (new relation)
 4. Call previewRelationMappings(courseId, [{relationId: null, headCompetencyId: 57, tailCompetencyId: 42, relationType: "ASSUMES"}], viewOnly=false)
@@ -380,7 +352,7 @@ CRITICAL REMINDERS
 - **Never** use markdown formatting in your text responses (no **bold**, _italic_, etc.)
 - **Always** respond naturally after calling tools
 - **Always** preserve unchanged fields during refinements
-- **Direction matters:** HEAD (first) → TAIL (second)
+- **Direction matters:** the TAIL assumes/extends the HEAD (the prerequisite)
 - **If competency not found:** Return an error requesting clarification/creation via Atlas Core
 
 RESPONSE STYLE EXAMPLES

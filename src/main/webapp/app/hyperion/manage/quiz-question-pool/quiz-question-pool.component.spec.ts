@@ -231,7 +231,10 @@ describe('QuizQuestionPoolComponent', () => {
         expect(component.queueCollapsed()).toBe(false);
         expect(fixture.nativeElement.querySelector('[data-testid="pool-needs-review-queue"]')).not.toBeNull();
 
-        vi.spyOn(poolService, 'review').mockReturnValue(of({ ...flagged, reviewState: 'APPROVED' }));
+        vi.spyOn(poolService, 'review').mockImplementation(() => {
+            all[0] = { ...flagged, reviewState: 'APPROVED' };
+            return of(all[0]);
+        });
         component.review({ questionId: 1, reviewState: 'APPROVED' });
         fixture.detectChanges();
 
@@ -248,13 +251,29 @@ describe('QuizQuestionPoolComponent', () => {
 
     it('should count the pending flagged questions of the whole queue, not only the loaded ones', () => {
         const loaded = Array.from({ length: 20 }, (_, index) => ({ ...question(index + 1, 9, 'Arrays'), flagged: true }));
+        const approved = new Set<number>();
         setup({ isAtLeastEditor: true, isAtLeastInstructor: true });
-        vi.spyOn(poolService, 'getQuestions').mockImplementation((_courseId, query) => of(query.flagged ? { ...page(loaded, 40), pendingCount: 40 } : page(questions())));
+        vi.spyOn(poolService, 'getQuestions').mockImplementation((_courseId, query) =>
+            of(
+                query.flagged
+                    ? {
+                          ...page(
+                              loaded.map((item) => (approved.has(item.id) ? { ...item, reviewState: 'APPROVED' as const } : item)),
+                              40,
+                          ),
+                          pendingCount: 40 - approved.size,
+                      }
+                    : page(questions()),
+            ),
+        );
         component.refresh();
         expect(component.pendingInQueue()).toBe(40);
 
         for (const item of loaded) {
-            vi.spyOn(poolService, 'review').mockReturnValue(of({ ...item, reviewState: 'APPROVED' }));
+            vi.spyOn(poolService, 'review').mockImplementation(() => {
+                approved.add(item.id);
+                return of({ ...item, reviewState: 'APPROVED' });
+            });
             component.review({ questionId: item.id, reviewState: 'APPROVED' });
         }
 
@@ -262,6 +281,77 @@ describe('QuizQuestionPoolComponent', () => {
         expect(component.allFlaggedReviewed()).toBe(false);
         expect(component.queueCollapsed()).toBe(false);
         expect(component.remainingNeedsReview()).toBe(20);
+    });
+
+    it('should not count a decision twice when a queue response requested before it already includes it', () => {
+        const first = { ...question(1, 9, 'Arrays'), flagged: true };
+        const second = { ...question(2, 9, 'Arrays'), flagged: true };
+        setup({ isAtLeastEditor: true, isAtLeastInstructor: true });
+        let approved = false;
+        const delayedQueue = new Subject<PoolQuestionPage>();
+        let queueRequests = 0;
+        vi.spyOn(poolService, 'getQuestions').mockImplementation((_courseId, query) => {
+            if (!query.flagged) {
+                return of(page(questions()));
+            }
+            queueRequests++;
+            if (queueRequests === 2) {
+                return delayedQueue.asObservable();
+            }
+            return of({ ...page(approved ? [{ ...first, reviewState: 'APPROVED' as const }, second] : [first, second]), pendingCount: approved ? 1 : 2 });
+        });
+        component.refresh();
+        expect(component.pendingInQueue()).toBe(2);
+
+        component.refresh();
+        vi.spyOn(poolService, 'review').mockImplementation(() => {
+            approved = true;
+            return of({ ...first, reviewState: 'APPROVED' });
+        });
+        component.review({ questionId: 1, reviewState: 'APPROVED' });
+        delayedQueue.next({ ...page([{ ...first, reviewState: 'APPROVED' }, second]), pendingCount: 1 });
+
+        expect(component.pendingInQueue()).toBe(1);
+        expect(component.allFlaggedReviewed()).toBe(false);
+        expect(component.queueCollapsed()).toBe(false);
+    });
+
+    it('should take the count of a queue reloaded after a decision, including questions flagged meanwhile', () => {
+        const known = { ...question(1, 9, 'Arrays'), flagged: true };
+        const discovered = { ...question(2, 9, 'Arrays'), flagged: true };
+        setup({ isAtLeastEditor: true, isAtLeastInstructor: true });
+        let built = false;
+        let approved = false;
+        const delayedQueue = new Subject<PoolQuestionPage>();
+        let queueRequests = 0;
+        vi.spyOn(poolService, 'getQuestions').mockImplementation((_courseId, query) => {
+            if (!query.flagged) {
+                return of(page(questions()));
+            }
+            queueRequests++;
+            if (queueRequests === 2) {
+                return delayedQueue.asObservable();
+            }
+            const first = approved ? { ...known, reviewState: 'APPROVED' as const } : known;
+            const items = built ? [discovered, first] : [first];
+            return of({ ...page(items), pendingCount: items.filter((item) => item.reviewState === 'PENDING').length });
+        });
+        component.refresh();
+        expect(component.pendingInQueue()).toBe(1);
+
+        component.refresh();
+        built = true;
+        vi.spyOn(poolService, 'review').mockImplementation(() => {
+            approved = true;
+            return of({ ...known, reviewState: 'APPROVED' });
+        });
+        component.review({ questionId: 1, reviewState: 'APPROVED' });
+        delayedQueue.next({ ...page([discovered, { ...known, reviewState: 'APPROVED' }]), pendingCount: 1 });
+
+        expect(component.pendingInQueue()).toBe(1);
+        expect(component.needsReviewQuestions().map((item) => item.id)).toEqual([2, 1]);
+        expect(component.allFlaggedReviewed()).toBe(false);
+        expect(component.queueCollapsed()).toBe(false);
     });
 
     it('should reach the undecided questions behind a reviewed first page with Load more', () => {
@@ -315,8 +405,6 @@ describe('QuizQuestionPoolComponent', () => {
             component.review({ questionId: item.id, reviewState: 'APPROVED' });
         }
 
-        component.loadMoreNeedsReview();
-
         expect(questionsSpy).toHaveBeenLastCalledWith(1, { flagged: true, page: 0, size: 500 });
         expect(component.needsReviewQuestions().every((item) => item.reviewState === 'PENDING')).toBe(true);
         expect(component.needsReviewQuestions().map((item) => item.id)).toContain(501);
@@ -355,8 +443,9 @@ describe('QuizQuestionPoolComponent', () => {
         expect(component.remainingNeedsReview()).toBe(0);
     });
 
-    it('should keep a decision taken while an appended queue page was loading in the pending count', () => {
+    it('should discard an appended queue page requested before a decision and count from the reloaded queue', () => {
         const all = Array.from({ length: 520 }, (_, index) => ({ ...question(index + 1, 9, 'Arrays'), flagged: true }));
+        let approvedCount = 0;
         setup({ isAtLeastEditor: true, isAtLeastInstructor: true });
         const appended = new Subject<PoolQuestionPage>();
         vi.spyOn(poolService, 'getQuestions').mockImplementation((_courseId, query) => {
@@ -366,22 +455,26 @@ describe('QuizQuestionPoolComponent', () => {
             if (query.page === 25) {
                 return appended.asObservable();
             }
-            return of({ ...page(all.slice(query.page * query.size, (query.page + 1) * query.size), 520), pendingCount: 520 });
+            return of({ ...page(all.slice(query.page * query.size, (query.page + 1) * query.size), 520), pendingCount: 520 - approvedCount });
         });
         component.refresh();
         while (component.needsReviewQuestions().length < 500) {
             component.loadMoreNeedsReview();
         }
         component.loadMoreNeedsReview();
-        vi.spyOn(poolService, 'review').mockReturnValue(of({ ...all[0], reviewState: 'APPROVED' }));
+        vi.spyOn(poolService, 'review').mockImplementation(() => {
+            approvedCount++;
+            return of({ ...all[0], reviewState: 'APPROVED' });
+        });
         component.review({ questionId: 1, reviewState: 'APPROVED' });
         expect(component.pendingInQueue()).toBe(519);
 
         appended.next({ ...page(all.slice(500), 520), pendingCount: 520 });
         appended.complete();
 
-        expect(component.needsReviewQuestions()).toHaveLength(520);
+        expect(component.needsReviewQuestions()).toHaveLength(500);
         expect(component.pendingInQueue()).toBe(519);
+        expect(component.isLoadingMoreNeedsReview()).toBe(false);
     });
 
     it('should recount the queue when a flagged question outside the loaded queue is reviewed', () => {
@@ -495,6 +588,68 @@ describe('QuizQuestionPoolComponent', () => {
 
         expect(progressSpy.mock.calls.filter((call) => call[0] === 1)).toHaveLength(pollsOfFirstCourse);
         expect(component.settings()).toEqual(settings);
+    });
+
+    it('should keep polling after a decision until a queue response requested after it is applied', () => {
+        vi.useFakeTimers();
+        const known = { ...question(1, 9, 'Arrays'), flagged: true };
+        const discovered = { ...question(2, 9, 'Arrays'), flagged: true };
+        setup({ isAtLeastEditor: true, isAtLeastInstructor: true });
+        let queueResponse: () => Observable<PoolQuestionPage> = () => of({ ...page([known]), pendingCount: 1 });
+        vi.spyOn(poolService, 'getQuestions').mockImplementation((_courseId, query) => (query.flagged ? queueResponse() : of(page(questions()))));
+        component.refresh();
+        vi.spyOn(poolService, 'startBuild').mockReturnValue(of({ started: true, enqueued: 12 }));
+        const progressSpy = vi.spyOn(poolService, 'getProgress').mockReturnValue(of({ ...progress, running: false }));
+        const finalQueue = new Subject<PoolQuestionPage>();
+        queueResponse = () => finalQueue.asObservable();
+        component.startBuild();
+        vi.advanceTimersByTime(3000);
+
+        queueResponse = () => throwError(() => new Error('network'));
+        vi.spyOn(poolService, 'review').mockReturnValue(of({ ...known, reviewState: 'APPROVED' }));
+        component.review({ questionId: 1, reviewState: 'APPROVED' });
+        finalQueue.next({ ...page([discovered, { ...known, reviewState: 'APPROVED' }]), pendingCount: 1 });
+        finalQueue.complete();
+        expect(component.pendingInQueue()).toBe(0);
+
+        queueResponse = () => of({ ...page([discovered, { ...known, reviewState: 'APPROVED' }]), pendingCount: 1 });
+        const pollsBefore = progressSpy.mock.calls.length;
+        vi.advanceTimersByTime(3000);
+        expect(progressSpy.mock.calls.length).toBe(pollsBefore + 1);
+        expect(component.pendingInQueue()).toBe(1);
+        expect(component.queueCollapsed()).toBe(false);
+
+        const pollsAfterStop = progressSpy.mock.calls.length;
+        vi.advanceTimersByTime(6000);
+        expect(progressSpy.mock.calls.length).toBe(pollsAfterStop);
+    });
+
+    it('should neither cancel a build nor save settings of a course that is no longer shown when the confirmation is accepted', () => {
+        const params = new Subject<Record<string, string>>();
+        setup({ isAtLeastEditor: true, isAtLeastInstructor: true }, params.asObservable());
+        params.next({ courseId: '1' });
+        component.progress.set({ ...progress, running: true });
+        const cancelSpy = vi.spyOn(poolService, 'cancelBuild').mockReturnValue(of(undefined));
+        const saveSpy = vi.spyOn(poolService, 'updateSettings').mockReturnValue(of(settings));
+        const warningSpy = vi.spyOn(alertService, 'warning');
+        const confirmationService = fixture.debugElement.injector.get(TumAetUiConfirmationService);
+
+        component.confirmCancelBuild();
+        const cancelConfirmation = confirmationService.request(undefined)!;
+        params.next({ courseId: '2' });
+        expect(confirmationService.request(undefined)).toBeUndefined();
+        cancelConfirmation.accept();
+
+        component.progress.set({ ...progress, running: true });
+        component.saveSettings({ ...settings, singleChoiceQuestionsPerLectureUnit: 30 });
+        const saveConfirmation = confirmationService.request(undefined)!;
+        params.next({ courseId: '1' });
+        saveConfirmation.accept();
+
+        expect(cancelSpy).not.toHaveBeenCalled();
+        expect(saveSpy).not.toHaveBeenCalled();
+        expect(warningSpy).toHaveBeenCalledTimes(2);
+        expect(warningSpy).toHaveBeenCalledWith('artemisApp.hyperion.quizQuestionPool.courseChanged');
     });
 
     it('should keep polling when a progress request fails once', () => {
@@ -875,7 +1030,7 @@ describe('QuizQuestionPoolComponent', () => {
 
         expect(component.runningBuildSettings()).toEqual(buildSettings);
         expect(component.runningBuildFacts().map((fact) => fact.values['count'])).toEqual([10, 5, 12, undefined]);
-        expect(component.settingsFacts().map((fact) => fact.changed)).toEqual([false, true, true, false, false]);
+        expect(component.settingsFacts().map((fact) => fact.changed)).toEqual([false, true, true, false]);
         expect(fixture.nativeElement.querySelector('[data-testid="pool-build-settings-summary"]')).not.toBeNull();
         expect(fixture.nativeElement.querySelectorAll('[data-testid="pool-settings-summary"] [data-changed]')).toHaveLength(2);
 
@@ -1124,6 +1279,44 @@ describe('QuizQuestionPoolComponent', () => {
         expect(component.needsReviewQuestions().map((item) => item.id)).toEqual(flagged.slice(20).map((item) => item.id));
         expect(component.showNeedsReviewQueue()).toBe(true);
         expect(component.pendingInQueue()).toBe(20);
+    });
+
+    it('should not delete a question of a course that is no longer shown when the confirmation is accepted', () => {
+        const params = new Subject<Record<string, string>>();
+        setup({ isAtLeastEditor: true, isAtLeastInstructor: true }, params.asObservable());
+        params.next({ courseId: '1' });
+        const deleteSpy = vi.spyOn(poolService, 'deleteQuestion').mockReturnValue(of(undefined));
+        const warningSpy = vi.spyOn(alertService, 'warning');
+        const confirmationService = fixture.debugElement.injector.get(TumAetUiConfirmationService);
+
+        component.confirmDeleteQuestion(2);
+        const confirmation = confirmationService.request(undefined)!;
+        params.next({ courseId: '2' });
+        expect(confirmationService.request(undefined)).toBeUndefined();
+        confirmation.accept();
+
+        expect(deleteSpy).not.toHaveBeenCalled();
+        expect(warningSpy).toHaveBeenCalledWith('artemisApp.hyperion.quizQuestionPool.list.deleteCourseChanged');
+    });
+
+    it('should not delete the pool of a course that is no longer shown when the typed confirmation is accepted', () => {
+        const params = new Subject<Record<string, string>>();
+        setup({ isAtLeastEditor: true, isAtLeastInstructor: true, title: 'Programming' }, params.asObservable());
+        params.next({ courseId: '1' });
+        const deleteDialogService = TestBed.inject(DeleteDialogService);
+        let confirm: (() => void) | undefined;
+        vi.spyOn(deleteDialogService, 'openDeleteDialog').mockImplementation((options) => {
+            confirm = options.delete as () => void;
+        });
+        const deleteSpy = vi.spyOn(poolService, 'deleteQuestions').mockReturnValue(of(3));
+        const warningSpy = vi.spyOn(alertService, 'warning');
+
+        component.confirmDeleteQuestions();
+        params.next({ courseId: '2' });
+        confirm!();
+
+        expect(deleteSpy).not.toHaveBeenCalled();
+        expect(warningSpy).toHaveBeenCalledWith('artemisApp.hyperion.quizQuestionPool.list.deleteCourseChanged');
     });
 
     it('should explain a refused deletion while a build runs', () => {

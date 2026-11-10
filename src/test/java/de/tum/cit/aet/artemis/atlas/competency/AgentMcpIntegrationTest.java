@@ -52,10 +52,6 @@ class AgentMcpIntegrationTest extends AbstractAtlasIntegrationTest {
 
     @BeforeEach
     void setup() {
-        atlasMLRequestMockProvider.ifPresent(provider -> {
-            provider.enableMockingOfRequests();
-            provider.mockSaveCompetenciesAny();
-        });
         userUtilService.addUsers(TEST_PREFIX, 2, 1, 1, 1);
         course = courseUtilService.createEnrolledCourse(TEST_PREFIX);
         competency = competencyUtilService.createCompetency(course);

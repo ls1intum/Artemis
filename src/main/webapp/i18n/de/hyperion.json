@@ -2,6 +2,7 @@
     "artemisApp": {
         "hyperion": {
             "quizQuestionPool": {
+                "courseChanged": "Es wurde nichts geändert, weil inzwischen ein anderer Kurs angezeigt wird. Öffne den Kurs erneut und wiederhole die Aktion.",
                 "title": "Smart Quizzes",
                 "sidebarTitle": "Smart Quizzes",
                 "intro": "Hyperion generiert Multiple-Choice-Fragen zu jeder Vorlesungseinheit, die mit einer Kompetenz dieses Kurses verknüpft ist, gestützt auf die Folien, das Transkript oder den Text der Einheit, und prüft jede Frage, bevor du sie siehst. Übernimm die Fragen, die du in Quizzen verwenden willst, und schließe die anderen aus. Die übernommenen Fragen ermöglichen später außerdem personalisiertes Lernen: Studierende üben mit Fragen, die auf ihre Stärken und Schwächen zugeschnitten sind.",
@@ -72,8 +73,6 @@
                     "summaryMultipleOnFixed": "{{ count }} Multiple-Choice-Fragen pro Vorlesungseinheit mit {{ min }} richtigen Optionen",
                     "summaryMultipleOff": "keine Multiple-Choice-Fragen",
                     "summaryMix": "Schwierigkeit {{ easy }} / {{ medium }} / {{ hard }} %",
-                    "summaryOvernightOn": "nächtliche Läufe an",
-                    "summaryOvernightOff": "nächtliche Läufe aus",
                     "countHint": "Zwischen {{ min }} und {{ max }}.",
                     "summaryRunningBuild": "Aktueller Lauf:",
                     "summaryNextBuild": "Nächster Lauf:",
@@ -130,6 +129,7 @@
                     "allReviewed": "Alle markierten Fragen geprüft",
                     "needsReviewToggle": "Markierte Fragen ein- oder ausblenden",
                     "deleteCompetency": "Fragen dieser Kompetenz löschen",
+                    "deleteCourseChanged": "Es wurde nichts gelöscht, weil inzwischen ein anderer Kurs angezeigt wird. Öffne den Kurs erneut und wiederhole das Löschen.",
                     "deleteBlocked": "Während ein Lauf läuft, können keine Fragen gelöscht werden.",
                     "materialChanged": "Material geändert",
                     "materialChangedHint": "Das Material der Vorlesungseinheit hat sich geändert, nachdem diese Frage generiert wurde. Die Frage bleibt erhalten, zählt aber nicht mehr zum Pool."

@@ -217,8 +217,8 @@ export class QuizQuestionPoolComponent implements OnInit, OnDestroy {
     /** The sequence number of the review-queue request whose response the queue shows. */
     private appliedQueueAt = 0;
 
-    /** The changes of the pending count made on the page, each with the sequence number at which it was made. */
-    private readonly pendingChanges: { at: number; change: number }[] = [];
+    /** Whether a decision was made after the queue was last loaded, so polling must not stop before a newer queue response is applied. */
+    private queueOutdated = false;
 
     readonly isInstructor = computed(() => !!this.course()?.isAtLeastInstructor);
     readonly canReview = computed(() => !!this.course()?.isAtLeastEditor);
@@ -262,8 +262,7 @@ export class QuizQuestionPoolComponent implements OnInit, OnDestroy {
         if (!stored) {
             return [];
         }
-        const overnight = { key: SETTINGS_KEY_PREFIX + (stored.poolGenerationEnabled ? 'summaryOvernightOn' : 'summaryOvernightOff'), values: {}, changed: false };
-        const facts = [...buildFactsOf(stored, this.runningBuildSettings()), overnight];
+        const facts = buildFactsOf(stored, this.runningBuildSettings());
         if (this.runningBuildSettings() && this.plan()) {
             const count = this.nextBuildCount();
             const planned = { key: SETTINGS_KEY_PREFIX + 'summaryPlanned', values: { count }, changed: count !== this.progress()?.total };
@@ -358,7 +357,8 @@ export class QuizQuestionPoolComponent implements OnInit, OnDestroy {
         this.reviewSequences.clear();
         this.appliedQuestionsAt = 0;
         this.appliedQueueAt = 0;
-        this.pendingChanges.length = 0;
+        this.queueOutdated = false;
+        this.confirmationService.close(undefined);
     }
 
     private isCurrent(courseId: number): boolean {
@@ -421,6 +421,7 @@ export class QuizQuestionPoolComponent implements OnInit, OnDestroy {
             this.needsReviewQuestions.set([]);
             this.needsReviewTotal.set(0);
             this.pendingInQueue.set(0);
+            this.queueOutdated = false;
             return EMPTY;
         }
         const requestedAt = ++this.requestSequence;
@@ -430,32 +431,36 @@ export class QuizQuestionPoolComponent implements OnInit, OnDestroy {
                     return;
                 }
                 this.appliedQueueAt = requestedAt;
+                this.queueOutdated = false;
                 this.needsReviewQuestions.update((current) => this.keepNewerDecisions(current, page.items, requestedAt));
                 this.needsReviewTotal.set(page.totalCount);
-                this.pendingInQueue.set(this.pendingAfterNewerDecisions(page, requestedAt));
+                this.pendingInQueue.set(this.pendingOf(page));
                 this.queueCollapsed.set(this.allFlaggedReviewed());
             }),
         );
     }
 
-    /**
-     * The server's pending count, corrected for the changes made on the page after the request started, which the response cannot
-     * reflect yet.
-     */
-    private pendingAfterNewerDecisions(page: PoolQuestionPage, requestedAt: number): number {
-        let pending = page.pendingCount ?? page.items.filter((question) => question.reviewState === 'PENDING').length;
-        for (const { at, change } of this.pendingChanges) {
-            if (at > requestedAt) {
-                pending += change;
-            }
-        }
-        return Math.max(0, pending);
+    /** The pending count of a queue response, which was requested after the last decision or deletion on the page. */
+    private pendingOf(page: PoolQuestionPage): number {
+        return Math.max(0, page.pendingCount ?? page.items.filter((question) => question.reviewState === 'PENDING').length);
     }
 
-    /** Changes the pending count by a decision or deletion made on the page and remembers when, for responses requested before it. */
-    private changePending(change: number, at: number): void {
-        this.pendingChanges.push({ at, change });
+    /** Changes the pending count by a decision or deletion made on the page until the next queue response replaces it. */
+    private changePending(change: number): void {
         this.pendingInQueue.update((pending) => Math.max(0, pending + change));
+    }
+
+    /**
+     * Discards every queue response requested before a decision, which may or may not include it, and reloads the queue with the loaded
+     * range and a page that was being loaded.
+     */
+    private replaceQueueAfterDecision(courseId: number): void {
+        this.appliedQueueAt = this.requestSequence;
+        this.queueOutdated = true;
+        const loaded = this.needsReviewQuestions().length + (this.isLoadingMoreNeedsReview() ? PAGE_SIZE : 0);
+        this.reloadNeedsReview(courseId, this.refreshSize(loaded))
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe({ error: () => this.alertService.error('artemisApp.hyperion.quizQuestionPool.errors.loadFailed') });
     }
 
     /** Appends the next page of the grouped list. */
@@ -535,7 +540,7 @@ export class QuizQuestionPoolComponent implements OnInit, OnDestroy {
                 }
                 this.needsReviewQuestions.update((current) => [...current, ...unseen]);
                 this.needsReviewTotal.set(result.totalCount);
-                this.pendingInQueue.set(this.pendingAfterNewerDecisions(result, requestedAt));
+                this.pendingInQueue.set(this.pendingOf(result));
                 return of(result);
             }),
         );
@@ -775,6 +780,10 @@ export class QuizQuestionPoolComponent implements OnInit, OnDestroy {
 
     /** Asks for confirmation, then stops the running build after its current step. */
     confirmCancelBuild(): void {
+        const courseId = this.courseId();
+        if (!courseId) {
+            return;
+        }
         this.confirmationService.confirm({
             header: this.translateService.instant('artemisApp.hyperion.quizQuestionPool.progress.cancelConfirmHeader'),
             message: this.translateService.instant('artemisApp.hyperion.quizQuestionPool.progress.cancelConfirmMessage'),
@@ -783,13 +792,16 @@ export class QuizQuestionPoolComponent implements OnInit, OnDestroy {
             acceptSeverity: 'danger',
             rejectLabel: this.translateService.instant('artemisApp.hyperion.quizQuestionPool.progress.cancelConfirmReject'),
             rejectSeverity: 'secondary',
-            accept: () => this.cancelBuild(),
+            accept: () => this.cancelBuild(courseId),
         });
     }
 
-    private cancelBuild(): void {
-        const courseId = this.courseId();
-        if (!courseId || this.isCancelling()) {
+    private cancelBuild(courseId: number): void {
+        if (!this.isCurrent(courseId)) {
+            this.alertService.warning('artemisApp.hyperion.quizQuestionPool.courseChanged');
+            return;
+        }
+        if (this.isCancelling()) {
             return;
         }
         this.isCancelling.set(true);
@@ -835,8 +847,12 @@ export class QuizQuestionPoolComponent implements OnInit, OnDestroy {
      * @param settings the edited settings
      */
     saveSettings(settings: PoolSettings): void {
+        const courseId = this.courseId();
+        if (!courseId) {
+            return;
+        }
         if (!this.isRunning()) {
-            this.storeSettings(settings);
+            this.storeSettings(courseId, settings);
             return;
         }
         this.confirmationService.confirm({
@@ -846,13 +862,16 @@ export class QuizQuestionPoolComponent implements OnInit, OnDestroy {
             acceptLabel: this.translateService.instant('artemisApp.hyperion.quizQuestionPool.settings.nextBuildAccept'),
             rejectLabel: this.translateService.instant('artemisApp.hyperion.quizQuestionPool.settings.cancel'),
             rejectSeverity: 'secondary',
-            accept: () => this.storeSettings(settings),
+            accept: () => this.storeSettings(courseId, settings),
         });
     }
 
-    private storeSettings(settings: PoolSettings): void {
-        const courseId = this.courseId();
-        if (!courseId || this.isSavingSettings()) {
+    private storeSettings(courseId: number, settings: PoolSettings): void {
+        if (!this.isCurrent(courseId)) {
+            this.alertService.warning('artemisApp.hyperion.quizQuestionPool.courseChanged');
+            return;
+        }
+        if (this.isSavingSettings()) {
             return;
         }
         this.isSavingSettings.set(true);
@@ -912,7 +931,8 @@ export class QuizQuestionPoolComponent implements OnInit, OnDestroy {
                         this.reviewSequences.set(updated.id, ++this.requestSequence);
                         const previous = this.needsReviewQuestions().find((question) => question.id === updated.id);
                         if (previous && previous.reviewState !== updated.reviewState) {
-                            this.changePending((updated.reviewState === 'PENDING' ? 1 : 0) - (previous.reviewState === 'PENDING' ? 1 : 0), this.requestSequence);
+                            this.changePending((updated.reviewState === 'PENDING' ? 1 : 0) - (previous.reviewState === 'PENDING' ? 1 : 0));
+                            this.replaceQueueAfterDecision(courseId);
                         } else if (!previous && updated.flagged) {
                             this.reloadNeedsReview(courseId, this.refreshSize(this.needsReviewQuestions().length))
                                 .pipe(takeUntilDestroyed(this.destroyRef))
@@ -929,8 +949,12 @@ export class QuizQuestionPoolComponent implements OnInit, OnDestroy {
             });
     }
 
-    /** Asks for confirmation, then removes one question from the pool. */
+    /** Asks for confirmation, then removes one question from the pool of the course shown when the dialog opened. */
     confirmDeleteQuestion(questionId: number): void {
+        const courseId = this.courseId();
+        if (!courseId) {
+            return;
+        }
         this.confirmationService.confirm({
             header: this.translateService.instant('artemisApp.hyperion.quizQuestionPool.list.deleteConfirmHeader'),
             message: this.translateService.instant('artemisApp.hyperion.quizQuestionPool.list.deleteConfirmMessage'),
@@ -939,13 +963,16 @@ export class QuizQuestionPoolComponent implements OnInit, OnDestroy {
             acceptSeverity: 'danger',
             rejectLabel: this.translateService.instant('artemisApp.hyperion.quizQuestionPool.settings.cancel'),
             rejectSeverity: 'secondary',
-            accept: () => this.deleteQuestion(questionId),
+            accept: () => this.deleteQuestion(courseId, questionId),
         });
     }
 
-    private deleteQuestion(questionId: number): void {
-        const courseId = this.courseId();
-        if (!courseId || this.busyQuestionIds().has(questionId)) {
+    private deleteQuestion(courseId: number, questionId: number): void {
+        if (!this.isCurrent(courseId)) {
+            this.alertService.warning('artemisApp.hyperion.quizQuestionPool.list.deleteCourseChanged');
+            return;
+        }
+        if (this.busyQuestionIds().has(questionId)) {
             return;
         }
         this.busyQuestionIds.update((ids) => new Set([...ids, questionId]));
@@ -978,7 +1005,7 @@ export class QuizQuestionPoolComponent implements OnInit, OnDestroy {
                         this.needsReviewQuestions.update((queue) => queue.filter((question) => question.id !== questionId));
                         this.needsReviewTotal.update((total) => Math.max(0, total - 1));
                         if (queued.reviewState === 'PENDING') {
-                            this.changePending(-1, deletedAt);
+                            this.changePending(-1);
                         }
                         this.queueCollapsed.set(this.allFlaggedReviewed());
                         if (this.needsReviewQuestions().length === 0 && this.needsReviewTotal() > 0) {
@@ -996,13 +1023,15 @@ export class QuizQuestionPoolComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Opens the delete dialog for every question of one competency, or of the whole pool, and requires the course title.
+     * Opens the delete dialog for every question of one competency, or of the whole pool, and requires the course title. The deletion
+     * applies to the course shown when the dialog opened and is refused if another course is shown when it is confirmed.
      *
      * @param competencyId the competency to clear, or undefined for the whole pool
      */
     confirmDeleteQuestions(competencyId?: number): void {
         const course = this.course();
-        if (!course) {
+        const courseId = this.courseId();
+        if (!course || !courseId) {
             return;
         }
         const competency = competencyId === undefined ? undefined : this.competencyOptions().find((option) => option.id === competencyId);
@@ -1015,13 +1044,17 @@ export class QuizQuestionPoolComponent implements OnInit, OnDestroy {
             buttonType: ButtonType.ERROR,
             requireConfirmationOnlyForAdditionalChecks: false,
             dialogError: this.deleteError.asObservable(),
-            delete: () => this.deleteQuestions(competencyId),
+            delete: () => this.deleteQuestions(courseId, competencyId),
         });
     }
 
-    private deleteQuestions(competencyId?: number): void {
-        const courseId = this.courseId();
-        if (!courseId || this.isDeleting()) {
+    private deleteQuestions(courseId: number, competencyId?: number): void {
+        if (!this.isCurrent(courseId)) {
+            this.deleteError.next('');
+            this.alertService.warning('artemisApp.hyperion.quizQuestionPool.list.deleteCourseChanged');
+            return;
+        }
+        if (this.isDeleting()) {
             return;
         }
         this.isDeleting.set(true);
@@ -1090,7 +1123,7 @@ export class QuizQuestionPoolComponent implements OnInit, OnDestroy {
                     ])
                         .pipe(takeUntilDestroyed(this.destroyRef))
                         .subscribe(([queueLoaded, listLoaded]) => {
-                            if (this.isCurrent(courseId) && !progress.running && queueLoaded && listLoaded && generation === this.pollGeneration) {
+                            if (this.isCurrent(courseId) && !progress.running && queueLoaded && listLoaded && !this.queueOutdated && generation === this.pollGeneration) {
                                 this.stopPolling();
                             }
                         });

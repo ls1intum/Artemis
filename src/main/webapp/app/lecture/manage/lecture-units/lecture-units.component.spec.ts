@@ -587,6 +587,24 @@ describe('LectureUpdateUnitsComponent', () => {
         expect(createStub).not.toHaveBeenCalled();
     });
 
+    it('should create an attachment video unit with only a name, so its video can be uploaded to TUM.Live afterwards', async () => {
+        const attachmentVideoUnitService = TestBed.inject(AttachmentVideoUnitService);
+        const createStub = vi.spyOn(attachmentVideoUnitService, 'create').mockReturnValue(of(new HttpResponse({ body: new AttachmentVideoUnit(), status: 201 })));
+
+        wizardUnitComponentFixture.detectChanges();
+        await wizardUnitComponentFixture.whenStable();
+
+        wizardUnitComponent.isAttachmentVideoUnitFormOpen.set(true);
+        wizardUnitComponent.createAttachmentVideoUnit({ formProperties: { name: 'Recording' }, fileProperties: {} });
+        await wizardUnitComponentFixture.whenStable();
+
+        expect(createStub).toHaveBeenCalledTimes(1);
+        const sent = createStub.mock.calls[0][0] as FormData;
+        expect(sent.has('file')).toBe(false);
+        expect(sent.has('attachment')).toBe(false);
+        expect(JSON.parse(await (sent.get('attachmentVideoUnit') as Blob).text())).toMatchObject({ name: 'Recording' });
+    });
+
     it('should close the exercise form once its items are created and reload the list when their requests completed', async () => {
         wizardUnitComponentFixture.detectChanges();
         await wizardUnitComponentFixture.whenStable();
@@ -665,6 +683,60 @@ describe('LectureUpdateUnitsComponent', () => {
 
         expect(wizardUnitComponent).not.toBeNull();
         expect(wizardUnitComponent.isExerciseUnitFormOpen()).toBe(true);
+    });
+
+    it('takes an attached TUM.Live video into the edited unit, its form and the list, but not into another unit', () => {
+        mockUnitManagementComponent();
+        const unit = new AttachmentVideoUnit();
+        unit.id = 4;
+        wizardUnitComponent.editingUnit.set(unit);
+        const response = new Subject<HttpResponse<AttachmentVideoUnit>>();
+        vi.spyOn(attachmentVideoUnitService, 'findById').mockReturnValue(response);
+        const form = { applyServerVideoSource: vi.fn() };
+        wizardUnitComponent.attachmentVideoUnitForm = signal(form as unknown as AttachmentVideoUnitFormComponent).asReadonly() as Signal<
+            AttachmentVideoUnitFormComponent | undefined
+        >;
+
+        wizardUnitComponent.onTumLiveVideoAttached(4);
+        response.next(new HttpResponse({ body: { ...unit, videoSource: 'https://tum.live/w/algo/55' } as AttachmentVideoUnit }));
+
+        expect((wizardUnitComponent.editingUnit() as AttachmentVideoUnit).videoSource).toBe('https://tum.live/w/algo/55');
+        expect(form.applyServerVideoSource).toHaveBeenCalledWith('https://tum.live/w/algo/55');
+        expect(unitManagementComponentMock.loadData).toHaveBeenCalledOnce();
+
+        const other = new AttachmentVideoUnit();
+        other.id = 5;
+        wizardUnitComponent.onTumLiveVideoAttached(4);
+        wizardUnitComponent.editingUnit.set(other);
+        response.next(new HttpResponse({ body: { ...unit, videoSource: 'https://tum.live/w/algo/56' } as AttachmentVideoUnit }));
+
+        expect((wizardUnitComponent.editingUnit() as AttachmentVideoUnit).videoSource).toBeUndefined();
+        expect(form.applyServerVideoSource).toHaveBeenCalledOnce();
+    });
+
+    it('keeps an attached TUM.Live video when the response of a save that ran meanwhile arrives', () => {
+        mockUnitManagementComponent();
+        const unit = new AttachmentVideoUnit();
+        unit.id = 4;
+        unit.name = 'Unit';
+        wizardUnitComponent.editingUnit.set(unit);
+        const save = new Subject<AttachmentVideoUnit>();
+        const sent = new AttachmentVideoUnit();
+        sent.id = 4;
+        sent.name = 'Renamed';
+        // A save of the details is running.
+        const runningSave = { key: 'k', request: () => save } as never;
+        wizardUnitComponent['pendingDetails'].set(runningSave);
+        wizardUnitComponent['flushAutosave']();
+        vi.spyOn(attachmentVideoUnitService, 'findById').mockReturnValue(
+            of(new HttpResponse({ body: { ...unit, videoSource: 'https://tum.live/w/algo/55' } as AttachmentVideoUnit })),
+        );
+
+        wizardUnitComponent.onTumLiveVideoAttached(4);
+        save.next(sent);
+
+        expect((wizardUnitComponent.editingUnit() as AttachmentVideoUnit).name).toBe('Renamed');
+        expect((wizardUnitComponent.editingUnit() as AttachmentVideoUnit).videoSource).toBe('https://tum.live/w/algo/55');
     });
 
     describe('PDF drop zone', () => {
@@ -1544,7 +1616,7 @@ describe('LectureUpdateUnitsComponent', () => {
 
         describe('file and video items', () => {
             let updateSpy: MockInstance<AttachmentVideoUnitService['update']>;
-            let formMock: { takeOverSavedFile: Mock; takeOverSavedVideoSource: Mock; hasUnconfirmedContent: Mock };
+            let formMock: { takeOverSavedFile: Mock; takeOverSavedVideoSource: Mock; applyServerVideoSource: Mock; hasUnconfirmedContent: Mock };
 
             function savedFileUnit(): AttachmentVideoUnit {
                 const unit = new AttachmentVideoUnit();
@@ -1562,11 +1634,17 @@ describe('LectureUpdateUnitsComponent', () => {
                 };
             }
 
-            beforeEach(() => {
+            /** The server's answer: the saved unit, with the video link it has after the save. */
+            function savedResponse(videoSource: string | undefined = 'https://live.rbg.tum.de/w/old') {
                 const responseUnit = new AttachmentVideoUnit();
                 responseUnit.attachment = { id: 8, link: 'attachments/slides-v2.pdf', version: 2 } as Attachment;
-                updateSpy = vi.spyOn(attachmentVideoUnitService, 'update').mockReturnValue(of(new HttpResponse({ body: responseUnit, status: 200 })));
-                formMock = { takeOverSavedFile: vi.fn(), takeOverSavedVideoSource: vi.fn(), hasUnconfirmedContent: vi.fn(() => false) };
+                responseUnit.videoSource = videoSource;
+                return of(new HttpResponse({ body: responseUnit, status: 200 }));
+            }
+
+            beforeEach(() => {
+                updateSpy = vi.spyOn(attachmentVideoUnitService, 'update').mockReturnValue(savedResponse());
+                formMock = { takeOverSavedFile: vi.fn(), takeOverSavedVideoSource: vi.fn(), applyServerVideoSource: vi.fn(), hasUnconfirmedContent: vi.fn(() => false) };
                 wizardUnitComponent.attachmentVideoUnitForm = signal(formMock as unknown as AttachmentVideoUnitFormComponent).asReadonly() as Signal<
                     AttachmentVideoUnitFormComponent | undefined
                 >;
@@ -1643,13 +1721,13 @@ describe('LectureUpdateUnitsComponent', () => {
 
             it('should keep a confirmed video URL that waits behind another save when the details change', async () => {
                 const firstResponse = new Subject<HttpResponse<AttachmentVideoUnit>>();
-                updateSpy.mockReturnValueOnce(firstResponse);
                 const newSource = 'https://live.rbg.tum.de/w/new';
+                updateSpy.mockReturnValueOnce(firstResponse).mockReturnValueOnce(savedResponse(newSource));
 
                 wizardUnitComponent.onAttachmentVideoUnitChanged({ data: fileFormData({ description: 'Week 1' }), immediate: true, valid: true });
                 wizardUnitComponent.onVideoSourceSaveRequested(fileFormData({ description: 'Week 1', videoSource: newSource }));
                 wizardUnitComponent.onAttachmentVideoUnitChanged({ data: fileFormData({ description: 'Week 1', videoSource: newSource }), immediate: true, valid: true });
-                firstResponse.next(new HttpResponse({ body: new AttachmentVideoUnit(), status: 200 }));
+                firstResponse.next(new HttpResponse({ body: Object.assign(new AttachmentVideoUnit(), { videoSource: 'https://live.rbg.tum.de/w/old' }), status: 200 }));
                 firstResponse.complete();
 
                 expect(updateSpy).toHaveBeenCalledTimes(2);
@@ -1839,6 +1917,7 @@ describe('LectureUpdateUnitsComponent', () => {
             });
 
             it('should save a confirmed video URL and let the form take it over', async () => {
+                updateSpy.mockReturnValueOnce(savedResponse('https://live.rbg.tum.de/w/new'));
                 wizardUnitComponent.onVideoSourceSaveRequested(fileFormData({ videoSource: 'https://live.rbg.tum.de/w/new' }));
 
                 const formData = updateSpy.mock.calls[0][2];
@@ -1850,6 +1929,41 @@ describe('LectureUpdateUnitsComponent', () => {
                 expect(formMock.takeOverSavedVideoSource).toHaveBeenCalledExactlyOnceWith('https://live.rbg.tum.de/w/new');
                 expect(formMock.takeOverSavedFile).not.toHaveBeenCalled();
             });
+            it('should keep a video URL the server did not save because another editor changed the link, and save the next one against that link', async () => {
+                const warningSpy = vi.spyOn(TestBed.inject(AlertService), 'warning');
+                // Another editor saved .../other after this form was loaded with .../old, so the server keeps .../other.
+                updateSpy.mockReturnValueOnce(savedResponse('https://live.rbg.tum.de/w/other'));
+
+                wizardUnitComponent.onVideoSourceSaveRequested(fileFormData({ videoSource: 'https://live.rbg.tum.de/w/new' }));
+
+                expect(formMock.takeOverSavedVideoSource).toHaveBeenCalledExactlyOnceWith('https://live.rbg.tum.de/w/other');
+                expect(warningSpy).toHaveBeenCalledWith('artemisApp.lecture.unitEditor.videoSourceChangedMeanwhile');
+                expect((wizardUnitComponent.editingUnit() as AttachmentVideoUnit).videoSource).toBe('https://live.rbg.tum.de/w/other');
+
+                updateSpy.mockReturnValueOnce(savedResponse('https://live.rbg.tum.de/w/new'));
+                wizardUnitComponent.onVideoSourceSaveRequested(fileFormData({ videoSource: 'https://live.rbg.tum.de/w/new' }));
+
+                await expect(getAttachmentVideoUnitPayload(updateSpy.mock.calls[1][2])).resolves.toMatchObject({
+                    videoSource: 'https://live.rbg.tum.de/w/new',
+                    loadedVideoSource: 'https://live.rbg.tum.de/w/other',
+                });
+            });
+
+            it('should show a video URL another editor saved when a change of the details is saved, and send the next link against it', async () => {
+                // Another editor saved .../other; this editor's name change comes back with it.
+                updateSpy.mockReturnValueOnce(savedResponse('https://live.rbg.tum.de/w/other'));
+
+                wizardUnitComponent.onAttachmentVideoUnitChanged({ data: fileFormData({ name: 'Slides week 1' }), immediate: true, valid: true });
+
+                expect(formMock.applyServerVideoSource).toHaveBeenCalledExactlyOnceWith('https://live.rbg.tum.de/w/other');
+
+                updateSpy.mockReturnValueOnce(savedResponse('https://live.rbg.tum.de/w/new'));
+                wizardUnitComponent.onVideoSourceSaveRequested(fileFormData({ name: 'Slides week 1', videoSource: 'https://live.rbg.tum.de/w/new' }));
+
+                await expect(getAttachmentVideoUnitPayload(updateSpy.mock.calls[1][2])).resolves.toMatchObject({ loadedVideoSource: 'https://live.rbg.tum.de/w/other' });
+                expect(formMock.applyServerVideoSource).toHaveBeenCalledOnce();
+            });
+
             it('should count a failed upload and a running change of the details at once', () => {
                 const running = new Subject<HttpResponse<AttachmentVideoUnit>>();
                 const detailsSave = new Subject<HttpResponse<AttachmentVideoUnit>>();

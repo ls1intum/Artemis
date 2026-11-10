@@ -59,10 +59,9 @@ describe('QuizQuestionPoolSettingsDialogComponent', () => {
         expect(emitted).not.toHaveBeenCalled();
 
         component.setSingleChoiceQuestionsPerLectureUnit(30);
-        component.setPoolGenerationEnabled(true);
         component.submit();
 
-        expect(emitted).toHaveBeenCalledWith({ ...settings, poolGenerationEnabled: true, singleChoiceQuestionsPerLectureUnit: 30 });
+        expect(emitted).toHaveBeenCalledWith({ ...settings, singleChoiceQuestionsPerLectureUnit: 30 });
     });
 
     it('should show the multiple-choice count only while multiple-choice questions are enabled', () => {
@@ -126,7 +125,6 @@ describe('QuizQuestionPoolSettingsDialogComponent', () => {
         setup(true);
 
         expect((query('#pool-single-choice-questions') as HTMLInputElement).disabled).toBe(true);
-        expect((query('#pool-generation-enabled') as HTMLInputElement).disabled).toBe(true);
         expect((query('[data-testid="pool-save-settings-button"]') as HTMLButtonElement).disabled).toBe(true);
     });
 

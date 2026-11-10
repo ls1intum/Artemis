@@ -20,12 +20,9 @@ import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
-import de.tum.cit.aet.artemis.atlas.api.AtlasMLApi;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.RelationType;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyRelationDTO;
-import de.tum.cit.aet.artemis.atlas.dto.atlasml.AtlasMLCompetencyRelationDTO;
-import de.tum.cit.aet.artemis.atlas.dto.atlasml.SuggestCompetencyRelationsResponseDTO;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyRelationRepository;
 import de.tum.cit.aet.artemis.atlas.repository.CourseCompetencyRepository;
 import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyRelationService;
@@ -57,9 +54,6 @@ class CompetencyMappingToolsServiceTest {
     private AtlasAgentSessionCacheService sessionCacheService;
 
     @Mock
-    private AtlasMLApi atlasMLApi;
-
-    @Mock
     private AuthorizationCheckService authorizationCheckService;
 
     @Mock
@@ -79,7 +73,7 @@ class CompetencyMappingToolsServiceTest {
     void setUp() {
         objectMapper = JsonObjectMapper.get();
         service = new CompetencyMappingToolsService(objectMapper, courseCompetencyRepository, competencyRelationRepository, competencyRelationService, courseTestRepository,
-                sessionCacheService, Optional.of(atlasMLApi), authorizationCheckService, userRepository);
+                sessionCacheService, authorizationCheckService, userRepository);
 
         course = new Course();
         course.setId(123L);
@@ -172,24 +166,6 @@ class CompetencyMappingToolsServiceTest {
     }
 
     @Test
-    void suggestRelations_happyPath() throws Exception {
-        when(atlasMLApi.suggestCompetencyRelations(123L)).thenReturn(new SuggestCompetencyRelationsResponseDTO(List.of(new AtlasMLCompetencyRelationDTO(1L, 2L, "ASSUMES"))));
-
-        JsonNode json = objectMapper.readTree(service.suggestRelationMappingsUsingML(123L));
-
-        assertThat(json.get("count").asInt()).isEqualTo(1);
-    }
-
-    @Test
-    void suggestRelations_mlFailure_returnsError() throws Exception {
-        when(atlasMLApi.suggestCompetencyRelations(123L)).thenThrow(new RuntimeException("boom"));
-
-        JsonNode json = objectMapper.readTree(service.suggestRelationMappingsUsingML(123L));
-
-        assertThat(json.get("error").asString()).contains("Failed to get ML-based");
-    }
-
-    @Test
     void lastPreviewRequiresActiveSessionAndNonemptyCachedOperations() {
         assertThat(service.getLastPreviewedRelation()).contains("No active session");
         CompetencyMappingToolsService.setCurrentSessionId("refinement");
@@ -267,11 +243,11 @@ class CompetencyMappingToolsServiceTest {
     }
 
     @Test
-    void saveZeroIdCreatesAndAtlasFailureDoesNotUndoSavedRelation() {
+    void saveZeroIdCreatesRelation() {
         when(courseTestRepository.findById(123L)).thenReturn(Optional.of(course));
         when(courseCompetencyRepository.findById(1L)).thenReturn(Optional.of(head));
         when(courseCompetencyRepository.findById(2L)).thenReturn(Optional.of(tail));
-        when(atlasMLApi.mapCompetencyToCompetency(2L, 1L)).thenThrow(new IllegalStateException("offline"));
+
         var result = objectMapper.readTree(service.saveRelationMappings(123L, List.of(new CompetencyRelationDTO(0L, 1L, 2L, RelationType.ASSUMES))));
         assertThat(result.get("success").asBoolean()).isTrue();
         assertThat(result.get("created").asInt()).isEqualTo(1);
@@ -299,18 +275,4 @@ class CompetencyMappingToolsServiceTest {
         verify(competencyRelationService).createCompetencyRelation(tail, head, RelationType.ASSUMES, course);
     }
 
-    @Test
-    void suggestionsRejectAbsentEmptyAndInvalidResults() {
-        service = new CompetencyMappingToolsService(objectMapper, courseCompetencyRepository, competencyRelationRepository, competencyRelationService, courseTestRepository,
-                sessionCacheService, Optional.empty(), authorizationCheckService, userRepository);
-        assertThat(service.suggestRelationMappingsUsingML(123L)).contains("AtlasML is not available");
-        service = new CompetencyMappingToolsService(objectMapper, courseCompetencyRepository, competencyRelationRepository, competencyRelationService, courseTestRepository,
-                sessionCacheService, Optional.of(atlasMLApi), authorizationCheckService, userRepository);
-        assertThat(service.suggestRelationMappingsUsingML(123L)).contains("No relation suggestions");
-        when(atlasMLApi.suggestCompetencyRelations(123L)).thenReturn(new SuggestCompetencyRelationsResponseDTO(null), new SuggestCompetencyRelationsResponseDTO(List.of()),
-                new SuggestCompetencyRelationsResponseDTO(List.of(new AtlasMLCompetencyRelationDTO(1L, 2L, "INVALID"))));
-        assertThat(service.suggestRelationMappingsUsingML(123L)).contains("No relation suggestions");
-        assertThat(service.suggestRelationMappingsUsingML(123L)).contains("No relation suggestions");
-        assertThat(service.suggestRelationMappingsUsingML(123L)).contains("No valid relation suggestions");
-    }
 }

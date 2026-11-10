@@ -12,6 +12,8 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.jspecify.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.data.domain.Page;
@@ -23,6 +25,7 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
+import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
@@ -58,6 +61,8 @@ import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 @Lazy
 @Conditional(HyperionEnabled.class)
 public class HyperionQuizQuestionPoolService {
+
+    private static final Logger log = LoggerFactory.getLogger(HyperionQuizQuestionPoolService.class);
 
     /** The largest page the question list serves. */
     public static final int MAX_PAGE_SIZE = 500;
@@ -110,12 +115,14 @@ public class HyperionQuizQuestionPoolService {
      * @throws de.tum.cit.aet.artemis.core.exception.ServiceUnavailableAlertException if the pool has no model endpoint configured
      */
     public QuizQuestionPoolBuildStartDTO startBuild(Course course, @Nullable Long userId) {
+        long courseId = course.getId();
         if (!modelService.isConfigured()) {
+            log.info("Quiz question pool build of course [{}] requested by {} is refused: no model is configured for the pool", courseId, currentUser());
             throw HyperionQuizQuestionPoolModelService.notConfigured();
         }
-        long courseId = course.getId();
         String leaseToken = buildService.tryStart(courseId);
         if (leaseToken == null) {
+            log.info("Quiz question pool build of course [{}] requested by {} is not started: a build of the course is already running", courseId, currentUser());
             return new QuizQuestionPoolBuildStartDTO(false, 0);
         }
         int enqueued;
@@ -136,7 +143,14 @@ public class HyperionQuizQuestionPoolService {
             buildService.release(courseId, leaseToken);
             throw e;
         }
+        HyperionCourseSettings settings = buildService.settingsOfRunningBuild(courseId);
+        log.info("Quiz question pool build of course [{}] started by {}: {} new items, {}, generator {}, judge {}", courseId, currentUser(), enqueued,
+                settings == null ? "settings unknown" : HyperionQuizQuestionPoolBuildService.describe(settings), modelService.generatorModel(), modelService.judgeModel());
         return new QuizQuestionPoolBuildStartDTO(true, enqueued);
+    }
+
+    private static String currentUser() {
+        return SecurityUtils.getCurrentUserLogin().orElse("an unknown user");
     }
 
     /**
@@ -149,6 +163,7 @@ public class HyperionQuizQuestionPoolService {
         if (!buildService.requestCancel(courseId)) {
             throw new ConflictException("No build of this quiz question pool is running", "QuizQuestionPool", "notRunning");
         }
+        log.info("Quiz question pool build of course [{}]: {} asked the build to stop", courseId, currentUser());
     }
 
     /**
@@ -340,7 +355,13 @@ public class HyperionQuizQuestionPoolService {
      * @return the stored settings
      */
     public HyperionCourseSettingsDTO updateSettings(long courseId, HyperionCourseSettingsDTO settings) {
-        return HyperionCourseSettingsDTO.of(settingsService.updateSettings(courseId, settings.toSettings()));
+        HyperionCourseSettings previous = settingsService.getSettings(courseId);
+        HyperionCourseSettings stored = settingsService.updateSettings(courseId, settings.toSettings());
+        if (previous != null && !previous.equals(stored)) {
+            log.info("Quiz question pool settings of course [{}] changed by {}: {} -> {}", courseId, currentUser(), HyperionQuizQuestionPoolBuildService.describe(previous),
+                    HyperionQuizQuestionPoolBuildService.describe(stored));
+        }
+        return HyperionCourseSettingsDTO.of(stored);
     }
 
     /**
@@ -385,6 +406,7 @@ public class HyperionQuizQuestionPoolService {
             throw new EntityNotFoundException("QuizQuestionPoolItem", questionId);
         }
         whileHoldingTheBuildLease(courseId, () -> itemRepository.deleteById(questionId));
+        log.info("Quiz question pool of course [{}]: {} deleted question [{}]", courseId, currentUser(), questionId);
     }
 
     /**
@@ -398,6 +420,8 @@ public class HyperionQuizQuestionPoolService {
     public QuizQuestionPoolDeletionDTO deleteItems(long courseId, @Nullable Long competencyId) {
         int[] deleted = new int[1];
         whileHoldingTheBuildLease(courseId, () -> deleted[0] = itemRepository.deleteAllForCourse(courseId, competencyId));
+        log.info("Quiz question pool of course [{}]: {} deleted {} questions of {}", courseId, currentUser(), deleted[0],
+                competencyId == null ? "the whole pool" : "competency [" + competencyId + "]");
         return new QuizQuestionPoolDeletionDTO(deleted[0]);
     }
 

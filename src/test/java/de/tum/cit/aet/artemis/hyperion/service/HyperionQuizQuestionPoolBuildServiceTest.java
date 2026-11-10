@@ -161,6 +161,14 @@ class HyperionQuizQuestionPoolBuildServiceTest {
     }
 
     @Test
+    void describe_namesTheCountsTheCorrectOptionRangeAndTheDifficultyMix() {
+        assertThat(HyperionQuizQuestionPoolBuildService.describe(new HyperionCourseSettings(false, 12, true, 6, 2, 3, 20, 50, 30)))
+                .isEqualTo("12 single-choice, 6 multiple-choice (2-3 correct) per lecture unit, difficulty 20/50/30 %");
+        assertThat(HyperionQuizQuestionPoolBuildService.describe(new HyperionCourseSettings(false, 12, false, 6, 1, 4, 20, 50, 30)))
+                .isEqualTo("12 single-choice, no multiple-choice per lecture unit, difficulty 20/50/30 %");
+    }
+
+    @Test
     void splitByPercent_givesTheRemainderToTheLargestFractionsEarlierOnesFirst() {
         assertThat(HyperionQuizQuestionPoolBuildService.splitByPercent(21, new int[] { 20, 50, 30 })).containsExactly(4, 11, 6);
         assertThat(HyperionQuizQuestionPoolBuildService.splitByPercent(25, new int[] { 20, 50, 30 })).containsExactly(5, 13, 7);
