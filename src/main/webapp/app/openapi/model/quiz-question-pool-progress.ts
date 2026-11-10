@@ -32,4 +32,6 @@ export interface QuizQuestionPoolProgress {
     failed?: number;
     /** The settings the running build planned its cells with; absent while no build is running */
     buildSettings?: HyperionCourseSettings;
+    /** Whether the pool has its own model endpoint; builds are refused without one */
+    modelConfigured?: boolean;
 }

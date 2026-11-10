@@ -33,6 +33,7 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
+import de.tum.cit.aet.artemis.core.exception.ServiceUnavailableAlertException;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.hyperion.domain.HyperionCourseSettings;
 import de.tum.cit.aet.artemis.hyperion.domain.QuizQuestionDifficulty;
@@ -73,6 +74,9 @@ class HyperionQuizQuestionPoolServiceTest {
     @Mock
     private LectureUnitApi lectureUnitApi;
 
+    @Mock
+    private HyperionQuizQuestionPoolModelService modelService;
+
     private HyperionQuizQuestionPoolService service;
 
     private AutoCloseable mocks;
@@ -82,7 +86,9 @@ class HyperionQuizQuestionPoolServiceTest {
     @BeforeEach
     void setup() {
         mocks = MockitoAnnotations.openMocks(this);
-        service = new HyperionQuizQuestionPoolService(buildService, taskService, itemRepository, settingsService, Optional.of(courseCompetencyApi), Optional.of(lectureUnitApi));
+        when(modelService.isConfigured()).thenReturn(true);
+        service = new HyperionQuizQuestionPoolService(buildService, taskService, itemRepository, settingsService, Optional.of(courseCompetencyApi), Optional.of(lectureUnitApi),
+                modelService);
         course = new Course();
         course.setId(5L);
     }
@@ -101,6 +107,15 @@ class HyperionQuizQuestionPoolServiceTest {
 
         assertThat(result).isEqualTo(new QuizQuestionPoolBuildStartDTO(true, 12));
         verify(taskService).runBuildAsync(5L, 7L, "lease");
+    }
+
+    @Test
+    void startBuild_isRefusedWithoutAConfiguredModel() {
+        when(modelService.isConfigured()).thenReturn(false);
+
+        assertThatThrownBy(() -> service.startBuild(course, 7L)).isInstanceOf(ServiceUnavailableAlertException.class).hasMessageContaining("no local model configured");
+        verify(buildService, never()).tryStart(anyLong());
+        verify(buildService, never()).enqueue(course);
     }
 
     @Test
@@ -146,7 +161,7 @@ class HyperionQuizQuestionPoolServiceTest {
 
         QuizQuestionPoolProgressDTO progress = service.getProgress(5L);
 
-        assertThat(progress).isEqualTo(new QuizQuestionPoolProgressDTO(true, 17, 4, 2, 10, 8, 2, 1, null));
+        assertThat(progress).isEqualTo(new QuizQuestionPoolProgressDTO(true, 17, 4, 2, 10, 8, 2, 1, null, true));
     }
 
     @Test

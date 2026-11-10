@@ -146,6 +146,7 @@ export class QuizQuestionPoolService {
             rejected: progress.rejected ?? 0,
             failed: progress.failed ?? 0,
             buildSettings: progress.buildSettings ? this.toSettings(progress.buildSettings) : undefined,
+            modelConfigured: !!progress.modelConfigured,
         };
     }
 

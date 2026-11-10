@@ -3,8 +3,12 @@ package de.tum.cit.aet.artemis.hyperion.web;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -22,6 +26,8 @@ import java.util.regex.Pattern;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
+import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.messages.SystemMessage;
@@ -65,6 +71,10 @@ import de.tum.cit.aet.artemis.lecture.util.LectureUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalVCTest;
 
 class HyperionQuizQuestionPoolResourceTest extends AbstractSpringIntegrationLocalCILocalVCTest {
+
+    private static final String GENERATOR_MODEL = "local-generator";
+
+    private static final String JUDGE_MODEL = "local-judge";
 
     private static final String TEST_PREFIX = "hyperionquizpool";
 
@@ -149,6 +159,10 @@ class HyperionQuizQuestionPoolResourceTest extends AbstractSpringIntegrationLoca
         generationDelayMillis.set(0);
         slideDeckReachedThePrompt.set(false);
         mockModel();
+        when(quizQuestionPoolModelService.isConfigured()).thenReturn(true);
+        when(quizQuestionPoolModelService.chatClient()).thenReturn(ChatClient.create(azureOpenAiChatModel));
+        when(quizQuestionPoolModelService.generatorModel()).thenReturn(GENERATOR_MODEL);
+        when(quizQuestionPoolModelService.judgeModel()).thenReturn(JUDGE_MODEL);
     }
 
     @AfterEach
@@ -202,6 +216,20 @@ class HyperionQuizQuestionPoolResourceTest extends AbstractSpringIntegrationLoca
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void shouldRefuseToBuildWithoutAConfiguredModel() throws Exception {
+        userUtilService.changeUser(TEST_PREFIX + "instructor1");
+        when(quizQuestionPoolModelService.isConfigured()).thenReturn(false);
+
+        request.performMvcRequest(post("/api/hyperion/courses/{courseId}/quiz-question-pool/build", courseId)).andExpect(status().isServiceUnavailable());
+
+        QuizQuestionPoolProgressDTO progress = request.get("/api/hyperion/courses/" + courseId + "/quiz-question-pool/progress", HttpStatus.OK, QuizQuestionPoolProgressDTO.class);
+        assertThat(progress.modelConfigured()).isFalse();
+        assertThat(progress.total()).isZero();
+        verify(azureOpenAiChatModel, never()).call(any(Prompt.class));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void shouldBuildThePoolForInstructor() throws Exception {
         userUtilService.changeUser(TEST_PREFIX + "instructor1");
 
@@ -210,8 +238,12 @@ class HyperionQuizQuestionPoolResourceTest extends AbstractSpringIntegrationLoca
         awaitBuild();
 
         QuizQuestionPoolProgressDTO progress = request.get("/api/hyperion/courses/" + courseId + "/quiz-question-pool/progress", HttpStatus.OK, QuizQuestionPoolProgressDTO.class);
+        assertThat(progress.modelConfigured()).isTrue();
         assertThat(progress.total()).isEqualTo(EXPECTED_ITEMS);
         assertThat(progress.judged()).isEqualTo(EXPECTED_ITEMS);
+        ArgumentCaptor<Prompt> prompts = ArgumentCaptor.forClass(Prompt.class);
+        verify(azureOpenAiChatModel, atLeastOnce()).call(prompts.capture());
+        assertThat(prompts.getAllValues()).extracting(prompt -> prompt.getOptions().getModel()).containsOnly(GENERATOR_MODEL, JUDGE_MODEL);
         assertThat(progress.accepted()).isEqualTo(EXPECTED_ITEMS - EXPECTED_CELLS);
         assertThat(progress.rejected()).isEqualTo(EXPECTED_CELLS);
         assertThat(progress.toGenerate()).isZero();

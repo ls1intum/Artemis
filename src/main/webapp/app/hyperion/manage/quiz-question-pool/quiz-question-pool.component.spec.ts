@@ -27,7 +27,7 @@ describe('QuizQuestionPoolComponent', () => {
     let courseManagementService: CourseManagementService;
     let alertService: AlertService;
 
-    const progress: PoolProgress = { running: false, total: 10, toGenerate: 0, toJudge: 0, judged: 9, accepted: 7, rejected: 2, failed: 1 };
+    const progress: PoolProgress = { running: false, total: 10, toGenerate: 0, toJudge: 0, judged: 9, accepted: 7, rejected: 2, failed: 1, modelConfigured: true };
     const settings: PoolSettings = {
         poolGenerationEnabled: false,
         singleChoiceQuestionsPerLectureUnit: 12,
@@ -800,6 +800,22 @@ describe('QuizQuestionPoolComponent', () => {
         emptyState.querySelector('button').click();
 
         expect(buildSpy).toHaveBeenCalledWith(1);
+    });
+
+    it('should explain the missing local model and offer no build while the server has none configured', () => {
+        setup({ isAtLeastEditor: true, isAtLeastInstructor: true });
+        component.progress.set({ ...progress, total: 0, modelConfigured: false });
+        fixture.detectChanges();
+
+        expect(component.isModelMissing()).toBe(true);
+        expect(fixture.nativeElement.querySelector('[data-testid="pool-model-missing"]')).not.toBeNull();
+        expect(fixture.nativeElement.querySelector('[data-testid="pool-progress-empty"] button').disabled).toBe(true);
+
+        component.progress.set({ ...progress, total: 0 });
+        fixture.detectChanges();
+
+        expect(component.isModelMissing()).toBe(false);
+        expect(fixture.nativeElement.querySelector('[data-testid="pool-model-missing"]')).toBeNull();
     });
 
     it('should open the settings dialog, store the edited settings and close it', () => {

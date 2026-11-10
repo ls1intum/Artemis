@@ -7,6 +7,7 @@ import {
     TumAetUiConfirmDialogComponent,
     TumAetUiConfirmationService,
     TumAetUiEmptyStateComponent,
+    TumAetUiMessageComponent,
     TumAetUiPanelComponent,
     TumAetUiProgressBarComponent,
     TumAetUiSelectComponent,
@@ -121,6 +122,7 @@ function buildFactsOf(settings: PoolSettings, reference?: PoolSettings): PoolSet
         TumAetUiCardComponent,
         TumAetUiConfirmDialogComponent,
         TumAetUiEmptyStateComponent,
+        TumAetUiMessageComponent,
         TumAetUiPanelComponent,
         TumAetUiProgressBarComponent,
         TumAetUiSelectComponent,
@@ -211,6 +213,8 @@ export class QuizQuestionPoolComponent implements OnInit, OnDestroy {
     readonly canReview = computed(() => !!this.course()?.isAtLeastEditor);
     readonly canDelete = computed(() => !!this.course()?.isAtLeastInstructor);
     readonly isRunning = computed(() => !!this.progress()?.running);
+    /** Whether the server reported that the pool has no model endpoint, so no build can start. */
+    readonly isModelMissing = computed(() => this.progress()?.modelConfigured === false);
     /** The questions the pool holds once the next build is complete: those it holds now plus those that build would add. */
     readonly nextBuildCount = computed(() => (this.progress()?.total ?? 0) + (this.plan()?.missing ?? 0));
     /**

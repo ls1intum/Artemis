@@ -64,15 +64,18 @@ public class HyperionQuizQuestionPoolService {
 
     private final Optional<LectureUnitApi> lectureUnitApi;
 
+    private final HyperionQuizQuestionPoolModelService modelService;
+
     public HyperionQuizQuestionPoolService(HyperionQuizQuestionPoolBuildService buildService, HyperionQuizQuestionPoolTaskService taskService,
             QuizQuestionPoolItemRepository itemRepository, HyperionCourseSettingsService settingsService, Optional<CourseCompetencyApi> courseCompetencyApi,
-            Optional<LectureUnitApi> lectureUnitApi) {
+            Optional<LectureUnitApi> lectureUnitApi, HyperionQuizQuestionPoolModelService modelService) {
         this.buildService = buildService;
         this.taskService = taskService;
         this.itemRepository = itemRepository;
         this.settingsService = settingsService;
         this.courseCompetencyApi = courseCompetencyApi;
         this.lectureUnitApi = lectureUnitApi;
+        this.modelService = modelService;
     }
 
     /**
@@ -81,8 +84,12 @@ public class HyperionQuizQuestionPoolService {
      * @param course the course
      * @param userId the user the token usage is attributed to; may be {@code null}
      * @return whether a build was started, and how many items were added
+     * @throws de.tum.cit.aet.artemis.core.exception.ServiceUnavailableAlertException if the pool has no model endpoint configured
      */
     public QuizQuestionPoolBuildStartDTO startBuild(Course course, @Nullable Long userId) {
+        if (!modelService.isConfigured()) {
+            throw HyperionQuizQuestionPoolModelService.notConfigured();
+        }
         long courseId = course.getId();
         String leaseToken = buildService.tryStart(courseId);
         if (leaseToken == null) {
@@ -148,7 +155,7 @@ public class HyperionQuizQuestionPoolService {
         int failed = counts.getOrDefault(QuizQuestionPoolItemState.FAILED_GENERATION, 0) + counts.getOrDefault(QuizQuestionPoolItemState.FAILED_FILTER, 0);
         HyperionCourseSettings buildSettings = buildService.settingsOfRunningBuild(courseId);
         return new QuizQuestionPoolProgressDTO(buildService.isRunning(courseId), total, toGenerate, toJudge, judged, accepted, rejected, failed,
-                buildSettings == null ? null : HyperionCourseSettingsDTO.of(buildSettings));
+                buildSettings == null ? null : HyperionCourseSettingsDTO.of(buildSettings), modelService.isConfigured());
     }
 
     /**

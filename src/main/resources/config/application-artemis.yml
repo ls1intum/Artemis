@@ -163,9 +163,18 @@ artemis:
       shutdown-drain-timeout: PT11M
       test-case-sync-timeout: PT10M
     quiz-pool:
-      # Model (for Azure: deployment name) that generates pool questions; blank uses the default chat model configured below.
+      # The pool sends course material only to its own self-hosted, OpenAI-compatible endpoint (for example Logos or vLLM), never to the
+      # chat model configured under spring.ai. Leave base-url, generator-model and judge-model empty to keep the pool off; a partial
+      # configuration, a model missing from allowed-models or a cloud provider host stops the server at startup.
+      base-url: # including the /v1 prefix, e.g. https://logos.example.org/v1
+      api-key:
+      # HTTP timeout of one model call.
+      timeout: 5m
+      # Self-hosted models the pool may use; generator-model and judge-model must each be one of them.
+      allowed-models: openai/gpt-oss-120b,Qwen/Qwen3.8-27B
+      # Model that generates pool questions.
       generator-model:
-      # Model (for Azure: deployment name) that judges generated questions; blank uses the default chat model configured below.
+      # Model that judges generated questions.
       judge-model:
       # Questions requested per generation call; a cell larger than this is filled in several calls.
       generation-batch-size: 8

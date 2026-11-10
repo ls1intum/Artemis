@@ -3443,6 +3443,8 @@ components:
         buildSettings: {$ref: '#/components/schemas/HyperionCourseSettings', description: The
             settings the running build planned its cells with; absent while no build
             is running}
+        modelConfigured: {type: boolean, description: Whether the pool has its own
+            model endpoint; builds are refused without one}
     IndexedContentObject:
       type: object
       properties:

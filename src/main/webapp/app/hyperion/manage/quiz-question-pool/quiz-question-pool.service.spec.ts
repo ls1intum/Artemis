@@ -91,9 +91,9 @@ describe('QuizQuestionPoolService', () => {
         let result: PoolProgress | undefined;
         service.getProgress(7).subscribe((progress) => (result = progress));
 
-        httpMock.expectOne((r) => r.url === '/api/hyperion/courses/7/quiz-question-pool/progress').flush({ running: true, total: 4, judged: 1 });
+        httpMock.expectOne((r) => r.url === '/api/hyperion/courses/7/quiz-question-pool/progress').flush({ running: true, total: 4, judged: 1, modelConfigured: true });
 
-        expect(result).toEqual({ running: true, total: 4, toGenerate: 0, toJudge: 0, judged: 1, accepted: 0, rejected: 0, failed: 0 });
+        expect(result).toEqual({ running: true, total: 4, toGenerate: 0, toJudge: 0, judged: 1, accepted: 0, rejected: 0, failed: 0, modelConfigured: true });
     });
 
     it('should start a build and report a running build as not started', () => {

@@ -30,7 +30,8 @@
                     "cancelConfirmReject": "Keep running",
                     "cancelRequested": "The build stops after its current step.",
                     "cancelNotRunning": "No build is running.",
-                    "cancelFailed": "The build could not be cancelled."
+                    "cancelFailed": "The build could not be cancelled.",
+                    "modelMissing": "Smart Quizzes needs a self-hosted language model, which this server does not have configured. Ask your Artemis administrator to set one up; until then no questions can be generated."
                 },
                 "settings": {
                     "title": "Settings",
