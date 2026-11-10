@@ -5,7 +5,7 @@
         tumAetUiTooltipPlacement="bottom"
     >
         <p-select
-            [attr.aria-label]="'artemisApp.iris.contextSelection.label' | artemisTranslate"
+            [ariaLabel]="'artemisApp.iris.contextSelection.label' | artemisTranslate"
             [disabled]="disabled()"
             [pt]="{
                 header: { style: 'padding-left: 12px; padding-right: 12px;' },
@@ -25,6 +25,7 @@
             [filter]="true"
             filterBy="label"
             [filterPlaceholder]="'artemisApp.iris.contextSelection.search' | artemisTranslate"
+            [ariaFilterLabel]="'artemisApp.iris.contextSelection.searchLabel' | artemisTranslate"
             [resetFilterOnHide]="true"
             scrollHeight="40vh"
             [panelStyle]="{ 'min-width': '250px' }"
@@ -48,7 +49,14 @@
     </span>
 
     @if (activeChip(); as chip) {
-        <tumaet-ui-chip class="iris-context-chip" size="small" data-testid="iris-context-chip" [removable]="!disabled()" (removed)="onChipRemove()">
+        <tumaet-ui-chip
+            class="iris-context-chip"
+            size="small"
+            data-testid="iris-context-chip"
+            [removable]="!disabled()"
+            [removeAriaLabel]="'artemisApp.iris.contextSelection.removeContext' | artemisTranslate"
+            (removed)="onChipRemove()"
+        >
             <span [tumAetUiTooltip]="chip.label" tumAetUiTooltipPlacement="bottom"><fa-icon [icon]="chip.faIcon" class="me-1" aria-hidden="true" />{{ chip.label }}</span>
         </tumaet-ui-chip>
     }

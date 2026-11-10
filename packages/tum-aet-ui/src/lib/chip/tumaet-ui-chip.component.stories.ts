@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/angular-vite';
+import { argsToTemplate } from '@storybook/angular-vite';
 import { fn } from 'storybook/test';
 
 import { TumAetUiChipComponent } from './tumaet-ui-chip.component';
@@ -38,9 +39,10 @@ export const Truncated: Story = {
     args: {
         label: 'Introduction to Machine Learning and Neural Networks',
         removable: true,
+        removeAriaLabel: 'Remove Introduction to Machine Learning and Neural Networks',
     },
     render: (args) => ({
         props: args,
-        template: `<div style="width: 12rem"><tumaet-ui-chip [label]="label" [removable]="removable" [removeAriaLabel]="removeAriaLabel" (removed)="removed($event)" /></div>`,
+        template: `<div style="width: 12rem"><tumaet-ui-chip ${argsToTemplate(args)} /></div>`,
     }),
 };
