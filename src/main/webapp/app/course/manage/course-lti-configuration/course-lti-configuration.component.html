@@ -145,37 +145,30 @@
             <ng-template ngbNavContent>
                 <div class="row">
                     <div class="col-12 mx-auto">
-                        <div class="table-responsive">
-                            <table class="table table-bordered">
-                                <thead class="thead-dark">
-                                    <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" (sortChange)="sortRows()">
-                                        <th jhiSortBy="id">
-                                            id
-                                            <fa-icon [icon]="faSort" />
+                        <tumaet-ui-table-layout class="[--tumaet-ui-table-layout-offset:20rem]">
+                            <table tumAetUiTable size="small" striped [sortField]="predicate()" [sortOrder]="reverse() ? 1 : -1" (sortChange)="onSort($event)">
+                                <thead>
+                                    <tr>
+                                        <th tumAetUiSortableColumn="id">
+                                            <span>id</span>
                                         </th>
-                                        <th jhiSortBy="type">
-                                            {{ 'artemisApp.exercise.type' | artemisTranslate }}
-                                            <fa-icon [icon]="faSort" />
+                                        <th tumAetUiSortableColumn="type">
+                                            <span>{{ 'artemisApp.exercise.type' | artemisTranslate }}</span>
                                         </th>
-                                        <th jhiSortBy="title">
-                                            {{ 'artemisApp.exercise.title' | artemisTranslate }}
-                                            <fa-icon [icon]="faSort" />
+                                        <th tumAetUiSortableColumn="title">
+                                            <span>{{ 'artemisApp.exercise.title' | artemisTranslate }}</span>
                                         </th>
-                                        <th jhiSortBy="launchUrl">
-                                            {{ 'artemisApp.lti.lti13LaunchUrl' | artemisTranslate }}
-                                            <fa-icon [icon]="faSort" />
+                                        <th tumAetUiSortableColumn="launchUrl">
+                                            <span>{{ 'artemisApp.lti.lti13LaunchUrl' | artemisTranslate }}</span>
                                         </th>
-                                        <th jhiSortBy="releaseDate">
-                                            {{ 'artemisApp.exercise.releaseDate' | artemisTranslate }}
-                                            <fa-icon [icon]="faSort" />
+                                        <th tumAetUiSortableColumn="releaseDate">
+                                            <span>{{ 'artemisApp.exercise.releaseDate' | artemisTranslate }}</span>
                                         </th>
-                                        <th jhiSortBy="dueDate">
-                                            {{ 'artemisApp.exercise.dueDate' | artemisTranslate }}
-                                            <fa-icon [icon]="faSort" />
+                                        <th tumAetUiSortableColumn="dueDate">
+                                            <span>{{ 'artemisApp.exercise.dueDate' | artemisTranslate }}</span>
                                         </th>
-                                        <th jhiSortBy="assessmentDueDate">
-                                            {{ 'artemisApp.exercise.assessmentDueDate' | artemisTranslate }}
-                                            <fa-icon [icon]="faSort" />
+                                        <th tumAetUiSortableColumn="assessmentDueDate">
+                                            <span>{{ 'artemisApp.exercise.assessmentDueDate' | artemisTranslate }}</span>
                                         </th>
                                     </tr>
                                 </thead>
@@ -196,7 +189,7 @@
                                     }
                                 </tbody>
                             </table>
-                        </div>
+                        </tumaet-ui-table-layout>
                     </div>
                 </div>
             </ng-template>
@@ -206,29 +199,24 @@
             <ng-template ngbNavContent>
                 <div class="row">
                     <div class="col-12 mx-auto">
-                        <div class="table-responsive">
-                            <table class="table table-bordered">
-                                <thead class="thead-dark">
-                                    <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" (sortChange)="sortRows()">
-                                        <th jhiSortBy="id">
-                                            id
-                                            <fa-icon [icon]="faSort" />
+                        <tumaet-ui-table-layout class="[--tumaet-ui-table-layout-offset:20rem]">
+                            <table tumAetUiTable size="small" striped [sortField]="predicate()" [sortOrder]="reverse() ? 1 : -1" (sortChange)="onSort($event)">
+                                <thead>
+                                    <tr>
+                                        <th tumAetUiSortableColumn="id">
+                                            <span>id</span>
                                         </th>
-                                        <th jhiSortBy="title">
-                                            {{ 'artemisApp.lecture.title' | artemisTranslate }}
-                                            <fa-icon [icon]="faSort" />
+                                        <th tumAetUiSortableColumn="title">
+                                            <span>{{ 'artemisApp.lecture.title' | artemisTranslate }}</span>
                                         </th>
-                                        <th jhiSortBy="launchUrl">
-                                            {{ 'artemisApp.lti.lti13LaunchUrl' | artemisTranslate }}
-                                            <fa-icon [icon]="faSort" />
+                                        <th tumAetUiSortableColumn="launchUrl">
+                                            <span>{{ 'artemisApp.lti.lti13LaunchUrl' | artemisTranslate }}</span>
                                         </th>
-                                        <th jhiSortBy="startDate">
-                                            {{ 'artemisApp.lecture.startDate' | artemisTranslate }}
-                                            <fa-icon [icon]="faSort" />
+                                        <th tumAetUiSortableColumn="startDate">
+                                            <span>{{ 'artemisApp.lecture.startDate' | artemisTranslate }}</span>
                                         </th>
-                                        <th jhiSortBy="endDate">
-                                            {{ 'artemisApp.lecture.endDate' | artemisTranslate }}
-                                            <fa-icon [icon]="faSort" />
+                                        <th tumAetUiSortableColumn="endDate">
+                                            <span>{{ 'artemisApp.lecture.endDate' | artemisTranslate }}</span>
                                         </th>
                                     </tr>
                                 </thead>
@@ -247,7 +235,7 @@
                                     }
                                 </tbody>
                             </table>
-                        </div>
+                        </tumaet-ui-table-layout>
                     </div>
                 </div>
             </ng-template>

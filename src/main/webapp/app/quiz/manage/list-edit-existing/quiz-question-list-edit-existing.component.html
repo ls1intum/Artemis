@@ -119,33 +119,45 @@
                     </div>
                 }
                 @if (existingQuestions().length !== 0) {
-                    <div class="table-responsive existing-question-table">
-                        <table class="table table-striped">
-                            <thead class="thead-dark">
+                    <tumaet-ui-table-layout class="[--tumaet-ui-table-layout-offset:20rem]">
+                        <div tumAetUiTableToolbar class="flex min-w-0 flex-1 items-center gap-2">
+                            <span class="flex-1"></span>
+                            <button
+                                type="button"
+                                tumAetUiButton
+                                severity="primary"
+                                variant="outlined"
+                                size="small"
+                                (click)="addExistingQuestions()"
+                                jhiTranslate="artemisApp.quizExercise.addSelectedQuestions"
+                            ></button>
+                        </div>
+                        <table tumAetUiTable size="small" striped [sortField]="sortField()" [sortOrder]="sortOrder()" (sortChange)="onSort($event)">
+                            <thead>
                                 <tr>
-                                    <th width="45%">
+                                    <th class="w-[45%]" [tumAetUiSortableColumn]="'title'">
                                         <span jhiTranslate="artemisApp.quizExercise.export.questionTitle"></span>
                                     </th>
-                                    <th width="28%">
+                                    <th class="w-[28%]" [tumAetUiSortableColumn]="'exercise'">
                                         <span jhiTranslate="artemisApp.quizExercise.export.quizExerciseTitle"></span>
                                     </th>
-                                    <th width="10%">
+                                    <th class="w-[10%]" [tumAetUiSortableColumn]="'type'">
                                         <span jhiTranslate="artemisApp.exercise.type"></span>
                                     </th>
-                                    <th width="10%">
+                                    <th class="w-[10%]">
                                         <span jhiTranslate="entity.action.preview"></span>
                                     </th>
-                                    <th width="7%">
+                                    <th class="w-[7%]">
                                         <span jhiTranslate="entity.action.add"></span>
                                     </th>
                                 </tr>
                             </thead>
                             <tbody>
-                                @for (question of existingQuestions(); track question) {
+                                @for (question of sortedQuestions(); track question) {
                                     <tr>
-                                        <td width="45%">{{ question.title }}</td>
-                                        <td width="28%">{{ question.exercise?.title }}</td>
-                                        <td width="10%" class="mb-0">
+                                        <td>{{ question.title }}</td>
+                                        <td>{{ question.exercise?.title }}</td>
+                                        <td class="mb-0">
                                             <h5>
                                                 @if (question.type === MULTIPLE_CHOICE) {
                                                     <span class="badge bg-info align-text-top">MC</span>
@@ -162,7 +174,7 @@
                                                 }
                                             </h5>
                                         </td>
-                                        <td width="10%">
+                                        <td>
                                             <tumaet-ui-button
                                                 severity="success"
                                                 variant="outlined"
@@ -175,37 +187,23 @@
                                                 (clicked)="openPreview(question)"
                                             />
                                         </td>
-                                        <td width="7%">
-                                            <div class="form-check">
-                                                <input
-                                                    type="checkbox"
-                                                    id="cbExportQuizQuestion{{ question.id }}"
-                                                    class="form-check-input"
-                                                    [(ngModel)]="question.exportQuiz"
-                                                    style="margin-left: 0"
-                                                />
-                                                <label class="form-check-label" for="cbExportQuizQuestion{{ question.id }}">&nbsp;</label>
-                                            </div>
+                                        <td>
+                                            <input
+                                                type="checkbox"
+                                                id="cbExportQuizQuestion{{ question.id }}"
+                                                class="size-4"
+                                                [attr.aria-label]="'entity.action.add' | artemisTranslate"
+                                                [(ngModel)]="question.exportQuiz"
+                                            />
                                         </td>
                                     </tr>
                                 }
                             </tbody>
                         </table>
-                    </div>
+                    </tumaet-ui-table-layout>
                 }
                 @if (allExistingQuestions().length !== 0 && existingQuestions().length === 0 && selectedCourseId !== undefined) {
                     <div jhiTranslate="artemisApp.quizExercise.noMatchingQuestionsFound" class="ms-3"></div>
-                }
-                @if (existingQuestions().length !== 0) {
-                    <button
-                        type="button"
-                        tumAetUiButton
-                        severity="primary"
-                        variant="outlined"
-                        size="small"
-                        (click)="addExistingQuestions()"
-                        jhiTranslate="artemisApp.quizExercise.addSelectedQuestions"
-                    ></button>
                 }
             }
         </div>

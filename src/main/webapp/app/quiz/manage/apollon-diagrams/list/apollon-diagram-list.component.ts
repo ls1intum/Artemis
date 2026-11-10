@@ -16,7 +16,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
-import { TumAetUiButtonDirective, TumAetUiTableDirective, TumAetUiTableSortEvent, TumAetUiTableSortableColumnComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective, TumAetUiTableDirective, TumAetUiTableLayoutComponent, TumAetUiTableSortEvent, TumAetUiTableSortableColumnComponent } from '@tumaet/ui-angular';
 
 @Component({
     selector: 'jhi-apollon-diagram-list',
@@ -31,6 +31,7 @@ import { TumAetUiButtonDirective, TumAetUiTableDirective, TumAetUiTableSortEvent
         TumAetUiButtonDirective,
         TumAetUiTableDirective,
         TumAetUiTableSortableColumnComponent,
+        TumAetUiTableLayoutComponent,
     ],
 })
 export class ApollonDiagramListComponent {

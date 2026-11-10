@@ -1,0 +1,55 @@
+:host {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    max-height: calc(100dvh - var(--tumaet-ui-table-layout-offset, 12rem));
+    overflow: hidden;
+    border: 1px solid var(--tumaet-ui-border-color);
+    border-radius: 0.5rem;
+    background-color: var(--tumaet-ui-content-background);
+}
+
+// A 0% basis is the content size while the parent's height is not definite (an auto-height dialog), so the frame never
+// collapses; under a parent with a real height it takes exactly the free space.
+:host(.tumaet-ui-table-layout-fill) {
+    flex: 1 1 0%;
+    max-height: none;
+}
+
+// Never wraps and never grows: labels collapse to icons in the consumer, and a toolbar that is still too wide scrolls
+// sideways instead of breaking onto a second line.
+.tumaet-ui-table-layout-toolbar {
+    display: flex;
+    flex: none;
+    align-items: center;
+    gap: 0.5rem;
+    height: 2.5rem;
+    padding: 0 0.5rem;
+    border-bottom: 1px solid var(--tumaet-ui-border-color);
+    white-space: nowrap;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: none;
+
+    // No slot content, or only hidden content (a consumer that cannot use @if around a projected node sets `hidden`).
+    &:not(:has(> :not([hidden]))) {
+        display: none;
+    }
+}
+
+.tumaet-ui-table-layout-body {
+    position: relative;
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: auto;
+}
+
+.tumaet-ui-table-layout-loading {
+    position: absolute;
+    inset: 0;
+    z-index: 20;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: color-mix(in srgb, var(--tumaet-ui-content-background) 60%, transparent);
+}

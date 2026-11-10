@@ -1,14 +1,13 @@
-<div class="flex flex-wrap gap-2 mb-2">
-    <button type="button" tumAetUiButton severity="secondary" size="small" variant="outlined" (click)="expandAll()" data-testid="expand-all">
-        <span jhiTranslate="artemisApp.featureUsage.expandAll"></span>
-    </button>
-    <button type="button" tumAetUiButton severity="secondary" size="small" variant="outlined" (click)="collapseAll()" data-testid="collapse-all">
-        <span jhiTranslate="artemisApp.featureUsage.collapseAll"></span>
-    </button>
-</div>
-
-<div class="overflow-x-auto">
-    <table tumAetUiTable size="small" style="min-width: 100%" aria-describedby="feature-usage-page-heading" data-testid="feature-tree">
+<tumaet-ui-table-layout>
+    <div tumAetUiTableToolbar class="flex min-w-0 flex-1 items-center gap-2">
+        <button type="button" tumAetUiButton severity="secondary" size="small" variant="outlined" (click)="expandAll()" data-testid="expand-all">
+            <span jhiTranslate="artemisApp.featureUsage.expandAll"></span>
+        </button>
+        <button type="button" tumAetUiButton severity="secondary" size="small" variant="outlined" (click)="collapseAll()" data-testid="collapse-all">
+            <span jhiTranslate="artemisApp.featureUsage.collapseAll"></span>
+        </button>
+    </div>
+    <table tumAetUiTable size="small" aria-describedby="feature-usage-page-heading" data-testid="feature-tree">
         <thead>
             <tr>
                 <th scope="col" jhiTranslate="artemisApp.featureUsage.column.feature"></th>
@@ -157,4 +156,4 @@
             }
         </tbody>
     </table>
-</div>
+</tumaet-ui-table-layout>

@@ -7,9 +7,8 @@ import { lastValueFrom, of } from 'rxjs';
 import { RatingListItem } from 'app/assessment/shared/entities/rating-list-item.model';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { MockTranslateService, TranslatePipeMock } from 'test/helpers/mocks/service/mock-translate.service';
-import { MockComponent, MockDirective, MockProvider } from 'ng-mocks';
+import { MockComponent, MockProvider } from 'ng-mocks';
 import { StarRatingComponent } from 'app/assessment/manage/rating/star-rating/star-rating.component';
-import { SortDirective } from 'app/foundation/sort/directive/sort.directive';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { TranslateService } from '@ngx-translate/core';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
@@ -74,7 +73,7 @@ describe('RatingListComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [RatingListComponent, TranslatePipeMock, MockComponent(StarRatingComponent), MockDirective(SortDirective)],
+            imports: [RatingListComponent, TranslatePipeMock, MockComponent(StarRatingComponent)],
             providers: [
                 { provide: ActivatedRoute, useValue: route },
                 { provide: Router, useClass: MockRouter },

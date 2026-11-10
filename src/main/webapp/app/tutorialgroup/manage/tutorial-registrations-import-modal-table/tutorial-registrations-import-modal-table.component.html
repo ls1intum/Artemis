@@ -1,21 +1,21 @@
-<div class="frame">
-    <div class="scroll-container">
-        <table tumAetUiTable class="import-table">
-            <thead>
-                <tr>
-                    <th scope="col" jhiTranslate="artemisApp.pages.tutorialGroupRegistrations.importModal.tableHeader.login"></th>
-                    <th scope="col" jhiTranslate="artemisApp.pages.tutorialGroupRegistrations.importModal.tableHeader.registrationNumber"></th>
-                </tr>
-            </thead>
+<tumaet-ui-table-layout class="[--tumaet-ui-table-layout-offset:26rem]">
+    <table tumAetUiTable size="small">
+        <thead>
+            <tr>
+                <th scope="col" jhiTranslate="artemisApp.pages.tutorialGroupRegistrations.importModal.tableHeader.login"></th>
+                <th scope="col" jhiTranslate="artemisApp.pages.tutorialGroupRegistrations.importModal.tableHeader.registrationNumber"></th>
+            </tr>
+        </thead>
 
-            <tbody>
-                @for (row of rows(); track row.login ?? row.registrationNumber) {
-                    <tr>
-                        <td [class.danger]="row.login && row.markFilledCells">{{ row.login }}</td>
-                        <td [class.danger]="row.registrationNumber && row.markFilledCells">{{ row.registrationNumber }}</td>
-                    </tr>
-                }
-            </tbody>
-        </table>
-    </div>
-</div>
+        <tbody>
+            @for (row of rows(); track row.login ?? row.registrationNumber) {
+                <tr>
+                    <td [class.danger]="row.login && row.markFilledCells" [class.bg-state-danger]="row.login && row.markFilledCells">{{ row.login }}</td>
+                    <td [class.danger]="row.registrationNumber && row.markFilledCells" [class.bg-state-danger]="row.registrationNumber && row.markFilledCells">
+                        {{ row.registrationNumber }}
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</tumaet-ui-table-layout>

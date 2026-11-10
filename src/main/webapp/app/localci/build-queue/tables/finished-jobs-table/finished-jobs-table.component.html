@@ -1,13 +1,5 @@
 @if (buildJobs()?.length) {
-    <table
-        tumAetUiTable
-        [size]="'small'"
-        [striped]="true"
-        [sortField]="predicate()"
-        [sortOrder]="ascending() ? 1 : -1"
-        (sortChange)="onTableSort($event)"
-        style="width: max-content"
-    >
+    <table tumAetUiTable [size]="'small'" [striped]="true" [sortField]="predicate()" [sortOrder]="ascending() ? 1 : -1" (sortChange)="onTableSort($event)">
         <thead>
             <tr>
                 <th class="finish-jobs-column-tiny">

@@ -32,8 +32,6 @@ import { GradeType, GradingScale } from 'app/assessment/shared/entities/grading-
 import { GradingService } from 'app/assessment/manage/grading/grading-service';
 import { GradeStep } from 'app/assessment/shared/entities/grade-step.model';
 import { MockTranslateValuesDirective } from 'test/helpers/mocks/directive/mock-translate-values.directive';
-import { SortByDirective } from 'app/foundation/sort/directive/sort-by.directive';
-import { SortDirective } from 'app/foundation/sort/directive/sort.directive';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ParticipantScoresDistributionComponent } from 'app/course/participant-scores/participant-scores-distribution/participant-scores-distribution.component';
 import { CsvDecimalSeparator, CsvExportOptions, CsvFieldSeparator, CsvQuoteStrings } from 'app/shared-ui/export/modal/export-modal.component';
@@ -303,8 +301,6 @@ describe('CourseScoresComponent', () => {
                         MockComponent(ExportButtonComponent),
                         MockPipe(ArtemisTranslatePipe),
                         MockPipe(ArtemisDatePipe),
-                        MockDirective(SortByDirective),
-                        MockDirective(SortDirective),
                         MockDirective(DeleteButtonDirective),
                         MockDirective(TranslateDirective),
                         MockTranslateValuesDirective,

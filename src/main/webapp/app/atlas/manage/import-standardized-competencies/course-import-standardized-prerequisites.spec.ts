@@ -2,7 +2,6 @@ import { vi } from 'vitest';
 import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { StandardizedCompetencyFilterStubComponent } from 'test/helpers/stubs/atlas/standardized-competency-filter-stub.component';
-import { SortDirective } from 'app/foundation/sort/directive/sort.directive';
 import { MockComponent, MockDirective, MockProvider } from 'ng-mocks';
 import { StandardizedCompetencyDetailStubComponent } from 'test/helpers/stubs/atlas/standardized-competency-detail-stub.component';
 import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
@@ -39,7 +38,6 @@ describe('CourseImportStandardizedPrerequisitesComponent', () => {
                 KnowledgeAreaTreeStubComponent,
                 FaIconComponent,
                 MockComponent(ButtonComponent),
-                MockDirective(SortDirective),
                 MockDirective(MarkdownDirective),
                 MockComponent(DocumentationButtonComponent),
             ],

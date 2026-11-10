@@ -1,25 +1,27 @@
 <div class="build-jobs-section">
     @if (buildJobs()?.length) {
-        <table tumAetUiTable [size]="'small'" [striped]="true" style="width: max-content">
-            <thead>
-                <tr jhi-build-jobs-header [running]="false" [showCourseId]="showCourseId()"></tr>
-            </thead>
-            <tbody>
-                @for (buildJob of buildJobs(); track buildJob.id ?? $index) {
-                    <tr
-                        jhi-build-job-row
-                        [buildJob]="buildJob"
-                        [displayTime]="displayTime()"
-                        [running]="false"
-                        [isAdminView]="false"
-                        [showCourseId]="showCourseId()"
-                        [courseId]="courseId()"
-                        (cancelJob)="cancelJob.emit($event)"
-                        (jobClick)="onJobClick($event)"
-                    ></tr>
-                }
-            </tbody>
-        </table>
+        <tumaet-ui-table-layout style="--tumaet-ui-table-layout-offset: 28rem">
+            <table tumAetUiTable [size]="'small'" [striped]="true">
+                <thead>
+                    <tr jhi-build-jobs-header [running]="false" [showCourseId]="showCourseId()"></tr>
+                </thead>
+                <tbody>
+                    @for (buildJob of buildJobs(); track buildJob.id ?? $index) {
+                        <tr
+                            jhi-build-job-row
+                            [buildJob]="buildJob"
+                            [displayTime]="displayTime()"
+                            [running]="false"
+                            [isAdminView]="false"
+                            [showCourseId]="showCourseId()"
+                            [courseId]="courseId()"
+                            (cancelJob)="cancelJob.emit($event)"
+                            (jobClick)="onJobClick($event)"
+                        ></tr>
+                    }
+                </tbody>
+            </table>
+        </tumaet-ui-table-layout>
     } @else {
         <p class="text-muted-color" jhiTranslate="artemisApp.buildQueue.noQueuedBuilds"></p>
     }

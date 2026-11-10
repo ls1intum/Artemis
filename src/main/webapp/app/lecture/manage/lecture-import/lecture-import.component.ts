@@ -2,7 +2,15 @@ import { Component, DestroyRef, OnInit, inject, output, signal } from '@angular/
 import { FormsModule } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Subject, debounceTime, switchMap, tap } from 'rxjs';
-import { TumAetUiButtonDirective, TumAetUiInputDirective, TumAetUiPaginatorComponent, TumAetUiTableDirective, TumAetUiTableSortableColumnComponent } from '@tumaet/ui-angular';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import {
+    TumAetUiButtonDirective,
+    TumAetUiInputDirective,
+    TumAetUiPaginatorComponent,
+    TumAetUiTableDirective,
+    TumAetUiTableLayoutComponent,
+    TumAetUiTableSortableColumnComponent,
+} from '@tumaet/ui-angular';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { LecturePagingService } from 'app/lecture/manage/services/lecture-paging.service';
 import { SearchResult, SearchTermPageableSearch, SortingOrder } from 'app/foundation/pagination/pageable-table';
@@ -18,6 +26,8 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
         TumAetUiInputDirective,
         TumAetUiPaginatorComponent,
         TumAetUiTableDirective,
+        TumAetUiTableLayoutComponent,
+        ArtemisTranslatePipe,
         TumAetUiTableSortableColumnComponent,
         TranslateDirective,
     ],

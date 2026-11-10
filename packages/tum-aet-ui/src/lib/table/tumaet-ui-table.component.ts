@@ -24,6 +24,7 @@ import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
 import { faCircleQuestion, faMagnifyingGlass, faSort, faSortDown, faSortUp } from '@fortawesome/free-solid-svg-icons';
 import { TumAetUiPaginatorComponent } from '../paginator/tumaet-ui-paginator.component';
 import { CellRendererParams, ColumnDef, TumAetUiSortDirection, TumAetUiSortState, TumAetUiTableQueryEvent } from './tumaet-ui-table.types';
+import { TumAetUiTableLayoutComponent } from '../table-layout/tumaet-ui-table-layout.component';
 import { TumAetUiTranslatePipe } from '../i18n/tumaet-ui-translate.pipe';
 import { TumAetUiTooltipDirective } from '../tooltip/tumaet-ui-tooltip.directive';
 
@@ -43,7 +44,7 @@ const HIDE_BELOW_CLASSES: Record<NonNullable<ColumnDef<unknown>['hideBelow']>, s
     selector: 'tumaet-ui-table',
     templateUrl: './tumaet-ui-table.component.html',
     styleUrl: './tumaet-ui-table.component.scss',
-    imports: [CdkTableModule, NgTemplateOutlet, FaIconComponent, TumAetUiTranslatePipe, TumAetUiPaginatorComponent, TumAetUiTooltipDirective],
+    imports: [CdkTableModule, NgTemplateOutlet, FaIconComponent, TumAetUiTranslatePipe, TumAetUiPaginatorComponent, TumAetUiTableLayoutComponent, TumAetUiTooltipDirective],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TumAetUiTableComponent<T> {
@@ -62,8 +63,8 @@ export class TumAetUiTableComponent<T> {
     /** Identity function forwarded to the CDK table. */
     readonly trackBy = input<TrackByFunction<T> | undefined>(undefined);
     readonly striped = input(false, { transform: booleanAttribute });
-    readonly scrollable = input(false, { transform: booleanAttribute });
-    readonly scrollHeight = input<string | undefined>(undefined);
+    /** Takes the height of a flex-column parent instead of sizing to its rows; see `tumaet-ui-table-layout`. */
+    readonly fill = input(false, { transform: booleanAttribute });
     readonly showSearch = input(true, { transform: booleanAttribute });
     readonly searchPlaceholder = input('tumAetUi.table.searchPlaceholder');
     readonly emptyMessage = input('tumAetUi.table.noResults');
@@ -104,7 +105,7 @@ export class TumAetUiTableComponent<T> {
     });
 
     protected readonly tableClasses = computed(() => {
-        const base = 'tumaet:w-full tumaet:border-collapse tumaet:text-sm';
+        const base = 'tumaet:w-full tumaet:border-separate tumaet:border-spacing-0 tumaet:text-sm';
         return this.striped() ? `${base} tumaet:[&_tbody_tr:nth-child(odd)]:bg-table-striped-background` : base;
     });
 

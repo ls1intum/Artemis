@@ -1,17 +1,12 @@
-jhi-table-view.jhi-table-flex-scroll {
+// `fill`: the host passes the height of its flex-column parent on to the layout frame.
+jhi-table-view.jhi-table-view-fill {
     display: flex;
-    flex: 1 1 auto;
+    flex: 1 1 0%;
     flex-direction: column;
     min-height: 0;
-    height: 100%;
 }
 
-.jhi-table-view-container {
-    &.jhi-flex-scrollable {
-        flex: 1 1 auto;
-        overflow: hidden;
-    }
-
+jhi-table-view {
     tr[data-disabled] {
         opacity: 0.6;
     }

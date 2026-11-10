@@ -27,33 +27,35 @@
             </div>
         }
         @if (!isLoading() && inconsistencies().length) {
-            <div class="table-responsive p-1 my-5">
-                <table class="table table-striped">
-                    <thead>
-                        <tr>
-                            <th><span jhiTranslate="artemisApp.programmingExercise.detail.title"></span></th>
-                            <th><span jhiTranslate="artemisApp.consistencyCheck.error.type"></span></th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @for (error of inconsistencies(); let index = $index; track index) {
+            <div class="p-1 my-5">
+                <tumaet-ui-table-layout class="[--tumaet-ui-table-layout-offset:30rem]">
+                    <table tumAetUiTable size="small" striped>
+                        <thead>
                             <tr>
-                                <td>
-                                    @if (error.programmingExerciseCourseId !== undefined) {
-                                        <a [routerLink]="['/course-management', error.programmingExerciseCourseId, 'programming-exercises', error.programmingExercise!.id]">
-                                            <span>{{ error.programmingExercise!.title }}</span>
-                                        </a>
-                                    } @else {
-                                        <span>{{ error.programmingExercise!.title }}</span>
-                                    }
-                                </td>
-                                <td>
-                                    <span [jhiTranslate]="'artemisApp.consistencyCheck.error.' + error.type"></span>
-                                </td>
+                                <th><span jhiTranslate="artemisApp.programmingExercise.detail.title"></span></th>
+                                <th><span jhiTranslate="artemisApp.consistencyCheck.error.type"></span></th>
                             </tr>
-                        }
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody>
+                            @for (error of inconsistencies(); let index = $index; track index) {
+                                <tr>
+                                    <td>
+                                        @if (error.programmingExerciseCourseId !== undefined) {
+                                            <a [routerLink]="['/course-management', error.programmingExerciseCourseId, 'programming-exercises', error.programmingExercise!.id]">
+                                                <span>{{ error.programmingExercise!.title }}</span>
+                                            </a>
+                                        } @else {
+                                            <span>{{ error.programmingExercise!.title }}</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        <span [jhiTranslate]="'artemisApp.consistencyCheck.error.' + error.type"></span>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </tumaet-ui-table-layout>
             </div>
         }
     </div>

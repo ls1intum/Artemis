@@ -13,37 +13,39 @@
             </div>
         </div>
     } @else {
-        <table class="table table-striped mb-3">
-            <thead>
-                <tr>
-                    <th scope="col" class="col-4" [jhiTranslate]="TRANSLATION_BASE + '.name'"></th>
-                    <th scope="col" class="col-4" [jhiTranslate]="TRANSLATION_BASE + '.login'"></th>
-                    <th scope="col" class="col-2" [jhiTranslate]="TRANSLATION_BASE + '.repository'"></th>
-                </tr>
-            </thead>
-            <tbody class="table-group-divider">
-                @for (item of participation(); track item) {
+        <tumaet-ui-table-layout class="mt-3 [--tumaet-ui-table-layout-offset:20rem]">
+            <table tumAetUiTable size="small" striped>
+                <thead>
                     <tr>
-                        <td>{{ item.firstName }} {{ item.lastName }}</td>
-                        <td>{{ item.login }}</td>
-                        <td>
-                            <jhi-code-button
-                                class="ms-2"
-                                size="small"
-                                [allowOnlineIde]="false"
-                                [exerciseId]="exerciseId()"
-                                [repositoryUri]="item.repositoryURI"
-                                [repositoryViewLink]="['/courses', courseId(), 'exercises', exerciseId(), 'repository', item.participationId]"
-                                [vcsAccessTokenSourceInfo]="{
-                                    returnedTokenType: 'repository-token',
-                                    repositoryType: RepositoryType.USER,
-                                    participationId: item.participationId,
-                                }"
-                            />
-                        </td>
+                        <th scope="col" [jhiTranslate]="TRANSLATION_BASE + '.name'"></th>
+                        <th scope="col" [jhiTranslate]="TRANSLATION_BASE + '.login'"></th>
+                        <th scope="col" [jhiTranslate]="TRANSLATION_BASE + '.repository'"></th>
                     </tr>
-                }
-            </tbody>
-        </table>
+                </thead>
+                <tbody>
+                    @for (item of participation(); track item) {
+                        <tr>
+                            <td>{{ item.firstName }} {{ item.lastName }}</td>
+                            <td>{{ item.login }}</td>
+                            <td>
+                                <jhi-code-button
+                                    class="ms-2"
+                                    size="small"
+                                    [allowOnlineIde]="false"
+                                    [exerciseId]="exerciseId()"
+                                    [repositoryUri]="item.repositoryURI"
+                                    [repositoryViewLink]="['/courses', courseId(), 'exercises', exerciseId(), 'repository', item.participationId]"
+                                    [vcsAccessTokenSourceInfo]="{
+                                        returnedTokenType: 'repository-token',
+                                        repositoryType: RepositoryType.USER,
+                                        participationId: item.participationId,
+                                    }"
+                                />
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </tumaet-ui-table-layout>
     }
 </div>

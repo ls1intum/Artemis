@@ -36,7 +36,7 @@ export const TUM_AET_UI_DEFAULT_TRANSLATIONS = {
     'tumAetUi.panel.collapse': 'Collapse',
     'tumAetUi.panel.expand': 'Expand',
     'tumAetUi.paginator.ariaLabel': 'Pagination',
-    'tumAetUi.paginator.currentPageReport': 'Showing {first} to {second} of {total}',
+    'tumAetUi.paginator.compactReport': '{first}–{second} of {total}',
     'tumAetUi.paginator.first': 'First page',
     'tumAetUi.paginator.last': 'Last page',
     'tumAetUi.paginator.next': 'Next page',

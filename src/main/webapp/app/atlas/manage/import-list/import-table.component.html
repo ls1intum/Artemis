@@ -1,83 +1,57 @@
-<div class="d-flex align-items-center justify-content-between">
-    <h5 class="m-0" [jhiTranslate]="columnBaseTranslationKey() + '.table.title'"></h5>
-    <div>
-        <div class="d-flex align-items-center">
-            @if (isLoading()) {
-                <fa-icon [icon]="faSpinner" animation="spin" />
-            }
-            <input
-                id="import-objects-search"
-                type="search"
-                class="form-control ms-2 rounded"
-                [placeholder]="'global.importTable.searchPlaceholder' | artemisTranslate"
-                aria-label="Search"
-                [(ngModel)]="searchTerm"
-                (ngModelChange)="search()"
-            />
-        </div>
+<h5 class="m-0 mb-2" [jhiTranslate]="columnBaseTranslationKey() + '.table.title'"></h5>
+<tumaet-ui-table-layout [loading]="isLoading()">
+    <div tumAetUiTableToolbar class="flex min-w-0 flex-1 items-center gap-2">
+        <input
+            tumAetUiInput
+            tumAetUiInputSize="small"
+            id="import-objects-search"
+            type="search"
+            class="max-w-72 min-w-24 flex-1"
+            [placeholder]="'global.importTable.searchPlaceholder' | artemisTranslate"
+            [attr.aria-label]="'global.importTable.searchPlaceholder' | artemisTranslate"
+            [(ngModel)]="searchTerm"
+            (ngModelChange)="search()"
+        />
     </div>
-</div>
-<hr class="my-2" />
-<div class="import-table-container">
-    <table class="table align-middle table-striped">
+    <table tumAetUiTable size="small" striped [sortField]="sortedColumn()" [sortOrder]="sortingOrder() === SortingOrder.ASCENDING ? 1 : -1" (sortChange)="onSortChange($event)">
         <thead>
             <tr>
-                <th scope="col" class="col-1 clickable">
-                    <button
-                        type="button"
-                        (click)="setSortedColumn('ID')"
-                        class="flex w-full items-center border-0 bg-transparent p-0 text-start text-inherit focus-visible:outline-2 focus-visible:outline-offset-2"
-                    >
-                        <span>#</span>
-                        <ng-container *ngTemplateOutlet="sortIcon; context: { sortedColumn: 'ID', currentSortedColumn: sortedColumn(), sortingOrder: sortingOrder() }" />
-                    </button>
-                </th>
+                <th scope="col" class="w-16" tumAetUiSortableColumn="ID"><span>#</span></th>
                 @for (column of columns(); track column) {
-                    <th scope="col" class="col-4">
-                        <button
-                            type="button"
-                            (click)="setSortedColumn(column.name)"
-                            class="flex w-full items-center border-0 bg-transparent p-0 text-start text-inherit focus-visible:outline-2 focus-visible:outline-offset-2"
-                        >
-                            <span [jhiTranslate]="columnBaseTranslationKey() + '.table.columns.' + column.name"></span>
-                            <ng-container *ngTemplateOutlet="sortIcon; context: { sortedColumn: column.name, currentSortedColumn: sortedColumn(), sortingOrder: sortingOrder() }" />
-                        </button>
+                    <th scope="col" [tumAetUiSortableColumn]="column.name">
+                        <span [jhiTranslate]="columnBaseTranslationKey() + '.table.columns.' + column.name"></span>
                     </th>
                 }
-                <th scope="col"><span class="visually-hidden" jhiTranslate="entity.actions"></span></th>
+                <th scope="col"><span class="sr-only" jhiTranslate="entity.actions"></span></th>
             </tr>
         </thead>
         <tbody>
             @for (entity of resultsOnPage(); track entity.id) {
-                <tr class="flex-row">
-                    <td class="col-1">
-                        <span>{{ entity.id }}</span>
-                    </td>
+                <tr>
+                    <td>{{ entity.id }}</td>
                     @for (column of columns(); track column) {
-                        <td class="text-break col-4">
+                        <td class="break-words">
                             <ngb-highlight [result]="column.getProperty(entity)" [term]="searchTerm()" />
                         </td>
                     }
-                    <td class="col-1">
-                        <button type="button" class="btn btn-sm btn-outline-secondary" (click)="selectRow(entity)">Select</button>
+                    <td>
+                        <button tumAetUiButton size="small" severity="secondary" variant="outlined" type="button" (click)="selectRow(entity)">Select</button>
                     </td>
                 </tr>
             } @empty {
                 <tr>
-                    <td [colSpan]="numberOfColumns()" class="text-center text-secondary"><em jhiTranslate="global.generic.emptyList"></em></td>
+                    <td [colSpan]="numberOfColumns()" class="text-center text-muted-color"><em jhiTranslate="global.generic.emptyList"></em></td>
                 </tr>
             }
         </tbody>
     </table>
-</div>
-<div class="d-flex justify-content-between p-2">
-    <p-paginator [first]="(page() - 1) * pageSize()" [rows]="pageSize()" [totalRecords]="collectionSize()" (onPageChange)="onPageChange($event)" />
-</div>
-
-<ng-template #sortIcon let-sortedColumn="sortedColumn" let-currentSortedColumn="currentSortedColumn" let-sortingOrder="sortingOrder">
-    @if (sortedColumn !== currentSortedColumn) {
-        <fa-icon [icon]="faSort" class="ms-1" />
-    } @else {
-        <fa-icon [icon]="sortingOrder === SortingOrder.DESCENDING ? faSortDown : faSortUp" class="ms-1" />
-    }
-</ng-template>
+    <tumaet-ui-paginator
+        tumAetUiTableFooter
+        [page]="page() - 1"
+        [pageSize]="pageSize()"
+        [totalRecords]="collectionSize()"
+        [showRowsPerPage]="false"
+        [showCurrentPageReport]="false"
+        (pageChange)="setPage($event + 1)"
+    />
+</tumaet-ui-table-layout>

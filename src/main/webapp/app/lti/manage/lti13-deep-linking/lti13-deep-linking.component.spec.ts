@@ -405,8 +405,8 @@ describe('Lti13DeepLinkingComponent', () => {
 
     it('should sort exercises by title in ascending order', () => {
         component.exercises.set([exercise1, exercise2, exercise3]);
-        component.predicate = 'title';
-        component.reverse = false;
+        component.predicate.set('title');
+        component.reverse.set(false);
 
         component.sortRows();
 

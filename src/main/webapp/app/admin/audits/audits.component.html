@@ -45,21 +45,23 @@
         </div>
     </div>
     @if (audits().length) {
-        <div class="overflow-x-auto" data-testid="audits-table-container">
-            <table tumAetUiTable size="small" [striped]="true" aria-describedby="audits-page-heading" data-testid="audits-table">
+        <tumaet-ui-table-layout data-testid="audits-table-container">
+            <table
+                tumAetUiTable
+                size="small"
+                [striped]="true"
+                [sortField]="predicate()"
+                [sortOrder]="ascending() ? 1 : -1"
+                (sortChange)="onSort($event)"
+                aria-describedby="audits-page-heading"
+                data-testid="audits-table"
+            >
                 <thead>
                     <!-- Sorting works whether or not a date range is set, so the header is not conditional. -->
-                    <tr
-                        jhiSort
-                        [predicate]="predicate()"
-                        [ascending]="ascending()"
-                        (predicateChange)="predicate.set($event!)"
-                        (ascendingChange)="ascending.set($event)"
-                        (sortChange)="transition()"
-                    >
-                        <th scope="col" jhiSortBy="auditEventDate"><span jhiTranslate="audits.table.header.date"></span> <fa-icon [icon]="faSort" /></th>
-                        <th scope="col" jhiSortBy="principal"><span jhiTranslate="audits.table.header.principal"></span> <fa-icon [icon]="faSort" /></th>
-                        <th scope="col" jhiSortBy="auditEventType"><span jhiTranslate="audits.table.header.status"></span> <fa-icon [icon]="faSort" /></th>
+                    <tr>
+                        <th scope="col" [tumAetUiSortableColumn]="'auditEventDate'"><span jhiTranslate="audits.table.header.date"></span></th>
+                        <th scope="col" [tumAetUiSortableColumn]="'principal'"><span jhiTranslate="audits.table.header.principal"></span></th>
+                        <th scope="col" [tumAetUiSortableColumn]="'auditEventType'"><span jhiTranslate="audits.table.header.status"></span></th>
                         <th scope="col"><span jhiTranslate="audits.table.header.data"></span></th>
                     </tr>
                 </thead>
@@ -93,22 +95,15 @@
                     }
                 </tbody>
             </table>
-        </div>
-        <div class="mt-3">
-            <div class="flex justify-center">
-                <jhi-item-count [params]="{ page: page(), totalItems: totalItems(), itemsPerPage: itemsPerPage }" />
-            </div>
-            <div class="flex justify-center">
-                <tumaet-ui-paginator
-                    [page]="page() - 1"
-                    [pageSize]="itemsPerPage"
-                    [totalRecords]="totalItems()"
-                    [showCurrentPageReport]="false"
-                    [showRowsPerPage]="false"
-                    (pageChange)="onPageChange($event)"
-                />
-            </div>
-        </div>
+            <tumaet-ui-paginator
+                tumAetUiTableFooter
+                [page]="page() - 1"
+                [pageSize]="itemsPerPage"
+                [totalRecords]="totalItems()"
+                [showRowsPerPage]="false"
+                (pageChange)="onPageChange($event)"
+            />
+        </tumaet-ui-table-layout>
     } @else {
         <tumaet-ui-message severity="warn" data-testid="audits-not-found">
             <span jhiTranslate="audits.notFound"></span>

@@ -7,11 +7,24 @@
         so the CDK virtual-scroll viewport fills exactly that bounded area. This keeps the last
         logger reachable and prevents the scroll from jumping.
     -->
-    <div class="flex h-full min-h-0 flex-col gap-3">
-        <p jhiTranslate="logs.nbloggers" [translateValues]="{ total: loggers().length }">There are {{ loggers().length }} loggers.</p>
-        <div class="flex flex-col gap-2">
-            <label for="logs-filter" jhiTranslate="logs.filter"></label>
-            <input id="logs-filter" data-testid="logs-filter-input" type="text" tumAetUiInput class="w-full" [ngModel]="filterInput()" (ngModelChange)="updateFilter($event)" />
+    <div class="flex h-full min-h-0 flex-col gap-2">
+        <div class="flex h-10 min-w-0 items-center gap-2">
+            <input
+                id="logs-filter"
+                data-testid="logs-filter-input"
+                type="search"
+                tumAetUiInput
+                tumAetUiInputSize="small"
+                class="max-w-72 min-w-24 flex-1"
+                [placeholder]="'logs.filter' | artemisTranslate"
+                [attr.aria-label]="'logs.filter' | artemisTranslate"
+                [ngModel]="filterInput()"
+                (ngModelChange)="updateFilter($event)"
+            />
+            <span class="flex-1"></span>
+            <span class="truncate text-sm text-muted-color" jhiTranslate="logs.nbloggers" [translateValues]="{ total: loggers().length }"
+                >There are {{ loggers().length }} loggers.</span
+            >
         </div>
         <tumaet-ui-table-virtual-scroll
             class="min-h-0 flex-1"
@@ -23,19 +36,16 @@
             ariaDescribedBy="logs-page-heading"
             data-testid="logs-table"
         >
-            <div
-                jhiSort
-                [predicate]="orderProp()"
-                [ascending]="ascending()"
-                (predicateChange)="orderProp.set($event!)"
-                (ascendingChange)="ascending.set($event)"
-                class="flex flex-1 items-center"
-            >
-                <div jhiSortBy="name" role="columnheader" class="min-w-0 flex-1 cursor-pointer truncate">
-                    <span jhiTranslate="logs.table.name"></span> <fa-icon [icon]="faSort" />
+            <div class="flex flex-1 items-center">
+                <div role="columnheader" class="min-w-0 flex-1 truncate" [attr.aria-sort]="ariaSort('name')">
+                    <button type="button" class="cursor-pointer border-0 bg-transparent p-0 font-semibold text-inherit" (click)="toggleSort('name')">
+                        <span jhiTranslate="logs.table.name"></span> <fa-icon [icon]="sortIcon('name')" />
+                    </button>
                 </div>
-                <div jhiSortBy="level" role="columnheader" class="shrink-0 text-end whitespace-nowrap cursor-pointer">
-                    <span jhiTranslate="logs.table.level"></span> <fa-icon [icon]="faSort" />
+                <div role="columnheader" class="shrink-0 text-end whitespace-nowrap" [attr.aria-sort]="ariaSort('level')">
+                    <button type="button" class="cursor-pointer border-0 bg-transparent p-0 font-semibold text-inherit" (click)="toggleSort('level')">
+                        <span jhiTranslate="logs.table.level"></span> <fa-icon [icon]="sortIcon('level')" />
+                    </button>
                 </div>
             </div>
         </tumaet-ui-table-virtual-scroll>

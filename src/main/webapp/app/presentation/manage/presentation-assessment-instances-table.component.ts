@@ -1,5 +1,6 @@
-import { Component, input, linkedSignal, output } from '@angular/core';
-import { TumAetUiTableDirective, TumAetUiTagComponent } from '@tumaet/ui-angular';
+import { Component, computed, input, linkedSignal, output, signal } from '@angular/core';
+import { orderBy } from 'lodash-es';
+import { TumAetUiTableDirective, TumAetUiTableSortEvent, TumAetUiTableSortableColumnComponent, TumAetUiTagComponent } from '@tumaet/ui-angular';
 
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
@@ -18,6 +19,7 @@ import { PresentationStudentTableRow } from 'app/presentation/manage/presentatio
     host: { class: 'block' },
     imports: [
         TumAetUiTableDirective,
+        TumAetUiTableSortableColumnComponent,
         TumAetUiTagComponent,
         TranslateDirective,
         ArtemisTranslatePipe,
@@ -33,6 +35,18 @@ export class PresentationAssessmentInstancesTableComponent {
     /** Editors remove assigned students; tutors only grade them. */
     readonly canDelete = input(false);
 
+    protected readonly sortField = signal<string | undefined>(undefined);
+    protected readonly sortOrder = signal(1);
+
+    /** The rows ordered by the selected column; the server delivers all students of the presentation, so the client sorts them. */
+    protected readonly sortedRows = computed(() => {
+        const field = this.sortField();
+        if (!field) {
+            return this.rows();
+        }
+        return orderBy(this.rows(), [(row) => PresentationAssessmentInstancesTableComponent.sortValue(row, field)], [this.sortOrder() === 1 ? 'asc' : 'desc']);
+    });
+
     readonly editInstance = output<PresentationStudentTableRow>();
     readonly deleteInstance = output<PresentationStudentTableRow>();
 
@@ -41,6 +55,24 @@ export class PresentationAssessmentInstancesTableComponent {
         source: () => this.presentationAssessment().id,
         computation: () => [],
     });
+
+    protected onSortChange(event: TumAetUiTableSortEvent): void {
+        this.sortField.set(event.field);
+        this.sortOrder.set(event.order);
+    }
+
+    private static sortValue(row: PresentationStudentTableRow, field: string): string | number {
+        switch (field) {
+            case 'assessed':
+                return row.assessed ? 1 : 0;
+            case 'resultPoints':
+                return row.instance.resultPoints ?? Number.NEGATIVE_INFINITY;
+            case 'presentationDate':
+                return row.instance.presentationDate?.valueOf() ?? Number.NEGATIVE_INFINITY;
+            default:
+                return row.displayName.toLowerCase();
+        }
+    }
 
     /** Shows the details of a collapsed row and hides those of an expanded one. */
     protected toggleDetails(row: PresentationStudentTableRow): void {

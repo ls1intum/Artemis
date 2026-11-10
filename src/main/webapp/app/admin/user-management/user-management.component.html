@@ -1,7 +1,14 @@
 <div>
     <h5 *adminTitleBarTitle id="user-management-page-heading" class="mb-0" jhiTranslate="artemisApp.userManagement.home.title"></h5>
     <div *adminTitleBarActions class="flex items-center gap-2">
-        <tumaet-ui-button size="small" severity="secondary" variant="outlined" (clicked)="importDialog.open()" data-testid="import-users-button">
+        <tumaet-ui-button
+            [ariaLabel]="'artemisApp.importUsers.buttonLabel' | artemisTranslate"
+            size="small"
+            severity="secondary"
+            variant="outlined"
+            (clicked)="importDialog.open()"
+            data-testid="import-users-button"
+        >
             <fa-icon [icon]="faFileImport" />
             <span class="hidden md:inline" jhiTranslate="artemisApp.importUsers.buttonLabel"></span>
         </tumaet-ui-button>
@@ -12,51 +19,60 @@
         </a>
     </div>
     @if (users(); as userList) {
-        <form [formGroup]="userSearchForm">
-            <div class="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-                <div class="flex flex-wrap items-center gap-3">
-                    <label for="field_searchTerm" class="mb-0" jhiTranslate="artemisApp.userManagement.searchForUser"></label>
-                    <input tumAetUiInput type="text" name="searchTerm" id="field_searchTerm" formControlName="searchControl" (blur)="loadAll()" (keydown)="onKeydown($event)" />
-                    <tumaet-ui-button size="small" (clicked)="loadAll()" data-testid="search-button">{{ 'artemisApp.userManagement.search' | artemisTranslate }}</tumaet-ui-button>
-                    @if (searchInvalid()) {
-                        <tumaet-ui-message severity="error" data-testid="search-error">
-                            <span jhiTranslate="artemisApp.userManagement.searchError"></span>
-                        </tumaet-ui-message>
-                    }
-                    @if (loadingSearchResult()) {
-                        <span jhiTranslate="artemisApp.userManagement.loading"></span>
-                    }
-                </div>
-                <div class="flex items-center justify-center gap-2 md:justify-end">
-                    <jhi-delete-users-button (deletionRequested)="openPermanentDeletionDialog($event)" />
-                    <button
-                        tumAetUiButton
-                        type="button"
-                        severity="danger"
-                        size="small"
-                        (click)="deleteAllSelectedUsers()"
-                        [disabled]="!selectedUsers().length"
-                        data-testid="delete-selected-users"
-                    >
-                        <fa-icon [icon]="faTrash" />
-                    </button>
-                    <tumaet-ui-button
-                        size="small"
-                        [severity]="filters().numberOfAppliedFilters ? 'success' : 'secondary'"
-                        (clicked)="openFilterModal()"
-                        data-testid="open-filter-button"
-                    >
-                        <fa-icon [icon]="faFilter" />
-                        <span
-                            class="hidden md:inline"
-                            jhiTranslate="artemisApp.userManagement.filter.modal.open"
-                            [translateValues]="{ num: filters().numberOfAppliedFilters }"
-                        ></span>
-                    </tumaet-ui-button>
-                </div>
-            </div>
-        </form>
-        <div class="mt-3 overflow-x-auto">
+        <tumaet-ui-table-layout [loading]="loadingSearchResult()">
+            <form tumAetUiTableToolbar [formGroup]="userSearchForm" class="flex min-w-0 flex-1 items-center gap-2">
+                <input
+                    tumAetUiInput
+                    tumAetUiInputSize="small"
+                    type="search"
+                    name="searchTerm"
+                    id="field_searchTerm"
+                    class="max-w-72 min-w-16 flex-1"
+                    formControlName="searchControl"
+                    [placeholder]="'artemisApp.userManagement.searchForUser' | artemisTranslate"
+                    [attr.aria-label]="'artemisApp.userManagement.searchForUser' | artemisTranslate"
+                    [attr.aria-invalid]="searchInvalid()"
+                    [attr.aria-describedby]="searchInvalid() ? 'user-search-error' : null"
+                    (blur)="loadAll()"
+                    (keydown)="onKeydown($event)"
+                />
+                <tumaet-ui-button size="small" (clicked)="loadAll()" data-testid="search-button" [ariaLabel]="'artemisApp.userManagement.search' | artemisTranslate">
+                    <fa-icon [icon]="faSearch" class="md:hidden" />
+                    <span class="hidden md:inline">{{ 'artemisApp.userManagement.search' | artemisTranslate }}</span>
+                </tumaet-ui-button>
+                @if (searchInvalid()) {
+                    <span
+                        id="user-search-error"
+                        class="text-sm text-state-danger"
+                        role="alert"
+                        data-testid="search-error"
+                        jhiTranslate="artemisApp.userManagement.searchError"
+                    ></span>
+                }
+                <span class="flex-1"></span>
+                <jhi-delete-users-button (deletionRequested)="openPermanentDeletionDialog($event)" />
+                <button
+                    tumAetUiButton
+                    type="button"
+                    severity="danger"
+                    size="small"
+                    (click)="deleteAllSelectedUsers()"
+                    [disabled]="!selectedUsers().length"
+                    data-testid="delete-selected-users"
+                >
+                    <fa-icon [icon]="faTrash" />
+                </button>
+                <tumaet-ui-button
+                    [ariaLabel]="'artemisApp.userManagement.filter.modal.open' | artemisTranslate: { num: filters().numberOfAppliedFilters }"
+                    size="small"
+                    [severity]="filters().numberOfAppliedFilters ? 'success' : 'secondary'"
+                    (clicked)="openFilterModal()"
+                    data-testid="open-filter-button"
+                >
+                    <fa-icon [icon]="faFilter" />
+                    <span class="hidden md:inline" jhiTranslate="artemisApp.userManagement.filter.modal.open" [translateValues]="{ num: filters().numberOfAppliedFilters }"></span>
+                </tumaet-ui-button>
+            </form>
             <table
                 tumAetUiTable
                 size="small"
@@ -115,7 +131,7 @@
                 </thead>
                 <tbody>
                     @for (user of userList; track trackIdentity($index, user)) {
-                        <tr data-testid="user-row">
+                        <tr class="whitespace-nowrap" data-testid="user-row">
                             <td>
                                 <tumaet-ui-checkbox
                                     [disabled]="!currentAccount() || currentAccount()?.login === user.login"
@@ -226,25 +242,16 @@
                     }
                 </tbody>
             </table>
-        </div>
-    }
-    @if (users().length) {
-        <div class="mt-3">
-            <div class="flex justify-center">
-                <jhi-item-count [params]="{ page: page(), totalItems: totalItems(), itemsPerPage: itemsPerPage() }" />
-            </div>
-            <div class="flex justify-center">
-                <tumaet-ui-paginator
-                    [page]="page() - 1"
-                    [pageSize]="itemsPerPage()"
-                    [pageSizeOptions]="pageSizeOptions"
-                    [totalRecords]="totalItems()"
-                    [showCurrentPageReport]="false"
-                    (pageChange)="onPageChange($event)"
-                    (pageSizeChange)="onPageSizeChange($event)"
-                />
-            </div>
-        </div>
+            <tumaet-ui-paginator
+                tumAetUiTableFooter
+                [page]="page() - 1"
+                [pageSize]="itemsPerPage()"
+                [pageSizeOptions]="pageSizeOptions"
+                [totalRecords]="totalItems()"
+                (pageChange)="onPageChange($event)"
+                (pageSizeChange)="onPageSizeChange($event)"
+            />
+        </tumaet-ui-table-layout>
     }
 </div>
 <tumaet-ui-dialog [(visible)]="filterModalVisible" size="medium" header="{{ 'artemisApp.userManagement.filter.modal.title' | artemisTranslate }}">

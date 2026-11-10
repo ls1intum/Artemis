@@ -26,8 +26,6 @@ import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { CopyToClipboardButtonComponent } from 'app/shared-ui/components/buttons/copy-to-clipboard-button/copy-to-clipboard-button.component';
-import { SortDirective } from 'app/foundation/sort/directive/sort.directive';
-import { SortByDirective } from 'app/foundation/sort/directive/sort-by.directive';
 
 describe('Course LTI Configuration Component', () => {
     let comp: CourseLtiConfigurationComponent;
@@ -88,8 +86,6 @@ describe('Course LTI Configuration Component', () => {
                         MockComponent(FaIconComponent),
                         MockComponent(HelpIconComponent),
                         MockComponent(CopyToClipboardButtonComponent),
-                        MockDirective(SortDirective),
-                        MockDirective(SortByDirective),
                     ],
                 },
             })

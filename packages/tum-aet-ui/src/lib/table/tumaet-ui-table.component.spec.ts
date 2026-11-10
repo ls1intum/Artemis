@@ -86,10 +86,10 @@ describe('TumAetUiTableComponent', () => {
         expect(rows.every((d) => !(d.nativeElement as HTMLElement).classList.contains('tumaet-ui-table-row-highlighted'))).toBe(true);
     });
 
-    it('announces the table as busy while loading', () => {
+    it('announces the table frame as busy while loading', () => {
         fixture.componentRef.setInput('loading', true);
         fixture.detectChanges();
-        expect(fixture.debugElement.query(By.css('table')).nativeElement.getAttribute('aria-busy')).toBe('true');
+        expect(fixture.debugElement.query(By.css('tumaet-ui-table-layout')).nativeElement.getAttribute('aria-busy')).toBe('true');
     });
 
     it('emits one initial dataRequest after first render with defaults', async () => {

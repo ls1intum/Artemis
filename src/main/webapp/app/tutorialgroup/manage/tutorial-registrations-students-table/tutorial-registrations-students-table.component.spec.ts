@@ -54,7 +54,7 @@ describe('TutorialRegistrationsStudentsTable', () => {
         fixture.componentRef.setInput('students', [firstStudent, secondStudent]);
         fixture.detectChanges();
 
-        const rows = fixture.nativeElement.querySelectorAll('.table-row');
+        const rows = fixture.nativeElement.querySelectorAll('tbody tr');
 
         expect(rows).toHaveLength(2);
         expect(rows[0].textContent).toContain('Ada Lovelace');

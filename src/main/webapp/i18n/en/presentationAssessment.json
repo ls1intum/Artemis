@@ -52,7 +52,6 @@
             "type": "Type",
             "typeStandalone": "Standalone",
             "typeExercise": "Exercise",
-            "rows": "rows",
             "statistics": {
                 "total": "Total"
             },

@@ -1,9 +1,7 @@
 import { vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
-import { SortByDirective } from 'app/foundation/sort/directive/sort-by.directive';
-import { SortDirective } from 'app/foundation/sort/directive/sort.directive';
-import { MockComponent, MockDirective } from 'ng-mocks';
+import { MockComponent } from 'ng-mocks';
 import { ImportAllCompetenciesComponent } from 'app/atlas/manage/competency-management/import-all-competencies.component';
 import { Course } from 'app/course/shared/entities/course.model';
 
@@ -14,7 +12,6 @@ import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testi
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { Subject } from 'rxjs';
-import { PaginatorState } from 'primeng/paginator';
 
 describe('ImportAllCompetenciesComponent', () => {
     let fixture: ComponentFixture<ImportAllCompetenciesComponent>;
@@ -30,7 +27,7 @@ describe('ImportAllCompetenciesComponent', () => {
         dialogConfig = { data: {} } as DynamicDialogConfig;
 
         await TestBed.configureTestingModule({
-            imports: [ImportAllCompetenciesComponent, FontAwesomeTestingModule, MockComponent(ButtonComponent), MockDirective(SortByDirective), MockDirective(SortDirective)],
+            imports: [ImportAllCompetenciesComponent, FontAwesomeTestingModule, MockComponent(ButtonComponent)],
             declarations: [],
             providers: [
                 { provide: TranslateService, useClass: MockTranslateService },
@@ -81,23 +78,5 @@ describe('ImportAllCompetenciesComponent', () => {
 
         const semesterProperty = component.columns[2];
         expect(semesterProperty.getProperty(course)).toBe(course.semester);
-    });
-
-    it('onPaginatorPageChange converts the 0-indexed PrimeNG page to a 1-indexed page', () => {
-        const onPageChangeSpy = vi.spyOn(component, 'onPageChange');
-
-        component.onPaginatorPageChange({ page: 2 } as PaginatorState);
-
-        expect(onPageChangeSpy).toHaveBeenCalledWith(3);
-        expect(component.state.page).toBe(3);
-    });
-
-    it('onPaginatorPageChange treats an undefined page as the first page (page 1)', () => {
-        const onPageChangeSpy = vi.spyOn(component, 'onPageChange');
-
-        component.onPaginatorPageChange({} as PaginatorState);
-
-        expect(onPageChangeSpy).toHaveBeenCalledWith(1);
-        expect(component.state.page).toBe(1);
     });
 });

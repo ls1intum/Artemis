@@ -1,52 +1,55 @@
-<table class="table table-striped align-middle">
-    <thead class="thead-dark">
-        <tr (sortChange)="onSortChange($event)" [(ascending)]="ascending" [predicate]="search().sortedColumn" class="flex-row" jhiSort>
-            <th jhiSortBy="ID" class="col-0.5">
-                <span>#</span>
-                <fa-icon [icon]="faSort" />
-            </th>
-            <th jhiSortBy="TITLE" class="col-2">
-                <span [jhiTranslate]="'artemisApp.competency.import.table.TITLE'"></span>
-                <fa-icon [icon]="faSort" />
-            </th>
-            <!-- do not allow sorting by description -->
-            <th class="col-6">
-                <span [jhiTranslate]="'artemisApp.competency.import.table.DESCRIPTION'"></span>
-            </th>
-            <th jhiSortBy="COURSE_TITLE" class="col-2">
-                <span [jhiTranslate]="'artemisApp.competency.import.table.COURSE_TITLE'"></span>
-                <fa-icon [icon]="faSort" />
-            </th>
-            <th jhiSortBy="SEMESTER" class="col-0.5">
-                <span [jhiTranslate]="'artemisApp.competency.import.table.SEMESTER'"></span>
-                <fa-icon [icon]="faSort" />
-            </th>
-            <!-- column for buttons -->
-            <th class="col-1"></th>
-        </tr>
-    </thead>
-    <tbody>
-        @for (competency of content().resultsOnPage; track competency.id) {
+<tumaet-ui-table-layout>
+    <table
+        tumAetUiTable
+        size="small"
+        striped
+        [sortField]="search().sortedColumn"
+        [sortOrder]="search().sortingOrder === SortingOrder.ASCENDING ? 1 : -1"
+        (sortChange)="onSortChange($event)"
+    >
+        <thead>
             <tr>
-                <td class="col-0.5">{{ competency.id }}</td>
-                <td class="col-2">{{ competency.title }}</td>
-                <td class="markdown-preview col-6" [jhiMarkdown]="competency.description"></td>
-                <td class="col-2">{{ competency.course?.title }}</td>
-                <td class="col-0.5">{{ competency.course?.semester }}</td>
-                <td class="col-1">
-                    <ng-container *ngTemplateOutlet="buttonsTemplate(); context: { competency: competency }" />
-                </td>
+                <th tumAetUiSortableColumn="ID" class="w-16"><span>#</span></th>
+                <th tumAetUiSortableColumn="TITLE">
+                    <span [jhiTranslate]="'artemisApp.competency.import.table.TITLE'"></span>
+                </th>
+                <!-- do not allow sorting by description -->
+                <th>
+                    <span [jhiTranslate]="'artemisApp.competency.import.table.DESCRIPTION'"></span>
+                </th>
+                <th tumAetUiSortableColumn="COURSE_TITLE">
+                    <span [jhiTranslate]="'artemisApp.competency.import.table.COURSE_TITLE'"></span>
+                </th>
+                <th tumAetUiSortableColumn="SEMESTER">
+                    <span [jhiTranslate]="'artemisApp.competency.import.table.SEMESTER'"></span>
+                </th>
+                <!-- column for buttons -->
+                <th class="w-24"></th>
             </tr>
-        }
-    </tbody>
-</table>
-@if (displayPagination()) {
-    <div class="d-flex justify-content-between p-2">
-        <p-paginator
-            [first]="(search().page - 1) * search().pageSize"
-            [rows]="search().pageSize"
-            [totalRecords]="search().pageSize * content().numberOfPages"
-            (onPageChange)="onPaginatorPageChange($event)"
-        />
-    </div>
-}
+        </thead>
+        <tbody>
+            @for (competency of content().resultsOnPage; track competency.id) {
+                <tr>
+                    <td>{{ competency.id }}</td>
+                    <td>{{ competency.title }}</td>
+                    <td class="markdown-preview" [jhiMarkdown]="competency.description"></td>
+                    <td>{{ competency.course?.title }}</td>
+                    <td>{{ competency.course?.semester }}</td>
+                    <td>
+                        <ng-container *ngTemplateOutlet="buttonsTemplate(); context: { competency: competency }" />
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+    <tumaet-ui-paginator
+        tumAetUiTableFooter
+        [hidden]="!displayPagination()"
+        [page]="search().page - 1"
+        [pageSize]="search().pageSize"
+        [totalRecords]="search().pageSize * content().numberOfPages"
+        [showRowsPerPage]="false"
+        [showCurrentPageReport]="false"
+        (pageChange)="onPageChange($event + 1)"
+    />
+</tumaet-ui-table-layout>

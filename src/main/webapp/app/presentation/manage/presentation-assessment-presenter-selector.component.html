@@ -22,7 +22,7 @@
         />
     }
 
-    <div class="overflow-x-auto">
+    <tumaet-ui-table-layout>
         <table tumAetUiTable size="small" [sortField]="sortField()" [sortOrder]="sortAscending() ? 1 : -1" (sortChange)="onSortChange($event)">
             <thead>
                 <tr>
@@ -74,5 +74,5 @@
                 }
             </tbody>
         </table>
-    </div>
+    </tumaet-ui-table-layout>
 </div>

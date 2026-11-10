@@ -1,4 +1,4 @@
-import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective, TumAetUiTableDirective, TumAetUiTableLayoutComponent, TumAetUiTableSortEvent, TumAetUiTableSortableColumnComponent } from '@tumaet/ui-angular';
 import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { forkJoin, of } from 'rxjs';
@@ -15,7 +15,7 @@ import { GradingService } from 'app/assessment/manage/grading/grading-service';
 import { GradeType, GradingScale } from 'app/assessment/shared/entities/grading-scale.model';
 import { catchError } from 'rxjs/operators';
 import { HttpResponse } from '@angular/common/http';
-import { faClipboard, faDownload, faSort, faSpinner } from '@fortawesome/free-solid-svg-icons';
+import { faClipboard, faDownload, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { CsvExportRowBuilder } from 'app/shared-ui/export/row-builder/csv-export-row-builder';
 import { mean, median, standardDeviation } from 'app/foundation/util/statistics.util';
 import { CsvExportOptions } from 'app/shared-ui/export/modal/export-modal.component';
@@ -50,8 +50,6 @@ import { ParticipantScoresDistributionComponent } from 'app/course/participant-s
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { NgClass } from '@angular/common';
 import { ExportButtonComponent } from 'app/shared-ui/export/button/export-button.component';
-import { SortDirective } from 'app/foundation/sort/directive/sort.directive';
-import { SortByDirective } from 'app/foundation/sort/directive/sort-by.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { CourseScoresStudentStatistics } from 'app/course/manage/course-scores/course-scores-student-statistics';
 import { ExerciseTypeStatisticsMap } from 'app/course/manage/course-scores/exercise-type-statistics-map';
@@ -81,8 +79,9 @@ export enum HighlightType {
         NgbTooltip,
         NgClass,
         ExportButtonComponent,
-        SortDirective,
-        SortByDirective,
+        TumAetUiTableDirective,
+        TumAetUiTableLayoutComponent,
+        TumAetUiTableSortableColumnComponent,
         ArtemisTranslatePipe,
         CourseTitleBarActionsDirective,
         HelpIconComponent,
@@ -173,7 +172,6 @@ export class CourseScoresComponent implements OnInit {
     readonly ButtonSize = ButtonSize;
 
     // Icons
-    readonly faSort = faSort;
     readonly faDownload = faDownload;
     readonly faSpinner = faSpinner;
     readonly faClipboard = faClipboard;
@@ -188,6 +186,12 @@ export class CourseScoresComponent implements OnInit {
                 this.initializeWithCourse(findWithExercisesResult.body!);
             });
         });
+    }
+
+    onSort(event: TumAetUiTableSortEvent): void {
+        this.predicate.set(event.field);
+        this.reverse.set(event.order === 1);
+        this.sortRows();
     }
 
     sortRows() {

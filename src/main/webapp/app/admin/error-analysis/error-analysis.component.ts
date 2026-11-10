@@ -9,6 +9,7 @@ import {
     TumAetUiPaginatorComponent,
     TumAetUiSelectButtonComponent,
     TumAetUiTableDirective,
+    TumAetUiTableLayoutComponent,
     TumAetUiTableSortEvent,
     TumAetUiTableSortableColumnComponent,
     TumAetUiTagComponent,
@@ -52,6 +53,7 @@ import {
     templateUrl: './error-analysis.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
+        TumAetUiTableLayoutComponent,
         FormsModule,
         FaIconComponent,
         TranslateDirective,

@@ -172,181 +172,186 @@
     </div>
 
     <!-- Filters -->
-    <div class="flex flex-wrap gap-3 mb-3 items-center" data-testid="filters-section">
-        <div class="grow min-w-64">
-            <tumaet-ui-icon-field [icon]="faSearch">
-                <input
-                    [attr.aria-label]="'artemisApp.dependencies.filterPlaceholder' | artemisTranslate"
-                    tumAetUiInput
-                    type="text"
-                    class="w-full"
-                    [placeholder]="'artemisApp.dependencies.filterPlaceholder' | artemisTranslate"
-                    [ngModel]="filterText()"
-                    (ngModelChange)="updateFilter($event)"
-                    data-testid="filter-input"
-                />
-            </tumaet-ui-icon-field>
-        </div>
-        <tumaet-ui-button-group>
-            <tumaet-ui-button size="small" [severity]="selectedSource() === 'all' ? 'primary' : 'secondary'" (clicked)="updateSource('all')" data-testid="source-filter-all">
-                <span jhiTranslate="artemisApp.dependencies.sourceAll"></span>
-                <tumaet-ui-tag class="ms-1" severity="secondary" [value]="'' + totalComponentCount()" />
-            </tumaet-ui-button>
-            <tumaet-ui-button
-                size="small"
-                [severity]="selectedSource() === 'server' ? 'primary' : 'secondary'"
-                (clicked)="updateSource('server')"
-                data-testid="source-filter-server"
-            >
-                <fa-icon [icon]="faServer" class="me-1" />
-                <span jhiTranslate="artemisApp.dependencies.sourceServer"></span>
-                <tumaet-ui-tag class="ms-1" severity="secondary" [value]="'' + serverComponentCount()" />
-            </tumaet-ui-button>
-            <tumaet-ui-button
-                size="small"
-                [severity]="selectedSource() === 'client' ? 'primary' : 'secondary'"
-                (clicked)="updateSource('client')"
-                data-testid="source-filter-client"
-            >
-                <fa-icon [icon]="faDesktop" class="me-1" />
-                <span jhiTranslate="artemisApp.dependencies.sourceClient"></span>
-                <tumaet-ui-tag class="ms-1" severity="secondary" [value]="'' + clientComponentCount()" />
-            </tumaet-ui-button>
-        </tumaet-ui-button-group>
-        @if (vulnerabilities()?.totalVulnerabilities) {
-            <button
-                tumAetUiButton
-                type="button"
-                size="small"
-                [severity]="showOnlyVulnerable() ? 'danger' : 'secondary'"
-                [variant]="showOnlyVulnerable() ? 'solid' : 'outlined'"
-                (click)="toggleVulnerableOnly()"
-                data-testid="show-vulnerable-only-button"
-            >
-                <fa-icon [icon]="faExclamationTriangle" class="me-1" />
-                <span jhiTranslate="artemisApp.dependencies.showVulnerableOnly"></span>
-            </button>
-        }
-    </div>
-
-    <!-- Results count -->
-    <div class="mb-2 text-muted-color" data-testid="results-count">
-        <span>{{ 'artemisApp.dependencies.showingComponents' | artemisTranslate: { count: filteredComponents().length } }}</span>
-    </div>
-
-    <!-- Components Table -->
-    <table
-        tumAetUiTable
-        style="min-width: 100%"
-        [sortField]="sortField()"
-        [sortOrder]="sortAscending() ? 1 : -1"
-        (sortChange)="onTableSort($event)"
-        aria-describedby="sbom-page-heading"
-        data-testid="components-table"
-    >
-        <thead>
-            <tr>
-                <th scope="col" [tumAetUiSortableColumn]="'name'">
-                    <span jhiTranslate="artemisApp.dependencies.componentName"></span>
-                </th>
-                <th scope="col" [tumAetUiSortableColumn]="'group'">
-                    <span jhiTranslate="artemisApp.dependencies.componentGroup"></span>
-                </th>
-                <th scope="col" [tumAetUiSortableColumn]="'version'">
-                    <span jhiTranslate="artemisApp.dependencies.componentVersion"></span>
-                </th>
-                <th scope="col">
-                    <span jhiTranslate="artemisApp.dependencies.componentSecurity"></span>
-                </th>
-                <th scope="col">
-                    <span jhiTranslate="artemisApp.dependencies.componentLicenses"></span>
-                </th>
-                <th scope="col">
-                    <span jhiTranslate="artemisApp.dependencies.componentSource"></span>
-                </th>
-            </tr>
-        </thead>
-        <tbody>
-            @for (component of filteredComponents(); track component) {
-                <tr>
-                    <td>
-                        <strong>{{ component.name }}</strong>
-                        @if (component.description) {
-                            <br />
-                            <small class="text-muted-color">{{ component.description }}</small>
-                        }
-                    </td>
-                    <td>{{ component.group ?? '-' }}</td>
-                    <td>
-                        <tumaet-ui-tag severity="info" [value]="component.version" />
-                    </td>
-                    <td>
-                        @if (loadingVulnerabilities()) {
-                            <fa-icon [icon]="faSpinner" animation="spin" class="text-muted-color" />
-                        } @else if (component.componentVulnerabilities && component.componentVulnerabilities.length > 0) {
-                            <tumaet-ui-tag
-                                [severity]="getSeverityLevel(getHighestSeverity(component.componentVulnerabilities))"
-                                [title]="component.componentVulnerabilities[0]?.summary ?? ''"
-                            >
-                                <fa-icon [icon]="faExclamationTriangle" class="me-1" />
-                                {{ component.componentVulnerabilities!.length }}
-                                @if (component.componentVulnerabilities!.length === 1) {
-                                    <span jhiTranslate="artemisApp.dependencies.vulnerability"></span>
-                                } @else {
-                                    <span jhiTranslate="artemisApp.dependencies.vulnerabilitiesCount"></span>
-                                }
-                            </tumaet-ui-tag>
-                            <div class="mt-1 flex flex-wrap gap-1">
-                                @for (vuln of component.componentVulnerabilities!.slice(0, 3); track vuln.id) {
-                                    <a [href]="'https://osv.dev/vulnerability/' + vuln.id" target="_blank" rel="noopener noreferrer" class="no-underline">
-                                        <tumaet-ui-tag severity="secondary" [value]="vuln.id" />
-                                    </a>
-                                }
-                                @if (component.componentVulnerabilities!.length > 3) {
-                                    <tumaet-ui-tag severity="secondary" [value]="'+' + (component.componentVulnerabilities!.length - 3)" />
-                                }
-                            </div>
-                        } @else {
-                            <tumaet-ui-tag severity="success">
-                                <fa-icon [icon]="faShieldAlt" class="me-1" />
-                                <span jhiTranslate="artemisApp.dependencies.secure"></span>
-                            </tumaet-ui-tag>
-                        }
-                    </td>
-                    <td>
-                        @if (component.licenses?.length) {
-                            <div class="flex flex-wrap gap-1">
-                                @for (license of component.licenses; track license) {
-                                    <tumaet-ui-tag severity="success" [value]="license" />
-                                }
-                            </div>
-                        } @else {
-                            <span class="text-muted-color">-</span>
-                        }
-                    </td>
-                    <td>
-                        @if (component.source === 'server') {
-                            <tumaet-ui-tag severity="info">
-                                <fa-icon [icon]="faServer" class="me-1" />
-                                Server
-                            </tumaet-ui-tag>
-                        } @else {
-                            <tumaet-ui-tag severity="danger">
-                                <fa-icon [icon]="faDesktop" class="me-1" />
-                                Client
-                            </tumaet-ui-tag>
-                        }
-                    </td>
-                </tr>
-            } @empty {
-                <tr>
-                    <td colspan="6" class="text-center py-4">
-                        <span class="text-muted-color" jhiTranslate="artemisApp.dependencies.noComponents"></span>
-                    </td>
-                </tr>
+    <tumaet-ui-table-layout>
+        <div tumAetUiTableToolbar class="flex min-w-0 flex-1 items-center gap-2" data-testid="filters-section">
+            <div class="min-w-24 max-w-72 flex-1">
+                <tumaet-ui-icon-field [icon]="faSearch">
+                    <input
+                        [attr.aria-label]="'artemisApp.dependencies.filterPlaceholder' | artemisTranslate"
+                        tumAetUiInput
+                        type="search"
+                        tumAetUiInputSize="small"
+                        class="w-full"
+                        [placeholder]="'artemisApp.dependencies.filterPlaceholder' | artemisTranslate"
+                        [ngModel]="filterText()"
+                        (ngModelChange)="updateFilter($event)"
+                        data-testid="filter-input"
+                    />
+                </tumaet-ui-icon-field>
+            </div>
+            <tumaet-ui-button-group>
+                <tumaet-ui-button size="small" [severity]="selectedSource() === 'all' ? 'primary' : 'secondary'" (clicked)="updateSource('all')" data-testid="source-filter-all">
+                    <span jhiTranslate="artemisApp.dependencies.sourceAll"></span>
+                    <tumaet-ui-tag class="ms-1" severity="secondary" [value]="'' + totalComponentCount()" />
+                </tumaet-ui-button>
+                <tumaet-ui-button
+                    [ariaLabel]="'artemisApp.dependencies.sourceServer' | artemisTranslate"
+                    size="small"
+                    [severity]="selectedSource() === 'server' ? 'primary' : 'secondary'"
+                    (clicked)="updateSource('server')"
+                    data-testid="source-filter-server"
+                >
+                    <fa-icon [icon]="faServer" class="me-1" />
+                    <span class="hidden md:inline" jhiTranslate="artemisApp.dependencies.sourceServer"></span>
+                    <tumaet-ui-tag class="ms-1" severity="secondary" [value]="'' + serverComponentCount()" />
+                </tumaet-ui-button>
+                <tumaet-ui-button
+                    [ariaLabel]="'artemisApp.dependencies.sourceClient' | artemisTranslate"
+                    size="small"
+                    [severity]="selectedSource() === 'client' ? 'primary' : 'secondary'"
+                    (clicked)="updateSource('client')"
+                    data-testid="source-filter-client"
+                >
+                    <fa-icon [icon]="faDesktop" class="me-1" />
+                    <span class="hidden md:inline" jhiTranslate="artemisApp.dependencies.sourceClient"></span>
+                    <tumaet-ui-tag class="ms-1" severity="secondary" [value]="'' + clientComponentCount()" />
+                </tumaet-ui-button>
+            </tumaet-ui-button-group>
+            @if (vulnerabilities()?.totalVulnerabilities) {
+                <button
+                    tumAetUiButton
+                    type="button"
+                    size="small"
+                    [severity]="showOnlyVulnerable() ? 'danger' : 'secondary'"
+                    [variant]="showOnlyVulnerable() ? 'solid' : 'outlined'"
+                    (click)="toggleVulnerableOnly()"
+                    [attr.aria-label]="'artemisApp.dependencies.showVulnerableOnly' | artemisTranslate"
+                    data-testid="show-vulnerable-only-button"
+                >
+                    <fa-icon [icon]="faExclamationTriangle" class="me-1" />
+                    <span class="hidden md:inline" jhiTranslate="artemisApp.dependencies.showVulnerableOnly"></span>
+                </button>
             }
-        </tbody>
-    </table>
+            <span class="flex-1"></span>
+            <span class="hidden truncate text-sm text-muted-color lg:inline" data-testid="results-count">{{
+                'artemisApp.dependencies.showingComponents' | artemisTranslate: { count: filteredComponents().length }
+            }}</span>
+        </div>
+
+        <!-- Components Table -->
+        <table
+            tumAetUiTable
+            size="small"
+            [sortField]="sortField()"
+            [sortOrder]="sortAscending() ? 1 : -1"
+            (sortChange)="onTableSort($event)"
+            aria-describedby="sbom-page-heading"
+            data-testid="components-table"
+        >
+            <thead>
+                <tr>
+                    <th scope="col" [tumAetUiSortableColumn]="'name'">
+                        <span jhiTranslate="artemisApp.dependencies.componentName"></span>
+                    </th>
+                    <th scope="col" [tumAetUiSortableColumn]="'group'">
+                        <span jhiTranslate="artemisApp.dependencies.componentGroup"></span>
+                    </th>
+                    <th scope="col" [tumAetUiSortableColumn]="'version'">
+                        <span jhiTranslate="artemisApp.dependencies.componentVersion"></span>
+                    </th>
+                    <th scope="col">
+                        <span jhiTranslate="artemisApp.dependencies.componentSecurity"></span>
+                    </th>
+                    <th scope="col">
+                        <span jhiTranslate="artemisApp.dependencies.componentLicenses"></span>
+                    </th>
+                    <th scope="col">
+                        <span jhiTranslate="artemisApp.dependencies.componentSource"></span>
+                    </th>
+                </tr>
+            </thead>
+            <tbody>
+                @for (component of filteredComponents(); track component) {
+                    <tr>
+                        <td>
+                            <strong>{{ component.name }}</strong>
+                            @if (component.description) {
+                                <br />
+                                <small class="text-muted-color">{{ component.description }}</small>
+                            }
+                        </td>
+                        <td>{{ component.group ?? '-' }}</td>
+                        <td>
+                            <tumaet-ui-tag severity="info" [value]="component.version" />
+                        </td>
+                        <td>
+                            @if (loadingVulnerabilities()) {
+                                <fa-icon [icon]="faSpinner" animation="spin" class="text-muted-color" />
+                            } @else if (component.componentVulnerabilities && component.componentVulnerabilities.length > 0) {
+                                <tumaet-ui-tag
+                                    [severity]="getSeverityLevel(getHighestSeverity(component.componentVulnerabilities))"
+                                    [title]="component.componentVulnerabilities[0]?.summary ?? ''"
+                                >
+                                    <fa-icon [icon]="faExclamationTriangle" class="me-1" />
+                                    {{ component.componentVulnerabilities!.length }}
+                                    @if (component.componentVulnerabilities!.length === 1) {
+                                        <span jhiTranslate="artemisApp.dependencies.vulnerability"></span>
+                                    } @else {
+                                        <span jhiTranslate="artemisApp.dependencies.vulnerabilitiesCount"></span>
+                                    }
+                                </tumaet-ui-tag>
+                                <div class="mt-1 flex flex-wrap gap-1">
+                                    @for (vuln of component.componentVulnerabilities!.slice(0, 3); track vuln.id) {
+                                        <a [href]="'https://osv.dev/vulnerability/' + vuln.id" target="_blank" rel="noopener noreferrer" class="no-underline">
+                                            <tumaet-ui-tag severity="secondary" [value]="vuln.id" />
+                                        </a>
+                                    }
+                                    @if (component.componentVulnerabilities!.length > 3) {
+                                        <tumaet-ui-tag severity="secondary" [value]="'+' + (component.componentVulnerabilities!.length - 3)" />
+                                    }
+                                </div>
+                            } @else {
+                                <tumaet-ui-tag severity="success">
+                                    <fa-icon [icon]="faShieldAlt" class="me-1" />
+                                    <span jhiTranslate="artemisApp.dependencies.secure"></span>
+                                </tumaet-ui-tag>
+                            }
+                        </td>
+                        <td>
+                            @if (component.licenses?.length) {
+                                <div class="flex flex-wrap gap-1">
+                                    @for (license of component.licenses; track license) {
+                                        <tumaet-ui-tag severity="success" [value]="license" />
+                                    }
+                                </div>
+                            } @else {
+                                <span class="text-muted-color">-</span>
+                            }
+                        </td>
+                        <td>
+                            @if (component.source === 'server') {
+                                <tumaet-ui-tag severity="info">
+                                    <fa-icon [icon]="faServer" class="me-1" />
+                                    Server
+                                </tumaet-ui-tag>
+                            } @else {
+                                <tumaet-ui-tag severity="danger">
+                                    <fa-icon [icon]="faDesktop" class="me-1" />
+                                    Client
+                                </tumaet-ui-tag>
+                            }
+                        </td>
+                    </tr>
+                } @empty {
+                    <tr>
+                        <td colspan="6" class="text-center py-4">
+                            <span class="text-muted-color" jhiTranslate="artemisApp.dependencies.noComponents"></span>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </tumaet-ui-table-layout>
 } @else if (sbomUnavailable()) {
     <tumaet-ui-message severity="info" class="block" data-testid="sbom-unavailable-message">
         <div class="flex items-start gap-3">

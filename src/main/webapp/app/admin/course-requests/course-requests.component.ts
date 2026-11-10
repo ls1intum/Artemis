@@ -10,6 +10,7 @@ import {
     TumAetUiPopoverComponent,
     TumAetUiPopoverTriggerDirective,
     TumAetUiTableDirective,
+    TumAetUiTableLayoutComponent,
     TumAetUiTagComponent,
     TumAetUiTooltipDirective,
 } from '@tumaet/ui-angular';
@@ -43,6 +44,7 @@ import { AdminTitleBarActionsDirective } from 'app/admin/shared/admin-title-bar-
     templateUrl: './course-requests.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
+        TumAetUiTableLayoutComponent,
         NgTemplateOutlet,
         TranslateDirective,
         ArtemisTranslatePipe,

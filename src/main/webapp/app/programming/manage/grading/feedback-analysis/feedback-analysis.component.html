@@ -1,169 +1,128 @@
-<ng-template #headerTemplate let-column="column" let-label="label">
-    @if (column !== 'errorCategory') {
-        <button
-            type="button"
-            (click)="setSortedColumn(column)"
-            class="flex w-full items-center border-0 bg-transparent p-0 text-start text-inherit focus-visible:outline-2 focus-visible:outline-offset-2"
-        >
-            <span [jhiTranslate]="label"></span>
-            <jhi-sort-icon [direction]="getSortDirection(column)" />
-        </button>
-    } @else {
-        <span [jhiTranslate]="label"></span>
-    }
-</ng-template>
 <ng-template #emptyTableTemplate>
     <div
-        class="text-center p-3 text-muted"
+        class="p-3 text-center text-muted"
         [jhiTranslate]="this.selectedFiltersCount() > 0 || this.searchTerm() !== '' ? TRANSLATION_BASE + '.noDataFilter' : TRANSLATION_BASE + '.noData'"
     ></div>
 </ng-template>
-<div class="m-3">
-    <div class="row m-0 justify-content-between align-items-center">
-        <div class="justify-content-between d-flex align-items-center">
-            <h3 class="m-0 p-0" [jhiTranslate]="TRANSLATION_BASE + '.title'" [translateValues]="{ exerciseTitle: exerciseTitle() }"></h3>
-            <div class="d-flex align-items-center">
-                <div class="form-switch d-flex align-items-center flex-md-shrink-0 me-2">
-                    <input
-                        id="group-similar-feedback"
-                        [attr.aria-label]="'artemisApp.programmingExercise.configureGrading.feedbackAnalysis.groupFeedback' | artemisTranslate"
-                        class="form-check-input mt-0"
-                        type="checkbox"
-                        (click)="toggleGroupFeedback()"
-                        [checked]="groupFeedback()"
-                        style="width: 2.5rem; height: 1.25rem"
-                    />
-                    <label for="group-similar-feedback" class="ms-1 me-2 mb-0">
-                        <span [jhiTranslate]="TRANSLATION_BASE + '.groupFeedback'"></span>
-                        <fa-icon size="sm" [icon]="faCircleQuestion" [ngbTooltip]="TRANSLATION_BASE + '.groupFeedbackTooltip' | artemisTranslate" class="btn-warning" />
-                    </label>
-                </div>
-                <button type="button" class="btn me-2" (click)="openFilterModal()" [ngClass]="selectedFiltersCount() ? 'btn-success' : 'btn-secondary'">
-                    <fa-icon [icon]="faFilter" />
-                    <span [jhiTranslate]="TRANSLATION_BASE + '.filter'"></span> ({{ selectedFiltersCount() }})
-                </button>
-                <input
-                    type="search"
-                    class="form-control"
-                    [placeholder]="TRANSLATION_BASE + '.search' | artemisTranslate"
-                    aria-label="Search feedback"
-                    [ngModel]="searchTerm()"
-                    (ngModelChange)="search($event)"
-                />
-            </div>
+<div class="m-3 flex flex-col gap-3">
+    <h3 class="m-0 p-0" [jhiTranslate]="TRANSLATION_BASE + '.title'" [translateValues]="{ exerciseTitle: exerciseTitle() }"></h3>
+    <tumaet-ui-table-layout [loading]="isLoading()">
+        <div tumAetUiTableToolbar class="flex min-w-0 flex-1 items-center gap-2">
+            <input
+                tumAetUiInput
+                tumAetUiInputSize="small"
+                type="search"
+                class="max-w-72 min-w-24 flex-1"
+                [placeholder]="TRANSLATION_BASE + '.search' | artemisTranslate"
+                [attr.aria-label]="TRANSLATION_BASE + '.search' | artemisTranslate"
+                [ngModel]="searchTerm()"
+                (ngModelChange)="search($event)"
+            />
+            <span class="flex-1"></span>
+            <tumaet-ui-toggle-switch
+                inputId="group-similar-feedback"
+                [ariaLabel]="TRANSLATION_BASE + '.groupFeedback' | artemisTranslate"
+                [ngModel]="groupFeedback()"
+                (changed)="toggleGroupFeedback()"
+            />
+            <label for="group-similar-feedback" class="m-0 flex items-center gap-1">
+                <span class="hidden md:inline" [jhiTranslate]="TRANSLATION_BASE + '.groupFeedback'"></span>
+                <fa-icon size="sm" [icon]="faCircleQuestion" [tumAetUiTooltip]="TRANSLATION_BASE + '.groupFeedbackTooltip' | artemisTranslate" />
+            </label>
+            <button
+                [attr.aria-label]="TRANSLATION_BASE + '.filter' | artemisTranslate"
+                tumAetUiButton
+                type="button"
+                size="small"
+                [severity]="selectedFiltersCount() ? 'success' : 'secondary'"
+                (click)="openFilterModal()"
+            >
+                <fa-icon [icon]="faFilter" />
+                <span class="hidden md:inline" [jhiTranslate]="TRANSLATION_BASE + '.filter'"></span>
+                <span>({{ selectedFiltersCount() }})</span>
+            </button>
         </div>
-    </div>
-    <div style="overflow-x: auto">
-        <table class="table table-striped mb-3">
+        <table tumAetUiTable size="small" striped [sortField]="sortedColumn()" [sortOrder]="sortingOrder() === SortingOrder.ASCENDING ? 1 : -1" (sortChange)="onTableSort($event)">
             <thead>
                 <tr>
-                    <th
-                        scope="col"
-                        class="col-1"
-                        [attr.aria-sort]="getSortDirection('count') === 'ASCENDING' ? 'ascending' : getSortDirection('count') === 'DESCENDING' ? 'descending' : 'none'"
-                    >
-                        <ng-container *ngTemplateOutlet="headerTemplate; context: { column: 'count', label: TRANSLATION_BASE + '.occurrence' }" />
+                    <th scope="col" class="w-1/12" [tumAetUiSortableColumn]="'count'">
+                        <span [jhiTranslate]="TRANSLATION_BASE + '.occurrence'"></span>
                     </th>
-                    <th
-                        scope="col"
-                        class="col-6"
-                        [attr.aria-sort]="getSortDirection('detailTexts') === 'ASCENDING' ? 'ascending' : getSortDirection('detailTexts') === 'DESCENDING' ? 'descending' : 'none'"
-                    >
-                        <ng-container *ngTemplateOutlet="headerTemplate; context: { column: 'detailTexts', label: TRANSLATION_BASE + '.feedback' }" />
+                    <th scope="col" class="w-1/2" [tumAetUiSortableColumn]="'detailTexts'">
+                        <span [jhiTranslate]="TRANSLATION_BASE + '.feedback'"></span>
                     </th>
-                    <th
-                        scope="col"
-                        class="col-1"
-                        [attr.aria-sort]="getSortDirection('taskName') === 'ASCENDING' ? 'ascending' : getSortDirection('taskName') === 'DESCENDING' ? 'descending' : 'none'"
-                    >
-                        <ng-container *ngTemplateOutlet="headerTemplate; context: { column: 'taskName', label: TRANSLATION_BASE + '.task' }" />
+                    <th scope="col" [tumAetUiSortableColumn]="'taskName'">
+                        <span [jhiTranslate]="TRANSLATION_BASE + '.task'"></span>
                     </th>
-                    <th
-                        scope="col"
-                        class="col-2"
-                        [attr.aria-sort]="
-                            getSortDirection('testCaseName') === 'ASCENDING' ? 'ascending' : getSortDirection('testCaseName') === 'DESCENDING' ? 'descending' : 'none'
-                        "
-                    >
-                        <ng-container *ngTemplateOutlet="headerTemplate; context: { column: 'testCaseName', label: TRANSLATION_BASE + '.testcase' }" />
+                    <th scope="col" [tumAetUiSortableColumn]="'testCaseName'">
+                        <span [jhiTranslate]="TRANSLATION_BASE + '.testcase'"></span>
                     </th>
-                    <th scope="col" class="col-1">
-                        <ng-container *ngTemplateOutlet="headerTemplate; context: { column: 'errorCategory', label: TRANSLATION_BASE + '.errorCategory' }" />
+                    <th scope="col">
+                        <span [jhiTranslate]="TRANSLATION_BASE + '.errorCategory'"></span>
                     </th>
                     <th scope="col" jhiTranslate="entity.actions"></th>
                 </tr>
             </thead>
-            @if (isLoading()) {
-                <tbody>
+            <tbody>
+                @if (!content().resultsOnPage) {
                     <tr>
                         <td colspan="6">
-                            <div class="row justify-content-center p-2">
-                                <div class="spinner-border text-primary" role="status">
-                                    <span class="visually-hidden" jhiTranslate="loading"></span>
-                                </div>
-                            </div>
+                            <ng-container *ngTemplateOutlet="emptyTableTemplate" />
                         </td>
                     </tr>
-                </tbody>
-            } @else {
-                <tbody class="table-group-divider">
-                    @if (!content().resultsOnPage) {
+                } @else {
+                    @for (item of content().resultsOnPage; track item) {
                         <tr>
-                            <td colspan="6">
-                                <ng-container *ngTemplateOutlet="emptyTableTemplate" />
+                            <td class="text-center">{{ item.count }} ({{ item.relativeCount | number: '1.0-0' }}%)</td>
+                            <td>
+                                {{ item.detailTexts[0].length > MAX_FEEDBACK_DETAIL_TEXT_LENGTH ? (item.detailTexts[0] | slice: 0 : 100) + '...' : item.detailTexts[0] }}
+                            </td>
+                            <td>{{ item.taskName }}</td>
+                            <td>{{ item.testCaseName }}</td>
+                            <td>{{ item.errorCategory }}</td>
+                            <td class="text-center">
+                                <div class="flex items-center justify-center">
+                                    <button
+                                        type="button"
+                                        class="ms-2 border-0 bg-transparent p-0 text-state-info focus-visible:outline-2 focus-visible:outline-offset-2"
+                                        (click)="openFeedbackModal(item)"
+                                        [attr.aria-label]="TRANSLATION_BASE + '.feedbackModal.header' | artemisTranslate"
+                                    >
+                                        <fa-icon [icon]="facDetails" />
+                                    </button>
+                                    <button
+                                        type="button"
+                                        class="ms-2 border-0 bg-transparent p-0 text-state-info focus-visible:outline-2 focus-visible:outline-offset-2"
+                                        (click)="openAffectedStudentsModal(item)"
+                                        [attr.aria-label]="TRANSLATION_BASE + '.affectedStudentsModal.header' | artemisTranslate"
+                                    >
+                                        <fa-icon [icon]="faUsers" />
+                                    </button>
+                                    @if (isCommunicationEnabled()) {
+                                        <button
+                                            type="button"
+                                            class="ms-2 border-0 bg-transparent p-0 text-state-info focus-visible:outline-2 focus-visible:outline-offset-2"
+                                            (click)="openFeedbackDetailChannelModal(item)"
+                                            [attr.aria-label]="TRANSLATION_BASE + '.feedbackDetailChannel.title' | artemisTranslate"
+                                        >
+                                            <fa-icon [icon]="faMessage" />
+                                        </button>
+                                    }
+                                </div>
                             </td>
                         </tr>
-                    } @else {
-                        @for (item of content().resultsOnPage; track item) {
-                            <tr>
-                                <td class="text-center">{{ item.count }} ({{ item.relativeCount | number: '1.0-0' }}%)</td>
-                                <td>
-                                    {{ item.detailTexts[0].length > MAX_FEEDBACK_DETAIL_TEXT_LENGTH ? (item.detailTexts[0] | slice: 0 : 100) + '...' : item.detailTexts[0] }}
-                                </td>
-                                <td>{{ item.taskName }}</td>
-                                <td>{{ item.testCaseName }}</td>
-                                <td>{{ item.errorCategory }}</td>
-                                <td class="text-center">
-                                    <div class="d-flex justify-content-center align-items-center">
-                                        <button
-                                            type="button"
-                                            class="ms-2 border-0 bg-transparent p-0 text-state-info focus-visible:outline-2 focus-visible:outline-offset-2"
-                                            (click)="openFeedbackModal(item)"
-                                            [attr.aria-label]="TRANSLATION_BASE + '.feedbackModal.header' | artemisTranslate"
-                                        >
-                                            <fa-icon [icon]="facDetails" />
-                                        </button>
-                                        <button
-                                            type="button"
-                                            class="ms-2 border-0 bg-transparent p-0 text-state-info focus-visible:outline-2 focus-visible:outline-offset-2"
-                                            (click)="openAffectedStudentsModal(item)"
-                                            [attr.aria-label]="TRANSLATION_BASE + '.affectedStudentsModal.header' | artemisTranslate"
-                                        >
-                                            <fa-icon [icon]="faUsers" />
-                                        </button>
-                                        @if (isCommunicationEnabled()) {
-                                            <button
-                                                type="button"
-                                                class="ms-2 border-0 bg-transparent p-0 text-state-info focus-visible:outline-2 focus-visible:outline-offset-2"
-                                                (click)="openFeedbackDetailChannelModal(item)"
-                                                [attr.aria-label]="TRANSLATION_BASE + '.feedbackDetailChannel.title' | artemisTranslate"
-                                            >
-                                                <fa-icon [icon]="faMessage" />
-                                            </button>
-                                        }
-                                    </div>
-                                </td>
-                            </tr>
-                        }
                     }
-                </tbody>
-            }
+                }
+            </tbody>
         </table>
-    </div>
-    <div class="d-flex flex-column align-items-end mt-2">
-        <p-paginator [first]="(page() - 1) * pageSize()" [rows]="pageSize()" [totalRecords]="totalItems()" (onPageChange)="onPageChange($event)" />
-        <div class="text-muted text-end">
-            <span [jhiTranslate]="TRANSLATION_BASE + '.totalItems'" [translateValues]="{ count: totalItems() }"></span>
-        </div>
-    </div>
+        <tumaet-ui-paginator
+            tumAetUiTableFooter
+            [page]="page() - 1"
+            [pageSize]="pageSize()"
+            [pageSizeOptions]="[10, 25, 50, 100]"
+            [totalRecords]="totalItems()"
+            (pageChange)="onPageChange($event)"
+            (pageSizeChange)="onPageSizeChange($event)"
+        />
+    </tumaet-ui-table-layout>
 </div>

@@ -170,7 +170,7 @@
                         [text]="'artemisApp.assessmentDashboard.noExercisesMatchFilters' | artemisTranslate"
                     />
                 } @else {
-                    <div class="w-full overflow-x-auto border-t border-surface">
+                    <tumaet-ui-table-layout class="mt-2 w-full">
                         <table
                             tumAetUiTable
                             size="small"
@@ -183,7 +183,7 @@
                         >
                             <thead>
                                 <tr>
-                                    <th tumAetUiSortableColumn="type" class="hidden min-w-12 !whitespace-normal xl:table-cell xl:w-[6%]">
+                                    <th tumAetUiSortableColumn="type" class="hidden min-w-12 xl:table-cell xl:w-[6%]">
                                         <span jhiTranslate="artemisApp.assessmentDashboard.exerciseType"></span>
                                     </th>
                                     <th tumAetUiSortableColumn="title" class="w-[10rem] min-w-[8rem] xl:w-[18%] 2xl:min-w-[14rem] 2xl:max-w-none">
@@ -192,22 +192,22 @@
                                     @if (!isTestRun()) {
                                         <th class="w-[20rem] min-w-[18rem] xl:w-[42%] 2xl:w-[42%]" jhiTranslate="artemisApp.assessmentDashboard.yourStatus"></th>
                                     }
-                                    <th tumAetUiSortableColumn="averageRating" class="hidden min-w-14 !whitespace-normal xl:table-cell xl:w-[7%]">
-                                        <span class="block whitespace-normal break-words leading-tight" jhiTranslate="artemisApp.assessmentDashboard.exerciseAverageRating"></span>
+                                    <th tumAetUiSortableColumn="averageRating" class="hidden min-w-14 xl:table-cell xl:w-[7%]">
+                                        <span class="block whitespace-nowrap break-words leading-tight" jhiTranslate="artemisApp.assessmentDashboard.exerciseAverageRating"></span>
                                     </th>
                                     @if (!isExamMode()) {
-                                        <th tumAetUiSortableColumn="dueDate" class="hidden min-w-16 !whitespace-normal xl:table-cell xl:w-[8%]">
-                                            <span class="block whitespace-normal break-words leading-tight" jhiTranslate="artemisApp.assessmentDashboard.exerciseDueDate"></span>
+                                        <th tumAetUiSortableColumn="dueDate" class="hidden min-w-16 xl:table-cell xl:w-[8%]">
+                                            <span class="block whitespace-nowrap break-words leading-tight" jhiTranslate="artemisApp.assessmentDashboard.exerciseDueDate"></span>
                                         </th>
                                     }
                                     @if (!isExamMode()) {
-                                        <th tumAetUiSortableColumn="assessmentDueDate" class="hidden min-w-16 !whitespace-normal xl:table-cell xl:w-[8%]">
-                                            <span class="block whitespace-normal break-words leading-tight" jhiTranslate="artemisApp.assessmentDashboard.assessmentsDueDate"></span>
+                                        <th tumAetUiSortableColumn="assessmentDueDate" class="hidden min-w-16 xl:table-cell xl:w-[8%]">
+                                            <span class="block whitespace-nowrap break-words leading-tight" jhiTranslate="artemisApp.assessmentDashboard.assessmentsDueDate"></span>
                                         </th>
                                     }
                                     @if (!isExamMode()) {
-                                        <th class="w-28 min-w-24 !whitespace-normal xl:hidden">
-                                            <span class="block whitespace-normal break-words leading-tight" jhiTranslate="artemisApp.assessmentDashboard.dueDates"></span>
+                                        <th class="w-28 min-w-24 xl:hidden">
+                                            <span class="block whitespace-nowrap break-words leading-tight" jhiTranslate="artemisApp.assessmentDashboard.dueDates"></span>
                                         </th>
                                     }
                                     <th class="w-10 min-w-10 text-end xl:w-[16%]">
@@ -341,7 +341,7 @@
                                 }
                             </tbody>
                         </table>
-                    </div>
+                    </tumaet-ui-table-layout>
                 }
             </tumaet-ui-panel>
             @if (course() && course().isAtLeastInstructor && tutorIssues().length > 0) {

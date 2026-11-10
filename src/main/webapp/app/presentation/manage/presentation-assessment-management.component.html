@@ -63,31 +63,27 @@
                                     <div class="presentation-summary text-(--text-body-secondary)">{{ presentationAssessment.description }}</div>
                                 }
 
-                                <div class="presentation-grading-toolbar">
-                                    <label for="selected-presentation-student-search-input" class="sr-only">{{
-                                        'artemisApp.presentationAssessment.searchStudent' | artemisTranslate
-                                    }}</label>
-                                    <tumaet-ui-icon-field class="student-search" [icon]="faSearch">
-                                        <input
-                                            id="selected-presentation-student-search-input"
-                                            tumAetUiInput
-                                            tumAetUiInputSize="small"
-                                            type="search"
-                                            class="student-search-input w-full"
-                                            [ngModel]="studentSearchTerm()"
-                                            (ngModelChange)="updateStudentSearch($event)"
-                                            placeholder="{{ 'artemisApp.presentationAssessment.searchStudent' | artemisTranslate }}"
-                                            data-testid="selected-presentation-student-search"
-                                        />
-                                    </tumaet-ui-icon-field>
-                                    <div class="flex items-center">
+                                <tumaet-ui-table-layout fill class="mx-4 mb-4">
+                                    <div tumAetUiTableToolbar class="flex min-w-0 flex-1 items-center gap-2">
+                                        <tumaet-ui-icon-field class="student-search" [icon]="faSearch">
+                                            <input
+                                                id="selected-presentation-student-search-input"
+                                                tumAetUiInput
+                                                tumAetUiInputSize="small"
+                                                type="search"
+                                                class="student-search-input w-full"
+                                                [ngModel]="studentSearchTerm()"
+                                                (ngModelChange)="updateStudentSearch($event)"
+                                                [placeholder]="'artemisApp.presentationAssessment.searchStudent' | artemisTranslate"
+                                                [attr.aria-label]="'artemisApp.presentationAssessment.searchStudent' | artemisTranslate"
+                                                data-testid="selected-presentation-student-search"
+                                            />
+                                        </tumaet-ui-icon-field>
+                                        <span class="flex-1"></span>
                                         <tumaet-ui-button size="small" (clicked)="startCreateInstance(presentationAssessment)" data-testid="create-instance-button">
                                             <span jhiTranslate="artemisApp.presentationAssessment.enterGrade"></span>
                                         </tumaet-ui-button>
                                     </div>
-                                </div>
-
-                                <div class="presentation-table-scroll">
                                     <jhi-presentation-assessment-instances-table
                                         [rows]="studentRows()"
                                         [presentationAssessment]="presentationAssessment"
@@ -95,7 +91,7 @@
                                         (editInstance)="startEditInstance($event.presentationAssessment, $event.instance)"
                                         (deleteInstance)="deleteInstance($event.presentationAssessment, $event.instance)"
                                     />
-                                </div>
+                                </tumaet-ui-table-layout>
                             </section>
                         }
                     } @else {
@@ -115,76 +111,73 @@
                                 </div>
                             </div>
 
-                            <div class="presentation-overall-toolbar border-y border-(--border-color)">
-                                <label for="presentation-overview-search-input" class="sr-only">{{ 'artemisApp.presentationAssessment.searchOverview' | artemisTranslate }}</label>
-                                <tumaet-ui-icon-field class="student-search" [icon]="faSearch">
-                                    <input
-                                        id="presentation-overview-search-input"
-                                        tumAetUiInput
-                                        tumAetUiInputSize="small"
-                                        type="search"
-                                        class="student-search-input w-full"
-                                        [ngModel]="studentSearchTerm()"
-                                        (ngModelChange)="updateStudentSearch($event)"
-                                        placeholder="{{ 'artemisApp.presentationAssessment.searchOverview' | artemisTranslate }}"
-                                        data-testid="student-search"
+                            <tumaet-ui-table-layout fill class="mx-4 mb-4">
+                                <div tumAetUiTableToolbar class="flex min-w-0 flex-1 items-center gap-2">
+                                    <tumaet-ui-icon-field class="student-search" [icon]="faSearch">
+                                        <input
+                                            id="presentation-overview-search-input"
+                                            tumAetUiInput
+                                            tumAetUiInputSize="small"
+                                            type="search"
+                                            class="student-search-input w-full"
+                                            [ngModel]="studentSearchTerm()"
+                                            (ngModelChange)="updateStudentSearch($event)"
+                                            [placeholder]="'artemisApp.presentationAssessment.searchOverview' | artemisTranslate"
+                                            [attr.aria-label]="'artemisApp.presentationAssessment.searchOverview' | artemisTranslate"
+                                            data-testid="student-search"
+                                        />
+                                    </tumaet-ui-icon-field>
+                                    <tumaet-ui-button-group class="presentation-status-filter" [attr.aria-label]="'artemisApp.presentationAssessment.status' | artemisTranslate">
+                                        <tumaet-ui-button
+                                            size="small"
+                                            variant="text"
+                                            [severity]="assessmentStatusFilter() === 'all' ? 'primary' : 'secondary'"
+                                            [ariaPressed]="assessmentStatusFilter() === 'all'"
+                                            (clicked)="setAssessmentStatusFilter('all')"
+                                            data-testid="status-filter-all"
+                                            ><span jhiTranslate="artemisApp.presentationAssessment.filter.all"></span
+                                        ></tumaet-ui-button>
+                                        <tumaet-ui-button
+                                            size="small"
+                                            variant="text"
+                                            [severity]="assessmentStatusFilter() === 'assessed' ? 'primary' : 'secondary'"
+                                            [ariaPressed]="assessmentStatusFilter() === 'assessed'"
+                                            (clicked)="setAssessmentStatusFilter('assessed')"
+                                            data-testid="status-filter-assessed"
+                                            ><span jhiTranslate="artemisApp.presentationAssessment.assessed"></span
+                                        ></tumaet-ui-button>
+                                        <tumaet-ui-button
+                                            size="small"
+                                            variant="text"
+                                            [severity]="assessmentStatusFilter() === 'pending' ? 'primary' : 'secondary'"
+                                            [ariaPressed]="assessmentStatusFilter() === 'pending'"
+                                            (clicked)="setAssessmentStatusFilter('pending')"
+                                            data-testid="status-filter-pending"
+                                            ><span jhiTranslate="artemisApp.presentationAssessment.pending"></span
+                                        ></tumaet-ui-button>
+                                    </tumaet-ui-button-group>
+                                    <span class="presentation-toolbar-divider border-l border-(--border-color)" aria-hidden="true"></span>
+                                    <tumaet-ui-select
+                                        size="small"
+                                        class="presentation-filter-select"
+                                        [options]="presentationFilterOptions()"
+                                        optionLabel="label"
+                                        optionValue="value"
+                                        [ngModel]="presentationFilter()"
+                                        (ngModelChange)="updatePresentationFilter($event)"
+                                        [ariaLabel]="'artemisApp.presentationAssessment.filter.presentation' | artemisTranslate"
                                     />
-                                </tumaet-ui-icon-field>
-                                <tumaet-ui-button-group class="presentation-status-filter" [attr.aria-label]="'artemisApp.presentationAssessment.status' | artemisTranslate">
-                                    <tumaet-ui-button
+                                    <tumaet-ui-select
                                         size="small"
-                                        variant="text"
-                                        [severity]="assessmentStatusFilter() === 'all' ? 'primary' : 'secondary'"
-                                        [ariaPressed]="assessmentStatusFilter() === 'all'"
-                                        (clicked)="setAssessmentStatusFilter('all')"
-                                        data-testid="status-filter-all"
-                                        ><span jhiTranslate="artemisApp.presentationAssessment.filter.all"></span
-                                    ></tumaet-ui-button>
-                                    <tumaet-ui-button
-                                        size="small"
-                                        variant="text"
-                                        [severity]="assessmentStatusFilter() === 'assessed' ? 'primary' : 'secondary'"
-                                        [ariaPressed]="assessmentStatusFilter() === 'assessed'"
-                                        (clicked)="setAssessmentStatusFilter('assessed')"
-                                        data-testid="status-filter-assessed"
-                                        ><span jhiTranslate="artemisApp.presentationAssessment.assessed"></span
-                                    ></tumaet-ui-button>
-                                    <tumaet-ui-button
-                                        size="small"
-                                        variant="text"
-                                        [severity]="assessmentStatusFilter() === 'pending' ? 'primary' : 'secondary'"
-                                        [ariaPressed]="assessmentStatusFilter() === 'pending'"
-                                        (clicked)="setAssessmentStatusFilter('pending')"
-                                        data-testid="status-filter-pending"
-                                        ><span jhiTranslate="artemisApp.presentationAssessment.pending"></span
-                                    ></tumaet-ui-button>
-                                </tumaet-ui-button-group>
-                                <span class="presentation-toolbar-divider border-l border-(--border-color)" aria-hidden="true"></span>
-                                <tumaet-ui-select
-                                    size="small"
-                                    class="presentation-filter-select"
-                                    [options]="presentationFilterOptions()"
-                                    optionLabel="label"
-                                    optionValue="value"
-                                    [ngModel]="presentationFilter()"
-                                    (ngModelChange)="updatePresentationFilter($event)"
-                                    [ariaLabel]="'artemisApp.presentationAssessment.filter.presentation' | artemisTranslate"
-                                />
-                                <tumaet-ui-select
-                                    size="small"
-                                    class="presentation-filter-select"
-                                    [options]="typeFilterOptions()"
-                                    optionLabel="label"
-                                    optionValue="value"
-                                    [ngModel]="presentationTypeFilter()"
-                                    (ngModelChange)="updatePresentationTypeFilter($event)"
-                                    [ariaLabel]="'artemisApp.presentationAssessment.filter.type' | artemisTranslate"
-                                />
-                                <span class="presentation-row-count text-muted-color">
-                                    {{ totalStudentRows() }} <span jhiTranslate="artemisApp.presentationAssessment.rows"></span>
-                                </span>
-                            </div>
-                            <div class="presentation-table-scroll">
+                                        class="presentation-filter-select"
+                                        [options]="typeFilterOptions()"
+                                        optionLabel="label"
+                                        optionValue="value"
+                                        [ngModel]="presentationTypeFilter()"
+                                        (ngModelChange)="updatePresentationTypeFilter($event)"
+                                        [ariaLabel]="'artemisApp.presentationAssessment.filter.type' | artemisTranslate"
+                                    />
+                                </div>
                                 <jhi-presentation-assessment-overview-table
                                     [rows]="studentRows()"
                                     [sortField]="studentSortField()"
@@ -194,18 +187,18 @@
                                     (editInstance)="startEditInstance($event.presentationAssessment, $event.instance)"
                                     (deleteInstance)="deleteInstance($event.presentationAssessment, $event.instance)"
                                 />
-                            </div>
+                                <tumaet-ui-paginator
+                                    tumAetUiTableFooter
+                                    [page]="overviewPage()"
+                                    [pageSize]="overviewPageSize()"
+                                    [pageSizeOptions]="[10, 25, 50, 100]"
+                                    [totalRecords]="totalStudentRows()"
+                                    (pageChange)="overviewPage.set($event)"
+                                    (pageSizeChange)="updateOverviewPageSize($event)"
+                                />
+                            </tumaet-ui-table-layout>
                         </section>
                     }
-                    <tumaet-ui-paginator
-                        class="presentation-paginator"
-                        [page]="overviewPage()"
-                        [pageSize]="overviewPageSize()"
-                        [pageSizeOptions]="[10, 25, 50, 100]"
-                        [totalRecords]="totalStudentRows()"
-                        (pageChange)="overviewPage.set($event)"
-                        (pageSizeChange)="updateOverviewPageSize($event)"
-                    />
                 } @else {
                     <tumaet-ui-message severity="secondary" data-testid="presentation-assessments-empty-message">
                         <span jhiTranslate="artemisApp.presentationAssessment.noExisting"></span>

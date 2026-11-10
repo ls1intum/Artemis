@@ -1,3 +1,4 @@
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { BuildJobSearchComponent } from 'app/localci/shared/build-job-search.component';
 import { subscribeToFinishedBuildJobSearch, subscribeToFinishedBuildJobs } from 'app/localci/build-queue/finished-build-job-loading';
 import { NgTemplateOutlet } from '@angular/common';
@@ -13,7 +14,7 @@ import { onError } from 'app/foundation/util/global.utils';
 import { HttpErrorResponse, HttpHeaders } from '@angular/common/http';
 import { AlertService } from 'app/foundation/service/alert.service';
 import dayjs from 'dayjs/esm';
-import { TumAetUiButtonComponent, TumAetUiButtonGroupComponent, TumAetUiDialogComponent, TumAetUiTagComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonComponent, TumAetUiButtonGroupComponent, TumAetUiDialogComponent, TumAetUiTableLayoutComponent, TumAetUiTagComponent } from '@tumaet/ui-angular';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { FormsModule } from '@angular/forms';
@@ -49,6 +50,8 @@ import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
     styleUrl: './build-overview.component.scss',
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
+        ArtemisTranslatePipe,
+        TumAetUiTableLayoutComponent,
         BuildJobSearchComponent,
         NgTemplateOutlet,
         TranslateDirective,

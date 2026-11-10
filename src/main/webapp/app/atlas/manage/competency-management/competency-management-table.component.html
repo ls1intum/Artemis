@@ -1,27 +1,33 @@
-<div class="d-flex flex-wrap align-items-center mt-4">
-    <h2 [jhiTranslate]="'artemisApp.' + competencyType() + '.title'" class="me-3 mb-0"></h2>
-    <div class="ms-auto d-flex align-items-center gap-2">
+<h2 [jhiTranslate]="'artemisApp.' + competencyType() + '.title'" class="mt-4 mb-2"></h2>
+<tumaet-ui-table-layout>
+    <div tumAetUiTableToolbar class="flex min-w-0 flex-1 items-center gap-2">
         @if (courseCompetencies().length) {
-            <p-iconfield iconPosition="left">
-                <p-inputicon>
-                    <fa-icon [icon]="faMagnifyingGlass" />
-                </p-inputicon>
-                <input
-                    [attr.aria-label]="searchPlaceholder()"
-                    #searchInput
-                    pInputText
-                    type="text"
-                    class="competency-search-input"
-                    [placeholder]="searchPlaceholder()"
-                    [value]="filterText()"
-                    (input)="filterText.set(searchInput.value)"
-                />
-            </p-iconfield>
+            <input
+                #searchInput
+                tumAetUiInput
+                tumAetUiInputSize="small"
+                type="search"
+                class="max-w-72 min-w-24 flex-1"
+                data-testid="competency-search-input"
+                [attr.aria-label]="searchPlaceholder()"
+                [placeholder]="searchPlaceholder()"
+                [value]="filterText()"
+                (input)="filterText.set(searchInput.value)"
+            />
         }
-        <div ngbDropdown class="d-inline">
-            <button tumAetUiButton size="small" severity="secondary" type="button" id="importCompetenciesDropdown" ngbDropdownToggle>
+        <span class="flex-1"></span>
+        <div ngbDropdown container="body" class="inline-block">
+            <button
+                [attr.aria-label]="'artemisApp.' + competencyType() + '.manage.importButton' | artemisTranslate"
+                tumAetUiButton
+                size="small"
+                severity="secondary"
+                type="button"
+                id="importCompetenciesDropdown"
+                ngbDropdownToggle
+            >
                 <fa-icon [icon]="faFileImport" />
-                {{ 'artemisApp.' + competencyType() + '.manage.importButton' | artemisTranslate }}
+                <span class="hidden md:inline">{{ 'artemisApp.' + competencyType() + '.manage.importButton' | artemisTranslate }}</span>
             </button>
             <div ngbDropdownMenu aria-labelledby="importCompetenciesDropdown">
                 <button type="button" class="btn" id="competencyImportAllButton" (click)="openImportAllModal()" ngbDropdownItem>
@@ -40,37 +46,37 @@
                 }
             </div>
         </div>
-        <a tumAetUiButton size="small" severity="primary" [routerLink]="['/course-management', courseId(), competencyType() + '-management', 'create']">
+        <a
+            tumAetUiButton
+            size="small"
+            severity="primary"
+            [attr.aria-label]="'artemisApp.' + competencyType() + '.manage.createButton' | artemisTranslate"
+            [routerLink]="['/course-management', courseId(), competencyType() + '-management', 'create']"
+        >
             <fa-icon [icon]="faPlus" />
-            <span [jhiTranslate]="'artemisApp.' + competencyType() + '.manage.createButton'"></span>
+            <span class="hidden md:inline" [jhiTranslate]="'artemisApp.' + competencyType() + '.manage.createButton'"></span>
         </a>
     </div>
-</div>
-<div class="table-responsive mt-2">
     @if (courseCompetencies().length) {
-        <table class="table table-striped">
+        <table tumAetUiTable size="small" striped [sortField]="sortPredicate" [sortOrder]="sortAscending ? 1 : -1" (sortChange)="onSortChange($event)">
             <thead>
-                <tr jhiSort [(predicate)]="sortPredicate" [(ascending)]="sortAscending" (sortChange)="sortRows()">
-                    <th jhiSortBy="title">
+                <tr>
+                    <th tumAetUiSortableColumn="title" data-testid="competency-sort-title">
                         <span jhiTranslate="artemisApp.competency.title"></span>
-                        <fa-icon [icon]="faSort" />
                     </th>
                     <th>
                         <span jhiTranslate="artemisApp.competency.description"></span>
                     </th>
-                    <th jhiSortBy="taxonomy">
+                    <th tumAetUiSortableColumn="taxonomy" data-testid="competency-sort-taxonomy">
                         <span jhiTranslate="artemisApp.competency.taxonomy"></span>
-                        <fa-icon [icon]="faSort" />
                     </th>
-                    <th class="d-none d-lg-table-cell" jhiSortBy="softDueDate">
+                    <th class="hidden lg:table-cell" tumAetUiSortableColumn="softDueDate">
                         <span jhiTranslate="artemisApp.competency.softDueDate"></span>
-                        <fa-icon [icon]="faSort" />
                     </th>
-                    <th class="d-none d-lg-table-cell" jhiSortBy="masteredStudents">
+                    <th class="hidden lg:table-cell" tumAetUiSortableColumn="masteredStudents">
                         <span jhiTranslate="artemisApp.competency.masteredStudents"></span>
-                        <fa-icon [icon]="faSort" />
                     </th>
-                    <th class="d-none d-lg-table-cell">
+                    <th class="hidden lg:table-cell">
                         <span jhiTranslate="artemisApp.competency.optional"></span>
                     </th>
                     <th></th>
@@ -90,30 +96,30 @@
                                     {{ 'artemisApp.courseCompetency.taxonomies.' + (competency.taxonomy ?? 'none') | artemisTranslate }}
                                 </div>
                             </td>
-                            <td class="d-none d-lg-table-cell">
+                            <td class="hidden lg:table-cell">
                                 {{ competency.softDueDate | artemisDate }}
                             </td>
-                            <td class="d-none d-lg-table-cell">
+                            <td class="hidden lg:table-cell">
                                 @if (competency.courseProgress) {
                                     {{ competency.courseProgress.numberOfMasteredStudents ?? 0 }} / {{ competency.courseProgress.numberOfStudents ?? 0 }}
                                 } @else {
                                     —
                                 }
                             </td>
-                            <td class="d-none d-lg-table-cell">
+                            <td class="hidden lg:table-cell">
                                 <span [jhiTranslate]="'global.generic.' + (competency.optional ? 'yes' : 'no')"></span>
                             </td>
                             <td>
-                                <div class="d-flex justify-content-end">
+                                <div class="flex justify-end gap-1">
                                     <a
+                                        [attr.aria-label]="'entity.action.edit' | artemisTranslate"
                                         tumAetUiButton
                                         size="small"
                                         severity="warn"
-                                        class="me-1"
                                         [routerLink]="['/course-management', courseId(), competencyType() + '-management', competency.id, 'edit']"
                                     >
                                         <fa-icon [icon]="faPencilAlt" />
-                                        <span class="d-none d-md-inline" jhiTranslate="entity.action.edit"></span>
+                                        <span class="hidden md:inline" jhiTranslate="entity.action.edit"></span>
                                     </a>
                                     <button
                                         type="button"
@@ -143,6 +149,6 @@
             </tbody>
         </table>
     } @else {
-        <span [jhiTranslate]="'artemisApp.' + competencyType() + '.manage.empty'"></span>
+        <p class="p-3 text-muted-color" [jhiTranslate]="'artemisApp.' + competencyType() + '.manage.empty'"></p>
     }
-</div>
+</tumaet-ui-table-layout>

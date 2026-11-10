@@ -197,27 +197,29 @@
     </div>
     <div class="list-controls-row">
         <h2 jhiTranslate="artemisApp.pages.tutorialGroupDetail.sessionsListTitle"></h2>
-        <div class="spacer"></div>
-        @if (loggedInUserAccessLevel() >= TutorialGroupDetailManagementAccessLevel.TUTOR_OF_GROUP) {
-            <button tumAetUiButton size="small" type="button" data-testid="new-session-button" (click)="openSessionModal()">
-                <fa-icon [icon]="faPlus" />
-                <span jhiTranslate="artemisApp.pages.tutorialGroupDetail.newSessionButtonLabel"></span>
-            </button>
-        }
-        <tumaet-ui-select-button
-            size="small"
-            [options]="sessionListOptions()"
-            [ngModel]="selectedSessionListOption()"
-            (ngModelChange)="selectedSessionListOption.set($event)"
-            optionLabel="label"
-            optionValue="value"
-            [allowEmpty]="false"
-        />
     </div>
     @let sessions = tutorialGroupSessions();
     @if (sessions) {
-        <div class="session-table-scroll">
-            <table tumAetUiTable>
+        <tumaet-ui-table-layout>
+            <div tumAetUiTableToolbar class="flex min-w-0 flex-1 items-center gap-2">
+                <span class="flex-1"></span>
+                @if (loggedInUserAccessLevel() >= TutorialGroupDetailManagementAccessLevel.TUTOR_OF_GROUP) {
+                    <button tumAetUiButton size="small" type="button" data-testid="new-session-button" (click)="openSessionModal()">
+                        <fa-icon [icon]="faPlus" />
+                        <span class="sr-only md:not-sr-only" jhiTranslate="artemisApp.pages.tutorialGroupDetail.newSessionButtonLabel"></span>
+                    </button>
+                }
+                <tumaet-ui-select-button
+                    size="small"
+                    [options]="sessionListOptions()"
+                    [ngModel]="selectedSessionListOption()"
+                    (ngModelChange)="selectedSessionListOption.set($event)"
+                    optionLabel="label"
+                    optionValue="value"
+                    [allowEmpty]="false"
+                />
+            </div>
+            <table tumAetUiTable size="small">
                 <thead>
                     <tr>
                         <th jhiTranslate="artemisApp.pages.tutorialGroupDetail.sessionTableColumnTitle.date"></th>
@@ -336,7 +338,7 @@
                     }
                 </tbody>
             </table>
-        </div>
+        </tumaet-ui-table-layout>
     }
 </div>
 <tumaet-ui-confirm-dialog />

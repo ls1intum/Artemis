@@ -4,6 +4,7 @@ import {
     TumAetUiMessageComponent,
     TumAetUiPanelComponent,
     TumAetUiTableDirective,
+    TumAetUiTableLayoutComponent,
     TumAetUiTableSortEvent,
     TumAetUiTableSortableColumnComponent,
     TumAetUiTagComponent,
@@ -86,6 +87,7 @@ import dayjs from 'dayjs/esm';
         TumAetUiTableSortableColumnComponent,
         TumAetUiTagComponent,
         TumAetUiTooltipDirective,
+        TumAetUiTableLayoutComponent,
     ],
 })
 export class AssessmentDashboardComponent implements OnInit {

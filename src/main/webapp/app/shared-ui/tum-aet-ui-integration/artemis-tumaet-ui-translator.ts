@@ -38,7 +38,7 @@ const ARTEMIS_TRANSLATION_KEYS = {
     'tumAetUi.panel.collapse': 'global.generic.collapse',
     'tumAetUi.panel.expand': 'global.generic.expand',
     'tumAetUi.paginator.ariaLabel': 'global.paginator.ariaLabel',
-    'tumAetUi.paginator.currentPageReport': 'global.item-count',
+    'tumAetUi.paginator.compactReport': 'global.paginator.compactReport',
     'tumAetUi.paginator.first': 'global.paginator.first',
     'tumAetUi.paginator.last': 'global.paginator.last',
     'tumAetUi.paginator.next': 'global.paginator.next',

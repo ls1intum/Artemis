@@ -422,8 +422,8 @@
             "dev": "Development",
             "test": "Test Server"
         },
-        "item-count": "Showing {{first}} to {{second}} of {{total}} items",
         "paginator": {
+            "compactReport": "{{first}}–{{second}} of {{total}}",
             "ariaLabel": "Pagination",
             "first": "First page",
             "previous": "Previous page",

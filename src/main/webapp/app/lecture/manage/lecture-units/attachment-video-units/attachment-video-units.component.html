@@ -19,7 +19,22 @@
             <tumaet-ui-message severity="info" [icon]="faCircleInfo" data-testid="split-summary" [text]="summary" />
         }
     }
-    <div class="overflow-x-auto">
+    <tumaet-ui-table-layout class="[--tumaet-ui-table-layout-offset:20rem]">
+        <div tumAetUiTableToolbar class="flex min-w-0 flex-1 items-center gap-2">
+            <span class="flex-1"></span>
+            <button
+                [attr.aria-label]="'artemisApp.attachmentVideoUnit.createAttachmentVideoUnits.addUnit' | artemisTranslate"
+                tumAetUiButton
+                type="button"
+                severity="secondary"
+                variant="outlined"
+                size="small"
+                (click)="addRow()"
+            >
+                <fa-icon [icon]="faPlus" />
+                <span class="hidden md:inline" jhiTranslate="artemisApp.attachmentVideoUnit.createAttachmentVideoUnits.addUnit"></span>
+            </button>
+        </div>
         <table tumAetUiTable size="small" striped>
             <thead>
                 <tr>
@@ -103,13 +118,7 @@
                 }
             </tbody>
         </table>
-    </div>
-    <div>
-        <button tumAetUiButton type="button" severity="secondary" variant="outlined" size="small" (click)="addRow()">
-            <fa-icon [icon]="faPlus" />
-            <span jhiTranslate="artemisApp.attachmentVideoUnit.createAttachmentVideoUnits.addUnit"></span>
-        </button>
-    </div>
+    </tumaet-ui-table-layout>
     <tumaet-ui-form-field controlId="removeSlidesCommaSeparatedKeyPhrases" [label]="'artemisApp.attachmentVideoUnit.createAttachmentVideoUnits.removeSlides' | artemisTranslate">
         <input
             [attr.aria-label]="'artemisApp.attachmentVideoUnit.createAttachmentVideoUnits.removeSlidesPlaceholder' | artemisTranslate"

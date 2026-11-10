@@ -107,8 +107,8 @@ describe('CourseRegistrationComponent', () => {
     it('should sort registrable courses by title in ascending order', () => {
         findAllForRegistrationStub.mockReturnValue(of(new HttpResponse({ body: [course3, course2, course1] })));
 
-        component.predicate = 'title';
-        component.ascending = true;
+        component.predicate.set('title');
+        component.ascending.set(true);
         component.loadRegistrableCourses();
 
         expect(component.filteredCoursesToSelect()).toEqual([course1, course2, course3]);
@@ -117,8 +117,8 @@ describe('CourseRegistrationComponent', () => {
     it('should sort registrable courses by title in descending order', () => {
         findAllForRegistrationStub.mockReturnValue(of(new HttpResponse({ body: [course1, course3, course2] })));
 
-        component.predicate = 'title';
-        component.ascending = false;
+        component.predicate.set('title');
+        component.ascending.set(false);
         component.loadRegistrableCourses();
 
         expect(component.filteredCoursesToSelect()).toEqual([course3, course2, course1]);
@@ -126,8 +126,8 @@ describe('CourseRegistrationComponent', () => {
 
     it('should sort registrable courses by semester in ascending order', () => {
         findAllForRegistrationStub.mockReturnValue(of(new HttpResponse({ body: [course2, course3, course1] })));
-        component.predicate = 'semester';
-        component.ascending = true;
+        component.predicate.set('semester');
+        component.ascending.set(true);
         component.loadRegistrableCourses();
 
         expect(component.filteredCoursesToSelect()).toEqual([course1, course2, course3]);
@@ -135,8 +135,8 @@ describe('CourseRegistrationComponent', () => {
 
     it('should sort registrable courses by semester in descending order', async () => {
         findAllForRegistrationStub.mockReturnValue(of(new HttpResponse({ body: [course2, course3, course1] })));
-        component.predicate = 'semester';
-        component.ascending = false;
+        component.predicate.set('semester');
+        component.ascending.set(false);
         component.loadRegistrableCourses();
 
         expect(component.filteredCoursesToSelect()).toEqual([course3, course2, course1]);
@@ -144,8 +144,8 @@ describe('CourseRegistrationComponent', () => {
 
     it('should call transition and update URL with sort parameters', () => {
         const activatedRoute = TestBed.inject(ActivatedRoute);
-        component.predicate = 'title';
-        component.ascending = true;
+        component.predicate.set('title');
+        component.ascending.set(true);
         component.searchTermString = 'test';
 
         component.transition();
@@ -162,8 +162,8 @@ describe('CourseRegistrationComponent', () => {
 
     it('should call transition with descending sort', () => {
         const activatedRoute = TestBed.inject(ActivatedRoute);
-        component.predicate = 'semester';
-        component.ascending = false;
+        component.predicate.set('semester');
+        component.ascending.set(false);
         component.searchTermString = '';
 
         component.transition();
@@ -184,8 +184,8 @@ describe('CourseRegistrationComponent', () => {
         component.ngOnInit();
 
         expect(findAllForRegistrationStub).toHaveBeenCalledOnce();
-        expect(component.predicate).toBe('title');
-        expect(component.ascending).toBe(true);
+        expect(component.predicate()).toBe('title');
+        expect(component.ascending()).toBe(true);
     });
 
     it('should handle navigation with sort parameter from query params', () => {
@@ -194,8 +194,8 @@ describe('CourseRegistrationComponent', () => {
 
         component.ngOnInit();
 
-        expect(component.predicate).toBe('semester');
-        expect(component.ascending).toBe(false);
+        expect(component.predicate()).toBe('semester');
+        expect(component.ascending()).toBe(false);
         expect(component.searchTermString).toBe('test search');
     });
 
@@ -208,8 +208,8 @@ describe('CourseRegistrationComponent', () => {
         component.ngOnInit();
 
         // Should still use default predicate and ascending since the sort param is invalid
-        expect(component.predicate).toBe('title');
-        expect(component.ascending).toBe(true);
+        expect(component.predicate()).toBe('title');
+        expect(component.ascending()).toBe(true);
     });
 
     it('should use default sort when sortParam is not a string', () => {
@@ -221,14 +221,14 @@ describe('CourseRegistrationComponent', () => {
         component.ngOnInit();
 
         // Should use fallback 'title,asc'
-        expect(component.predicate).toBe('title');
-        expect(component.ascending).toBe(true);
+        expect(component.predicate()).toBe('title');
+        expect(component.ascending()).toBe(true);
     });
 
     it('should use defaultSort when predicate is "defaultSort"', () => {
         findAllForRegistrationStub.mockReturnValue(of(new HttpResponse({ body: [course1, course2, course3] })));
 
-        component.predicate = 'defaultSort';
+        component.predicate.set('defaultSort');
         component.loadRegistrableCourses();
 
         // Should sort by title in ascending order (default behavior)
@@ -238,7 +238,7 @@ describe('CourseRegistrationComponent', () => {
     it('should use defaultSort when predicate is undefined', () => {
         findAllForRegistrationStub.mockReturnValue(of(new HttpResponse({ body: [course1, course2, course3] })));
 
-        component.predicate = undefined!;
+        component.predicate.set(undefined!);
         component.loadRegistrableCourses();
 
         // Should sort by title in ascending order (default behavior)

@@ -4,7 +4,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { FeedbackAnalysisComponent, FeedbackAnalysisState } from 'app/programming/manage/grading/feedback-analysis/feedback-analysis.component';
-import { PaginatorState } from 'primeng/paginator';
 import { FeedbackAnalysisResponse, FeedbackAnalysisService, FeedbackDetail } from 'app/programming/manage/grading/feedback-analysis/service/feedback-analysis.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { FeedbackFilterModalComponent, FilterData } from 'app/programming/manage/grading/feedback-analysis/modal/feedback-filter/feedback-filter-modal.component';
@@ -289,15 +288,16 @@ describe('FeedbackAnalysisComponent', () => {
             expect(loadDataSpy).toHaveBeenCalledOnce();
         });
 
-        it('onPageChange converts the 0-indexed PrimeNG page to a 1-indexed page', () => {
+        it('onPageChange converts the 0-indexed paginator page to a 1-indexed page', () => {
             const setPageSpy = vi.spyOn(component, 'setPage');
-            component.onPageChange({ page: 1 } as PaginatorState);
+            component.onPageChange(1);
             expect(setPageSpy).toHaveBeenCalledWith(2);
         });
 
-        it('onPageChange defaults an undefined PrimeNG page to the first page', () => {
+        it('onPageSizeChange stores the page size and returns to the first page', () => {
             const setPageSpy = vi.spyOn(component, 'setPage');
-            component.onPageChange({} as PaginatorState);
+            component.onPageSizeChange(50);
+            expect(component.pageSize()).toBe(50);
             expect(setPageSpy).toHaveBeenCalledWith(1);
         });
     });
@@ -318,16 +318,16 @@ describe('FeedbackAnalysisComponent', () => {
         expect(header.getAttribute('aria-sort')).toBe('ascending');
     });
 
-    describe('setSortedColumn', () => {
+    describe('onTableSort', () => {
         it('should update sortedColumn and sortingOrder, and reload data', async () => {
             const loadDataSpy = vi.spyOn(internals(component), 'loadData');
 
-            component.setSortedColumn('testCaseName');
+            component.onTableSort({ field: 'testCaseName', order: 1 });
             expect(component.sortedColumn()).toBe('testCaseName');
             expect(component.sortingOrder()).toBe('ASCENDING');
             expect(loadDataSpy).toHaveBeenCalledOnce();
 
-            component.setSortedColumn('testCaseName');
+            component.onTableSort({ field: 'testCaseName', order: -1 });
             expect(component.sortingOrder()).toBe('DESCENDING');
             expect(loadDataSpy).toHaveBeenCalledTimes(2);
         });

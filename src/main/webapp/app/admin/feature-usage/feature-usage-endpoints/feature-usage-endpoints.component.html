@@ -1,21 +1,19 @@
-<div class="flex flex-wrap gap-2 mb-2">
-    <tumaet-ui-select
-        [options]="moduleOptions()"
-        [ngModel]="selectedModule()"
-        (ngModelChange)="selectedModule.set($event)"
-        optionLabel="label"
-        optionValue="value"
-        size="small"
-        [ariaLabel]="'artemisApp.featureUsage.moduleFilter' | artemisTranslate"
-        data-testid="module-filter"
-    />
-</div>
-
-<div class="overflow-x-auto">
+<tumaet-ui-table-layout>
+    <div tumAetUiTableToolbar class="flex min-w-0 flex-1 items-center gap-2">
+        <tumaet-ui-select
+            [options]="moduleOptions()"
+            [ngModel]="selectedModule()"
+            (ngModelChange)="selectedModule.set($event)"
+            optionLabel="label"
+            optionValue="value"
+            size="small"
+            [ariaLabel]="'artemisApp.featureUsage.moduleFilter' | artemisTranslate"
+            data-testid="module-filter"
+        />
+    </div>
     <table
         tumAetUiTable
         size="small"
-        style="min-width: 100%"
         [sortField]="sortField()"
         [sortOrder]="sortAscending() ? 1 : -1"
         (sortChange)="onSort($event)"
@@ -99,4 +97,4 @@
             }
         </tbody>
     </table>
-</div>
+</tumaet-ui-table-layout>

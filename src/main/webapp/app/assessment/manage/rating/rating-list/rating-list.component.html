@@ -1,83 +1,82 @@
 <div class="w-full">
-    <div class="flex flex-wrap gap-y-2 overflow-x-auto">
-        <div [hidden]="ratings().length !== 0">
+    @if (ratings().length === 0) {
+        <div>
             <span>{{ 'artemisApp.ratingList.noRatingToShow' | translate }}</span>
         </div>
-        <table class="w-full text-left" [hidden]="ratings().length === 0" tumAetUiTable>
-            <thead>
-                <tr jhiSort [(predicate)]="ratingsSortingPredicate" [(ascending)]="ratingsReverseOrder" (sortChange)="sortRows()">
-                    <th jhiSortBy="id">
-                        <a class="th-link">#</a>
-                        <fa-icon [icon]="faSort" />
-                    </th>
-                    <th jhiSortBy="exerciseTitle">
-                        <a class="th-link">{{ 'artemisApp.ratingList.exercise' | translate }}</a>
-                        <fa-icon [icon]="faSort" />
-                    </th>
-                    <th jhiSortBy="exerciseType">
-                        <a class="th-link">{{ 'artemisApp.ratingList.exerciseType' | translate }}</a>
-                        <fa-icon [icon]="faSort" />
-                    </th>
-                    <th jhiSortBy="assessorLogin">
-                        <a class="th-link">{{ 'artemisApp.complaint.listOfComplaints.assessorLogin' | translate }}</a>
-                        <fa-icon [icon]="faSort" />
-                    </th>
-                    <th jhiSortBy="assessorName">
-                        <a class="th-link">{{ 'artemisApp.complaint.listOfComplaints.assessorName' | translate }}</a>
-                        <fa-icon [icon]="faSort" />
-                    </th>
-                    <th jhiSortBy="assessmentType">
-                        <a class="th-link">{{ 'artemisApp.ratingList.assessmentType' | translate }}</a>
-                        <fa-icon [icon]="faSort" />
-                    </th>
-                    <th jhiSortBy="rating">
-                        <a class="th-link">{{ 'artemisApp.ratingList.rating' | translate }}</a>
-                        <fa-icon [icon]="faSort" />
-                    </th>
-                    <th class="text-center">{{ 'artemisApp.ratingList.actions' | translate }}</th>
-                </tr>
-            </thead>
-            <tbody>
-                @for (rating of ratings(); track rating.id) {
+    } @else {
+        <tumaet-ui-table-layout>
+            <table size="small" striped tumAetUiTable [sortField]="ratingsSortingPredicate" [sortOrder]="ratingsReverseOrder ? 1 : -1" (sortChange)="onSortChange($event)">
+                <thead>
                     <tr>
-                        <td>
-                            {{ rating.id }}
-                        </td>
-                        <td>
-                            <span>{{ rating.exerciseTitle }}</span>
-                        </td>
-                        <td>
-                            <fa-icon [icon]="getExerciseIcon(rating.exerciseType)" [tumAetUiTooltip]="getExerciseTypeTooltip(rating.exerciseType) | translate" />
-                        </td>
-                        <td>
-                            <span>{{ rating.assessorLogin ?? '-' }}</span>
-                        </td>
-                        <td>
-                            <span>{{ rating.assessorName ?? '-' }}</span>
-                        </td>
-                        <td>
-                            <span>{{ getAssessmentTypeTranslationKey(rating.assessmentType) | translate }}</span>
-                        </td>
-                        <td>
-                            <span><star-rating checkedColor="gold" uncheckedColor="grey" [value]="rating.rating || 0" size="24" [readOnly]="true" [totalStars]="5" /></span>
-                        </td>
-                        <td class="text-center">
-                            <!-- TODO: also support navigating into Athena assessments in the future -->
-                            @if (rating.assessmentType !== AssessmentType.AUTOMATIC_ATHENA) {
-                                <button type="button" (click)="openResult(rating)" tumAetUiButton severity="primary" size="small">
-                                    <fa-icon [icon]="faFolderOpen" [fixedWidth]="true" />
-                                    <span>{{ 'artemisApp.ratingList.openSubmission' | translate }}</span>
-                                </button>
-                            }
-                        </td>
+                        <th tumAetUiSortableColumn="id">
+                            <span>#</span>
+                        </th>
+                        <th tumAetUiSortableColumn="exerciseTitle">
+                            <span>{{ 'artemisApp.ratingList.exercise' | translate }}</span>
+                        </th>
+                        <th tumAetUiSortableColumn="exerciseType">
+                            <span>{{ 'artemisApp.ratingList.exerciseType' | translate }}</span>
+                        </th>
+                        <th tumAetUiSortableColumn="assessorLogin">
+                            <span>{{ 'artemisApp.complaint.listOfComplaints.assessorLogin' | translate }}</span>
+                        </th>
+                        <th tumAetUiSortableColumn="assessorName">
+                            <span>{{ 'artemisApp.complaint.listOfComplaints.assessorName' | translate }}</span>
+                        </th>
+                        <th tumAetUiSortableColumn="assessmentType">
+                            <span>{{ 'artemisApp.ratingList.assessmentType' | translate }}</span>
+                        </th>
+                        <th tumAetUiSortableColumn="rating">
+                            <span>{{ 'artemisApp.ratingList.rating' | translate }}</span>
+                        </th>
+                        <th class="text-center">{{ 'artemisApp.ratingList.actions' | translate }}</th>
                     </tr>
-                }
-            </tbody>
-        </table>
-        @if (totalElements() > pageSize) {
-            <div class="flex justify-center mt-4!">
-                <tumaet-ui-paginator [page]="page() - 1" [pageSize]="pageSize" [totalRecords]="totalElements()" [showRowsPerPage]="false" (pageChange)="onPageChange($event)" />
-            </div>
-        }
-    </div>
+                </thead>
+                <tbody>
+                    @for (rating of ratings(); track rating.id) {
+                        <tr>
+                            <td>
+                                {{ rating.id }}
+                            </td>
+                            <td>
+                                <span>{{ rating.exerciseTitle }}</span>
+                            </td>
+                            <td>
+                                <fa-icon [icon]="getExerciseIcon(rating.exerciseType)" [tumAetUiTooltip]="getExerciseTypeTooltip(rating.exerciseType) | translate" />
+                            </td>
+                            <td>
+                                <span>{{ rating.assessorLogin ?? '-' }}</span>
+                            </td>
+                            <td>
+                                <span>{{ rating.assessorName ?? '-' }}</span>
+                            </td>
+                            <td>
+                                <span>{{ getAssessmentTypeTranslationKey(rating.assessmentType) | translate }}</span>
+                            </td>
+                            <td>
+                                <span><star-rating checkedColor="gold" uncheckedColor="grey" [value]="rating.rating || 0" size="24" [readOnly]="true" [totalStars]="5" /></span>
+                            </td>
+                            <td class="text-center">
+                                <!-- TODO: also support navigating into Athena assessments in the future -->
+                                @if (rating.assessmentType !== AssessmentType.AUTOMATIC_ATHENA) {
+                                    <button type="button" (click)="openResult(rating)" tumAetUiButton severity="primary" size="small">
+                                        <fa-icon [icon]="faFolderOpen" [fixedWidth]="true" />
+                                        <span>{{ 'artemisApp.ratingList.openSubmission' | translate }}</span>
+                                    </button>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+            <tumaet-ui-paginator
+                tumAetUiTableFooter
+                [page]="page() - 1"
+                [pageSize]="pageSize"
+                [totalRecords]="totalElements()"
+                [showRowsPerPage]="false"
+                (pageChange)="onPageChange($event)"
+            />
+        </tumaet-ui-table-layout>
+    }
 </div>

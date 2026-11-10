@@ -2,24 +2,26 @@
     <form name="exportForm" role="form" (ngSubmit)="exportRepos()" #exportForm="ngForm">
         <div class="modal-body">
             @if (isRepoExportForMultipleExercises()) {
-                <div class="table-responsive m-2 p-1">
+                <div class="m-2 p-1">
                     <span style="font-weight: bold" jhiTranslate="artemisApp.instructorDashboard.exportRepos.currentlySelected"
                         >You are about to download all teams'/students' submissions of the following exercises:</span
                     >
-                    <table class="table table-striped">
-                        <thead>
-                            <tr>
-                                <th scope="col" jhiTranslate="artemisApp.exercise.title"></th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @for (programmingExercise of programmingExercises; track programmingExercise) {
+                    <tumaet-ui-table-layout class="[--tumaet-ui-table-layout-offset:30rem]">
+                        <table tumAetUiTable size="small" striped>
+                            <thead>
                                 <tr>
-                                    <td>{{ programmingExercise.title }}</td>
+                                    <th scope="col" jhiTranslate="artemisApp.exercise.title"></th>
                                 </tr>
-                            }
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody>
+                                @for (programmingExercise of programmingExercises; track programmingExercise) {
+                                    <tr>
+                                        <td>{{ programmingExercise.title }}</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </tumaet-ui-table-layout>
                 </div>
             }
             @if (!singleParticipantMode && !isRepoExportForMultipleExercises()) {

@@ -1,20 +1,20 @@
-<div class="d-flex justify-content-between">
-    @if (isRepositoryView()) {
-        <h3 jhiTranslate="artemisApp.programmingExercise.commitInfo.history"></h3>
-    } @else {
-        <h5 jhiTranslate="artemisApp.programmingExercise.commitInfo.title"></h5>
-    }
-    <button type="button" class="btn btn-secondary me-2" (click)="toggleAllExpanded()">
-        @if (isGroupsExpanded()) {
-            <span jhiTranslate="artemisApp.programmingExercise.configureGrading.collapseAll"></span>
-        } @else {
-            <span jhiTranslate="artemisApp.programmingExercise.configureGrading.expandAll"></span>
-        }
-    </button>
-</div>
-
-<div style="overflow-x: auto">
-    <table class="table table-responsive">
+@if (isRepositoryView()) {
+    <h3 jhiTranslate="artemisApp.programmingExercise.commitInfo.history"></h3>
+} @else {
+    <h5 jhiTranslate="artemisApp.programmingExercise.commitInfo.title"></h5>
+}
+<tumaet-ui-table-layout>
+    <div tumAetUiTableToolbar class="flex min-w-0 flex-1 items-center gap-2">
+        <span class="flex-1"></span>
+        <button tumAetUiButton type="button" size="small" severity="secondary" (click)="toggleAllExpanded()">
+            @if (isGroupsExpanded()) {
+                <span jhiTranslate="artemisApp.programmingExercise.configureGrading.collapseAll"></span>
+            } @else {
+                <span jhiTranslate="artemisApp.programmingExercise.configureGrading.expandAll"></span>
+            }
+        </button>
+    </div>
+    <table tumAetUiTable size="small">
         <thead>
             <tr>
                 <th scope="col">#</th>
@@ -43,4 +43,4 @@
             }
         </tbody>
     </table>
-</div>
+</tumaet-ui-table-layout>

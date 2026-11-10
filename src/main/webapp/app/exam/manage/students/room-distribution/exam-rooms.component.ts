@@ -8,18 +8,21 @@ import {
     ExamRoomUploadInformationDTO,
 } from 'app/exam/manage/students/room-distribution/exam-rooms.model';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { SortDirective } from 'app/foundation/sort/directive/sort.directive';
 import { SortService } from 'app/foundation/service/sort.service';
-import { SortByDirective } from 'app/foundation/sort/directive/sort-by.directive';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faSort } from '@fortawesome/free-solid-svg-icons';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ExamRoomsService } from 'app/exam/manage/students/room-distribution/exam-rooms.service';
 import { MAX_FILE_SIZE } from 'app/foundation/constants/input.constants';
 import { TranslateService } from '@ngx-translate/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService } from 'app/foundation/service/alert.service';
-import { TumAetUiButtonDirective, TumAetUiCardComponent, TumAetUiTableDirective } from '@tumaet/ui-angular';
+import {
+    TumAetUiButtonDirective,
+    TumAetUiCardComponent,
+    TumAetUiTableDirective,
+    TumAetUiTableLayoutComponent,
+    TumAetUiTableSortEvent,
+    TumAetUiTableSortableColumnComponent,
+} from '@tumaet/ui-angular';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
 import { ActivatedRoute } from '@angular/router';
@@ -34,14 +37,13 @@ import { AccountService } from 'app/core/auth/account.service';
     templateUrl: './exam-rooms.component.html',
     imports: [
         TranslateDirective,
-        SortDirective,
-        SortByDirective,
-        FaIconComponent,
         ArtemisTranslatePipe,
         HelpIconComponent,
         TumAetUiButtonDirective,
         TumAetUiCardComponent,
         TumAetUiTableDirective,
+        TumAetUiTableLayoutComponent,
+        TumAetUiTableSortableColumnComponent,
     ],
 })
 export class ExamRoomsComponent implements OnInit {
@@ -53,8 +55,6 @@ export class ExamRoomsComponent implements OnInit {
     private readonly accountService = inject(AccountService);
 
     private readonly baseTranslationPath = 'artemisApp.examRooms.management';
-
-    protected readonly faSort = faSort;
 
     private selectedFile: WritableSignal<File | undefined> = signal(undefined);
     private actionStatus: WritableSignal<'uploading' | 'uploadSuccess' | 'deleting' | 'deletionSuccess' | undefined> = signal(undefined);
@@ -94,8 +94,8 @@ export class ExamRoomsComponent implements OnInit {
     readonly hasExamRoomData: Signal<boolean> = computed(() => !!this.numberOfUniqueExamRooms());
     readonly examRoomData: Signal<ExamRoomDTOExtended[] | undefined> = computed(() => this.calculateExamRoomData());
 
-    // Fields for working with SortDirective
-    readonly sortAttribute = model<'roomNumber' | 'name' | 'building' | 'defaultCapacity' | 'maxCapacity'>('name');
+    // Sort state of the exam room table
+    readonly sortAttribute = model<string>('name');
     readonly ascending = model(true);
 
     ngOnInit() {
@@ -195,6 +195,12 @@ export class ExamRoomsComponent implements OnInit {
                 this.actionStatus.set(undefined);
             },
         });
+    }
+
+    protected onSortChange(event: TumAetUiTableSortEvent): void {
+        this.sortAttribute.set(event.field);
+        this.ascending.set(event.order === 1);
+        this.sortRows();
     }
 
     /**

@@ -1,61 +1,67 @@
-<div class="flex flex-col gap-4!">
-    <div class="flex flex-col gap-2">
-        <label for="lecture-import-search" jhiTranslate="artemisApp.lecture.import.search"></label>
-        <input tumAetUiInput id="lecture-import-search" [(ngModel)]="searchTerm" name="search" type="search" />
+<tumaet-ui-table-layout class="[--tumaet-ui-table-layout-offset:16rem]" [loading]="loading()">
+    <div tumAetUiTableToolbar class="flex min-w-0 flex-1 items-center gap-2">
+        <input
+            tumAetUiInput
+            tumAetUiInputSize="small"
+            id="lecture-import-search"
+            name="search"
+            type="search"
+            class="max-w-72 min-w-24 flex-1"
+            [(ngModel)]="searchTerm"
+            [placeholder]="'artemisApp.lecture.import.search' | artemisTranslate"
+            [attr.aria-label]="'artemisApp.lecture.import.search' | artemisTranslate"
+        />
     </div>
-    @if (loading()) {
-        <span role="status" jhiTranslate="artemisApp.lecture.import.loading"></span>
-    }
-    <div class="overflow-x-auto">
-        <table
-            tumAetUiTable
-            [striped]="true"
-            [sortField]="sortedColumn"
-            [sortOrder]="listSorting ? 1 : -1"
-            (sortChange)="sortedColumn = $event.field; listSorting = $event.order > 0"
-        >
-            <thead>
-                <tr>
-                    <th tumAetUiSortableColumn="ID"><span>#</span></th>
-                    @for (column of columns; track column.name) {
-                        <th [tumAetUiSortableColumn]="column.name"><span [jhiTranslate]="'artemisApp.lecture.import.table.' + column.name"></span></th>
-                    }
-                    <th></th>
-                </tr>
-            </thead>
-            <tbody>
-                @for (lecture of content().resultsOnPage; track lecture.id) {
-                    <tr>
-                        <td>{{ lecture.id }}</td>
-                        @for (column of columns; track column.name) {
-                            <td class="break-words">
-                                @for (part of highlight(column.getProperty(lecture)); track $index) {
-                                    @if (part.match) {
-                                        <mark class="rounded bg-state-warning/20 text-inherit">{{ part.text }}</mark>
-                                    } @else {
-                                        {{ part.text }}
-                                    }
-                                }
-                            </td>
-                        }
-                        <td>
-                            <button
-                                tumAetUiButton
-                                severity="secondary"
-                                type="button"
-                                size="small"
-                                [attr.data-testid]="'import-lecture-' + lecture.id"
-                                (click)="selectImport(lecture)"
-                                jhiTranslate="artemisApp.lecture.import.table.doImport"
-                            ></button>
-                        </td>
-                    </tr>
+    <table
+        tumAetUiTable
+        size="small"
+        [striped]="true"
+        [sortField]="sortedColumn"
+        [sortOrder]="listSorting ? 1 : -1"
+        (sortChange)="sortedColumn = $event.field; listSorting = $event.order > 0"
+    >
+        <thead>
+            <tr>
+                <th tumAetUiSortableColumn="ID"><span>#</span></th>
+                @for (column of columns; track column.name) {
+                    <th [tumAetUiSortableColumn]="column.name"><span [jhiTranslate]="'artemisApp.lecture.import.table.' + column.name"></span></th>
                 }
-            </tbody>
-        </table>
-    </div>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @for (lecture of content().resultsOnPage; track lecture.id) {
+                <tr>
+                    <td>{{ lecture.id }}</td>
+                    @for (column of columns; track column.name) {
+                        <td class="break-words">
+                            @for (part of highlight(column.getProperty(lecture)); track $index) {
+                                @if (part.match) {
+                                    <mark class="rounded bg-state-warning/20 text-inherit">{{ part.text }}</mark>
+                                } @else {
+                                    {{ part.text }}
+                                }
+                            }
+                        </td>
+                    }
+                    <td>
+                        <button
+                            tumAetUiButton
+                            severity="secondary"
+                            type="button"
+                            size="small"
+                            [attr.data-testid]="'import-lecture-' + lecture.id"
+                            (click)="selectImport(lecture)"
+                            jhiTranslate="artemisApp.lecture.import.table.doImport"
+                        ></button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
     <!-- The API supplies a page count, so the estimated total supports navigation but cannot describe an item range. -->
     <tumaet-ui-paginator
+        tumAetUiTableFooter
         [page]="state.page - 1"
         [pageSize]="state.pageSize"
         [totalRecords]="total()"
@@ -63,4 +69,4 @@
         [showRowsPerPage]="false"
         (pageChange)="onPageChange($event + 1)"
     />
-</div>
+</tumaet-ui-table-layout>

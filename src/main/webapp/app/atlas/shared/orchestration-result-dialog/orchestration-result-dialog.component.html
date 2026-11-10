@@ -3,8 +3,8 @@
         <p class="summary-box mb-4!" data-testid="orchestration-summary">{{ summaryMessage() }}</p>
     }
     @if (hasActions()) {
-        <div class="max-h-90 overflow-auto">
-            <table tumAetUiTable size="small" [scrollable]="true" data-testid="orchestration-actions">
+        <tumaet-ui-table-layout>
+            <table tumAetUiTable size="small" data-testid="orchestration-actions">
                 <thead>
                     <tr>
                         <th scope="col" jhiTranslate="artemisApp.atlasOrchestrator.resultDialog.columns.action"></th>
@@ -32,7 +32,7 @@
                     }
                 </tbody>
             </table>
-        </div>
+        </tumaet-ui-table-layout>
     } @else {
         <p class="mb-0 text-muted-color" jhiTranslate="artemisApp.atlasOrchestrator.resultDialog.empty"></p>
     }

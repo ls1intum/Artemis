@@ -44,22 +44,19 @@
         </div>
     }
     @if (allExamUsersAttendanceCheck().length > 0 && !isLoading()) {
-        <div class="overflow-x-auto" id="exams-table">
-            <table tumAetUiTable [striped]="true">
+        <tumaet-ui-table-layout id="exams-table">
+            <table tumAetUiTable size="small" [striped]="true" [sortField]="predicate()" [sortOrder]="ascending() ? 1 : -1" (sortChange)="onSortChange($event)">
                 <thead>
-                    <tr jhiSort [(predicate)]="predicate" [(ascending)]="ascending" (sortChange)="sortRows()">
-                        <th jhiSortBy="id">
+                    <tr>
+                        <th tumAetUiSortableColumn="id">
                             <span jhiTranslate="global.field.id"></span>
-                            <fa-icon [icon]="faSort" />
                         </th>
                         <th></th>
-                        <th jhiSortBy="login">
+                        <th tumAetUiSortableColumn="login">
                             <span jhiTranslate="artemisApp.examManagement.examStudents.login"></span>
-                            <fa-icon [icon]="faSort" />
                         </th>
-                        <th jhiSortBy="registrationNumber">
+                        <th tumAetUiSortableColumn="registrationNumber">
                             <span jhiTranslate="artemisApp.examManagement.examStudents.registrationNumber"></span>
-                            <fa-icon [icon]="faSort" />
                         </th>
                         <th>
                             <span jhiTranslate="artemisApp.examManagement.examStudents.attendanceChecks"></span>
@@ -153,6 +150,6 @@
                     }
                 </tbody>
             </table>
-        </div>
+        </tumaet-ui-table-layout>
     }
 </div>
