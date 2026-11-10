@@ -1,6 +1,6 @@
 <div class="build-jobs-section">
     @if (buildJobs()?.length) {
-        <tumaet-ui-table-layout style="--tumaet-ui-table-layout-offset: 28rem">
+        <tumaet-ui-table-layout style="--table-layout-offset: 28rem">
             <table tumAetUiTable [size]="'small'" [striped]="true">
                 <thead>
                     <tr jhi-build-jobs-header [running]="true" [showCourseId]="showCourseId()"></tr>

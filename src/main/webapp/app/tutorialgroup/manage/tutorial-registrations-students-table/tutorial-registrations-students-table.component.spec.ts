@@ -126,13 +126,37 @@ describe('TutorialRegistrationsStudentsTable', () => {
             expect(names()).toEqual(['Alan Turing', 'grace Hopper', 'Ada Lovelace']);
         });
 
+        const sortButton = (columnIndex: number) =>
+            fixture.nativeElement.querySelectorAll('thead th[scope="col"]')[columnIndex].querySelector('button') as HTMLButtonElement | null;
+
+        it('should render a sort button in every sortable header, so the translation does not replace it', () => {
+            // A jhiTranslate directly on the header writes its host's content and would wipe the button.
+            for (const columnIndex of [0, 1, 2, 3]) {
+                expect(sortButton(columnIndex)).not.toBeNull();
+            }
+        });
+
         it('should reorder the rows when a sortable header is clicked', () => {
-            const header = fixture.nativeElement.querySelector('th[scope="col"]:nth-child(3)') as HTMLElement;
-            (header.querySelector('button') ?? header).click();
+            sortButton(2)!.click();
             fixture.detectChanges();
 
             expect(fixture.componentInstance.sortField()).toBe('email');
             expect(names()).toEqual(['Ada Lovelace', 'Alan Turing', 'grace Hopper']);
+        });
+
+        it('should sort by registration number when its header button is clicked', () => {
+            sortButton(3)!.click();
+            fixture.detectChanges();
+
+            expect(fixture.componentInstance.sortField()).toBe('registrationNumber');
+            expect(fixture.componentInstance.sortOrder()).toBe(1);
+            expect(names()).toEqual(['grace Hopper', 'Ada Lovelace', 'Alan Turing']);
+
+            sortButton(3)!.click();
+            fixture.detectChanges();
+
+            expect(fixture.componentInstance.sortOrder()).toBe(-1);
+            expect(names()).toEqual(['Alan Turing', 'Ada Lovelace', 'grace Hopper']);
         });
     });
 

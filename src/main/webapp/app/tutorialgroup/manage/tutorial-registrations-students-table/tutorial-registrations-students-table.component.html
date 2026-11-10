@@ -9,11 +9,9 @@
                 <th scope="col" [tumAetUiSortableColumn]="'name'"><span jhiTranslate="artemisApp.pages.tutorialGroupRegistrations.studentsTableHeaderLabel.name"></span></th>
                 <th scope="col" [tumAetUiSortableColumn]="'login'"><span jhiTranslate="artemisApp.pages.tutorialGroupRegistrations.studentsTableHeaderLabel.login"></span></th>
                 <th scope="col" [tumAetUiSortableColumn]="'email'"><span jhiTranslate="artemisApp.pages.tutorialGroupRegistrations.studentsTableHeaderLabel.email"></span></th>
-                <th
-                    scope="col"
-                    [tumAetUiSortableColumn]="'registrationNumber'"
-                    jhiTranslate="artemisApp.pages.tutorialGroupRegistrations.studentsTableHeaderLabel.registrationNumber"
-                ></th>
+                <th scope="col" [tumAetUiSortableColumn]="'registrationNumber'">
+                    <span jhiTranslate="artemisApp.pages.tutorialGroupRegistrations.studentsTableHeaderLabel.registrationNumber"></span>
+                </th>
                 @if (actionColumn) {
                     <th scope="col" class="action-column text-end" [jhiTranslate]="actionColumn.headerStringKey"></th>
                 }

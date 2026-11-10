@@ -3,7 +3,7 @@
         <h2 class="m-0 text-xl font-semibold" jhiTranslate="artemisApp.exerciseUnit.createExerciseUnit.headline"></h2>
     }
     <p class="create-exercise-unit-hint m-0 text-sm" jhiTranslate="artemisApp.exerciseUnit.createExerciseUnit.description"></p>
-    <tumaet-ui-table-layout class="[--tumaet-ui-table-layout-offset:20rem]">
+    <tumaet-ui-table-layout class="[--table-layout-offset:20rem]">
         <table tumAetUiTable size="small" rowHover [sortField]="predicate()" [sortOrder]="ascending() ? 1 : -1" (sortChange)="onSortChange($event)">
             <thead>
                 <tr>

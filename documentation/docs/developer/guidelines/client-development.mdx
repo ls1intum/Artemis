@@ -892,7 +892,7 @@ alike and the controls never leave the screen:
 - Only the body scrolls, in both directions. The footer is at most 40px high, shows the range ("1–50 of 1,284") and a
   slim pager on one line, and adapts to the width of the table, so it also works inside dialogs. Skip it for lists that
   are shown completely.
-- The frame is as tall as its rows, up to the free height of the viewport. Set `--tumaet-ui-table-layout-offset` (the
+- The frame is as tall as its rows, up to the free height of the viewport. Set `--table-layout-offset` (the
   height of everything around the table, default `12rem`) where the page chrome is smaller or larger, or pass `fill`
   inside a flex-column parent that provides a height.
 - Make columns sortable with `tumAetUiSortableColumn` wherever the sort is meaningful, server-side for paged data and in

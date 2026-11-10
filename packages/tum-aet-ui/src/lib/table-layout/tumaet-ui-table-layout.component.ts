@@ -17,7 +17,7 @@ import { TumAetUiProgressSpinnerComponent } from '../progress-spinner/tumaet-ui-
  * the node instead, or put the `@if` inside it.
  *
  * The frame is as tall as its table up to the free height of the viewport, so a short table has no empty space under
- * it and a long one keeps toolbar and footer in view. Override the offset with `--tumaet-ui-table-layout-offset`
+ * it and a long one keeps toolbar and footer in view. Override the offset with `--table-layout-offset`
  * (the height of everything around the table, default 12rem) or give the frame a height with `fill` when a parent
  * already provides one.
  */

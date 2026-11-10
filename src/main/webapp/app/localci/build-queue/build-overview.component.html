@@ -78,7 +78,7 @@
                 <span jhiTranslate="artemisApp.buildQueue.finishedBuildJobs"></span>
                 <tumaet-ui-tag severity="info" [value]="finishedBuildJobs().length.toString()" />
             </h5>
-            <tumaet-ui-table-layout style="--tumaet-ui-table-layout-offset: 24rem">
+            <tumaet-ui-table-layout style="--table-layout-offset: 24rem">
                 <div tumAetUiTableToolbar class="flex min-w-0 flex-1 items-center gap-2">
                     <div jhi-build-job-search class="flex min-w-0 items-center gap-2" [(searchTerm)]="searchTerm" (searchRequested)="triggerLoadFinishedJobs()"></div>
                     <tumaet-ui-button size="small" severity="secondary" (clicked)="loadFinishedBuildJobs()" [ariaLabel]="'metrics.refresh.button' | artemisTranslate">
