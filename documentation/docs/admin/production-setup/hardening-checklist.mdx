@@ -42,6 +42,7 @@ The remaining items depend on how and where you run Artemis, so only you can ver
 - [ ] Build containers cannot join the network of the host or of another container, and the container network is not the one of your internal services. Artemis refuses a network that shares the namespace of the host or of another
       container when it starts.
 - [ ] Firewall rules keep the container subnets away from internal services and from the metadata endpoint of your cloud provider.
+- [ ] `supporting_scripts/security/check-container-isolation.sh <network>` passes for the network of your build containers, or its failures are closed by firewall rules. It starts a build-like container on that network and tries to reach the host, a neighboring container and the internet.
 - [ ] Build agents authenticate with SSH keys (`artemis.version-control.build-agent-use-ssh`) where possible, and the allowed address ranges are set where your network permits it. See
       [Build Agent Authentication](/admin/production-setup/security#build-agent-authentication).
 

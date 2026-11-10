@@ -1,0 +1,11 @@
+# Configuration of the secret scan in .github/workflows/security-scans.yml
+title = "Artemis secret scan"
+
+[extend]
+useDefault = true
+
+# Examples in the documentation show a request with a placeholder token. They are not credentials.
+[[allowlists]]
+description = "Placeholder tokens in curl examples of the documentation"
+targetRules = ["curl-auth-header"]
+paths = ['''documentation/docs/.*\.mdx?$''']
