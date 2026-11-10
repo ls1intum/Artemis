@@ -280,8 +280,22 @@ final class OutputOnlyMainProbe {
 
     /** Whether a failure of the executed test with this name costs credit: it is weighted above zero, or there is no usable plan and every test counts. */
     static Predicate<String> gradedTest(@Nullable String testPlanJson) {
+        return gradedTest(testPlanJson, Set.of());
+    }
+
+    /**
+     * Whether a failure of the executed test with this name costs credit. A usable plan decides by weight. Without one, the saved positive-credit test names of the exercise
+     * being adapted decide, and only when there are none does every test count.
+     *
+     * @param testPlanJson         the grading plan of the candidate, possibly absent
+     * @param savedGradedTestNames the exercise's saved test names that carry credit, empty outside an adaptation
+     * @return the tests whose failure costs credit
+     */
+    static Predicate<String> gradedTest(@Nullable String testPlanJson, Set<String> savedGradedTestNames) {
+        Set<String> saved = savedGradedTestNames.stream().map(OutputOnlyMainProbe::reportedTestName).collect(Collectors.toUnmodifiableSet());
+        Predicate<String> withoutPlan = saved.isEmpty() ? testName -> true : testName -> saved.contains(reportedTestName(testName));
         if (testPlanJson == null || testPlanJson.isBlank()) {
-            return testName -> true;
+            return withoutPlan;
         }
         try {
             Set<String> graded = GeneratedTestPlan.parse(testPlanJson).assessmentEntries().stream().filter(entry -> entry.seamWeightTier() > 0)
@@ -289,7 +303,7 @@ final class OutputOnlyMainProbe {
             return testName -> graded.contains(reportedTestName(testName));
         }
         catch (IllegalArgumentException _) {
-            return testName -> true;
+            return withoutPlan;
         }
     }
 

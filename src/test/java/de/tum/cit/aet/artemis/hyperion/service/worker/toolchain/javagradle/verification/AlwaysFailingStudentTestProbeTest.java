@@ -4,6 +4,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.function.Predicate;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -115,11 +117,21 @@ class AlwaysFailingStudentTestProbeTest {
         }
     }
 
-    private static String plan(boolean positiveIsGraded) {
+    @Test
+    void anAdaptationWithoutAPlanCountsOnlyTheSavedCredit() {
+        var savedCredit = OutputOnlyMainProbe.gradedTest(null, Set.of("rejectsWrongSum", "rejectsWrongSize()"));
+        var outcomes = AlwaysFailingStudentTestProbe.evaluate(Map.of(PATH, TEMPLATE), Map.of(PATH, SOLUTION), savedCredit,
+                (mutant, _) -> build(mutant == null ? List.of() : List.of("rejectsWrongSum", "rejectsWrongSize"), TESTS));
+
+        assertThat(outcomes).as("the passing zero-credit check awards nothing").singleElement().extracting(SemanticMutantOutcome::disposition)
+                .isEqualTo(Disposition.KILLED_BY_GRADED_SUITE);
+    }
+
+    private static Predicate<String> plan(boolean positiveIsGraded) {
         String positive = positiveIsGraded ? "{\"name\":\"positive\",\"seam\":\"S1\",\"seamWeightTier\":3,\"visibility\":\"ALWAYS\"}"
                 : "{\"name\":\"positive\",\"purpose\":\"PRESERVATION\",\"seamWeightTier\":0,\"visibility\":\"ALWAYS\"}";
-        return "{\"tests\":[" + positive + ",{\"name\":\"rejectsWrongSum\",\"seam\":\"S1\",\"seamWeightTier\":3,\"visibility\":\"ALWAYS\"},"
-                + "{\"name\":\"rejectsWrongSize\",\"seam\":\"S1\",\"seamWeightTier\":3,\"visibility\":\"ALWAYS\"}]}";
+        return OutputOnlyMainProbe.gradedTest("{\"tests\":[" + positive + ",{\"name\":\"rejectsWrongSum\",\"seam\":\"S1\",\"seamWeightTier\":3,\"visibility\":\"ALWAYS\"},"
+                + "{\"name\":\"rejectsWrongSize\",\"seam\":\"S1\",\"seamWeightTier\":3,\"visibility\":\"ALWAYS\"}]}");
     }
 
     private static BuildSummary build(List<String> failures, List<String> tests) {

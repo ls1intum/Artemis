@@ -13,6 +13,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
+import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -818,16 +819,15 @@ public class DifferentialVerifier {
 
     /**
      * Executes empty-body and assertion-suppression counterexamples separately for each changed learner-owned JUnit method after a passing reference build. Unchanged supplied
-     * classes and
-     * non-empty test lifecycles are excluded. Other methods remain unchanged so they cannot mask the selected method. A compilation failure is inconclusive; only the executed
-     * weighted grading tests decide whether an ineffective test is accepted.
+     * classes and non-empty test lifecycles are excluded. Other methods remain unchanged so they cannot mask the selected method. A compilation failure is inconclusive; only
+     * the executed tests that carry credit decide whether an ineffective test is accepted.
      *
      * @param sandbox               isolated workspace
      * @param sessionId             active sandbox session
      * @param exercise              exercise whose build recipe is used
      * @param producedTemplateFiles starter sources used to exclude unchanged supplied classes
      * @param producedSolutionFiles reference sources that passed verification
-     * @param testPlanJson          grading plan identifying tests that carry credit
+     * @param testPlanJson          grading plan identifying tests that carry credit; without one, the exercise's saved credit decides
      * @param seededStructuralTests trusted server-owned structural bundle
      * @param restoreCandidate      restores the pristine candidate around every probe
      * @param completed             receives each completed outcome before the next probe starts
@@ -846,13 +846,15 @@ public class DifferentialVerifier {
                 }
             }
         });
-        List<SemanticMutantOutcome> outcomes = SemanticMutantExecution.recheck(producedSolutionFiles, probes, OutputOnlyMainProbe.gradedTest(testPlanJson),
+        // An adaptation may omit its plan; the saved credit of the exercise then decides for both probes, so a zero-weight diagnostic cannot stand in for graded credit.
+        Predicate<String> graded = OutputOnlyMainProbe.gradedTest(testPlanJson, exercise.baselineGradedTestNames());
+        List<SemanticMutantOutcome> outcomes = SemanticMutantExecution.recheck(producedSolutionFiles, probes, graded,
                 (mutant, overlay) -> runSemanticMutantProbe(sandbox, sessionId, exercise, seededStructuralTests, mutant, overlay, restoreCandidate), outcome -> {
                     studentTestAssessmentHistory.record(sessionId, outcome);
                     completed.accept(outcome);
                 });
         List<SemanticMutantOutcome> allOutcomes = new ArrayList<>(outcomes);
-        List<SemanticMutantOutcome> alwaysFailing = AlwaysFailingStudentTestProbe.evaluate(producedTemplateFiles, producedSolutionFiles, testPlanJson,
+        List<SemanticMutantOutcome> alwaysFailing = AlwaysFailingStudentTestProbe.evaluate(producedTemplateFiles, producedSolutionFiles, graded,
                 (mutant, overlay) -> runSemanticMutantProbe(sandbox, sessionId, exercise, seededStructuralTests, mutant, overlay, restoreCandidate));
         alwaysFailing.forEach(outcome -> {
             studentTestAssessmentHistory.record(sessionId, outcome);

@@ -45,6 +45,7 @@ import de.tum.cit.aet.artemis.hyperion.protocol.VerificationResult;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.FakeInteractiveSandbox;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.GenerationInput;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.GenerationResources;
+import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.critic.SemanticMutant;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification.AgentVerifyReport.TestFailureEvidence;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.workspace.GenerationWorkspace;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.workspace.SandboxBuildCommands;
@@ -207,6 +208,9 @@ class DifferentialVerifierTest {
 
         private final List<Map<String, String>> restoredWorkspaceSources = new ArrayList<>();
 
+        /** Served, one per build, before {@link #solution} for ordinary solution builds. */
+        private final java.util.ArrayDeque<BuildReportSpec> queuedSolutionBuilds = new java.util.ArrayDeque<>();
+
         /** Served instead of the solution build's reports, for the hardened-reader rejection paths. */
         private TarArchiveInputStream tamperedSolutionReports;
 
@@ -216,6 +220,11 @@ class DifferentialVerifierTest {
 
         private ScriptedSandbox withTamperedSolutionReports(TarArchiveInputStream reports) {
             this.tamperedSolutionReports = reports;
+            return this;
+        }
+
+        private ScriptedSandbox firstSolutionBuilds(BuildReportSpec... builds) {
+            queuedSolutionBuilds.addAll(List.of(builds));
             return this;
         }
 
@@ -278,8 +287,9 @@ class DifferentialVerifierTest {
             }
             boolean solutionBuild = joined.contains("solution");
             boolean structural = joined.contains("trusted-structural");
-            BuildReportSpec spec = solutionBuild ? structural && structuralSolution != null ? structuralSolution : solution
-                    : structural && structuralTemplate != null ? structuralTemplate : template;
+            BuildReportSpec spec = solutionBuild && !structural && !queuedSolutionBuilds.isEmpty() ? queuedSolutionBuilds.poll()
+                    : solutionBuild ? structural && structuralSolution != null ? structuralSolution : solution
+                            : structural && structuralTemplate != null ? structuralTemplate : template;
             if (solutionBuild) {
                 lastSolution = spec;
             }
@@ -369,6 +379,20 @@ class DifferentialVerifierTest {
         assertThat(outcomes.getFirst().disposition())
                 .isEqualTo(stopAfterRestore == 2 ? SemanticMutantOutcome.Disposition.INCONCLUSIVE : SemanticMutantOutcome.Disposition.SURVIVED_GRADED_SUITE);
         assertThat(outcomes.subList(1, 4)).allSatisfy(outcome -> assertThat(outcome.disposition()).isEqualTo(SemanticMutantOutcome.Disposition.INCONCLUSIVE));
+    }
+
+    @Test
+    void anAdaptationWithoutAPlanDoesNotLetAZeroCreditDiagnosticKillAnEmptyLearnerTest() {
+        List<String> names = List.of("weightedCheck", "diagnostic");
+        var adaptation = new GenerationInput(1, "de.test", null, false, Set.of("weightedCheck()"), Set.of(), GenerationBuildTool.GRADLE);
+        var sandbox = new ScriptedSandbox(resultWithFails(1, names, List.of("diagnostic")), result(2, 2, 0, 1), PROBLEM_STATEMENT_WITH_TASK)
+                .firstSolutionBuilds(resultWithFails(0, names, List.of()));
+
+        var outcomes = newVerifier().probeStudentTestAssertions(sandbox, "s", adaptation, Map.of(), learnerTests(), null, SeededStructuralTests.EMPTY, NO_RESTORE, _ -> {
+        });
+
+        assertThat(outcomes).filteredOn(outcome -> outcome.mutant().evidence() != SemanticMutant.Evidence.ALWAYS_FAILING_STUDENT_TESTS).hasSize(4)
+                .allSatisfy(outcome -> assertThat(outcome.disposition()).isEqualTo(SemanticMutantOutcome.Disposition.SURVIVED_GRADED_SUITE));
     }
 
     @Test

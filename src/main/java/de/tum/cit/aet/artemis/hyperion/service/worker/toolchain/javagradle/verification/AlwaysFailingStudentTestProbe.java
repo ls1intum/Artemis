@@ -5,8 +5,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.function.Predicate;
 
-import org.jspecify.annotations.Nullable;
-
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.critic.ContractWitness;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.critic.SemanticMutant;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification.SemanticMutantOutcome.Disposition;
@@ -17,7 +15,7 @@ final class AlwaysFailingStudentTestProbe {
     private AlwaysFailingStudentTestProbe() {
     }
 
-    static List<SemanticMutantOutcome> evaluate(Map<String, String> templateFiles, Map<String, String> solutionFiles, @Nullable String testPlanJson,
+    static List<SemanticMutantOutcome> evaluate(Map<String, String> templateFiles, Map<String, String> solutionFiles, Predicate<String> graded,
             SemanticMutantExecution.ProbeRunner runner) {
         List<Map.Entry<String, String>> changed = solutionFiles.entrySet().stream()
                 .filter(entry -> entry.getKey().startsWith("src/") && entry.getKey().endsWith(".java") && !entry.getValue().equals(templateFiles.get(entry.getKey()))).toList();
@@ -32,7 +30,6 @@ final class AlwaysFailingStudentTestProbe {
         }
         SemanticMutant mutant = SemanticMutant.alwaysFailingStudentTests(file.getKey(), file.getValue(), replacement.get());
         BuildSummary baseline = runner.run(null, null);
-        Predicate<String> graded = OutputOnlyMainProbe.gradedTest(testPlanJson);
         List<String> expected = baseline.testNames().stream().filter(graded).toList();
         if (baseline.timedOut() || baseline.exitCode() != 0 || baseline.failures() != 0 || !baseline.testFailedNames().isEmpty() || baseline.tests() == 0 || expected.isEmpty()) {
             return List.of(new SemanticMutantOutcome(mutant, Disposition.INCONCLUSIVE));
