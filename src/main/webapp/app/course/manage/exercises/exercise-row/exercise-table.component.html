@@ -169,6 +169,7 @@
                                 [course]="course()"
                                 (exerciseUpdated)="exerciseUpdated.emit($event)"
                                 (exerciseDeleted)="exerciseDeleted.emit($event)"
+                                (exerciseDeletionOutcomeUnknown)="exerciseDeletionOutcomeUnknown.emit()"
                                 (quizActionsMinWidth)="onQuizActionsMinWidth($event)"
                             />
                         </td>

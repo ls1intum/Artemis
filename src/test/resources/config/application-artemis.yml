@@ -95,10 +95,6 @@ artemis:
             enabled: true # Production defaults this off; the agent and orchestrator tests need their beans, and the shared ChatClient is mocked.
         orchestrator:
             responses-api-enabled: false # General integration tests mock the shared ChatClient; adapter tests enable Responses explicitly.
-        atlasml:
-            enabled: true
-            base-url: https://fake.fake
-            auth-token: fake-token
     # Deimos LLM settings for tests. The endpoint is never called: integration tests use windows with no candidate
     # participations, and unit tests mock the client. These values only satisfy the startup validation, which
     # deliberately refuses to boot with a blank endpoint so no instance can silently send student code somewhere.

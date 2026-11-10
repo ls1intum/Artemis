@@ -172,6 +172,53 @@ buildAgents:
   # Extra labels for the build namespace, for example to satisfy a cluster's own admission or quota policy.
   namespaceLabels: {}
   concurrentBuildsPerAgent: 1
+  # Scales the number of controllers with the build queue, using a KEDA ScaledObject. OFF by default.
+  #
+  # Requires KEDA (https://keda.sh) in the cluster and a Prometheus that scrapes the core pods, which carry the
+  # prometheus.io/* annotations (artemis.podAnnotations). When enabled, the StatefulSet no longer sets `replicas`:
+  # replicaCount is ignored and the ScaledObject owns the replica count.
+  #
+  # The target is the number of controllers that the queue needs:
+  #   ceil((queued builds + running builds) / concurrentBuildsPerAgent)
+  # limited to minReplicas..maxReplicas. maxReplicas x concurrentBuildsPerAgent x the resources of one build must fit
+  # on the build nodes, otherwise the extra build Pods wait for resources.
+  #
+  # Scaling down removes the controller with the highest ordinal, whether or not it is busy. A build that it was
+  # running goes back into the queue and runs again on another agent (at most five times). The conservative
+  # scale-down behavior below keeps that rare.
+  autoscaling:
+    enabled: false
+    minReplicas: 1
+    maxReplicas: 10
+    # ONLY used with minReplicas: 0, and ignored otherwise. KEDA then reads the metric every pollingIntervalSeconds
+    # to wake the controllers up from zero, and waits cooldownPeriodSeconds after the last active trigger before it
+    # scales them to zero. Between one and maxReplicas, the Kubernetes HorizontalPodAutoscaler that KEDA creates
+    # decides, with the scaleUp and scaleDown behavior below.
+    pollingIntervalSeconds: 30
+    cooldownPeriodSeconds: 300
+    prometheus:
+      # REQUIRED when enabled. For example http://prometheus-server.monitoring.svc:80
+      serverAddress: ""
+      # PromQL label matchers that select the metrics of THIS installation, without the braces. REQUIRED unless
+      # `query` is set. A Prometheus often scrapes several Artemis installations, and without a selector the backlog
+      # of another installation would scale these controllers, and its metrics would hide a missing scrape here.
+      # Which labels exist depends on the scrape configuration of your Prometheus. Use labels that identify this
+      # installation, for example the namespace of the core pods: namespace="artemis"
+      selector: ""
+      # Optional override of the whole PromQL query, instead of the default built from `selector`. The default reads
+      # the gauges of the core nodes. They report cluster-wide values, so max() avoids counting them once per core
+      # node.
+      query: ""
+    scaleUp:
+      # At most this many controllers are added per period.
+      pods: 4
+      periodSeconds: 60
+    scaleDown:
+      # The target must stay lower than the current count for this long before a controller is removed.
+      stabilizationWindowSeconds: 600
+      # At most this many controllers are removed per period.
+      pods: 1
+      periodSeconds: 300
   javaOpts: >-
     -Xmx1536m -Xms512m
     --add-modules java.se

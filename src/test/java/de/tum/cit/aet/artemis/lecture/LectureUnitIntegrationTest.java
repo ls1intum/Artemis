@@ -802,7 +802,7 @@ class LectureUnitIntegrationTest extends AbstractSpringIntegrationIndependentBat
         var unit = citedUnitFixture(ProcessingPhase.DONE);
         lectureTranscriptionRepository.deleteAll(lectureTranscriptionRepository.findByLectureId(lecture1.getId()));
         unit.setVideoSource(null);
-        attachmentVideoUnitRepository.save(unit);
+        attachmentVideoUnitRepository.saveWithVideoSource(unit);
 
         var versions = request.get("/api/lecture/lecture-units/" + unit.getId() + "/material-versions", HttpStatus.OK, LectureUnitMaterialVersionsDTO.class);
 
@@ -824,7 +824,7 @@ class LectureUnitIntegrationTest extends AbstractSpringIntegrationIndependentBat
     private AttachmentVideoUnit citedUnitFixture(ProcessingPhase phase) {
         var unit = lectureUtilService.createAttachmentVideoUnit(lecture1, false);
         unit.setVideoSource(CITED_VIDEO_SOURCE);
-        unit = attachmentVideoUnitRepository.save(unit);
+        unit = attachmentVideoUnitRepository.saveWithVideoSource(unit);
 
         var attachment = unit.getAttachment();
         attachment.setVersion(3);

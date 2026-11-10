@@ -2,7 +2,7 @@
 id: build-runners
 title: LocalCI Build Runners
 sidebar_label: LocalCI Build Runners
-last_reviewed: 2026-11-03
+last_reviewed: 2026-11-09
 ---
 
 import Callout from "../../../src/components/Callout/Callout";
@@ -24,6 +24,9 @@ queue and its priorities, estimated start and completion times, retries, cancell
 consecutive-failure auto-pause, build logs, result and static-code-analysis parsing, statistics, and the build agent
 views in the administration section. Repositories are cloned by the agent either way, so git credentials never reach
 the build. Changing the runner changes only where the build script runs.
+
+What the build sees inside the container, which user runs it, and where images come from is described in
+[LocalCI Build Environment](/admin/production-setup/localci-build-environment).
 
 The exercise-visible feature set is the same with two exceptions, both rejected with an explicit build error rather
 than silently ignored: named Docker networks and a custom memory swap. See
@@ -71,8 +74,9 @@ image and container cleanup schedules.
 <Callout variant={CalloutVariant.warning}>
 
   The Kubernetes runner is a proof of concept. It supports everything a normal programming exercise build needs, but it
-  has not been through a production deployment. Runtime sandboxes such as gVisor or Kata, autoscaling, external secret
-  management, and highly available data services are deliberately out of scope and are left to the deployment.
+  has not been through a production deployment. Runtime sandboxes such as gVisor or Kata, external secret
+  management, and highly available data services are deliberately out of scope and are left to the deployment. The Helm chart can scale the build agents with the queue, see
+  [Operating LocalCI on Kubernetes](/admin/production-setup/localci-on-kubernetes#automatically).
 
 </Callout>
 
@@ -109,7 +113,10 @@ neither a Docker socket nor a Kubernetes API token.
   such as `sudo` and `gosu`. This matches what the Docker runner allows; restricting it further would break exercises
   on Kubernetes that build fine on Docker.
 - Exercises configured with the Docker network mode `none` additionally get a short trusted init container that drops
-  all IPv4 and IPv6 traffic except loopback. Only that init container gets `NET_ADMIN`; the builder does not.
+  all IPv4 and IPv6 traffic except loopback. Only that init container gets `NET_ADMIN`; the builder does not. The builder
+  of such an exercise also loses `CAP_NET_RAW`, because a root process that keeps it can open a packet socket that sends
+  and receives frames without passing through those firewall rules. Raw sockets are of no use to a build without a network,
+  and every other capability of the default set stays.
 
 ### Configuration
 
@@ -127,7 +134,7 @@ artemis:
             workload-service-account: artemis-localci-workload
             pod-start-timeout-seconds: 120                  # Budget for scheduling and image pulls, excluded from the build timeout
             result-collection-timeout-seconds: 60           # Budget for each helper exec call
-            job-ttl-seconds: 300                            # How long a finished Job is kept for inspection
+            job-ttl-seconds: 300                            # Fallback cleanup of finished Jobs that the agent did not delete itself
             active-deadline-grace-seconds: 60               # Added on top of the build timeout before Kubernetes kills the Job
             orphan-cleanup-interval-seconds: 30
             workspace-size-limit: 4Gi                       # Size limit of the shared emptyDir workspace
@@ -309,6 +316,11 @@ It expects Docker Desktop 4.51 or newer with the `kind` provisioner, exactly thr
 and at least 8 CPUs and 24 GiB assigned. `deployment/helm/artemis/CLUSTER-SETUP.md` documents the individual commands
 (`build`, `up`, `status`, `test`, `logs`, `down`) and the diagnostics.
 
+### Operating
+
+Configuration beyond the install, sizing, scaling, updates and monitoring of an installation that uses the chart are described in
+[Operating LocalCI on Kubernetes](/admin/production-setup/localci-on-kubernetes).
+
 ### Troubleshooting
 
 | Symptom | Where to look |
@@ -317,4 +329,4 @@ and at least 8 CPUs and 24 GiB assigned. `deployment/helm/artemis/CLUSTER-SETUP.
 | Builds fail immediately with an image-pull message | The exercise image cannot be pulled in the build namespace. Add an entry to `image-pull-secrets`. These failures are reported as exercise problems and do not pause the agent. |
 | Builds report no test feedback although the script ran | The exercise's result paths did not match anything. `kubectl -n artemis-builds logs job/<name> -c builder` shows what the script produced. |
 | Builds time out before the script starts | Scheduling or image pulls exceed `pod-start-timeout-seconds`. Raise it, or pre-pull the exercise images onto the build nodes. |
-| Jobs accumulate in the build namespace | Raise `job-ttl-seconds` only if you want to keep them for inspection; otherwise check the agent logs for failing delete calls. |
+| Jobs accumulate in the build namespace | The agent deletes a Job after it has parsed the result, and `job-ttl-seconds` only cleans up what was left behind. Check the agent logs for failing delete calls. |

@@ -222,6 +222,28 @@ public class AsyncConfiguration implements AsyncConfigurer {
     }
 
     /**
+     * Executor for the background deletion of exercises, exams and exercise groups (see {@code EntityDeletionProgressService}).
+     * <p>
+     * A deletion is started by an instructor who then watches a progress dialog, so it must not wait behind a course archive on {@code longRunningJobExecutor}. It also
+     * must not run on the shared {@code taskExecutor}: deleting the participations of a programming exercise removes repositories and build plans and can take minutes.
+     * <p>
+     * Four threads let a few instructors delete at the same time without a bulk delete of many exercises taking every thread of the node for itself. The queue is long
+     * enough that the rejection handler is unreachable in practice. If it were reached, the request would fail with an error instead of the request thread running a
+     * deletion itself.
+     *
+     * @return a dedicated pool for background deletions
+     */
+    @Bean("entityDeletionExecutor")
+    public Executor entityDeletionExecutor() {
+        ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
+        executor.setCorePoolSize(4);
+        executor.setMaxPoolSize(4);
+        executor.setQueueCapacity(500);
+        executor.setThreadNamePrefix("entity-deletion-");
+        return new ExceptionHandlingAsyncTaskExecutor(executor);
+    }
+
+    /**
      * Executor for an instructor's bulk build runs: the build of all participations of an exercise and the rebuild of
      * selected participations (see {@code ProgrammingTriggerService}).
      * <p>
