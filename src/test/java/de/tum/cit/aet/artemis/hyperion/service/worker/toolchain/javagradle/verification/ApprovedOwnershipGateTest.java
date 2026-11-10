@@ -328,6 +328,26 @@ class ApprovedOwnershipGateTest {
         assertThat(ApprovedOwnershipGate.givenTypeStudentCreatedDependencies(rows, List.of("Entry"), Map.of(), map("src/de/test/Ledger.java", samePackage))).isEmpty();
     }
 
+    @Test
+    void givenDependencies_ignoreATypeParameterThatShadowsTheStudentType() {
+        String spec = "## Design\n| Type | Role | Template status |\n|---|---|---|\n| Demo | entry point | given |\n| Player | context | student-creates |\n";
+        List<StageChecks.DesignRow> rows = StageChecks.designTableRows(spec);
+        String player = "public class Player {}";
+        String genericMethod = "public class Demo { private static <Player> Player identity(Player value) { return value; } }";
+        String genericClass = "public class Demo { static class Box<Player extends Comparable<Player>> { Player value; } }";
+        String typeArgument = "public class Demo { java.util.List<Player> players; }";
+        String outsideTheScope = "public class Demo { static <Player> Player identity(Player value) { return value; } Player current; }";
+
+        for (String demo : List.of(genericMethod, genericClass)) {
+            assertThat(ApprovedOwnershipGate.givenTypeStudentCreatedDependencies(rows, List.of("Player"), Map.of(), map("src/Demo.java", demo, "src/Player.java", player))).as(demo)
+                    .isEmpty();
+        }
+        for (String demo : List.of(typeArgument, outsideTheScope)) {
+            assertThat(ApprovedOwnershipGate.givenTypeStudentCreatedDependencies(rows, List.of("Player"), Map.of(), map("src/Demo.java", demo, "src/Player.java", player))).as(demo)
+                    .containsExactly("Demo->Player");
+        }
+    }
+
     private static Stream<Arguments> annotatedTypeOwnershipCases() {
         return Stream
                 .of("@FunctionalInterface public interface Strategy { int apply(int x); }", "@java.lang.FunctionalInterface public interface Strategy { int apply(int x); }",

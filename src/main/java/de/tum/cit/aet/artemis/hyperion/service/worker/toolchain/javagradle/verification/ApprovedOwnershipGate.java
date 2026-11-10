@@ -327,7 +327,52 @@ public final class ApprovedOwnershipGate {
                 visible = true;
             }
         }
-        return visible && Pattern.compile("(?<![\\w$.])" + Pattern.quote(simpleName) + "(?![\\w$])").matcher(maskedSource).find();
+        return visible && Pattern.compile("(?<![\\w$.])" + Pattern.quote(simpleName) + "(?![\\w$])").matcher(withoutTypeParameterScopes(maskedSource, simpleName)).find();
+    }
+
+    /**
+     * A type-parameter list: after a member modifier, a separator or an annotation for a generic method or constructor, or after the name of a generic type. A type-argument
+     * list such as {@code List<Player>} follows a type name without {@code class}, so it does not match.
+     */
+    private static final Pattern TYPE_PARAMETER_LIST = Pattern.compile("(?:\\b(?:public|protected|private|static|final|abstract|synchronized|native|default|strictfp)|[;{}]|"
+            + "\\b(?:class|interface|record)\\s+[A-Za-z_$][\\w$]*)\\s*<((?:[^<>]|<[^<>]*>)*)>");
+
+    /** The source with every scope in which {@code simpleName} names a type parameter blanked, so a generic {@code <Player> Player identity(Player p)} is not a reference. */
+    private static String withoutTypeParameterScopes(String maskedSource, String simpleName) {
+        StringBuilder visible = new StringBuilder(maskedSource);
+        Matcher list = TYPE_PARAMETER_LIST.matcher(maskedSource);
+        while (list.find()) {
+            if (!declaresTypeParameter(list.group(1), simpleName)) {
+                continue;
+            }
+            int open = maskedSource.indexOf('{', list.end());
+            int terminator = maskedSource.indexOf(';', list.end());
+            int end = open >= 0 && (terminator < 0 || open < terminator) ? matchingBrace(maskedSource, open) : terminator;
+            for (int index = list.start(); index < (end < 0 ? maskedSource.length() : end + 1); index++) {
+                visible.setCharAt(index, ' ');
+            }
+        }
+        return visible.toString();
+    }
+
+    private static final Pattern TYPE_PARAMETER_ANNOTATION = Pattern.compile("@[\\w$.]+");
+
+    /** Whether a type-parameter list such as {@code K, Player extends Comparable<Player>} declares {@code name}; commas inside a bound do not separate parameters. */
+    private static boolean declaresTypeParameter(String parameters, String name) {
+        int depth = 0;
+        int start = 0;
+        for (int index = 0; index <= parameters.length(); index++) {
+            char current = index < parameters.length() ? parameters.charAt(index) : ',';
+            depth += current == '<' ? 1 : current == '>' ? -1 : 0;
+            if (current == ',' && depth == 0) {
+                Matcher declared = JAVA_IDENTIFIER.matcher(TYPE_PARAMETER_ANNOTATION.matcher(parameters.substring(start, index)).replaceAll(" "));
+                if (declared.find() && declared.group().equals(name)) {
+                    return true;
+                }
+                start = index + 1;
+            }
+        }
+        return false;
     }
 
     private static boolean canonicalGivenFileMatches(String type, Map<String, String> templateFiles, Map<String, String> solutionFiles) {
