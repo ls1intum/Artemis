@@ -6,12 +6,13 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCase;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismVerdict;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
  * A DTO with a subset of Plagiarism Case fields for displaying relevant info to a student.
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record PlagiarismCaseDTO(Long id, PlagiarismVerdict verdict, Long studentId) {
+public record PlagiarismCaseDTO(@Schema(requiredMode = Schema.RequiredMode.REQUIRED) Long id, PlagiarismVerdict verdict, Long studentId) {
 
     /**
      * Creates a {@link PlagiarismCaseDTO} from a {@link PlagiarismCase} entity.

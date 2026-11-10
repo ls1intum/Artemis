@@ -1,4 +1,3 @@
-import { HttpResponse } from '@angular/common/http';
 import { Component, ElementRef, OnInit, effect, inject, signal, viewChildren } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { PlagiarismCasesService } from 'app/plagiarism/shared/services/plagiarism-cases.service';
@@ -80,8 +79,7 @@ export class PlagiarismCasesInstructorViewComponent implements OnInit {
             : this.plagiarismCasesService.getCoursePlagiarismCasesForInstructor(this.courseId());
 
         plagiarismCasesForInstructor$.subscribe({
-            next: (res: HttpResponse<PlagiarismCase[]>) => {
-                const plagiarismCases = res.body!;
+            next: (plagiarismCases: PlagiarismCase[]) => {
                 this.plagiarismCases.set(plagiarismCases);
                 this.groupedPlagiarismCases.set(this.getGroupedPlagiarismCasesByExercise(plagiarismCases));
             },

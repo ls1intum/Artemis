@@ -1,7 +1,7 @@
 import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
 import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { forkJoin, of } from 'rxjs';
+import { Observable, forkJoin, of } from 'rxjs';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import dayjs from 'dayjs/esm';
 import { sum } from 'lodash-es';
@@ -270,9 +270,10 @@ export class CourseScoresComponent implements OnInit {
         // find grading scale if it exists for course
         const gradingScaleObservable = this.gradingService.findGradingScaleForCourse(courseId).pipe(catchError(() => of(new HttpResponse<GradingScaleDTO>())));
 
-        const plagiarismCasesObservable = this.plagiarismEnabled()
+        // Without the plagiarism module there are no cases, and the grade calculation runs without plagiarism grades.
+        const plagiarismCasesObservable: Observable<PlagiarismCaseDTO[] | undefined> = this.plagiarismEnabled()
             ? this.plagiarismCasesService.getCoursePlagiarismCasesForScores(courseId)
-            : of(new HttpResponse<PlagiarismCaseDTO[]>());
+            : of(undefined);
 
         forkJoin([findGradeScoresObservable, gradingScaleObservable, plagiarismCasesObservable]).subscribe(([courseGradeInformation, gradingScaleResponse, plagiarismCases]) => {
             this.gradeScores.set(courseGradeInformation.gradeScores ?? []);
@@ -288,7 +289,7 @@ export class CourseScoresComponent implements OnInit {
 
             // if grading scale exists set properties
             if (this.gradingScaleExists()) {
-                this.calculateGradingScaleInformation(plagiarismCases.body ?? undefined);
+                this.calculateGradingScaleInformation(plagiarismCases);
             }
 
             this.calculateAverageAndMedianScores();

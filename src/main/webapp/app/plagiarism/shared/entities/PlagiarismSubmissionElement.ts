@@ -3,7 +3,8 @@ export class PlagiarismSubmissionElement {
     id!: number;
     column!: number;
     line!: number;
-    file!: string;
+    /** File of the token; undefined for a text submission or when the server has none. */
+    file?: string;
     /**
      * Where the token ends, counted in characters from its start and without line breaks, so it only gives the end
      * column for a token that stays on one line. Superseded by `endLine` / `endColumn`; still sent because results

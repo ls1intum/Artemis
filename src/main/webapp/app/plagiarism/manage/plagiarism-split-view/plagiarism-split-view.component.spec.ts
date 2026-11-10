@@ -14,7 +14,7 @@ import { MockComponent, MockPipe } from 'ng-mocks';
 import { TextSubmissionViewerComponent } from 'app/plagiarism/manage/plagiarism-split-view/text-submission-viewer/text-submission-viewer.component';
 import { PlagiarismStatus } from 'app/plagiarism/shared/entities/PlagiarismStatus';
 import { PlagiarismCasesService } from 'app/plagiarism/shared/services/plagiarism-cases.service';
-import { HttpResponse, provideHttpClient } from '@angular/common/http';
+import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { PlagiarismComparison } from '../../shared/entities/PlagiarismComparison';
 import { FromToElement, PlagiarismSubmissionElement } from '../../shared/entities/PlagiarismSubmissionElement';
@@ -73,7 +73,7 @@ describe('Plagiarism Split View Component', () => {
 
     it('should parse text matches for comparison', async () => {
         vi.spyOn(comp, 'parseTextMatches');
-        vi.spyOn(plagiarismCasesService, 'getPlagiarismComparisonForSplitView').mockReturnValue(of({ body: comparison } as HttpResponse<PlagiarismComparison>));
+        vi.spyOn(plagiarismCasesService, 'getPlagiarismComparisonForSplitView').mockReturnValue(of(comparison));
 
         // The constructor effect fetches and parses the comparison whenever comparison() changes (replaces the former ngOnChanges).
         fixture.componentRef.setInput('exercise', textExercise as Exercise);
@@ -87,9 +87,7 @@ describe('Plagiarism Split View Component', () => {
     });
 
     it('should not fetch comparison until the course id can be resolved', () => {
-        const getComparisonSpy = vi
-            .spyOn(plagiarismCasesService, 'getPlagiarismComparisonForSplitView')
-            .mockReturnValue(of({ body: comparison } as HttpResponse<PlagiarismComparison>));
+        const getComparisonSpy = vi.spyOn(plagiarismCasesService, 'getPlagiarismComparisonForSplitView').mockReturnValue(of(comparison));
 
         // With a comparison set but no exercise, courseId() is undefined, so the effect must not fetch.
         fixture.componentRef.setInput('comparison', { id: 1 } as PlagiarismComparison);
@@ -99,9 +97,7 @@ describe('Plagiarism Split View Component', () => {
     });
 
     it('should fetch the comparison when the exercise is bound after the comparison', () => {
-        const getComparisonSpy = vi
-            .spyOn(plagiarismCasesService, 'getPlagiarismComparisonForSplitView')
-            .mockReturnValue(of({ body: comparison } as HttpResponse<PlagiarismComparison>));
+        const getComparisonSpy = vi.spyOn(plagiarismCasesService, 'getPlagiarismComparisonForSplitView').mockReturnValue(of(comparison));
 
         // The parent may bind the inputs in either order. The effect tracks the derived course id as well, so the late exercise still triggers the fetch.
         fixture.componentRef.setInput('comparison', { id: 1 } as PlagiarismComparison);
@@ -297,9 +293,7 @@ describe('Plagiarism Split View Component', () => {
 
         const plagiarismComparison = createPlagiarismComparison();
 
-        const plagiarismCasesServiceSpy = vi
-            .spyOn(plagiarismCasesService, 'getPlagiarismComparisonForSplitView')
-            .mockReturnValue(of({ body: plagiarismComparison } as HttpResponse<PlagiarismComparison>));
+        const plagiarismCasesServiceSpy = vi.spyOn(plagiarismCasesService, 'getPlagiarismComparisonForSplitView').mockReturnValue(of(plagiarismComparison));
 
         fixture.componentRef.setInput('sortByStudentLogin', studentLogin);
         fixture.componentRef.setInput('exercise', textExercise as Exercise);
@@ -322,7 +316,7 @@ describe('Plagiarism Split View Component', () => {
     it.each([false, true])('passes student viewing purpose %s to both plagiarism panes', (forStudent) => {
         fixture.componentRef.setInput('forStudent', forStudent);
         fixture.componentRef.setInput('exercise', textExercise);
-        vi.spyOn(plagiarismCasesService, 'getPlagiarismComparisonForSplitView').mockReturnValue(of({ body: comparison } as HttpResponse<PlagiarismComparison>));
+        vi.spyOn(plagiarismCasesService, 'getPlagiarismComparisonForSplitView').mockReturnValue(of(comparison));
         fixture.detectChanges();
         const viewers = fixture.debugElement.queryAll(By.directive(TextSubmissionViewerComponent));
         expect(viewers).toHaveLength(2);

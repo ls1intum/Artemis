@@ -1,12 +1,12 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
-import { Observable, Subject, of } from 'rxjs';
+import { Subject, of } from 'rxjs';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { PlagiarismStatus } from 'app/plagiarism/shared/entities/PlagiarismStatus';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { PlagiarismCasesService } from 'app/plagiarism/shared/services/plagiarism-cases.service';
-import { HttpResponse, provideHttpClient } from '@angular/common/http';
+import { provideHttpClient } from '@angular/common/http';
 import { MockDirective } from 'ng-mocks';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
@@ -117,7 +117,7 @@ describe('Plagiarism Header Component', () => {
     });
 
     it('should update the plagiarism status', async () => {
-        const updatePlagiarismComparisonStatusStub = vi.spyOn(plagiarismCasesService, 'updatePlagiarismComparisonStatus').mockReturnValue(of({}) as Observable<HttpResponse<void>>);
+        const updatePlagiarismComparisonStatusStub = vi.spyOn(plagiarismCasesService, 'updatePlagiarismComparisonStatus').mockReturnValue(of(undefined));
         comp.updatePlagiarismStatus(PlagiarismStatus.CONFIRMED);
 
         await Promise.resolve();

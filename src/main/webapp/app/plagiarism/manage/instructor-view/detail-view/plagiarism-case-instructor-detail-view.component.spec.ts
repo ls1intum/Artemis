@@ -6,10 +6,10 @@ import { PlagiarismCasesService } from 'app/plagiarism/shared/services/plagiaris
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { PlagiarismCase, PlagiarismCaseExercise, PlagiarismCaseVerdictResponse } from 'app/plagiarism/shared/entities/PlagiarismCase';
-import { HttpResponse, provideHttpClient } from '@angular/common/http';
+import { provideHttpClient } from '@angular/common/http';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
-import { Observable, ReplaySubject, of } from 'rxjs';
+import { ReplaySubject, of } from 'rxjs';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { PlagiarismVerdict } from 'app/plagiarism/shared/entities/PlagiarismVerdict';
 import { CommunicationService } from 'app/communication/service/communication.service';
@@ -66,7 +66,7 @@ describe('Plagiarism Cases Instructor View Component', () => {
         fixture = TestBed.createComponent(PlagiarismCaseInstructorDetailViewComponent);
         component = fixture.componentInstance;
         plagiarismCasesService = TestBed.inject(PlagiarismCasesService);
-        vi.spyOn(plagiarismCasesService, 'getPlagiarismCaseDetailForInstructor').mockReturnValue(of({ body: plagiarismCase }) as Observable<HttpResponse<PlagiarismCase>>);
+        vi.spyOn(plagiarismCasesService, 'getPlagiarismCaseDetailForInstructor').mockReturnValue(of(plagiarismCase));
         saveVerdictSpy = vi.spyOn(plagiarismCasesService, 'saveVerdict');
     });
 
@@ -95,19 +95,26 @@ describe('Plagiarism Cases Instructor View Component', () => {
         expect(() => component.saveNoPlagiarismVerdict()).toThrow(Error);
     });
 
+    const verdictBy = { id: 8, login: 'instructor', name: 'Instructor' };
+    const verdictDate = '2026-11-03T10:00:00Z';
+
+    function verdictResponse(verdict: PlagiarismVerdict, fields: { verdictMessage?: string; verdictPointDeduction?: number } = {}): PlagiarismCaseVerdictResponse {
+        return { verdict, verdictMessage: fields.verdictMessage, verdictPointDeduction: fields.verdictPointDeduction ?? 0, verdictBy, verdictDate };
+    }
+
     it('should save plagiarism case plagiarism verdict', async () => {
-        saveVerdictSpy.mockReturnValue(of({ body: { verdict: PlagiarismVerdict.PLAGIARISM } }) as Observable<HttpResponse<PlagiarismCaseVerdictResponse>>);
+        saveVerdictSpy.mockReturnValue(of(verdictResponse(PlagiarismVerdict.PLAGIARISM)));
         component.posts.set([{ id: 1, plagiarismCase: { id: 1 } }]);
         component.courseId.set(1);
         component.plagiarismCaseId = 1;
         component.plagiarismCase.set({ id: 1 });
         component.saveVerdict();
         await Promise.resolve();
-        expect(component.plagiarismCase()).toEqual({ id: 1, verdict: PlagiarismVerdict.PLAGIARISM });
+        expect(component.plagiarismCase()).toEqual({ id: 1, verdict: PlagiarismVerdict.PLAGIARISM, verdictBy, verdictDate });
     });
 
     it('should save plagiarism case warning verdict', async () => {
-        saveVerdictSpy.mockReturnValue(of({ body: { verdict: PlagiarismVerdict.WARNING, verdictMessage: 'message' } }) as Observable<HttpResponse<PlagiarismCaseVerdictResponse>>);
+        saveVerdictSpy.mockReturnValue(of(verdictResponse(PlagiarismVerdict.WARNING, { verdictMessage: 'message' })));
         component.posts.set([{ id: 1, plagiarismCase: { id: 1 } }]);
         component.courseId.set(1);
         component.plagiarismCaseId = 1;
@@ -115,13 +122,11 @@ describe('Plagiarism Cases Instructor View Component', () => {
         component.verdictMessage.set('message');
         component.saveWarningVerdict();
         await Promise.resolve();
-        expect(component.plagiarismCase()).toEqual({ id: 1, verdict: PlagiarismVerdict.WARNING, verdictMessage: 'message' });
+        expect(component.plagiarismCase()).toEqual({ id: 1, verdict: PlagiarismVerdict.WARNING, verdictMessage: 'message', verdictBy, verdictDate });
     });
 
     it('should save plagiarism case point deduction verdict', async () => {
-        saveVerdictSpy.mockReturnValue(
-            of({ body: { verdict: PlagiarismVerdict.POINT_DEDUCTION, verdictPointDeduction: 80 } }) as Observable<HttpResponse<PlagiarismCaseVerdictResponse>>,
-        );
+        saveVerdictSpy.mockReturnValue(of(verdictResponse(PlagiarismVerdict.POINT_DEDUCTION, { verdictPointDeduction: 80 })));
         component.posts.set([{ id: 1, plagiarismCase: { id: 1 } }]);
         component.courseId.set(1);
         component.plagiarismCaseId = 1;
@@ -129,18 +134,18 @@ describe('Plagiarism Cases Instructor View Component', () => {
         component.verdictPointDeduction.set(80);
         component.savePointDeductionVerdict();
         await Promise.resolve();
-        expect(component.plagiarismCase()).toEqual({ id: 1, verdict: PlagiarismVerdict.POINT_DEDUCTION, verdictPointDeduction: 80 });
+        expect(component.plagiarismCase()).toEqual({ id: 1, verdict: PlagiarismVerdict.POINT_DEDUCTION, verdictPointDeduction: 80, verdictBy, verdictDate });
     });
 
     it('should save plagiarism case no plagiarism verdict', async () => {
-        saveVerdictSpy.mockReturnValue(of({ body: { verdict: PlagiarismVerdict.NO_PLAGIARISM } }) as Observable<HttpResponse<PlagiarismCaseVerdictResponse>>);
+        saveVerdictSpy.mockReturnValue(of(verdictResponse(PlagiarismVerdict.NO_PLAGIARISM)));
         component.posts.set([{ id: 1, plagiarismCase: { id: 1 } }]);
         component.courseId.set(1);
         component.plagiarismCaseId = 1;
         component.plagiarismCase.set({ id: 1 });
         component.saveNoPlagiarismVerdict();
         await Promise.resolve();
-        expect(component.plagiarismCase()).toEqual({ id: 1, verdict: PlagiarismVerdict.NO_PLAGIARISM });
+        expect(component.plagiarismCase()).toEqual({ id: 1, verdict: PlagiarismVerdict.NO_PLAGIARISM, verdictBy, verdictDate });
     });
 
     it('should create student notification for course exercise', () => {
