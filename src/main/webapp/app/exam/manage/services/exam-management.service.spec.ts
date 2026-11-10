@@ -6,6 +6,7 @@ import { ExamStudentDTO, ExamStudentSearch } from 'app/exam/manage/students/exam
 import { UserForRegistration } from 'app/shared-ui/user-registration-modal/user-for-registration.model';
 import { SortingOrder } from 'app/foundation/pagination/pageable-table';
 import { Exam } from 'app/exam/shared/entities/exam.model';
+import { EntitySummaryCategory } from 'app/shared-ui/delete-dialog/delete-dialog.model';
 import { toExamUpdateDTO } from 'app/exam/manage/services/exam-update-dto.model';
 import dayjs from 'dayjs/esm';
 import { ExamInformationDTO } from 'app/exam/shared/entities/exam-information.model';
@@ -65,6 +66,30 @@ describe('Exam Management Service Tests', () => {
 
     afterEach(() => {
         httpMock.verify();
+    });
+
+    it('should group the deletion summary of an exam into categories', () => {
+        let categories: EntitySummaryCategory[] | undefined;
+        service.getDeletionSummary(1, 2).subscribe((value) => (categories = value));
+
+        httpMock.expectOne({ method: 'GET', url: `${service.resourceUrl}/1/exams/2/deletion-summary` }).flush({ numberOfExerciseGroups: 2, numberRegisteredStudents: 150 });
+
+        expect(categories!.map((category) => category.titleKey)).toEqual([
+            'artemisApp.examManagement.delete.summary.category.structure',
+            'artemisApp.examManagement.delete.summary.category.students',
+        ]);
+        expect(categories![1].items).toEqual([
+            { labelKey: 'artemisApp.examManagement.delete.summary.numberRegisteredStudents', value: 150, highlight: false, neverHighlight: true },
+        ]);
+    });
+
+    it('should return no categories when the server sends no deletion summary', () => {
+        let categories: EntitySummaryCategory[] | undefined;
+        service.getDeletionSummary(1, 2).subscribe((value) => (categories = value));
+
+        httpMock.expectOne({ method: 'GET', url: `${service.resourceUrl}/1/exams/2/deletion-summary` }).flush(null);
+
+        expect(categories).toEqual([]);
     });
 
     it('should choose instructor statistics explicitly before requesting', () => {

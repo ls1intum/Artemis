@@ -1,5 +1,7 @@
 {
     "error": {
+        "tumLiveUploadInProgress": "Der offene Upload wird bereits an TUM.Live gesendet. Verwirf ihn, um einen neuen zu starten.",
+        "tumLiveNotConnected": "Der Kurs ist nicht mit TUM.Live verbunden.",
         "registrationClosed": "Die Anmeldung ist geschlossen, da die Prüfung beendet ist.",
         "attendanceCorrectionNotAllowed": "Die Anwesenheit kann erst nach dem Ende einer echten Prüfung korrigiert werden.",
         "exerciseGenerationCancellationUnavailable": "Der Abbruch konnte nicht bestätigt werden. Prüfe den aktuellen Status des Laufs und versuche es erneut.",
@@ -32,6 +34,7 @@
         "noCourseIdOrExerciseGroupId": "Für einen Import muss entweder courseId oder exerciseGroupId gesetzt sein.",
         "concurrencyFailure": "Ein:e Nutzer:in hat diese Daten zeitgleich mit dir geändert. Deine Änderungen wurden abgelehnt.",
         "courseOperationInProgress": "Für diesen Kurs wird bereits ein Zurücksetzen, Löschen oder Archivieren ausgeführt. Warte, bis der Vorgang abgeschlossen ist, bevor du einen weiteren startest.",
+        "deletionInProgress": "Für diese Aufgabe, diese Klausur oder eine Aufgabengruppe derselben Klausur läuft bereits ein Löschvorgang. Warte, bis er abgeschlossen ist, bevor du einen weiteren startest.",
         "validation": "Validierungsfehler auf dem Server.",
         "resultStringNull": "Fehler! Ein Ergebnistext ist erforderlich.",
         "resultStringTooLong": "Fehler! Der Ergebnistext ist zu lange (max. 255 Zeichen)",

@@ -137,6 +137,7 @@ export class ExerciseTableComponent {
     readonly groupChange = output<TableGroupChange>();
     readonly exerciseUpdated = output<Exercise>();
     readonly exerciseDeleted = output<Exercise>();
+    readonly exerciseDeletionOutcomeUnknown = output<void>();
     readonly selectionToggle = output<number>();
     readonly selectionAllChange = output<boolean>();
 
