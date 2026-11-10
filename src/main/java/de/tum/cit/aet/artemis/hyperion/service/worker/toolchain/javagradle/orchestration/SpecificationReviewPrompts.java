@@ -93,7 +93,8 @@ final class SpecificationReviewPrompts {
                         An assessment failure does not show that the learner's task is impossible. Do not move learner-chosen cases or assertions into supplied code, rename away the
                         counterexample's learner entry point, or make the probe inapplicable. For learner-written JUnit tests, reference/style/student-tests.md demonstrates supported grading.
                         Remove incidental normative constraints that the brief does not require. Reconcile Rules, Public API, Design, Testing Strategy and risk partitions together.
-                        The revised specification receives the normal consistency and semantic review; the runtime counterexample is checked again before statement authoring.
+                        The revised specification receives the normal consistency and semantic review. The server reruns the executable assessment once the rebuilt exercise
+                        passes verification, which may be after statement authoring.
                         """;
     }
 
