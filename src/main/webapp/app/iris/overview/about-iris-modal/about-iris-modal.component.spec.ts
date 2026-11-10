@@ -17,17 +17,25 @@ describe('AboutIrisModalComponent', () => {
     let component: AboutIrisModalComponent;
     let fixture: ComponentFixture<AboutIrisModalComponent>;
     let chatService: { startFreshChat: ReturnType<typeof vi.fn> };
+    let chatServiceResolutions: number;
     const userIdentitySignal = signal<User | undefined>(undefined);
 
     beforeEach(async () => {
         vi.spyOn(console, 'warn').mockImplementation(() => {});
 
         chatService = { startFreshChat: vi.fn() };
+        chatServiceResolutions = 0;
 
         TestBed.configureTestingModule({
             imports: [AboutIrisModalComponent, MockComponent(IrisLogoComponent), MockPipe(ArtemisTranslatePipe), MockDirective(TranslateDirective)],
             providers: [
-                { provide: IrisChatService, useValue: chatService },
+                {
+                    provide: IrisChatService,
+                    useFactory: () => {
+                        chatServiceResolutions++;
+                        return chatService;
+                    },
+                },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AccountService, useValue: { userIdentity: userIdentitySignal } },
             ],
@@ -92,6 +100,15 @@ describe('AboutIrisModalComponent', () => {
         component.tryIris();
         expect(chatService.startFreshChat).toHaveBeenCalledOnce();
         expect(component.visible()).toBe(false);
+    });
+
+    it('should not create the chat service until the user tries Iris', async () => {
+        await open();
+        expect(chatServiceResolutions).toBe(0);
+
+        component.tryIris();
+
+        expect(chatServiceResolutions).toBe(1);
     });
 
     it.each([

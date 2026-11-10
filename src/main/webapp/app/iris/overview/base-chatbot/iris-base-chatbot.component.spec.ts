@@ -2245,6 +2245,7 @@ describe('IrisBaseChatbotComponent', () => {
 
         it('does not persist an answer before it is submitted', () => {
             const save = vi.spyOn(httpService, 'saveMcqResponse');
+            vi.spyOn(component, 'currentSessionId').mockReturnValue(42);
             component.onMcqAnswerChanged(mockServerMessage, { selectedIndex: 1, submitted: false });
             component.onMcqResponseSaved(mockServerMessage, { selectedIndex: 1, submitted: false });
             expect(save).not.toHaveBeenCalled();

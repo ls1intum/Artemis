@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, inject, input, model } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Injector, computed, inject, input, model } from '@angular/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import type { IconDefinition } from '@fortawesome/free-solid-svg-icons';
 import { faBook, faBrain, faCompass, faLightbulb, faShieldHalved, faThumbsUp, faUser, faXmark } from '@fortawesome/free-solid-svg-icons';
@@ -24,7 +24,8 @@ interface FeatureCard {
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AboutIrisModalComponent {
-    private readonly chatService = inject(IrisChatService);
+    // Resolved on demand: the course settings pages render this dialog without a chat, so they must not create the chat services.
+    private readonly injector = inject(Injector);
     private readonly accountService = inject(AccountService);
 
     /** Two-way visibility, driven by the host: the Iris chat and the course settings pages. */
@@ -85,7 +86,7 @@ export class AboutIrisModalComponent {
     }
 
     tryIris(): void {
-        this.chatService.startFreshChat();
+        this.injector.get(IrisChatService).startFreshChat();
         this.close();
     }
 }
