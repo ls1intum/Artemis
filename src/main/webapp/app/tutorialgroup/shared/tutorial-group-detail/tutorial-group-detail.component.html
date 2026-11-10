@@ -200,7 +200,13 @@
     </div>
     @let sessions = tutorialGroupSessions();
     @if (sessions) {
-        <tumaet-ui-table-layout>
+        <tumaet-ui-table-layout
+            [empty]="sessions.length === 0"
+            emptyTitle="artemisApp.pages.tutorialGroupDetail.sessionsEmptyTitle"
+            [emptyDescription]="
+                loggedInUserAccessLevel() >= TutorialGroupDetailManagementAccessLevel.TUTOR_OF_GROUP ? 'artemisApp.pages.tutorialGroupDetail.sessionsEmptyDescription' : undefined
+            "
+        >
             <div tumAetUiTableToolbar class="flex min-w-0 flex-1 items-center gap-2">
                 <span class="flex-1"></span>
                 @if (loggedInUserAccessLevel() >= TutorialGroupDetailManagementAccessLevel.TUTOR_OF_GROUP) {
@@ -338,6 +344,14 @@
                     }
                 </tbody>
             </table>
+            <div tumAetUiTableEmptyActions>
+                @if (loggedInUserAccessLevel() >= TutorialGroupDetailManagementAccessLevel.TUTOR_OF_GROUP) {
+                    <button tumAetUiButton size="small" type="button" (click)="openSessionModal()">
+                        <fa-icon [icon]="faPlus" />
+                        <span jhiTranslate="artemisApp.pages.tutorialGroupDetail.newSessionButtonLabel"></span>
+                    </button>
+                }
+            </div>
         </tumaet-ui-table-layout>
     }
 </div>

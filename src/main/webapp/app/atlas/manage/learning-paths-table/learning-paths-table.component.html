@@ -6,7 +6,12 @@
             {{ formattedAverageProgress() !== undefined ? formattedAverageProgress() + '%' : 'N/A' }}
         </div>
     </div>
-    <tumaet-ui-table-layout class="max-h-72!" [loading]="isLoading()">
+    <tumaet-ui-table-layout
+        class="max-h-72!"
+        [loading]="isLoading()"
+        [empty]="learningPaths().length === 0 && !isLoading()"
+        emptyTitle="artemisApp.learningPathManagement.learningPathsTable.noResults"
+    >
         <div tumAetUiTableToolbar class="flex min-w-0 flex-1 items-center gap-2">
             <input
                 tumAetUiInput
@@ -52,12 +57,6 @@
                                 (keyup.space)="$event.target === $event.currentTarget ? keyboardAction42.click() : undefined"
                                 ><u>{{ learningPath.progress }} %</u></span
                             >
-                        </td>
-                    </tr>
-                } @empty {
-                    <tr>
-                        <td colspan="4" class="text-center">
-                            <span jhiTranslate="artemisApp.learningPathManagement.learningPathsTable.noResults"></span>
                         </td>
                     </tr>
                 }

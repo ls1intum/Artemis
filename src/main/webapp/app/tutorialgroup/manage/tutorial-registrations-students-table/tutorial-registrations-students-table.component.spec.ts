@@ -50,6 +50,16 @@ describe('TutorialRegistrationsStudentsTable', () => {
         expect(tables[0].querySelectorAll('tbody tr')).toHaveLength(1);
     });
 
+    it('should show the empty state only when there are no students', () => {
+        fixture.componentRef.setInput('students', [firstStudent]);
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelector('[data-testid="table-empty"]')).toBeNull();
+
+        fixture.componentRef.setInput('students', []);
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelector('[data-testid="table-empty"]')).not.toBeNull();
+    });
+
     it('should render one table row per input student', () => {
         fixture.componentRef.setInput('students', [firstStudent, secondStudent]);
         fixture.detectChanges();

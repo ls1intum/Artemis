@@ -2,7 +2,6 @@ import { AccountService } from 'app/core/auth/account.service';
 import {
     TumAetUiButtonDirective,
     TumAetUiCheckboxComponent,
-    TumAetUiMessageComponent,
     TumAetUiProgressSpinnerComponent,
     TumAetUiSelectComponent,
     TumAetUiTableDirective,
@@ -48,7 +47,6 @@ import { ComplaintDTO } from 'app/assessment/shared/entities/complaint-dto.model
         ArtemisDurationFromSecondsPipe,
         TumAetUiButtonDirective,
         TumAetUiTableDirective,
-        TumAetUiMessageComponent,
         TumAetUiSelectComponent,
         TumAetUiCheckboxComponent,
         TumAetUiProgressSpinnerComponent,

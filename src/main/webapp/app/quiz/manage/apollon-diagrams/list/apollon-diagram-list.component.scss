@@ -26,13 +26,4 @@
         text-align: end;
         white-space: nowrap;
     }
-
-    &__empty {
-        min-height: 8rem;
-        color: var(--text-body-secondary);
-    }
-
-    &__empty-icon {
-        opacity: 0.5;
-    }
 }

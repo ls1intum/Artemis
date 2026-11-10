@@ -3,8 +3,11 @@ import { TumAetUiEmptyStateComponent } from '../empty-state/tumaet-ui-empty-stat
 import { TumAetUiTranslatePipe } from '../i18n/tumaet-ui-translate.pipe';
 import { TumAetUiProgressSpinnerComponent } from '../progress-spinner/tumaet-ui-progress-spinner.component';
 
-/** The frame never gets smaller than this: toolbar, header, a few rows and the footer. */
-const MIN_HEIGHT_PX = 224;
+/**
+ * The measured frame never gets smaller than this: toolbar, header, about eight rows and the footer. A table far down a
+ * scrolling page (below other tables or forms) then stays usable and the page scrolls instead of squeezing the rows.
+ */
+const MIN_HEIGHT_PX = 320;
 /** Space kept free below the frame inside its scroll container. */
 const BOTTOM_GAP_PX = 12;
 const OFFSET_PROPERTY = '--table-layout-offset';

@@ -2,40 +2,36 @@
     @if (summaryMessage()) {
         <p class="summary-box mb-4!" data-testid="orchestration-summary">{{ summaryMessage() }}</p>
     }
-    @if (hasActions()) {
-        <tumaet-ui-table-layout>
-            <table tumAetUiTable size="small" data-testid="orchestration-actions">
-                <thead>
+    <tumaet-ui-table-layout [empty]="!hasActions()" emptyTitle="artemisApp.atlasOrchestrator.resultDialog.empty">
+        <table tumAetUiTable size="small" data-testid="orchestration-actions">
+            <thead>
+                <tr>
+                    <th scope="col" jhiTranslate="artemisApp.atlasOrchestrator.resultDialog.columns.action"></th>
+                    <th scope="col" jhiTranslate="artemisApp.atlasOrchestrator.resultDialog.columns.competency"></th>
+                    <th scope="col" jhiTranslate="artemisApp.atlasOrchestrator.resultDialog.columns.detail"></th>
+                    <th scope="col" jhiTranslate="artemisApp.atlasOrchestrator.resultDialog.columns.reason"></th>
+                </tr>
+            </thead>
+            <tbody>
+                @for (action of appliedActions(); track $index) {
                     <tr>
-                        <th scope="col" jhiTranslate="artemisApp.atlasOrchestrator.resultDialog.columns.action"></th>
-                        <th scope="col" jhiTranslate="artemisApp.atlasOrchestrator.resultDialog.columns.competency"></th>
-                        <th scope="col" jhiTranslate="artemisApp.atlasOrchestrator.resultDialog.columns.detail"></th>
-                        <th scope="col" jhiTranslate="artemisApp.atlasOrchestrator.resultDialog.columns.reason"></th>
+                        <td><tumaet-ui-tag [severity]="actionSeverity(action.type)" [value]="actionTypeKey(action.type) | artemisTranslate" /></td>
+                        <td>
+                            {{ action.competencyTitle }}
+                            <span class="ms-1 text-muted-color">#{{ action.competencyId }}</span>
+                            @if (weightBandTag(action.weight); as tag) {
+                                <tumaet-ui-tag severity="secondary" class="ms-2" [value]="(tag.translationKey | artemisTranslate) + ' · ' + (tag.weight | number: '1.1-1')" />
+                            }
+                        </td>
+                        <td>{{ action.detail }}</td>
+                        <td>
+                            <span class="text-muted-color">{{ action.justification }}</span>
+                        </td>
                     </tr>
-                </thead>
-                <tbody>
-                    @for (action of appliedActions(); track $index) {
-                        <tr>
-                            <td><tumaet-ui-tag [severity]="actionSeverity(action.type)" [value]="actionTypeKey(action.type) | artemisTranslate" /></td>
-                            <td>
-                                {{ action.competencyTitle }}
-                                <span class="ms-1 text-muted-color">#{{ action.competencyId }}</span>
-                                @if (weightBandTag(action.weight); as tag) {
-                                    <tumaet-ui-tag severity="secondary" class="ms-2" [value]="(tag.translationKey | artemisTranslate) + ' · ' + (tag.weight | number: '1.1-1')" />
-                                }
-                            </td>
-                            <td>{{ action.detail }}</td>
-                            <td>
-                                <span class="text-muted-color">{{ action.justification }}</span>
-                            </td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
-        </tumaet-ui-table-layout>
-    } @else {
-        <p class="mb-0 text-muted-color" jhiTranslate="artemisApp.atlasOrchestrator.resultDialog.empty"></p>
-    }
+                }
+            </tbody>
+        </table>
+    </tumaet-ui-table-layout>
     <ng-template #footer>
         <button tumAetUiButton type="button" severity="secondary" (click)="close()" data-testid="orchestration-result-close">
             <span jhiTranslate="entity.action.close"></span>

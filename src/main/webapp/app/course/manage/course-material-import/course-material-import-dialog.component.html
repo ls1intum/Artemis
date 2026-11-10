@@ -2,7 +2,12 @@
     @if (currentStep() === 'selectCourse') {
         <!-- Step 1: Course Selection -->
         <div class="course-selection-step">
-            <tumaet-ui-table-layout class="[--table-layout-offset:22rem]" [loading]="isLoadingCourses()">
+            <tumaet-ui-table-layout
+                class="[--table-layout-offset:22rem]"
+                [loading]="isLoadingCourses()"
+                [empty]="courses().length === 0 && !isLoadingCourses()"
+                emptyTitle="artemisApp.course.import.noCourses"
+            >
                 <div tumAetUiTableToolbar class="flex min-w-0 flex-1 items-center gap-2">
                     <input
                         tumAetUiInput
@@ -41,10 +46,6 @@
                                         jhiTranslate="entity.action.select"
                                     ></button>
                                 </td>
-                            </tr>
-                        } @empty {
-                            <tr>
-                                <td colspan="4" class="text-center" jhiTranslate="artemisApp.course.import.noCourses"></td>
                             </tr>
                         }
                     </tbody>

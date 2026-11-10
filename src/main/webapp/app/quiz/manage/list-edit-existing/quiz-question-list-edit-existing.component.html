@@ -112,17 +112,16 @@
                         ></button>
                     </div>
                 }
-                @if (allExistingQuestions().length === 0 && selectedCourseId !== undefined) {
-                    <div>
-                        <div>&nbsp;</div>
-                        <span jhiTranslate="artemisApp.quizExercise.noQuestionsFoundCourse"></span>
-                    </div>
-                }
-                @if (existingQuestions().length !== 0) {
-                    <tumaet-ui-table-layout class="[--table-layout-offset:20rem]">
+                @if (existingQuestions().length !== 0 || selectedCourseId !== undefined) {
+                    <tumaet-ui-table-layout
+                        class="[--table-layout-offset:20rem]"
+                        [empty]="existingQuestions().length === 0"
+                        [emptyTitle]="allExistingQuestions().length === 0 ? 'artemisApp.quizExercise.noQuestionsFoundCourse' : 'artemisApp.quizExercise.noMatchingQuestionsFound'"
+                    >
                         <div tumAetUiTableToolbar class="flex min-w-0 flex-1 items-center gap-2">
                             <span class="flex-1"></span>
                             <button
+                                [hidden]="existingQuestions().length === 0"
                                 type="button"
                                 tumAetUiButton
                                 severity="primary"
@@ -201,9 +200,6 @@
                             </tbody>
                         </table>
                     </tumaet-ui-table-layout>
-                }
-                @if (allExistingQuestions().length !== 0 && existingQuestions().length === 0 && selectedCourseId !== undefined) {
-                    <div jhiTranslate="artemisApp.quizExercise.noMatchingQuestionsFound" class="ms-3"></div>
                 }
             }
         </div>

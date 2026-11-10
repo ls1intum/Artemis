@@ -25,7 +25,11 @@
                     <span>{{ getDynamicRegistrationUrl() }}</span>
                     <jhi-copy-to-clipboard-button [copyText]="getDynamicRegistrationUrl()" />
                 </dd>
-                <tumaet-ui-table-layout class="mt-3">
+                <tumaet-ui-table-layout class="mt-3" [empty]="platforms().length === 0">
+                    <a tumAetUiTableEmptyActions tumAetUiButton size="small" [routerLink]="['/admin', 'lti-configuration', 'new']" data-testid="add-platform-empty-button">
+                        <fa-icon [icon]="faPlus" />
+                        <span jhiTranslate="artemisApp.lti13.addNewPlatform"></span>
+                    </a>
                     <div tumAetUiTableToolbar class="flex min-w-0 flex-1 items-center gap-2">
                         <h4 class="mb-0 truncate text-base" jhiTranslate="artemisApp.lti.configuredPlatforms"></h4>
                         <jhi-help-icon text="artemisApp.lti.configuredPlatformsTooltip" />

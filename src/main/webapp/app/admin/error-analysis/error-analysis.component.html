@@ -53,7 +53,7 @@
     </div>
 } @else if (result()) {
     @if (totalGroups() === 0) {
-        <p class="text-muted-color" data-testid="error-analysis-empty" jhiTranslate="artemisApp.errorAnalysis.empty"></p>
+        <tumaet-ui-empty-state variant="plain" data-testid="error-analysis-empty" [title]="'artemisApp.errorAnalysis.empty' | artemisTranslate" />
     } @else {
         <tumaet-ui-table-layout [loading]="loading()">
             <p tumAetUiTableToolbar class="m-0 truncate text-sm" data-testid="error-analysis-summary">

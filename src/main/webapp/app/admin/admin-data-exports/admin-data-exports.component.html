@@ -14,7 +14,19 @@
         </tumaet-ui-button>
     </div>
 
-    <tumaet-ui-table-layout [loading]="loading()">
+    <tumaet-ui-table-layout [loading]="loading()" [empty]="dataExports().length === 0 && !loading()" emptyTitle="artemisApp.dataExport.admin.noExports">
+        <tumaet-ui-button
+            tumAetUiTableEmptyActions
+            data-button-intent="transfer"
+            data-button-intent-reason="Opens the data export request workflow"
+            size="small"
+            severity="secondary"
+            (clicked)="openCreateModal()"
+            data-testid="create-export-empty-btn"
+        >
+            <fa-icon [icon]="faPlus" class="me-1" />
+            <span jhiTranslate="artemisApp.dataExport.admin.createExport"></span>
+        </tumaet-ui-button>
         <table tumAetUiTable size="small" data-testid="data-exports-table">
             <thead>
                 <tr>
@@ -72,12 +84,6 @@
                                     </button>
                                 }
                             </div>
-                        </td>
-                    </tr>
-                } @empty {
-                    <tr>
-                        <td colspan="7" class="text-center">
-                            <span jhiTranslate="artemisApp.dataExport.admin.noExports"></span>
                         </td>
                     </tr>
                 }

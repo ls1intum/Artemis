@@ -183,6 +183,30 @@ describe('CompetencyManagementTableComponent', () => {
         expect(competencyDeletedSpy).toHaveBeenCalledWith(1);
     });
 
+    describe('empty state', () => {
+        const empty = () => fixture.nativeElement.querySelector('[data-testid="table-empty"]');
+
+        it('should show the empty state with a create action when the course has no competencies', () => {
+            component.courseCompetencies.set([]);
+            fixture.changeDetectorRef.detectChanges();
+
+            expect(empty()).not.toBeNull();
+            expect(empty().querySelector('a')).not.toBeNull();
+        });
+
+        it('should show the empty state without a create action when only the filter matches nothing', () => {
+            component.courseCompetencies.set([{ id: 1, title: 'Algebra' } as CourseCompetency]);
+            fixture.changeDetectorRef.detectChanges();
+            expect(empty()).toBeNull();
+
+            competencyManagementTableComponent.filterText.set('zzz');
+            fixture.changeDetectorRef.detectChanges();
+
+            expect(empty()).not.toBeNull();
+            expect(empty().querySelector('a')).toBeNull();
+        });
+    });
+
     describe('filtering', () => {
         it('should filter competencies by title (case-insensitive)', () => {
             const competency1 = { id: 1, title: 'Algebra' } as CourseCompetency;

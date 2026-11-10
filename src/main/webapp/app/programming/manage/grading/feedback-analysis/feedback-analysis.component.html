@@ -1,12 +1,10 @@
-<ng-template #emptyTableTemplate>
-    <div
-        class="p-3 text-center text-muted"
-        [jhiTranslate]="this.selectedFiltersCount() > 0 || this.searchTerm() !== '' ? TRANSLATION_BASE + '.noDataFilter' : TRANSLATION_BASE + '.noData'"
-    ></div>
-</ng-template>
 <div class="m-3 flex flex-col gap-3">
     <h3 class="m-0 p-0" [jhiTranslate]="TRANSLATION_BASE + '.title'" [translateValues]="{ exerciseTitle: exerciseTitle() }"></h3>
-    <tumaet-ui-table-layout [loading]="isLoading()">
+    <tumaet-ui-table-layout
+        [loading]="isLoading()"
+        [empty]="!content().resultsOnPage?.length && !isLoading()"
+        [emptyTitle]="selectedFiltersCount() > 0 || searchTerm() !== '' ? TRANSLATION_BASE + '.noDataFilter' : TRANSLATION_BASE + '.noData'"
+    >
         <div tumAetUiTableToolbar class="flex min-w-0 flex-1 items-center gap-2">
             <input
                 tumAetUiInput
@@ -64,54 +62,46 @@
                 </tr>
             </thead>
             <tbody>
-                @if (!content().resultsOnPage) {
+                @for (item of content().resultsOnPage; track item) {
                     <tr>
-                        <td colspan="6">
-                            <ng-container *ngTemplateOutlet="emptyTableTemplate" />
+                        <td class="text-center">{{ item.count }} ({{ item.relativeCount | number: '1.0-0' }}%)</td>
+                        <td>
+                            {{ item.detailTexts[0].length > MAX_FEEDBACK_DETAIL_TEXT_LENGTH ? (item.detailTexts[0] | slice: 0 : 100) + '...' : item.detailTexts[0] }}
+                        </td>
+                        <td>{{ item.taskName }}</td>
+                        <td>{{ item.testCaseName }}</td>
+                        <td>{{ item.errorCategory }}</td>
+                        <td class="text-center">
+                            <div class="flex items-center justify-center">
+                                <button
+                                    type="button"
+                                    class="ms-2 border-0 bg-transparent p-0 text-state-info focus-visible:outline-2 focus-visible:outline-offset-2"
+                                    (click)="openFeedbackModal(item)"
+                                    [attr.aria-label]="TRANSLATION_BASE + '.feedbackModal.header' | artemisTranslate"
+                                >
+                                    <fa-icon [icon]="facDetails" />
+                                </button>
+                                <button
+                                    type="button"
+                                    class="ms-2 border-0 bg-transparent p-0 text-state-info focus-visible:outline-2 focus-visible:outline-offset-2"
+                                    (click)="openAffectedStudentsModal(item)"
+                                    [attr.aria-label]="TRANSLATION_BASE + '.affectedStudentsModal.header' | artemisTranslate"
+                                >
+                                    <fa-icon [icon]="faUsers" />
+                                </button>
+                                @if (isCommunicationEnabled()) {
+                                    <button
+                                        type="button"
+                                        class="ms-2 border-0 bg-transparent p-0 text-state-info focus-visible:outline-2 focus-visible:outline-offset-2"
+                                        (click)="openFeedbackDetailChannelModal(item)"
+                                        [attr.aria-label]="TRANSLATION_BASE + '.feedbackDetailChannel.title' | artemisTranslate"
+                                    >
+                                        <fa-icon [icon]="faMessage" />
+                                    </button>
+                                }
+                            </div>
                         </td>
                     </tr>
-                } @else {
-                    @for (item of content().resultsOnPage; track item) {
-                        <tr>
-                            <td class="text-center">{{ item.count }} ({{ item.relativeCount | number: '1.0-0' }}%)</td>
-                            <td>
-                                {{ item.detailTexts[0].length > MAX_FEEDBACK_DETAIL_TEXT_LENGTH ? (item.detailTexts[0] | slice: 0 : 100) + '...' : item.detailTexts[0] }}
-                            </td>
-                            <td>{{ item.taskName }}</td>
-                            <td>{{ item.testCaseName }}</td>
-                            <td>{{ item.errorCategory }}</td>
-                            <td class="text-center">
-                                <div class="flex items-center justify-center">
-                                    <button
-                                        type="button"
-                                        class="ms-2 border-0 bg-transparent p-0 text-state-info focus-visible:outline-2 focus-visible:outline-offset-2"
-                                        (click)="openFeedbackModal(item)"
-                                        [attr.aria-label]="TRANSLATION_BASE + '.feedbackModal.header' | artemisTranslate"
-                                    >
-                                        <fa-icon [icon]="facDetails" />
-                                    </button>
-                                    <button
-                                        type="button"
-                                        class="ms-2 border-0 bg-transparent p-0 text-state-info focus-visible:outline-2 focus-visible:outline-offset-2"
-                                        (click)="openAffectedStudentsModal(item)"
-                                        [attr.aria-label]="TRANSLATION_BASE + '.affectedStudentsModal.header' | artemisTranslate"
-                                    >
-                                        <fa-icon [icon]="faUsers" />
-                                    </button>
-                                    @if (isCommunicationEnabled()) {
-                                        <button
-                                            type="button"
-                                            class="ms-2 border-0 bg-transparent p-0 text-state-info focus-visible:outline-2 focus-visible:outline-offset-2"
-                                            (click)="openFeedbackDetailChannelModal(item)"
-                                            [attr.aria-label]="TRANSLATION_BASE + '.feedbackDetailChannel.title' | artemisTranslate"
-                                        >
-                                            <fa-icon [icon]="faMessage" />
-                                        </button>
-                                    }
-                                </div>
-                            </td>
-                        </tr>
-                    }
                 }
             </tbody>
         </table>

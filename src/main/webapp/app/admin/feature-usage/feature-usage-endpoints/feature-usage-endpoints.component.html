@@ -1,4 +1,4 @@
-<tumaet-ui-table-layout>
+<tumaet-ui-table-layout [empty]="rows().length === 0" emptyTitle="artemisApp.featureUsage.noMatches">
     <div tumAetUiTableToolbar class="flex min-w-0 flex-1 items-center gap-2">
         <tumaet-ui-select
             [options]="moduleOptions()"
@@ -89,10 +89,6 @@
                             </button>
                         }
                     </td>
-                </tr>
-            } @empty {
-                <tr>
-                    <td colspan="10" class="text-muted-color" jhiTranslate="artemisApp.featureUsage.noMatches"></td>
                 </tr>
             }
         </tbody>

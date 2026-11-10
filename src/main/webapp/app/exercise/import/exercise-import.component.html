@@ -22,7 +22,7 @@
             <span class="ms-3!" jhiTranslate="artemisApp.exercise.import.loading"></span>
         }
     </div>
-    <tumaet-ui-table-layout [loading]="loading()" class="[--table-layout-offset:22rem]">
+    <tumaet-ui-table-layout [loading]="loading()" [empty]="content().resultsOnPage.length === 0 && !loading()" class="[--table-layout-offset:22rem]">
         <table tumAetUiTable size="small" striped [sortField]="sortedColumn" [sortOrder]="listSorting ? 1 : -1" (sortChange)="onTableSort($event)">
             <thead>
                 <tr>

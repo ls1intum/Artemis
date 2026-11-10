@@ -19,7 +19,7 @@
             <tumaet-ui-message severity="info" [icon]="faCircleInfo" data-testid="split-summary" [text]="summary" />
         }
     }
-    <tumaet-ui-table-layout class="[--table-layout-offset:20rem]">
+    <tumaet-ui-table-layout class="[--table-layout-offset:20rem]" [empty]="units().length === 0 && !isLoading()">
         <div tumAetUiTableToolbar class="flex min-w-0 flex-1 items-center gap-2">
             <span class="flex-1"></span>
             <button
@@ -118,6 +118,12 @@
                 }
             </tbody>
         </table>
+        <div tumAetUiTableEmptyActions>
+            <button tumAetUiButton type="button" severity="secondary" variant="outlined" size="small" (click)="addRow()">
+                <fa-icon [icon]="faPlus" />
+                <span jhiTranslate="artemisApp.attachmentVideoUnit.createAttachmentVideoUnits.addUnit"></span>
+            </button>
+        </div>
     </tumaet-ui-table-layout>
     <tumaet-ui-form-field controlId="removeSlidesCommaSeparatedKeyPhrases" [label]="'artemisApp.attachmentVideoUnit.createAttachmentVideoUnits.removeSlides' | artemisTranslate">
         <input

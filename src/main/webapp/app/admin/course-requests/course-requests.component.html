@@ -138,18 +138,17 @@
                             </div>
                         </td>
                     </tr>
-                } @empty {
-                    <tr>
-                        <td colspan="7" class="text-center text-muted-color" jhiTranslate="artemisApp.courseRequest.admin.noPendingRequests"></td>
-                    </tr>
                 }
             </tbody>
         </table>
+        @if (pendingRequests().length === 0 && !loading()) {
+            <tumaet-ui-empty-state variant="plain" data-testid="pending-empty" [title]="'artemisApp.courseRequest.admin.noPendingRequests' | artemisTranslate" />
+        }
     </div>
 
     <!-- Decided Requests Table -->
     <h4 class="mb-3" jhiTranslate="artemisApp.courseRequest.admin.decidedTitle"></h4>
-    <tumaet-ui-table-layout [loading]="loading()">
+    <tumaet-ui-table-layout [loading]="loading()" [empty]="decidedRequests().length === 0 && !loading()" emptyTitle="artemisApp.courseRequest.admin.noDecidedRequests">
         <table tumAetUiTable size="small" [striped]="true" data-testid="decided-table">
             <thead>
                 <tr>
@@ -210,10 +209,6 @@
                                 </a>
                             }
                         </td>
-                    </tr>
-                } @empty {
-                    <tr>
-                        <td colspan="6" class="text-center text-muted-color" jhiTranslate="artemisApp.courseRequest.admin.noDecidedRequests"></td>
                     </tr>
                 }
             </tbody>

@@ -59,6 +59,8 @@ export class BuildAgentSummaryComponent implements OnInit, OnDestroy {
 
     /** Signal containing the list of all build agents with their current status */
     readonly buildAgents = signal<BuildAgentInformation[]>([]);
+    /** True once the first list of build agents arrived, so the empty state does not flash while loading. */
+    readonly buildAgentsLoaded = signal(false);
 
     /**
      * Computed signal that calculates the total build capacity across all active agents.
@@ -121,6 +123,7 @@ export class BuildAgentSummaryComponent implements OnInit, OnDestroy {
     private subscribeToWebsocketUpdates(): void {
         this.buildAgentsWebsocketSubscription = this.websocketService.subscribe<BuildAgentInformation[]>(this.buildAgentsWebsocketTopic).subscribe((updatedBuildAgents) => {
             this.buildAgents.set(updatedBuildAgents);
+            this.buildAgentsLoaded.set(true);
         });
     }
 
@@ -131,6 +134,7 @@ export class BuildAgentSummaryComponent implements OnInit, OnDestroy {
     private loadBuildAgents(): void {
         this.initialLoadSubscription = this.buildAgentsService.getBuildAgentSummary().subscribe((buildAgentsList) => {
             this.buildAgents.set(buildAgentsList);
+            this.buildAgentsLoaded.set(true);
         });
     }
 

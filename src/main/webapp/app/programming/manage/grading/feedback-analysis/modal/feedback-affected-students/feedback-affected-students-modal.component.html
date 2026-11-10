@@ -13,7 +13,7 @@
             </div>
         </div>
     } @else {
-        <tumaet-ui-table-layout class="mt-3 [--table-layout-offset:20rem]">
+        <tumaet-ui-table-layout class="mt-3 [--table-layout-offset:20rem]" [empty]="participation().length === 0">
             <table tumAetUiTable size="small" striped>
                 <thead>
                     <tr>

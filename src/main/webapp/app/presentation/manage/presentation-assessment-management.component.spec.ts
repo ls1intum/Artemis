@@ -447,6 +447,7 @@ describe('PresentationAssessmentManagementComponent', () => {
         expect(component.totalStudentRows()).toBe(0);
         expect(component.isLoadingStudentRows()).toBe(false);
         expect(component.studentRowsLoadFailed()).toBe(false);
+        expect(countByTestId('table-empty')).toBe(1);
     });
 
     it('should finish loading student rows when the response arrives', async () => {

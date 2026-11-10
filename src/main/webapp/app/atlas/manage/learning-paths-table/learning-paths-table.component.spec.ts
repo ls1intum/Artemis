@@ -75,6 +75,19 @@ describe('LearningPathsTableComponent', () => {
         vi.restoreAllMocks();
     });
 
+    it('should show the empty state only when no learning paths were found', async () => {
+        fixture.detectChanges();
+        await fixture.whenStable();
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelector('[data-testid="table-empty"]')).toBeNull();
+
+        getLearningPathInformationSpy.mockResolvedValue(<SearchResult<LearningPathInformationDTO>>{ numberOfPages: 0, resultsOnPage: [] });
+        component.search('nobody');
+        await fixture.whenStable();
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelector('[data-testid="table-empty"]')).not.toBeNull();
+    });
+
     it('should load learning paths', async () => {
         fixture.detectChanges();
         await fixture.whenStable();

@@ -3,7 +3,11 @@
         <h4 class="mb-3">
             <span jhiTranslate="artemisApp.exampleSubmission.exampleSubmissions"></span>
         </h4>
-        <tumaet-ui-table-layout>
+        <tumaet-ui-table-layout
+            [empty]="!exercise().exampleSubmissions?.length"
+            emptyTitle="artemisApp.exampleSubmission.empty.title"
+            [emptyDescription]="exercise().course!.isAtLeastEditor ? 'artemisApp.exampleSubmission.empty.description' : undefined"
+        >
             <div tumAetUiTableToolbar class="flex min-w-0 flex-1 items-center gap-2">
                 <span class="flex-1"></span>
                 @if (exercise().course!.isAtLeastEditor) {
@@ -122,6 +126,14 @@
                     }
                 </tbody>
             </table>
+            <div tumAetUiTableEmptyActions>
+                @if (exercise().course!.isAtLeastEditor) {
+                    <a tumAetUiButton size="small" data-testid="empty-create-example-submission" [routerLink]="getLinkToExampleSubmission('new')">
+                        <fa-icon [icon]="faPlus" />
+                        <span jhiTranslate="artemisApp.modelingExercise.createExampleSubmission"></span>
+                    </a>
+                }
+            </div>
         </tumaet-ui-table-layout>
     }
 </div>

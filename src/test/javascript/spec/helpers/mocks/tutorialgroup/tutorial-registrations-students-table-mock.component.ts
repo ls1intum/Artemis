@@ -9,6 +9,7 @@ import { TutorialGroupStudent } from 'app/openapi/model/tutorial-group-student';
 export class TutorialRegistrationsStudentsTableMockComponent {
     students = input.required<TutorialGroupStudent[]>();
     hasToolbar = input(false, { transform: booleanAttribute });
+    emptyTitle = input<string>();
     removeActionColumnInfo = input<TutorialRegistrationsStudentsTableRemoveActionColumnInfo>();
 
     triggerRemove(student: TutorialGroupStudent, event = new Event('click')) {

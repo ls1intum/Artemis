@@ -1,6 +1,7 @@
 <jhi-tutorial-registrations-students-table
     hasToolbar
     [students]="filteredRegisteredStudents()"
+    [emptyTitle]="searchString() ? 'global.search.noResultsFound' : undefined"
     [removeActionColumnInfo]="loggedInUserIsAtLeastTutorOfGroup() ? studentsTableRemoveActionColumnInfo : undefined"
 >
     <div studentsTableToolbar class="contents">

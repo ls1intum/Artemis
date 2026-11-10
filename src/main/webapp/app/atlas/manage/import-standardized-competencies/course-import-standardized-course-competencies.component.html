@@ -80,42 +80,38 @@
         <span jhiTranslate="artemisApp.standardizedCompetency.courseImport.empty"></span>
     }
     <h3 class="mt-3" jhiTranslate="artemisApp.standardizedCompetency.courseImport.selectedTitle"></h3>
-    <tumaet-ui-table-layout>
-        @if (selectedCompetencies.length) {
-            <table tumAetUiTable size="small" striped [sortField]="selectedSortField" [sortOrder]="selectedSortAscending ? 1 : -1" (sortChange)="onSelectedSortChange($event)">
-                <thead>
+    <tumaet-ui-table-layout [empty]="selectedCompetencies.length === 0" emptyTitle="artemisApp.standardizedCompetency.courseImport.selectedEmpty">
+        <table tumAetUiTable size="small" striped [sortField]="selectedSortField" [sortOrder]="selectedSortAscending ? 1 : -1" (sortChange)="onSelectedSortChange($event)">
+            <thead>
+                <tr>
+                    <th tumAetUiSortableColumn="id" class="w-16"><span>#</span></th>
+                    <th tumAetUiSortableColumn="title">
+                        <span [jhiTranslate]="'artemisApp.standardizedCompetency.model.title'"></span>
+                    </th>
+                    <th>
+                        <span [jhiTranslate]="'artemisApp.standardizedCompetency.model.description'"></span>
+                    </th>
+                    <th tumAetUiSortableColumn="knowledgeAreaTitle">
+                        <span [jhiTranslate]="'artemisApp.standardizedCompetency.model.knowledgeArea'"></span>
+                    </th>
+                    <!-- column for buttons -->
+                    <th class="w-16"></th>
+                </tr>
+            </thead>
+            <tbody>
+                @for (competency of selectedCompetencies; track competency.id) {
                     <tr>
-                        <th tumAetUiSortableColumn="id" class="w-16"><span>#</span></th>
-                        <th tumAetUiSortableColumn="title">
-                            <span [jhiTranslate]="'artemisApp.standardizedCompetency.model.title'"></span>
-                        </th>
-                        <th>
-                            <span [jhiTranslate]="'artemisApp.standardizedCompetency.model.description'"></span>
-                        </th>
-                        <th tumAetUiSortableColumn="knowledgeAreaTitle">
-                            <span [jhiTranslate]="'artemisApp.standardizedCompetency.model.knowledgeArea'"></span>
-                        </th>
-                        <!-- column for buttons -->
-                        <th class="w-16"></th>
+                        <td>{{ competency.id }}</td>
+                        <td>{{ competency.title }}</td>
+                        <td class="markdown-preview" [jhiMarkdown]="competency.description"></td>
+                        <td>{{ competency.knowledgeAreaTitle }}</td>
+                        <td>
+                            <jhi-button [btnType]="ButtonType.ERROR" [icon]="faTrash" (onClick)="deselectCompetency(competency)" />
+                        </td>
                     </tr>
-                </thead>
-                <tbody>
-                    @for (competency of selectedCompetencies; track competency.id) {
-                        <tr>
-                            <td>{{ competency.id }}</td>
-                            <td>{{ competency.title }}</td>
-                            <td class="markdown-preview" [jhiMarkdown]="competency.description"></td>
-                            <td>{{ competency.knowledgeAreaTitle }}</td>
-                            <td>
-                                <jhi-button [btnType]="ButtonType.ERROR" [icon]="faTrash" (onClick)="deselectCompetency(competency)" />
-                            </td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
-        } @else {
-            <p class="p-3 text-muted-color" jhiTranslate="artemisApp.standardizedCompetency.courseImport.selectedEmpty"></p>
-        }
+                }
+            </tbody>
+        </table>
     </tumaet-ui-table-layout>
     <div class="mt-3">
         @if (selectedCompetencies.length) {

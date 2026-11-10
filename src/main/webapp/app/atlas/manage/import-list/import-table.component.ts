@@ -56,7 +56,6 @@ export class ImportTableComponent<T extends BaseEntity> {
     columns = input.required<Column<T>[]>();
     readonly columnBaseTranslationKey = input.required<string>();
     disabledIds = input<number[]>([]);
-    readonly numberOfColumns = computed(() => this.columns().length + 2);
 
     readonly onRowSelection = output<T>();
 

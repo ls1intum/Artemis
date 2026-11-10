@@ -172,7 +172,7 @@
     </div>
 
     <!-- Filters -->
-    <tumaet-ui-table-layout>
+    <tumaet-ui-table-layout [empty]="filteredComponents().length === 0" emptyTitle="artemisApp.dependencies.noComponents">
         <div tumAetUiTableToolbar class="flex min-w-0 flex-1 items-center gap-2" data-testid="filters-section">
             <div class="min-w-24 max-w-72 flex-1">
                 <tumaet-ui-icon-field [icon]="faSearch">
@@ -340,12 +340,6 @@
                                     Client
                                 </tumaet-ui-tag>
                             }
-                        </td>
-                    </tr>
-                } @empty {
-                    <tr>
-                        <td colspan="6" class="text-center py-4">
-                            <span class="text-muted-color" jhiTranslate="artemisApp.dependencies.noComponents"></span>
                         </td>
                     </tr>
                 }

@@ -520,7 +520,7 @@
             <h4 class="mt-12! mb-4!">
                 <span jhiTranslate="artemisApp.examScores.studentResultsTitle"></span>
             </h4>
-            <tumaet-ui-table-layout>
+            <tumaet-ui-table-layout [empty]="!studentResults()?.length">
                 <table tumAetUiTable size="small" striped [sortField]="predicate()" [sortOrder]="ascending() ? 1 : -1" (sortChange)="onSortChange($event)">
                     <thead>
                         <tr>

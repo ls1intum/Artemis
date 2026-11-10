@@ -1,5 +1,5 @@
 <h5 class="m-0 mb-2" [jhiTranslate]="columnBaseTranslationKey() + '.table.title'"></h5>
-<tumaet-ui-table-layout [loading]="isLoading()">
+<tumaet-ui-table-layout [loading]="isLoading()" [empty]="resultsOnPage().length === 0 && !isLoading()" emptyTitle="global.generic.emptyList">
     <div tumAetUiTableToolbar class="flex min-w-0 flex-1 items-center gap-2">
         <input
             tumAetUiInput
@@ -37,10 +37,6 @@
                     <td>
                         <button tumAetUiButton size="small" severity="secondary" variant="outlined" type="button" (click)="selectRow(entity)">Select</button>
                     </td>
-                </tr>
-            } @empty {
-                <tr>
-                    <td [colSpan]="numberOfColumns()" class="text-center text-muted-color"><em jhiTranslate="global.generic.emptyList"></em></td>
                 </tr>
             }
         </tbody>

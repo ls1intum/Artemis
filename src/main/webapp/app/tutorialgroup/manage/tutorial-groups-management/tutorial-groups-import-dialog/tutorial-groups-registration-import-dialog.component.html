@@ -330,9 +330,9 @@
             </div>
         }
         <!-- Overview Table -->
-        @if (registrationsDisplayedInTable() && registrationsDisplayedInTable().length > 0) {
+        @if (isImportDone() || registrationsDisplayedInTable()?.length) {
             <div class="mb-4! mt-6!">
-                <tumaet-ui-table-layout class="[--table-layout-offset:22rem]">
+                <tumaet-ui-table-layout class="[--table-layout-offset:22rem]" [empty]="!registrationsDisplayedInTable()?.length">
                     <table tumAetUiTable size="small" [striped]="true" data-testid="tutorial-groups-import-preview">
                         <thead>
                             <tr>

@@ -72,7 +72,7 @@
                 <div class="m-1"><span jhiTranslate="artemisApp.examRooms.management.examRoomOverview.totalSeats"></span> {{ numberOfAvailable()!.examSeats }}</div>
             </strong>
             <h4 class="mt-6!"><span jhiTranslate="artemisApp.examRooms.management.examRoomOverview.examRoomsTitle"></span></h4>
-            <tumaet-ui-table-layout>
+            <tumaet-ui-table-layout [empty]="!hasExamRoomData()" emptyTitle="artemisApp.examRooms.management.examRoomOverview.empty">
                 <table tumAetUiTable size="small" [striped]="true" [sortField]="sortAttribute()" [sortOrder]="ascending() ? 1 : -1" (sortChange)="onSortChange($event)">
                     <thead>
                         <tr>
@@ -119,7 +119,7 @@
                 </table>
             </tumaet-ui-table-layout>
         } @else {
-            <p jhiTranslate="artemisApp.examRooms.management.examRoomOverview.missing"></p>
+            <tumaet-ui-empty-state variant="plain" [title]="'artemisApp.examRooms.management.examRoomOverview.missing' | artemisTranslate" />
         }
     </div>
 </div>

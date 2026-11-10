@@ -3,7 +3,7 @@
 } @else {
     <h5 jhiTranslate="artemisApp.programmingExercise.commitInfo.title"></h5>
 }
-<tumaet-ui-table-layout>
+<tumaet-ui-table-layout [empty]="groupedCommits().length === 0">
     <div tumAetUiTableToolbar class="flex min-w-0 flex-1 items-center gap-2">
         <span class="flex-1"></span>
         <button tumAetUiButton type="button" size="small" severity="secondary" (click)="toggleAllExpanded()">

@@ -106,7 +106,7 @@
         </div>
         <div class="separator"></div>
         @if (exportReady()) {
-            <tumaet-ui-table-layout>
+            <tumaet-ui-table-layout [empty]="studentStatistics().length === 0">
                 <div tumAetUiTableToolbar class="flex min-w-0 flex-1 items-center gap-2">
                     <span class="flex-1"></span>
                     <jhi-csv-export-button
@@ -120,10 +120,10 @@
                 <table tumAetUiTable size="small" striped [sortField]="predicate()" [sortOrder]="reverse() ? 1 : -1" (sortChange)="onSort($event)">
                     <thead>
                         <tr>
-                            <th scope="col" tumAetUiSortableColumn="user.name">
+                            <th scope="col" tumAetUiSortableColumn="student.name">
                                 <span jhiTranslate="artemisApp.instructorDashboard.name"></span>
                             </th>
-                            <th scope="col" tumAetUiSortableColumn="user.login">
+                            <th scope="col" tumAetUiSortableColumn="student.login">
                                 <span jhiTranslate="artemisApp.instructorDashboard.username"></span>
                             </th>
                             <th scope="col" tumAetUiSortableColumn="numberOfParticipatedExercises">

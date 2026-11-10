@@ -9,7 +9,12 @@
         <tumaet-ui-message severity="error" class="mb-3 w-full">{{ 'artemisApp.courseIngestionDashboard.matrix.error' | artemisTranslate }}</tumaet-ui-message>
     }
 
-    <tumaet-ui-table-layout [loading]="loading()" style="--table-layout-offset: 20rem">
+    <tumaet-ui-table-layout
+        [loading]="loading()"
+        [empty]="rows().length === 0 && !loading()"
+        emptyTitle="artemisApp.courseIngestionDashboard.matrix.empty"
+        style="--table-layout-offset: 20rem"
+    >
         <div tumAetUiTableToolbar class="flex min-w-0 flex-1 items-center gap-2">
             <input
                 #searchBox
@@ -134,10 +139,6 @@
                                 <span class="text-sm" [jhiTranslate]="'artemisApp.courseIngestionDashboard.status.' + row.status"></span>
                             </span>
                         </td>
-                    </tr>
-                } @empty {
-                    <tr>
-                        <td [attr.colspan]="allTypes.length + 3" class="text-muted-color text-center py-4" jhiTranslate="artemisApp.courseIngestionDashboard.matrix.empty"></td>
                     </tr>
                 }
             </tbody>

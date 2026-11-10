@@ -63,7 +63,12 @@
                                     <div class="presentation-summary text-(--text-body-secondary)">{{ presentationAssessment.description }}</div>
                                 }
 
-                                <tumaet-ui-table-layout fill class="mx-4 mb-4">
+                                <tumaet-ui-table-layout
+                                    fill
+                                    class="mx-4 mb-4"
+                                    [empty]="studentRows().length === 0 && !isLoadingStudentRows()"
+                                    [emptyTitle]="studentSearchTerm() ? 'artemisApp.presentationAssessment.noMatchingStudents' : 'tumAetUi.table.empty'"
+                                >
                                     <div tumAetUiTableToolbar class="flex min-w-0 flex-1 items-center gap-2">
                                         <tumaet-ui-icon-field class="student-search" [icon]="faSearch">
                                             <input
@@ -91,6 +96,11 @@
                                         (editInstance)="startEditInstance($event.presentationAssessment, $event.instance)"
                                         (deleteInstance)="deleteInstance($event.presentationAssessment, $event.instance)"
                                     />
+                                    <div tumAetUiTableEmptyActions>
+                                        <tumaet-ui-button size="small" (clicked)="startCreateInstance(presentationAssessment)" data-testid="empty-create-instance-button">
+                                            <span jhiTranslate="artemisApp.presentationAssessment.enterGrade"></span>
+                                        </tumaet-ui-button>
+                                    </div>
                                 </tumaet-ui-table-layout>
                             </section>
                         }
@@ -111,7 +121,14 @@
                                 </div>
                             </div>
 
-                            <tumaet-ui-table-layout fill class="mx-4 mb-4">
+                            <tumaet-ui-table-layout
+                                fill
+                                class="mx-4 mb-4"
+                                [empty]="studentRows().length === 0 && !isLoadingStudentRows()"
+                                [emptyTitle]="
+                                    studentSearchTerm() || assessmentStatusFilter() !== 'all' ? 'artemisApp.presentationAssessment.noMatchingStudents' : 'tumAetUi.table.empty'
+                                "
+                            >
                                 <div tumAetUiTableToolbar class="flex min-w-0 flex-1 items-center gap-2">
                                     <tumaet-ui-icon-field class="student-search" [icon]="faSearch">
                                         <input

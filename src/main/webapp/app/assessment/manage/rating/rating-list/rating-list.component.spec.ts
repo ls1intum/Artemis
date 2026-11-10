@@ -168,12 +168,12 @@ describe('RatingListComponent', () => {
             expect(serviceSpy).toHaveBeenLastCalledWith(123, 0, 20, 'exerciseTitle,asc');
         });
 
-        it('should show no table and no paginator when there are no ratings', () => {
+        it('should show the empty state and no rows when there are no ratings', () => {
             vi.spyOn(ratingService, 'getRatingsForDashboard').mockReturnValue(of({ content: [], totalElements: 0, totalPages: 0 }));
             fixture.detectChanges();
 
-            expect(element().querySelector('table')).toBeNull();
-            expect(fixture.debugElement.query(By.directive(TumAetUiPaginatorComponent))).toBeNull();
+            expect(element().querySelector('[data-testid="table-empty"]')).not.toBeNull();
+            expect(element().querySelectorAll('tbody tr')).toHaveLength(0);
         });
     });
 

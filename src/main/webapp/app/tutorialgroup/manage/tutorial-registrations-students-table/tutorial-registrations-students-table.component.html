@@ -1,5 +1,5 @@
 @let actionColumn = removeActionColumnInfo();
-<tumaet-ui-table-layout>
+<tumaet-ui-table-layout [empty]="sortedStudents().length === 0" [emptyTitle]="emptyTitle() ?? 'tumAetUi.table.empty'">
     <div tumAetUiTableToolbar class="flex min-w-0 flex-1 items-center gap-2" [hidden]="!hasToolbar()">
         <ng-content select="[studentsTableToolbar]" />
     </div>

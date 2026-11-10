@@ -65,6 +65,9 @@ export enum HighlightType {
     NONE = 'none',
 }
 
+/** Prefix of the sortable column of the points a student achieved for one exercise type. */
+const POINTS_PER_TYPE_PREFIX = 'sumPointsPerExerciseType.';
+
 @Component({
     selector: 'jhi-course-scores',
     templateUrl: './course-scores.component.html',
@@ -196,7 +199,14 @@ export class CourseScoresComponent implements OnInit {
 
     sortRows() {
         const statistics = [...this.studentStatistics()];
-        this.sortService.sortByProperty(statistics, this.predicate(), this.reverse());
+        const field = this.predicate();
+        if (field.startsWith(POINTS_PER_TYPE_PREFIX)) {
+            // The points per exercise type live in a Map, which a property path cannot read.
+            const exerciseType = field.slice(POINTS_PER_TYPE_PREFIX.length) as ExerciseType;
+            this.sortService.sortByFunction(statistics, (statistic) => statistic.sumPointsPerExerciseType.get(exerciseType) ?? 0, this.reverse());
+        } else {
+            this.sortService.sortByProperty(statistics, field, this.reverse());
+        }
         this.studentStatistics.set(statistics);
     }
 

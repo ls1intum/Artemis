@@ -52,12 +52,12 @@ describe('PresentationAssessmentInstancesTableComponent', () => {
         component = fixture.componentInstance;
     });
 
-    it('should render one row per student and a message when there are none', () => {
+    it('should render one row per student and no rows when there are none', () => {
         render([createRow(), createRow({ studentLogin: 'student2', rowKey: '11:student2', displayName: 'Student Two' })]);
         expect(element().querySelectorAll('tbody tr')).toHaveLength(2);
 
         render([]);
-        expect(query('tbody td[colspan="6"]')?.getAttribute('jhiTranslate')).toBe('artemisApp.presentationAssessment.noMatchingStudents');
+        expect(element().querySelectorAll('tbody tr')).toHaveLength(0);
     });
 
     it('should show the result points against the maximum only for assessed rows', () => {

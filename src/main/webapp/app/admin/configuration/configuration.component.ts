@@ -62,6 +62,9 @@ export class ConfigurationComponent implements OnInit {
             .sort((a, b) => (a.prefix < b.prefix ? ascendingMultiplier : descendingMultiplier));
     });
 
+    /** True once the beans arrived, so the empty state does not flash while loading. */
+    readonly beansLoaded = signal(false);
+
     /** Property sources from configuration */
     readonly propertySources = signal<PropertySource[]>([]);
 
@@ -71,6 +74,7 @@ export class ConfigurationComponent implements OnInit {
     ngOnInit(): void {
         this.configurationService.getBeans().subscribe((beans) => {
             this.allBeans.set(beans);
+            this.beansLoaded.set(true);
         });
 
         this.configurationService.getPropertySources().subscribe((propertySources) => {

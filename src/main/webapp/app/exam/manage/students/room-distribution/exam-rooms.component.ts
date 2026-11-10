@@ -18,6 +18,7 @@ import { AlertService } from 'app/foundation/service/alert.service';
 import {
     TumAetUiButtonDirective,
     TumAetUiCardComponent,
+    TumAetUiEmptyStateComponent,
     TumAetUiTableDirective,
     TumAetUiTableLayoutComponent,
     TumAetUiTableSortEvent,
@@ -41,6 +42,7 @@ import { AccountService } from 'app/core/auth/account.service';
         HelpIconComponent,
         TumAetUiButtonDirective,
         TumAetUiCardComponent,
+        TumAetUiEmptyStateComponent,
         TumAetUiTableDirective,
         TumAetUiTableLayoutComponent,
         TumAetUiTableSortableColumnComponent,

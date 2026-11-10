@@ -83,7 +83,7 @@ describe('OrchestrationResultDialogComponent', () => {
     });
 
     it('renders the empty-state translation key when no actions are present', () => {
-        expect(document.querySelector('p[jhitranslate="artemisApp.atlasOrchestrator.resultDialog.empty"]')).not.toBeNull();
+        expect(document.querySelector('[data-testid="table-empty"]')).not.toBeNull();
     });
 
     it('renders applied action details and updates the host when the close action is chosen', async () => {

@@ -22,7 +22,11 @@
             </p>
         </div>
         <div class="build-agents-section">
-            <tumaet-ui-table-layout style="--table-layout-offset: 20rem">
+            <tumaet-ui-table-layout
+                [empty]="buildAgentsLoaded() && buildAgents().length === 0"
+                emptyTitle="artemisApp.buildAgents.noBuildAgents"
+                style="--table-layout-offset: 20rem"
+            >
                 <table tumAetUiTable [size]="'small'" [striped]="true">
                     <thead>
                         <tr>
@@ -31,7 +35,7 @@
                             <th scope="col" class="build-agents-column" jhiTranslate="artemisApp.buildAgents.status"></th>
                             <th scope="col" class="build-agents-column" jhiTranslate="artemisApp.buildAgents.maxNumberOfConcurrentBuildJobs"></th>
                             <th scope="col" class="build-agents-column" jhiTranslate="artemisApp.buildAgents.numberOfCurrentBuildJobs"></th>
-                            <th scope="col" class="build-agents-column-jobs" jhiTranslate="artemisApp.buildAgents.runningBuildJobs"></th>
+                            <th scope="col" class="build-agents-column" jhiTranslate="artemisApp.buildAgents.runningBuildJobs"></th>
                             <th scope="col" class="build-agents-column" jhiTranslate="artemisApp.buildQueue.actions"></th>
                         </tr>
                     </thead>

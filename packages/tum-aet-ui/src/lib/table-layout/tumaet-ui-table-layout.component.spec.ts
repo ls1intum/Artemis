@@ -144,7 +144,7 @@ describe('TumAetUiTableLayoutComponent', () => {
         it('keeps a usable minimum when little space is left', () => {
             vi.spyOn(HTMLElement.prototype, 'clientHeight', 'get').mockReturnValue(250);
 
-            expect(create().layout.style.maxHeight).toBe('224px');
+            expect(create().layout.style.maxHeight).toBe('320px');
         });
 
         it('follows resizes of the container', () => {

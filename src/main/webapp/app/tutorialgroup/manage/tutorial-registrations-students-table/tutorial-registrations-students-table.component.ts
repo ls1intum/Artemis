@@ -36,6 +36,8 @@ export class TutorialRegistrationsStudentsTableComponent {
     removeActionColumnInfo = input<TutorialRegistrationsStudentsTableRemoveActionColumnInfo>();
     /** Set when the consumer projects controls with the attribute `studentsTableToolbar`. */
     hasToolbar = input(false, { transform: booleanAttribute });
+    /** Translation key of the empty state heading, for example "no results" while a search is active. Defaults to "No entries yet". */
+    emptyTitle = input<string>();
     sortField = signal<string>('name');
     sortOrder = signal<number>(1);
     studentsWithCompleteProfilePictureUrl = computed(() => this.computeStudentsWithCompleteProfilePictureUrl());

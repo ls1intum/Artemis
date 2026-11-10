@@ -172,7 +172,7 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
     itemsPerPage = ITEMS_PER_PAGE;
 
     /** Current page number for pagination (1-indexed) */
-    currentPage = 1;
+    currentPage = signal(1);
 
     /** Column to sort finished build jobs by */
     predicate = 'buildSubmissionDate';
@@ -527,7 +527,7 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
     fetchFinishedBuildJobs() {
         return this.buildQueueService.getFinishedBuildJobs(
             {
-                page: this.currentPage,
+                page: this.currentPage(),
                 pageSize: this.itemsPerPage,
                 sortingOrder: this.ascending ? SortingOrder.ASCENDING : SortingOrder.DESCENDING,
                 sortedColumn: this.predicate,
@@ -556,7 +556,7 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
     onPageChange(event: PageChangeEvent) {
         const newPageNumber = event?.page;
         if (newPageNumber) {
-            this.currentPage = newPageNumber;
+            this.currentPage.set(newPageNumber);
             this.loadFinishedBuildJobs();
         }
     }

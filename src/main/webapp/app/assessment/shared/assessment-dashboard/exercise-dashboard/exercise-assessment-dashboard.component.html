@@ -631,114 +631,110 @@
                             [tumAetUiTooltip]="'artemisApp.exerciseAssessmentDashboard.complaintHint' | artemisTranslate"
                         />
                         <div class="overflow-x-auto">
-                            @if (submissionsWithComplaints() && submissionsWithComplaints()!.length > 0) {
-                                <tumaet-ui-table-layout>
-                                    <table
-                                        class="exercise-table"
-                                        tumAetUiTable
-                                        size="small"
-                                        [sortField]="sortPredicates[1]"
-                                        [sortOrder]="reverseOrders[1] ? 1 : -1"
-                                        (sortChange)="onComplaintSort($event)"
-                                    >
-                                        <thead>
+                            <tumaet-ui-table-layout
+                                [empty]="!submissionsWithComplaints()?.length"
+                                [emptyTitle]="
+                                    complaintsDashboardInfo().total === 0
+                                        ? 'artemisApp.exerciseAssessmentDashboard.noComplaints'
+                                        : 'artemisApp.exerciseAssessmentDashboard.noComplaintsDisplayed'
+                                "
+                            >
+                                <table
+                                    class="exercise-table"
+                                    tumAetUiTable
+                                    size="small"
+                                    [sortField]="sortPredicates[1]"
+                                    [sortOrder]="reverseOrders[1] ? 1 : -1"
+                                    (sortChange)="onComplaintSort($event)"
+                                >
+                                    <thead>
+                                        <tr>
+                                            <th>#</th>
+                                            <th tumAetUiSortableColumn="complaint.submittedTime">
+                                                <span jhiTranslate="artemisApp.exerciseAssessmentDashboard.submissionDate"></span>
+                                            </th>
+                                            <th tumAetUiSortableColumn="submission.latestResult.score">
+                                                <span jhiTranslate="artemisApp.exerciseAssessmentDashboard.result"></span>
+                                            </th>
+                                            <th tumAetUiSortableColumn="responseTime"><span jhiTranslate="artemisApp.exerciseAssessmentDashboard.responseTime"></span></th>
+                                            <th tumAetUiSortableColumn="complaint.accepted"><span jhiTranslate="artemisApp.exerciseAssessmentDashboard.status"></span></th>
+                                            <th jhiTranslate="artemisApp.exerciseAssessmentDashboard.action"></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @for (submissionWithComplaint of submissionsWithComplaints(); track submissionWithComplaint; let i = $index) {
                                             <tr>
-                                                <th>#</th>
-                                                <th tumAetUiSortableColumn="complaint.submittedTime">
-                                                    <span jhiTranslate="artemisApp.exerciseAssessmentDashboard.submissionDate"></span>
-                                                </th>
-                                                <th tumAetUiSortableColumn="submission.latestResult.score">
-                                                    <span jhiTranslate="artemisApp.exerciseAssessmentDashboard.result"></span>
-                                                </th>
-                                                <th tumAetUiSortableColumn="responseTime"><span jhiTranslate="artemisApp.exerciseAssessmentDashboard.responseTime"></span></th>
-                                                <th tumAetUiSortableColumn="complaint.accepted"><span jhiTranslate="artemisApp.exerciseAssessmentDashboard.status"></span></th>
-                                                <th jhiTranslate="artemisApp.exerciseAssessmentDashboard.action"></th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            @for (submissionWithComplaint of submissionsWithComplaints(); track submissionWithComplaint; let i = $index) {
-                                                <tr>
-                                                    <td>{{ i + 1 }}</td>
-                                                    <td>{{ submissionWithComplaint.complaint.submittedTime | artemisDate }}</td>
-                                                    <td>
-                                                        <jhi-result
-                                                            [result]="submissionWithComplaint.submission.latestResult"
-                                                            [participation]="submissionWithComplaint.complaint.result!.submission!.participation!"
-                                                            [exercise]="exercise()"
-                                                            [isOwnParticipation]="false"
+                                                <td>{{ i + 1 }}</td>
+                                                <td>{{ submissionWithComplaint.complaint.submittedTime | artemisDate }}</td>
+                                                <td>
+                                                    <jhi-result
+                                                        [result]="submissionWithComplaint.submission.latestResult"
+                                                        [participation]="submissionWithComplaint.complaint.result!.submission!.participation!"
+                                                        [exercise]="exercise()"
+                                                        [isOwnParticipation]="false"
+                                                    />
+                                                </td>
+                                                <td>
+                                                    @if (submissionWithComplaint.complaint.accepted === undefined) {
+                                                        &gt;=
+                                                    }
+                                                    {{ complaintService.getResponseTimeInSeconds(submissionWithComplaint.complaint) | artemisDurationFromSeconds: true }}
+                                                    @if (complaintService.shouldHighlightComplaint(submissionWithComplaint.complaint)) {
+                                                        <fa-icon
+                                                            [icon]="faExclamationTriangle"
+                                                            class="text-state-warning"
+                                                            tumAetUiTooltip="{{ 'artemisApp.complaint.oneWeekUnanswered' | artemisTranslate }}"
                                                         />
-                                                    </td>
-                                                    <td>
-                                                        @if (submissionWithComplaint.complaint.accepted === undefined) {
-                                                            &gt;=
-                                                        }
-                                                        {{ complaintService.getResponseTimeInSeconds(submissionWithComplaint.complaint) | artemisDurationFromSeconds: true }}
-                                                        @if (complaintService.shouldHighlightComplaint(submissionWithComplaint.complaint)) {
-                                                            <fa-icon
-                                                                [icon]="faExclamationTriangle"
-                                                                class="text-state-warning"
-                                                                tumAetUiTooltip="{{ 'artemisApp.complaint.oneWeekUnanswered' | artemisTranslate }}"
-                                                            />
-                                                        }
-                                                    </td>
-                                                    <td>
-                                                        @if (submissionWithComplaint.complaint.accepted === undefined) {
-                                                            <span class="text-state-warning" jhiTranslate="artemisApp.complaint.listOfComplaints.noReply"></span>
-                                                        }
-                                                        @if (submissionWithComplaint.complaint.accepted === true) {
-                                                            <span class="text-state-success" jhiTranslate="artemisApp.complaint.listOfComplaints.accepted"></span>
-                                                        }
-                                                        @if (submissionWithComplaint.complaint.accepted === false) {
-                                                            <span class="text-state-danger" jhiTranslate="artemisApp.complaint.listOfComplaints.rejected"></span>
-                                                        }
-                                                    </td>
-                                                    <td>
-                                                        @if (submissionWithComplaint.complaint.accepted === undefined) {
-                                                            <a
-                                                                [class.pointer-events-none]="isComplaintLocked(submissionWithComplaint.complaint)"
-                                                                [routerLink]="
-                                                                    isComplaintLocked(submissionWithComplaint.complaint)
-                                                                        ? null
-                                                                        : getAssessmentLink(submissionWithComplaint.submission)
-                                                                "
-                                                                [attr.aria-disabled]="isComplaintLocked(submissionWithComplaint.complaint) || null"
-                                                                [attr.tabindex]="isComplaintLocked(submissionWithComplaint.complaint) ? -1 : null"
-                                                                [queryParams]="getComplaintQueryParams(submissionWithComplaint.complaint)"
-                                                                data-testid="evaluate-complaint"
-                                                                tumAetUiButton
-                                                                severity="success"
-                                                                size="small"
-                                                            >
-                                                                <fa-icon [icon]="faFolderOpen" [fixedWidth]="true" />
-                                                                {{ 'artemisApp.exerciseAssessmentDashboard.evaluateComplaint' | artemisTranslate }}
-                                                            </a>
-                                                        } @else {
-                                                            <a
-                                                                [routerLink]="getAssessmentLink(submissionWithComplaint.submission)"
-                                                                [queryParams]="getComplaintQueryParams(submissionWithComplaint.complaint)"
-                                                                tumAetUiButton
-                                                                severity="primary"
-                                                                size="small"
-                                                            >
-                                                                <fa-icon [icon]="faFolderOpen" [fixedWidth]="true" />
-                                                                {{ 'artemisApp.exerciseAssessmentDashboard.showComplaint' | artemisTranslate }}
-                                                            </a>
-                                                        }
-                                                        <!--                                                    </ng-container>-->
-                                                    </td>
-                                                </tr>
-                                            }
-                                        </tbody>
-                                    </table>
-                                </tumaet-ui-table-layout>
-                            } @else {
-                                @if (complaintsDashboardInfo().total === 0) {
-                                    <tumaet-ui-message severity="info"><span jhiTranslate="artemisApp.exerciseAssessmentDashboard.noComplaints"></span></tumaet-ui-message>
-                                }
-                                @if (complaintsDashboardInfo().total !== 0) {
-                                    <tumaet-ui-message severity="info"><span jhiTranslate="artemisApp.exerciseAssessmentDashboard.noComplaintsDisplayed"></span></tumaet-ui-message>
-                                }
-                            }
+                                                    }
+                                                </td>
+                                                <td>
+                                                    @if (submissionWithComplaint.complaint.accepted === undefined) {
+                                                        <span class="text-state-warning" jhiTranslate="artemisApp.complaint.listOfComplaints.noReply"></span>
+                                                    }
+                                                    @if (submissionWithComplaint.complaint.accepted === true) {
+                                                        <span class="text-state-success" jhiTranslate="artemisApp.complaint.listOfComplaints.accepted"></span>
+                                                    }
+                                                    @if (submissionWithComplaint.complaint.accepted === false) {
+                                                        <span class="text-state-danger" jhiTranslate="artemisApp.complaint.listOfComplaints.rejected"></span>
+                                                    }
+                                                </td>
+                                                <td>
+                                                    @if (submissionWithComplaint.complaint.accepted === undefined) {
+                                                        <a
+                                                            [class.pointer-events-none]="isComplaintLocked(submissionWithComplaint.complaint)"
+                                                            [routerLink]="
+                                                                isComplaintLocked(submissionWithComplaint.complaint) ? null : getAssessmentLink(submissionWithComplaint.submission)
+                                                            "
+                                                            [attr.aria-disabled]="isComplaintLocked(submissionWithComplaint.complaint) || null"
+                                                            [attr.tabindex]="isComplaintLocked(submissionWithComplaint.complaint) ? -1 : null"
+                                                            [queryParams]="getComplaintQueryParams(submissionWithComplaint.complaint)"
+                                                            data-testid="evaluate-complaint"
+                                                            tumAetUiButton
+                                                            severity="success"
+                                                            size="small"
+                                                        >
+                                                            <fa-icon [icon]="faFolderOpen" [fixedWidth]="true" />
+                                                            {{ 'artemisApp.exerciseAssessmentDashboard.evaluateComplaint' | artemisTranslate }}
+                                                        </a>
+                                                    } @else {
+                                                        <a
+                                                            [routerLink]="getAssessmentLink(submissionWithComplaint.submission)"
+                                                            [queryParams]="getComplaintQueryParams(submissionWithComplaint.complaint)"
+                                                            tumAetUiButton
+                                                            severity="primary"
+                                                            size="small"
+                                                        >
+                                                            <fa-icon [icon]="faFolderOpen" [fixedWidth]="true" />
+                                                            {{ 'artemisApp.exerciseAssessmentDashboard.showComplaint' | artemisTranslate }}
+                                                        </a>
+                                                    }
+                                                    <!--                                                    </ng-container>-->
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </tumaet-ui-table-layout>
                         </div>
                     }
 
@@ -751,108 +747,102 @@
                             [tumAetUiTooltip]="'artemisApp.exerciseAssessmentDashboard.moreFeedbackRequestHint' | artemisTranslate"
                         />
                         <div class="overflow-x-auto">
-                            @if (submissionsWithMoreFeedbackRequests() && submissionsWithMoreFeedbackRequests()!.length > 0) {
-                                <tumaet-ui-table-layout>
-                                    <table
-                                        class="exercise-table"
-                                        tumAetUiTable
-                                        size="small"
-                                        [sortField]="sortPredicates[2]"
-                                        [sortOrder]="reverseOrders[2] ? 1 : -1"
-                                        (sortChange)="onMoreFeedbackSort($event)"
-                                    >
-                                        <thead>
+                            <tumaet-ui-table-layout
+                                [empty]="!submissionsWithMoreFeedbackRequests()?.length"
+                                [emptyTitle]="
+                                    moreFeedbackRequestsDashboardInfo().total === 0
+                                        ? 'artemisApp.exerciseAssessmentDashboard.noMoreFeedbackRequests'
+                                        : 'artemisApp.exerciseAssessmentDashboard.noMoreFeedbackRequestsDisplayed'
+                                "
+                            >
+                                <table
+                                    class="exercise-table"
+                                    tumAetUiTable
+                                    size="small"
+                                    [sortField]="sortPredicates[2]"
+                                    [sortOrder]="reverseOrders[2] ? 1 : -1"
+                                    (sortChange)="onMoreFeedbackSort($event)"
+                                >
+                                    <thead>
+                                        <tr>
+                                            <th>#</th>
+                                            <th tumAetUiSortableColumn="complaint.submittedTime">
+                                                <span jhiTranslate="artemisApp.exerciseAssessmentDashboard.submissionDate"></span>
+                                            </th>
+                                            <th tumAetUiSortableColumn="submission.latestResult.score">
+                                                <span jhiTranslate="artemisApp.exerciseAssessmentDashboard.result"></span>
+                                            </th>
+                                            <th tumAetUiSortableColumn="responseTime"><span jhiTranslate="artemisApp.exerciseAssessmentDashboard.responseTime"></span></th>
+                                            <th tumAetUiSortableColumn="complaint.accepted"><span jhiTranslate="artemisApp.exerciseAssessmentDashboard.status"></span></th>
+                                            <th jhiTranslate="artemisApp.exerciseAssessmentDashboard.action"></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @for (moreFeedbackRequest of submissionsWithMoreFeedbackRequests(); track moreFeedbackRequest; let i = $index) {
                                             <tr>
-                                                <th>#</th>
-                                                <th tumAetUiSortableColumn="complaint.submittedTime">
-                                                    <span jhiTranslate="artemisApp.exerciseAssessmentDashboard.submissionDate"></span>
-                                                </th>
-                                                <th tumAetUiSortableColumn="submission.latestResult.score">
-                                                    <span jhiTranslate="artemisApp.exerciseAssessmentDashboard.result"></span>
-                                                </th>
-                                                <th tumAetUiSortableColumn="responseTime"><span jhiTranslate="artemisApp.exerciseAssessmentDashboard.responseTime"></span></th>
-                                                <th tumAetUiSortableColumn="complaint.accepted"><span jhiTranslate="artemisApp.exerciseAssessmentDashboard.status"></span></th>
-                                                <th jhiTranslate="artemisApp.exerciseAssessmentDashboard.action"></th>
+                                                <td>{{ i + 1 }}</td>
+                                                <td>{{ moreFeedbackRequest.complaint.submittedTime | artemisDate }}</td>
+                                                <td>
+                                                    <jhi-result [result]="moreFeedbackRequest.complaint.result" [exercise]="exercise()" [isOwnParticipation]="false" />
+                                                </td>
+                                                <td>
+                                                    @if (moreFeedbackRequest.complaint.accepted === undefined) {
+                                                        &gt;=
+                                                    }
+                                                    {{ complaintService.getResponseTimeInSeconds(moreFeedbackRequest.complaint) | artemisDurationFromSeconds: true }}
+                                                    @if (complaintService.shouldHighlightComplaint(moreFeedbackRequest.complaint)) {
+                                                        <fa-icon
+                                                            [icon]="faExclamationTriangle"
+                                                            class="text-state-warning"
+                                                            tumAetUiTooltip="{{ 'artemisApp.complaint.oneWeekUnanswered' | artemisTranslate }}"
+                                                        />
+                                                    }
+                                                </td>
+                                                <td>
+                                                    @if (moreFeedbackRequest.complaint.accepted === undefined) {
+                                                        <span class="text-state-warning" jhiTranslate="artemisApp.complaint.listOfComplaints.noReply"></span>
+                                                    }
+                                                    @if (moreFeedbackRequest.complaint.accepted === true) {
+                                                        <span class="text-state-success" jhiTranslate="artemisApp.moreFeedback.accepted"></span>
+                                                    }
+                                                </td>
+                                                <td>
+                                                    @if (moreFeedbackRequest.complaint.accepted === undefined) {
+                                                        <a
+                                                            [class.pointer-events-none]="isComplaintLocked(moreFeedbackRequest.complaint)"
+                                                            [routerLink]="
+                                                                isComplaintLocked(moreFeedbackRequest.complaint) ? null : getAssessmentLink(moreFeedbackRequest.submission)
+                                                            "
+                                                            [attr.aria-disabled]="isComplaintLocked(moreFeedbackRequest.complaint) || null"
+                                                            [attr.tabindex]="isComplaintLocked(moreFeedbackRequest.complaint) ? -1 : null"
+                                                            [queryParams]="getComplaintQueryParams(moreFeedbackRequest.complaint)"
+                                                            tumAetUiButton
+                                                            severity="success"
+                                                            size="small"
+                                                        >
+                                                            <fa-icon [icon]="faFolderOpen" [fixedWidth]="true" />
+                                                            {{ 'artemisApp.exerciseAssessmentDashboard.evaluateMoreFeedbackRequest' | artemisTranslate }}
+                                                        </a>
+                                                    } @else {
+                                                        <button
+                                                            type="button"
+                                                            [routerLink]="getAssessmentLink(moreFeedbackRequest.submission)"
+                                                            [queryParams]="getComplaintQueryParams(moreFeedbackRequest.complaint)"
+                                                            tumAetUiButton
+                                                            severity="primary"
+                                                            size="small"
+                                                        >
+                                                            <fa-icon [icon]="faFolderOpen" [fixedWidth]="true" />
+                                                            {{ 'artemisApp.exerciseAssessmentDashboard.showMoreFeedbackRequests' | artemisTranslate }}
+                                                        </button>
+                                                    }
+                                                    <!--                                                    </ng-container>-->
+                                                </td>
                                             </tr>
-                                        </thead>
-                                        <tbody>
-                                            @for (moreFeedbackRequest of submissionsWithMoreFeedbackRequests(); track moreFeedbackRequest; let i = $index) {
-                                                <tr>
-                                                    <td>{{ i + 1 }}</td>
-                                                    <td>{{ moreFeedbackRequest.complaint.submittedTime | artemisDate }}</td>
-                                                    <td>
-                                                        <jhi-result [result]="moreFeedbackRequest.complaint.result" [exercise]="exercise()" [isOwnParticipation]="false" />
-                                                    </td>
-                                                    <td>
-                                                        @if (moreFeedbackRequest.complaint.accepted === undefined) {
-                                                            &gt;=
-                                                        }
-                                                        {{ complaintService.getResponseTimeInSeconds(moreFeedbackRequest.complaint) | artemisDurationFromSeconds: true }}
-                                                        @if (complaintService.shouldHighlightComplaint(moreFeedbackRequest.complaint)) {
-                                                            <fa-icon
-                                                                [icon]="faExclamationTriangle"
-                                                                class="text-state-warning"
-                                                                tumAetUiTooltip="{{ 'artemisApp.complaint.oneWeekUnanswered' | artemisTranslate }}"
-                                                            />
-                                                        }
-                                                    </td>
-                                                    <td>
-                                                        @if (moreFeedbackRequest.complaint.accepted === undefined) {
-                                                            <span class="text-state-warning" jhiTranslate="artemisApp.complaint.listOfComplaints.noReply"></span>
-                                                        }
-                                                        @if (moreFeedbackRequest.complaint.accepted === true) {
-                                                            <span class="text-state-success" jhiTranslate="artemisApp.moreFeedback.accepted"></span>
-                                                        }
-                                                    </td>
-                                                    <td>
-                                                        @if (moreFeedbackRequest.complaint.accepted === undefined) {
-                                                            <a
-                                                                [class.pointer-events-none]="isComplaintLocked(moreFeedbackRequest.complaint)"
-                                                                [routerLink]="
-                                                                    isComplaintLocked(moreFeedbackRequest.complaint) ? null : getAssessmentLink(moreFeedbackRequest.submission)
-                                                                "
-                                                                [attr.aria-disabled]="isComplaintLocked(moreFeedbackRequest.complaint) || null"
-                                                                [attr.tabindex]="isComplaintLocked(moreFeedbackRequest.complaint) ? -1 : null"
-                                                                [queryParams]="getComplaintQueryParams(moreFeedbackRequest.complaint)"
-                                                                tumAetUiButton
-                                                                severity="success"
-                                                                size="small"
-                                                            >
-                                                                <fa-icon [icon]="faFolderOpen" [fixedWidth]="true" />
-                                                                {{ 'artemisApp.exerciseAssessmentDashboard.evaluateMoreFeedbackRequest' | artemisTranslate }}
-                                                            </a>
-                                                        } @else {
-                                                            <button
-                                                                type="button"
-                                                                [routerLink]="getAssessmentLink(moreFeedbackRequest.submission)"
-                                                                [queryParams]="getComplaintQueryParams(moreFeedbackRequest.complaint)"
-                                                                tumAetUiButton
-                                                                severity="primary"
-                                                                size="small"
-                                                            >
-                                                                <fa-icon [icon]="faFolderOpen" [fixedWidth]="true" />
-                                                                {{ 'artemisApp.exerciseAssessmentDashboard.showMoreFeedbackRequests' | artemisTranslate }}
-                                                            </button>
-                                                        }
-                                                        <!--                                                    </ng-container>-->
-                                                    </td>
-                                                </tr>
-                                            }
-                                        </tbody>
-                                    </table>
-                                </tumaet-ui-table-layout>
-                            } @else {
-                                @if (moreFeedbackRequestsDashboardInfo().total === 0) {
-                                    <tumaet-ui-message severity="info"
-                                        ><span jhiTranslate="artemisApp.exerciseAssessmentDashboard.noMoreFeedbackRequests"></span
-                                    ></tumaet-ui-message>
-                                }
-                                @if (moreFeedbackRequestsDashboardInfo().total !== 0) {
-                                    <tumaet-ui-message severity="info"
-                                        ><span jhiTranslate="artemisApp.exerciseAssessmentDashboard.noMoreFeedbackRequestsDisplayed"></span
-                                    ></tumaet-ui-message>
-                                }
-                            }
+                                        }
+                                    </tbody>
+                                </table>
+                            </tumaet-ui-table-layout>
                         </div>
                     }
                 </div>

@@ -6,7 +6,7 @@
         </div>
     }
     <div class="modal-body d-flex flex-column flex-grow-1 overflow-hidden">
-        <tumaet-ui-table-layout fill [loading]="loading()">
+        <tumaet-ui-table-layout fill [loading]="loading()" [empty]="content().resultsOnPage.length === 0 && !loading()">
             <div tumAetUiTableToolbar class="flex min-w-0 flex-1 items-center gap-2">
                 <input
                     tumAetUiInput

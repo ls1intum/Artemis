@@ -32,11 +32,8 @@
                 <span jhiTranslate="artemisApp.aiworker.retainedReservations" [translateValues]="{ count: retainedReservations() }"></span>
             </tumaet-ui-message>
         }
-        @if (!workers().length) {
-            <tumaet-ui-message severity="info"><span jhiTranslate="artemisApp.aiworker.empty"></span></tumaet-ui-message>
-        }
     }
-    <tumaet-ui-table-layout style="--table-layout-offset: 28rem">
+    <tumaet-ui-table-layout [empty]="!workers().length && !loading() && !failed()" emptyTitle="artemisApp.aiworker.empty" style="--table-layout-offset: 28rem">
         <table tumAetUiTable data-testid="ai-workers-table">
             <caption class="sr-only" jhiTranslate="artemisApp.aiworker.title"></caption>
             <thead>

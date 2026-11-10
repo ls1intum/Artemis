@@ -48,7 +48,11 @@
     </div>
     <tumaet-ui-message severity="warn" class="mb-4" [text]="'artemisApp.examManagement.testRun.reminderToDelete' | artemisTranslate" />
     @if (testRuns()) {
-        <tumaet-ui-table-layout>
+        <tumaet-ui-table-layout
+            [empty]="testRuns().length === 0 && !isLoading()"
+            emptyTitle="artemisApp.examManagement.testRun.empty.title"
+            emptyDescription="artemisApp.examManagement.testRun.empty.description"
+        >
             <table tumAetUiTable size="small" striped [sortField]="predicate()" [sortOrder]="ascending() ? 1 : -1" (sortChange)="onSortChange($event)">
                 <thead>
                     <tr>
@@ -121,6 +125,14 @@
                     }
                 </tbody>
             </table>
+            <div tumAetUiTableEmptyActions>
+                @if (course()?.isAtLeastInstructor && examContainsExercises()) {
+                    <button type="button" tumAetUiButton size="small" data-testid="test-run-empty-create" (click)="openCreateTestRunModal()">
+                        <fa-icon [icon]="faPlus" />
+                        <span jhiTranslate="artemisApp.examManagement.testRun.setup"></span>
+                    </button>
+                }
+            </div>
         </tumaet-ui-table-layout>
     }
     @if (createTestRunDialogVisible()) {

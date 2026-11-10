@@ -43,8 +43,8 @@
             }
         </div>
     }
-    @if (allExamUsersAttendanceCheck().length > 0 && !isLoading()) {
-        <tumaet-ui-table-layout id="exams-table">
+    @if (!isLoading()) {
+        <tumaet-ui-table-layout id="exams-table" [empty]="allExamUsersAttendanceCheck().length === 0">
             <table tumAetUiTable size="small" [striped]="true" [sortField]="predicate()" [sortOrder]="ascending() ? 1 : -1" (sortChange)="onSortChange($event)">
                 <thead>
                     <tr>

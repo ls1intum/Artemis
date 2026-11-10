@@ -22,7 +22,11 @@
         />
     }
 
-    <tumaet-ui-table-layout>
+    <tumaet-ui-table-layout
+        [empty]="presenters().length === 0"
+        emptyTitle="artemisApp.presentationAssessment.noPresenters"
+        [emptyDescription]="editable() ? 'artemisApp.presentationAssessment.noPresentersDescription' : undefined"
+    >
         <table tumAetUiTable size="small" [sortField]="sortField()" [sortOrder]="sortAscending() ? 1 : -1" (sortChange)="onSortChange($event)">
             <thead>
                 <tr>

@@ -7,7 +7,11 @@
         </a>
     </div>
     @if (notifications(); as notificationList) {
-        <tumaet-ui-table-layout>
+        <tumaet-ui-table-layout [empty]="notificationList.length === 0">
+            <a tumAetUiButton tumAetUiTableEmptyActions size="small" [routerLink]="['./new']" data-testid="create-notification-empty-button">
+                <fa-icon [icon]="faPlus" />
+                <span jhiTranslate="artemisApp.systemNotification.createLabel"></span>
+            </a>
             <table
                 tumAetUiTable
                 [sortField]="predicate()"

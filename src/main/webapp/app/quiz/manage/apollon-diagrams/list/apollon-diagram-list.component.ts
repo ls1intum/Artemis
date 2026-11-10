@@ -10,7 +10,7 @@ import { ApollonDiagram } from 'app/modeling/shared/entities/apollon-diagram.mod
 import { SortService } from 'app/foundation/service/sort.service';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { Course } from 'app/course/shared/entities/course.model';
-import { faDiagramProject, faPlus, faTrash, faXmark } from '@fortawesome/free-solid-svg-icons';
+import { faPlus, faTrash, faXmark } from '@fortawesome/free-solid-svg-icons';
 import { UMLDiagramType } from '@tumaet/apollon';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -43,6 +43,7 @@ export class ApollonDiagramListComponent {
     private courseService = inject(CourseManagementService);
 
     apollonDiagrams = signal<ApollonDiagram[]>([]);
+    readonly isLoading = signal(true);
     readonly predicate = signal('id');
     readonly ascending = signal(true);
 
@@ -62,7 +63,6 @@ export class ApollonDiagramListComponent {
     faPlus = faPlus;
     faXmark = faXmark;
     faTrash = faTrash;
-    faDiagramProject = faDiagramProject;
 
     constructor() {
         effect(() => {
@@ -84,8 +84,10 @@ export class ApollonDiagramListComponent {
             next: (response) => {
                 // Sorted on arrival so the rows match the sort indicator the header already shows.
                 this.apollonDiagrams.set(this.sorted(response.body!));
+                this.isLoading.set(false);
             },
             error: () => {
+                this.isLoading.set(false);
                 this.alertService.error('artemisApp.apollonDiagram.home.error.loading');
             },
         });

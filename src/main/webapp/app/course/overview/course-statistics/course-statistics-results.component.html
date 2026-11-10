@@ -34,7 +34,11 @@
         </div>
     </div>
     <div class="px-5! pb-5!">
-        <tumaet-ui-table-layout class="[--table-layout-offset:24rem]">
+        <tumaet-ui-table-layout
+            class="[--table-layout-offset:24rem]"
+            [empty]="filteredRows().length === 0"
+            [emptyTitle]="hasExercises() ? 'artemisApp.courseOverview.statistics.redesign.noMatchingExercises' : 'artemisApp.courseOverview.statistics.redesign.noExercises'"
+        >
             <div tumAetUiTableToolbar class="flex min-w-0 flex-1 items-center gap-2">
                 <input
                     #exerciseSearch
@@ -109,18 +113,6 @@
                                     [value]="'artemisApp.courseOverview.statistics.redesign.states.' + row.state | artemisTranslate"
                                 />
                             </td>
-                        </tr>
-                    } @empty {
-                        <tr>
-                            <td
-                                colspan="3"
-                                class="py-8! text-center"
-                                [jhiTranslate]="
-                                    hasExercises()
-                                        ? 'artemisApp.courseOverview.statistics.redesign.noMatchingExercises'
-                                        : 'artemisApp.courseOverview.statistics.redesign.noExercises'
-                                "
-                            ></td>
                         </tr>
                     }
                 </tbody>

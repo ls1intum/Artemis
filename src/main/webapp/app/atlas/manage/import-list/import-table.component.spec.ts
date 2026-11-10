@@ -114,6 +114,22 @@ describe('ImportTableComponent', () => {
         });
     });
 
+    it('should show the empty state only when there are no results and nothing is loading', async () => {
+        fixture.detectChanges();
+        await fixture.whenStable();
+        fixture.changeDetectorRef.detectChanges();
+        expect(fixture.nativeElement.querySelector('[data-testid="table-empty"]')).toBeNull();
+
+        searchSpy.mockReturnValue(of({ ...searchResult, resultsOnPage: [] }));
+        const searchField = fixture.debugElement.nativeElement.querySelector('#import-objects-search');
+        searchField.value = 'no such object';
+        searchField.dispatchEvent(new Event('input'));
+        await new Promise((resolve) => setTimeout(resolve, 350));
+        await fixture.whenStable();
+        fixture.changeDetectorRef.detectChanges();
+        expect(fixture.nativeElement.querySelector('[data-testid="table-empty"]')).not.toBeNull();
+    });
+
     it('should set isLoading correctly on data load', async () => {
         const isLoadingSpy = vi.spyOn(component.isLoading, 'set');
 

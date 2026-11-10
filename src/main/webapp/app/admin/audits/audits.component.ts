@@ -14,7 +14,6 @@ import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-title.directive';
 import {
     TumAetUiDatePickerComponent,
-    TumAetUiMessageComponent,
     TumAetUiPaginatorComponent,
     TumAetUiTabComponent,
     TumAetUiTabListComponent,
@@ -40,7 +39,6 @@ import {
         TumAetUiPaginatorComponent,
         ArtemisDatePipe,
         AdminTitleBarTitleDirective,
-        TumAetUiMessageComponent,
         TumAetUiTableDirective,
         TumAetUiDatePickerComponent,
         TumAetUiTabsComponent,
