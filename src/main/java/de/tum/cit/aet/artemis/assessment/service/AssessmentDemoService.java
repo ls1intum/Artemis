@@ -14,8 +14,10 @@ import de.tum.cit.aet.artemis.assessment.domain.GradeType;
 import de.tum.cit.aet.artemis.assessment.domain.GradingScale;
 import de.tum.cit.aet.artemis.assessment.dto.GradingScaleUpdateDTO;
 import de.tum.cit.aet.artemis.assessment.dto.GradingScaleUpdateDTO.GradeStepDTO;
+import de.tum.cit.aet.artemis.assessment.repository.GradingScaleRepository;
 import de.tum.cit.aet.artemis.core.config.StartupDelayConfig;
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.exam.domain.Exam;
 
 /**
  * Creates the grading scale of the demo course seeded by the {@code demo} profile, and makes the results seeded for the demo course count towards the scores of its students.
@@ -46,9 +48,13 @@ public class AssessmentDemoService {
 
     private final GradingScaleService gradingScaleService;
 
-    public AssessmentDemoService(ParticipantScoreScheduleService participantScoreScheduleService, GradingScaleService gradingScaleService) {
+    private final GradingScaleRepository gradingScaleRepository;
+
+    public AssessmentDemoService(ParticipantScoreScheduleService participantScoreScheduleService, GradingScaleService gradingScaleService,
+            GradingScaleRepository gradingScaleRepository) {
         this.participantScoreScheduleService = participantScoreScheduleService;
         this.gradingScaleService = gradingScaleService;
+        this.gradingScaleRepository = gradingScaleRepository;
     }
 
     /**
@@ -82,6 +88,27 @@ public class AssessmentDemoService {
         GradingScale createdGradingScale = gradingScaleService.saveGradingScale(gradingScale);
 
         log.info("Created demo grading scale for course '{}' with id {}", course.getShortName(), createdGradingScale.getId());
+    }
+
+    /**
+     * Creates the grading scale of the demo exam if the exam does not have one yet, with the same grade steps as the course.
+     * <p>
+     * This mirrors {@code GradingScaleResource#createGradingScaleForExam} for the request the client sends when an instructor saves the proposed grade steps unchanged: the
+     * maximum points of the exam stay as they are.
+     *
+     * @param exam the demo exam.
+     */
+    public void createDemoExamGradingScale(Exam exam) {
+        if (gradingScaleRepository.findByExamId(exam.getId()).isPresent()) {
+            log.debug("Demo exam grading scale already exists, skipping creation");
+            return;
+        }
+
+        GradingScale gradingScale = new GradingScaleUpdateDTO(GradeType.GRADE, null, null, null, null, null, DEMO_GRADE_STEPS, null, null, null).toEntity();
+        gradingScale.setExam(exam);
+        GradingScale createdGradingScale = gradingScaleService.saveGradingScale(gradingScale);
+
+        log.info("Created demo grading scale for exam '{}' with id {}", exam.getTitle(), createdGradingScale.getId());
     }
 
     /**

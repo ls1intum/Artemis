@@ -1,4 +1,5 @@
 name: Test (MySQL)
+# REMOVE_IN_ARTEMIS_11 (MySQL): delete this workflow with MySQL support
 
 # TODO: Re-enable automatic triggers once MySQL testcontainers are reliable
 on:

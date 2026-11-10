@@ -2,6 +2,7 @@
 id: index
 title: Coding and Design Guidelines
 sidebar_label: Coding and Design Guidelines
+last_reviewed: 2026-11-03
 ---
 
 import Callout from '../../../src/components/Callout/Callout';
@@ -34,15 +35,19 @@ Guidelines for Spring Boot and Java server development:
 
 - **[Server Development](/developer/guidelines/server-development)** - Java best practices, project structure, REST APIs, and authorization
 - **[REST API](/developer/guidelines/rest-api)** - REST API design, Data Transfer Objects (DTOs), and API best practices
+- **[WebSocket Topics](/developer/guidelines/websocket)** - Declared topics, access rules, and sending and receiving messages
 - **[Server Tests](/developer/guidelines/server-tests)** - Server testing strategies, ArchUnit, and performance tips
 - **[Database](/developer/guidelines/database)** - Database design, relationships, cascade types, and dynamic fetching
 - **[Entity Ownership](/developer/guidelines/entity-ownership)** - What every entity belongs to, and where the schema still permits an orphan
 - **[Migration Consolidation](/developer/guidelines/database-migration-consolidation)** - Folding a release cycle's Liquibase changelogs into the initial schema, done once per major version
+- **[Caching](/developer/guidelines/caching)** - When a cache is justified, what it may hold, and how it is evicted across nodes
+- **[Distributed Data](/developer/guidelines/distributed-data)** - Cross-node state through the `DistributedDataProvider`, and the Hazelcast, Redis and Local providers
 - **[Performance](/developer/guidelines/performance)** - Performance optimization, data economy, paging, and query optimization
 - **[Criteria Builder](/developer/guidelines/criteria-builder)** - Type-safe dynamic queries using JPA Criteria API
 
 ## General Guidelines
 
+- **[Dead Code](/developer/guidelines/dead-code)** - The dead-code gates for the server and the client, and how to resolve a finding
 - **[Documentation](/developer/guidelines/documentation)** - Structuring a documentation page, naming what the reader sees on screen, and keeping screenshots and screencasts current
 - **[Language](/developer/guidelines/language)** - Inclusive, diversity-sensitive, and appreciative language guidelines
 - **[Terminology](/developer/guidelines/terminology)** - Naming components precisely, and the two vague layer words Artemis does not use

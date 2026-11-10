@@ -1,6 +1,6 @@
 @if (isProgrammingExerciseResults) {
     <div class="inline">
-        <button size="small" severity="info" tumAetUiButton type="button" id="export-results-dropdown" class="me-1" [tumAetUiMenuTrigger]="exportMenu">
+        <button size="small" severity="secondary" tumAetUiButton type="button" id="export-results-dropdown" class="me-1" [tumAetUiMenuTrigger]="exportMenu">
             <fa-icon [icon]="faDownload" />
             <span class="hidden md:inline" jhiTranslate="artemisApp.exercise.export.results.title"></span>
         </button>
@@ -30,7 +30,7 @@
     </div>
 }
 @if (!isProgrammingExerciseResults) {
-    <button size="small" severity="info" tumAetUiButton type="button" class="me-1" (click)="exportResults(false, false)">
+    <button size="small" severity="secondary" tumAetUiButton type="button" class="me-1" (click)="exportResults(false, false)">
         <fa-icon [icon]="faDownload" />
         <span class="hidden md:inline" jhiTranslate="artemisApp.exercise.export.results.title"></span>
     </button>

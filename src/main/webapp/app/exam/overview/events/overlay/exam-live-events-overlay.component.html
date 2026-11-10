@@ -10,7 +10,7 @@
         }
     </div>
     @if (unacknowledgedEvents().length === 0) {
-        <button type="button" tumAetUiButton class="mt-2! w-full" (click)="closeOverlay()">Close</button>
+        <button type="button" tumAetUiButton severity="secondary" class="mt-2! w-full" (click)="closeOverlay()">Close</button>
     }
     @if (unacknowledgedEvents().length > 1) {
         <button type="button" tumAetUiButton class="mt-2! w-full" (click)="acknowledgeAllUnacknowledgedEvents()">

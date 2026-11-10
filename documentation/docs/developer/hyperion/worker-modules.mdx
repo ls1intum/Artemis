@@ -2,6 +2,7 @@
 id: worker-modules
 title: AI Worker and Hyperion Boundaries
 sidebar_label: AI Worker Boundaries
+last_reviewed: 2026-11-03
 ---
 
 Artemis builds **one WAR**. AI Worker and Hyperion are feature packages in the main
@@ -62,7 +63,7 @@ not establish support for another language.
 
 ```bash
 ./gradlew compileJava compileTestJava spotlessCheck checkstyleMain checkstyleTest -x webapp
-./gradlew test -PincludeArchitectureTests --tests '*ArchitectureTest' -x webapp
+./gradlew test -DincludeTags="ArchitectureTest" -x webapp
 ./gradlew test --tests 'de.tum.cit.aet.artemis.aiworker.*' --tests 'de.tum.cit.aet.artemis.hyperion.service.worker.*' -x webapp
 ```
 

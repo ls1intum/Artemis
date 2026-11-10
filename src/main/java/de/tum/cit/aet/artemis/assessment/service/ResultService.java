@@ -309,6 +309,19 @@ public class ResultService {
     }
 
     /**
+     * Deletes a result from an already loaded participation graph using Hibernate's cascade lifecycle. Participant
+     * scores are removed by the caller. Bulk SQL deletion would leave managed children in the parent's orphan-removal
+     * collection and cause another deletion when the submission is removed in the same transaction.
+     *
+     * @param result the result belonging to the participation being deleted
+     */
+    public void deleteResultWithCascade(Result result) {
+        deleteNonCascadedResultReferences(result.getId(), false);
+        result.getSubmission().getResults().remove(result);
+        resultRepository.deleteById(result.getId());
+    }
+
+    /**
      * Deletes references to a result that are NOT cascade-deleted by Hibernate.
      * Complaints, complaint responses, ratings, and participant scores have no cascade
      * relationship from Result and must be explicitly deleted.

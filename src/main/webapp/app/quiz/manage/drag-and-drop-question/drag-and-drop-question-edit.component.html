@@ -37,7 +37,12 @@
                 <div class="question-action-buttons">
                     <button
                         type="button"
+                        tumAetUiButton
+                        size="small"
+                        severity="danger"
+                        variant="outlined"
                         class="question-action-btn question-action-btn--delete"
+                        data-testid="quiz-question-delete"
                         attr.aria-label="{{ 'artemisApp.quizExercise.deleteQuestion' | artemisTranslate }}"
                         (click)="deleteQuestion()"
                     >
@@ -641,7 +646,7 @@
             <hr />
             <div class="question-options">
                 <div ngbTooltip="{{ 'artemisApp.dragAndDropQuestion.disabledPreviewTooltip' | artemisTranslate }}" [disableTooltip]="!!question().backgroundFilePath">
-                    <button type="button" class="btn btn-outline-secondary" [disabled]="!question().backgroundFilePath" (click)="togglePreview()">
+                    <button type="button" tumAetUiButton size="small" severity="success" variant="outlined" [disabled]="!question().backgroundFilePath" (click)="togglePreview()">
                         <fa-icon [icon]="faEye" />
                         <span jhiTranslate="entity.action.preview"></span>
                     </button>
@@ -654,7 +659,7 @@
     <div class="preview-dnd-question">
         <jhi-drag-and-drop-question [question]="question()" [mappings]="[]" [questionIndex]="questionIndex()" [filePreviewPaths]="filePreviewPaths()" />
         <hr />
-        <button type="button" class="btn btn-outline-secondary" (click)="togglePreview()">
+        <button type="button" tumAetUiButton size="small" severity="warn" variant="outlined" (click)="togglePreview()">
             <fa-icon [icon]="faPencilAlt" />
             <span jhiTranslate="entity.action.edit"></span>
         </button>

@@ -39,12 +39,17 @@ import de.tum.cit.aet.artemis.core.util.CourseUtilService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.api.ExamUsageStatisticsApi;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
+import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
+import de.tum.cit.aet.artemis.exam.test_repository.StudentExamTestRepository;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
+import de.tum.cit.aet.artemis.lecture.domain.Lecture;
+import de.tum.cit.aet.artemis.lecture.test_repository.LectureTestRepository;
+import de.tum.cit.aet.artemis.lecture.util.LectureUtilService;
 import de.tum.cit.aet.artemis.localci.domain.BuildJob;
 import de.tum.cit.aet.artemis.localci.test_repository.BuildJobTestRepository;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildStatus;
@@ -110,6 +115,15 @@ class PublicUsageStatisticsTest extends AbstractSpringIntegrationIndependentTest
     private ExamTestRepository examRepository;
 
     @Autowired
+    private StudentExamTestRepository studentExamTestRepository;
+
+    @Autowired
+    private LectureUtilService lectureUtilService;
+
+    @Autowired
+    private LectureTestRepository lectureTestRepository;
+
+    @Autowired
     private Optional<CompetencyUsageStatisticsApi> competencyUsageStatisticsApi;
 
     @Autowired
@@ -134,7 +148,11 @@ class PublicUsageStatisticsTest extends AbstractSpringIntegrationIndependentTest
     }
 
     private Course createCourseStartingNow(String userPrefix, int students) {
-        userUtilService.addUsers(userPrefix, students, 0, 0, 0);
+        return createCourseStartingNow(userPrefix, students, 0, 0, 0);
+    }
+
+    private Course createCourseStartingNow(String userPrefix, int students, int tutors, int editors, int instructors) {
+        userUtilService.addUsers(userPrefix, students, tutors, editors, instructors);
         Course course = courseUtilService.createCourse();
         course.setStartDate(ZonedDateTime.now());
         course.setEndDate(ZonedDateTime.now().plusMonths(3));
@@ -229,6 +247,7 @@ class PublicUsageStatisticsTest extends AbstractSpringIntegrationIndependentTest
         userTestRepository.save(testUser);
 
         assertThat(publicUsageStatisticsRepository.findStudentIds(Set.of(course.getId()))).hasSize(MIN_STUDENTS - 1).doesNotContain(testUser.getId());
+        assertThat(publicUsageStatisticsRepository.countStudentEnrollments(Set.of(course.getId()))).isEqualTo(MIN_STUDENTS - 1);
         assertThat(realCourseIds()).doesNotContain(course.getId());
     }
 
@@ -242,6 +261,10 @@ class PublicUsageStatisticsTest extends AbstractSpringIntegrationIndependentTest
 
         assertThat(realCourseIds()).contains(first.getId(), second.getId());
         assertThat(publicUsageStatisticsRepository.findStudentIds(Set.of(first.getId(), second.getId()))).hasSize(MIN_STUDENTS);
+        // the enrolments are not unique: every student is enrolled once per course
+        assertThat(publicUsageStatisticsRepository.countStudentEnrollments(Set.of(first.getId()))).isEqualTo(MIN_STUDENTS);
+        assertThat(publicUsageStatisticsRepository.countStudentEnrollments(Set.of(first.getId(), second.getId()))).isEqualTo(2L * MIN_STUDENTS);
+        assertThat(publicUsageStatisticsRepository.countStudentEnrollments(Set.of(first.getId() + 100_000))).isZero();
     }
 
     @Test
@@ -382,10 +405,122 @@ class PublicUsageStatisticsTest extends AbstractSpringIntegrationIndependentTest
         assertThat(tutorialGroupUsageStatisticsApi.orElseThrow().countTutorialGroups(Set.of(otherCourse.getId()))).isZero();
     }
 
-    private void saveExam(Course course, String title, boolean testExam) {
+    private Exam saveExam(Course course, String title, boolean testExam) {
         Exam exam = testExam ? examUtilService.addTestExam(course) : examUtilService.addExam(course);
         exam.setTitle(title);
-        examRepository.save(exam);
+        return examRepository.save(exam);
+    }
+
+    @Test
+    void examRegistrations_areNotUniqueAndFollowTheDefinitionOfRealExams() {
+        Course course = createCourseStartingNow(TEST_PREFIX + "x", MIN_STUDENTS);
+        Course otherCourse = courseUtilService.createCourse();
+        otherCourse.setStartDate(ZonedDateTime.now());
+        courseUtilService.saveCourse(otherCourse);
+        // the same students register for several exams, and each registration counts
+        examUtilService.registerUsersForExamAndSaveExam(saveExam(course, "Final exam", false), TEST_PREFIX + "x", MIN_STUDENTS);
+        examUtilService.registerUsersForExamAndSaveExam(saveExam(course, "Retake", false), TEST_PREFIX + "x", 2);
+        examUtilService.registerUsersForExamAndSaveExam(saveExam(otherCourse, "Final exam", false), TEST_PREFIX + "x", 1);
+        // registrations for exams that are not real do not count
+        examUtilService.registerUsersForExamAndSaveExam(saveExam(course, "Mock exam", false), TEST_PREFIX + "x", MIN_STUDENTS);
+        examUtilService.registerUsersForExamAndSaveExam(saveExam(course, "Practice for students", true), TEST_PREFIX + "x", MIN_STUDENTS);
+
+        var api = examUsageStatisticsApi.orElseThrow();
+        assertThat(api.countRealExamRegistrations(Set.of(course.getId()))).isEqualTo(MIN_STUDENTS + 2);
+        assertThat(api.countRealExamRegistrations(Set.of(course.getId(), otherCourse.getId()))).isEqualTo(MIN_STUDENTS + 3);
+        assertThat(api.countRealExamRegistrations(Set.of(course.getId() + 100_000))).isZero();
+
+        User testUser = userTestRepository.findOneByLogin(TEST_PREFIX + "xstudent1").orElseThrow();
+        testUser.setTestUser(true);
+        userTestRepository.save(testUser);
+        // student 1 is registered for the final exam of the course, the retake and the final exam of the other course
+        assertThat(api.countRealExamRegistrations(Set.of(course.getId(), otherCourse.getId()))).isEqualTo(MIN_STUDENTS + 3 - 3);
+    }
+
+    @Test
+    void instructorsAndTutors_areUniquePeopleWithoutTestAndDeletedUsers() {
+        Course first = createCourseStartingNow(TEST_PREFIX + "s", MIN_STUDENTS, 2, 1, 1);
+        Course second = courseUtilService.createCourse();
+        second.setStartDate(ZonedDateTime.now());
+        courseUtilService.saveCourse(second);
+        // the same people have the same roles in the second course, so they must not be counted twice
+        userUtilService.enrollPrefixedUsersInCourse(second, TEST_PREFIX + "s");
+        Set<Long> both = Set.of(first.getId(), second.getId());
+
+        // students are no staff, and an editor counts as a tutor
+        assertThat(publicUsageStatisticsRepository.countInstructors(Set.of(first.getId()))).isEqualTo(1);
+        assertThat(publicUsageStatisticsRepository.countTutors(Set.of(first.getId()))).isEqualTo(3);
+        assertThat(publicUsageStatisticsRepository.countInstructors(both)).isEqualTo(1);
+        assertThat(publicUsageStatisticsRepository.countTutors(both)).isEqualTo(3);
+        assertThat(publicUsageStatisticsRepository.countInstructors(Set.of(first.getId() + 100_000))).isZero();
+        assertThat(publicUsageStatisticsRepository.countTutors(Set.of(first.getId() + 100_000))).isZero();
+
+        User testUser = userTestRepository.findOneByLogin(TEST_PREFIX + "sinstructor1").orElseThrow();
+        testUser.setTestUser(true);
+        userTestRepository.save(testUser);
+        User deleted = userTestRepository.findOneByLogin(TEST_PREFIX + "stutor1").orElseThrow();
+        deleted.setDeleted(true);
+        userTestRepository.save(deleted);
+
+        assertThat(publicUsageStatisticsRepository.countInstructors(both)).isZero();
+        assertThat(publicUsageStatisticsRepository.countTutors(both)).isEqualTo(2);
+    }
+
+    @Test
+    void lectureUnits_areCountedForAllUnitTypesWithoutTheUnitsOfTutorialLectures() {
+        Course course = createCourseStartingNow(TEST_PREFIX + "u", MIN_STUDENTS);
+        Course otherCourse = courseUtilService.createCourse();
+        Lecture lecture = lectureUtilService.createLecture(course);
+        lectureUtilService.createTextUnit(lecture);
+        lectureUtilService.createTextUnit(lecture);
+        lectureUtilService.createOnlineUnit(lecture);
+        lectureUtilService.createAttachmentVideoUnitWithoutAttachment(lecture);
+        Lecture tutorialLecture = lectureUtilService.createLecture(course);
+        tutorialLecture.setIsTutorialLecture(true);
+        lectureTestRepository.save(tutorialLecture);
+        lectureUtilService.createTextUnit(tutorialLecture);
+        lectureUtilService.createTextUnit(lectureUtilService.createLecture(otherCourse));
+
+        assertThat(publicUsageStatisticsRepository.countLectureUnits(Set.of(course.getId()))).isEqualTo(4);
+        assertThat(publicUsageStatisticsRepository.countLectureUnits(Set.of(course.getId(), otherCourse.getId()))).isEqualTo(5);
+        assertThat(publicUsageStatisticsRepository.countLectureUnits(Set.of(course.getId() + 100_000))).isZero();
+    }
+
+    private StudentExam startedStudentExam(Exam exam, String login, boolean started, boolean testRun) {
+        StudentExam studentExam = examUtilService.addStudentExamWithUser(exam, login);
+        if (started) {
+            studentExam.setStartedAndStartDate(ZonedDateTime.now());
+        }
+        studentExam.setTestRun(testRun);
+        return studentExamTestRepository.save(studentExam);
+    }
+
+    @Test
+    void examParticipations_areNotUniqueAndOnlyCountStartedStudentExamsOfRealExams() {
+        Course course = createCourseStartingNow(TEST_PREFIX + "q", MIN_STUDENTS);
+        Exam finalExam = saveExam(course, "Final exam", false);
+        Exam retake = saveExam(course, "Retake", false);
+        String student = TEST_PREFIX + "qstudent";
+        // students 1 to 3 start the final exam, 4 and 5 are registered but never start
+        for (int i = 1; i <= MIN_STUDENTS; i++) {
+            startedStudentExam(finalExam, student + i, i <= 3, false);
+        }
+        // student 1 also takes the retake, which counts again
+        startedStudentExam(retake, student + 1, true, false);
+        // exams that are not real, and test runs of instructors, do not count
+        startedStudentExam(saveExam(course, "Mock exam", false), student + 1, true, false);
+        startedStudentExam(saveExam(course, "Practice for students", true), student + 1, true, false);
+        startedStudentExam(saveExam(course, "Test run exam", false), student + 1, true, true);
+
+        var api = examUsageStatisticsApi.orElseThrow();
+        assertThat(api.countRealExamParticipations(Set.of(course.getId()))).isEqualTo(4);
+        assertThat(api.countRealExamParticipations(Set.of(course.getId() + 100_000))).isZero();
+
+        User testUser = userTestRepository.findOneByLogin(student + 1).orElseThrow();
+        testUser.setTestUser(true);
+        userTestRepository.save(testUser);
+        // student 1 started the final exam and the retake
+        assertThat(api.countRealExamParticipations(Set.of(course.getId()))).isEqualTo(2);
     }
 
     @Test
@@ -462,6 +597,12 @@ class PublicUsageStatisticsTest extends AbstractSpringIntegrationIndependentTest
             Set<Long> realCourses = realCourseIds();
             // other tests of this class add real courses to the same semester, so the totals are compared with the module counts of all of them
             assertThat(semester.exams()).isEqualTo(examUsageStatisticsApi.orElseThrow().countRealExams(realCourses)).isGreaterThanOrEqualTo(6);
+            assertThat(semester.examRegistrations()).isEqualTo(examUsageStatisticsApi.orElseThrow().countRealExamRegistrations(realCourses));
+            assertThat(semester.examParticipations()).isEqualTo(examUsageStatisticsApi.orElseThrow().countRealExamParticipations(realCourses));
+            assertThat(semester.instructors()).isEqualTo(publicUsageStatisticsRepository.countInstructors(realCourses));
+            assertThat(semester.tutors()).isEqualTo(publicUsageStatisticsRepository.countTutors(realCourses));
+            assertThat(semester.lectureUnits()).isEqualTo(publicUsageStatisticsRepository.countLectureUnits(realCourses));
+            assertThat(semester.enrollments()).isEqualTo(publicUsageStatisticsRepository.countStudentEnrollments(realCourses)).isGreaterThanOrEqualTo(3L * MIN_STUDENTS);
             assertThat(semester.competencies()).isEqualTo(competencyUsageStatisticsApi.orElseThrow().countCompetencies(realCourses)).isGreaterThanOrEqualTo(9);
             assertThat(semester.tutorialGroups()).isNotNull();
             assertThat(semester.courses()).isEqualTo(realCourses.size());
