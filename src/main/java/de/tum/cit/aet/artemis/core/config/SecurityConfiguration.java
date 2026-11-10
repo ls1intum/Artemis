@@ -2,7 +2,6 @@ package de.tum.cit.aet.artemis.core.config;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
-import java.util.List;
 import java.util.Optional;
 
 import org.slf4j.Logger;
@@ -121,9 +120,6 @@ public class SecurityConfiguration {
 
     @Value("${artemis.user-management.passkey.token-validity-in-seconds-for-passkey:15552000}")
     private long tokenValidityInSecondsForPasskey;
-
-    @Value("#{'${spring.prometheus.monitoringIp:127.0.0.1}'.split(',')}")
-    private List<String> monitoringIpAddresses;
 
     /**
      * Validates the configuration of the validity duration of passkey generated jwts
@@ -303,12 +299,13 @@ public class SecurityConfiguration {
      * @param personalAccessTokenService Resolved when a request arrives for the same reason as the elevated access service: the service exists only
      *                                       when {@code artemis.agent-access.enabled} is true, and no request without a personal access token needs it.
      *                                       A parameter of this method rather than of the constructor keeps the constructor within the dependency limit.
+     * @param monitoringAccessPolicy     Decides which peer addresses may read {@code /management/prometheus}, from addresses and CIDR blocks.
      * @return The configured {@link SecurityFilterChain}.
      * @throws Exception If an error occurs during the configuration process.
      */
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http, AuthenticationEntryPoint entryPoint, AccessDeniedHandler deniedHandler,
-            ObjectProvider<PersonalAccessTokenService> personalAccessTokenService) throws Exception {
+            ObjectProvider<PersonalAccessTokenService> personalAccessTokenService, MonitoringAccessPolicy monitoringAccessPolicy) throws Exception {
         // @formatter:off
         http
             // Disables Spring Security's CSRF token protection. Note what does and does not make that safe here:
@@ -385,8 +382,8 @@ public class SecurityConfiguration {
                     .requestMatchers("/.well-known/jwks.json").permitAll()
                     .requestMatchers("/.well-known/assetlinks.json").permitAll()
                     .requestMatchers("/.well-known/apple-app-site-association").permitAll()
-                    // Prometheus endpoint protected by IP address.
-                    .requestMatchers("/management/prometheus/**").access((_, context) -> new AuthorizationDecision(monitoringIpAddresses.contains(context.getRequest().getRemoteAddr())))
+                    // Prometheus endpoint protected by IP address. spring.prometheus.monitoringIp holds addresses and CIDR blocks.
+                    .requestMatchers("/management/prometheus/**").access((_, context) -> new AuthorizationDecision(monitoringAccessPolicy.isAllowed(context.getRequest().getRemoteAddr())))
                     // The remaining /management/** paths are administrative. The public exceptions (info, health) and
                     // the IP-gated prometheus rule are matched earlier, so this rule covers the rest. Actuator
                     // endpoints are not served by an annotated handler, so this is the only place that can ask for

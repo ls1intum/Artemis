@@ -9,7 +9,7 @@
             "disconnectComplete": "Die TUM.Live-Verbindung wurde getrennt.",
             "error": "TUM.Live konnte die Anfrage nicht abschließen. Versuche es erneut.",
             "refreshUnavailable": "TUM.Live ist vorübergehend nicht erreichbar.",
-            "restrictedWarning": "Dieser TUM.Live-Kurs ist nur eingeschränkt sichtbar. Die Verbindung gewährt keinen Zugriff auf private Videos.",
+            "restrictedWarning": "Dieser TUM.Live-Kurs ist nur eingeschränkt sichtbar. Die Verbindung gewährt keinen Zugriff auf private Videos, außer auf die aus Artemis hochgeladenen.",
             "courseName": "TUM.Live-Kurs",
             "visibility": "Sichtbarkeit",
             "visibilityValues": {
@@ -34,6 +34,24 @@
             "working": "Wird ausgeführt…",
             "disconnectTitle": "TUM.Live trennen",
             "disconnectQuestion": "Diesen Kurs trennen und den Artemis-Zugriff in TUM.Live widerrufen?"
+        },
+        "tumLiveUpload": {
+            "title": "TUM.Live-Aufnahme",
+            "description": "Lade das Video in den verbundenen TUM.Live-Kurs hoch. Artemis zeigt es in dieser Einheit, sobald TUM.Live es umgewandelt hat. Du kannst die Seite in der Zwischenzeit verlassen.",
+            "replaceDescription": "Diese Einheit zeigt ein Video, das zu TUM.Live hochgeladen wurde. Lade ein anderes Video hoch, um es zu ersetzen; das alte wird in TUM.Live gelöscht, sobald das neue bereit ist.",
+            "chooseFile": "Videodatei für TUM.Live",
+            "upload": "Zu TUM.Live hochladen",
+            "replace": "Video ersetzen",
+            "uploading": "Wird zu TUM.Live hochgeladen…",
+            "cancel": "Hochladen abbrechen",
+            "processing": "TUM.Live wandelt das Video um. Artemis fügt es dieser Einheit hinzu, sobald es bereit ist.",
+            "discard": "Upload verwerfen",
+            "attached": "Das Video ist bereit und wurde dieser Einheit hinzugefügt.",
+            "transferFailed": "Das Hochladen ist fehlgeschlagen: {{ reason }}. Versuche es erneut.",
+            "unreachable": "TUM.Live ist nicht erreichbar, oder der Upload-Link ist abgelaufen. Versuche es erneut.",
+            "lastError": "Der letzte Upload wurde nicht hinzugefügt: {{ reason }}",
+            "deleteRecording": "Video auch in TUM.Live löschen",
+            "deleteRecordings": "Auch die zu TUM.Live hochgeladenen Videos dieser Vorlesung löschen"
         }
     }
 }
