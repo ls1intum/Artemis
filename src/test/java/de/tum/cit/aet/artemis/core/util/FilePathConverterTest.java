@@ -8,10 +8,12 @@ import java.util.Map;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.ResourceLock;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.yaml.snakeyaml.Yaml;
 
+@ResourceLock("FilePathConverter")
 class FilePathConverterTest {
 
     private static final Logger log = LoggerFactory.getLogger(FilePathConverterTest.class);

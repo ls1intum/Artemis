@@ -32,6 +32,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.api.parallel.ResourceLock;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -54,6 +55,7 @@ import de.tum.cit.aet.artemis.lecture.test_repository.SlideTestRepository;
  * points at the file the caller started from.
  */
 @ExtendWith(MockitoExtension.class)
+@ResourceLock("FilePathConverter")
 class AttachmentServiceFileReplacementTest {
 
     private static final long ATTACHMENT_ID = 7L;

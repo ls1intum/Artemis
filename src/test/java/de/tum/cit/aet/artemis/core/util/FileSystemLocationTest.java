@@ -19,6 +19,7 @@ import java.util.stream.Stream;
 import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.ResourceLock;
 import org.yaml.snakeyaml.Yaml;
 
 import de.tum.cit.aet.artemis.core.FilePathType;
@@ -30,6 +31,7 @@ import de.tum.cit.aet.artemis.core.FilePathType;
  * change that makes one of these assertions fail is a change that makes the server stop finding files it wrote earlier.
  * The directory names are deliberately not the ones in the served URL, which is the whole point of separating the two.
  */
+@ResourceLock("FilePathConverter")
 class FileSystemLocationTest {
 
     private static Path rootPath;
