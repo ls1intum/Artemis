@@ -18,6 +18,8 @@ export class AttachmentVideoUnit extends LectureUnit {
     public videoSourceType?: 'TUM_LIVE' | 'YOUTUBE' | null;
     public youtubeVideoId?: string | null;
     public attachmentUpdateIntent?: AttachmentUpdateIntent;
+    /** Sent with an update: the video link the editor was loaded with. The server changes the link only if the editor changed it, and only if the unit still has this one. */
+    public loadedVideoSource?: string;
 
     constructor() {
         super(LectureUnitType.ATTACHMENT_VIDEO);

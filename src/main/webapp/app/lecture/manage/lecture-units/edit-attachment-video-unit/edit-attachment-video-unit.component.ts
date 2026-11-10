@@ -11,12 +11,13 @@ import { AttachmentVideoUnitFormComponent, AttachmentVideoUnitFormData } from 'a
 import { Attachment, AttachmentType } from 'app/lecture/shared/entities/attachment.model';
 import { combineLatest } from 'rxjs';
 import { LectureUnitLayoutComponent } from '../lecture-unit-layout/lecture-unit-layout.component';
-import { hydrate } from 'app/foundation/util/deep-clone.util';
+import { cloneWith, hydrate } from 'app/foundation/util/deep-clone.util';
+import { TumLiveUploadComponent } from 'app/lecture/manage/lecture-units/tum-live-upload/tum-live-upload.component';
 
 @Component({
     selector: 'jhi-edit-attachment-video-unit',
     templateUrl: './edit-attachment-video-unit.component.html',
-    imports: [LectureUnitLayoutComponent, AttachmentVideoUnitFormComponent],
+    imports: [LectureUnitLayoutComponent, AttachmentVideoUnitFormComponent, TumLiveUploadComponent],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class EditAttachmentVideoUnitComponent implements OnInit {
@@ -85,6 +86,31 @@ export class EditAttachmentVideoUnitComponent implements OnInit {
             });
     }
 
+    /**
+     * Shows the video link of a video uploaded to TUM.Live, which Artemis set on the unit, so saving the form keeps it.
+     * @param unitId the unit
+     */
+    onTumLiveVideoAttached(unitId: number): void {
+        const lectureId = this.lectureId();
+        if (lectureId === undefined) {
+            return;
+        }
+        this.attachmentVideoUnitService
+            .findById(unitId, lectureId)
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe({
+                next: (response: AttachmentVideoUnit) => {
+                    const videoSource = response.videoSource;
+                    const unit = this.attachmentVideoUnit();
+                    if (unit) {
+                        this.attachmentVideoUnit.set(cloneWith(unit, { videoSource }));
+                    }
+                    this.attachmentVideoUnitForm()?.applyServerVideoSource(videoSource);
+                },
+                error: (res: HttpErrorResponse) => onError(this.alertService, res),
+            });
+    }
+
     updateAttachmentVideoUnit(attachmentVideoUnitFormData: AttachmentVideoUnitFormData) {
         const { description, name, releaseDate, updateNotificationText, videoSource, competencyLinks } = attachmentVideoUnitFormData.formProperties;
         const { file, fileName } = attachmentVideoUnitFormData.fileProperties;
@@ -116,6 +142,8 @@ export class EditAttachmentVideoUnitComponent implements OnInit {
             releaseDate,
             competencyLinks,
             videoSource,
+            // An empty loaded link is sent as '': without the field the server compares with the link the unit has now.
+            loadedVideoSource: currentUnit.videoSource ?? '',
             attachmentUpdateIntent: hasUpload ? AttachmentUpdateIntent.FILE_UPLOAD : AttachmentUpdateIntent.NO_FILE_CHANGE,
         });
 
@@ -135,7 +163,22 @@ export class EditAttachmentVideoUnitComponent implements OnInit {
                 finalize(() => this.isLoading.set(false)),
             )
             .subscribe({
-                next: () => this.router.navigate(['../../../'], { relativeTo: this.activatedRoute }),
+                next: (response: AttachmentVideoUnit) => {
+                    const savedVideoSource = response.videoSource || undefined;
+                    const sentVideoSource = videoSource || undefined;
+                    if (sentVideoSource !== (currentUnit.videoSource || undefined) && savedVideoSource !== sentVideoSource) {
+                        // The link was changed meanwhile, so the server kept that one. The page stays, shows it as the saved link and keeps the entered one to
+                        // be saved again; the rest of the change is saved.
+                        this.attachmentVideoUnit.set(cloneWith(currentUnit, { name, description, releaseDate, competencyLinks, videoSource: savedVideoSource }));
+                        if (response.attachment) {
+                            this.attachment.set(cloneWith(response.attachment, { attachmentVideoUnit: undefined }));
+                        }
+                        this.attachmentVideoUnitForm()?.applyServerVideoSource(savedVideoSource);
+                        this.alertService.warning('artemisApp.lecture.unitEditor.videoSourceChangedMeanwhile');
+                        return;
+                    }
+                    void this.router.navigate(['../../../'], { relativeTo: this.activatedRoute });
+                },
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),
             });
     }

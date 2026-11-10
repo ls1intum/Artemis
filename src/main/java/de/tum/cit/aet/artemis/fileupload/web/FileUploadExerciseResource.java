@@ -41,10 +41,8 @@ import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
 import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
 import de.tum.cit.aet.artemis.assessment.service.GradingCriteriaMapper;
-import de.tum.cit.aet.artemis.atlas.api.AtlasMLApi;
 import de.tum.cit.aet.artemis.atlas.api.CompetencyApi;
 import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
-import de.tum.cit.aet.artemis.atlas.dto.atlasml.SaveCompetencyRequestDTO.OperationTypeDTO;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
@@ -154,8 +152,6 @@ public class FileUploadExerciseResource {
 
     private final Optional<SlideApi> slideApi;
 
-    private final Optional<AtlasMLApi> atlasMLApi;
-
     private final Optional<CompetencyApi> competencyApi;
 
     private final CompetencyExerciseLinkService competencyExerciseLinkService;
@@ -170,10 +166,9 @@ public class FileUploadExerciseResource {
             ParticipationRepository participationRepository, GroupNotificationScheduleService groupNotificationScheduleService,
             FileUploadExerciseImportService fileUploadExerciseImportService, FileUploadExerciseService fileUploadExerciseService, ChannelService channelService,
             ExerciseVersionService exerciseVersionService, ChannelRepository channelRepository, Optional<CompetencyProgressApi> competencyProgressApi, Optional<SlideApi> slideApi,
-            Optional<AtlasMLApi> atlasMLApi, Optional<CompetencyApi> competencyApi, CompetencyExerciseLinkService competencyExerciseLinkService,
-            ExerciseVariantGroupService exerciseVariantGroupService, TeamAssignmentConfigRepository teamAssignmentConfigRepository,
-            PlagiarismDetectionConfigRepository plagiarismDetectionConfigRepository, ExerciseConfigurationService exerciseConfigurationService,
-            FileUploadExerciseWithSubmissionsExportService fileUploadExerciseWithSubmissionsExportService) {
+            Optional<CompetencyApi> competencyApi, CompetencyExerciseLinkService competencyExerciseLinkService, ExerciseVariantGroupService exerciseVariantGroupService,
+            TeamAssignmentConfigRepository teamAssignmentConfigRepository, PlagiarismDetectionConfigRepository plagiarismDetectionConfigRepository,
+            ExerciseConfigurationService exerciseConfigurationService, FileUploadExerciseWithSubmissionsExportService fileUploadExerciseWithSubmissionsExportService) {
         this.teamAssignmentConfigRepository = teamAssignmentConfigRepository;
         this.plagiarismDetectionConfigRepository = plagiarismDetectionConfigRepository;
         this.exerciseConfigurationService = exerciseConfigurationService;
@@ -194,7 +189,6 @@ public class FileUploadExerciseResource {
         this.exerciseVersionService = exerciseVersionService;
         this.competencyProgressApi = competencyProgressApi;
         this.slideApi = slideApi;
-        this.atlasMLApi = atlasMLApi;
         this.competencyApi = competencyApi;
         this.competencyExerciseLinkService = competencyExerciseLinkService;
         this.exerciseVariantGroupService = exerciseVariantGroupService;
@@ -252,16 +246,6 @@ public class FileUploadExerciseResource {
         groupNotificationScheduleService.checkNotificationsForNewExerciseAsync(fileUploadExercise);
         competencyProgressApi.ifPresent(api -> api.updateProgressByLearningObjectAsync(result));
 
-        // Notify AtlasML about the new exercise
-        atlasMLApi.ifPresent(api -> {
-            try {
-                api.saveExerciseWithCompetencies(result, OperationTypeDTO.UPDATE);
-            }
-            catch (Exception e) {
-                log.warn("Failed to notify AtlasML about exercise creation: {}", e.getMessage());
-            }
-        });
-
         exerciseVersionService.createExerciseVersion(result);
 
         return ResponseEntity.created(new URI("/api/fileupload/file-upload-exercises/" + result.getId())).body(loadFileUploadExerciseDTOForResponse(result.getId()));
@@ -317,15 +301,6 @@ public class FileUploadExerciseResource {
 
         final var newFileUploadExercise = fileUploadExerciseImportService.importFileUploadExercise(importedFileUploadExercise, originalFileUploadExercise);
 
-        // Notify AtlasML about the new exercise
-        atlasMLApi.ifPresent(api -> {
-            try {
-                api.saveExerciseWithCompetencies(newFileUploadExercise, OperationTypeDTO.UPDATE);
-            }
-            catch (Exception e) {
-                log.warn("Failed to notify AtlasML about exercise creation: {}", e.getMessage());
-            }
-        });
         exerciseVersionService.createExerciseVersion(newFileUploadExercise);
 
         return ResponseEntity.created(new URI("/api/fileupload/file-upload-exercises/" + newFileUploadExercise.getId())).body(FileUploadExerciseDTO.of(newFileUploadExercise));
@@ -496,9 +471,6 @@ public class FileUploadExerciseResource {
         // Update competency progress for affected students
         competencyProgressApi.ifPresent(api -> api.updateProgressForUpdatedLearningObjectAsyncWithOriginalCompetencyIds(originalCompetencyIds, persistedExercise));
 
-        // Sync with AtlasML for AI-based features
-        atlasMLApi.ifPresent(api -> api.notifyExerciseUpdated(persistedExercise));
-
         // Create a version snapshot for history tracking
         exerciseVersionService.createExerciseVersion(persistedExercise);
 
@@ -646,11 +618,10 @@ public class FileUploadExerciseResource {
     }
 
     /**
-     * DELETE /file-upload-exercises/:exerciseId : delete the "id"
-     * fileUploadExercise.
+     * DELETE /file-upload-exercises/:exerciseId : delete the "id" fileUploadExercise in the background. The progress is sent over the websocket topic of the exercise.
      *
      * @param exerciseId the id of the fileUploadExercise to delete
-     * @return the ResponseEntity with status 200 (OK)
+     * @return the ResponseEntity with status 202 (Accepted), or 409 (Conflict) if the exercise is already being deleted
      */
     @DeleteMapping("file-upload-exercises/{exerciseId}")
     @EnforceAtLeastInstructorInExercise
@@ -658,21 +629,15 @@ public class FileUploadExerciseResource {
         log.info("REST request to delete FileUploadExercise : {}", exerciseId);
         var exercise = fileUploadExerciseRepository.findByIdElseThrow(exerciseId);
         User user = userRepository.getUserWithAuthorities();
+        var course = exercise.getCourseViaExerciseGroupOrCourseMemberElseThrow();
 
-        // Notify AtlasML about the exercise deletion before actual deletion
-        atlasMLApi.ifPresent(api -> {
-            try {
-                api.saveExerciseWithCompetencies(exercise, OperationTypeDTO.DELETE);
-            }
-            catch (Exception e) {
-                log.warn("Failed to notify AtlasML about exercise deletion: {}", e.getMessage());
-            }
-        });
         // note: we use the exercise service here, because this one makes sure to clean
         // up all lazy references correctly.
-        exerciseService.logDeletion(exercise, exercise.getCourseViaExerciseGroupOrCourseMemberElseThrow(), user);
-        exerciseDeletionService.delete(exerciseId, false);
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, exercise.getTitle())).build();
+        // Audit only once the deletion is accepted, so a refused duplicate request is not audited.
+        exerciseDeletionService.startAsyncDeletion(exercise, false, () -> {
+            exerciseService.logDeletion(exercise, course, user);
+        });
+        return ResponseEntity.accepted().build();
     }
 
     /**

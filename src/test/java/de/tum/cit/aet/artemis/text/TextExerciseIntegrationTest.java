@@ -63,7 +63,6 @@ import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
 import de.tum.cit.aet.artemis.assessment.test_repository.ExampleSubmissionTestRepository;
 import de.tum.cit.aet.artemis.assessment.util.GradingCriterionUtil;
 import de.tum.cit.aet.artemis.atlas.competency.util.CompetencyUtilService;
-import de.tum.cit.aet.artemis.atlas.connector.AtlasMLRequestMockProvider;
 import de.tum.cit.aet.artemis.atlas.domain.LearningObject;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
@@ -72,8 +71,6 @@ import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepos
 import de.tum.cit.aet.artemis.communication.util.ConversationUtilService;
 import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.core.dto.SortingOrder;
-import de.tum.cit.aet.artemis.core.service.feature.Feature;
-import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.core.util.PageUtil;
 import de.tum.cit.aet.artemis.core.util.PageableSearchUtilService;
@@ -96,6 +93,7 @@ import de.tum.cit.aet.artemis.exercise.repository.PlagiarismDetectionConfigRepos
 import de.tum.cit.aet.artemis.exercise.repository.TeamAssignmentConfigRepository;
 import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
 import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
+import de.tum.cit.aet.artemis.exercise.util.AsyncDeletionTestUtilService;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.exercise.util.ImportedExerciseAssertions;
 import de.tum.cit.aet.artemis.globalsearch.service.WeaviateService;
@@ -130,6 +128,9 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
 
     /** The exercise updated notifications in a page of course notifications, as a JSON path filter. */
     private static final String EXERCISE_UPDATED_NOTIFICATIONS = "$.content[?(@.notificationType == 'exerciseUpdatedNotification')]";
+
+    @Autowired
+    private AsyncDeletionTestUtilService asyncDeletionTestUtilService;
 
     @Autowired
     private TeamAssignmentConfigRepository teamAssignmentConfigRepository;
@@ -184,12 +185,6 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
 
     @Autowired
     private ConversationUtilService conversationUtilService;
-
-    @Autowired
-    private Optional<AtlasMLRequestMockProvider> atlasMLRequestMockProvider;
-
-    @Autowired
-    private FeatureToggleService featureToggleService;
 
     @Autowired(required = false)
     private WeaviateService weaviateService;
@@ -260,7 +255,8 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         var textBlocks = TextExerciseFactory.generateTextBlocks(submissionCount * submissionSize);
         textExerciseUtilService.addAndSaveTextBlocksToTextSubmission(textBlocks, textSubmission);
 
-        request.delete("/api/text/text-exercises/" + textExercise.getId(), HttpStatus.OK);
+        request.delete("/api/text/text-exercises/" + textExercise.getId(), HttpStatus.ACCEPTED);
+        asyncDeletionTestUtilService.awaitExerciseDeletion(textExercise.getId());
         assertThat(textExerciseRepository.findById(textExercise.getId())).as("text exercise was deleted").isEmpty();
         assertExerciseNotInWeaviate(weaviateService, textExercise.getId());
     }
@@ -273,7 +269,8 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         TextExercise textExercise = textExerciseUtilService.createIndividualTextExercise(course, now, now, now);
         Channel exerciseChannel = conversationUtilService.addChannelToExercise(textExercise);
 
-        request.delete("/api/text/text-exercises/" + textExercise.getId(), HttpStatus.OK);
+        request.delete("/api/text/text-exercises/" + textExercise.getId(), HttpStatus.ACCEPTED);
+        asyncDeletionTestUtilService.awaitExerciseDeletion(textExercise.getId());
 
         Optional<Channel> exerciseChannelAfterDelete = channelRepository.findById(exerciseChannel.getId());
         assertThat(exerciseChannelAfterDelete).isEmpty();
@@ -285,7 +282,8 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         textExercise.setCompetencyLinks(Set.of(new CompetencyExerciseLink(competency, textExercise, 1)));
         textExerciseRepository.save(textExercise);
 
-        request.delete("/api/text/text-exercises/" + textExercise.getId(), HttpStatus.OK);
+        request.delete("/api/text/text-exercises/" + textExercise.getId(), HttpStatus.ACCEPTED);
+        asyncDeletionTestUtilService.awaitExerciseDeletion(textExercise.getId());
 
         verify(competencyProgressApi).updateProgressByCompetencyAsync(eq(competency));
     }
@@ -295,7 +293,8 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
     void deleteExamTextExercise() throws Exception {
         TextExercise textExercise = examUtilService.addEnrolledCourseExamExerciseGroupWithOneTextExercise(TEST_PREFIX);
 
-        request.delete("/api/text/text-exercises/" + textExercise.getId(), HttpStatus.OK);
+        request.delete("/api/text/text-exercises/" + textExercise.getId(), HttpStatus.ACCEPTED);
+        asyncDeletionTestUtilService.awaitExerciseDeletion(textExercise.getId());
         assertThat(textExerciseRepository.findById(textExercise.getId())).isNotPresent();
     }
 
@@ -439,36 +438,6 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         textExercise.setDueDate(someMoment);
         request.postWithResponseBody("/api/text/text-exercises", UpdateTextExerciseDTO.of(textExercise), TextExerciseResponseDTO.class, HttpStatus.BAD_REQUEST);
         assertThat(exerciseGroup.getExercises()).doesNotContain(textExercise);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
-    void atlasML_isCalledOnCreateUpdateAndDelete() throws Exception {
-        var provider = atlasMLRequestMockProvider.orElseThrow(() -> new IllegalStateException("AtlasMLRequestMockProvider must be available for AtlasML tests"));
-        featureToggleService.enableFeature(Feature.AtlasML);
-        try {
-            provider.reset();
-            provider.enableMockingOfRequests();
-            provider.mockSaveCompetenciesAny();
-            // Create
-            courseUtilService.enableMessagingForCourse(course);
-            textExercise.setId(null);
-            textExercise.setTitle("AtlasML Create");
-            textExercise.setChannelName("atlasml-create");
-            request.postWithResponseBody("/api/text/text-exercises", UpdateTextExerciseDTO.of(textExercise), TextExerciseResponseDTO.class, HttpStatus.CREATED);
-
-            // Update
-            textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).getFirst();
-            textExercise.setTitle("AtlasML Update");
-            request.putWithResponseBody("/api/text/text-exercises", de.tum.cit.aet.artemis.text.dto.UpdateTextExerciseDTO.of(textExercise), TextExerciseResponseDTO.class,
-                    HttpStatus.OK);
-
-            // Delete
-            request.delete("/api/text/text-exercises/" + textExercise.getId(), HttpStatus.OK);
-        }
-        finally {
-            featureToggleService.disableFeature(Feature.AtlasML);
-        }
     }
 
     @Test

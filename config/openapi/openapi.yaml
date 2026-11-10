@@ -213,7 +213,7 @@ paths:
         required: true
         schema:
           type: string
-          enum: [start-now, end-now, set-visible]
+          enum: [start-now, set-visible]
       responses:
         '200':
           description: OK
@@ -660,6 +660,30 @@ paths:
           content:
             application/json:
               schema: {$ref: '#/components/schemas/HyperionCourseSettings'}
+  /api/hyperion/courses/{courseId}/quiz-question-pool/questions/{questionId}/review:
+    put:
+      tags: [hyperion-quiz-question-pool]
+      operationId: updateQuizQuestionPoolReview
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: questionId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/QuizQuestionPoolReview'}
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/QuizQuestionPoolItem'}
   /api/tutorialgroup/courses/{courseId}/tutorial-groups:
     get:
       tags: [tutorial-group]
@@ -1318,6 +1342,49 @@ paths:
           content:
             application/json:
               schema: {$ref: '#/components/schemas/SimpleLecture'}
+  /api/lecture/lecture-units/{lectureUnitId}/tumlive-upload:
+    get:
+      tags: [tum-live-upload]
+      operationId: getUploadState
+      parameters:
+      - name: lectureUnitId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/TumLiveUploadState'}
+    post:
+      tags: [tum-live-upload]
+      operationId: startUpload
+      parameters:
+      - name: lectureUnitId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/TumLiveUploadStart'}
+    delete:
+      tags: [tum-live-upload]
+      operationId: discardUpload
+      parameters:
+      - name: lectureUnitId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: ref
+        in: query
+        required: true
+        schema: {type: string}
+      responses:
+        '200': {description: OK}
   /api/lecture/courses/{courseId}/lectures:
     get:
       tags: [lecture]
@@ -1486,6 +1553,17 @@ paths:
           content:
             application/json:
               schema: {$ref: '#/components/schemas/QuizQuestionPoolBuildStart'}
+  /api/hyperion/courses/{courseId}/quiz-question-pool/build/cancel:
+    post:
+      tags: [hyperion-quiz-question-pool]
+      operationId: cancelQuizQuestionPoolBuild
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200': {description: OK}
   /api/hyperion/courses/{courseId}/quiz-exercises/refine-question:
     post:
       tags: [hyperion-quiz-question-generation]
@@ -2397,6 +2475,10 @@ paths:
         in: path
         required: true
         schema: {type: integer, format: int64}
+      - name: deleteTumLiveRecordings
+        in: query
+        required: false
+        schema: {type: boolean, default: false}
       responses:
         '200': {description: OK}
   /api/lecture/lectures/{lectureId}/title:
@@ -2666,6 +2748,23 @@ paths:
                 type: array
                 items: {$ref: '#/components/schemas/SimpleLecture'}
                 uniqueItems: true
+  /api/lecture/courses/{courseId}/tumlive-uploads:
+    get:
+      tags: [tum-live-upload]
+      operationId: getUploadedUnits
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/TumLiveUploadedUnit'}
   /api/lecture/courses/{courseId}/lectures-with-slides:
     get:
       tags: [lecture]
@@ -2875,14 +2974,42 @@ paths:
         in: query
         required: false
         schema: {type: integer, format: int64}
+      - name: flagged
+        in: query
+        required: false
+        schema: {type: boolean, default: false}
+      - name: page
+        in: query
+        required: false
+        schema: {type: integer, format: int32, default: 0}
+      - name: size
+        in: query
+        required: false
+        schema: {type: integer, format: int32, default: 100}
       responses:
         '200':
           description: OK
           content:
             application/json:
-              schema:
-                type: array
-                items: {$ref: '#/components/schemas/QuizQuestionPoolItem'}
+              schema: {$ref: '#/components/schemas/QuizQuestionPoolPage'}
+    delete:
+      tags: [hyperion-quiz-question-pool]
+      operationId: deleteQuizQuestionPoolQuestions
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: competencyId
+        in: query
+        required: false
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/QuizQuestionPoolDeletion'}
   /api/hyperion/courses/{courseId}/quiz-question-pool/progress:
     get:
       tags: [hyperion-quiz-question-pool]
@@ -2898,6 +3025,21 @@ paths:
           content:
             application/json:
               schema: {$ref: '#/components/schemas/QuizQuestionPoolProgress'}
+  /api/hyperion/courses/{courseId}/quiz-question-pool/plan:
+    get:
+      tags: [hyperion-quiz-question-pool]
+      operationId: getQuizQuestionPoolPlan
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/QuizQuestionPoolPlan'}
   /api/hyperion/authoring-runs:
     get:
       tags: [hyperion-authoring-run]
@@ -3144,6 +3286,10 @@ paths:
         in: path
         required: true
         schema: {type: integer, format: int64}
+      - name: deleteTumLiveRecordings
+        in: query
+        required: false
+        schema: {type: boolean, default: false}
       responses:
         '200': {description: OK}
   /api/hyperion/programming-exercises/{exerciseId}/generate-exercise/jobs/{jobId}:
@@ -3159,6 +3305,21 @@ paths:
         in: path
         required: true
         schema: {type: string}
+      responses:
+        '200': {description: OK}
+  /api/hyperion/courses/{courseId}/quiz-question-pool/questions/{questionId}:
+    delete:
+      tags: [hyperion-quiz-question-pool]
+      operationId: deleteQuizQuestionPoolQuestion
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: questionId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
       responses:
         '200': {description: OK}
   /api/hyperion/admin/exercises/{exerciseId}/wedged-slot/{token}:
@@ -4022,8 +4183,12 @@ components:
       description: Request to refine multiple quiz questions at once using a single
         user prompt
       properties:
-        questions: {type: array, description: The quiz questions to refine, maxItems: 50,
-          minItems: 1}
+        questions:
+          type: array
+          description: The quiz questions to refine
+          items: {$ref: '#/components/schemas/GeneratedQuizQuestion'}
+          maxItems: 50
+          minItems: 1
         refinementPrompt: {type: string, description: User instructions describing
             how all questions should be changed, maxLength: 2000, minLength: 1}
       required: [questions, refinementPrompt]
@@ -4058,7 +4223,11 @@ components:
       type: object
       description: Response containing generated quiz questions
       properties:
-        questions: {type: array, description: Generated quiz questions, minItems: 1}
+        questions:
+          type: array
+          description: Generated quiz questions
+          items: {$ref: '#/components/schemas/GeneratedQuizQuestion'}
+          minItems: 1
       required: [questions]
     GeneratedAssessmentInstruction:
       type: object
@@ -4106,6 +4275,13 @@ components:
           items: {$ref: '#/components/schemas/SubmissionOverview'}
           uniqueItems: true
         hasSubmitted: {type: boolean}
+    QuizQuestionPoolCompetency:
+      type: object
+      description: A competency with questions in the quiz question pool
+      properties:
+        id: {type: integer, format: int64, description: Id of the competency}
+        title: {type: string, description: Title of the competency}
+      required: [id]
     LectureForOverview:
       type: object
       properties:
@@ -4285,12 +4461,14 @@ components:
         attachmentUpdateIntent:
           type: string
           enum: [NO_FILE_CHANGE, FILE_UPLOAD, EDITOR_PDF_CONTENT_CHANGED]
+        loadedVideoSource: {type: string}
         type: {type: string}
     QuizQuestionPoolProgress:
       type: object
       description: Progress of a course's quiz question pool build
       properties:
-        running: {type: boolean, description: Whether a build is running on this node}
+        running: {type: boolean, description: Whether a build of the course is running
+            anywhere in the cluster}
         total: {type: integer, format: int32, description: Intended questions in the
             pool}
         toGenerate: {type: integer, format: int32, description: Items still to generate}
@@ -4303,6 +4481,11 @@ components:
             rejected}
         failed: {type: integer, format: int32, description: Items whose generation
             or filtering failed permanently}
+        buildSettings: {$ref: '#/components/schemas/HyperionCourseSettings', description: The
+            settings the running build planned its cells with; absent while no build
+            is running}
+        modelConfigured: {type: boolean, description: Whether the pool has its own
+            model endpoint; builds are refused without one}
     SimpleLectureCourse:
       type: object
       properties:
@@ -4736,23 +4919,9 @@ components:
             that an instructor would reject or rewrite the question}
         justification: {type: string, description: One-sentence justification of the
             severity}
+        flagged: {type: boolean, description: Whether this verdict asks a reviewer
+            to look at an accepted question}
       required: [mode]
-    LectureDetailsTextUnit:
-      allOf:
-      - {$ref: '#/components/schemas/LectureUnitDetails'}
-      - type: object
-        properties:
-          id: {type: integer, format: int64}
-          lecture: {$ref: '#/components/schemas/LectureDetailsLectureReference'}
-          name: {type: string}
-          releaseDate: {type: string, format: date-time}
-          completed: {type: boolean}
-          visibleToStudents: {type: boolean}
-          competencyLinks:
-            type: array
-            items: {$ref: '#/components/schemas/LectureDetailsCompetencyLink'}
-          content: {type: string}
-          type: {type: string}
     QuizQuestionFilterDecision:
       type: object
       description: The filter's decision for one generated quiz question and the per-mode
@@ -4769,6 +4938,22 @@ components:
           minItems: 1
         rationale: {type: string, description: The filter's overall rationale}
       required: [verdicts]
+    LectureDetailsTextUnit:
+      allOf:
+      - {$ref: '#/components/schemas/LectureUnitDetails'}
+      - type: object
+        properties:
+          id: {type: integer, format: int64}
+          lecture: {$ref: '#/components/schemas/LectureDetailsLectureReference'}
+          name: {type: string}
+          releaseDate: {type: string, format: date-time}
+          completed: {type: boolean}
+          visibleToStudents: {type: boolean}
+          competencyLinks:
+            type: array
+            items: {$ref: '#/components/schemas/LectureDetailsCompetencyLink'}
+          content: {type: string}
+          type: {type: string}
     DragAndDropQuestionCreate:
       required: [correctMappings, dragItems, dropLocations, points, scoringType, title,
         type]
@@ -4945,6 +5130,15 @@ components:
         busy: {type: boolean}
         capacityAvailable: {type: boolean}
         restriction: {type: string}
+    QuizQuestionPoolPlan:
+      type: object
+      description: The pool a build would plan with the course's stored settings
+      properties:
+        planned: {type: integer, format: int32, description: Questions the pool holds
+            once a build with the stored settings is complete}
+        missing: {type: integer, format: int32, description: Questions a build with
+            the stored settings would add to the pool}
+      required: [missing, planned]
     CalendarEvent:
       type: object
       properties:
@@ -5179,6 +5373,8 @@ components:
       required: [question, reasoning, type]
       type: object
       properties:
+        question: {$ref: '#/components/schemas/GeneratedQuizQuestion', description: The
+            refined quiz question}
         reasoning: {type: string, description: Brief explanation of what was changed
             during refinement, minLength: 1}
         type:
@@ -5227,6 +5423,11 @@ components:
           enum: [EASY, MEDIUM, HARD]
         maxPoints: {type: number, format: double}
       required: [difficulty, maxPoints, packageName, shortName, title]
+    TumLiveUploadedUnit:
+      type: object
+      properties:
+        lectureId: {type: integer, format: int64}
+        lectureUnitId: {type: integer, format: int64}
     ShortAnswerSubmittedAnswerFromStudent:
       required: [questionId, submittedTexts, type]
       type: object
@@ -5273,6 +5474,10 @@ components:
           type: string
           description: The instructor's review decision
           enum: [PENDING, APPROVED, EXCLUDED]
+        flagged: {type: boolean, description: 'Whether the filter''s verdicts ask
+            for a review, present once the question is judged'}
+        question: {$ref: '#/components/schemas/GeneratedQuizQuestion', description: 'The
+            generated question, present once generated'}
         decision: {$ref: '#/components/schemas/QuizQuestionFilterDecision', description: 'The
             filter''s decision, present once judged'}
         failure: {type: string, description: 'Why the last attempt failed, present
@@ -5385,6 +5590,8 @@ components:
       type: object
       description: Request to refine an existing quiz question using a user prompt
       properties:
+        question: {$ref: '#/components/schemas/GeneratedQuizQuestion', description: The
+            existing quiz question to refine}
         refinementPrompt: {type: string, description: User instructions describing
             how the question should be changed, maxLength: 2000, minLength: 1}
       required: [question, refinementPrompt]
@@ -5688,6 +5895,15 @@ components:
       properties:
         faqText: {type: string, minLength: 1}
       required: [faqText]
+    QuizQuestionPoolReview:
+      type: object
+      description: The review decision for one quiz question pool item
+      properties:
+        reviewState:
+          type: string
+          description: The review decision
+          enum: [PENDING, APPROVED, EXCLUDED]
+      required: [reviewState]
     DragAndDropSubmittedAnswerFromStudent:
       required: [mappings, questionId, type]
       type: object
@@ -5968,6 +6184,16 @@ components:
         userPrompt: {type: string, description: User prompt describing the problem
             statement requirements, maxLength: 1000, minLength: 1}
       required: [userPrompt]
+    GeneratedQuizAnswerOption:
+      type: object
+      description: One generated answer option
+      properties:
+        text: {type: string, description: Answer option text, maxLength: 2000, minLength: 1}
+        correct: {type: boolean, description: Whether this option is correct}
+        hint: {type: string, description: Optional hint, maxLength: 2000, minLength: 0}
+        explanation: {type: string, description: Optional explanation, maxLength: 2000,
+          minLength: 0}
+      required: [correct, text]
     ExerciseOverview:
       type: object
       properties:
@@ -6349,6 +6575,24 @@ components:
         id: {type: integer, format: int64}
         title: {type: string}
         active: {type: boolean}
+    QuizQuestionPoolPage:
+      type: object
+      description: One page of a course's quiz question pool
+      properties:
+        items:
+          type: array
+          description: The items of the requested page, absent when the page is empty
+          items: {$ref: '#/components/schemas/QuizQuestionPoolItem'}
+        totalCount: {type: integer, format: int64, description: How many items match
+            the request across all pages}
+        competencies:
+          type: array
+          description: Every competency that has items in the pool, absent when the
+            pool is empty
+          items: {$ref: '#/components/schemas/QuizQuestionPoolCompetency'}
+        pendingCount: {type: integer, format: int64, description: 'For a request of
+            the flagged items, how many of them across all pages await a decision'}
+      required: [competencies, items, totalCount]
     TutorialGroupStudentImportData:
       type: object
       properties:
@@ -6370,6 +6614,27 @@ components:
           additionalProperties: {type: string}
           description: Action-specific context parameters
       required: [actionType, problemStatementMarkdown]
+    GeneratedQuizQuestion:
+      type: object
+      description: One generated quiz question
+      properties:
+        type:
+          type: string
+          description: Question type
+          enum: [single-choice, multiple-choice, true-false]
+        title: {type: string, description: Question title, maxLength: 500, minLength: 1}
+        questionText: {type: string, description: Question text, maxLength: 10000,
+          minLength: 1}
+        options:
+          type: array
+          description: Answer options
+          items: {$ref: '#/components/schemas/GeneratedQuizAnswerOption'}
+          minItems: 1
+        hint: {type: string, description: Optional hint for the overall question,
+          maxLength: 2000, minLength: 0}
+        explanation: {type: string, description: Optional explanation for the overall
+            question, maxLength: 2000, minLength: 0}
+      required: [options, questionText, title, type]
     HiddenPageInfo:
       type: object
       properties:
@@ -6485,6 +6750,16 @@ components:
         students:
           type: array
           items: {$ref: '#/components/schemas/StudentExport'}
+    TumLiveUploadState:
+      type: object
+      properties:
+        connected: {type: boolean}
+        pendingRef: {type: string}
+        pendingSince: {type: string, format: date-time}
+        converting: {type: boolean}
+        progress: {type: integer, format: int32}
+        attachedRef: {type: string}
+        lastError: {type: string}
     CodeGenerationJobStart:
       type: object
       properties:
@@ -6510,6 +6785,17 @@ components:
       type: object
       properties:
         id: {type: integer, format: int64}
+    TumLiveUploadStart:
+      type: object
+      properties:
+        ref: {type: string}
+        uploadUrl: {type: string}
+    QuizQuestionPoolDeletion:
+      type: object
+      description: The result of deleting quiz question pool items
+      properties:
+        deleted: {type: integer, format: int64, description: How many items were deleted}
+      required: [deleted]
     QuizBatchCreation:
       type: object
       properties:
@@ -7021,9 +7307,32 @@ components:
       properties:
         poolGenerationEnabled: {type: boolean, description: Whether the quiz question
             pool is generated automatically for new lecture material}
-        questionsPerLectureUnit: {type: integer, format: int32, description: 'Questions
-            the pool holds per lecture unit and competency, spread over that unit''s
-            cells', maximum: 60, minimum: 1}
+        singleChoiceQuestionsPerLectureUnit: {type: integer, format: int32, description: Single-choice
+            questions the pool holds per lecture unit and competency, maximum: 60,
+          minimum: 1}
+        multipleChoiceEnabled: {type: boolean, description: Whether the pool also
+            holds multiple-choice questions}
+        multipleChoiceQuestionsPerLectureUnit: {type: integer, format: int32, description: Multiple-choice
+            questions the pool holds per lecture unit and competency while they are
+            enabled, maximum: 60, minimum: 1}
+        multipleChoiceMinCorrectOptions: {type: integer, format: int32, description: The
+            fewest answer options a multiple-choice question marks correct, maximum: 4,
+          minimum: 1}
+        multipleChoiceMaxCorrectOptions: {type: integer, format: int32, description: The
+            most answer options a multiple-choice question marks correct; not below
+            the fewest, maximum: 4, minimum: 1}
+        easyPercent: {type: integer, format: int32, description: 'Share of each lecture
+            unit''s questions generated at the easy difficulty, in percent', maximum: 100,
+          minimum: 0}
+        mediumPercent: {type: integer, format: int32, description: 'Share of each
+            lecture unit''s questions generated at the medium difficulty, in percent',
+          maximum: 100, minimum: 0}
+        hardPercent: {type: integer, format: int32, description: 'Share of each lecture
+            unit''s questions generated at the hard difficulty, in percent; the three
+            shares add up to 100', maximum: 100, minimum: 0}
+      required: [easyPercent, hardPercent, mediumPercent, multipleChoiceEnabled, multipleChoiceMaxCorrectOptions,
+        multipleChoiceMinCorrectOptions, multipleChoiceQuestionsPerLectureUnit, poolGenerationEnabled,
+        singleChoiceQuestionsPerLectureUnit]
     QuizQuestionPoolBuildStart:
       type: object
       description: Outcome of a request to build a course's quiz question pool

@@ -35,6 +35,7 @@ api/quiz-submission-api.ts
 api/quiz-training-api.ts
 api/request-options.ts
 api/text-unit-api.ts
+api/tum-live-upload-api.ts
 api/tutorial-group-api.ts
 api/tutorial-group-free-period-api.ts
 api/tutorial-group-session-api.ts
@@ -135,6 +136,8 @@ model/exercise-unit.ts
 model/exercise-variant-group-reference.ts
 model/generated-assessment-criterion.ts
 model/generated-assessment-instruction.ts
+model/generated-quiz-answer-option.ts
+model/generated-quiz-question.ts
 model/get-lecture-unit-by-id200response.ts
 model/get-lectures.ts
 model/global-search-result.ts
@@ -232,8 +235,13 @@ model/quiz-question-from-editor.ts
 model/quiz-question-generation-request.ts
 model/quiz-question-generation-response.ts
 model/quiz-question-pool-build-start.ts
+model/quiz-question-pool-competency.ts
+model/quiz-question-pool-deletion.ts
 model/quiz-question-pool-item.ts
+model/quiz-question-pool-page.ts
+model/quiz-question-pool-plan.ts
 model/quiz-question-pool-progress.ts
+model/quiz-question-pool-review.ts
 model/quiz-question-re-evaluate.ts
 model/quiz-question-refinement-failure.ts
 model/quiz-question-refinement-request.ts
@@ -306,6 +314,9 @@ model/submitted-answer-from-student.ts
 model/text-unit.ts
 model/timing.ts
 model/tokens.ts
+model/tum-live-upload-start.ts
+model/tum-live-upload-state.ts
+model/tum-live-uploaded-unit.ts
 model/tutorial-group-configuration-free-period.ts
 model/tutorial-group-configuration.ts
 model/tutorial-group-detail-data.ts

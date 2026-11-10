@@ -27,6 +27,7 @@ export interface AttachmentVideoUnit {
     visibleToStudents?: boolean;
     lecture?: AttachmentVideoUnitLectureReference;
     attachmentUpdateIntent?: AttachmentVideoUnitAttachmentUpdateIntentEnum;
+    loadedVideoSource?: string;
     type?: string;
 }
 

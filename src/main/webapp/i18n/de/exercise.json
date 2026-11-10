@@ -27,12 +27,29 @@
                 "testCourse": "Testkurses",
                 "realCourse": "echten Kurses",
                 "summary": {
-                    "title": "Aufgaben-Zusammenfassung",
-                    "numberOfStudentParticipations": "Anzahl der Studierendenteilnahmen",
-                    "numberOfAssessments": "Anzahl der Bewertungen",
-                    "numberOfCommunicationPosts": "Anzahl der Kommunikationsbeiträge",
-                    "numberOfAnswerPosts": "Anzahl der Antworten",
-                    "numberOfBuilds": "Anzahl der Builds"
+                    "title": "Was gelöscht wird",
+                    "category": {
+                        "studentWork": "Studierendenleistungen",
+                        "assessment": "Bewertung",
+                        "plagiarism": "Plagiatsprüfungen",
+                        "communication": "Kommunikation",
+                        "content": "Aufgabeninhalte und Verknüpfungen",
+                        "infrastructure": "Infrastruktur"
+                    },
+                    "numberOfStudentParticipations": "Teilnahmen von Studierenden",
+                    "numberOfTeams": "Teams",
+                    "numberOfSubmissions": "Abgaben",
+                    "numberOfStudentExams": "Klausuren von Studierenden, die diese Aufgabe enthalten",
+                    "numberOfResults": "Ergebnisse",
+                    "numberOfAssessments": "Manuelle Bewertungen",
+                    "numberOfComplaints": "Beschwerden und Feedback-Anfragen",
+                    "numberOfPlagiarismComparisons": "Plagiatsvergleiche",
+                    "numberOfCommunicationPosts": "Beiträge im Aufgabenkanal",
+                    "numberOfAnswerPosts": "Antworten im Aufgabenkanal",
+                    "numberOfExampleSubmissions": "Beispielabgaben",
+                    "numberOfCompetencyLinks": "Verknüpfte Kompetenzen",
+                    "numberOfLectureUnitLinks": "Verknüpfte Vorlesungseinheiten",
+                    "numberOfBuilds": "Build-Jobs"
                 }
             },
             "reset": {

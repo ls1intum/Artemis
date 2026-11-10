@@ -557,6 +557,8 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
 
             const attachmentVideoUnitWithoutFile = hydrate(new AttachmentVideoUnit(), attachmentVideoUnit, {
                 attachmentUpdateIntent: AttachmentUpdateIntent.NO_FILE_CHANGE,
+                // The PDF editor does not change the video link.
+                loadedVideoSource: attachmentVideoUnit.videoSource ?? '',
             });
 
             this.attachmentVideoUnitService
@@ -598,6 +600,8 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
 
             const attachmentVideoUnit = hydrate(new AttachmentVideoUnit(), attachmentVideoUnitToUpdate, {
                 attachmentUpdateIntent: instructorPdfFile ? AttachmentUpdateIntent.EDITOR_PDF_CONTENT_CHANGED : AttachmentUpdateIntent.NO_FILE_CHANGE,
+                // The PDF editor does not change the video link.
+                loadedVideoSource: this.attachmentVideoUnit()!.videoSource ?? '',
             });
 
             const submitUpdate = (finalPageOrder?: OrderedPage[]) => {

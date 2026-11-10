@@ -6,6 +6,7 @@ import { MockProvider } from 'ng-mocks';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { AttachmentVideoUnitFormComponent, AttachmentVideoUnitFormData } from '../attachment-video-unit-form/attachment-video-unit-form.component';
+import { TumLiveUploadService } from 'app/lecture/manage/lecture-units/services/tum-live-upload.service';
 import { AttachmentVideoUnitService } from '../services/attachment-video-unit.service';
 import { EditAttachmentVideoUnitComponent } from './edit-attachment-video-unit.component';
 import { AttachmentUpdateIntent, AttachmentVideoUnit } from '../../../shared/entities/lecture-unit/attachmentVideoUnit.model';
@@ -37,6 +38,7 @@ describe('EditAttachmentVideoUnitComponent', () => {
             providers: [
                 MockProvider(AttachmentVideoUnitService),
                 MockProvider(AlertService),
+                MockProvider(TumLiveUploadService, { getState: () => of({ connected: true }) }),
                 { provide: Router, useClass: MockRouter },
                 { provide: ProfileService, useClass: MockProfileService },
                 {
@@ -110,7 +112,7 @@ describe('EditAttachmentVideoUnitComponent', () => {
         attachmentVideoUnit.attachment = undefined;
         attachmentVideoUnit.videoSource = 'https://example.com/video';
         vi.spyOn(attachmentVideoUnitService, 'findById').mockReturnValue(of(attachmentVideoUnit));
-        updateAttachmentVideoUnitSpy.mockReturnValue(of(attachmentVideoUnit));
+        updateAttachmentVideoUnitSpy.mockReturnValue(of({ ...attachmentVideoUnit, videoSource: 'https://example.com/updated-video' } as AttachmentVideoUnit));
         fixture.detectChanges();
 
         fixture.componentInstance.updateAttachmentVideoUnit({
@@ -162,6 +164,17 @@ describe('EditAttachmentVideoUnitComponent', () => {
         expect(attachmentVideoUnitFormComponent.formData()?.fileProperties.file).toBeUndefined();
     });
 
+    it('shows the video link of a video uploaded to TUM.Live once it is attached', () => {
+        fixture.detectChanges();
+        const form: AttachmentVideoUnitFormComponent = fixture.debugElement.query(By.directive(AttachmentVideoUnitFormComponent)).componentInstance;
+        vi.spyOn(attachmentVideoUnitService, 'findById').mockReturnValue(of({ ...attachmentVideoUnit, videoSource: 'https://tum.live/w/algo/55' } as AttachmentVideoUnit));
+
+        fixture.componentInstance.onTumLiveVideoAttached(attachmentVideoUnit.id!);
+
+        expect(form.videoSourceControl!.value).toBe('https://tum.live/w/algo/55');
+        expect(fixture.componentInstance.attachmentVideoUnit()?.videoSource).toBe('https://tum.live/w/algo/55');
+    });
+
     it('should update attachment video unit with file change without notification', () => {
         fixture.detectChanges();
 
@@ -210,6 +223,7 @@ describe('EditAttachmentVideoUnitComponent', () => {
                 name: attachmentVideoUnit.name,
                 description: attachmentVideoUnit.description,
                 releaseDate: attachmentVideoUnit.releaseDate,
+                videoSource: attachmentVideoUnit.videoSource,
                 version: 1,
                 updateNotificationText: notification,
             },
@@ -263,6 +277,29 @@ describe('EditAttachmentVideoUnitComponent', () => {
         });
 
         expect(updateAttachmentVideoUnitSpy.mock.calls[0][3]!.notificationText).toBeUndefined();
+    });
+
+    it('stays on the page with the entered video URL when another editor changed the link meanwhile', async () => {
+        const warningSpy = vi.spyOn(TestBed.inject(AlertService), 'warning');
+        fixture.detectChanges();
+        const form: AttachmentVideoUnitFormComponent = fixture.debugElement.query(By.directive(AttachmentVideoUnitFormComponent)).componentInstance;
+        form.videoSourceControl!.setValue('https://example.com/entered');
+        // The server kept the link another editor saved after this page was loaded.
+        updateAttachmentVideoUnitSpy.mockReturnValue(of({ ...attachmentVideoUnit, videoSource: 'https://example.com/other' } as AttachmentVideoUnit));
+
+        fixture.componentInstance.updateAttachmentVideoUnit({ formProperties: { name: 'Renamed', videoSource: 'https://example.com/entered' }, fileProperties: {} });
+
+        expect(navigateSpy).not.toHaveBeenCalled();
+        expect(warningSpy).toHaveBeenCalledWith('artemisApp.lecture.unitEditor.videoSourceChangedMeanwhile');
+        expect(form.videoSourceControl!.value).toBe('https://example.com/entered');
+        expect(fixture.componentInstance.attachmentVideoUnit()?.videoSource).toBe('https://example.com/other');
+
+        // Saving again compares with the link the server has now.
+        updateAttachmentVideoUnitSpy.mockReturnValue(of({ ...attachmentVideoUnit, videoSource: 'https://example.com/entered' } as AttachmentVideoUnit));
+        fixture.componentInstance.updateAttachmentVideoUnit({ formProperties: { name: 'Renamed', videoSource: 'https://example.com/entered' }, fileProperties: {} });
+
+        expect(updateAttachmentVideoUnitSpy.mock.calls[1][2]).toMatchObject({ loadedVideoSource: 'https://example.com/other' });
+        expect(navigateSpy).toHaveBeenCalledOnce();
     });
 
     it('should report a failed update and stay on the page', () => {

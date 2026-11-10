@@ -72,6 +72,7 @@ import de.tum.cit.aet.artemis.lecture.config.LectureEnabled;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
+import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 import de.tum.cit.aet.artemis.lecture.dto.LectureDTO;
 import de.tum.cit.aet.artemis.lecture.dto.LectureDetailsDTO;
 import de.tum.cit.aet.artemis.lecture.dto.LectureForOverviewDTO;
@@ -83,6 +84,7 @@ import de.tum.cit.aet.artemis.lecture.repository.LectureUnitRepository;
 import de.tum.cit.aet.artemis.lecture.repository.SlideRepository;
 import de.tum.cit.aet.artemis.lecture.service.LectureImportService;
 import de.tum.cit.aet.artemis.lecture.service.LectureService;
+import de.tum.cit.aet.artemis.lecture.service.TumLiveUploadService;
 import de.tum.cit.aet.artemis.videosource.domain.VideoSourceType;
 import de.tum.cit.aet.artemis.videosource.service.YouTubeUrlService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -130,10 +132,13 @@ public class LectureResource {
 
     private final LectureUnitRepository lectureUnitRepository;
 
+    private final TumLiveUploadService tumLiveUploadService;
+
     public LectureResource(LectureRepository lectureRepository, LectureService lectureService, LectureImportService lectureImportService, CourseRepository courseRepository,
             UserRepository userRepository, AuthorizationCheckService authCheckService, ChannelService channelService, ChannelRepository channelRepository,
             SlideRepository slideRepository, Optional<SearchableEntityWeaviateService> searchableEntityWeaviateServiceOptional, YouTubeUrlService youTubeUrlService,
-            LectureUnitRepository lectureUnitRepository) {
+            LectureUnitRepository lectureUnitRepository, TumLiveUploadService tumLiveUploadService) {
+        this.tumLiveUploadService = tumLiveUploadService;
         this.lectureRepository = lectureRepository;
         this.lectureService = lectureService;
         this.lectureImportService = lectureImportService;
@@ -600,15 +605,18 @@ public class LectureResource {
     /**
      * DELETE /lectures/:lectureId : delete the "id" lecture.
      *
-     * @param lectureId the id of the lecture to delete
+     * @param lectureId               the id of the lecture to delete
+     * @param deleteTumLiveRecordings whether to delete in TUM.Live the videos Artemis uploaded for its units; uploads not attached yet are always deleted
      * @return the ResponseEntity with status 200 (OK)
      */
     @DeleteMapping("lectures/{lectureId}")
     @EnforceAtLeastInstructorInLecture
-    public ResponseEntity<Void> deleteLecture(@PathVariable Long lectureId) {
+    public ResponseEntity<Void> deleteLecture(@PathVariable Long lectureId, @RequestParam(defaultValue = "false") boolean deleteTumLiveRecordings) {
         Lecture lecture = lectureRepository.findByIdWithLectureUnitsAndCompetenciesElseThrow(lectureId);
         log.debug("REST request to delete Lecture : {}", lectureId);
+        List<Long> unitIds = lecture.getLectureUnits().stream().map(LectureUnit::getId).toList();
         lectureService.delete(lecture, true);
+        tumLiveUploadService.releaseForDeletion(unitIds, deleteTumLiveRecordings);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, lectureId.toString())).build();
     }
 

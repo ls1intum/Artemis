@@ -21,7 +21,6 @@ import { FileUploadExerciseService } from 'app/fileupload/manage/services/file-u
 import { QuizExerciseService } from 'app/quiz/manage/service/quiz-exercise.service';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
 import { ModelingExerciseService } from 'app/modeling/manage/services/modeling-exercise.service';
-import { EntitySummary } from 'app/shared-ui/delete-dialog/delete-dialog.model';
 import { DeleteDialogService } from 'app/shared-ui/delete-dialog/service/delete-dialog.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
@@ -31,6 +30,9 @@ import { MODULE_FEATURE_HYPERION, MODULE_FEATURE_HYPERION_EXERCISE_GENERATION, P
 import { GenerationCapabilityRequestsService } from 'app/hyperion/exercise-generation/generation-capability-requests.service';
 import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/programming/shared/entities/programming-exercise.model';
 import { QuizExerciseDeletionApi } from 'app/openapi/api/quiz-exercise-deletion-api';
+import { EntityDeletionStatus, EntityDeletionType } from 'app/shared-ui/delete-dialog/entity-deletion-progress.model';
+import { EntityDeletionService } from 'app/shared-ui/delete-dialog/service/entity-deletion.service';
+import { MockEntityDeletionService } from 'test/helpers/mocks/service/mock-entity-deletion.service';
 
 @Component({ selector: 'jhi-quiz-exercise-lifecycle-buttons', template: '' })
 class QuizLifecycleButtonsStubComponent {
@@ -44,7 +46,7 @@ class QuizLifecycleButtonsStubComponent {
 class ExerciseActionBarStubComponent {
     items = input.required<ActionItem[]>();
     hasReservedContent = input(false);
-    keepPriorityIds = input<string[]>([]);
+    inlineIds = input<string[]>([]);
     columnMinWidthChange = output<number>();
 }
 
@@ -67,6 +69,7 @@ describe('ExerciseActionsComponent', () => {
         await TestBed.configureTestingModule({
             imports: [ExerciseActionsComponent],
             providers: [
+                { provide: EntityDeletionService, useClass: MockEntityDeletionService },
                 provideRouter([]),
                 { provide: TranslateService, useClass: MockTranslateService },
                 MockProvider(ExerciseService),
@@ -98,7 +101,7 @@ describe('ExerciseActionsComponent', () => {
         programmingExerciseService = TestBed.inject(ProgrammingExerciseService);
         modelingExerciseService = TestBed.inject(ModelingExerciseService);
 
-        vi.spyOn(exerciseService, 'getDeletionSummary').mockReturnValue(of({} as EntitySummary));
+        vi.spyOn(exerciseService, 'getDeletionSummary').mockReturnValue(of([]));
 
         fixture.componentRef.setInput('exercise', textExercise());
         fixture.componentRef.setInput('courseId', 1);
@@ -513,6 +516,61 @@ describe('ExerciseActionsComponent', () => {
             expect(deleteSpy).toHaveBeenCalledWith(3);
             expect(broadcastSpy).toHaveBeenCalledWith({ name: eventName, content: 'Deleted an exercise' });
             expect(deleted).toEqual([exercise]);
+        });
+
+        it('hands the exercise to the background deletion with the target of that exercise', () => {
+            vi.spyOn(textExerciseService, 'delete').mockReturnValue(of(new HttpResponse<void>()));
+            fixture.componentRef.setInput('exercise', textExercise({ id: 3, type: ExerciseType.TEXT, title: 'Sorting' }));
+
+            component['onDelete']({});
+
+            const deletionService = TestBed.inject(EntityDeletionService) as unknown as MockEntityDeletionService;
+            expect(deletionService.delete).toHaveBeenCalledWith(
+                { entityType: EntityDeletionType.EXERCISE, entityId: 3, title: 'Sorting', successAlertKey: 'artemisApp.textExercise.deleted' },
+                expect.anything(),
+            );
+        });
+
+        it('keeps the exercise in the list when the background deletion failed', () => {
+            (TestBed.inject(EntityDeletionService) as unknown as MockEntityDeletionService).status = EntityDeletionStatus.FAILED;
+            vi.spyOn(textExerciseService, 'delete').mockReturnValue(of(new HttpResponse<void>()));
+            const broadcastSpy = vi.spyOn(eventManager, 'broadcast');
+            fixture.componentRef.setInput('exercise', textExercise({ id: 3, type: ExerciseType.TEXT }));
+            const deleted: Exercise[] = [];
+            component.exerciseDeleted.subscribe((e) => deleted.push(e));
+
+            component['onDelete']({});
+
+            expect(broadcastSpy).not.toHaveBeenCalled();
+            expect(deleted).toEqual([]);
+        });
+
+        it('asks the list to reload instead of removing the exercise when it is not known how the background deletion ended', () => {
+            (TestBed.inject(EntityDeletionService) as unknown as MockEntityDeletionService).status = EntityDeletionStatus.UNKNOWN;
+            vi.spyOn(textExerciseService, 'delete').mockReturnValue(of(new HttpResponse<void>()));
+            fixture.componentRef.setInput('exercise', textExercise({ id: 3, type: ExerciseType.TEXT }));
+            const deleted: Exercise[] = [];
+            let reloads = 0;
+            component.exerciseDeleted.subscribe((e) => deleted.push(e));
+            component.exerciseDeletionOutcomeUnknown.subscribe(() => reloads++);
+
+            component['onDelete']({});
+
+            // The exercise may still exist, so it is not removed as if the deletion was confirmed; the list is read from the server again.
+            expect(deleted).toEqual([]);
+            expect(reloads).toBe(1);
+        });
+
+        it('reports a refused deletion, e.g. one that is already running, to the confirmation dialog', () => {
+            vi.spyOn(textExerciseService, 'delete').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 409, statusText: 'Conflict' })));
+            const errors: string[] = [];
+            component.dialogError$.subscribe((message) => errors.push(message));
+            fixture.componentRef.setInput('exercise', textExercise({ id: 3, type: ExerciseType.TEXT }));
+
+            component['onDelete']({});
+
+            expect(errors).toHaveLength(1);
+            expect(errors[0]).not.toBe('');
         });
 
         it('deletes a programming exercise with the repo/build-plan flags', () => {

@@ -1,4 +1,5 @@
 import { Component, DestroyRef, ElementRef, Injector, OnInit, afterNextRender, computed, inject, input, linkedSignal, signal, viewChild } from '@angular/core';
+import { TumLiveUploadComponent } from 'app/lecture/manage/lecture-units/tum-live-upload/tum-live-upload.component';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NgTemplateOutlet } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -21,7 +22,7 @@ import {
 import { LectureUnit, LectureUnitType } from 'app/lecture/shared/entities/lecture-unit/lectureUnit.model';
 import { onError } from 'app/foundation/util/global.utils';
 import { Attachment, AttachmentType } from 'app/lecture/shared/entities/attachment.model';
-import { deepClone } from 'app/foundation/util/deep-clone.util';
+import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
 import { LectureUnitManagementComponent } from 'app/lecture/manage/lecture-units/management/lecture-unit-management.component';
 import { TextUnitApi } from 'app/openapi/api/text-unit-api';
 import { OnlineUnitApi } from 'app/openapi/api/online-unit-api';
@@ -92,6 +93,7 @@ const AUTOSAVE_REQUEST_CONTEXT = () => new HttpContext().set(SKIP_HTTP_ERROR_ALE
         TextUnitFormComponent,
         OnlineUnitFormComponent,
         AttachmentVideoUnitFormComponent,
+        TumLiveUploadComponent,
         CreateExerciseUnitComponent,
         PdfDropZoneComponent,
         NgTemplateOutlet,
@@ -359,7 +361,8 @@ export class LectureUpdateUnitsComponent implements OnInit {
     createAttachmentVideoUnit(attachmentVideoUnitFormData: AttachmentVideoUnitFormData): void {
         const { description, name, releaseDate, videoSource, competencyLinks } = attachmentVideoUnitFormData.formProperties;
         const { file, fileName } = attachmentVideoUnitFormData.fileProperties;
-        if (!name || (!fileName && !videoSource)) {
+        // A unit may start without a file and a video, so its video can be uploaded to TUM.Live once it exists.
+        if (!name) {
             return;
         }
 
@@ -744,15 +747,22 @@ export class LectureUpdateUnitsComponent implements OnInit {
                 this.inFlight.set(undefined);
             }
         };
+        const videoSourceEpoch = this.videoSourceEpoch;
         // Not tied to the page: a save that already runs completes even when the user leaves.
         pending.request().subscribe({
-            next: (savedUnit) => {
+            next: (sentUnit) => {
                 requestDone();
+                // A TUM.Live video attached while the save ran is newer than the link the save sent; the next save must send it, not the old one.
+                const editing = this.editingUnit() as AttachmentVideoUnit;
+                const attachedMeanwhile = videoSourceEpoch !== this.videoSourceEpoch && editing?.id === sentUnit.id;
+                const savedUnit = attachedMeanwhile && editing ? cloneWith(sentUnit as AttachmentVideoUnit, { videoSource: editing.videoSource }) : sentUnit;
                 this.unitManagementComponent()?.replaceLectureUnit(deepClone(savedUnit));
                 if (this.editingUnitId() === unitId) {
+                    // Read before this save is taken over; the unit is still the edited one, as checked above.
+                    const linkBefore = editing?.videoSource;
                     this.lastSavedKey = pending.key;
                     this.editingUnit.set(savedUnit);
-                    this.takeOverSavedContent(pending, savedUnit);
+                    this.takeOverSavedContent(pending, savedUnit, linkBefore, (sentUnit as AttachmentVideoUnit).videoSource);
                     this.lastSavedAt.set(dayjs());
                 }
                 // Also after the form closed because its item was deleted, so the saves of an item opened meanwhile are sent.
@@ -813,12 +823,48 @@ export class LectureUpdateUnitsComponent implements OnInit {
         }
     }
 
-    private takeOverSavedContent(pending: PendingUnitSave, savedUnit: AttachmentVideoUnit): void {
+    /**
+     * Shows the video link of a video uploaded to TUM.Live, which Artemis set on the edited unit, as its saved link.
+     * @param unitId the unit
+     */
+    /** Counts the TUM.Live videos attached to the edited unit, so the response of a save that ran meanwhile does not bring back the old link. */
+    private videoSourceEpoch = 0;
+
+    onTumLiveVideoAttached(unitId: number): void {
+        this.attachmentVideoUnitService.findById(unitId, this.lecture().id!).subscribe({
+            next: (response: AttachmentVideoUnit) => {
+                const editingUnit = this.editingUnit();
+                // Another unit may be open by now; its form must not get this unit's video.
+                if (!editingUnit || editingUnit.id !== unitId) {
+                    return;
+                }
+                const videoSource = response.videoSource;
+                this.videoSourceEpoch++;
+                // The saved model too, since the details' autosave sends the video link from it.
+                this.editingUnit.set(cloneWith(editingUnit as AttachmentVideoUnit, { videoSource }));
+                this.attachmentVideoUnitForm()?.applyServerVideoSource(videoSource);
+                // The list shows the new video, and deleting the unit now asks about it.
+                this.unitManagementComponent()?.loadData();
+            },
+            error: (error: HttpErrorResponse) => onError(this.alertService, error),
+        });
+    }
+
+    private takeOverSavedContent(pending: PendingUnitSave, savedUnit: AttachmentVideoUnit, linkBefore: string | undefined, linkSaved: string | undefined): void {
         const form = this.attachmentVideoUnitForm();
+        if (pending.confirmed?.confirmed !== 'videoSource' && (savedUnit.videoSource || undefined) !== (linkBefore || undefined)) {
+            // Another editor changed the link meanwhile, which the response of this save shows: the form shows it too, and keeps a link the user entered.
+            form?.applyServerVideoSource(savedUnit.videoSource);
+        }
         if (pending.confirmed?.confirmed === 'file') {
             form?.takeOverSavedFile(savedUnit.attachment?.link, savedUnit.attachment?.version, pending.confirmed.data.fileProperties.file);
         } else if (pending.confirmed?.confirmed === 'videoSource') {
             form?.takeOverSavedVideoSource(savedUnit.videoSource);
+            // Compared with the link the server saved, not with a TUM.Live video attached after it, which replaced the saved link.
+            if ((linkSaved || undefined) !== (pending.confirmed.data.formProperties.videoSource || undefined)) {
+                // The link was changed meanwhile, so the server kept that one. The entered link stays in the field as a change of it, to be saved again.
+                this.alertService.warning('artemisApp.lecture.unitEditor.videoSourceChangedMeanwhile');
+            }
         }
     }
 
@@ -891,6 +937,8 @@ export class LectureUpdateUnitsComponent implements OnInit {
         attachmentVideoUnit.releaseDate = releaseDate || undefined;
         attachmentVideoUnit.competencyLinks = this.competencyLinksToSend(competencyLinks);
         attachmentVideoUnit.videoSource = options.withVideoSource ? videoSource || undefined : savedUnit.videoSource;
+        // An empty loaded link is sent as '': without the field the server compares with the link the unit has now.
+        attachmentVideoUnit.loadedVideoSource = savedUnit.videoSource ?? '';
         attachmentVideoUnit.attachmentUpdateIntent = withUpload ? AttachmentUpdateIntent.FILE_UPLOAD : AttachmentUpdateIntent.NO_FILE_CHANGE;
 
         const attachmentToUpdate = withUpload ? (attachment ? deepClone(attachment) : new Attachment()) : undefined;
@@ -914,8 +962,10 @@ export class LectureUpdateUnitsComponent implements OnInit {
             )
             .pipe(
                 map((updated) => {
-                    // The response has the new version and link of an uploaded file.
+                    // The response has the new version and link of an uploaded file, and the unit's video link: the server keeps the link if it was changed
+                    // meanwhile, by another editor or a TUM.Live upload, so the link the request sent may not be the saved one.
                     attachmentVideoUnit.attachment = updated.attachment ?? attachment;
+                    attachmentVideoUnit.videoSource = updated.videoSource || undefined;
                     return attachmentVideoUnit;
                 }),
             );

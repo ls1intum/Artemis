@@ -57,6 +57,7 @@ api/exercise-unit-resources.ts
 api/quiz-participation-resources.ts
 api/hyperion-assessment-criteria-generation-resources.ts
 api/admin-ai-worker-resources.ts
+api/tum-live-upload-resources.ts
 api/quiz-exercise-retrieval-resources.ts
 api/global-search-resources.ts
 api/admin-hyperion-generation-monitoring-resources.ts

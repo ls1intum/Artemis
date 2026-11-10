@@ -56,10 +56,14 @@ export class LectureApi {
      *
      *
      * @param lectureId
+     * @param deleteTumLiveRecordings
      * @param options the HttpContext and extra headers of this request; a declared header parameter overrides a header of the same name
      */
-    deleteLecture(lectureId: number, options?: import('./request-options').RequestOptions): Observable<void> {
-        const url = `${this.basePath}/api/lecture/lectures/${lectureId}`;
+    deleteLecture(lectureId: number, deleteTumLiveRecordings?: boolean, options?: import('./request-options').RequestOptions): Observable<void> {
+        const queryParams = new URLSearchParams();
+        appendQueryParam(queryParams, 'deleteTumLiveRecordings', deleteTumLiveRecordings);
+        const queryString = queryParams.toString();
+        const url = `${this.basePath}/api/lecture/lectures/${lectureId}${queryString ? `?${queryString}` : ''}`;
         return this.http.delete<void>(url, options && { ...(options.context !== undefined && { context: options.context }), ...(options.headers !== undefined && { headers: options.headers }) });
     }
 
