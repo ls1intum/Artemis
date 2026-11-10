@@ -251,8 +251,7 @@ export class QuizQuestionPoolComponent implements OnInit, OnDestroy {
         if (!stored) {
             return [];
         }
-        const overnight = { key: SETTINGS_KEY_PREFIX + (stored.poolGenerationEnabled ? 'summaryOvernightOn' : 'summaryOvernightOff'), values: {}, changed: false };
-        const facts = [...buildFactsOf(stored, this.runningBuildSettings()), overnight];
+        const facts = buildFactsOf(stored, this.runningBuildSettings());
         if (this.runningBuildSettings() && this.plan()) {
             const count = this.nextBuildCount();
             const planned = { key: SETTINGS_KEY_PREFIX + 'summaryPlanned', values: { count }, changed: count !== this.progress()?.total };

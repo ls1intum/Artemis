@@ -18,7 +18,7 @@ const MAX_CORRECT_OPTIONS = 4;
 
 /**
  * Lets an instructor edit the pool settings of a course in a dialog: the single-choice count per lecture unit, the optional
- * multiple-choice count with its range of correct options, the difficulty mix and the overnight builds. Edits stay in the dialog's
+ * multiple-choice count with its range of correct options and the difficulty mix. Edits stay in the dialog's
  * draft until it emits them to save.
  */
 @Component({
@@ -66,10 +66,6 @@ export class QuizQuestionPoolSettingsDialogComponent {
             this.correctOptionRangeOrdered()
         );
     });
-
-    setPoolGenerationEnabled(enabled: boolean): void {
-        this.change({ poolGenerationEnabled: enabled });
-    }
 
     setSingleChoiceQuestionsPerLectureUnit(questions: number | undefined): void {
         this.change({ singleChoiceQuestionsPerLectureUnit: questions ?? 0 });

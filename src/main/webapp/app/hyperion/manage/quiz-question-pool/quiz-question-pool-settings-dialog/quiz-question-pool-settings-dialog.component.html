@@ -171,19 +171,6 @@
                 ></small>
             }
         </fieldset>
-        <div class="flex items-start gap-3">
-            <tumaet-ui-toggle-switch
-                inputId="pool-generation-enabled"
-                [ngModel]="draftValue.poolGenerationEnabled"
-                (ngModelChange)="setPoolGenerationEnabled($event)"
-                [disabled]="saving()"
-                [ariaLabel]="'artemisApp.hyperion.quizQuestionPool.settings.poolGenerationEnabled' | artemisTranslate"
-            />
-            <label for="pool-generation-enabled" class="m-0">
-                <span>{{ 'artemisApp.hyperion.quizQuestionPool.settings.poolGenerationEnabled' | artemisTranslate }}</span>
-                <small class="block text-muted-color">{{ 'artemisApp.hyperion.quizQuestionPool.settings.poolGenerationHelp' | artemisTranslate }}</small>
-            </label>
-        </div>
     </div>
     <ng-template #footer>
         <button tumAetUiButton type="button" severity="secondary" variant="outlined" data-testid="pool-settings-cancel" [disabled]="saving()" (click)="cancel()">
