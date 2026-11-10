@@ -53,7 +53,7 @@ const USERS: ExampleUser[] = Array.from({ length: TOTAL_USERS }, (_, index) => {
     changeDetection: ChangeDetectionStrategy.OnPush,
     template: `
         <div style="display: flex; flex-direction: column; height: 520px">
-            <tumaet-ui-table-layout [loading]="loading()" fill>
+            <tumaet-ui-table-layout [loading]="loading()" [empty]="empty()" emptyTitle="tumAetUi.table.empty" emptyDescription="tumAetUi.table.searchPlaceholder" fill>
                 <div tumAetUiTableToolbar style="display: flex; flex: 1; min-width: 0; align-items: center; gap: 0.5rem">
                     <input
                         tumAetUiInput
@@ -127,6 +127,8 @@ class TableLayoutExampleComponent {
     readonly loading = input(false);
     /** Icons only in the toolbar, as applications do below the `md` breakpoint. */
     readonly compact = input(false);
+    /** No rows: shows the empty state under the column header. */
+    readonly empty = input(false);
 
     protected readonly faFilter = faFilter;
     protected readonly faPlus = faPlus;
@@ -139,6 +141,9 @@ class TableLayoutExampleComponent {
     protected readonly sortOrder = signal(1);
 
     protected readonly pageRows = computed(() => {
+        if (this.empty()) {
+            return [];
+        }
         const field = this.sortField();
         const order = this.sortOrder();
         const sorted = [...USERS].sort((a, b) => (a[field] < b[field] ? -1 : a[field] > b[field] ? 1 : 0) * order);
@@ -160,6 +165,7 @@ class TableLayoutExampleComponent {
 interface TableLayoutStoryArgs {
     loading: boolean;
     compact: boolean;
+    empty: boolean;
     width: string;
 }
 
@@ -167,15 +173,16 @@ const meta = {
     title: 'Data Display/Table Layout',
     component: TumAetUiTableLayoutComponent,
     decorators: [moduleMetadata({ imports: [TableLayoutExampleComponent] })],
-    args: { loading: false, compact: false, width: '100%' },
+    args: { loading: false, compact: false, empty: false, width: '100%' },
     argTypes: {
         loading: { control: 'boolean', description: 'Dims the body with a spinner while rows load.' },
         compact: { control: 'boolean', description: 'Icons only in the toolbar, as applications do below the `md` breakpoint.' },
+        empty: { control: 'boolean', description: 'No rows: shows the empty state under the column header instead of a blank body.' },
         width: { control: 'text', description: 'Width of the story, to see the frame follow its container.' },
     },
     render: (args) => ({
         props: args,
-        template: `<div [style.width]="width" style="max-width: 100%"><tumaet-ui-table-layout-example [loading]="loading" [compact]="compact" /></div>`,
+        template: `<div [style.width]="width" style="max-width: 100%"><tumaet-ui-table-layout-example [loading]="loading" [compact]="compact" [empty]="empty" /></div>`,
     }),
     parameters: {
         layout: 'padded',
@@ -200,3 +207,6 @@ export const Phone: Story = { args: { compact: true, width: '390px' } };
 
 /** While rows load, the body is dimmed, the frame is announced as busy and the pager is disabled by the page. */
 export const Loading: Story = { args: { loading: true } };
+
+/** A table without rows shows an empty state under its column header, with the wording and actions of the page. */
+export const Empty: Story = { args: { empty: true } };

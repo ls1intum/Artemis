@@ -6,9 +6,10 @@ import { TumAetUiTableLayoutComponent } from './tumaet-ui-table-layout.component
 @Component({
     imports: [TumAetUiTableLayoutComponent],
     template: `
-        <tumaet-ui-table-layout [loading]="loading()" [fill]="fill()">
+        <tumaet-ui-table-layout [loading]="loading()" [fill]="fill()" [empty]="empty()" [emptyTitle]="emptyTitle()" [emptyDescription]="emptyDescription()">
             <div tumAetUiTableToolbar [hidden]="!withToolbar()" data-testid="toolbar-content">toolbar</div>
             <table data-testid="table-content"></table>
+            <div tumAetUiTableEmptyActions data-testid="empty-action">Create</div>
             <div tumAetUiTableFooter data-testid="footer-content">footer</div>
         </tumaet-ui-table-layout>
     `,
@@ -17,6 +18,9 @@ class HostComponent {
     readonly loading = signal(false);
     readonly fill = signal(false);
     readonly withToolbar = signal(true);
+    readonly empty = signal(false);
+    readonly emptyTitle = signal('tumAetUi.table.empty');
+    readonly emptyDescription = signal<string | undefined>(undefined);
 }
 
 describe('TumAetUiTableLayoutComponent', () => {
@@ -167,5 +171,31 @@ describe('TumAetUiTableLayoutComponent', () => {
 
         expect(body.minHeight).toBe('112px');
         expect(body.overflow).toBe('auto');
+    });
+    describe('empty state', () => {
+        const empty = () => query('[data-testid="table-scroll-body"] [data-testid="table-empty"]');
+
+        it('shows nothing while the table has rows', () => {
+            expect(empty()).toBeNull();
+        });
+
+        it('shows the default heading under the table when empty', () => {
+            fixture.componentInstance.empty.set(true);
+            fixture.detectChanges();
+
+            expect(empty()?.textContent).toContain('No entries yet');
+            expect(empty()?.previousElementSibling?.getAttribute('data-testid')).toBe('table-content');
+        });
+
+        it('shows the page wording and projects the actions', () => {
+            fixture.componentInstance.empty.set(true);
+            fixture.componentInstance.emptyTitle.set('tumAetUi.table.noResults');
+            fixture.componentInstance.emptyDescription.set('tumAetUi.table.searchPlaceholder');
+            fixture.detectChanges();
+
+            expect(empty()?.textContent).toContain('No results found');
+            expect(empty()?.textContent).toContain('Search');
+            expect(empty()?.querySelector('[data-testid="empty-action"]')?.textContent).toBe('Create');
+        });
     });
 });

@@ -1,4 +1,6 @@
 import { ChangeDetectionStrategy, Component, DestroyRef, ElementRef, afterNextRender, booleanAttribute, computed, inject, input, signal } from '@angular/core';
+import { TumAetUiEmptyStateComponent } from '../empty-state/tumaet-ui-empty-state.component';
+import { TumAetUiTranslatePipe } from '../i18n/tumaet-ui-translate.pipe';
 import { TumAetUiProgressSpinnerComponent } from '../progress-spinner/tumaet-ui-progress-spinner.component';
 
 /** The frame never gets smaller than this: toolbar, header, a few rows and the footer. */
@@ -29,6 +31,10 @@ function scrollParent(element: HTMLElement): HTMLElement | undefined {
  * </tumaet-ui-table-layout>
  * ```
  *
+ * Empty: bind `empty` to "no rows and not loading" and the body shows a centered empty state under the column header. Set
+ * `emptyTitle` and `emptyDescription` (translation keys) for the page's wording and project actions such as "Create" with
+ * `[tumAetUiTableEmptyActions]`.
+ *
  * Do not wrap a slotted node in `@if`: with preserved whitespace Angular no longer projects it (NG8011). Set `[hidden]` on
  * the node instead, or put the `@if` inside it.
  *
@@ -42,7 +48,7 @@ function scrollParent(element: HTMLElement): HTMLElement | undefined {
     selector: 'tumaet-ui-table-layout',
     templateUrl: './tumaet-ui-table-layout.component.html',
     styleUrl: './tumaet-ui-table-layout.component.scss',
-    imports: [TumAetUiProgressSpinnerComponent],
+    imports: [TumAetUiEmptyStateComponent, TumAetUiProgressSpinnerComponent, TumAetUiTranslatePipe],
     host: {
         '[class.tumaet-ui-table-layout-fill]': 'fill()',
         '[attr.aria-busy]': "loading() ? 'true' : null",
@@ -58,6 +64,12 @@ export class TumAetUiTableLayoutComponent {
     readonly loading = input(false, { transform: booleanAttribute });
     /** Takes the height of a flex-column parent instead of sizing to the table. */
     readonly fill = input(false, { transform: booleanAttribute });
+    /** Shows the empty state in the body, under the column header, instead of leaving it blank. Bind it to "no rows and not loading". */
+    readonly empty = input(false, { transform: booleanAttribute });
+    /** Translation key of the empty state heading. */
+    readonly emptyTitle = input('tumAetUi.table.empty');
+    /** Optional translation key of a sentence below the heading, for example how to add the first entry. */
+    readonly emptyDescription = input<string | undefined>(undefined);
 
     private readonly measuredHeight = signal<number | undefined>(undefined);
     protected readonly maxHeight = computed(() => {

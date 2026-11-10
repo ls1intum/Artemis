@@ -3,6 +3,16 @@
 </div>
 <div class="tumaet-ui-table-layout-body" data-testid="table-scroll-body">
     <ng-content />
+    @if (empty()) {
+        <div class="tumaet-ui-table-layout-empty" data-testid="table-empty">
+            @let description = emptyDescription();
+            <tumaet-ui-empty-state variant="plain" [title]="emptyTitle() | tumAetUiTranslate" [description]="description ? (description | tumAetUiTranslate) : undefined">
+                <div tumAetUiEmptyStateActions>
+                    <ng-content select="[tumAetUiTableEmptyActions]" />
+                </div>
+            </tumaet-ui-empty-state>
+        </div>
+    }
     @if (loading()) {
         <div class="tumaet-ui-table-layout-loading" aria-hidden="true">
             <tumaet-ui-progress-spinner />

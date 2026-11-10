@@ -1,4 +1,4 @@
-<tumaet-ui-table-layout [loading]="loading()" [fill]="fill()">
+<tumaet-ui-table-layout [loading]="loading()" [fill]="fill()" [empty]="rows().length === 0 && !loading()" [emptyTitle]="emptyMessage()">
     <!-- Two siblings in the toolbar slot, so the frame can hide the toolbar when the search is off and the consumer projects nothing. -->
     <div tumAetUiTableToolbar class="tumaet:relative tumaet:min-w-16 tumaet:max-w-72 tumaet:flex-1" [hidden]="!showSearch()">
         <fa-icon
@@ -84,12 +84,6 @@
 
         <tr cdk-header-row *cdkHeaderRowDef="displayedColumns(); sticky: true" class="tumaet:bg-content-background"></tr>
         <tr cdk-row *cdkRowDef="let row; columns: displayedColumns()" [class.tumaet-ui-table-row-highlighted]="rowHighlighted()?.(row) ?? false"></tr>
-
-        <tr *cdkNoDataRow>
-            <td [attr.colspan]="displayedColumns().length" class="tumaet:bg-content-background tumaet:px-4 tumaet:py-6 tumaet:text-center tumaet:text-muted">
-                <span>{{ emptyMessage() | tumAetUiTranslate }}</span>
-            </td>
-        </tr>
     </table>
 
     <tumaet-ui-paginator

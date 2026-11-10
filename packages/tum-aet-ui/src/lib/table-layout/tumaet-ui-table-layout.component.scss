@@ -51,6 +51,17 @@
     overflow: auto;
 }
 
+// Centered in the visible part of the body, also when a wide table scrolls sideways.
+.tumaet-ui-table-layout-empty {
+    position: sticky;
+    left: 0;
+    display: flex;
+    box-sizing: border-box;
+    width: 100%;
+    justify-content: center;
+    padding: 1.5rem 1rem;
+}
+
 .tumaet-ui-table-layout-loading {
     position: absolute;
     inset: 0;

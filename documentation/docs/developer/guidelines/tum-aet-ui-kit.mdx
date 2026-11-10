@@ -184,7 +184,10 @@ too wide scrolls sideways instead of breaking into a second line.
 
 - **Loading:** the body is dimmed with a spinner and the frame is announced as busy; the pager is disabled so that
   overlapping requests cannot show the wrong page.
-- **Empty:** show the message in the first row of the body, not a separate block.
+- **Empty:** bind `empty` of the frame to "no rows and not loading". The body then shows a centered empty state
+  (`tumaet-ui-empty-state`) under the column header, by default "No entries yet". Set `emptyTitle` and `emptyDescription`
+  to the wording of the page and project a call to action such as "Create" with `[tumAetUiTableEmptyActions]`. Do not
+  write a "no results" row into the table.
 - **Sorting:** the active column shows its direction and exposes `aria-sort`. Sorting resets the pager to the first page.
 - **Accessibility:** an icon-only button needs an accessible name, the pager is a labelled `nav`, and the selected page is
   marked with `aria-current`.

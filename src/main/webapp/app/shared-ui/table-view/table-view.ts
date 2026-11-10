@@ -337,8 +337,6 @@ export class TableViewComponent<T> {
 
     protected readonly showCaption = computed(() => this.resolvedOptions().showSearch || !!this.tableActions());
 
-    protected readonly emptyMessageColSpan = computed(() => this.cols().length + (this.rowActions() ? 1 : 0) + (this.resolvedOptions().selectionMode ? 1 : 0));
-
     /** Uses the caller-set pageSize until the user changes it via the paginator. */
     protected readonly effectivePageSize = computed(() => this.currentPageSizeOverride() ?? this.resolvedOptions().pageSize);
 

@@ -897,6 +897,9 @@ describes the anatomy, sizes and responsive behaviour; the Storybook story **Dat
   so content above the table needs no manual offset. Where that cannot work, for example several frames stacked on one
   page, set `--table-layout-offset` (the height of everything around the table) to switch to a viewport based cap, or pass
   `fill` inside a parent that provides a height.
+- Show an empty state, not a blank body: bind `[empty]` of the frame to "no rows and not loading" and set `emptyTitle`
+  (and optionally `emptyDescription` and an action with `[tumAetUiTableEmptyActions]`) to the wording of the page. Do not
+  write a "no results" row into the table.
 - Make columns sortable with `tumAetUiSortableColumn` wherever the sort is meaningful, server-side for paged data and in
   memory for complete lists.
 - Do not wrap a slotted node (`tumAetUiTableToolbar`, `tumAetUiTableFooter`) directly in `@if`. The application keeps

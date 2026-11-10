@@ -154,11 +154,26 @@ describe('TumAetUiTableComponent', () => {
         expect(headerCells().length).toBe(2);
     });
 
-    it('shows the empty row when there are no rows', async () => {
+    it('shows the empty state with the empty message when there are no rows', async () => {
         fixture.componentRef.setInput('rows', []);
+        fixture.componentRef.setInput('emptyMessage', 'tumAetUi.table.noResults');
         fixture.detectChanges();
         await fixture.whenStable();
-        expect(fixture.debugElement.query(By.css('tr[role="row"] td[colspan], td[colspan]'))).toBeTruthy();
+
+        const empty = fixture.debugElement.query(By.css('[data-testid="table-empty"]'));
+        expect(empty).toBeTruthy();
+        expect(empty.nativeElement.textContent).toContain('No results found');
+    });
+
+    it('does not show the empty state while rows exist or while loading', async () => {
+        fixture.detectChanges();
+        await fixture.whenStable();
+        expect(fixture.debugElement.query(By.css('[data-testid="table-empty"]'))).toBeNull();
+
+        fixture.componentRef.setInput('rows', []);
+        fixture.componentRef.setInput('loading', true);
+        fixture.detectChanges();
+        expect(fixture.debugElement.query(By.css('[data-testid="table-empty"]'))).toBeNull();
     });
 
     it('emits dataRequest with the next page index when the paginator advances', async () => {

@@ -1,4 +1,9 @@
-<tumaet-ui-table-layout [loading]="loading()" [fill]="resolvedOptions().fill">
+<tumaet-ui-table-layout
+    [loading]="loading()"
+    [fill]="resolvedOptions().fill"
+    [empty]="visibleValues().length === 0 && !loading()"
+    [emptyTitle]="resolvedOptions().emptyMessageTranslation"
+>
     <!-- `hidden` instead of @if: an @if around a projected node is not projected into its slot when whitespace is preserved (NG8011). -->
     <div tumAetUiTableToolbar class="flex min-w-0 flex-1 items-center gap-2" [hidden]="!showCaption()">
         @if (resolvedOptions().showSearch) {
@@ -133,10 +138,6 @@
                             <ng-container [ngTemplateOutlet]="rowActions()!" [ngTemplateOutletContext]="{ $implicit: row }" />
                         </td>
                     }
-                </tr>
-            } @empty {
-                <tr>
-                    <td [colSpan]="emptyMessageColSpan()" class="text-center text-text-secondary"><span [jhiTranslate]="resolvedOptions().emptyMessageTranslation"></span></td>
                 </tr>
             }
         </tbody>

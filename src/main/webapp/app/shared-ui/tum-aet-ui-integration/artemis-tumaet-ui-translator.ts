@@ -51,6 +51,7 @@ const ARTEMIS_TRANSLATION_KEYS = {
     'tumAetUi.select.filter': 'global.generic.filterOptions',
     'tumAetUi.select.noResults': 'global.generic.noMatchingOptions',
     'tumAetUi.table.actions': 'entity.actions',
+    'tumAetUi.table.empty': 'global.generic.noEntriesYet',
     'tumAetUi.table.noResults': 'global.search.noResultsFound',
     'tumAetUi.table.searchPlaceholder': 'global.search.searchPlaceholder',
 } as const satisfies Readonly<Record<TumAetUiTranslationKey, string>>;

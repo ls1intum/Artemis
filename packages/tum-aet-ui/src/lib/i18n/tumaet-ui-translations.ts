@@ -49,6 +49,7 @@ export const TUM_AET_UI_DEFAULT_TRANSLATIONS = {
     'tumAetUi.select.filter': 'Filter options',
     'tumAetUi.select.noResults': 'No matching options',
     'tumAetUi.table.actions': 'Actions',
+    'tumAetUi.table.empty': 'No entries yet',
     'tumAetUi.table.noResults': 'No results found',
     'tumAetUi.table.searchPlaceholder': 'Search',
 } as const satisfies Readonly<Record<string, string>>;
