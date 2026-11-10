@@ -224,13 +224,18 @@ class ErrorAnalysisServiceTest {
         bufferOfNode1.count(ErrorLocation.SERVER, ErrorSeverity.ERROR, null, "boom");
 
         CompletableFuture<Void> flush = CompletableFuture.runAsync(slowNode::flush);
-        assertThat(writing.await(30, TimeUnit.SECONDS)).isTrue();
-        // the group has left the buffer and its count is not written yet
         AtomicReference<List<ErrorGroupDTO>> seen = new AtomicReference<>();
         Thread query = new Thread(() -> seen.set(errorsOfTheLastDay(slowNode)));
-        query.start();
-        await().until(() -> !query.isAlive() || query.getState() == Thread.State.BLOCKED);
-        finishWriting.countDown();
+        try {
+            assertThat(writing.await(30, TimeUnit.SECONDS)).isTrue();
+            // the group has left the buffer and its count is not written yet
+            query.start();
+            await().until(() -> !query.isAlive() || query.getState() == Thread.State.BLOCKED);
+        }
+        finally {
+            // also on an early failure, so the flush does not keep a worker of the common pool waiting
+            finishWriting.countDown();
+        }
         query.join();
         flush.join();
 
