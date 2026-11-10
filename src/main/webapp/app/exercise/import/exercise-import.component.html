@@ -58,7 +58,7 @@
                 @for (exercise of content().resultsOnPage; track trackId($index, exercise)) {
                     <tr [class]="'exercise-' + exercise.id">
                         <td class="w-1/12">
-                            <span [class.font-semibold]="'' + exercise.id === searchTerm"> {{ exercise.id }}</span>
+                            <span [class.font-semibold]="'' + exercise.id === searchTerm">{{ exercise.id }}</span>
                         </td>
                         <td class="break-words w-1/3">
                             @for (part of highlightParts(exercise.title); track $index) {

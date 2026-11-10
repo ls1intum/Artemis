@@ -1,7 +1,7 @@
 <div class="lecture-unit-card min-w-0 flex-1 clickable">
     <div class="lecture-unit-header flex flex-wrap px-6! m-0">
         <div class="flex w-full min-w-0 flex-wrap gap-2 p-0 justify-between items-center">
-            <h5 class="m-0 flex min-w-0 flex-1">
+            <h5 class="m-0 flex min-w-[min(100%,16rem)] flex-1">
                 <button
                     tumAetUiButton
                     severity="secondary"
@@ -11,10 +11,12 @@
                     id="lecture-unit-toggle-button"
                     (click)="toggleCollapse()"
                     [attr.aria-expanded]="!isCollapsed()"
-                    class="flex min-w-0 flex-1 items-center border-0 p-0 text-start text-base focus-visible:outline-2 focus-visible:outline-offset-2"
+                    class="flex min-w-0 flex-1 items-center whitespace-normal border-0 p-0 text-start text-base focus-visible:outline-2 focus-visible:outline-offset-2"
                 >
                     <fa-icon class="me-4!" size="lg" [icon]="icon()" />
-                    <span class="text-xl font-medium leading-tight" [attr.data-testid]="'lecture-unit-' + lectureUnit().id + '-name'">{{ lectureUnit().name ?? '' }}</span>
+                    <span class="min-w-0 break-words text-xl font-medium leading-tight" [attr.data-testid]="'lecture-unit-' + lectureUnit().id + '-name'">{{
+                        lectureUnit().name ?? ''
+                    }}</span>
                     @if (!isVisibleToStudents()) {
                         <tumaet-ui-tag
                             severity="warn"
@@ -25,7 +27,7 @@
                     }
                 </button>
             </h5>
-            <div class="flex items-center gap-2">
+            <div class="flex flex-wrap items-center gap-2">
                 @if (showOriginalVersionButton() && !isStudentPath()) {
                     <button
                         tumAetUiButton
