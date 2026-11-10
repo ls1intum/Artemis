@@ -561,12 +561,12 @@ final class ApprovedStructuralContract {
 
     /**
      * Whether runtime reflection, which Ares uses, can see an annotation of this type. A JDK annotation type is decided by its retention, an absent {@code @Retention} meaning
-     * {@code CLASS}; an unqualified name is also looked up in {@code java.lang}, which needs no import. Only the platform class loader is asked, so a name written in the
-     * specification never loads application classes. Any other annotation, such as JUnit's {@code @Test}, cannot be inspected here and is kept, because an annotation a
-     * solution must carry is almost always meant to be seen at runtime.
+     * {@code CLASS}; an unqualified name is also looked up in {@code java.lang}, which needs no import, and in {@code java.lang.annotation}, whose import a Public API block
+     * may omit, as for {@code @Native}. Only the platform class loader is asked, so a name written in the specification never loads application classes. Any other
+     * annotation, such as JUnit's {@code @Test}, cannot be inspected here and is kept, because an annotation a solution must carry is almost always meant to be seen at runtime.
      */
     private static boolean visibleAtRuntime(String annotationType) {
-        List<String> candidates = annotationType.contains(".") ? List.of(annotationType) : List.of("java.lang." + annotationType);
+        List<String> candidates = annotationType.contains(".") ? List.of(annotationType) : List.of("java.lang." + annotationType, "java.lang.annotation." + annotationType);
         for (String candidate : candidates) {
             try {
                 Class<?> type = Class.forName(candidate, false, ClassLoader.getPlatformClassLoader());

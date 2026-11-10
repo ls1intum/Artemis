@@ -74,6 +74,23 @@ class ApprovedStructuralContractTest {
                 .singleElement().asString().contains("testNullInput");
     }
 
+    /** A Public API block may omit the import of a {@code java.lang.annotation} type; its retention still decides whether the oracle requires it. */
+    @Test
+    void anUnimportedSourceRetainedAnnotationStaysOutOfTheOracle() {
+        var parsed = ApprovedStructuralContract.parse("""
+                ## Public API
+                ```java
+                public class Buffer {
+                    @Native public static final int DEFAULT_SIZE = 10;
+                }
+                ```
+                """, Set.of("Buffer"));
+
+        assertThat(parsed.errors()).isEmpty();
+        JsonNode oracle = MAPPER.readTree(parsed.contract().toOracle("example")).get(0);
+        assertThat(oracle.at("/attributes/0").has("annotations")).as("@Native has source retention").isFalse();
+    }
+
     /** Ares sees only runtime-retained annotations; one the compiler discards must not reach the oracle, or a matching solution fails its structural check. */
     @Test
     void annotationsWithoutRuntimeRetentionStayOutOfTheOracle() {
