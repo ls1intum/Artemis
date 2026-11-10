@@ -53,7 +53,7 @@
                 // picked by an annotation instead, so it has to scan everything: the global setting applies to its group too.
                 "-Dspringdoc.packages-to-scan=" + (openApiGroup
                     ? "de.tum.cit.aet.artemis"
-                    : "de.tum.cit.aet.artemis.aiworker.web,de.tum.cit.aet.artemis.tutorialgroup.web,de.tum.cit.aet.artemis.hyperion.web,de.tum.cit.aet.artemis.calendar.web,de.tum.cit.aet.artemis.globalsearch.web,de.tum.cit.aet.artemis.quiz.web"),
+                    : "de.tum.cit.aet.artemis.aiworker.web,de.tum.cit.aet.artemis.tutorialgroup.web,de.tum.cit.aet.artemis.hyperion.web,de.tum.cit.aet.artemis.calendar.web,de.tum.cit.aet.artemis.globalsearch.web,de.tum.cit.aet.artemis.quiz.web,de.tum.cit.aet.artemis.iris.web.admin"),
                 // Legacy URL aliases stay mapped in Java for old clients (canonical path first, legacy second), but are kept out
                 // of the specification: in the generated client each alias would become a name/name_ method pair.
                 "-Dspringdoc.paths-to-exclude=/api/quiz/quiz-exercises/*/start-batch,/api/tutorialgroup/courses/*/tutorial-groups-configuration,/api/tutorialgroup/courses/*/tutorial-groups-configuration/**",
@@ -119,15 +119,15 @@
                 set: 'Array',
         ]
         languageSpecificPrimitives =['void']
-        // useHttpResource=false: classical HttpClient.get() Observable methods (not the signal-based
-        // httpResource API). useInjectFunction=true: inject() instead of constructor injection.
+        // Emit separate GET resource factories alongside all Observable methods.
+        // useInjectFunction=true: inject() instead of constructor injection.
         // readonlyModels=false: keep DTO properties mutable (Artemis builds/edits DTOs in place).
         // observeResponseHeaders=true: an operation whose 2xx response declares headers returns the
         // HttpResponse, so callers can read them (e.g. X-Has-Next of the quiz training questions).
         configOptions = [
-            useHttpResource       : "false",
+            useHttpResource       : "true",
             useInjectFunction     : "true",
-            separateResources     : "false",
+            separateResources     : "true",
             readonlyModels        : "false",
             observeResponseHeaders: "true"
         ]
