@@ -3,7 +3,7 @@ import { HttpResponse } from '@angular/common/http';
 import { signal } from '@angular/core';
 import { By } from '@angular/platform-browser';
 import { TranslateService } from '@ngx-translate/core';
-import { TumAetUiDialogComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonComponent, TumAetUiDialogComponent } from '@tumaet/ui-angular';
 import { of, throwError } from 'rxjs';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { AccountSettingsDialogComponent } from 'app/account/settings/account-settings-dialog.component';
@@ -73,6 +73,24 @@ describe('AccountSettingsDialogComponent', () => {
         expect(component.settingsModel()).toEqual({ firstName: 'Ada', lastName: 'Lovelace', email: 'ada@example.com' });
     });
 
+    it('only enables saving while valid account settings differ from the current account', () => {
+        createComponent();
+        component.initializeForm();
+        component.visible.set(true);
+        fixture.detectChanges();
+
+        const saveButton = fixture.debugElement.query(By.css('[data-testid="account-settings-save-button"]')).componentInstance as TumAetUiButtonComponent;
+        expect(saveButton.disabled()).toBe(true);
+
+        component.settingsForm.firstName().value.set('Grace');
+        fixture.detectChanges();
+        expect(saveButton.disabled()).toBe(false);
+
+        component.settingsForm.firstName().value.set('Ada');
+        fixture.detectChanges();
+        expect(saveButton.disabled()).toBe(true);
+    });
+
     it('saves name and email, updates the authenticated account, and closes the dialog', () => {
         createComponent();
         component.initializeForm();
@@ -125,6 +143,6 @@ describe('AccountSettingsDialogComponent', () => {
         expect(component.settingsForm.email().disabled()).toBe(true);
 
         component.saveSettings();
-        expect(accountService.save).toHaveBeenCalledWith(expect.objectContaining({ firstName: 'Ada', lastName: 'Lovelace', email: 'ada@example.com' }));
+        expect(accountService.save).not.toHaveBeenCalled();
     });
 });

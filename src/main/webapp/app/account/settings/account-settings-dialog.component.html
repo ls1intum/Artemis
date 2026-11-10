@@ -84,7 +84,7 @@
         <tumaet-ui-button severity="secondary" variant="outlined" (clicked)="visible.set(false)">
             <span jhiTranslate="entity.action.cancel"></span>
         </tumaet-ui-button>
-        <tumaet-ui-button [disabled]="settingsForm().invalid()" (clicked)="saveSettings()">
+        <tumaet-ui-button data-testid="account-settings-save-button" [disabled]="settingsForm().invalid() || !settingsChanged()" (clicked)="saveSettings()">
             <span jhiTranslate="entity.action.save"></span>
         </tumaet-ui-button>
     </ng-template>

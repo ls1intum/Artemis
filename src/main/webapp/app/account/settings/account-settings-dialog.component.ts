@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject, model, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, model, signal } from '@angular/core';
 import { FormField, disabled, email, form, maxLength, minLength, pattern, required } from '@angular/forms/signals';
 import { MODULE_FEATURE_SAML2 } from 'app/app.constants';
 import { AccountService } from 'app/core/auth/account.service';
@@ -39,6 +39,7 @@ export class AccountSettingsDialogComponent {
     readonly allowedEmailPatternReadable = this.profileInfo.allowedEmailPatternReadable ?? this.profileInfo.allowedEmailPattern;
 
     readonly settingsModel = signal<AccountSettingsFormModel>({ firstName: '', lastName: '', email: '' });
+    readonly settingsChanged = computed(() => this.haveSettingsChanged());
     readonly settingsForm = form(this.settingsModel, (path) => {
         required(path.firstName);
         minLength(path.firstName, 2);
@@ -76,7 +77,7 @@ export class AccountSettingsDialogComponent {
 
     saveSettings(): void {
         const user = this.accountService.userIdentity();
-        if (!user || this.settingsForm().invalid()) {
+        if (!user || this.settingsForm().invalid() || !this.settingsChanged()) {
             return;
         }
 
@@ -97,5 +98,15 @@ export class AccountSettingsDialogComponent {
             // All possible failures are already handled through automatic alerts.
             error: () => {},
         });
+    }
+
+    private haveSettingsChanged(): boolean {
+        const user = this.accountService.userIdentity();
+        if (!user) {
+            return false;
+        }
+
+        const settings = this.settingsModel();
+        return settings.firstName !== (user.firstName ?? '') || settings.lastName !== (user.lastName ?? '') || settings.email !== (user.email ?? '');
     }
 }
