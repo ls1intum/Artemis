@@ -135,8 +135,16 @@ final class OutputOnlyMainProbe {
         List<SemanticMutantOutcome> outcomes = new ArrayList<>();
         for (Target target : selected) {
             String source = solutionFiles.get(target.solutionPath());
-            Optional<String> variant = captureTranscript.apply(target).flatMap(transcript -> transcriptOnlyVariant(source, transcript));
+            Optional<String> transcript = captureTranscript.apply(target);
+            Optional<String> variant = transcript.flatMap(captured -> transcriptOnlyVariant(source, captured));
             if (variant.isEmpty()) {
+                // A graded transcript comparison the probe cannot run is unassessed, not cleared.
+                if (transcript.isEmpty() && gradesPrintedOutput(testFiles, target.simpleName(), gradedMethods)) {
+                    transcriptOnlyVariant(source, "").map(silent -> uncapturedOutcome(target, source, silent)).ifPresent(outcome -> {
+                        outcomes.add(outcome);
+                        completed.accept(outcome);
+                    });
+                }
                 continue;
             }
             SemanticMutant probe = SemanticMutant.printedTranscript(target.solutionPath(), source, variant.get(), target.simpleName());
@@ -154,6 +162,12 @@ final class OutputOnlyMainProbe {
         }
         outcomes.addAll(SemanticMutantExecution.recheck(solutionFiles, variants, gradedTest(testPlanJson), runner, completed));
         return List.copyOf(outcomes);
+    }
+
+    private static SemanticMutantOutcome uncapturedOutcome(Target target, String source, String silentVariant) {
+        return new SemanticMutantOutcome(SemanticMutant.printedTranscript(target.solutionPath(), source, silentVariant, target.simpleName()), Disposition.INCONCLUSIVE,
+                "The reference main of " + target.simpleName() + " could not be run on its own, for example because it needs arguments or the exercise's dependencies, so "
+                        + "whether a main that only prints the expected output earns credit was not assessed.");
     }
 
     /**
@@ -396,7 +410,8 @@ final class OutputOnlyMainProbe {
     /**
      * A POSIX shell command that compiles the solution's student source tree into a private directory and runs one {@code main} there without arguments, with empty standard
      * input and bounded time, printing its standard output base64-encoded. The tree is compiled without the exercise's dependencies, which only a build could resolve, so a
-     * tree that needs them fails to compile and the probe is skipped. Exit codes: 90 no student sources, 91 they do not compile alone (compiler output on stderr), 92
+     * tree that needs them fails to compile and the probe reports incomplete evidence. Learner-written JUnit classes in the tree are left out, because they need JUnit and
+     * {@code main} does not. Exit codes: 90 no student sources, 91 they do not compile alone (compiler output on stderr), 92
      * {@code main} failed or timed out, 93 it printed more than {@link #MAX_TRANSCRIPT_BYTES}.
      */
     static String captureCommand(Target target) {
@@ -409,7 +424,7 @@ final class OutputOnlyMainProbe {
                 trap 'rm -rf "$OUT"' EXIT
                 cd '@@SOLUTION@@' || exit 90
                 [ -d '@@SOURCE_ROOT@@' ] || exit 90
-                find '@@SOURCE_ROOT@@' -type f -name '*.java' > "$OUT/sources" || exit 90
+                find '@@SOURCE_ROOT@@' -type f -name '*.java' -exec grep -L 'org\\.junit' {} + > "$OUT/sources"
                 [ -s "$OUT/sources" ] || exit 90
                 javac -nowarn -proc:none -encoding UTF-8 -d "$OUT/classes" @"$OUT/sources" > "$OUT/javac.log" 2>&1 || { head -c 2000 "$OUT/javac.log" >&2; exit 91; }
                 cd "$OUT" || exit 90

@@ -425,6 +425,28 @@ class OutputOnlyMainProbeTest {
         assertThat(OutputOnlyMainProbe.transcript(new SandboxExecResultDTO(exit, stdout, stderr, false))).contains("Bücher: 1 { \"quoted\" }\n");
     }
 
+    /** A learner-written JUnit class may share the student tree with a graded main; it needs JUnit, which the capture does not resolve, and main does not need it. */
+    @Test
+    void theCaptureCommandLeavesOutLearnerJUnitClassesInTheStudentTree(@TempDir Path solution) throws Exception {
+        for (String tool : List.of("sh", "javac", "java", "timeout", "base64", "head", "mktemp", "grep")) {
+            Assumptions.assumeTrue(onPath(tool), tool + " is not installed");
+        }
+        Files.createDirectories(solution.resolve("src/example"));
+        FileUtils.writeStringToFile(solution.resolve(PATH).toFile(), SOLUTION, StandardCharsets.UTF_8);
+        FileUtils.writeStringToFile(solution.resolve("src/example/LibraryCheck.java").toFile(),
+                "package example; import org.junit.jupiter.api.Test; class LibraryCheck { @Test void t() { new Library().add(\"x\"); } }", StandardCharsets.UTF_8);
+        String command = OutputOnlyMainProbe.captureCommand(new OutputOnlyMainProbe.Target(PATH, "Library", "example.Library")).replace("'/workspace/solution'",
+                "'" + solution + "'");
+
+        Process process = new ProcessBuilder("sh", "-c", command).start();
+        String stdout = new String(process.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
+        String stderr = new String(process.getErrorStream().readAllBytes(), StandardCharsets.UTF_8);
+        int exit = process.waitFor();
+
+        assertThat(exit).as(stderr).isZero();
+        assertThat(OutputOnlyMainProbe.transcript(new SandboxExecResultDTO(exit, stdout, stderr, false))).contains("Books: 1 { \"quoted\" }\n");
+    }
+
     private static boolean onPath(String tool) {
         return Arrays.stream(System.getenv().getOrDefault("PATH", "").split(java.io.File.pathSeparator)).anyMatch(directory -> Files.isExecutable(Path.of(directory, tool)));
     }
@@ -545,7 +567,13 @@ class OutputOnlyMainProbeTest {
         assertThat(OutputOnlyMainProbe.evaluate(TESTS, Map.of(PATH, TEMPLATE), Map.of(PATH, SOLUTION), PLAN, Set.of(PATH), target -> Optional.of("Books: 1\n"), failing, _ -> {
         })).as("a pending probe is rechecked elsewhere").isEmpty();
         assertThat(OutputOnlyMainProbe.evaluate(TESTS, Map.of(PATH, TEMPLATE), Map.of(PATH, SOLUTION), PLAN, Set.of(), target -> Optional.empty(), failing, _ -> {
-        })).as("a reference run that is not deterministic and bounded proves nothing").isEmpty();
+        })).as("a graded transcript the probe cannot capture is unassessed, not cleared").singleElement().satisfies(outcome -> {
+            assertThat(outcome.disposition()).isEqualTo(Disposition.INCONCLUSIVE);
+            assertThat(outcome.mutant().printsTranscriptOnly()).isTrue();
+            assertThat(outcome.diagnostic()).contains("Library", "not assessed");
+        });
+        assertThat(OutputOnlyMainProbe.evaluate(Map.of(), Map.of(PATH, TEMPLATE), Map.of(PATH, SOLUTION), PLAN, Set.of(), target -> Optional.empty(), failing, _ -> {
+        })).as("no graded test compares the output").isEmpty();
     }
 
     @Test
