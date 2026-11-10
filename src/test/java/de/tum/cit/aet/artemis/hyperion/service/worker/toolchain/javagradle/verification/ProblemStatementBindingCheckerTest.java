@@ -49,6 +49,24 @@ class ProblemStatementBindingCheckerTest {
         assertThat(ProblemStatementBindingChecker.tasksWithoutInstruction(statement)).containsExactly("[task][Missing instruction](missing)", "[task][Also missing](alsoMissing)");
     }
 
+    @Test
+    void aFencedExampleInsideTheNumberedInstructionDoesNotHideIt() {
+        String statement = """
+                1. Implement the price lookup, for example:
+                   ```java
+                   # not a heading
+                   price("tea"); // 2
+                   ```
+                [task][Price lookup](prices)
+                ## Another section
+                ```java
+                1. not an instruction
+                ```
+                [task][Missing instruction](missing)
+                """;
+        assertThat(ProblemStatementBindingChecker.tasksWithoutInstruction(statement)).containsExactly("[task][Missing instruction](missing)");
+    }
+
     @ParameterizedTest
     @CsvSource({ "testSort, [task][Sort](testSortAscending)", "testSort, [task][Sort](testSortDescending)", "testSort, prefix_testSort", "testSort, testSort$Suffix",
             "test$Sort, [task][Sort](test$SortAscending)", "testSort, ätestSort", "testSort, testSorté" })

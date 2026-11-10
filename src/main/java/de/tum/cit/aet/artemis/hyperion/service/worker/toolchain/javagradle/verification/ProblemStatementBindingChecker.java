@@ -139,10 +139,19 @@ final class ProblemStatementBindingChecker {
         return List.copyOf(bareTasks);
     }
 
+    /** Scans upwards; a fenced example inside the numbered block is skipped as a whole, so its lines neither end the block nor count as the instruction. */
     private static boolean hasPrecedingNumberedInstruction(List<String> lines, int taskIndex) {
+        boolean insideFence = false;
         for (int index = taskIndex - 1; index >= 0; index--) {
             String line = lines.get(index).strip();
-            if (TASK_BINDING.matcher(line).find() || line.startsWith("#") || line.startsWith("```")) {
+            if (line.startsWith("```")) {
+                insideFence = !insideFence;
+                continue;
+            }
+            if (insideFence) {
+                continue;
+            }
+            if (TASK_BINDING.matcher(line).find() || line.startsWith("#")) {
                 return false;
             }
             if (NUMBERED_INSTRUCTION.matcher(line).matches()) {
