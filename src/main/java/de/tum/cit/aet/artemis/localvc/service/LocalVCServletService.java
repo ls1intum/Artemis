@@ -182,9 +182,9 @@ public class LocalVCServletService {
             return;
         }
 
-        // The initial handshake request of an operation (/info/refs) always spends one token.
+        // The initial handshake request of an operation (/info/refs) spends one token before its credentials are checked. A correct password gives it back in authenticateUser.
         // The data transfer requests (git-upload-pack, git-receive-pack) reuse the credentials of the handshake, so they spend
-        // nothing here. A data transfer request that carries a wrong password is charged in authenticateUser instead.
+        // nothing here. A data transfer request that carries a password is charged in authenticateUser instead and gets the token back when the password is correct.
         if (isHandshakeRequest(request)) {
             spendAuthenticationRateLimit(request);
         }
@@ -335,18 +335,16 @@ public class LocalVCServletService {
 
         // if the user does not have an access token or used a password, we try to authenticate the user with it
         // Try to authenticate the user based on the configured options, this can include sending the data to an external system (e.g. LDAP) or using internal authentication.
-        // The handshake request was already counted. A data transfer request that skips the handshake and sends a password spends one token
-        // before the password is checked, so that parallel requests cannot all pass a budget check first. The token is given back when the password is
-        // correct, so a regular clone or push is not charged for its several requests.
+        // The handshake request was already charged one token before its credentials were looked at. A data transfer request that skips the handshake and sends a password
+        // spends one token before the password is checked, so that parallel requests cannot all pass a budget check first. Either token is given back when the password is
+        // correct, so a regular clone or push is not charged for its several requests, and it can complete even where the allowance is a single token.
         boolean dataTransferRequest = !isHandshakeRequest(request);
         if (dataTransferRequest) {
             spendAuthenticationRateLimit(request);
         }
         UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(username, passwordOrToken);
         authenticationManager.authenticate(authenticationToken);
-        if (dataTransferRequest) {
-            rateLimitService.refundPerMinute(resolveClientAddress(request), RateLimitType.GIT_AUTHENTICATION);
-        }
+        rateLimitService.refundPerMinute(resolveClientAddress(request), RateLimitType.GIT_AUTHENTICATION);
 
         return new AuthenticatedUser(user, AuthenticationMechanism.PASSWORD);
     }

@@ -1031,8 +1031,9 @@ class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
                 String repositoryUrl = localVCBaseUri + "/git/" + projectKey1 + "/" + assignmentRepositorySlug + ".git";
                 String authorizationHeader = "Basic " + Base64.getEncoder().encodeToString((student1Login + ":" + USER_PASSWORD).getBytes(StandardCharsets.UTF_8));
 
-                // The first handshake spends the only token and goes through, so the rejections below come from the limit.
-                assertThat(sendInfoRefs(client, repositoryUrl, "git-upload-pack", authorizationHeader, clientAddress).statusCode()).isEqualTo(200);
+                // A handshake with a wrong password keeps the only token, so the rejections below come from the limit.
+                String wrongAuthorizationHeader = "Basic " + Base64.getEncoder().encodeToString((student1Login + ":wrong-" + USER_PASSWORD).getBytes(StandardCharsets.UTF_8));
+                assertThat(sendInfoRefs(client, repositoryUrl, "git-upload-pack", wrongAuthorizationHeader, clientAddress).statusCode()).isEqualTo(401);
 
                 for (String service : List.of("git-upload-pack", "git-receive-pack")) {
                     HttpResponse<String> response = sendInfoRefs(client, repositoryUrl, service, authorizationHeader, clientAddress);
@@ -1051,27 +1052,30 @@ class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
     }
 
     /**
-     * A regular clone or push is several requests with the same credentials. The handshake spends one token, and a correct password on the transfer requests
-     * that follow costs nothing more, so the limit stays a bound on guessing and does not shrink the number of operations a client may run.
+     * A regular clone or push is several requests with the same credentials. Their correct password gives back what each of them spent, so the limit stays a bound on
+     * guessing and does not shrink the number of operations a client may run. Wrong passwords keep their tokens until the budget is spent.
      */
     @Test
-    void testCorrectPasswordOnDataTransferRequestsSpendsNoExtraAuthenticationToken() throws Exception {
+    void testCorrectPasswordsDoNotUseUpTheAuthenticationBudget() throws Exception {
         localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
 
         runWithAuthenticationRateLimit(2, clientAddress -> {
             String handshakeUri = "/git/" + projectKey1 + "/" + assignmentRepositorySlug + ".git/info/refs";
             String transferUri = "/git/" + projectKey1 + "/" + assignmentRepositorySlug + ".git/git-upload-pack";
 
-            // first operation: the handshake spends one of the two tokens, the transfer requests spend none
-            localVCServletService.authenticateAndAuthorizeGitRequest(createGitRequest(handshakeUri, student1Login, USER_PASSWORD, clientAddress), RepositoryActionType.READ);
-            for (int i = 0; i < 3; i++) {
-                localVCServletService.authenticateAndAuthorizeGitRequest(createGitRequest(transferUri, student1Login, USER_PASSWORD, clientAddress), RepositoryActionType.READ);
+            // more operations than the budget holds: every handshake and every transfer request with the correct password goes through
+            for (int operation = 0; operation < 4; operation++) {
+                localVCServletService.authenticateAndAuthorizeGitRequest(createGitRequest(handshakeUri, student1Login, USER_PASSWORD, clientAddress), RepositoryActionType.READ);
+                for (int i = 0; i < 3; i++) {
+                    localVCServletService.authenticateAndAuthorizeGitRequest(createGitRequest(transferUri, student1Login, USER_PASSWORD, clientAddress), RepositoryActionType.READ);
+                }
             }
 
-            // second operation: the second token is still there
-            localVCServletService.authenticateAndAuthorizeGitRequest(createGitRequest(handshakeUri, student1Login, USER_PASSWORD, clientAddress), RepositoryActionType.READ);
-
-            // third operation: the budget is spent, at the handshake as well as on a transfer request that skips it
+            // two wrong passwords spend the budget, at the handshake as well as on a transfer request that skips it
+            for (String uri : List.of(handshakeUri, transferUri)) {
+                assertThatExceptionOfType(AuthenticationException.class).isThrownBy(() -> localVCServletService
+                        .authenticateAndAuthorizeGitRequest(createGitRequest(uri, student1Login, "wrong-" + USER_PASSWORD, clientAddress), RepositoryActionType.READ));
+            }
             assertThatExceptionOfType(RateLimitExceededException.class).isThrownBy(() -> localVCServletService
                     .authenticateAndAuthorizeGitRequest(createGitRequest(handshakeUri, student1Login, USER_PASSWORD, clientAddress), RepositoryActionType.READ));
             assertThatExceptionOfType(RateLimitExceededException.class).isThrownBy(() -> localVCServletService
@@ -1110,12 +1114,13 @@ class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
 
         runWithAuthenticationRateLimit(1, clientAddress -> {
             String handshakeUri = "/git/" + projectKey1 + "/" + assignmentRepositorySlug + ".git/info/refs";
-            MockHttpServletRequest first = createGitRequest(handshakeUri, student1Login, USER_PASSWORD, clientAddress);
+            // a wrong password keeps its token, so the first request uses up the budget of one
+            MockHttpServletRequest first = createGitRequest(handshakeUri, student1Login, "wrong-" + USER_PASSWORD, clientAddress);
             first.addHeader("X-Forwarded-For", "203.0.113.1");
             MockHttpServletRequest second = createGitRequest(handshakeUri, student1Login, USER_PASSWORD, clientAddress);
             second.addHeader("X-Forwarded-For", "203.0.113.2");
 
-            localVCServletService.authenticateAndAuthorizeGitRequest(first, RepositoryActionType.READ);
+            assertThatExceptionOfType(AuthenticationException.class).isThrownBy(() -> localVCServletService.authenticateAndAuthorizeGitRequest(first, RepositoryActionType.READ));
 
             assertThatExceptionOfType(RateLimitExceededException.class)
                     .isThrownBy(() -> localVCServletService.authenticateAndAuthorizeGitRequest(second, RepositoryActionType.READ));
@@ -1133,20 +1138,45 @@ class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
             String handshakeUri = "/git/" + projectKey1 + "/" + assignmentRepositorySlug + ".git/info/refs";
             String transferUri = "/git/" + projectKey1 + "/" + assignmentRepositorySlug + ".git/git-upload-pack";
 
-            // handshake: two of three tokens are left
+            // a correct password gives back the token that its handshake spent
             localVCServletService.authenticateAndAuthorizeGitRequest(createGitRequest(handshakeUri, student1Login, USER_PASSWORD, clientAddress), RepositoryActionType.READ);
-            // a wrong password keeps its token: one is left
+            // a wrong password keeps its token: two are left
             assertThatExceptionOfType(AuthenticationException.class).isThrownBy(() -> localVCServletService
                     .authenticateAndAuthorizeGitRequest(createGitRequest(transferUri, student1Login, "wrong-" + USER_PASSWORD, clientAddress), RepositoryActionType.READ));
             // correct passwords give theirs back, however many there are
             for (int i = 0; i < 5; i++) {
                 localVCServletService.authenticateAndAuthorizeGitRequest(createGitRequest(transferUri, student1Login, USER_PASSWORD, clientAddress), RepositoryActionType.READ);
             }
-            // the last token goes to a wrong password, and nothing is left for the next request, correct password or not
-            assertThatExceptionOfType(AuthenticationException.class).isThrownBy(() -> localVCServletService
-                    .authenticateAndAuthorizeGitRequest(createGitRequest(transferUri, student1Login, "wrong-" + USER_PASSWORD, clientAddress), RepositoryActionType.READ));
+            // the last two tokens go to wrong passwords, and nothing is left for the next request, correct password or not
+            for (int i = 0; i < 2; i++) {
+                assertThatExceptionOfType(AuthenticationException.class).isThrownBy(() -> localVCServletService
+                        .authenticateAndAuthorizeGitRequest(createGitRequest(transferUri, student1Login, "wrong-" + USER_PASSWORD, clientAddress), RepositoryActionType.READ));
+            }
             assertThatExceptionOfType(RateLimitExceededException.class).isThrownBy(() -> localVCServletService
                     .authenticateAndAuthorizeGitRequest(createGitRequest(transferUri, student1Login, USER_PASSWORD, clientAddress), RepositoryActionType.READ));
+        });
+    }
+
+    /**
+     * Where the allowance is a single token, a clone or push still completes: the handshake gives its token back when the password is correct, so the transfer requests
+     * that follow it find one. A wrong password keeps the token, and the next request is refused.
+     */
+    @Test
+    void testHandshakeAndTransferCompleteWithASingleToken() throws Exception {
+        localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+
+        runWithAuthenticationRateLimit(1, clientAddress -> {
+            String handshakeUri = "/git/" + projectKey1 + "/" + assignmentRepositorySlug + ".git/info/refs";
+            String transferUri = "/git/" + projectKey1 + "/" + assignmentRepositorySlug + ".git/git-upload-pack";
+
+            localVCServletService.authenticateAndAuthorizeGitRequest(createGitRequest(handshakeUri, student1Login, USER_PASSWORD, clientAddress), RepositoryActionType.READ);
+            localVCServletService.authenticateAndAuthorizeGitRequest(createGitRequest(transferUri, student1Login, USER_PASSWORD, clientAddress), RepositoryActionType.READ);
+            localVCServletService.authenticateAndAuthorizeGitRequest(createGitRequest(transferUri, student1Login, USER_PASSWORD, clientAddress), RepositoryActionType.READ);
+
+            assertThatExceptionOfType(AuthenticationException.class).isThrownBy(() -> localVCServletService
+                    .authenticateAndAuthorizeGitRequest(createGitRequest(handshakeUri, student1Login, "wrong-" + USER_PASSWORD, clientAddress), RepositoryActionType.READ));
+            assertThatExceptionOfType(RateLimitExceededException.class).isThrownBy(() -> localVCServletService
+                    .authenticateAndAuthorizeGitRequest(createGitRequest(handshakeUri, student1Login, USER_PASSWORD, clientAddress), RepositoryActionType.READ));
         });
     }
 
