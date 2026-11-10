@@ -31,8 +31,9 @@ export class CourseCompetenciesRelationGraphComponent {
     readonly edges = computed<DagGraphEdge[]>(() => {
         return this.relations().map((relation) => ({
             id: `edge-${relation.id}`,
-            source: `${relation.headCompetencyId}`,
-            target: `${relation.tailCompetencyId}`,
+            // tail → head, so the labelled edge reads like the relation form: "tail REQUIRES head"
+            source: `${relation.tailCompetencyId}`,
+            target: `${relation.headCompetencyId}`,
             label: relation.relationType,
             data: {
                 id: relation.id,
