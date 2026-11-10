@@ -909,18 +909,6 @@ Course Info Bar
     width: 50%;
 }
 
-// Cross-component button styling for onboarding modal (replaces ::ng-deep)
-jhi-iris-onboarding-modal .actions jhi-button button {
-    border-radius: 0.5rem;
-    padding: 0.5rem 1rem;
-}
-
-jhi-iris-onboarding-modal .tooltip-footer jhi-button button {
-    border-radius: 0.25rem;
-    font-size: 0.75rem;
-    padding: 0.3rem 0.75rem;
-}
-
 // Onboarding stacking context. The click-guard sits at 1049 and the spotlight blocker at 1050
 // (defined in iris-onboarding-modal.component.scss). The active target must rise above both so
 // the user's clicks reach the real UI element; PrimeNG overlays opened from that target must
@@ -1563,6 +1551,11 @@ Note: This class assumes that the scrollbar is already present (e.g. overflow-y 
     }
 }
 
+// Interim messages end flush with their bubble; the paragraph is rendered markdown outside component scope.
+jhi-iris-base-chatbot .interim-message .bubble-left p:last-child {
+    margin-bottom: 0;
+}
+
 // Iris chat bubble markdown content (rendered via innerHTML, outside component scope)
 .bubble-left,
 .bubble-right {
@@ -1636,31 +1629,6 @@ Note: This class assumes that the scrollbar is already present (e.g. overflow-y 
         display: block;
         overflow-x: auto;
     }
-}
-
-// Iris send button inner styling (jhi-button rendered outside component scope)
-#irisSendButton button {
-    border-radius: 0.5rem;
-    padding: 6px 8px;
-    background-color: var(--primary);
-    border-color: var(--primary);
-    color: var(--white);
-    transition:
-        background-color 0.3s ease,
-        border-color 0.3s ease;
-
-    &:hover .svg-inline--fa {
-        transform: rotate(45deg);
-    }
-
-    &:disabled {
-        opacity: 0.5;
-        cursor: not-allowed;
-    }
-}
-
-#irisSendButton .svg-inline--fa {
-    transition: transform 0.3s ease;
 }
 
 // Communication dialogs (PrimeNG DynamicDialog styling)

@@ -62,8 +62,10 @@
             "actions": {
                 "copy": "Copy",
                 "goodResponse": "Good response",
-                "badResponse": "Bad response"
-            }
+                "badResponse": "Bad response",
+                "send": "Send message"
+            },
+            "scrollToBottom": "Scroll to the latest message"
         }
     }
 }
