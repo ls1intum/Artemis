@@ -15,6 +15,9 @@ overrides:
   brace-expansion: '5.0.12'
   nodemailer: '9.1.1'
   lodash: '4.18.1'
+  # Must stay >= 11.0.1, which fixed GHSA-g3hv-75wg-m249 (denial of service through globparts amplification).
+  # The 10.x line never got the fix, and eslint and typescript-estree ask for a range that does not reach 11.
+  minimatch: '11.0.5'
   shell-quote: '1.12.0'
 
 allowBuilds:
