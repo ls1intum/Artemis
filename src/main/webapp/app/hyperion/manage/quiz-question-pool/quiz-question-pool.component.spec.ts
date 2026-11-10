@@ -588,6 +588,68 @@ describe('QuizQuestionPoolComponent', () => {
         expect(component.settings()).toEqual(settings);
     });
 
+    it('should keep polling after a decision until a queue response requested after it is applied', () => {
+        vi.useFakeTimers();
+        const known = { ...question(1, 9, 'Arrays'), flagged: true };
+        const discovered = { ...question(2, 9, 'Arrays'), flagged: true };
+        setup({ isAtLeastEditor: true, isAtLeastInstructor: true });
+        let queueResponse: () => Observable<PoolQuestionPage> = () => of({ ...page([known]), pendingCount: 1 });
+        vi.spyOn(poolService, 'getQuestions').mockImplementation((_courseId, query) => (query.flagged ? queueResponse() : of(page(questions()))));
+        component.refresh();
+        vi.spyOn(poolService, 'startBuild').mockReturnValue(of({ started: true, enqueued: 12 }));
+        const progressSpy = vi.spyOn(poolService, 'getProgress').mockReturnValue(of({ ...progress, running: false }));
+        const finalQueue = new Subject<PoolQuestionPage>();
+        queueResponse = () => finalQueue.asObservable();
+        component.startBuild();
+        vi.advanceTimersByTime(3000);
+
+        queueResponse = () => throwError(() => new Error('network'));
+        vi.spyOn(poolService, 'review').mockReturnValue(of({ ...known, reviewState: 'APPROVED' }));
+        component.review({ questionId: 1, reviewState: 'APPROVED' });
+        finalQueue.next({ ...page([discovered, { ...known, reviewState: 'APPROVED' }]), pendingCount: 1 });
+        finalQueue.complete();
+        expect(component.pendingInQueue()).toBe(0);
+
+        queueResponse = () => of({ ...page([discovered, { ...known, reviewState: 'APPROVED' }]), pendingCount: 1 });
+        const pollsBefore = progressSpy.mock.calls.length;
+        vi.advanceTimersByTime(3000);
+        expect(progressSpy.mock.calls.length).toBe(pollsBefore + 1);
+        expect(component.pendingInQueue()).toBe(1);
+        expect(component.queueCollapsed()).toBe(false);
+
+        const pollsAfterStop = progressSpy.mock.calls.length;
+        vi.advanceTimersByTime(6000);
+        expect(progressSpy.mock.calls.length).toBe(pollsAfterStop);
+    });
+
+    it('should neither cancel a build nor save settings of a course that is no longer shown when the confirmation is accepted', () => {
+        const params = new Subject<Record<string, string>>();
+        setup({ isAtLeastEditor: true, isAtLeastInstructor: true }, params.asObservable());
+        params.next({ courseId: '1' });
+        component.progress.set({ ...progress, running: true });
+        const cancelSpy = vi.spyOn(poolService, 'cancelBuild').mockReturnValue(of(undefined));
+        const saveSpy = vi.spyOn(poolService, 'updateSettings').mockReturnValue(of(settings));
+        const warningSpy = vi.spyOn(alertService, 'warning');
+        const confirmationService = fixture.debugElement.injector.get(TumAetUiConfirmationService);
+
+        component.confirmCancelBuild();
+        const cancelConfirmation = confirmationService.request(undefined)!;
+        params.next({ courseId: '2' });
+        expect(confirmationService.request(undefined)).toBeUndefined();
+        cancelConfirmation.accept();
+
+        component.progress.set({ ...progress, running: true });
+        component.saveSettings({ ...settings, singleChoiceQuestionsPerLectureUnit: 30 });
+        const saveConfirmation = confirmationService.request(undefined)!;
+        params.next({ courseId: '1' });
+        saveConfirmation.accept();
+
+        expect(cancelSpy).not.toHaveBeenCalled();
+        expect(saveSpy).not.toHaveBeenCalled();
+        expect(warningSpy).toHaveBeenCalledTimes(2);
+        expect(warningSpy).toHaveBeenCalledWith('artemisApp.hyperion.quizQuestionPool.courseChanged');
+    });
+
     it('should keep polling when a progress request fails once', () => {
         vi.useFakeTimers();
         setup({ isAtLeastEditor: true, isAtLeastInstructor: true });
@@ -1111,8 +1173,10 @@ describe('QuizQuestionPoolComponent', () => {
         const confirmationService = fixture.debugElement.injector.get(TumAetUiConfirmationService);
 
         component.confirmDeleteQuestion(2);
+        const confirmation = confirmationService.request(undefined)!;
         params.next({ courseId: '2' });
-        confirmationService.request(undefined)!.accept();
+        expect(confirmationService.request(undefined)).toBeUndefined();
+        confirmation.accept();
 
         expect(deleteSpy).not.toHaveBeenCalled();
         expect(warningSpy).toHaveBeenCalledWith('artemisApp.hyperion.quizQuestionPool.list.deleteCourseChanged');
