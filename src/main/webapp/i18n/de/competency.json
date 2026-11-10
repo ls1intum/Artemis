@@ -170,26 +170,6 @@
                 "connectedCompetencies": "Verbundene Kompetenzen",
                 "explanation": "Diese Vorlesungseinheit hilft dir bei der Erreichung der folgenden Kompetenzen:",
                 "noCompetencies": "Keine Kompetenzen mit dieser Vorlesungseinheit verbunden!"
-            },
-            "relation": {
-                "competencyRelations": "Beziehungen zwischen Kompetenzen",
-                "tailCompetency": "Schlusskompetenz",
-                "relationType": "Beziehungstyp",
-                "headCompetency": "Startkompetenz",
-                "createRelation": "Beziehung erstellen",
-                "createsCircularRelation": "Du kannst keine kreisförmigen Beziehungen zwischen Kompetenzen erstellen.",
-                "selfRelation": "Du kannst keine Beziehung zwischen einer Kompetenz und sich selbst erstellen.",
-                "relationAlreadyExists": "Diese Beziehung existiert bereits.",
-                "type": {
-                    "ASSUMES": "Setzt voraus",
-                    "EXTENDS": "Erweitert",
-                    "MATCHES": "Stimmt überein mit"
-                },
-                "typeExplanation": {
-                    "ASSUMES": "Die Startkompetenz setzt das Wissen aus der Schlusskompetenz voraus und bringt neues Wissen bei, das auf der Schlusskompetenz aufbaut.",
-                    "EXTENDS": "Die Startkompetenz setzt das Wissen aus der Schlusskompetenz voraus und vertieft dieses Wissen weiter.",
-                    "MATCHES": "Die Start- und Schlusskompetenz sind gleichwertig und umfassen dasselbe Wissen."
-                }
             }
         },
         "courseCompetency": {
@@ -280,10 +260,10 @@
                     "MATCHES": "Stimmt überein mit"
                 },
                 "form": {
-                    "headCourseCompetencyLabel": "Startkurskompetenz",
-                    "headCourseCompetencyDefaultOption": "Wähle Startkurskompetenz",
-                    "tailCourseCompetencyLabel": "Schlusskurskompetenz",
-                    "tailCourseCompetencyDefaultOption": "Wähle Schlusskurskompetenz",
+                    "headCourseCompetencyLabel": "Bezugskurskompetenz",
+                    "headCourseCompetencyDefaultOption": "Wähle Bezugskurskompetenz",
+                    "tailCourseCompetencyLabel": "Kurskompetenz",
+                    "tailCourseCompetencyDefaultOption": "Wähle Kurskompetenz",
                     "relationTypeLabel": "Beziehungstyp",
                     "relationTypeDefaultOption": "Wähle Beziehungstyp",
                     "deleteRelationButtonLabel": "Beziehung löschen",
