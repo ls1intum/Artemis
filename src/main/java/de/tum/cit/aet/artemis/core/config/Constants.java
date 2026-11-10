@@ -241,6 +241,8 @@ public final class Constants {
 
     public static final String UPDATE_EXAM = "UPDATE_EXAM";
 
+    public static final String UPDATE_EXAM_ATTENDANCE = "UPDATE_EXAM_ATTENDANCE";
+
     public static final String ADD_USER_TO_EXAM = "ADD_USER_TO_EXAM";
 
     public static final String REMOVE_USER_FROM_EXAM = "REMOVE_USER_FROM_EXAM";
@@ -402,6 +404,7 @@ public final class Constants {
     /**
      * The name of the Spring profile used to process build jobs in a Jenkins setup.
      */
+    // REMOVE_IN_ARTEMIS_11 (Jenkins): remove the jenkins profile constant with Jenkins support
     public static final String PROFILE_JENKINS = "jenkins";
 
     /**
@@ -479,11 +482,6 @@ public final class Constants {
      * The name of the module feature used for Atlas functionality.
      */
     public static final String MODULE_FEATURE_ATLAS = "atlas";
-
-    /**
-     * The name of the module feature used for AtlasML functionality.
-     */
-    public static final String MODULE_FEATURE_ATLASML = "atlasml";
 
     /**
      * The name of the module feature used for the LLM-backed part of Atlas.
@@ -601,11 +599,6 @@ public final class Constants {
      * The name of the property used to enable or disable Atlas functionality.
      */
     public static final String ATLAS_ENABLED_PROPERTY_NAME = "artemis.atlas.enabled";
-
-    /**
-     * The name of the property used to enable or disable AtlasML functionality.
-     */
-    public static final String ATLASML_ENABLED_PROPERTY_NAME = "artemis.atlas.atlasml.enabled";
 
     /**
      * The name of the property used to enable or disable the LLM-backed part of Atlas: the chat agent, the autonomous

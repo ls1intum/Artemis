@@ -9,8 +9,10 @@ import java.io.File;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -20,6 +22,9 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -34,17 +39,21 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.util.ResourceUtils;
 
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.admin.repository.ApplicationAuditEventRepository;
 import de.tum.cit.aet.artemis.core.dto.UserForRegistrationDTO;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
+import de.tum.cit.aet.artemis.exam.domain.ExamSession;
 import de.tum.cit.aet.artemis.exam.domain.ExamUser;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
+import de.tum.cit.aet.artemis.exam.dto.ExamAttendanceUpdateDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamRegistrationResultDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamStudentDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamUserAttendanceCheckDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamUserDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamUsersNotFoundDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExportExamUserDTO;
+import de.tum.cit.aet.artemis.exam.repository.ExamSessionRepository;
 import de.tum.cit.aet.artemis.exam.repository.ExamUserRepository;
 import de.tum.cit.aet.artemis.localvc.util.LocalVCTestRepository;
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTest;
@@ -55,6 +64,12 @@ class ExamUserIntegrationTest extends AbstractProgrammingIntegrationLocalCILocal
 
     @Autowired
     private ExamUserRepository examUserRepository;
+
+    @Autowired
+    private ExamSessionRepository examSessionRepository;
+
+    @Autowired
+    private ApplicationAuditEventRepository applicationAuditEventRepository;
 
     private Course course1;
 
@@ -108,6 +123,167 @@ class ExamUserIntegrationTest extends AbstractProgrammingIntegrationLocalCILocal
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testManualAttendanceUpdatesIdentityChecksAndPreservesSignature() throws Exception {
+        exam1.setEndDate(ZonedDateTime.now().minusMinutes(1));
+        examRepository.save(exam1);
+        ExamUser registered = examUserRepository.findAllByExamId(exam1.getId()).getFirst();
+        registered.setSigningImagePath("existing-signature.png");
+        examUserRepository.save(registered);
+        String base = "/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId();
+        String path = base + "/exam-users/" + registered.getId() + "/attendance";
+        request.putWithoutResponseBody(path, new ExamAttendanceUpdateDTO(false), HttpStatus.NO_CONTENT);
+        ExamUser updated = examUserRepository.findByIdElseThrow(registered.getId());
+        assertThat(updated.getDidCheckImage()).isFalse();
+        assertThat(updated.getDidCheckName()).isFalse();
+        assertThat(updated.getDidCheckLogin()).isFalse();
+        assertThat(updated.getDidCheckRegistrationNumber()).isFalse();
+        assertThat(updated.getSigningImagePath()).endsWith("existing-signature.png");
+        var attendance = request.getList(base + "/verify-exam-users?includeAll=true", HttpStatus.OK, ExamUserAttendanceCheckDTO.class);
+        assertThat(attendance).anySatisfy(row -> {
+            assertThat(row.id()).isEqualTo(registered.getId());
+            assertThat(row.didCheckImage()).isFalse();
+            assertThat(row.didCheckName()).isFalse();
+            assertThat(row.didCheckLogin()).isFalse();
+            assertThat(row.didCheckRegistrationNumber()).isFalse();
+            assertThat(row.attendanceChecked()).isFalse();
+            assertThat(row.signingImagePath()).endsWith("existing-signature.png");
+        });
+        request.putWithoutResponseBody(path, new ExamAttendanceUpdateDTO(true), HttpStatus.NO_CONTENT);
+        updated = examUserRepository.findByIdElseThrow(registered.getId());
+        assertThat(updated.getDidCheckImage()).isTrue();
+        assertThat(updated.getDidCheckName()).isTrue();
+        assertThat(updated.getDidCheckLogin()).isTrue();
+        assertThat(updated.getDidCheckRegistrationNumber()).isTrue();
+        assertThat(updated.getSigningImagePath()).endsWith("existing-signature.png");
+    }
+
+    @ParameterizedTest
+    @CsvSource({ "true,true,true,true", "true,false,true,true", "true,true,false,true", "true,false,false,false", "false,true,true,false", "false,false,true,false" })
+    @WithMockUser(username = TEST_PREFIX + "student2", roles = "USER")
+    void testAttendanceCheckRequiresSignatureOnlyDuringConduction(boolean checksComplete, boolean signed, boolean examEnded, boolean expected) throws Exception {
+        ExamUser registered = examUserRepository.findAllByExamId(exam1.getId()).getFirst();
+        registered.setDidCheckImage(checksComplete);
+        registered.setDidCheckName(checksComplete);
+        registered.setDidCheckLogin(checksComplete);
+        registered.setDidCheckRegistrationNumber(checksComplete);
+        registered.setSigningImagePath(signed ? "signature.png" : null);
+        examUserRepository.save(registered);
+        exam1.setEndDate(examEnded ? ZonedDateTime.now().minusMinutes(1) : ZonedDateTime.now().plusHours(1));
+        examRepository.save(exam1);
+        String path = "/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/attendance";
+        assertThat(request.get(path, HttpStatus.OK, Boolean.class)).isEqualTo(expected);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testManualAttendanceChecksAreReflectedInPagedAttendanceAndFilters() throws Exception {
+        Exam exam = createPaginationTestExam();
+        exam.setEndDate(ZonedDateTime.now().minusMinutes(1));
+        examRepository.save(exam);
+        String base = "/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId();
+        for (var registration : examUserRepository.findAllByExamId(exam.getId())) {
+            String login = registration.getUser().getLogin();
+            if (login.equals(TEST_PREFIX + "student2") || login.equals(TEST_PREFIX + "student3")) {
+                request.putWithoutResponseBody(base + "/exam-users/" + registration.getId() + "/attendance", new ExamAttendanceUpdateDTO(login.equals(TEST_PREFIX + "student3")),
+                        HttpStatus.NO_CONTENT);
+            }
+        }
+        var rows = request.getList(pagedUrl(exam), HttpStatus.OK, ExamStudentDTO.class, pageParams(""));
+        assertThat(rows).filteredOn(row -> row.login().equals(TEST_PREFIX + "student2")).singleElement().satisfies(row -> {
+            assertThat(row.started()).isTrue();
+            assertThat(row.didExamUserAttendExam()).isFalse();
+        });
+        assertThat(rows).filteredOn(row -> row.login().equals(TEST_PREFIX + "student3")).singleElement().satisfies(row -> {
+            assertThat(Boolean.TRUE.equals(row.started())).isFalse();
+            assertThat(row.didExamUserAttendExam()).isTrue();
+        });
+        assertThat(request.getList(pagedUrl(exam), HttpStatus.OK, ExamStudentDTO.class, pageParams("DidNotAttend"))).extracting(ExamStudentDTO::login)
+                .containsExactlyInAnyOrder(TEST_PREFIX + "student2", TEST_PREFIX + "student4");
+        assertThat(request.getList(pagedUrl(exam), HttpStatus.OK, ExamStudentDTO.class, pageParams("AttendanceChecked"))).extracting(ExamStudentDTO::login)
+                .containsExactlyInAnyOrder(TEST_PREFIX + "student1", TEST_PREFIX + "student3");
+        assertThat(request.getList(pagedUrl(exam), HttpStatus.OK, ExamStudentDTO.class, pageParams("AttendanceNotChecked"))).extracting(ExamStudentDTO::login)
+                .containsExactly(TEST_PREFIX + "student2");
+        assertThat(request.getList(base + "/verify-exam-users?includeAll=false", HttpStatus.OK, ExamUserAttendanceCheckDTO.class)).extracting(ExamUserAttendanceCheckDTO::login)
+                .containsExactly(TEST_PREFIX + "student2");
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = { true, false })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testManualAttendanceAuditsInstructorAndDoesNotRequireSignature(boolean attended) throws Exception {
+        exam1.setEndDate(ZonedDateTime.now().minusMinutes(1));
+        examRepository.save(exam1);
+        ExamUser registration = examUserRepository.findAllByExamId(exam1.getId()).getFirst();
+        registration.setDidCheckImage(!attended);
+        registration.setDidCheckName(!attended);
+        registration.setDidCheckLogin(!attended);
+        registration.setDidCheckRegistrationNumber(!attended);
+        examUserRepository.save(registration);
+        Instant before = Instant.now().minusSeconds(1);
+        String path = "/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/exam-users/" + registration.getId() + "/attendance";
+
+        request.putWithoutResponseBody(path, new ExamAttendanceUpdateDTO(attended), HttpStatus.NO_CONTENT);
+
+        ExamUser saved = examUserRepository.findByIdElseThrow(registration.getId());
+        assertThat(saved.getDidCheckImage()).isEqualTo(attended);
+        assertThat(saved.getDidCheckName()).isEqualTo(attended);
+        assertThat(saved.getDidCheckLogin()).isEqualTo(attended);
+        assertThat(saved.getDidCheckRegistrationNumber()).isEqualTo(attended);
+        assertThat(saved.getSigningImagePath()).isNull();
+        assertThat(examUserRepository.isAttendanceChecked(exam1.getId(), registration.getUser().getLogin())).isEqualTo(attended);
+        assertThat(applicationAuditEventRepository.findByPrincipalAndAuditEventDateAfterAndAuditEventType(TEST_PREFIX + "instructor1", before, "UPDATE_EXAM_ATTENDANCE"))
+                .filteredOn(event -> String.valueOf(registration.getId()).equals(event.getData().get("examUserId"))).singleElement().satisfies(event -> {
+                    assertThat(event.getPrincipal()).isEqualTo(TEST_PREFIX + "instructor1");
+                    assertThat(event.getData()).containsEntry("courseId", course1.getId().toString()).containsEntry("examId", exam1.getId().toString())
+                            .containsEntry("studentLogin", registration.getUser().getLogin()).containsEntry("oldDidCheckImage", Boolean.toString(!attended))
+                            .containsEntry("newDidCheckImage", Boolean.toString(attended)).containsEntry("oldDidCheckName", Boolean.toString(!attended))
+                            .containsEntry("newDidCheckName", Boolean.toString(attended)).containsEntry("oldDidCheckLogin", Boolean.toString(!attended))
+                            .containsEntry("newDidCheckLogin", Boolean.toString(attended)).containsEntry("oldDidCheckRegistrationNumber", Boolean.toString(!attended))
+                            .containsEntry("newDidCheckRegistrationNumber", Boolean.toString(attended)).containsEntry("signatureChanged", "false");
+                });
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testManualAttendanceRejectsMissingDecision() throws Exception {
+        exam1.setEndDate(ZonedDateTime.now().minusMinutes(1));
+        examRepository.save(exam1);
+        ExamUser registration = examUserRepository.findAllByExamId(exam1.getId()).getFirst();
+        String path = "/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/exam-users/" + registration.getId() + "/attendance";
+        Instant before = Instant.now().minusSeconds(1);
+        request.putWithoutResponseBody(path, new ExamAttendanceUpdateDTO(null), HttpStatus.BAD_REQUEST);
+        assertThat(examUserRepository.findByIdElseThrow(registration.getId()).getDidCheckImage()).isFalse();
+        assertThat(applicationAuditEventRepository.findByPrincipalAndAuditEventDateAfterAndAuditEventType(TEST_PREFIX + "instructor1", before, "UPDATE_EXAM_ATTENDANCE"))
+                .filteredOn(event -> String.valueOf(registration.getId()).equals(event.getData().get("examUserId"))).isEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void testManualAttendanceRequiresInstructor() throws Exception {
+        ExamUser registered = examUserRepository.findAllByExamId(exam1.getId()).getFirst();
+        request.putWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/exam-users/" + registered.getId() + "/attendance",
+                new ExamAttendanceUpdateDTO(true), Void.class, HttpStatus.FORBIDDEN);
+        assertThat(examUserRepository.findByIdElseThrow(registered.getId()).getDidCheckImage()).isFalse();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testManualAttendanceRejectedBeforeEndAndForOtherExam() throws Exception {
+        ExamUser registered = examUserRepository.findAllByExamId(exam1.getId()).getFirst();
+        String base = "/api/exam/courses/" + course1.getId() + "/exams/";
+        exam1.setEndDate(ZonedDateTime.now().plusHours(1));
+        examRepository.save(exam1);
+        request.putWithResponseBody(base + exam1.getId() + "/exam-users/" + registered.getId() + "/attendance", new ExamAttendanceUpdateDTO(true), Void.class,
+                HttpStatus.BAD_REQUEST);
+        Exam otherExam = examUtilService.addExam(course1);
+        otherExam.setEndDate(ZonedDateTime.now().minusMinutes(1));
+        examRepository.save(otherExam);
+        request.putWithResponseBody(base + otherExam.getId() + "/exam-users/" + registered.getId() + "/attendance", new ExamAttendanceUpdateDTO(true), Void.class,
+                HttpStatus.NOT_FOUND);
+    }
+
+    @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testUpdateExamUser_DidCheckFields() throws Exception {
         ExamUserDTO examUserDTO = new ExamUserDTO(TEST_PREFIX + "student2", "", "", "", "", "", "", "", true, true, true, true, "", null, null, null, null, null, null, null);
@@ -117,6 +293,42 @@ class ExamUserIntegrationTest extends AbstractProgrammingIntegrationLocalCILocal
         assertThat(examUser.getDidCheckImage()).isTrue();
         assertThat(examUser.getDidCheckName()).isTrue();
         assertThat(examUser.getDidCheckLogin()).isTrue();
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = { true, false })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testUpdateExamUserAuditsInstructorAndBeforeAfterValues(boolean hasSigned) throws Exception {
+        ExamUser registration = examUserRepository.findByExamIdAndUserId(exam1.getId(), userUtilService.getUserByLogin(TEST_PREFIX + "student2").getId()).orElseThrow();
+        registration.setActualRoom("Room A");
+        registration.setActualSeat("1");
+        examUserRepository.save(registration);
+        Instant before = Instant.now().minusSeconds(1);
+        var update = new ExamUserDTO(TEST_PREFIX + "student2", "", "", "", "", "", "Room B", "14", true, false, true, false, "", null, null, null, null, null, null, null);
+
+        request.performMvcRequest(buildUpdateExamUser(update, hasSigned, course1.getId(), exam1.getId())).andExpect(status().isOk());
+
+        assertThat(applicationAuditEventRepository.findByPrincipalAndAuditEventDateAfterAndAuditEventType(TEST_PREFIX + "instructor1", before, "UPDATE_EXAM_ATTENDANCE"))
+                .filteredOn(event -> String.valueOf(registration.getId()).equals(event.getData().get("examUserId"))).singleElement().satisfies(event -> {
+                    assertThat(event.getPrincipal()).isEqualTo(TEST_PREFIX + "instructor1");
+                    assertThat(event.getAuditEventDate()).isBetween(before, Instant.now());
+                    assertThat(event.getData()).containsEntry("courseId", course1.getId().toString()).containsEntry("examId", exam1.getId().toString())
+                            .containsEntry("studentId", registration.getUser().getId().toString()).containsEntry("studentLogin", TEST_PREFIX + "student2")
+                            .containsEntry("oldDidCheckImage", "false").containsEntry("newDidCheckImage", "true").containsEntry("oldDidCheckName", "false")
+                            .containsEntry("newDidCheckName", "false").containsEntry("oldDidCheckLogin", "false").containsEntry("newDidCheckLogin", "false")
+                            .containsEntry("oldDidCheckRegistrationNumber", "false").containsEntry("newDidCheckRegistrationNumber", "true").containsEntry("oldRoom", "Room A")
+                            .containsEntry("newRoom", "Room B").containsEntry("oldSeat", "1").containsEntry("newSeat", "14")
+                            .containsEntry("signatureChanged", Boolean.toString(hasSigned));
+                });
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student3", roles = "USER")
+    void testRejectedAttendanceUpdateDoesNotCreateSuccessfulAuditEvent() throws Exception {
+        Instant before = Instant.now().minusSeconds(1);
+        var update = new ExamUserDTO(TEST_PREFIX + "student2", "", "", "", "", "", "", "", true, true, true, true, "", null, null, null, null, null, null, null);
+        request.performMvcRequest(buildUpdateExamUser(update, false, course1.getId(), exam1.getId())).andExpect(status().isForbidden());
+        assertThat(applicationAuditEventRepository.findByPrincipalAndAuditEventDateAfterAndAuditEventType(TEST_PREFIX + "student3", before, "UPDATE_EXAM_ATTENDANCE")).isEmpty();
     }
 
     @Test
@@ -485,13 +697,13 @@ class ExamUserIntegrationTest extends AbstractProgrammingIntegrationLocalCILocal
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
-    void testGetExamStudentsPaged_filterDidNotAttend_returnsExamMissingAndNotStartedStudents() throws Exception {
+    void testGetExamStudentsPaged_filterDidNotAttend_returnsUnconfirmedStudents() throws Exception {
         var paginationExam = createPaginationTestExam();
-        // student3 (NotStarted) + student4 (ExamMissing) = 2 students who did not attend
+        // Starting an exam does not confirm the identity checks: students 2, 3 and 4 remain unconfirmed.
         var params = pageParams("DidNotAttend");
         List<ExamStudentDTO> result = request.getList(pagedUrl(paginationExam), HttpStatus.OK, ExamStudentDTO.class, params);
-        assertThat(result).hasSize(2);
-        assertThat(result.stream().map(ExamStudentDTO::login).toList()).containsExactlyInAnyOrder(TEST_PREFIX + "student3", TEST_PREFIX + "student4");
+        assertThat(result).hasSize(3);
+        assertThat(result).extracting(ExamStudentDTO::login).containsExactlyInAnyOrder(TEST_PREFIX + "student2", TEST_PREFIX + "student3", TEST_PREFIX + "student4");
     }
 
     @Test
@@ -556,6 +768,82 @@ class ExamUserIntegrationTest extends AbstractProgrammingIntegrationLocalCILocal
         var allLogins = new ArrayList<>(page0.stream().map(ExamStudentDTO::login).toList());
         allLogins.addAll(page1.stream().map(ExamStudentDTO::login).toList());
         assertThat(allLogins).doesNotHaveDuplicates().hasSize(4);
+    }
+
+    @ParameterizedTest
+    @CsvSource(value = { "login|1 2 3 4|4 3 2 1", "visibleRegistrationNumber|2 3 4 1|1 4 3 2", "plannedRoom|2 3 1 4|4 1 2 3", "plannedSeat|2 3 1 4|4 1 2 3",
+            "actualRoom|3 4 1 2|2 1 3 4", "actualSeat|3 4 1 2|2 1 3 4", "workingTime|2 3 1 4|1 2 3 4", "numberOfExamSessions|4 2 3 1|1 2 3 4", "name|4 2 3 1|1 2 3 4",
+            "progress|4 3 2 1|1 2 3 4", "unsupported|1 2 3 4|1 2 3 4", "NULL|1 2 3 4|1 2 3 4" }, delimiter = '|', nullValues = "NULL")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testPagedStudentSortPreservesAttendanceChecksAndStableTies(String column, String ascendingLogins, String descendingLogins) throws Exception {
+        var exam = createPaginationTestExam();
+        exam.setEndDate(ZonedDateTime.now().minusMinutes(1));
+        examRepository.save(exam);
+        String[] firstNames = { "Beta", "alpha", "Alpha", null };
+        String[] lastNames = { "Zulu", "Able", "Able", null };
+        String[] registrationNumbers = { "30", "10", "11", "20" };
+        String[] plannedRooms = { "B", "A", "A", "C" };
+        String[] plannedSeats = { "2", "1", "1", "3" };
+        for (int index = 0; index < 4; index++) {
+            var user = userUtilService.getUserByLogin(TEST_PREFIX + "student" + (index + 1));
+            user.setFirstName(firstNames[index]);
+            user.setLastName(lastNames[index]);
+            user.setRegistrationNumber("9" + exam.getId() + "0" + registrationNumbers[index]);
+            userTestRepository.save(user);
+            var registered = examUserRepository.findByExamIdAndUserId(exam.getId(), user.getId()).orElseThrow();
+            registered.setPlannedRoom(plannedRooms[index]);
+            registered.setPlannedSeat(plannedSeats[index]);
+            registered.setActualRoom(index == 1 ? "D" : index == 3 ? "A" : null);
+            registered.setActualSeat(index == 1 ? "4" : index == 3 ? "1" : null);
+            examUserRepository.save(registered);
+            if (index == 0 || index == 2) {
+                request.put("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/exam-users/" + registered.getId() + "/attendance",
+                        new ExamAttendanceUpdateDTO(index == 2), HttpStatus.NO_CONTENT);
+            }
+            if (index < 3) {
+                var attempt = studentExamRepository.findByExamIdAndUserId(exam.getId(), user.getId()).orElseThrow();
+                attempt.setWorkingTime(index == 0 ? 200 : 100);
+                studentExamRepository.save(attempt);
+                for (int sessionIndex = 0; sessionIndex < (index == 0 ? 2 : 1); sessionIndex++) {
+                    var session = new ExamSession();
+                    session.setStudentExam(attempt);
+                    examSessionRepository.save(session);
+                }
+            }
+        }
+        var testRun = buildStudentExam(exam, userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
+        testRun.setTestRun(true);
+        testRun.setWorkingTime(10000);
+        studentExamRepository.save(testRun);
+        var ignoredSession = new ExamSession();
+        ignoredSession.setStudentExam(testRun);
+        examSessionRepository.save(ignoredSession);
+
+        for (boolean descending : new boolean[] { false, true }) {
+            var params = pageParams("");
+            params.set("pageSize", "2");
+            if (column == null) {
+                params.remove("sortedColumn");
+                params.remove("sortingOrder");
+            }
+            else {
+                params.set("sortedColumn", column);
+            }
+            if (descending || column != null) {
+                params.set("sortingOrder", descending ? "DESCENDING" : "ASCENDING");
+            }
+            var rows = new ArrayList<>(request.getList(pagedUrl(exam), HttpStatus.OK, ExamStudentDTO.class, params));
+            params.set("page", "1");
+            rows.addAll(request.getList(pagedUrl(exam), HttpStatus.OK, ExamStudentDTO.class, params));
+            var expected = Arrays.stream((descending ? descendingLogins : ascendingLogins).split(" ")).map(number -> TEST_PREFIX + "student" + number).toList();
+            assertThat(rows).extracting(ExamStudentDTO::login).containsExactlyElementsOf(expected);
+            assertThat(rows).extracting(ExamStudentDTO::id).doesNotHaveDuplicates();
+            var submitted = rows.stream().filter(row -> row.login().equals(TEST_PREFIX + "student1")).findFirst().orElseThrow();
+            assertThat(submitted.didExamUserAttendExam()).isFalse();
+            assertThat(submitted.workingTime()).isEqualTo(200);
+            assertThat(submitted.numberOfExamSessions()).isEqualTo(2);
+            assertThat(rows.stream().filter(row -> row.login().equals(TEST_PREFIX + "student3")).findFirst().orElseThrow().didExamUserAttendExam()).isTrue();
+        }
     }
 
     @Test

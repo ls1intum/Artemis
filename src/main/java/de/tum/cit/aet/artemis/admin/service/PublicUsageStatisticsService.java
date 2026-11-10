@@ -118,7 +118,7 @@ public class PublicUsageStatisticsService {
     // The key names the shape of the cached records. A change of the shape is therefore compatible without bumping DistributedDataSchema.VERSION: a node only
     // reads the key of its own shape and never an entry that a build with another shape wrote. Increase the key whenever a record component is added, removed
     // or retyped in any record reachable from PublicUsageStatisticsDTO, including BuildUsageDTO and CommunicationUsageDTO.
-    @Cacheable(cacheNames = CACHE_NAME, key = "'usage-3'", sync = true)
+    @Cacheable(cacheNames = CACHE_NAME, key = "'usage-5'", sync = true)
     public PublicUsageStatisticsDTO getUsageStatistics() {
         Instant now = Instant.now();
         ZoneId zone = ZoneId.systemDefault();
@@ -142,10 +142,14 @@ public class PublicUsageStatisticsService {
         Long irisMessages = irisUsageStatisticsApi.map(api -> api.countMessagesInCourses(courseIds)).orElse(null);
         Long tutorialGroups = tutorialGroupUsageStatisticsApi.map(api -> api.countTutorialGroups(courseIds)).orElse(null);
         Long exams = examUsageStatisticsApi.map(api -> api.countRealExams(courseIds)).orElse(null);
+        Long examRegistrations = examUsageStatisticsApi.map(api -> api.countRealExamRegistrations(courseIds)).orElse(null);
+        Long examParticipations = examUsageStatisticsApi.map(api -> api.countRealExamParticipations(courseIds)).orElse(null);
         Long competencies = competencyUsageStatisticsApi.map(api -> api.countCompetencies(courseIds)).orElse(null);
-        return Optional.of(new UsageSemesterDTO(semester.label(), courseIds.size(), studentIds.size(), activeStudents, submissions, lectures,
-                exercisesByType(publicUsageStatisticsRepository.countExercisesByType(courseIds)), buildUsage(courseIds, semester, zone, now), communicationUsage(courseIds),
-                irisMessages, tutorialGroups, exams, competencies));
+        return Optional.of(new UsageSemesterDTO(semester.label(), courseIds.size(), studentIds.size(), publicUsageStatisticsRepository.countStudentEnrollments(courseIds),
+                publicUsageStatisticsRepository.countInstructors(courseIds), publicUsageStatisticsRepository.countTutors(courseIds), activeStudents, submissions, lectures,
+                publicUsageStatisticsRepository.countLectureUnits(courseIds), exercisesByType(publicUsageStatisticsRepository.countExercisesByType(courseIds)),
+                buildUsage(courseIds, semester, zone, now), communicationUsage(courseIds), irisMessages, tutorialGroups, exams, examRegistrations, examParticipations,
+                competencies));
     }
 
     /**

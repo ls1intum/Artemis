@@ -2,6 +2,7 @@
 id: tum-live-course-connection
 title: Connect a TUM.Live Course
 sidebar_label: TUM.Live Course Connection
+last_reviewed: 2026-11-03
 ---
 
 # Connect a TUM.Live course
@@ -19,3 +20,17 @@ To remove access, select **Disconnect** and confirm. Artemis first revokes its e
 When a lecture unit links a recording of the connected TUM.Live course, Artemis plays it in its own video player and can transcribe it for Iris, even if the TUM.Live course is not public. Students do not need a TUM.Live account for this; Artemis checks that they may see the unit. Lectures that are private in TUM.Live stay unavailable to Artemis.
 
 The video address that Artemis gets is valid for seven hours. If a video stops playing after a page was open that long, reload the page.
+
+## Upload a video to TUM.Live
+
+In a connected course, editors can upload the video of an attachment video unit to the TUM.Live course instead of linking an existing recording. A unit can be saved without a PDF and a video for this.
+
+1. Open the unit in the lecture's unit management and edit it.
+2. Under **TUM.Live recording**, choose an MP4 file and select **Upload to TUM.Live**. Keep the page open until the upload is complete.
+3. TUM.Live then converts the video. You can leave the page; Artemis adds the video to the unit when it is ready and starts processing it for Iris.
+
+The upload creates a new lecture in the TUM.Live course. Until it is converted, students can see it in TUM.Live as a planned lecture. To replace the video, upload another one: the unit keeps the old video until the new one is ready, and the old lecture is then deleted in TUM.Live. If you change the unit's video link by hand while an upload converts, your link is kept and the upload is deleted.
+
+A failed or cancelled upload is deleted in TUM.Live. An upload that has not finished after six hours is given up; upload the video again in that case. Artemis sets no size limit, but servers between your browser and TUM.Live can; their error is shown.
+
+When you delete a unit or a lecture with a video uploaded from Artemis, Artemis asks whether to delete the video in TUM.Live too. Deleting a course keeps its videos in TUM.Live.

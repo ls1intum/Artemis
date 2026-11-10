@@ -21,6 +21,8 @@ import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ExamWideAnnouncementEvent } from 'app/exam/overview/services/exam-participation-live-events.service';
 import { EntityTitleService, EntityType } from 'app/core/navbar/entity-title.service';
 import { ExamDeletionSummaryDTO } from 'app/exam/shared/entities/exam-deletion-summary.model';
+import { EntitySummaryCategory } from 'app/shared-ui/delete-dialog/delete-dialog.model';
+import { buildExamDeletionSummary } from 'app/exam/manage/services/exam-deletion-summary.util';
 import { ExamUpdateDTO, toExamUpdateDTO } from 'app/exam/manage/services/exam-update-dto.model';
 import { ExportExamUserDTO } from 'app/exam/manage/students/export-users/students-export.model';
 import { ExamExerciseStartPreparationStatus } from 'app/exam/manage/services/exam-exercise-start-preparation-status.model';
@@ -82,6 +84,17 @@ export class ExamManagementService {
         return this.http
             .patch(`${this.resourceUrl}/${courseId}/exams/${examId}/working-time`, workingTimeChange, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.processExamResponseFromServer(res)));
+    }
+
+    getAnnouncements(courseId: number, examId: number): Observable<ExamWideAnnouncementEvent[]> {
+        return this.http.get<ExamWideAnnouncementEvent[]>(`${this.resourceUrl}/${courseId}/exams/${examId}/announcements`).pipe(
+            map((events) => {
+                for (const event of events) {
+                    event.createdDate = convertDateFromServer(event.createdDate)!;
+                }
+                return events;
+            }),
+        );
     }
 
     createAnnouncement(courseId: number, examId: number, content: string): Observable<ExamWideAnnouncementEvent> {
@@ -260,12 +273,14 @@ export class ExamManagementService {
     }
 
     /**
-     * Returns a summary for the exam providing information potentially relevant for the deletion.
+     * Returns what is deleted together with the exam, grouped into categories for the delete dialog.
      * @param courseId The course id.
      * @param examId The exam id.
      */
-    getDeletionSummary(courseId: number, examId: number): Observable<HttpResponse<ExamDeletionSummaryDTO>> {
-        return this.http.get<ExamDeletionSummaryDTO>(`${this.resourceUrl}/${courseId}/exams/${examId}/deletion-summary`, { observe: 'response' });
+    getDeletionSummary(courseId: number, examId: number): Observable<EntitySummaryCategory[]> {
+        return this.http
+            .get<ExamDeletionSummaryDTO>(`${this.resourceUrl}/${courseId}/exams/${examId}/deletion-summary`, { observe: 'response' })
+            .pipe(map((response) => (response.body ? buildExamDeletionSummary(response.body) : [])));
     }
 
     /**
@@ -295,7 +310,7 @@ export class ExamManagementService {
      * @return studentDtos of students that were not found in the system
      */
     addAllStudentsOfCourseToExam(courseId: number, examId: number): Observable<HttpResponse<void>> {
-        return this.http.post<HttpResponse<void>>(`${this.resourceUrl}/${courseId}/exams/${examId}/register-course-students`, { observe: 'response' });
+        return this.http.post<void>(`${this.resourceUrl}/${courseId}/exams/${examId}/register-course-students`, {}, { observe: 'response' });
     }
 
     /**
@@ -374,13 +389,18 @@ export class ExamManagementService {
     }
 
     /**
-     * Returns exam users who started the exam but have not yet submitted a signed attendance record.
+     * Returns exam users who started the exam and whose attendance checks are incomplete.
      * @param courseId The course id.
      * @param examId The exam id.
-     * @returns Exam users with incomplete attendance check data.
+     * @param includeAll Include all registered exam users for attendance correction.
+     * @returns Exam users with incomplete attendance check data, or all registered users when requested.
      */
-    verifyExamUserAttendance(courseId: number, examId: number): Observable<HttpResponse<ExamUserAttendanceCheckDTO[]>> {
-        return this.http.get<ExamUserAttendanceCheckDTO[]>(`${this.resourceUrl}/${courseId}/exams/${examId}/verify-exam-users`, { observe: 'response' });
+    verifyExamUserAttendance(courseId: number, examId: number, includeAll = false): Observable<HttpResponse<ExamUserAttendanceCheckDTO[]>> {
+        return this.http.get<ExamUserAttendanceCheckDTO[]>(`${this.resourceUrl}/${courseId}/exams/${examId}/verify-exam-users`, { observe: 'response', params: { includeAll } });
+    }
+
+    updateAttendance(courseId: number, examId: number, examUserId: number, attended: boolean): Observable<void> {
+        return this.http.put<void>(`${this.resourceUrl}/${courseId}/exams/${examId}/exam-users/${examUserId}/attendance`, { attended });
     }
 
     /**

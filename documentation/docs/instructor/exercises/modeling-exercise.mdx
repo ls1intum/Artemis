@@ -2,6 +2,7 @@
 id: modeling-exercise
 title: Modeling Exercise
 sidebar_label: Modeling Exercise
+last_reviewed: 2026-11-05
 ---
 
 import Callout from "../../../src/components/Callout/Callout";
@@ -19,6 +20,7 @@ import exampleSubmissionForAssessmentTraining from './assets/modeling/example-su
 import assessmentTrainingMode from './assets/modeling/assessment-training-mode.png';
 import importModelingExerciseModal from './assets/modeling/import-modeling-exercise-modal.png';
 import courseDashboardExerciseModeling from './assets/modeling/course-dashboard-exercise-modeling.png';
+import exerciseDetailsModeling from './assets/modeling/exercise-details-modeling.png';
 import submissionsDashboard from './assets/modeling/submissions-dashboard.png';
 import assessmentModal from './assets/modeling/assessment-modal.png';
 import assessmentInstruction from './assets/modeling/assessment-instruction.png';
@@ -135,6 +137,20 @@ narrow window moves behind the row's overflow menu. The title opens the exercise
 
 <Image src={courseDashboardExerciseModeling} alt="Course exercise list with the actions available on a modeling exercise" size={ImageSize.large} caption="The exercise on the course's exercise list" />
 
+Select the title to open the exercise details. The saved title and exercise type appear in the header, while the
+**Exercise ID** is in **General**. Section links scroll to the configuration, problem statement, solution diagram
+and grading information on the same page; all sections remain available to browser search.
+
+The action bar groups **Participations**, **Statistics**, **Assessment Dashboard** and **Example submissions**
+separately from **Edit**, with **Teams** for team exercises. Available controls depend on your role and whether
+the exercise belongs to a course or an exam. Instructors find **Delete** in **Exercise administration** at the
+bottom of the page, where deletion still requires confirmation.
+
+<Image src={exerciseDetailsModeling} alt="Modeling exercise details with the saved title, assessment navigation and section links" size={ImageSize.large} caption="The modeling exercise's details" />
+
+See [Exercise Details for Course Staff](/instructor/exercises/intro#exercise-details-for-course-staff) for shared
+navigation and compact-screen behavior.
+
 ## Assess Submissions
 
 Assessment opens once the due date has passed. **Assessment** in the course navigation lists the exercises waiting
@@ -162,7 +178,7 @@ and releases the lock so somebody else can take the submission, and **Exercise D
 
 ## Automatic Assessment Suggestions
 
-Where the course has **Grading feedback suggestions** switched on in its **Athena AI Feedback** panel, Artemis generates assessment suggestions for modeling submissions using the Athena service.
+Where the course has **Grading feedback suggestions** enabled on the Athena settings page, Artemis generates assessment suggestions for modeling submissions using the Athena service.
 
 <Callout variant={CalloutVariant.info}>
 
@@ -255,7 +271,7 @@ Evaluate the following 10 criteria:
 
 **Overview:**
 
-When a modeling exercise is configured to allow **Allow automatic AI preliminary feedback requests**, preliminary AI feedback can be requested for modeling submissions. The feedback is generated through the Athena Service, which analyzes both the **structure** and **layout** of the diagrams and produces feedback based on the provided **Grading Instructions**, **Problem Statement**, and **Sample Solution**.
+When the course has **Formative feedback requests** switched on in its **Athena AI Feedback** panel (see [AI-Assisted Feedback](/instructor/assessment-grading/ai-feedback)), students can request preliminary AI feedback for their modeling submissions. The feedback is generated through the Athena Service, which analyzes both the **structure** and **layout** of the diagrams and produces feedback based on the provided **Grading Instructions**, **Problem Statement**, and **Sample Solution**.
 
 <Callout variant={CalloutVariant.warning}>
 
@@ -266,7 +282,7 @@ When a modeling exercise is configured to allow **Allow automatic AI preliminary
 **How to Request Automatic Feedback:**
 
 1. **Requesting Feedback**
-   - 1.1. Navigate to a **Modeling Exercise** with the **Automatic Student Feedback** feature enabled
+   - 1.1. Navigate to a **Modeling Exercise** in a course with **Formative feedback requests** enabled
    - 1.2. Create a diagram in the modeling editor and submit it
    - 1.3. Feedback may be requested either from the exercise overview page or directly within the modeling editor
 

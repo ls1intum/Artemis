@@ -2,6 +2,7 @@
 id: distributed-data
 title: Distributed Data with Redis or Valkey
 sidebar_label: Distributed Data with Redis or Valkey
+last_reviewed: 2026-11-09
 ---
 
 import Callout from "../../../src/components/Callout/Callout";
@@ -18,7 +19,7 @@ and follows the same procedure. Redis and Valkey persist queues, maps, sets, and
 restart. Hazelcast does not retain this data after its cluster stops and therefore needs no persistent-data migration.
 
 Artemis assigns a schema version to its Redis or Valkey data. Stored structures use versioned keys such as
-`artemis:v1:{buildJobQueue}`. The metadata keys are deliberately readable without an Artemis-specific codec:
+`artemis:v2:{buildJobQueue}`. The metadata keys are deliberately readable without an Artemis-specific codec:
 
 ```text
 artemis:distributed-data-schema
@@ -28,6 +29,7 @@ artemis:distributed-data-schema:release
 The first Artemis release with this mechanism treats existing unversioned data as schema version `0` and migrates it
 to schema version `1` during startup. A release declaring a later schema runs every step in between during the same
 startup, so a store that has never been migrated goes from `0` through `1` to the version the release expects.
+The current schema version is `2`.
 
 ## Prepare an upgrade
 
@@ -64,6 +66,35 @@ these structures:
 | `features` | Contains runtime feature-toggle changes made by an administrator. |
 | `pyris-job-map` | Tracks in-flight Iris jobs and their remaining expiry time. |
 
+The schema `1` to `2` migration preserves `buildJobQueue`, `processingJobs`, `buildResultQueue`,
+`deferredBuildResultQueue`, and the current Iris job map, `pyris-job-map-v2`. It also removes the obsolete `AtlasML`
+feature toggle and rewrites the keys of `features`, because stored keys identify a toggle by its position in the
+list of features. Every other runtime toggle keeps its value.
+
+Iris job state moves together: `pyris-chat-job-client-id-map` retains client correlation,
+`pyris-chat-material-version-map` and `pyris-global-search-material-version-map` retain stale-result checks, and
+`pyris-restart-watch` retains restart recovery. `struggle-inflight-map` and `struggle-cooldown-map` retain the
+in-flight and cooldown guards for proactive tutoring. Expiring entries keep their remaining lifetime.
+
+Atlas preserves `atlas-content-change-accumulator`, including pending exercise and lecture-unit changes, the last
+event time used for debouncing, and each course's daily orchestration count and date. Empty buckets with consumed
+quota are retained too, so an upgrade neither loses queued changes nor resets the daily cap. These entries have no
+expiry. The same data is preserved when missing schema metadata causes the migration path to be replayed.
+
+Hyperion authoring state also moves together. The migration preserves:
+
+| Structures | Why they are preserved |
+|---|---|
+| `hyperion-exercise-generation-jobs`, `hyperion-live-save-coordination` | Retain generation, undo and uncertain-save reservations that require explicit recovery. |
+| `hyperion-exercise-generation-cancellations`, `hyperion-generation-token-budget-reservations` | Keep cancellation decisions and conservative charges for provider usage that could not be accounted for completely. |
+| `hyperion-exercise-generation-transcripts`, `hyperion-exercise-generation-file-changes`, `hyperion-exercise-generation-artifacts`, `hyperion-exercise-generation-usage` | Retain reconnect replay, unsaved generated candidates and their usage account, which cannot be reconstructed from saved exercises. |
+| `hyperion-authoring-activity`, `hyperion-authoring-latest-mutation`, `hyperion-authoring-owner-runs`, `hyperion-authoring-activity-sequence` | Keep authoring history, pagination and the latest mutation's undo references consistent. |
+| `hyperion-exercise-variant-jobs` | Retain variant results and links to provisioned exercises, including those whose cleanup failed. |
+
+Expiring Hyperion entries keep their remaining lifetime; the upgrade does not restart their retention window.
+Moving a reservation does not restart its worker or clear an interrupted save. Inspect and reconcile retained
+reservations using the [Hyperion save and recovery procedure](/admin/hyperion#save-cancellation-and-recovery).
+
 `deferredBuildResultQueue` was introduced after schema `1`. It holds results awaiting exercise result-processing admission;
 future schema migrations must preserve it alongside `buildResultQueue`. Deferred results remain visible in the admin
 result-queue listing and are retried every five seconds without queue-listener events. The admin clear operation
@@ -85,16 +116,20 @@ build-agent registrations, websocket presence, caches, and topic messages. A use
 progress, for example an LTI launch, may need to retry it after the maintenance window.
 
 Entries are moved incrementally, and the schema version is published only after migration finishes. If the migrating
-node stops, start it again with the same new release. The migration resumes safely.
+node stops, start it again with the same new release. The migration resumes safely. If the schema metadata is missing,
+Artemis replays the whole adjacent migration path from version `0`, including over empty source structures, so data
+already moved into an intermediate namespace is recovered rather than skipped.
 
 ## Verify the migration
 
 The first new node logs messages similar to:
 
 ```text
-Distributed store predates schema versions, treating its contents as version 0
+Distributed store carries no schema version, replaying migrations from version 0
 Migrating distributed data from schema version 0 to 1
 Distributed data is now at schema version 1
+Migrating distributed data from schema version 1 to 2
+Distributed data is now at schema version 2
 ```
 
 A store that is already at a numbered version logs only the steps that are still missing.
@@ -104,7 +139,7 @@ Read the metadata with `redis-cli` or the equivalent `valkey-cli` commands:
 ```bash
 redis-cli GET artemis:distributed-data-schema
 redis-cli GET artemis:distributed-data-schema:release
-redis-cli --scan --pattern 'artemis:v1:*'
+redis-cli --scan --pattern 'artemis:v2:*'
 ```
 
 The first command must report the schema expected by the release. The second reports the Artemis release that last

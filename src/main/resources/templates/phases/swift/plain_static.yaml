@@ -1,13 +1,10 @@
 - name: setup
   script: |-
-    cp -R Sources ${studentParentWorkingDirectoryName}
-    # copy test files
     cp -R Tests ${studentParentWorkingDirectoryName}
     cp Package.swift ${studentParentWorkingDirectoryName}
 - name: compile
   script: |-
     # In order to get the correct console output we need to execute the command within the ${studentParentWorkingDirectoryName} directory
-    # swift build
     cd ${studentParentWorkingDirectoryName}
     swift build
 - name: test
@@ -18,6 +15,8 @@
     - '${studentParentWorkingDirectoryName}/tests.xml'
 - name: finalize
   script: |-
+    # The used docker container is calling 'swift build' which creates files as root (e.g. tests.xml),
+    # so we need to allow everyone to access these files
     chmod -R 777 .
   forceRun: true
 - name: static_code_analysis
@@ -25,10 +24,11 @@
     # Copy SwiftLint rules
     cp .swiftlint.yml ${studentParentWorkingDirectoryName} || true
     # create target directory for SCA Parser
-    mkdir target
+    mkdir -p target
     cd ${studentParentWorkingDirectoryName}
-    # Execute static code analysis
-    swiftlint > ../target/swiftlint-result.xml
+    # Execute static code analysis. The checkstyle reporter is available in every SwiftLint version, in contrast to the SARIF reporter (SwiftLint 0.55 and newer).
+    # The report is written to stdout and the progress to stderr. SwiftLint exits with a non-zero code if it finds violations, which does not fail the build.
+    swiftlint lint --quiet --no-cache --reporter checkstyle > ../target/swiftlint-result.xml
   forceRun: true
   resultPaths:
     - 'target/swiftlint-result.xml'

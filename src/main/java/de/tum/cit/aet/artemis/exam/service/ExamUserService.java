@@ -359,7 +359,7 @@ public class ExamUserService {
         ZonedDateTime startedDate = se != null ? se.startedDate() : null;
         ZonedDateTime submissionDate = se != null ? se.submissionDate() : null;
         long examSessionCount = se != null ? se.examSessionCount() : 0L;
-        boolean didAttend = Boolean.TRUE.equals(started);
+        boolean didAttend = eu.getDidCheckImage() && eu.getDidCheckName() && eu.getDidCheckLogin() && eu.getDidCheckRegistrationNumber();
 
         String progress;
         if (se == null) {

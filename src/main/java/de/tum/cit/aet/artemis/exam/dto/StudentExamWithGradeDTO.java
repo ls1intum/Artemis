@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.exam.dto;
 
+import java.util.List;
 import java.util.Map;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -12,7 +13,8 @@ import de.tum.cit.aet.artemis.exam.dto.detail.StudentExamForDetailDTO;
 
 /**
  * DTO that wraps a {@link StudentExam} projection and contains related assessment result and grading information if
- * available. Includes max points and max bonus points.
+ * available. Includes max points and max bonus points. Pending exercise ids identify submitted automatic programming
+ * builds of this attempt that have not finished; their aggregate points and grade are not yet available.
  * <p>
  * It is possible to calculate data included in this DTO by using the {@link StudentExam}, {@link ExamScoresDTO.StudentResultDTO}
  * and {@link GradingScale} for the exam. The calculations are done in the server and returned with this DTO so that the client
@@ -24,5 +26,5 @@ import de.tum.cit.aet.artemis.exam.dto.detail.StudentExamForDetailDTO;
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record StudentExamWithGradeDTO(Double maxPoints, Double maxBonusPoints, GradeType gradeType, StudentExamForDetailDTO studentExam,
-        ExamScoresDTO.StudentResultDTO studentResult, Map<Long, Double> achievedPointsPerExercise) {
+        ExamScoresDTO.StudentResultDTO studentResult, Map<Long, Double> achievedPointsPerExercise, List<Long> pendingExerciseIds) {
 }
