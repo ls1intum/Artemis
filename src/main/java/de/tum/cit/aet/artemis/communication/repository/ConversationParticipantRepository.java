@@ -14,6 +14,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.PessimisticLockingFailureException;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -22,6 +23,7 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.communication.domain.ConversationParticipant;
+import de.tum.cit.aet.artemis.communication.dto.ConversationMentionCandidateDTO;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 
@@ -32,6 +34,62 @@ import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 @Lazy
 @Repository
 public interface ConversationParticipantRepository extends ArtemisJpaRepository<ConversationParticipant, Long> {
+
+    /**
+     * Searches eligible mention recipients, most recent message or reply first. Course-wide channels have implicit course members;
+     * Other conversations only include their actual participants who retain course access, including administrators without
+     * an explicit course role. Login breaks ties, including members who have never posted.
+     * Activity is aggregated once per conversation rather than looked up separately for every matching member. Names containing
+     * mention delimiters are excluded before the limit because the editor and posting parser cannot encode them.
+     *
+     * @param conversationId the current conversation
+     * @param courseId       the owning course
+     * @param courseWide     whether course membership implies conversation membership
+     * @param searchTerm     the normalized login or full-name query, with LIKE metacharacters escaped using {@code !}
+     * @param noActivity     a timestamp before any message
+     * @param pageable       the result limit
+     * @return eligible users in activity order
+     */
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.communication.dto.ConversationMentionCandidateDTO(user.firstName, user.lastName, user.login)
+            FROM User user
+            LEFT JOIN (
+                SELECT message.author.id AS authorId, MAX(message.creationDate) AS latestActivity
+                FROM Post message
+                WHERE message.conversation.id = :conversationId
+                GROUP BY message.author.id
+            ) messageActivity ON messageActivity.authorId = user.id
+            LEFT JOIN (
+                SELECT reply.author.id AS authorId, MAX(reply.creationDate) AS latestActivity
+                FROM AnswerPost reply
+                WHERE reply.post.conversation.id = :conversationId
+                GROUP BY reply.author.id
+            ) replyActivity ON replyActivity.authorId = user.id
+            WHERE user.deleted = FALSE
+                AND ((:courseWide = TRUE AND EXISTS (
+                    SELECT role.id FROM UserCourseRole role WHERE role.user = user AND role.course.id = :courseId
+                )) OR (:courseWide = FALSE AND EXISTS (
+                    SELECT participant.id FROM ConversationParticipant participant
+                    WHERE participant.user = user AND participant.conversation.id = :conversationId
+                ) AND (EXISTS (
+                    SELECT role.id FROM UserCourseRole role WHERE role.user = user AND role.course.id = :courseId
+                ) OR :#{T(de.tum.cit.aet.artemis.account.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities
+                    OR :#{T(de.tum.cit.aet.artemis.account.domain.Authority).SUPER_ADMIN_AUTHORITY} MEMBER OF user.authorities
+                )))
+                AND LOCATE('[', CONCAT(COALESCE(user.firstName, ''), COALESCE(user.lastName, ''))) = 0
+                AND LOCATE(']', CONCAT(COALESCE(user.firstName, ''), COALESCE(user.lastName, ''))) = 0
+                AND LOCATE('(', CONCAT(COALESCE(user.firstName, ''), COALESCE(user.lastName, ''))) = 0
+                AND LOCATE(')', CONCAT(COALESCE(user.firstName, ''), COALESCE(user.lastName, ''))) = 0
+                AND (:searchTerm = ''
+                    OR LOWER(user.login) LIKE CONCAT(:searchTerm, '%') ESCAPE '!'
+                    OR LOWER(CONCAT(COALESCE(user.firstName, ''), ' ', COALESCE(user.lastName, ''))) LIKE CONCAT('%', :searchTerm, '%') ESCAPE '!')
+            ORDER BY GREATEST(
+                COALESCE(messageActivity.latestActivity, :noActivity),
+                COALESCE(replyActivity.latestActivity, :noActivity)
+            ) DESC, user.login ASC
+            """)
+    List<ConversationMentionCandidateDTO> findMentionCandidates(@Param("conversationId") long conversationId, @Param("courseId") long courseId,
+            @Param("courseWide") boolean courseWide, @Param("searchTerm") String searchTerm, @Param("noActivity") ZonedDateTime noActivity, Pageable pageable);
 
     @Query("""
             SELECT DISTINCT conversationParticipant
@@ -330,52 +388,6 @@ public interface ConversationParticipantRepository extends ArtemisJpaRepository<
             WHERE conversationParticipant.conversation.course.id = :courseId
             """)
     void deleteAllByConversationCourseId(@Param("courseId") long courseId);
-
-    /**
-     * Increment the unreadMessagesCount field of the participants of a conversation who are eligible for an unread
-     * message: everyone except the sender, whose {@code unreadMessagesCount} is not null and who has not muted the
-     * conversation. Participants failing any of those conditions are left untouched.
-     * <p>
-     * Call this from the request that creates the message, not from a background thread. The read side
-     * ({@code updateLastRead}) resets the counter to zero and nothing orders the two, so an increment running
-     * asynchronously can land after a recipient's read and leave them with an unread message they already saw.
-     *
-     * @param conversationId id of the conversation with participants
-     * @param senderId       userId of the sender of the message(Post)
-     */
-    @Transactional // ok because of modifying query
-    @Modifying
-    @Query("""
-            UPDATE ConversationParticipant conversationParticipant
-            SET conversationParticipant.unreadMessagesCount = conversationParticipant.unreadMessagesCount + 1
-            WHERE conversationParticipant.conversation.id = :conversationId
-                AND conversationParticipant.user.id <> :senderId
-                AND conversationParticipant.unreadMessagesCount IS NOT NULL
-                AND conversationParticipant.isMuted = FALSE
-            """)
-    void incrementUnreadMessagesCountOfParticipants(@Param("conversationId") Long conversationId, @Param("senderId") Long senderId);
-
-    /**
-     * Increment the unreadMessagesCount field of the given participants of a conversation, for a reply that only concerns
-     * them: the author of a message and the users who replied to it. Like
-     * {@link #incrementUnreadMessagesCountOfParticipants(Long, Long)}, participants whose {@code unreadMessagesCount} is
-     * null or who muted the conversation are left untouched, and it has to be called from the request that creates the reply.
-     * The sender of the reply must not be among the given users.
-     *
-     * @param conversationId id of the conversation with participants
-     * @param userIds        ids of the users who are part of the thread the reply was written in
-     */
-    @Transactional // ok because of modifying query
-    @Modifying
-    @Query("""
-            UPDATE ConversationParticipant conversationParticipant
-            SET conversationParticipant.unreadMessagesCount = conversationParticipant.unreadMessagesCount + 1
-            WHERE conversationParticipant.conversation.id = :conversationId
-                AND conversationParticipant.user.id IN :userIds
-                AND conversationParticipant.unreadMessagesCount IS NOT NULL
-                AND conversationParticipant.isMuted = FALSE
-            """)
-    void incrementUnreadMessagesCountOfParticipantsIn(@Param("conversationId") Long conversationId, @Param("userIds") Collection<Long> userIds);
 
     /**
      * Checks if the user has a conversation in the course whose unread count is positive and that is not muted. This covers what

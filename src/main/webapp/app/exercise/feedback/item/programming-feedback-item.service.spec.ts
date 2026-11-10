@@ -237,10 +237,11 @@ describe('ProgrammingFeedbackItemService', () => {
         const item = service.create([feedback], false)[0];
 
         expect(item.title).toBe('File src/main/java/Example.java at lines 11-13');
+        // Athena's lines count from 0, the panel's from 1
         expect(item.codeReference).toEqual({
             filePath: 'src/main/java/Example.java',
-            line: 11,
-            lineEnd: 13,
+            line: 12,
+            lineEnd: 14,
         });
     });
 
@@ -261,18 +262,41 @@ describe('ProgrammingFeedbackItemService', () => {
         });
     });
 
-    it('should not show a code reference for AI feedback that refers to line 0', () => {
-        const feedback = {
+    it('should show a non-graded suggestion about the first line with its title and as line 1', () => {
+        const feedback: Feedback = {
             id: 1,
             type: FeedbackType.AUTOMATIC,
-            text: `${NON_GRADED_FEEDBACK_SUGGESTION_IDENTIFIER}File src/main/java/Example.java at line 0`,
-            detailText: 'The loop condition is incorrect.',
+            text: `${NON_GRADED_FEEDBACK_SUGGESTION_IDENTIFIER}Add a package declaration`,
+            detailText: 'The file has no package declaration.',
             reference: 'file:src/main/java/Example.java_line:0',
-        } as Feedback;
+        };
 
         const item = service.create([feedback], false)[0];
 
-        expect(item.codeReference).toBeUndefined();
+        expect(item.title).toBe('Add a package declaration');
+        expect(item.codeReference).toEqual({ filePath: 'src/main/java/Example.java', line: 1 });
+    });
+
+    it('should show a non-graded suggestion range counted from 1', () => {
+        const feedback: Feedback = {
+            id: 1,
+            type: FeedbackType.AUTOMATIC,
+            text: `${NON_GRADED_FEEDBACK_SUGGESTION_IDENTIFIER}Simplify the loop`,
+            reference: 'file:src/main/java/Example.java_line:0-2',
+        };
+
+        expect(service.create([feedback], false)[0].codeReference).toEqual({ filePath: 'src/main/java/Example.java', line: 1, lineEnd: 3 });
+    });
+
+    it('should not show a code reference for a graded feedback suggestion that refers to line 0', () => {
+        const feedback: Feedback = {
+            id: 1,
+            type: FeedbackType.MANUAL,
+            text: `${FEEDBACK_SUGGESTION_IDENTIFIER}Review the class`,
+            reference: 'file:src/main/java/Example.java_line:0',
+        };
+
+        expect(service.create([feedback], false)[0].codeReference).toBeUndefined();
     });
 
     it('should strip the adapted-suggestion prefix from a feedback suggestion title', () => {

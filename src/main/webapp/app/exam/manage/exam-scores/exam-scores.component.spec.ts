@@ -1,3 +1,4 @@
+import * as XLSX from '@e965/xlsx';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { JhiLanguageHelper } from 'app/core/language/shared/language.helper';
@@ -28,6 +29,7 @@ import {
     EXAM_ASSIGNED_EXERCISE,
     EXAM_OVERALL_POINTS_KEY,
     EXAM_OVERALL_SCORE_KEY,
+    EXAM_PASSED,
     EXAM_SUBMITTED,
     FINAL_GRADE_KEY,
     NAME_KEY,
@@ -48,7 +50,13 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { GradingScaleDTO, toGradingScaleDTO } from 'app/assessment/shared/entities/grading-scale-dto.model';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
+vi.mock('@e965/xlsx', async (importOriginal) => {
+    const actual = await importOriginal<typeof import('@e965/xlsx')>();
+    return { ...actual, writeFile: vi.fn() };
+});
 import { deepClone } from 'app/foundation/util/deep-clone.util';
+import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.utils';
 
 describe('ExamScoresComponent', () => {
     let fixture: ComponentFixture<ExamScoresComponent>;
@@ -468,7 +476,7 @@ describe('ExamScoresComponent', () => {
             averagePercentage: 56.666666666666664,
         } as AggregatedExerciseGroupResult;
 
-        expect(groupResult1).toEqual(expectedGroupResult);
+        expect(groupResult1).toMatchObject(expectedGroupResult);
 
         const totalPoints = exResult1ForGroup1.achievedPoints! + exResult2ForGroup1.achievedPoints! + exResult3ForGroup1.achievedPoints!;
         expect(groupResult1!.totalPoints).toBe(totalPoints);
@@ -550,7 +558,7 @@ describe('ExamScoresComponent', () => {
             averagePoints: 60,
             averagePercentage: 60,
         };
-        expect(groupResult1).toEqual(expectedGroupResult);
+        expect(groupResult1).toMatchObject(expectedGroupResult);
 
         const totalPoints = exResult1ForGroup1.achievedPoints! + exResult2ForGroup1.achievedPoints!;
         expect(groupResult1!.totalPoints).toBe(totalPoints);
@@ -577,6 +585,407 @@ describe('ExamScoresComponent', () => {
                 expect(exResult.averagePercentage).toBe((averageExPoints / exInfo.maxPoints) * 100);
             }
         });
+    });
+
+    it('computes score statistics from each scored attempt and excludes pending results', () => {
+        const dto = deepClone(examScoreDTO);
+        dto.hasSecondCorrectionAndStarted = false;
+        dto.studentResults[0].maxPoints = 10.5;
+        dto.studentResults[0].overallPointsAchieved = 8.4;
+        dto.studentResults[0].overallScoreAchieved = 80;
+        dto.studentResults[0].hasPassed = true;
+        dto.studentResults[1].maxPoints = 20;
+        dto.studentResults[1].overallPointsAchieved = 4;
+        dto.studentResults[1].overallScoreAchieved = 20;
+        dto.studentResults[2].maxPoints = 15;
+        dto.studentResults[2].overallPointsAchieved = undefined;
+        dto.studentResults[2].overallScoreAchieved = undefined;
+        dto.studentResults[2].submitted = true;
+        vi.spyOn(examService, 'getExamScores').mockReturnValue(of(new HttpResponse({ body: dto })));
+        fixture.detectChanges();
+        expect(comp.aggregatedExamResults().meanPointsTotal).toBe(6.2);
+        expect(comp.aggregatedExamResults().meanPointsRelativeTotal).toBe(50);
+        expect(comp.aggregatedExamResults().medianRelativeTotal).toBe(50);
+        expect(comp.aggregatedExamResults().meanPointsRelativeSubmitted).toBe(50);
+        expect(comp.aggregatedExamResults().medianRelativeSubmitted).toBe(50);
+        expect(comp.aggregatedExamResults().meanPointsRelativePassed).toBe(80);
+        expect(comp.scores()).toEqual([80, 20]);
+        expect(comp.aggregatedExamResults().noOfRegisteredUsers).toBe(dto.studentResults.length);
+        expect(comp.aggregatedExamResults().noOfExamsSubmitted).toBe(dto.studentResults.filter((result) => result.submitted).length);
+        expect(Array.from<HTMLElement>(fixture.nativeElement.querySelectorAll('[data-testid="attempt-max-points"]')).map((cell) => cell.textContent?.trim())).toEqual([
+            '10.5',
+            '20',
+            '15',
+        ]);
+        expect(fixture.nativeElement.querySelector('[data-testid="configured-exam-max-points"]')).toBeNull();
+        comp.toggleFilterForNonEmptySubmission();
+        expect(comp.aggregatedExamResults().meanScoreNonEmpty).toBe(50);
+        expect(comp.aggregatedExamResults().medianScoreNonEmpty).toBe(50);
+        comp.toggleFilterForSubmittedExam();
+        expect(comp.aggregatedExamResults().meanScoreSubmittedAndNonEmpty).toBe(50);
+        expect(comp.aggregatedExamResults().medianScoreSubmittedAndNonEmpty).toBe(50);
+    });
+
+    it('exports the exact denominator of each test-exam attempt', () => {
+        const dto = deepClone(examScoreDTO);
+        dto.studentResults[0].maxPoints = 10.5;
+        dto.studentResults[0].overallPointsAchieved = 8.4;
+        dto.studentResults[0].overallScoreAchieved = 80;
+        dto.studentResults[1].maxPoints = 20;
+        vi.spyOn(examService, 'getExamScores').mockReturnValue(of(new HttpResponse({ body: dto })));
+        fixture.detectChanges();
+        const exported = vi.spyOn(comp, 'exportAsCsv');
+        comp.exportExamResults({
+            fieldSeparator: CsvFieldSeparator.SEMICOLON,
+            quoteCharacter: CsvQuoteStrings.QUOTES_DOUBLE,
+            quoteStrings: true,
+            decimalSeparator: CsvDecimalSeparator.PERIOD,
+        });
+        expect(exported.mock.calls[0][0]).toContain('Maximum Exam Points');
+        expect(exported.mock.calls[0][1][0]['Maximum Exam Points']).toBe('10.5');
+        expect(exported.mock.calls[0][1][1]['Maximum Exam Points']).toBe('20');
+        expect(exported.mock.calls[0][1][0]['Overall Exam Points']).toBe('8.4');
+        expect(exported.mock.calls[0][1][0]['Overall Exam Score']).toBe('80%');
+    });
+
+    it.each([true, false])('exports unscored pass values separately from a genuine zero (test exam: %s)', async (testExam) => {
+        const dto = deepClone(examScoreDTO);
+        dto.studentResults.forEach((result, index) => {
+            result.maxPoints = testExam ? (index === 0 ? 0 : 10) : undefined;
+            result.overallPointsAchieved = index === 1 ? undefined : 0;
+            result.overallScoreAchieved = index === 1 ? undefined : 0;
+            result.hasPassed = false;
+            result.submitted = true;
+            result.overallGrade = index === 2 ? '5' : undefined;
+        });
+        vi.spyOn(examService, 'getExamScores').mockReturnValue(of(new HttpResponse({ body: dto })));
+        fixture.detectChanges();
+        comp.gradingScaleExists.set(true);
+        comp.isBonus.set(false);
+        const options = {
+            fieldSeparator: CsvFieldSeparator.SEMICOLON,
+            quoteCharacter: CsvQuoteStrings.QUOTES_DOUBLE,
+            quoteStrings: true,
+            decimalSeparator: CsvDecimalSeparator.PERIOD,
+        };
+
+        comp.exportExamResults(options);
+
+        const blob = vi.mocked(URL.createObjectURL).mock.calls.at(-1)![0] as Blob;
+        const workbook = XLSX.read(await blob.text(), { type: 'string', FS: ';' });
+        const csvRows = XLSX.utils.sheet_to_json<string[]>(workbook.Sheets[workbook.SheetNames[0]], { header: 1, defval: '' });
+        const passColumn = csvRows[0].indexOf(EXAM_PASSED);
+        expect(passColumn).toBeGreaterThanOrEqual(0);
+        const expected = testExam ? ['', '', 'no'] : ['no', 'no', 'no'];
+        expect(csvRows.slice(1).map((row) => row[passColumn])).toEqual(expected);
+
+        const writeFile = vi.mocked(XLSX.writeFile);
+        writeFile.mockClear();
+        comp.exportExamResults();
+        const excelWorkbook = writeFile.mock.calls[0][0];
+        const excelRows = XLSX.utils.sheet_to_json<string[]>(excelWorkbook.Sheets[excelWorkbook.SheetNames[0]], { header: 1, defval: '' });
+        expect(excelRows.slice(1).map((row) => row[excelRows[0].indexOf(EXAM_PASSED)])).toEqual(expected);
+    });
+
+    it('counts pending and manual-only attempts independently of scored statistics in every submission filter', () => {
+        const dto = deepClone(examScoreDTO);
+        dto.hasSecondCorrectionAndStarted = false;
+        dto.studentResults[0].maxPoints = 10;
+        dto.studentResults[0].overallPointsAchieved = 0;
+        dto.studentResults[0].overallScoreAchieved = 0;
+        dto.studentResults[1].maxPoints = 10;
+        dto.studentResults[1].overallPointsAchieved = undefined;
+        dto.studentResults[1].overallScoreAchieved = undefined;
+        dto.studentResults[2].maxPoints = 0;
+        dto.studentResults[2].overallPointsAchieved = 0;
+        dto.studentResults[2].overallScoreAchieved = 0;
+        for (const result of dto.studentResults) {
+            for (const exerciseResult of Object.values(result.exerciseGroupIdToExerciseResult ?? {})) {
+                exerciseResult.hasNonEmptySubmission = true;
+            }
+        }
+        vi.spyOn(examService, 'getExamScores').mockReturnValue(of(new HttpResponse({ body: dto })));
+        fixture.detectChanges();
+        expect(comp.aggregatedExamResults().noOfRegisteredUsers).toBe(3);
+        expect(comp.aggregatedExamResults().noOfExamsSubmitted).toBe(2);
+        expect(comp.aggregatedExamResults().noOfExamsNonEmpty).toBe(3);
+        expect(comp.aggregatedExamResults().noOfExamsSubmittedAndNotEmpty).toBe(2);
+        expect(Number(comp.tableState.relativeAmountOfSubmittedExams)).toBeCloseTo(66.67, 0);
+        expect(comp.aggregatedExamResults().meanPointsTotal).toBe(0);
+        expect(comp.scores()).toEqual([0]);
+        comp.toggleFilterForSubmittedExam();
+        expect(comp.tableState.absoluteAmountOfTotalExams).toBe(2);
+        expect(comp.tableState.absoluteAmountOfSubmittedExams).toBe(2);
+        expect(comp.tableState.relativeAmountOfSubmittedExams).toBe('100');
+        comp.toggleFilterForNonEmptySubmission();
+        expect(comp.tableState.absoluteAmountOfTotalExams).toBe(2);
+        expect(comp.tableState.absoluteAmountOfSubmittedExams).toBe(2);
+        comp.toggleFilterForSubmittedExam();
+        expect(comp.tableState.absoluteAmountOfTotalExams).toBe(3);
+        expect(comp.tableState.absoluteAmountOfSubmittedExams).toBe(2);
+        expect(Number(comp.tableState.relativeAmountOfSubmittedExams)).toBeCloseTo(66.67, 0);
+    });
+
+    it.each([undefined, null, Number.NaN])('keeps nonempty unscored exercise metadata out of numeric averages (%s)', (missingScore) => {
+        const dto = deepClone(examScoreDTO);
+        dto.hasSecondCorrectionAndStarted = false;
+        dto.exerciseGroups = [
+            {
+                id: 1,
+                title: 'Scored quiz',
+                maxPoints: 10,
+                numberOfParticipants: 3,
+                containedExercises: [{ exerciseId: 11, title: 'Quiz', maxPoints: 10, numberOfParticipants: 3, exerciseType: 'QuizExercise' }],
+            },
+            {
+                id: 2,
+                title: 'Manual essay',
+                maxPoints: 20,
+                numberOfParticipants: 2,
+                containedExercises: [{ exerciseId: 12, title: 'Essay', maxPoints: 20, numberOfParticipants: 2, exerciseType: 'TextExercise' }],
+            },
+            {
+                id: 3,
+                title: 'Pending programming',
+                maxPoints: 20,
+                numberOfParticipants: 1,
+                containedExercises: [{ exerciseId: 13, title: 'Programming', maxPoints: 20, numberOfParticipants: 1, exerciseType: 'ProgrammingExercise' }],
+            },
+        ];
+        dto.studentResults.forEach((result, index) => {
+            result.submitted = true;
+            result.maxPoints = index === 2 ? 20 : 10;
+            result.overallPointsAchieved = index === 2 ? (missingScore === undefined ? undefined : 0) : index === 0 ? 4 : 0;
+            result.overallScoreAchieved = index === 2 ? (missingScore as number | undefined) : index === 0 ? 40 : 0;
+            result.overallPointsAchievedInFirstCorrection = result.overallPointsAchieved;
+            result.overallGrade = index === 0 ? '3' : '4';
+            result.overallGradeInFirstCorrection = result.overallGrade;
+            result.hasPassed = index === 0;
+            // JSON omits nullable achieved fields on actual manual and pending server metadata.
+            result.exerciseGroupIdToExerciseResult =
+                index === 2
+                    ? {
+                          1: { exerciseId: 11, title: 'Quiz', maxScore: 10, hasNonEmptySubmission: true },
+                          3: { exerciseId: 13, title: 'Programming', maxScore: 20, hasNonEmptySubmission: true },
+                      }
+                    : {
+                          1: { exerciseId: 11, title: 'Quiz', maxScore: 10, achievedPoints: index === 0 ? 4 : 0, achievedScore: index === 0 ? 40 : 0, hasNonEmptySubmission: true },
+                          2: {
+                              exerciseId: 12,
+                              title: 'Essay',
+                              maxScore: 20,
+                              achievedPoints: missingScore as number | undefined,
+                              achievedScore: missingScore as number | undefined,
+                              hasNonEmptySubmission: true,
+                          },
+                      };
+        });
+        vi.spyOn(examService, 'getExamScores').mockReturnValue(of(new HttpResponse({ body: dto })));
+        const realGradingService = TestBed.runInInjectionContext(() => new GradingService());
+        vi.spyOn(gradingService, 'findMatchingGradeStep').mockImplementation((steps, percentage) => realGradingService.findMatchingGradeStep(steps, percentage));
+        fixture.detectChanges();
+
+        const [quiz, manual, pending] = comp.aggregatedExerciseGroupResults();
+        expect(quiz.noOfParticipantsWithFilter).toBe(3);
+        expect(quiz.noOfScoredParticipantsWithFilter).toBe(2);
+        expect(quiz.averagePoints).toBe(2);
+        expect(quiz.averagePercentage).toBe(20);
+        expect(quiz.exerciseResults[0].averagePoints).toBe(2);
+        expect(manual.noOfParticipantsWithFilter).toBe(2);
+        expect(manual.noOfScoredParticipantsWithFilter).toBe(0);
+        expect(manual.averagePoints).toBeUndefined();
+        expect(manual.averagePercentage).toBeUndefined();
+        expect(manual.exerciseResults[0].noOfParticipantsWithFilter).toBe(2);
+        expect(manual.exerciseResults[0].averagePoints).toBeUndefined();
+        expect(pending.noOfParticipantsWithFilter).toBe(1);
+        expect(pending.noOfScoredParticipantsWithFilter).toBe(0);
+        expect(pending.averagePoints).toBeUndefined();
+        expect(pending.exerciseResults[0].noOfParticipantsWithFilter).toBe(1);
+        expect(comp.aggregatedExamResults().noOfExamsNonEmpty).toBe(3);
+        expect(comp.scores()).toEqual([40, 0]);
+        expect(fixture.nativeElement.textContent).not.toContain('NaN');
+        const essayCells = Array.from(fixture.nativeElement.querySelectorAll('td') as NodeListOf<HTMLTableCellElement>)
+            .map((cell) => cell.textContent?.replace(/\s+/g, ' ').trim())
+            .filter((text) => text?.startsWith('Essay :'));
+        expect(essayCells).toEqual(['Essay : - ( - %)', 'Essay : - ( - %)']);
+        const manualStatistics = Array.from(fixture.nativeElement.querySelectorAll('tr') as NodeListOf<HTMLTableRowElement>).find(
+            (row) => row.cells[1]?.textContent?.trim() === 'Manual essay',
+        );
+        expect(manualStatistics?.cells[4].textContent?.trim()).toBe('-');
+    });
+
+    it('refreshes rendered chart eligibility after filtering and keeps first-render exercise navigation valid', async () => {
+        const dto = deepClone(examScoreDTO);
+        dto.hasSecondCorrectionAndStarted = false;
+        dto.exerciseGroups = [
+            {
+                id: 1,
+                title: 'Quiz group',
+                maxPoints: 10,
+                numberOfParticipants: 1,
+                containedExercises: [{ exerciseId: 11, title: 'Quiz', maxPoints: 10, numberOfParticipants: 1, exerciseType: 'QuizExercise' }],
+            },
+            {
+                id: 2,
+                title: 'Pending group',
+                maxPoints: 20,
+                numberOfParticipants: 1,
+                containedExercises: [{ exerciseId: 13, title: 'Programming', maxPoints: 20, numberOfParticipants: 1, exerciseType: 'ProgrammingExercise' }],
+            },
+        ];
+        dto.studentResults = dto.studentResults.slice(0, 2);
+        dto.studentResults.forEach((result, index) => {
+            result.submitted = true;
+            result.maxPoints = index === 0 ? 10 : 20;
+            result.overallPointsAchieved = index === 0 ? 0 : undefined;
+            result.overallScoreAchieved = index === 0 ? 0 : undefined;
+            result.exerciseGroupIdToExerciseResult =
+                index === 0
+                    ? {
+                          1: { exerciseId: 11, title: 'Quiz', maxScore: 10, achievedPoints: 0, achievedScore: 0, hasNonEmptySubmission: false },
+                      }
+                    : {
+                          2: { exerciseId: 13, title: 'Programming', maxScore: 20, hasNonEmptySubmission: true },
+                      };
+        });
+        vi.spyOn(Element.prototype, 'getBoundingClientRect').mockReturnValue({
+            width: 600,
+            height: 300,
+            top: 0,
+            left: 0,
+            right: 600,
+            bottom: 300,
+            x: 0,
+            y: 0,
+            toJSON: () => ({}),
+        } as DOMRect);
+        (TestBed.inject(ActivatedRoute) as MockActivatedRoute).setParameters({ courseId: 123, examId: 1 });
+        comp.course.set({ accuracyOfScores: 1 });
+        vi.spyOn(examService, 'getExamScores').mockReturnValue(of(new HttpResponse({ body: dto })));
+        const navigate = vi.spyOn(TestBed.inject(ArtemisNavigationUtilService), 'routeInNewTab').mockImplementation(() => {});
+        fixture.detectChanges();
+        await fixture.whenStable();
+        fixture.detectChanges();
+        const bars = fixture.nativeElement.querySelectorAll('jhi-exam-scores-average-scores-graph rect[role="button"]') as NodeListOf<SVGRectElement>;
+        expect(bars).toHaveLength(2);
+        expect(bars[1].getAttribute('aria-label')).toContain('11 Quiz');
+        vi.useFakeTimers();
+        try {
+            bars[1].dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+            vi.advanceTimersByTime(1000);
+            expect(navigate).toHaveBeenCalledExactlyOnceWith(['course-management', 123, 'exams', 1, 'exercise-groups', 1, 'quiz-exercises', 11, 'participations']);
+        } finally {
+            vi.useRealTimers();
+        }
+
+        comp.toggleFilterForNonEmptySubmission();
+        fixture.detectChanges();
+        await fixture.whenStable();
+        fixture.detectChanges();
+        expect(comp.aggregatedExerciseGroupResults()[0].averagePoints).toBeUndefined();
+        expect(comp.aggregatedExerciseGroupResults()[1].noOfParticipantsWithFilter).toBe(1);
+        expect(fixture.nativeElement.querySelectorAll('jhi-exam-scores-average-scores-graph rect[role="button"]')).toHaveLength(0);
+    });
+
+    it.each([
+        { points: 20, score: 100 },
+        { points: 0, score: 0 },
+    ])('uses assigned attempts for participation percentages while averaging scored points ($points)', ({ points, score }) => {
+        const dto = deepClone(examScoreDTO);
+        dto.hasSecondCorrectionAndStarted = false;
+        // Actual server contract: the server's existing participation counts describe the scored cohort.
+        dto.exerciseGroups = [
+            {
+                id: 24,
+                title: 'Automatic programming only',
+                maxPoints: 20,
+                numberOfParticipants: 1,
+                containedExercises: [{ exerciseId: 31, title: 'Program', maxPoints: 20, numberOfParticipants: 1, exerciseType: 'ProgrammingExercise' }],
+            },
+        ];
+        dto.studentResults = dto.studentResults.slice(0, 2);
+        dto.studentResults.forEach((result, index) => {
+            result.submitted = true;
+            result.maxPoints = 20;
+            result.overallPointsAchieved = index === 0 ? points : undefined;
+            result.overallScoreAchieved = index === 0 ? score : undefined;
+            result.exerciseGroupIdToExerciseResult = {
+                24:
+                    index === 0
+                        ? {
+                              exerciseId: 31,
+                              title: 'Program',
+                              maxScore: 20,
+                              achievedPoints: points,
+                              achievedScore: score,
+                              hasNonEmptySubmission: true,
+                          }
+                        : { exerciseId: 31, title: 'Program', maxScore: 20, hasNonEmptySubmission: true },
+            };
+        });
+        vi.spyOn(examService, 'getExamScores').mockReturnValue(of(new HttpResponse({ body: dto })));
+        fixture.detectChanges();
+        comp.toggleFilterForNonEmptySubmission();
+        fixture.detectChanges();
+
+        const group = comp.aggregatedExerciseGroupResults()[0];
+        expect(group.totalParticipants).toBe(2);
+        expect(group.noOfParticipantsWithFilter).toBe(2);
+        expect(group.noOfScoredParticipantsWithFilter).toBe(1);
+        expect(group.averagePoints).toBe(points);
+        expect(group.averagePercentage).toBe(score);
+        expect(group.exerciseResults[0].totalParticipants).toBe(2);
+        expect(group.exerciseResults[0].averagePoints).toBe(points);
+        expect(comp.aggregatedExamResults().meanPointsTotal).toBe(points);
+        expect(comp.aggregatedExamResults().noOfExamsNonEmpty).toBe(2);
+        const statisticsRow = Array.from(fixture.nativeElement.querySelectorAll('tr') as NodeListOf<HTMLTableRowElement>).find(
+            (row) => row.cells[1]?.textContent?.trim() === 'Automatic programming only',
+        )!;
+        expect(statisticsRow.cells[2].textContent?.replace(/\s+/g, ' ').trim()).toBe('2 / 2 (100 %)');
+        expect(statisticsRow.cells[6].textContent?.replace(/\s+/g, ' ').trim()).toBe('2 / 2 (100 %)');
+        expect(fixture.nativeElement.textContent).not.toContain('200 %');
+    });
+
+    it('retains registration and submission counts when no test attempt has a completed automatic score', () => {
+        const dto = deepClone(examScoreDTO);
+        for (const result of dto.studentResults) {
+            result.maxPoints = 0;
+            result.overallPointsAchieved = 0;
+            result.overallScoreAchieved = 0;
+        }
+        dto.studentResults[1].maxPoints = 10;
+        dto.studentResults[1].overallPointsAchieved = undefined;
+        dto.studentResults[1].overallScoreAchieved = undefined;
+        vi.spyOn(examService, 'getExamScores').mockReturnValue(of(new HttpResponse({ body: dto })));
+        fixture.detectChanges();
+        expect(comp.aggregatedExamResults().noOfRegisteredUsers).toBe(3);
+        expect(comp.aggregatedExamResults().noOfExamsSubmitted).toBe(2);
+        expect(comp.tableState.absoluteAmountOfTotalExams).toBe(3);
+        expect(comp.tableState.absoluteAmountOfSubmittedExams).toBe(2);
+        expect(comp.tableState.averagePointsTotal).toBe('-');
+        expect(comp.tableState.averageScoreTotal).toBe('-');
+        expect(comp.scores()).toEqual([]);
+    });
+
+    it('leaves a pending bonus final grade blank in the table and exported CSV', () => {
+        const dto = deepClone(examScoreDTO);
+        dto.studentResults[0].overallGrade = '3';
+        dto.studentResults[0].gradeWithBonus = { bonusStrategy: BonusStrategy.POINTS, pending: true };
+        dto.studentResults[1].gradeWithBonus = { bonusStrategy: BonusStrategy.POINTS, pending: false, finalGrade: '1.0' };
+        vi.spyOn(examService, 'getExamScores').mockReturnValue(of(new HttpResponse({ body: dto })));
+        vi.spyOn(gradingService, 'findGradingScaleForExam').mockReturnValue(of(new HttpResponse({ body: toGradingScaleDTO(gradingScale) })));
+        fixture.detectChanges();
+        const finalGrades = Array.from<HTMLElement>(fixture.nativeElement.querySelectorAll('[data-testid="exam-final-grade"]')).map((cell) => cell.textContent?.trim());
+        expect(finalGrades.slice(0, 2)).toEqual(['-', '1.0']);
+        const exported = vi.spyOn(comp, 'exportAsCsv');
+        comp.exportExamResults({
+            fieldSeparator: CsvFieldSeparator.SEMICOLON,
+            quoteCharacter: CsvQuoteStrings.QUOTES_DOUBLE,
+            quoteStrings: true,
+            decimalSeparator: CsvDecimalSeparator.PERIOD,
+        });
+        expect(exported.mock.calls[0][1][0][FINAL_GRADE_KEY]).toBe('');
+        expect(exported.mock.calls[0][1][1][FINAL_GRADE_KEY]).toBe('1.0');
     });
 
     it('should generate csv correctly', () => {

@@ -27,7 +27,7 @@
                         [tumAetUiTooltip]="'entity.action.scores' | artemisTranslate"
                         tumAetUiTooltipPlacement="top"
                         tumAetUiButton
-                        severity="secondary"
+                        severity="info"
                         size="small"
                     >
                         <fa-icon [icon]="faTable" />
@@ -40,7 +40,7 @@
                         [tumAetUiTooltip]="'artemisApp.course.gradingSystem' | artemisTranslate"
                         tumAetUiTooltipPlacement="top"
                         tumAetUiButton
-                        severity="secondary"
+                        severity="warn"
                         size="small"
                     >
                         <fa-icon [icon]="faClipboard" />
@@ -53,7 +53,7 @@
                             [tumAetUiTooltip]="'artemisApp.plagiarism.cases.plagiarismCases' | artemisTranslate"
                             tumAetUiTooltipPlacement="top"
                             tumAetUiButton
-                            severity="secondary"
+                            severity="info"
                             size="small"
                         >
                             <fa-icon [icon]="faHeartBroken" />
@@ -309,6 +309,7 @@
                                                     <ng-container>
                                                         <a
                                                             data-testid="open-exercise-dashboard"
+                                                            severity="info"
                                                             [routerLink]="getAssessmentDashboardLinkForExercise(exercise)"
                                                             [attr.aria-label]="'entity.action.exerciseDashboard' | artemisTranslate"
                                                             [tumAetUiTooltip]="'entity.action.exerciseDashboard' | artemisTranslate"

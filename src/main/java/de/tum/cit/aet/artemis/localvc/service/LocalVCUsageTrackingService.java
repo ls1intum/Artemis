@@ -67,11 +67,15 @@ public class LocalVCUsageTrackingService {
 
     private final Optional<FeatureUsageCollector> featureUsageCollector;
 
-    private final LocalVCServletService localVCServletService;
+    private final LocalVCBuildAgentAuthenticationService buildAgentAuthenticationService;
 
-    public LocalVCUsageTrackingService(Optional<FeatureUsageCollector> featureUsageCollector, LocalVCServletService localVCServletService) {
+    private final LocalVCRepositoryResolverService repositoryResolver;
+
+    public LocalVCUsageTrackingService(Optional<FeatureUsageCollector> featureUsageCollector, LocalVCBuildAgentAuthenticationService buildAgentAuthenticationService,
+            LocalVCRepositoryResolverService repositoryResolver) {
         this.featureUsageCollector = featureUsageCollector;
-        this.localVCServletService = localVCServletService;
+        this.buildAgentAuthenticationService = buildAgentAuthenticationService;
+        this.repositoryResolver = repositoryResolver;
     }
 
     /**
@@ -115,7 +119,7 @@ public class LocalVCUsageTrackingService {
             // the security context, so it is recorded as ANONYMOUS and the admin page shows no role for git features. The
             // interesting distinction, staff repository against student repository, is in the identifier instead.
             String repositoryKind = repositoryKind(request);
-            if (localVCServletService.isBuildAgentClone(request)) {
+            if (buildAgentAuthenticationService.isBuildAgentClone(request)) {
                 // Every build clones the assignment and the test repository. Counted like a person's clone, those would
                 // make the local IDE and repository editing features look used on every instance that runs builds, so
                 // they are counted as system calls of the build, under an identifier of their own because the
@@ -137,7 +141,7 @@ public class LocalVCUsageTrackingService {
 
     private String repositoryKind(HttpServletRequest request) {
         try {
-            String repositoryTypeOrUserName = localVCServletService.parseRepositoryUri(request).getRepositoryTypeOrUserName();
+            String repositoryTypeOrUserName = repositoryResolver.parseRepositoryUri(request).getRepositoryTypeOrUserName();
             return STAFF_REPOSITORY_KINDS.getOrDefault(repositoryTypeOrUserName, ASSIGNMENT_REPOSITORY);
         }
         catch (Exception e) {

@@ -37,6 +37,7 @@
                             <td>
                                 @if (!subsequentExerciseGroupSelection()) {
                                     <button
+                                        severity="secondary"
                                         tumAetUiButton
                                         type="button"
                                         class="whitespace-nowrap"
@@ -85,7 +86,7 @@
                 <jhi-exam-exercise-import [exam]="selectedExam" [importInSameCourse]="isImportInSameCourse()" [targetCourseId]="targetCourseId()" />
             </div>
             <div class="flex justify-end pt-4">
-                <button tumAetUiButton type="button" [disabled]="isImportingExercises()" (click)="performImportOfExerciseGroups()">
+                <button severity="secondary" tumAetUiButton type="button" [disabled]="isImportingExercises()" (click)="performImportOfExerciseGroups()">
                     @if (isImportingExercises()) {
                         <fa-icon [icon]="faSpinner" animation="spin" />
                     }

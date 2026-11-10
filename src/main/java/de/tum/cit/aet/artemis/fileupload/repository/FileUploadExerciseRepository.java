@@ -108,4 +108,12 @@ public interface FileUploadExerciseRepository extends ArtemisJpaRepository<FileU
     default FileUploadExercise findWithGradingCriteriaByIdElseThrow(Long exerciseId) {
         return getValueElseThrow(findWithGradingCriteriaById(exerciseId), exerciseId);
     }
+
+    @EntityGraph(type = LOAD, attributePaths = { "categories", "gradingCriteria" })
+    Optional<FileUploadExercise> findWithCategoriesAndGradingCriteriaById(long exerciseId);
+
+    @NonNull
+    default FileUploadExercise findWithCategoriesAndGradingCriteriaByIdElseThrow(long exerciseId) {
+        return getValueElseThrow(findWithCategoriesAndGradingCriteriaById(exerciseId), exerciseId);
+    }
 }

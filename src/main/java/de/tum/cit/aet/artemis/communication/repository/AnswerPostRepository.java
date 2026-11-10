@@ -37,6 +37,35 @@ import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 public interface AnswerPostRepository extends ArtemisJpaRepository<AnswerPost, Long> {
 
     /**
+     * Persist a conversation reply and the unread counters of its eligible thread participants as one unit.
+     * Readers cannot acknowledge a visible reply before its unread increment has committed.
+     *
+     * @param answerMessage the new conversation reply
+     * @param recipientIds  eligible thread participants, excluding the reply author
+     * @return the persisted reply
+     */
+    @Transactional // the reply and its unread increments must become visible together
+    default AnswerPost saveWithUnreadMessages(AnswerPost answerMessage, Collection<Long> recipientIds) {
+        AnswerPost saved = save(answerMessage);
+        if (!recipientIds.isEmpty()) {
+            incrementUnreadMessagesCountOfParticipantsIn(saved.getPost().getConversation().getId(), recipientIds);
+        }
+        return saved;
+    }
+
+    @Transactional // ok because of modifying query
+    @Modifying
+    @Query("""
+            UPDATE ConversationParticipant conversationParticipant
+            SET conversationParticipant.unreadMessagesCount = conversationParticipant.unreadMessagesCount + 1
+            WHERE conversationParticipant.conversation.id = :conversationId
+                AND conversationParticipant.user.id IN :userIds
+                AND conversationParticipant.unreadMessagesCount IS NOT NULL
+                AND conversationParticipant.isMuted = FALSE
+            """)
+    void incrementUnreadMessagesCountOfParticipantsIn(@Param("conversationId") Long conversationId, @Param("userIds") Collection<Long> userIds);
+
+    /**
      * Finds all {@link AnswerPost} entities authored by the given user ID.
      *
      * @param authorId the ID of the author

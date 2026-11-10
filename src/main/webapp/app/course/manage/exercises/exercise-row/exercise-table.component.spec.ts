@@ -11,6 +11,7 @@ import { DifficultyLevel, Exercise, ExerciseType } from 'app/exercise/shared/ent
 import { CourseExerciseGroup } from 'app/exercise/shared/entities/exercise/course-exercise-group.model';
 import { Course } from 'app/course/shared/entities/course.model';
 import { QuizExercise, QuizMode, QuizStatus } from 'app/quiz/shared/entities/quiz-exercise.model';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 
 /** Stands in for the real actions component, whose service tree is irrelevant to what the table template renders. */
 @Component({ selector: 'jhi-exercise-actions', template: '' })
@@ -77,6 +78,60 @@ describe('ExerciseTableComponent', () => {
             component.sortBy('dueDate');
             // The group's later due date governs the grouped exercise, so it sorts after dated1.
             expect(component.sortedExercises().map((e) => e.id)).toEqual([1, 4]);
+        });
+
+        it('sorts release-only exercises chronologically in both directions', () => {
+            const releasedEarly: Exercise = { id: 4, title: 'Zebra', type: ExerciseType.TEXT, releaseDate: dayjs('2026-01-01T10:00:00Z') } as Exercise;
+            const releasedLate: Exercise = { id: 5, title: 'Alpha', type: ExerciseType.TEXT, releaseDate: dayjs('2026-01-02T10:00:00Z') } as Exercise;
+            fixture.componentRef.setInput('exercises', [releasedLate, undated, releasedEarly]);
+
+            component.sortBy('dueDate');
+            expect(component.sortedExercises().map((e) => e.id)).toEqual([4, 5, 3]);
+
+            component.sortBy('dueDate');
+            expect(component.sortedExercises().map((e) => e.id)).toEqual([5, 4, 3]);
+        });
+
+        it('uses due dates first, then start dates and release dates for mixed timelines', () => {
+            const due: Exercise = { id: 4, type: ExerciseType.TEXT, releaseDate: dayjs('2026-01-01'), dueDate: dayjs('2026-01-20') } as Exercise;
+            const starting: Exercise = { id: 5, type: ExerciseType.TEXT, releaseDate: dayjs('2026-01-01'), startDate: dayjs('2026-01-10') } as Exercise;
+            const released: Exercise = { id: 6, type: ExerciseType.TEXT, releaseDate: dayjs('2026-01-05') } as Exercise;
+            fixture.componentRef.setInput('exercises', [due, starting, undated, released]);
+
+            component.sortBy('dueDate');
+            expect(component.sortedExercises().map((e) => e.id)).toEqual([6, 5, 4, 3]);
+
+            component.sortBy('dueDate');
+            expect(component.sortedExercises().map((e) => e.id)).toEqual([4, 5, 6, 3]);
+        });
+
+        it('uses group release dates rather than overridden individual dates', () => {
+            const grouped: Exercise = { id: 4, type: ExerciseType.TEXT, dueDate: dayjs('2026-01-01'), releaseDate: dayjs('2026-01-01') } as Exercise;
+            const group: CourseExerciseGroup = { id: 10, exercises: [grouped], releaseDate: dayjs('2026-01-20') };
+            fixture.componentRef.setInput('exercises', [undated, grouped, dated1]);
+            fixture.componentRef.setInput('groups', [group]);
+
+            component.sortBy('dueDate');
+            expect(component.sortedExercises().map((e) => e.id)).toEqual([1, 4, 3]);
+
+            component.sortBy('dueDate');
+            expect(component.sortedExercises().map((e) => e.id)).toEqual([4, 1, 3]);
+        });
+
+        it('uses group start dates and keeps fully undated groups last', () => {
+            const starting: Exercise = { id: 4, type: ExerciseType.TEXT } as Exercise;
+            const groupedUndated: Exercise = { id: 5, type: ExerciseType.TEXT, dueDate: dayjs('2026-01-01') } as Exercise;
+            fixture.componentRef.setInput('exercises', [starting, groupedUndated, dated1]);
+            fixture.componentRef.setInput('groups', [
+                { id: 10, exercises: [starting], startDate: dayjs('2026-01-20'), releaseDate: dayjs('2026-01-01') },
+                { id: 11, exercises: [groupedUndated] },
+            ]);
+
+            component.sortBy('dueDate');
+            expect(component.sortedExercises().map((e) => e.id)).toEqual([1, 4, 5]);
+
+            component.sortBy('dueDate');
+            expect(component.sortedExercises().map((e) => e.id)).toEqual([4, 1, 5]);
         });
 
         it('sorts by points and difficulty', () => {
@@ -328,6 +383,39 @@ describe('ExerciseTableComponent', () => {
             fixture.detectChanges();
             return fixture.nativeElement as HTMLElement;
         }
+
+        it.each([
+            [20, 100, 'templateFulfillsTest', undefined, undefined],
+            [0, 99, 'solutionFailsTest', undefined, undefined],
+            [0, 100, 'solutionFailsTest', 9, 10],
+            [0, 110, 'solutionFailsTest', 9, 10],
+        ])('shows an unexpected-build warning beside the exercise title for scores %s/%s', (templateScore, solutionScore, reason, passedTestCaseCount, testCaseCount) => {
+            const programming = Object.assign(new ProgrammingExercise(undefined, undefined), {
+                id: 8,
+                type: ExerciseType.PROGRAMMING,
+                title: 'Programming exercise',
+                templateParticipation: { id: 10, submissions: [{ results: [{ id: 20, score: templateScore, successful: true }] }] },
+                solutionParticipation: { id: 11, submissions: [{ results: [{ id: 21, score: solutionScore, successful: true, passedTestCaseCount, testCaseCount }] }] },
+            });
+            const element = renderRows([programming]);
+            const warning = element.querySelector('[data-testid="programming-build-warning"]');
+
+            expect(warning).not.toBeNull();
+            expect(warning?.closest('[data-testid="exercise-row-title"]')).not.toBeNull();
+            expect(warning?.getAttribute('aria-label')).toContain(reason);
+        });
+
+        it.each([100, 110])('does not warn for passing solution score %s or unavailable results', (score) => {
+            const expected = Object.assign(new ProgrammingExercise(undefined, undefined), {
+                id: 8,
+                type: ExerciseType.PROGRAMMING,
+                templateParticipation: { id: 10, submissions: [{ results: [{ id: 20, score: 0, successful: false }] }] },
+                solutionParticipation: { id: 11, submissions: [{ results: [{ id: 21, score, successful: true, passedTestCaseCount: 10, testCaseCount: 10 }] }] },
+            });
+            const unavailable = Object.assign(new ProgrammingExercise(undefined, undefined), { id: 9 });
+
+            expect(renderRows([expected, unavailable]).querySelector('[data-testid="programming-build-warning"]')).toBeNull();
+        });
 
         it('drives the select-all header checkbox: dash on partial selection, tick on all', async () => {
             const a = { id: 1, title: 'a', type: ExerciseType.TEXT } as Exercise;

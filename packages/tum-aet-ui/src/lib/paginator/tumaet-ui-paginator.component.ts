@@ -2,7 +2,7 @@ import { Directionality } from '@angular/cdk/bidi';
 import { ChangeDetectionStrategy, Component, DestroyRef, booleanAttribute, computed, inject, input, numberAttribute, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faAngleLeft, faAngleRight, faAnglesLeft, faAnglesRight } from '@fortawesome/free-solid-svg-icons';
+import { faAngleLeft, faAngleRight, faAnglesLeft, faAnglesRight, faChevronDown } from '@fortawesome/free-solid-svg-icons';
 import { TumAetUiTranslatePipe } from '../i18n/tumaet-ui-translate.pipe';
 
 const PAGE_LINK_SIZE = 5;
@@ -45,6 +45,7 @@ export class TumAetUiPaginatorComponent {
     protected readonly previousPageIcon = computed(() => (this.direction() === 'rtl' ? faAngleRight : faAngleLeft));
     protected readonly nextPageIcon = computed(() => (this.direction() === 'rtl' ? faAngleLeft : faAngleRight));
     protected readonly lastPageIcon = computed(() => (this.direction() === 'rtl' ? faAnglesLeft : faAnglesRight));
+    protected readonly pageSizeIcon = faChevronDown;
 
     protected readonly navButtonClasses = NAV_BUTTON_CLASSES;
     protected readonly selectedPageClasses = NAV_BUTTON_CLASSES.replace('tumaet:bg-transparent', 'tumaet:bg-primary/15').replace(

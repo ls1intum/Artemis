@@ -67,6 +67,7 @@ jobs:
       has_beans: ${{ steps.decide.outputs.has_beans }}
       has_liquibase: ${{ steps.decide.outputs.has_liquibase }}
       has_skills: ${{ steps.decide.outputs.has_skills }}
+      has_helm: ${{ steps.decide.outputs.has_helm }}
       has_tum_aet_ui: ${{ steps.decide.outputs.has_tum_aet_ui }}
       sonar_relevant: ${{ steps.decide.outputs.sonar_relevant }}
       codeql_relevant: ${{ steps.decide.outputs.codeql_relevant }}
@@ -263,6 +264,11 @@ jobs:
               - 'AGENTS.md'
               - 'documentation/docs/developer/work-with-ai.mdx'
               - '.claude-plugin/**'
+            has_helm:
+              - '.github/workflows/ci.yml'
+              - '.github/workflows/ci-helm.yml'
+              - 'deployment/helm/**'
+              - 'supporting_scripts/check_helm_chart.sh'
             has_docs:
               - '.github/workflows/ci.yml'
               - '.github/workflows/ci-docs.yml'
@@ -273,6 +279,9 @@ jobs:
               - 'pnpm-workspace.yaml'
               - 'config/pnpm/**'
               - 'supporting_scripts/generate-tum-aet-ui-reference-page.mjs'
+              - 'supporting_scripts/check_docs_references.py'
+              - 'supporting_scripts/check_docs_freshness.py'
+              - 'supporting_scripts/generate_architecture_diagrams.py'
             has_tum_aet_ui:
               - '.github/workflows/release-tum-aet-ui.yml'
               - '.github/workflows/ci.yml'
@@ -370,6 +379,7 @@ jobs:
           F_BEANS: ${{ steps.area.outputs.has_beans }}
           F_LIQUIBASE: ${{ steps.area.outputs.has_liquibase }}
           F_SKILLS: ${{ steps.area.outputs.has_skills }}
+          F_HELM: ${{ steps.area.outputs.has_helm }}
           F_TUM_AET_UI: ${{ steps.area.outputs.has_tum_aet_ui }}
           F_SONAR: ${{ steps.relevant.outputs.sonar }}
           F_SONAR_CONFIG: ${{ steps.area.outputs.has_sonar_config }}
@@ -385,7 +395,7 @@ jobs:
         run: |
           set -Eeuo pipefail
           if [ "$FORCE" = "true" ]; then
-            for k in build_relevant has_java has_sandbox_tests has_docs has_i18n has_gradle has_workflows has_version has_beans has_liquibase has_skills has_tum_aet_ui codeql_relevant sonar_relevant run_server_tests run_client_tests server_test_inputs run_e2e build_pr_image; do
+            for k in build_relevant has_java has_sandbox_tests has_docs has_i18n has_gradle has_workflows has_version has_beans has_liquibase has_skills has_helm has_tum_aet_ui codeql_relevant sonar_relevant run_server_tests run_client_tests server_test_inputs run_e2e build_pr_image; do
               echo "$k=true" >> "$GITHUB_OUTPUT"
             done
           else
@@ -408,6 +418,7 @@ jobs:
                 echo "has_liquibase=false"
               fi
               echo "has_skills=${F_SKILLS:-false}"
+              echo "has_helm=${F_HELM:-false}"
               echo "has_tum_aet_ui=${F_TUM_AET_UI:-false}"
               if [ "${F_CODEQL:-false}" = "true" ] || [ "${F_CODEQL_CONFIG:-false}" = "true" ]; then
                 echo "codeql_relevant=true"
@@ -903,6 +914,17 @@ jobs:
     with:
       commit_sha: ${{ github.event.pull_request.head.sha || github.sha }}
 
+  # Not folded into `quality` or `test`: both are gated on `build_relevant`, and a chart change touches neither the server nor the client.
+  helm:
+    name: Helm Chart
+    needs: detect-changes
+    if: needs.detect-changes.outputs.has_helm == 'true'
+    uses: ./.github/workflows/ci-helm.yml
+    permissions:
+      contents: read
+    with:
+      commit_sha: ${{ github.event.pull_request.head.sha || github.sha }}
+
   # Prose changes need terminology checks regardless of which area changed.
   terminology:
     if: >-
@@ -914,6 +936,22 @@ jobs:
       contents: read
     with:
       commit_sha: ${{ github.event.pull_request.head.sha || github.sha }}
+
+  # The documentation describes code, so a change to the code can make a page wrong without touching it.
+  # These checks are cheap and read the whole tree, so they run for every change, like the terminology check.
+  docs-checks:
+    if: >-
+      (github.event_name != 'release' || !startsWith(github.event.release.tag_name, '@tumaet/')) &&
+      (github.event.action != 'edited' || github.event.changes.base != null)
+    name: Documentation Checks
+    uses: ./.github/workflows/ci-docs-checks.yml
+    permissions:
+      contents: read
+      pull-requests: read
+    with:
+      commit_sha: ${{ github.event.pull_request.head.sha || github.sha }}
+      pull_request_number: ${{ github.event_name == 'pull_request' && github.event.pull_request.number || '' }}
+      base_sha: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || '' }}
 
   # Deleting the last caller can orphan code in any area of the repository.
   dead-code:
@@ -1039,7 +1077,9 @@ jobs:
       - version-consistency
       - bean-instantiations
       - skills
+      - helm
       - terminology
+      - docs-checks
       - dead-code
       - liquibase
       - e2e
@@ -1116,7 +1156,9 @@ jobs:
       - version-consistency
       - bean-instantiations
       - skills
+      - helm
       - terminology
+      - docs-checks
       - dead-code
       - liquibase
       - e2e

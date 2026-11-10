@@ -129,43 +129,6 @@ jhi-quiz-question-list-edit {
     padding: 0.25rem 0.6rem;
 }
 
-.footer-save-btn {
-    display: inline-flex;
-    align-items: center;
-    padding: 0.4rem 0.9rem;
-    border: none;
-    border-radius: 0.5rem;
-    background: var(--success);
-    color: white;
-    font-weight: 500;
-    font-size: 0.85rem;
-    cursor: pointer;
-    transition:
-        background 0.2s,
-        box-shadow 0.2s;
-
-    // aria-disabled, not disabled, so the button stays focusable and can explain why it is blocked
-    &:disabled,
-    &[aria-disabled='true'] {
-        opacity: 0.55;
-        cursor: not-allowed;
-    }
-
-    &:hover:not(:disabled):not([aria-disabled='true']) {
-        background: color-mix(in srgb, var(--success) 80%, black);
-    }
-}
-
-.section-header-action.danger {
-    border-color: var(--bs-danger);
-    color: var(--bs-danger);
-
-    &:hover {
-        background: var(--bs-danger);
-        color: var(--bs-white);
-    }
-}
-
 .quiz-max-score-badge {
     border-radius: 0.5rem;
     padding: 0.35rem 0.75rem;
@@ -194,18 +157,11 @@ jhi-quiz-question-list-edit {
     }
 }
 
-button.global-refinement-fab.p-button {
-    background: var(--blue);
+button.global-refinement-fab {
     border-radius: 50%;
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
-    color: white !important;
     height: 3rem;
     width: 3rem;
-
-    &:hover {
-        background: color-mix(in srgb, var(--blue) 80%, black);
-        border-color: color-mix(in srgb, var(--blue) 80%, black);
-    }
 }
 
 .global-refinement-fab-expanded {
@@ -221,31 +177,11 @@ button.global-refinement-fab.p-button {
     padding: 0.4rem;
 }
 
-button.global-refinement-fab-action-button.p-button {
+button.global-refinement-fab-action-button {
     border-radius: 50%;
     flex-shrink: 0;
     height: 2.75rem;
     width: 2.75rem;
-}
-
-button.global-refinement-fab-action-button.p-button:not(.global-refinement-fab-close-button) {
-    background: var(--blue);
-    color: white !important;
-
-    &:hover:not(:disabled) {
-        background: color-mix(in srgb, var(--blue) 80%, black);
-        border-color: color-mix(in srgb, var(--blue) 80%, black);
-    }
-}
-
-button.global-refinement-fab-close-button.p-button {
-    background: var(--p-surface-0) !important;
-    border-color: var(--bs-border-color) !important;
-    color: var(--bs-body-color) !important;
-}
-
-:root[prime-ng-use-dark-theme='true'] button.global-refinement-fab-close-button.p-button {
-    background: var(--p-surface-900) !important;
 }
 
 .global-refinement-fab-textarea {

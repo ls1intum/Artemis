@@ -19,7 +19,7 @@
             </p-iconfield>
         }
         <div ngbDropdown class="d-inline">
-            <button type="button" id="importCompetenciesDropdown" class="btn btn-primary" ngbDropdownToggle>
+            <button tumAetUiButton size="small" severity="secondary" type="button" id="importCompetenciesDropdown" ngbDropdownToggle>
                 <fa-icon [icon]="faFileImport" />
                 {{ 'artemisApp.' + competencyType() + '.manage.importButton' | artemisTranslate }}
             </button>
@@ -40,7 +40,7 @@
                 }
             </div>
         </div>
-        <a class="btn btn-primary" [routerLink]="['/course-management', courseId(), competencyType() + '-management', 'create']">
+        <a tumAetUiButton size="small" severity="primary" [routerLink]="['/course-management', courseId(), competencyType() + '-management', 'create']">
             <fa-icon [icon]="faPlus" />
             <span [jhiTranslate]="'artemisApp.' + competencyType() + '.manage.createButton'"></span>
         </a>
@@ -106,7 +106,10 @@
                             <td>
                                 <div class="d-flex justify-content-end">
                                     <a
-                                        class="btn btn-sm btn-primary me-1"
+                                        tumAetUiButton
+                                        size="small"
+                                        severity="warn"
+                                        class="me-1"
                                         [routerLink]="['/course-management', courseId(), competencyType() + '-management', competency.id, 'edit']"
                                     >
                                         <fa-icon [icon]="faPencilAlt" />
@@ -114,7 +117,12 @@
                                     </a>
                                     <button
                                         type="button"
+                                        tumAetUiButton
+                                        severity="danger"
+                                        variant="text"
+                                        size="small"
                                         jhiDeleteButton
+                                        [renderButtonStyle]="false"
                                         [entityTitle]="competency.title ?? ''"
                                         [deleteQuestion]="'artemisApp.' + competencyType() + '.competencyCard.delete.question'"
                                         [deleteConfirmationText]="'artemisApp.' + competencyType() + '.competencyCard.delete.typeNameToConfirm'"
