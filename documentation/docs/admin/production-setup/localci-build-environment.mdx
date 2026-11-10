@@ -116,6 +116,9 @@ What to know before you set them:
 - **`CI=true` changes tools.** Some tools turn off prompts and progress bars, or treat warnings as errors, when `CI` is set. Try it with the exercises of a language before you set it for all of them.
 - **A default network of `none` has to be opted out of.** The editor shows an exercise without a network selection as using the default, and with this setting that is `none`. On Docker, an exercise that needs the network selects one from
   `allowed-custom-networks`, for example `bridge`, so list it there. The Kubernetes runner supports only `none`, so a default of `none` cannot be overridden by an exercise on Kubernetes. Set it there only for an installation whose exercises never need the network.
+- **A default network of `none` stops dependency downloads.** A build without a network cannot reach Maven Central, a Gradle plugin portal or any other repository, so it fails while it resolves dependencies, for example with
+  `Could not transfer artifact ... from central`. The setting only works for exercises whose images already contain every dependency or whose build uses an offline cache, see
+  [Dependencies and Maven configuration](#dependencies-and-maven-configuration). Check this with one exercise of each language before you set `none` for the installation.
 - **Not for restricted builds.** The builds that Hyperion triggers to synchronize test cases always run without a network and without the variables of the exercise, whatever the defaults say.
 
 ## Docker images
