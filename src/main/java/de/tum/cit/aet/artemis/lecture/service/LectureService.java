@@ -37,6 +37,7 @@ import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
 import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
+import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.util.PageUtil;
@@ -362,6 +363,10 @@ public class LectureService {
      */
     public LectureDetailsDTO.LectureUnitDetailsDTO getUnitForDetails(long lectureUnitId, User user) {
         LectureUnit lectureUnit = lectureUnitRepository.findWithCompetencyLinksAndLectureAndCourseByIdElseThrow(lectureUnitId);
+        // The unit has to be available for the requesting user, as for the units listed on the lecture details page
+        if (!authCheckService.isAllowedToSeeLectureUnit(lectureUnit, user)) {
+            throw new AccessForbiddenException("LectureUnit", lectureUnitId);
+        }
         lectureUnit.setCompleted(lectureUnitCompletionRepository.findByLectureUnitIdAndUserId(lectureUnitId, user.getId()).isPresent());
         if (lectureUnit instanceof ExerciseUnit exerciseUnit && exerciseUnit.getExercise() != null) {
             exerciseService.loadExercisesWithInformationForDashboard(Set.of(exerciseUnit.getExercise().getId()), user).stream().findFirst().ifPresent(exerciseUnit::setExercise);
