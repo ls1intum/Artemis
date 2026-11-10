@@ -6,6 +6,8 @@ import java.io.InputStream;
 import java.nio.file.Path;
 import java.util.Map;
 
+import org.jspecify.annotations.Nullable;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.ResourceLock;
@@ -20,12 +22,25 @@ class FilePathConverterTest {
 
     private static Path rootPath;
 
+    @Nullable
+    private static Path originalFileUploadPath;
+
     @BeforeAll
     static void setup() {
+        originalFileUploadPath = FilePathConverter.getFileUploadPath();
         // Read the file upload path from the test configuration file to avoid hardcoding
         rootPath = readFileUploadPathFromConfig();
         log.info("Using file upload root path for tests: {}", rootPath);
         FilePathConverter.setFileUploadPath(rootPath);
+    }
+
+    @AfterAll
+    static void restoreFileUploadPath() {
+        // The path is process-wide and the integration test base sets it once per JVM: put back what was there. A null means nothing had published it yet, and the base does that
+        // on its first use.
+        if (originalFileUploadPath != null) {
+            FilePathConverter.setFileUploadPath(originalFileUploadPath);
+        }
     }
 
     @SuppressWarnings("unchecked")

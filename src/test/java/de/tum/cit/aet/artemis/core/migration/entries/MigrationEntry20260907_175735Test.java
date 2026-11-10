@@ -22,6 +22,8 @@ import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Stream;
 
 import org.apache.commons.io.FileUtils;
+import org.jspecify.annotations.Nullable;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -51,9 +53,22 @@ class MigrationEntry20260907_175735Test {
 
     private static final String CONTENT_IN_LECTURE_DIRECTORY = "the file the changelog left behind";
 
+    @Nullable
+    private static Path originalFileUploadPath;
+
     @BeforeAll
     static void setUploadPath() {
+        originalFileUploadPath = FilePathConverter.getFileUploadPath();
         FilePathConverter.setFileUploadPath(readFileUploadPathFromConfig());
+    }
+
+    @AfterAll
+    static void restoreFileUploadPath() {
+        // The path is process-wide and the integration test base sets it once per JVM: put back what was there. A null means nothing had published it yet, and the base does that
+        // on its first use.
+        if (originalFileUploadPath != null) {
+            FilePathConverter.setFileUploadPath(originalFileUploadPath);
+        }
     }
 
     @SuppressWarnings("unchecked")

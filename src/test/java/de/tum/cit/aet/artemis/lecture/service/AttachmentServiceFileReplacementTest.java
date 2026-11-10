@@ -28,6 +28,8 @@ import java.util.Optional;
 
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
+import org.jspecify.annotations.Nullable;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -86,8 +88,21 @@ class AttachmentServiceFileReplacementTest {
 
     private Attachment attachment;
 
+    @Nullable
+    private Path originalFileUploadPath;
+
+    @AfterEach
+    void restoreFileUploadPath() {
+        // Do not leave the deleted temporary directory as the process-wide upload root. A null means nothing had published it yet, and the integration test base does that on its
+        // first use.
+        if (originalFileUploadPath != null) {
+            FilePathConverter.setFileUploadPath(originalFileUploadPath);
+        }
+    }
+
     @BeforeEach
     void setUp() {
+        originalFileUploadPath = FilePathConverter.getFileUploadPath();
         FilePathConverter.setFileUploadPath(tempDirectory);
         attachmentService = new AttachmentService(attachmentRepository, slideRepository, fileService, tempFileUtilService);
         var attachmentVideoUnit = new AttachmentVideoUnit();
