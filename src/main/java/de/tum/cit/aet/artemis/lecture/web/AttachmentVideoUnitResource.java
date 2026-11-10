@@ -339,9 +339,7 @@ public class AttachmentVideoUnitResource {
             throw new BadRequestAlertException("A new attachment cannot already have an ID", ENTITY_NAME, "idexists");
         }
 
-        if (attachment == null && attachmentVideoUnitDTO.videoSource() == null) {
-            throw new BadRequestAlertException("A attachment must have a an attachment or a video source", ENTITY_NAME, "videosourceAndAttachment");
-        }
+        // A unit may start without a PDF and a video, so its video can be uploaded to TUM.Live once it exists.
         if (attachment != null && (file == null || file.isEmpty()) && !StringUtils.hasText(attachment.link())) {
             throw new BadRequestAlertException("A fileless attachment must include a link", ENTITY_NAME, "attachmentLinkRequired");
         }

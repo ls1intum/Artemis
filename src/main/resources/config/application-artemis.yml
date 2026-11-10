@@ -8,6 +8,8 @@ artemis:
     # api-base-url: https://live.example.edu/api/v2
     # web-base-url: https://live.example.edu
     # api-key: <deployment-secret>
+    # upload-max-age: PT6H              # a video uploaded to TUM.Live that is not converted after this time is given up and deleted there
+    # upload-check-interval: PT1M       # how often the scheduling node attaches converted uploads and deletes unused ones in TUM.Live
   course-archives-path: ./exports/courses         # a folder in which archived courses and exams are stored.
   legal-path: ./legal                             # a folder in which legal documents (imprint and privacy statements) are stored.
   repo-clone-path: ./repos                        # a folder in which git repos for the online code editor are stored. In a multi node setup, this folder should be in a shared file system area (e.g. based on NFS), so that user can access the same files over multiple nodes

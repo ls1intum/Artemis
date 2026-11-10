@@ -1,25 +1,18 @@
-<div>
-    <h2 class="text-xl! font-bold!">
-        <!--UserSettingsCategory-->
-        {{ 'artemisApp.userSettings.categories.' + userSettingsCategory | artemisTranslate }}
-    </h2>
-    <div class="userSettings-info flex">
-        <fa-icon class="ng-fa-icon" [icon]="faInfoCircle" />
-        <span class="ps-1" jhiTranslate="artemisApp.userSettings.scienceSettingsInfo"></span>
-    </div>
+<h2 class="text-xl! font-bold!">
+    {{ 'artemisApp.userSettings.categories.' + userSettingsCategory | artemisTranslate }}
+</h2>
+<p class="text-muted-color">
+    <span jhiTranslate="artemisApp.userSettings.scienceSettingsInfo"></span>
     @if (!featureToggleActive()) {
-        <div class="userSettings-info mt-2 flex">
-            <fa-icon class="ng-fa-icon" [icon]="faInfoCircle" />
-            <span class="ps-1" jhiTranslate="artemisApp.userSettings.scienceSettingsFeatureDisabled"></span>
-        </div>
+        {{ ' ' }}<span jhiTranslate="artemisApp.userSettings.scienceSettingsFeatureDisabled"></span>
     }
-</div>
+</p>
 @if (userSettings()) {
     <tumaet-ui-list [ariaLabel]="'artemisApp.userSettings.categories.' + userSettingsCategory | artemisTranslate">
         @for (settingGroup of userSettings().groups; track settingGroup) {
             @for (setting of settingGroup.settings; track setting) {
                 <li tumAetUiListItem *jhiHasAnyAuthority="settingGroup.restrictionLevels">
-                    <div class="flex items-start gap-2">
+                    <div class="flex items-center gap-2">
                         <tumaet-ui-toggle-switch
                             [inputId]="setting.settingId"
                             [ngModel]="setting.active"
@@ -27,7 +20,6 @@
                             (changed)="toggleSetting(setting, $event)"
                         />
                         <label [for]="setting.settingId">
-                            <span class="font-medium">{{ 'artemisApp.userSettings.settingNames.' + setting.key | artemisTranslate }}:</span>
                             {{ 'artemisApp.userSettings.settingDescriptions.' + setting.descriptionKey | artemisTranslate }}
                         </label>
                     </div>
