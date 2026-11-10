@@ -1,3 +1,4 @@
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
 import { Location, UpperCasePipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit, ViewEncapsulation, inject, signal } from '@angular/core';
@@ -48,6 +49,7 @@ import { cloneWith } from 'app/foundation/util/deep-clone.util';
     templateUrl: './file-upload-assessment.component.html',
     encapsulation: ViewEncapsulation.None,
     imports: [
+        TumAetUiButtonDirective,
         AssessmentLayoutComponent,
         ResizeableContainerComponent,
         ScoreDisplayComponent,

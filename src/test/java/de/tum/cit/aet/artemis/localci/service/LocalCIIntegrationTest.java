@@ -161,7 +161,7 @@ class LocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
 
     // helper method to process a new push
     private void processNewPush(String commitHash, Repository getRepository, User user) {
-        localVCServletService.processNewPush(commitHash, getRepository, user, Optional.empty(), Optional.empty(), Optional.empty());
+        localVCPushProcessingService.processNewPush(commitHash, getRepository, user, Optional.empty(), Optional.empty(), Optional.empty());
     }
 
     @BeforeEach

@@ -18,6 +18,8 @@ import org.springframework.transaction.annotation.Transactional;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
+import de.tum.cit.aet.artemis.exercise.dto.ExerciseDeletionInfoDTO;
+import de.tum.cit.aet.artemis.exercise.dto.ExerciseTypeCountDTO;
 
 /**
  * Spring Data JPA repository for the ExerciseGroup entity.
@@ -52,6 +54,92 @@ public interface ExerciseGroupRepository extends ArtemisJpaRepository<ExerciseGr
             """)
     // INDEX() is used to retrieve the order saved by @OrderColumn, see https://en.wikibooks.org/wiki/Java_Persistence/JPQL#Special_Operators
     List<ExerciseGroup> findWithExamAndExercisesByExamId(@Param("examId") Long examId);
+
+    /**
+     * Count the exercise groups of an exam.
+     *
+     * @param examId the id of the exam
+     * @return the number of exercise groups
+     */
+    long countByExamId(long examId);
+
+    /**
+     * Returns a mapping from exercise type to count for the exercises of an exam.
+     *
+     * @param examId the id of the exam
+     * @return a list of mappings from exercise type to count
+     */
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.exercise.dto.ExerciseTypeCountDTO(TYPE(e), COUNT(e))
+            FROM Exercise e
+            WHERE e.exerciseGroup.exam.id = :examId
+                AND TYPE(e) IN (ModelingExercise, TextExercise, ProgrammingExercise, QuizExercise, FileUploadExercise)
+            GROUP BY TYPE(e)
+            """)
+    List<ExerciseTypeCountDTO> countExercisesByExamIdGroupedByType(@Param("examId") long examId);
+
+    /**
+     * Returns a mapping from exercise type to count for the exercises of an exercise group.
+     *
+     * @param exerciseGroupId the id of the exercise group
+     * @return a list of mappings from exercise type to count
+     */
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.exercise.dto.ExerciseTypeCountDTO(TYPE(e), COUNT(e))
+            FROM Exercise e
+            WHERE e.exerciseGroup.id = :exerciseGroupId
+                AND TYPE(e) IN (ModelingExercise, TextExercise, ProgrammingExercise, QuizExercise, FileUploadExercise)
+            GROUP BY TYPE(e)
+            """)
+    List<ExerciseTypeCountDTO> countExercisesByExerciseGroupIdGroupedByType(@Param("exerciseGroupId") long exerciseGroupId);
+
+    /**
+     * Fetches minimal exercise information needed for the progress of deleting an exam, in the order the exercises are deleted.
+     *
+     * @param examId the id of the exam
+     * @return the id, title and type of every exercise of the exam
+     */
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.exercise.dto.ExerciseDeletionInfoDTO(
+                e.id,
+                e.title,
+                CASE TYPE(e)
+                    WHEN de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise THEN de.tum.cit.aet.artemis.exercise.domain.ExerciseType.PROGRAMMING
+                    WHEN de.tum.cit.aet.artemis.text.domain.TextExercise THEN de.tum.cit.aet.artemis.exercise.domain.ExerciseType.TEXT
+                    WHEN de.tum.cit.aet.artemis.modeling.domain.ModelingExercise THEN de.tum.cit.aet.artemis.exercise.domain.ExerciseType.MODELING
+                    WHEN de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise THEN de.tum.cit.aet.artemis.exercise.domain.ExerciseType.FILE_UPLOAD
+                    WHEN de.tum.cit.aet.artemis.quiz.domain.QuizExercise THEN de.tum.cit.aet.artemis.exercise.domain.ExerciseType.QUIZ
+                END
+            )
+            FROM Exercise e
+            WHERE e.exerciseGroup.exam.id = :examId
+            ORDER BY e.id
+            """)
+    List<ExerciseDeletionInfoDTO> findExerciseDeletionInfoByExamId(@Param("examId") long examId);
+
+    /**
+     * Fetches minimal exercise information needed for the progress of deleting an exercise group, in the order the exercises are deleted.
+     *
+     * @param exerciseGroupId the id of the exercise group
+     * @return the id, title and type of every exercise of the group
+     */
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.exercise.dto.ExerciseDeletionInfoDTO(
+                e.id,
+                e.title,
+                CASE TYPE(e)
+                    WHEN de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise THEN de.tum.cit.aet.artemis.exercise.domain.ExerciseType.PROGRAMMING
+                    WHEN de.tum.cit.aet.artemis.text.domain.TextExercise THEN de.tum.cit.aet.artemis.exercise.domain.ExerciseType.TEXT
+                    WHEN de.tum.cit.aet.artemis.modeling.domain.ModelingExercise THEN de.tum.cit.aet.artemis.exercise.domain.ExerciseType.MODELING
+                    WHEN de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise THEN de.tum.cit.aet.artemis.exercise.domain.ExerciseType.FILE_UPLOAD
+                    WHEN de.tum.cit.aet.artemis.quiz.domain.QuizExercise THEN de.tum.cit.aet.artemis.exercise.domain.ExerciseType.QUIZ
+                END
+            )
+            FROM Exercise e
+            WHERE e.exerciseGroup.id = :exerciseGroupId
+            ORDER BY e.id
+            """)
+    List<ExerciseDeletionInfoDTO> findExerciseDeletionInfoByExerciseGroupId(@Param("exerciseGroupId") long exerciseGroupId);
 
     /**
      * Get one exerciseGroup by id with all exercises.

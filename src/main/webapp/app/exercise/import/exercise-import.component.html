@@ -86,7 +86,7 @@
                             <div class="flex items-center gap-2">
                                 @if (isPreviewAvailable()) {
                                     <tumaet-ui-button
-                                        severity="secondary"
+                                        severity="success"
                                         variant="outlined"
                                         size="small"
                                         [icon]="faEye"
@@ -99,7 +99,7 @@
                                         (clicked)="openPreview(exercise, $event)"
                                     />
                                 }
-                                <tumaet-ui-button (clicked)="selectImport(exercise)" class="import"
+                                <tumaet-ui-button severity="secondary" size="small" (clicked)="selectImport(exercise)" class="import"
                                     ><span jhiTranslate="artemisApp.exercise.import.table.doImport"></span
                                 ></tumaet-ui-button>
                             </div>
@@ -134,7 +134,7 @@
                 <tumaet-ui-button severity="secondary" variant="outlined" size="small" [icon]="faArrowLeft" data-testid="exercise-import-preview-back" (clicked)="closePreview()">
                     <span jhiTranslate="artemisApp.exercise.import.preview.backToList"></span>
                 </tumaet-ui-button>
-                <tumaet-ui-button size="small" data-testid="exercise-import-preview-import" (clicked)="importPreviewed()">
+                <tumaet-ui-button severity="secondary" size="small" data-testid="exercise-import-preview-import" (clicked)="importPreviewed()">
                     <span jhiTranslate="artemisApp.exercise.import.table.doImport"></span>
                 </tumaet-ui-button>
             </div>

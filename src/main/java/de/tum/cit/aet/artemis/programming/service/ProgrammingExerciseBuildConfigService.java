@@ -21,6 +21,7 @@ import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.buildagent.dto.DockerFlagsDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.DockerRunConfig;
+import de.tum.cit.aet.artemis.core.config.ContainerDefaults;
 import de.tum.cit.aet.artemis.core.config.ProgrammingLanguageConfiguration;
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -42,12 +43,16 @@ public class ProgrammingExerciseBuildConfigService {
 
     private final ProgrammingLanguageConfiguration programmingLanguageConfiguration;
 
+    private final ContainerDefaults containerDefaults;
+
     @Value("${artemis.continuous-integration.container-flags-limit.allowed-custom-networks:none}")
     private List<String> allowedNetworks;
 
-    public ProgrammingExerciseBuildConfigService(LicenseService licenseService, ProgrammingLanguageConfiguration programmingLanguageConfiguration) {
+    public ProgrammingExerciseBuildConfigService(LicenseService licenseService, ProgrammingLanguageConfiguration programmingLanguageConfiguration,
+            ContainerDefaults containerDefaults) {
         this.licenseService = licenseService;
         this.programmingLanguageConfiguration = programmingLanguageConfiguration;
+        this.containerDefaults = containerDefaults;
     }
 
     /**
@@ -82,11 +87,15 @@ public class ProgrammingExerciseBuildConfigService {
      * {"network":"none","env":{"key1":"value1","key2":"value2"}}
      * </pre>
      *
+     * <p>
+     * The container settings that the installation defines for every build, see {@link ContainerDefaults}, apply where the exercise
+     * sets none. A variable of the exercise overrides a default with the same name, and the network of the exercise replaces the default network.
+     *
      * @param buildConfig         the build config containing the Docker flags
      * @param programmingExercise the exercise the configuration belongs to, passed in rather than reached through the
      *                                configuration: it owns the exercise key, so that reference is lazy and does not
      *                                resolve once the session is closed
-     * @return a {@link DockerRunConfig} object initialized with the parsed flags, or {@code null} if the JSON string is empty
+     * @return a {@link DockerRunConfig} object initialized with the parsed flags and the defaults, or {@code null} if neither sets anything
      */
     @Nullable
     public DockerRunConfig getDockerRunConfig(ProgrammingExerciseBuildConfig buildConfig, ProgrammingExercise programmingExercise) {
@@ -96,7 +105,10 @@ public class ProgrammingExerciseBuildConfigService {
     /**
      * Converts the Docker flags of the exercise, overridden by the flags of the container the job runs, into a
      * {@link DockerRunConfig}. A field the container sets replaces the exercise's, its environment variables are merged
-     * on top of the exercise's by name; see {@link BuildContainerDockerFlagsDTO}.
+     * on top of the exercise's by name; see {@link BuildContainerDockerFlagsDTO}. The container settings of the
+     * installation, see {@link ContainerDefaults}, apply below both: their variables are overridden by name by those of
+     * the language, the exercise and the container, and their network applies where neither the exercise nor the
+     * container sets one.
      *
      * @param buildConfig         the build config containing the exercise's Docker flags
      * @param programmingExercise the exercise the configuration belongs to
@@ -138,17 +150,40 @@ public class ProgrammingExerciseBuildConfigService {
                 memorySwap = containerFlags.memorySwap();
             }
         }
+        // the installation's network applies where neither the exercise nor the container sets one
+        if (network == null) {
+            network = containerDefaults.network();
+        }
 
         ProgrammingExercise exercise = programmingExercise;
         if (exercise == null) {
-            return createDockerRunConfig(network, exerciseEnvironment, cpuCount, memory, memorySwap);
+            return createDockerRunConfig(network, withInstallationDefaults(exerciseEnvironment), cpuCount, memory, memorySwap);
         }
 
         ProgrammingLanguage programmingLanguage = exercise.getProgrammingLanguage();
         ProjectType projectType = exercise.getProjectType();
         Map<String, String> environment = addLanguageSpecificEnvironment(exerciseEnvironment, programmingLanguage, projectType);
 
-        return createDockerRunConfig(network, environment, cpuCount, memory, memorySwap);
+        return createDockerRunConfig(network, withInstallationDefaults(environment), cpuCount, memory, memorySwap);
+    }
+
+    /**
+     * Puts the variables that every build container gets below those of the language and the exercise, which override them by name.
+     *
+     * @param moreSpecific the variables of the language and of the exercise, may be null
+     * @return the variables of the container, or null if there are none at all
+     */
+    @Nullable
+    private Map<String, String> withInstallationDefaults(@Nullable Map<String, String> moreSpecific) {
+        Map<String, String> defaults = containerDefaults.environment();
+        if (defaults.isEmpty()) {
+            return moreSpecific;
+        }
+        Map<String, String> environment = new HashMap<>(defaults);
+        if (moreSpecific != null) {
+            environment.putAll(moreSpecific);
+        }
+        return environment;
     }
 
     /**

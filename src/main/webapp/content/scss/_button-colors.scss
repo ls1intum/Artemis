@@ -1,0 +1,120 @@
+// Compatibility only: migrate application markup to tumAetUiButton when touching its action group.
+// These aliases keep unmigrated neighbours on the same light/dark palette during that migration.
+.btn {
+    --bs-btn-font-family: var(--tumaet-ui-font-family);
+    --bs-btn-font-size: var(--tumaet-ui-font-size-base);
+    --bs-btn-line-height: var(--tumaet-ui-line-height-base);
+    --bs-btn-padding-x: calc(var(--tumaet-ui-spacing) * 3);
+    --bs-btn-padding-y: calc(var(--tumaet-ui-spacing) * 2);
+    --bs-btn-border-radius: var(--tumaet-ui-radius-md);
+    --bs-btn-disabled-opacity: 0.6;
+
+    border-radius: var(--tumaet-ui-radius-md);
+    font-weight: 400;
+
+    &.btn-sm {
+        --bs-btn-font-size: var(--tumaet-ui-font-size-sm);
+        --bs-btn-line-height: var(--tumaet-ui-line-height-sm);
+        --bs-btn-padding-x: calc(var(--tumaet-ui-spacing) * 2.5);
+        --bs-btn-padding-y: calc(var(--tumaet-ui-spacing) * 1.5);
+    }
+
+    &.btn-lg {
+        --bs-btn-font-size: var(--tumaet-ui-font-size-lg);
+        --bs-btn-line-height: var(--tumaet-ui-line-height-lg);
+        --bs-btn-padding-x: calc(var(--tumaet-ui-spacing) * 4);
+        --bs-btn-padding-y: calc(var(--tumaet-ui-spacing) * 2.5);
+    }
+
+    &:hover:not(:disabled, .disabled, [aria-disabled='true']) {
+        box-shadow: inset 0 0 0 999px var(--tumaet-ui-button-hover-overlay);
+    }
+
+    &:active:not(:disabled, .disabled, [aria-disabled='true']) {
+        box-shadow: inset 0 0 0 999px var(--tumaet-ui-button-active-overlay);
+    }
+
+    &:focus-visible {
+        outline: 2px solid var(--tumaet-ui-button-focus-color);
+        outline-offset: 2px;
+    }
+}
+
+@each $legacy,
+    $severity in (primary: primary, secondary: secondary, default: secondary, success: success, info: info, warning: warn, danger: danger, light: secondary, dark: contrast)
+{
+    .btn.btn-#{$legacy} {
+        --bs-btn-color: var(--tumaet-ui-button-#{$severity}-contrast);
+        --bs-btn-bg: var(--tumaet-ui-button-#{$severity}-background);
+        --bs-btn-border-color: var(--tumaet-ui-button-#{$severity}-background);
+        --bs-btn-hover-color: var(--bs-btn-color);
+        --bs-btn-hover-bg: var(--bs-btn-bg);
+        --bs-btn-hover-border-color: var(--bs-btn-border-color);
+        --bs-btn-active-color: var(--bs-btn-color);
+        --bs-btn-active-bg: var(--bs-btn-bg);
+        --bs-btn-active-border-color: var(--bs-btn-border-color);
+        --bs-btn-disabled-color: var(--bs-btn-color);
+        --bs-btn-disabled-bg: var(--bs-btn-bg);
+        --bs-btn-disabled-border-color: var(--bs-btn-border-color);
+    }
+
+    .btn.btn-outline-#{$legacy} {
+        --bs-btn-color: var(--tumaet-ui-button-#{$severity}-foreground);
+        --bs-btn-bg: transparent;
+        --bs-btn-border-color: var(--tumaet-ui-button-#{$severity}-background);
+        --bs-btn-hover-color: var(--bs-btn-color);
+        --bs-btn-hover-bg: transparent;
+        --bs-btn-hover-border-color: var(--bs-btn-border-color);
+        --bs-btn-active-color: var(--bs-btn-color);
+        --bs-btn-active-bg: transparent;
+        --bs-btn-active-border-color: var(--bs-btn-border-color);
+        --bs-btn-disabled-color: var(--bs-btn-color);
+        --bs-btn-disabled-bg: transparent;
+        --bs-btn-disabled-border-color: var(--bs-btn-border-color);
+    }
+
+    // Persistent selection is different from a pointer press: retain the filled checked/active indicator.
+    .btn-check:checked + .btn.btn-outline-#{$legacy},
+    .btn.btn-outline-#{$legacy}.active,
+    .btn.btn-outline-#{$legacy}[aria-pressed='true'] {
+        --bs-btn-color: var(--tumaet-ui-button-#{$severity}-contrast);
+        --bs-btn-bg: var(--tumaet-ui-button-#{$severity}-background);
+        --bs-btn-border-color: var(--tumaet-ui-button-#{$severity}-background);
+        --bs-btn-hover-bg: var(--bs-btn-bg);
+        --bs-btn-active-bg: var(--bs-btn-bg);
+        --bs-btn-active-color: var(--bs-btn-color);
+
+        color: var(--bs-btn-color);
+        background-color: var(--bs-btn-bg);
+        border-color: var(--bs-btn-border-color);
+    }
+}
+
+.btn.btn-outline-secondary {
+    --bs-btn-border-color: var(--tumaet-ui-button-secondary-border);
+}
+
+// Existing PrimeNG buttons keep their component styling but share typography and interaction emphasis.
+.p-button {
+    font-family: var(--tumaet-ui-font-family);
+    font-size: var(--tumaet-ui-font-size-base);
+    line-height: var(--tumaet-ui-line-height-base);
+
+    &.p-button-sm {
+        font-size: var(--tumaet-ui-font-size-sm);
+        line-height: var(--tumaet-ui-line-height-sm);
+    }
+
+    &.p-button-lg {
+        font-size: var(--tumaet-ui-font-size-lg);
+        line-height: var(--tumaet-ui-line-height-lg);
+    }
+
+    &:hover:not(:disabled, [aria-disabled='true']) {
+        box-shadow: inset 0 0 0 999px var(--tumaet-ui-button-hover-overlay);
+    }
+
+    &:active:not(:disabled, [aria-disabled='true']) {
+        box-shadow: inset 0 0 0 999px var(--tumaet-ui-button-active-overlay);
+    }
+}

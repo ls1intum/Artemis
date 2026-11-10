@@ -1156,7 +1156,7 @@
         "e2e/exercise/quiz-exercise/QuizExerciseAssessment.spec.ts": ["assessment", "communication", "course", "exam", "exam-management-client", "exercise", "quiz"],
         "e2e/exercise/quiz-exercise/QuizExerciseDropLocation.spec.ts": ["assessment", "communication", "course", "exam", "exam-management-client", "exercise", "quiz"],
         "e2e/exercise/quiz-exercise/QuizExerciseLifecycle.spec.ts": ["assessment", "atlas", "communication", "course", "exam", "exam-management-client", "exercise", "quiz"],
-        "e2e/exercise/quiz-exercise/QuizExerciseManagement.spec.ts": ["assessment", "atlas", "communication", "course", "exam", "exam-management-client", "exercise", "quiz"],
+        "e2e/exercise/quiz-exercise/QuizExerciseManagement.spec.ts": ["assessment", "atlas", "communication", "core", "course", "exam", "exam-management-client", "exercise", "quiz"],
         "e2e/exercise/quiz-exercise/QuizExerciseParticipation.spec.ts": ["assessment", "communication", "course", "exam", "exam-management-client", "exercise", "quiz"],
         "e2e/exercise/quiz-exercise/QuizExerciseStatistics.spec.ts": ["assessment", "communication", "course", "exam", "exam-management-client", "exercise", "quiz"],
         "e2e/exercise/quiz-exercise/QuizExerciseSubmissionPaths.spec.ts": ["assessment", "communication", "course", "exam", "exam-management-client", "exercise", "quiz"],
