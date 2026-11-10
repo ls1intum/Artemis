@@ -477,7 +477,7 @@
                                 <br />
                             </td>
                             <td>
-                                <a tumAetUiButton class="whitespace-nowrap" [routerLink]="getExamRoutesByIdentifier()('assessment-dashboard')">
+                                <a severity="info" tumAetUiButton class="whitespace-nowrap" [routerLink]="getExamRoutesByIdentifier()('assessment-dashboard')">
                                     <fa-icon [icon]="faThList" />
                                     <span jhiTranslate="artemisApp.examManagement.assessmentDashboard"></span>
                                 </a>
@@ -545,6 +545,7 @@
                                                                 </td>
                                                                 <td class="font-bold">
                                                                     <button
+                                                                        severity="info"
                                                                         tumAetUiButton
                                                                         type="button"
                                                                         [routerLink]="getExamRoutesByIdentifier()('assessment-dashboard')"
@@ -704,6 +705,7 @@
                             </td>
                             <td>
                                 <a
+                                    severity="info"
                                     tumAetUiButton
                                     class="whitespace-nowrap"
                                     [routerLink]="getExamRoutesByIdentifier()('assessment-dashboard')"

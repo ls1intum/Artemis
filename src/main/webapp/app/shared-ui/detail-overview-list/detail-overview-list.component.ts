@@ -27,6 +27,11 @@ export interface DetailOverviewSection {
     details: Detail[];
 }
 
+export interface DetailOverviewContentSection {
+    headline: string;
+    content: TemplateRef<unknown>;
+}
+
 export enum DetailType {
     Link = 'detail-link',
     Text = 'detail-text',
@@ -79,10 +84,12 @@ export class DetailOverviewListComponent {
     sections = input.required<DetailOverviewSection[]>();
     /** Optional contextual tools rendered alongside a visible section heading. */
     readonly sectionActions = input<Readonly<Record<string, TemplateRef<unknown>>>>({});
+    /** A final section with custom content, included in the section navigation. */
+    readonly footerSection = input<DetailOverviewContentSection>();
 
     // headline list for navigation bar
     readonly headlines = computed<{ id: string; translationKey: string }[]>(() =>
-        this.sections().map((section) => {
+        [...this.sections(), ...(this.footerSection() ? [this.footerSection()!] : [])].map((section) => {
             return {
                 id: section.headline.replaceAll('.', '-'),
                 translationKey: section.headline,

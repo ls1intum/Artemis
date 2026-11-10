@@ -3,6 +3,7 @@
         <jhi-text-block-assessment-card
             id="text-feedback-block-{{ i }}"
             [textBlockRef]="ref"
+            [allFeedbacks]="allFeedbacks()"
             [selected]="selectedRef() === ref"
             [readOnly]="readOnly()"
             (didSelect)="didSelectRef($event)"
@@ -20,6 +21,7 @@
         [readOnly]="readOnly()"
         (textBlockRefAdded)="addTextBlockRef($event)"
         [submission]="submission()"
+        [allFeedbacks]="allFeedbacks()"
     />
 }
 @if (showCounts()) {

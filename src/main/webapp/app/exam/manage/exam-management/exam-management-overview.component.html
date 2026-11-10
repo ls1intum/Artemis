@@ -75,7 +75,7 @@
     >
         <ng-container tumAetUiEmptyStateActions>
             @if (course()?.isAtLeastInstructor) {
-                <tumaet-ui-button size="small" (clicked)="openImportModal()">
+                <tumaet-ui-button severity="secondary" size="small" (clicked)="openImportModal()">
                     <fa-icon [icon]="faFileImport" />
                     <span jhiTranslate="artemisApp.examManagement.importExam"></span>
                 </tumaet-ui-button>

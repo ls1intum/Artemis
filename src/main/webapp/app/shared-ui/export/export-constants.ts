@@ -11,6 +11,7 @@ export const COURSE_OVERALL_SCORE_KEY = 'Overall Course Score';
 export const EXAM_ASSIGNED_EXERCISE = 'Assigned Exercise';
 export const EXAM_ACHIEVED_POINTS = 'Achieved Points';
 export const EXAM_ACHIEVED_SCORE = 'Achieved Score (%)';
+export const EXAM_MAX_POINTS_KEY = 'Maximum Exam Points';
 export const EXAM_OVERALL_POINTS_KEY = 'Overall Exam Points';
 export const EXAM_OVERALL_SCORE_KEY = 'Overall Exam Score';
 export const EXAM_SUBMITTED = 'Submitted';

@@ -1,5 +1,6 @@
 import { Page, expect } from '@playwright/test';
 import { navigateToExamSubpage } from './ExamManagementPage';
+import { finishDeletionProgress } from '../DeletionProgressDialog';
 
 /**
  * A class which encapsulates UI selectors and actions for the exam details page.
@@ -80,7 +81,13 @@ export class ExamDetailsPage {
         await expect(deleteButton).not.toBeDisabled();
         const responsePromise = this.page.waitForResponse((response) => response.request().method() === 'DELETE' && /\/api\/exam\/courses\/\d+\/exams\/\d+$/.test(response.url()));
         await deleteButton.click();
-        return await responsePromise;
+        const response = await responsePromise;
+        // The server accepts the deletion with 202 and deletes in the background; the progress dialog reports it and has to be dismissed.
+        // A refused request (for example 409) never opens it, so only an accepted deletion is followed.
+        if (response.status() === 202) {
+            await finishDeletionProgress(this.page);
+        }
+        return response;
     }
 }
 

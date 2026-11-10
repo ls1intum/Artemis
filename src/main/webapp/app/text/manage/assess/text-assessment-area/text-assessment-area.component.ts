@@ -1,3 +1,4 @@
+import { Feedback } from 'app/assessment/shared/entities/feedback.model';
 import { Component, HostListener, effect, inject, input, model, output, signal } from '@angular/core';
 import { DOCUMENT } from '@angular/common';
 import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
@@ -26,6 +27,7 @@ export class TextAssessmentAreaComponent {
 
     // inputs
     submission = input.required<TextSubmission>();
+    allFeedbacks = input<Feedback[]>([]);
     textBlockRefs = model.required<TextBlockRef[]>();
     readOnly = input<boolean>(false);
     highlightDifferences = input<boolean>(false);
