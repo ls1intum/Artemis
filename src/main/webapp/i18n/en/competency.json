@@ -4,12 +4,6 @@
             "created": "Competency created",
             "deleted": "Competency deleted",
             "updated": "Competency updated",
-            "suggested": "AI Suggested",
-            "acceptSuggestion": "Accept this competency suggestion",
-            "dismissSuggestion": "Dismiss this competency suggestion",
-            "suggestions": {
-                "loadError": "Could not load competency suggestions. Please try again later."
-            },
             "competencyButton": "Competencies",
             "title": "Title",
             "description": "Description",
@@ -137,9 +131,6 @@
                     "high": "High"
                 }
             },
-            "suggestion": {
-                "tooltip": "This competency is suggested by AI based on the exercise description"
-            },
             "competencyCard": {
                 "connectedLectureUnits": "Linked Lecture Content",
                 "connectedLectureUnitsExplanation": "The following lecture content is linked to this competency:",
@@ -170,26 +161,6 @@
                 "connectedCompetencies": "Linked Competencies",
                 "explanation": "This lecture content helps you to achieve the following competencies: ",
                 "noCompetencies": "No competencies are linked with this lecture content! "
-            },
-            "relation": {
-                "competencyRelations": "Competency Relations",
-                "tailCompetency": "Tail Competency",
-                "relationType": "Relation Type",
-                "headCompetency": "Head Competency",
-                "createRelation": "Create Relation",
-                "createsCircularRelation": "You can not create circular relations between competencies.",
-                "selfRelation": "You can not create a relation between a competency and itself.",
-                "relationAlreadyExists": "This relation already exists.",
-                "type": {
-                    "ASSUMES": "Requires",
-                    "EXTENDS": "Extends",
-                    "MATCHES": "Matches"
-                },
-                "typeExplanation": {
-                    "ASSUMES": "The head competency requires the student to master the tail competency and teaches new knowledge that builds upon the tail competency.",
-                    "EXTENDS": "The head competency requires the student to master the tail competency and deepens that knowledge further.",
-                    "MATCHES": "The head and tail competency match and cover the same knowledge."
-                }
             }
         },
         "courseCompetency": {
@@ -300,18 +271,6 @@
                         "competency": "This node represents a Competency",
                         "prerequisite": "This node represents a Prerequisite"
                     }
-                },
-                "suggestions": {
-                    "fetch": "AI suggestions",
-                    "title": "Suggestions",
-                    "empty": "No suggestions",
-                    "aiBadge": "AI",
-                    "aiTooltip": "Suggested by AI",
-                    "aiSuggestionsTitle": "AI Suggestions",
-                    "addSuggestions": "Add Suggestions ({{count}})",
-                    "addSelectedSuggestions": "Add Selected Suggestions",
-                    "alreadyExists": "(already exists)",
-                    "getAiSuggestionsTooltip": "Get AI Suggestions"
                 }
             },
             "featureExplanation": {

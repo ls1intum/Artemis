@@ -25,17 +25,21 @@ class BackwardCompatibleSerializationCodecTest {
     private final BackwardCompatibleSerializationCodec codec = new BackwardCompatibleSerializationCodec();
 
     @Test
-    void testPreservesExistingFeatureMapKeyEncodings() throws IOException {
-        // Kryo writes enum ordinals plus one. These are the key bytes stored before PresentationAssessments existed.
-        assertFeatureKeyEncoding(Feature.GlobalSearchReconcile, 17);
-        assertFeatureKeyEncoding(Feature.GlobalSearchReconcileOrphan, 18);
+    void testPreservesSchema2FeatureMapKeyEncodings() throws IOException {
+        // Kryo writes enum ordinals plus one. Schema 2 removed AtlasML; the v1 golden bytes and their conversion
+        // are covered by RedissonDistributedDataMigratorTest rather than read with the current enum.
+        assertFeatureKeyEncoding(Feature.Science, 5);
+        assertFeatureKeyEncoding(Feature.AtlasAgent, 8);
+        assertFeatureKeyEncoding(Feature.GlobalSearchReconcile, 16);
+        assertFeatureKeyEncoding(Feature.GlobalSearchReconcileOrphan, 17);
+        assertFeatureKeyEncoding(Feature.PresentationAssessments, 18);
     }
 
-    private void assertFeatureKeyEncoding(Feature feature, int historicalOrdinalEncoding) throws IOException {
+    private void assertFeatureKeyEncoding(Feature feature, int schemaOrdinalEncoding) throws IOException {
         ByteBuf encoded = codec.getMapKeyEncoder().encode(feature);
         try {
-            assertThat((int) encoded.getUnsignedByte(encoded.writerIndex() - 1)).as("persisted ordinal encoding of %s", feature).isEqualTo(historicalOrdinalEncoding);
-            assertThat(feature.ordinal()).isEqualTo(historicalOrdinalEncoding - 1);
+            assertThat((int) encoded.getUnsignedByte(encoded.writerIndex() - 1)).as("persisted ordinal encoding of %s", feature).isEqualTo(schemaOrdinalEncoding);
+            assertThat(feature.ordinal()).isEqualTo(schemaOrdinalEncoding - 1);
             assertThat(codec.getMapKeyDecoder().decode(encoded, new State())).isEqualTo(feature);
         }
         finally {
