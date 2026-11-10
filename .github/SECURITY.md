@@ -255,9 +255,7 @@ Artemis does not target high-assurance eGovernment or classified data use cases,
 
 Please report potential security vulnerabilities **responsibly**.
 
-📧 **Contact:** `artemis@xcit.tum.de`  
-🔐 Encrypted email via **S/MIME** is supported:  
-[Download certificate](artemis_xcit.tum.de.pem)
+📧 **Contact:** `artemis@xcit.tum.de`
 
 Please report vulnerabilities in Artemis itself here. Issues in the configuration or operation of a
 specific Artemis instance should go to the institution that operates it.
