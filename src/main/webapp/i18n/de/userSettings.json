@@ -228,6 +228,9 @@
                 "joinedArtemis": "Artemis beigetreten am",
                 "profilePicture": "Profilbild",
                 "addProfilePicture": "Profilbild hinzufügen",
+                "noImage": "kein Bild",
+                "deleteProfilePictureTitle": "Profilbild löschen?",
+                "deleteProfilePictureQuestion": "Möchtest du dein Profilbild wirklich löschen?",
                 "sshKey": "Öffentlicher SSH-Schlüssel"
             },
             "categories": {

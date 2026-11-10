@@ -228,6 +228,9 @@
                 "joinedArtemis": "Joined Artemis on",
                 "profilePicture": "Profile Picture",
                 "addProfilePicture": "Add a profile picture",
+                "noImage": "no image",
+                "deleteProfilePictureTitle": "Delete profile picture?",
+                "deleteProfilePictureQuestion": "Are you sure you want to delete your profile picture?",
                 "sshKey": "Public SSH Key"
             },
             "categories": {

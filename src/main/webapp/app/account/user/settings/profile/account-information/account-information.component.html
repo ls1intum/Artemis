@@ -22,9 +22,9 @@
             class="hidden"
             (change)="setUserImage($event)"
         />
-        <div class="flex size-48 shrink-0 items-center justify-center md:h-0 md:min-h-full md:w-auto md:aspect-square">
-            @if (user.imageUrl && !imageLoadFailed()) {
-                <div class="relative size-full overflow-hidden rounded-lg">
+        <div class="flex size-48 shrink-0 items-center justify-center md:h-0 md:min-h-full md:w-auto md:aspect-square" style="contain: size">
+            <div class="relative size-full overflow-hidden rounded-lg" style="background-color: var(--tumaet-ui-table-striped-background)">
+                @if (user.imageUrl && !imageLoadFailed()) {
                     <jhi-image
                         class="block size-full [&>img]:size-full [&>img]:object-cover"
                         [src]="addPublicFilePrefix(user.imageUrl)!"
@@ -42,7 +42,7 @@
                         rounded
                         [icon]="faTrash"
                         [ariaLabel]="'entity.action.delete' | artemisTranslate"
-                        (clicked)="deleteUserImage()"
+                        (clicked)="confirmDeleteUserImage()"
                     />
 
                     <tumaet-ui-button
@@ -57,13 +57,24 @@
                         [ariaLabel]="'entity.action.edit' | artemisTranslate"
                         (clicked)="triggerUserImageFileInput()"
                     />
-                </div>
-            } @else {
-                <tumaet-ui-button size="small" (clicked)="triggerUserImageFileInput()">
-                    <fa-icon [icon]="faPlus" />
-                    <span jhiTranslate="artemisApp.userSettings.accountInformationPage.addProfilePicture"></span>
-                </tumaet-ui-button>
-            }
+                } @else {
+                    <div class="flex size-full flex-col items-center justify-center gap-2">
+                        <span class="text-muted-color text-sm" jhiTranslate="artemisApp.userSettings.accountInformationPage.noImage"></span>
+                        <tumaet-ui-button
+                            data-testid="profile-picture-add-button"
+                            data-button-intent="utility"
+                            data-button-intent-reason="Adds a profile picture from the otherwise empty profile-picture frame"
+                            class="[&>button]:size-10 [&>button]:p-0"
+                            severity="secondary"
+                            size="small"
+                            rounded
+                            [icon]="faPlus"
+                            [ariaLabel]="'artemisApp.userSettings.accountInformationPage.addProfilePicture' | artemisTranslate"
+                            (clicked)="triggerUserImageFileInput()"
+                        />
+                    </div>
+                }
+            </div>
         </div>
 
         <tumaet-ui-list class="w-full min-w-0" [ariaLabel]="'artemisApp.userSettings.accountInformation' | artemisTranslate">
@@ -112,6 +123,8 @@
 }
 
 <jhi-account-settings-dialog [(visible)]="accountSettingsDialogVisible" />
+
+<tumaet-ui-confirm-dialog [key]="deleteProfilePictureConfirmationKey" />
 
 <tumaet-ui-dialog
     [visible]="!!imageToCrop()"
