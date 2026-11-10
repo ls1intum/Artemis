@@ -213,7 +213,7 @@ paths:
         required: true
         schema:
           type: string
-          enum: [start-now, end-now, set-visible]
+          enum: [start-now, set-visible]
       responses:
         '200':
           description: OK
@@ -401,6 +401,30 @@ paths:
           content:
             application/json:
               schema: {$ref: '#/components/schemas/HyperionCourseSettings'}
+  /api/hyperion/courses/{courseId}/quiz-question-pool/questions/{questionId}/review:
+    put:
+      tags: [hyperion-quiz-question-pool]
+      operationId: updateQuizQuestionPoolReview
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: questionId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/QuizQuestionPoolReview'}
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/QuizQuestionPoolItem'}
   /api/tutorialgroup/courses/{courseId}/tutorial-groups:
     get:
       tags: [tutorial-group]
@@ -1010,6 +1034,17 @@ paths:
           content:
             application/json:
               schema: {$ref: '#/components/schemas/QuizQuestionPoolBuildStart'}
+  /api/hyperion/courses/{courseId}/quiz-question-pool/build/cancel:
+    post:
+      tags: [hyperion-quiz-question-pool]
+      operationId: cancelQuizQuestionPoolBuild
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200': {description: OK}
   /api/hyperion/courses/{courseId}/quiz-exercises/refine-question:
     post:
       tags: [hyperion-quiz-question-generation]
@@ -2062,14 +2097,42 @@ paths:
         in: query
         required: false
         schema: {type: integer, format: int64}
+      - name: flagged
+        in: query
+        required: false
+        schema: {type: boolean, default: false}
+      - name: page
+        in: query
+        required: false
+        schema: {type: integer, format: int32, default: 0}
+      - name: size
+        in: query
+        required: false
+        schema: {type: integer, format: int32, default: 100}
       responses:
         '200':
           description: OK
           content:
             application/json:
-              schema:
-                type: array
-                items: {$ref: '#/components/schemas/QuizQuestionPoolItem'}
+              schema: {$ref: '#/components/schemas/QuizQuestionPoolPage'}
+    delete:
+      tags: [hyperion-quiz-question-pool]
+      operationId: deleteQuizQuestionPoolQuestions
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: competencyId
+        in: query
+        required: false
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/QuizQuestionPoolDeletion'}
   /api/hyperion/courses/{courseId}/quiz-question-pool/progress:
     get:
       tags: [hyperion-quiz-question-pool]
@@ -2085,6 +2148,21 @@ paths:
           content:
             application/json:
               schema: {$ref: '#/components/schemas/QuizQuestionPoolProgress'}
+  /api/hyperion/courses/{courseId}/quiz-question-pool/plan:
+    get:
+      tags: [hyperion-quiz-question-pool]
+      operationId: getQuizQuestionPoolPlan
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/QuizQuestionPoolPlan'}
   /api/hyperion/authoring-runs:
     get:
       tags: [hyperion-authoring-run]
@@ -2429,6 +2507,21 @@ paths:
         in: path
         required: true
         schema: {type: string}
+      responses:
+        '200': {description: OK}
+  /api/hyperion/courses/{courseId}/quiz-question-pool/questions/{questionId}:
+    delete:
+      tags: [hyperion-quiz-question-pool]
+      operationId: deleteQuizQuestionPoolQuestion
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: questionId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
       responses:
         '200': {description: OK}
   /api/hyperion/admin/exercises/{exerciseId}/wedged-slot/{token}:
@@ -3269,8 +3362,12 @@ components:
       description: Request to refine multiple quiz questions at once using a single
         user prompt
       properties:
-        questions: {type: array, description: The quiz questions to refine, maxItems: 50,
-          minItems: 1}
+        questions:
+          type: array
+          description: The quiz questions to refine
+          items: {$ref: '#/components/schemas/GeneratedQuizQuestion'}
+          maxItems: 50
+          minItems: 1
         refinementPrompt: {type: string, description: User instructions describing
             how all questions should be changed, maxLength: 2000, minLength: 1}
       required: [questions, refinementPrompt]
@@ -3309,7 +3406,11 @@ components:
       type: object
       description: Response containing generated quiz questions
       properties:
-        questions: {type: array, description: Generated quiz questions, minItems: 1}
+        questions:
+          type: array
+          description: Generated quiz questions
+          items: {$ref: '#/components/schemas/GeneratedQuizQuestion'}
+          minItems: 1
       required: [questions]
     GeneratedAssessmentInstruction:
       type: object
@@ -3325,6 +3426,13 @@ components:
         usageCount: {type: integer, format: int32, description: Maximum number of
             uses, minimum: 0}
       required: [credits, feedback, gradingScale, instructionDescription, usageCount]
+    QuizQuestionPoolCompetency:
+      type: object
+      description: A competency with questions in the quiz question pool
+      properties:
+        id: {type: integer, format: int64, description: Id of the competency}
+        title: {type: string, description: Title of the competency}
+      required: [id]
     QuizSearchExam:
       type: object
       properties:
@@ -3444,7 +3552,8 @@ components:
       type: object
       description: Progress of a course's quiz question pool build
       properties:
-        running: {type: boolean, description: Whether a build is running on this node}
+        running: {type: boolean, description: Whether a build of the course is running
+            anywhere in the cluster}
         total: {type: integer, format: int32, description: Intended questions in the
             pool}
         toGenerate: {type: integer, format: int32, description: Items still to generate}
@@ -3457,6 +3566,11 @@ components:
             rejected}
         failed: {type: integer, format: int32, description: Items whose generation
             or filtering failed permanently}
+        buildSettings: {$ref: '#/components/schemas/HyperionCourseSettings', description: The
+            settings the running build planned its cells with; absent while no build
+            is running}
+        modelConfigured: {type: boolean, description: Whether the pool has its own
+            model endpoint; builds are refused without one}
     IndexedContentObject:
       type: object
       properties:
@@ -3834,6 +3948,8 @@ components:
             that an instructor would reject or rewrite the question}
         justification: {type: string, description: One-sentence justification of the
             severity}
+        flagged: {type: boolean, description: Whether this verdict asks a reviewer
+            to look at an accepted question}
       required: [mode]
     QuizQuestionFilterDecision:
       type: object
@@ -3993,6 +4109,15 @@ components:
         busy: {type: boolean}
         capacityAvailable: {type: boolean}
         restriction: {type: string}
+    QuizQuestionPoolPlan:
+      type: object
+      description: The pool a build would plan with the course's stored settings
+      properties:
+        planned: {type: integer, format: int32, description: Questions the pool holds
+            once a build with the stored settings is complete}
+        missing: {type: integer, format: int32, description: Questions a build with
+            the stored settings would add to the pool}
+      required: [missing, planned]
     CalendarEvent:
       type: object
       properties:
@@ -4208,6 +4333,8 @@ components:
       required: [question, reasoning, type]
       type: object
       properties:
+        question: {$ref: '#/components/schemas/GeneratedQuizQuestion', description: The
+            refined quiz question}
         reasoning: {type: string, description: Brief explanation of what was changed
             during refinement, minLength: 1}
         type:
@@ -4302,6 +4429,10 @@ components:
           type: string
           description: The instructor's review decision
           enum: [PENDING, APPROVED, EXCLUDED]
+        flagged: {type: boolean, description: 'Whether the filter''s verdicts ask
+            for a review, present once the question is judged'}
+        question: {$ref: '#/components/schemas/GeneratedQuizQuestion', description: 'The
+            generated question, present once generated'}
         decision: {$ref: '#/components/schemas/QuizQuestionFilterDecision', description: 'The
             filter''s decision, present once judged'}
         failure: {type: string, description: 'Why the last attempt failed, present
@@ -4406,6 +4537,8 @@ components:
       type: object
       description: Request to refine an existing quiz question using a user prompt
       properties:
+        question: {$ref: '#/components/schemas/GeneratedQuizQuestion', description: The
+            existing quiz question to refine}
         refinementPrompt: {type: string, description: User instructions describing
             how the question should be changed, maxLength: 2000, minLength: 1}
       required: [question, refinementPrompt]
@@ -4671,6 +4804,15 @@ components:
       properties:
         faqText: {type: string, minLength: 1}
       required: [faqText]
+    QuizQuestionPoolReview:
+      type: object
+      description: The review decision for one quiz question pool item
+      properties:
+        reviewState:
+          type: string
+          description: The review decision
+          enum: [PENDING, APPROVED, EXCLUDED]
+      required: [reviewState]
     IngestionCoverage:
       type: object
       properties:
@@ -4948,6 +5090,16 @@ components:
         userPrompt: {type: string, description: User prompt describing the problem
             statement requirements, maxLength: 1000, minLength: 1}
       required: [userPrompt]
+    GeneratedQuizAnswerOption:
+      type: object
+      description: One generated answer option
+      properties:
+        text: {type: string, description: Answer option text, maxLength: 2000, minLength: 1}
+        correct: {type: boolean, description: Whether this option is correct}
+        hint: {type: string, description: Optional hint, maxLength: 2000, minLength: 0}
+        explanation: {type: string, description: Optional explanation, maxLength: 2000,
+          minLength: 0}
+      required: [correct, text]
     TutorialGroupFreePeriod:
       type: object
       properties:
@@ -5243,6 +5395,24 @@ components:
         title: {type: string}
         active: {type: boolean}
       required: [active, id]
+    QuizQuestionPoolPage:
+      type: object
+      description: One page of a course's quiz question pool
+      properties:
+        items:
+          type: array
+          description: The items of the requested page, absent when the page is empty
+          items: {$ref: '#/components/schemas/QuizQuestionPoolItem'}
+        totalCount: {type: integer, format: int64, description: How many items match
+            the request across all pages}
+        competencies:
+          type: array
+          description: Every competency that has items in the pool, absent when the
+            pool is empty
+          items: {$ref: '#/components/schemas/QuizQuestionPoolCompetency'}
+        pendingCount: {type: integer, format: int64, description: 'For a request of
+            the flagged items, how many of them across all pages await a decision'}
+      required: [competencies, items, totalCount]
     TutorialGroupStudentImportData:
       type: object
       properties:
@@ -5264,6 +5434,27 @@ components:
           additionalProperties: {type: string}
           description: Action-specific context parameters
       required: [actionType, problemStatementMarkdown]
+    GeneratedQuizQuestion:
+      type: object
+      description: One generated quiz question
+      properties:
+        type:
+          type: string
+          description: Question type
+          enum: [single-choice, multiple-choice, true-false]
+        title: {type: string, description: Question title, maxLength: 500, minLength: 1}
+        questionText: {type: string, description: Question text, maxLength: 10000,
+          minLength: 1}
+        options:
+          type: array
+          description: Answer options
+          items: {$ref: '#/components/schemas/GeneratedQuizAnswerOption'}
+          minItems: 1
+        hint: {type: string, description: Optional hint for the overall question,
+          maxLength: 2000, minLength: 0}
+        explanation: {type: string, description: Optional explanation for the overall
+            question, maxLength: 2000, minLength: 0}
+      required: [options, questionText, title, type]
     ShortAnswerSolutionReEvaluate:
       type: object
       properties:
@@ -5374,6 +5565,12 @@ components:
       type: object
       properties:
         id: {type: integer, format: int64}
+    QuizQuestionPoolDeletion:
+      type: object
+      description: The result of deleting quiz question pool items
+      properties:
+        deleted: {type: integer, format: int64, description: How many items were deleted}
+      required: [deleted]
     QuizBatchCreation:
       type: object
       properties:
@@ -5836,9 +6033,32 @@ components:
       properties:
         poolGenerationEnabled: {type: boolean, description: Whether the quiz question
             pool is generated automatically for new lecture material}
-        questionsPerLectureUnit: {type: integer, format: int32, description: 'Questions
-            the pool holds per lecture unit and competency, spread over that unit''s
-            cells', maximum: 60, minimum: 1}
+        singleChoiceQuestionsPerLectureUnit: {type: integer, format: int32, description: Single-choice
+            questions the pool holds per lecture unit and competency, maximum: 60,
+          minimum: 1}
+        multipleChoiceEnabled: {type: boolean, description: Whether the pool also
+            holds multiple-choice questions}
+        multipleChoiceQuestionsPerLectureUnit: {type: integer, format: int32, description: Multiple-choice
+            questions the pool holds per lecture unit and competency while they are
+            enabled, maximum: 60, minimum: 1}
+        multipleChoiceMinCorrectOptions: {type: integer, format: int32, description: The
+            fewest answer options a multiple-choice question marks correct, maximum: 4,
+          minimum: 1}
+        multipleChoiceMaxCorrectOptions: {type: integer, format: int32, description: The
+            most answer options a multiple-choice question marks correct; not below
+            the fewest, maximum: 4, minimum: 1}
+        easyPercent: {type: integer, format: int32, description: 'Share of each lecture
+            unit''s questions generated at the easy difficulty, in percent', maximum: 100,
+          minimum: 0}
+        mediumPercent: {type: integer, format: int32, description: 'Share of each
+            lecture unit''s questions generated at the medium difficulty, in percent',
+          maximum: 100, minimum: 0}
+        hardPercent: {type: integer, format: int32, description: 'Share of each lecture
+            unit''s questions generated at the hard difficulty, in percent; the three
+            shares add up to 100', maximum: 100, minimum: 0}
+      required: [easyPercent, hardPercent, mediumPercent, multipleChoiceEnabled, multipleChoiceMaxCorrectOptions,
+        multipleChoiceMinCorrectOptions, multipleChoiceQuestionsPerLectureUnit, poolGenerationEnabled,
+        singleChoiceQuestionsPerLectureUnit]
     QuizQuestionPoolBuildStart:
       type: object
       description: Outcome of a request to build a course's quiz question pool

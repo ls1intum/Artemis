@@ -35,6 +35,7 @@ import de.tum.cit.aet.artemis.core.service.ResourceLoaderService;
 import de.tum.cit.aet.artemis.exam.service.ExamLiveEventsService;
 import de.tum.cit.aet.artemis.globalsearch.service.IngestionBrowserService;
 import de.tum.cit.aet.artemis.globalsearch.service.IngestionBrowserWeaviateReadService;
+import de.tum.cit.aet.artemis.hyperion.service.HyperionQuizQuestionPoolModelService;
 import de.tum.cit.aet.artemis.iris.api.PyrisFaqApi;
 import de.tum.cit.aet.artemis.iris.service.IrisCitationService;
 import de.tum.cit.aet.artemis.iris.service.IrisSessionPresenceService;
@@ -203,6 +204,10 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTestBase extends Ab
     @MockitoBean
     protected ChatModel azureOpenAiChatModel;
 
+    // the quiz question pool reaches its models only through this service, never through the chat model above; tests route it there explicitly
+    @MockitoBean
+    protected HyperionQuizQuestionPoolModelService quizQuestionPoolModelService;
+
     protected URI localVCBaseUri;
 
     @Value("${artemis.version-control.url}")
@@ -277,7 +282,8 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTestBase extends Ab
     protected void resetSpyBeans() {
         Mockito.reset(gitServiceSpy, bareGitRepositoryServiceSpy, continuousIntegrationService, localCITriggerService, resourceLoaderService, programmingMessagingService,
                 competencyProgressService, competencyProgressApi, irisCitationService, irisChatSessionService, irisSessionPresenceService, pyrisPipelineService, pyrisEventService,
-                ldapUserService, ldapTemplate, examLiveEventsService, pyrisFaqApi, azureOpenAiChatModel, repositoryVcsAccessTokenService, fallbackBuildLogEntryService);
+                ldapUserService, ldapTemplate, examLiveEventsService, pyrisFaqApi, azureOpenAiChatModel, quizQuestionPoolModelService, repositoryVcsAccessTokenService,
+                fallbackBuildLogEntryService);
         ingestionBrowserServiceSpy.ifPresent(Mockito::reset);
         ingestionBrowserReadServiceSpy.ifPresent(Mockito::reset);
         buildAgentConfigurationOverrides.reset();

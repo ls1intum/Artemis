@@ -151,9 +151,10 @@ describe('ScienceSettingsComponent', () => {
         expect(comp.userSettings()).toBeTruthy();
 
         const element: HTMLElement = fixture.nativeElement;
-        // The heading AND the unconditional info line below it must render. In the bug the component threw right after
-        // the heading, so only the <h2> showed and this info line (a plain sibling) was missing.
+        // The heading AND the unconditional description below it must render. In the bug the component threw right after
+        // the heading, so only the <h2> showed and this description (a plain sibling) was missing.
         expect(element.querySelector('h2')).toBeTruthy();
-        expect(element.querySelector('.userSettings-info')).toBeTruthy();
+        expect(element.querySelector('p [jhitranslate="artemisApp.userSettings.scienceSettingsInfo"]')).toBeTruthy();
+        expect(element.querySelector('fa-icon')).toBeFalsy();
     });
 });
