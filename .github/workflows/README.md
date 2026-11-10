@@ -39,6 +39,7 @@ ci.yml                                                            (single entry 
 ├── version-consistency ─ uses ci-version-consistency.yml (if has_version; build.gradle/openapi/README in sync)
 ├── bean-instantiations ─ uses ci-bean-instantiations.yml (if has_beans; boots the app, checks startup bean metrics)
 ├── skills          ── uses ci-skills.yml         (if has_skills; every path an agent skill cites still resolves)
+├── helm            ── uses ci-helm.yml           (if has_helm; deployment/helm/artemis lints, renders in its variants and validates against the Kubernetes schemas, without a cluster)
 ├── docs-checks     ── uses ci-docs-checks.yml    (always; sidebars, paths, class names, properties and labels in the docs exist, review dates, diagrams match their generator; advises which pages a PR may have made wrong)
 ├── terminology     ── uses ci-terminology.yml    (always, incl. docs-only PRs; repo-wide component-naming gate)
 ├── dead-code       ── uses ci-dead-code.yml      (always; unreachable Java classes + unreachable client files)

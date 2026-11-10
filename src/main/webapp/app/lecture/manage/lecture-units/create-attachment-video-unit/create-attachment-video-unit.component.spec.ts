@@ -139,4 +139,21 @@ describe('CreateAttachmentVideoUnitComponent', () => {
         expect(createAttachmentVideoUnitStub).toHaveBeenCalledWith(expect.any(FormData), 1);
         expect(navigateSpy).toHaveBeenCalledTimes(1);
     });
+
+    it('should create a unit with only a name, so its video can be uploaded to TUM.Live afterwards', async () => {
+        const attachmentVideoUnitService = TestBed.inject(AttachmentVideoUnitService);
+        const createStub = vi.spyOn(attachmentVideoUnitService, 'create').mockReturnValue(of(new HttpResponse({ body: new AttachmentVideoUnit(), status: 201 })));
+        const navigateSpy = vi.spyOn(TestBed.inject(Router), 'navigate');
+        createAttachmentVideoUnitComponentFixture.detectChanges();
+
+        const attachmentVideoUnitFormComponent = createAttachmentVideoUnitComponentFixture.debugElement.query(By.directive(AttachmentVideoUnitFormComponent)).componentInstance;
+        attachmentVideoUnitFormComponent.formSubmitted.emit({ formProperties: { name: 'Recording' }, fileProperties: {} });
+
+        await createAttachmentVideoUnitComponentFixture.whenStable();
+        expect(createStub).toHaveBeenCalledWith(expect.any(FormData), 1);
+        const sent = createStub.mock.calls[0][0] as FormData;
+        expect(sent.has('file')).toBe(false);
+        expect(sent.has('attachment')).toBe(false);
+        expect(navigateSpy).toHaveBeenCalledTimes(1);
+    });
 });

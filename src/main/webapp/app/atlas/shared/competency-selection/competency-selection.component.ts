@@ -1,7 +1,6 @@
 import { Component, OnInit, forwardRef, inject, input, output, signal } from '@angular/core';
 import { ControlValueAccessor, FormsModule, NG_VALUE_ACCESSOR } from '@angular/forms';
-import { faLightbulb, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
-import { HttpClient } from '@angular/common/http';
+import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import {
     CompetencyLearningObjectLink,
     CourseCompetency,
@@ -14,16 +13,13 @@ import {
 } from 'app/atlas/shared/entities/competency.model';
 import { ActivatedRoute } from '@angular/router';
 import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
-import { finalize } from 'rxjs';
 import { CourseCompetencyService } from 'app/atlas/shared/services/course-competency.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TumAetUiButtonComponent, TumAetUiCheckboxComponent, TumAetUiSelectComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiCheckboxComponent, TumAetUiSelectComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 import { TranslateService } from '@ngx-translate/core';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MODULE_FEATURE_ATLAS } from 'app/app.constants';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { FeatureToggleHideDirective } from 'app/foundation/feature-toggle/feature-toggle-hide.directive';
-import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 @Component({
@@ -36,28 +32,17 @@ import { cloneWith } from 'app/foundation/util/deep-clone.util';
             useExisting: forwardRef(() => CompetencySelectionComponent),
         },
     ],
-    imports: [
-        TumAetUiButtonComponent,
-        TumAetUiCheckboxComponent,
-        TumAetUiSelectComponent,
-        TumAetUiTooltipDirective,
-        FaIconComponent,
-        FormsModule,
-        ArtemisTranslatePipe,
-        FeatureToggleHideDirective,
-    ],
+    imports: [TumAetUiCheckboxComponent, TumAetUiSelectComponent, TumAetUiTooltipDirective, FaIconComponent, FormsModule, ArtemisTranslatePipe],
 })
 export class CompetencySelectionComponent implements OnInit, ControlValueAccessor {
     private route = inject(ActivatedRoute);
     private courseStorageService = inject(CourseStorageService);
     private courseCompetencyService = inject(CourseCompetencyService);
     private profileService = inject(ProfileService);
-    private http = inject(HttpClient);
     private translateService = inject(TranslateService);
 
     labelName = input<string>('');
     labelTooltip = input<string>('');
-    exerciseDescription = input<string | undefined>(undefined);
 
     valueChange = output<CompetencyLearningObjectLink[] | undefined>();
     availableCount = output<number>();
@@ -68,17 +53,12 @@ export class CompetencySelectionComponent implements OnInit, ControlValueAccesso
     // all course competencies
     readonly competencyLinks = signal<CompetencyLearningObjectLink[] | undefined>(undefined);
 
-    readonly isSuggesting = signal(false);
     readonly checkboxStates = signal<Record<number, boolean>>(undefined!);
-    suggestedCompetencyIds = new Set<number>();
     /** Pending links received via refreshWithLinks before competency loading finished. */
     private pendingRefreshLinks?: CompetencyLearningObjectLink[];
 
     getIcon = getIcon;
     faQuestionCircle = faQuestionCircle;
-    faLightbulb = faLightbulb;
-
-    protected readonly FeatureToggle = FeatureToggle;
 
     _onChange = (_value: CompetencyLearningObjectLink[] | undefined) => {};
     private onTouched = () => {};
@@ -278,63 +258,6 @@ export class CompetencySelectionComponent implements OnInit, ControlValueAccesso
 
     registerOnTouched(fn: () => void): void {
         this.onTouched = fn;
-    }
-
-    suggestCompetencies(): void {
-        if (!this.exerciseDescription()?.trim()) {
-            return;
-        }
-
-        this.isSuggesting.set(true);
-        this.suggestedCompetencyIds.clear();
-
-        const courseId = Number(this.route.snapshot.paramMap.get('courseId'));
-        const requestBody = { description: this.exerciseDescription(), course_id: courseId?.toString() };
-
-        this.http
-            .post<{ competencies: { id: number | string }[] }>('/api/atlas/competencies/suggest', requestBody)
-            .pipe(
-                finalize(() => {
-                    this.isSuggesting.set(false);
-                }),
-            )
-            .subscribe({
-                next: (response) => {
-                    response.competencies.forEach((suggestion) => {
-                        const matchingLink = this.competencyLinks()?.find((link) => link.competency?.id === Number(suggestion.id));
-                        if (matchingLink?.competency?.id) {
-                            this.suggestedCompetencyIds.add(matchingLink.competency.id);
-                        }
-                    });
-                    this.sortCompetenciesBySuggestion();
-                },
-                error: (error) => {
-                    // console.error('Error getting competency suggestions:', error);
-                },
-            });
-    }
-
-    isSuggested(competencyId: number): boolean {
-        return this.suggestedCompetencyIds.has(competencyId);
-    }
-
-    sortCompetenciesBySuggestion(): void {
-        const competencyLinks = this.competencyLinks();
-        if (competencyLinks) {
-            // Sort a fresh copy and set it back so the template re-renders the new order under zoneless.
-            const sorted = [...competencyLinks].sort((a, b) => {
-                const aIsSuggested = a.competency?.id ? this.isSuggested(a.competency.id) : false;
-                const bIsSuggested = b.competency?.id ? this.isSuggested(b.competency.id) : false;
-
-                // Sort suggested competencies to the top
-                if (aIsSuggested && !bIsSuggested) return -1;
-                if (!aIsSuggested && bIsSuggested) return 1;
-
-                // Keep original order for items with same suggestion status
-                return 0;
-            });
-            this.competencyLinks.set(sorted);
-        }
     }
 
     setDisabledState?(isDisabled: boolean): void {

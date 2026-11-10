@@ -118,14 +118,15 @@ and the chart installs neither. Two settings make the metrics usable:
    and the chart refuses to render without it, unless you set your own `query`. Which labels exist depends on the scrape configuration of your Prometheus, so use labels that identify this installation,
    for example the namespace of the core pods.
 2. **Allow Prometheus to scrape Artemis.** `/management/prometheus` only answers requests from the addresses in `spring.prometheus.monitoringIp`, which is `127.0.0.1` by default, and the chart does not change it.
-   Without the setting, the scrape of the core pods is denied and KEDA has no metrics. Set it for the core nodes through `artemis.extraEnv` to the **source IP addresses of Prometheus**, comma-separated and
-   as exact addresses, not as ranges. Use the addresses that the core pods see, which are the address of the Prometheus pod unless your network translates them.
+   Without the setting, the scrape of the core pods is denied and KEDA has no metrics. Set it for the core nodes through `artemis.extraEnv` to the **source addresses of Prometheus**, comma-separated. An entry is a single
+   address or a CIDR block such as `10.42.0.0/16`, for IPv4 and IPv6. Use a block that covers the pods of Prometheus, because the address of a pod changes when it is rescheduled, and keep it as narrow as the pod network
+   of the namespace that Prometheus runs in. The core pods see the address of the Prometheus pod, unless your network translates it. A value that is not an address or a block stops the start with the property named in the message.
 
 ```yaml
 artemis:
   extraEnv:
     - name: SPRING_PROMETHEUS_MONITORINGIP
-      value: "10.42.1.15"
+      value: "10.42.0.0/16"
 buildAgents:
   concurrentBuildsPerAgent: 2
   autoscaling:
