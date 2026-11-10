@@ -179,9 +179,10 @@ class RedissonDistributedDataMigratorTest {
     void testAnExpiringEntryKeepsItsRemainingLifetime() {
         redissonClient.getMapCache("pyris-job-map").put("job-1", "session-1", 1, TimeUnit.HOURS);
 
-        migrationService().migrateToCurrentVersion();
+        // the unversioned-to-first step carries this map; the next one no longer does, as current builds read pyris-job-map-v2
+        migrationServiceFor(1).migrateToCurrentVersion();
 
-        RMapCache<Object, Object> migrated = redissonClient.getMapCache(keyFor(VERSION, "pyris-job-map"));
+        RMapCache<Object, Object> migrated = redissonClient.getMapCache(keyFor(1, "pyris-job-map"));
         assertThat(migrated.get("job-1")).isEqualTo("session-1");
         // Carried over rather than reset: an entry that was minutes from expiring must not become permanent.
         assertThat(migrated.remainTimeToLive("job-1")).isPositive().isLessThanOrEqualTo(Duration.ofHours(1).toMillis());
@@ -297,12 +298,21 @@ class RedissonDistributedDataMigratorTest {
         redissonClient.getMap(keyFor(1, "processingJobs")).put("running", "agent-1");
         redissonClient.getQueue(keyFor(1, "buildResultQueue")).add("result-1");
         redissonClient.getMap(keyFor(1, "features")).put("Science", Boolean.FALSE);
-        redissonClient.getMapCache(keyFor(1, "pyris-job-map")).put("job-1", "session-1", 1, TimeUnit.HOURS);
+        // the maps the live Iris services read when a Pyris callback of a run in flight arrives
+        List<String> irisMaps = List.of("pyris-job-map-v2", "pyris-chat-job-client-id-map", "pyris-chat-material-version-map", "pyris-global-search-material-version-map");
+        for (String irisMap : irisMaps) {
+            redissonClient.getMapCache(keyFor(1, irisMap)).put("run-1", irisMap + "-value", 1, TimeUnit.HOURS);
+        }
 
         migrationServiceFor(2).migrateToCurrentVersion();
 
         assertThat(redissonClient.getMap(keyFor(2, "features")).get("Science")).isEqualTo(Boolean.FALSE);
-        assertThat(redissonClient.getMapCache(keyFor(2, "pyris-job-map")).get("job-1")).isEqualTo("session-1");
+        for (String irisMap : irisMaps) {
+            RMapCache<Object, Object> migrated = redissonClient.getMapCache(keyFor(2, irisMap));
+            assertThat(migrated.get("run-1")).as(irisMap).isEqualTo(irisMap + "-value");
+            // carried over with the lifetime it had left, so an abandoned run still expires
+            assertThat(migrated.remainTimeToLive("run-1")).as(irisMap).isPositive().isLessThanOrEqualTo(Duration.ofHours(1).toMillis());
+        }
         assertThat(redissonClient.getPriorityQueue(keyFor(2, "buildJobQueue"))).isEmpty();
         assertThat(redissonClient.getMap(keyFor(2, "processingJobs"))).isEmpty();
         assertThat(redissonClient.getQueue(keyFor(2, "buildResultQueue"))).isEmpty();

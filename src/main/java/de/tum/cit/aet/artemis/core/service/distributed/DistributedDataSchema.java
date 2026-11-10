@@ -99,9 +99,18 @@ public final class DistributedDataSchema {
      * The structures carried over from schema version 1 to 2. Version 2 changed the encoding of build job queue items, so
      * the build queue, the processing jobs and the result queue are flushed; the missing-job retry rebuilds what they held,
      * so such a build may run twice, and a queued result is lost and its build retried.
+     *
+     * <p>
+     * The Iris maps are moved with the remaining lifetime of their entries. A Pyris callback is accepted only for a job in
+     * pyris-job-map-v2 and has no database fallback, so dropping it would reject the callbacks of every run in flight; the
+     * other three hold what a callback of such a run reads: the browser tab of a chat job and the lecture material versions
+     * its citations refer to. The struggle in-flight markers and cooldowns are not moved: losing them at most admits one
+     * more proactive struggle run per student and exercise.
      */
     public static final List<CarriedOverStructure> V1_TO_V2_STRUCTURES = List.of(new CarriedOverStructure("features", StructureKind.MAP),
-            new CarriedOverStructure("pyris-job-map", StructureKind.EXPIRING_MAP));
+            new CarriedOverStructure("pyris-job-map-v2", StructureKind.EXPIRING_MAP), new CarriedOverStructure("pyris-chat-job-client-id-map", StructureKind.EXPIRING_MAP),
+            new CarriedOverStructure("pyris-chat-material-version-map", StructureKind.EXPIRING_MAP),
+            new CarriedOverStructure("pyris-global-search-material-version-map", StructureKind.EXPIRING_MAP));
 
     private DistributedDataSchema() {
     }
