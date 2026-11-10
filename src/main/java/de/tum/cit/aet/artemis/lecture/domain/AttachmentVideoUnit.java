@@ -25,7 +25,11 @@ public class AttachmentVideoUnit extends LectureUnit {
     @Column(name = "description")
     private String description;
 
-    @Column(name = "source")
+    /**
+     * Not written by a save of the unit or its lecture: an edit changes it through {@code AttachmentVideoUnitRepository.updateVideoSourceIfUnchanged}, so a save
+     * that loaded the unit before a TUM.Live upload was attached cannot write the replaced URL back.
+     */
+    @Column(name = "source", updatable = false)
     private String videoSource;
 
     @OneToOne(mappedBy = "attachmentVideoUnit", cascade = CascadeType.REMOVE, orphanRemoval = true)

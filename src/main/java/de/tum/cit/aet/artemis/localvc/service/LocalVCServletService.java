@@ -184,7 +184,7 @@ public class LocalVCServletService {
         if (request.getRequestURI().endsWith("/info/refs")) {
             String ipString = getIpStringFromRequest(request);
             final IPAddress ipAddress = new IPAddressString(ipString).getAddress();
-            rateLimitService.enforcePerMinute(ipAddress, RateLimitType.AUTHENTICATION);
+            rateLimitService.enforcePerMinute(ipAddress, RateLimitType.GIT_AUTHENTICATION);
         }
 
         LocalVCRepositoryUri localVCRepositoryUri = repositoryResolver.parseRepositoryUri(request);
