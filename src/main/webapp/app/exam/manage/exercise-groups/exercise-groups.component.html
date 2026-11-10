@@ -78,6 +78,7 @@
                             [connectedDropLists]="dropListIds()"
                             (groupChange)="onTableGroupChange($event)"
                             (exerciseDeleted)="removeExercise($event.id!, exerciseGroup.id!)"
+                            (exerciseDeletionOutcomeUnknown)="reloadExerciseGroups()"
                         />
                     }
                 }
@@ -145,13 +146,15 @@
 }
 
 @if (exerciseImportType(); as importType) {
-    <jhi-exam-exercise-import-dialog [(visible)]="exerciseImportVisible" [exerciseType]="importType" (imported)="onExerciseImported($event)" />
+    <jhi-exam-exercise-import-dialog [(visible)]="exerciseImportVisible" [exerciseType]="importType" [courseId]="courseId()" (imported)="onExerciseImported($event)" />
 }
 
 <jhi-exam-delete-dialog
     [(visible)]="deleteGroupVisible"
     [entityTitle]="groupToDelete()?.title || ''"
     [deleteQuestion]="deleteGroupQuestion()"
+    entitySummaryTitle="artemisApp.examManagement.exerciseGroup.delete.summary.title"
+    [fetchCategorizedEntitySummary]="deleteGroupSummary()"
     deleteConfirmationText="artemisApp.examManagement.exerciseGroup.delete.typeNameToConfirm"
     [additionalChecks]="deleteGroupChecks()"
     [dialogError]="dialogError"

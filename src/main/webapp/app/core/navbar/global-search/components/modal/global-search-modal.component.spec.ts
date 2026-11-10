@@ -222,6 +222,20 @@ describe('GlobalSearchModalComponent', () => {
             expect(searchOverlayService.toggle).not.toHaveBeenCalled();
         });
 
+        it('should ignore a keydown event that carries no key, as dispatched by autofill and browser extensions', () => {
+            mockOsDetectorService.isActionKey.mockReturnValue(true);
+            // an event of another type than KeyboardEvent has no key at all, a KeyboardEvent without one has an empty key
+            const withoutKey = new Event('keydown') as KeyboardEvent;
+            const withEmptyKey = new KeyboardEvent('keydown', { metaKey: true });
+            const withNumericKey = Object.assign(new Event('keydown'), { key: 7 }) as unknown as KeyboardEvent;
+
+            expect(() => component.handleKeyboardEvent(withNumericKey)).not.toThrow();
+            expect(() => component.handleKeyboardEvent(withoutKey)).not.toThrow();
+            expect(() => component.handleKeyboardEvent(withEmptyKey)).not.toThrow();
+
+            expect(searchOverlayService.toggle).not.toHaveBeenCalled();
+        });
+
         it('should not toggle modal when Cmd+K is pressed and user is not authenticated', () => {
             const accountService = TestBed.inject(AccountService);
             vi.spyOn(accountService, 'isAuthenticated').mockReturnValue(false);

@@ -228,6 +228,27 @@ describe('WebauthnService', () => {
             expect(vi.mocked(captureException)).toHaveBeenCalledWith(genericError);
         });
 
+        it('should report a browser that does not support the request as information, but still tell the user', async () => {
+            const notSupportedError = new DOMException("Resident credentials or empty 'allowCredentials' lists are not supported at this time.", 'NotSupportedError');
+            vi.spyOn(navigator.credentials, 'get').mockRejectedValue(notSupportedError);
+            vi.spyOn(console, 'error').mockImplementation(() => {});
+
+            await expect(service.loginWithPasskey()).rejects.toThrow(notSupportedError);
+
+            expect(alertService.addErrorAlert).toHaveBeenCalledWith('artemisApp.userSettings.passkeySettingsPage.error.login');
+            expect(vi.mocked(captureException)).toHaveBeenCalledExactlyOnceWith(notSupportedError, { severity: 'INFO' });
+        });
+
+        it('should not report a failure of the conditional flow itself, because its caller reports it with the context of the autofill', async () => {
+            const genericError = new Error('Network error');
+            vi.spyOn(navigator.credentials, 'get').mockRejectedValue(genericError);
+            vi.spyOn(console, 'error').mockImplementation(() => {});
+
+            await expect(service.loginWithPasskey(true)).rejects.toThrow(genericError);
+
+            expect(vi.mocked(captureException)).not.toHaveBeenCalled();
+        });
+
         it('should handle error from webauthnApiService.loginWithPasskey', async () => {
             const apiError = new Error('API error');
             vi.spyOn(navigator.credentials, 'get').mockResolvedValue(mockPublicKeyCredential);
@@ -715,6 +736,45 @@ describe('WebauthnService', () => {
             // loginWithPasskey should have been called twice (initial + one retry)
             expect(webauthnApiService.getAuthenticationOptions).toHaveBeenCalledTimes(2);
             expect(onSuccess).not.toHaveBeenCalled();
+        });
+
+        describe('reporting the end of the flow', () => {
+            beforeEach(() => {
+                webauthnApiService.getAuthenticationOptions.mockResolvedValue({
+                    challenge: encodeAsBase64Url(new Uint8Array([1, 2, 3])),
+                    timeout: 60000,
+                    rpId: 'example.com',
+                } as any);
+            });
+
+            it('should report a browser that cannot reach a passkey provider as information', async () => {
+                vi.spyOn(navigator.credentials, 'get').mockRejectedValue(new DOMException('Error connecting to Web Authentication service.', 'NotSupportedError'));
+
+                service.startConditionalMediation(vi.fn());
+                await new Promise((resolve) => setTimeout(resolve, 0));
+
+                expect(vi.mocked(captureException)).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({ message: 'Passkey autocomplete error' }), { severity: 'INFO' });
+            });
+
+            it('should report a flow that the user dismissed twice as information', async () => {
+                vi.spyOn(console, 'warn').mockImplementation(() => {});
+                vi.spyOn(navigator.credentials, 'get').mockRejectedValue(new DOMException('User cancelled', 'NotAllowedError'));
+
+                service.startConditionalMediation(vi.fn());
+                await new Promise((resolve) => setTimeout(resolve, 10));
+
+                expect(vi.mocked(captureException)).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({ message: 'Passkey autocomplete error' }), { severity: 'INFO' });
+            });
+
+            it('should report any other failure with its default severity', async () => {
+                const failure = new Error('Something unexpected');
+                vi.spyOn(navigator.credentials, 'get').mockRejectedValue(failure);
+
+                service.startConditionalMediation(vi.fn());
+                await new Promise((resolve) => setTimeout(resolve, 0));
+
+                expect(vi.mocked(captureException)).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({ message: 'Passkey autocomplete error', cause: failure }));
+            });
         });
 
         it('should abort and refresh the background challenge every 4:45 minutes', async () => {

@@ -344,19 +344,21 @@ jhi-iris-mcq-question {
     position: relative;
 }
 
-.activity-trail {
+.llm-message-wrapper jhi-iris-activity-feed {
     margin-bottom: 8px;
-    color: var(--text-body-secondary);
-    font-size: 0.875rem;
+}
 
-    summary {
-        cursor: pointer;
-        width: fit-content;
-    }
+// An interim message and the steps after it are parts of one answer, so they sit closer together
+// than separate messages: 16px instead of 48px (paragraph and bubble margins plus the message gap).
+.interim-message {
+    margin-bottom: -8px;
 
-    jhi-iris-activity-feed {
-        display: block;
-        margin-top: 8px;
+    .bubble-left {
+        margin-bottom: 0;
+
+        ::ng-deep p:last-child {
+            margin-bottom: 0;
+        }
     }
 }
 

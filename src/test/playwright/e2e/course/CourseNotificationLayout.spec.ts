@@ -1,6 +1,7 @@
 import { expect } from '@playwright/test';
 import { test } from '../../support/fixtures';
 import { admin, studentOne } from '../../support/users';
+import { expectWithinViewport, forEachViewport } from '../../support/layout';
 import { generateUUID } from '../../support/utils';
 
 test('Conversation notifications leave Send accessible, preserve the draft and open the reply', async ({
@@ -115,4 +116,54 @@ test('Conversation notifications leave Send accessible, preserve the draft and o
         await studentContext.close();
         await courseManagementAPIRequests.deleteCourse(course, admin);
     }
+});
+
+test('Long system notifications stay inside the viewport and scroll to their final text', async ({ page }) => {
+    const finalText = 'End of maintenance announcement.';
+    const text = `${'The platform will be unavailable during planned maintenance. '.repeat(60)}${finalText}`;
+    await page.route('**/api/notification/public/system-notifications/active', (route) =>
+        route.fulfill({
+            json: [
+                {
+                    id: Date.now(),
+                    title: 'Planned maintenance',
+                    text,
+                    type: 'WARNING',
+                    notificationDate: new Date(Date.now() - 60_000).toISOString(),
+                    expireDate: new Date(Date.now() + 3_600_000).toISOString(),
+                },
+            ],
+        }),
+    );
+    await page.goto('/sign-in');
+    const trigger = page.getByTestId('system-notification-message');
+    const details = page.getByTestId('system-notification-details');
+
+    await forEachViewport(page, async () => {
+        await trigger.focus();
+        await trigger.press('Enter');
+        await expect(details).toContainText(finalText);
+        await expectWithinViewport(details, ['top', 'right', 'bottom', 'left'], { name: 'full system notification' });
+        await expect.poll(() => details.evaluate((element) => element.scrollHeight > element.clientHeight)).toBe(true);
+        await details.focus();
+        await details.press('End');
+        await expect.poll(() => details.evaluate((element) => element.scrollHeight - element.clientHeight - element.scrollTop)).toBeLessThanOrEqual(1);
+        await expect
+            .poll(() =>
+                details.evaluate((element, ending) => {
+                    const textNode = element.querySelector('p')?.firstChild;
+                    if (!textNode) return false;
+                    const length = textNode.textContent?.length ?? 0;
+                    const range = document.createRange();
+                    range.setStart(textNode, Math.max(0, length - ending.length));
+                    range.setEnd(textNode, length);
+                    const finalLine = range.getBoundingClientRect();
+                    const panel = element.getBoundingClientRect();
+                    return finalLine.top >= panel.top && finalLine.bottom <= panel.bottom + 1;
+                }, finalText),
+            )
+            .toBe(true);
+        await details.press('Escape');
+        await expect(details).toBeHidden();
+    });
 });

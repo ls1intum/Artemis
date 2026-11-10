@@ -2,11 +2,16 @@
 id: repository-access
 title: Repository Access Configuration
 sidebar_label: Repository Access Configuration
-last_reviewed: 2026-11-03
+last_reviewed: 2026-11-06
 ---
 
 import Callout from "../../../../src/components/Callout/Callout";
 import {CalloutVariant} from "../../../../src/components/Callout/Callout.types";
+import Image, {ImageSize} from "../../../../src/components/Image/Image";
+import accessLogDesktopLight from '../assets/programming/vcs-access-log-desktop-light.webp';
+import accessLogDesktopDark from '../assets/programming/vcs-access-log-desktop-dark.webp';
+import accessLogMobileLight from '../assets/programming/vcs-access-log-mobile-light.webp';
+import accessLogMobileDark from '../assets/programming/vcs-access-log-mobile-dark.webp';
 
 Who may read or write which repository depends on three things: the kind of repository, the role of the user, and where you are in the exercise timeline. The tables below spell out every combination, and the last section covers how to see who actually accessed a repository.
 
@@ -131,6 +136,23 @@ Open the repository from **Course Management** and click **Open Access Log**. Ea
 | Access Type | How the user authenticated, for example over HTTPS with a token, or over SSH with a key |
 | Commit Hash | The commit involved, for write accesses |
 | Timestamp | When the access happened |
+
+The log shows the newest accesses first. Click a column heading to sort by user, author, action, access type, or timestamp. Use the search field above the table to find entries by user, author, action, access type, commit hash, or date. Search dates in `YYYY-MM-DD` format using your local calendar date.
+
+Use the pagination controls below the table to change pages or the number of entries per page. The column headings and pagination remain visible while the entries scroll. On narrow screens, scroll the table horizontally to reach the remaining columns.
+
+<Image src={accessLogDesktopLight} alt="VCS access log with global search, sortable columns, and pagination" size={ImageSize.large} caption="Repository access log in the light theme" />
+
+<details>
+<summary>Dark theme and narrow-screen examples</summary>
+
+<Image src={accessLogDesktopDark} alt="VCS access log in the dark theme" size={ImageSize.large} caption="Repository access log in the dark theme" />
+
+<Image src={accessLogMobileLight} alt="VCS access log on a narrow screen in the light theme" size={ImageSize.large} caption="On a narrow screen, scroll the table horizontally while pagination remains visible" />
+
+<Image src={accessLogMobileDark} alt="VCS access log on a narrow screen in the dark theme" size={ImageSize.large} caption="Narrow-screen repository access log in the dark theme" />
+
+</details>
 
 <Callout variant={CalloutVariant.info}>
 

@@ -19,6 +19,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -111,6 +112,26 @@ class LocalCILanguageFeatureMatrixTest {
         assertThat(phases).as("build phases of %s", configuration).isNotNull().isNotEmpty();
         assertThat(phases).as("every phase of %s runs something", configuration).allSatisfy(phase -> assertThat(phase.script()).isNotBlank());
         assertThat(phases).as("%s produces test results", configuration).anyMatch(phase -> phase.resultPaths() != null && !phase.resultPaths().isEmpty());
+    }
+
+    /**
+     * The static code analysis phases of these languages read a configuration file from the test repository. Where the file is shipped depends on the setup of the test
+     * repository: Kotlin takes it from the staticCodeAnalysisConfig folder like Java, Go from the staticCodeAnalysis folder like the non-JVM languages.
+     * Go checks the test repository out into a subdirectory, so its phase has to address the file through the test working directory.
+     */
+    private static Stream<Arguments> staticAnalysisConfigurationFiles() {
+        return Stream.of(
+                Arguments.of(ProgrammingLanguage.KOTLIN, "templates/kotlin/test/staticCodeAnalysisConfig/detekt-student.yml", "staticCodeAnalysisConfig/detekt-student.yml"),
+                Arguments.of(ProgrammingLanguage.GO, "templates/go/staticCodeAnalysis/test/.golangci.yml", "${testWorkingDirectory}/.golangci.yml"));
+    }
+
+    @ParameterizedTest
+    @MethodSource("staticAnalysisConfigurationFiles")
+    void shouldShipTheConfigurationFileThatTheStaticCodeAnalysisPhaseReads(ProgrammingLanguage language, String templateFile, String fileReferencedByPhase) throws Exception {
+        var phases = service.getBuildPlanPhasesFor(language, Optional.empty(), true, false);
+
+        assertThat(new ClassPathResource(templateFile).exists()).as("template file %s", templateFile).isTrue();
+        assertThat(phases).as("a phase of %s references %s", language, fileReferencedByPhase).anyMatch(phase -> phase.script().contains(fileReferencedByPhase));
     }
 
     private static Stream<Configuration> staticAnalysisConfigurations() {

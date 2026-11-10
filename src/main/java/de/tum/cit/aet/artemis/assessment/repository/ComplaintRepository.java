@@ -65,6 +65,19 @@ public interface ComplaintRepository extends ArtemisJpaRepository<Complaint, Lon
             """)
     Optional<Complaint> findByIdWithEagerAssessor(@Param("complaintId") Long complaintId);
 
+    /**
+     * Counts the complaints and more feedback requests of the given exercises.
+     *
+     * @param exerciseIds the ids of the exercises
+     * @return the number of complaints of any type
+     */
+    @Query("""
+            SELECT COUNT(c)
+            FROM Complaint c
+            WHERE c.exerciseId IN :exerciseIds
+            """)
+    long countByExerciseIds(@Param("exerciseIds") Set<Long> exerciseIds);
+
     @Query("""
             SELECT COUNT(c)
             FROM Complaint c

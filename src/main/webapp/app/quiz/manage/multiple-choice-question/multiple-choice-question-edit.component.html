@@ -38,7 +38,12 @@
                     @if (hyperionEnabled()) {
                         <button
                             type="button"
+                            tumAetUiButton
+                            size="small"
+                            severity="warn"
+                            variant="outlined"
                             class="question-action-btn question-action-btn--refine"
+                            data-testid="quiz-question-refine"
                             attr.aria-label="{{ 'artemisApp.quizExercise.refineQuestion' | artemisTranslate }}"
                             (click)="refineAndExpand()"
                         >
@@ -47,7 +52,12 @@
                     }
                     <button
                         type="button"
+                        tumAetUiButton
+                        size="small"
+                        severity="danger"
+                        variant="outlined"
                         class="question-action-btn question-action-btn--delete"
+                        data-testid="quiz-question-delete"
                         attr.aria-label="{{ 'artemisApp.quizExercise.deleteQuestion' | artemisTranslate }}"
                         (click)="deleteQuestion()"
                     >
