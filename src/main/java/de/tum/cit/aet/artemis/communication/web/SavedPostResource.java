@@ -46,6 +46,7 @@ import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
+import de.tum.cit.aet.artemis.course.domain.Course;
 
 /**
  * REST controller for managing Message Posts.
@@ -160,7 +161,11 @@ public class SavedPostResource {
 
         var post = retrievePostingElseThrow(postId, postingType);
         // the posting has to belong to a course the user is a member of
-        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, post.getCoursePostingBelongsTo(), user);
+        Course course = post.getCoursePostingBelongsTo();
+        if (course == null) {
+            throw new BadRequestAlertException("The posting does not belong to a course.", ENTITY_NAME, "postingWithoutCourse");
+        }
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
 
         savedPostService.savePostForCurrentUser(post);
 
