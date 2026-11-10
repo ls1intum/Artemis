@@ -418,6 +418,22 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
 
     @Test
     @WithMockUser(username = AUTHENTICATEDUSER)
+    void saveAccountWithMaximumLengthDisplayName() throws Exception {
+        String firstName = "a".repeat(50);
+        String lastName = "b".repeat(50);
+        User user = userUtilService.createAndSaveUser(AUTHENTICATEDUSER);
+        user.setFirstName(firstName);
+        user.setLastName(lastName);
+
+        request.put("/api/account/basic-information", new UserDTO(user), HttpStatus.OK);
+
+        User updatedUser = userTestRepository.findOneByLogin(AUTHENTICATEDUSER).orElseThrow();
+        assertThat(updatedUser.getFirstName()).isEqualTo(firstName);
+        assertThat(updatedUser.getLastName()).isEqualTo(lastName);
+    }
+
+    @Test
+    @WithMockUser(username = AUTHENTICATEDUSER)
     void saveAccountRegistrationDisabledExternalUser() throws Throwable {
         testWithRegistrationDisabled(() -> {
             // Create an external user (non-internal users should be forbidden)
