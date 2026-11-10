@@ -261,6 +261,12 @@ describe('Lecture Service', () => {
             expect(req.request.method).toBe('DELETE');
         });
 
+        it('should delete a lecture with its videos uploaded to TUM.Live', async () => {
+            service.delete(elemDefault.id!, true).pipe(take(1)).subscribe();
+            const req = httpMock.expectOne({ url: `${resourceUrl}/${elemDefault.id}?deleteTumLiveRecordings=true`, method: 'DELETE' });
+            req.flush({});
+        });
+
         it('should convert Dates from server', async () => {
             const results = service.convertLectureArrayDatesFromServer([elemDefault, elemDefault]);
             expect(results).toEqual([elemDefault, elemDefault]);

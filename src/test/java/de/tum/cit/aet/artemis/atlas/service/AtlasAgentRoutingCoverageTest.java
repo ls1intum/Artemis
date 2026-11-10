@@ -342,7 +342,7 @@ class AtlasAgentRoutingCoverageTest {
         when(competencies.findById(2L)).thenReturn(Optional.of(second));
         when(competencies.findAllById(java.util.Set.of(1L, 2L))).thenReturn(List.of(first, second));
         when(relations.findAllWithHeadAndTailByCourseId(1L)).thenReturn(java.util.Set.of());
-        var tools = new CompetencyMappingToolsService(JsonObjectMapper.get(), competencies, relations, null, null, cache, Optional.empty(), null, null);
+        var tools = new CompetencyMappingToolsService(JsonObjectMapper.get(), competencies, relations, null, null, cache, null, null);
         var existing = new de.tum.cit.aet.artemis.atlas.dto.CompetencyRelationDTO(5L, 1L, 2L, RelationType.EXTENDS);
         var unsaved = new de.tum.cit.aet.artemis.atlas.dto.CompetencyRelationDTO(null, 2L, 1L, RelationType.ASSUMES);
         assertThat(tools.previewRelationMappings(1L, batch ? List.of(existing, unsaved) : List.of(existing), false)).contains("Preview generated successfully");
