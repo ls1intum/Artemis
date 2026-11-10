@@ -7,6 +7,7 @@ import { Post } from 'app/communication/shared/entities/post.model';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { SEED_COURSES } from '../../support/seedData';
 import { RELOAD_RENDER_TIMEOUT } from '../../support/timeouts';
+import { trackWebsocketSubscriptions } from '../../support/websocketSubscriptions';
 import { Commands } from '../../support/commands';
 import { Course } from 'app/course/shared/entities/course.model';
 import { CourseManagementAPIRequests } from '../../support/requests/CourseManagementAPIRequests';
@@ -330,8 +331,11 @@ test.describe('Channel messages', { tag: '@fast' }, () => {
                 expect(readConversation?.lastReadDate).toBeTruthy();
                 const unreadPost = await messages.createCourseMessage(course, target.id!, 'channel', 'New lecture question');
                 expect(new Date(unreadPost.creationDate!.toString()).getTime()).toBeGreaterThan(new Date(readConversation!.lastReadDate!.toString()).getTime());
+                const subscriptions = trackWebsocketSubscriptions(page);
                 await page.goto(`/courses/${course.id}/communication?conversationId=${other.id}`);
                 await expect(page.getByTestId('conversation-name')).toHaveText(other.name!);
+                // The reply below is a live update: it is lost if the page has not subscribed yet.
+                await subscriptions.waitFor('/notifications/conversations');
                 const generalChannels = page.getByRole('button', { name: /^General \(/ });
                 if ((await generalChannels.getAttribute('aria-expanded')) !== 'true') {
                     await generalChannels.click();

@@ -8,6 +8,7 @@ import { Course } from 'app/course/shared/entities/course.model';
 import { ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
 import { Channel } from 'app/communication/shared/entities/conversation/channel.model';
 import { readResponseJson } from '../../support/utils';
+import { trackWebsocketSubscriptions } from '../../support/websocketSubscriptions';
 
 /** Real REST persistence, websocket delivery and the rendered sidebar must agree. */
 test.describe('Unread messages across conversation types', { tag: '@fast' }, () => {
@@ -52,6 +53,21 @@ test.describe('Unread messages across conversation types', { tag: '@fast' }, () 
             }
             await expect(button).toHaveAttribute('aria-expanded', 'true');
         }
+    }
+
+    /**
+     * Runs a navigation that creates a new websocket and waits until the page listens for new posts and conversation changes.
+     * A live update published before that is lost, so the tests must not trigger one earlier.
+     */
+    async function navigateAndAwaitSubscriptions(page: Page, navigate: () => Promise<unknown>) {
+        const subscriptions = trackWebsocketSubscriptions(page);
+        await navigate();
+        await subscriptions.waitFor('/notifications/conversations');
+        await subscriptions.waitFor(`/topic/communication/courses/${course!.id}/conversations/user/`);
+    }
+
+    async function openCommunication(page: Page, conversationId: number) {
+        await navigateAndAwaitSubscriptions(page, () => page.goto(`/courses/${course!.id}/communication?conversationId=${conversationId}`));
     }
 
     function conversationLink(page: Page, id: number) {
@@ -118,7 +134,7 @@ test.describe('Unread messages across conversation types', { tag: '@fast' }, () 
                 await markRead(bystander, id);
             }
             await markRead(page, id);
-            await page.goto(`/courses/${course!.id}/communication?conversationId=${other.id}`);
+            await openCommunication(page, other.id!);
             await expect(page.getByTestId('conversation-name')).toHaveText(other.name!);
             await showGroups(page);
             const link = conversationLink(page, id);
@@ -150,7 +166,7 @@ test.describe('Unread messages across conversation types', { tag: '@fast' }, () 
     for (const kind of ['groupChat', 'oneToOneChat'] as const) {
         test(`reads live arrivals after creating a ${kind} from a manually unread channel`, async ({ page, courseMessages }) => {
             const original = await api(staff).createCourseMessage(course!, channel.id!, 'channel', 'Which synchronization policy should our study group use?');
-            await page.goto(`/courses/${course!.id}/communication?conversationId=${channel.id}`);
+            await openCommunication(page, channel.id!);
             await expect(courseMessages.getSinglePost(original.id!)).toContainText(original.content!);
             await courseMessages.getSinglePost(original.id!).getByText(original.content!, { exact: true }).click({ button: 'right' });
             await page.getByTestId('posting-menu-mark-unread').click();
@@ -199,7 +215,7 @@ test.describe('Unread messages across conversation types', { tag: '@fast' }, () 
         await markRead(page, channel.id!);
         const muted = await page.request.post(`api/communication/courses/${course!.id}/conversations/${channel.id}/muted`, { params: { isMuted: true } });
         expect(muted.ok()).toBe(true);
-        await page.goto(`/courses/${course!.id}/communication?conversationId=${other.id}`);
+        await openCommunication(page, other.id!);
         await expect(page.getByTestId('conversation-name')).toHaveText(other.name!);
         await showGroups(page);
         const link = conversationLink(page, channel.id!);
@@ -208,7 +224,7 @@ test.describe('Unread messages across conversation types', { tag: '@fast' }, () 
         await expect(link.getByTestId('conversation-unread-count')).toHaveCount(0);
         const unmuted = await page.request.post(`api/communication/courses/${course!.id}/conversations/${channel.id}/muted`, { params: { isMuted: false } });
         expect(unmuted.ok()).toBe(true);
-        await page.reload();
+        await navigateAndAwaitSubscriptions(page, () => page.reload());
         await expect(page.getByTestId('conversation-name')).toHaveText(other.name!);
         await showGroups(page);
         await link.click();
@@ -245,7 +261,7 @@ test.describe('Unread messages across conversation types', { tag: '@fast' }, () 
         const readPost = await api(staff).createCourseMessage(course!, channel.id!, 'channel', 'The lecture notes on thread safety are available.');
         await markRead(page, channel.id!);
         await markRead(previousReplier, channel.id!);
-        await page.goto(`/courses/${course!.id}/communication?conversationId=${other.id}`);
+        await openCommunication(page, other.id!);
         await expect(page.getByTestId('conversation-name')).toHaveText(other.name!);
         await showGroups(page);
         const badge = conversationLink(page, channel.id!).getByTestId('conversation-unread-count');

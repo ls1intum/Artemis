@@ -80,6 +80,7 @@ test('Conversation notifications leave Send accessible, preserve the draft and o
         expect(await input.evaluate(() => window.getSelection()?.anchorOffset)).toBe(selectionBefore);
         await studentPage.screenshot({ path: testInfo.outputPath('conversation-notification-layout.png') });
 
+        const cards = studentPage.getByTestId('notification-popup-card');
         let latestContent = 'Reply notification layout regression';
         for (let index = 1; index <= 7; index++) {
             latestContent = `Long notification ${index}: ${'Long message for the notification layout. '.repeat(30)}`;
@@ -88,8 +89,9 @@ test('Conversation notifications leave Send accessible, preserve the draft and o
             });
             expect(response.ok()).toBe(true);
             reply = await response.json();
+            // Notifications are delivered asynchronously. Wait for each popup, so a delayed delivery is not mistaken for a missing one.
+            await expect(cards).toHaveCount(index + 1);
         }
-        const cards = studentPage.getByTestId('notification-popup-card');
         await expect(cards).toHaveCount(8);
         await studentPage.setViewportSize({ width: 390, height: 844 });
         const latestCard = cards.last();
