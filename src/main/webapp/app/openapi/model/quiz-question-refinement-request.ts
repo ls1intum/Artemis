@@ -8,11 +8,14 @@
  * NOTE: This file is auto-generated. Do not edit manually.
  */
 
+import type { GeneratedQuizQuestion } from './generated-quiz-question';
 
 /**
  * Request to refine an existing quiz question using a user prompt
  */
 export interface QuizQuestionRefinementRequest {
+    /** The existing quiz question to refine */
+    question: GeneratedQuizQuestion;
     /** User instructions describing how the question should be changed */
     refinementPrompt: string;
 }
