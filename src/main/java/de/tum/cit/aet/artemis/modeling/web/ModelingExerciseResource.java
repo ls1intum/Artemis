@@ -34,10 +34,8 @@ import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
 import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
 import de.tum.cit.aet.artemis.assessment.service.GradingCriteriaMapper;
-import de.tum.cit.aet.artemis.atlas.api.AtlasMLApi;
 import de.tum.cit.aet.artemis.atlas.api.CompetencyApi;
 import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
-import de.tum.cit.aet.artemis.atlas.dto.atlasml.SaveCompetencyRequestDTO.OperationTypeDTO;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
@@ -153,8 +151,6 @@ public class ModelingExerciseResource {
 
     private final Optional<SlideApi> slideApi;
 
-    private final Optional<AtlasMLApi> atlasMLApi;
-
     private final Optional<CompetencyApi> competencyApi;
 
     private final CompetencyExerciseLinkService competencyExerciseLinkService;
@@ -170,7 +166,7 @@ public class ModelingExerciseResource {
             ModelingExerciseService modelingExerciseService, ExerciseDeletionService exerciseDeletionService, ModelingExerciseImportService modelingExerciseImportService,
             SubmissionExportService modelingSubmissionExportService, ExerciseService exerciseService, GroupNotificationScheduleService groupNotificationScheduleService,
             GradingCriterionRepository gradingCriterionRepository, ChannelService channelService, ChannelRepository channelRepository,
-            ExerciseVersionService exerciseVersionService, Optional<CompetencyProgressApi> competencyProgressApi, Optional<SlideApi> slideApi, Optional<AtlasMLApi> atlasMLApi,
+            ExerciseVersionService exerciseVersionService, Optional<CompetencyProgressApi> competencyProgressApi, Optional<SlideApi> slideApi,
             Optional<CompetencyApi> competencyApi, CompetencyExerciseLinkService competencyExerciseLinkService, Optional<ExerciseGroupApi> exerciseGroupApi,
             ExerciseVariantGroupService exerciseVariantGroupService, TeamAssignmentConfigRepository teamAssignmentConfigRepository,
             PlagiarismDetectionConfigRepository plagiarismDetectionConfigRepository, ExerciseConfigurationService exerciseConfigurationService,
@@ -197,7 +193,6 @@ public class ModelingExerciseResource {
         this.exerciseVersionService = exerciseVersionService;
         this.competencyProgressApi = competencyProgressApi;
         this.slideApi = slideApi;
-        this.atlasMLApi = atlasMLApi;
         this.competencyExerciseLinkService = competencyExerciseLinkService;
         this.exerciseGroupApi = exerciseGroupApi;
         this.exerciseVariantGroupService = exerciseVariantGroupService;
@@ -270,15 +265,6 @@ public class ModelingExerciseResource {
         groupNotificationScheduleService.checkNotificationsForNewExerciseAsync(modelingExercise);
         competencyProgressApi.ifPresent(api -> api.updateProgressByLearningObjectAsync(result));
 
-        // Notify AtlasML about the new modeling exercise
-        atlasMLApi.ifPresent(api -> {
-            try {
-                api.saveExerciseWithCompetencies(result, OperationTypeDTO.UPDATE);
-            }
-            catch (Exception e) {
-                log.warn("Failed to notify AtlasML about modeling exercise creation: {}", e.getMessage());
-            }
-        });
         exerciseVersionService.createExerciseVersion(result);
 
         // Guarantee exam.course is initialized before mapping: a second save() above (competency links) would
@@ -397,9 +383,6 @@ public class ModelingExerciseResource {
 
         competencyProgressApi.ifPresent(api -> api.updateProgressForUpdatedLearningObjectAsyncWithOriginalCompetencyIds(originalCompetencyIds, persistedExercise));
 
-        // Notify AtlasML about the modeling exercise update
-        atlasMLApi.ifPresent(api -> api.notifyExerciseUpdated(persistedExercise));
-
         exerciseVersionService.createExerciseVersion(persistedExercise);
 
         // Guarantee exam.course is initialized before mapping: save() merges the detached originalExercise, and merge
@@ -483,17 +466,8 @@ public class ModelingExerciseResource {
         var course = modelingExercise.getCourseViaExerciseGroupOrCourseMemberElseThrow();
         // note: we use the exercise service here, because this one makes sure to clean
         // up all lazy references correctly.
-        // AtlasML is notified and the request is audited only once the deletion is accepted, so a request that is refused because the exercise is already being deleted does
-        // neither. The notification still precedes the actual deletion.
+        // Audit only once the deletion is accepted, so a refused duplicate request is not audited.
         exerciseDeletionService.startAsyncDeletion(modelingExercise, false, () -> {
-            atlasMLApi.ifPresent(api -> {
-                try {
-                    api.saveExerciseWithCompetencies(modelingExercise, OperationTypeDTO.DELETE);
-                }
-                catch (Exception e) {
-                    log.warn("Failed to notify AtlasML about modeling exercise deletion: {}", e.getMessage());
-                }
-            });
             exerciseService.logDeletion(modelingExercise, course, user);
         });
         return ResponseEntity.accepted().build();
@@ -540,8 +514,6 @@ public class ModelingExerciseResource {
 
         final var newModelingExercise = modelingExerciseImportService.importModelingExercise(importedExercise, originalModelingExercise);
         modelingExerciseRepository.save(newModelingExercise);
-        // Notify AtlasML about the imported exercise
-        atlasMLApi.ifPresent(api -> api.saveExerciseWithCompetencies(newModelingExercise));
         exerciseVersionService.createExerciseVersion(newModelingExercise, user);
 
         // Guarantee exam.course is initialized before mapping: the import service's second save() (competency links)
