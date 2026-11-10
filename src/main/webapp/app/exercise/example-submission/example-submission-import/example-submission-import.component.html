@@ -18,6 +18,7 @@
             <tumaet-ui-table-layout
                 [loading]="loading()"
                 [empty]="content().resultsOnPage.length === 0 && !loading()"
+                [emptyTitle]="searchTermEntered ? 'artemisApp.assessment.dashboard.empty' : 'artemisApp.assessment.dashboard.emptySearch'"
                 class="[--table-layout-offset:20rem] max-md:[--table-layout-offset:28rem]"
             >
                 <div tumAetUiTableToolbar class="flex min-w-0 flex-1 items-center gap-2">
@@ -98,9 +99,6 @@
                         }
                     </tbody>
                 </table>
-                @if (!content().resultsOnPage || content().resultsOnPage.length === 0) {
-                    <p class="p-4 text-center" [jhiTranslate]="searchTermEntered ? 'artemisApp.assessment.dashboard.empty' : 'artemisApp.assessment.dashboard.emptySearch'"></p>
-                }
                 <!-- The search API supplies page counts, not an exact number of records, so the count is not shown. -->
                 <tumaet-ui-paginator
                     tumAetUiTableFooter
