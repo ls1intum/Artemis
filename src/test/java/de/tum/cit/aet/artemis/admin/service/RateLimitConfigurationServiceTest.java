@@ -129,6 +129,9 @@ class RateLimitConfigurationServiceTest {
 
         assertThat(configurationService.getEffectiveRpm(RateLimitType.OIDC_AUTHORIZATION)).isEqualTo(7);
         assertThat(configurationService.getEffectiveRpm(RateLimitType.AUTHENTICATION)).isEqualTo(99);
+    }
+
+    @Test
     void testGetEffectiveRpm_GitAuthentication_UsesTheCustomValueOrTheDefault() {
         when(properties.getGitAuthenticationRequestsPerMinute()).thenReturn(300);
         assertThat(configurationService.getEffectiveRpm(RateLimitType.GIT_AUTHENTICATION)).isEqualTo(300);
