@@ -13,34 +13,59 @@
         />
 
         <div class="mcq-carousel-navigation">
-            <button type="button" class="nav-btn" [disabled]="currentIndex() === 0" (click)="previousQuestion()">
+            <button
+                tumAetUiButton
+                severity="primary"
+                variant="outlined"
+                type="button"
+                class="nav-btn"
+                [attr.aria-label]="'artemisApp.iris.mcq.previousQuestion' | artemisTranslate"
+                [disabled]="currentIndex() === 0"
+                (click)="previousQuestion()"
+            >
                 <fa-icon [icon]="faChevronLeft" />
             </button>
 
             @if (useDots()) {
                 <div class="mcq-carousel-dots">
-                    @for (q of mcqSetData().questions; track $index) {
+                    @for (question of questionNavigation(); track question.index) {
                         <button
                             type="button"
                             class="dot"
-                            [class.active]="currentIndex() === $index"
-                            [class.correct]="isQuestionCorrect($index)"
-                            [class.incorrect]="isQuestionIncorrect($index)"
-                            (click)="goToQuestion($index)"
-                        ></button>
+                            [attr.aria-label]="question.labelKey | artemisTranslate: { number: question.index + 1 }"
+                            [title]="question.labelKey | artemisTranslate: { number: question.index + 1 }"
+                            [class.active]="currentIndex() === question.index"
+                            [attr.aria-current]="currentIndex() === question.index ? 'step' : undefined"
+                            [class.correct]="question.correct"
+                            [class.incorrect]="question.incorrect"
+                            (click)="goToQuestion(question.index)"
+                        >
+                            <span class="dot-indicator" aria-hidden="true">{{ question.correct ? '✓' : question.incorrect ? '×' : '' }}</span>
+                        </button>
                     }
                 </div>
             } @else {
                 <span class="mcq-carousel-counter">{{ currentIndex() + 1 }} / {{ totalQuestions() }}</span>
             }
 
-            <button type="button" class="nav-btn" [disabled]="currentIndex() === totalQuestions() - 1" (click)="nextQuestion()">
+            <button
+                tumAetUiButton
+                severity="primary"
+                variant="outlined"
+                type="button"
+                class="nav-btn"
+                [attr.aria-label]="'artemisApp.iris.mcq.nextQuestion' | artemisTranslate"
+                [disabled]="currentIndex() === totalQuestions() - 1"
+                (click)="nextQuestion()"
+            >
                 <fa-icon [icon]="faChevronRight" />
             </button>
         </div>
 
         @if (allAnswered()) {
-            <button type="button" class="view-score-btn" (click)="showScore.set(true)" jhiTranslate="artemisApp.iris.mcq.viewScore"></button>
+            <button tumAetUiButton severity="info" data-button-intent="analytics" type="button" class="view-score-btn" (click)="showScore.set(true)">
+                <span jhiTranslate="artemisApp.iris.mcq.viewScore"></span>
+            </button>
         }
     } @else {
         <div class="score-summary">
@@ -52,19 +77,25 @@
 
             @if (useDots()) {
                 <div class="mcq-carousel-dots score-dots">
-                    @for (q of mcqSetData().questions; track $index) {
+                    @for (question of questionNavigation(); track question.index) {
                         <button
                             type="button"
                             class="dot"
-                            [class.correct]="isQuestionCorrect($index)"
-                            [class.incorrect]="isQuestionIncorrect($index)"
-                            (click)="showScore.set(false); goToQuestion($index)"
-                        ></button>
+                            [attr.aria-label]="question.labelKey | artemisTranslate: { number: question.index + 1 }"
+                            [title]="question.labelKey | artemisTranslate: { number: question.index + 1 }"
+                            [class.correct]="question.correct"
+                            [class.incorrect]="question.incorrect"
+                            (click)="showScore.set(false); goToQuestion(question.index)"
+                        >
+                            <span class="dot-indicator" aria-hidden="true">{{ question.correct ? '✓' : question.incorrect ? '×' : '' }}</span>
+                        </button>
                     }
                 </div>
             }
 
-            <button type="button" class="review-btn" (click)="showScore.set(false)" jhiTranslate="artemisApp.iris.mcq.reviewQuestions"></button>
+            <button tumAetUiButton severity="success" variant="outlined" data-button-intent="positive" type="button" class="review-btn" (click)="showScore.set(false)">
+                <span jhiTranslate="artemisApp.iris.mcq.reviewQuestions"></span>
+            </button>
         </div>
     }
 </div>

@@ -44,7 +44,7 @@ describe('IrisMcqQuestionComponent', () => {
 
     it('should render four options', () => {
         const el = render();
-        const options = el.querySelectorAll('.mcq-option');
+        const options = el.querySelectorAll<HTMLInputElement>('.mcq-option-input');
         expect(options).toHaveLength(4);
     });
 
@@ -70,11 +70,11 @@ describe('IrisMcqQuestionComponent', () => {
 
     it('should select an option on click', () => {
         const el = render();
-        const options = el.querySelectorAll('.mcq-option');
-        (options[1] as HTMLButtonElement).click();
+        const options = el.querySelectorAll<HTMLInputElement>('.mcq-option-input');
+        options[1].click();
         fixture.detectChanges();
         expect(component.selectedIndex()).toBe(1);
-        expect(options[1].classList.contains('selected')).toBe(true);
+        expect(options[1].nextElementSibling!.classList.contains('selected')).toBe(true);
     });
 
     it('should disable submit button when no option is selected', () => {
@@ -85,8 +85,8 @@ describe('IrisMcqQuestionComponent', () => {
 
     it('should enable submit button after selecting an option', () => {
         const el = render();
-        const options = el.querySelectorAll('.mcq-option');
-        (options[0] as HTMLButtonElement).click();
+        const options = el.querySelectorAll<HTMLInputElement>('.mcq-option-input');
+        options[0].click();
         fixture.detectChanges();
         const submitButton = el.querySelector('.mcq-submit') as HTMLButtonElement;
         expect(submitButton.disabled).toBe(false);
@@ -94,36 +94,36 @@ describe('IrisMcqQuestionComponent', () => {
 
     it('should show correct feedback when correct answer is selected', () => {
         const el = render();
-        const options = el.querySelectorAll('.mcq-option');
-        (options[1] as HTMLButtonElement).click(); // correct answer
+        const options = el.querySelectorAll<HTMLInputElement>('.mcq-option-input');
+        options[1].click(); // correct answer
         fixture.detectChanges();
         (el.querySelector('.mcq-submit') as HTMLButtonElement).click();
         fixture.detectChanges();
 
         expect(component.submitted()).toBe(true);
-        expect(component.isCorrectAnswer()).toBe(true);
-        expect(el.querySelector('.mcq-feedback-correct')).toBeTruthy();
-        expect(el.querySelector('.mcq-feedback-incorrect')).toBeFalsy();
+        expect(component.correctAnswer()).toBe(true);
+        expect(el.querySelector('tumaet-ui-message')?.getAttribute('data-severity')).toBe('success');
+        expect(el.querySelector('[role="status"]')?.textContent).toContain('artemisApp.iris.mcq.correct');
     });
 
     it('should show incorrect feedback when wrong answer is selected', () => {
         const el = render();
-        const options = el.querySelectorAll('.mcq-option');
-        (options[0] as HTMLButtonElement).click(); // incorrect answer
+        const options = el.querySelectorAll<HTMLInputElement>('.mcq-option-input');
+        options[0].click(); // incorrect answer
         fixture.detectChanges();
         (el.querySelector('.mcq-submit') as HTMLButtonElement).click();
         fixture.detectChanges();
 
         expect(component.submitted()).toBe(true);
-        expect(component.isCorrectAnswer()).toBe(false);
-        expect(el.querySelector('.mcq-feedback-incorrect')).toBeTruthy();
-        expect(el.querySelector('.mcq-feedback-correct')).toBeFalsy();
+        expect(component.correctAnswer()).toBe(false);
+        expect(el.querySelector('tumaet-ui-message')?.getAttribute('data-severity')).toBe('error');
+        expect(el.querySelector('[role="alert"]')?.textContent).toContain('artemisApp.iris.mcq.incorrect');
     });
 
     it('should show explanation after submission', () => {
         const el = render();
-        const options = el.querySelectorAll('.mcq-option');
-        (options[1] as HTMLButtonElement).click();
+        const options = el.querySelectorAll<HTMLInputElement>('.mcq-option-input');
+        options[1].click();
         fixture.detectChanges();
         (el.querySelector('.mcq-submit') as HTMLButtonElement).click();
         fixture.detectChanges();
@@ -135,8 +135,8 @@ describe('IrisMcqQuestionComponent', () => {
 
     it('should hide submit button after submission', () => {
         const el = render();
-        const options = el.querySelectorAll('.mcq-option');
-        (options[1] as HTMLButtonElement).click();
+        const options = el.querySelectorAll<HTMLInputElement>('.mcq-option-input');
+        options[1].click();
         fixture.detectChanges();
         (el.querySelector('.mcq-submit') as HTMLButtonElement).click();
         fixture.detectChanges();
@@ -146,33 +146,33 @@ describe('IrisMcqQuestionComponent', () => {
 
     it('should highlight correct option with correct class after submission', () => {
         const el = render();
-        const options = el.querySelectorAll('.mcq-option');
-        (options[0] as HTMLButtonElement).click(); // wrong answer
+        const options = el.querySelectorAll<HTMLInputElement>('.mcq-option-input');
+        options[0].click(); // wrong answer
         fixture.detectChanges();
         (el.querySelector('.mcq-submit') as HTMLButtonElement).click();
         fixture.detectChanges();
 
-        expect(options[0].classList.contains('incorrect')).toBe(true);
-        expect(options[1].classList.contains('correct')).toBe(true);
+        expect(options[0].nextElementSibling!.classList.contains('incorrect')).toBe(true);
+        expect(options[1].nextElementSibling!.classList.contains('correct')).toBe(true);
     });
 
     it('should disable all options after submission', () => {
         const el = render();
-        const options = el.querySelectorAll('.mcq-option');
-        (options[1] as HTMLButtonElement).click();
+        const options = el.querySelectorAll<HTMLInputElement>('.mcq-option-input');
+        options[1].click();
         fixture.detectChanges();
         (el.querySelector('.mcq-submit') as HTMLButtonElement).click();
         fixture.detectChanges();
 
         options.forEach((option) => {
-            expect((option as HTMLButtonElement).disabled).toBe(true);
+            expect(option.disabled).toBe(true);
         });
     });
 
     it('should not change selection after submission', () => {
         const el = render();
-        const options = el.querySelectorAll('.mcq-option');
-        (options[1] as HTMLButtonElement).click();
+        const options = el.querySelectorAll<HTMLInputElement>('.mcq-option-input');
+        options[1].click();
         fixture.detectChanges();
         (el.querySelector('.mcq-submit') as HTMLButtonElement).click();
         fixture.detectChanges();
@@ -186,8 +186,8 @@ describe('IrisMcqQuestionComponent', () => {
         const spy = vi.fn();
         component.answerChanged.subscribe(spy);
 
-        const options = el.querySelectorAll('.mcq-option');
-        (options[2] as HTMLButtonElement).click();
+        const options = el.querySelectorAll<HTMLInputElement>('.mcq-option-input');
+        options[2].click();
         fixture.detectChanges();
 
         expect(spy).toHaveBeenCalledWith({ selectedIndex: 2, submitted: false });
@@ -198,8 +198,8 @@ describe('IrisMcqQuestionComponent', () => {
         const spy = vi.fn();
         component.answerChanged.subscribe(spy);
 
-        const options = el.querySelectorAll('.mcq-option');
-        (options[1] as HTMLButtonElement).click();
+        const options = el.querySelectorAll<HTMLInputElement>('.mcq-option-input');
+        options[1].click();
         fixture.detectChanges();
         (el.querySelector('.mcq-submit') as HTMLButtonElement).click();
         fixture.detectChanges();
@@ -293,12 +293,12 @@ describe('IrisMcqQuestionComponent', () => {
 
         // Should be able to select and submit
         const el = fixture.nativeElement as HTMLElement;
-        const options = el.querySelectorAll('.mcq-option');
+        const options = el.querySelectorAll<HTMLInputElement>('.mcq-option-input');
         options.forEach((option) => {
-            expect((option as HTMLButtonElement).disabled).toBe(false);
+            expect(option.disabled).toBe(false);
         });
 
-        (options[0] as HTMLButtonElement).click();
+        options[0].click();
         fixture.detectChanges();
 
         expect(component.selectedIndex()).toBe(0);
@@ -321,8 +321,94 @@ describe('IrisMcqQuestionComponent', () => {
         expect(component.submitted()).toBe(true);
     });
 
-    it('should return false for isCorrectAnswer when no option is selected', () => {
+    it('should report no correct answer when no option is selected', () => {
         render();
-        expect(component.isCorrectAnswer()).toBe(false);
+        expect(component.correctAnswer()).toBe(false);
+    });
+
+    it('should expose native radios in a uniquely named group labelled by the question', () => {
+        const el = render();
+        const group = el.querySelector('[role="radiogroup"]')!;
+        const radios = el.querySelectorAll<HTMLInputElement>('input[type="radio"]');
+        expect(group.getAttribute('aria-labelledby')).toBe(component.questionLabelId);
+        expect(el.querySelector(`#${component.questionLabelId}`)?.textContent).toBe(sampleMcq.question);
+        expect(new Set(Array.from(radios, (radio) => radio.name))).toEqual(new Set([component.questionLabelId]));
+        expect(radios[1].labels?.[0].textContent).toContain('B');
+        expect(radios[1].labels?.[0].textContent).toContain('4');
+    });
+
+    it('should have one tab stop that follows the selected radio', () => {
+        const el = render();
+        const radios = el.querySelectorAll<HTMLInputElement>('input[type="radio"]');
+        expect(Array.from(radios, (radio) => radio.tabIndex)).toEqual([0, -1, -1, -1]);
+        radios[2].click();
+        fixture.detectChanges();
+        expect(Array.from(radios, (radio) => radio.tabIndex)).toEqual([-1, -1, 0, -1]);
+        expect(Array.from(radios, (radio) => radio.checked)).toEqual([false, false, true, false]);
+    });
+
+    it.each(['ArrowRight', 'ArrowDown', 'ArrowLeft', 'ArrowUp'])('should leave %s navigation to the native radio group', (key) => {
+        const el = render();
+        const radio = el.querySelector<HTMLInputElement>('input[type="radio"]')!;
+        radio.focus();
+        // JSDOM does not implement native keyboard default actions. Verify that the application
+        // keeps the native, same-name group and does not cancel the browser's arrow-key handling.
+        const event = new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true });
+        expect(radio.dispatchEvent(event)).toBe(true);
+        expect(event.defaultPrevented).toBe(false);
+        expect(document.activeElement).toBe(radio);
+    });
+
+    it('should focus the feedback and remove submitted answers from the tab order', async () => {
+        const el = render();
+        const radios = el.querySelectorAll<HTMLInputElement>('input[type="radio"]');
+        radios[1].click();
+        fixture.detectChanges();
+        const submit = el.querySelector<HTMLButtonElement>('.mcq-submit')!;
+        submit.focus();
+        submit.click();
+        fixture.detectChanges();
+        await fixture.whenStable();
+        expect(document.activeElement).toBe(el.querySelector('.mcq-feedback'));
+        expect(Array.from(radios, (radio) => radio.tabIndex)).toEqual([-1, -1, -1, -1]);
+        expect(Array.from(radios, (radio) => radio.disabled)).toEqual([true, true, true, true]);
+        radios[0].click();
+        fixture.detectChanges();
+        expect(radios[1].checked).toBe(true);
+        expect(component.selectedIndex()).toBe(1);
+    });
+
+    it('should restore checked and disabled native radios without moving focus', async () => {
+        const el = render({ ...sampleMcq, response: { selectedIndex: 2, submitted: true } });
+        await fixture.whenStable();
+        const radios = el.querySelectorAll<HTMLInputElement>('input[type="radio"]');
+        expect(Array.from(radios, (radio) => radio.checked)).toEqual([false, false, true, false]);
+        expect(Array.from(radios, (radio) => radio.disabled)).toEqual([true, true, true, true]);
+        expect(document.activeElement).not.toBe(el.querySelector('.mcq-feedback'));
+    });
+
+    it('should expose correct and incorrect option status as text as well as colour', () => {
+        const el = render();
+        el.querySelector<HTMLInputElement>('input[type="radio"]')!.click();
+        fixture.detectChanges();
+        el.querySelector<HTMLButtonElement>('.mcq-submit')!.click();
+        fixture.detectChanges();
+        const options = el.querySelectorAll('.mcq-option');
+        expect(options[0].textContent).toContain('×');
+        expect(options[0].textContent).toContain('artemisApp.iris.mcq.incorrect');
+        expect(options[1].textContent).toContain('✓');
+        expect(options[1].textContent).toContain('artemisApp.iris.mcq.correct');
+    });
+
+    it('should retain cleaned option text and letter labels', () => {
+        const el = render({
+            ...sampleMcq,
+            options: [
+                { text: 'A. First answer', correct: true },
+                { text: 'A valid answer', correct: false },
+            ],
+        });
+        expect(Array.from(el.querySelectorAll('.mcq-option-text'), (option) => option.textContent)).toEqual(['First answer', 'A valid answer']);
+        expect(Array.from(el.querySelectorAll('.mcq-option-label'), (option) => option.textContent)).toEqual(['A', 'B']);
     });
 });
