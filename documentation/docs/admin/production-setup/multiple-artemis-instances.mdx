@@ -2,7 +2,7 @@
 id: multiple-artemis-instances
 title: Multiple Artemis Instances
 sidebar_label: Multiple Artemis Instances
-last_reviewed: 2026-11-08
+last_reviewed: 2026-11-09
 ---
 
 import Callout from "../../../src/components/Callout/Callout";
@@ -705,6 +705,63 @@ It may take a few seconds for the build agent to show up:
     size={ImageSize.large}
     alt={"List of build agents as shown in the Artemis user interface."}
 />
+
+
+### Which setting goes on which node
+
+A multi-node installation has two kinds of nodes with one configuration each. The file names are the same as in a single-node setup; only the
+nodes that read a setting matter.
+
+| Setting | Core nodes | Build agents |
+| --- | --- | --- |
+| Profiles | `core`, `localvc`, `localci`, `scheduling` | `buildagent` |
+| Database (`spring.datasource`) | Yes, **one** database that all core nodes share | No. A build agent has no database access. |
+| `artemis.distributed-data.provider` | Yes, identical on all nodes | Yes, identical to the core nodes |
+| `artemis.version-control.url` and the repository authentication | Yes | `url` and `default-branch` only, see [Build Agents](#build-agents) |
+| `artemis.continuous-integration.build.images` (default Docker image per language) | Yes, exercises are created on core nodes | Not needed |
+| `build-timeout-seconds` (`min`, `default`, `max`) | Yes, `application-localci.yml` | Yes, `application-buildagent.yml`. The `max` values must be equal. |
+| `container-flags-limit`, including `allowed-custom-networks` | Yes | Yes, with the same values |
+| `bulk-trigger`, `concurrent-result-processing-size` | Yes | No |
+| `concurrent-build-size`, `specify-concurrent-builds`, `image-cleanup`, `container-cleanup`, `build-logs`, `proxies`, `docker-connection-uri` | No | Yes |
+| `build-agent.short-name` | No | Yes, unique per agent |
+| Docker registry login (`~/.docker/config.json`) | No | Yes, on every build agent host. See [LocalCI Build Environment](/admin/production-setup/localci-build-environment#images-from-a-private-registry). |
+
+The defaults of all these keys are in `application-localci.yml` and `application-buildagent.yml`, which are part of the `.war`. Put your changes into
+the configuration file that you already use for your installation (for example `application-prod.yml` or an external `application-local.yml`), not into the files inside the `.war`.
+Which Docker image a build runs in, what the container may do, and how the build can be adapted is described in [LocalCI Build Environment](/admin/production-setup/localci-build-environment).
+
+There is **one database** for the whole installation. It belongs to the core nodes and is shared by all of them. The state that the nodes exchange at runtime, such as the
+build queue and the build agents, is not in that database but in the [distributed data provider](/admin/production-setup/distributed-data).
+
+### Operating build agents
+
+**Adding build agents.** Start another Artemis node with the `buildagent` profile and a unique `build-agent.short-name`. It registers with the cluster within seconds, shows up under
+**Administration → Build System → Build Agents**, and takes jobs from the queue immediately. Nothing has to change on the core nodes or on the other agents.
+Pull the Docker images before you start it, so that its first builds do not wait for downloads.
+The agent only needs a connection to the [distributed data provider](/admin/production-setup/distributed-data), to Docker, and to the version control URL.
+
+**Scaling automatically.** Artemis has **no autoscaler** of its own: the number of build agents is the number that you start. The Build Agents page shows the length of the queue and the utilization of
+each agent, and agents can join and leave at any time. The metrics of the Artemis nodes expose the same numbers as the gauges `artemis.global.localci.queued`, `running`, `agents`
+and `maxConcurrentBuilds`, which a monitoring system such as Prometheus can scrape. A scaling rule in your own orchestration or virtualization environment has to watch the queue and start or stop agent nodes.
+Fix the number of concurrent builds per agent with `specify-concurrent-builds: true`, so that every added agent adds a known capacity.
+
+An orchestrator is easiest with the experimental [Kubernetes runner](/admin/production-setup/build-runners#kubernetes-runner). It runs every build as a Kubernetes Job, so the
+cluster schedules the build Pods itself, and a cluster autoscaler can add nodes when Pods wait for resources. The Helm chart can also scale the build agent controllers
+with the queue, using KEDA and Prometheus, see [Operating LocalCI on Kubernetes](/admin/production-setup/localci-on-kubernetes#automatically). The runner is a proof of concept and has not been
+through a production deployment.
+
+**Removing build agents.** Pause the agent on the Build Agents page, wait until its running builds have finished, then stop it.
+A paused agent takes no new jobs. If builds are still running after `pause-grace-period-seconds` (60 seconds by default), the agent cancels them and puts them back into the queue.
+
+**When a build agent fails during a build.** If the agent crashes, loses its connection or is stopped, the cluster notices that it left, and the jobs it was running go back into the
+queue with a higher retry count, where another agent picks them up. A second check runs every two minutes for jobs whose agent no longer exists, in case the notification was lost.
+A job is re-queued up to five times this way, and is then marked as failed. Separately, a build that is neither queued nor running and has not been seen for five minutes is marked
+**missing**, and Artemis queues it again up to three times (`max-missing-job-retries`). For a student, a failing agent therefore usually means a result that arrives later, not a lost build.
+An agent also pauses itself after `pause-after-consecutive-failed-jobs` (100) consecutive failed jobs, so that a broken host does not fail the whole queue.
+
+**Updating.** Build agents are updated together with the core nodes, following [Deploying a New Version](#deploying-a-new-version): Artemis has no rolling update.
+Pause the agents so that running builds finish, stop all nodes, start the first core node and wait for it, then start the remaining core nodes, and finally the build agents,
+which need a running core node (or the Redis or Valkey store) to join. Jobs that are lost during the restart are detected as missing builds and queued again, as described above.
 
 
 ## Running multiple instances locally
