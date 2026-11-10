@@ -62,6 +62,7 @@ import de.tum.cit.aet.artemis.lecture.repository.LectureUnitRepository;
 import de.tum.cit.aet.artemis.lecture.service.LectureContentProcessingService;
 import de.tum.cit.aet.artemis.lecture.service.LectureService;
 import de.tum.cit.aet.artemis.lecture.service.LectureUnitService;
+import de.tum.cit.aet.artemis.lecture.service.TumLiveUploadService;
 import io.swagger.v3.oas.annotations.Operation;
 
 @Conditional(LectureEnabled.class)
@@ -98,10 +99,13 @@ public class LectureUnitResource {
 
     private final Optional<SearchableEntityWeaviateService> searchableEntityWeaviateService;
 
+    private final TumLiveUploadService tumLiveUploadService;
+
     public LectureUnitResource(UserRepository userRepository, LectureRepository lectureRepository, LectureUnitRepository lectureUnitRepository,
             LectureUnitService lectureUnitService, Optional<CompetencyProgressApi> competencyProgressApi, Optional<LectureContentProcessingService> lectureContentProcessingService,
             LectureUnitProcessingStateRepository processingStateRepository, LectureTranscriptionRepository transcriptionRepository,
-            Optional<SearchableEntityWeaviateService> searchableEntityWeaviateServiceOptional, LectureService lectureService) {
+            Optional<SearchableEntityWeaviateService> searchableEntityWeaviateServiceOptional, LectureService lectureService, TumLiveUploadService tumLiveUploadService) {
+        this.tumLiveUploadService = tumLiveUploadService;
         this.userRepository = userRepository;
         this.lectureUnitRepository = lectureUnitRepository;
         this.lectureRepository = lectureRepository;
@@ -189,13 +193,15 @@ public class LectureUnitResource {
     /**
      * DELETE lectures/:lectureId/lecture-units/:lectureUnitId
      *
-     * @param lectureId     the id of the lecture to which the unit belongs
-     * @param lectureUnitId the id of the lecture unit to remove
+     * @param lectureId               the id of the lecture to which the unit belongs
+     * @param lectureUnitId           the id of the lecture unit to remove
+     * @param deleteTumLiveRecordings whether to delete in TUM.Live the video Artemis uploaded for the unit; an upload not attached yet is always deleted
      * @return the ResponseEntity with status 200 (OK)
      */
     @DeleteMapping("lectures/{lectureId}/lecture-units/{lectureUnitId}")
     @EnforceAtLeastInstructorInLectureUnit
-    public ResponseEntity<Void> deleteLectureUnit(@PathVariable long lectureUnitId, @PathVariable Long lectureId) {
+    public ResponseEntity<Void> deleteLectureUnit(@PathVariable long lectureUnitId, @PathVariable Long lectureId,
+            @RequestParam(defaultValue = "false") boolean deleteTumLiveRecordings) {
         log.info("REST request to delete lecture unit: {}", lectureUnitId);
         LectureUnit lectureUnit = lectureUnitRepository.findByIdElseThrow(lectureUnitId);
         if (lectureUnit.getLecture() == null || lectureUnit.getLecture().getCourse() == null) {
@@ -211,6 +217,7 @@ public class LectureUnitResource {
         }
         long unitId = lectureUnitId;
         lectureUnitService.removeLectureUnit(lectureUnit);
+        tumLiveUploadService.releaseForDeletion(List.of(unitId), deleteTumLiveRecordings);
 
         searchableEntityWeaviateService.ifPresent(service -> service.deleteEntityAsync(SearchableEntitySchema.TypeValues.LECTURE_UNIT, unitId));
 
