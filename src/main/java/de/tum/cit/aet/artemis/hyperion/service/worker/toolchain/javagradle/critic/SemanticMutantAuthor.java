@@ -105,8 +105,10 @@ class SemanticMutantAuthor {
                 + ContractWitnessAuthor.renderTemplateOwnership(SpecFidelityCritic.designTemplateStatuses(specification)) + "\n\nPRISTINE REFERENCE SOLUTION:\n" + renderedSolution
                 + targetPrompt + exclusionPrompt;
         String response = Objects.requireNonNullElse(reviewer.call(SYSTEM_PROMPT, prompt, usageSink, cancelled, MAX_OUTPUT_TOKENS), "");
-        List<SemanticMutant> proposals = parse(response, specification, visibleSolutionFiles, visibleTargets);
-        if (proposals.isEmpty() && !visibleTargets.isEmpty() && exclusions.isEmpty() && !cancelled.getAsBoolean()) {
+        boolean correctable = !visibleTargets.isEmpty() && exclusions.isEmpty() && !cancelled.getAsBoolean();
+        // A blank first response under review targets gets the same bounded correction; parse still rejects a blank correction as unavailable.
+        List<SemanticMutant> proposals = correctable && response.isBlank() ? List.of() : parse(response, specification, visibleSolutionFiles, visibleTargets);
+        if (proposals.isEmpty() && correctable) {
             String correction = prompt + "\n\nThe initial response yielded no admissible executable proposal for the review hypotheses above. "
                     + "Reconsider one grounded hypothesis using an exact visible solutionPath, an existing R-number rule, one complete changed Java source file, "
                     + "and a self-contained, fully qualified JUnit method whose declared name matches testName. "

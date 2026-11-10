@@ -47,6 +47,32 @@ class SemanticMutantAuthorTest {
     }
 
     @Test
+    void aBlankFirstResponseUnderReviewTargetsGetsTheCorrection() {
+        ReviewerClient reviewer = mock(ReviewerClient.class);
+        when(reviewer.configured()).thenReturn(true);
+        String valid = response("src/example/Scheduler.java", "R1", "org.junit.jupiter.api.Assertions.assertEquals(1, new Scheduler().choose());");
+        when(reviewer.call(anyString(), anyString(), any(), any(), anyInt())).thenReturn("  ", valid);
+        var configured = new SemanticMutantAuthor(reviewer, JsonMapper.builder().build());
+        var target = new SpecFidelityReport.Finding(SpecFidelityReport.Kind.WEAK_TEST_ORACLE, "global choice", "a first-batch-only selection may pass");
+
+        assertThat(configured.author(SPEC, Map.of("src/example/Scheduler.java", SOURCE), List.of(target), null, () -> false)).hasSize(1);
+        verify(reviewer, times(2)).call(anyString(), anyString(), any(), any(), anyInt());
+    }
+
+    @Test
+    void aBlankCorrectionLeavesExecutableReviewUnavailable() {
+        ReviewerClient reviewer = mock(ReviewerClient.class);
+        when(reviewer.configured()).thenReturn(true);
+        when(reviewer.call(anyString(), anyString(), any(), any(), anyInt())).thenReturn("", "");
+        var configured = new SemanticMutantAuthor(reviewer, JsonMapper.builder().build());
+        var target = new SpecFidelityReport.Finding(SpecFidelityReport.Kind.WEAK_TEST_ORACLE, "global choice", "a first-batch-only selection may pass");
+
+        assertThatThrownBy(() -> configured.author(SPEC, Map.of("src/example/Scheduler.java", SOURCE), List.of(target), null, () -> false))
+                .isInstanceOf(IllegalStateException.class);
+        verify(reviewer, times(2)).call(anyString(), anyString(), any(), any(), anyInt());
+    }
+
+    @Test
     void anUncertainCorrectionDoesNotInventAnExecutableDefect() {
         ReviewerClient reviewer = mock(ReviewerClient.class);
         when(reviewer.configured()).thenReturn(true);
