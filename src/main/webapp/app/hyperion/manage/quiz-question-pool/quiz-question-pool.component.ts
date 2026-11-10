@@ -206,9 +206,6 @@ export class QuizQuestionPoolComponent implements OnInit, OnDestroy {
     /** The sequence number of the review-queue request whose response the queue shows. */
     private appliedQueueAt = 0;
 
-    /** The changes of the pending count made on the page, each with the sequence number at which it was made. */
-    private readonly pendingChanges: { at: number; change: number }[] = [];
-
     readonly isInstructor = computed(() => !!this.course()?.isAtLeastInstructor);
     readonly canReview = computed(() => !!this.course()?.isAtLeastEditor);
     readonly canDelete = computed(() => !!this.course()?.isAtLeastInstructor);
@@ -313,7 +310,6 @@ export class QuizQuestionPoolComponent implements OnInit, OnDestroy {
         this.reviewSequences.clear();
         this.appliedQuestionsAt = 0;
         this.appliedQueueAt = 0;
-        this.pendingChanges.length = 0;
     }
 
     private isCurrent(courseId: number): boolean {
@@ -387,27 +383,32 @@ export class QuizQuestionPoolComponent implements OnInit, OnDestroy {
                 this.appliedQueueAt = requestedAt;
                 this.needsReviewQuestions.update((current) => this.keepNewerDecisions(current, page.items, requestedAt));
                 this.needsReviewTotal.set(page.totalCount);
-                this.pendingInQueue.set(this.pendingAfterNewerDecisions(page, requestedAt));
+                this.pendingInQueue.set(this.pendingOf(page));
                 this.queueCollapsed.set(this.allFlaggedReviewed());
             }),
         );
     }
 
-    /**
-     * The server's pending count, unless a decision or deletion was made on the page after the request started: the response may or may
-     * not include it, so the page keeps its own count, which does, until a response requested afterwards arrives.
-     */
-    private pendingAfterNewerDecisions(page: PoolQuestionPage, requestedAt: number): number {
-        if (this.pendingChanges.some(({ at }) => at > requestedAt)) {
-            return this.pendingInQueue();
-        }
+    /** The pending count of a queue response, which was requested after the last decision or deletion on the page. */
+    private pendingOf(page: PoolQuestionPage): number {
         return Math.max(0, page.pendingCount ?? page.items.filter((question) => question.reviewState === 'PENDING').length);
     }
 
-    /** Changes the pending count by a decision or deletion made on the page and remembers when, so responses requested before it keep the page's count. */
-    private changePending(change: number, at: number): void {
-        this.pendingChanges.push({ at, change });
+    /** Changes the pending count by a decision or deletion made on the page until the next queue response replaces it. */
+    private changePending(change: number): void {
         this.pendingInQueue.update((pending) => Math.max(0, pending + change));
+    }
+
+    /**
+     * Discards every queue response requested before a decision, which may or may not include it, and reloads the queue with the loaded
+     * range and a page that was being loaded.
+     */
+    private replaceQueueAfterDecision(courseId: number): void {
+        this.appliedQueueAt = this.requestSequence;
+        const loaded = this.needsReviewQuestions().length + (this.isLoadingMoreNeedsReview() ? PAGE_SIZE : 0);
+        this.reloadNeedsReview(courseId, this.refreshSize(loaded))
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe({ error: () => this.alertService.error('artemisApp.hyperion.quizQuestionPool.errors.loadFailed') });
     }
 
     /** Appends the next page of the grouped list. */
@@ -487,7 +488,7 @@ export class QuizQuestionPoolComponent implements OnInit, OnDestroy {
                 }
                 this.needsReviewQuestions.update((current) => [...current, ...unseen]);
                 this.needsReviewTotal.set(result.totalCount);
-                this.pendingInQueue.set(this.pendingAfterNewerDecisions(result, requestedAt));
+                this.pendingInQueue.set(this.pendingOf(result));
                 return of(result);
             }),
         );
@@ -779,7 +780,8 @@ export class QuizQuestionPoolComponent implements OnInit, OnDestroy {
                         this.reviewSequences.set(updated.id, ++this.requestSequence);
                         const previous = this.needsReviewQuestions().find((question) => question.id === updated.id);
                         if (previous && previous.reviewState !== updated.reviewState) {
-                            this.changePending((updated.reviewState === 'PENDING' ? 1 : 0) - (previous.reviewState === 'PENDING' ? 1 : 0), this.requestSequence);
+                            this.changePending((updated.reviewState === 'PENDING' ? 1 : 0) - (previous.reviewState === 'PENDING' ? 1 : 0));
+                            this.replaceQueueAfterDecision(courseId);
                         } else if (!previous && updated.flagged) {
                             this.reloadNeedsReview(courseId, this.refreshSize(this.needsReviewQuestions().length))
                                 .pipe(takeUntilDestroyed(this.destroyRef))
@@ -852,7 +854,7 @@ export class QuizQuestionPoolComponent implements OnInit, OnDestroy {
                         this.needsReviewQuestions.update((queue) => queue.filter((question) => question.id !== questionId));
                         this.needsReviewTotal.update((total) => Math.max(0, total - 1));
                         if (queued.reviewState === 'PENDING') {
-                            this.changePending(-1, deletedAt);
+                            this.changePending(-1);
                         }
                         this.queueCollapsed.set(this.allFlaggedReviewed());
                         if (this.needsReviewQuestions().length === 0 && this.needsReviewTotal() > 0) {
