@@ -33,10 +33,13 @@ import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.ResourceAccessMode;
+import org.junit.jupiter.api.parallel.ResourceLock;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.http.CacheControl;
 import org.springframework.http.HttpHeaders;
@@ -80,6 +83,7 @@ import de.tum.cit.aet.artemis.quiz.domain.QuizMode;
 import de.tum.cit.aet.artemis.quiz.util.QuizExerciseUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
+@ResourceLock(value = "FilePathConverter", mode = ResourceAccessMode.READ)
 class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     private static final String TEST_PREFIX = "fileintegration";
@@ -351,6 +355,9 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     private static final byte[] PNG_IMAGE = { (byte) 0x89, 'P', 'N', 'G', '\r', '\n', 0x1A, '\n', 0, 0, 0, 13 };
 
+    @Value("${artemis.file-upload-path}")
+    private Path fileUploadPath;
+
     private int uploadProfilePicture(MockMultipartFile file) throws Exception {
         return mockMvc.perform(multipart(HttpMethod.PUT, "/api/account/profile-picture").file(file)).andReturn().getResponse().getStatus();
     }
@@ -389,7 +396,11 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     void testStoredScriptedSvgIsServedInSandbox() throws Exception {
         User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         String filename = "ProfilePicture_" + TEST_PREFIX + ".svg";
-        FileUtils.writeByteArrayToFile(FilePathConverter.getProfilePictureFilePath().resolve(filename).toFile(), SCRIPTED_SVG.getBytes(StandardCharsets.UTF_8));
+        // The REST endpoint reads the upload directory of FilePathConverter, the static handler the directory of this application context. They are the same unless test
+        // contexts with different upload directories share the JVM, so the file is stored in both.
+        byte[] scriptedSvg = SCRIPTED_SVG.getBytes(StandardCharsets.UTF_8);
+        FileUtils.writeByteArrayToFile(FilePathConverter.getProfilePictureFilePath().resolve(filename).toFile(), scriptedSvg);
+        FileUtils.writeByteArrayToFile(fileUploadPath.resolve("images/user/profile-pictures").resolve(filename).toFile(), scriptedSvg);
         user.setImageUrl(filename);
         userTestRepository.save(user);
 
