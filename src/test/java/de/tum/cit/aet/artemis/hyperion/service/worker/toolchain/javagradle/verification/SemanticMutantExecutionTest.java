@@ -73,6 +73,25 @@ class SemanticMutantExecutionTest {
     }
 
     @Test
+    void evaluatesEveryAdmittedProposal() {
+        List<SemanticMutant> proposals = IntStream
+                .rangeClosed(1,
+                        6)
+                .mapToObj(index -> new SemanticMutant("R" + index, PATH, ORIGINAL, MUTANT_SOURCE, new ContractWitness("R" + index, "globalChoice" + index,
+                        "@Test void globalChoice" + index + "() { assertEquals(1, new Scheduler().choose()); }", "chooses only within the first batch")))
+                .toList();
+        AtomicInteger builds = new AtomicInteger();
+
+        List<SemanticMutantOutcome> outcomes = SemanticMutantExecution.evaluate(TESTS, Map.of(PATH, ORIGINAL), proposals, (_, _) -> {
+            builds.incrementAndGet();
+            return new BuildSummary(0, 0, 1, false, List.of(), List.of(), List.of(), "compilation failed");
+        });
+
+        assertThat(outcomes).extracting(SemanticMutantOutcome::mutant).containsExactlyElementsOf(proposals);
+        assertThat(builds).hasValue(6);
+    }
+
+    @Test
     void validatesOnlyAfterAllThreeEnvironmentProbesAndRestoresAroundEach() {
         InteractiveSandbox sandbox = sandbox(reports(List.of("existing"), List.of()), reports(List.of("existing", "globalChoice"), List.of()),
                 reports(List.of("existing", "globalChoice"), List.of("globalChoice")));

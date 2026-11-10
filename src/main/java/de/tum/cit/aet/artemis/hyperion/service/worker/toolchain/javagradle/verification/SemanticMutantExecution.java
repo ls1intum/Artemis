@@ -18,8 +18,6 @@ import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verif
 /** Classifies sandbox mutant builds; {@link DifferentialVerifier} remains the sole owner of executing and restoring the workspace. */
 final class SemanticMutantExecution {
 
-    private static final int MAX_MUTANTS = 4;
-
     @FunctionalInterface
     interface ProbeRunner {
 
@@ -44,7 +42,8 @@ final class SemanticMutantExecution {
             return inconclusive(candidates);
         }
         List<SemanticMutantOutcome> outcomes = new ArrayList<>();
-        for (SemanticMutant mutant : candidates.stream().limit(MAX_MUTANTS).toList()) {
+        // The caller bounds the admitted proposals; every one it passes receives an outcome, so none is silently dropped.
+        for (SemanticMutant mutant : candidates) {
             if (!mutant.originalSolutionSource().equals(solutionFiles.get(mutant.solutionPath())) || declaresMethod(testFiles, mutant.counterexample().testName())) {
                 outcomes.add(new SemanticMutantOutcome(mutant, Disposition.INCONCLUSIVE));
                 continue;
@@ -165,6 +164,6 @@ final class SemanticMutantExecution {
     }
 
     private static List<SemanticMutantOutcome> inconclusive(List<SemanticMutant> candidates) {
-        return candidates.stream().limit(MAX_MUTANTS).map(candidate -> new SemanticMutantOutcome(candidate, Disposition.INCONCLUSIVE)).toList();
+        return candidates.stream().map(candidate -> new SemanticMutantOutcome(candidate, Disposition.INCONCLUSIVE)).toList();
     }
 }
