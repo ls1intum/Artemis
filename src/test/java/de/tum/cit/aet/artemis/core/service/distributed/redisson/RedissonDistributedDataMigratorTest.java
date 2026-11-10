@@ -7,11 +7,17 @@ import static de.tum.cit.aet.artemis.core.service.distributed.DistributedDataSch
 import static de.tum.cit.aet.artemis.core.service.distributed.DistributedDataSchema.keyFor;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+import static org.assertj.core.api.Assertions.entry;
 
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.time.Instant;
+import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.HexFormat;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import org.junit.jupiter.api.AfterAll;
@@ -19,7 +25,10 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIf;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.redisson.Redisson;
+import org.redisson.api.RMap;
 import org.redisson.api.RMapCache;
 import org.redisson.api.RSet;
 import org.redisson.api.RedissonClient;
@@ -32,10 +41,29 @@ import org.testcontainers.DockerClientFactory;
 
 import com.redis.testcontainers.RedisContainer;
 
+import de.tum.cit.aet.artemis.atlas.domain.competency.ContentChangeAccumulator;
 import de.tum.cit.aet.artemis.core.service.distributed.DistributedDataSchema.CarriedOverStructure;
 import de.tum.cit.aet.artemis.core.service.distributed.DistributedDataSchema.StructureKind;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
+import de.tum.cit.aet.artemis.hyperion.domain.AuthoringRun;
+import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationArtifactCompleteness;
+import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationEventDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationFileChangeDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationRetainedArtifactsDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationRetainedFileDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.GenerationMode;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.history.GenerationRunStoreService.Mutation;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.history.GenerationRunStoreService.RunReference;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationJobService.JobArtifacts;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationJobService.JobFileChangeIndex;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationJobService.JobInfo;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationJobService.JobTranscript;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationLiveSaveService.LiveSaveSlot;
+import de.tum.cit.aet.artemis.hyperion.service.variants.VariantJob;
+import de.tum.cit.aet.artemis.hyperion.service.variants.VariantJobPhase;
 import de.tum.cit.aet.artemis.shared.ValkeyTestContainerFactory;
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.ByteBufUtil;
 
 /**
  * Covers the namespace migration against a real Redis, which is the only way to exercise the drain: the semantics that
@@ -102,6 +130,55 @@ class RedissonDistributedDataMigratorTest {
 
         assertThat(storedVersion()).isEqualTo(String.valueOf(VERSION));
         assertThat(redissonClient.<String>getBucket(RELEASE_KEY, StringCodec.INSTANCE).get()).isEqualTo("1.2.3");
+    }
+
+    /** A crash after the first drain but before its version write leaves no plain keys to identify the source. */
+    @Test
+    void testResumesTheFirstMigrationAfterEveryPlainKeyWasDrained() throws Exception {
+        redissonClient.getQueue(keyFor(1, "buildResultQueue")).add("result-moved-to-v1");
+        rawFeatures(1).put(v1FeatureKey(8), encodedToggle(true));
+
+        migrationService().migrateToCurrentVersion();
+
+        assertThat(redissonClient.getQueue(keyFor(2, "buildResultQueue")).readAll()).containsExactly("result-moved-to-v1");
+        assertThat(redissonClient.<Feature, Boolean>getMap(keyFor(2, "features")).readAllMap()).containsOnly(entry(Feature.AtlasAgent, true));
+        assertThat(redissonClient.getKeys().getKeysByPattern("artemis:v1:*")).isEmpty();
+        assertThat(storedVersion()).isEqualTo("2");
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = { false, true })
+    void testResumesUnrecordedMigrationsWithPartlyMovedNumberedData(boolean hasUnversionedData) throws Exception {
+        List<String> expectedResults = new ArrayList<>(List.of("waiting-in-v1", "already-in-v2"));
+        if (hasUnversionedData) {
+            redissonClient.getQueue("buildResultQueue").add("still-unversioned");
+            expectedResults.add("still-unversioned");
+        }
+        redissonClient.getQueue(keyFor(1, "buildResultQueue")).add("waiting-in-v1");
+        redissonClient.getQueue(keyFor(2, "buildResultQueue")).add("already-in-v2");
+        rawFeatures(1).put(v1FeatureKey(8), encodedToggle(true));
+        redissonClient.getMap(keyFor(2, "features")).put(Feature.Memiris, Boolean.FALSE);
+
+        migrationService().migrateToCurrentVersion();
+        migrationService().migrateToCurrentVersion();
+
+        assertThat(redissonClient.getQueue(keyFor(2, "buildResultQueue")).readAll()).containsExactlyInAnyOrderElementsOf(expectedResults);
+        assertThat(redissonClient.<Feature, Boolean>getMap(keyFor(2, "features")).readAllMap()).containsOnly(entry(Feature.AtlasAgent, true), entry(Feature.Memiris, false));
+        assertThat(redissonClient.getQueue("buildResultQueue")).isEmpty();
+        assertThat(redissonClient.getKeys().getKeysByPattern("artemis:v1:*")).isEmpty();
+        assertThat(storedVersion()).isEqualTo("2");
+    }
+
+    @Test
+    void testRecordsTheVersionWithoutReencodingAnAlreadyDrainedTarget() {
+        redissonClient.getQueue(keyFor(2, "buildResultQueue")).add("already-in-v2");
+        redissonClient.getMap(keyFor(2, "features")).put(Feature.AtlasAgent, Boolean.TRUE);
+
+        migrationService().migrateToCurrentVersion();
+
+        assertThat(redissonClient.getQueue(keyFor(2, "buildResultQueue")).readAll()).containsExactly("already-in-v2");
+        assertThat(redissonClient.<Feature, Boolean>getMap(keyFor(2, "features")).readAllMap()).containsOnly(entry(Feature.AtlasAgent, true));
+        assertThat(storedVersion()).isEqualTo("2");
     }
 
     @Test
@@ -307,5 +384,294 @@ class RedissonDistributedDataMigratorTest {
         Long moved = ReflectionTestUtils.invokeMethod(migrationService(), "drain", UNVERSIONED, VERSION, new CarriedOverStructure("emptySet", StructureKind.SET));
 
         assertThat(moved).isZero();
+    }
+
+    /**
+     * How schema version 1 encoded a {@link Feature} map key, captured from the build that still had {@code AtlasML}:
+     * the class name, then the constant's position plus one. Golden bytes rather than an encoding computed here, because
+     * the current enum can no longer produce them.
+     */
+    private static final String V1_FEATURE_KEY_PREFIX = "010064652e74756d2e6369742e6165742e617274656d69732e636f72652e736572766963652e666561747572652e466561747572e5";
+
+    private static byte[] v1FeatureKey(int v1Position) {
+        return HexFormat.of().parseHex(V1_FEATURE_KEY_PREFIX + HexFormat.of().toHexDigits((byte) (v1Position + 1)));
+    }
+
+    private static byte[] encodedToggle(boolean enabled) throws Exception {
+        ByteBuf encoded = new BackwardCompatibleSerializationCodec().getMapValueEncoder().encode(enabled);
+        try {
+            return ByteBufUtil.getBytes(encoded);
+        }
+        finally {
+            encoded.release();
+        }
+    }
+
+    private static RMap<byte[], byte[]> rawFeatures(int version) {
+        return redissonClient.getMap(keyFor(version, "features"), ByteArrayCodec.INSTANCE);
+    }
+
+    private static void claimVersion(int version) {
+        redissonClient.getBucket(VERSION_KEY, StringCodec.INSTANCE).set(String.valueOf(version));
+    }
+
+    /**
+     * Removing {@code AtlasML} moved every later constant one position up. A v1 AtlasAgent key read with the current enum
+     * would be Memiris, so the migration must resolve each key against the v1 order, not copy its bytes.
+     */
+    @Test
+    void testV1ToV2KeepsEveryFeatureToggleUnderItsOwnName() throws Exception {
+        claimVersion(1);
+        RMap<byte[], byte[]> v1 = rawFeatures(1);
+        v1.put(v1FeatureKey(4), encodedToggle(false));  // Science, before AtlasML
+        v1.put(v1FeatureKey(7), encodedToggle(true));   // AtlasML, removed in v2
+        v1.put(v1FeatureKey(8), encodedToggle(true));   // AtlasAgent, now one position up
+        v1.put(v1FeatureKey(9), encodedToggle(false));  // Memiris
+        v1.put(v1FeatureKey(17), encodedToggle(true));  // GlobalSearchReconcileOrphan
+        v1.put(v1FeatureKey(18), encodedToggle(false)); // PresentationAssessments, the last v1 constant
+
+        migrationService().migrateToCurrentVersion();
+
+        RMap<Feature, Boolean> features = redissonClient.getMap(keyFor(2, "features"));
+        assertThat(features.readAllMap()).containsOnly(entry(Feature.Science, false), entry(Feature.AtlasAgent, true), entry(Feature.Memiris, false),
+                entry(Feature.GlobalSearchReconcileOrphan, true), entry(Feature.PresentationAssessments, false));
+        assertThat(rawFeatures(1).isExists()).isFalse();
+        assertThat(storedVersion()).isEqualTo("2");
+    }
+
+    @Test
+    void testV1ToV2MovesTheOtherStructuresUnchanged() {
+        claimVersion(1);
+        redissonClient.getQueue(keyFor(1, "buildResultQueue")).add("result-1");
+        redissonClient.getQueue(keyFor(1, "deferredBuildResultQueue")).addAll(List.of("deferred-1", "deferred-2"));
+        redissonClient.getPriorityQueue(keyFor(1, "buildJobQueue")).add("job-1");
+        redissonClient.getMap(keyFor(1, "processingJobs")).put("running", "agent-1");
+        redissonClient.getMapCache(keyFor(1, "pyris-job-map")).put("job-1", "session-1", 1, TimeUnit.HOURS);
+        redissonClient.getMapCache(keyFor(1, "pyris-job-map-v2")).put("job-2", "session-2", 1, TimeUnit.HOURS);
+        redissonClient.getMap(keyFor(1, "buildAgentInformation")).put("agent-1", "details");
+
+        migrationService().migrateToCurrentVersion();
+
+        assertThat(redissonClient.getQueue(keyFor(2, "buildResultQueue")).readAll()).containsExactly("result-1");
+        assertThat(redissonClient.getQueue(keyFor(2, "deferredBuildResultQueue")).readAll()).containsExactly("deferred-1", "deferred-2");
+        assertThat(redissonClient.getPriorityQueue(keyFor(2, "buildJobQueue")).readAll()).containsExactly("job-1");
+        assertThat(redissonClient.getMap(keyFor(2, "processingJobs"))).containsEntry("running", "agent-1");
+        assertThat(redissonClient.getMapCache(keyFor(2, "pyris-job-map")).get("job-1")).isEqualTo("session-1");
+        RMapCache<Object, Object> activePyrisJobs = redissonClient.getMapCache(keyFor(2, "pyris-job-map-v2"));
+        assertThat(activePyrisJobs.get("job-2")).isEqualTo("session-2");
+        assertThat(activePyrisJobs.remainTimeToLive("job-2")).isPositive().isLessThanOrEqualTo(Duration.ofHours(1).toMillis());
+        // Not carried over, and the whole v1 namespace is deleted once the step completes.
+        assertThat(redissonClient.getMap(keyFor(2, "buildAgentInformation")).isEmpty()).isTrue();
+        assertThat(redissonClient.getKeys().getKeysByPattern("artemis:v1:*")).isEmpty();
+    }
+
+    @Test
+    void testV1ToV2KeepsPendingAtlasContentChangesAndConsumedDailyQuota() {
+        claimVersion(1);
+        Instant lastEvent = Instant.parse("2026-11-09T10:15:30Z");
+        LocalDate quotaDate = LocalDate.of(2026, 11, 9);
+        var pending = new ContentChangeAccumulator(Set.of(11L, 12L), Set.of(21L, 22L), lastEvent, 4, quotaDate);
+        var quotaOnly = new ContentChangeAccumulator(Set.of(), Set.of(), lastEvent.minusSeconds(300), 10, quotaDate);
+        atlasAccumulatorMap(1).putAll(Map.of(41L, pending, 42L, quotaOnly));
+
+        migrationService().migrateToCurrentVersion();
+
+        assertThat(atlasAccumulatorMap(2).readAllMap()).containsOnly(entry(41L, pending), entry(42L, quotaOnly));
+        assertThat(atlasAccumulatorMap(2).remainTimeToLive()).isEqualTo(-1);
+        assertThat(atlasAccumulatorMap(1).isExists()).isFalse();
+        assertThat(storedVersion()).isEqualTo("2");
+    }
+
+    @Test
+    void testMissingSchemaMetadataRecoversAtlasAccumulatorWithoutLosingAlreadyMovedCourses() {
+        Instant lastEvent = Instant.parse("2026-11-09T10:15:30Z");
+        LocalDate quotaDate = LocalDate.of(2026, 11, 9);
+        var pending = new ContentChangeAccumulator(Set.of(11L), Set.of(21L), lastEvent, 4, quotaDate);
+        var copiedBeforeCrash = new ContentChangeAccumulator(Set.of(12L), Set.of(22L), lastEvent.minusSeconds(60), 5, quotaDate);
+        var alreadyMoved = new ContentChangeAccumulator(Set.of(13L), Set.of(23L), lastEvent.minusSeconds(120), 6, quotaDate);
+        var quotaOnly = new ContentChangeAccumulator(Set.of(), Set.of(), lastEvent.minusSeconds(300), 10, quotaDate);
+        atlasAccumulatorMap(1).putAll(Map.of(41L, pending, 42L, copiedBeforeCrash, 44L, quotaOnly));
+        atlasAccumulatorMap(2).putAll(Map.of(42L, copiedBeforeCrash, 43L, alreadyMoved));
+        // No unversioned data or metadata remains: restart must still run the 1-to-2 carry-over step.
+        assertThat(storedVersion()).isNull();
+
+        migrationService().migrateToCurrentVersion();
+        migrationService().migrateToCurrentVersion();
+
+        assertThat(atlasAccumulatorMap(2).readAllMap()).containsOnly(entry(41L, pending), entry(42L, copiedBeforeCrash), entry(43L, alreadyMoved), entry(44L, quotaOnly));
+        assertThat(atlasAccumulatorMap(2).remainTimeToLive()).isEqualTo(-1);
+        assertThat(atlasAccumulatorMap(1).isExists()).isFalse();
+        assertThat(storedVersion()).isEqualTo("2");
+    }
+
+    private static RMap<Long, ContentChangeAccumulator> atlasAccumulatorMap(int version) {
+        return redissonClient.getMap(keyFor(version, "atlas-content-change-accumulator"));
+    }
+
+    @Test
+    void testV1ToV2KeepsChatAndSearchContextWithItsRemainingLifetime() {
+        assertExpiringV1EntriesSurvive(List.of(new ExpiringEntry("pyris-chat-job-client-id-map", "chat-job", "browser-tab-7"),
+                new ExpiringEntry("pyris-chat-material-version-map", "chat-job", "[{\"lectureUnitId\":42,\"attachmentVersion\":3}]"),
+                new ExpiringEntry("pyris-global-search-material-version-map", "student:search-job", "[{\"lectureUnitId\":42,\"videoVersion\":5}]")));
+    }
+
+    @Test
+    void testV1ToV2KeepsStruggleReservationsAndAdmissionChargesWithTheirRemainingLifetime() {
+        assertExpiringV1EntriesSurvive(List.of(new ExpiringEntry("struggle-inflight-map", "student:exercise", "struggle-run"),
+                new ExpiringEntry("struggle-cooldown-map", "student:exercise:decide", "admission-token")));
+    }
+
+    private void assertExpiringV1EntriesSurvive(List<ExpiringEntry> entries) {
+        claimVersion(1);
+        long lifetime = Duration.ofMinutes(17).toMillis();
+        for (ExpiringEntry entry : entries) {
+            redissonClient.getMapCache(keyFor(1, entry.name())).put(entry.key(), entry.value(), lifetime, TimeUnit.MILLISECONDS);
+            redissonClient.getMapCache(keyFor(1, entry.name())).put(entry.key() + "-source-only", entry.value() + "-source-only", lifetime, TimeUnit.MILLISECONDS);
+            // An interrupted migration can have written a target entry without removing its source yet.
+            redissonClient.getMapCache(keyFor(2, entry.name())).put(entry.key(), entry.value(), lifetime, TimeUnit.MILLISECONDS);
+        }
+
+        migrationService().migrateToCurrentVersion();
+        migrationService().migrateToCurrentVersion();
+
+        for (ExpiringEntry entry : entries) {
+            RMapCache<String, String> migrated = redissonClient.getMapCache(keyFor(2, entry.name()));
+            assertThat(migrated.readAllMap()).containsOnly(entry(entry.key(), entry.value()), entry(entry.key() + "-source-only", entry.value() + "-source-only"));
+            assertThat(migrated.remainTimeToLive(entry.key())).isPositive().isLessThanOrEqualTo(lifetime);
+            assertThat(migrated.remainTimeToLive(entry.key() + "-source-only")).isPositive().isLessThanOrEqualTo(lifetime);
+            assertThat(redissonClient.getMapCache(keyFor(1, entry.name())).isExists()).isFalse();
+        }
+        assertThat(storedVersion()).isEqualTo("2");
+    }
+
+    private record ExpiringEntry(String name, String key, String value) {
+    }
+
+    @Test
+    void testV1ToV2KeepsTerminalGenerationReplayAndUnsavedArtifacts() throws Exception {
+        Instant finishedAt = Instant.parse("2026-11-09T09:00:00Z");
+        var terminalEvent = new ExerciseGenerationEventDTO(ExerciseGenerationEventDTO.Type.DONE, "Review unsaved candidate", ExerciseGenerationEventDTO.Phase.REVIEWING,
+                ExerciseGenerationEventDTO.CompletionStatus.PARTIAL, null, false, null, null, ExerciseGenerationEventDTO.TerminationReason.ATTEMPT_CAP_REACHED, null, null, null,
+                finishedAt);
+        var transcript = new JobTranscript("generation-42", "instructor", 42L, GenerationMode.GENERATE, List.of(terminalEvent), true, "Retained specification", "balanced");
+        var fileChange = new ExerciseGenerationFileChangeDTO(ExerciseGenerationFileChangeDTO.TYPE, "solution/Main.java", "solution", "write", 3, finishedAt);
+        var artifacts = new ExerciseGenerationRetainedArtifactsDTO("generation-42", ExerciseGenerationArtifactCompleteness.COMPLETE, "Retained problem statement",
+                "Retained specification", List.of(new ExerciseGenerationRetainedFileDTO("solution", "Main.java", "class Main {}")));
+        Object usage = ReflectionTestUtils.invokeMethod(Class.forName("de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationJobReplayStore$JobUsage"),
+                "empty");
+
+        assertExpiringV1ValuesSurvive(List.of(new ExpiringValue("hyperion-exercise-generation-transcripts", "42", transcript),
+                new ExpiringValue("hyperion-exercise-generation-file-changes", "42", new JobFileChangeIndex("generation-42", "instructor", List.of(fileChange))),
+                new ExpiringValue("hyperion-exercise-generation-artifacts", "42", new JobArtifacts("generation-42", "instructor", artifacts)),
+                new ExpiringValue("hyperion-exercise-generation-usage", "generation-42", usage)));
+    }
+
+    @Test
+    void testV1ToV2KeepsAuthoringHistoryAndItsCursor() {
+        AuthoringRun run = new AuthoringRun();
+        run.setId(19L);
+        run.setJobId("generation-42");
+        run.setExerciseId(42L);
+        run.setOwnerId(7L);
+        run.setKind(AuthoringRun.Kind.ADAPT);
+        run.setStatus(AuthoringRun.Status.SAVED);
+        run.setBeforeVersionId(100L);
+        run.setAfterVersionId(101L);
+        redissonClient.getMap(keyFor(1, "hyperion-authoring-activity-sequence")).put("next", 20L);
+
+        assertExpiringV1ValuesSurvive(List.of(new ExpiringValue("hyperion-authoring-activity", "generation-42", run),
+                new ExpiringValue("hyperion-authoring-latest-mutation", 42L, new Mutation("generation-42", 19L)),
+                new ExpiringValue("hyperion-authoring-owner-runs", 7L, List.of(new RunReference(19L, "generation-42")))));
+
+        assertThat(redissonClient.<String, Long>getMap(keyFor(2, "hyperion-authoring-activity-sequence")).readAllMap()).containsOnly(entry("next", 20L));
+    }
+
+    @Test
+    void testV1ToV2KeepsUncertainSavesReservationsAndFailedVariantCleanup() throws Exception {
+        Instant startedAt = Instant.parse("2026-11-09T08:00:00Z");
+        JobInfo reservation = new JobInfo("revert-42", "instructor", 42L, startedAt, null, "old-node", startedAt, false, "budget-42");
+        LiveSaveSlot liveSave = new LiveSaveSlot("save-42", "old-node", startedAt, Map.of("reader-42", "old-node"));
+        redissonClient.getMap(keyFor(1, "hyperion-exercise-generation-jobs")).put("42", reservation);
+        redissonClient.getMap(keyFor(1, "hyperion-live-save-coordination")).put("42", liveSave);
+        var budgetType = Class.forName("de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.HyperionGenerationBudgetService$TokenBudgetReservation");
+        var budgetConstructor = budgetType.getDeclaredConstructor(Long.class, Long.class, long.class);
+        budgetConstructor.setAccessible(true);
+        Object budgetReservation = budgetConstructor.newInstance(7L, 3L, 1200L);
+        VariantJob variant = new VariantJob();
+        variant.setJobId("variant-42");
+        variant.setPhase(VariantJobPhase.FAILED);
+        variant.setVariantExerciseId(43L);
+        variant.setFailureDetail("Provisioned clone cleanup requires retry");
+
+        assertExpiringV1ValuesSurvive(List.of(new ExpiringValue("hyperion-exercise-generation-cancellations", "generation-42", Boolean.TRUE),
+                new ExpiringValue("hyperion-generation-token-budget-reservations", "budget-42", budgetReservation),
+                new ExpiringValue("hyperion-exercise-variant-jobs", "variant-42", variant)));
+
+        assertThat(redissonClient.<String, JobInfo>getMap(keyFor(2, "hyperion-exercise-generation-jobs")).readAllMap()).containsOnly(entry("42", reservation));
+        assertThat(redissonClient.<String, LiveSaveSlot>getMap(keyFor(2, "hyperion-live-save-coordination")).readAllMap()).containsOnly(entry("42", liveSave));
+    }
+
+    private void assertExpiringV1ValuesSurvive(List<ExpiringValue> entries) {
+        claimVersion(1);
+        long lifetime = Duration.ofMinutes(17).toMillis();
+        for (ExpiringValue entry : entries) {
+            redissonClient.getMapCache(keyFor(1, entry.name())).put(entry.key(), entry.value(), lifetime, TimeUnit.MILLISECONDS);
+        }
+
+        migrationService().migrateToCurrentVersion();
+        migrationService().migrateToCurrentVersion();
+
+        for (ExpiringValue entry : entries) {
+            RMapCache<Object, Object> migrated = redissonClient.getMapCache(keyFor(2, entry.name()));
+            assertThat(migrated.readAllKeySet()).containsExactly(entry.key());
+            assertThat(migrated.get(entry.key())).usingRecursiveComparison().isEqualTo(entry.value());
+            assertThat(migrated.remainTimeToLive(entry.key())).isPositive().isLessThanOrEqualTo(lifetime);
+            assertThat(redissonClient.getMapCache(keyFor(1, entry.name())).isExists()).isFalse();
+        }
+        assertThat(storedVersion()).isEqualTo("2");
+    }
+
+    private record ExpiringValue(String name, Object key, Object value) {
+    }
+
+    @Test
+    void testV1ToV2KeepsThePreviousPyrisBootIdForRestartRecovery() {
+        claimVersion(1);
+        redissonClient.getMap(keyFor(1, "pyris-restart-watch")).put("bootId", "previous-pyris-process");
+
+        migrationService().migrateToCurrentVersion();
+
+        assertThat(redissonClient.<String, String>getMap(keyFor(2, "pyris-restart-watch")).readAllMap()).containsOnly(entry("bootId", "previous-pyris-process"));
+        assertThat(redissonClient.getMap(keyFor(1, "pyris-restart-watch")).isExists()).isFalse();
+    }
+
+    /**
+     * A toggle is written to v2 before it is removed from v1, so a crash in between leaves it in both. The rerun has to
+     * overwrite the v2 entry, not add a second one under another encoding.
+     */
+    @Test
+    void testV1ToV2RerunAfterAPartialFeatureMoveDoesNotDuplicateToggles() throws Exception {
+        claimVersion(1);
+        rawFeatures(1).put(v1FeatureKey(8), encodedToggle(true));
+        redissonClient.getMap(keyFor(2, "features")).put(Feature.AtlasAgent, Boolean.TRUE);
+
+        migrationService().migrateToCurrentVersion();
+
+        assertThat(redissonClient.<Feature, Boolean>getMap(keyFor(2, "features")).readAllMap()).containsOnly(entry(Feature.AtlasAgent, true));
+    }
+
+    /**
+     * An unreadable toggle must not keep the instance from starting: it is dropped and startup seeds its default again.
+     */
+    @Test
+    void testV1ToV2DropsAFeatureToggleItCannotRead() throws Exception {
+        claimVersion(1);
+        rawFeatures(1).put("not-a-feature".getBytes(StandardCharsets.UTF_8), encodedToggle(true));
+        rawFeatures(1).put(v1FeatureKey(0), encodedToggle(true));
+
+        migrationService().migrateToCurrentVersion();
+
+        assertThat(redissonClient.<Feature, Boolean>getMap(keyFor(2, "features")).readAllMap()).containsOnly(entry(Feature.ProgrammingExercises, true));
+        assertThat(storedVersion()).isEqualTo("2");
     }
 }
