@@ -439,7 +439,7 @@ class GenerationOrchestratorTest {
 
     @ParameterizedTest
     @ValueSource(booleans = { false, true })
-    void aRedesignedCandidateKeepsPriorLearnerObligationsBeforeTranscriptWorkCanFail(boolean checkpointDeliveryFails) {
+    void aRedesignedCandidateDoesNotReplaceTheCheckpointBeforeAssessmentCompletes(boolean checkpointDeliveryFails) {
         var redesigned = new AtomicBoolean();
         var stagedService = newService(true);
         when(stagedGenerationRunner.run(any(), any(), any(), anyString(), anyString(), any(), any(), anyString(), any(), any(), any(), any(), anyBoolean(), anyBoolean(), any(),
@@ -492,12 +492,9 @@ class GenerationOrchestratorTest {
 
         assertThat(outcome.terminationReason()).isEqualTo(TerminationReason.RUN_FAILED);
         assertThat(outcome.isMechanicallyVerified()).isTrue();
-        assertThat(outcome.verification().testCount()).isEqualTo(7);
-        assertThat(outcome.capturedProducedFiles().get(RepositoryRole.SOLUTION)).containsKey("src/Runner.java").doesNotContainKey("src/LearnerChecks.java");
-        assertThat(outcome.specFidelityReport().findings())
-                .anyMatch(finding -> finding.kind() == SpecFidelityReport.Kind.EXECUTABLE_EVIDENCE_UNAVAILABLE && finding.detail().contains("src/LearnerChecks.java"));
-        assertThat(outcome.specFidelityReport().findings())
-                .anyMatch(finding -> finding.kind() == SpecFidelityReport.Kind.EXECUTABLE_EVIDENCE_UNAVAILABLE && finding.detail().contains("assertion-suppression obligation"));
+        assertThat(outcome.verification().testCount()).isEqualTo(2);
+        assertThat(outcome.capturedProducedFiles().get(RepositoryRole.SOLUTION)).containsKey("src/LearnerChecks.java").doesNotContainKey("src/Runner.java");
+        assertThat(outcome.specFidelityReport().findings()).anyMatch(finding -> finding.kind() == SpecFidelityReport.Kind.EXECUTABLE_WEAK_TEST_ORACLE);
         assertThat(outcome.specFidelityReport()).isEqualTo(checkpoints.getLast().specFidelityReport());
         assertThat(outcome.capturedProducedFiles()).isEqualTo(checkpoints.getLast().capturedProducedFiles());
     }

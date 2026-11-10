@@ -423,6 +423,23 @@ class GenerationAttemptLoopTest {
     }
 
     @ParameterizedTest
+    @EnumSource(value = Mode.class, names = { "GENERATE", "ADAPT" })
+    void unstagedCandidatesRetainExecutedLearnerTestBypassFindings(Mode mode) {
+        stubSchedulerFixture();
+        var bypass = SemanticMutant.emptyStudentTests("src/Scheduler.java", "class Scheduler {}", "class Scheduler { }");
+        when(verifier.probeStudentTestAssertions(any(), anyString(), any(), any(), any(), any(), any(), any(), any()))
+                .thenReturn(List.of(new SemanticMutantOutcome(bypass, Disposition.SURVIVED_GRADED_SUITE)));
+
+        GenerationAttemptLoop loop = newLoop(mode, 1, 0, false);
+        loop.run();
+
+        assertThat(loop.lastMechanicallyVerifiedCandidate()).isNotNull();
+        assertThat(loop.lastMechanicallyVerifiedCandidate().verification().mechanicallyVerified()).isTrue();
+        assertThat(loop.lastMechanicallyVerifiedCandidate().reviewReport().findings()).anyMatch(finding -> finding.kind() == SpecFidelityReport.Kind.EXECUTABLE_WEAK_TEST_ORACLE);
+        verify(stagedGenerationRunner, never()).requestAssessmentRedesign(any(), anyString(), any(), anyString(), any());
+    }
+
+    @ParameterizedTest
     @EnumSource(value = SemanticMutant.Evidence.class, names = { "PRINTED_TRANSCRIPT", "EMPTY_STUDENT_TESTS", "NON_FAILING_STUDENT_TESTS", "ALWAYS_FAILING_STUDENT_TESTS" })
     void aMechanicallyValidDraftRetainsExecutedAssessmentDefects(SemanticMutant.Evidence evidence) {
         stubSchedulerFixture();

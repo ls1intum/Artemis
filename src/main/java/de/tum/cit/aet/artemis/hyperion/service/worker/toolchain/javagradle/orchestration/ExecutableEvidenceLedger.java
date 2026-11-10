@@ -135,7 +135,7 @@ final class ExecutableEvidenceLedger {
 
     /** The authoritative checkpoint boundary also checks candidates authored by ordinary mechanical retries, before any verified snapshot can be published. */
     AssessmentVerdict assessBeforeCheckpoint(VerificationResult result, Map<RepositoryRole, Map<String, String>> candidateFiles, @Nullable String plan,
-            SeededStructuralTests seeded, Runnable restoreCandidate, Consumer<VerificationResult> evidenceUpdated) {
+            SeededStructuralTests seeded, Runnable restoreCandidate, boolean assessTranscript, Consumer<VerificationResult> evidenceUpdated) {
         Map<String, SemanticMutantOutcome> known = transcriptVerdicts(candidateFiles, plan);
         Map<AssessmentProbe, SemanticMutantOutcome> outcomes = new LinkedHashMap<>();
         verifier.pendingStudentTestAssessments(sessionId).forEach(outcome -> outcomes.put(AssessmentProbe.of(outcome), outcome));
@@ -155,10 +155,12 @@ final class ExecutableEvidenceLedger {
             updateAssessmentFindings(outcomes.values());
             evidenceUpdated.accept(result);
         };
-        known.values().forEach(completed);
-        verifier.probeOutputOnlyMains(sandbox, sessionId, exercise, candidateFiles.getOrDefault(RepositoryRole.TESTS, Map.of()),
-                candidateFiles.getOrDefault(RepositoryRole.TEMPLATE, Map.of()), candidateFiles.getOrDefault(RepositoryRole.SOLUTION, Map.of()), plan, seeded, known.keySet(),
-                restoreCandidate, completed).forEach(completed);
+        if (assessTranscript) {
+            known.values().forEach(completed);
+            verifier.probeOutputOnlyMains(sandbox, sessionId, exercise, candidateFiles.getOrDefault(RepositoryRole.TESTS, Map.of()),
+                    candidateFiles.getOrDefault(RepositoryRole.TEMPLATE, Map.of()), candidateFiles.getOrDefault(RepositoryRole.SOLUTION, Map.of()), plan, seeded, known.keySet(),
+                    restoreCandidate, completed).forEach(completed);
+        }
         // Learner-test probes are regenerated for each authoritative candidate, rather than entering the model-authored mutation lifecycle.
         verifier.probeStudentTestAssertions(sandbox, sessionId, exercise, candidateFiles.getOrDefault(RepositoryRole.TEMPLATE, Map.of()),
                 candidateFiles.getOrDefault(RepositoryRole.SOLUTION, Map.of()), plan, seeded, restoreCandidate, completed).forEach(completed);

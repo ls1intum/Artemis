@@ -365,6 +365,7 @@ class GenerationAttemptLoop {
                 stagedContinuation = stagedGenerationRunner.requestAssessmentRedesign(exercise, sessionId, stagedAuthoringStartedAt, ownershipConflict.get(),
                         unresolvedConceptFindings);
                 if (stagedContinuation != null) {
+                    candidateBeforeCurrentRepair = lastMechanicallyVerifiedCandidate;
                     if (!canContinueAssessment(attempt)) {
                         return outcomeIfAgentStopped();
                     }
@@ -382,11 +383,12 @@ class GenerationAttemptLoop {
                 if (cancelled.getAsBoolean()) {
                     return cancelledOutcome(cancelledResult(loopResult));
                 }
-                stagedContinuation = attempt < maxGenerationAttempts && mechanicalAttemptsBeforeAnyRepair + 1 < MAX_MECHANICAL_ATTEMPTS
+                stagedContinuation = useStagedGeneration && attempt < maxGenerationAttempts && mechanicalAttemptsBeforeAnyRepair + 1 < MAX_MECHANICAL_ATTEMPTS
                         ? stagedGenerationRunner.requestAssessmentRedesign(exercise, sessionId, stagedAuthoringStartedAt,
                                 specFidelityCritic.renderForRetryPrompt(executableEvidence.preserveAssessmentFindings(SpecFidelityReport.empty())), unresolvedConceptFindings)
                         : null;
                 if (stagedContinuation != null) {
+                    candidateBeforeCurrentRepair = lastMechanicallyVerifiedCandidate;
                     if (!canContinueAssessment(attempt)) {
                         return outcomeIfAgentStopped();
                     }
@@ -656,8 +658,8 @@ class GenerationAttemptLoop {
             result = executableEvidence.recheckAfterVerification(result, candidateFiles, testPlanSnapshot, candidateBeforeCurrentRepair != null, seededStructuralTests,
                     restoreCandidate);
         }
-        return useStagedGeneration && result.mechanicallyVerified()
-                ? executableEvidence.assessBeforeCheckpoint(result, candidateFiles, testPlanSnapshot, seededStructuralTests, restoreCandidate,
+        return result.mechanicallyVerified()
+                ? executableEvidence.assessBeforeCheckpoint(result, candidateFiles, testPlanSnapshot, seededStructuralTests, restoreCandidate, useStagedGeneration,
                         verified -> checkpointMechanicallyVerifiedCandidate(artifacts, specDocumentSnapshot, verified))
                 : new ExecutableEvidenceLedger.AssessmentVerdict(result, List.of());
     }
