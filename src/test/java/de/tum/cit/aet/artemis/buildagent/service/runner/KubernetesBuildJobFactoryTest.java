@@ -93,6 +93,31 @@ class KubernetesBuildJobFactoryTest {
     }
 
     @Test
+    void networkNoneDropsRawSocketsFromTheBuilderSoThatThePacketSocketCannotBypassTheFirewallRules() {
+        Job job = factory.createJob(buildJob(new DockerRunConfig(List.of(), "none", 0, 0, 0)), "local-ci-job-r2", "agent");
+
+        Container builder = container(job, KubernetesBuildJobFactory.BUILDER_CONTAINER);
+        assertThat(builder.getSecurityContext().getCapabilities().getDrop()).containsExactly("NET_RAW");
+        // the rest of the context is unchanged: the seccomp profile stays, and nothing else is dropped or added
+        assertThat(builder.getSecurityContext().getSeccompProfile().getType()).isEqualTo("RuntimeDefault");
+        assertThat(builder.getSecurityContext().getCapabilities().getAdd()).isNullOrEmpty();
+        assertThat(builder.getSecurityContext().getAllowPrivilegeEscalation()).isNull();
+        // the helper container keeps dropping everything
+        assertThat(container(job, KubernetesBuildJobFactory.HELPER_CONTAINER).getSecurityContext().getCapabilities().getDrop()).containsExactly("ALL");
+    }
+
+    @Test
+    void theDefaultNetworkKeepsTheDefaultCapabilitiesOfTheBuilder() {
+        for (String network : new String[] { null, "", " " }) {
+            Job job = factory.createJob(buildJob(new DockerRunConfig(List.of(), network, 0, 0, 0)), "local-ci-job-r2", "agent");
+
+            Container builder = container(job, KubernetesBuildJobFactory.BUILDER_CONTAINER);
+            assertThat(builder.getSecurityContext().getCapabilities()).as("network '%s'", network).isNull();
+            assertThat(builder.getSecurityContext().getSeccompProfile().getType()).isEqualTo("RuntimeDefault");
+        }
+    }
+
+    @Test
     void rejectsUnsupportedRunFlagsAndMalformedEnvironment() {
         assertThatThrownBy(() -> factory.createJob(buildJob(new DockerRunConfig(List.of(), "course-network", 0, 0, 0)), "job", "agent")).isInstanceOf(LocalCIException.class)
                 .hasMessageContaining("Named Docker networks");
