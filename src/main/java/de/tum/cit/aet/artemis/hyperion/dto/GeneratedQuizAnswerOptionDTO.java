@@ -13,8 +13,8 @@ import io.swagger.v3.oas.annotations.media.Schema;
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 @JsonIgnoreProperties(ignoreUnknown = true)
-@Schema(name = "GeneratedQuizAnswerOption", description = "One generated answer option")
+@Schema(description = "One generated answer option")
 public record GeneratedQuizAnswerOptionDTO(@NotBlank @Size(min = 1, max = 2000) @Schema(description = "Answer option text") String text,
-        @Schema(description = "Whether this option is correct") boolean correct, @Size(max = 2000) @Schema(description = "Optional hint") String hint,
-        @Size(max = 2000) @Schema(description = "Optional explanation") String explanation) {
+        @Schema(description = "Whether this option is correct", requiredMode = Schema.RequiredMode.REQUIRED) boolean correct,
+        @Size(max = 2000) @Schema(description = "Optional hint") String hint, @Size(max = 2000) @Schema(description = "Optional explanation") String explanation) {
 }

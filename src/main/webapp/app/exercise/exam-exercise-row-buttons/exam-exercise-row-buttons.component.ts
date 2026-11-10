@@ -1,7 +1,9 @@
 import { injectGenerationCapabilities } from 'app/hyperion/exercise-generation/hyperion-generation-capabilities';
 import { Component, computed, effect, inject, input, output, signal } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Subject } from 'rxjs';
+import { Observable, Subject } from 'rxjs';
+import { EntityDeletionService } from 'app/shared-ui/delete-dialog/service/entity-deletion.service';
+import { exerciseDeletionTarget, isDeletionCompleted, isDeletionOutcomeUnknown } from 'app/shared-ui/delete-dialog/entity-deletion-target.util';
 import { ActionItem } from 'app/exercise/exercise-action-bar/exercise-action-bar.model';
 import { ExerciseActionBarComponent } from 'app/exercise/exercise-action-bar/exercise-action-bar.component';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -50,6 +52,7 @@ export class ExamExerciseRowButtonsComponent {
     private quizExerciseService = inject(QuizExerciseService);
     private quizExerciseDeletionApi = inject(QuizExerciseDeletionApi);
     private exerciseService = inject(ExerciseService);
+    private entityDeletionService = inject(EntityDeletionService);
     private eventManager = inject(EventManager);
     private profileService = inject(ProfileService);
     private translateService = inject(TranslateService);
@@ -60,6 +63,8 @@ export class ExamExerciseRowButtonsComponent {
     readonly exerciseGroupId = input.required<number>();
     readonly latestIndividualEndDate = input<dayjs.Dayjs>();
     readonly onDeleteExercise = output<void>();
+    /** Emitted when it is not known how a deletion ended; the table is reloaded from the server instead of removing the exercise. */
+    readonly deletionOutcomeUnknown = output<void>();
     /**
      * Width (px) the actions column must reserve to keep the always-visible test-run warning plus the ellipsis
      * trigger on screen; 0 when there is none. Mirrors `ExerciseActionsComponent.quizActionsMinWidth` so a shared
@@ -288,7 +293,7 @@ export class ExamExerciseRowButtonsComponent {
                 delete: {
                     entityTitle: ex.title ?? '',
                     entitySummaryTitle: 'artemisApp.exercise.delete.summary.title',
-                    fetchEntitySummary: this.deletionSummary(),
+                    fetchCategorizedEntitySummary: this.deletionSummary(),
                     deleteQuestion: ex.type === ExerciseType.PROGRAMMING ? 'artemisApp.programmingExercise.delete.question' : 'artemisApp.exercise.delete.question',
                     deleteConfirmationText: 'artemisApp.exercise.delete.typeNameToConfirm',
                     translateValues: this.deleteTranslateValues(),
@@ -322,55 +327,45 @@ export class ExamExerciseRowButtonsComponent {
     }
 
     private deleteTextExercise() {
-        this.textExerciseService.delete(this.exercise().id!).subscribe({
-            next: () => {
-                this.eventManager.broadcast({ name: 'textExerciseListModification', content: 'Deleted a textExercise' });
-                this.dialogErrorSource.next('');
-                this.onDeleteExercise.emit();
-            },
-            error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
-        });
+        this.runDeletion(this.textExerciseService.delete(this.exercise().id!), 'textExerciseListModification', 'Deleted a textExercise');
     }
 
     private deleteModelingExercise() {
-        this.modelingExerciseService.delete(this.exercise().id!).subscribe({
-            next: () => {
-                this.eventManager.broadcast({ name: 'modelingExerciseListModification', content: 'Deleted a modelingExercise' });
-                this.dialogErrorSource.next('');
-                this.onDeleteExercise.emit();
-            },
-            error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
-        });
+        this.runDeletion(this.modelingExerciseService.delete(this.exercise().id!), 'modelingExerciseListModification', 'Deleted a modelingExercise');
     }
 
     private deleteFileUploadExercise() {
-        this.fileUploadExerciseService.delete(this.exercise().id!).subscribe({
-            next: () => {
-                this.eventManager.broadcast({ name: 'fileUploadExerciseListModification', content: 'Deleted a fileUploadExercise' });
-                this.dialogErrorSource.next('');
-                this.onDeleteExercise.emit();
-            },
-            error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
-        });
+        this.runDeletion(this.fileUploadExerciseService.delete(this.exercise().id!), 'fileUploadExerciseListModification', 'Deleted a fileUploadExercise');
     }
 
     private deleteQuizExercise() {
-        this.quizExerciseDeletionApi.deleteQuizExercise(this.exercise().id!).subscribe({
-            next: () => {
-                this.eventManager.broadcast({ name: 'quizExerciseListModification', content: 'Deleted a quiz' });
-                this.dialogErrorSource.next('');
-                this.onDeleteExercise.emit();
-            },
-            error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
-        });
+        this.runDeletion(this.quizExerciseDeletionApi.deleteQuizExercise(this.exercise().id!), 'quizExerciseListModification', 'Deleted a quiz');
     }
 
     public deleteProgrammingExercise(event: { [key: string]: boolean }) {
-        this.programmingExerciseService.delete(this.exercise().id!, event.deleteStudentReposBuildPlans, event.deleteBaseReposBuildPlans).subscribe({
-            next: () => {
-                this.eventManager.broadcast({ name: 'programmingExerciseListModification', content: 'Deleted a programming exercise' });
+        this.runDeletion(
+            this.programmingExerciseService.delete(this.exercise().id!, event.deleteStudentReposBuildPlans, event.deleteBaseReposBuildPlans),
+            'programmingExerciseListModification',
+            'Deleted a programming exercise',
+        );
+    }
+
+    /**
+     * Starts the background deletion, shows its progress and refreshes the list once the exercise is gone.
+     */
+    private runDeletion(request$: Observable<unknown>, eventName: string, eventContent: string) {
+        this.entityDeletionService.delete(exerciseDeletionTarget(this.exercise()), request$).subscribe({
+            next: (progress) => {
+                if (isDeletionCompleted(progress)) {
+                    this.eventManager.broadcast({ name: eventName, content: eventContent });
+                    this.onDeleteExercise.emit();
+                } else if (isDeletionOutcomeUnknown(progress)) {
+                    // Not known how it ended: only refresh the list, which shows the real state, instead of announcing a deletion.
+                    this.eventManager.broadcast({ name: eventName, content: 'Refresh after an unknown deletion outcome' });
+                    this.deletionOutcomeUnknown.emit();
+                }
+                // A failed deletion is reported by the progress dialog; this only ends the confirmation dialog.
                 this.dialogErrorSource.next('');
-                this.onDeleteExercise.emit();
             },
             error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
         });
