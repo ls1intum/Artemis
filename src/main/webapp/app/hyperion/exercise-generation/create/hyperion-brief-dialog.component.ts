@@ -9,13 +9,15 @@ import { TumAetUiButtonComponent, TumAetUiDialogComponent, TumAetUiInputDirectiv
 
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { Course } from 'app/course/shared/entities/course.model';
-import { DifficultyLevel } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { DifficultyLevel, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { HyperionExerciseGenerationService } from 'app/hyperion/exercise-generation/hyperion-exercise-generation.service';
 import { HyperionMetadataSuggestion } from 'app/hyperion/exercise-generation/hyperion-generation-stream.model';
 import { HyperionJobRegistryService } from 'app/hyperion/exercise-generation/state/hyperion-job-registry.service';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
+import { EntityDeletionService } from 'app/shared-ui/delete-dialog/service/entity-deletion.service';
+import { exerciseDeletionTarget, isDeletionCompleted } from 'app/shared-ui/delete-dialog/entity-deletion-target.util';
 import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/programming/shared/entities/programming-exercise.model';
 
 const MIN_BRIEF_LENGTH = 40;
@@ -39,6 +41,7 @@ const MAX_BRIEF_LENGTH = 8000;
 })
 export class HyperionBriefDialogComponent {
     private readonly programmingExerciseService = inject(ProgrammingExerciseService);
+    private readonly entityDeletionService = inject(EntityDeletionService);
     private readonly generationService = inject(HyperionExerciseGenerationService);
     private readonly registry = inject(HyperionJobRegistryService);
     private readonly router = inject(Router);
@@ -175,20 +178,35 @@ export class HyperionBriefDialogComponent {
             });
     }
 
-    /** Remove the unused draft after a failed start, preserving the brief for another attempt. */
+    /**
+     * Remove the unused draft after a failed start, preserving the brief for another attempt.
+     * <p>
+     * The server deletes the draft in the background and answers the request right away, so the draft only counts as removed, and a new
+     * attempt is only possible, once the deletion has ended. If it fails, the draft stays and the deletion can be retried.
+     */
     deleteCreatedExercise(): void {
-        const exerciseId = this.createdExercise()?.id;
-        if (exerciseId === undefined || this.busy()) {
+        const exercise = this.createdExercise();
+        const exerciseId = exercise?.id;
+        if (exercise === undefined || exerciseId === undefined || this.busy()) {
             return;
         }
         this.deleting.set(true);
         this.deleteFailed.set(false);
-        this.programmingExerciseService
-            .delete(exerciseId, false, false)
+        // Silent: this dialog is its own progress feedback, and the service reports a failed deletion with an alert.
+        this.entityDeletionService
+            .delete(
+                exerciseDeletionTarget({ id: exerciseId, title: exercise.title, type: ExerciseType.PROGRAMMING }),
+                this.programmingExerciseService.delete(exerciseId, false, false),
+                { silent: true },
+            )
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe({
-                next: () => {
+                next: (progress) => {
                     this.deleting.set(false);
+                    if (!isDeletionCompleted(progress)) {
+                        this.deleteFailed.set(true);
+                        return;
+                    }
                     this.createdExercise.set(undefined);
                     this.startError.set(undefined);
                     this.exerciseDeleted.emit(exerciseId);

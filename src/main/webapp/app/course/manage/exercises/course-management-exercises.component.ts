@@ -71,7 +71,11 @@ import { CourseTitleBarToolbarDirective } from 'app/course/shared/directives/cou
 import { CourseTitleBarActionsDirective } from 'app/course/shared/directives/course-title-bar-actions.directive';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { DeleteDialogService } from 'app/shared-ui/delete-dialog/service/delete-dialog.service';
-import { ActionType } from 'app/shared-ui/delete-dialog/delete-dialog.model';
+import { ActionType, EntitySummaryCategory } from 'app/shared-ui/delete-dialog/delete-dialog.model';
+import { EntityDeletionService } from 'app/shared-ui/delete-dialog/service/entity-deletion.service';
+import { exerciseDeletionTarget, isRejectionReportedByGlobalHandler } from 'app/shared-ui/delete-dialog/entity-deletion-target.util';
+import { mergeSummaryCategories } from 'app/shared-ui/delete-dialog/entity-summary.util';
+import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
 import { ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
@@ -129,6 +133,8 @@ export class CourseManagementExercisesComponent implements OnInit {
     private readonly groupSync = inject(ExerciseGroupSyncService);
     private readonly deleteDialogService = inject(DeleteDialogService);
     private readonly alertService = inject(AlertService);
+    private readonly entityDeletionService = inject(EntityDeletionService);
+    private readonly exerciseService = inject(ExerciseService);
     private readonly localStorageService = inject(LocalStorageService);
     private readonly profileService = inject(ProfileService);
     private readonly destroyRef = inject(DestroyRef);
@@ -453,6 +459,12 @@ export class CourseManagementExercisesComponent implements OnInit {
         }
     }
 
+    /** What is deleted together with all selected exercises, added up per row, so the dialog shows the total amount of data. */
+    fetchSelectedExercisesDeletionSummary(): Observable<EntitySummaryCategory[]> {
+        const summaries = this.selectedExercises().map((exercise) => this.exerciseService.getDeletionSummary(exercise));
+        return summaries.length === 0 ? of([]) : forkJoin(summaries).pipe(map((categories) => mergeSummaryCategories(categories)));
+    }
+
     /**
      * Deletes every selected exercise via its type-specific service, invoked by the bulk-delete button on confirm.
      * Reloads afterwards so the view matches the server even on a partial failure.
@@ -464,24 +476,32 @@ export class CourseManagementExercisesComponent implements OnInit {
             this.selectedDeleteError.next('');
             return;
         }
-        // catchError turns a rejected delete into an emitted value, so forkJoin waits for the whole batch
-        // instead of unsubscribing the remaining deletes on the first failure.
+        // Every deletion runs in the background on the server and is silent: there is no progress dialog per exercise. The service itself
+        // raises an alert for each deletion that fails, and the global error handling reports a refused request, so the failures are reported
+        // even after the instructor left this page. This component only has to refresh the view once the whole batch ended. catchError turns a
+        // rejected request into an emitted value, so forkJoin waits for the whole batch instead of unsubscribing the remaining deletions.
         const deletionObservables = exercisesToDelete.map((exercise) =>
-            this.deleteObservableFor(exercise, event).pipe(
+            this.entityDeletionService.delete(exerciseDeletionTarget(exercise), this.deleteObservableFor(exercise, event), { silent: true }).pipe(
                 map(() => undefined),
-                catchError((error: HttpErrorResponse) => of(error)),
+                catchError((error: unknown) => {
+                    // The global error handling stays silent about some rejections, e.g. the plain 502 page of a proxy, so those are reported here.
+                    if (!isRejectionReportedByGlobalHandler(error, this.alertService)) {
+                        this.alertService.error('artemisApp.deletionProgress.requestRejected', { title: exercise.title ?? '' });
+                    }
+                    return of(undefined);
+                }),
             ),
         );
+        this.alertService.info('artemisApp.deletionProgress.bulkStarted', { count: exercisesToDelete.length });
         const contextVersion = this.courseContextVersion;
         forkJoin(deletionObservables)
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe({
-                next: (results) => {
+                next: () => {
+                    this.selectedDeleteError.next('');
                     if (this.courseContextVersion !== contextVersion) {
                         return;
                     }
-                    const firstError = results.find((result): result is HttpErrorResponse => result !== undefined);
-                    this.selectedDeleteError.next(firstError?.message ?? '');
                     // Some exercises may already be gone; reload so the view matches the server (even on a partial failure).
                     this.clearSelection();
                     this.loadCourseExercises(courseId);
@@ -518,8 +538,11 @@ export class CourseManagementExercisesComponent implements OnInit {
         this.showEditSelected.set(true);
     }
 
-    /** After the "edit selected" modal saved, reload so the updated dates show in the table and cards. */
-    protected onEditSelectedSaved(): void {
+    /**
+     * Reads the exercises of the course from the server again. Used after the "edit selected" modal saved, so the updated dates show in the table and cards,
+     * and after a deletion ended with an unknown outcome, when nothing is announced or removed locally and the server tells what is left.
+     */
+    reloadCourseExercises(): void {
         const courseId = this.course()?.id;
         if (courseId !== undefined) {
             this.loadCourseExercises(courseId);

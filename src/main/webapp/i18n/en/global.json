@@ -564,7 +564,10 @@
             "value": "Value"
         },
         "delete": {
-            "title": "Confirm delete operation"
+            "title": "Confirm delete operation",
+            "summary": {
+                "largeCountWarning": "This deletes a large amount of data. Please check the numbers below carefully before you confirm."
+            }
         },
         "unlink": {
             "title": "Confirm unlink operation"
