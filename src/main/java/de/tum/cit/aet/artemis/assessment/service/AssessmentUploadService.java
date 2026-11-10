@@ -331,10 +331,6 @@ public class AssessmentUploadService {
         final Map<Long, AssessmentUploadParticipationDTO> participationsById = requestedParticipationIds.isEmpty() ? Map.of()
                 : assessmentUploadParticipationRepository.findAssessmentUploadParticipations(exercise.getId(), requestedParticipationIds).stream()
                         .collect(Collectors.toMap(AssessmentUploadParticipationDTO::participationId, Function.identity()));
-        final Set<Long> unresolvedParticipationIds = new HashSet<>(requestedParticipationIds);
-        unresolvedParticipationIds.removeAll(participationsById.keySet());
-        final Set<Long> participationIdsOutsideExercise = unresolvedParticipationIds.isEmpty() ? Set.of()
-                : assessmentUploadParticipationRepository.findIdsOutsideExercise(exercise.getId(), unresolvedParticipationIds);
         // A text file is "referenced" if some row's identifier matches it (exact or exported-folder suffix), even when that row fails another check (e.g. invalid points). Only
         // text files that no row references at all are reported as UNMATCHED_TEXT_FILE.
         final Set<String> referencedTextKeys = csv.records().stream().map(this::extractIdentifier).filter(identifier -> !identifier.isBlank())
@@ -360,8 +356,7 @@ public class AssessmentUploadService {
                 continue;
             }
 
-            switch (validateRow(identifier, csvRecord, csv.pointsColumn(), textContentsByBaseName, matchedTextKeys, participationsById, participationIdsOutsideExercise,
-                    maximumPoints)) {
+            switch (validateRow(identifier, csvRecord, csv.pointsColumn(), textContentsByBaseName, matchedTextKeys, participationsById, maximumPoints)) {
                 case ValidRow(ValidatedRow row, String matchedTextKey) -> {
                     matchedTextKeys.add(matchedTextKey);
                     validatedRows.add(row);
@@ -401,21 +396,19 @@ public class AssessmentUploadService {
      * <p>
      * <b>Postcondition:</b> read-only; returns a {@link ValidRow} (with the matched text-file key) if all checks pass, otherwise an {@link InvalidRow} carrying the first error.
      *
-     * @param identifier                      the student identifier from the first CSV column ({@code <participationId>-<login>})
-     * @param csvRecord                       the CSV row being validated
-     * @param pointsColumn                    the resolved header name of the {@code Manual points} column
-     * @param textContentsByBaseName          the available text files keyed by base name
-     * @param matchedTextKeys                 text-file keys already assigned to earlier valid rows
-     * @param participationsById              exercise-scoped participation data resolved for the entire upload
-     * @param participationIdsOutsideExercise ids that exist but belong to another exercise
-     * @param maximumPoints                   maximum accepted points including bonus points
+     * @param identifier             the student identifier from the first CSV column ({@code <participationId>-<login>})
+     * @param csvRecord              the CSV row being validated
+     * @param pointsColumn           the resolved header name of the {@code Manual points} column
+     * @param textContentsByBaseName the available text files keyed by base name
+     * @param matchedTextKeys        text-file keys already assigned to earlier valid rows
+     * @param participationsById     exercise-scoped participation data resolved for the entire upload
+     * @param maximumPoints          maximum accepted points including bonus points
      * @return a {@link ValidRow} if the row is valid, otherwise an {@link InvalidRow}
      */
     private RowValidationResult validateRow(final String identifier, final CSVRecord csvRecord, final String pointsColumn, final Map<String, String> textContentsByBaseName,
-            final Set<String> matchedTextKeys, final Map<Long, AssessmentUploadParticipationDTO> participationsById, final Set<Long> participationIdsOutsideExercise,
-            final double maximumPoints) {
+            final Set<String> matchedTextKeys, final Map<Long, AssessmentUploadParticipationDTO> participationsById, final double maximumPoints) {
         assert csvRecord != null && textContentsByBaseName != null && matchedTextKeys != null : "CSV and text-file data must not be null";
-        assert participationsById != null && participationIdsOutsideExercise != null : "resolved participation data must not be null";
+        assert participationsById != null : "resolved participation data must not be null";
         assert identifier != null && !identifier.isBlank() : "identifier must not be blank";
         assert pointsColumn != null && !pointsColumn.isBlank() : "pointsColumn must be resolved";
         assert Double.isFinite(maximumPoints) && maximumPoints > 0 : "maximumPoints must be finite and positive";
@@ -427,9 +420,6 @@ public class AssessmentUploadService {
         final String login = identifier.substring(identifier.indexOf('-') + 1);
 
         final AssessmentUploadParticipationDTO participation = participationsById.get(participationId.get());
-        if (participation == null && participationIdsOutsideExercise.contains(participationId.get())) {
-            return new InvalidRow(AssessmentUploadErrorDTO.of(identifier, AssessmentUploadErrorType.PARTICIPATION_WRONG_EXERCISE));
-        }
         if (participation == null) {
             return new InvalidRow(AssessmentUploadErrorDTO.of(identifier, AssessmentUploadErrorType.PARTICIPATION_NOT_FOUND));
         }

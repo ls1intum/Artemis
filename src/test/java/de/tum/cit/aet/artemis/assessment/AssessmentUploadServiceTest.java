@@ -477,6 +477,20 @@ class AssessmentUploadServiceTest extends AbstractProgrammingIntegrationIndepend
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void shouldNotRevealWhetherParticipationExistsOutsideExercise() {
+        final Course otherCourse = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndTestCases();
+        final ProgrammingExercise otherExercise = ExerciseUtilService.getFirstExerciseWithType(otherCourse, ProgrammingExercise.class);
+        final var otherParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(otherExercise, TEST_PREFIX + "student3");
+        final String csv = "Identifier,Manual points\n%s-anyone,80\n%d-anyone,80\n".formatted(otherParticipation.getId(), Long.MAX_VALUE);
+
+        final AssessmentUploadResultDTO result = assessmentUploadService.importAssessments(programmingExercise, buildZip(csv, Map.of()));
+
+        assertThat(result.errors()).extracting(error -> error.type()).containsExactly(AssessmentUploadErrorType.PARTICIPATION_NOT_FOUND,
+                AssessmentUploadErrorType.PARTICIPATION_NOT_FOUND);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldReportMissingAndUnmatchedTextFiles() {
         final String csv = "Identifier,Manual points\n%s,80\n".formatted(identifier1);
         final Map<String, String> textFiles = new LinkedHashMap<>();

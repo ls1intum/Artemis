@@ -4,7 +4,6 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.Set;
 
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
@@ -73,27 +72,6 @@ public interface AssessmentUploadParticipationRepository extends ArtemisJpaRepos
             ORDER BY p.id
             """)
     List<AssessmentUploadParticipationDTO> findAllForAssessmentUploadTemplate(@Param("exerciseId") final long exerciseId);
-
-    /**
-     * Finds which requested participation ids exist outside the target exercise. This preserves the distinction between an unknown participation and one belonging to another
-     * exercise without resolving rows individually.
-     * <p>
-     * <b>Preconditions:</b> {@code exerciseId} identifies a persisted exercise and {@code participationIds} is non-{@code null}, non-empty, and contains persisted ids.
-     * <p>
-     * <b>Postcondition:</b> every returned id occurs in {@code participationIds} and belongs to a different exercise.
-     *
-     * @param exerciseId       the target exercise id
-     * @param participationIds ids that were not found in the target exercise
-     * @return ids belonging to another exercise
-     */
-    @Query("""
-            SELECT p.id
-            FROM StudentParticipation p
-                LEFT JOIN p.exercise exercise
-            WHERE (exercise.id <> :exerciseId OR exercise.id IS NULL)
-                AND p.id IN :participationIds
-            """)
-    Set<Long> findIdsOutsideExercise(@Param("exerciseId") final long exerciseId, @Param("participationIds") final Collection<Long> participationIds);
 
     /**
      * Loads the participations needed during assessment-upload storage: the participant reference used by result lifecycle callbacks, and each participation's latest submission

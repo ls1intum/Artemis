@@ -105,7 +105,6 @@ class AssessmentUploadFailureCompensationTest {
         final StudentParticipation participation = participationWithExistingSubmission();
         final AssessmentUploadParticipationRepository participationRepository = mock(AssessmentUploadParticipationRepository.class);
         when(participationRepository.findAssessmentUploadParticipations(any(Long.class), any())).thenReturn(List.of(new AssessmentUploadParticipationDTO(PARTICIPATION_ID, LOGIN)));
-        when(participationRepository.findIdsOutsideExercise(any(Long.class), any())).thenReturn(Set.of());
         when(participationRepository.findAllForAssessmentUpload(any(Long.class), any())).thenReturn(List.of(participation));
 
         final AssessmentUploadService service = new AssessmentUploadService(archiveParserReturningOneRow(), participationRepository, submissionRepository, resultService,
@@ -130,7 +129,6 @@ class AssessmentUploadFailureCompensationTest {
     private AssessmentUploadParticipationRepository participationRepositoryReturningOneParticipation() {
         final AssessmentUploadParticipationRepository participationRepository = mock(AssessmentUploadParticipationRepository.class);
         when(participationRepository.findAssessmentUploadParticipations(any(Long.class), any())).thenReturn(List.of(new AssessmentUploadParticipationDTO(PARTICIPATION_ID, LOGIN)));
-        when(participationRepository.findIdsOutsideExercise(any(Long.class), any())).thenReturn(Set.of());
         when(participationRepository.findAllForAssessmentUpload(any(Long.class), any())).thenReturn(List.of(participationWithoutSubmission()));
         return participationRepository;
     }

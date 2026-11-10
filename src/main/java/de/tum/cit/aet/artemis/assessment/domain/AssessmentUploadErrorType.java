@@ -48,14 +48,9 @@ public enum AssessmentUploadErrorType {
     DUPLICATE_IDENTIFIER,
 
     /**
-     * No participation with the given participation id exists.
+     * No participation with the given participation id exists in the target exercise.
      */
     PARTICIPATION_NOT_FOUND,
-
-    /**
-     * A participation with the given participation id exists, but it belongs to a different exercise.
-     */
-    PARTICIPATION_WRONG_EXERCISE,
 
     /**
      * The login part of the identifier does not match the participant (student login or team short name) of the resolved participation.

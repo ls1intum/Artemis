@@ -100,7 +100,6 @@ class AssessmentUploadAvailabilityGateTest {
         final AssessmentUploadParticipationRepository participationRepository = mock(AssessmentUploadParticipationRepository.class);
         when(participationRepository.findAssessmentUploadParticipations(eq(EXERCISE_ID), any()))
                 .thenReturn(participations.stream().map(p -> new AssessmentUploadParticipationDTO(p.getId(), login(p.getId()))).toList());
-        when(participationRepository.findIdsOutsideExercise(eq(EXERCISE_ID), any())).thenReturn(Set.of());
         when(participationRepository.findAllForAssessmentUpload(eq(EXERCISE_ID), any())).thenReturn(participations);
 
         final AssessmentUploadService service = new AssessmentUploadService(archiveParserFor(participations), participationRepository, submissionRepository, resultService,
