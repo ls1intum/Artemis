@@ -261,8 +261,10 @@ describe('ExerciseAssessmentDashboardComponent', () => {
             providers,
         })
             .overrideComponent(ExerciseAssessmentDashboardComponent, {
-                remove: { imports: [TutorLeaderboardComponent] },
-                add: { imports: [MockComponent(TutorLeaderboardComponent)] },
+                remove: { imports: [TutorLeaderboardComponent, CollapsableAssessmentInstructionsComponent, ModelingEditorComponent] },
+                add: {
+                    imports: [MockComponent(TutorLeaderboardComponent), MockComponent(CollapsableAssessmentInstructionsComponent), MockComponent(ModelingEditorComponent)],
+                },
             })
             .compileComponents();
         fixture = TestBed.createComponent(ExerciseAssessmentDashboardComponent);
