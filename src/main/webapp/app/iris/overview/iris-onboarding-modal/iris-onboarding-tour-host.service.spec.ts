@@ -4,7 +4,7 @@ import { IrisOnboardingTourHost } from './iris-onboarding-tour-host.service';
 import { IrisOnboardingModalComponent } from './iris-onboarding-modal.component';
 import { IrisOnboardingRef } from './iris-onboarding-ref';
 import { IrisOnboardingService } from './iris-onboarding.service';
-import { Component, inject, signal } from '@angular/core';
+import { ApplicationRef, Component, inject, signal } from '@angular/core';
 import { Subject } from 'rxjs';
 
 @Component({ template: '<button type="button" (click)="open()">Open tour</button>' })
@@ -38,6 +38,16 @@ describe('IrisOnboardingTourHost', () => {
         expect(element?.tagName.toLowerCase()).toBe('jhi-iris-onboarding-modal');
         expect(element?.querySelector('.tour-stub')).not.toBeNull();
         expect(ref).toBeInstanceOf(IrisOnboardingRef);
+    });
+
+    it('should remove the tour again when attaching it fails', () => {
+        const applicationRef = TestBed.inject(ApplicationRef);
+        vi.spyOn(applicationRef, 'attachView').mockImplementation(() => {
+            throw new Error('attach failed');
+        });
+
+        expect(() => host.open()).toThrow('attach failed');
+        expect(document.querySelector('jhi-iris-onboarding-modal')).toBeNull();
     });
 
     it('should report the result and remove the tour once it closes', () => {

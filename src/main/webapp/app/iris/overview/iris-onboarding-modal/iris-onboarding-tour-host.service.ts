@@ -22,8 +22,14 @@ export class IrisOnboardingTourHost {
         const ref = new IrisOnboardingRef();
         const elementInjector = Injector.create({ parent: this.injector, providers: [{ provide: IrisOnboardingRef, useValue: ref }] });
         const componentRef = createComponent(IrisOnboardingModalComponent, { environmentInjector: this.environmentInjector, elementInjector });
-        this.document.body.appendChild(componentRef.location.nativeElement);
-        this.applicationRef.attachView(componentRef.hostView);
+        try {
+            this.document.body.appendChild(componentRef.location.nativeElement);
+            this.applicationRef.attachView(componentRef.hostView);
+        } catch (error) {
+            componentRef.destroy();
+            componentRef.location.nativeElement.remove();
+            throw error;
+        }
         ref.onClose.subscribe({
             complete: () => {
                 this.applicationRef.detachView(componentRef.hostView);

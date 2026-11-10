@@ -12,6 +12,11 @@
 
     &__menu-trigger {
         opacity: 0;
+
+        // The menu opens in an overlay outside the row, so keep its trigger visible while it is open.
+        &[aria-expanded='true'] {
+            opacity: 1;
+        }
     }
 
     &:hover,
