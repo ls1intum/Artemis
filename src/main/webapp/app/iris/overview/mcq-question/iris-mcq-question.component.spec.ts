@@ -337,13 +337,12 @@ describe('IrisMcqQuestionComponent', () => {
         expect(radios[1].labels?.[0].textContent).toContain('4');
     });
 
-    it('should have one tab stop that follows the selected radio', () => {
+    it('should leave the tab stop to the native radio group and check the clicked radio', () => {
         const el = render();
         const radios = el.querySelectorAll<HTMLInputElement>('input[type="radio"]');
-        expect(Array.from(radios, (radio) => radio.tabIndex)).toEqual([0, -1, -1, -1]);
+        expect(Array.from(radios, (radio) => radio.hasAttribute('tabindex'))).toEqual([false, false, false, false]);
         radios[2].click();
         fixture.detectChanges();
-        expect(Array.from(radios, (radio) => radio.tabIndex)).toEqual([-1, -1, 0, -1]);
         expect(Array.from(radios, (radio) => radio.checked)).toEqual([false, false, true, false]);
     });
 
@@ -370,7 +369,6 @@ describe('IrisMcqQuestionComponent', () => {
         fixture.detectChanges();
         await fixture.whenStable();
         expect(document.activeElement).toBe(el.querySelector('.mcq-feedback'));
-        expect(Array.from(radios, (radio) => radio.tabIndex)).toEqual([-1, -1, -1, -1]);
         expect(Array.from(radios, (radio) => radio.disabled)).toEqual([true, true, true, true]);
         radios[0].click();
         fixture.detectChanges();

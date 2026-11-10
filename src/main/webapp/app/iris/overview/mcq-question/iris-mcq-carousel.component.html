@@ -19,6 +19,7 @@
                 variant="outlined"
                 type="button"
                 class="nav-btn"
+                [rounded]="true"
                 [attr.aria-label]="'artemisApp.iris.mcq.previousQuestion' | artemisTranslate"
                 [disabled]="currentIndex() === 0"
                 (click)="previousQuestion()"
@@ -54,6 +55,7 @@
                 variant="outlined"
                 type="button"
                 class="nav-btn"
+                [rounded]="true"
                 [attr.aria-label]="'artemisApp.iris.mcq.nextQuestion' | artemisTranslate"
                 [disabled]="currentIndex() === totalQuestions() - 1"
                 (click)="nextQuestion()"
@@ -63,7 +65,7 @@
         </div>
 
         @if (allAnswered()) {
-            <button tumAetUiButton severity="info" data-button-intent="analytics" type="button" class="view-score-btn" (click)="showScore.set(true)">
+            <button tumAetUiButton severity="primary" data-button-intent="workflow" type="button" class="view-score-btn" (click)="showScore.set(true)">
                 <span jhiTranslate="artemisApp.iris.mcq.viewScore"></span>
             </button>
         }
@@ -93,7 +95,7 @@
                 </div>
             }
 
-            <button tumAetUiButton severity="success" variant="outlined" data-button-intent="positive" type="button" class="review-btn" (click)="showScore.set(false)">
+            <button tumAetUiButton severity="secondary" variant="outlined" data-button-intent="utility" type="button" class="review-btn" (click)="showScore.set(false)">
                 <span jhiTranslate="artemisApp.iris.mcq.reviewQuestions"></span>
             </button>
         </div>

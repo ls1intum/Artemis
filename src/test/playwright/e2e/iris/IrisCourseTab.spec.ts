@@ -31,7 +31,7 @@ async function openIrisChat(page: Page): Promise<void> {
     }
 
     await expect(messageInput).toBeVisible();
-    await expect(page.locator('.onboarding-container'), 'the onboarding tour must not be offered to a student who completed it').toHaveCount(0);
+    await expect(page.getByTestId('iris-onboarding'), 'the onboarding tour must not be offered to a student who completed it').toHaveCount(0);
 }
 
 /**

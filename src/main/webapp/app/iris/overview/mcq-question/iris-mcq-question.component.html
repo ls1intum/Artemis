@@ -9,7 +9,6 @@
                     [name]="questionLabelId"
                     [value]="$index"
                     [checked]="selectedIndex() === $index"
-                    [tabindex]="!submitted() && (selectedIndex() ?? 0) === $index ? 0 : -1"
                     [disabled]="submitted()"
                     (change)="selectOption($index)"
                 />

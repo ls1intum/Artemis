@@ -2102,6 +2102,7 @@ describe('IrisBaseChatbotComponent', () => {
                 ]);
                 expect(await (await entries[0].host()).getAttribute('aria-current')).toBe('true');
                 expect(await (await entries[3].host()).getAttribute('aria-current')).toBeNull();
+                expect(document.querySelectorAll('tumaet-ui-menu [role="group"]')).toHaveLength(2);
                 expect(await menu.isOpen()).toBe(true);
                 expect(component.sessionMenuOpen()).toBe(true);
             });
