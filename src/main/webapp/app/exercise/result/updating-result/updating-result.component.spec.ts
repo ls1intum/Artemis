@@ -135,6 +135,7 @@ describe('UpdatingResultComponent', () => {
     it.each([undefined, true, false])('ignores AI results on load and websocket updates with successful=%s', (successful) => {
         const official: Result = { id: 20, rated: true, score: 80, completionDate: dayjs().subtract(1, 'minute') };
         const ai: Result = { id: 21, rated: true, score: successful ? 20 : undefined, successful, assessmentType: AssessmentType.AUTOMATIC_ATHENA, completionDate: dayjs() };
+        fixture.componentRef.setInput('exercise', { type: ExerciseType.PROGRAMMING });
         cleanInitializeUngraded({ ...initialParticipation, submissions: [{ results: [official, ai] } as Submission] });
         expect(comp.result()).toEqual(official);
 
@@ -143,6 +144,16 @@ describe('UpdatingResultComponent', () => {
 
         subscribeForLatestResultOfParticipationSubject.next({ ...official, id: 22, score: 90 });
         expect(comp.result()?.score).toBe(90);
+    });
+
+    it.each([undefined, false, true])('selects only successful text Athena assessments on load and websocket updates: %s', (successful) => {
+        const official: Result = { id: 20, rated: true, score: 80, completionDate: dayjs().subtract(1, 'minute') };
+        const ai: Result = { id: 21, rated: true, score: 60, successful, assessmentType: AssessmentType.AUTOMATIC_ATHENA, completionDate: dayjs() };
+        fixture.componentRef.setInput('exercise', { type: ExerciseType.TEXT });
+        cleanInitializeGraded({ ...initialParticipation, submissions: [{ results: [official, ai] } as Submission] });
+        expect(comp.result()).toEqual(successful ? ai : official);
+        subscribeForLatestResultOfParticipationSubject.next({ ...ai, id: 22 });
+        expect(comp.result()?.id).toBe(successful ? 22 : official.id);
     });
 
     it('should react to rated, but not to unrated results if showUngradedResults is false', () => {

@@ -944,7 +944,8 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationIndepen
         assertThat(assessedSubmissionList).isEmpty();
 
         // Student should not have received a result over WebSocket as manual correction is ongoing
-        verify(websocketMessagingService, never()).sendMessageToUser(notNull(), userTopic("/topic/newResults"), isA(de.tum.cit.aet.artemis.programming.dto.ResultDTO.class));
+        verify(websocketMessagingService, never()).sendMessageToUser(notNull(), userTopic("/topic/newResults"),
+                isA(de.tum.cit.aet.artemis.programming.dto.ResultResponseDTO.class));
     }
 
     private void assessmentDueDatePassed() {

@@ -11,7 +11,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
-import de.tum.cit.aet.artemis.assessment.domain.FeedbackSeverity;
 import de.tum.cit.aet.artemis.assessment.domain.FeedbackType;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.domain.Visibility;
@@ -20,7 +19,8 @@ import de.tum.cit.aet.artemis.exercise.dto.SubmissionDTO;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
 
 /**
- * DTO containing {@link Result} information.
+ * Stable result representation shared with queued build jobs.
+ * Client feedback responses use {@link ResultResponseDTO} so new response fields do not change distributed serialization.
  * This does not include large reference attributes in order to send minimal data to the client.
  */
 // TODO: the result should include an actual string calculated and rounded on server side (based on exercise and course settings), this should not be done on the client side
@@ -32,11 +32,11 @@ public record ResultDTO(Long id, ZonedDateTime completionDate, Boolean successfu
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public record FeedbackDTO(Long id, String text, String detailText, boolean hasLongFeedbackText, String reference, Double credits, Boolean positive, FeedbackType type,
-            Visibility visibility, TestCaseDTO testCase, FeedbackSeverity severity) implements Serializable {
+            Visibility visibility, TestCaseDTO testCase) implements Serializable {
 
         public static FeedbackDTO of(Feedback feedback) {
             return new FeedbackDTO(feedback.getId(), feedback.getText(), feedback.getDetailText(), feedback.getHasLongFeedbackText(), feedback.getReference(),
-                    feedback.getCredits(), feedback.isPositive(), feedback.getType(), feedback.getVisibility(), TestCaseDTO.of(feedback.getTestCase()), feedback.getSeverity());
+                    feedback.getCredits(), feedback.isPositive(), feedback.getType(), feedback.getVisibility(), TestCaseDTO.of(feedback.getTestCase()));
         }
     }
 
@@ -74,39 +74,4 @@ public record ResultDTO(Long id, ZonedDateTime completionDate, Boolean successfu
                 result.isExampleResult(), result.getTestCaseCount(), result.getPassedTestCaseCount(), result.getCodeIssueCount());
     }
 
-    /**
-     * Converts a Result that is serialized <em>nested under its own submission</em> into a ResultDTO.
-     * <p>
-     * Both {@code submission} and {@code participation} are left {@code null}: the entity wire suppresses them via
-     * {@code @JsonIgnoreProperties({"submission", "participation"})} on {@code Submission.results}, and re-emitting
-     * them would repeat the whole submission/participation/exercise/course subtree once per result. Unlike
-     * {@link #of(Result, Collection)} this never dereferences {@code result.getSubmission()}, so a result with a
-     * {@code null} submission maps without a {@link NullPointerException}.
-     * <p>
-     * The feedback collection is only mapped when it is already initialized, so this never triggers a lazy load.
-     *
-     * @param result the result to convert
-     * @return the converted DTO
-     */
-    public static ResultDTO ofNested(Result result) {
-        var feedbacks = result.getFeedbacks();
-        return ofNested(result, feedbacks != null && Hibernate.isInitialized(feedbacks) ? feedbacks : null);
-    }
-
-    /**
-     * Converts a Result that is serialized <em>nested under its own submission</em> into a ResultDTO, with an
-     * explicit feedback list. Callers that filter feedback (sensitive-information filtering) use this overload so
-     * they never have to mutate the managed result to shape the JSON; callers that just want whatever is loaded use
-     * {@link #ofNested(Result)}.
-     *
-     * @param result           the result to convert
-     * @param filteredFeedback the feedback that should be sent to the client; {@code null} maps to no feedback list
-     * @return the converted DTO
-     */
-    public static ResultDTO ofNested(Result result, Collection<Feedback> filteredFeedback) {
-        List<FeedbackDTO> feedbackDTOs = filteredFeedback == null ? null : filteredFeedback.stream().map(FeedbackDTO::of).toList();
-        return new ResultDTO(result.getId(), result.getCompletionDate(), result.isSuccessful(), result.getScore(), result.isRated(), null, null, feedbackDTOs,
-                result.getAssessmentType(), result.getCorrectionRound(), result.hasComplaint(), result.isExampleResult(), result.getTestCaseCount(),
-                result.getPassedTestCaseCount(), result.getCodeIssueCount());
-    }
 }

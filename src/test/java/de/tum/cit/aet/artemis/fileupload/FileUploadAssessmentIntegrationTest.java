@@ -62,7 +62,7 @@ import de.tum.cit.aet.artemis.fileupload.dto.FileUploadResultDTO;
 import de.tum.cit.aet.artemis.fileupload.dto.FileUploadSubmissionDTO;
 import de.tum.cit.aet.artemis.fileupload.dto.UpdateFileUploadExerciseDTO;
 import de.tum.cit.aet.artemis.fileupload.util.FileUploadExerciseFactory;
-import de.tum.cit.aet.artemis.programming.dto.ResultDTO;
+import de.tum.cit.aet.artemis.programming.dto.ResultResponseDTO;
 
 class FileUploadAssessmentIntegrationTest extends AbstractFileUploadIntegrationTest {
 
@@ -831,7 +831,7 @@ class FileUploadAssessmentIntegrationTest extends AbstractFileUploadIntegrationT
         assertThat(assessedSubmissionList).isEmpty();
 
         // Student should not have received a result over WebSocket as manual correction is ongoing
-        verify(websocketMessagingService, never()).sendMessageToUser(notNull(), userTopic("/topic/newResults"), isA(ResultDTO.class));
+        verify(websocketMessagingService, never()).sendMessageToUser(notNull(), userTopic("/topic/newResults"), isA(ResultResponseDTO.class));
     }
 
     @Test

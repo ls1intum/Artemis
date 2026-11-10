@@ -569,7 +569,7 @@ export class ExamResultSummaryComponent implements OnInit {
     getTextColorAndIconClassByExercise(exercise: Exercise) {
         const participation = exercise.studentParticipations![0];
         const showUngradedResults = false;
-        let result = getLatestResultOfStudentParticipation(participation, showUngradedResults);
+        let result = getLatestResultOfStudentParticipation(participation, showUngradedResults, exercise.type);
 
         // The exam grade info holds the authoritative achieved score (e.g. updated after an accepted
         // complaint), while the participation's result can be stale. Prefer that score so the color and

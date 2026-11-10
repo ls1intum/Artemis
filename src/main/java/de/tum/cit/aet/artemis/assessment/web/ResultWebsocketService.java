@@ -23,7 +23,7 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
-import de.tum.cit.aet.artemis.programming.dto.ResultDTO;
+import de.tum.cit.aet.artemis.programming.dto.ResultResponseDTO;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingFeedbackSynthesizerService;
 
 /**
@@ -77,7 +77,7 @@ public class ResultWebsocketService {
         }
 
         // Send to tutors, instructors and admins
-        websocketMessagingService.sendMessage(EXERCISE_RESULTS.at(participation.getExercise().getId()), ResultDTO.of(result));
+        websocketMessagingService.sendMessage(EXERCISE_RESULTS.at(participation.getExercise().getId()), ResultResponseDTO.of(result));
     }
 
     private void broadcastNewResultToParticipants(StudentParticipation studentParticipation, Result result) {
@@ -99,14 +99,14 @@ public class ResultWebsocketService {
         if (isAutomaticAssessmentOrDueDateOver && !isAfterExamEnd) {
             var students = studentParticipation.getStudents();
 
-            var resultDTO = ResultDTO.of(result);
+            var resultDTO = ResultResponseDTO.of(result);
             // An instructor conducting an exam test run simulates a student and must see what the student exam shows, see ResultService#filterSensitiveInformationIfNecessary
             boolean isExamTestRun = studentParticipation.isTestRun() && exercise.isExamExercise();
             students.stream().filter(student -> !isExamTestRun && authCheckService.isAtLeastTeachingAssistantForExercise(exercise, student))
                     .forEach(user -> websocketMessagingService.sendMessageToUser(user.getLogin(), NEW_RESULTS.at(), resultDTO));
 
             var filteredFeedback = result.createFilteredFeedbacks(!isWorkingPeriodOver, exercise);
-            var filteredFeedbackResultDTO = ResultDTO.of(result, filteredFeedback);
+            var filteredFeedbackResultDTO = ResultResponseDTO.of(result, filteredFeedback);
 
             students.stream().filter(student -> isExamTestRun || !authCheckService.isAtLeastTeachingAssistantForExercise(exercise, student))
                     .forEach(user -> websocketMessagingService.sendMessageToUser(user.getLogin(), NEW_RESULTS.at(), filteredFeedbackResultDTO));

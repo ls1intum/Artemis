@@ -273,7 +273,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
 
     @ParameterizedTest
     @EnumSource(FeedbackSeverity.class)
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void saveAssessmentPreservesFeedbackSeverity(FeedbackSeverity severity) throws Exception {
         TextSubmission submission = ParticipationFactory.generateTextSubmission("Some submitted text", Language.ENGLISH, true);
         submission = textExerciseUtilService.saveTextSubmissionWithResultAndAssessor(textExercise, submission, TEST_PREFIX + "student1", TEST_PREFIX + "tutor1");
@@ -1912,7 +1912,8 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
         assertThat(assessedSubmissionList).isEmpty();
 
         // Student should not have received a result over WebSocket as manual correction is ongoing
-        verify(websocketMessagingService, never()).sendMessageToUser(notNull(), userTopic("/topic/newResults"), isA(de.tum.cit.aet.artemis.programming.dto.ResultDTO.class));
+        verify(websocketMessagingService, never()).sendMessageToUser(notNull(), userTopic("/topic/newResults"),
+                isA(de.tum.cit.aet.artemis.programming.dto.ResultResponseDTO.class));
     }
 
     private void addAssessmentFeedbackAndCheckScore(TextSubmissionWithoutAssessmentDTO submissionWithoutAssessment, List<Feedback> feedbacks, double pointsAwarded,

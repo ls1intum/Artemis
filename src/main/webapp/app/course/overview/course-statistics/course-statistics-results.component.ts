@@ -64,7 +64,7 @@ export class CourseStatisticsResultsComponent {
         return this.exercises()
             .map((exercise) => {
                 const participation = exercise.studentParticipations?.find((entry) => !isPracticeMode(entry));
-                const result = getLatestResultOfStudentParticipation(participation, false);
+                const result = getLatestResultOfStudentParticipation(participation, false, exercise.type);
                 const submitted = hasSubmittedForStatistics(participation);
                 const state: ResultState = result?.score !== undefined ? 'graded' : submitted ? 'pending' : 'notSubmitted';
                 const context = this.course() ? cloneWith(exercise, { course: this.course() }) : exercise;

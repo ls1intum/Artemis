@@ -633,7 +633,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
 
     private static Stream<Arguments> gradeRelevantResultStates() {
         return Stream.of(Arguments.of(AssessmentType.AUTOMATIC_ATHENA, null, false), Arguments.of(AssessmentType.AUTOMATIC_ATHENA, false, false),
-                Arguments.of(AssessmentType.AUTOMATIC_ATHENA, true, false), Arguments.of(AssessmentType.AUTOMATIC, false, true));
+                Arguments.of(AssessmentType.AUTOMATIC_ATHENA, true, true), Arguments.of(AssessmentType.AUTOMATIC, false, true));
     }
 
     private FileUploadExercise setupFileUploadExerciseWithResults() {

@@ -37,6 +37,7 @@ import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
@@ -206,8 +207,22 @@ class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationLocalCILo
     @ParameterizedTest
     @CsvSource({ "false,,", "true,,", "false,,true", "true,,true", "false,60,true", "true,60,true", "false,60,false", "true,60,false" })
     void preliminaryResultsDoNotReplaceOfficialScores(boolean team, Double score, Boolean successful) {
-        var participation = team ? teamTextParticipation : studentTextParticipation;
-        var official = resultRepository.findFirstWithSubmissionAndFeedbacksByParticipationIdOrderByCompletionDateDesc(participation.getId()).orElseThrow();
+        programmingExercise.setMode(team ? ExerciseMode.TEAM : ExerciseMode.INDIVIDUAL);
+        programmingExercise = exerciseRepository.save(programmingExercise);
+        StudentParticipation participation;
+        if (team) {
+            Team programmingTeam = new Team();
+            programmingTeam.setShortName(TEST_PREFIX + "programming");
+            programmingTeam.setExercise(programmingExercise);
+            programmingTeam.addStudents(student1);
+            programmingTeam = teamRepository.save(programmingTeam);
+            participation = participationUtilService.addTeamParticipationForExercise(programmingExercise, programmingTeam.getId());
+        }
+        else {
+            participation = participationUtilService.createAndSaveParticipationForExercise(programmingExercise, student1.getLogin());
+        }
+        var submission = participationUtilService.addSubmission(participation, new ProgrammingSubmission().submitted(true).submissionDate(ZonedDateTime.now().minusHours(1)));
+        var official = participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, ZonedDateTime.now().minusMinutes(30), submission);
         var preliminary = new Result();
         preliminary.setSubmission(official.getSubmission());
         preliminary.setExerciseId(participation.getExercise().getId());
@@ -242,6 +257,32 @@ class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationLocalCILo
         official.setAssessmentType(AssessmentType.AUTOMATIC_ATHENA);
         resultRepository.save(official);
         assertThat(resultGradeRepository.findLatestGradeRelevantResultWithCompletionDate(participation.getId())).isEmpty();
+    }
+
+    @ParameterizedTest
+    @CsvSource({ "false", "true" })
+    void successfulTextAthenaAssessmentRemainsGradeRelevant(boolean team) {
+        var participation = team ? teamTextParticipation : studentTextParticipation;
+        var official = resultRepository.findFirstWithSubmissionsByParticipationIdOrderByCompletionDateDesc(participation.getId()).orElseThrow();
+        official.setAssessmentType(AssessmentType.AUTOMATIC_ATHENA);
+        official.setSuccessful(true);
+        resultRepository.save(official);
+
+        assertThat(resultGradeRepository.findLatestGradeRelevantResultWithCompletionDate(participation.getId())).get().extracting(Result::getId).isEqualTo(official.getId());
+        var exerciseId = participation.getExercise().getId();
+        if (team) {
+            var teamId = participation.getTeam().orElseThrow().getId();
+            assertThat(resultRepository.getResultsOrderedByParticipationIdLegalSubmissionIdResultIdDescForTeam(exerciseId, teamId)).extracting(Result::getId)
+                    .contains(official.getId());
+            assertThat(resultRepository.getRatedResultsOrderedByParticipationIdLegalSubmissionIdResultIdDescForTeam(exerciseId, teamId)).extracting(Result::getId)
+                    .contains(official.getId());
+        }
+        else {
+            assertThat(resultRepository.getResultsOrderedByParticipationIdLegalSubmissionIdResultIdDescForStudent(exerciseId, student1.getId())).extracting(Result::getId)
+                    .contains(official.getId());
+            assertThat(resultRepository.getRatedResultsOrderedByParticipationIdLegalSubmissionIdResultIdDescForStudent(exerciseId, student1.getId())).extracting(Result::getId)
+                    .contains(official.getId());
+        }
     }
 
     private void testAllPreAuthorize() throws Exception {

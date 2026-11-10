@@ -326,7 +326,7 @@ class ProgrammingExerciseCodeReviewFeedbackServiceTest {
         assertThat(feedbacks).extracting(Feedback::getCredits).containsExactly(5.0, 0.0, -5.0, -10.0);
         assertThat(ProgrammingFeedbackDTO.of(EXERCISE_ID, 50L, feedbacks.getFirst()).severity()).isEqualTo(FeedbackSeverity.HIGH);
         assertThat(de.tum.cit.aet.artemis.assessment.dto.FeedbackDTO.of(feedbacks.getFirst()).severity()).isEqualTo(FeedbackSeverity.HIGH);
-        assertThat(de.tum.cit.aet.artemis.programming.dto.ResultDTO.FeedbackDTO.of(feedbacks.getFirst()).severity()).isEqualTo(FeedbackSeverity.HIGH);
+        assertThat(de.tum.cit.aet.artemis.programming.dto.ResultResponseDTO.FeedbackDTO.of(feedbacks.getFirst()).severity()).isEqualTo(FeedbackSeverity.HIGH);
     }
 
     @Test

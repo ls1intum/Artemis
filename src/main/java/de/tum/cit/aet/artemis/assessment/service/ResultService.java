@@ -575,7 +575,8 @@ public class ResultService {
             // These detached submissions are used only for the export; the stored results and student-facing AI feedback remain intact.
             Set<Submission> submissionsWithOfficialResults = new HashSet<>();
             for (Submission submission : participation.getSubmissions()) {
-                submission.setResults(submission.getResults().stream().filter(result -> !result.isAthenaBased()).collect(Collectors.toSet()));
+                submission.setResults(submission.getResults().stream().filter(result -> !(participation.getExercise() instanceof ProgrammingExercise) || !result.isAthenaBased())
+                        .collect(Collectors.toSet()));
                 if (!submission.getResults().isEmpty()) {
                     submissionsWithOfficialResults.add(submission);
                 }

@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Test;
 
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 
 /**
@@ -93,6 +94,22 @@ class SubmissionResultAccessorTest {
         assertThat(submission.getLatestGradingResult()).isNull();
     }
 
+    @Test
+    void successfulTextAthenaAssessmentRemainsGradeRelevant() {
+        Result athena = result(1L, AssessmentType.AUTOMATIC_ATHENA);
+        athena.setCompletionDate(ZonedDateTime.now());
+        Submission submission = new TextSubmission();
+        submission.addResult(athena);
+        assertThat(submission.getLatestGradingResult()).isNull();
+        assertThat(submission.getLatestCompletedResult()).isNull();
+        athena.setSuccessful(false);
+        assertThat(submission.getLatestGradingResult()).isNull();
+        assertThat(submission.getLatestCompletedResult()).isNull();
+        athena.setSuccessful(true);
+        assertThat(submission.getLatestGradingResult()).isSameAs(athena);
+        assertThat(submission.getLatestCompletedResult()).isSameAs(athena);
+    }
+
     private static Result result(long id, AssessmentType assessmentType) {
         Result result = new Result();
         result.setId(id);
@@ -101,7 +118,7 @@ class SubmissionResultAccessorTest {
     }
 
     private static Submission submissionWith(Result... results) {
-        Submission submission = new TextSubmission();
+        Submission submission = new ProgrammingSubmission();
         submission.setResults(new HashSet<>(Arrays.asList(results)));
         return submission;
     }
@@ -197,7 +214,7 @@ class SubmissionResultAccessorTest {
     @Test
     void manualResultAccessorsToleratePlaceholdersLeftByDeletedResults() {
         Result manual = result(2L, AssessmentType.MANUAL);
-        Submission submission = new TextSubmission();
+        Submission submission = new ProgrammingSubmission();
         // The results are defensively null tolerant, so a null among them must not break the accessors.
         submission.setResults(new HashSet<>());
         submission.getResults().add(null);

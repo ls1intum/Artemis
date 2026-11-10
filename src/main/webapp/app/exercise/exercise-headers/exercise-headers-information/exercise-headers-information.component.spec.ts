@@ -1,3 +1,5 @@
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { TumAetUiDialogService, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
@@ -45,6 +47,7 @@ describe('ExerciseHeadersInformationComponent', () => {
             imports: [ExerciseHeadersInformationComponent, TumAetUiTooltipDirective],
             providers: [
                 MockProvider(ExerciseService),
+                { provide: ProfileService, useClass: MockProfileService },
                 MockProvider(ComplaintService),
                 { provide: ActivatedRoute, useValue: new MockActivatedRoute() },
                 { provide: TumAetUiDialogService, useClass: MockDialogService },
@@ -303,7 +306,7 @@ describe('ExerciseHeadersInformationComponent', () => {
     it.each([undefined, true, false])('keeps official points while AI feedback has successful=%s and remains selectable', (successful) => {
         const official: Result = { id: 1, rated: true, score: 80 };
         const ai: Result = { id: 2, rated: true, score: successful ? 20 : undefined, successful, assessmentType: AssessmentType.AUTOMATIC_ATHENA };
-        fixture.componentRef.setInput('exercise', { ...baseExercise, maxPoints: 10 });
+        fixture.componentRef.setInput('exercise', { ...baseExercise, type: ExerciseType.PROGRAMMING, maxPoints: 10 });
         fixture.componentRef.setInput('studentParticipation', { submissions: [{ results: [official, ai] }] } as StudentParticipation);
         fixture.detectChanges();
 
@@ -318,6 +321,15 @@ describe('ExerciseHeadersInformationComponent', () => {
         fixture.componentRef.setInput('isPractice', true);
         fixture.detectChanges();
         expect(component.achievedPoints()).toBe(8);
+    });
+
+    it('keeps a successful text Athena assessment in the official points', () => {
+        const ai: Result = { id: 2, rated: true, score: 60, successful: true, assessmentType: AssessmentType.AUTOMATIC_ATHENA };
+        fixture.componentRef.setInput('exercise', { ...baseExercise, maxPoints: 10 });
+        fixture.componentRef.setInput('studentParticipation', { submissions: [{ results: [ai] }] });
+        fixture.detectChanges();
+        expect(component.relevantResult()).toEqual(ai);
+        expect(component.achievedPoints()).toBe(6);
     });
 
     describe('selected history result', () => {

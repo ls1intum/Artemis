@@ -60,7 +60,7 @@ export class ExampleSubmissionImportComponent extends ImportComponent<Submission
      * picks a result itself, so callers that only have a participation resolve it here via the shared helper.
      */
     getLatestResult(submission: Submission): Result | undefined {
-        return getLatestResultOfStudentParticipation(submission.participation, false);
+        return getLatestResultOfStudentParticipation(submission.participation, false, this.exercise().type);
     }
 
     protected override onSearchResult() {

@@ -24,7 +24,7 @@ import { SubmissionResultStatusComponent } from 'app/course/overview/submission-
 import { DifficultyLevelComponent } from 'app/exercise/difficulty-level/difficulty-level.component';
 import { ExerciseCategoriesComponent } from 'app/exercise/exercise-categories/exercise-categories.component';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
-import { isAthenaAIResult } from 'app/exercise/result/result.utils';
+import { isGradeRelevantResult } from 'app/exercise/result/result.utils';
 import { LiveQuizParticipationStatus } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { ResultHistoryDropdownComponent } from './result-history-dropdown/result-history-dropdown.component';
 
@@ -188,7 +188,7 @@ export class ExerciseHeadersInformationComponent {
 
     /** The latest result, used by all result-derived boxes when no previous result is selected in the history dropdown. */
     private readonly latestResult = computed<Result | undefined>(() => {
-        const results = this.sortedHistoryResults().filter((result) => !isAthenaAIResult(result));
+        const results = this.sortedHistoryResults().filter((result) => isGradeRelevantResult(result, this.exercise().type));
         // Practice results are unrated, so in practice mode use the latest result regardless of the rated flag.
         return this.isPractice() ? results.first() : results.filter((result) => result.rated).first();
     });
@@ -199,7 +199,7 @@ export class ExerciseHeadersInformationComponent {
     readonly achievedPoints = computed<number>(() => {
         const selectedResult = this.relevantResult();
         // Selecting AI feedback in the history must not replace the official points.
-        const pointsResult = selectedResult && isAthenaAIResult(selectedResult) ? this.latestResult() : selectedResult;
+        const pointsResult = selectedResult && !isGradeRelevantResult(selectedResult, this.exercise().type) ? this.latestResult() : selectedResult;
         const relevantResult = this.quizPracticeInProgress() ? undefined : pointsResult;
         if (relevantResult?.score === undefined) {
             return 0;

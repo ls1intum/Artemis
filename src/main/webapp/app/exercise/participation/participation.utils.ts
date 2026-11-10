@@ -6,7 +6,7 @@ import dayjs from 'dayjs/esm';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { orderBy as _orderBy } from 'lodash-es';
-import { isAthenaAIResult } from 'app/exercise/result/result.utils';
+import { isGradeRelevantResult } from 'app/exercise/result/result.utils';
 import { getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/submission/submission.model';
 
 /**
@@ -79,8 +79,13 @@ export const isParticipationInDueTime = (participation: Participation, exercise:
  *
  * @param participation
  * @param showUngradedResults
+ * @param exerciseType the exercise type, when the participation does not carry its exercise
  */
-export function getLatestResultOfStudentParticipation(participation: StudentParticipation | undefined, showUngradedResults: boolean): Result | undefined {
+export function getLatestResultOfStudentParticipation(
+    participation: StudentParticipation | undefined,
+    showUngradedResults: boolean,
+    exerciseType = participation?.exercise?.type,
+): Result | undefined {
     if (!participation) {
         return undefined;
     }
@@ -93,6 +98,6 @@ export function getLatestResultOfStudentParticipation(participation: StudentPart
     }
 
     // The latest result is the first rated result in the sorted array (=newest) or any result if the option is active to show ungraded results.
-    const latestResult = results?.find((result) => !isAthenaAIResult(result) && (showUngradedResults || result.rated === true));
+    const latestResult = results?.find((result) => isGradeRelevantResult(result, exerciseType) && (showUngradedResults || result.rated === true));
     return latestResult ? latestResult : undefined;
 }
