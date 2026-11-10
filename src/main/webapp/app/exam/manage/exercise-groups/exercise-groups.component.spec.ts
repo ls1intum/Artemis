@@ -8,7 +8,7 @@ import { EmbeddedViewRef } from '@angular/core';
 import { CourseTitleBarService } from 'app/course/shared/services/course-title-bar.service';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { AlertService } from 'app/foundation/service/alert.service';
-import { EventManager } from 'app/foundation/service/event-manager.service';
+import { EventManager, EventWithContent } from 'app/foundation/service/event-manager.service';
 import { Course } from 'app/course/shared/entities/course.model';
 import { ExamInformationDTO } from 'app/exam/shared/entities/exam-information.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
@@ -19,7 +19,7 @@ import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-g
 import { ExerciseGroupsComponent } from 'app/exam/manage/exercise-groups/exercise-groups.component';
 import dayjs from 'dayjs/esm';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { Subject, of, throwError } from 'rxjs';
+import { NEVER, Subject, of, throwError } from 'rxjs';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -35,6 +35,11 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { ExamExerciseTableComponent } from 'app/exam/manage/exercise-groups/exercise-table/exam-exercise-table.component';
 import { ExamExerciseGroupEditModalComponent } from 'app/exam/manage/exercise-groups/group-edit-modal/exam-exercise-group-edit-modal.component';
 import { ExamExerciseTypePickerComponent } from 'app/exam/manage/exercise-groups/exercise-type-picker/exam-exercise-type-picker.component';
+import { EntityDeletionProgress, EntityDeletionStatus, EntityDeletionType } from 'app/shared-ui/delete-dialog/entity-deletion-progress.model';
+import { EXAM_DELETED_EVENT, ExamDeletedEventContent } from 'app/exam/shared/entities/exam-deleted-event.model';
+import { EntitySummaryCategory } from 'app/shared-ui/delete-dialog/delete-dialog.model';
+import { EntityDeletionService } from 'app/shared-ui/delete-dialog/service/entity-deletion.service';
+import { MockEntityDeletionService } from 'test/helpers/mocks/service/mock-entity-deletion.service';
 
 describe('Exercise Groups Component', () => {
     const course = new Course();
@@ -78,6 +83,7 @@ describe('Exercise Groups Component', () => {
                 MockDirective(TranslateDirective),
             ],
             providers: [
+                { provide: EntityDeletionService, useClass: MockEntityDeletionService },
                 { provide: ActivatedRoute, useValue: route },
                 { provide: Router, useClass: MockRouter },
                 MockProvider(AlertService),
@@ -177,12 +183,242 @@ describe('Exercise Groups Component', () => {
 
         vi.spyOn(exerciseGroupService, 'delete').mockReturnValue(of(new HttpResponse<void>()));
         vi.spyOn(eventManager, 'broadcast');
+        vi.spyOn(comp, 'loadExerciseGroups').mockReturnValue(NEVER);
 
         comp.deleteExerciseGroup(0, {});
         await Promise.resolve();
 
         expect(exerciseGroupService.delete).toHaveBeenCalledOnce();
         expect(comp.exerciseGroups()).toHaveLength(groups.length - 1);
+    });
+
+    it('reads the exercise groups from the server after a deletion ended, because the outcome may be unknown', () => {
+        comp.exerciseGroups.set(groups);
+        vi.spyOn(exerciseGroupService, 'delete').mockReturnValue(of(new HttpResponse<void>()));
+        const serverGroups = [{ id: 0, title: 'still there' } as ExerciseGroup];
+        const loadSpy = vi.spyOn(comp, 'loadExerciseGroups').mockReturnValue(of(new HttpResponse<Exam>({ body: { exerciseGroups: serverGroups } as Exam })));
+
+        comp.deleteExerciseGroup(0, {});
+
+        expect(loadSpy).toHaveBeenCalledOnce();
+        expect(comp.exerciseGroups()).toEqual(serverGroups);
+    });
+
+    it('reads the exercise groups from the server again, e.g. when it is not known how the deletion of an exercise ended', () => {
+        comp.exerciseGroups.set(groups);
+        const serverGroups = [{ id: 0, title: 'still there', exercises: [{ id: 11 }] } as ExerciseGroup];
+        const loadSpy = vi.spyOn(comp, 'loadExerciseGroups').mockReturnValue(of(new HttpResponse<Exam>({ body: { exerciseGroups: serverGroups } as Exam })));
+
+        comp.reloadExerciseGroups();
+
+        expect(loadSpy).toHaveBeenCalledOnce();
+        expect(comp.exerciseGroups()).toEqual(serverGroups);
+    });
+
+    it('hands the exercise group to the background deletion with the title it has', () => {
+        comp.exerciseGroups.set([{ id: 5, title: 'Group A' } as ExerciseGroup]);
+        vi.spyOn(exerciseGroupService, 'delete').mockReturnValue(of(new HttpResponse<void>()));
+
+        comp.deleteExerciseGroup(5, { deleteStudentReposBuildPlans: true, deleteBaseReposBuildPlans: true });
+
+        const deletionService = TestBed.inject(EntityDeletionService) as unknown as MockEntityDeletionService;
+        expect(deletionService.delete).toHaveBeenCalledWith(
+            expect.objectContaining({ entityType: EntityDeletionType.EXERCISE_GROUP, entityId: 5, title: 'Group A', successAlertKey: 'artemisApp.exerciseGroup.deleted' }),
+            expect.anything(),
+        );
+    });
+
+    it('keeps the exercise group when the background deletion failed', () => {
+        (TestBed.inject(EntityDeletionService) as unknown as MockEntityDeletionService).status = EntityDeletionStatus.FAILED;
+        comp.exerciseGroups.set(groups);
+        vi.spyOn(exerciseGroupService, 'delete').mockReturnValue(of(new HttpResponse<void>()));
+        const broadcastSpy = vi.spyOn(eventManager, 'broadcast');
+
+        comp.deleteExerciseGroup(0, {});
+
+        expect(comp.exerciseGroups()).toHaveLength(groups.length);
+        expect(broadcastSpy).not.toHaveBeenCalled();
+    });
+
+    it('announces no deletion and reads the groups from the server when the outcome of the deletion is unknown', () => {
+        (TestBed.inject(EntityDeletionService) as unknown as MockEntityDeletionService).status = EntityDeletionStatus.UNKNOWN;
+        comp.exerciseGroups.set(groups);
+        vi.spyOn(exerciseGroupService, 'delete').mockReturnValue(of(new HttpResponse<void>()));
+        const broadcastSpy = vi.spyOn(eventManager, 'broadcast');
+        const serverGroups = [...groups];
+        const loadSpy = vi.spyOn(comp, 'loadExerciseGroups').mockReturnValue(of(new HttpResponse<Exam>({ body: { exerciseGroups: serverGroups } as Exam })));
+
+        comp.deleteExerciseGroup(0, {});
+
+        // the group is neither removed locally nor announced as deleted: the server tells what is left
+        expect(broadcastSpy).not.toHaveBeenCalled();
+        expect(loadSpy).toHaveBeenCalledOnce();
+        expect(comp.exerciseGroups()).toEqual(serverGroups);
+    });
+
+    describe('resuming a running deletion after a reload', () => {
+        let deletionService: MockEntityDeletionService;
+
+        const progress = (status: EntityDeletionStatus, entityType: EntityDeletionType, entityId: number): EntityDeletionProgress => ({
+            entityType,
+            entityId,
+            status,
+            stepsCompleted: 2,
+            totalSteps: 2,
+            itemsProcessed: 0,
+            totalItems: 0,
+            weightedProgressPercent: 100,
+        });
+
+        /**
+         * Loads the page for an exam of which the user is (or is not) an instructor, with two groups. Reading the groups again, which happens
+         * when a deletion ended, returns {@link reloadedGroups} instead when given.
+         */
+        const loadPage = (isAtLeastInstructor: boolean, reloadedGroups?: ExerciseGroup[]) => {
+            const examCourse = new Course();
+            examCourse.id = course.id;
+            examCourse.isAtLeastInstructor = isAtLeastInstructor;
+            const loadedExam = new Exam();
+            loadedExam.id = exam.id;
+            loadedExam.title = 'Final exam';
+            loadedExam.course = examCourse;
+            loadedExam.exerciseGroups = [{ id: 8, title: 'Group A' } as ExerciseGroup, { id: 9, title: 'Group B' } as ExerciseGroup];
+            const loaded = of(new HttpResponse<Exam>({ body: loadedExam }));
+            const loadSpy = vi.spyOn(comp, 'loadExerciseGroups');
+            loadSpy.mockReturnValueOnce(loaded);
+            loadSpy.mockReturnValue(reloadedGroups ? of(new HttpResponse<Exam>({ body: { exerciseGroups: reloadedGroups } as Exam })) : loaded);
+            vi.spyOn(comp, 'loadLatestIndividualEndDateOfExam').mockReturnValue(of(null));
+            comp.ngOnInit();
+        };
+
+        beforeEach(() => {
+            deletionService = TestBed.inject(EntityDeletionService) as unknown as MockEntityDeletionService;
+            deletionService.resumeInExam.mockClear();
+        });
+
+        it('looks for a running deletion in the exam once the groups are loaded, for instructors', () => {
+            loadPage(true);
+
+            expect(deletionService.resumeInExam).toHaveBeenCalledOnce();
+            const [courseId, examId, titleOf, lifetime] = deletionService.resumeInExam.mock.calls[0];
+            expect(courseId).toBe(course.id);
+            expect(examId).toBe(exam.id);
+            // the titles come from what the page has loaded, so the progress dialog names the group and the exam
+            expect(titleOf(EntityDeletionType.EXERCISE_GROUP, 9)).toBe('Group B');
+            expect(titleOf(EntityDeletionType.EXERCISE_GROUP, 77)).toBeUndefined();
+            expect(titleOf(EntityDeletionType.EXAM, exam.id!)).toBe('Final exam');
+            expect(lifetime).toBeDefined();
+        });
+
+        it('does not look for a running deletion when the user is no instructor', () => {
+            loadPage(false);
+
+            expect(deletionService.resumeInExam).not.toHaveBeenCalled();
+        });
+
+        it('announces the deletion and reads the groups again when the resumed deletion of a group completes', () => {
+            const broadcastSpy = vi.spyOn(eventManager, 'broadcast');
+            const serverGroups = [{ id: 8, title: 'Group A' } as ExerciseGroup];
+            deletionService.resumeInExam.mockReturnValueOnce(of(progress(EntityDeletionStatus.COMPLETED, EntityDeletionType.EXERCISE_GROUP, 9)));
+
+            loadPage(true, serverGroups);
+
+            expect(broadcastSpy).toHaveBeenCalledWith({ name: 'exerciseGroupOverviewModification', content: 'Deleted an exercise group' });
+            // the group is gone from the list that the server returned, not only from the one that was loaded before
+            expect(comp.exerciseGroups()).toEqual(serverGroups);
+        });
+
+        it('announces no deletion and reads the groups again when the resumed deletion of a group ends with an unknown outcome', () => {
+            const broadcastSpy = vi.spyOn(eventManager, 'broadcast');
+            const serverGroups = [{ id: 8 }, { id: 9 }, { id: 10 }] as ExerciseGroup[];
+            deletionService.resumeInExam.mockReturnValueOnce(of(progress(EntityDeletionStatus.UNKNOWN, EntityDeletionType.EXERCISE_GROUP, 9)));
+
+            loadPage(true, serverGroups);
+
+            expect(broadcastSpy).not.toHaveBeenCalled();
+            // the groups were read from the server again: this list is not the one that was loaded first
+            expect(comp.exerciseGroups()).toEqual(serverGroups);
+        });
+
+        it('keeps the groups when the resumed deletion of a group failed, which the progress dialog reports', () => {
+            const broadcastSpy = vi.spyOn(eventManager, 'broadcast');
+            const reloadSpy = vi.spyOn(comp, 'reloadExerciseGroups');
+            deletionService.resumeInExam.mockReturnValueOnce(of(progress(EntityDeletionStatus.FAILED, EntityDeletionType.EXERCISE_GROUP, 9)));
+
+            loadPage(true);
+
+            expect(reloadSpy).not.toHaveBeenCalled();
+            expect(broadcastSpy).not.toHaveBeenCalled();
+            expect(comp.exerciseGroups()).toHaveLength(2);
+        });
+
+        it('drops the exam from the shared list, reads the list again and leaves the page when the resumed deletion of the exam completes', () => {
+            const navigateSpy = vi.spyOn(router, 'navigate');
+            const broadcastSpy = vi.spyOn(eventManager, 'broadcast');
+            deletionService.resumeInExam.mockReturnValueOnce(of(progress(EntityDeletionStatus.COMPLETED, EntityDeletionType.EXAM, exam.id!)));
+
+            loadPage(true);
+
+            expect(broadcastSpy).toHaveBeenNthCalledWith(1, new EventWithContent<ExamDeletedEventContent>(EXAM_DELETED_EVENT, { examId: exam.id! }));
+            expect(broadcastSpy).toHaveBeenNthCalledWith(2, { name: 'examListModification', content: 'dummy' });
+            expect(navigateSpy).toHaveBeenCalledExactlyOnceWith(['/course-management', course.id, 'exams']);
+            // the exam is dropped from the list before the page is left, so the overview never shows (or asks for the statistics of) a deleted exam
+            expect(broadcastSpy.mock.invocationCallOrder.every((order) => order < navigateSpy.mock.invocationCallOrder[0])).toBe(true);
+        });
+
+        it('does not leave the page when the resumed deletion of the exam completes after the user left it', () => {
+            const navigateSpy = vi.spyOn(router, 'navigate');
+            const broadcastSpy = vi.spyOn(eventManager, 'broadcast');
+            const ended$ = new Subject<EntityDeletionProgress>();
+            deletionService.resumeInExam.mockReturnValueOnce(ended$);
+            loadPage(true);
+
+            fixture.destroy();
+            ended$.next(progress(EntityDeletionStatus.COMPLETED, EntityDeletionType.EXAM, exam.id!));
+
+            // lists are still refreshed, but the user is not pulled away from whatever they are doing now
+            expect(broadcastSpy).toHaveBeenCalledWith({ name: 'examListModification', content: 'dummy' });
+            expect(navigateSpy).not.toHaveBeenCalled();
+        });
+
+        it('only refreshes when the resumed deletion of the exam ends with an unknown outcome', () => {
+            const navigateSpy = vi.spyOn(router, 'navigate');
+            const broadcastSpy = vi.spyOn(eventManager, 'broadcast');
+            const serverGroups = [{ id: 8 }, { id: 9 }, { id: 10 }] as ExerciseGroup[];
+            deletionService.resumeInExam.mockReturnValueOnce(of(progress(EntityDeletionStatus.UNKNOWN, EntityDeletionType.EXAM, exam.id!)));
+
+            loadPage(true, serverGroups);
+
+            expect(broadcastSpy).toHaveBeenCalledExactlyOnceWith({ name: 'examListModification', content: 'Refresh after an unknown deletion outcome' });
+            expect(navigateSpy).not.toHaveBeenCalled();
+            expect(comp.exerciseGroups()).toEqual(serverGroups);
+        });
+    });
+
+    it('reports a refused deletion to the confirmation dialog', () => {
+        comp.exerciseGroups.set(groups);
+        vi.spyOn(exerciseGroupService, 'delete').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 409, statusText: 'Conflict' })));
+        const errors: string[] = [];
+        comp.dialogError.subscribe((message) => errors.push(message));
+
+        comp.deleteExerciseGroup(0, {});
+
+        expect(errors).toHaveLength(1);
+        expect(errors[0]).not.toBe('');
+        expect(comp.exerciseGroups()).toHaveLength(groups.length);
+    });
+
+    it('fetches the deletion summary of the exercise group that is about to be deleted', () => {
+        const categories: EntitySummaryCategory[] = [{ titleKey: 'category', items: [{ labelKey: 'label', value: 3 }] }];
+        const summarySpy = vi.spyOn(exerciseGroupService, 'getDeletionSummary').mockReturnValue(of(categories));
+        expect(comp['deleteGroupSummary']()).toBeUndefined();
+
+        comp['confirmDeleteGroup']({ id: 8, title: 'Group B' } as ExerciseGroup);
+        let received: EntitySummaryCategory[] | undefined;
+        comp['deleteGroupSummary']()!.subscribe((value) => (received = value));
+
+        expect(summarySpy).toHaveBeenCalledWith(comp.courseId(), comp.examId(), 8);
+        expect(received).toEqual(categories);
     });
 
     it.each([[ExerciseType.PROGRAMMING], [ExerciseType.TEXT], [ExerciseType.MODELING], [ExerciseType.QUIZ], [ExerciseType.FILE_UPLOAD]])(
@@ -218,14 +454,21 @@ describe('Exercise Groups Component', () => {
             comp.openImportModal(groups[0], exerciseType);
 
             // An exercise read from a file has no id
-            comp['onExerciseImported']({ id: undefined } as Exercise);
+            const fromFile = { id: undefined, type: exerciseType } as Exercise;
+            comp['onExerciseImported'](fromFile);
 
             expect(comp['exerciseImportVisible']()).toBe(false);
             expect(router.navigate).toHaveBeenCalledOnce();
-            expect(router.navigate).toHaveBeenCalledWith(
-                ['/course-management', 456, 'exams', 123, 'exercise-groups', 0, `${exerciseType}-exercises`, 'import-from-file'],
-                expect.anything(),
-            );
+            if (exerciseType === ExerciseType.PROGRAMMING) {
+                expect(router.navigate).toHaveBeenCalledWith(['/course-management', 456, 'exams', 123, 'exercise-groups', 0, 'programming-exercises', 'import-from-file'], {
+                    state: { programmingExerciseForImportFromFile: fromFile },
+                });
+            } else {
+                // The other types open the editor of a new exercise with the settings from the file.
+                expect(router.navigate).toHaveBeenCalledWith(['/course-management', 456, 'exams', 123, 'exercise-groups', 0, `${exerciseType}-exercises`, 'new'], {
+                    state: { exerciseForImportFromFile: fromFile },
+                });
+            }
         },
     );
 

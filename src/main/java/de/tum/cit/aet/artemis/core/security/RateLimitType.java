@@ -15,19 +15,33 @@ public enum RateLimitType {
     ACCOUNT_MANAGEMENT(5),
 
     /**
-     * Rate limit for authenticated login endpoints,
-     * including REST and Git-based authentication.
+     * Rate limit for authenticated login endpoints. Git authentication has its own bucket, {@link #GIT_AUTHENTICATION}.
      * <p>
      * Default: 30 requests per minute per client.
      */
     AUTHENTICATION(30),
 
     /**
+     * Rate limit for the authentication of git operations over HTTP and SSH: one per clone, fetch or push over HTTP, and one
+     * per SSH authentication. Build agents are exempt as described for {@link #BUILD_AGENT_CLONE_TOKEN}.
+     * <p>
+     * Kept in its own bucket rather than sharing {@link #AUTHENTICATION}. A lecture hall can sit behind one NAT address, and
+     * the students there push close to a deadline. With one shared bucket those pushes used up the allowance that the
+     * logins of everyone on the same address depend on, so a student who had just pushed could not log in. The limit is
+     * not raised, because git over HTTP can verify a password like a login does, and a separate bucket should not make
+     * guessing passwords through git easier than it was; an installation that serves large rooms raises it
+     * deliberately.
+     * <p>
+     * Default: 30 requests per minute per client, overridable with
+     * {@code artemis.rate-limiting.git-authentication-requests-per-minute}.
+     */
+    GIT_AUTHENTICATION(30),
+
+    /**
      * Rate limit for the unauthenticated login-options lookup that drives the identifier-first login form.
      * <p>
      * Kept in its own bucket rather than sharing {@link #AUTHENTICATION}: the client calls this once per login attempt,
-     * immediately before authenticating, so sharing a bucket would halve the budget a real user has for logging in, and
-     * git authentication would draw down the same allowance again.
+     * immediately before authenticating, so sharing a bucket would halve the budget a real user has for logging in.
      * <p>
      * The endpoint answers whether an identifier belongs to an internal account, so the budget is deliberately no larger
      * than the login budget it precedes. It stays at 30 rather than dropping to {@link #ACCOUNT_MANAGEMENT} levels because
@@ -49,14 +63,14 @@ public enum RateLimitType {
     /**
      * Rate limit for the build agent clone-token check on the git https path.
      * <p>
-     * That check runs ahead of {@link #AUTHENTICATION} on purpose, because throttling agents would stall every build
+     * That check runs ahead of {@link #GIT_AUTHENTICATION} on purpose, because throttling agents would stall every build
      * during an exam peak. Its cheap gates - the {@code bjct-} prefix, a single-key agent lookup and the build agent
      * network allowlist - reject anything that is not a plausible agent credential from an allowed network, but past
      * them it reads the whole distributed processing job map to find the presented token. A caller inside the build
      * agent networks who knows a registered agent name - it is an identifier, shown in the admin UI - could otherwise
      * force that read in a loop with arbitrary passwords, unbounded. This limit bounds it <em>where rate limiting is
-     * switched on at all</em>: {@code artemis.rate-limiting.enabled} defaults to false, and on an installation that
-     * leaves it there the cheap gates above are the only bound on reaching the scan.
+     * switched on</em>, which it is unless an operator sets {@code artemis.rate-limiting.enabled} to false. On an installation
+     * that switches it off, the cheap gates above are the only bound on reaching the scan.
      * <p>
      * It is a bound on guessing, and sized like one, because two things keep it away from real agents. An address that
      * some build agent is registered at is exempt, which tracks the agents automatically rather than through a
@@ -65,8 +79,8 @@ public enum RateLimitType {
      * registration to be exempt by, such as one sharing a JVM with a core node.
      * <p>
      * Default: 30 requests per minute per client, the same order as the other credential-checking limits. Rate limiting
-     * is off unless {@code artemis.rate-limiting.enabled} is set; where it is on,
-     * {@code artemis.rate-limiting.build-agent-clone-token-requests-per-minute} overrides this.
+     * is on unless {@code artemis.rate-limiting.enabled} is set to false;
+     * {@code artemis.rate-limiting.build-agent-clone-token-requests-per-minute} overrides the default.
      */
     BUILD_AGENT_CLONE_TOKEN(30),
 
@@ -111,17 +125,68 @@ public enum RateLimitType {
      * outbound connection to a user-supplied link, so the limit bounds that use of the server as an HTTP client.
      * <p>
      * Kept in its own bucket rather than sharing {@link #AUTHENTICATION}, so that editors previewing links never draw
-     * down the allowance that logins and git authentication of everyone behind the same address depend on.
+     * down the allowance that the logins of everyone behind the same address depend on.
      * <p>
      * Default: 30 requests per minute per client, overridable with
      * {@code artemis.rate-limiting.online-resource-fetch-requests-per-minute}.
      */
-    ONLINE_RESOURCE_FETCH(30);
+    ONLINE_RESOURCE_FETCH(30),
+
+    /**
+     * Rate limit for client error reports sent by clients that are not authenticated, such as an error on the login page
+     * or an error that prevents the application from starting. Reports of authenticated users are not limited by this.
+     * <p>
+     * Every report writes a log entry, so the limit bounds how fast one address can fill the log. It is sized for a
+     * shared address, not for one user: a lecture hall can sit behind one NAT, and the client already drops duplicate
+     * reports and caps the reports of a page.
+     * <p>
+     * Unlike every other type, this limit cannot be switched off: it applies even if {@code artemis.rate-limiting.enabled} is
+     * {@code false} or the rate limit feature is toggled off, because the endpoint is open to everybody and an installation
+     * that disables rate limiting for its logins must not leave its log open to flooding. Only an address in
+     * {@code artemis.rate-limiting.exempt-addresses} is not limited.
+     * <p>
+     * The limit counts the TCP peer as Tomcat resolved it, and never reads a forwarding header itself, so that a sender cannot choose its own
+     * budget. A request that exceeds it is answered with 429 and is not logged above debug level, because a limit that bounds the log must
+     * not write a line for every rejection.
+     * <p>
+     * Default: 60 requests per minute per client, overridable with
+     * {@code artemis.rate-limiting.client-error-report-requests-per-minute}.
+     */
+    CLIENT_ERROR_REPORT(60, true, false);
 
     private final int defaultRpm;
 
+    private final boolean alwaysEnforced;
+
+    private final boolean rejectionLogged;
+
     RateLimitType(int defaultRpm) {
+        this(defaultRpm, false, true);
+    }
+
+    RateLimitType(int defaultRpm, boolean alwaysEnforced, boolean rejectionLogged) {
         this.defaultRpm = defaultRpm;
+        this.alwaysEnforced = alwaysEnforced;
+        this.rejectionLogged = rejectionLogged;
+    }
+
+    /**
+     * Whether a request that exceeds the limit is logged as a warning. It is for the limits that guard logins and accounts, where a
+     * rejection can be the sign of an attack. A limit that bounds the size of the log itself is not, as that would let the sender fill it.
+     *
+     * @return {@code true} if every rejection is logged as a warning
+     */
+    public boolean isRejectionLogged() {
+        return rejectionLogged;
+    }
+
+    /**
+     * Whether the limit is enforced even if rate limiting is switched off globally or toggled off as a feature.
+     *
+     * @return {@code true} if this limit cannot be disabled
+     */
+    public boolean isAlwaysEnforced() {
+        return alwaysEnforced;
     }
 
     /**

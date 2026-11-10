@@ -109,12 +109,11 @@ public final class Constants {
 
     public static final Pattern FILE_ENDING_PATTERN = Pattern.compile(FILE_ENDING_REGEX);
 
-    // Allowed characters for exercise titles: Unicode letters (\p{L}, e.g. umlauts like "Lärche"), combining marks
-    // (\p{M}, for decomposed accented characters), numbers (\p{N}), underscore, hyphen and whitespace. Titles are
-    // display-only and never used to derive VCS/CI artifacts (those come from the ASCII-validated short name), so
-    // allowing international letters here is safe. Previously this was ASCII-only, which rejected legitimate titles such
-    // as "Lärche" on edit while create/import accepted them.
+    // Keep existing programming exercise title restrictions separate from non-programming display titles.
     public static final Pattern TITLE_NAME_PATTERN = Pattern.compile("^[\\p{L}\\p{M}\\p{N}_\\-\\s]*");
+
+    // Non-programming exercise display titles additionally allow periods, e.g. "Strategy vs. bridge pattern".
+    public static final Pattern EXERCISE_DISPLAY_TITLE_PATTERN = Pattern.compile("^[\\p{L}\\p{M}\\p{N}_\\-\\s.]*");
 
     public static final String TUM_LDAP_MATRIKEL_NUMBER = "imMatrikelNr";
 
@@ -241,6 +240,8 @@ public final class Constants {
     public static final String DELETE_EXAM = "DELETE_EXAM";
 
     public static final String UPDATE_EXAM = "UPDATE_EXAM";
+
+    public static final String UPDATE_EXAM_ATTENDANCE = "UPDATE_EXAM_ATTENDANCE";
 
     public static final String ADD_USER_TO_EXAM = "ADD_USER_TO_EXAM";
 
@@ -403,6 +404,7 @@ public final class Constants {
     /**
      * The name of the Spring profile used to process build jobs in a Jenkins setup.
      */
+    // REMOVE_IN_ARTEMIS_11 (Jenkins): remove the jenkins profile constant with Jenkins support
     public static final String PROFILE_JENKINS = "jenkins";
 
     /**

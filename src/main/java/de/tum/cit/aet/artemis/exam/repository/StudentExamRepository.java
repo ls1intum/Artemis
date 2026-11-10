@@ -48,6 +48,27 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation
 @Repository
 public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam, Long> {
 
+    /**
+     * Counts every student exam that was started, so a student who took several exams is counted once per exam. Which exams are real is defined like in
+     * {@link ExamRepository#countRealExamsInCourses}. Test runs of instructors are not counted.
+     *
+     * @param courseIds the courses
+     * @return the number of started student exams of the real exams of these courses, without deleted users and test users
+     */
+    @Query("""
+            SELECT COUNT(se.id)
+            FROM StudentExam se
+            WHERE se.exam.course.id IN :courseIds
+                AND se.exam.testExam = FALSE
+                AND LOWER(se.exam.title) NOT LIKE 'test%'
+                AND LOWER(se.exam.title) NOT LIKE 'mock%'
+                AND se.started = TRUE
+                AND (se.testRun IS NULL OR se.testRun = FALSE)
+                AND se.user.deleted = FALSE
+                AND se.user.isTestUser = FALSE
+            """)
+    long countParticipationsInRealExamsInCourses(@Param("courseIds") Set<Long> courseIds);
+
     @Query("""
             SELECT se
             FROM StudentExam se
@@ -220,6 +241,21 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
             """)
     long countTestRunsByExamId(@Param("examId") Long examId);
 
+    /**
+     * Counts the student exams of real exams (no test runs) that contain at least one of the given exercises.
+     *
+     * @param exerciseIds the ids of the exercises
+     * @return the number of student exams
+     */
+    @Query("""
+            SELECT COUNT(DISTINCT se)
+            FROM StudentExam se
+                JOIN se.exercises ex
+            WHERE ex.id IN :exerciseIds
+                AND (se.testRun IS NULL OR se.testRun = FALSE)
+            """)
+    long countRealStudentExamsContainingExercises(@Param("exerciseIds") Collection<Long> exerciseIds);
+
     @Query("""
             SELECT COUNT(se)
             FROM StudentExam se
@@ -328,27 +364,6 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
             """)
     List<StudentExamExerciseStartDTO> findExerciseStartDataByExamId(@Param("examId") long examId);
 
-    /**
-     * The same rows as {@link #findExerciseStartDataByExamId}, restricted to the given student exams. Ids that do not
-     * belong to the exam, and ids of test runs, simply do not match, so callers cannot prepare exercises across exams
-     * or interfere with a test run.
-     *
-     * @param examId         the id of the exam
-     * @param studentExamIds the ids of the student exams to read
-     * @return one row per exercise of every requested student exam that belongs to the exam
-     */
-    @Query("""
-            SELECT new de.tum.cit.aet.artemis.exam.dto.StudentExamExerciseStartDTO(studentExam.id, student.id, student.login, exercise.id)
-            FROM StudentExam studentExam
-                JOIN studentExam.user student
-                JOIN studentExam.exercises exercise
-            WHERE studentExam.exam.id = :examId
-                AND studentExam.id IN :studentExamIds
-                AND (studentExam.testRun IS NULL OR studentExam.testRun = FALSE)
-            ORDER BY studentExam.id, exercise.id
-            """)
-    List<StudentExamExerciseStartDTO> findExerciseStartDataByExamIdAndStudentExamIds(@Param("examId") long examId, @Param("studentExamIds") Collection<Long> studentExamIds);
-
     Optional<StudentExam> findFirstByExamIdAndUserIdOrderByCreatedDateDesc(long examId, long userId);
 
     /**
@@ -380,28 +395,47 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
     Optional<StudentExamWorkingPeriodDTO> findNewestWorkingPeriodByExamIdAndUserId(@Param("examId") long examId, @Param("userId") long userId);
 
     /**
-     * Checks whether an exercise is part of the newest student exam of a student in an exam, ignoring instructor test runs. An earlier attempt of a test exam does
-     * not count, because the exercises of an attempt are assigned to it alone.
+     * Finds which of the given users have a student exam of their own in an exam, ignoring instructor test runs. Only such a student has a working period that a result
+     * can be attached to.
      *
-     * @param examId     the id of the exam
-     * @param userId     the id of the student
-     * @param exerciseId the id of the exercise
-     * @return true if the newest student exam of the student contains the exercise
+     * @param examId  the id of the exam
+     * @param userIds the ids of the users to check
+     * @return the ids of the given users that have a student exam in the exam
      */
     @Query("""
-            SELECT COUNT(e.id) > 0
+            SELECT DISTINCT se.user.id
+            FROM StudentExam se
+            WHERE se.exam.id = :examId
+                AND se.user.id IN :userIds
+                AND (se.testRun IS NULL OR se.testRun = FALSE)
+            """)
+    Set<Long> findUserIdsWithStudentExamByExamIdAndUserIdIn(@Param("examId") long examId, @Param("userIds") Collection<Long> userIds);
+
+    /**
+     * Finds which of the given users have the exercise in their newest student exam of an exam, ignoring instructor test runs. An earlier attempt of a test exam does not
+     * count, because the exercises of an attempt are assigned to it alone.
+     *
+     * @param examId     the id of the exam
+     * @param exerciseId the id of the exercise
+     * @param userIds    the ids of the users to check
+     * @return the ids of the given users whose newest student exam contains the exercise
+     */
+    @Query("""
+            SELECT DISTINCT se.user.id
             FROM StudentExam se
                 JOIN se.exercises e
-            WHERE se.id = (
-                SELECT MAX(se2.id)
-                FROM StudentExam se2
-                WHERE se2.exam.id = :examId
-                    AND se2.user.id = :userId
-                    AND (se2.testRun IS NULL OR se2.testRun = FALSE)
-            )
+            WHERE se.exam.id = :examId
+                AND se.user.id IN :userIds
                 AND e.id = :exerciseId
+                AND se.id = (
+                    SELECT MAX(se2.id)
+                    FROM StudentExam se2
+                    WHERE se2.exam.id = :examId
+                        AND se2.user.id = se.user.id
+                        AND (se2.testRun IS NULL OR se2.testRun = FALSE)
+                )
             """)
-    boolean isExerciseOfNewestStudentExam(@Param("examId") long examId, @Param("userId") long userId, @Param("exerciseId") long exerciseId);
+    Set<Long> findUserIdsWithExerciseInNewestStudentExam(@Param("examId") long examId, @Param("exerciseId") long exerciseId, @Param("userIds") Collection<Long> userIds);
 
     @Query("""
             SELECT se

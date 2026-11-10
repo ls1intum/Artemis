@@ -8,7 +8,6 @@ import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.http.ResponseEntity;
@@ -50,7 +49,6 @@ import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.En
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
-import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.exam.api.ExamAccessApi;
 import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
@@ -84,9 +82,6 @@ public class TextExerciseResource {
     private static final Logger log = LoggerFactory.getLogger(TextExerciseResource.class);
 
     private static final String ENTITY_NAME = "textExercise";
-
-    @Value("${jhipster.clientApp.name}")
-    private String applicationName;
 
     private final TextExerciseService textExerciseService;
 
@@ -225,10 +220,10 @@ public class TextExerciseResource {
     }
 
     /**
-     * DELETE /text-exercises/:exerciseId : delete the "exerciseId" textExercise.
+     * DELETE /text-exercises/:exerciseId : delete the "exerciseId" textExercise in the background. The progress is sent over the websocket topic of the exercise.
      *
      * @param exerciseId the id of the textExercise to delete
-     * @return the ResponseEntity with status 200 (OK)
+     * @return the ResponseEntity with status 202 (Accepted), or 409 (Conflict) if the exercise is already being deleted
      */
     @DeleteMapping("text-exercises/{exerciseId}")
     @EnforceAtLeastInstructorInExercise
@@ -236,14 +231,16 @@ public class TextExerciseResource {
         log.info("REST request to delete TextExercise : {}", exerciseId);
         var textExercise = textExerciseRepository.findByIdElseThrow(exerciseId);
         var user = userRepository.getUserWithAuthorities();
-
-        // Notify AtlasML about the exercise deletion before actual deletion
-        notifyAtlasML(textExercise, OperationTypeDTO.DELETE, "text exercise deletion");
+        var course = textExercise.getCourseViaExerciseGroupOrCourseMemberElseThrow();
 
         // NOTE: we use the exerciseDeletionService here, because this one makes sure to clean up all lazy references correctly.
-        exerciseService.logDeletion(textExercise, textExercise.getCourseViaExerciseGroupOrCourseMemberElseThrow(), user);
-        exerciseDeletionService.delete(exerciseId, false);
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, textExercise.getTitle())).build();
+        // AtlasML is notified and the request is audited only once the deletion is accepted, so a request that is refused because the exercise is already being deleted does
+        // neither. The notification still precedes the actual deletion.
+        exerciseDeletionService.startAsyncDeletion(textExercise, false, () -> {
+            notifyAtlasML(textExercise, OperationTypeDTO.DELETE, "text exercise deletion");
+            exerciseService.logDeletion(textExercise, course, user);
+        });
+        return ResponseEntity.accepted().build();
     }
 
     /**

@@ -4,6 +4,7 @@ title: TUM AET UI package
 sidebar_label: TUM AET UI package
 slug: /guidelines/tum-aet-ui-kit
 description: Architecture, integration, contribution, testing, and publishing for the TUM AET UI component library.
+last_reviewed: 2026-11-06
 ---
 
 import Callout from '../../../src/components/Callout/Callout';
@@ -21,6 +22,9 @@ as `@tumaet/ui-angular`. Artemis production builds consume its compiled public e
 Use the [TUM AET UI component reference](/developer/tum-aet-ui-reference) to inspect
 supported states, controls, accessibility results, and APIs. This guide covers package architecture
 and contribution rules.
+
+For button colours, emphasis, and toolbar sizing, follow
+[Button intent and hierarchy](/developer/guidelines/client-theming#button-intent-and-hierarchy).
 
 ## Ownership boundary
 
@@ -155,6 +159,13 @@ Artemis loads `@tumaet/ui-angular/styles.css` after application styles. Its unla
 overrides the package's font family, brand, application surfaces, and status roles. Its Tailwind
 configuration owns application utilities. Set `data-theme="dark"` on the document element for dark
 mode; the package theme also sets the matching CSS `color-scheme` for browser controls.
+
+Button-only colors are centralized in the light/dark **Button palette** blocks of
+`packages/tum-aet-ui/themes.css`. The `--tumaet-ui-button-<severity>-{background,contrast,foreground}`
+properties let a host adjust buttons independently of status feedback. Existing Bootstrap and
+PrimeNG button adapters consume the same palette while migration continues; new controls use TUM
+AET UI directly. See [changing the global button palette](/developer/guidelines/client-theming#change-the-global-button-palette)
+for the property contract, overrides, and verification commands.
 
 Treat package token names and responsive thresholds as public styling contracts. Add a token only when a host needs a supported customization
 axis; do not expose Tailwind's full primitive theme.

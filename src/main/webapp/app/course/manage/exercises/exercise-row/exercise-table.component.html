@@ -67,6 +67,18 @@
                                 <fa-icon [icon]="row.icon" [fixedWidth]="true" class="text-muted me-1" />
                             }
                             <a class="fw-semibold" [routerLink]="row.titleLink">{{ row.exercise.title }}</a>
+                            @if (row.programmingBuildWarning) {
+                                <span
+                                    class="inline-flex ms-2"
+                                    [tumAetUiTooltip]="row.programmingBuildWarning"
+                                    [attr.aria-label]="row.programmingBuildWarning"
+                                    role="img"
+                                    tabindex="0"
+                                    data-testid="programming-build-warning"
+                                >
+                                    <fa-icon [icon]="faTriangleExclamation" class="text-state-warning" />
+                                </span>
+                            }
                         </td>
                         <td class="col-dates">
                             <div class="d-flex flex-column small">
@@ -157,6 +169,7 @@
                                 [course]="course()"
                                 (exerciseUpdated)="exerciseUpdated.emit($event)"
                                 (exerciseDeleted)="exerciseDeleted.emit($event)"
+                                (exerciseDeletionOutcomeUnknown)="exerciseDeletionOutcomeUnknown.emit()"
                                 (quizActionsMinWidth)="onQuizActionsMinWidth($event)"
                             />
                         </td>

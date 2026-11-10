@@ -663,9 +663,9 @@ class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
     void testFetch_buildAgentCredentials_isRejectedWithLocalCi() throws Throwable {
         MockHttpServletRequest request = createGitRequest("/git/" + projectKey1 + "/" + templateRepositorySlug + ".git/info/refs", "buildjob_user", "buildjob_password");
 
-        ConfigUtil.testWithChangedConfig(localVCServletService, "useSshForBuildAgent", false,
-                () -> ConfigUtil.testWithChangedConfig(localVCServletService, "buildAgentGitUsername", "buildjob_user",
-                        () -> ConfigUtil.testWithChangedConfig(localVCServletService, "buildAgentGitPassword", "buildjob_password",
+        ConfigUtil.testWithChangedConfig(localVCBuildAgentAuthenticationService, "useSshForBuildAgent", false,
+                () -> ConfigUtil.testWithChangedConfig(localVCBuildAgentAuthenticationService, "buildAgentGitUsername", "buildjob_user",
+                        () -> ConfigUtil.testWithChangedConfig(localVCBuildAgentAuthenticationService, "buildAgentGitPassword", "buildjob_password",
                                 () -> assertThatExceptionOfType(LocalVCAuthException.class)
                                         .isThrownBy(() -> localVCServletService.authenticateAndAuthorizeGitRequest(request, RepositoryActionType.READ)))));
     }
@@ -695,7 +695,7 @@ class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
         // Enabled deliberately, so that the push is rejected by the READ restriction under test rather than because the
         // ssh configuration of the test context closes the shortcut for every action anyway.
         // Build agent bypass does NOT apply to WRITE — "buildjob_user" is not a real user, so auth fails
-        ConfigUtil.testWithChangedConfig(localVCServletService, "useSshForBuildAgent", false, () -> assertThatExceptionOfType(LocalVCAuthException.class)
+        ConfigUtil.testWithChangedConfig(localVCBuildAgentAuthenticationService, "useSshForBuildAgent", false, () -> assertThatExceptionOfType(LocalVCAuthException.class)
                 .isThrownBy(() -> localVCServletService.authenticateAndAuthorizeGitRequest(request, RepositoryActionType.WRITE)));
     }
 
@@ -1015,7 +1015,7 @@ class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
 
         var properties = new RateLimitingProperties();
         properties.setEnabled(true);
-        properties.setAuthenticationRequestsPerMinute(1);
+        properties.setGitAuthenticationRequestsPerMinute(1);
         properties.setExemptAddresses(List.of("127.0.0.0/8", "::1"));
         var featureToggleService = mock(FeatureToggleService.class);
         when(featureToggleService.isFeatureEnabled(Feature.RateLimit)).thenReturn(true);
@@ -1038,6 +1038,46 @@ class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
                 HttpResponse<String> response = sendInfoRefs(client, repositoryUrl, service, authorizationHeader, clientAddress);
                 assertThat(response.statusCode()).as("status for %s", service).isEqualTo(429);
                 assertThat(response.headers().firstValueAsLong(HttpHeaders.RETRY_AFTER).orElse(0)).as("Retry-After for %s", service).isPositive();
+            }
+        }
+        finally {
+            ReflectionTestUtils.setField(servletServiceTarget, "rateLimitService", originalRateLimitService);
+            RATE_LIMIT_SERVICE_SWAP_LOCK.unlock();
+        }
+    }
+
+    /**
+     * Git has a bucket of its own, separate from the logins. A lecture hall behind one address that pushes at a deadline used to
+     * use up the allowance that the logins of everyone on that address depend on. Here the login bucket allows one request and
+     * the git bucket many, and several handshakes from the same address all go through, so a handshake no longer draws on the login bucket.
+     * The swap of the rate limit service is the one of the test above.
+     */
+    @Test
+    void testGitHandshakesDoNotUseUpTheLoginBudget() throws Exception {
+        localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+
+        var properties = new RateLimitingProperties();
+        properties.setEnabled(true);
+        properties.setAuthenticationRequestsPerMinute(1);
+        properties.setGitAuthenticationRequestsPerMinute(100);
+        properties.setExemptAddresses(List.of("127.0.0.0/8", "::1"));
+        var featureToggleService = mock(FeatureToggleService.class);
+        when(featureToggleService.isFeatureEnabled(Feature.RateLimit)).thenReturn(true);
+        var limitingRateLimitService = new RateLimitService(rateLimitProxyManager, new RateLimitConfigurationService(properties), featureToggleService);
+
+        Object servletServiceTarget = AopTestUtils.getUltimateTargetObject(localVCServletService);
+        RATE_LIMIT_SERVICE_SWAP_LOCK.lock();
+        Object originalRateLimitService = ReflectionTestUtils.getField(servletServiceTarget, "rateLimitService");
+        ReflectionTestUtils.setField(servletServiceTarget, "rateLimitService", limitingRateLimitService);
+        try (HttpClient client = HttpClient.newHttpClient()) {
+            String repositoryUrl = localVCBaseUri + "/git/" + projectKey1 + "/" + assignmentRepositorySlug + ".git";
+            String authorizationHeader = "Basic " + Base64.getEncoder().encodeToString((student1Login + ":" + USER_PASSWORD).getBytes(StandardCharsets.UTF_8));
+            String clientAddress = "2001:db8::" + Integer.toHexString(ThreadLocalRandom.current().nextInt(1, 0x10000)) + ":"
+                    + Integer.toHexString(ThreadLocalRandom.current().nextInt(0x10000));
+
+            for (int handshake = 1; handshake <= 3; handshake++) {
+                assertThat(sendInfoRefs(client, repositoryUrl, "git-upload-pack", authorizationHeader, clientAddress).statusCode()).as("status of handshake %d", handshake)
+                        .isEqualTo(200);
             }
         }
         finally {

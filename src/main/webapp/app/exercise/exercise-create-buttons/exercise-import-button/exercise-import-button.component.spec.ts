@@ -2,7 +2,6 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ExerciseImportButtonComponent } from './exercise-import-button.component';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { ExerciseImportComponent } from 'app/exercise/import/exercise-import.component';
 import { ExerciseImportTabsComponent } from 'app/exercise/import/exercise-import-tabs/exercise-import-tabs.component';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -69,12 +68,13 @@ describe('ExerciseImportButtonComponent', () => {
     afterEach(() => httpMock.verify());
 
     it.each([
-        { exerciseType: ExerciseType.MODELING, id: 2, expectedComponent: ExerciseImportComponent },
-        { exerciseType: ExerciseType.TEXT, id: 2, expectedComponent: ExerciseImportComponent },
-        { exerciseType: ExerciseType.FILE_UPLOAD, id: 2, expectedComponent: ExerciseImportComponent },
-        { exerciseType: ExerciseType.PROGRAMMING, id: 2, expectedComponent: ExerciseImportTabsComponent },
-        { exerciseType: ExerciseType.PROGRAMMING, id: undefined, expectedComponent: ExerciseImportTabsComponent },
-    ])('should open import modal', async ({ exerciseType, id, expectedComponent }) => {
+        { exerciseType: ExerciseType.MODELING, id: 2 },
+        { exerciseType: ExerciseType.TEXT, id: 2 },
+        { exerciseType: ExerciseType.TEXT, id: undefined },
+        { exerciseType: ExerciseType.FILE_UPLOAD, id: 2 },
+        { exerciseType: ExerciseType.PROGRAMMING, id: 2 },
+        { exerciseType: ExerciseType.PROGRAMMING, id: undefined },
+    ])('should open import modal for $exerciseType (id: $id)', async ({ exerciseType, id }) => {
         fixture.componentRef.setInput('exerciseType', exerciseType);
 
         const onCloseSubject = new Subject<Exercise | undefined>();
@@ -87,31 +87,36 @@ describe('ExerciseImportButtonComponent', () => {
 
         expect(beforeNavigateSpy).toHaveBeenCalledTimes(1);
         expect(openSpy).toHaveBeenCalledTimes(1);
+        // Every type offers the import of an existing exercise and the import from a file.
         expect(openSpy).toHaveBeenCalledWith(
-            expectedComponent,
+            ExerciseImportTabsComponent,
             expect.objectContaining({
-                data: { exerciseType },
+                data: { exerciseType, courseId: 123 },
             }),
         );
 
         // Simulate dialog closing with result
-        onCloseSubject.next({ id, maxPoints: 1 } as Exercise);
+        const result = { id, type: exerciseType, maxPoints: 1 } as Exercise;
+        onCloseSubject.next(result);
         onCloseSubject.complete();
 
         // Wait for async operations
         await fixture.whenStable();
 
+        expect(routerSpy).toHaveBeenCalledTimes(1);
         if (id && exerciseType === ExerciseType.PROGRAMMING) {
-            expect(routerSpy).toHaveBeenCalledTimes(1);
             expect(routerSpy).toHaveBeenCalledWith(['/course-management', 123, `${exerciseType}-exercises`, 'import', 2], {
                 queryParams: { sourceIsExamExercise: false },
             });
         } else if (!id && exerciseType === ExerciseType.PROGRAMMING) {
             expect(routerSpy).toHaveBeenCalledWith(['/course-management', 123, 'programming-exercises', 'import-from-file'], {
-                state: { programmingExerciseForImportFromFile: { id: undefined, maxPoints: 1 } },
+                state: { programmingExerciseForImportFromFile: result },
+            });
+        } else if (!id) {
+            expect(routerSpy).toHaveBeenCalledWith(['/course-management', 123, `${exerciseType}-exercises`, 'new'], {
+                state: { exerciseForImportFromFile: result },
             });
         } else {
-            expect(routerSpy).toHaveBeenCalledTimes(1);
             expect(routerSpy).toHaveBeenCalledWith(['/course-management', 123, `${exerciseType}-exercises`, 2, 'import'], {
                 queryParams: { sourceIsExamExercise: false },
             });

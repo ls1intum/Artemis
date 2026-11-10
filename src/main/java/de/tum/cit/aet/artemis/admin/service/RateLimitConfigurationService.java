@@ -98,7 +98,7 @@ public class RateLimitConfigurationService {
     /**
      * Checks if rate limiting is enabled globally.
      *
-     * @return true if rate limiting is enabled, false otherwise (default: false)
+     * @return true if rate limiting is enabled, false otherwise (default: true)
      */
     public boolean isRateLimitingEnabled() {
         return properties.isEnabled();
@@ -115,6 +115,7 @@ public class RateLimitConfigurationService {
         return switch (type) {
             case ACCOUNT_MANAGEMENT -> properties.getAccountManagementRequestsPerMinute() != null ? properties.getAccountManagementRequestsPerMinute() : type.getDefaultRpm();
             case AUTHENTICATION -> properties.getAuthenticationRequestsPerMinute() != null ? properties.getAuthenticationRequestsPerMinute() : type.getDefaultRpm();
+            case GIT_AUTHENTICATION -> properties.getGitAuthenticationRequestsPerMinute() != null ? properties.getGitAuthenticationRequestsPerMinute() : type.getDefaultRpm();
             case LOGIN_OPTIONS -> properties.getLoginOptionsRequestsPerMinute() != null ? properties.getLoginOptionsRequestsPerMinute() : type.getDefaultRpm();
             case PROBLEM_STATEMENT_RENDERING ->
                 properties.getProblemStatementRenderingRequestsPerMinute() != null ? properties.getProblemStatementRenderingRequestsPerMinute() : type.getDefaultRpm();
@@ -126,6 +127,7 @@ public class RateLimitConfigurationService {
                 properties.getBuildAgentCloneTokenRequestsPerMinute() != null ? properties.getBuildAgentCloneTokenRequestsPerMinute() : type.getDefaultRpm();
             case ONLINE_RESOURCE_FETCH ->
                 properties.getOnlineResourceFetchRequestsPerMinute() != null ? properties.getOnlineResourceFetchRequestsPerMinute() : type.getDefaultRpm();
+            case CLIENT_ERROR_REPORT -> properties.getClientErrorReportRequestsPerMinute() != null ? properties.getClientErrorReportRequestsPerMinute() : type.getDefaultRpm();
         };
     }
 }

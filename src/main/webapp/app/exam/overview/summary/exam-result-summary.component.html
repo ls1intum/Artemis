@@ -18,7 +18,7 @@
                 <!-- display: contents, so a button that is not shown leaves no empty flex item (and no extra gap) next to the export button -->
                 <jhi-exam-request-ai-feedback-button class="contents" [courseId]="courseId()" [studentExam]="studentExam()" [testExamConduction]="testExamConduction()" />
             }
-            <button type="button" id="exportToPDFButton" data-testid="exam-summary-export-button" tumAetUiButton size="small" (click)="printPDF()">
+            <button severity="secondary" type="button" id="exportToPDFButton" data-testid="exam-summary-export-button" tumAetUiButton size="small" (click)="printPDF()">
                 <fa-icon [icon]="faPrint" />
                 <span jhiTranslate="artemisApp.exam.examSummary.exportPDF"></span>
             </button>

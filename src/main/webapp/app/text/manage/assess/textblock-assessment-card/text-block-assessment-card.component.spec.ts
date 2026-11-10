@@ -43,7 +43,7 @@ describe('TextblockAssessmentCardComponent', () => {
         await TestBed.configureTestingModule({
             imports: [TextBlockAssessmentCardComponent],
             providers: [
-                MockProvider(StructuredGradingCriterionService),
+                StructuredGradingCriterionService,
                 MockProvider(TextAssessmentAnalytics),
                 MockProvider(TextAssessmentService),
                 { provide: ActivatedRoute, useValue: new MockActivatedRoute({ id: 123 }) },
@@ -59,6 +59,87 @@ describe('TextblockAssessmentCardComponent', () => {
 
     it('should create', () => {
         expect(component).toBeTruthy();
+    });
+
+    describe('structured grading instruction drops', () => {
+        function instructionDrop(): Event {
+            const instruction = new GradingInstruction();
+            instruction.id = 42;
+            instruction.credits = 2;
+            instruction.feedback = 'A correct explanation';
+            const event = new Event('drop', { bubbles: true, cancelable: true });
+            Object.defineProperty(event, 'dataTransfer', {
+                value: { getData: (format: string) => (format === 'text/plain' ? JSON.stringify(instruction) : '') },
+            });
+            return event;
+        }
+
+        it('ignores an instruction dropped onto a non-selectable block', () => {
+            const textBlockRef = TextBlockRef.new();
+            textBlockRef.selectable = false;
+            fixture.componentRef.setInput('textBlockRef', textBlockRef);
+            fixture.detectChanges();
+            const updateFeedback = vi.spyOn(TestBed.inject(StructuredGradingCriterionService), 'updateFeedbackWithStructuredGradingInstructionEvent');
+            const selections: (TextBlockRef | undefined)[] = [];
+            const changes: TextBlockRef[] = [];
+            component.didSelect.subscribe((ref) => selections.push(ref));
+            component.didChange.subscribe((ref) => changes.push(ref));
+            const event = instructionDrop();
+
+            fixture.nativeElement.querySelector('span').dispatchEvent(event);
+
+            expect(updateFeedback).not.toHaveBeenCalled();
+            expect(selections).toEqual([]);
+            expect(changes).toEqual([]);
+            expect(textBlockRef.feedback).toBeUndefined();
+            expect(event.defaultPrevented).toBe(false);
+        });
+
+        it('applies a dropped instruction through the grading service and emits the updated block', () => {
+            vi.useFakeTimers();
+            try {
+                const textBlockRef = TextBlockRef.new();
+                textBlockRef.initFeedback();
+                fixture.componentRef.setInput('textBlockRef', textBlockRef);
+                fixture.detectChanges();
+                const updateFeedback = vi.spyOn(TestBed.inject(StructuredGradingCriterionService), 'updateFeedbackWithStructuredGradingInstructionEvent');
+                const selections: (TextBlockRef | undefined)[] = [];
+                const changes: TextBlockRef[] = [];
+                component.didSelect.subscribe((ref) => selections.push(ref));
+                component.didChange.subscribe((ref) => changes.push(ref));
+                const event = instructionDrop();
+
+                fixture.nativeElement.querySelector('span').dispatchEvent(event);
+
+                expect(updateFeedback).toHaveBeenCalledExactlyOnceWith(textBlockRef.feedback, event);
+                expect(selections).toEqual([textBlockRef]);
+                expect(changes).toEqual([textBlockRef]);
+                expect(changes[0]).toBe(textBlockRef);
+                expect(changes[0].feedback?.gradingInstruction).toMatchObject({ id: 42, credits: 2, feedback: 'A correct explanation' });
+                expect(changes[0].feedback?.credits).toBe(2);
+                expect(event.defaultPrevented).toBe(true);
+            } finally {
+                vi.clearAllTimers();
+                vi.useRealTimers();
+            }
+        });
+
+        it('still emits a change when a selectable read-only block has no feedback to update', () => {
+            const textBlockRef = TextBlockRef.new();
+            fixture.componentRef.setInput('textBlockRef', textBlockRef);
+            fixture.componentRef.setInput('readOnly', true);
+            fixture.detectChanges();
+            const updateFeedback = vi.spyOn(TestBed.inject(StructuredGradingCriterionService), 'updateFeedbackWithStructuredGradingInstructionEvent');
+            const changes: TextBlockRef[] = [];
+            component.didChange.subscribe((ref) => changes.push(ref));
+
+            fixture.nativeElement.querySelector('span').dispatchEvent(instructionDrop());
+
+            expect(updateFeedback).not.toHaveBeenCalled();
+            expect(textBlockRef.feedback).toBeUndefined();
+            expect(changes).toEqual([textBlockRef]);
+            expect(changes[0]).toBe(textBlockRef);
+        });
     });
 
     it('cannot be selected in readOnly mode', () => {

@@ -1,0 +1,16 @@
+@if (supported) {
+    <button
+        tumAetUiButton
+        type="button"
+        size="small"
+        severity="secondary"
+        data-testid="build-notifications-toggle"
+        [attr.aria-label]="toggleLabel() | artemisTranslate"
+        [attr.aria-pressed]="enabled()"
+        [tumAetUiTooltip]="toggleLabel() | artemisTranslate"
+        [disabled]="requestingPermission() || permission() === 'denied'"
+        (click)="toggleNotifications()"
+    >
+        <fa-icon [icon]="enabled() ? faBell : faBellSlash" />
+    </button>
+}

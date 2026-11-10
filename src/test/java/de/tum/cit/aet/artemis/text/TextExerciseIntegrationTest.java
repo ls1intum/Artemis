@@ -20,6 +20,8 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -32,6 +34,7 @@ import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
+import org.apache.commons.io.FileUtils;
 import org.assertj.core.data.Offset;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -71,6 +74,7 @@ import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.core.dto.SortingOrder;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
+import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.core.util.PageUtil;
 import de.tum.cit.aet.artemis.core.util.PageableSearchUtilService;
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -92,6 +96,8 @@ import de.tum.cit.aet.artemis.exercise.repository.PlagiarismDetectionConfigRepos
 import de.tum.cit.aet.artemis.exercise.repository.TeamAssignmentConfigRepository;
 import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
 import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
+import de.tum.cit.aet.artemis.exercise.util.AsyncDeletionTestUtilService;
+import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.exercise.util.ImportedExerciseAssertions;
 import de.tum.cit.aet.artemis.globalsearch.service.WeaviateService;
 import de.tum.cit.aet.artemis.lecture.dto.CompetencyLinkDTO;
@@ -125,6 +131,9 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
 
     /** The exercise updated notifications in a page of course notifications, as a JSON path filter. */
     private static final String EXERCISE_UPDATED_NOTIFICATIONS = "$.content[?(@.notificationType == 'exerciseUpdatedNotification')]";
+
+    @Autowired
+    private AsyncDeletionTestUtilService asyncDeletionTestUtilService;
 
     @Autowired
     private TeamAssignmentConfigRepository teamAssignmentConfigRepository;
@@ -255,7 +264,8 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         var textBlocks = TextExerciseFactory.generateTextBlocks(submissionCount * submissionSize);
         textExerciseUtilService.addAndSaveTextBlocksToTextSubmission(textBlocks, textSubmission);
 
-        request.delete("/api/text/text-exercises/" + textExercise.getId(), HttpStatus.OK);
+        request.delete("/api/text/text-exercises/" + textExercise.getId(), HttpStatus.ACCEPTED);
+        asyncDeletionTestUtilService.awaitExerciseDeletion(textExercise.getId());
         assertThat(textExerciseRepository.findById(textExercise.getId())).as("text exercise was deleted").isEmpty();
         assertExerciseNotInWeaviate(weaviateService, textExercise.getId());
     }
@@ -268,7 +278,8 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         TextExercise textExercise = textExerciseUtilService.createIndividualTextExercise(course, now, now, now);
         Channel exerciseChannel = conversationUtilService.addChannelToExercise(textExercise);
 
-        request.delete("/api/text/text-exercises/" + textExercise.getId(), HttpStatus.OK);
+        request.delete("/api/text/text-exercises/" + textExercise.getId(), HttpStatus.ACCEPTED);
+        asyncDeletionTestUtilService.awaitExerciseDeletion(textExercise.getId());
 
         Optional<Channel> exerciseChannelAfterDelete = channelRepository.findById(exerciseChannel.getId());
         assertThat(exerciseChannelAfterDelete).isEmpty();
@@ -280,7 +291,8 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         textExercise.setCompetencyLinks(Set.of(new CompetencyExerciseLink(competency, textExercise, 1)));
         textExerciseRepository.save(textExercise);
 
-        request.delete("/api/text/text-exercises/" + textExercise.getId(), HttpStatus.OK);
+        request.delete("/api/text/text-exercises/" + textExercise.getId(), HttpStatus.ACCEPTED);
+        asyncDeletionTestUtilService.awaitExerciseDeletion(textExercise.getId());
 
         verify(competencyProgressApi).updateProgressByCompetencyAsync(eq(competency));
     }
@@ -290,7 +302,8 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
     void deleteExamTextExercise() throws Exception {
         TextExercise textExercise = examUtilService.addEnrolledCourseExamExerciseGroupWithOneTextExercise(TEST_PREFIX);
 
-        request.delete("/api/text/text-exercises/" + textExercise.getId(), HttpStatus.OK);
+        request.delete("/api/text/text-exercises/" + textExercise.getId(), HttpStatus.ACCEPTED);
+        asyncDeletionTestUtilService.awaitExerciseDeletion(textExercise.getId());
         assertThat(textExerciseRepository.findById(textExercise.getId())).isNotPresent();
     }
 
@@ -459,7 +472,8 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
                     HttpStatus.OK);
 
             // Delete
-            request.delete("/api/text/text-exercises/" + textExercise.getId(), HttpStatus.OK);
+            request.delete("/api/text/text-exercises/" + textExercise.getId(), HttpStatus.ACCEPTED);
+            asyncDeletionTestUtilService.awaitExerciseDeletion(textExercise.getId());
         }
         finally {
             featureToggleService.disableFeature(Feature.AtlasML);
@@ -1195,6 +1209,49 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
 
         request.putWithResponseBody("/api/text/text-exercises", de.tum.cit.aet.artemis.text.dto.UpdateTextExerciseDTO.of(textExercise), TextExerciseResponseDTO.class,
                 HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void createImportAndUpdateTextExerciseWithPeriodInTitle() throws Exception {
+        String title = "W01E01 Strategy vs. bridge pattern";
+        Course course = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
+        TextExercise exercise = TextExerciseFactory.generateTextExercise(null, null, null, course);
+        exercise.setTitle(title);
+        TextExerciseResponseDTO created = request.postWithResponseBody("/api/text/text-exercises", UpdateTextExerciseDTO.of(exercise), TextExerciseResponseDTO.class,
+                HttpStatus.CREATED);
+        assertThat(created.title()).isEqualTo(title);
+
+        TextExercise source = textExerciseRepository.findByIdWithExampleSubmissionsAndResultsAndGradingCriteriaElseThrow(created.id());
+        source.setCourse(courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX));
+        TextExerciseResponseDTO imported = request.postWithResponseBody("/api/text/text-exercises/import?sourceExerciseId=" + created.id(), ImportTextExerciseDTO.of(source),
+                TextExerciseResponseDTO.class, HttpStatus.CREATED);
+        assertThat(imported.title()).isEqualTo(title);
+
+        TextExercise importedExercise = textExerciseRepository.findByIdWithExampleSubmissionsAndResultsAndGradingCriteriaElseThrow(imported.id());
+        importedExercise.setProblemStatement("Updated problem statement");
+        TextExerciseResponseDTO updated = request.putWithResponseBody("/api/text/text-exercises", UpdateTextExerciseDTO.of(importedExercise), TextExerciseResponseDTO.class,
+                HttpStatus.OK);
+        assertThat(updated.title()).isEqualTo(title);
+        assertThat(textExerciseRepository.findByIdElseThrow(imported.id()).getProblemStatement()).isEqualTo("Updated problem statement");
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "ab", "Strategy/bridge" })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void createTextExerciseWithInvalidTitleIsRejected(String title) throws Exception {
+        textExercise.setId(null);
+        textExercise.setTitle(title);
+        request.postWithResponseBody("/api/text/text-exercises", UpdateTextExerciseDTO.of(textExercise), TextExerciseResponseDTO.class, HttpStatus.BAD_REQUEST);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "ab", "Strategy/bridge" })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void importTextExerciseWithInvalidTitleIsRejected(String title) throws Exception {
+        textExercise.setTitle(title);
+        request.postWithResponseBody("/api/text/text-exercises/import?sourceExerciseId=" + textExercise.getId(), ImportTextExerciseDTO.of(textExercise),
+                TextExerciseResponseDTO.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -2432,4 +2489,58 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         request.get(courseUrl, HttpStatus.OK, TextExerciseResponseDTO.class);
     }
 
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void exportExercise() throws Exception {
+        String embeddedFileName = "Markdown_" + UUID.randomUUID() + ".png";
+        String secondEmbeddedFileName = "Markdown_" + UUID.randomUUID() + ".png";
+        Path embeddedFile = FilePathConverter.getMarkdownFilePath().resolve(embeddedFileName);
+        Path secondEmbeddedFile = FilePathConverter.getMarkdownFilePath().resolve(secondEmbeddedFileName);
+        FileUtils.writeByteArrayToFile(embeddedFile.toFile(), new byte[] { 1, 2, 3 });
+        FileUtils.writeByteArrayToFile(secondEmbeddedFile.toFile(), new byte[] { 4, 5, 6 });
+        // Both images on one line, one in Markdown and one in HTML syntax, and a link with a path that must not be followed.
+        textExercise.setProblemStatement("Look at ![image](/api/core/files/markdown/" + embeddedFileName + ") and <img src=\"/api/core/files/markdown/" + secondEmbeddedFileName
+                + "\" width=\"100\"> but not ![x](/api/core/files/markdown/../../config/application.yml)");
+        textExercise.setCategories(Set.of("{\"category\":\"export\"}"));
+        textExerciseRepository.save(textExercise);
+        gradingCriterionRepository.saveAll(exerciseUtilService.addGradingInstructionsToExercise(textExercise));
+
+        try {
+            var export = exerciseUtilService.readExerciseExport(request.getFile("/api/text/text-exercises/" + textExercise.getId() + "/export", HttpStatus.OK));
+
+            assertThat(export.details()).containsEntry("type", "text").containsKey("categories");
+            ExerciseUtilService.assertExportedGradingCriteriaWithoutIds(export.details());
+            assertThat(export.entries().keySet()).anyMatch(name -> name.startsWith("Problem-Statement-")).contains("files/" + embeddedFileName, "files/" + secondEmbeddedFileName);
+            assertThat(export.entries().keySet()).filteredOn(name -> name.startsWith("files/")).hasSize(2);
+        }
+        finally {
+            Files.deleteIfExists(embeddedFile);
+            Files.deleteIfExists(secondEmbeddedFile);
+        }
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void exportExercise_missingEmbeddedFile_failsInsteadOfExportingAnIncompleteFile() throws Exception {
+        textExercise.setProblemStatement("Look at ![image](/api/core/files/markdown/Markdown_" + UUID.randomUUID() + ".png)");
+        textExerciseRepository.save(textExercise);
+
+        request.getFile("/api/text/text-exercises/" + textExercise.getId() + "/export", HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void exportExercise_examExercise() throws Exception {
+        TextExercise examExercise = examUtilService.addEnrolledCourseExamExerciseGroupWithOneTextExercise("exportExercise_examExercise", TEST_PREFIX);
+
+        var export = exerciseUtilService.readExerciseExport(request.getFile("/api/text/text-exercises/" + examExercise.getId() + "/export", HttpStatus.OK));
+
+        assertThat(export.details()).containsEntry("type", "text");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void exportExercise_asTutor_forbidden() throws Exception {
+        request.getFile("/api/text/text-exercises/" + textExercise.getId() + "/export", HttpStatus.FORBIDDEN);
+    }
 }

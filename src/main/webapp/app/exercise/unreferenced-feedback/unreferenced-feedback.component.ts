@@ -1,6 +1,6 @@
 import { TumAetUiButtonDirective, TumAetUiMessageComponent, TumAetUiTagComponent, TumAetUiTagSeverity } from '@tumaet/ui-angular';
 import { Component, computed, effect, inject, input, model } from '@angular/core';
-import { Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
+import { Feedback, FeedbackType, instructionCountsOf } from 'app/assessment/shared/entities/feedback.model';
 import { StructuredGradingCriterionService } from 'app/exercise/structured-grading-criterion/structured-grading-criterion.service';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { UnreferencedFeedbackDetailComponent } from 'app/assessment/manage/unreferenced-feedback-detail/unreferenced-feedback-detail.component';
@@ -65,7 +65,7 @@ export class UnreferencedFeedbackComponent implements GradingInstructionSelectio
     readonly feedbacks = model<Feedback[]>([]);
 
     /** Feedback used for scoring: full assessment when the parent supplies it, otherwise this list only. */
-    private readonly scoringFeedbacks = computed(() => {
+    readonly scoringFeedbacks = computed(() => {
         const allFeedbacks = this.allFeedbacks();
         return allFeedbacks.length > 0 ? allFeedbacks : this.feedbacks();
     });
@@ -265,18 +265,6 @@ export class UnreferencedFeedbackComponent implements GradingInstructionSelectio
             this.updateFeedback(newFeedback);
         }
     }
-}
-
-/** How often each grading instruction appears among the given feedback. */
-function instructionCountsOf(feedbacks: Feedback[]): ReadonlyMap<number, number> {
-    const counts = new Map<number, number>();
-    for (const feedback of feedbacks) {
-        const instructionId = feedback.gradingInstruction?.id;
-        if (instructionId !== undefined) {
-            counts.set(instructionId, (counts.get(instructionId) ?? 0) + 1);
-        }
-    }
-    return counts;
 }
 
 function toGroup(title: string, translateTitle: boolean, feedbacks: Feedback[], contributingCredits: Map<Feedback, number>): FeedbackGroup {

@@ -1,4 +1,4 @@
-import { Service, computed, effect, inject, signal, untracked } from '@angular/core';
+import { Service, Signal, computed, effect, inject, signal, untracked } from '@angular/core';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { BehaviorSubject, Observable, lastValueFrom, of } from 'rxjs';
@@ -7,7 +7,6 @@ import { Course } from 'app/course/shared/entities/course.model';
 import { User } from 'app/account/user/user.model';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
-import { setUser } from '@sentry/angular';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { Exercise, getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Authority, IS_AT_LEAST_ADMIN, IS_AT_LEAST_SUPER_ADMIN, IS_AT_LEAST_TUTOR } from 'app/foundation/constants/authority.constants';
@@ -39,6 +38,7 @@ export interface IAccountService {
     authenticate: (identity?: User) => void;
     hasAnyAuthority: (authorities: readonly Authority[]) => Promise<boolean>;
     hasAnyAuthorityDirect: (authorities: readonly Authority[]) => boolean;
+    hasAdministratorAccess: () => boolean;
     identity: (force?: boolean) => Promise<User | undefined>;
     isAtLeastTutorInCourse: (course: Course) => boolean;
     isAtLeastTutorInCourseWithId: (courseId?: number) => boolean;
@@ -49,6 +49,9 @@ export interface IAccountService {
     isAtLeastInstructorForExercise: (exercise?: Exercise) => boolean;
     isAtLeastInstructorInCourse: (course: Course) => boolean;
     isAtLeastInstructorInCourseWithId: (courseId?: number) => boolean;
+    isAdmin: Signal<boolean>;
+    isSuperAdmin: Signal<boolean>;
+    isAtLeastTutor: Signal<boolean>;
     isAuthenticated: () => boolean;
     getAuthenticationState: () => Observable<User | undefined>;
     getImageUrl: () => string | undefined;
@@ -69,6 +72,9 @@ export class AccountService implements IAccountService {
     private prefilledUsernameValue?: string;
 
     readonly authenticated = computed(() => !!this.userIdentity());
+    readonly isAdmin = computed(() => this.hasAnyAuthorityDirect(IS_AT_LEAST_ADMIN));
+    readonly isSuperAdmin = computed(() => this.hasAnyAuthorityDirect(IS_AT_LEAST_SUPER_ADMIN));
+    readonly isAtLeastTutor = computed(() => this.hasAnyAuthorityDirect(IS_AT_LEAST_TUTOR));
 
     readonly askToSetupPasskey = computed(() => this.userIdentity()?.askToSetupPasskey ?? false);
     readonly isLoggedInWithPasskey = computed(() => this.userIdentity()?.loggedInWithPasskey ?? false);
@@ -152,9 +158,6 @@ export class AccountService implements IAccountService {
                     const user = response.body!;
                     if (user) {
                         this.userIdentity.set(user);
-
-                        // improved error tracking in sentry
-                        setUser({ username: user.login! });
 
                         // After retrieve the account info, the language will be changed to
                         // the user's preferred language configured in the account setting
@@ -256,18 +259,6 @@ export class AccountService implements IAccountService {
         return this.isAtLeastInstructorInCourse(exercise?.course || exercise?.exerciseGroup?.exam?.course);
     }
 
-    isAdmin(): boolean {
-        return this.hasAnyAuthorityDirect(IS_AT_LEAST_ADMIN);
-    }
-
-    isSuperAdmin(): boolean {
-        return this.hasAnyAuthorityDirect(IS_AT_LEAST_SUPER_ADMIN);
-    }
-
-    isAtLeastTutor(): boolean {
-        return this.hasAnyAuthorityDirect(IS_AT_LEAST_TUTOR);
-    }
-
     /**
      * Whether the user may use editor features that are not bound to a course, as the server decides for editor endpoints:
      * an editor or instructor, or an administrator whose session grants the administrator rights.
@@ -296,7 +287,7 @@ export class AccountService implements IAccountService {
      * Unlike {@link isAdmin}, the administrator authority alone is not enough while passkeys are required for administrator
      * features: until the administrator signs in with an approved passkey, the server does not grant the administrator rights.
      */
-    private hasAdministratorAccess(): boolean {
+    hasAdministratorAccess(): boolean {
         return this.isAdmin() && (!this.isPasskeyRequiredForAdministratorFeatures() || this.isUserLoggedInWithApprovedPasskey());
     }
 

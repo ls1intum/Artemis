@@ -1,6 +1,8 @@
-import { map, of } from 'rxjs';
+import { EMPTY, Subscription, catchError, defer, expand, map, of, retry, switchMap, throwError, timer } from 'rxjs';
+import { HttpErrorResponse } from '@angular/common/http';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { StudentExamService } from 'app/exam/manage/student-exams/student-exam.service';
-import { Component, OnInit, effect, inject, input, output, signal } from '@angular/core';
+import { Component, DestroyRef, OnInit, effect, inject, input, output, signal } from '@angular/core';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { Exercise, ExerciseType, IncludedInOverallScore, getIcon } from 'app/exercise/shared/entities/exercise/exercise.model';
 import dayjs from 'dayjs/esm';
@@ -21,7 +23,7 @@ import { evaluateTemplateStatus, getResultIconClass, getTextColorClass } from 'a
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
 import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
 import { faArrowUp, faEye, faEyeSlash, faFolderOpen, faInfoCircle, faPrint } from '@fortawesome/free-solid-svg-icons';
-import { captureException } from '@sentry/angular';
+import { captureException } from 'app/core/error-reporting/capture-exception';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { isExamResultPublished } from 'app/exam/overview/exam.utils';
@@ -99,12 +101,15 @@ type StateBeforeResetting = {
 })
 export class ExamResultSummaryComponent implements OnInit {
     private route = inject(ActivatedRoute);
+    private destroyRef = inject(DestroyRef);
     private serverDateService = inject(ArtemisServerDateService);
     private themeService = inject(ThemeService);
     private examParticipationService = inject(ExamParticipationService);
     private studentExamService = inject(StudentExamService);
     private plagiarismCasesService = inject(PlagiarismCasesService);
     private alertService = inject(AlertService);
+
+    private gradeRequest?: { studentExamId: number; subscription: Subscription };
 
     // make constants available to html for comparison
     readonly TEXT = ExerciseType.TEXT;
@@ -135,8 +140,15 @@ export class ExamResultSummaryComponent implements OnInit {
         effect(() => {
             const se = this.studentExam();
             const gradeInfo = this.studentExamGradeInfoDTO();
+            if (this.gradeRequest && this.gradeRequest.studentExamId !== se.id) {
+                this.gradeRequest.subscription.unsubscribe();
+            }
             if (gradeInfo) {
-                gradeInfo.studentExam = se;
+                if (gradeInfo.studentExam?.id !== undefined && gradeInfo.studentExam.id !== se.id) {
+                    this.studentExamGradeInfoDTO.set(undefined);
+                } else {
+                    gradeInfo.studentExam = se;
+                }
             }
             this.tryLoadPlagiarismCaseInfosForStudent();
         });
@@ -209,18 +221,64 @@ export class ExamResultSummaryComponent implements OnInit {
 
         this.exerciseInfos.set(this.getExerciseInfos());
 
-        if (this.instructorView() || isExamResultPublished(this.isTestRun(), studentExam.exam, this.serverDateService)) {
+        if (this.instructorView() || (this.isTestExam ? studentExam.submitted : isExamResultPublished(this.isTestRun(), studentExam.exam, this.serverDateService))) {
             const suppliedGrades = this.managementGradeInfo();
             const grades = this.instructorView()
                 ? suppliedGrades
                     ? of(suppliedGrades)
                     : this.studentExamService.find(this.courseId(), studentExam.exam.id, studentExam.id).pipe(map((response) => response.body!))
-                : this.examParticipationService.loadStudentExamGradeInfoForSummary(this.courseId(), studentExam.exam.id, studentExam.id);
-            grades.subscribe((studentExamWithGrade: StudentExamWithGradeDTO) => {
-                studentExamWithGrade.studentExam = this.studentExam();
-                this.studentExamGradeInfoDTO.set(studentExamWithGrade);
-                this.exerciseInfos.set(this.getExerciseInfos(studentExamWithGrade));
-            });
+                : defer(() =>
+                      this.studentExam().id === studentExam.id
+                          ? this.examParticipationService.loadStudentExamGradeInfoForSummary(this.courseId(), studentExam.exam!.id!, studentExam.id!)
+                          : EMPTY,
+                  ).pipe(
+                      retry({
+                          delay: (error: unknown, retryCount) => {
+                              if (!(error instanceof HttpErrorResponse) || (error.status !== 0 && (error.status < 500 || error.status >= 600))) {
+                                  return throwError(() => error);
+                              }
+                              return timer(Math.min(2000 * 2 ** Math.max(0, retryCount - 3), 30000));
+                          },
+                      }),
+                      // The HTTP interceptor reports permanent failures; they must not become an endless retry loop.
+                      catchError(() => EMPTY),
+                  );
+            // Poll quickly at first, then back off while results stay pending or refreshes keep failing.
+            let pollCount = 0;
+            const subscription = grades
+                .pipe(
+                    expand((gradeInfo) => {
+                        const pendingAutomaticResults = this.isTestExam && !!gradeInfo.pendingExerciseIds?.length;
+                        if (this.studentExam().id !== studentExam.id || (!pendingAutomaticResults && !gradeInfo.studentResult?.gradeWithBonus?.pending)) {
+                            return EMPTY;
+                        }
+                        const pollDelay = Math.min(2000 * 2 ** Math.max(0, pollCount++ - 2), 30000);
+                        return timer(pollDelay).pipe(
+                            switchMap(() => {
+                                if (this.studentExam().id !== studentExam.id) {
+                                    return EMPTY;
+                                }
+                                return this.instructorView()
+                                    ? this.studentExamService.find(this.courseId(), studentExam.exam!.id!, studentExam.id!).pipe(map((response) => response.body!))
+                                    : this.examParticipationService.loadStudentExamGradeInfoForSummary(this.courseId(), studentExam.exam!.id!, studentExam.id!);
+                            }),
+                            // A transient refresh failure leaves the pending state visible and retries on the next interval.
+                            catchError((error: unknown) =>
+                                error instanceof HttpErrorResponse && error.status !== 0 && (error.status < 500 || error.status >= 600) ? EMPTY : of(gradeInfo),
+                            ),
+                        );
+                    }),
+                    takeUntilDestroyed(this.destroyRef),
+                )
+                .subscribe((studentExamWithGrade: StudentExamWithGradeDTO) => {
+                    if (this.studentExam().id !== studentExam.id) {
+                        return;
+                    }
+                    studentExamWithGrade.studentExam = this.studentExam();
+                    this.studentExamGradeInfoDTO.set(studentExamWithGrade);
+                    this.exerciseInfos.set(this.getExerciseInfos(studentExamWithGrade));
+                });
+            this.gradeRequest = { studentExamId: studentExam.id, subscription };
         }
 
         this.exampleSolutionPublished.set(!!studentExam.exam?.exampleSolutionPublicationDate && dayjs().isAfter(studentExam.exam.exampleSolutionPublicationDate));

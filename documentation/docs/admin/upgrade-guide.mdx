@@ -2,6 +2,7 @@
 id: upgrade-guide
 title: Upgrade Guide
 sidebar_label: Upgrade Guide
+last_reviewed: 2026-11-09
 ---
 
 import Callout from "../../src/components/Callout/Callout";
@@ -26,6 +27,25 @@ Which of these actually execute depends on the database Artemis finds:
 - **An existing database** already has the changelogs under `history/` recorded from when it ran them, so Liquibase skips them. The baseline marks itself as applied without executing, because the schema it would create is already there. Only the changelogs under `changelog/` run.
 
 Both routes end with the same schema, so it makes no difference to the running instance whether it was installed fresh or upgraded over several years. A check on every Artemis pull request applies both routes to an empty database and compares the results on MySQL and PostgreSQL.
+
+## Planned Removals in Artemis 11
+
+<Callout variant={CalloutVariant.warning}>
+    Artemis 11, planned for March 2027, removes **Jenkins** as a continuous integration system and **MySQL** as a database.
+    Both are deprecated from now on. They keep working in the 10.x releases, but you should plan to leave them.
+</Callout>
+
+- **Jenkins.** The replacement is LocalCI, which runs build jobs in Docker containers on build agents that you scale by adding nodes. LocalVC remains
+  the version control system. Follow the [Jenkins to LocalCI migration guide](/admin/jenkins-to-localci-migration). An installation is affected if the `jenkins` profile is active. See [Integrated Code Lifecycle setup](/admin/production-setup/integrated-code-lifecycle-setup)
+  for the target setup. The Jenkins-only settings (`jenkins.*`, the `artemis.continuous-integration` keys that are marked as Jenkins specific, and the shared
+  build agent git credentials) are removed with it.
+- **MySQL.** The replacement is PostgreSQL. An installation is affected if its JDBC URL starts with `jdbc:mysql`. Production installations that still use MySQL
+  already have to override `spring.jpa.database: MYSQL`, because PostgreSQL is the default.
+  The MySQL branches of the Liquibase baseline and the MySQL test and CI jobs are removed in Artemis 11, which does not support MySQL.
+  Migrate the data to PostgreSQL while you still run a 10.x release, with the guide
+  [Migrating MySQL Data to PostgreSQL](/admin/database-tips#migrating-mysql-data-to-postgresql).
+
+The [roadmap](/about/roadmap#planned-removals-in-artemis-11) lists the whole scope.
 
 ## Memiris Storage Cleanup After 10.4
 
@@ -177,6 +197,19 @@ Restore the backup taken in step 4 of the upgrade procedure if the cause cannot 
 
 Some releases change behavior in a way that requires a one-time action on existing data. These steps are additional to the upgrade scenarios above.
 
+### 10.7: Rate Limit of Git Operations
+
+The authentication of git operations over HTTP and SSH has its own rate limit setting, `artemis.rate-limiting.git-authentication-requests-per-minute` (`ARTEMIS_RATELIMITING_GITAUTHENTICATIONREQUESTSPERMINUTE`), which is **30 per minute and client address** unless you set it.
+Before, git shared `authentication-requests-per-minute` with the logins. After the upgrade, that value only applies to logins, and the two limits no longer add up to one: **with the defaults, one client address may now make up to 30 login attempts and up to 30 git authentications
+per minute, where it could make 30 in total.** With a login limit of your own, for example 300, an address that could make 300 requests of both kinds in total may now make 300 logins and 30 git authentications.
+That is more room for guessing a password, because git over HTTP can verify a password like a login does. **Review the git limit on every installation**, whether you raised, lowered or never set the login limit:
+
+- If you **raised** `authentication-requests-per-minute` so that a lecture hall behind one address could push at a deadline, set the git setting to the same value before you upgrade, or git drops to 30.
+- If you **lowered** it, for example to 5, to make guessing harder, set the git setting to the same value too, or git is at 30 while the logins stay at 5.
+- If you never set it, decide whether 30 git authentications per client address and minute is what you want next to 30 logins, and lower the git setting if not.
+
+See [Rate Limiting](/admin/production-setup/security#rate-limiting).
+
 ### 10.1: Installation Metadata in Production
 
 Every production core node refuses to start until three settings describe who runs the installation, whether or not telemetry is enabled:
@@ -236,12 +269,12 @@ From version 10.0 on, the same events live in `security_audit_event`, with their
 If the audit log does not reach back far enough, build the list from the identity provider instead, and still match on `login`: export the accounts the identity provider manages, apply your configured `saml2.username-pattern` to each one to get the login Artemis would have stored, lowercase the result, and match `jhi_user.login` against that list.
 
 <Callout variant={CalloutVariant.warning}>
-  Do not fall back to matching on `email`. Artemis identifies a SAML2 user by the login that `saml2.username-pattern` produces and never by email, and `jhi_user.email` is not unique: an address stored on an older release can be shared between accounts or recycled from a former owner, so an email match can select more than one row, or the wrong one. Clearing the internal flag on the wrong row changes that account's authentication route and locks its owner out of the password form, the password reset function, and password-based Git access. Where the identity provider gives you nothing but an email address, leave that account out of the update and confirm its identity in **Administration → User management** first. See [User Email Uniqueness](./user-email-uniqueness) for finding and resolving the duplicates an instance already has, and point `saml2.username-pattern` at a stable, globally unique identity provider attribute so that the login remains a reliable key.
+  Do not fall back to matching on `email`. Artemis identifies a SAML2 user by the login that `saml2.username-pattern` produces and never by email, and `jhi_user.email` is not unique: an address stored on an older release can be shared between accounts or recycled from a former owner, so an email match can select more than one row, or the wrong one. Clearing the internal flag on the wrong row changes that account's authentication route and locks its owner out of the password form, the password reset function, and password-based Git access. Where the identity provider gives you nothing but an email address, leave that account out of the update and confirm its identity in **Administration → Account → Users** first. See [User Email Uniqueness](./user-email-uniqueness) for finding and resolving the duplicates an instance already has, and point `saml2.username-pattern` at a stable, globally unique identity provider attribute so that the login remains a reliable key.
 </Callout>
 
 #### Clearing the Flag
 
-**For a few accounts**, open **Administration → User management**, edit the user, and clear the **Internal** checkbox.
+**For a few accounts**, open **Administration → Account → Users**, edit the user, and clear the **Internal** checkbox.
 
 **For many accounts**, update `jhi_user.is_internal` directly. Confirm that the `SELECT` above returns what you expect and that you have a backup, then run the update in a transaction:
 
