@@ -2,7 +2,7 @@
 id: security-assurance
 title: Security Assurance
 sidebar_label: Security Assurance
-last_reviewed: 2026-11-03
+last_reviewed: 2026-11-10
 ---
 
 This assurance case explains the security properties Artemis aims to provide, the boundaries on
@@ -110,6 +110,28 @@ documents verification, including the limits of older and retrospectively signed
 Private vulnerability reporting, advisory publication, supported-version fixes, and reporter credit
 provide a route for correcting controls when they fail. The
 [release policy](/about/releases) tells operators what support and upgrade path to expect.
+
+## Audits and continuous checks
+
+The assurance case is checked from two directions. Audits examine the whole system at a point in time;
+continuous checks keep what an audit established from eroding. The audits themselves are listed in the
+[security policy](https://github.com/ls1intum/Artemis/blob/develop/.github/SECURITY.md#security-audits-and-reviews).
+The most recent audit took place on 9 November 2026 and covered the server REST interfaces and the build
+agent infrastructure. Its findings were fixed with tests that cover refused requests, and the behavior
+that operators and maintainers rely on is documented in the [access rights](/admin/access-rights) and in
+[security configuration](/admin/production-setup/security).
+
+The checks that run on every change, and therefore apply to the next audit as well, are:
+
+| Check                                                                                                                                            | What it supports                                                                                                                            |
+| ------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| [CodeQL](https://github.com/ls1intum/Artemis/blob/develop/.github/workflows/ci-codeql.yml) and the static analysis of the continuous integration | Common vulnerability patterns in Java and TypeScript                                                                                        |
+| Architecture tests such as `EnforceRoleInResourceArchitectureTest`, `SecurityContextArchitectureTest` and `WebsocketTopicArchitectureTest`       | An endpoint declares the role it requires, security context access stays in the allowed places, and every websocket destination is declared |
+| Integration tests of the REST interfaces                                                                                                         | An allowed, a refused and a malformed request for the operations that change or disclose data                                               |
+| [OpenSSF Scorecard](https://github.com/ls1intum/Artemis/blob/develop/.github/workflows/scorecard.yml) and the dependency submission              | Repository hygiene and the vulnerabilities of third-party dependencies                                                                      |
+
+A change of an authorization rule is reviewed together with the test of the refused request. A finding of
+an audit is only closed once such a test exists, so the same weakness does not return unnoticed.
 
 ## Maintaining the argument
 

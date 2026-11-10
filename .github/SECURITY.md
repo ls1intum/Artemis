@@ -341,6 +341,26 @@ nothing about the image a consumer actually pulled.
 
 
 
+### Security Audits and Reviews
+
+Beyond the review of every pull request, Artemis is audited as a whole. The audits are listed here so
+that operators can see what was examined, when, and which releases contain the resulting changes.
+
+| Date            | Scope                                                         | Outcome                                                                                                                                                                                                   |
+| --------------- | ------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 9 November 2026 | The server REST interfaces and the build agent infrastructure | The findings were triaged and fixed, and each fix received tests that cover a refused request. The fixes are part of release 10.7 and are backported to 9.9.x. Operators should update to these releases. |
+
+An audit combines the review of maintainers, automated analysis ([CodeQL](https://codeql.github.com/)
+and static analysis in the continuous integration), the architecture tests of the repository, and
+assisted review of the code. Confirmed findings are fixed first. They are summarized here once a release
+with the fix is available, in line with [Disclosure and Advisories](#disclosure-and-advisories).
+Audits are repeated regularly, in particular after larger changes to authentication, authorization or the
+build infrastructure. How the continuous checks support this is described in the
+[security assurance case](https://docs.artemis.tum.de/developer/security-assurance#audits-and-continuous-checks).
+Artemis has not been certified by an independent third party.
+
+
+
 ### Further Reading
 
 - [Trust and transparency](https://docs.artemis.tum.de/about/trust) is the entry point for security,
