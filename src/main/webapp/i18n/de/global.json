@@ -7,6 +7,7 @@
             "no": "Nein",
             "you": "Du",
             "emptyList": "Keine Elemente verfügbar",
+            "serverNotReachable": "Server ist nicht erreichbar",
             "filterOptions": "Optionen filtern",
             "noMatchingOptions": "Keine passenden Optionen",
             "selectedCount": "{{ count }} ausgewählt",
@@ -563,7 +564,10 @@
             "value": "Wert"
         },
         "delete": {
-            "title": "Löschen bestätigen"
+            "title": "Löschen bestätigen",
+            "summary": {
+                "largeCountWarning": "Es werden sehr viele Daten gelöscht. Bitte prüfe die folgenden Zahlen sorgfältig, bevor du bestätigst."
+            }
         },
         "unlink": {
             "title": "Trennen bestätigen"

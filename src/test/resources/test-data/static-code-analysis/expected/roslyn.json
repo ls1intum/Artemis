@@ -1,0 +1,71 @@
+{
+  "tool": "ROSLYN",
+  "issues": [
+    {
+      "filePath": "/var/tmp/testing-dir/assignment/Flawed.cs",
+      "startLine": 8,
+      "endLine": 8,
+      "startColumn": 23,
+      "endColumn": 28,
+      "rule": "CS8600",
+      "category": "Compiler",
+      "message": "Converting null literal or possible null value to non-nullable type.",
+      "priority": "warning"
+    },
+    {
+      "filePath": "/var/tmp/testing-dir/assignment/Flawed.cs",
+      "startLine": 9,
+      "endLine": 9,
+      "startColumn": 16,
+      "endColumn": 20,
+      "rule": "CS8602",
+      "category": "Compiler",
+      "message": "Dereference of a possibly null reference.",
+      "priority": "warning"
+    },
+    {
+      "filePath": "/var/tmp/testing-dir/assignment/Flawed.cs",
+      "startLine": 7,
+      "endLine": 7,
+      "startColumn": 13,
+      "endColumn": 19,
+      "rule": "CS0219",
+      "category": "Compiler",
+      "message": "The variable 'unused' is assigned but its value is never used",
+      "priority": "warning"
+    },
+    {
+      "filePath": "/var/tmp/testing-dir/assignment/Flawed.cs",
+      "startLine": 12,
+      "endLine": 12,
+      "startColumn": 16,
+      "endColumn": 21,
+      "rule": "CA1822",
+      "category": "Performance",
+      "message": "Member 'Count' does not access instance data and can be marked as static",
+      "priority": "warning"
+    },
+    {
+      "filePath": "/var/tmp/testing-dir/assignment/BubbleSort.cs",
+      "startLine": 9,
+      "endLine": 9,
+      "startColumn": 17,
+      "endColumn": 28,
+      "rule": "CA1822",
+      "category": "Performance",
+      "message": "Member 'PerformSort' does not access instance data and can be marked as static",
+      "priority": "warning"
+    },
+    {
+      "filePath": "/var/tmp/testing-dir/assignment/MergeSort.cs",
+      "startLine": 9,
+      "endLine": 9,
+      "startColumn": 17,
+      "endColumn": 28,
+      "rule": "CA1822",
+      "category": "Performance",
+      "message": "Member 'PerformSort' does not access instance data and can be marked as static",
+      "priority": "warning"
+    }
+  ]
+}

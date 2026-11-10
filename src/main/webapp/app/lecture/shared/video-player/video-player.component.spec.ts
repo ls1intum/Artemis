@@ -114,7 +114,7 @@ describe('VideoPlayerComponent', () => {
                             (resizeMove)="onVideoColumnResize($event)"
                             (resizeEnd)="onResizeEnd()"
                         >
-                            <video #videoRef></video>
+                            <video #videoRef (pointermove)="onVideoInteraction()" (focus)="onVideoInteraction()" (keydown)="onVideoInteraction()" (play)="onVideoPlaybackChange()" (pause)="onVideoPlaybackChange()" (seeking)="onVideoPlaybackChange()" (ratechange)="onVideoPlaybackChange()"></video>
                         </div>
                         <button #resizerHandle type="button" class="resizer-handle"></button>
                         <div class="transcript-column"></div>
@@ -192,6 +192,104 @@ describe('VideoPlayerComponent', () => {
 
         expect(getIndex()).toBe(0);
         expect(component.getCurrentSlideNumber()).toBe(7);
+    });
+
+    it('keeps following the transcript while the pointer rests still on the video', async () => {
+        const segments: TranscriptSegment[] = [
+            { startTime: 10, endTime: 12, text: 'A' },
+            { startTime: 20, endTime: 22, text: 'B' },
+        ];
+        setInputs('https://cdn.example.com/m.m3u8', segments);
+        await render();
+
+        const scrollSpy = vi.fn();
+        // The test template renders no transcript viewer, so stub the viewChild signal.
+        (component as any).transcriptViewer = () => ({ scrollToSegment: scrollSpy });
+
+        component.updateCurrentSegment(10.1);
+        expect(scrollSpy).toHaveBeenLastCalledWith(0);
+        component.updateCurrentSegment(20.1);
+        expect(scrollSpy).toHaveBeenLastCalledWith(1);
+    });
+
+    it('holds the transcript still while the pointer moves over the video so a native menu stays open, then catches up', async () => {
+        vi.useFakeTimers();
+        try {
+            const segments: TranscriptSegment[] = [
+                { startTime: 10, endTime: 12, text: 'A' },
+                { startTime: 20, endTime: 22, text: 'B' },
+            ];
+            setInputs('https://cdn.example.com/m.m3u8', segments);
+            await render();
+
+            const scrollSpy = vi.fn();
+            (component as any).transcriptViewer = () => ({ scrollToSegment: scrollSpy });
+            const videoElement = component.videoRef()!.nativeElement;
+
+            videoElement.dispatchEvent(new Event('pointermove'));
+            component.updateCurrentSegment(10.1);
+            component.updateCurrentSegment(20.1);
+            expect(getIndex()).toBe(1);
+            expect(scrollSpy).not.toHaveBeenCalled();
+
+            // The hold ends by itself; the next update scrolls to the segment that is active by then
+            vi.advanceTimersByTime(10_001);
+            component.updateCurrentSegment(20.2);
+            expect(scrollSpy).toHaveBeenCalledExactlyOnceWith(1);
+        } finally {
+            vi.useRealTimers();
+        }
+    });
+
+    it('refreshes the hold on every pointer movement and on focus', async () => {
+        vi.useFakeTimers();
+        try {
+            const segments: TranscriptSegment[] = [{ startTime: 10, endTime: 12, text: 'A' }];
+            setInputs('https://cdn.example.com/m.m3u8', segments);
+            await render();
+
+            const scrollSpy = vi.fn();
+            (component as any).transcriptViewer = () => ({ scrollToSegment: scrollSpy });
+            const videoElement = component.videoRef()!.nativeElement;
+
+            videoElement.dispatchEvent(new Event('pointermove'));
+            component.updateCurrentSegment(10.1);
+            vi.advanceTimersByTime(6_000);
+            // Still moving 6 s later: the hold now runs until 16 s, not 10 s
+            videoElement.dispatchEvent(new Event('pointermove'));
+            vi.advanceTimersByTime(6_000);
+            component.updateCurrentSegment(10.2);
+            expect(scrollSpy).not.toHaveBeenCalled();
+
+            // Focusing the video (clicking its controls, or tabbing to it) holds the transcript again
+            videoElement.dispatchEvent(new Event('focus'));
+            vi.advanceTimersByTime(9_000);
+            component.updateCurrentSegment(10.3);
+            expect(scrollSpy).not.toHaveBeenCalled();
+
+            vi.advanceTimersByTime(2_000);
+            component.updateCurrentSegment(10.4);
+            expect(scrollSpy).toHaveBeenCalledExactlyOnceWith(0);
+        } finally {
+            vi.useRealTimers();
+        }
+    });
+
+    it('ends the hold early when the playback speed or state changes', async () => {
+        const segments: TranscriptSegment[] = [{ startTime: 10, endTime: 12, text: 'A' }];
+        setInputs('https://cdn.example.com/m.m3u8', segments);
+        await render();
+
+        const scrollSpy = vi.fn();
+        (component as any).transcriptViewer = () => ({ scrollToSegment: scrollSpy });
+        const videoElement = component.videoRef()!.nativeElement;
+
+        videoElement.dispatchEvent(new Event('keydown'));
+        component.updateCurrentSegment(10.1);
+        expect(scrollSpy).not.toHaveBeenCalled();
+
+        videoElement.dispatchEvent(new Event('ratechange'));
+        expect(scrollSpy).toHaveBeenCalledExactlyOnceWith(0);
     });
 
     it('timeupdate outside any segment leaves index at -1', async () => {

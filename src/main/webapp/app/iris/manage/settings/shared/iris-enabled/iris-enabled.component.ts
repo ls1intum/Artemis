@@ -6,6 +6,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { RouterLink } from '@angular/router';
 import { faArrowRight } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
 import { IrisCourseSettingsDTO } from 'app/iris/shared/entities/settings/iris-course-settings.model';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { onError } from 'app/foundation/util/global.utils';
@@ -20,7 +21,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 @Component({
     selector: 'jhi-iris-enabled',
     templateUrl: './iris-enabled.component.html',
-    imports: [EnabledToggleComponent, TranslateDirective, ArtemisTranslatePipe, RouterLink, FaIconComponent],
+    imports: [EnabledToggleComponent, TranslateDirective, ArtemisTranslatePipe, RouterLink, FaIconComponent, TumAetUiButtonDirective],
     changeDetection: ChangeDetectionStrategy.OnPush,
     styles: [
         `
@@ -33,28 +34,6 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
                 display: flex;
                 flex-direction: column;
                 gap: 0.75rem;
-            }
-
-            .iris-configure-link {
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                gap: 0.4rem;
-                padding: 0.5rem 1rem;
-                border: 1px solid var(--p-content-border-color);
-                border-radius: 0.625rem;
-                background: var(--overview-card-nested-bg, var(--p-content-background));
-                color: var(--p-text-color);
-                font-weight: 500;
-                font-size: 0.88rem;
-                text-decoration: none;
-                transition: all 0.2s ease;
-
-                &:hover {
-                    background: var(--p-content-hover-background);
-                    border-color: var(--p-content-border-color);
-                    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-                }
             }
         `,
     ],

@@ -241,6 +241,8 @@ public final class Constants {
 
     public static final String UPDATE_EXAM = "UPDATE_EXAM";
 
+    public static final String UPDATE_EXAM_ATTENDANCE = "UPDATE_EXAM_ATTENDANCE";
+
     public static final String ADD_USER_TO_EXAM = "ADD_USER_TO_EXAM";
 
     public static final String REMOVE_USER_FROM_EXAM = "REMOVE_USER_FROM_EXAM";
@@ -402,6 +404,7 @@ public final class Constants {
     /**
      * The name of the Spring profile used to process build jobs in a Jenkins setup.
      */
+    // REMOVE_IN_ARTEMIS_11 (Jenkins): remove the jenkins profile constant with Jenkins support
     public static final String PROFILE_JENKINS = "jenkins";
 
     /**

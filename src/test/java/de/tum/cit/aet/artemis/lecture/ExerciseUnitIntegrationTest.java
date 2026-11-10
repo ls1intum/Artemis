@@ -21,6 +21,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseResponseDTO;
+import de.tum.cit.aet.artemis.exercise.util.AsyncDeletionTestUtilService;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 import de.tum.cit.aet.artemis.fileupload.repository.FileUploadExerciseRepository;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
@@ -41,6 +42,9 @@ class ExerciseUnitIntegrationTest extends AbstractSpringIntegrationIndependentBa
     private static final String TEST_PREFIX = "exerciseunitintegration";
 
     private static final String OTHER_PREFIX = TEST_PREFIX + "other";
+
+    @Autowired
+    private AsyncDeletionTestUtilService asyncDeletionTestUtilService;
 
     @Autowired
     private TextExerciseRepository textExerciseRepository;
@@ -212,11 +216,16 @@ class ExerciseUnitIntegrationTest extends AbstractSpringIntegrationIndependentBa
         }
         assertThat(persistedExerciseUnits).hasSameSizeAs(exercisesOfCourse);
 
-        request.delete("/api/text/text-exercises/" + textExercise.getId(), HttpStatus.OK);
-        request.delete("/api/modeling/modeling-exercises/" + modelingExercise.getId(), HttpStatus.OK);
-        request.delete("/api/quiz/quiz-exercises/" + quizExercise.getId(), HttpStatus.OK);
-        request.delete("/api/fileupload/file-upload-exercises/" + fileUploadExercise.getId(), HttpStatus.OK);
-        request.delete("/api/programming/programming-exercises/" + programmingExercise.getId(), HttpStatus.OK, deleteProgrammingExerciseParamsFalse());
+        request.delete("/api/text/text-exercises/" + textExercise.getId(), HttpStatus.ACCEPTED);
+        asyncDeletionTestUtilService.awaitExerciseDeletion(textExercise.getId());
+        request.delete("/api/modeling/modeling-exercises/" + modelingExercise.getId(), HttpStatus.ACCEPTED);
+        asyncDeletionTestUtilService.awaitExerciseDeletion(modelingExercise.getId());
+        request.delete("/api/quiz/quiz-exercises/" + quizExercise.getId(), HttpStatus.ACCEPTED);
+        asyncDeletionTestUtilService.awaitExerciseDeletion(quizExercise.getId());
+        request.delete("/api/fileupload/file-upload-exercises/" + fileUploadExercise.getId(), HttpStatus.ACCEPTED);
+        asyncDeletionTestUtilService.awaitExerciseDeletion(fileUploadExercise.getId());
+        request.delete("/api/programming/programming-exercises/" + programmingExercise.getId(), HttpStatus.ACCEPTED, deleteProgrammingExerciseParamsFalse());
+        asyncDeletionTestUtilService.awaitExerciseDeletion(programmingExercise.getId());
 
         List<ExerciseUnitDTO> exerciseUnitsOfLecture = request.getList("/api/lecture/lectures/" + lecture1.getId() + "/exercise-units", HttpStatus.OK, ExerciseUnitDTO.class);
         assertThat(exerciseUnitsOfLecture).isEmpty();

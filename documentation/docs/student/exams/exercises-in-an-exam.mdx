@@ -2,6 +2,7 @@
 id: exercises-in-an-exam
 title: Exercises in an Exam
 sidebar_label: Exercises in an Exam
+last_reviewed: 2026-11-06
 ---
 
 import Callout from "../../../src/components/Callout/Callout";
@@ -22,9 +23,11 @@ import submissionPolicyPenalty from '../assets/exams/exam_submission_policy_pena
 An exam can mix every exercise type Artemis supports. They share the navigation sidebar and the clock described
 under [Take an Exam](/student/exams/take-an-exam), and differ in how you work and how you submit.
 
-Text, modeling and programming exercises all dock the problem statement to the right — above the editor on a small
+Text, modeling, programming and file upload exercises all dock the problem statement to the right — above your solution area on a small
 screen. The arrow at its top corner collapses it when you want the editor to fill the space, and dragging the
 divider resizes the panes.
+
+import examFileUploadAutomatic from '../assets/exams/exam_file_upload_automatic.png';
 
 ## Quiz Exercises
 
@@ -57,9 +60,9 @@ screen.
 
 ## File Upload Exercises
 
-You attach the file your answer consists of — a scan, a drawing, a spreadsheet — and choose **Upload**. Nothing is
-submitted until you do: there is no **Save** for this type, and moving to another exercise in the sidebar does not
-submit an unuploaded file.
+Drop the file your answer consists of — a scan, a drawing, a spreadsheet — into the upload area, or select it from your device. The upload starts automatically. Wait for confirmation before moving on; a selected file is not submitted until its upload succeeds. You can open the uploaded file, and image files also show a preview. If the upload fails, use the retry control.
+
+<Image src={examFileUploadAutomatic} alt="File upload exam exercise on a phone with automatic upload instructions and an image preview" size={ImageSize.large} caption="An uploaded image in a test exam on a phone" />
 
 <Callout variant={CalloutVariant.warning}>
 
@@ -93,7 +96,10 @@ then to the result itself. Nothing is built until you submit.
 
 ### Working in Your Own Editor
 
-**Code** gives you the repository address, over HTTPS or over SSH if you have registered a public key. Clone it,
+**Code** gives you the repository address. With a **token** the address contains the token. Over **SSH** the address contains no
+credential and the public key that you registered identifies you. Over **HTTPS** the address contains no token either, and Git asks for
+your Artemis password. See [Integrated Code Lifecycle](/student/tools-reference/integrated-code-lifecycle#cloning-the-repository-to-your-computer)
+for the three methods. Clone it,
 open the project in your editor, work, then commit and push — pushing does what **Submit** does in the browser.
 
 <Image src={examCloneRepository} alt="The Code dialog offering the clone URL" size={ImageSize.large} caption="Getting the repository address" />

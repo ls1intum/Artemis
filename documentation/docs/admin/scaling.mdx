@@ -3,6 +3,7 @@ id: scaling
 title: Scaling Artemis
 sidebar_label: 'Scaling & Sizing'
 description: "How to size an Artemis installation: how many servers, how much CPU and memory, when to add nodes, and what the measurements show."
+last_reviewed: 2026-11-09
 ---
 
 import Callout from "../../src/components/Callout/Callout";
@@ -69,7 +70,8 @@ Configuration: [Core nodes](/admin/production-setup/multiple-artemis-instances#c
 works, only how quickly a student sees the result of a push. A long build queue is noticeable and
 annoying, but nothing breaks: students carry on working and their results arrive later. Build agents run
 the same Artemis application with most of its features switched off, need no access to the shared file
-system, and can be added and removed while the cluster is running. Configuration:
+system, and can be added and removed while the cluster is running. Artemis has no autoscaler of its own, see
+[Operating build agents](/admin/production-setup/multiple-artemis-instances#operating-build-agents) for how to automate it. Configuration:
 [Build Agents](/admin/production-setup/multiple-artemis-instances#build-agents), or
 [Jenkins build agents](/admin/jenkins-localvc#build-agents) if you run Jenkins instead of the
 Integrated Code Lifecycle.
@@ -203,6 +205,53 @@ numbers together: on its own, neither of them says anything.
   for what that does to the numbers.
 
 </Callout>
+
+## When many students push at once
+
+With the Integrated Code Lifecycle, every push to a student repository queues one build job. This section describes what protects the
+installation when students push in a loop or all push right before a deadline, and what does not exist.
+
+**A per-student limit is an instructor setting.** Instructors can give an exercise a
+[submission policy](/instructor/exercises/programming-exercise/grade-and-verify#submission-policy-configuration). The **Lock Repository** policy allows a fixed number of submissions per student,
+and then locks the repository, so that further pushes are rejected and no more builds are queued. The **Submission Penalty** policy does not limit builds, only the score.
+Practice mode is not counted. Without a policy, a student can push as often as they like.
+The lock is applied when the result of a build is processed, so pushes that are already queued when the limit is reached are still built. The policy therefore caps the long run, not a burst.
+
+**What does not exist.** Artemis has no waiting period between a push and its build that merges quick successive pushes, no installation-wide limit on the number of queued builds per
+student or per participation, and no mechanism that cancels the queued build of an older commit when a newer one arrives. Without a policy, a student who pushes twenty times queues twenty builds.
+Every build runs the same amount of work, so the way to keep the queue short is a policy where the exercise allows it, plus capacity and priorities.
+
+**How the queue is ordered.** The build queue is shared by all nodes. A job with a lower priority number runs first, and jobs of the same priority run in the order in which they were submitted:
+
+| Priority | Which builds |
+| --- | --- |
+| 1 | Builds during the working period of an exam |
+| 2 | Builds of normal exercises, and of test exams and exam test runs |
+| 3 | Builds of optional exercises, and builds after the due date, which includes an exam after its working period and the practice mode |
+| 4 | Builds that an instructor triggers for a whole exercise with **Trigger All** |
+
+Courses that are marked as a test course add 5 to every priority, so their builds wait behind the builds of real courses. This includes exams in a test course, which can end up at priority 6.
+Because the number decides first, a flood of pushes to one normal exercise delays the builds of other normal exercises that are submitted after it, and builds of a lower priority such as practice mode.
+It does not delay the builds of a regular exam in a real course during its working period.
+Builds triggered in bulk are throttled so that they cannot fill the queue, see [Bulk builds](/admin/production-setup/integrated-code-lifecycle-setup#bulk-builds).
+
+**What limits the damage.**
+
+- The authentication of git operations is [rate limited per client IP](/admin/production-setup/security#rate-limiting), in the same bucket as logins,
+  so a script that clones or pushes in a tight loop is slowed down. Build agents are excluded when they are registered with an address. An agent that clones over HTTPS without a registered address has
+  a budget of its own for its clone tokens (`artemis.rate-limiting.build-agent-clone-token-requests-per-minute`), and when it uses that up, its requests can count against the shared limit. The limit is configurable with `artemis.rate-limiting.authentication-requests-per-minute` (30 by default),
+  and `artemis.rate-limiting.enabled: false` switches rate limiting off. A campus network that puts many students behind one address shares this limit:
+  if a whole lecture hall pushes at a deadline, raise it, or students see HTTP 429 errors that have nothing to do with the build queue.
+- The number of **concurrent builds per agent** and the build timeout bound how much work a build can take. A student program that never ends occupies a slot only until the timeout, 240 seconds at most by default.
+  The CPU, memory and process limits of the container stop a single build from taking down the host, see [Container Resource Restrictions](/admin/production-setup/programming-exercise-adjustments#container-resource-restrictions).
+- A build agent that fails 100 builds in a row pauses itself instead of draining the queue with failures.
+- A build that gets lost, for example because an agent restarts, is detected and queued again, see [Operating build agents](/admin/production-setup/multiple-artemis-instances#operating-build-agents).
+- Administrators can cancel single queued or running builds, or all of them, in the build queue administration, and pause build agents.
+
+**What to do about it.** Size the build agents for the peak, not for the average, using the table in
+[A starting point for sizing](#a-starting-point-for-sizing). Watch the queue during the first deadline of a term. If the queue grows faster than it drains, add agents, since they join without a restart,
+and lower the build timeout of exercises that do not need the maximum, because a short timeout turns slots over faster.
+Tell students that a result for their last push can take a while at the deadline, and that pushing again does not make it faster.
 
 ## What to scale when
 
