@@ -1,5 +1,4 @@
 import { Service, inject } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { QuizExercise, QuizStatus } from 'app/quiz/shared/entities/quiz-exercise.model';
@@ -27,7 +26,6 @@ import { QuizPointStatisticsResponse, QuizQuestionStatisticResponse, QuizStatist
 
 @Service()
 export class QuizExerciseService {
-    private http = inject(HttpClient);
     private exerciseService = inject(ExerciseService);
     private fileService = inject(FileService);
     private accountService = inject(AccountService);
@@ -75,10 +73,12 @@ export class QuizExerciseService {
         return this.quizExerciseRetrievalApi.getQuizExercise(quizExerciseId).pipe(map((exercise) => this.prepareForClient(toQuizExercise(exercise))));
     }
 
-    /** Loads management details of an exam exercise with the same conversion as course details. */
+    /**
+     * Find the management details of an exam quiz exercise, converted like the course details
+     * @param quizExerciseId the id of the exam quiz exercise that should be found
+     */
     findForExam(quizExerciseId: number): Observable<QuizExercise> {
-        // This purpose-specific endpoint is not included in the generated retrieval API yet.
-        return this.http.get<QuizExerciseDetails>(`api/quiz/quiz-exercises/${quizExerciseId}/for-exam`).pipe(map((exercise) => this.prepareForClient(toQuizExercise(exercise))));
+        return this.quizExerciseRetrievalApi.getQuizExerciseForExam(quizExerciseId).pipe(map((exercise) => this.prepareForClient(toQuizExercise(exercise))));
     }
 
     /**

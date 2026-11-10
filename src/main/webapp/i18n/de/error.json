@@ -1,5 +1,6 @@
 {
     "error": {
+        "quizQuestionPoolModelNotConfigured": "Smart Quizzes ist auf diesem Server nicht eingerichtet. Bitte wende dich an deine Administration, damit ein lokales Sprachmodell konfiguriert wird.",
         "tumLiveUploadInProgress": "Der offene Upload wird bereits an TUM.Live gesendet. Verwirf ihn, um einen neuen zu starten.",
         "tumLiveNotConnected": "Der Kurs ist nicht mit TUM.Live verbunden.",
         "registrationClosed": "Die Anmeldung ist geschlossen, da die Prüfung beendet ist.",
