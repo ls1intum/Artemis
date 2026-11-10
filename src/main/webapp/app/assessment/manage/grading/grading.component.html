@@ -254,34 +254,7 @@
                                 <td>
                                     <span [innerHTML]="gradeStep | gradeStepBounds: GradeEditMode.POINTS : last | safeHtml"></span>
                                 </td>
-                                @if (gradingScale.gradeType !== GradeType.BONUS) {
-                                    <td>
-                                        <input
-                                            [attr.aria-label]="'artemisApp.gradingSystem.gradeName' | artemisTranslate"
-                                            [formField]="gradingForm.gradeSteps[i].gradeName"
-                                            type="text"
-                                            tumAetUiInput
-                                        />
-                                    </td>
-                                }
-                                @if (gradingScale.gradeType === GradeType.BONUS) {
-                                    <td>
-                                        <input
-                                            [attr.aria-label]="'artemisApp.gradingSystem.bonusPoints' | artemisTranslate"
-                                            [formField]="gradingForm.gradeSteps[i].gradeName"
-                                            type="text"
-                                            inputmode="numeric"
-                                            placeholder="0"
-                                            tumAetUiInput
-                                        />
-                                    </td>
-                                }
-                                <td class="text-end">
-                                    <button (click)="deleteGradeStep(i)" type="button" tumAetUiButton severity="danger" size="small">
-                                        <fa-icon [icon]="faTimes" />
-                                        <span jhiTranslate="artemisApp.gradingSystem.delete"></span>
-                                    </button>
-                                </td>
+                                <ng-container [ngTemplateOutlet]="gradeNameAndDeleteCells" [ngTemplateOutletContext]="{ $implicit: i }" />
                             </tr>
                         }
                     </tbody>
@@ -369,34 +342,7 @@
                                         (keydown.enter)="onDetailedPointsInput(i, false, upperPointsInput.value)"
                                     />
                                 </td>
-                                @if (gradingScale.gradeType !== GradeType.BONUS) {
-                                    <td>
-                                        <input
-                                            [attr.aria-label]="'artemisApp.gradingSystem.gradeName' | artemisTranslate"
-                                            [formField]="gradingForm.gradeSteps[i].gradeName"
-                                            type="text"
-                                            tumAetUiInput
-                                        />
-                                    </td>
-                                }
-                                @if (gradingScale.gradeType === GradeType.BONUS) {
-                                    <td>
-                                        <input
-                                            [attr.aria-label]="'artemisApp.gradingSystem.bonusPoints' | artemisTranslate"
-                                            [formField]="gradingForm.gradeSteps[i].gradeName"
-                                            type="text"
-                                            inputmode="numeric"
-                                            placeholder="0"
-                                            tumAetUiInput
-                                        />
-                                    </td>
-                                }
-                                <td class="text-end">
-                                    <button (click)="deleteGradeStep(i)" type="button" tumAetUiButton severity="danger" size="small">
-                                        <fa-icon [icon]="faTimes" />
-                                        <span jhiTranslate="artemisApp.gradingSystem.delete"></span>
-                                    </button>
-                                </td>
+                                <ng-container [ngTemplateOutlet]="gradeNameAndDeleteCells" [ngTemplateOutletContext]="{ $implicit: i }" />
                             </tr>
                         }
                     </tbody>
@@ -406,6 +352,32 @@
         </div>
     }
 </div>
+
+<ng-template #gradeNameAndDeleteCells let-i>
+    @if (gradingScale.gradeType !== GradeType.BONUS) {
+        <td>
+            <input [attr.aria-label]="'artemisApp.gradingSystem.gradeName' | artemisTranslate" [formField]="gradingForm.gradeSteps[i].gradeName" type="text" tumAetUiInput />
+        </td>
+    }
+    @if (gradingScale.gradeType === GradeType.BONUS) {
+        <td>
+            <input
+                [attr.aria-label]="'artemisApp.gradingSystem.bonusPoints' | artemisTranslate"
+                [formField]="gradingForm.gradeSteps[i].gradeName"
+                type="text"
+                inputmode="numeric"
+                placeholder="0"
+                tumAetUiInput
+            />
+        </td>
+    }
+    <td class="text-end">
+        <button (click)="deleteGradeStep(i)" type="button" tumAetUiButton severity="danger" size="small">
+            <fa-icon [icon]="faTimes" />
+            <span jhiTranslate="artemisApp.gradingSystem.delete"></span>
+        </button>
+    </td>
+</ng-template>
 
 <ng-template #specialGradeRows>
     <tr class="grading-scale-table-row">
