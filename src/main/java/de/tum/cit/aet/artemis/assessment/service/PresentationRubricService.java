@@ -27,10 +27,10 @@ import de.tum.cit.aet.artemis.assessment.dto.PresentationRubricRatingDTO;
 import de.tum.cit.aet.artemis.assessment.dto.PresentationRubricRatingLevelDTO;
 import de.tum.cit.aet.artemis.assessment.repository.PresentationAssessmentInstanceRepository;
 import de.tum.cit.aet.artemis.assessment.repository.PresentationAssessmentRepository;
+import de.tum.cit.aet.artemis.assessment.repository.PresentationAssessmentWriteRepository.PresentationRubricChanges;
 import de.tum.cit.aet.artemis.assessment.repository.PresentationRubricCriterionRepository;
 import de.tum.cit.aet.artemis.assessment.repository.PresentationRubricLevelRepository;
 import de.tum.cit.aet.artemis.assessment.repository.PresentationRubricRatingRepository;
-import de.tum.cit.aet.artemis.assessment.repository.PresentationRubricWriteRepository.PresentationRubricChanges;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.util.RoundingUtil;
@@ -103,11 +103,11 @@ public class PresentationRubricService {
     }
 
     /**
-     * Loads the rubric of a presentation graded by rubric together with its instance counts.
+     * Loads the rubric of a presentation graded by rubric together with the number of its assessed instances.
      *
      * @param courseId     the owning course id
      * @param assessmentId the presentation assessment id
-     * @return the rubric with the number of instances and of assessed instances
+     * @return the rubric with the number of assessed instances
      */
     public PresentationRubricDTO getRubric(long courseId, long assessmentId) {
         PresentationAssessment assessment = presentationAssessmentRepository.findOneByIdAndCourseId(assessmentId, courseId)
@@ -121,9 +121,8 @@ public class PresentationRubricService {
         List<PresentationRubricCriterionDTO> criterionDtos = criteria.stream().map(criterion -> toDto(criterion, levelsByCriterionId.getOrDefault(criterion.getId(), List.of())))
                 .toList();
 
-        long instanceCount = presentationAssessmentInstanceRepository.countByPresentationAssessmentId(assessmentId);
         long assessedInstanceCount = presentationAssessmentInstanceRepository.countByPresentationAssessmentIdAndRubricScoreIsNotNull(assessmentId);
-        return new PresentationRubricDTO(criterionDtos, instanceCount, assessedInstanceCount);
+        return new PresentationRubricDTO(criterionDtos, assessedInstanceCount);
     }
 
     /**
@@ -179,7 +178,7 @@ public class PresentationRubricService {
     }
 
     /**
-     * Applies texts and weights to the stored rubric of a presentation that already has instances, whose structure must stay the same:
+     * Applies texts and weights to the stored rubric of a presentation that already has assessed instances, whose structure must stay the same:
      * the same criteria and levels by id, in the same order, with the same scales.
      *
      * @param assessmentId the presentation assessment id
@@ -276,6 +275,7 @@ public class PresentationRubricService {
     /**
      * Calculates the rubric score: each criterion contributes its weight times the share of its scale the selected level reaches.
      * Only the sum is rounded, so rounding errors of the single criteria do not add up.
+     * The grading dialog previews the same formula with rubricPreviewScore; the tests of both pin the same example.
      *
      * @param criteria              the criteria with their weights and scales
      * @param positionByCriterionId the selected level position of every criterion, starting at 0 for the lowest level
@@ -320,7 +320,7 @@ public class PresentationRubricService {
     }
 
     private static BadRequestAlertException structureLocked() {
-        return new BadRequestAlertException("Only texts and weights of the rubric can be changed once the presentation has instances", PresentationAssessment.ENTITY_NAME,
+        return new BadRequestAlertException("Only texts and weights of the rubric can be changed once the presentation has assessed instances", PresentationAssessment.ENTITY_NAME,
                 "rubricStructureLocked");
     }
 

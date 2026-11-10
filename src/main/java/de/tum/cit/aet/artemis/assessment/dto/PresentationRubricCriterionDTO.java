@@ -20,5 +20,5 @@ import de.tum.cit.aet.artemis.assessment.domain.PresentationRubricScale;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record PresentationRubricCriterionDTO(Long id, @NotBlank @Size(max = PresentationRubricCriterion.MAX_NAME_LENGTH) String name,
         @Size(max = PresentationRubricCriterion.MAX_DESCRIPTION_LENGTH) String description, @NotNull @Min(1) @Max(100) Integer weight, @NotNull PresentationRubricScale scale,
-        @NotNull @Size(min = 3, max = 5) List<@NotNull @Valid PresentationRubricLevelDTO> levels) {
+        @NotNull List<@NotNull @Valid PresentationRubricLevelDTO> levels) {
 }

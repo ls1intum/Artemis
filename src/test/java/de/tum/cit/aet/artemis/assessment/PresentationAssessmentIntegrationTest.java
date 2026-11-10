@@ -380,7 +380,7 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
         instance.setResultPoints(18.0);
         PresentationAssessmentInstance staleInstance = instance;
 
-        assertThatThrownBy(() -> presentationAssessmentInstanceRepository.updateInstanceIfVersionMatches(courseId, assessmentId, instanceUpdate.getVersion(), staleInstance, null))
+        assertThatThrownBy(() -> presentationAssessmentRepository.updateInstanceIfVersionMatches(courseId, assessmentId, instanceUpdate.getVersion(), staleInstance, null))
                 .isInstanceOf(ConflictException.class);
 
         PresentationAssessment storedAssessment = presentationAssessmentRepository.findByIdElseThrow(assessmentId);
@@ -415,7 +415,7 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
         assertThat(instanceUpdate.getVersion()).isEqualTo(maximumUpdate.getVersion());
 
         instance.setResultPoints(18.0);
-        presentationAssessmentInstanceRepository.updateInstanceIfVersionMatches(courseId, assessmentId, instanceUpdate.getVersion(), instance, null);
+        presentationAssessmentRepository.updateInstanceIfVersionMatches(courseId, assessmentId, instanceUpdate.getVersion(), instance, null);
 
         int updated = presentationAssessmentRepository.updateIfVersionMatches(assessmentId, courseId, maximumUpdate.getVersion(), maximumUpdate.getTitle(),
                 maximumUpdate.getDescription(), 10.0, null);
@@ -439,11 +439,11 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
         long versionReadByDeletion = presentationAssessmentRepository.findByIdElseThrow(assessmentId).getVersion();
         long versionReadByUpdate = presentationAssessmentRepository.findByIdElseThrow(assessmentId).getVersion();
 
-        presentationAssessmentInstanceRepository.deleteInstanceIfVersionMatches(courseId, assessmentId, versionReadByDeletion, instance);
+        presentationAssessmentRepository.deleteInstanceIfVersionMatches(courseId, assessmentId, versionReadByDeletion, instance);
         instance.setResultPoints(18.0);
         PresentationAssessmentInstance staleInstance = instance;
 
-        assertThatThrownBy(() -> presentationAssessmentInstanceRepository.updateInstanceIfVersionMatches(courseId, assessmentId, versionReadByUpdate, staleInstance, null))
+        assertThatThrownBy(() -> presentationAssessmentRepository.updateInstanceIfVersionMatches(courseId, assessmentId, versionReadByUpdate, staleInstance, null))
                 .isInstanceOf(ConflictException.class);
         assertThat(presentationAssessmentInstanceRepository.findById(instance.getId())).isEmpty();
     }
@@ -459,10 +459,10 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
         long versionReadByDeletion = presentationAssessmentRepository.findByIdElseThrow(assessmentId).getVersion();
 
         instance.setResultPoints(18.0);
-        presentationAssessmentInstanceRepository.updateInstanceIfVersionMatches(courseId, assessmentId, versionReadByUpdate, instance, null);
+        presentationAssessmentRepository.updateInstanceIfVersionMatches(courseId, assessmentId, versionReadByUpdate, instance, null);
         PresentationAssessmentInstance updatedInstance = instance;
 
-        assertThatThrownBy(() -> presentationAssessmentInstanceRepository.deleteInstanceIfVersionMatches(courseId, assessmentId, versionReadByDeletion, updatedInstance))
+        assertThatThrownBy(() -> presentationAssessmentRepository.deleteInstanceIfVersionMatches(courseId, assessmentId, versionReadByDeletion, updatedInstance))
                 .isInstanceOf(ConflictException.class);
         assertThat(presentationAssessmentInstanceRepository.findByIdElseThrow(instance.getId()).getResultPoints()).isEqualTo(18.0);
     }
@@ -507,7 +507,7 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
 
         assertThat(updated).isEqualTo(1);
 
-        assertThatThrownBy(() -> presentationAssessmentInstanceRepository.createInstancesIfVersionMatches(courseId, assessmentId, expectedVersion, instances, List.of()))
+        assertThatThrownBy(() -> presentationAssessmentRepository.createInstancesIfVersionMatches(courseId, assessmentId, expectedVersion, instances, List.of()))
                 .isInstanceOf(ConflictException.class);
 
         assertThat(presentationAssessmentInstanceRepository.count()).isEqualTo(instancesBeforeWrite);
@@ -543,8 +543,9 @@ class PresentationAssessmentIntegrationTest extends AbstractSpringIntegrationInd
         invalidInstance.setMode(PresentationAssessmentMode.IN_PERSON);
         // Deliberately missing the required student to trigger a persistence failure.
 
-        assertThatThrownBy(() -> presentationAssessmentInstanceRepository.createInstancesIfVersionMatches(courseId, assessmentId, originalVersion,
-                List.of(validInstance, invalidInstance), List.of())).isInstanceOf(DataIntegrityViolationException.class);
+        assertThatThrownBy(
+                () -> presentationAssessmentRepository.createInstancesIfVersionMatches(courseId, assessmentId, originalVersion, List.of(validInstance, invalidInstance), List.of()))
+                .isInstanceOf(DataIntegrityViolationException.class);
 
         PresentationAssessment storedAssessment = presentationAssessmentRepository.findByIdElseThrow(assessmentId);
 

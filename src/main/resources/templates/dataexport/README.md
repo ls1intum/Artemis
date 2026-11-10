@@ -57,7 +57,7 @@ If you presented in a course that uses presentation assessments:
 ### Presentation Rubric Ratings (`presentation_rubric_ratings.csv`)
 If one of your presentations was graded by rubric:
 - Each criterion with its weight and rating scale
-- The level you were rated on, as value and name
+- The level you were rated on, from 1 for the lowest level up to 3 or 5 for the highest, depending on the scale
 - The comment the instructors entered for the criterion
 
 ### AI Tutor Interactions (`iris_chat_sessions.json`)

@@ -31,14 +31,14 @@ import de.tum.cit.aet.artemis.assessment.domain.PresentationRubricRating;
 import de.tum.cit.aet.artemis.assessment.dto.PresentationAssessmentDTO;
 import de.tum.cit.aet.artemis.assessment.dto.PresentationAssessmentInstanceRequestDTO;
 import de.tum.cit.aet.artemis.assessment.dto.PresentationAssessmentInstancesBatchCreateDTO;
+import de.tum.cit.aet.artemis.assessment.dto.PresentationAssessmentRequestDTO;
 import de.tum.cit.aet.artemis.assessment.dto.PresentationAssessmentStatisticsDTO;
 import de.tum.cit.aet.artemis.assessment.dto.PresentationAssessmentStudentRowDTO;
 import de.tum.cit.aet.artemis.assessment.dto.PresentationRubricRatingDTO;
 import de.tum.cit.aet.artemis.assessment.repository.PresentationAssessmentInstanceRepository;
 import de.tum.cit.aet.artemis.assessment.repository.PresentationAssessmentRepository;
-import de.tum.cit.aet.artemis.assessment.repository.PresentationRubricCriterionRepository;
+import de.tum.cit.aet.artemis.assessment.repository.PresentationAssessmentWriteRepository.PresentationRubricChanges;
 import de.tum.cit.aet.artemis.assessment.repository.PresentationRubricRatingRepository;
-import de.tum.cit.aet.artemis.assessment.repository.PresentationRubricWriteRepository.PresentationRubricChanges;
 import de.tum.cit.aet.artemis.assessment.service.PresentationRubricService.RubricGrade;
 import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
@@ -74,14 +74,12 @@ public class PresentationAssessmentService {
 
     private final PresentationRubricService presentationRubricService;
 
-    private final PresentationRubricCriterionRepository presentationRubricCriterionRepository;
-
     private final PresentationRubricRatingRepository presentationRubricRatingRepository;
 
     public PresentationAssessmentService(PresentationAssessmentRepository presentationAssessmentRepository, UserRepository userRepository, ExerciseRepository exerciseRepository,
             PresentationAssessmentInstanceRepository presentationAssessmentInstanceRepository, CourseRepository courseRepository,
             CourseConfigurationRepository courseConfigurationRepository, PresentationRubricService presentationRubricService,
-            PresentationRubricCriterionRepository presentationRubricCriterionRepository, PresentationRubricRatingRepository presentationRubricRatingRepository) {
+            PresentationRubricRatingRepository presentationRubricRatingRepository) {
         this.presentationAssessmentRepository = presentationAssessmentRepository;
         this.userRepository = userRepository;
         this.exerciseRepository = exerciseRepository;
@@ -89,7 +87,6 @@ public class PresentationAssessmentService {
         this.courseRepository = courseRepository;
         this.courseConfigurationRepository = courseConfigurationRepository;
         this.presentationRubricService = presentationRubricService;
-        this.presentationRubricCriterionRepository = presentationRubricCriterionRepository;
         this.presentationRubricRatingRepository = presentationRubricRatingRepository;
     }
 
@@ -175,7 +172,7 @@ public class PresentationAssessmentService {
      * @param dto      the presentation assessment data
      * @return the persisted presentation assessment as a DTO
      */
-    public PresentationAssessmentDTO create(long courseId, PresentationAssessmentDTO dto) {
+    public PresentationAssessmentDTO create(long courseId, PresentationAssessmentRequestDTO dto) {
         if (dto.id() != null) {
             throw new BadRequestAlertException("A new presentation assessment cannot already have an ID", PresentationAssessment.ENTITY_NAME, "idExists");
         }
@@ -186,7 +183,7 @@ public class PresentationAssessmentService {
         ExerciseIdAndTitleDTO exercise = applyDto(presentationAssessment, dto);
         PresentationRubricChanges rubric = dto.rubricCriteria() == null ? PresentationRubricChanges.NONE
                 : presentationRubricService.buildReplacement(presentationAssessment, dto.rubricCriteria());
-        PresentationAssessment savedAssessment = presentationRubricCriterionRepository.createWithRubric(presentationAssessment, rubric);
+        PresentationAssessment savedAssessment = presentationAssessmentRepository.createWithRubric(presentationAssessment, rubric);
 
         return toDto(savedAssessment, courseId, exercise);
     }
@@ -199,7 +196,7 @@ public class PresentationAssessmentService {
      * @param dto          the updated presentation assessment data
      * @return the saved presentation assessment as a DTO
      */
-    public PresentationAssessmentDTO update(long courseId, long assessmentId, PresentationAssessmentDTO dto) {
+    public PresentationAssessmentDTO update(long courseId, long assessmentId, PresentationAssessmentRequestDTO dto) {
         if (dto.id() == null) {
             throw new BadRequestAlertException("A presentation assessment update must have an ID", PresentationAssessment.ENTITY_NAME, "idMissing");
         }
@@ -224,11 +221,11 @@ public class PresentationAssessmentService {
         presentationRubricService.validateRubricPresence(presentationAssessment.getGradingMethod(), dto.rubricCriteria(), false);
         PresentationRubricChanges rubric = PresentationRubricChanges.NONE;
         if (dto.rubricCriteria() != null) {
-            boolean locked = presentationAssessmentInstanceRepository.countByPresentationAssessmentId(assessmentId) > 0;
+            boolean locked = presentationAssessmentInstanceRepository.countByPresentationAssessmentIdAndRubricScoreIsNotNull(assessmentId) > 0;
             rubric = locked ? presentationRubricService.buildLockedUpdate(assessmentId, dto.rubricCriteria())
                     : presentationRubricService.buildReplacement(presentationAssessment, dto.rubricCriteria());
         }
-        presentationRubricCriterionRepository.updateWithRubricIfVersionMatches(courseId, assessmentId, expectedVersion, presentationAssessment, rubric);
+        presentationAssessmentRepository.updateWithRubricIfVersionMatches(courseId, assessmentId, expectedVersion, presentationAssessment, rubric);
 
         return toDto(presentationAssessment, courseId, exercise);
     }
@@ -272,7 +269,7 @@ public class PresentationAssessmentService {
         applyInstanceDto(courseId, assessment, instance, dto, grade);
 
         List<PresentationRubricRating> ratings = grade == null ? null : grade.ratingsFor(instance);
-        presentationAssessmentInstanceRepository.updateInstanceIfVersionMatches(courseId, assessmentId, expectedVersion, instance, ratings);
+        presentationAssessmentRepository.updateInstanceIfVersionMatches(courseId, assessmentId, expectedVersion, instance, ratings);
 
         return findInstanceElseThrow(courseId, assessmentId, instanceId);
     }
@@ -299,7 +296,7 @@ public class PresentationAssessmentService {
         List<PresentationAssessmentInstance> instances = students.stream().map(student -> createIndividualInstance(assessment, dto.forStudent(student.getLogin()), student, grade))
                 .toList();
         List<PresentationRubricRating> ratings = grade == null ? List.of() : instances.stream().flatMap(instance -> grade.ratingsFor(instance).stream()).toList();
-        return presentationAssessmentInstanceRepository.createInstancesIfVersionMatches(courseId, assessmentId, expectedVersion, instances, ratings);
+        return presentationAssessmentRepository.createInstancesIfVersionMatches(courseId, assessmentId, expectedVersion, instances, ratings);
     }
 
     /**
@@ -337,7 +334,7 @@ public class PresentationAssessmentService {
         PresentationAssessment assessment = findByIdAndCourseIdElseThrow(courseId, assessmentId);
         long expectedVersion = assessment.getVersion();
         PresentationAssessmentInstance instance = findInstanceElseThrow(courseId, assessmentId, instanceId);
-        presentationAssessmentInstanceRepository.deleteInstanceIfVersionMatches(courseId, assessmentId, expectedVersion, instance);
+        presentationAssessmentRepository.deleteInstanceIfVersionMatches(courseId, assessmentId, expectedVersion, instance);
     }
 
     private PresentationAssessmentInstance findInstanceElseThrow(long courseId, long assessmentId, long instanceId) {
@@ -437,7 +434,7 @@ public class PresentationAssessmentService {
         return instance;
     }
 
-    private ExerciseIdAndTitleDTO applyDto(PresentationAssessment presentationAssessment, PresentationAssessmentDTO dto) {
+    private ExerciseIdAndTitleDTO applyDto(PresentationAssessment presentationAssessment, PresentationAssessmentRequestDTO dto) {
         boolean gradedByScore = presentationAssessment.getGradingMethod() == PresentationGradingMethod.SCORE;
         if (gradedByScore && dto.maxPoints() == null) {
             throw new BadRequestAlertException("A presentation graded by score needs maximum points", PresentationAssessment.ENTITY_NAME, "maxPointsRequired");

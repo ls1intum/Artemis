@@ -33,8 +33,7 @@ public class DataExportPresentationAssessmentService {
     private static final String[] HEADER = { "course_title", "presentation_title", "presentation_date", "mode", "language", "location", "meeting_link", "grading_method",
             "max_points", "result_points", "passed", "rubric_score", "remark" };
 
-    private static final String[] RATING_HEADER = { "course_title", "presentation_title", "presentation_date", "criterion_name", "weight", "scale", "level_value", "level_key",
-            "comment" };
+    private static final String[] RATING_HEADER = { "course_title", "presentation_title", "presentation_date", "criterion_name", "weight", "scale", "level_value", "comment" };
 
     private final PresentationAssessmentInstanceRepository presentationAssessmentInstanceRepository;
 
@@ -81,7 +80,7 @@ public class DataExportPresentationAssessmentService {
             for (var rating : ratings) {
                 // Levels are stored from position 0, but shown and graded from value 1
                 printer.printRecord(rating.courseTitle(), rating.presentationTitle(), rating.presentationDate(), rating.criterionName(), rating.weight(), rating.scale(),
-                        rating.levelPosition() + 1, rating.scale().getLevelKey(rating.levelPosition()), rating.comment());
+                        rating.levelPosition() + 1, rating.comment());
             }
         }
     }

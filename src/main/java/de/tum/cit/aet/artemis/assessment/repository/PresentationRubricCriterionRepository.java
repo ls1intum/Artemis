@@ -21,7 +21,7 @@ import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 @Profile(PROFILE_CORE)
 @Lazy
 @Repository
-public interface PresentationRubricCriterionRepository extends ArtemisJpaRepository<PresentationRubricCriterion, Long>, PresentationRubricWriteRepository {
+public interface PresentationRubricCriterionRepository extends ArtemisJpaRepository<PresentationRubricCriterion, Long> {
 
     List<PresentationRubricCriterion> findAllByPresentationAssessmentIdOrderByPosition(long presentationAssessmentId);
 

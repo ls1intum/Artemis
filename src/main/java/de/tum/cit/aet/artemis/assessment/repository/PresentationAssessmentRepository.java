@@ -24,7 +24,7 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 @Profile(PROFILE_CORE)
 @Lazy
 @Repository
-public interface PresentationAssessmentRepository extends ArtemisJpaRepository<PresentationAssessment, Long> {
+public interface PresentationAssessmentRepository extends ArtemisJpaRepository<PresentationAssessment, Long>, PresentationAssessmentWriteRepository {
 
     /**
      * Returns presentation definitions ordered by title and id, without fetching instances.

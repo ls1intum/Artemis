@@ -32,8 +32,8 @@ import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 @Profile(PROFILE_CORE)
 @Lazy
 @Repository
-public interface PresentationAssessmentInstanceRepository extends ArtemisJpaRepository<PresentationAssessmentInstance, Long>,
-        JpaSpecificationExecutor<PresentationAssessmentInstance>, PresentationAssessmentInstanceWriteRepository {
+public interface PresentationAssessmentInstanceRepository
+        extends ArtemisJpaRepository<PresentationAssessmentInstance, Long>, JpaSpecificationExecutor<PresentationAssessmentInstance> {
 
     /**
      * Finds an instance within the given presentation assessment and course.
@@ -117,8 +117,6 @@ public interface PresentationAssessmentInstanceRepository extends ArtemisJpaRepo
     PresentationAssessmentStatisticsDTO findStatisticsByCourseId(@Param("courseId") long courseId);
 
     long countByPresentationAssessmentCourseId(long courseId);
-
-    long countByPresentationAssessmentId(long presentationAssessmentId);
 
     long countByPresentationAssessmentIdAndRubricScoreIsNotNull(long presentationAssessmentId);
 

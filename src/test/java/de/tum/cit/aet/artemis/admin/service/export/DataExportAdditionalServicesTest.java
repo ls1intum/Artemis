@@ -631,7 +631,6 @@ class DataExportAdditionalServicesTest extends AbstractSpringIntegrationIndepend
             assertThat(records).extracting(record -> record.get("scale")).containsExactly("FIVE_POINT", "THREE_POINT", "FIVE_POINT");
             // Levels are stored from position 0 but exported from value 1, as they are shown
             assertThat(records).extracting(record -> record.get("level_value")).containsExactly("4", "3", "2");
-            assertThat(records).extracting(record -> record.get("level_key")).containsExactly("Good", "Excellent", "Needs Improvement");
             assertThat(records).extracting(record -> record.get("comment")).containsExactly("Clear structure", "", "Too much text");
         }
 

@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.course.service;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.ZonedDateTime;
+import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -18,8 +19,15 @@ import de.tum.cit.aet.artemis.assessment.domain.PresentationAssessment;
 import de.tum.cit.aet.artemis.assessment.domain.PresentationAssessmentInstance;
 import de.tum.cit.aet.artemis.assessment.domain.PresentationAssessmentMode;
 import de.tum.cit.aet.artemis.assessment.domain.PresentationGradingMethod;
+import de.tum.cit.aet.artemis.assessment.domain.PresentationRubricCriterion;
+import de.tum.cit.aet.artemis.assessment.domain.PresentationRubricLevel;
+import de.tum.cit.aet.artemis.assessment.domain.PresentationRubricRating;
+import de.tum.cit.aet.artemis.assessment.domain.PresentationRubricScale;
 import de.tum.cit.aet.artemis.assessment.repository.PresentationAssessmentInstanceRepository;
 import de.tum.cit.aet.artemis.assessment.repository.PresentationAssessmentRepository;
+import de.tum.cit.aet.artemis.assessment.repository.PresentationRubricCriterionRepository;
+import de.tum.cit.aet.artemis.assessment.repository.PresentationRubricLevelRepository;
+import de.tum.cit.aet.artemis.assessment.repository.PresentationRubricRatingRepository;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.test_repository.ConversationParticipantTestRepository;
 import de.tum.cit.aet.artemis.communication.util.ConversationUtilService;
@@ -97,6 +105,15 @@ class CourseResetServiceTest extends AbstractSpringIntegrationIndependentTest {
 
     @Autowired
     private PresentationAssessmentInstanceRepository presentationAssessmentInstanceRepository;
+
+    @Autowired
+    private PresentationRubricCriterionRepository presentationRubricCriterionRepository;
+
+    @Autowired
+    private PresentationRubricLevelRepository presentationRubricLevelRepository;
+
+    @Autowired
+    private PresentationRubricRatingRepository presentationRubricRatingRepository;
 
     private Course course;
 
@@ -238,6 +255,53 @@ class CourseResetServiceTest extends AbstractSpringIntegrationIndependentTest {
         assertThat(presentationAssessmentInstanceRepository.countByPresentationAssessmentCourseId(course.getId())).isZero();
         assertThat(presentationAssessmentInstanceRepository.countByPresentationAssessmentCourseId(otherCourse.getId())).isEqualTo(1);
         assertThat(presentationAssessmentRepository.findById(otherPresentationAssessment.getId())).isPresent();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testResetDeletesRubricRatingsButKeepsTheRubric() {
+        PresentationAssessment presentationAssessment = new PresentationAssessment();
+        presentationAssessment.setCourse(course);
+        presentationAssessment.setTitle("Rubric presentation");
+        presentationAssessment.setGradingMethod(PresentationGradingMethod.RUBRIC);
+        presentationAssessment = presentationAssessmentRepository.save(presentationAssessment);
+
+        PresentationRubricCriterion criterion = new PresentationRubricCriterion();
+        criterion.setPresentationAssessment(presentationAssessment);
+        criterion.setName("Content");
+        criterion.setWeight(100);
+        criterion.setScale(PresentationRubricScale.THREE_POINT);
+        criterion = presentationRubricCriterionRepository.save(criterion);
+        PresentationRubricLevel highestLevel = null;
+        for (int position = 0; position < PresentationRubricScale.THREE_POINT.getLevelCount(); position++) {
+            PresentationRubricLevel level = new PresentationRubricLevel();
+            level.setCriterion(criterion);
+            level.setPosition(position);
+            highestLevel = presentationRubricLevelRepository.save(level);
+        }
+
+        PresentationAssessmentInstance instance = new PresentationAssessmentInstance();
+        instance.setPresentationAssessment(presentationAssessment);
+        instance.setPresentationDate(ZonedDateTime.now().plusDays(1));
+        instance.setLanguage("en");
+        instance.setMode(PresentationAssessmentMode.IN_PERSON);
+        instance.setRubricScore(100.0);
+        instance.setStudent(student);
+        instance = presentationAssessmentInstanceRepository.save(instance);
+        PresentationRubricRating rating = new PresentationRubricRating();
+        rating.setInstance(instance);
+        rating.setCriterion(criterion);
+        rating.setLevel(highestLevel);
+        presentationRubricRatingRepository.save(rating);
+
+        courseResetService.resetStudentData(course.getId());
+
+        assertThat(presentationRubricRatingRepository.findAllByInstanceIdOrderByCriterionPosition(instance.getId())).isEmpty();
+        assertThat(presentationRubricCriterionRepository.findAllByPresentationAssessmentIdOrderByPosition(presentationAssessment.getId()))
+                .extracting(PresentationRubricCriterion::getName).containsExactly("Content");
+        assertThat(presentationRubricLevelRepository.findAllByCriterionIdInOrderByPosition(List.of(criterion.getId()))).hasSize(3);
+        // Without assessed instances, the structure of the rubric is no longer fixed
+        assertThat(presentationAssessmentInstanceRepository.countByPresentationAssessmentIdAndRubricScoreIsNotNull(presentationAssessment.getId())).isZero();
     }
 
     private PresentationAssessment createPresentationAssessmentWithInstance(Course course, String title) {

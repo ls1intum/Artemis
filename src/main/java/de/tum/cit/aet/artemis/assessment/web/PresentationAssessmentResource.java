@@ -31,6 +31,7 @@ import de.tum.cit.aet.artemis.assessment.dto.PresentationAssessmentDTO;
 import de.tum.cit.aet.artemis.assessment.dto.PresentationAssessmentInstanceDTO;
 import de.tum.cit.aet.artemis.assessment.dto.PresentationAssessmentInstanceRequestDTO;
 import de.tum.cit.aet.artemis.assessment.dto.PresentationAssessmentInstancesBatchCreateDTO;
+import de.tum.cit.aet.artemis.assessment.dto.PresentationAssessmentRequestDTO;
 import de.tum.cit.aet.artemis.assessment.dto.PresentationAssessmentStatisticsDTO;
 import de.tum.cit.aet.artemis.assessment.dto.PresentationAssessmentStudentRowDTO;
 import de.tum.cit.aet.artemis.assessment.dto.PresentationRubricDTO;
@@ -152,7 +153,7 @@ public class PresentationAssessmentResource {
      */
     @PostMapping("courses/{courseId}/presentation-assessments")
     @EnforceAtLeastEditorInCourse
-    public ResponseEntity<PresentationAssessmentDTO> createPresentationAssessment(@PathVariable long courseId, @Valid @RequestBody PresentationAssessmentDTO dto)
+    public ResponseEntity<PresentationAssessmentDTO> createPresentationAssessment(@PathVariable long courseId, @Valid @RequestBody PresentationAssessmentRequestDTO dto)
             throws URISyntaxException {
         log.debug("REST request to create presentation assessment for course {}: {}", courseId, dto);
         validatePresentationAssessmentCourseId(courseId, dto);
@@ -172,7 +173,7 @@ public class PresentationAssessmentResource {
     @PutMapping("courses/{courseId}/presentation-assessments/{assessmentId}")
     @EnforceAtLeastEditorInCourse
     public ResponseEntity<PresentationAssessmentDTO> updatePresentationAssessment(@PathVariable long courseId, @PathVariable long assessmentId,
-            @Valid @RequestBody PresentationAssessmentDTO dto) {
+            @Valid @RequestBody PresentationAssessmentRequestDTO dto) {
         log.debug("REST request to update presentation assessment {} for course {}: {}", assessmentId, courseId, dto);
         validatePresentationAssessmentCourseId(courseId, dto);
         presentationAssessmentService.checkPresentationAssessmentsEnabled(courseId);
@@ -261,7 +262,7 @@ public class PresentationAssessmentResource {
         return ResponseEntity.noContent().build();
     }
 
-    private void validatePresentationAssessmentCourseId(long courseId, PresentationAssessmentDTO dto) {
+    private void validatePresentationAssessmentCourseId(long courseId, PresentationAssessmentRequestDTO dto) {
         if (dto.courseId() != null && dto.courseId() != courseId) {
             throw new BadRequestAlertException("The path course id and body course id must match", PresentationAssessment.ENTITY_NAME, "courseIdMismatch");
         }

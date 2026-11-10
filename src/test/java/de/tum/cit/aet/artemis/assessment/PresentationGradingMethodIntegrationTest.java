@@ -8,7 +8,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.IntStream;
 
 import org.junit.jupiter.api.AfterEach;
@@ -16,6 +18,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,6 +38,7 @@ import de.tum.cit.aet.artemis.assessment.dto.PresentationAssessmentDTO;
 import de.tum.cit.aet.artemis.assessment.dto.PresentationAssessmentInstanceDTO;
 import de.tum.cit.aet.artemis.assessment.dto.PresentationAssessmentInstanceRequestDTO;
 import de.tum.cit.aet.artemis.assessment.dto.PresentationAssessmentInstancesBatchCreateDTO;
+import de.tum.cit.aet.artemis.assessment.dto.PresentationAssessmentRequestDTO;
 import de.tum.cit.aet.artemis.assessment.dto.PresentationAssessmentStatisticsDTO;
 import de.tum.cit.aet.artemis.assessment.dto.PresentationAssessmentStudentRowDTO;
 import de.tum.cit.aet.artemis.assessment.dto.PresentationRubricCriterionDTO;
@@ -43,10 +47,10 @@ import de.tum.cit.aet.artemis.assessment.dto.PresentationRubricLevelDTO;
 import de.tum.cit.aet.artemis.assessment.dto.PresentationRubricRatingDTO;
 import de.tum.cit.aet.artemis.assessment.repository.PresentationAssessmentInstanceRepository;
 import de.tum.cit.aet.artemis.assessment.repository.PresentationAssessmentRepository;
+import de.tum.cit.aet.artemis.assessment.repository.PresentationAssessmentWriteRepository.PresentationRubricChanges;
 import de.tum.cit.aet.artemis.assessment.repository.PresentationRubricCriterionRepository;
 import de.tum.cit.aet.artemis.assessment.repository.PresentationRubricLevelRepository;
 import de.tum.cit.aet.artemis.assessment.repository.PresentationRubricRatingRepository;
-import de.tum.cit.aet.artemis.assessment.repository.PresentationRubricWriteRepository.PresentationRubricChanges;
 import de.tum.cit.aet.artemis.assessment.service.PresentationAssessmentService;
 import de.tum.cit.aet.artemis.assessment.service.PresentationRubricService;
 import de.tum.cit.aet.artemis.assessment.service.PresentationRubricService.RubricGrade;
@@ -152,7 +156,6 @@ class PresentationGradingMethodIntegrationTest extends AbstractSpringIntegration
 
             PresentationRubricDTO rubric = getRubric(created.id());
 
-            assertThat(rubric.instanceCount()).isZero();
             assertThat(rubric.assessedInstanceCount()).isZero();
             assertThat(rubric.criteria()).extracting(PresentationRubricCriterionDTO::name).containsExactly("Content", "Delivery", "Slides");
             assertThat(rubric.criteria()).extracting(PresentationRubricCriterionDTO::weight).containsExactly(50, 30, 20);
@@ -225,7 +228,7 @@ class PresentationGradingMethodIntegrationTest extends AbstractSpringIntegration
         @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void changingTheGradingMethod_shouldBeRejected() throws Exception {
             PresentationAssessmentDTO created = createPresentation(PresentationGradingMethod.SCORE, 20.0, null);
-            var update = new PresentationAssessmentDTO(created.id(), created.title(), created.description(), PresentationGradingMethod.PASS_FAIL, null, null, null, null);
+            var update = new PresentationAssessmentRequestDTO(created.id(), created.title(), created.description(), PresentationGradingMethod.PASS_FAIL, null, null, null, null);
 
             expectError(MockMvcRequestBuilders.put(assessmentUrl(course, created.id())), update, "gradingMethodImmutable");
         }
@@ -246,10 +249,22 @@ class PresentationGradingMethodIntegrationTest extends AbstractSpringIntegration
 
         @Test
         @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+        void withUnassessedInstances_shouldReplaceTheWholeRubric() throws Exception {
+            PresentationAssessmentDTO created = createPresentation(PresentationGradingMethod.RUBRIC, null, standardRubric());
+            createInstances(created.id(), List.of(student(1)), null, null, null);
+
+            updatePresentation(rubricUpdate(created, List.of(criterion("Structure", 100, PresentationRubricScale.THREE_POINT))), HttpStatus.OK);
+
+            assertThat(getRubric(created.id()).criteria()).extracting(PresentationRubricCriterionDTO::name).containsExactly("Structure");
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void withoutCriteriaInTheRequest_shouldKeepTheRubric() throws Exception {
             PresentationAssessmentDTO created = createPresentation(PresentationGradingMethod.RUBRIC, null, standardRubric());
             PresentationRubricDTO before = getRubric(created.id());
-            var update = new PresentationAssessmentDTO(created.id(), "Renamed presentation", created.description(), PresentationGradingMethod.RUBRIC, null, null, null, null);
+            var update = new PresentationAssessmentRequestDTO(created.id(), "Renamed presentation", created.description(), PresentationGradingMethod.RUBRIC, null, null, null,
+                    null);
 
             updatePresentation(update, HttpStatus.OK);
 
@@ -259,9 +274,8 @@ class PresentationGradingMethodIntegrationTest extends AbstractSpringIntegration
 
         @Test
         @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
-        void withInstances_shouldStillChangeTexts() throws Exception {
-            PresentationAssessmentDTO created = createPresentation(PresentationGradingMethod.RUBRIC, null, standardRubric());
-            createInstances(created.id(), List.of(student(1)), null, null, null);
+        void withAssessedInstances_shouldStillChangeTexts() throws Exception {
+            PresentationAssessmentDTO created = createLockedRubricPresentation();
             PresentationRubricDTO rubric = getRubric(created.id());
             List<PresentationRubricCriterionDTO> renamed = rubric.criteria().stream()
                     .map(criterion -> new PresentationRubricCriterionDTO(criterion.id(), criterion.name() + " (new)", "New description", criterion.weight(), criterion.scale(),
@@ -278,62 +292,15 @@ class PresentationGradingMethodIntegrationTest extends AbstractSpringIntegration
                     .containsOnly("New level text");
         }
 
-        @Test
+        @ParameterizedTest
+        @EnumSource(StructureChange.class)
         @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
-        void withInstances_addingACriterion_shouldBeRejected() throws Exception {
-            PresentationAssessmentDTO created = createLockedRubricPresentation();
-            List<PresentationRubricCriterionDTO> criteria = new ArrayList<>(withWeights(getRubric(created.id()), 40, 30, 20));
-            criteria.add(criterion("Questions", 10, PresentationRubricScale.THREE_POINT));
-
-            expectError(MockMvcRequestBuilders.put(assessmentUrl(course, created.id())), rubricUpdate(created, criteria), "rubricStructureLocked");
-        }
-
-        @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
-        void withInstances_removingACriterion_shouldBeRejected() throws Exception {
-            PresentationAssessmentDTO created = createLockedRubricPresentation();
-            List<PresentationRubricCriterionDTO> criteria = withWeights(getRubric(created.id()), 70, 30, 0).subList(0, 2);
-
-            expectError(MockMvcRequestBuilders.put(assessmentUrl(course, created.id())), rubricUpdate(created, criteria), "rubricStructureLocked");
-        }
-
-        @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
-        void withInstances_changingAScale_shouldBeRejected() throws Exception {
+        void withAssessedInstances_changingTheStructure_shouldBeRejected(StructureChange change) throws Exception {
             PresentationAssessmentDTO created = createLockedRubricPresentation();
             PresentationRubricDTO rubric = getRubric(created.id());
-            PresentationRubricCriterionDTO delivery = rubric.criteria().get(1);
-            List<PresentationRubricCriterionDTO> criteria = new ArrayList<>(rubric.criteria());
-            // Five new levels match the new scale, so only the fixed structure rejects the change
-            criteria.set(1, new PresentationRubricCriterionDTO(delivery.id(), delivery.name(), delivery.description(), delivery.weight(), PresentationRubricScale.FIVE_POINT,
-                    criterion(delivery.name(), delivery.weight(), PresentationRubricScale.FIVE_POINT).levels()));
 
-            expectError(MockMvcRequestBuilders.put(assessmentUrl(course, created.id())), rubricUpdate(created, criteria), "rubricStructureLocked");
+            expectError(MockMvcRequestBuilders.put(assessmentUrl(course, created.id())), rubricUpdate(created, changeStructure(rubric, change)), "rubricStructureLocked");
             assertThat(getRubric(created.id()).criteria()).isEqualTo(rubric.criteria());
-        }
-
-        @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
-        void withInstances_reorderingCriteria_shouldBeRejected() throws Exception {
-            PresentationAssessmentDTO created = createLockedRubricPresentation();
-            List<PresentationRubricCriterionDTO> criteria = new ArrayList<>(getRubric(created.id()).criteria());
-            criteria.add(criteria.removeFirst());
-
-            expectError(MockMvcRequestBuilders.put(assessmentUrl(course, created.id())), rubricUpdate(created, criteria), "rubricStructureLocked");
-        }
-
-        @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
-        void withInstances_levelOfAnotherCriterion_shouldBeRejected() throws Exception {
-            PresentationAssessmentDTO created = createLockedRubricPresentation();
-            PresentationRubricDTO rubric = getRubric(created.id());
-            PresentationRubricCriterionDTO content = rubric.criteria().getFirst();
-            List<PresentationRubricLevelDTO> levels = new ArrayList<>(content.levels());
-            levels.set(0, rubric.criteria().get(2).levels().getFirst());
-            List<PresentationRubricCriterionDTO> criteria = new ArrayList<>(rubric.criteria());
-            criteria.set(0, new PresentationRubricCriterionDTO(content.id(), content.name(), content.description(), content.weight(), content.scale(), levels));
-
-            expectError(MockMvcRequestBuilders.put(assessmentUrl(course, created.id())), rubricUpdate(created, criteria), "rubricStructureLocked");
         }
 
         @Test
@@ -364,24 +331,12 @@ class PresentationGradingMethodIntegrationTest extends AbstractSpringIntegration
             assertThat(queriesForSixInstances).isEqualTo(queriesForTwoInstances);
         }
 
-        @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
-        void changingWeights_withoutAssessedInstances_shouldLeaveTheInstancesUnassessed() throws Exception {
-            PresentationAssessmentDTO created = createPresentation(PresentationGradingMethod.RUBRIC, null, standardRubric());
-            long unassessed = createInstances(created.id(), List.of(student(1)), null, null, null).getFirst().id();
-
-            updatePresentation(rubricUpdate(created, withWeights(getRubric(created.id()), 40, 40, 20)), HttpStatus.OK);
-
-            assertThat(getRubric(created.id()).criteria()).extracting(PresentationRubricCriterionDTO::weight).containsExactly(40, 40, 20);
-            assertThat(rubricScore(unassessed)).isNull();
-        }
-
         private long countQueriesOfWeightChange(int assessedInstanceCount) throws Exception {
             PresentationAssessmentDTO created = createPresentation(PresentationGradingMethod.RUBRIC, null, standardRubric());
             PresentationRubricDTO rubric = getRubric(created.id());
             List<String> logins = IntStream.rangeClosed(1, assessedInstanceCount).mapToObj(PresentationGradingMethodIntegrationTest::student).toList();
             List<PresentationAssessmentInstanceDTO> instances = createInstances(created.id(), logins, null, null, ratings(rubric, 3, 2, 1));
-            PresentationAssessmentDTO update = rubricUpdate(created, withWeights(rubric, 40, 40, 20));
+            PresentationAssessmentRequestDTO update = rubricUpdate(created, withWeights(rubric, 40, 40, 20));
 
             queryInterceptor.startQueryCount();
             updatePresentation(update, HttpStatus.OK);
@@ -397,7 +352,7 @@ class PresentationGradingMethodIntegrationTest extends AbstractSpringIntegration
 
         @Test
         @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
-        void asTutor_shouldCountInstancesAndAssessedInstances() throws Exception {
+        void asTutor_shouldCountTheAssessedInstances() throws Exception {
             long presentationId = createRubricPresentationAsInstructor();
             PresentationRubricDTO rubric = getRubric(presentationId);
             createInstances(presentationId, List.of(student(1)), null, null, null);
@@ -405,7 +360,6 @@ class PresentationGradingMethodIntegrationTest extends AbstractSpringIntegration
 
             PresentationRubricDTO counted = getRubric(presentationId);
 
-            assertThat(counted.instanceCount()).isEqualTo(2);
             assertThat(counted.assessedInstanceCount()).isEqualTo(1);
         }
 
@@ -447,6 +401,36 @@ class PresentationGradingMethodIntegrationTest extends AbstractSpringIntegration
     }
 
     @Nested
+    class GradeAnyMethod {
+
+        @ParameterizedTest
+        @EnumSource(PresentationGradingMethod.class)
+        @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+        void removingTheResult_shouldBeRejected(PresentationGradingMethod gradingMethod) throws Exception {
+            long presentationId = createPresentationAsInstructor(gradingMethod);
+            PresentationAssessmentInstanceDTO instance = createInstances(presentationId, List.of(student(1)), gradingMethod == PresentationGradingMethod.SCORE ? 12.0 : null,
+                    gradingMethod == PresentationGradingMethod.PASS_FAIL ? true : null, gradingMethod == PresentationGradingMethod.RUBRIC ? rubricRatings(presentationId) : null)
+                    .getFirst();
+
+            expectError(MockMvcRequestBuilders.put(instanceUrl(presentationId, instance.id())), instanceUpdate(instance, student(1), null, null, null), "resultCannotBeRemoved");
+        }
+
+        @ParameterizedTest
+        @CsvSource({ "PASS_FAIL, SCORE", "PASS_FAIL, RUBRIC", "SCORE, PASS_FAIL", "SCORE, RUBRIC", "RUBRIC, PASS_FAIL", "RUBRIC, SCORE" })
+        @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+        void resultOfAnotherMethod_shouldBeRejected(PresentationGradingMethod gradingMethod, PresentationGradingMethod otherMethod) throws Exception {
+            long presentationId = createPresentationAsInstructor(gradingMethod);
+            Set<PresentationGradingMethod> methods = EnumSet.of(gradingMethod, otherMethod);
+            // A presentation without a rubric gets ratings that cannot be resolved, since the grading method is checked first
+            List<PresentationRubricRatingDTO> ratings = gradingMethod == PresentationGradingMethod.RUBRIC ? rubricRatings(presentationId) : unresolvedRatings();
+            var dto = batch(List.of(student(1)), methods.contains(PresentationGradingMethod.SCORE) ? 5.0 : null,
+                    methods.contains(PresentationGradingMethod.PASS_FAIL) ? true : null, methods.contains(PresentationGradingMethod.RUBRIC) ? ratings : null);
+
+            expectError(MockMvcRequestBuilders.post(instancesUrl(presentationId)), dto, "resultDoesNotMatchGradingMethod");
+        }
+    }
+
+    @Nested
     class GradePassFail {
 
         @Test
@@ -482,48 +466,6 @@ class PresentationGradingMethodIntegrationTest extends AbstractSpringIntegration
 
             assertThat(presentationAssessmentInstanceRepository.findByIdElseThrow(instance.id()).getPassed()).isFalse();
         }
-
-        @Test
-        @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
-        void removingTheResult_shouldBeRejected() throws Exception {
-            long presentationId = createPresentationAsInstructor(PresentationGradingMethod.PASS_FAIL, null);
-            PresentationAssessmentInstanceDTO instance = createInstances(presentationId, List.of(student(1)), null, true, null).getFirst();
-
-            expectError(MockMvcRequestBuilders.put(instanceUrl(presentationId, instance.id())), instanceUpdate(instance, student(1), null, null, null), "resultCannotBeRemoved");
-        }
-
-        @ParameterizedTest
-        @ValueSource(strings = { "points", "ratings" })
-        @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
-        void resultOfAnotherMethod_shouldBeRejected(String otherResult) throws Exception {
-            long presentationId = createPresentationAsInstructor(PresentationGradingMethod.PASS_FAIL, null);
-            var dto = batch(List.of(student(1)), otherResult.equals("points") ? 5.0 : null, true, otherResult.equals("ratings") ? unresolvedRatings() : null);
-
-            expectError(MockMvcRequestBuilders.post(instancesUrl(presentationId)), dto, "resultDoesNotMatchGradingMethod");
-        }
-    }
-
-    @Nested
-    class GradeScore {
-
-        @ParameterizedTest
-        @ValueSource(strings = { "passed", "ratings" })
-        @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
-        void resultOfAnotherMethod_shouldBeRejected(String otherResult) throws Exception {
-            long presentationId = createPresentationAsInstructor(PresentationGradingMethod.SCORE, 20.0);
-            var dto = batch(List.of(student(1)), 5.0, otherResult.equals("passed") ? true : null, otherResult.equals("ratings") ? unresolvedRatings() : null);
-
-            expectError(MockMvcRequestBuilders.post(instancesUrl(presentationId)), dto, "resultDoesNotMatchGradingMethod");
-        }
-
-        @Test
-        @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
-        void removingThePoints_shouldBeRejected() throws Exception {
-            long presentationId = createPresentationAsInstructor(PresentationGradingMethod.SCORE, 20.0);
-            PresentationAssessmentInstanceDTO instance = createInstances(presentationId, List.of(student(1)), 12.0, null, null).getFirst();
-
-            expectError(MockMvcRequestBuilders.put(instanceUrl(presentationId, instance.id())), instanceUpdate(instance, student(1), null, null, null), "resultCannotBeRemoved");
-        }
     }
 
     @Nested
@@ -540,6 +482,7 @@ class PresentationGradingMethodIntegrationTest extends AbstractSpringIntegration
 
             // score = Σ weight · position / (level count − 1), with position 0 for the lowest level
             // = 50 % · 3/4 + 30 % · 2/2 + 20 % · 1/4 = 72.5 %
+            // The same example pins the preview of the grading dialog in presentation-rubric-rating-form.spec.ts
             assertThat(instance.rubricScore()).isEqualTo(72.5);
             assertThat(getRatings(presentationId, instance.id())).containsExactlyElementsOf(ratings);
         }
@@ -570,15 +513,15 @@ class PresentationGradingMethodIntegrationTest extends AbstractSpringIntegration
         }
 
         @ParameterizedTest
-        @ValueSource(strings = { "missing", "duplicate", "foreign" })
+        @EnumSource(IncompleteRatings.class)
         @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
-        void incompleteRatings_shouldBeRejected(String problem) throws Exception {
+        void incompleteRatings_shouldBeRejected(IncompleteRatings problem) throws Exception {
             long presentationId = createRubricPresentationAsInstructor();
             List<PresentationRubricRatingDTO> ratings = new ArrayList<>(ratings(getRubric(presentationId), 3, 2, 1));
             switch (problem) {
-                case "missing" -> ratings.removeLast();
-                case "duplicate" -> ratings.set(2, ratings.getFirst());
-                default -> ratings.set(2, ratings(getRubric(createRubricPresentationAsInstructor()), 0, 0, 0).getLast());
+                case MISSING -> ratings.removeLast();
+                case DUPLICATE -> ratings.set(2, ratings.getFirst());
+                case OF_ANOTHER_RUBRIC -> ratings.set(2, ratings(getRubric(createRubricPresentationAsInstructor()), 0, 0, 0).getLast());
             }
 
             expectError(MockMvcRequestBuilders.post(instancesUrl(presentationId)), batch(List.of(student(1)), null, null, ratings), "rubricRatingsIncomplete");
@@ -611,26 +554,6 @@ class PresentationGradingMethodIntegrationTest extends AbstractSpringIntegration
 
         @Test
         @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
-        void removingTheRatings_shouldBeRejected() throws Exception {
-            long presentationId = createRubricPresentationAsInstructor();
-            PresentationAssessmentInstanceDTO instance = createInstances(presentationId, List.of(student(1)), null, null, ratings(getRubric(presentationId), 3, 2, 1)).getFirst();
-
-            expectError(MockMvcRequestBuilders.put(instanceUrl(presentationId, instance.id())), instanceUpdate(instance, student(1), null, null, null), "resultCannotBeRemoved");
-        }
-
-        @ParameterizedTest
-        @ValueSource(strings = { "points", "passed" })
-        @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
-        void resultOfAnotherMethod_shouldBeRejected(String otherResult) throws Exception {
-            long presentationId = createRubricPresentationAsInstructor();
-            var dto = batch(List.of(student(1)), otherResult.equals("points") ? 5.0 : null, otherResult.equals("passed") ? true : null,
-                    ratings(getRubric(presentationId), 3, 2, 1));
-
-            expectError(MockMvcRequestBuilders.post(instancesUrl(presentationId)), dto, "resultDoesNotMatchGradingMethod");
-        }
-
-        @Test
-        @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
         void score_shouldBeRoundedAsTheCourseRoundsScores() throws Exception {
             course.setAccuracyOfScores(0);
             courseRepository.save(course);
@@ -644,14 +567,16 @@ class PresentationGradingMethodIntegrationTest extends AbstractSpringIntegration
         }
 
         @ParameterizedTest
-        @ValueSource(strings = { "withoutLevel", "longComment" })
+        @EnumSource(InvalidRating.class)
         @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
-        void invalidRating_shouldBeRejected(String problem) throws Exception {
+        void invalidRating_shouldBeRejected(InvalidRating problem) throws Exception {
             long presentationId = createRubricPresentationAsInstructor();
             List<PresentationRubricRatingDTO> ratings = new ArrayList<>(ratings(getRubric(presentationId), 3, 2, 1));
             PresentationRubricRatingDTO first = ratings.getFirst();
-            ratings.set(0, problem.equals("withoutLevel") ? new PresentationRubricRatingDTO(first.criterionId(), null, null)
-                    : new PresentationRubricRatingDTO(first.criterionId(), first.levelId(), "a".repeat(1001)));
+            ratings.set(0, switch (problem) {
+                case WITHOUT_LEVEL -> new PresentationRubricRatingDTO(first.criterionId(), null, null);
+                case LONG_COMMENT -> new PresentationRubricRatingDTO(first.criterionId(), first.levelId(), "a".repeat(1001));
+            });
 
             request.postListWithResponseBody(instancesUrl(presentationId), batch(List.of(student(1)), null, null, ratings), PresentationAssessmentInstanceDTO.class,
                     HttpStatus.BAD_REQUEST);
@@ -766,23 +691,6 @@ class PresentationGradingMethodIntegrationTest extends AbstractSpringIntegration
             assertThat(presentationAssessmentInstanceRepository.findById(instance.id())).isEmpty();
             assertThat(presentationRubricRatingRepository.findAllByInstanceIdOrderByCriterionPosition(instance.id())).isEmpty();
         }
-
-        @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
-        void resettingTheCourse_shouldDeleteTheRatingsButKeepAnUnlockedRubric() throws Exception {
-            PresentationAssessmentDTO created = createPresentation(PresentationGradingMethod.RUBRIC, null, standardRubric());
-            PresentationRubricDTO rubric = getRubric(created.id());
-            PresentationAssessmentInstanceDTO instance = createInstances(created.id(), List.of(student(1)), null, null, ratings(rubric, 3, 2, 1)).getFirst();
-
-            // The statement the course reset uses for presentations
-            presentationAssessmentInstanceRepository.deleteAllByCourseId(course.getId());
-
-            assertThat(presentationRubricRatingRepository.findAllByInstanceIdOrderByCriterionPosition(instance.id())).isEmpty();
-            assertThat(getRubric(created.id()).criteria()).isEqualTo(rubric.criteria());
-            assertThat(getRubric(created.id()).instanceCount()).isZero();
-            // Without instances, the structure of the rubric can change again
-            updatePresentation(rubricUpdate(created, List.of(criterion("Structure", 100, PresentationRubricScale.THREE_POINT))), HttpStatus.OK);
-        }
     }
 
     @Nested
@@ -803,7 +711,7 @@ class PresentationGradingMethodIntegrationTest extends AbstractSpringIntegration
         void asTutor_changingTheRubric_shouldBeForbidden() throws Exception {
             long presentationId = createRubricPresentationAsInstructor();
             PresentationRubricDTO rubric = getRubric(presentationId);
-            var update = new PresentationAssessmentDTO(presentationId, "Final presentation", "Presentation of the project", PresentationGradingMethod.RUBRIC, null, null, null,
+            var update = new PresentationAssessmentRequestDTO(presentationId, "Final presentation", "Presentation of the project", PresentationGradingMethod.RUBRIC, null, null,
                     null, withWeights(rubric, 40, 40, 20));
 
             updatePresentation(update, HttpStatus.FORBIDDEN);
@@ -834,8 +742,7 @@ class PresentationGradingMethodIntegrationTest extends AbstractSpringIntegration
 
             presentationAssessmentService.updateInstance(courseId, created.id(), instance.id(), instanceUpdate(instance, student(1), null, null, ratings(rubric, 0, 0, 0)));
 
-            assertThatThrownBy(
-                    () -> presentationRubricCriterionRepository.updateWithRubricIfVersionMatches(courseId, created.id(), versionReadByWeightUpdate, weightUpdate, changes))
+            assertThatThrownBy(() -> presentationAssessmentRepository.updateWithRubricIfVersionMatches(courseId, created.id(), versionReadByWeightUpdate, weightUpdate, changes))
                     .isInstanceOf(ConflictException.class);
             assertThat(getRubric(created.id()).criteria()).extracting(PresentationRubricCriterionDTO::weight).containsExactly(50, 30, 20);
             assertThat(rubricScore(instance.id())).isEqualTo(0.0);
@@ -858,7 +765,7 @@ class PresentationGradingMethodIntegrationTest extends AbstractSpringIntegration
 
             presentationAssessmentService.update(courseId, created.id(), rubricUpdate(created, withWeights(rubric, 40, 40, 20)));
 
-            assertThatThrownBy(() -> presentationAssessmentInstanceRepository.updateInstanceIfVersionMatches(courseId, created.id(), versionReadByGrading, staleInstance,
+            assertThatThrownBy(() -> presentationAssessmentRepository.updateInstanceIfVersionMatches(courseId, created.id(), versionReadByGrading, staleInstance,
                     grade.ratingsFor(staleInstance))).isInstanceOf(ConflictException.class);
             assertThat(rubricScore(instanceId)).isEqualTo(75.0);
             assertThat(getRatings(created.id(), instanceId)).containsExactlyElementsOf(storedRatings);
@@ -872,10 +779,10 @@ class PresentationGradingMethodIntegrationTest extends AbstractSpringIntegration
         return request.postWithResponseBody(baseUrl(course), presentation(gradingMethod, maxPoints, criteria), PresentationAssessmentDTO.class, HttpStatus.CREATED);
     }
 
-    /** A presentation graded by rubric that has an instance, so that the structure of its rubric is fixed. */
+    /** A presentation graded by rubric that has an assessed instance, so that the structure of its rubric is fixed. */
     private PresentationAssessmentDTO createLockedRubricPresentation() throws Exception {
         PresentationAssessmentDTO created = createPresentation(PresentationGradingMethod.RUBRIC, null, standardRubric());
-        createInstances(created.id(), List.of(student(1)), null, null, null);
+        createInstances(created.id(), List.of(student(1)), null, null, ratings(getRubric(created.id()), 3, 2, 1));
         return created;
     }
 
@@ -886,7 +793,7 @@ class PresentationGradingMethodIntegrationTest extends AbstractSpringIntegration
         return presentationAssessmentService.create(course.getId(), presentation(PresentationGradingMethod.RUBRIC, null, standardRubric())).id();
     }
 
-    private void updatePresentation(PresentationAssessmentDTO update, HttpStatus expectedStatus) throws Exception {
+    private void updatePresentation(PresentationAssessmentRequestDTO update, HttpStatus expectedStatus) throws Exception {
         request.putWithResponseBody(assessmentUrl(course, update.id()), update, PresentationAssessmentDTO.class, expectedStatus);
     }
 
@@ -958,12 +865,12 @@ class PresentationGradingMethodIntegrationTest extends AbstractSpringIntegration
 
     // Data
 
-    private static PresentationAssessmentDTO presentation(PresentationGradingMethod gradingMethod, Double maxPoints, List<PresentationRubricCriterionDTO> criteria) {
-        return new PresentationAssessmentDTO(null, "Final presentation", "Presentation of the project", gradingMethod, maxPoints, null, null, null, criteria);
+    private static PresentationAssessmentRequestDTO presentation(PresentationGradingMethod gradingMethod, Double maxPoints, List<PresentationRubricCriterionDTO> criteria) {
+        return new PresentationAssessmentRequestDTO(null, "Final presentation", "Presentation of the project", gradingMethod, maxPoints, null, null, criteria);
     }
 
-    private static PresentationAssessmentDTO rubricUpdate(PresentationAssessmentDTO presentation, List<PresentationRubricCriterionDTO> criteria) {
-        return new PresentationAssessmentDTO(presentation.id(), presentation.title(), presentation.description(), PresentationGradingMethod.RUBRIC, null, null, null, null,
+    private static PresentationAssessmentRequestDTO rubricUpdate(PresentationAssessmentDTO presentation, List<PresentationRubricCriterionDTO> criteria) {
+        return new PresentationAssessmentRequestDTO(presentation.id(), presentation.title(), presentation.description(), PresentationGradingMethod.RUBRIC, null, null, null,
                 criteria);
     }
 
@@ -997,6 +904,59 @@ class PresentationGradingMethodIntegrationTest extends AbstractSpringIntegration
 
     private Double rubricScore(long instanceId) {
         return presentationAssessmentInstanceRepository.findByIdElseThrow(instanceId).getRubricScore();
+    }
+
+    /** A presentation graded by the given method, created as the instructor: by score out of 20 points, by rubric with the standard rubric. */
+    private long createPresentationAsInstructor(PresentationGradingMethod gradingMethod) {
+        if (gradingMethod == PresentationGradingMethod.RUBRIC) {
+            return createRubricPresentationAsInstructor();
+        }
+        return createPresentationAsInstructor(gradingMethod, gradingMethod == PresentationGradingMethod.SCORE ? 20.0 : null);
+    }
+
+    /** A complete rating of the standard rubric of the presentation. */
+    private List<PresentationRubricRatingDTO> rubricRatings(long presentationId) throws Exception {
+        return ratings(getRubric(presentationId), 3, 2, 1);
+    }
+
+    /** A change of the structure of the standard rubric, which a rubric with assessed instances rejects. */
+    private enum StructureChange {
+        ADDING_A_CRITERION, REMOVING_A_CRITERION, CHANGING_A_SCALE, REORDERING_CRITERIA, LEVEL_OF_ANOTHER_CRITERION
+    }
+
+    private static List<PresentationRubricCriterionDTO> changeStructure(PresentationRubricDTO rubric, StructureChange change) {
+        List<PresentationRubricCriterionDTO> criteria = new ArrayList<>(rubric.criteria());
+        switch (change) {
+            case ADDING_A_CRITERION -> {
+                criteria = new ArrayList<>(withWeights(rubric, 40, 30, 20));
+                criteria.add(criterion("Questions", 10, PresentationRubricScale.THREE_POINT));
+            }
+            case REMOVING_A_CRITERION -> criteria = withWeights(rubric, 70, 30, 0).subList(0, 2);
+            case CHANGING_A_SCALE -> {
+                PresentationRubricCriterionDTO delivery = criteria.get(1);
+                // Five new levels match the new scale, so only the fixed structure rejects the change
+                criteria.set(1, new PresentationRubricCriterionDTO(delivery.id(), delivery.name(), delivery.description(), delivery.weight(), PresentationRubricScale.FIVE_POINT,
+                        criterion(delivery.name(), delivery.weight(), PresentationRubricScale.FIVE_POINT).levels()));
+            }
+            case REORDERING_CRITERIA -> criteria.add(criteria.removeFirst());
+            case LEVEL_OF_ANOTHER_CRITERION -> {
+                PresentationRubricCriterionDTO content = criteria.getFirst();
+                List<PresentationRubricLevelDTO> levels = new ArrayList<>(content.levels());
+                levels.set(0, criteria.get(2).levels().getFirst());
+                criteria.set(0, new PresentationRubricCriterionDTO(content.id(), content.name(), content.description(), content.weight(), content.scale(), levels));
+            }
+        }
+        return criteria;
+    }
+
+    /** How the ratings of a rubric can be incomplete: a criterion without a rating, a criterion rated twice, or a rating of a criterion of another rubric. */
+    private enum IncompleteRatings {
+        MISSING, DUPLICATE, OF_ANOTHER_RUBRIC
+    }
+
+    /** A rating that fails the request validation. */
+    private enum InvalidRating {
+        WITHOUT_LEVEL, LONG_COMMENT
     }
 
     private static String student(int number) {
