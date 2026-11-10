@@ -15,6 +15,7 @@ import { By } from '@angular/platform-browser';
 import { MockComponent } from 'ng-mocks';
 import { TumAetUiDialogComponent } from '@tumaet/ui-angular';
 import { ImageCropperModalComponent } from 'app/course/manage/image-cropper-modal/image-cropper-modal.component';
+import { AccountSettingsDialogComponent } from 'app/account/settings/account-settings-dialog.component';
 
 describe('AccountInformationComponent', () => {
     let fixture: ComponentFixture<AccountInformationComponent>;
@@ -46,7 +47,10 @@ describe('AccountInformationComponent', () => {
                 provideRouter([]),
             ],
         })
-            .overrideComponent(AccountInformationComponent, { remove: { imports: [ImageCropperModalComponent] }, add: { imports: [MockComponent(ImageCropperModalComponent)] } })
+            .overrideComponent(AccountInformationComponent, {
+                remove: { imports: [ImageCropperModalComponent, AccountSettingsDialogComponent] },
+                add: { imports: [MockComponent(ImageCropperModalComponent), MockComponent(AccountSettingsDialogComponent)] },
+            })
             .compileComponents();
         fixture = TestBed.createComponent(AccountInformationComponent);
         comp = fixture.componentInstance;
@@ -71,6 +75,15 @@ describe('AccountInformationComponent', () => {
             expect(definition.querySelectorAll(':scope > dt')).toHaveLength(1);
             expect(definition.querySelectorAll(':scope > dd')).toHaveLength(1);
         }
+    });
+
+    it('should open the account settings dialog from the edit button', () => {
+        fixture.detectChanges();
+
+        const editButton: HTMLButtonElement = fixture.nativeElement.querySelector('[data-testid="account-settings-edit-button"] button');
+        editButton.click();
+
+        expect(comp.accountSettingsDialogVisible()).toBe(true);
     });
 
     it('should show the image cropper when setting user image', () => {

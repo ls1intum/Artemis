@@ -80,8 +80,8 @@
             "notificationSettings": "Benachrichtigungen",
             "notificationSettingsFilterInfo": "Diese Einstellungen filtern auch die Seitenleiste für Mitteilungen",
             "scienceSettings": "Forschung",
-            "scienceSettingsFeatureDisabled": "Dieses Feature ist derzeit deaktiviert. Du kannst deine Einstellungen trotzdem bearbeiten, falls das Feature wieder aktiviert wird.",
-            "scienceSettingsInfo": "Hilf Artemis dabei besser zu werden!",
+            "scienceSettingsFeatureDisabled": "Die Funktion ist derzeit deaktiviert. Deine Einstellung wird angewendet, sobald sie wieder aktiviert wird.",
+            "scienceSettingsInfo": "Artemis kann Daten erfassen, um Forschenden dabei zu helfen, Lernverhalten zu untersuchen und die Plattform zu verbessern.",
             "idePreferencesPage": {
                 "description": "Wähle die IDEs, die du für das Öffnen von Programmieraufgaben verwenden möchtest.",
                 "default": "Standard",
@@ -220,6 +220,7 @@
                 }
             },
             "accountInformationPage": {
+                "editTitle": "Kontoinformationen bearbeiten",
                 "registrationNumber": "Matrikelnummer",
                 "fullName": "Vollständiger Name",
                 "login": "Login",
@@ -227,8 +228,7 @@
                 "joinedArtemis": "Artemis beigetreten am",
                 "profilePicture": "Profilbild",
                 "addProfilePicture": "Profilbild hinzufügen",
-                "sshKey": "Öffentlicher SSH-Schlüssel",
-                "editAccountSettings": "Kontoeinstellungen bearbeiten"
+                "sshKey": "Öffentlicher SSH-Schlüssel"
             },
             "categories": {
                 "LLMUsage": "KI-Erfahrungseinstellungen",
@@ -278,8 +278,7 @@
                 "tutorialGroupUpdateDelete": "Änderungen und Löschungen von Übungsgruppen",
                 "newConversationMessages": "Neue Nachrichten in Unterhaltung",
                 "newReplyMessage": "Neue Antworten in Unterhaltung",
-                "assignUnassignTutorialGroup": "Anmeldungen und Abmeldungen von Übungsgruppenleitung",
-                "activity": "Aktivitäten"
+                "assignUnassignTutorialGroup": "Anmeldungen und Abmeldungen von Übungsgruppenleitung"
             },
             "settingDescriptions": {
                 "basicWeeklySummaryDescription": "Erhalte jeden Freitag um 17:00 Uhr eine einfache wöchentliche Zusammenfassung (bsp. welche neuen Aufgaben diese Woche veröffentlicht wurden und noch bearbeitbar sind)",
@@ -306,7 +305,7 @@
                 "newConversationMessageDescription": "Erhalte eine Mitteilung, wenn du eine neue Nachricht in einer Unterhaltung erhältst",
                 "conversationNewReplyMessageDescription": "Erhalte eine Mitteilung, wenn du eine neue Antwort in einer Unterhaltung erhältst",
                 "assignUnassignTutorialGroupDescription": "Erhalte eine Mitteilung, wenn du als Tutor:in der Leitung einer Übungsgruppe zugewiesen oder entzogen wurdest",
-                "activityDescription": "Teile welche Features von Artemis du nutzt und wie du mit ihnen interagierst. Die Informationen sind für Administratoren zugänglich."
+                "activityDescription": "Erlaube Artemis zu erfassen, welche Features du nutzt und wie du mit ihnen interagierst. Diese Informationen sind nur für Administrator:innen zugänglich."
             },
             "globalNotificationSettings": {
                 "title": "Benachrichtigungen",

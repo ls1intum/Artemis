@@ -13,9 +13,9 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { addPublicFilePrefix } from 'app/app.constants';
 import { UserSettingsService } from 'app/account/user/settings/directive/user-settings.service';
-import { RouterLink } from '@angular/router';
-import { TumAetUiButtonComponent, TumAetUiButtonDirective, TumAetUiDialogComponent, TumAetUiListComponent, TumAetUiListItemDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonComponent, TumAetUiDialogComponent, TumAetUiListComponent, TumAetUiListItemDirective } from '@tumaet/ui-angular';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { AccountSettingsDialogComponent } from 'app/account/settings/account-settings-dialog.component';
 
 @Component({
     selector: 'jhi-account-information',
@@ -26,14 +26,13 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
         ImageComponent,
         FaIconComponent,
         ArtemisDatePipe,
-        RouterLink,
         TumAetUiButtonComponent,
-        TumAetUiButtonDirective,
         TumAetUiListComponent,
         TumAetUiListItemDirective,
         TumAetUiDialogComponent,
         ImageCropperModalComponent,
         ArtemisTranslatePipe,
+        AccountSettingsDialogComponent,
     ],
 })
 export class AccountInformationComponent {
@@ -49,6 +48,7 @@ export class AccountInformationComponent {
 
     readonly currentUser: Signal<User | undefined> = this.accountService.userIdentity;
     readonly imageLoadFailed = signal(false);
+    readonly accountSettingsDialogVisible = signal(false);
 
     private readonly fileInput = viewChild.required<ElementRef<HTMLInputElement>>('fileInput');
 
