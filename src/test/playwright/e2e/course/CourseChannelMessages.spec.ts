@@ -336,6 +336,8 @@ test.describe('Channel messages', { tag: '@fast' }, () => {
                 await expect(page.getByTestId('conversation-name')).toHaveText(other.name!);
                 // The reply below is a live update: it is lost if the page has not subscribed yet.
                 await subscriptions.waitFor('/notifications/conversations');
+                // The unread badge is driven by a message addressed to the user, which every node has to be able to route to this session.
+                await subscriptions.waitUntilKnownToAllNodes();
                 const generalChannels = page.getByRole('button', { name: /^General \(/ });
                 if ((await generalChannels.getAttribute('aria-expanded')) !== 'true') {
                     await generalChannels.click();

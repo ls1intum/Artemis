@@ -3,6 +3,7 @@ import { test } from '../../support/fixtures';
 import { admin, studentOne } from '../../support/users';
 import { expectWithinViewport, forEachViewport } from '../../support/layout';
 import { generateUUID } from '../../support/utils';
+import { trackWebsocketSubscriptions } from '../../support/websocketSubscriptions';
 
 test('Conversation notifications leave Send accessible, preserve the draft and open the reply', async ({
     browser,
@@ -45,15 +46,12 @@ test('Conversation notifications leave Send accessible, preserve the draft and o
         expect(currentMessage.ok()).toBe(true);
 
         const studentPage = await studentContext.newPage();
-        let subscribedToNotifications = false;
-        studentPage.on('websocket', (socket) => {
-            socket.on('framesent', ({ payload }) => {
-                if (payload.toString().includes(`/user/topic/notification/${course.id}`)) subscribedToNotifications = true;
-            });
-        });
+        const subscriptions = trackWebsocketSubscriptions(studentPage);
         await studentPage.goto(`/courses/${course.id}/communication?conversationId=${currentChannel.id}`);
         await expect(studentPage.getByTestId('conversation-name')).toContainText(currentChannel.name!);
-        await expect.poll(() => subscribedToNotifications).toBe(true);
+        await subscriptions.waitFor(`/user/topic/notification/${course.id}`);
+        // The notifications are addressed to the user: every node has to know the new session before the replies are sent.
+        await subscriptions.waitUntilKnownToAllNodes();
         const input = studentPage.getByTestId('formatted-message-input');
         const draft = 'Continue typing while another reply arrives';
         await input.fill(draft);

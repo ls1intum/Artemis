@@ -57,13 +57,15 @@ test.describe('Unread messages across conversation types', { tag: '@fast' }, () 
 
     /**
      * Runs a navigation that creates a new websocket and waits until the page listens for new posts and conversation changes.
-     * A live update published before that is lost, so the tests must not trigger one earlier.
+     * A live update published before that is lost, so the tests must not trigger one earlier. Updates addressed to the user also need every node to know the
+     * page's session, which takes up to the interval of the user registry broadcast.
      */
     async function navigateAndAwaitSubscriptions(page: Page, navigate: () => Promise<unknown>) {
         const subscriptions = trackWebsocketSubscriptions(page);
         await navigate();
         await subscriptions.waitFor('/notifications/conversations');
         await subscriptions.waitFor(`/topic/communication/courses/${course!.id}/conversations/user/`);
+        await subscriptions.waitUntilKnownToAllNodes();
     }
 
     async function openCommunication(page: Page, conversationId: number) {
