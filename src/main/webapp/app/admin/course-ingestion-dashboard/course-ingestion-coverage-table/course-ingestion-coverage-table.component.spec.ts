@@ -147,6 +147,22 @@ describe('CourseIngestionCoverageTableComponent', () => {
         expect(storedSpy).toHaveBeenCalledWith({ page: 0, size: 20, sort: 'coverageGapScore,desc', status: undefined, active: undefined, search: undefined });
     });
 
+    it('maps a column header sort event onto the sort toggle', () => {
+        fixture.detectChanges();
+        liveSpy.mockClear();
+
+        // The active column (name) flips its direction.
+        component['onSort']({ field: 'name', order: -1 });
+        expect(component.sortMode()).toBe('name');
+        expect(component.sortDirection()).toBe('desc');
+        expect(liveSpy).toHaveBeenLastCalledWith({ page: 0, size: 20, sort: 'title,desc', search: undefined });
+
+        // Another column adopts its own default direction.
+        component['onSort']({ field: 'release', order: 1 });
+        expect(component.sortMode()).toBe('release');
+        expect(liveSpy).toHaveBeenLastCalledWith({ page: 0, size: 20, sort: 'startDate,desc', search: undefined });
+    });
+
     it('filters by status and active state, and refreshes the projection', () => {
         fixture.detectChanges();
 

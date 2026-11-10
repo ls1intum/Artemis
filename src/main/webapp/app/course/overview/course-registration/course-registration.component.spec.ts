@@ -245,6 +245,20 @@ describe('CourseRegistrationComponent', () => {
         expect(component.ascending()).toBe(true);
     });
 
+    it('should fall back to title ascending when the route default sort is not a string', () => {
+        findAllForRegistrationStub.mockReturnValue(of(new HttpResponse({ body: [course1, course2] })));
+        queryParamMapSubject.next(convertToParamMap({}));
+        dataSubject.next({ defaultSort: 42 });
+        component.predicate.set('semester');
+        component.ascending.set(false);
+
+        component.ngOnInit();
+
+        expect(component.predicate()).toBe('title');
+        expect(component.ascending()).toBe(true);
+        expect(findAllForRegistrationStub).toHaveBeenCalled();
+    });
+
     it('should use defaultSort when predicate is "defaultSort"', () => {
         findAllForRegistrationStub.mockReturnValue(of(new HttpResponse({ body: [course1, course2, course3] })));
 

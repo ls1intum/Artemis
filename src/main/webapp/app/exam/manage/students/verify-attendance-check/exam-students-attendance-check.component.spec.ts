@@ -281,6 +281,24 @@ describe('ExamStudentsAttendanceCheckComponent', () => {
         expect(sortServiceSpy).toHaveBeenCalledOnce();
     });
 
+    it('should apply the column header sort and re-sort the attendance rows', () => {
+        const sortServiceSpy = vi.spyOn(sortService, 'sortByProperty');
+        fixture.detectChanges();
+        sortServiceSpy.mockClear();
+
+        component['onSortChange']({ field: 'login', order: -1 });
+
+        expect(component.predicate()).toBe('login');
+        expect(component.ascending()).toBe(false);
+        expect(sortServiceSpy).toHaveBeenCalledExactlyOnceWith(component.allExamUsersAttendanceCheck(), 'login', false);
+
+        component['onSortChange']({ field: 'registrationNumber', order: 1 });
+
+        expect(component.predicate()).toBe('registrationNumber');
+        expect(component.ascending()).toBe(true);
+        expect(sortServiceSpy).toHaveBeenLastCalledWith(component.allExamUsersAttendanceCheck(), 'registrationNumber', true);
+    });
+
     it('should call exam management service', () => {
         const examUserAttendanceCheckDTO = new ExamUserAttendanceCheckDTO();
         examUserAttendanceCheckDTO.id = 1;

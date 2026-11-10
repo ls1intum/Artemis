@@ -353,6 +353,21 @@ describe('CourseScoresComponent', () => {
         expect(textIncludedWith10Points10BonusPoints.title).toBe(`exercise (id=1)`);
     });
 
+    it('should re-sort the student statistics when a column header sort is applied', () => {
+        setupMocks();
+
+        component.onSort({ field: 'overallPoints', order: 1 });
+
+        expect(component.predicate()).toBe('overallPoints');
+        expect(component.reverse()).toBe(true);
+        expect(component.studentStatistics().map((statistic) => statistic.overallPoints)).toEqual([15, 50]);
+
+        component.onSort({ field: 'overallPoints', order: -1 });
+
+        expect(component.reverse()).toBe(false);
+        expect(component.studentStatistics().map((statistic) => statistic.overallPoints)).toEqual([50, 15]);
+    });
+
     it('should group exercises and calculate exercise max score', () => {
         vi.spyOn(courseManagementService, 'findWithExercises').mockReturnValue(of(new HttpResponse({ body: course })));
         vi.spyOn(plagiarismCasesService, 'getCoursePlagiarismCasesForScores').mockReturnValue(of(new HttpResponse<PlagiarismCaseDTO[]>({ body: [] })));

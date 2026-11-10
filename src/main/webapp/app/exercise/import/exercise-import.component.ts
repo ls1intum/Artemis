@@ -15,17 +15,18 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { FormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import {
+    TumAetUiButtonComponent,
     TumAetUiCheckboxComponent,
     TumAetUiInputDirective,
     TumAetUiPaginatorComponent,
     TumAetUiTableDirective,
     TumAetUiTableLayoutComponent,
     TumAetUiTableSortableColumnComponent,
+    TumAetUiTooltipDirective,
 } from '@tumaet/ui-angular';
 import { ExerciseCourseTitlePipe } from 'app/foundation/pipes/exercise-course-title.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ArtemisDurationFromSecondsPipe } from 'app/foundation/pipes/artemis-duration-from-seconds.pipe';
-import { TumAetUiButtonComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 import { faArrowLeft, faEye } from '@fortawesome/free-solid-svg-icons';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { QuizExerciseService } from 'app/quiz/manage/service/quiz-exercise.service';

@@ -2,6 +2,7 @@
     display: flex;
     flex-direction: column;
     min-height: 0;
+
     // Never below a usable minimum (toolbar, header, a few rows and the footer), so a short viewport scrolls the page
     // instead of squeezing the rows to nothing.
     max-height: max(14rem, calc(100dvh - var(--table-layout-offset, 12rem)));

@@ -230,6 +230,23 @@ describe('ImportComponent', () => {
         });
     });
 
+    it('onTableSort applies a descending order for -1', () => {
+        setStateAndCallOnInit(() => {
+            comp.onTableSort({ field: 'TITLE', order: -1 });
+            vi.advanceTimersByTime(10);
+            expect(searchStub).toHaveBeenCalledWith({ ...state, sortedColumn: 'TITLE', sortingOrder: SortingOrder.DESCENDING }, undefined);
+        });
+    });
+
+    it('onTableSort ignores a sort event without a field', () => {
+        setStateAndCallOnInit(() => {
+            searchStub.mockClear();
+            comp.onTableSort({ field: '', order: 1 });
+            vi.advanceTimersByTime(10);
+            expect(searchStub).not.toHaveBeenCalled();
+        });
+    });
+
     it('should sort rows with default values', () => {
         const sortServiceSpy = vi.spyOn(sortService, 'sortByProperty');
 

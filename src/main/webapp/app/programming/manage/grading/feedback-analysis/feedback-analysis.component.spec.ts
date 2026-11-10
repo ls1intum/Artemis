@@ -333,6 +333,20 @@ describe('FeedbackAnalysisComponent', () => {
         });
     });
 
+    describe('onTableSort without a field', () => {
+        it('should ignore a sort event that names no column', () => {
+            const loadDataSpy = vi.spyOn(internals(component), 'loadData');
+            const sortedColumn = component.sortedColumn();
+            const sortingOrder = component.sortingOrder();
+
+            component.onTableSort({ field: '', order: 1 });
+
+            expect(component.sortedColumn()).toBe(sortedColumn);
+            expect(component.sortingOrder()).toBe(sortingOrder);
+            expect(loadDataSpy).not.toHaveBeenCalled();
+        });
+    });
+
     describe('search', () => {
         beforeEach(() => {
             vi.spyOn(internals(component), 'debounceLoadData').mockImplementation(() => {
