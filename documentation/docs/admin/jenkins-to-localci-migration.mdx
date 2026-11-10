@@ -3,7 +3,7 @@ id: jenkins-to-localci-migration
 title: Migrating from Jenkins to LocalCI
 sidebar_label: Jenkins to LocalCI Migration
 description: How to move an Artemis installation that builds with Jenkins to LocalCI before Jenkins support is removed in Artemis 11.
-last_reviewed: 2026-11-03
+last_reviewed: 2026-11-10
 ---
 
 import Callout from "../../src/components/Callout/Callout";
@@ -48,6 +48,9 @@ and no Jenkins user to maintain.
    [feature support table](/instructor/exercises/programming-exercise#feature-support-by-language). LocalCI supports every
    language that Jenkins supports and more. Sequential test runs for Kotlin and static code analysis for Swift, which used to exist only with Jenkins,
    are available with LocalCI from the release that contains them. Check the feature table of your target version before you migrate.
+   An exercise whose Jenkins pipeline ran stages in different environments, for example a separate image per toolchain, can run its build in
+   [several containers](/instructor/exercises/programming-exercise/configure-the-build#run-the-build-in-several-containers-optional),
+   each with its own Docker image, build phases and repositories.
 3. **Find customizations.** These do not carry over automatically:
    - Instructors who edited the pipeline script of an exercise in the script-based build plan editor. LocalCI ignores a stored Jenkinsfile
      and runs the build phases of the exercise. Such an exercise needs its script rebuilt as build phases, see [Step 4](#4-check-every-exercise).
