@@ -272,9 +272,9 @@ class DeimosBatchServiceTest {
         var finding = new DeimosManipulationFinding("src/Attack.java", 3, "abcdef12, 2026-01-15T10:00Z");
         var omission = new DeimosOmission(DeimosOmissionReason.FILE_INPUT_LIMIT, "src/Big.java", "abcdef12, 2026-01-15T10:00Z");
         var manipulation = new DeimosBatchSummaryDTO.ParticipationAnalysis(301L, 55L, DeimosVerdict.MANIPULATION_ATTEMPT, null, null, DeimosFailureType.LLM_TIMEOUT,
-                List.of(finding), 4, List.of(), 0);
-        var incomplete = new DeimosBatchSummaryDTO.ParticipationAnalysis(303L, 55L, DeimosVerdict.INCOMPLETELY_CHECKED, false, "looks fine", null, List.of(), 0, List.of(omission),
-                12);
+                List.of(finding), 4, false, List.of(), 0);
+        var incomplete = new DeimosBatchSummaryDTO.ParticipationAnalysis(303L, 55L, DeimosVerdict.INCOMPLETELY_CHECKED, false, "looks fine", null, List.of(), 0, false,
+                List.of(omission), 12);
         var failures = List.of(new DeimosBatchSummaryDTO.FailedAnalysis(305L, DeimosFailureType.LLM_AUTHENTICATION_FAILED, "rejected"),
                 new DeimosBatchSummaryDTO.FailedAnalysis(DeimosBatchSummaryDTO.BATCH_LEVEL_FAILURE_PARTICIPATION_ID, DeimosFailureType.LLM_AUTHENTICATION_FAILED, "aborted"));
         when(deimosBatchParticipationRepository.countDistinctParticipationIdsForCourseInRange(7L, from, to)).thenReturn(7L);
@@ -321,7 +321,8 @@ class DeimosBatchServiceTest {
         ZonedDateTime to = FIXED_NOW;
         var omission = new DeimosOmission(DeimosOmissionReason.NON_TEXT_FILE, "lib/tool.so", "abcdef12, 2026-01-15T10:00Z");
         // Only a binary file changed: no model answer, no rationale and no failure.
-        var incomplete = new DeimosBatchSummaryDTO.ParticipationAnalysis(311L, 55L, DeimosVerdict.INCOMPLETELY_CHECKED, null, null, null, List.of(), 0, List.of(omission), 1);
+        var incomplete = new DeimosBatchSummaryDTO.ParticipationAnalysis(311L, 55L, DeimosVerdict.INCOMPLETELY_CHECKED, null, null, null, List.of(), 0, false, List.of(omission),
+                1);
         when(deimosBatchParticipationRepository.countDistinctParticipationIdsForCourseInRange(7L, from, to)).thenReturn(1L);
         when(deimosBatchParticipationRepository.findParticipationIdsForCourseInRange(eq(7L), eq(from), eq(to), any(Pageable.class))).thenReturn(new SliceImpl<>(List.of(311L)));
         when(courseRepository.getCourseTitle(7L)).thenReturn("Course 7");
@@ -346,8 +347,8 @@ class DeimosBatchServiceTest {
         ZonedDateTime to = FIXED_NOW;
         var finding = new DeimosManipulationFinding("src/Attack.java", 3, "abcdef12, 2026-01-15T10:00Z");
         // The model answered, so there is a rationale to show and no failure to explain.
-        var manipulation = new DeimosBatchSummaryDTO.ParticipationAnalysis(314L, 55L, DeimosVerdict.MANIPULATION_ATTEMPT, true, " forged marker ", null, List.of(finding), 1,
-                List.of(), 0);
+        var manipulation = new DeimosBatchSummaryDTO.ParticipationAnalysis(314L, 55L, DeimosVerdict.MANIPULATION_ATTEMPT, true, " forged marker ", null, List.of(finding),
+                DeimosAnalysisService.MAX_TRACKED_FINDINGS_PER_PARTICIPATION, true, List.of(), 0);
         when(deimosBatchParticipationRepository.countDistinctParticipationIdsForCourseInRange(7L, from, to)).thenReturn(1L);
         when(deimosBatchParticipationRepository.findParticipationIdsForCourseInRange(eq(7L), eq(from), eq(to), any(Pageable.class))).thenReturn(new SliceImpl<>(List.of(314L)));
         when(courseRepository.getCourseTitle(7L)).thenReturn("Course 7");
@@ -360,6 +361,8 @@ class DeimosBatchServiceTest {
             assertThat(link.llmMalicious()).isTrue();
             assertThat(link.rationale()).isEqualTo("forged marker");
             assertThat(link.failureTranslationKey()).isNull();
+            assertThat(link.findingCount()).isEqualTo(DeimosAnalysisService.MAX_TRACKED_FINDINGS_PER_PARTICIPATION);
+            assertThat(link.findingCountCapped()).isTrue();
         });
     }
 
@@ -392,8 +395,8 @@ class DeimosBatchServiceTest {
         ZonedDateTime from = FIXED_NOW.minusDays(1);
         ZonedDateTime to = FIXED_NOW;
         // Without an exercise id there is no page to link to, so the entry is left out; the counts still include it.
-        var withoutExercise = new DeimosBatchSummaryDTO.ParticipationAnalysis(312L, 0L, DeimosVerdict.MALICIOUS, true, "no exercise", null, List.of(), 0, List.of(), 0);
-        var withExercise = new DeimosBatchSummaryDTO.ParticipationAnalysis(313L, 55L, DeimosVerdict.MALICIOUS, true, "with exercise", null, List.of(), 0, List.of(), 0);
+        var withoutExercise = new DeimosBatchSummaryDTO.ParticipationAnalysis(312L, 0L, DeimosVerdict.MALICIOUS, true, "no exercise", null, List.of(), 0, false, List.of(), 0);
+        var withExercise = new DeimosBatchSummaryDTO.ParticipationAnalysis(313L, 55L, DeimosVerdict.MALICIOUS, true, "with exercise", null, List.of(), 0, false, List.of(), 0);
         when(deimosBatchParticipationRepository.countDistinctParticipationIdsForCourseInRange(7L, from, to)).thenReturn(2L);
         when(deimosBatchParticipationRepository.findParticipationIdsForCourseInRange(eq(7L), eq(from), eq(to), any(Pageable.class)))
                 .thenReturn(new SliceImpl<>(List.of(312L, 313L)));
@@ -452,7 +455,7 @@ class DeimosBatchServiceTest {
     }
 
     private static DeimosBatchSummaryDTO.ParticipationAnalysis analysis(long participationId, DeimosVerdict verdict, boolean malicious, String rationale) {
-        return new DeimosBatchSummaryDTO.ParticipationAnalysis(participationId, 55L, verdict, malicious, rationale, null, List.of(), 0, List.of(), 0);
+        return new DeimosBatchSummaryDTO.ParticipationAnalysis(participationId, 55L, verdict, malicious, rationale, null, List.of(), 0, false, List.of(), 0);
     }
 
     private static User createTriggerUser() {

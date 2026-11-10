@@ -96,6 +96,43 @@ class DefaultDeimosLlmClientTest {
         assertThat(verdict.get().rationale()).isEqualTo("found \"payload\" marker {here}");
     }
 
+    @ParameterizedTest
+    @ValueSource(strings = { "The student opens a block { and never closes it.", "The student wrote \"tricky code here.", "A brace { and a quote \" in prose." })
+    void shouldRecoverTheVerdictAfterUnmatchedDelimitersInThePreamble(String preamble) {
+        String content = preamble + "\n{\"malicious\": true, \"rationale\": \"opens an outbound socket\"}";
+
+        var verdict = DefaultDeimosLlmClient.parseVerdict(content);
+
+        assertThat(verdict).isPresent();
+        assertThat(verdict.get().malicious()).isTrue();
+        assertThat(verdict.get().rationale()).isEqualTo("opens an outbound socket");
+    }
+
+    @Test
+    void shouldStillRejectDifferingVerdictsAfterAnUnmatchedBrace() {
+        String content = "Note { unclosed\n{\"malicious\": false, \"rationale\": \"first assessment\"}\n{\"malicious\": false, \"rationale\": \"second assessment\"}";
+
+        assertThat(DefaultDeimosLlmClient.parseVerdict(content)).isEmpty();
+    }
+
+    @Test
+    void shouldRejectAResponseWhoseObjectsCannotAllBeFound() {
+        // The second verdict lies behind more unmatched braces than are recovered from. Returning the first alone would
+        // hide that the two differ.
+        String content = "{\"malicious\": false, \"rationale\": \"first assessment\"}\n" + "{ ".repeat(9) + "\n"
+                + "{\"malicious\": false, \"rationale\": \"different assessment\"}";
+
+        assertThat(DefaultDeimosLlmClient.parseVerdict(content)).isEmpty();
+    }
+
+    @Test
+    @Timeout(value = 5, threadMode = Timeout.ThreadMode.SEPARATE_THREAD)
+    void shouldBoundTheWorkForAResponseFullOfUnmatchedBraces() {
+        String content = "{".repeat(200_000) + "{\"malicious\": false, \"rationale\": \"ordinary\"}";
+
+        assertThat(DefaultDeimosLlmClient.parseVerdict(content)).isEmpty();
+    }
+
     @Test
     void shouldRejectResponseWithoutMaliciousField() {
         // Binding straight onto the boolean record component would silently yield false here, i.e. a security tool
@@ -419,11 +456,11 @@ class DefaultDeimosLlmClientTest {
     }
 
     @Test
-    void shouldLetAnUnterminatedStringEndTheScan() {
+    void shouldNotLetAStrayQuoteBetweenObjectsHideTheSecondOne() {
         var verdict = DefaultDeimosLlmClient.parseVerdict("{\"malicious\": false, \"rationale\": \"fine\"} and a stray \" {\"malicious\": false, \"rationale\": \"other\"}");
 
-        // The stray quote opens a string that the next quote closes, so the second object is never seen as one.
-        assertThat(verdict).hasValueSatisfying(response -> assertThat(response.rationale()).isEqualTo("fine"));
+        // A quote outside an object is prose, so both objects are found, and their differing rationales are ambiguous.
+        assertThat(verdict).isEmpty();
     }
 
     @Test

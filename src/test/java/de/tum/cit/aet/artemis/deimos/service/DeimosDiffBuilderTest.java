@@ -269,8 +269,11 @@ class DeimosDiffBuilderTest {
         var target = Map.of("a.txt", "y".repeat(300) + "\n", "b.txt", IntStream.range(0, 12).mapToObj(line -> "line " + line).collect(Collectors.joining("\n", "", "\n")), "c.txt",
                 "y\n");
 
-        // 82 bytes for the notice replacing a.txt, then exactly the 85 bytes of b.txt truncated at its cap, then nothing.
-        DiffResult result = builder.buildDiff(base, target, RESERVED + 167L);
+        // The notice replacing a.txt, then exactly what b.txt needs to be truncated at its 60-byte cap rather than by the
+        // budget, then nothing. Derived from the separator, so the boundary holds on every platform.
+        String aNotice = "--- a/a.txt" + NL + "+++ b/a.txt" + NL + "[file omitted: exceeds the 200 byte analysis size limit]" + NL + NL;
+        String bHeadersAndSeparator = "--- a/b.txt" + NL + "+++ b/b.txt" + NL + NL;
+        DiffResult result = builder.buildDiff(base, target, RESERVED + utf8(aNotice) + utf8(bHeadersAndSeparator) + 60L);
 
         assertThat(result.omissions()).containsExactly(new DiffOmission(DeimosOmissionReason.FILE_INPUT_LIMIT, "a.txt"),
                 new DiffOmission(DeimosOmissionReason.FILE_DIFF_LIMIT, "b.txt"), new DiffOmission(DeimosOmissionReason.PAYLOAD_LIMIT, "c.txt"));

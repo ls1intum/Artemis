@@ -1,6 +1,5 @@
 package de.tum.cit.aet.artemis.deimos.service;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.SET_UP_TEMPLATE_FOR_EXERCISE;
 import static de.tum.cit.aet.artemis.deimos.config.DeimosLimits.DEFAULT_FINAL_STATE_RESERVED_BYTES;
 import static de.tum.cit.aet.artemis.deimos.config.DeimosLimits.DEFAULT_MAX_FILE_DIFF_BYTES;
 import static de.tum.cit.aet.artemis.deimos.config.DeimosLimits.DEFAULT_MAX_FILE_INPUT_BYTES;
@@ -28,6 +27,7 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
+import org.apache.commons.codec.digest.DigestUtils;
 import org.eclipse.jgit.lib.ObjectId;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
@@ -59,7 +59,9 @@ import de.tum.cit.aet.artemis.localvc.service.BareGitRepositoryService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingSubmissionRepository;
+import de.tum.cit.aet.artemis.programming.repository.TemplateProgrammingExerciseParticipationRepository;
 
 @Conditional(DeimosEnabled.class)
 @Lazy
@@ -89,6 +91,12 @@ public class DeimosAnalysisService {
 
     private static final int MAX_REPORTED_FINDINGS_PER_PARTICIPATION = 10;
 
+    /**
+     * How many distinct findings per participation are told apart. Beyond it, findings still decide the verdict, but the
+     * reported count is a lower bound.
+     */
+    static final int MAX_TRACKED_FINDINGS_PER_PARTICIPATION = 10_000;
+
     private static final int MAX_REPORTED_OMISSIONS_PER_PARTICIPATION = 10;
 
     /**
@@ -103,6 +111,10 @@ public class DeimosAnalysisService {
     private final ProgrammingSubmissionRepository programmingSubmissionRepository;
 
     private final StudentParticipationRepository studentParticipationRepository;
+
+    private final TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository;
+
+    private final ProgrammingExerciseRepository programmingExerciseRepository;
 
     private final DeimosLlmClient deimosLlmClient;
 
@@ -127,6 +139,7 @@ public class DeimosAnalysisService {
     private final int finalStateReservedBytes;
 
     public DeimosAnalysisService(ProgrammingSubmissionRepository programmingSubmissionRepository, StudentParticipationRepository studentParticipationRepository,
+            TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository, ProgrammingExerciseRepository programmingExerciseRepository,
             DeimosLlmClient deimosLlmClient, DeimosPromptTemplateService deimosPromptTemplateService, DeimosSnapshotReader deimosSnapshotReader,
             BareGitRepositoryService bareGitRepositoryService, @Value("${" + MAX_FILE_INPUT_BYTES_PROPERTY + ":" + DEFAULT_MAX_FILE_INPUT_BYTES + "}") int maxFileInputBytes,
             @Value("${" + MAX_FILE_DIFF_BYTES_PROPERTY + ":" + DEFAULT_MAX_FILE_DIFF_BYTES + "}") int maxFileDiffBytes,
@@ -134,6 +147,8 @@ public class DeimosAnalysisService {
             @Value("${" + FINAL_STATE_RESERVED_BYTES_PROPERTY + ":" + DEFAULT_FINAL_STATE_RESERVED_BYTES + "}") int finalStateReservedBytes) {
         this.programmingSubmissionRepository = programmingSubmissionRepository;
         this.studentParticipationRepository = studentParticipationRepository;
+        this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
+        this.programmingExerciseRepository = programmingExerciseRepository;
         this.deimosLlmClient = deimosLlmClient;
         this.deimosPromptTemplateService = deimosPromptTemplateService;
         this.deimosSnapshotReader = deimosSnapshotReader;
@@ -287,7 +302,7 @@ public class DeimosAnalysisService {
             @Nullable DeimosFailureType failureType, ParticipationEvidence evidence) {
         List<DeimosOmission> reportedOmissions = evidence.omissions.stream().limit(MAX_REPORTED_OMISSIONS_PER_PARTICIPATION).map(RecordedOmission::toDisplay).toList();
         return new ParticipationAnalysis(participationId, exerciseId, verdict, response != null ? response.malicious() : null, response != null ? response.rationale() : null,
-                failureType, List.copyOf(evidence.reportedFindings), evidence.findingKeys.size(), reportedOmissions, evidence.omissions.size());
+                failureType, List.copyOf(evidence.reportedFindings), evidence.findingKeys.size(), evidence.findingCountCapped, reportedOmissions, evidence.omissions.size());
     }
 
     /**
@@ -340,9 +355,17 @@ public class DeimosAnalysisService {
     private static final class ParticipationEvidence {
 
         /**
-         * Keys of all distinct findings, so a marker that persists through later snapshots is counted once.
+         * SHA-256 digests of the keys of the distinct findings, so a marker that persists through later snapshots is
+         * counted once. Digests rather than the keys themselves, since a key holds the whole marker line, and at most
+         * {@link #MAX_TRACKED_FINDINGS_PER_PARTICIPATION} of them, so neither long lines nor many of them can exhaust
+         * the heap.
          */
         private final Set<String> findingKeys = new HashSet<>();
+
+        /**
+         * Whether further distinct findings occurred after {@link #findingKeys} was full, so its size is a lower bound.
+         */
+        private boolean findingCountCapped;
 
         private final List<DeimosManipulationFinding> reportedFindings = new ArrayList<>();
 
@@ -355,7 +378,16 @@ public class DeimosAnalysisService {
         private boolean sentinelSeen;
 
         void addFinding(String key, DeimosManipulationFinding finding) {
-            if (findingKeys.add(key) && reportedFindings.size() < MAX_REPORTED_FINDINGS_PER_PARTICIPATION) {
+            String digest = DigestUtils.sha256Hex(key);
+            if (findingKeys.contains(digest)) {
+                return;
+            }
+            if (findingKeys.size() >= MAX_TRACKED_FINDINGS_PER_PARTICIPATION) {
+                findingCountCapped = true;
+                return;
+            }
+            findingKeys.add(digest);
+            if (reportedFindings.size() < MAX_REPORTED_FINDINGS_PER_PARTICIPATION) {
                 reportedFindings.add(finding);
             }
         }
@@ -440,12 +472,7 @@ public class DeimosAnalysisService {
         }
 
         try (Repository repository = bareGitRepositoryService.getBareRepository(participation.getVcsRepositoryUri(), false)) {
-            String setupCommitHash = bareGitRepositoryService.getFirstCommitWithMessage(repository, SET_UP_TEMPLATE_FOR_EXERCISE);
-            if (setupCommitHash == null) {
-                log.warn("No setup commit found for participation {}, falling back to empty template", participationId);
-            }
-
-            TextSnapshot template = setupCommitHash != null ? readSnapshot(repository, setupCommitHash) : new TextSnapshot(Map.of(), Map.of());
+            TextSnapshot template = readTemplate(participation.getProgrammingExercise().getId());
             var history = new HistoryAccumulator(participationId, repository, template, new MarkerScan(participationId, template, sentinel, evidence), evidence);
             for (ProgrammingSubmission submission : submissions) {
                 history.add(submission);
@@ -457,6 +484,44 @@ public class DeimosAnalysisService {
         }
         catch (Exception ex) {
             throw new DeimosSnapshotHistoryException("Could not build snapshot history for participation " + participationId, ex);
+        }
+    }
+
+    /**
+     * Reads the baseline of the analysis: the current state of the exercise's template repository on the exercise branch.
+     * <p>
+     * Taken from the template repository rather than from the setup commit in the participation repository, because the
+     * student controls that history: a merged or pushed older commit carrying the setup message would otherwise decide
+     * which content counts as the instructor's, hiding unchanged files from the diffs and their markers from the scan.
+     * Without a readable template the analysis fails, since an empty baseline would attribute the template to the student.
+     *
+     * @param exerciseId the exercise the participation belongs to
+     * @return the text files of the template and all its other entries
+     * @throws DeimosSnapshotHistoryException if the template repository, its branch or its commit cannot be read
+     */
+    private TextSnapshot readTemplate(long exerciseId) {
+        var templateParticipation = templateProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(exerciseId)
+                .orElseThrow(() -> new DeimosSnapshotHistoryException("Exercise " + exerciseId + " has no template participation"));
+        if (templateParticipation.getVcsRepositoryUri() == null) {
+            throw new DeimosSnapshotHistoryException("The template participation of exercise " + exerciseId + " has no repository URI");
+        }
+        String branch = programmingExerciseRepository.findBranchByExerciseId(exerciseId);
+        if (branch == null || branch.isBlank()) {
+            throw new DeimosSnapshotHistoryException("Exercise " + exerciseId + " has no branch");
+        }
+        try (Repository templateRepository = bareGitRepositoryService.getBareRepository(templateParticipation.getVcsRepositoryUri(), false)) {
+            // Resolved once, so the whole analysis reads one immutable commit even if the instructor pushes meanwhile.
+            ObjectId templateCommit = templateRepository.resolve("refs/heads/" + branch + "^{commit}");
+            if (templateCommit == null) {
+                throw new DeimosSnapshotHistoryException("Could not resolve branch " + branch + " in the template repository of exercise " + exerciseId);
+            }
+            return readSnapshot(templateRepository, templateCommit.getName());
+        }
+        catch (DeimosSnapshotHistoryException ex) {
+            throw ex;
+        }
+        catch (Exception ex) {
+            throw new DeimosSnapshotHistoryException("Could not read the template repository of exercise " + exerciseId, ex);
         }
     }
 
@@ -610,8 +675,9 @@ public class DeimosAnalysisService {
      * <p>
      * Only files whose content changed against the previous snapshot are scanned, so each content is scanned once. A
      * marker line that already occurs in the exercise template's version of the same file is the instructor's, for
-     * example in an exercise about prompt injection, and is not attributed to the student. File paths are scanned as
-     * well, because they reach the prompt through the diff headers.
+     * example in an exercise about prompt injection, and is not attributed to the student, as often as the template
+     * contains it: every further copy is the student's. File paths are scanned as well, because they reach the prompt
+     * through the diff headers.
      */
     private static final class MarkerScan {
 
@@ -627,9 +693,9 @@ public class DeimosAnalysisService {
         private final ParticipationEvidence evidence;
 
         /**
-         * The marker lines per template file, computed once per file.
+         * How often each marker line occurs per template file, computed once per file.
          */
-        private final Map<String, Set<String>> templateMarkerLines = new HashMap<>();
+        private final Map<String, Map<String, Integer>> templateMarkerLines = new HashMap<>();
 
         private MarkerScan(long participationId, TextSnapshot template, String sentinel, ParticipationEvidence evidence) {
             this.participationId = participationId;
@@ -670,9 +736,12 @@ public class DeimosAnalysisService {
 
         private void scanTextFile(String path, String content, String snapshotLabel) {
             scanPath(path, snapshotLabel);
-            Set<String> markerLinesInTemplate = templateMarkerLines.computeIfAbsent(path, this::markerLinesOfTemplateFile);
+            Map<String, Integer> markerLinesInTemplate = templateMarkerLines.computeIfAbsent(path, this::markerLinesOfTemplateFile);
+            // Counted only for the lines the template contains, so this map never holds more than the template's lines.
+            Map<String, Integer> inheritedOccurrences = new HashMap<>();
             DeimosFenceMarkers.forEachMarkerLine(content, (lineNumber, line) -> {
-                if (!markerLinesInTemplate.contains(line)) {
+                Integer occurrencesInTemplate = markerLinesInTemplate.get(line);
+                if (occurrencesInTemplate == null || inheritedOccurrences.merge(line, 1, Integer::sum) > occurrencesInTemplate) {
                     evidence.addFinding("line\0" + path + "\0" + line, new DeimosManipulationFinding(displayPath(path), lineNumber, snapshotLabel));
                 }
             });
@@ -685,13 +754,13 @@ public class DeimosAnalysisService {
             }
         }
 
-        private Set<String> markerLinesOfTemplateFile(String path) {
+        private Map<String, Integer> markerLinesOfTemplateFile(String path) {
             String templateContent = template.textFiles().get(path);
-            Set<String> lines = new HashSet<>();
+            Map<String, Integer> occurrences = new HashMap<>();
             if (templateContent != null) {
-                DeimosFenceMarkers.forEachMarkerLine(templateContent, (lineNumber, line) -> lines.add(line));
+                DeimosFenceMarkers.forEachMarkerLine(templateContent, (lineNumber, line) -> occurrences.merge(line, 1, Integer::sum));
             }
-            return lines;
+            return occurrences;
         }
     }
 
@@ -739,7 +808,7 @@ public class DeimosAnalysisService {
     private TextSnapshot readSnapshot(Repository repository, String commitHash) {
         try {
             if (repository.resolve(commitHash) == null) {
-                throw new DeimosSnapshotHistoryException("Could not resolve commit " + commitHash + " in the participation repository");
+                throw new DeimosSnapshotHistoryException("Could not resolve commit " + commitHash + " in the repository");
             }
             return deimosSnapshotReader.read(repository, commitHash);
         }
@@ -747,7 +816,7 @@ public class DeimosAnalysisService {
             throw ex;
         }
         catch (Exception ex) {
-            throw new DeimosSnapshotHistoryException("Could not read commit " + commitHash + " from the participation repository", ex);
+            throw new DeimosSnapshotHistoryException("Could not read commit " + commitHash + " from the repository", ex);
         }
     }
 

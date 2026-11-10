@@ -82,8 +82,10 @@
                         <span th:if="${finding.lineNumber == null}"
                               th:text="#{email.deimos.analysisComplete.findingInPath(${finding.filePath}, ${finding.snapshot})}">File path, snapshot</span>
                     </li>
-                    <li th:if="${link.findingCount > link.findings.size()}"
+                    <li th:if="${link.findingCount > link.findings.size() and !link.findingCountCapped}"
                         th:text="#{email.deimos.analysisComplete.moreFindings(${link.findingCount - link.findings.size()})}">... and more</li>
+                    <li th:if="${link.findingCountCapped}"
+                        th:text="#{email.deimos.analysisComplete.moreFindingsAtLeast(${link.findingCount - link.findings.size()})}">... and at least that many more</li>
                 </ul>
                 <p th:if="${link.llmMalicious != null and link.llmMalicious}" th:text="#{email.deimos.analysisComplete.llmAssessmentMalicious}">The model also classified it as malicious:</p>
                 <p th:if="${link.llmMalicious != null and !link.llmMalicious}" th:text="#{email.deimos.analysisComplete.llmAssessmentBenign}">The model classified it as benign:</p>

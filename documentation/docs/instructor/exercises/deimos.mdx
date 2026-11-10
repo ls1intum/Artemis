@@ -69,9 +69,9 @@ unified diffs:
 
 1. A diff of the first snapshot against the **exercise template**, followed by a diff between each pair of
    consecutive snapshots, in chronological order. The template is the baseline, so the first section shows everything
-   the student added to the given starting point. If the template commit cannot be located in the repository, an
-   empty baseline is used instead, for this section and for the cumulative diff below. Everything in the first
-   snapshot is then treated as newly added, subject to the size bounds below.
+   the student added to the given starting point. Deimos reads it from the template repository of the exercise, as it
+   is at the time of the analysis, and never from the student's repository, whose history the student controls. If
+   the template repository cannot be read, the participation fails with *Repository could not be read*.
 2. A cumulative diff of the final state against the exercise template. It is usually present, and it is what lets the
    model see where the participation ended up even when intermediate snapshots were dropped. It is left out in two
    cases: when the final state does not differ from the template at all, and when it would exactly repeat a single
@@ -92,7 +92,13 @@ imitates the markers separating student code from the instructions to the model,
 `---END UNTRUSTED DATA ...---`. Case, spacing and the identifier do not matter, and text around the marker, for
 example a comment sign, does not hide it. The check covers files that the size limits below keep from the model, so
 padding a submission does not hide a forged marker from it. A marker that the exercise template already contains is
-not attributed to the student. A hit is reported as a *manipulation attempt*.
+not attributed to the student, as often as the same file of the template contains it: every further copy counts. A
+hit is reported as a *manipulation attempt*.
+
+Because the baseline is the current template, changing the template after students have started affects their
+analysis. The changes you made appear in the diffs as if the student had made them in reverse, and take up part of
+the size limits below. A marker line you remove from the template counts as a finding for every student who still has
+it, and a marker line you add is no longer attributed to a student who wrote the same line.
 
 ### Snapshots are not commits
 
@@ -116,14 +122,16 @@ administrator can change these bounds; the defaults are:
 Omissions caused by these budgets are marked explicitly in the data the model receives, and the reservation for the
 final state exists so that exhausting the budget cannot leave the model judging only the earliest part of a long
 history. Still, a participation with a very large repository is analysed less completely than a small one. When the
-model finds such a participation benign, the completion email reports it as *incompletely checked* instead, with the
-reason, the file and the snapshot of each omission, so you know which parts nobody has looked at.
+model finds such a participation benign, the completion email reports it as *incompletely checked* instead, so you
+know which parts nobody has looked at. It lists up to ten omissions with their reason, the file where a single file is
+affected, and the snapshot, or *final state* for the cumulative diff. Omissions beyond the first ten are counted.
 
 A submission with a blank commit hash cannot be read. It is marked in the data the model receives and makes an
 otherwise benign participation *incompletely checked* as well. Submissions that carry no commit hash at all are excluded before the
 history is even built and leave no trace. Both are rare, and they are distinct from a hash that exists but cannot be
-resolved in the repository: that case is not silent, it makes the whole participation fail with *Repository could not
-be read*.
+resolved in the repository. That case is not silent: if no marker was found earlier, the participation fails with
+*Repository could not be read*. Otherwise, it is reported as a *manipulation attempt*, with the repository error as
+additional information.
 
 ## What Deimos does not see
 

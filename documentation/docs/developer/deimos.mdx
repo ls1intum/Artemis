@@ -113,8 +113,13 @@ walking the git graph. Consequences worth knowing:
   file mode alone is not recorded. Deleted entries leave nothing to examine. These omissions are recorded before any
   budget decision, so a dropped snapshot section keeps them. The payload gets one notice with their number but no
   paths, because the names are the student's.
-- The baseline is the exercise template, resolved from the setup commit. If that commit cannot be found, an empty
-  baseline is used and everything counts as added.
+- The baseline is the head of the exercise branch in the template repository, resolved once to a single commit per
+  participation. It is deliberately not the setup commit of the participation repository: that history is the
+  student's, and `getFirstCommitWithMessage` would accept an older commit with the setup message from a merged
+  history or another branch, which would then hide its files from the diffs and its markers from the scan. A missing
+  template participation, branch or commit throws `DeimosSnapshotHistoryException` rather than falling back to an
+  empty baseline, which would attribute the whole template to the student. The cost is that a template changed after
+  a student started differs from that student's starting point.
 
 Diffs are real unified diffs built with JGit in memory, under four configurable byte budgets. The defaults live in
 `DeimosLimits` and every `@Value` fallback refers to them; `application.yml` repeats them, and `DeimosLimitsTest`
@@ -182,7 +187,9 @@ forged marker out of sight of this check, even when it pushes it out of the payl
 included), anywhere in a line and with any identifier. It must stay linear in the input: the fixed `-{3}` prefix and
 the possessive quantifiers mean a long run of hyphens or whitespace is scanned once, and the scan reuses one matcher
 with its region set to each line. Marker lines that the template's version of the same file already contains are not
-attributed to the student, and findings are deduplicated by file and line text.
+attributed to the student, as often as the template contains them, and findings are deduplicated by file and line text.
+Only a SHA-256 digest of each finding's key is retained, for at most `MAX_TRACKED_FINDINGS_PER_PARTICIPATION`
+distinct findings; beyond that, the verdict is unchanged and the email reports the count as a lower bound.
 
 The findings live in a per-participation `ParticipationEvidence` owned by `analyze`, so they survive a snapshot that
 fails later or a failed model call. If the random sentinel itself shows up in student content, which would mean it
@@ -217,6 +224,10 @@ nothing in a sequence of objects says which one is final, and taking the first c
 as benign. Verdicts that differ in `malicious` are rejected across tiers as well, because a fence does not mark the
 final answer either: a fenced object may be a quoted example followed by the actual answer. A classification stated
 outside a recoverable object counts too, so prose with an unmatched brace or quote cannot hide a later verdict.
+Quotes only delimit strings inside an object, and an opening brace that is never closed is treated as prose: the text
+after it is scanned again, so a verdict following it is still recovered. After `MAX_UNMATCHED_BRACE_RECOVERIES` such
+braces the response is rejected as `LLM_UNPARSEABLE`, which bounds the work and keeps a differing verdict from hiding
+in the part that was not scanned.
 
 ## Failure taxonomy
 

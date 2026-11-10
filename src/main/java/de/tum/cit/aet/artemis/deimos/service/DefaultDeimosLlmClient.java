@@ -66,6 +66,12 @@ public class DefaultDeimosLlmClient implements DeimosLlmClient {
     private static final String MALICIOUS_FIELD = "malicious";
 
     /**
+     * How often an opening brace that is never closed is treated as prose and the text after it scanned again. Each
+     * recovery is one linear pass, so this bounds the work a response full of unmatched braces can cause.
+     */
+    private static final int MAX_UNMATCHED_BRACE_RECOVERIES = 8;
+
+    /**
      * A classification stated anywhere in the response, also where no object can be recovered: prose with an unmatched
      * brace or quote derails the balanced-object scan, and must not hide a later contradicting verdict. Each character of
      * the key may be written literally or as a JSON Unicode escape.
@@ -137,14 +143,20 @@ public class DefaultDeimosLlmClient implements DeimosLlmClient {
      * participation as benign. Verdicts with differing classifications are rejected across tiers as well, because a
      * fence does not mark the final answer either: a fenced object may be a quoted example followed by the actual
      * answer. Classifications stated outside a recoverable object count as well. The response is then counted as
-     * {@code LLM_UNPARSEABLE} and can be re-run, rather than silently resolved in the dangerous direction.
+     * {@code LLM_UNPARSEABLE} and can be re-run, rather than silently resolved in the dangerous direction. So is a
+     * response whose balanced objects could not all be found, since a differing verdict could hide among the rest.
      *
      * @param content the raw assistant response
      * @return the parsed verdict, or empty if no tier yielded exactly one valid verdict or the classifications differ
      */
     static Optional<DeimosLlmResponse> parseVerdict(String content) {
+        List<String> balancedObjects = balancedJsonObjects(content);
+        if (balancedObjects == null) {
+            log.warn("LLM response contained more than {} unmatched opening braces, rejecting it as unparseable", MAX_UNMATCHED_BRACE_RECOVERIES);
+            return Optional.empty();
+        }
         List<Set<DeimosLlmResponse>> verdictsPerTier = new ArrayList<>();
-        for (List<String> tier : candidateTiers(content)) {
+        for (List<String> tier : candidateTiers(content, balancedObjects)) {
             var distinctVerdicts = new LinkedHashSet<DeimosLlmResponse>();
             for (String candidate : tier) {
                 tryParse(candidate).ifPresent(distinctVerdicts::add);
@@ -169,51 +181,68 @@ public class DefaultDeimosLlmClient implements DeimosLlmClient {
         return Optional.empty();
     }
 
-    private static List<List<String>> candidateTiers(String content) {
+    private static List<List<String>> candidateTiers(String content, List<String> balancedObjects) {
         List<String> fencedBlocks = new ArrayList<>();
         Matcher fencedMatcher = FENCED_BLOCK_PATTERN.matcher(content);
         while (fencedMatcher.find()) {
             fencedBlocks.add(fencedMatcher.group(1).strip());
         }
 
-        return List.of(List.of(content.strip()), fencedBlocks, balancedJsonObjects(content));
+        return List.of(List.of(content.strip()), fencedBlocks, balancedObjects);
     }
 
     /**
      * Finds balanced top-level JSON objects in arbitrary text.
      * <p>
      * String- and escape-aware: braces inside a string value (a rationale quoting the student's code, for instance)
-     * must not change the nesting depth, otherwise the scanner would cut the object short.
+     * must not change the nesting depth, otherwise the scanner would cut the object short. Quotes only delimit strings
+     * inside an object, so a stray quote in the prose around it cannot swallow the rest of the text.
+     * <p>
+     * An opening brace that is never closed is prose as well, for example in a sentence before the answer. Its object is
+     * dropped and the text after the brace is scanned again, keeping the objects found before it, so a later verdict is
+     * still found.
      *
      * @param text the text to scan
-     * @return every balanced top-level object found, in order of appearance
+     * @return every balanced top-level object found, in order of appearance, or {@code null} if the text contains more
+     *         than {@link #MAX_UNMATCHED_BRACE_RECOVERIES} unmatched opening braces, so not all objects could be found
      */
-    private static List<String> balancedJsonObjects(String text) {
+    private static @Nullable List<String> balancedJsonObjects(String text) {
         List<String> objects = new ArrayList<>();
         int depth = 0;
         int start = -1;
+        int recoveries = 0;
 
         int i = 0;
-        while (i < text.length()) {
-            char currentChar = text.charAt(i);
-            if (currentChar == '"') {
-                i = endOfString(text, i);
-            }
-            else if (currentChar == '{') {
-                if (depth == 0) {
-                    start = i;
+        while (true) {
+            while (i < text.length()) {
+                char currentChar = text.charAt(i);
+                if (currentChar == '"' && depth > 0) {
+                    i = endOfString(text, i);
                 }
-                depth++;
-            }
-            else if (currentChar == '}' && depth > 0) {
-                depth--;
-                if (depth == 0) {
-                    objects.add(text.substring(start, i + 1));
+                else if (currentChar == '{') {
+                    if (depth == 0) {
+                        start = i;
+                    }
+                    depth++;
                 }
+                else if (currentChar == '}' && depth > 0) {
+                    depth--;
+                    if (depth == 0) {
+                        objects.add(text.substring(start, i + 1));
+                    }
+                }
+                i++;
             }
-            i++;
+            if (depth == 0) {
+                return objects;
+            }
+            if (recoveries == MAX_UNMATCHED_BRACE_RECOVERIES) {
+                return null;
+            }
+            recoveries++;
+            depth = 0;
+            i = start + 1;
         }
-        return objects;
     }
 
     /**

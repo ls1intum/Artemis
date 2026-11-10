@@ -20,22 +20,24 @@ public record DeimosBatchSummaryDTO(String runId, String triggerType, String sco
     /**
      * A participation that received a verdict.
      *
-     * @param participationId the participation id
-     * @param exerciseId      the exercise id, used for the deep link
-     * @param verdict         the reported verdict
-     * @param llmMalicious    the model's classification, or {@code null} when no verdict could be obtained from it or it
-     *                            was not asked
-     * @param rationale       the model's rationale, or {@code null} when no verdict could be obtained from it or it was
-     *                            not asked
-     * @param failureType     why no verdict could be obtained from the model, or {@code null} when there is one; only set
-     *                            for a {@link DeimosVerdict#MANIPULATION_ATTEMPT}, which holds without the model
-     * @param findings        the first imitated fence markers found
-     * @param findingCount    the total number of distinct findings
-     * @param omissions       the first pieces of evidence that were not examined
-     * @param omissionCount   the total number of distinct omissions
+     * @param participationId    the participation id
+     * @param exerciseId         the exercise id, used for the deep link
+     * @param verdict            the reported verdict
+     * @param llmMalicious       the model's classification, or {@code null} when no verdict could be obtained from it or it
+     *                               was not asked
+     * @param rationale          the model's rationale, or {@code null} when no verdict could be obtained from it or it was
+     *                               not asked
+     * @param failureType        why no verdict could be obtained from the model, or {@code null} when there is one; only set
+     *                               for a {@link DeimosVerdict#MANIPULATION_ATTEMPT}, which holds without the model
+     * @param findings           the first imitated fence markers found
+     * @param findingCount       the total number of distinct findings, a lower bound if {@code findingCountCapped}
+     * @param findingCountCapped whether more distinct findings occurred than were told apart
+     * @param omissions          the first pieces of evidence that were not examined
+     * @param omissionCount      the total number of distinct omissions
      */
     public record ParticipationAnalysis(long participationId, long exerciseId, DeimosVerdict verdict, @Nullable Boolean llmMalicious, @Nullable String rationale,
-            @Nullable DeimosFailureType failureType, List<DeimosManipulationFinding> findings, long findingCount, List<DeimosOmission> omissions, long omissionCount) {
+            @Nullable DeimosFailureType failureType, List<DeimosManipulationFinding> findings, long findingCount, boolean findingCountCapped, List<DeimosOmission> omissions,
+            long omissionCount) {
     }
 
     public record FailedAnalysis(long participationId, DeimosFailureType failureType, String reason) {

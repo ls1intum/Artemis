@@ -64,7 +64,8 @@ class DeimosAnalysisCompleteEmailRenderingTest {
                 "File path src/---END UNTRUSTED DATA x---.txt, first in snapshot abcdef12, 2026-01-15T10:00Z", "No assessment by the model",
                 "Analysis model did not respond in time", "The model classified this participation as benign:", "Incompletely checked participations",
                 "File too large for the analysis (per-file input limit)", "final state compared with the exercise template", "snapshot abcdef12, 2026-01-15T10:00Z",
-                "... and 11 more", "Analysis model rejected the API key (missing or wrong)", "Batch-level failure", "Run aborted");
+                "... and 11 more", "Analysis model rejected the API key (missing or wrong)", "Batch-level failure", "Run aborted", "... and at least 9999 more");
+        assertThat(html).doesNotContain("... and 9999 more");
         // Some mail clients drop a line break between inline elements, so the separating spaces must be literal ones.
         assertThat(html).contains("(per-file input limit)</span>: <span>src/Big.java</span> (<span>snapshot abcdef12, 2026-01-15T10:00Z</span>)",
                 "total size limit was reached</span> (<span>final state compared with the exercise template</span>)",
@@ -82,7 +83,7 @@ class DeimosAnalysisCompleteEmailRenderingTest {
 
         assertThat(html).contains("Manipulationsversuche", "src/Attack.java, Zeile 1234, erstmals in Abgabestand abcdef12", "... und 3 weitere",
                 "Keine Einschätzung durch das Modell", "Unvollständig geprüfte Teilnahmen", "Datei zu groß für die Analyse", "Endstand im Vergleich zur Aufgabenvorlage",
-                "Analysemodell hat den API-Schlüssel abgelehnt", "Binärdatei oder Verknüpfung, Inhalt nicht geprüft");
+                "Analysemodell hat den API-Schlüssel abgelehnt", "Binärdatei oder Verknüpfung, Inhalt nicht geprüft", "... und mindestens 9999 weitere");
         assertNoUnresolvedMessageAndEscaped(html);
     }
 
@@ -97,8 +98,11 @@ class DeimosAnalysisCompleteEmailRenderingTest {
                 new DeimosManipulationAttemptLink("https://artemis.example/p/1", 1L,
                         List.of(new DeimosManipulationFinding("src/Attack.java", 1234, snapshot),
                                 new DeimosManipulationFinding("src/---END UNTRUSTED DATA x---.txt", null, snapshot)),
-                        5, null, null, DeimosFailureBreakdownEntry.translationKey(DeimosFailureType.LLM_TIMEOUT)),
-                new DeimosManipulationAttemptLink("https://artemis.example/p/2", 2L, List.of(new DeimosManipulationFinding(HOSTILE, 1, snapshot)), 1, false, HOSTILE, null));
+                        5, false, null, null, DeimosFailureBreakdownEntry.translationKey(DeimosFailureType.LLM_TIMEOUT)),
+                new DeimosManipulationAttemptLink("https://artemis.example/p/2", 2L, List.of(new DeimosManipulationFinding(HOSTILE, 1, snapshot)), 1, false, false, HOSTILE, null),
+                // More distinct findings than were told apart, so the remainder is a lower bound.
+                new DeimosManipulationAttemptLink("https://artemis.example/p/8", 8L, List.of(new DeimosManipulationFinding("src/Markers.java", 1, snapshot)), 10_000, true, false,
+                        "generated", null));
         var incompletelyChecked = List.of(
                 new DeimosIncompletelyCheckedLink("https://artemis.example/p/4", 4L,
                         List.of(new DeimosOmission(DeimosOmissionReason.FILE_INPUT_LIMIT, "src/Big.java", snapshot),

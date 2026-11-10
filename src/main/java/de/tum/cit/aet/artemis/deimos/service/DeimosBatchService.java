@@ -227,7 +227,8 @@ public class DeimosBatchService {
                             : null;
                     String llmRationale = participationAnalysis.rationale() != null ? rationale : null;
                     manipulationAttemptLinks.add(new DeimosManipulationAttemptLink(participationUrl, participationAnalysis.participationId(), participationAnalysis.findings(),
-                            participationAnalysis.findingCount(), participationAnalysis.llmMalicious(), llmRationale, failureTranslationKey));
+                            participationAnalysis.findingCount(), participationAnalysis.findingCountCapped(), participationAnalysis.llmMalicious(), llmRationale,
+                            failureTranslationKey));
                 }
                 case MALICIOUS -> maliciousParticipationLinks.add(new DeimosMaliciousParticipationLink(participationUrl, participationAnalysis.participationId(), rationale));
                 case INCOMPLETELY_CHECKED -> incompletelyCheckedLinks.add(new DeimosIncompletelyCheckedLink(participationUrl, participationAnalysis.participationId(),
