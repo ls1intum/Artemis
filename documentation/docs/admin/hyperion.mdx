@@ -251,6 +251,8 @@ The server checks this configuration at startup:
 
 Every generation and filter call is recorded in the LLM token usage tracking, so add the two models to `artemis.llm.model-costs` if you want their cost reported.
 
+Every server log line of the pool starts with `Quiz question pool`, so `grep "Quiz question pool"` shows its activity. A build logs one line when it starts (course, user, new questions, settings and models) and one when it ends (duration, and how many questions were generated, accepted, rejected, regenerated after a rejection, and failed, with the failure reasons such as `CALL_FAILED` or `NO_MATERIAL`). Refused builds, cancel requests, deletions and settings changes are logged with the user who made them; failed model calls and lecture units without usable material are logged as warnings.
+
 ## Verifying the integration
 
 1. Restart the Artemis server and confirm that `hyperion` appears in `activeModuleFeatures` on `/management/info`.
