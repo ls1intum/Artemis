@@ -64,8 +64,7 @@ describe('AboutIrisModalComponent', () => {
         expect(component).toBeTruthy();
     });
 
-    it('should expose faXmark and faShield icons', () => {
-        expect(component['faXmark']).toBeDefined();
+    it('should expose the privacy icon', () => {
         expect(component['faShield']).toBeDefined();
     });
 
@@ -85,7 +84,29 @@ describe('AboutIrisModalComponent', () => {
 
     it('should default to hidden and render nothing', () => {
         expect(component.visible()).toBe(false);
-        expect(document.querySelector('.about-iris-panel')).toBeNull();
+        expect(document.querySelector('.about-iris__body')).toBeNull();
+    });
+
+    it.each(['close button', 'Escape', 'backdrop'])('should dismiss with %s without resolving the chat service', async (action) => {
+        await open();
+        if (action === 'close button') {
+            document.querySelector<HTMLButtonElement>('.tumaet-ui-dialog-close')!.click();
+        } else if (action === 'Escape') {
+            document.body.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+        } else {
+            document.querySelector('.cdk-overlay-backdrop')!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+        }
+        await fixture.whenStable();
+        expect(component.visible()).toBe(false);
+        expect(document.querySelector('[role="dialog"]')).toBeNull();
+        expect(chatServiceResolutions).toBe(0);
+        expect(chatService.startFreshChat).not.toHaveBeenCalled();
+    });
+
+    it('should give the close button a translated accessible name', async () => {
+        await open();
+        const close = document.querySelector<HTMLButtonElement>('.tumaet-ui-dialog-close')!;
+        expect(close.getAttribute('aria-label')).toBe('artemisApp.iris.aboutIrisModal.close');
     });
 
     it('close() should hide the dialog without starting a fresh chat', async () => {
@@ -111,10 +132,7 @@ describe('AboutIrisModalComponent', () => {
         expect(chatServiceResolutions).toBe(1);
     });
 
-    it.each([
-        ['.close-btn', 'close'],
-        ['[data-testid="try-iris-button"]', 'tryIris'],
-    ] as const)('%s click should call %s()', async (selector, method) => {
+    it.each([['[data-testid="try-iris-button"]', 'tryIris']] as const)('%s click should call %s()', async (selector, method) => {
         await open();
         vi.spyOn(component, method);
         document.querySelector<HTMLElement>(selector)!.click();
@@ -125,7 +143,7 @@ describe('AboutIrisModalComponent', () => {
     it('should not offer the try button when hideTryButton is set', async () => {
         fixture.componentRef.setInput('hideTryButton', true);
         await open();
-        expect(document.querySelector('.about-iris-panel')).not.toBeNull();
+        expect(document.querySelector('.about-iris__body')).not.toBeNull();
         expect(document.querySelector('[data-testid="try-iris-button"]')).toBeNull();
     });
 

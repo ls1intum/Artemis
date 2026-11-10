@@ -1,19 +1,19 @@
-import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, input, output, viewChild } from '@angular/core';
 import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { ButtonSize, ButtonType, getTumAetUiButtonOptions } from 'app/shared-ui/components/buttons/button/button.component';
-import { faCircleNotch } from '@fortawesome/free-solid-svg-icons';
 import { IrisLogoSize } from 'app/iris/overview/iris-logo/iris-logo.component';
-import { TumAetUiButtonDirective, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 import { FeatureToggleDirective } from 'app/foundation/feature-toggle/feature-toggle.directive';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { IrisLogoComponent } from 'app/iris/overview/iris-logo/iris-logo.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
+let nextIrisLogoButtonId = 0;
+
 @Component({
     selector: 'jhi-iris-logo-button',
     templateUrl: './iris-logo-button.component.html',
-    imports: [TumAetUiButtonDirective, TumAetUiTooltipDirective, FeatureToggleDirective, FaIconComponent, IrisLogoComponent, TranslateDirective, ArtemisTranslatePipe],
+    imports: [TumAetUiButtonComponent, TumAetUiTooltipDirective, FeatureToggleDirective, IrisLogoComponent, TranslateDirective, ArtemisTranslatePipe],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class IrisLogoButtonComponent {
@@ -33,7 +33,8 @@ export class IrisLogoButtonComponent {
 
     protected readonly buttonOptions = computed(() => getTumAetUiButtonOptions(this.btnType(), this.btnSize()));
 
-    // Icons
-    faCircleNotch = faCircleNotch;
+    protected readonly tooltipId = `iris-logo-button-tooltip-${nextIrisLogoButtonId++}`;
+    protected readonly featureToggleControl = viewChild(FeatureToggleDirective);
+
     SMALL = IrisLogoSize.SMALL;
 }
