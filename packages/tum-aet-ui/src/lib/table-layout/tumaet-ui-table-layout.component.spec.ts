@@ -65,4 +65,23 @@ describe('TumAetUiTableLayoutComponent', () => {
 
         expect(layout.classList.contains('tumaet-ui-table-layout-fill')).toBe(true);
     });
+    it('is bounded by a block parent with a fixed height when filling, instead of growing with its rows', () => {
+        fixture.componentInstance.fill.set(true);
+        fixture.detectChanges();
+
+        const layout = query('tumaet-ui-table-layout')!;
+        const style = getComputedStyle(layout);
+
+        // Not a flex item here (the parent is a plain block), so `flex` has no effect: the frame needs its own height.
+        expect(style.height).toBe('100%');
+        expect(style.maxHeight).toBe('none');
+        expect(style.overflow).toBe('hidden');
+    });
+
+    it('caps its height to the free viewport height, never below a usable minimum, when it does not fill', () => {
+        const style = getComputedStyle(query('tumaet-ui-table-layout')!);
+
+        expect(style.maxHeight).toContain('14rem');
+        expect(style.maxHeight).toContain('--table-layout-offset');
+    });
 });

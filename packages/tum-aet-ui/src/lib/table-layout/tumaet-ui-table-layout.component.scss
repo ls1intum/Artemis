@@ -13,9 +13,11 @@
 }
 
 // A 0% basis is the content size while the parent's height is not definite (an auto-height dialog), so the frame never
-// collapses; under a parent with a real height it takes exactly the free space.
+// collapses; under a flex parent with a real height it takes exactly the free space, and under a plain block parent with
+// a real height `height: 100%` bounds it, so the body scrolls instead of the frame overflowing.
 :host(.tumaet-ui-table-layout-fill) {
     flex: 1 1 0%;
+    height: 100%;
     max-height: none;
 }
 
