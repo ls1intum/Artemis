@@ -229,7 +229,10 @@ describe('QuizQuestionPoolComponent', () => {
         expect(component.queueCollapsed()).toBe(false);
         expect(fixture.nativeElement.querySelector('[data-testid="pool-needs-review-queue"]')).not.toBeNull();
 
-        vi.spyOn(poolService, 'review').mockReturnValue(of({ ...flagged, reviewState: 'APPROVED' }));
+        vi.spyOn(poolService, 'review').mockImplementation(() => {
+            all[0] = { ...flagged, reviewState: 'APPROVED' };
+            return of(all[0]);
+        });
         component.review({ questionId: 1, reviewState: 'APPROVED' });
         fixture.detectChanges();
 
@@ -246,13 +249,29 @@ describe('QuizQuestionPoolComponent', () => {
 
     it('should count the pending flagged questions of the whole queue, not only the loaded ones', () => {
         const loaded = Array.from({ length: 20 }, (_, index) => ({ ...question(index + 1, 9, 'Arrays'), flagged: true }));
+        const approved = new Set<number>();
         setup({ isAtLeastEditor: true, isAtLeastInstructor: true });
-        vi.spyOn(poolService, 'getQuestions').mockImplementation((_courseId, query) => of(query.flagged ? { ...page(loaded, 40), pendingCount: 40 } : page(questions())));
+        vi.spyOn(poolService, 'getQuestions').mockImplementation((_courseId, query) =>
+            of(
+                query.flagged
+                    ? {
+                          ...page(
+                              loaded.map((item) => (approved.has(item.id) ? { ...item, reviewState: 'APPROVED' as const } : item)),
+                              40,
+                          ),
+                          pendingCount: 40 - approved.size,
+                      }
+                    : page(questions()),
+            ),
+        );
         component.refresh();
         expect(component.pendingInQueue()).toBe(40);
 
         for (const item of loaded) {
-            vi.spyOn(poolService, 'review').mockReturnValue(of({ ...item, reviewState: 'APPROVED' }));
+            vi.spyOn(poolService, 'review').mockImplementation(() => {
+                approved.add(item.id);
+                return of({ ...item, reviewState: 'APPROVED' });
+            });
             component.review({ questionId: item.id, reviewState: 'APPROVED' });
         }
 
@@ -260,6 +279,39 @@ describe('QuizQuestionPoolComponent', () => {
         expect(component.allFlaggedReviewed()).toBe(false);
         expect(component.queueCollapsed()).toBe(false);
         expect(component.remainingNeedsReview()).toBe(20);
+    });
+
+    it('should not count a decision twice when a queue response requested before it already includes it', () => {
+        const first = { ...question(1, 9, 'Arrays'), flagged: true };
+        const second = { ...question(2, 9, 'Arrays'), flagged: true };
+        setup({ isAtLeastEditor: true, isAtLeastInstructor: true });
+        let approved = false;
+        const delayedQueue = new Subject<PoolQuestionPage>();
+        let queueRequests = 0;
+        vi.spyOn(poolService, 'getQuestions').mockImplementation((_courseId, query) => {
+            if (!query.flagged) {
+                return of(page(questions()));
+            }
+            queueRequests++;
+            if (queueRequests === 2) {
+                return delayedQueue.asObservable();
+            }
+            return of({ ...page(approved ? [{ ...first, reviewState: 'APPROVED' as const }, second] : [first, second]), pendingCount: approved ? 1 : 2 });
+        });
+        component.refresh();
+        expect(component.pendingInQueue()).toBe(2);
+
+        component.refresh();
+        vi.spyOn(poolService, 'review').mockImplementation(() => {
+            approved = true;
+            return of({ ...first, reviewState: 'APPROVED' });
+        });
+        component.review({ questionId: 1, reviewState: 'APPROVED' });
+        delayedQueue.next({ ...page([{ ...first, reviewState: 'APPROVED' }, second]), pendingCount: 1 });
+
+        expect(component.pendingInQueue()).toBe(1);
+        expect(component.allFlaggedReviewed()).toBe(false);
+        expect(component.queueCollapsed()).toBe(false);
     });
 
     it('should reach the undecided questions behind a reviewed first page with Load more', () => {
@@ -355,6 +407,7 @@ describe('QuizQuestionPoolComponent', () => {
 
     it('should keep a decision taken while an appended queue page was loading in the pending count', () => {
         const all = Array.from({ length: 520 }, (_, index) => ({ ...question(index + 1, 9, 'Arrays'), flagged: true }));
+        let approvedCount = 0;
         setup({ isAtLeastEditor: true, isAtLeastInstructor: true });
         const appended = new Subject<PoolQuestionPage>();
         vi.spyOn(poolService, 'getQuestions').mockImplementation((_courseId, query) => {
@@ -364,14 +417,17 @@ describe('QuizQuestionPoolComponent', () => {
             if (query.page === 25) {
                 return appended.asObservable();
             }
-            return of({ ...page(all.slice(query.page * query.size, (query.page + 1) * query.size), 520), pendingCount: 520 });
+            return of({ ...page(all.slice(query.page * query.size, (query.page + 1) * query.size), 520), pendingCount: 520 - approvedCount });
         });
         component.refresh();
         while (component.needsReviewQuestions().length < 500) {
             component.loadMoreNeedsReview();
         }
         component.loadMoreNeedsReview();
-        vi.spyOn(poolService, 'review').mockReturnValue(of({ ...all[0], reviewState: 'APPROVED' }));
+        vi.spyOn(poolService, 'review').mockImplementation(() => {
+            approvedCount++;
+            return of({ ...all[0], reviewState: 'APPROVED' });
+        });
         component.review({ questionId: 1, reviewState: 'APPROVED' });
         expect(component.pendingInQueue()).toBe(519);
 

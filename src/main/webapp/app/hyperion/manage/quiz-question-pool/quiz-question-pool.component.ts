@@ -394,20 +394,17 @@ export class QuizQuestionPoolComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * The server's pending count, corrected for the changes made on the page after the request started, which the response cannot
-     * reflect yet.
+     * The server's pending count, unless a decision or deletion was made on the page after the request started: the response may or may
+     * not include it, so the page keeps its own count, which does, until a response requested afterwards arrives.
      */
     private pendingAfterNewerDecisions(page: PoolQuestionPage, requestedAt: number): number {
-        let pending = page.pendingCount ?? page.items.filter((question) => question.reviewState === 'PENDING').length;
-        for (const { at, change } of this.pendingChanges) {
-            if (at > requestedAt) {
-                pending += change;
-            }
+        if (this.pendingChanges.some(({ at }) => at > requestedAt)) {
+            return this.pendingInQueue();
         }
-        return Math.max(0, pending);
+        return Math.max(0, page.pendingCount ?? page.items.filter((question) => question.reviewState === 'PENDING').length);
     }
 
-    /** Changes the pending count by a decision or deletion made on the page and remembers when, for responses requested before it. */
+    /** Changes the pending count by a decision or deletion made on the page and remembers when, so responses requested before it keep the page's count. */
     private changePending(change: number, at: number): void {
         this.pendingChanges.push({ at, change });
         this.pendingInQueue.update((pending) => Math.max(0, pending + change));
