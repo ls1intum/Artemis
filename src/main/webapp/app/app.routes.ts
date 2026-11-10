@@ -187,16 +187,6 @@ const routes: Routes = [
                     pageTitle: 'register.title',
                 },
             },
-            {
-                path: 'settings',
-                pathMatch: 'full',
-                loadComponent: () => import('app/account/settings/settings.component').then((m) => m.SettingsComponent),
-                data: {
-                    authorities: IS_AT_LEAST_STUDENT,
-                    pageTitle: 'global.menu.account.settings',
-                },
-                canActivate: [UserRouteAccessService],
-            },
         ],
         data: {
             usesModuleBackground: true,
