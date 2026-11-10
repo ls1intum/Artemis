@@ -22,6 +22,7 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseLatestDueDateDTO;
+import de.tum.cit.aet.artemis.exercise.dto.ExerciseParticipationCountDTO;
 
 @Profile(PROFILE_CORE)
 @Lazy
@@ -48,6 +49,20 @@ public interface ParticipationRepository extends ArtemisJpaRepository<Participat
             WHERE p.exercise.id IN :exerciseIds
             """)
     long countByExerciseIds(@Param("exerciseIds") Collection<Long> exerciseIds);
+
+    /**
+     * Count the number of participations of every one of a set of exercises with a single query. Exercises without participations are not part of the result.
+     *
+     * @param exerciseIds the id of the exercises (e.g. all in an exam)
+     * @return the number of participations per exercise
+     */
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.exercise.dto.ExerciseParticipationCountDTO(p.exercise.id, COUNT(p))
+            FROM Participation p
+            WHERE p.exercise.id IN :exerciseIds
+            GROUP BY p.exercise.id
+            """)
+    List<ExerciseParticipationCountDTO> countByExerciseIdsGroupedByExercise(@Param("exerciseIds") Collection<Long> exerciseIds);
 
     /**
      * Count the number of participations for a given exercise.

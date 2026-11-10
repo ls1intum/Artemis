@@ -127,16 +127,17 @@ import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
 import de.tum.cit.aet.artemis.exam.service.ExamAccessService;
 import de.tum.cit.aet.artemis.exam.service.ExamDateService;
 import de.tum.cit.aet.artemis.exam.service.ExamDeletionService;
+import de.tum.cit.aet.artemis.exam.service.ExamDeletionSummaryService;
 import de.tum.cit.aet.artemis.exam.service.ExamImportService;
 import de.tum.cit.aet.artemis.exam.service.ExamLiveEventsService;
 import de.tum.cit.aet.artemis.exam.service.ExamRegistrationService;
 import de.tum.cit.aet.artemis.exam.service.ExamService;
 import de.tum.cit.aet.artemis.exam.service.ExamSessionService;
-import de.tum.cit.aet.artemis.exam.service.ExamUserService;
 import de.tum.cit.aet.artemis.exam.service.StudentExamService;
 import de.tum.cit.aet.artemis.exam.util.ExamDateUtil;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
+import de.tum.cit.aet.artemis.exercise.dto.EntityDeletionProgressDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseForPlagiarismCasesOverviewDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseGroupWithIdAndExamDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
@@ -184,6 +185,8 @@ public class ExamResource {
 
     private final ExamDeletionService examDeletionService;
 
+    private final ExamDeletionSummaryService examDeletionSummaryService;
+
     private final ExamDateService examDateService;
 
     private final ExamRegistrationService examRegistrationService;
@@ -216,8 +219,6 @@ public class ExamResource {
 
     private final StudentExamService studentExamService;
 
-    private final ExamUserService examUserService;
-
     private final Optional<AutomaticAfterDueDateService> automaticAfterDueDateService;
 
     private final Optional<SearchableEntityWeaviateService> searchableEntityWeaviateService;
@@ -227,13 +228,14 @@ public class ExamResource {
             AuthorizationCheckService authCheckService, ExamDateService examDateService, TutorParticipationRepository tutorParticipationRepository,
             AssessmentDashboardService assessmentDashboardService, ExamRegistrationService examRegistrationService, ExamImportService examImportService,
             CustomAuditEventRepository auditEventRepository, ChannelService channelService, ChannelRepository channelRepository, ExerciseRepository exerciseRepository,
-            ExamSessionService examSessionRepository, ExamLiveEventsService examLiveEventsService, StudentExamService studentExamService, ExamUserService examUserService,
+            ExamSessionService examSessionRepository, ExamLiveEventsService examLiveEventsService, StudentExamService studentExamService,
             Optional<AutomaticAfterDueDateService> automaticAfterDueDateService, Optional<SearchableEntityWeaviateService> searchableEntityWeaviateServiceOptional,
-            StudentParticipationRepository studentParticipationRepository) {
+            StudentParticipationRepository studentParticipationRepository, ExamDeletionSummaryService examDeletionSummaryService) {
         this.userRepository = userRepository;
         this.courseRepository = courseRepository;
         this.examService = examService;
         this.examDeletionService = examDeletionService;
+        this.examDeletionSummaryService = examDeletionSummaryService;
         this.submissionService = submissionService;
         this.examDateService = examDateService;
         this.examRegistrationService = examRegistrationService;
@@ -251,7 +253,6 @@ public class ExamResource {
         this.examSessionService = examSessionRepository;
         this.examLiveEventsService = examLiveEventsService;
         this.studentExamService = studentExamService;
-        this.examUserService = examUserService;
         this.automaticAfterDueDateService = automaticAfterDueDateService;
         this.searchableEntityWeaviateService = searchableEntityWeaviateServiceOptional;
         this.studentParticipationRepository = studentParticipationRepository;
@@ -1096,12 +1097,12 @@ public class ExamResource {
     }
 
     /**
-     * DELETE /courses/{courseId}/exams/{examId} : Delete the exam with the given id.
+     * DELETE /courses/{courseId}/exams/{examId} : Delete the exam with the given id in the background. The progress is sent over the websocket topic of the exam.
      * The delete operation cascades to all student exams, exercise group, exercises and their participations.
      *
      * @param courseId the course to which the exam belongs
      * @param examId   the id of the exam to delete
-     * @return the ResponseEntity with status 200 (OK)
+     * @return the ResponseEntity with status 202 (Accepted), or 409 (Conflict) if the exam, or one of its exercise groups, is already being deleted
      */
     @FeatureUsage(UserFeature.EXAM_ARCHIVE)
     @DeleteMapping("courses/{courseId}/exams/{examId}")
@@ -1110,15 +1111,12 @@ public class ExamResource {
     public ResponseEntity<Void> deleteExam(@PathVariable Long courseId, @PathVariable Long examId) {
         log.info("REST request to delete exam : {}", examId);
 
-        var exam = examRepository.findByIdWithExamUsersElseThrow(examId);
         examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
 
-        examDeletionService.delete(examId);
+        // The exam, its exercises and the signatures and images of the registered students are deleted in the background.
+        examDeletionService.startAsyncDeletion(courseId, examId, userRepository.getUser().getLogin());
 
-        // delete all exam user signatures and images
-        exam.getExamUsers().forEach(examUserService::deleteAvailableExamUserImages);
-
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, exam.getTitle())).build();
+        return ResponseEntity.accepted().build();
     }
 
     /**
@@ -1669,6 +1667,23 @@ public class ExamResource {
     public ResponseEntity<ExamDeletionSummaryDTO> getDeletionSummary(@PathVariable long courseId, @PathVariable long examId) {
         examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
         log.debug("REST request to get deletion summary for exam : {}", examId);
-        return ResponseEntity.ok(examDeletionService.getExamDeletionSummary(examId));
+        return ResponseEntity.ok(examDeletionSummaryService.getExamDeletionSummary(examId));
+    }
+
+    /**
+     * GET /courses/{courseId}/exams/{examId}/deletion-progress : Get the latest progress of the background deletion of the exam or of one of its exercise groups, for a client that
+     * opens the page while the deletion runs.
+     *
+     * @param courseId the id of the course
+     * @param examId   the id of the exam
+     * @return the ResponseEntity with status 200 (OK) and the progress, or 204 (No Content) if neither the exam nor one of its exercise groups is being deleted
+     */
+    @GetMapping("courses/{courseId}/exams/{examId}/deletion-progress")
+    @EnforceAtLeastStudent
+    @ManualConfig
+    public ResponseEntity<EntityDeletionProgressDTO> getDeletionProgress(@PathVariable long courseId, @PathVariable long examId) {
+        examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
+        log.debug("REST request to get the deletion progress of exam : {}", examId);
+        return examDeletionService.getDeletionProgress(examId).map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.noContent().build());
     }
 }
