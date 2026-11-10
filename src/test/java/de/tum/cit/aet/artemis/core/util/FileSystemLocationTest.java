@@ -17,8 +17,11 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.apache.commons.io.FileUtils;
+import org.jspecify.annotations.Nullable;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.ResourceLock;
 import org.yaml.snakeyaml.Yaml;
 
 import de.tum.cit.aet.artemis.core.FilePathType;
@@ -30,14 +33,28 @@ import de.tum.cit.aet.artemis.core.FilePathType;
  * change that makes one of these assertions fail is a change that makes the server stop finding files it wrote earlier.
  * The directory names are deliberately not the ones in the served URL, which is the whole point of separating the two.
  */
+@ResourceLock("FilePathConverter")
 class FileSystemLocationTest {
 
     private static Path rootPath;
 
+    @Nullable
+    private static Path originalFileUploadPath;
+
     @BeforeAll
     static void setup() {
+        originalFileUploadPath = FilePathConverter.getFileUploadPath();
         rootPath = readFileUploadPathFromConfig();
         FilePathConverter.setFileUploadPath(rootPath);
+    }
+
+    @AfterAll
+    static void restoreFileUploadPath() {
+        // The path is process-wide and the integration test base sets it once per JVM: put back what was there. A null means nothing had published it yet, and the base does that
+        // on its first use.
+        if (originalFileUploadPath != null) {
+            FilePathConverter.setFileUploadPath(originalFileUploadPath);
+        }
     }
 
     @SuppressWarnings("unchecked")
