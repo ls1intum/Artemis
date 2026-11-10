@@ -364,6 +364,7 @@
         "securityFrameworkPolicyNotRepairable": "Artemis cannot repair an invalid, too large or unreadable policy file automatically. Fix the file in the tests repository or deactivate the Security Framework.",
         "securityFrameworkVersionIncompatible": "Ares {{ version }} does not accept these parts of the security policy, so every test would fail: {{ details }}. Remove them or choose a newer version.",
         "securityFrameworkTestClassesNotAdded": "The test classes could not be added automatically, because the list of test classes in the policy is written in a form Artemis does not rewrite. Add them to the file yourself.",
+        "securityFrameworkPolicyFileIgnored": "The security policy file is ignored by Git, for example by an entry in .gitignore, so it would not be committed. Remove the entry and try again.",
         "sharingInfoMissing": "The sharing platform information is missing.",
         "problemStatementTooLong": "The problem statement must not exceed 100,000 characters.",
         "generationBriefRequired": "Enter a brief before generating an exercise without a problem statement.",

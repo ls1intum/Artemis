@@ -5,6 +5,8 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import java.io.IOException;
 import java.lang.module.ModuleDescriptor;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.ArrayList;
@@ -26,6 +28,7 @@ import java.util.function.Predicate;
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
+import org.eclipse.jgit.dircache.DirCache;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.FileMode;
 import org.eclipse.jgit.lib.ObjectId;
@@ -693,7 +696,9 @@ public class SecurityFrameworkService {
             String checkedOutHead = gitService.getLocalHeadHash(repository);
             rejectSymbolicLinks(exercise, repository);
             change.accept(repository);
-            if (gitService.stageAllChanges(repository)) {
+            boolean changed = gitService.stageAllChanges(repository);
+            requireStagedPolicyFiles(repository);
+            if (changed) {
                 String trailers = "\n\n" + ACTION_TRAILER + action + (process ? "\n" + COMMIT_TRAILER : "");
                 String commitHash = gitService.commitStagedChanges(repository, commitMessage + trailers, user);
                 if (process && localVCPushProcessingService.isPresent()) {
@@ -720,6 +725,24 @@ public class SecurityFrameworkService {
             }
             if (temporaryCheckout != null && !FileUtils.deleteQuietly(temporaryCheckout.toFile())) {
                 log.warn("Could not delete the temporary Security Framework checkout {}", temporaryCheckout);
+            }
+        }
+    }
+
+    /**
+     * Rejects a change whose policy files would not be part of the commit. Staging skips a file that Git ignores, for example through a {@code .gitignore}
+     * entry for {@code SecurityPolicy.yaml}: the checkout would then contain the policy and look configured, while the pushed tests reference a missing one.
+     *
+     * @throws BadRequestAlertException if a policy file the tests reference exists in the checkout but is not staged
+     */
+    private static void requireStagedPolicyFiles(Repository repository) throws IOException {
+        Path root = repository.getLocalPath();
+        DirCache index = repository.readDirCache();
+        for (SecurityFrameworkState.PolicyFile policyFile : SecurityPolicyRepositoryFiles.evaluate(root).policyFiles()) {
+            Optional<String> path = SecurityPolicyRepositoryFiles.validatePolicyPath(policyFile.policyPath());
+            if (path.isPresent() && Files.exists(root.resolve(path.get()), LinkOption.NOFOLLOW_LINKS) && index.findEntry(path.get()) < 0) {
+                throw new BadRequestAlertException("The policy file " + path.get() + " is ignored by Git, for example by an entry in .gitignore, so it would not be"
+                        + " committed. Remove the entry and try again.", ENTITY_NAME, "securityFrameworkPolicyFileIgnored");
             }
         }
     }

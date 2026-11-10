@@ -559,6 +559,22 @@ class SecurityFrameworkServiceTest {
     }
 
     @Test
+    void reactivationFailsIfGitIgnoresTheRestoredPolicyFile() throws Exception {
+        // The policy file is tracked, so ignoring it only matters once deactivation has removed it from Git.
+        pushCheckoutChange(
+                checkout -> FileUtils.writeStringToFile(checkout.resolve(".gitignore").toFile(), SecurityPolicyRepositoryFiles.POLICY_FILE_NAME + "\n", StandardCharsets.UTF_8));
+        ProgrammingExercise exercise = exercise(ProgrammingLanguage.JAVA);
+        securityFrameworkService.deactivate(exercise, user);
+        int commitsBefore = pushedCommitCount();
+
+        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> securityFrameworkService.activate(exercise, "2.2.1", user))
+                .matches(exception -> "securityFrameworkPolicyFileIgnored".equals(exception.getErrorKey()));
+        assertThat(pushedCommitCount()).isEqualTo(commitsBefore);
+        assertThat(readPushed(SecurityPolicyRepositoryFiles.POLICY_FILE_NAME)).isEmpty();
+        assertThat(securityFrameworkService.getConfig(exercise).status()).isEqualTo(SecurityActivationStatus.INACTIVE.name());
+    }
+
+    @Test
     void activationGeneratesADefaultPolicyIfTheRepositoryNeverHadOne() throws Exception {
         initRemote(false);
 
