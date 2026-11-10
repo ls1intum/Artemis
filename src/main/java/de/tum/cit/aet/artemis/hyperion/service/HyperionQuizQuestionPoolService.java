@@ -262,6 +262,7 @@ public class HyperionQuizQuestionPoolService {
         else {
             storeRelevance(courseId, lectureUnitId, false);
         }
+        log.info("Quiz question pool of course [{}]: {} {} lecture unit [{}]", courseId, currentUser(), excluded ? "excluded" : "included", lectureUnitId);
     }
 
     /** Stores whether the lecture unit is excluded and, when it is, deletes its questions that are not approved. */

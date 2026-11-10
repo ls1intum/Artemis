@@ -57,12 +57,14 @@ public class HyperionQuizQuestionPoolScheduleService {
 
     private final HyperionQuizQuestionPoolBuildService buildService;
 
+    private final HyperionQuizQuestionPoolModelService modelService;
+
     private final TaskExecutor executor;
 
     private final Duration window;
 
     public HyperionQuizQuestionPoolScheduleService(HyperionCourseSettingsRepository settingsRepository, CourseRepository courseRepository,
-            QuizQuestionPoolBuildRepository buildRepository, HyperionQuizQuestionPoolBuildService buildService,
+            QuizQuestionPoolBuildRepository buildRepository, HyperionQuizQuestionPoolBuildService buildService, HyperionQuizQuestionPoolModelService modelService,
             @Qualifier("hyperionQuizQuestionPoolTaskExecutor") TaskExecutor executor, @Value("${artemis.hyperion.quiz-pool.schedule-window-hours:7}") int windowHours) {
         if (windowHours < 1 || windowHours > 23) {
             throw new IllegalArgumentException("artemis.hyperion.quiz-pool.schedule-window-hours must be between 1 and 23, got " + windowHours);
@@ -71,6 +73,7 @@ public class HyperionQuizQuestionPoolScheduleService {
         this.courseRepository = courseRepository;
         this.buildRepository = buildRepository;
         this.buildService = buildService;
+        this.modelService = modelService;
         this.executor = executor;
         this.window = Duration.ofHours(windowHours);
     }
@@ -98,6 +101,10 @@ public class HyperionQuizQuestionPoolScheduleService {
      * @return the number of courses whose pool was built
      */
     int buildEnabledPools(ZonedDateTime now, ZonedDateTime deadline) {
+        if (!modelService.isConfigured()) {
+            log.warn("Scheduled quiz question pool build skipped: no model is configured for the pool");
+            return 0;
+        }
         List<Long> courseIds = coursesInBuildOrder();
         log.info("Scheduled quiz question pool build: {} courses enabled, window ends at {}", courseIds.size(), deadline);
         int built = 0;

@@ -721,7 +721,7 @@ class HyperionQuizQuestionPoolBuildServiceTest {
 
         assertThat(service.isRunning(5L)).isFalse();
         assertThat(build.getFinishedAt()).isNotNull();
-        assertThat(build.getFailure()).contains("AI chat client is not configured");
+        assertThat(build.getFailure()).contains("no local model configured");
         verify(buildRepository).save(build);
     }
 

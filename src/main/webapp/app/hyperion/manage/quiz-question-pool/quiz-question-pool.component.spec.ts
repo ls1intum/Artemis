@@ -1189,6 +1189,32 @@ describe('QuizQuestionPoolComponent', () => {
         expect(relevanceSpy).toHaveBeenLastCalledWith(1, 6, false);
     });
 
+    it('should not exclude a lecture unit of a course that is no longer shown when the confirmation is accepted', () => {
+        const params = new Subject<Record<string, string>>();
+        setup({ isAtLeastEditor: true, isAtLeastInstructor: true }, params.asObservable());
+        params.next({ courseId: '1' });
+        const relevanceSpy = vi.spyOn(poolService, 'updateLectureUnitRelevance').mockReturnValue(of(true));
+        const warningSpy = vi.spyOn(alertService, 'warning');
+        const confirmationService = fixture.debugElement.injector.get(TumAetUiConfirmationService);
+
+        component.toggleLectureUnit({
+            competencyId: 9,
+            competencyTitle: 'Arrays',
+            lectureUnitId: 4,
+            lectureUnitName: 'Arrays in Java',
+            excluded: false,
+            materialChanged: false,
+            questionCount: 12,
+            approvedCount: 0,
+        });
+        const confirmation = confirmationService.request(undefined)!;
+        params.next({ courseId: '2' });
+        confirmation.accept();
+
+        expect(relevanceSpy).not.toHaveBeenCalled();
+        expect(warningSpy).toHaveBeenCalledWith('artemisApp.hyperion.quizQuestionPool.courseChanged');
+    });
+
     it('should explain a refused exclusion while a build runs', () => {
         setup({ isAtLeastEditor: true, isAtLeastInstructor: true });
         vi.spyOn(poolService, 'updateLectureUnitRelevance').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 409 })));

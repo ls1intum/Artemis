@@ -647,8 +647,12 @@ export class QuizQuestionPoolComponent implements OnInit, OnDestroy {
      * @param unit the lecture unit
      */
     toggleLectureUnit(unit: PoolLectureUnit): void {
+        const courseId = this.courseId();
+        if (!courseId) {
+            return;
+        }
         if (unit.excluded) {
-            this.setLectureUnitExcluded(unit.lectureUnitId, false);
+            this.setLectureUnitExcluded(courseId, unit.lectureUnitId, false);
             return;
         }
         this.confirmationService.confirm({
@@ -659,13 +663,16 @@ export class QuizQuestionPoolComponent implements OnInit, OnDestroy {
             acceptSeverity: 'danger',
             rejectLabel: this.translateService.instant('artemisApp.hyperion.quizQuestionPool.settings.cancel'),
             rejectSeverity: 'secondary',
-            accept: () => this.setLectureUnitExcluded(unit.lectureUnitId, true),
+            accept: () => this.setLectureUnitExcluded(courseId, unit.lectureUnitId, true),
         });
     }
 
-    private setLectureUnitExcluded(lectureUnitId: number, excluded: boolean): void {
-        const courseId = this.courseId();
-        if (!courseId || this.busyLectureUnitIds().has(lectureUnitId)) {
+    private setLectureUnitExcluded(courseId: number, lectureUnitId: number, excluded: boolean): void {
+        if (!this.isCurrent(courseId)) {
+            this.alertService.warning('artemisApp.hyperion.quizQuestionPool.courseChanged');
+            return;
+        }
+        if (this.busyLectureUnitIds().has(lectureUnitId)) {
             return;
         }
         this.busyLectureUnitIds.update((ids) => new Set([...ids, lectureUnitId]));

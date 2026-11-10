@@ -49,6 +49,9 @@ class HyperionQuizQuestionPoolScheduleServiceTest {
     private HyperionQuizQuestionPoolBuildService buildService;
 
     @Mock
+    private HyperionQuizQuestionPoolModelService modelService;
+
+    @Mock
     private TaskExecutor executor;
 
     private HyperionQuizQuestionPoolScheduleService scheduler;
@@ -62,7 +65,8 @@ class HyperionQuizQuestionPoolScheduleServiceTest {
     @BeforeEach
     void setup() {
         mocks = MockitoAnnotations.openMocks(this);
-        scheduler = new HyperionQuizQuestionPoolScheduleService(settingsRepository, courseRepository, buildRepository, buildService, executor, 7);
+        when(modelService.isConfigured()).thenReturn(true);
+        scheduler = new HyperionQuizQuestionPoolScheduleService(settingsRepository, courseRepository, buildRepository, buildService, modelService, executor, 7);
     }
 
     @AfterEach
@@ -142,6 +146,18 @@ class HyperionQuizQuestionPoolScheduleServiceTest {
         order.verify(buildService).buildAndRelease(2L, null, 2L, "lease", openDeadline);
         order.verify(buildService).buildAndRelease(3L, null, 3L, "lease", openDeadline);
         order.verify(buildService).buildAndRelease(1L, null, 1L, "lease", openDeadline);
+    }
+
+    @Test
+    void buildEnabledPools_buildsNothingWithoutAConfiguredModel() {
+        when(modelService.isConfigured()).thenReturn(false);
+        when(settingsRepository.findAll()).thenReturn(List.of(settings(1L, true)));
+
+        int built = scheduler.buildEnabledPools(now, openDeadline);
+
+        assertThat(built).isZero();
+        verify(settingsRepository, never()).findAll();
+        verify(buildService, never()).tryStart(anyLong());
     }
 
     @Test
