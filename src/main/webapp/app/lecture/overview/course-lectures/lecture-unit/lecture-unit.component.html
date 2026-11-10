@@ -1,7 +1,7 @@
 <div class="lecture-unit-card min-w-0 flex-1 clickable">
-    <div class="lecture-unit-header flex flex-wrap px-6! m-0">
-        <div class="flex w-full min-w-0 flex-wrap gap-2 p-0 justify-between items-center">
-            <h5 class="m-0 flex min-w-[min(100%,16rem)] flex-1">
+    <div class="lecture-unit-header @container flex px-4! m-0">
+        <div class="flex w-full min-w-0 gap-2 p-0 justify-between items-center">
+            <h5 class="m-0 flex min-w-0 flex-1">
                 <button
                     tumAetUiButton
                     severity="secondary"
@@ -11,12 +11,15 @@
                     id="lecture-unit-toggle-button"
                     (click)="toggleCollapse()"
                     [attr.aria-expanded]="!isCollapsed()"
-                    class="flex min-w-0 flex-1 items-center justify-start! whitespace-normal! border-0 p-0 text-start text-base focus-visible:outline-2 focus-visible:outline-offset-2"
+                    class="flex min-w-0 flex-1 items-center justify-start! border-0 p-0 text-start text-base focus-visible:outline-2 focus-visible:outline-offset-2"
                 >
-                    <fa-icon class="me-4!" size="lg" [icon]="icon()" />
-                    <span class="min-w-0 break-words text-xl font-medium leading-tight" [attr.data-testid]="'lecture-unit-' + lectureUnit().id + '-name'">{{
-                        lectureUnit().name ?? ''
-                    }}</span>
+                    <fa-icon class="me-3!" size="lg" [icon]="icon()" />
+                    <span
+                        class="min-w-0 truncate text-sm font-medium leading-tight @md:text-base"
+                        [attr.title]="lectureUnit().name"
+                        [attr.data-testid]="'lecture-unit-' + lectureUnit().id + '-name'"
+                        >{{ lectureUnit().name ?? '' }}</span
+                    >
                     @if (!isVisibleToStudents()) {
                         <tumaet-ui-tag
                             severity="warn"
@@ -27,12 +30,12 @@
                     }
                 </button>
             </h5>
-            <div class="flex flex-wrap items-center gap-2">
+            <div class="flex shrink-0 items-center gap-2">
                 @if (showOriginalVersionButton() && !isStudentPath()) {
                     <button
                         tumAetUiButton
                         severity="secondary"
-                        variant="solid"
+                        variant="outlined"
                         size="small"
                         type="button"
                         id="view-original-version-button"
@@ -40,14 +43,14 @@
                         (click)="handleOriginalVersionView($event)"
                     >
                         <fa-icon [icon]="faDownload" />
-                        <span class="hidden md:inline" [jhiTranslate]="'artemisApp.textUnit.originalVersion'"></span>
+                        <span class="hidden @lg:inline" [jhiTranslate]="'artemisApp.textUnit.originalVersion'"></span>
                     </button>
                 }
                 @if (showViewIsolatedButton()) {
                     <button
                         tumAetUiButton
                         [severity]="viewIsolatedButtonSeverity()"
-                        variant="solid"
+                        variant="outlined"
                         size="small"
                         type="button"
                         id="view-isolated-button"
@@ -55,14 +58,14 @@
                         (click)="handleIsolatedView($event)"
                     >
                         <fa-icon [icon]="viewIsolatedButtonIcon()" />
-                        <span class="hidden md:inline" [jhiTranslate]="viewIsolatedButtonLabel()"></span>
+                        <span class="hidden @lg:inline" [jhiTranslate]="viewIsolatedButtonLabel()"></span>
                     </button>
                 }
                 @if (showFullscreenButton()) {
                     <button
                         tumAetUiButton
                         severity="secondary"
-                        variant="solid"
+                        variant="outlined"
                         size="small"
                         type="button"
                         id="fullscreen-button"
@@ -99,7 +102,7 @@
         </div>
     </div>
     @if (!isCollapsed()) {
-        <div id="lecture-unit-body" class="lecture-unit-body px-6! py-2">
+        <div id="lecture-unit-body" class="lecture-unit-body px-4! py-2">
             <ng-content />
             <jhi-competency-contribution [courseId]="courseId()" [learningObjectId]="this.lectureUnit().id!" [isExercise]="false" />
         </div>
