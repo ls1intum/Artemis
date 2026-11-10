@@ -6,7 +6,7 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
-import { TumAetUiButtonComponent, TumAetUiDialogComponent, TumAetUiFormFieldComponent, TumAetUiInputDirective, TumAetUiMessageComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective, TumAetUiDialogComponent, TumAetUiFormFieldComponent, TumAetUiInputDirective, TumAetUiMessageComponent } from '@tumaet/ui-angular';
 
 interface AccountSettingsFormModel {
     firstName: string;
@@ -21,7 +21,7 @@ interface AccountSettingsFormModel {
         FormField,
         TranslateDirective,
         ArtemisTranslatePipe,
-        TumAetUiButtonComponent,
+        TumAetUiButtonDirective,
         TumAetUiDialogComponent,
         TumAetUiFormFieldComponent,
         TumAetUiInputDirective,
@@ -52,7 +52,7 @@ export class AccountSettingsDialogComponent {
         maxLength(path.email, 100);
         const allowedEmailPattern = this.profileInfo.allowedEmailPattern;
         if (allowedEmailPattern) {
-            pattern(path.email, new RegExp(allowedEmailPattern));
+            pattern(path.email, new RegExp(`^(?:${allowedEmailPattern})$`));
         } else {
             email(path.email);
         }
@@ -75,6 +75,11 @@ export class AccountSettingsDialogComponent {
         });
     }
 
+    onSubmit(event: SubmitEvent): void {
+        event.preventDefault();
+        this.saveSettings();
+    }
+
     saveSettings(): void {
         const user = this.accountService.userIdentity();
         if (!user || this.settingsForm().invalid() || !this.settingsChanged()) {
@@ -86,12 +91,12 @@ export class AccountSettingsDialogComponent {
             const settings = this.settingsModel();
             userToSave.firstName = settings.firstName;
             userToSave.lastName = settings.lastName;
-            userToSave.name = `${settings.firstName} ${settings.lastName}`;
             userToSave.email = settings.email;
         }
 
         this.accountService.save(userToSave).subscribe({
             next: () => {
+                userToSave.name = `${userToSave.firstName} ${userToSave.lastName}`;
                 this.accountService.authenticate(userToSave);
                 this.visible.set(false);
             },
