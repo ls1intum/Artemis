@@ -230,6 +230,24 @@ Artemis is designed to support high availability through its stateless architect
 
 Open development and transparency are considered an important security-strengthening factor.
 
+#### Audit History
+
+Beyond the review of every pull request, Artemis is audited as a whole. The audits are listed here so
+that operators can see what was examined, when, and which releases contain the resulting changes.
+
+| Date            | Scope                                                         | Outcome                                                                                                                                                                                                   |
+| --------------- | ------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 9 November 2026 | The server REST interfaces and the build agent infrastructure | The findings were triaged and fixed, and each fix received tests that cover a refused request. The fixes are part of release 10.7 and are backported to 9.9.x. Operators should update to these releases. |
+
+An audit combines the review of maintainers, automated analysis ([CodeQL](https://codeql.github.com/)
+and static analysis in the continuous integration), the architecture tests of the repository, and
+assisted review of the code. Confirmed findings are fixed first. They are summarized here once a release
+with the fix is available, in line with [Disclosure and Advisories](#disclosure-and-advisories).
+Audits are repeated regularly, in particular after larger changes to authentication, authorization or the
+build infrastructure. How the continuous checks support this is described in the
+[security assurance case](https://docs.artemis.tum.de/developer/security-assurance#audits-and-continuous-checks).
+Artemis has not been certified by an independent third party.
+
 
 
 ### Standards and Compliance
@@ -263,6 +281,18 @@ Please report vulnerabilities in Artemis itself here. Issues in the configuratio
 specific Artemis instance should go to the institution that operates it.
 
 We appreciate responsible disclosure and will work with reporters to resolve issues promptly.
+
+Targets for a report, which we aim to meet and which are not a contractual commitment:
+
+| Step                                               | Target                                       |
+| -------------------------------------------------- | -------------------------------------------- |
+| Acknowledge the report                             | Within 5 working days                        |
+| First assessment and severity                      | Within 10 working days                       |
+| Fix of a confirmed critical or high severity issue | In the next release, and sooner where needed |
+| Fix of a confirmed medium or low severity issue    | In one of the following releases             |
+
+The contact is also published as [`security.txt`](https://docs.artemis.tum.de/.well-known/security.txt).
+Reporters who want to be named are credited in the advisory.
 
 
 
@@ -338,26 +368,6 @@ cosign verify ghcr.io/ls1intum/artemis@<digest> \
 
 Images are signed **by digest**, not by tag: a tag is mutable, so a signature bound to one would say
 nothing about the image a consumer actually pulled.
-
-
-
-### Security Audits and Reviews
-
-Beyond the review of every pull request, Artemis is audited as a whole. The audits are listed here so
-that operators can see what was examined, when, and which releases contain the resulting changes.
-
-| Date            | Scope                                                         | Outcome                                                                                                                                                                                                   |
-| --------------- | ------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 9 November 2026 | The server REST interfaces and the build agent infrastructure | The findings were triaged and fixed, and each fix received tests that cover a refused request. The fixes are part of release 10.7 and are backported to 9.9.x. Operators should update to these releases. |
-
-An audit combines the review of maintainers, automated analysis ([CodeQL](https://codeql.github.com/)
-and static analysis in the continuous integration), the architecture tests of the repository, and
-assisted review of the code. Confirmed findings are fixed first. They are summarized here once a release
-with the fix is available, in line with [Disclosure and Advisories](#disclosure-and-advisories).
-Audits are repeated regularly, in particular after larger changes to authentication, authorization or the
-build infrastructure. How the continuous checks support this is described in the
-[security assurance case](https://docs.artemis.tum.de/developer/security-assurance#audits-and-continuous-checks).
-Artemis has not been certified by an independent third party.
 
 
 
