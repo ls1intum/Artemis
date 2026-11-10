@@ -2,7 +2,7 @@
 id: configure-the-build
 title: Configure the Build
 sidebar_label: Configure the Build
-last_reviewed: 2026-11-05
+last_reviewed: 2026-11-09
 ---
 
 import Callout from "../../../../src/components/Callout/Callout";
@@ -61,7 +61,8 @@ Controlling when tests *run* (via build-phase inclusion conditions) is separate 
 - **Importing a programming exercise in exam mode**: Tests are automatically set to only show after the release date of results. However, the build plan is imported as-is. This prevents situations where, for example, a build plan with only a single phase is unintentionally set to run `After due date`.
 
 You can also use a custom Docker image. Make sure to:
-- Publish the image in a publicly available repository (e.g., DockerHub)
+- Publish the image in a registry that the build agents can pull from. A public repository (e.g., DockerHub) works without further setup; for a private registry, ask your administrators to log the build agents in, see [Images from a private registry](/admin/production-setup/localci-build-environment#images-from-a-private-registry)
+- Use a versioned tag and change it when you update the image. A build agent only pulls an image that it does not have yet, so it does not notice that a tag such as `latest` now points to a new image
 - Build for both amd64 and arm64 architectures
 - Keep the image size small (build agents download before execution)
 - Include all build dependencies to avoid downloading in every build

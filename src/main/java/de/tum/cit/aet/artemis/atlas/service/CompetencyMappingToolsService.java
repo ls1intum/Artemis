@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.atlas.service;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
@@ -245,7 +246,19 @@ public class CompetencyMappingToolsService {
             }
 
             List<CompetencyRelationDTO> suggestedRelations = new ArrayList<>();
+            Set<AtlasMLCompetencyRelationDTO> rawRelations = new HashSet<>(suggestionsResponse.relations());
             for (AtlasMLCompetencyRelationDTO atlasMLRelation : suggestionsResponse.relations()) {
+                if (Objects.equals(atlasMLRelation.tailId(), atlasMLRelation.headId())) {
+                    continue;
+                }
+                if ("REQUIRES".equals(atlasMLRelation.relationType())) {
+                    // Prefer the mirrored EXTENDS when present; otherwise preserve the prerequisite direction as ASSUMES.
+                    var mirrored = new AtlasMLCompetencyRelationDTO(atlasMLRelation.headId(), atlasMLRelation.tailId(), "EXTENDS");
+                    if (!rawRelations.contains(mirrored)) {
+                        suggestedRelations.add(new CompetencyRelationDTO(null, atlasMLRelation.headId(), atlasMLRelation.tailId(), RelationType.ASSUMES));
+                    }
+                    continue;
+                }
                 RelationType relationType;
                 try {
                     relationType = RelationType.valueOf(atlasMLRelation.relationType());
@@ -254,7 +267,7 @@ public class CompetencyMappingToolsService {
                     continue;
                 }
 
-                suggestedRelations.add(new CompetencyRelationDTO(null, atlasMLRelation.headId(), atlasMLRelation.tailId(), relationType));
+                suggestedRelations.add(new CompetencyRelationDTO(null, atlasMLRelation.tailId(), atlasMLRelation.headId(), relationType));
             }
 
             if (suggestedRelations.isEmpty()) {
