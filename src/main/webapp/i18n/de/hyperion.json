@@ -31,7 +31,7 @@
                     "cancelRequested": "Der Lauf endet nach dem aktuellen Schritt.",
                     "cancelNotRunning": "Es läuft kein Lauf.",
                     "cancelFailed": "Der Lauf konnte nicht abgebrochen werden.",
-                    "modelMissing": "Smart Quizzes benötigt ein selbst betriebenes Sprachmodell, das auf diesem Server nicht konfiguriert ist. Bitte wende dich an deine Artemis-Administration; bis dahin können keine Fragen generiert werden."
+                    "modelMissing": "Smart Quizzes benötigt ein selbst betriebenes Sprachmodell, das auf diesem Server nicht korrekt konfiguriert ist. Bitte wende dich an deine Artemis-Administration; bis dahin können keine Fragen generiert werden."
                 },
                 "settings": {
                     "title": "Einstellungen",

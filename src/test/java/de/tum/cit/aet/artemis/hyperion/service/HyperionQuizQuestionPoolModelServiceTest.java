@@ -14,7 +14,9 @@ class HyperionQuizQuestionPoolModelServiceTest {
 
     private static final String LOCAL_ENDPOINT = "https://logos.example.org/v1";
 
-    private static final List<String> ALLOWED = List.of("openai/gpt-oss-120b", "Qwen/Qwen3.8-27B");
+    private static final String MODEL = "openai/gpt-oss-120b";
+
+    private static final List<String> ALLOWED = List.of(MODEL, "Qwen/Qwen3.8-27B");
 
     @Test
     void constructor_leavesThePoolOffWithoutAnyConfiguration() {
@@ -27,43 +29,55 @@ class HyperionQuizQuestionPoolModelServiceTest {
 
     @Test
     void constructor_buildsTheClientOfTheOwnEndpointForAllowedModels() {
-        HyperionQuizQuestionPoolModelService service = service(" " + LOCAL_ENDPOINT + " ", " openai/gpt-oss-120b ", "Qwen/Qwen3.8-27B", ALLOWED);
+        HyperionQuizQuestionPoolModelService service = service(" " + LOCAL_ENDPOINT + " ", " " + MODEL + " ", "Qwen/Qwen3.8-27B", ALLOWED);
 
         assertThat(service.isConfigured()).isTrue();
         assertThat(service.chatClient()).isNotNull();
-        assertThat(service.generatorModel()).isEqualTo("openai/gpt-oss-120b");
+        assertThat(service.generatorModel()).isEqualTo(MODEL);
         assertThat(service.judgeModel()).isEqualTo("Qwen/Qwen3.8-27B");
     }
 
     @Test
-    void constructor_rejectsAPartialConfiguration() {
-        assertThatThrownBy(() -> service(LOCAL_ENDPOINT, "openai/gpt-oss-120b", "", ALLOWED)).isInstanceOf(IllegalStateException.class).hasMessageContaining("judge-model");
-        assertThatThrownBy(() -> service("", "openai/gpt-oss-120b", "openai/gpt-oss-120b", ALLOWED)).isInstanceOf(IllegalStateException.class).hasMessageContaining("base-url");
-    }
-
-    @Test
-    void constructor_rejectsAModelOutsideTheAllowlist() {
-        assertThatThrownBy(() -> service(LOCAL_ENDPOINT, "openai/gpt-oss-120b", "anthropic/claude-opus", ALLOWED)).isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("anthropic/claude-opus").hasMessageContaining("allowed-models");
-        assertThatThrownBy(() -> service(LOCAL_ENDPOINT, "openai/gpt-oss-120b", "openai/gpt-oss-120b", List.of())).isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("allowed-models");
-    }
-
-    @Test
-    void constructor_rejectsCloudProviderEndpoints() {
-        for (String endpoint : List.of("https://api.openai.com/v1", "https://my-resource.openai.azure.com", "https://api.anthropic.com/v1",
-                "https://generativelanguage.googleapis.com/v1beta/openai", "https://bedrock-runtime.eu-central-1.amazonaws.com")) {
-            assertThatThrownBy(() -> service(endpoint, "openai/gpt-oss-120b", "openai/gpt-oss-120b", ALLOWED)).as(endpoint).isInstanceOf(IllegalStateException.class)
-                    .hasMessageContaining("self-hosted");
+    void constructor_leavesThePoolOffWhenTheConfigurationIsInvalid() {
+        for (HyperionQuizQuestionPoolModelService service : List.of(service(LOCAL_ENDPOINT, MODEL, "", ALLOWED), service(LOCAL_ENDPOINT, MODEL, "anthropic/claude-opus", ALLOWED),
+                service("https://api.openai.com/v1", MODEL, MODEL, ALLOWED), service("logos.example.org/v1", MODEL, MODEL, ALLOWED))) {
+            assertThat(service.isConfigured()).isFalse();
+            assertThatThrownBy(service::chatClient).isInstanceOf(ServiceUnavailableAlertException.class);
         }
     }
 
     @Test
-    void constructor_rejectsAnEndpointThatIsNotAnHttpUrl() {
-        assertThatThrownBy(() -> service("logos.example.org/v1", "openai/gpt-oss-120b", "openai/gpt-oss-120b", ALLOWED)).isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("http or https");
-        assertThatThrownBy(() -> service("ftp://logos.example.org/v1", "openai/gpt-oss-120b", "openai/gpt-oss-120b", ALLOWED)).isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("http or https");
+    void validate_rejectsAPartialConfiguration() {
+        assertThatThrownBy(() -> validate(LOCAL_ENDPOINT, MODEL, "", ALLOWED)).isInstanceOf(IllegalStateException.class).hasMessageContaining("judge-model");
+        assertThatThrownBy(() -> validate("", MODEL, MODEL, ALLOWED)).isInstanceOf(IllegalStateException.class).hasMessageContaining("base-url");
+    }
+
+    @Test
+    void validate_rejectsAModelOutsideTheAllowlist() {
+        assertThatThrownBy(() -> validate(LOCAL_ENDPOINT, MODEL, "anthropic/claude-opus", ALLOWED)).isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("anthropic/claude-opus").hasMessageContaining("allowed-models");
+        assertThatThrownBy(() -> validate(LOCAL_ENDPOINT, MODEL, MODEL, List.of())).isInstanceOf(IllegalStateException.class).hasMessageContaining("allowed-models");
+    }
+
+    @Test
+    void validate_rejectsCloudProviderEndpoints() {
+        for (String endpoint : List.of("https://api.openai.com/v1", "https://my-resource.openai.azure.com", "https://api.anthropic.com/v1",
+                "https://generativelanguage.googleapis.com/v1beta/openai", "https://bedrock-runtime.eu-central-1.amazonaws.com")) {
+            assertThatThrownBy(() -> validate(endpoint, MODEL, MODEL, ALLOWED)).as(endpoint).isInstanceOf(IllegalStateException.class).hasMessageContaining("self-hosted");
+        }
+    }
+
+    @Test
+    void validate_rejectsAnEndpointThatIsNotAnHttpUrl() {
+        assertThatThrownBy(() -> validate("logos.example.org/v1", MODEL, MODEL, ALLOWED)).isInstanceOf(IllegalStateException.class).hasMessageContaining("http or https");
+        assertThatThrownBy(() -> validate("ftp://logos.example.org/v1", MODEL, MODEL, ALLOWED)).isInstanceOf(IllegalStateException.class).hasMessageContaining("http or https");
+    }
+
+    @Test
+    void validate_acceptsALocalEndpointWithAllowedModelsAndReportsAnEmptyConfiguration() {
+        assertThat(validate(LOCAL_ENDPOINT, MODEL, MODEL, ALLOWED)).isTrue();
+        assertThat(validate("http://localhost:11434/v1", MODEL, MODEL, ALLOWED)).isTrue();
+        assertThat(validate("", "", "", ALLOWED)).isFalse();
     }
 
     @Test
@@ -73,6 +87,10 @@ class HyperionQuizQuestionPoolModelServiceTest {
         assertThat(HyperionQuizQuestionPoolModelService.isCloudHost("logos.aet.cit.tum.de")).isFalse();
         assertThat(HyperionQuizQuestionPoolModelService.isCloudHost("notopenai.com")).isFalse();
         assertThat(HyperionQuizQuestionPoolModelService.isCloudHost("localhost")).isFalse();
+    }
+
+    private static boolean validate(String baseUrl, String generatorModel, String judgeModel, List<String> allowedModels) {
+        return HyperionQuizQuestionPoolModelService.validate(baseUrl, generatorModel, judgeModel, allowedModels);
     }
 
     private static HyperionQuizQuestionPoolModelService service(String baseUrl, String generatorModel, String judgeModel, List<String> allowedModels) {

@@ -622,7 +622,14 @@ export class QuizQuestionPoolComponent implements OnInit, OnDestroy {
                     }
                     this.startPolling(courseId);
                 },
-                error: () => this.alertService.error('artemisApp.hyperion.quizQuestionPool.progress.buildFailed'),
+                error: (error: unknown) => {
+                    // The server's own alert explains that an administrator has to configure the model; reloading shows the page's notice.
+                    if (error instanceof HttpErrorResponse && error.status === 503) {
+                        this.refresh();
+                        return;
+                    }
+                    this.alertService.error('artemisApp.hyperion.quizQuestionPool.progress.buildFailed');
+                },
             });
     }
 

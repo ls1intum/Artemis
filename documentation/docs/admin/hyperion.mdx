@@ -246,7 +246,7 @@ The pool connects only through `base-url`, `api-key` and `timeout` above, indepe
 The server checks this configuration at startup:
 
 - With `base-url`, `generator-model` and `judge-model` all empty, the pool is off. The pool page tells instructors that no local model is configured, and builds are refused. The log reads `The quiz question pool is off: no model endpoint is configured`.
-- If only some of the three are set, if a model is missing from `allowed-models`, or if `base-url` is not an http(s) URL or points at a known cloud provider (for example Azure OpenAI, OpenAI, Anthropic or Google), the server does not start and the log names the setting to fix.
+- If only some of the three are set, if a model is missing from `allowed-models`, or if `base-url` is not an http(s) URL or points at a known cloud provider (for example Azure OpenAI, OpenAI, Anthropic or Google), the pool stays off in the same way and the log shows a warning that names the setting to fix: `The quiz question pool is off because its model configuration is invalid: …`. The rest of Artemis starts normally. Instructors only see that an administrator has to configure the pool; the details appear in the log alone.
 - Otherwise the log names the endpoint and the two models: `The quiz question pool uses the endpoint … with the generator model … and the judge model …`.
 
 Every generation and filter call is recorded in the LLM token usage tracking, so add the two models to `artemis.llm.model-costs` if you want their cost reported.

@@ -777,6 +777,21 @@ describe('QuizQuestionPoolComponent', () => {
         expect(component.isStartingBuild()).toBe(false);
     });
 
+    it('should reload the progress instead of adding its own alert when the server has no model configured', () => {
+        setup({ isAtLeastEditor: true, isAtLeastInstructor: true });
+        vi.spyOn(poolService, 'startBuild').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 503 })));
+        const progressSpy = vi.spyOn(poolService, 'getProgress').mockReturnValue(of({ ...progress, modelConfigured: false }));
+        const errorSpy = vi.spyOn(alertService, 'error');
+
+        component.startBuild();
+        fixture.detectChanges();
+
+        expect(errorSpy).not.toHaveBeenCalled();
+        expect(progressSpy).toHaveBeenCalledWith(1);
+        expect(component.isModelMissing()).toBe(true);
+        expect(fixture.nativeElement.querySelector('[data-testid="pool-model-missing"]')).not.toBeNull();
+    });
+
     it('should show the settings summary to instructors', () => {
         setup({ isAtLeastEditor: true, isAtLeastInstructor: true });
 

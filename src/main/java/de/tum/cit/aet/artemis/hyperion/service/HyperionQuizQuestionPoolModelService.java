@@ -29,8 +29,8 @@ import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
  * {@code judge-model}, {@code allowed-models}), and never through the chat model the rest of Artemis uses.
  * <p>
  * Without {@code base-url} and both model names the pool is not configured: builds are refused and no model is called. A partial
- * configuration, a model that is not listed in {@code allowed-models}, or an endpoint on a known cloud provider stops the server
- * at startup.
+ * configuration, a model that is not listed in {@code allowed-models}, or an endpoint that is not an http(s) URL or lies on a known
+ * cloud provider leaves the pool off in the same way and is logged as a warning that names the setting to fix.
  */
 @Service
 @Lazy(false)
@@ -62,7 +62,16 @@ public class HyperionQuizQuestionPoolModelService {
         this.generatorModel = trim(generatorModel);
         this.judgeModel = trim(judgeModel);
         String endpoint = trim(baseUrl);
-        if (!validate(endpoint, this.generatorModel, this.judgeModel, allowedModels)) {
+        boolean configured;
+        try {
+            configured = validate(endpoint, this.generatorModel, this.judgeModel, allowedModels);
+        }
+        catch (IllegalStateException e) {
+            log.warn("The quiz question pool is off because its model configuration is invalid: {}", e.getMessage());
+            this.chatClient = null;
+            return;
+        }
+        if (!configured) {
             log.info("The quiz question pool is off: no model endpoint is configured under {}base-url", PROPERTY_PREFIX);
             this.chatClient = null;
             return;
@@ -182,6 +191,6 @@ public class HyperionQuizQuestionPoolModelService {
      * @return the exception
      */
     public static ServiceUnavailableAlertException notConfigured() {
-        return new ServiceUnavailableAlertException("The quiz question pool has no local model configured", "QuizQuestionPool", "modelNotConfigured");
+        return new ServiceUnavailableAlertException("The quiz question pool has no local model configured", "QuizQuestionPool", "quizQuestionPoolModelNotConfigured");
     }
 }
