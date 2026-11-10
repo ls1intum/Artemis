@@ -21,6 +21,7 @@
                 "suggested": "KI-Feedback-Vorschlag",
                 "adapted": "Angepasster KI-Feedback-Vorschlag"
             },
+            "gradingInstructionUsageWarning": "Diese Bewertungsanweisung wird {{count}}-mal verwendet. Nur {{limit}} Anwendungen zählen zur Gesamtpunktzahl. Du kannst sie weiterhin für zusätzliches Feedback verwenden.",
             "subsequentFeedback": "Dies ist ein zusätzliches Feedback, das nicht in die Gesamtbewertung eingeht.",
             "error": {
                 "assessmentDueDateOver": "Die Einreichungsfrist der Bewertung für diese Aufgabe ist vorbei."

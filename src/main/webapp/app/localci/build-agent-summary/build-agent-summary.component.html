@@ -81,6 +81,8 @@
                                         </a>
                                         @if (job.id) {
                                             <tumaet-ui-button
+                                                data-button-intent="destructive"
+                                                data-button-intent-reason="Cancels queued or running build execution"
                                                 severity="danger"
                                                 size="small"
                                                 (clicked)="cancelBuildJob(job.id)"
@@ -94,7 +96,13 @@
                             </td>
                             <td class="build-agents-column" (click)="$event.stopPropagation()">
                                 @if ((agent.runningBuildJobs?.length ?? agent.numberOfCurrentBuildJobs ?? 0) > 0) {
-                                    <tumaet-ui-button severity="danger" size="small" (clicked)="cancelAllBuildJobs(agent.buildAgent)">
+                                    <tumaet-ui-button
+                                        data-button-intent="destructive"
+                                        data-button-intent-reason="Cancels queued or running build execution"
+                                        severity="danger"
+                                        size="small"
+                                        (clicked)="cancelAllBuildJobs(agent.buildAgent)"
+                                    >
                                         <fa-icon [icon]="faTimes" />
                                         <span class="ms-1" jhiTranslate="artemisApp.buildQueue.cancelAll"></span>
                                     </tumaet-ui-button>

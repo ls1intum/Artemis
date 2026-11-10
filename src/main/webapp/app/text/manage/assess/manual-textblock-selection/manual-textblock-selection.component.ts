@@ -1,3 +1,4 @@
+import { Feedback } from 'app/assessment/shared/entities/feedback.model';
 import { Component, effect, input, model, output, signal } from '@angular/core';
 import { TextBlockRef } from 'app/text/shared/entities/text-block-ref.model';
 import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
@@ -15,6 +16,7 @@ export class ManualTextblockSelectionComponent {
     selectedRef = model<TextBlockRef | undefined>(undefined);
     readOnly = input.required<boolean>();
     submission = input.required<TextSubmission>();
+    allFeedbacks = input<Feedback[]>([]);
 
     textBlockRefAdded = output<TextBlockRef>();
 

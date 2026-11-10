@@ -35,7 +35,16 @@
                 </tumaet-ui-message>
             }
             @if (lockedByCurrentUser()) {
-                <button type="button" id="lockButton" (click)="removeLock()" jhiTranslate="artemisApp.locks.removeButton" tumAetUiButton severity="secondary"></button>
+                <button
+                    data-button-intent="utility"
+                    data-button-intent-reason="Releases the assessment lock without deleting the complaint"
+                    type="button"
+                    id="lockButton"
+                    (click)="removeLock()"
+                    jhiTranslate="artemisApp.locks.removeButton"
+                    tumAetUiButton
+                    severity="secondary"
+                ></button>
             }
         </div>
         <div class="flex flex-wrap gap-y-2">

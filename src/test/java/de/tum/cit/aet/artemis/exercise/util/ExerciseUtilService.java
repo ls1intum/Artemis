@@ -4,18 +4,27 @@ import static de.tum.cit.aet.artemis.core.config.ArtemisConstants.SPRING_PROFILE
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 
+import java.io.File;
+import java.io.IOException;
 import java.time.ZonedDateTime;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.zip.ZipFile;
 
 import org.jspecify.annotations.NonNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
+
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.util.UserUtilService;
@@ -124,6 +133,55 @@ public class ExerciseUtilService {
 
     @Autowired
     private ConversationUtilService conversationUtilService;
+
+    @Autowired
+    private JsonMapper objectMapper;
+
+    /**
+     * The content of an exported exercise definition zip.
+     *
+     * @param entries the files in the zip by their entry name
+     * @param details the parsed exercise details file
+     */
+    public record ExportedExercise(Map<String, byte[]> entries, Map<String, Object> details) {
+    }
+
+    /**
+     * Reads the zip of an exercise definition export and checks that it contains exactly one exercise details file.
+     *
+     * @param zipFile the downloaded zip file
+     * @return the files of the zip and the parsed exercise details
+     * @throws IOException if the zip cannot be read
+     */
+    public ExportedExercise readExerciseExport(File zipFile) throws IOException {
+        Map<String, byte[]> entries = new HashMap<>();
+        try (var zip = new ZipFile(zipFile)) {
+            for (var entry : Collections.list(zip.entries())) {
+                if (!entry.isDirectory()) {
+                    entries.put(entry.getName(), zip.getInputStream(entry).readAllBytes());
+                }
+            }
+        }
+        var detailsFiles = entries.keySet().stream().filter(name -> name.startsWith("Exercise-Details-") && name.endsWith(".json")).toList();
+        assertThat(detailsFiles).as("exactly one exercise details file").hasSize(1);
+        return new ExportedExercise(entries, objectMapper.readValue(entries.get(detailsFiles.getFirst()), new TypeReference<>() {
+        }));
+    }
+
+    /**
+     * Checks that the exported grading criteria and their instructions are present and carry no ids.
+     *
+     * @param details the parsed exercise details of an export
+     */
+    @SuppressWarnings("unchecked")
+    public static void assertExportedGradingCriteriaWithoutIds(Map<String, Object> details) {
+        var criteria = (List<Map<String, Object>>) details.get("gradingCriteria");
+        assertThat(criteria).isNotEmpty().allSatisfy(criterion -> {
+            assertThat(criterion).doesNotContainKey("id");
+            var instructions = (List<Map<String, Object>>) criterion.getOrDefault("structuredGradingInstructions", List.of());
+            assertThat(instructions).allSatisfy(instruction -> assertThat(instruction).doesNotContainKey("id"));
+        });
+    }
 
     /**
      * Sets the max points of an exercise to 100 and sets bonus points to 10. IncludedInOverallScore of the exercise is set to INCLUDED_COMPLETELY.

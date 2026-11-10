@@ -133,6 +133,13 @@ export class IrisChatService implements OnDestroy {
 
     private lastSeenPartialSeqByRunId = new Map<string, number>();
     private lastActivitySeqByRunId = new Map<string, number>();
+    /**
+     * Per run, the ids of the steps an interim message of that run already shows. The live feed leaves them out,
+     * so each step appears once, between the message before it and the message after it.
+     */
+    private activityIdsOnMessagesByRunId = new Map<string, Set<string>>();
+    /** The last full step snapshot of a run, kept to filter it again when an interim message takes some of its steps. */
+    private lastActivitySnapshot?: { runId: string; activities: IrisActivityItem[] };
     private knownRunIds = new Set<string>();
     private terminalRunStateByRunId = new Map<string, IrisRunState>();
     private currentRunId?: string;
@@ -723,6 +730,10 @@ export class IrisChatService implements OnDestroy {
             return false;
         }
         if (!isKnownRun) {
+            if (!this.pendingRunGeneration()) {
+                // A run this page did not start, for example after a reload while Iris was still answering.
+                this.seedStepsOnLoadedInterimMessages(runId);
+            }
             this.knownRunIds.add(runId);
             this.currentRunId = runId;
             this.closePendingRunGeneration();
@@ -775,6 +786,9 @@ export class IrisChatService implements OnDestroy {
             }
             if (payload.runId && !isIntermediateMessage) {
                 this.activities.next([]);
+            }
+            if (payload.runId && isIntermediateMessage) {
+                this.moveStepsOntoMessage(payload.runId, payload.message.activities);
             }
         }
         if (payload.message?.sender === IrisSender.CTXSWAP) {
@@ -840,7 +854,46 @@ export class IrisChatService implements OnDestroy {
             return;
         }
         this.lastActivitySeqByRunId.set(payload.runId, payload.activitySeq);
-        this.activities.next(payload.activities);
+        this.lastActivitySnapshot = { runId: payload.runId, activities: payload.activities };
+        this.activities.next(this.stepsNotOnMessages(payload.runId, payload.activities));
+    }
+
+    /**
+     * An interim message carries the steps that ran before it. They now show above that message, so the live feed drops them.
+     */
+    private moveStepsOntoMessage(runId: string, messageActivities: IrisActivityItem[] | undefined): void {
+        if (!messageActivities?.length) {
+            return;
+        }
+        const idsOnMessages = this.activityIdsOnMessagesByRunId.get(runId) ?? new Set<string>();
+        messageActivities.forEach((activity) => idsOnMessages.add(activity.id));
+        this.activityIdsOnMessagesByRunId.set(runId, idsOnMessages);
+        if (this.lastActivitySnapshot?.runId === runId && !this.finalizedRunIds.has(runId)) {
+            this.activities.next(this.stepsNotOnMessages(runId, this.lastActivitySnapshot.activities));
+        }
+    }
+
+    /**
+     * After a reload the run's interim messages come from the session, not from frames of this run. Their steps already show on them,
+     * so the live feed must leave them out too. The run's interim messages are the ones after the last user message or final answer.
+     */
+    private seedStepsOnLoadedInterimMessages(runId: string): void {
+        const messages = this.messages.getValue();
+        const isRunStart = (message: IrisMessage) => message.sender === IrisSender.USER || (message.sender === IrisSender.LLM && message.final !== false);
+        const lastRunStartIndex = messages.findLastIndex(isRunStart);
+        const ids = messages
+            .slice(lastRunStartIndex + 1)
+            .filter((message): message is IrisAssistantMessage => message.sender === IrisSender.LLM && message.final === false)
+            .flatMap((message) => message.activities ?? [])
+            .map((activity) => activity.id);
+        if (ids.length) {
+            this.activityIdsOnMessagesByRunId.set(runId, new Set(ids));
+        }
+    }
+
+    private stepsNotOnMessages(runId: string, activities: IrisActivityItem[]): IrisActivityItem[] {
+        const idsOnMessages = this.activityIdsOnMessagesByRunId.get(runId);
+        return idsOnMessages?.size ? activities.filter((activity) => !idsOnMessages.has(activity.id)) : activities;
     }
 
     private resetLiveAssistantDraftTracking(): void {
@@ -871,6 +924,8 @@ export class IrisChatService implements OnDestroy {
         this.runInfo.next(undefined);
         this.activities.next([]);
         this.lastActivitySeqByRunId.clear();
+        this.activityIdsOnMessagesByRunId.clear();
+        this.lastActivitySnapshot = undefined;
         this.knownRunIds.clear();
         this.terminalRunStateByRunId.clear();
         this.currentRunId = undefined;
