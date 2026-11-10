@@ -19,6 +19,7 @@ import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.map.IMap;
 
 import io.github.bucket4j.BucketConfiguration;
+import io.github.bucket4j.distributed.ExpirationAfterWriteStrategy;
 import io.github.bucket4j.distributed.proxy.ProxyManager;
 import io.github.bucket4j.grid.hazelcast.Bucket4jHazelcast;
 import io.github.bucket4j.redis.redisson.Bucket4jRedisson;
@@ -71,7 +72,10 @@ public class RateLimitConfig {
     @Conditional(RedisDistributedDataCondition.class)
     public ProxyManager<String> redisRateLimitProxyManager(RedissonClient redissonClient) {
         CommandAsyncExecutor commandExecutor = ((Redisson) redissonClient).getCommandExecutor();
-        return Bucket4jRedisson.casBasedBuilder(commandExecutor).build();
+        // Discard idle Redis buckets only after their consumed tokens have fully refilled. Without this strategy,
+        // every new client IP leaves a persistent Redis key; the extra minute provides a safety margin.
+        return Bucket4jRedisson.casBasedBuilder(commandExecutor).expirationAfterWrite(ExpirationAfterWriteStrategy.basedOnTimeForRefillingBucketUpToMax(Duration.ofMinutes(1)))
+                .build();
     }
 
     /**

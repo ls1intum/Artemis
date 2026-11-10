@@ -149,6 +149,51 @@ Do not edit the schema metadata or move keys manually. A node refuses to start w
 a newer schema, or a schema for which the release has no adjacent migration. Resolve the version mismatch instead of
 bypassing this protection.
 
+## Expiring legacy Redis rate-limit buckets
+
+Redis- and Valkey-backed API rate limiting stores one Bucket4j record for each combination of rate-limit type,
+configured requests per minute, and client IP address. New Artemis releases configure **refill-aware TTL** for
+these records: after a bucket has fully recovered its available tokens, it is retained for one additional minute
+and then removed automatically. A bucket created by an older Artemis version may still have **no TTL**. Its first
+successful write through the updated Bucket4j proxy manager should install one, but idle legacy records will not
+be touched. This cleanup does not apply to Hazelcast or Local rate-limit storage.
+
+After upgrading **all** Artemis core nodes using the Redis/Valkey store, run a one-time cleanup of any legacy
+rate-limit keys that still have no TTL. Do not delete buckets outright or use `FLUSHDB`: that would reset active
+limits and could destroy unrelated distributed state.
+
+1. Take a Redis/Valkey backup. Ensure no old Artemis core node remains connected: old Bucket4j managers can still
+   write buckets without expiration. Confirm that all rate-limit bucket configurations still use the
+   one-minute `RateLimitConfig.perMinute()` refill interval before using the 120-second value below.
+2. Locate rate-limit keys with a cursor-based scan (never `KEYS` on production):
+
+   ```bash
+   redis-cli --scan --pattern 'type=*#rpm=*#*'
+   ```
+
+   Check the **actual** Redis key names in your deployment before proceeding; if a different key mapping or
+   namespace is in use, adjust the scan pattern. In a Redis Cluster, scan each primary node's keyspace.
+   Do not apply the procedure to unrelated names or to keys that do not match the complete
+   `type=<known RateLimitType>#rpm=<positive integer>#<valid IP address>` format.
+3. For each **verified** legacy bucket key, inspect its TTL with `PTTL`. Only keys returning `-1`
+   (present, without expiry) require migration. For example, after confirming a key belongs to Artemis rate limiting:
+
+   ```bash
+   redis-cli PTTL 'type=OIDC_AUTHORIZATION#rpm=3000#192.0.2.10'
+   redis-cli EXPIRE 'type=OIDC_AUTHORIZATION#rpm=3000#192.0.2.10' 120 NX
+   ```
+
+   `EXPIRE ... NX` sets a TTL only when the key currently has none and does **not** change its stored Bucket4j
+   state. The two-minute lifetime lets the current one-minute token bucket refill fully before expiry, with an
+   extra minute of margin. If the active application writes to the bucket again, its refill-aware expiration
+   strategy takes over and recalculates its TTL. Never force-expire a key that already has an active TTL.
+4. Verify that migrated keys have a positive `PTTL`, and repeat the scan to identify any remaining legacy keys.
+   Use the same authentication, TLS, database, and key-prefix settings as the Artemis Redis/Valkey connection.
+
+This is an **operator-controlled migration**, not an Artemis startup action. An operator should first perform a
+read-only scan, validate the key formats and expected counts, and apply changes in manageable batches. Migration
+must not rewrite or remove bucket values.
+
 ## Rollback
 
 <Callout variant={CalloutVariant.danger}>

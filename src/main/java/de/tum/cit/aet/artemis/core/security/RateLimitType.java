@@ -67,7 +67,7 @@ public enum RateLimitType {
      * <p>
      * Default: 3000 requests per minute per client.
      */
-    OIDC_AUTHORIZATION(3000),
+    OIDC_AUTHORIZATION(2),
 
     /**
      * Rate limit for the stateless problem-statement rendering endpoint.
