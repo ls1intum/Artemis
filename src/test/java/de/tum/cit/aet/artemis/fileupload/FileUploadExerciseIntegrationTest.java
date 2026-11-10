@@ -1285,6 +1285,41 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
+    void testGetAllExercisesOnPageWithoutSortingOrderIsBadRequest() throws Exception {
+        var params = pageableSearchUtilService.searchMapping(pageableSearchUtilService.configureSearch(TEST_PREFIX + "noSortingOrder"));
+        params.remove("sortingOrder");
+        request.getSearchResult("/api/fileupload/file-upload-exercises", HttpStatus.BAD_REQUEST, FileUploadExerciseDTO.class, params);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testGetAllExercisesOnPageAppliesCourseAndExamFilters() throws Exception {
+        String title = TEST_PREFIX + "searchFileUploadFilters";
+        final Course course = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
+        final var now = ZonedDateTime.now();
+        FileUploadExercise courseExercise = FileUploadExerciseFactory.generateFileUploadExercise(now.minusDays(1), now.minusHours(2), now.minusHours(1), "pdf", course);
+        courseExercise.setTitle(title + "-course");
+        courseExercise = fileUploadExerciseRepository.save(courseExercise);
+        ExerciseGroup exerciseGroup = examUtilService.addEnrolledExerciseGroupWithExamAndCourse(true, TEST_PREFIX);
+        FileUploadExercise examExercise = FileUploadExerciseFactory.generateFileUploadExerciseForExam(creationFilePattern, exerciseGroup);
+        examExercise.setTitle(title + "-exam");
+        examExercise = fileUploadExerciseRepository.save(examExercise);
+
+        var examOnly = pageableSearchUtilService.searchMapping(pageableSearchUtilService.configureSearch(title));
+        examOnly.add("isCourseFilter", "false");
+        SearchResultPageDTO<FileUploadExerciseDTO> examResult = request.getSearchResult("/api/fileupload/file-upload-exercises", HttpStatus.OK, FileUploadExerciseDTO.class,
+                examOnly);
+        assertThat(examResult.getResultsOnPage()).extracting(FileUploadExerciseDTO::id).containsExactly(examExercise.getId());
+
+        var courseOnly = pageableSearchUtilService.searchMapping(pageableSearchUtilService.configureSearch(title));
+        courseOnly.add("isExamFilter", "false");
+        SearchResultPageDTO<FileUploadExerciseDTO> courseResult = request.getSearchResult("/api/fileupload/file-upload-exercises", HttpStatus.OK, FileUploadExerciseDTO.class,
+                courseOnly);
+        assertThat(courseResult.getResultsOnPage()).extracting(FileUploadExerciseDTO::id).containsExactly(courseExercise.getId());
+    }
+
+    @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void searchExamFileUploadExercise_returnsExamContext() throws Exception {
         ExerciseGroup exerciseGroup = examUtilService.addEnrolledExerciseGroupWithExamAndCourse(true, TEST_PREFIX);

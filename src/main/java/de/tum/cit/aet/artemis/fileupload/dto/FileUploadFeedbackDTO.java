@@ -10,6 +10,7 @@ import de.tum.cit.aet.artemis.assessment.domain.FeedbackType;
 import de.tum.cit.aet.artemis.assessment.domain.GradingInstruction;
 import de.tum.cit.aet.artemis.assessment.domain.Visibility;
 import de.tum.cit.aet.artemis.assessment.dto.GradingInstructionDTO;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
  * DTO representing feedback for a file upload submission.
@@ -26,8 +27,9 @@ import de.tum.cit.aet.artemis.assessment.dto.GradingInstructionDTO;
  * @param gradingInstruction  the structured grading instruction linked to this feedback
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record FileUploadFeedbackDTO(Long id, @Nullable String text, @Nullable String detailText, @Nullable Boolean hasLongFeedbackText, @Nullable String reference,
-        @Nullable Double credits, @Nullable Boolean positive, @Nullable FeedbackType type, @Nullable Visibility visibility, @Nullable GradingInstructionDTO gradingInstruction) {
+public record FileUploadFeedbackDTO(@Schema(requiredMode = Schema.RequiredMode.REQUIRED) Long id, @Nullable String text, @Nullable String detailText,
+        @Nullable Boolean hasLongFeedbackText, @Nullable String reference, @Nullable Double credits, @Nullable Boolean positive, @Nullable FeedbackType type,
+        @Nullable Visibility visibility, @Nullable GradingInstructionDTO gradingInstruction) {
 
     /**
      * Factory method to create a {@link FileUploadFeedbackDTO} from a {@link Feedback} entity.

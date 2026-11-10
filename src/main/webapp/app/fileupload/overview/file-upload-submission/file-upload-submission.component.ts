@@ -264,31 +264,28 @@ export class FileUploadSubmissionComponent implements ComponentCanDeactivate, Ex
         this.isSaving.set(true);
 
         try {
-            const res = await firstValueFrom(this.fileUploadSubmissionService.update(submission, currentExercise.id, file));
-            const newSubmission = res.body;
+            const newSubmission = await firstValueFrom(this.fileUploadSubmissionService.update(submission, currentExercise.id, file));
 
-            if (newSubmission) {
-                this.submission.set(newSubmission);
-                const participation = newSubmission.participation;
-                if (this.isFileUploadParticipation(participation)) {
-                    participation.submissions = [newSubmission];
-                    this.participationWebsocketService.addParticipation(participation, currentExercise);
-                    this.participation.set(participation);
-                    this.fileUploadExercise.update((exercise) => {
-                        if (exercise) {
-                            exercise.studentParticipations = [participation];
-                        }
-                        return exercise;
-                    });
-                }
+            this.submission.set(newSubmission);
+            const participation = newSubmission.participation;
+            if (this.isFileUploadParticipation(participation)) {
+                participation.submissions = [newSubmission];
+                this.participationWebsocketService.addParticipation(participation, currentExercise);
+                this.participation.set(participation);
+                this.fileUploadExercise.update((exercise) => {
+                    if (exercise) {
+                        exercise.studentParticipations = [participation];
+                    }
+                    return exercise;
+                });
+            }
 
-                this.result.set(getLatestSubmissionResult(newSubmission));
-                this.setSubmittedFile();
-                if (this.isActive()) {
-                    this.alertService.success('artemisApp.fileUploadExercise.submitSuccessful');
-                } else {
-                    this.alertService.warning('artemisApp.fileUploadExercise.submitDueDateMissed');
-                }
+            this.result.set(getLatestSubmissionResult(newSubmission));
+            this.setSubmittedFile();
+            if (this.isActive()) {
+                this.alertService.success('artemisApp.fileUploadExercise.submitSuccessful');
+            } else {
+                this.alertService.warning('artemisApp.fileUploadExercise.submitDueDateMissed');
             }
         } catch (error: unknown) {
             this.submission.update((sub) => {

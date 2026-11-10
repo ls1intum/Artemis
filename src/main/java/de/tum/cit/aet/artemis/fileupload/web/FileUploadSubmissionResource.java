@@ -15,6 +15,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -31,6 +32,7 @@ import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
 import de.tum.cit.aet.artemis.core.config.Constants;
+import de.tum.cit.aet.artemis.core.config.openapi.NullableSuccessBody;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EmptyFileException;
@@ -118,7 +120,7 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
      * @return the ResponseEntity with status 200 and with body the new {@link FileUploadSubmissionDTO}, or with status 400 (Bad Request) if the fileUploadSubmission has already an
      *         ID
      */
-    @PostMapping("exercises/{exerciseId}/file-upload-submissions")
+    @PostMapping(value = "exercises/{exerciseId}/file-upload-submissions", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @EnforceAtLeastStudent
     public ResponseEntity<FileUploadSubmissionDTO> createFileUploadSubmission(@PathVariable long exerciseId,
             @RequestPart("submission") FileUploadSubmissionInputDTO fileUploadSubmissionInput, @RequestPart("file") MultipartFile file) {
@@ -309,11 +311,13 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
      * @param exerciseId      of the exercise
      * @param correctionRound for which we want to find the submission
      * @param lockSubmission  specifies if the submission should be locked for assessor
-     * @return the ResponseEntity with status 200 (OK) and the {@link FileUploadSubmissionDTO} in body
+     * @return the ResponseEntity with status 200 (OK) and the {@link FileUploadSubmissionDTO} in body, or with status 200 (OK) and an empty body when no submission is
+     *         eligible for assessment
      */
     @FeatureUsage(UserFeature.MANUAL_ASSESSMENT)
     @GetMapping("exercises/{exerciseId}/file-upload-submission-without-assessment")
     @EnforceAtLeastTutorInExercise
+    @NullableSuccessBody
     public ResponseEntity<FileUploadSubmissionDTO> getFileUploadSubmissionWithoutAssessment(@PathVariable Long exerciseId,
             @RequestParam(value = "lock", defaultValue = "false") boolean lockSubmission, @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound) {
         log.debug("REST request to get a file upload submission without assessment");

@@ -41,6 +41,7 @@ api/quiz-statistics-resources.ts
 api/hyperion-exercise-variant-resources.ts
 api/hyperion-programming-variant-resources.ts
 api/hyperion-exercise-generation-resources.ts
+api/file-upload-assessment-resources.ts
 api/hyperion-problem-statement-resources.ts
 api/quiz-exercise-deletion-resources.ts
 api/quiz-training-resources.ts
@@ -54,10 +55,12 @@ api/hyperion-assessment-criteria-generation-resources.ts
 api/admin-ai-worker-resources.ts
 api/quiz-exercise-retrieval-resources.ts
 api/global-search-resources.ts
+api/file-upload-exercise-resources.ts
 api/admin-hyperion-generation-monitoring-resources.ts
 api/tutorial-group-free-period-resources.ts
 api/hyperion-quiz-question-pool-resources.ts
 api/quiz-exercise-resources.ts
 api/hyperion-faq-resources.ts
 api/calendar-resources.ts
+api/file-upload-submission-resources.ts
 api/quiz-exercise-creation-update-resources.ts

@@ -22,7 +22,7 @@ import { SafeHtml } from '@angular/platform-browser';
 import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
 
 import { AccountService } from 'app/core/auth/account.service';
-import { provideHttpClient } from '@angular/common/http';
+import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { EntityTitleService } from 'app/core/navbar/entity-title.service';
@@ -99,13 +99,21 @@ describe('Exercise Service', () => {
         [ExerciseType.PROGRAMMING, 'api/programming/programming-exercises/5/export-instructor-exercise'],
         [ExerciseType.TEXT, 'api/text/text-exercises/5/export'],
         [ExerciseType.MODELING, 'api/modeling/modeling-exercises/5/export'],
-        [ExerciseType.FILE_UPLOAD, 'api/fileupload/file-upload-exercises/5/export'],
+        [ExerciseType.FILE_UPLOAD, '/api/fileupload/file-upload-exercises/5/export'],
         [ExerciseType.QUIZ, 'api/quiz/quiz-exercises/5/export'],
     ])('should export a %s exercise to a file', (type, url) => {
-        service.exportToFile({ id: 5, type } as Exercise).subscribe();
+        let response: HttpResponse<Blob> | undefined;
+        service.exportToFile({ id: 5, type } as Exercise).subscribe((exportResponse) => (response = exportResponse));
         const request = httpMock.expectOne({ method: 'GET', url });
         expect(request.request.responseType).toBe('blob');
-        request.flush(new Blob(['zip']));
+        request.flush(new Blob(['zip']), { headers: { filename: 'exercise.zip' } });
+        expect(response?.headers.get('filename')).toBe('exercise.zip');
+    });
+
+    it('should refuse to export a file upload exercise without an ID', () => {
+        let error: Error | undefined;
+        service.exportToFile({ type: ExerciseType.FILE_UPLOAD } as Exercise).subscribe({ error: (exportError: Error) => (error = exportError) });
+        expect(error?.message).toBe('Cannot export a file upload exercise without an ID');
     });
 
     it('should fetch only the exercise title projection for selection lists', () => {
@@ -511,6 +519,22 @@ describe('Exercise Service', () => {
         expect(entityTitleServiceSpy).toHaveBeenCalledWith(exerciseFromServer);
 
         expect(profileServiceSpy).not.toHaveBeenCalled();
+    });
+
+    it('should process an exercise received without its response', () => {
+        const accountServiceSpy = vi.spyOn(TestBed.inject(AccountService), 'setAccessRightsForExerciseAndReferencedCourse');
+        const entityTitleServiceSpy = vi.spyOn(TestBed.inject(EntityTitleService), 'setExerciseTitle');
+        const category = { color: '#6ae8ac', category: 'category1' } as ExerciseCategory;
+        const releaseDate = dayjs();
+        const exerciseFromServer: Exercise = Object.assign({}, textExercise, { categories: [JSON.stringify(category)], releaseDate: releaseDate.toJSON() });
+
+        const processedExercise = service.processExerciseEntity(exerciseFromServer);
+
+        expect(processedExercise).toBe(exerciseFromServer);
+        expect(processedExercise.categories).toEqual([category]);
+        expect(processedExercise.releaseDate).toEqual(releaseDate);
+        expect(accountServiceSpy).toHaveBeenCalledExactlyOnceWith(exerciseFromServer);
+        expect(entityTitleServiceSpy).toHaveBeenCalledExactlyOnceWith(exerciseFromServer);
     });
 
     it('should convert exercise dates and categories from client', () => {

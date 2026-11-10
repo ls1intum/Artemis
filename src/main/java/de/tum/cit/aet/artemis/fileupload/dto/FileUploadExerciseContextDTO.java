@@ -14,6 +14,7 @@ import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
  * DTO representing the exercise context for a file upload exercise.
@@ -43,10 +44,11 @@ import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
  * @param gradingCriteria                        the grading criteria defined for the exercise
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record FileUploadExerciseContextDTO(Long id, String title, @Nullable String problemStatement, @Nullable String gradingInstructions, @Nullable String exampleSolution,
-        @Nullable ZonedDateTime releaseDate, @Nullable ZonedDateTime startDate, @Nullable ZonedDateTime dueDate, @Nullable ZonedDateTime assessmentDueDate, Double maxPoints,
-        Double bonusPoints, @Nullable AssessmentType assessmentType, @Nullable Boolean allowComplaintsForAutomaticAssessments, @Nullable Boolean allowFeedbackRequests,
-        ExerciseType type, @Nullable String filePattern, boolean teamMode, @Nullable Boolean isAtLeastTutor, @Nullable Boolean isAtLeastEditor,
+public record FileUploadExerciseContextDTO(@Schema(requiredMode = Schema.RequiredMode.REQUIRED) Long id, String title, @Nullable String problemStatement,
+        @Nullable String gradingInstructions, @Nullable String exampleSolution, @Nullable ZonedDateTime releaseDate, @Nullable ZonedDateTime startDate,
+        @Nullable ZonedDateTime dueDate, @Nullable ZonedDateTime assessmentDueDate, Double maxPoints, Double bonusPoints, @Nullable AssessmentType assessmentType,
+        @Nullable Boolean allowComplaintsForAutomaticAssessments, @Nullable Boolean allowFeedbackRequests, @Schema(requiredMode = Schema.RequiredMode.REQUIRED) ExerciseType type,
+        @Nullable String filePattern, @Schema(requiredMode = Schema.RequiredMode.REQUIRED) boolean teamMode, @Nullable Boolean isAtLeastTutor, @Nullable Boolean isAtLeastEditor,
         @Nullable Boolean isAtLeastInstructor, @Nullable FileUploadCourseContextDTO course, @Nullable FileUploadExerciseGroupContextDTO exerciseGroup,
         @Nullable List<GradingCriterionDTO> gradingCriteria) {
 

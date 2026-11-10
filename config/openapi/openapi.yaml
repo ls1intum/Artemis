@@ -401,6 +401,137 @@ paths:
           content:
             application/json:
               schema: {$ref: '#/components/schemas/HyperionCourseSettings'}
+  /api/fileupload/file-upload-submissions/{submissionId}/feedback:
+    put:
+      tags: [file-upload-assessment]
+      operationId: saveFileUploadAssessment
+      parameters:
+      - name: submissionId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: submit
+        in: query
+        required: false
+        schema: {type: boolean, default: false}
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/FileUploadAssessmentInput'}
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/FileUploadResult'}
+  /api/fileupload/file-upload-submissions/{submissionId}/cancel-assessment:
+    put:
+      tags: [file-upload-assessment]
+      operationId: cancelAssessment
+      parameters:
+      - name: submissionId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: resultId
+        in: query
+        required: false
+        schema: {type: integer, format: int64}
+      responses:
+        '200': {description: OK}
+  /api/fileupload/file-upload-submissions/{submissionId}/assessment-after-complaint:
+    put:
+      tags: [file-upload-assessment]
+      operationId: updateFileUploadAssessmentAfterComplaint
+      parameters:
+      - name: submissionId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/FileUploadAssessmentUpdate'}
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/FileUploadResult'}
+  /api/fileupload/file-upload-exercises/{exerciseId}:
+    get:
+      tags: [file-upload-exercise]
+      operationId: getFileUploadExercise
+      parameters:
+      - name: exerciseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/FileUploadExercise'}
+    put:
+      tags: [file-upload-exercise]
+      operationId: updateFileUploadExercise
+      parameters:
+      - name: notificationText
+        in: query
+        required: false
+        schema: {type: string}
+      - name: exerciseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/UpdateFileUploadExercise'}
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/FileUploadExercise'}
+    delete:
+      tags: [file-upload-exercise]
+      operationId: deleteFileUploadExercise
+      parameters:
+      - name: exerciseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200': {description: OK}
+  /api/fileupload/file-upload-exercises/{exerciseId}/re-evaluate:
+    put:
+      tags: [file-upload-exercise]
+      operationId: reEvaluateAndUpdateFileUploadExercise
+      parameters:
+      - name: exerciseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: deleteFeedback
+        in: query
+        required: false
+        schema: {type: boolean}
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/UpdateFileUploadExercise'}
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/FileUploadExercise'}
   /api/tutorialgroup/courses/{courseId}/tutorial-groups:
     get:
       tags: [tutorial-group]
@@ -1298,6 +1429,154 @@ paths:
                 type: array
                 items: {type: string, maxLength: 128}
                 maxItems: 500
+  /api/fileupload/file-upload-exercises:
+    get:
+      tags: [file-upload-exercise]
+      operationId: getAllExercisesOnPage
+      parameters:
+      - name: page
+        in: query
+        required: true
+        schema: {type: integer, format: int32}
+      - name: pageSize
+        in: query
+        required: true
+        schema: {type: integer, format: int32}
+      - name: sortingOrder
+        in: query
+        required: true
+        schema:
+          type: string
+          enum: [ASCENDING, DESCENDING]
+      - name: sortedColumn
+        in: query
+        required: true
+        schema: {type: string}
+      - name: searchTerm
+        in: query
+        required: false
+        schema: {type: string, default: ''}
+      - name: isCourseFilter
+        in: query
+        required: false
+        schema: {type: boolean, default: true}
+      - name: isExamFilter
+        in: query
+        required: false
+        schema: {type: boolean, default: true}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/SearchResultPageDTOFileUploadExercise'}
+    post:
+      tags: [file-upload-exercise]
+      operationId: createFileUploadExercise
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/FileUploadExerciseInput'}
+        required: true
+      responses:
+        '201':
+          description: The created exercise
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/FileUploadExercise'}
+  /api/fileupload/file-upload-exercises/{exerciseId}/export-submissions:
+    post:
+      tags: [file-upload-exercise]
+      operationId: exportSubmissions
+      parameters:
+      - name: exerciseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/SubmissionExportOptions'}
+        required: true
+      responses:
+        '200':
+          description: The zip file of the submissions; its name is in the filename
+            header
+          content:
+            application/octet-stream:
+              schema: {type: string, format: binary}
+  /api/fileupload/file-upload-exercises/import:
+    post:
+      tags: [file-upload-exercise]
+      operationId: importFileUploadExercise
+      parameters:
+      - name: sourceId
+        in: query
+        required: true
+        schema: {type: integer, format: int64}
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/FileUploadExerciseInput'}
+        required: true
+      responses:
+        '201':
+          description: The imported exercise
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/FileUploadExercise'}
+  /api/fileupload/exercises/{exerciseId}/file-upload-submissions:
+    get:
+      tags: [file-upload-submission]
+      operationId: getAllFileUploadSubmissions
+      parameters:
+      - name: exerciseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: submittedOnly
+        in: query
+        required: false
+        schema: {type: boolean, default: false}
+      - name: assessedByMe
+        in: query
+        required: false
+        schema: {type: boolean, default: false}
+      - name: correction-round
+        in: query
+        required: false
+        schema: {type: integer, format: int32, default: 0}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/FileUploadSubmission'}
+    post:
+      tags: [file-upload-submission]
+      operationId: createFileUploadSubmission
+      parameters:
+      - name: exerciseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                submission: {$ref: '#/components/schemas/FileUploadSubmissionInput'}
+                file: {type: string, format: binary}
+              required: [file, submission]
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/FileUploadSubmission'}
   /api/tutorialgroup/courses/{courseId}/tutorial-groups/{tutorialGroupId}/sessions/{sessionId}/cancel:
     patch:
       tags: [tutorial-group-session]
@@ -1686,7 +1965,7 @@ paths:
   /api/quiz/quiz-exercises:
     get:
       tags: [quiz-exercise-retrieval]
-      operationId: getAllExercisesOnPage
+      operationId: getAllExercisesOnPage_1
       parameters:
       - name: page
         in: query
@@ -1851,6 +2130,21 @@ paths:
           content:
             application/json:
               schema: {$ref: '#/components/schemas/StudentQuizParticipation'}
+  /api/quiz/quiz-exercises/{exerciseId}/export:
+    get:
+      tags: [quiz-exercise]
+      operationId: exportExercise
+      parameters:
+      - name: exerciseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {type: string, format: binary}
   /api/quiz/exams/{examId}/quiz-exercises:
     get:
       tags: [quiz-exercise-retrieval]
@@ -2166,6 +2460,183 @@ paths:
           content:
             application/json:
               schema: {$ref: '#/components/schemas/CourseBrowserData'}
+  /api/fileupload/participations/{participationId}/file-upload-editor:
+    get:
+      tags: [file-upload-submission]
+      operationId: getDataForFileUpload
+      parameters:
+      - name: participationId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/FileUploadSubmission'}
+  /api/fileupload/participations/{participationId}/file-upload-editor/for-staff:
+    get:
+      tags: [file-upload-submission]
+      operationId: getDataForFileUploadForStaff
+      parameters:
+      - name: participationId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/FileUploadSubmission'}
+  /api/fileupload/file-upload-submissions/{submissionId}:
+    get:
+      tags: [file-upload-submission]
+      operationId: getFileUploadSubmission
+      parameters:
+      - name: submissionId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: correction-round
+        in: query
+        required: false
+        schema: {type: integer, format: int32, default: 0}
+      - name: resultId
+        in: query
+        required: false
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/FileUploadSubmission'}
+  /api/fileupload/file-upload-submissions/{submissionId}/result:
+    get:
+      tags: [file-upload-assessment]
+      operationId: getFileUploadAssessmentBySubmissionId
+      parameters:
+      - name: submissionId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/FileUploadResult'}
+  /api/fileupload/file-upload-submissions/{submissionId}/result/for-instructor:
+    get:
+      tags: [file-upload-assessment]
+      operationId: getFileUploadAssessmentBySubmissionIdForInstructor
+      parameters:
+      - name: submissionId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/FileUploadResult'}
+  /api/fileupload/file-upload-exercises/{exerciseId}/for-exam:
+    get:
+      tags: [file-upload-exercise]
+      operationId: getFileUploadExerciseForExam
+      parameters:
+      - name: exerciseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/FileUploadExercise'}
+  /api/fileupload/file-upload-exercises/{exerciseId}/export:
+    get:
+      tags: [file-upload-exercise]
+      operationId: exportExercise_1
+      parameters:
+      - name: exerciseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: The zip file of the exercise; its name is in the filename header
+          content:
+            application/octet-stream:
+              schema: {type: string, format: binary}
+  /api/fileupload/exercises/{exerciseId}/file-upload-submissions/assessed-by-me:
+    get:
+      tags: [file-upload-submission]
+      operationId: getMyAssessedFileUploadSubmissions
+      parameters:
+      - name: exerciseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: correction-round
+        in: query
+        required: false
+        schema: {type: integer, format: int32, default: 0}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/FileUploadSubmission'}
+  /api/fileupload/exercises/{exerciseId}/file-upload-submission-without-assessment:
+    get:
+      tags: [file-upload-submission]
+      operationId: getFileUploadSubmissionWithoutAssessment
+      parameters:
+      - name: exerciseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: lock
+        in: query
+        required: false
+        schema: {type: boolean, default: false}
+      - name: correction-round
+        in: query
+        required: false
+        schema: {type: integer, format: int32, default: 0}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                oneOf:
+                - {$ref: '#/components/schemas/FileUploadSubmission'}
+                - {type: 'null'}
+  /api/fileupload/courses/{courseId}/file-upload-exercises:
+    get:
+      tags: [file-upload-exercise]
+      operationId: getFileUploadExercisesForCourse
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/FileUploadExercise'}
   /api/calendar/subscription-token:
     get:
       tags: [calendar]
@@ -2349,6 +2820,25 @@ paths:
         schema: {type: string}
       responses:
         '200': {description: OK}
+  /api/fileupload/participations/{participationId}/file-upload-submissions/{submissionId}/results/{resultId}:
+    delete:
+      tags: [file-upload-assessment]
+      operationId: deleteAssessment_1
+      parameters:
+      - name: participationId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: submissionId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: resultId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200': {description: OK}
 components:
   schemas:
     CourseCompetency:
@@ -2396,6 +2886,60 @@ components:
         totalTokensUsed: {type: integer, format: int64}
         startedAt: {type: string, format: date-time}
         finishedAt: {type: string, format: date-time}
+    FileUploadExercise:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        type: {type: string}
+        title: {type: string}
+        channelName: {type: string}
+        shortName: {type: string}
+        problemStatement: {type: string}
+        categories:
+          type: array
+          items: {type: string}
+          uniqueItems: true
+        difficulty:
+          type: string
+          enum: [EASY, MEDIUM, HARD]
+        maxPoints: {type: number, format: double}
+        bonusPoints: {type: number, format: double}
+        includedInOverallScore:
+          type: string
+          enum: [INCLUDED_COMPLETELY, INCLUDED_AS_BONUS, NOT_INCLUDED]
+        assessmentType:
+          type: string
+          enum: [AUTOMATIC, SEMI_AUTOMATIC, MANUAL, AUTOMATIC_ATHENA]
+        mode:
+          type: string
+          enum: [INDIVIDUAL, TEAM]
+        teamMode: {type: boolean}
+        teamAssignmentConfig: {$ref: '#/components/schemas/FileUploadTeamAssignmentConfig'}
+        allowComplaintsForAutomaticAssessments: {type: boolean}
+        allowFeedbackRequests: {type: boolean}
+        presentationScoreEnabled: {type: boolean}
+        secondCorrectionEnabled: {type: boolean}
+        gradingInstructions: {type: string}
+        releaseDate: {type: string, format: date-time}
+        startDate: {type: string, format: date-time}
+        dueDate: {type: string, format: date-time}
+        assessmentDueDate: {type: string, format: date-time}
+        exampleSolutionPublicationDate: {type: string, format: date-time}
+        exampleSolution: {type: string}
+        filePattern: {type: string}
+        gradingInstructionFeedbackUsed: {type: boolean}
+        course: {$ref: '#/components/schemas/FileUploadExerciseCourse'}
+        exerciseGroup: {$ref: '#/components/schemas/FileUploadExerciseExamGroup'}
+        exerciseVariantGroup: {$ref: '#/components/schemas/ExerciseVariantGroupReference'}
+        gradingCriteria:
+          type: array
+          items: {$ref: '#/components/schemas/GradingCriterion'}
+        competencyLinks:
+          type: array
+          items: {$ref: '#/components/schemas/CompetencyLink'}
+          uniqueItems: true
+        plagiarismDetectionConfig: {$ref: '#/components/schemas/FileUploadPlagiarismDetectionConfig'}
+      required: [gradingInstructionFeedbackUsed, id, teamMode, type]
     QuizBatchWithPassword:
       type: object
       properties:
@@ -2666,6 +3210,51 @@ components:
         completion: {type: integer, format: int64, description: Completion token length,
           example: 3753}
         total: {type: integer, format: int64, description: Total token length, example: 13957}
+    FileUploadExerciseInput:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        title: {type: string}
+        channelName: {type: string}
+        shortName: {type: string}
+        problemStatement: {type: string}
+        categories:
+          type: array
+          items: {type: string}
+          uniqueItems: true
+        difficulty:
+          type: string
+          enum: [EASY, MEDIUM, HARD]
+        maxPoints: {type: number, format: double}
+        bonusPoints: {type: number, format: double}
+        includedInOverallScore:
+          type: string
+          enum: [INCLUDED_COMPLETELY, INCLUDED_AS_BONUS, NOT_INCLUDED]
+        mode:
+          type: string
+          enum: [INDIVIDUAL, TEAM]
+        teamAssignmentConfig: {$ref: '#/components/schemas/FileUploadTeamAssignmentConfig'}
+        allowComplaintsForAutomaticAssessments: {type: boolean}
+        presentationScoreEnabled: {type: boolean}
+        secondCorrectionEnabled: {type: boolean}
+        gradingInstructions: {type: string}
+        releaseDate: {type: string, format: date-time}
+        startDate: {type: string, format: date-time}
+        dueDate: {type: string, format: date-time}
+        assessmentDueDate: {type: string, format: date-time}
+        exampleSolutionPublicationDate: {type: string, format: date-time}
+        exampleSolution: {type: string}
+        filePattern: {type: string}
+        courseId: {type: integer, format: int64}
+        exerciseGroupId: {type: integer, format: int64}
+        gradingCriteria:
+          type: array
+          items: {$ref: '#/components/schemas/GradingCriterion'}
+        competencyLinks:
+          type: array
+          items: {$ref: '#/components/schemas/CompetencyLink'}
+          uniqueItems: true
+        plagiarismDetectionConfig: {$ref: '#/components/schemas/FileUploadPlagiarismDetectionConfig'}
     DragAndDropSubmittedAnswerBeforeEvaluation:
       required: [type]
       type: object
@@ -2906,6 +3495,16 @@ components:
         startTime: {type: string, format: date-time}
         started: {type: boolean}
         ended: {type: boolean}
+    FileUploadPlagiarismDetectionConfig:
+      type: object
+      properties:
+        continuousPlagiarismControlEnabled: {type: boolean}
+        continuousPlagiarismControlPostDueDateChecksEnabled: {type: boolean}
+        continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod: {type: integer,
+          format: int32}
+        similarityThreshold: {type: integer, format: int32}
+        minimumScore: {type: integer, format: int32}
+        minimumSize: {type: integer, format: int32}
     QuizQuestionWithoutSolution:
       discriminator:
         propertyName: type
@@ -3152,6 +3751,14 @@ components:
         refinementPrompt: {type: string, description: User instructions describing
             how all questions should be changed, maxLength: 2000, minLength: 1}
       required: [questions, refinementPrompt]
+    SubmissionExportOptions:
+      type: object
+      properties:
+        exportAllParticipants: {type: boolean}
+        filterLateSubmissions: {type: boolean}
+        filterLateSubmissionsDate: {type: string, format: date-time}
+        participantIdentifierList: {type: string}
+      required: [exportAllParticipants, filterLateSubmissions]
     LeaderboardEntry:
       type: object
       properties:
@@ -3504,6 +4111,7 @@ components:
         competency: {$ref: '#/components/schemas/Competency'}
         weight: {type: number, format: double}
         generatedByAi: {type: boolean, readOnly: true}
+      required: [weight]
     ProblemStatementRewriteRequest:
       type: object
       description: Request to rewrite a problem statement
@@ -3623,6 +4231,23 @@ components:
           items: {$ref: '#/components/schemas/QuizQuestionReEvaluate'}
           minItems: 1
       required: [includedInOverallScore, quizQuestions, randomizeQuestionOrder, title]
+    FileUploadCourseContext:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        title: {type: string}
+        shortName: {type: string}
+        accuracyOfScores: {type: integer, format: int32}
+        maxComplaints: {type: integer, format: int32}
+        maxTeamComplaints: {type: integer, format: int32}
+        maxComplaintTimeDays: {type: integer, format: int32}
+        maxRequestMoreFeedbackTimeDays: {type: integer, format: int32}
+        maxComplaintTextLimit: {type: integer, format: int32}
+        maxComplaintResponseTextLimit: {type: integer, format: int32}
+        complaintsEnabled: {type: boolean}
+        requestMoreFeedbackEnabled: {type: boolean}
+      required: [complaintsEnabled, id, maxComplaintResponseTextLimit, maxComplaintTextLimit,
+        maxComplaintTimeDays, maxRequestMoreFeedbackTimeDays, requestMoreFeedbackEnabled]
     RewriteFaqResponse:
       type: object
       description: Response containing rewritten FAQ
@@ -3686,6 +4311,15 @@ components:
       type: object
       properties:
         title: {type: string}
+    FileUploadAssessmentUpdate:
+      type: object
+      properties:
+        feedbacks:
+          type: array
+          items: {$ref: '#/components/schemas/FileUploadFeedbackInput'}
+        complaintResponse: {$ref: '#/components/schemas/FileUploadComplaintResponseInput'}
+        assessmentNote: {type: string}
+      required: [complaintResponse]
     QuizQuestionFilterVerdict:
       type: object
       description: The filter's judgement of one generated quiz question on one failure
@@ -3845,6 +4479,24 @@ components:
       properties:
         type: {type: string}
       required: [type]
+    FileUploadFeedback:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        text: {type: string}
+        detailText: {type: string}
+        hasLongFeedbackText: {type: boolean}
+        reference: {type: string}
+        credits: {type: number, format: double}
+        positive: {type: boolean}
+        type:
+          type: string
+          enum: [MANUAL, MANUAL_UNREFERENCED, AUTOMATIC_ADAPTED, AUTOMATIC]
+        visibility:
+          type: string
+          enum: [ALWAYS, AFTER_DUE_DATE, NEVER]
+        gradingInstruction: {$ref: '#/components/schemas/GradingInstruction'}
+      required: [id]
     PointCounter:
       type: object
       properties:
@@ -3874,6 +4526,13 @@ components:
         location: {type: string}
         facilitator: {type: string}
       required: [startDate, title, type]
+    FileUploadSubmissionInput:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        submitted: {type: boolean}
+        exerciseId: {type: integer, format: int64}
+      required: [submitted]
     QuizSearchExerciseGroup:
       type: object
       properties:
@@ -3987,6 +4646,25 @@ components:
         courseTitle: {type: string}
         nextSession: {$ref: '#/components/schemas/TutorialGroupSummarySession'}
         averageAttendance: {type: integer, format: int32}
+    FileUploadParticipation:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        initializationState:
+          type: string
+          enum: [UNINITIALIZED, REPO_COPIED, REPO_CONFIGURED, INACTIVE, BUILD_PLAN_COPIED,
+            BUILD_PLAN_CONFIGURED, INITIALIZED, FINISHED]
+        initializationDate: {type: string, format: date-time}
+        individualDueDate: {type: string, format: date-time}
+        presentationScore: {type: number, format: double}
+        submissionCount: {type: integer, format: int32}
+        type: {type: string}
+        testRun: {type: boolean}
+        participantName: {type: string}
+        participantIdentifier: {type: string}
+        isOwner: {type: boolean}
+        exercise: {$ref: '#/components/schemas/FileUploadExerciseContext'}
+      required: [id, testRun, type]
     QuizQuestionRefinementFailure:
       description: Failed refinement result containing an error message
       required: [error, type]
@@ -4070,6 +4748,13 @@ components:
         userPrompt: {type: string, description: User prompt for global refinement,
           maxLength: 1000, minLength: 1}
       required: [problemStatementText, userPrompt]
+    FileUploadAssessmentInput:
+      type: object
+      properties:
+        feedbacks:
+          type: array
+          items: {$ref: '#/components/schemas/FileUploadFeedbackInput'}
+        assessmentNote: {type: string}
     QuizQuestionRefinementSuccess:
       description: Successful refinement result containing the refined question and
         an explanation of the changes
@@ -4100,6 +4785,19 @@ components:
         workload: {type: string}
         version: {type: integer, format: int32}
         profile: {type: string}
+    FileUploadExerciseCourse:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        title: {type: string}
+        shortName: {type: string}
+        testCourse: {type: boolean}
+        presentationScore: {type: integer, format: int32}
+        courseInformationSharingConfiguration:
+          type: string
+          enum: [DISABLED, COMMUNICATION_AND_MESSAGING, COMMUNICATION_ONLY]
+        accuracyOfScores: {type: integer, format: int32}
+      required: [id]
     ResultAfterEvaluationWithSubmission:
       type: object
       properties:
@@ -4302,6 +5000,13 @@ components:
           description: Related locations across artifacts
           items: {$ref: '#/components/schemas/ArtifactLocation'}
       required: [category, description, relatedLocations, severity, suggestedFix]
+    FileUploadComplaintResponseInput:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        responseText: {type: string, maxLength: 65535, minLength: 0}
+        complaintIsAccepted: {type: boolean}
+      required: [complaintIsAccepted, id]
     IndexedContentPresence:
       type: object
       properties:
@@ -4314,6 +5019,17 @@ components:
           type: array
           items: {type: integer, format: int64}
           uniqueItems: true
+    FileUploadExerciseExam:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        title: {type: string}
+        course: {$ref: '#/components/schemas/FileUploadExerciseCourse'}
+        startDate: {type: string, format: date-time}
+        endDate: {type: string, format: date-time}
+        exampleSolutionPublicationDate: {type: string, format: date-time}
+        numberOfCorrectionRoundsInExam: {type: integer, format: int32}
+      required: [id]
     DragAndDropQuizQuestionWithSolution:
       required: [type]
       type: object
@@ -4457,6 +5173,13 @@ components:
         pictureFilePath: {type: string}
         text: {type: string}
         invalid: {type: boolean}
+    FileUploadAssessmentNote:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        note: {type: string}
+        creator: {$ref: '#/components/schemas/FileUploadUser'}
+      required: [id]
     DragItemFromEditor:
       type: object
       properties:
@@ -5101,6 +5824,22 @@ components:
           additionalProperties: {type: string}
           description: Action-specific context parameters
       required: [actionType, problemStatementMarkdown]
+    FileUploadFeedbackInput:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        text: {type: string}
+        detailText: {type: string}
+        reference: {type: string}
+        credits: {type: number, format: double}
+        positive: {type: boolean}
+        type:
+          type: string
+          enum: [MANUAL, MANUAL_UNREFERENCED, AUTOMATIC_ADAPTED, AUTOMATIC]
+        visibility:
+          type: string
+          enum: [ALWAYS, AFTER_DUE_DATE, NEVER]
+        gradingInstruction: {$ref: '#/components/schemas/GradingInstruction'}
     ShortAnswerSolutionReEvaluate:
       type: object
       properties:
@@ -5207,6 +5946,12 @@ components:
           enum: [GENERATE, ADAPT]
         exerciseTitle: {type: string}
         courseId: {type: integer, format: int64}
+    FileUploadExerciseGroupContext:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        exam: {$ref: '#/components/schemas/FileUploadExamContext'}
+      required: [id]
     EntityIdRef:
       type: object
       properties:
@@ -5302,6 +6047,39 @@ components:
         email: {type: string}
         registrationNumber: {type: string}
       required: [id, login]
+    FileUploadExerciseContext:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        title: {type: string}
+        problemStatement: {type: string}
+        gradingInstructions: {type: string}
+        exampleSolution: {type: string}
+        releaseDate: {type: string, format: date-time}
+        startDate: {type: string, format: date-time}
+        dueDate: {type: string, format: date-time}
+        assessmentDueDate: {type: string, format: date-time}
+        maxPoints: {type: number, format: double}
+        bonusPoints: {type: number, format: double}
+        assessmentType:
+          type: string
+          enum: [AUTOMATIC, SEMI_AUTOMATIC, MANUAL, AUTOMATIC_ATHENA]
+        allowComplaintsForAutomaticAssessments: {type: boolean}
+        allowFeedbackRequests: {type: boolean}
+        type:
+          type: string
+          enum: [text, programming, modeling, file-upload, quiz]
+        filePattern: {type: string}
+        teamMode: {type: boolean}
+        isAtLeastTutor: {type: boolean}
+        isAtLeastEditor: {type: boolean}
+        isAtLeastInstructor: {type: boolean}
+        course: {$ref: '#/components/schemas/FileUploadCourseContext'}
+        exerciseGroup: {$ref: '#/components/schemas/FileUploadExerciseGroupContext'}
+        gradingCriteria:
+          type: array
+          items: {$ref: '#/components/schemas/GradingCriterion'}
+      required: [id, teamMode, type]
     StudentQuizParticipation:
       discriminator:
         propertyName: quizQuestionsType
@@ -5398,6 +6176,24 @@ components:
             in EUR, example: 0.016513}
         totalEur: {type: number, format: double, description: Total costs in EUR,
           example: 0.027738}
+    FileUploadSubmission:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        submitted: {type: boolean}
+        type:
+          type: string
+          enum: [MANUAL, TIMEOUT, TEST, OTHER, INSTRUCTOR, EXTERNAL]
+        exampleSubmission: {type: boolean}
+        submissionDate: {type: string, format: date-time}
+        durationInMinutes: {type: integer, format: int64}
+        submissionExerciseType: {type: string}
+        filePath: {type: string}
+        participation: {$ref: '#/components/schemas/FileUploadParticipation'}
+        results:
+          type: array
+          items: {$ref: '#/components/schemas/FileUploadResult'}
+      required: [submissionExerciseType]
     MultipleChoiceSubmittedAnswerFromLiveClient:
       required: [type]
       type: object
@@ -5464,6 +6260,16 @@ components:
         maxPoints: {type: number, format: double}
         bonusPoints: {type: number, format: double}
         exerciseVariantGroup: {$ref: '#/components/schemas/ExerciseVariantGroupReference'}
+    FileUploadUser:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        login: {type: string}
+        name: {type: string}
+        firstName: {type: string}
+        lastName: {type: string}
+        imageUrl: {type: string}
+      required: [id, login]
     VariantPlacement:
       type: object
       properties:
@@ -5545,12 +6351,26 @@ components:
           description: Refinement results, one per input question in the same order
           items: {$ref: '#/components/schemas/QuizQuestionRefinementResponse'}
       required: [refinements]
+    SearchResultPageDTOFileUploadExercise:
+      type: object
+      properties:
+        resultsOnPage:
+          type: array
+          items: {$ref: '#/components/schemas/FileUploadExercise'}
+        numberOfPages: {type: integer, format: int32}
+      required: [numberOfPages]
     ProblemStatementRefinementResponse:
       type: object
       description: Response containing refined problem statement
       properties:
         refinedProblemStatement: {type: string, description: Refined problem statement
             text}
+    FileUploadTeamAssignmentConfig:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        minTeamSize: {type: integer, format: int32}
+        maxTeamSize: {type: integer, format: int32}
     ExerciseGenerationLiveUsage:
       type: object
       description: What a generation run has spent so far, streamed while it runs
@@ -5696,6 +6516,47 @@ components:
           type: array
           items: {$ref: '#/components/schemas/ExerciseGenerationFeedback'}
         sourceExerciseId: {type: integer, format: int64}
+    UpdateFileUploadExercise:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        title: {type: string}
+        channelName: {type: string}
+        shortName: {type: string}
+        problemStatement: {type: string}
+        categories:
+          type: array
+          items: {type: string}
+          uniqueItems: true
+        difficulty:
+          type: string
+          enum: [EASY, MEDIUM, HARD]
+        maxPoints: {type: number, format: double}
+        bonusPoints: {type: number, format: double}
+        includedInOverallScore:
+          type: string
+          enum: [INCLUDED_COMPLETELY, INCLUDED_AS_BONUS, NOT_INCLUDED]
+        allowComplaintsForAutomaticAssessments: {type: boolean}
+        presentationScoreEnabled: {type: boolean}
+        secondCorrectionEnabled: {type: boolean}
+        gradingInstructions: {type: string}
+        releaseDate: {type: string, format: date-time}
+        startDate: {type: string, format: date-time}
+        dueDate: {type: string, format: date-time}
+        assessmentDueDate: {type: string, format: date-time}
+        exampleSolutionPublicationDate: {type: string, format: date-time}
+        exampleSolution: {type: string}
+        filePattern: {type: string}
+        courseId: {type: integer, format: int64}
+        exerciseGroupId: {type: integer, format: int64}
+        gradingCriteria:
+          type: array
+          items: {$ref: '#/components/schemas/GradingCriterion'}
+        competencyLinks:
+          type: array
+          items: {$ref: '#/components/schemas/CompetencyLink'}
+          uniqueItems: true
+      required: [id, title]
     AnswerOptionFromEditor:
       type: object
       properties:
@@ -5705,6 +6566,33 @@ components:
         explanation: {type: string, maxLength: 500, minLength: 0}
         isCorrect: {type: boolean}
       required: [isCorrect, text]
+    FileUploadExerciseExamGroup:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        exam: {$ref: '#/components/schemas/FileUploadExerciseExam'}
+      required: [id]
+    FileUploadResult:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        completionDate: {type: string, format: date-time}
+        successful: {type: boolean}
+        score: {type: number, format: double}
+        rated: {type: boolean}
+        assessmentType:
+          type: string
+          enum: [AUTOMATIC, SEMI_AUTOMATIC, MANUAL, AUTOMATIC_ATHENA]
+        correctionRound: {type: integer, format: int32}
+        hasComplaint: {type: boolean}
+        exampleResult: {type: boolean}
+        assessmentNote: {$ref: '#/components/schemas/FileUploadAssessmentNote'}
+        assessor: {$ref: '#/components/schemas/FileUploadUser'}
+        feedbacks:
+          type: array
+          items: {$ref: '#/components/schemas/FileUploadFeedback'}
+        submission: {$ref: '#/components/schemas/FileUploadSubmission'}
+      required: [id, rated]
     ShortAnswerSubmittedAnswerFromLiveClient:
       required: [type]
       type: object
@@ -5752,6 +6640,7 @@ components:
           type: array
           items: {$ref: '#/components/schemas/QuizExerciseForSearch'}
         numberOfPages: {type: integer, format: int32}
+      required: [numberOfPages]
     ExerciseGenerationRepairRound:
       type: object
       description: Per-round finding bookkeeping of the semantic repair loop, so a
@@ -5772,6 +6661,12 @@ components:
         fresh: {type: integer, format: int32, description: How many of this round's
             findings are new since the previous round}
       required: [advisory, attempt, blocking, carriedOver, drained, fresh, round]
+    FileUploadExamContext:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        course: {$ref: '#/components/schemas/FileUploadCourseContext'}
+      required: [id]
     ConversationUser:
       type: object
       properties:

@@ -1,6 +1,5 @@
 import { of } from 'rxjs';
 import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
-import { HttpResponse } from '@angular/common/http';
 import { Course } from 'app/course/shared/entities/course.model';
 
 export const fileUploadExercise = new FileUploadExercise(undefined, undefined);
@@ -15,7 +14,7 @@ fileUploadExercise.categories = [];
 export class MockFileUploadExerciseService {
     create = (fileUploadExerciseParam: FileUploadExercise) => of();
     update = (fileUploadExerciseParam: FileUploadExercise, exerciseId: number, req?: any) => of();
-    find = (fileUploadExerciseId: number) => of(new HttpResponse({ body: fileUploadExercise }));
+    find = (fileUploadExerciseId: number) => of(fileUploadExercise);
     query = (req?: any) => of();
     delete = (fileUploadExerciseId: number) => of();
 }

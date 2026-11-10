@@ -1,5 +1,6 @@
 import { Exercise, ExerciseType, hasDueDatePassed } from 'app/exercise/shared/entities/exercise/exercise.model';
 import dayjs from 'dayjs/esm';
+import { HttpResponse } from '@angular/common/http';
 import { InitializationState, Participation } from 'app/exercise/shared/entities/participation/participation.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
@@ -7,7 +8,7 @@ import { Observable, from, of } from 'rxjs';
 import { TumAetUiDialogService } from '@tumaet/ui-angular';
 import { ExerciseUpdateWarningService } from 'app/exercise/exercise-update-warning/exercise-update-warning.service';
 import type { ExerciseServicable, ExerciseUpdateRequestOptions } from 'app/exercise/services/exercise.service';
-import { map, mergeMap, mergeWith, takeUntil } from 'rxjs/operators';
+import { filter, map, mergeMap, mergeWith, takeUntil } from 'rxjs/operators';
 import { StudentParticipation, isPracticeMode } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { SubmissionType } from 'app/exercise/shared/entities/submission/submission.model';
 import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
@@ -88,9 +89,11 @@ export class SaveExerciseCommand<T extends Exercise> {
             saveObservable = confirmedCase.pipe(mergeWith(reEvaluatedCase), takeUntil(canceledCase));
         }
 
+        // Services on the generated client return the exercise, services on handwritten transport its full response.
         return saveObservable.pipe(
             mergeMap(callServer),
-            map((res) => res.body!),
+            map((res: HttpResponse<T> | T) => (res instanceof HttpResponse ? res.body : res)),
+            filter((savedExercise): savedExercise is T => !!savedExercise),
         );
     }
 }

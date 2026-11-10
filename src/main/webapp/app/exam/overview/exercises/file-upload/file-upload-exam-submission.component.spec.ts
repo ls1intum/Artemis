@@ -16,7 +16,7 @@ import { MAX_SUBMISSION_FILE_SIZE } from 'app/foundation/constants/input.constan
 import { ExamParticipationService } from 'app/exam/overview/services/exam-participation.service';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { FileUploadSubmissionService } from 'app/fileupload/overview/file-upload-submission.service';
-import { HttpResponse, provideHttpClient } from '@angular/common/http';
+import { provideHttpClient } from '@angular/common/http';
 import { Subject, of, throwError } from 'rxjs';
 import { ExamExerciseUpdateHighlighterComponent } from 'app/exam/overview/exercises/exam-exercise-update-highlighter/exam-exercise-update-highlighter.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -27,6 +27,14 @@ import { ArtemisMarkdownService } from 'app/foundation/service/markdown.service'
 import { htmlForMarkdown } from 'app/foundation/util/markdown.conversion.util';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { addPublicFilePrefix } from 'app/app.constants';
+
+/** A submission as the server returns it after an upload. */
+function savedSubmission(filePath: string, id?: number): FileUploadSubmission {
+    const submission = new FileUploadSubmission();
+    submission.id = id;
+    submission.filePath = filePath;
+    return submission;
+}
 
 describe('FileUploadExamSubmissionComponent', () => {
     let fixture: ComponentFixture<FileUploadExamSubmissionComponent>;
@@ -142,7 +150,7 @@ describe('FileUploadExamSubmissionComponent', () => {
         });
 
         it('should automatically upload a valid selected file exactly once', () => {
-            const pending = new Subject<HttpResponse<FileUploadSubmission>>();
+            const pending = new Subject<FileUploadSubmission>();
             const update = vi.spyOn(fileUploadSubmissionService, 'update').mockReturnValue(pending);
             const file = new File(['image'], 'solution.PNG');
             comp.setFileSubmissionForExercise({ target: { files: [file] } } as unknown as Event);
@@ -152,7 +160,7 @@ describe('FileUploadExamSubmissionComponent', () => {
             expect(comp.studentSubmission().isSynced).toBe(false);
             fixture.detectChanges();
             expect(fixture.nativeElement.querySelector('[data-testid="exam-file-upload-input"]').disabled).toBe(true);
-            pending.next(new HttpResponse({ body: { filePath: 'new/solution.PNG' } }));
+            pending.next(savedSubmission('new/solution.PNG'));
             pending.complete();
             fixture.detectChanges();
             expect(comp.studentSubmission().isSynced).toBe(true);
@@ -160,7 +168,7 @@ describe('FileUploadExamSubmissionComponent', () => {
         });
 
         it('should refresh the preview when a file with the same name replaces the previous one', () => {
-            vi.spyOn(fileUploadSubmissionService, 'update').mockReturnValue(of(new HttpResponse({ body: { filePath: 'new/solution.png' } })));
+            vi.spyOn(fileUploadSubmissionService, 'update').mockReturnValue(of(savedSubmission('new/solution.png')));
             const previewSrc = () => fixture.nativeElement.querySelector('[data-testid="file-upload-preview"]').getAttribute('src');
             comp.setFileSubmissionForExercise({ target: { files: [new File(['one'], 'solution.png')] } } as unknown as Event);
             fixture.detectChanges();
@@ -174,7 +182,7 @@ describe('FileUploadExamSubmissionComponent', () => {
 
         it('automatically uploads a valid dropped file', () => {
             const file = new File(['image'], 'solution.png');
-            const update = vi.spyOn(fileUploadSubmissionService, 'update').mockReturnValue(of(new HttpResponse({ body: { filePath: 'new/solution.png' } })));
+            const update = vi.spyOn(fileUploadSubmissionService, 'update').mockReturnValue(of(savedSubmission('new/solution.png')));
             const preventDefault = vi.fn();
             comp.onDrop({ preventDefault, dataTransfer: { files: [file] } } as unknown as DragEvent);
             expect(preventDefault).toHaveBeenCalledOnce();
@@ -200,14 +208,14 @@ describe('FileUploadExamSubmissionComponent', () => {
         });
 
         it('should keep an in-flight upload associated with its original submission', () => {
-            const pending = new Subject<HttpResponse<FileUploadSubmission>>();
+            const pending = new Subject<FileUploadSubmission>();
             vi.spyOn(fileUploadSubmissionService, 'update').mockReturnValue(pending);
             comp.setFileSubmissionForExercise({ target: { files: [new File(['image'], 'solution.png')] } } as unknown as Event);
             const originalSubmission = comp.studentSubmission();
             const otherSubmission = { isSynced: true } as FileUploadSubmission;
             fixture.componentRef.setInput('studentSubmission', otherSubmission);
             fixture.detectChanges();
-            pending.next(new HttpResponse({ body: { filePath: 'original/solution.png' } }));
+            pending.next(savedSubmission('original/solution.png'));
             pending.complete();
             expect(originalSubmission.filePath).toBe('original/solution.png');
             expect(otherSubmission.filePath).toBeUndefined();
@@ -222,7 +230,7 @@ describe('FileUploadExamSubmissionComponent', () => {
             expect(comp.submissionFile).toBe(file);
             expect(comp.studentSubmission().isSynced).toBe(false);
             expect(fixture.nativeElement.querySelector('[data-testid="file-upload-error"]')).not.toBeNull();
-            update.mockReturnValue(of(new HttpResponse({ body: { filePath: 'new/solution.png' } })));
+            update.mockReturnValue(of(savedSubmission('new/solution.png')));
             (fixture.nativeElement.querySelector('[data-testid="file-upload-retry"]') as HTMLButtonElement).click();
             expect(update).toHaveBeenCalledTimes(2);
             expect(comp.studentSubmission().isSynced).toBe(true);
@@ -432,7 +440,7 @@ describe('FileUploadExamSubmissionComponent', () => {
 
         it('should save if submissionFile is defined', () => {
             const newFilePath = 'new/path/image.png';
-            const updateStub = vi.spyOn(fileUploadSubmissionService, 'update').mockReturnValue(of(new HttpResponse({ body: { id: 1, filePath: newFilePath } })));
+            const updateStub = vi.spyOn(fileUploadSubmissionService, 'update').mockReturnValue(of(savedSubmission(newFilePath, 1)));
             comp.submissionFile = new File([], 'name.png');
             expect(comp.studentSubmission().filePath).not.toEqual(newFilePath);
             comp.saveUploadedFile();
@@ -450,7 +458,7 @@ describe('FileUploadExamSubmissionComponent', () => {
         const examParticipationService = TestBed.inject(ExamParticipationService);
         const notify = vi.spyOn(examParticipationService, 'notifySubmissionSyncStateChanged');
 
-        const pending = new Subject<HttpResponse<FileUploadSubmission>>();
+        const pending = new Subject<FileUploadSubmission>();
         vi.spyOn(fileUploadSubmissionService, 'update').mockReturnValue(pending);
 
         // Selecting a valid file marks the submission unsaved.
@@ -460,7 +468,7 @@ describe('FileUploadExamSubmissionComponent', () => {
         expect(notify).toHaveBeenCalledOnce();
 
         // A successful upload marks it saved again.
-        pending.next(new HttpResponse({ body: { filePath: 'path/to/file.png' } }));
+        pending.next(savedSubmission('path/to/file.png'));
         pending.complete();
         expect(comp.studentSubmission().isSynced).toBe(true);
         expect(notify).toHaveBeenCalledTimes(2);

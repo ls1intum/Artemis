@@ -1098,6 +1098,7 @@ components:
         competency: {$ref: '#/components/schemas/CompetencyDTO'}
         weight: {type: number, format: double}
         generatedByAi: {type: boolean, readOnly: true}
+      required: [weight]
     GradingCriterionDTO:
       type: object
       properties:
@@ -2344,6 +2345,7 @@ components:
           type: array
           items: {$ref: '#/components/schemas/SlideDTO'}
           maxItems: 10000
+        slideMetadataPending: {type: boolean}
         completed: {type: boolean}
         visibleToStudents: {type: boolean}
         lecture: {$ref: '#/components/schemas/LectureReferenceDTO'}

@@ -25,14 +25,9 @@ export class FileUploadExerciseManagementResolve implements Resolve<FileUploadEx
      */
     resolve(route: ActivatedRouteSnapshot) {
         if (route.params['exerciseId']) {
-            return (
-                isExamExerciseRoute(route)
-                    ? this.fileUploadExerciseService.findForExam(route.params['exerciseId'])
-                    : this.fileUploadExerciseService.find(route.params['exerciseId'])
-            ).pipe(
-                filter((res) => !!res.body),
-                map((fileUploadExercise: HttpResponse<FileUploadExercise>) => fileUploadExercise.body!),
-            );
+            return isExamExerciseRoute(route)
+                ? this.fileUploadExerciseService.findForExam(route.params['exerciseId'])
+                : this.fileUploadExerciseService.find(route.params['exerciseId']);
         } else if (route.params['courseId']) {
             if (route.params['examId'] && route.params['exerciseGroupId']) {
                 return this.exerciseGroupService.find(route.params['courseId'], route.params['examId'], route.params['exerciseGroupId']).pipe(

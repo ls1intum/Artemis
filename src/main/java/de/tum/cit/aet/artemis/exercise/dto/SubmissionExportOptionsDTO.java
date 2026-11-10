@@ -4,6 +4,8 @@ import java.time.ZonedDateTime;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
 /**
  * This is a dto for the repository export options.
  *
@@ -13,7 +15,8 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * @param participantIdentifierList the list of participant identifiers
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record SubmissionExportOptionsDTO(boolean exportAllParticipants, boolean filterLateSubmissions, ZonedDateTime filterLateSubmissionsDate, String participantIdentifierList) {
+public record SubmissionExportOptionsDTO(@Schema(requiredMode = Schema.RequiredMode.REQUIRED) boolean exportAllParticipants,
+        @Schema(requiredMode = Schema.RequiredMode.REQUIRED) boolean filterLateSubmissions, ZonedDateTime filterLateSubmissionsDate, String participantIdentifierList) {
 
     /**
      * Creates a new SubmissionExportOptionsDTO with default values.

@@ -12,6 +12,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadSubmission;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
  * DTO representing a file upload submission.
@@ -29,8 +30,8 @@ import de.tum.cit.aet.artemis.fileupload.domain.FileUploadSubmission;
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record FileUploadSubmissionDTO(Long id, @Nullable Boolean submitted, @Nullable SubmissionType type, @Nullable Boolean exampleSubmission,
-        @Nullable ZonedDateTime submissionDate, @Nullable Long durationInMinutes, String submissionExerciseType, @Nullable String filePath,
-        @Nullable FileUploadParticipationDTO participation, @Nullable List<FileUploadResultDTO> results) {
+        @Nullable ZonedDateTime submissionDate, @Nullable Long durationInMinutes, @Schema(requiredMode = Schema.RequiredMode.REQUIRED) String submissionExerciseType,
+        @Nullable String filePath, @Nullable FileUploadParticipationDTO participation, @Nullable List<FileUploadResultDTO> results) {
 
     /**
      * Factory method to map a {@link FileUploadSubmission} to a DTO after a successful submission.

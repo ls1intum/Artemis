@@ -84,7 +84,7 @@ describe('FileUploadExerciseManagementResolve', () => {
     describe('resolve with exerciseId', () => {
         it('should resolve existing exercise by ID', async () => {
             const exercise = createExercise(createCourse());
-            vi.spyOn(fileUploadExerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: exercise })));
+            vi.spyOn(fileUploadExerciseService, 'find').mockReturnValue(of(exercise));
 
             const snapshot = { params: { exerciseId: 456 }, pathFromRoot: [{ params: {} }] } as unknown as ActivatedRouteSnapshot;
 
@@ -96,7 +96,7 @@ describe('FileUploadExerciseManagementResolve', () => {
 
         it('should not call course or exercise group service when exerciseId is present', async () => {
             const exercise = createExercise(createCourse());
-            vi.spyOn(fileUploadExerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: exercise })));
+            vi.spyOn(fileUploadExerciseService, 'find').mockReturnValue(of(exercise));
 
             const snapshot = { params: { exerciseId: 456 }, pathFromRoot: [{ params: {} }] } as unknown as ActivatedRouteSnapshot;
 
@@ -234,7 +234,7 @@ describe('FileUploadExerciseManagementResolve', () => {
     describe('service calls verification', () => {
         it('should call find with correct exercise ID', async () => {
             const exercise = createExercise();
-            vi.spyOn(fileUploadExerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: exercise })));
+            vi.spyOn(fileUploadExerciseService, 'find').mockReturnValue(of(exercise));
 
             const snapshot = { params: { exerciseId: 999 }, pathFromRoot: [{ params: {} }] } as unknown as ActivatedRouteSnapshot;
 
@@ -271,8 +271,8 @@ describe('FileUploadExerciseManagementResolve', () => {
     it('should resolve exam details from an ancestor with the same options', () => {
         const detailService = TestBed.inject(FileUploadExerciseService);
         const exercise = new FileUploadExercise(undefined, undefined);
-        const examFind = vi.spyOn(detailService, 'findForExam').mockReturnValue(of(new HttpResponse({ body: exercise })));
-        vi.spyOn(detailService, 'find').mockReturnValue(of(new HttpResponse({ body: exercise })));
+        const examFind = vi.spyOn(detailService, 'findForExam').mockReturnValue(of(exercise));
+        vi.spyOn(detailService, 'find').mockReturnValue(of(exercise));
         const snapshot = new ActivatedRouteSnapshot();
         snapshot.params = { exerciseId: 123 };
         const ancestor = new ActivatedRouteSnapshot();
@@ -290,8 +290,8 @@ describe('FileUploadExerciseManagementResolve', () => {
     ])('uses import source flag %s before target exam context %s after reload', (sourceFlag, targetIsExam) => {
         const detailService = TestBed.inject(FileUploadExerciseService);
         const exercise = new FileUploadExercise(undefined, undefined);
-        const courseFind = vi.spyOn(detailService, 'find').mockReturnValue(of(new HttpResponse({ body: exercise })));
-        const examFind = vi.spyOn(detailService, 'findForExam').mockReturnValue(of(new HttpResponse({ body: exercise })));
+        const courseFind = vi.spyOn(detailService, 'find').mockReturnValue(of(exercise));
+        const examFind = vi.spyOn(detailService, 'findForExam').mockReturnValue(of(exercise));
         const snapshot = new ActivatedRouteSnapshot();
         snapshot.params = { exerciseId: 123, ...(targetIsExam ? { examId: 7 } : {}) };
         snapshot.queryParams = sourceFlag === undefined ? {} : { sourceIsExamExercise: sourceFlag };
