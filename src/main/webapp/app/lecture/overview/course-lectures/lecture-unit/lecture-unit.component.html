@@ -11,7 +11,7 @@
                     id="lecture-unit-toggle-button"
                     (click)="toggleCollapse()"
                     [attr.aria-expanded]="!isCollapsed()"
-                    class="flex min-w-0 flex-1 items-center whitespace-normal! border-0 p-0 text-start text-base focus-visible:outline-2 focus-visible:outline-offset-2"
+                    class="flex min-w-0 flex-1 items-center justify-start! whitespace-normal! border-0 p-0 text-start text-base focus-visible:outline-2 focus-visible:outline-offset-2"
                 >
                     <fa-icon class="me-4!" size="lg" [icon]="icon()" />
                     <span class="min-w-0 break-words text-xl font-medium leading-tight" [attr.data-testid]="'lecture-unit-' + lectureUnit().id + '-name'">{{
