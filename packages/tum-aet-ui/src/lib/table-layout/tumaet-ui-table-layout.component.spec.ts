@@ -162,4 +162,10 @@ describe('TumAetUiTableLayoutComponent', () => {
             expect(layout.style.maxHeight).toBe('');
         });
     });
+    it('keeps a minimum body height so an empty table does not collapse onto its footer', () => {
+        const body = getComputedStyle(query('[data-testid="table-scroll-body"]')!);
+
+        expect(body.minHeight).toBe('112px');
+        expect(body.overflow).toBe('auto');
+    });
 });

@@ -45,7 +45,9 @@
 .tumaet-ui-table-layout-body {
     position: relative;
     flex: 1 1 auto;
-    min-height: 0;
+
+    // An empty table keeps room for its message: header, footer and a few rows of space, never header glued to footer.
+    min-height: 7rem;
     overflow: auto;
 }
 
