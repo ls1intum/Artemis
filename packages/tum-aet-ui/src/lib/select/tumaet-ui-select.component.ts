@@ -356,7 +356,8 @@ export class TumAetUiSelectComponent extends OptionControl implements ControlVal
                 if (this.activeIndex() >= 0 && this.activeIndex() < count && !this.isOptionDisabled(this.visibleOptions()[this.activeIndex()])) {
                     this.selectOption(this.visibleOptions()[this.activeIndex()]);
                 } else {
-                    this.close(false);
+                    // Closing removes the filter field with the panel, so focus goes back to the trigger and Tab moves on from there.
+                    this.close(this.document.activeElement === this.filterInput()?.nativeElement);
                 }
                 break;
             default:

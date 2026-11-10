@@ -287,6 +287,20 @@ describe('ProgrammingExerciseSecurityComponent', () => {
         expect(service.activate).toHaveBeenCalledWith(42, '3.2.2');
     });
 
+    it('activates with the newest selectable version when the exercise and the template both pin unsupported versions', () => {
+        service.getVersions.mockReturnValue(of({ selectableVersions: ['3.4.1', '3.3.0'], templateVersions: { [ProjectType.PLAIN_GRADLE]: '2.0.0' } }));
+        fixture.destroy();
+        createComponent();
+        initEdit({ status: SecurityActivationStatus.INACTIVE, frameworkVersion: '1.9.0' });
+        service.activate.mockReturnValue(of(configuredConfig('3.4.1')));
+
+        comp.onToggleChanged(true);
+
+        expect(service.activate).toHaveBeenCalledWith(42, '3.4.1');
+        // The hint about the template version belongs to creating an exercise.
+        expect(comp.unsupportedTemplateVersion()).toBeUndefined();
+    });
+
     it('labels the newest version and marks a no longer supported version the exercise pins', () => {
         initEdit(configuredConfig('2.0.0'));
         expect(comp.frameworkVersions().map((option) => option.version)).toEqual(['3.4.1', '3.3.0', '3.2.2', '2.0.0']);

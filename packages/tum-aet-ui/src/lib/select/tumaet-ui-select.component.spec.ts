@@ -354,6 +354,27 @@ describe('TumAetUiSelectComponent', () => {
             fixture.detectChanges();
         });
 
+        it('returns focus to the trigger when Tab in the search field closes the panel without a selection', () => {
+            fixture.componentRef.setInput('options', [
+                { label: 'Alpha', value: 'a' },
+                { label: 'Bravo', value: 'b', unavailable: true },
+            ]);
+            fixture.componentRef.setInput('optionDisabled', 'unavailable');
+            component.writeValue('b');
+            fixture.detectChanges();
+            const emitSpy = vi.spyOn(component.selectionChange, 'emit');
+            openPanel();
+            const field = requireFilterField();
+            field.focus();
+
+            field.dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab', bubbles: true }));
+            fixture.detectChanges();
+
+            expect(emitSpy).not.toHaveBeenCalled();
+            expect(listbox()).toBeNull();
+            expect(document.activeElement).toBe(triggerButton());
+        });
+
         it('shows no search field unless asked for one', () => {
             fixture.componentRef.setInput('filter', false);
             fixture.detectChanges();

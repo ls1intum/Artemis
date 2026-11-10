@@ -154,8 +154,17 @@ export class ProgrammingExerciseSecurityComponent {
         }
         return templateVersion;
     });
-    /** The version a staged activation pins unless the instructor picks one: the template's version, or the newest selectable one if it is no longer selectable. */
-    private readonly stagedDefaultVersion = computed(() => (this.unsupportedTemplateVersion() !== undefined ? this.latestVersion() : this.defaultVersion()));
+    /**
+     * The version an activation pins unless the instructor picks one, in every mode: the template's version, or the newest selectable one if the template's
+     * is no longer selectable, because the server refuses to pin an unsupported version. While the versions are unknown, the template's version is kept.
+     */
+    private readonly stagedDefaultVersion = computed(() => {
+        const templateVersion = this.defaultVersion();
+        if (this.versions() === undefined || !templateVersion || this.selectableVersions().includes(templateVersion)) {
+            return templateVersion;
+        }
+        return this.latestVersion();
+    });
 
     /** Whether each selectable version accepts the policy files of the exercise, by version (decision B10); empty if the server checked no policy file. */
     private readonly versionCompatibilities = computed(

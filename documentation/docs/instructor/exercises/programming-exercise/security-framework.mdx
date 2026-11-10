@@ -121,8 +121,8 @@ If an activation, deactivation or version change fails, the card shows **Error**
 
 ## Deactivate the Sandbox
 
-Switching off **Activate Security Framework** opens a confirmation dialog first. After you confirm, Artemis creates
-one commit in the tests repository that:
+When you edit an existing exercise, switching off **Activate Security Framework** opens a confirmation dialog first.
+After you confirm, Artemis creates one commit in the tests repository that:
 
 - deletes `SecurityPolicy.yaml`, and
 - sets `activated = false` on every `@Policy` annotation. Other arguments, such as a custom policy path, stay.
@@ -135,11 +135,16 @@ these tests would no longer compile without the library. The tests of the Java t
 Deactivating switches off more than the restrictions on student code. Everything the policy configures for the tests
 no longer applies either, such as the scheduling of hidden tests, output handling and failure reporting. Ares
 features that the tests use directly keep working, because they do not depend on the policy: for example,
-`@StrictTimeout` still limits how long a test runs, and structural tests still run. Hidden tests are then protected only by the test visibility settings of Artemis, so check those before
-you deactivate. The dialog warns about this, because the settings in the deleted policy file are lost from the
-current state of the repository. Activating again restores the last policy from the repository history.
+`@StrictTimeout` still limits how long a test runs, and structural tests still run. Hidden tests are then protected
+only by the test visibility settings of Artemis, so check those before you deactivate. The dialog warns about this,
+because the settings in the deleted policy file are lost from the current state of the repository. Activating again
+restores the last policy from the repository history.
 
 Deactivating an exercise that is already inactive changes nothing.
+
+When you create or import an exercise, switching off the setting opens no dialog. A hint under the switch shows
+that the sandbox will be off, and nothing changes until you save the exercise. See
+[When You Create an Exercise](#when-you-create-an-exercise) and [When You Import an Exercise](#when-you-import-an-exercise).
 
 ## Activate the Sandbox
 
@@ -156,7 +161,8 @@ Switching on **Activate Security Framework** creates one commit in the tests rep
 - pins the selected framework version in the build file.
 
 The template and solution builds then run again. If the restored policy file is not valid for the selected version,
-Artemis changes nothing and shows an error instead.
+or a missing test class cannot be added because the policy writes its list of test classes in a form Artemis does
+not rewrite, Artemis changes nothing and shows an error instead.
 
 ## Choose the Framework Version
 
@@ -165,9 +171,14 @@ Artemis changes nothing and shows an error instead.
 offer further versions with the `artemis.programming.security-framework.supported-versions` setting; it should only
 list published versions, and versions older than 2.2.1 are ignored.
 
-The version can only be changed while the sandbox is configured, and the change is again one commit followed by new
-template and solution builds. If the repository pins a version that is no longer offered, the selector shows it as
-no longer supported, and you can switch to a supported one.
+The version can be changed while the sandbox is **Configured** or **Misconfigured**, and the change is again one
+commit followed by new template and solution builds. For a **Misconfigured** exercise, selecting a version runs the
+activation with that version, so it also repairs the policy as described in [Activate the Sandbox](#activate-the-sandbox).
+This lets you switch to a version that accepts the policy if the pinned version rejects it. If the repair is not
+possible, the exercise stays on its previous version and the card shows the error.
+
+If the repository pins a version that is no longer offered, the selector shows it as no longer supported, and you can
+switch to a supported one.
 
 Ares fails every test if the policy uses a field that the pinned version does not know. Artemis therefore checks
 each version against the policy files of the exercise, using a compatibility manifest that lists the fields and
