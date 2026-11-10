@@ -44,9 +44,9 @@ describe('SystemNotificationManagementDetailComponent', () => {
             .overrideTemplate(
                 SystemNotificationManagementDetailComponent,
                 `
-                @if (notification) {
+                @if (notification(); as currentNotification) {
                     <div>
-                        <h2>{{ notification.title }}</h2>
+                        <h2>{{ currentNotification.title }}</h2>
                         <a id="editButton">Edit</a>
                     </div>
                 }
@@ -71,6 +71,7 @@ describe('SystemNotificationManagementDetailComponent', () => {
     it('should load notification from route data', () => {
         fixture.detectChanges();
         expect(component.notification()).toEqual(testNotification);
+        expect(fixture.nativeElement.querySelector('h2').textContent).toBe('test');
     });
 
     it('should display edit button with correct routerLink', () => {

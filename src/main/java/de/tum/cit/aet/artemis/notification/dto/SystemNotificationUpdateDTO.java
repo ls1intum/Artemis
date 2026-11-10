@@ -9,15 +9,27 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.notification.domain.SystemNotificationType;
 import de.tum.cit.aet.artemis.notification.domain.notification.SystemNotification;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
  * DTO for creating and updating SystemNotifications.
  * Uses DTOs instead of entity classes to avoid Hibernate detached entity issues.
+ * Missing or null dates still reach the existing service validation; the schema describes successful writes.
+ *
+ * @param id               absent on creation, identifies an existing notification on update
+ * @param title            optional replacement title
+ * @param text             optional replacement text
+ * @param notificationDate start instant, required and before expiry for a successful write
+ * @param expireDate       expiry instant, required for a successful write
+ * @param type             optional replacement notification type
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record SystemNotificationUpdateDTO(@Nullable Long id, @Nullable String title, @Nullable String text, @Nullable ZonedDateTime notificationDate,
-        @Nullable ZonedDateTime expireDate, @Nullable SystemNotificationType type) {
+public record SystemNotificationUpdateDTO(@Schema(nullable = true, description = "Omit on creation; required on update") @Nullable Long id,
+        @Schema(nullable = true) @Nullable String title, @Schema(nullable = true) @Nullable String text,
+        @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "Start instant; must precede expireDate") @Nullable ZonedDateTime notificationDate,
+        @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "Expiry instant; both dates are required for a successful write") @Nullable ZonedDateTime expireDate,
+        @Schema(nullable = true) @Nullable SystemNotificationType type) {
 
     /**
      * Creates a SystemNotificationUpdateDTO from the given SystemNotification domain object.

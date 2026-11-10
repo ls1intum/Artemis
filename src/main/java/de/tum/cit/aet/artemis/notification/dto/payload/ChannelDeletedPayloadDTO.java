@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.notification.dto.payload;
 
+import org.jspecify.annotations.Nullable;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 /**
@@ -9,5 +11,5 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * @param channelName  the name of that channel
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record ChannelDeletedPayloadDTO(String deletingUser, String channelName) implements CourseNotificationPayloadDTO {
+public record ChannelDeletedPayloadDTO(@Nullable String deletingUser, @Nullable String channelName) implements CourseNotificationPayloadDTO {
 }

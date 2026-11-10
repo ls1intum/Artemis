@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.notification.dto.payload;
 
+import org.jspecify.annotations.Nullable;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 /**
@@ -13,6 +15,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * @param numberOfPoints the points the exercise is worth
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record NewExercisePayloadDTO(Long exerciseId, String exerciseTitle, String difficulty, String releaseDate, String dueDate, Long numberOfPoints)
-        implements CourseNotificationPayloadDTO {
+public record NewExercisePayloadDTO(@Nullable Long exerciseId, @Nullable String exerciseTitle, @Nullable String difficulty, @Nullable String releaseDate, @Nullable String dueDate,
+        @Nullable Long numberOfPoints) implements CourseNotificationPayloadDTO {
 }

@@ -6,7 +6,7 @@ import { CourseNotificationCategory } from 'app/notification/shared/entities/cou
 import { CourseNotificationViewingStatus } from 'app/notification/shared/entities/course-notification/course-notification-viewing-status';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
-import { convertDateFromServer } from 'app/foundation/util/date.utils';
+import { CourseNotification as CourseNotificationDto } from 'app/openapi/model/course-notification';
 import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/account/user/user.model';
 
@@ -89,7 +89,7 @@ export class CourseNotificationWebsocketService implements OnDestroy {
         if (this.courseWebsocketSubscriptions[courseId]) {
             return this.courseWebsocketSubscriptions[courseId];
         }
-        this.courseWebsocketSubscriptions[courseId] = this.websocketService.subscribe('/user/topic/notification/' + courseId).subscribe((notification: CourseNotification) => {
+        this.courseWebsocketSubscriptions[courseId] = this.websocketService.subscribe<CourseNotificationDto>('/user/topic/notification/' + courseId).subscribe((notification) => {
             if (!notification || notification.courseId !== courseId) {
                 return;
             }
@@ -99,18 +99,7 @@ export class CourseNotificationWebsocketService implements OnDestroy {
             if (category === undefined || status === undefined) {
                 return;
             }
-            const courseNotification = new CourseNotification(
-                notification.notificationId!,
-                notification.courseId,
-                notification.notificationType!,
-                category,
-                status,
-                convertDateFromServer(notification.creationDate)!,
-                notification.courseTitle,
-                notification.courseIconUrl,
-                notification.payload!,
-                notification.relativeWebAppUrl!,
-            );
+            const courseNotification = CourseNotification.fromServer(notification);
             this.courseNotificationService.addNotification(courseId, courseNotification);
             this.websocketNotificationSubject.next(courseNotification);
         });

@@ -5,8 +5,8 @@
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { of } from 'rxjs';
-import { HttpResponse, provideHttpClient } from '@angular/common/http';
+import { Subject, of, throwError } from 'rxjs';
+import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -54,6 +54,7 @@ describe('SystemNotificationManagementUpdateComponent', () => {
     } as unknown as ActivatedRoute;
 
     beforeEach(async () => {
+        mockRoute.parent!.data = of({ notification: testNotification });
         await TestBed.configureTestingModule({
             imports: [ReactiveFormsModule, SystemNotificationManagementUpdateComponent, FontAwesomeTestingModule],
             providers: [
@@ -91,6 +92,53 @@ describe('SystemNotificationManagementUpdateComponent', () => {
 
     afterEach(() => {
         vi.restoreAllMocks();
+    });
+
+    it('keeps zero recipients visible and sends the maintenance selection only on creation', () => {
+        mockRoute.parent!.data = of({});
+        vi.spyOn(adminService, 'getMaintenanceRecipientsCount').mockReturnValue(of(0));
+        const pending = new Subject<HttpResponse<SystemNotification>>();
+        const create = vi.spyOn(adminService, 'create').mockReturnValue(pending);
+        const goToOverview = vi.spyOn(component, 'goToOverview').mockImplementation(() => {});
+        component.ngOnInit();
+        expect(component.recipientCount()).toBe(0);
+        component.form.patchValue({
+            title: 'Maintenance',
+            type: SystemNotificationType.INFO,
+            notificationDate: testNotification.notificationDate,
+            expireDate: testNotification.expireDate,
+        });
+        component.sendMaintenanceEmail.set(true);
+        component.save();
+        expect(create).toHaveBeenCalledWith(expect.objectContaining({ title: 'Maintenance', id: undefined }), true);
+        expect(component.isSaving()).toBe(true);
+        pending.next(new HttpResponse({ body: { id: 42 }, status: 201 }));
+        expect(component.isSaving()).toBe(false);
+        expect(goToOverview).toHaveBeenCalledOnce();
+    });
+
+    it('keeps an unavailable recipient count unknown', () => {
+        mockRoute.parent!.data = of({});
+        vi.spyOn(adminService, 'getMaintenanceRecipientsCount').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 503 })));
+        component.ngOnInit();
+        expect(component.recipientCount()).toBeUndefined();
+    });
+
+    it('resets saving on an update error and retains the entered dates for retry', () => {
+        const pending = new Subject<HttpResponse<SystemNotification>>();
+        const update = vi.spyOn(adminService, 'update').mockReturnValue(pending);
+        const create = vi.spyOn(adminService, 'create');
+        const goToOverview = vi.spyOn(component, 'goToOverview').mockImplementation(() => {});
+        component.ngOnInit();
+        component.sendMaintenanceEmail.set(true);
+        component.save();
+        expect(component.isSaving()).toBe(true);
+        expect(update).toHaveBeenCalledWith(expect.objectContaining({ id: 1, notificationDate: testNotification.notificationDate, expireDate: testNotification.expireDate }));
+        pending.error(new HttpErrorResponse({ status: 400 }));
+        expect(component.isSaving()).toBe(false);
+        expect(component.form.controls.notificationDate.value).toBe(testNotification.notificationDate);
+        expect(goToOverview).not.toHaveBeenCalled();
+        expect(create).not.toHaveBeenCalled();
     });
 
     it('should initialize component', () => {

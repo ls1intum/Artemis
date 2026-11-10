@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.notification.dto.payload;
 
+import org.jspecify.annotations.Nullable;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 /**
@@ -10,5 +12,5 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * @param moderatorName the tutor of that group
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record TutorialGroupDeletedPayloadDTO(String groupTitle, Long groupId, String moderatorName) implements CourseNotificationPayloadDTO {
+public record TutorialGroupDeletedPayloadDTO(@Nullable String groupTitle, @Nullable Long groupId, @Nullable String moderatorName) implements CourseNotificationPayloadDTO {
 }

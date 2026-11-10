@@ -1,15 +1,15 @@
 import { OnDestroy, Service, inject } from '@angular/core';
 import { faComments, faPersonChalkboard, faRectangleList, faRobot, faTriangleExclamation, faWandMagicSparkles } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
-import { CourseNotification, courseNotificationEnumValueFromName } from 'app/notification/shared/entities/course-notification/course-notification';
-import { HttpClient, HttpResponse } from '@angular/common/http';
+import { CourseNotification } from 'app/notification/shared/entities/course-notification/course-notification';
 import { BehaviorSubject, Observable, Subscription, of, tap } from 'rxjs';
-import { CourseNotificationInfo } from 'app/notification/shared/entities/course-notification/course-notification-info';
-import { CourseNotificationPage } from 'app/notification/shared/entities/course-notification/course-notification-page';
-import { CourseNotificationCategory } from 'app/notification/shared/entities/course-notification/course-notification-category';
+import { CourseNotificationInfo } from 'app/openapi/model/course-notification-info';
+import { CourseNotificationPage } from 'app/openapi/model/course-notification-page';
 import { CourseNotificationViewingStatus } from 'app/notification/shared/entities/course-notification/course-notification-viewing-status';
 import { CourseNotificationChannel } from 'app/notification/shared/entities/course-notification/course-notification-channel';
-import { convertDateFromServer } from 'app/foundation/util/date.utils';
+import { CourseNotificationApi } from 'app/openapi/api/course-notification-api';
+import { UserCourseNotificationStatusApi } from 'app/openapi/api/user-course-notification-status-api';
+import { UserCourseNotificationStatusUpdateRequest } from 'app/openapi/model/user-course-notification-status-update-request';
 import { AccountService } from 'app/core/auth/account.service';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
 
@@ -20,6 +20,10 @@ import { deepClone } from 'app/foundation/util/deep-clone.util';
  */
 @Service()
 export class CourseNotificationService implements OnDestroy {
+    private api = inject(CourseNotificationApi);
+    private statusApi = inject(UserCourseNotificationStatusApi);
+    private readonly accountService = inject(AccountService);
+
     public static readonly NOTIFICATION_TYPE_ICON_MAP = {
         newPostNotification: faComments,
         newAnswerNotification: faComments,
@@ -94,10 +98,7 @@ export class CourseNotificationService implements OnDestroy {
     // Parameter key of the message an editor wrote for students. It is plain text, so it is rendered literally and never
     // as markup, and a notification carrying it is shown with the `contentWithNotificationText` translation of its type.
     public static readonly NOTIFICATION_TEXT_PARAMETER = 'notificationText';
-    private http = inject(HttpClient);
-    private readonly accountService = inject(AccountService);
 
-    private readonly apiEndpoint = '/api/notification/courses/';
     public readonly pageSize = 10;
 
     private courseNotificationMap: Record<number, CourseNotification[]> = {};
@@ -105,7 +106,7 @@ export class CourseNotificationService implements OnDestroy {
     private notificationSubject = new BehaviorSubject<Record<number, CourseNotification[]>>({});
     private courseNotificationCountMap: Record<number, number> = {};
     private notificationCountSubject = new BehaviorSubject<Record<number, number>>({});
-    private cachedNotificationInfo: HttpResponse<CourseNotificationInfo> | null = null;
+    private cachedNotificationInfo: CourseNotificationInfo | null = null;
 
     public notificationCount$: Observable<Record<number, number>> = this.notificationCountSubject.asObservable();
     public notifications$: Observable<Record<number, CourseNotification[]>> = this.notificationSubject.asObservable();
@@ -151,17 +152,17 @@ export class CourseNotificationService implements OnDestroy {
      *
      * @returns Observable with notification information
      */
-    public getInfo(): Observable<HttpResponse<CourseNotificationInfo>> {
+    public getInfo(): Observable<CourseNotificationInfo> {
         if (this.cachedNotificationInfo) {
             return of(this.cachedNotificationInfo);
         }
 
         const generation = this.stateGeneration;
         // Otherwise, fetch from server and cache the result
-        return this.http.get<CourseNotificationInfo>(this.apiEndpoint + 'info', { observe: 'response' }).pipe(
+        return this.api.getCourseNotificationInfo().pipe(
             tap((response) => {
                 if (this.stateGeneration !== generation) return;
-                if (response.body) {
+                if (response) {
                     this.cachedNotificationInfo = response;
                 }
             }),
@@ -188,21 +189,23 @@ export class CourseNotificationService implements OnDestroy {
 
         const page = Math.floor(this.courseNotificationMap[courseId].length / this.pageSize);
         const generation = this.stateGeneration;
-        this.http.get<CourseNotificationPage>(this.apiEndpoint + courseId + '?page=' + page + '&size=' + this.pageSize, { observe: 'response' }).subscribe((response) => {
+        this.api.getCourseNotifications(courseId, page, this.pageSize).subscribe((pageResponse) => {
             if (this.stateGeneration !== generation) return;
-            const convertedResponse = this.convertResponseFromServer(response);
-
-            if (!convertedResponse.body || !convertedResponse.body.content) {
+            if (!pageResponse) {
                 this.courseNotificationPageMap[courseId] = true;
                 this.notifyNotificationSubscribers();
                 return;
             }
-
-            this.courseNotificationPageMap[courseId] = page + 1 >= convertedResponse.body.totalPages;
-            for (const notification of convertedResponse.body.content) {
+            const response = this.convertPageFromServer(pageResponse);
+            if (!response.content) {
+                this.courseNotificationPageMap[courseId] = true;
+                this.notifyNotificationSubscribers();
+                return;
+            }
+            this.courseNotificationPageMap[courseId] = page + 1 >= response.totalPages;
+            for (const notification of response.content) {
                 this.addNotificationIfNotDuplicate(courseId, notification, false);
             }
-
             this.notifyNotificationSubscribers();
         });
 
@@ -217,12 +220,12 @@ export class CourseNotificationService implements OnDestroy {
      * @param statusType - The new status to set
      */
     public setNotificationStatus(courseId: number, notificationIds: number[], statusType: CourseNotificationViewingStatus): void {
-        this.http
-            .put(this.apiEndpoint + courseId + '/status', {
-                notificationIds: notificationIds,
-                statusType: statusType,
-            })
-            .subscribe();
+        const wireStatus: Record<CourseNotificationViewingStatus, UserCourseNotificationStatusUpdateRequest['statusType']> = {
+            [CourseNotificationViewingStatus.UNSEEN]: 'UNSEEN',
+            [CourseNotificationViewingStatus.SEEN]: 'SEEN',
+            [CourseNotificationViewingStatus.ARCHIVED]: 'ARCHIVED',
+        };
+        this.statusApi.updateNotificationStatus(courseId, { notificationIds, statusType: wireStatus[statusType] }).subscribe();
     }
 
     /**
@@ -234,7 +237,7 @@ export class CourseNotificationService implements OnDestroy {
      * @param notificationIds - The IDs of the displayed notifications
      */
     public markDisplayedNotificationsAsSeen(courseId: number, notificationIds: number[]): void {
-        this.http.put(this.apiEndpoint + courseId + '/seen', { notificationIds }).subscribe();
+        this.statusApi.markDisplayedNotificationsAsSeen(courseId, { notificationIds }).subscribe();
     }
 
     /**
@@ -243,7 +246,7 @@ export class CourseNotificationService implements OnDestroy {
      * @param courseId - The ID of the course
      */
     public archiveAll(courseId: number): void {
-        this.http.put<void>(this.apiEndpoint + courseId + '/archive-all', {}).subscribe();
+        this.statusApi.archiveAll(courseId).subscribe();
     }
 
     /**
@@ -520,22 +523,14 @@ export class CourseNotificationService implements OnDestroy {
         return notificationDuplicate;
     }
 
-    /**
-     * Converts server response notification data to the expected format.
-     * Parses the creation date and the category and status enums; every other value is read from the payload where
-     * it is needed.
-     *
-     * @param res - The HTTP response from the server
-     * @returns The processed HTTP response
-     */
-    private convertResponseFromServer(res: HttpResponse<CourseNotificationPage>): HttpResponse<CourseNotificationPage> {
-        if (res.body && res.body.content) {
-            res.body.content.forEach((notification) => {
-                notification.creationDate = convertDateFromServer(notification.creationDate);
-                notification.category = courseNotificationEnumValueFromName(CourseNotificationCategory, notification.category);
-                notification.status = courseNotificationEnumValueFromName(CourseNotificationViewingStatus, notification.status);
-            });
-        }
-        return res;
+    /** Converts the entire page before any state write; reconstruction failures do not change totals or skip rows. */
+    private convertPageFromServer(page: CourseNotificationPage) {
+        const content = page.content?.map((notification) => {
+            if (notification === null) {
+                throw new Error('Cannot reconstruct course notification page: null entry');
+            }
+            return CourseNotification.fromServer(notification);
+        });
+        return { content, totalPages: page.totalPages };
     }
 }

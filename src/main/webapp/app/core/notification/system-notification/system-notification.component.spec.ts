@@ -12,9 +12,11 @@ import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClient } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { Renderer2, RendererStyleFlags2 } from '@angular/core';
 import { CLOSED_NOTIFICATION_IDS_STORAGE_KEY, SystemNotificationComponent, WEBSOCKET_CHANNEL } from 'app/core/notification/system-notification/system-notification.component';
 import { SystemNotificationService } from 'app/core/notification/system-notification/system-notification.service';
+import { SystemNotification as SystemNotificationDto } from 'app/openapi/model/system-notification';
 import * as navbarUtil from 'app/foundation/util/navbar.util';
 
 describe('System Notification Component', () => {
@@ -24,7 +26,7 @@ describe('System Notification Component', () => {
     let websocketService: WebsocketService;
     let localStorageService: LocalStorageService;
 
-    const createActiveNotification = (type: SystemNotificationType, id: number) => {
+    const createActiveNotification = (type: NonNullable<SystemNotification['type']>, id: number) => {
         return {
             id,
             title: 'Maintenance',
@@ -35,7 +37,7 @@ describe('System Notification Component', () => {
         } as SystemNotification;
     };
 
-    const createInactiveNotification = (type: SystemNotificationType, id: number) => {
+    const createInactiveNotification = (type: NonNullable<SystemNotification['type']>, id: number) => {
         return {
             id,
             title: 'Maintenance',
@@ -44,6 +46,20 @@ describe('System Notification Component', () => {
             notificationDate: dayjs().add(1, 'hour'),
             expireDate: dayjs().add(2, 'hour'),
         } as SystemNotification;
+    };
+
+    const toWire = (notification: SystemNotification): SystemNotificationDto => {
+        if (notification.id === undefined) {
+            throw new Error('Persisted notification fixture needs an id');
+        }
+        return {
+            id: notification.id,
+            title: notification.title,
+            text: notification.text,
+            type: notification.type,
+            notificationDate: notification.notificationDate?.toISOString(),
+            expireDate: notification.expireDate?.toISOString(),
+        };
     };
 
     beforeEach(async () => {
@@ -59,6 +75,7 @@ describe('System Notification Component', () => {
                 { provide: WebsocketService, useClass: MockWebsocketService },
                 { provide: TranslateService, useClass: MockTranslateService },
                 provideHttpClient(),
+                provideHttpClientTesting(),
             ],
         });
         await TestBed.compileComponents();
@@ -74,6 +91,18 @@ describe('System Notification Component', () => {
     afterEach(() => {
         localStorage.removeItem(CLOSED_NOTIFICATION_IDS_STORAGE_KEY);
         vi.restoreAllMocks();
+    });
+
+    it('loads a generated public request for an anonymous visitor without opening a WebSocket subscription', () => {
+        vi.spyOn(TestBed.inject(AccountService), 'getAuthenticationState').mockReturnValue(of(undefined));
+        const subscribe = vi.spyOn(websocketService, 'subscribe');
+        const http = TestBed.inject(HttpTestingController);
+        systemNotificationComponent.ngOnInit();
+        const notification = createActiveNotification(SystemNotificationType.INFO, 42);
+        http.expectOne('/api/notification/public/system-notifications/active').flush([toWire(notification)]);
+        expect(systemNotificationComponent.notificationsToDisplay()).toEqual([notification]);
+        expect(subscribe).not.toHaveBeenCalled();
+        http.verify();
     });
 
     it('should get system notifications, display active ones on init, and schedule changes correctly', () => {
@@ -104,7 +133,7 @@ describe('System Notification Component', () => {
         const originalNotifications = [createActiveNotification(SystemNotificationType.WARNING, 1), createInactiveNotification(SystemNotificationType.INFO, 2)];
         const newNotifications = [createActiveNotification(SystemNotificationType.WARNING, 3), createInactiveNotification(SystemNotificationType.INFO, 4)];
 
-        const subscribeSpy = vi.spyOn(websocketService, 'subscribe').mockReturnValue(of(newNotifications));
+        const subscribeSpy = vi.spyOn(websocketService, 'subscribe').mockReturnValue(of(newNotifications.map(toWire)));
         const getActiveNotificationSpy = vi.spyOn(systemNotificationService, 'getActiveNotifications').mockReturnValue(of(originalNotifications));
 
         systemNotificationComponent.ngOnInit();
@@ -165,7 +194,7 @@ describe('System Notification Component', () => {
         mockWebsocketService.setConnectionState(new ConnectionState(true, true));
         expect(getActiveNotificationSpy).toHaveBeenCalledTimes(2);
         const newerNotifications = [createActiveNotification(SystemNotificationType.WARNING, 5)];
-        mockWebsocketService.emit(WEBSOCKET_CHANNEL, newerNotifications);
+        mockWebsocketService.emit(WEBSOCKET_CHANNEL, newerNotifications.map(toWire));
         restResponse.next([]);
 
         expect(systemNotificationComponent.notifications).toEqual(newerNotifications);
@@ -249,7 +278,7 @@ describe('System Notification Component', () => {
             const updatedNotifications = [createActiveNotification(SystemNotificationType.WARNING, 1), createActiveNotification(SystemNotificationType.INFO, 2)];
 
             localStorageService.store(CLOSED_NOTIFICATION_IDS_STORAGE_KEY, [1]);
-            vi.spyOn(websocketService, 'subscribe').mockReturnValue(of(updatedNotifications));
+            vi.spyOn(websocketService, 'subscribe').mockReturnValue(of(updatedNotifications.map(toWire)));
             vi.spyOn(systemNotificationService, 'getActiveNotifications').mockReturnValue(of(originalNotifications));
 
             systemNotificationComponent.ngOnInit();
@@ -268,7 +297,7 @@ describe('System Notification Component', () => {
             const updatedNotifications = [createActiveNotification(SystemNotificationType.INFO, 2), createActiveNotification(SystemNotificationType.WARNING, 3)];
 
             localStorageService.store(CLOSED_NOTIFICATION_IDS_STORAGE_KEY, [1]);
-            vi.spyOn(websocketService, 'subscribe').mockReturnValue(of(updatedNotifications));
+            vi.spyOn(websocketService, 'subscribe').mockReturnValue(of(updatedNotifications.map(toWire)));
             vi.spyOn(systemNotificationService, 'getActiveNotifications').mockReturnValue(of(originalNotifications));
 
             systemNotificationComponent.ngOnInit();
@@ -326,7 +355,7 @@ describe('System Notification Component', () => {
 
             // User had closed notifications 1 and 2
             localStorageService.store(CLOSED_NOTIFICATION_IDS_STORAGE_KEY, [1, 2]);
-            vi.spyOn(websocketService, 'subscribe').mockReturnValue(of(updatedNotifications));
+            vi.spyOn(websocketService, 'subscribe').mockReturnValue(of(updatedNotifications.map(toWire)));
             vi.spyOn(systemNotificationService, 'getActiveNotifications').mockReturnValue(of(originalNotifications));
 
             systemNotificationComponent.ngOnInit();
@@ -343,7 +372,7 @@ describe('System Notification Component', () => {
         it('should persist dismissal across multiple websocket updates', () => {
             vi.useFakeTimers();
             const notifications = [createActiveNotification(SystemNotificationType.WARNING, 1), createActiveNotification(SystemNotificationType.INFO, 2)];
-            const wsSubject = new Subject<SystemNotification[]>();
+            const wsSubject = new Subject<SystemNotificationDto[]>();
 
             vi.spyOn(websocketService, 'subscribe').mockReturnValue(wsSubject);
             vi.spyOn(systemNotificationService, 'getActiveNotifications').mockReturnValue(of(notifications));
@@ -356,7 +385,7 @@ describe('System Notification Component', () => {
             expect(localStorageService.retrieve(CLOSED_NOTIFICATION_IDS_STORAGE_KEY)).toEqual([1]);
 
             // Websocket sends same notifications again — closed ID should persist
-            wsSubject.next([createActiveNotification(SystemNotificationType.WARNING, 1), createActiveNotification(SystemNotificationType.INFO, 2)]);
+            wsSubject.next([createActiveNotification(SystemNotificationType.WARNING, 1), createActiveNotification(SystemNotificationType.INFO, 2)].map(toWire));
 
             expect(systemNotificationComponent.closedIds).toEqual([1]);
             expect(systemNotificationComponent.notificationsToDisplay()).toHaveLength(1);
@@ -582,7 +611,7 @@ describe('System Notification Component', () => {
         it('should not write to localStorage when no IDs were pruned', () => {
             vi.useFakeTimers();
             const notifications = [createActiveNotification(SystemNotificationType.WARNING, 1), createActiveNotification(SystemNotificationType.INFO, 2)];
-            const wsSubject = new Subject<SystemNotification[]>();
+            const wsSubject = new Subject<SystemNotificationDto[]>();
 
             // Pre-store a closed ID that will remain valid after websocket update
             localStorageService.store(CLOSED_NOTIFICATION_IDS_STORAGE_KEY, [1]);
@@ -598,7 +627,7 @@ describe('System Notification Component', () => {
             storeSpy.mockClear();
 
             // Websocket sends notifications that still include ID 1 — nothing should be pruned
-            wsSubject.next([createActiveNotification(SystemNotificationType.WARNING, 1), createActiveNotification(SystemNotificationType.INFO, 2)]);
+            wsSubject.next([createActiveNotification(SystemNotificationType.WARNING, 1), createActiveNotification(SystemNotificationType.INFO, 2)].map(toWire));
 
             // closedIds should still contain 1, and store should NOT have been called by pruneClosedIds
             expect(systemNotificationComponent.closedIds).toEqual([1]);
@@ -609,7 +638,7 @@ describe('System Notification Component', () => {
         it('should write to localStorage when IDs are actually pruned', () => {
             vi.useFakeTimers();
             const notifications = [createActiveNotification(SystemNotificationType.WARNING, 1), createActiveNotification(SystemNotificationType.INFO, 2)];
-            const wsSubject = new Subject<SystemNotification[]>();
+            const wsSubject = new Subject<SystemNotificationDto[]>();
 
             // Pre-store closed IDs including one that will become stale
             localStorageService.store(CLOSED_NOTIFICATION_IDS_STORAGE_KEY, [1, 2]);
@@ -624,7 +653,7 @@ describe('System Notification Component', () => {
             storeSpy.mockClear();
 
             // Websocket sends notifications without ID 1 — ID 1 should be pruned
-            wsSubject.next([createActiveNotification(SystemNotificationType.INFO, 2), createActiveNotification(SystemNotificationType.WARNING, 3)]);
+            wsSubject.next([createActiveNotification(SystemNotificationType.INFO, 2), createActiveNotification(SystemNotificationType.WARNING, 3)].map(toWire));
 
             expect(systemNotificationComponent.closedIds).toEqual([2]);
             expect(storeSpy).toHaveBeenCalledWith(CLOSED_NOTIFICATION_IDS_STORAGE_KEY, [2]);
