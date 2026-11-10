@@ -166,11 +166,6 @@
                     "description": "Nutzt Iris, um Tutor:innen Antwortvorschläge zu machen, wenn sie im Kommunikationsmodul auf Studierendenfragen antworten.",
                     "disableWarning": "Tutor:innen erhalten keine KI-gestützten Antwortvorschläge von Iris im Kommunikationsmodul."
                 },
-                "AtlasML": {
-                    "name": "Atlas Machine Learning",
-                    "description": "Lässt Artemis den externen AtlasML-Dienst nutzen, um Lehrenden und Editor:innen Kompetenzen für Aufgaben und Beziehungen zwischen Kompetenzen vorzuschlagen, und hält AtlasML mit den Kompetenzen und Aufgabenverknüpfungen der Kurse synchron. Automatische Kompetenzaktualisierungen nutzen den Dienst außerdem, um ähnliche Kompetenzen zu finden. Erfordert einen konfigurierten AtlasML-Dienst (artemis.atlas.atlasml.enabled).",
-                    "disableWarning": "Lehrende und Editor:innen sehen in den Aufgabenformularen und im Formular für Kompetenzbeziehungen keine AtlasML-Vorschläge mehr, Artemis synchronisiert Kompetenzänderungen nicht mehr mit AtlasML, und automatische Kompetenzaktualisierungen laufen ohne Ähnlichkeitshinweise von AtlasML."
-                },
                 "AtlasAgent": {
                     "name": "Atlas-Agent",
                     "description": "Ermöglicht Lehrenden, die Kompetenzen ihres Kurses mit KI aufzubauen und zu pflegen. Der KI-Kompetenz-Assistent im Kompetenzmanagement schlägt Kompetenzen, Beziehungen und Aufgabenverknüpfungen vor und speichert sie nach Freigabe durch die Lehrenden. Atlas kann Kompetenzen und ihre Verknüpfungen mit Aufgaben und Vorlesungseinheiten auch ohne Rückfrage ändern: wenn Lehrende „Kompetenzen vorschlagen“ anklicken oder automatisch in Kursen, in denen Administrator:innen die Atlas-Auto-Orchestrierung eingeschaltet haben. Dabei werden Kursinhalte einschließlich Beispiellösungen an das konfigurierte Sprachmodell gesendet. Erfordert das Modul Atlas KI (LLM).",

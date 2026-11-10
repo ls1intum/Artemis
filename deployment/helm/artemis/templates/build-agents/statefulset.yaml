@@ -20,7 +20,10 @@ metadata:
     app.kubernetes.io/component: build-agent
 spec:
   serviceName: {{ include "artemis.buildAgentName" . }}
+  {{- /* With autoscaling the ScaledObject owns the replica count; setting it here would reset it on every upgrade. */}}
+  {{- if not (include "artemis.buildAgentAutoscalingEnabled" .) }}
   replicas: {{ .Values.buildAgents.replicaCount }}
+  {{- end }}
   podManagementPolicy: Parallel
   selector:
     matchLabels:

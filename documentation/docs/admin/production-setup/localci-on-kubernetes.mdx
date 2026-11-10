@@ -16,8 +16,8 @@ The installation itself is described in [Deploying](/admin/production-setup/buil
 
 <Callout variant={CalloutVariant.warning}>
 
-  The Kubernetes runner and the chart are a proof of concept. They have not been through a production deployment. The chart provides no autoscaling, no high availability for
-  PostgreSQL, the broker or the registry, no network policies, no resource quotas and no backups. This page says where each of these is left to you.
+  The Kubernetes runner and the chart are a proof of concept. They have not been through a production deployment. The chart provides no high availability for
+  PostgreSQL, the broker or the registry, no network policies, no resource quotas and no backups. Autoscaling of the build agents is optional and needs KEDA and Prometheus. This page says where each of these is left to you.
 
 </Callout>
 
@@ -93,17 +93,68 @@ The leader is always a single pod. If it is unavailable, no scheduled task runs 
 
 ## Scaling
 
-Scaling is manual. Change the value in the values file and run `helm upgrade`, so that the chart stays the single source of truth. A replica count that is changed with `kubectl scale` is not recorded in the release.
+The build agent controllers can be scaled by hand or automatically. The core nodes are always scaled by hand.
+
+### Manually
+
+Change the value in the values file and run `helm upgrade`, so that the chart stays the single source of truth. A replica count that is changed with `kubectl scale` is not recorded in the release.
 
 - **More build capacity:** raise `buildAgents.replicaCount`. A new controller registers with the cluster within seconds and takes jobs at once. Make sure the build nodes have room first.
 - **Less build capacity:** lower `buildAgents.replicaCount`. The StatefulSet removes the highest ordinal first. A build that runs on a removed controller is put back into the queue and runs again on another agent,
-  at most five times, see [Operating build agents](/admin/production-setup/multiple-artemis-instances#operating-build-agents). To avoid the repetition, pause the agent on the Build Agents page
-  and wait for its builds to finish before you lower the count.
+  at most five times, see [Operating build agents](/admin/production-setup/multiple-artemis-instances#operating-build-agents). To avoid the repetition, and the extra load described under
+  [Automatically](#automatically), pause the agent on the Build Agents page and wait for its builds to finish before you lower the count.
 - **More core capacity:** raise `artemis.replicaCount`. A new member waits for the leader to be ready and then joins the cluster.
 
 The values to decide with are the queue and the utilization on the Build Agents page, and the gauges `artemis.global.localci.queued`, `running`, `agents` and `maxConcurrentBuilds`.
 The core pods carry the annotations `prometheus.io/scrape`, `prometheus.io/path` (`/management/prometheus`) and `prometheus.io/port` for a Prometheus that honors them.
-If the cluster has a node autoscaler, it can add build nodes when build Pods wait for resources, but the number of controllers, and with it the number of concurrent builds, stays what the values say.
+
+### Automatically
+
+With `buildAgents.autoscaling.enabled: true` the chart creates a [KEDA](https://keda.sh) `ScaledObject` for the build agent controllers. It needs KEDA in the cluster and a Prometheus that scrapes the core pods,
+and the chart installs neither. Two settings make the metrics usable:
+
+1. **Scope the query to this installation.** A Prometheus often scrapes several Artemis installations, for example production and a test installation. Without a scope, the backlog of one installation
+   would scale the controllers of the other, and the metrics of the other would hide a missing scrape. `buildAgents.autoscaling.prometheus.selector` holds label matchers that select the metrics of this installation,
+   and the chart refuses to render without it, unless you set your own `query`. Which labels exist depends on the scrape configuration of your Prometheus, so use labels that identify this installation,
+   for example the namespace of the core pods.
+2. **Allow Prometheus to scrape Artemis.** `/management/prometheus` only answers requests from the addresses in `spring.prometheus.monitoringIp`, which is `127.0.0.1` by default, and the chart does not change it.
+   Without the setting, the scrape of the core pods is denied and KEDA has no metrics. Set it for the core nodes through `artemis.extraEnv` to the **source addresses of Prometheus**, comma-separated. An entry is a single
+   address or a CIDR block such as `10.42.0.0/16`, for IPv4 and IPv6. Use a block that covers the pods of Prometheus, because the address of a pod changes when it is rescheduled, and keep it as narrow as the pod network
+   of the namespace that Prometheus runs in. The core pods see the address of the Prometheus pod, unless your network translates it. A value that is not an address or a block stops the start with the property named in the message.
+
+```yaml
+artemis:
+  extraEnv:
+    - name: SPRING_PROMETHEUS_MONITORINGIP
+      value: "10.42.0.0/16"
+buildAgents:
+  concurrentBuildsPerAgent: 2
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 10
+    prometheus:
+      serverAddress: http://prometheus-server.monitoring.svc:80
+      selector: namespace="artemis"
+```
+
+- **Target.** The number of controllers that the queue needs: `ceil((queued + running builds) / concurrentBuildsPerAgent)`, from the cluster-wide gauges `artemis.global.localci.queued` and `running`,
+  limited to `minReplicas` and `maxReplicas`. `autoscaling.prometheus.query` replaces the default query, which is built from the selector.
+- **Replica count.** The StatefulSet no longer sets `replicas`, so `buildAgents.replicaCount` is ignored and `helm upgrade` does not reset the count.
+  The upgrade that **first** enables autoscaling on an existing release is the exception: Helm can remove the field, which makes Kubernetes reset the StatefulSet to one replica until KEDA has reconciled it.
+  The controllers above the first one are removed and their running builds are interrupted. Enable autoscaling while no builds run: pause the build agents, wait until their builds have finished,
+  as in [Updating](#updating), and set `minReplicas` to the capacity that you want to keep.
+- **Speed.** Controllers are added quickly (four per minute by default) and removed slowly (one every five minutes, after ten minutes below the target). The `scaleUp` and `scaleDown` values change this.
+- **Missing metric.** A missing series is an error and not zero, so a broken scrape leaves the count unchanged instead of scaling down while builds wait.
+- **Scale-down.** The controller with the highest ordinal is removed, whether it is busy or not. Its builds are put back into the queue and run again, at most five times, and are marked failed after that.
+  The Kubernetes Job of the removed controller is **not** stopped. The other controllers only clean up the Jobs of their own name, so it runs until it finishes or reaches its active deadline, which is the build timeout
+  plus the budgets for the pod start, the result collection and the grace period. A retry can therefore run next to it and use extra build capacity for that time. A controller that starts again under the same name
+  removes the Jobs it no longer tracks. The slow scale-down keeps all of this rare, but it cannot rule it out.
+- **Paused controllers.** A paused controller counts as a replica but takes no builds, and the scaler adds no capacity for it. Pausing is a maintenance action, and a new controller would start unpaused and override it.
+  Builds queued while all controllers are paused can start on a new controller without a resume action: when the queue raises the target above the current replica count, KEDA starts a controller, and it starts unpaused.
+  With a paused controller that stays at the current count, the builds wait until a controller is resumed.
+- **Capacity.** `maxReplicas × concurrentBuildsPerAgent` builds must fit on the build nodes, otherwise the additional build Pods wait for resources. A cluster node autoscaler can add the nodes when Pods wait,
+  but it does not change the number of controllers.
 
 ## Updating
 
@@ -134,17 +185,24 @@ If the cluster has a node autoscaler, it can add build nodes when build Pods wai
    ```
 
    Skip the member command when there is no member StatefulSet. Repeat the last command until no core node and no build agent pod is left. PostgreSQL, the registry and the broker keep running.
+
+   With [automatic scaling](#automatically), KEDA would start the build agents again. Instead of scaling the build agent StatefulSet, pin it to zero through the `ScaledObject`, which has the same name:
+
+   ```bash
+   kubectl -n <namespace> annotate scaledobject <name>-build-agent autoscaling.keda.sh/paused-replicas="0"
+   ```
 4. Update the same release with a single core node and no build agents:
 
    ```bash
    helm upgrade <release> ./deployment/helm/artemis --namespace <namespace> \
      --values my-values.yaml \
      --set artemis.replicaCount=1 --set buildAgents.replicaCount=0 \
+     --set buildAgents.autoscaling.enabled=false \
      --wait --timeout 25m
    ```
 
-   The leader starts alone and applies the Liquibase migrations. The command returns when it is ready.
-5. Run the same command with the same `my-values.yaml`, without the two `--set` options. This restores the intended replica counts, and the members and the build agents start with the new version.
+   The leader starts alone and applies the Liquibase migrations. The command returns when it is ready. The `buildAgents.autoscaling.enabled` option removes the `ScaledObject` for this step and is only needed with automatic scaling.
+5. Run the same command with the same `my-values.yaml`, without the `--set` options. This restores the intended replica counts, and the members and the build agents start with the new version. With automatic scaling the `ScaledObject` is created again.
 6. The new build agents start unpaused and take builds as soon as they are ready, so there is nothing to resume. Check the Build Agents page for the number of agents and their status, and trigger a build.
 
 Take the image tags from the values file and use versioned tags, for the Artemis image and for the helper image. For a release without database migrations, a plain `helm upgrade` is enough.

@@ -1015,7 +1015,7 @@ class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
 
         var properties = new RateLimitingProperties();
         properties.setEnabled(true);
-        properties.setAuthenticationRequestsPerMinute(1);
+        properties.setGitAuthenticationRequestsPerMinute(1);
         properties.setExemptAddresses(List.of("127.0.0.0/8", "::1"));
         var featureToggleService = mock(FeatureToggleService.class);
         when(featureToggleService.isFeatureEnabled(Feature.RateLimit)).thenReturn(true);
@@ -1038,6 +1038,46 @@ class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
                 HttpResponse<String> response = sendInfoRefs(client, repositoryUrl, service, authorizationHeader, clientAddress);
                 assertThat(response.statusCode()).as("status for %s", service).isEqualTo(429);
                 assertThat(response.headers().firstValueAsLong(HttpHeaders.RETRY_AFTER).orElse(0)).as("Retry-After for %s", service).isPositive();
+            }
+        }
+        finally {
+            ReflectionTestUtils.setField(servletServiceTarget, "rateLimitService", originalRateLimitService);
+            RATE_LIMIT_SERVICE_SWAP_LOCK.unlock();
+        }
+    }
+
+    /**
+     * Git has a bucket of its own, separate from the logins. A lecture hall behind one address that pushes at a deadline used to
+     * use up the allowance that the logins of everyone on that address depend on. Here the login bucket allows one request and
+     * the git bucket many, and several handshakes from the same address all go through, so a handshake no longer draws on the login bucket.
+     * The swap of the rate limit service is the one of the test above.
+     */
+    @Test
+    void testGitHandshakesDoNotUseUpTheLoginBudget() throws Exception {
+        localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+
+        var properties = new RateLimitingProperties();
+        properties.setEnabled(true);
+        properties.setAuthenticationRequestsPerMinute(1);
+        properties.setGitAuthenticationRequestsPerMinute(100);
+        properties.setExemptAddresses(List.of("127.0.0.0/8", "::1"));
+        var featureToggleService = mock(FeatureToggleService.class);
+        when(featureToggleService.isFeatureEnabled(Feature.RateLimit)).thenReturn(true);
+        var limitingRateLimitService = new RateLimitService(rateLimitProxyManager, new RateLimitConfigurationService(properties), featureToggleService);
+
+        Object servletServiceTarget = AopTestUtils.getUltimateTargetObject(localVCServletService);
+        RATE_LIMIT_SERVICE_SWAP_LOCK.lock();
+        Object originalRateLimitService = ReflectionTestUtils.getField(servletServiceTarget, "rateLimitService");
+        ReflectionTestUtils.setField(servletServiceTarget, "rateLimitService", limitingRateLimitService);
+        try (HttpClient client = HttpClient.newHttpClient()) {
+            String repositoryUrl = localVCBaseUri + "/git/" + projectKey1 + "/" + assignmentRepositorySlug + ".git";
+            String authorizationHeader = "Basic " + Base64.getEncoder().encodeToString((student1Login + ":" + USER_PASSWORD).getBytes(StandardCharsets.UTF_8));
+            String clientAddress = "2001:db8::" + Integer.toHexString(ThreadLocalRandom.current().nextInt(1, 0x10000)) + ":"
+                    + Integer.toHexString(ThreadLocalRandom.current().nextInt(0x10000));
+
+            for (int handshake = 1; handshake <= 3; handshake++) {
+                assertThat(sendInfoRefs(client, repositoryUrl, "git-upload-pack", authorizationHeader, clientAddress).statusCode()).as("status of handshake %d", handshake)
+                        .isEqualTo(200);
             }
         }
         finally {
