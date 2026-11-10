@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.regex.MatchResult;
 import java.util.regex.Matcher;
@@ -613,8 +614,9 @@ public final class ExerciseIntegrityGate {
 
     /**
      * The source ranges that can contribute to a path a test reads: the arguments of actual file/resource reads, and the value of every variable or field named in such a range
-     * and in scope there, followed until no further variable is named. Local values follow the latest preceding assignment in the closest enclosing scope; assignments
-     * after the read and overwritten values cannot supply its path. Fields remain conservative because declaration order does not determine their value at a method call.
+     * and in scope there, followed until no further variable is named. Local values follow the latest preceding assignment in the closest enclosing scope and any later
+     * reassignment in a branch before the read; assignments after the read and overwritten values cannot supply its path. A parameter or header variable shadows a field of
+     * the same name. Fields remain conservative because declaration order does not determine their value at a method call.
      *
      * @param masked comment- and literal-masked source, so parentheses inside literals are not counted
      * @return the ranges, each from its start to its exclusive end
@@ -635,13 +637,26 @@ public final class ExerciseIntegrityGate {
                 continue;
             }
             for (String name : named) {
-                List<MatchResult> assignments = ASSIGNMENT.matcher(masked).results()
-                        .filter(assignment -> name.equals(assignment.group(1)) && visibleAt(blocks, assignment.start(), range.valueAt()))
+                // A parameter or header variable of an enclosing block shadows an outer field of that name; only assignments inside that block can supply its value. A
+                // qualified use such as Test.fileName still reads the field.
+                boolean qualifiedUse = QUALIFIED_MEMBER.matcher(masked.substring(range.start(), range.end())).results().anyMatch(use -> use.group(1).equals(name));
+                Optional<SourceRange> shadowingBlock = qualifiedUse ? Optional.empty() : shadowingBlock(masked, blocks, range.valueAt(), name);
+                List<MatchResult> candidates = ASSIGNMENT.matcher(masked).results().filter(assignment -> name.equals(assignment.group(1)))
+                        .filter(assignment -> shadowingBlock.isEmpty() || shadowingBlock.get().start() < assignment.start() && assignment.start() < shadowingBlock.get().end())
+                        .toList();
+                List<MatchResult> assignments = candidates.stream().filter(assignment -> visibleAt(blocks, assignment.start(), range.valueAt()))
                         .filter(assignment -> blockDepth(blocks, assignment.start()) < 2 || assignment.start() < range.valueAt()).toList();
                 int closestScope = assignments.stream().mapToInt(assignment -> blockDepth(blocks, assignment.start())).max().orElse(-1);
                 int latest = assignments.stream().filter(assignment -> blockDepth(blocks, assignment.start()) == closestScope).mapToInt(MatchResult::start).max().orElse(-1);
-                for (MatchResult assignment : assignments) {
-                    if (blockDepth(blocks, assignment.start()) != closestScope || closestScope >= 2 && assignment.start() != latest
+                // A reassignment inside a branch between the latest assignment of the read's scope and the read can reach the read as well.
+                List<MatchResult> branchAssignments = closestScope < 2 ? List.of()
+                        : candidates.stream()
+                                .filter(assignment -> latest < assignment.start() && assignment.start() < range.valueAt() && blockDepth(blocks, assignment.start()) > closestScope
+                                        && !visibleAt(blocks, assignment.start(), range.valueAt()) && !declaresVariable(masked, assignment.start()))
+                                .toList();
+                for (MatchResult assignment : java.util.stream.Stream.concat(assignments.stream(), branchAssignments.stream()).toList()) {
+                    boolean branch = branchAssignments.contains(assignment);
+                    if (!branch && (blockDepth(blocks, assignment.start()) != closestScope || closestScope >= 2 && assignment.start() != latest)
                             || !followedAssignments.add(assignment.start())) {
                         continue;
                     }
@@ -654,6 +669,43 @@ public final class ExerciseIntegrityGate {
     }
 
     private record PathExpression(int start, int end, int valueAt) {
+    }
+
+    /** A member access by name, such as {@code fileName} in {@code Test.fileName}. */
+    private static final Pattern QUALIFIED_MEMBER = Pattern.compile("\\.\\s*([A-Za-z_$][\\w$]*)");
+
+    /** A type, optionally generic or an array, followed by the declared name and the end of a parameter or header variable. */
+    private static final Pattern HEADER_DECLARATION = Pattern.compile("[\\w$]\\s*(?:<[^()<>]*(?:<[^()<>]*>[^()<>]*)*>)?(?:\\[\\s*\\])*\\s+([A-Za-z_$][\\w$]*)\\s*[,):]");
+
+    /** The innermost block around {@code use} whose header, such as a method's parameter list, an enhanced for or a catch clause, declares {@code name}. */
+    private static Optional<SourceRange> shadowingBlock(String masked, List<SourceRange> blocks, int use, String name) {
+        return blocks.stream().filter(block -> block.start() < use && use < block.end()).sorted(java.util.Comparator.comparingInt(SourceRange::start).reversed())
+                .filter(block -> HEADER_DECLARATION.matcher(blockHeaderParameters(masked, block.start())).results().anyMatch(declared -> declared.group(1).equals(name)))
+                .findFirst();
+    }
+
+    /** The text of the last parenthesized group in the header before the brace at {@code open}, or empty when the header has none. */
+    private static String blockHeaderParameters(String masked, int open) {
+        int headerStart = Math.max(masked.lastIndexOf(';', open - 1), Math.max(masked.lastIndexOf('{', open - 1), masked.lastIndexOf('}', open - 1))) + 1;
+        int close = masked.lastIndexOf(')', open - 1);
+        if (close < headerStart) {
+            return "";
+        }
+        int depth = 0;
+        for (int index = close; index >= headerStart; index--) {
+            char current = masked.charAt(index);
+            depth += current == ')' ? 1 : current == '(' ? -1 : 0;
+            if (depth == 0) {
+                return masked.substring(index + 1, close + 1);
+            }
+        }
+        return "";
+    }
+
+    /** Whether the assignment at {@code position} declares a new variable, because a type precedes its name, rather than reassigning one declared earlier. */
+    private static boolean declaresVariable(String masked, int position) {
+        String before = masked.substring(0, position).stripTrailing();
+        return !before.isEmpty() && (Character.isJavaIdentifierPart(before.charAt(before.length() - 1)) || before.endsWith(">") || before.endsWith("]"));
     }
 
     private static int blockDepth(List<SourceRange> blocks, int position) {

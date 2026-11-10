@@ -958,6 +958,45 @@ class ExerciseIntegrityGateTest {
     }
 
     @Test
+    void sourceReadingTests_aParameterShadowsAFieldOfTheSameName() {
+        String test = """
+                class ReportTest {
+                    private static final String fileName = "Report.java";
+                    private static java.util.List<String> read(String fileName) throws Exception {
+                        return java.nio.file.Files.readAllLines(java.nio.file.Path.of(fileName));
+                    }
+                    @Test void readsTheCases() throws Exception { assertEquals(3, read("cases.csv").size(), fileName); }
+                }
+                """;
+
+        assertThat(ExerciseIntegrityGate.sourceReadingTestReasons(map("test/ReportTest.java", test))).isEmpty();
+        String fieldRead = test.replace("Path.of(fileName)", "Path.of(ReportTest.fileName)");
+        assertThat(ExerciseIntegrityGate.sourceReadingTestReasons(map("test/ReportTest.java", fieldRead))).as("an explicit field read").singleElement().asString()
+                .contains("Report.java");
+    }
+
+    @Test
+    void sourceReadingTests_followABranchAssignmentThatReachesTheRead() {
+        String test = """
+                class ClientTest {
+                    @Test void reads(boolean source) throws Exception {
+                        String fileName = "cases.csv";
+                        if (source) {
+                            fileName = "Client.java";
+                        }
+                        String text = java.nio.file.Files.readString(java.nio.file.Path.of(fileName));
+                    }
+                }
+                """;
+
+        assertThat(ExerciseIntegrityGate.sourceReadingTestReasons(map("test/ClientTest.java", test))).singleElement().asString().contains("Client.java");
+        String overwritten = test.replace("        String text =", "        fileName = \"data.csv\";\n        String text =");
+        assertThat(ExerciseIntegrityGate.sourceReadingTestReasons(map("test/ClientTest.java", overwritten))).as("overwritten after the branch").isEmpty();
+        String ownDeclaration = test.replace("fileName = \"Client.java\";", "String fileName = \"Client.java\";");
+        assertThat(ExerciseIntegrityGate.sourceReadingTestReasons(map("test/ClientTest.java", ownDeclaration))).as("a separate variable of the branch").isEmpty();
+    }
+
+    @Test
     void statementTasks_requireInstructionTextBeforeTheNextTask() {
         assertThat(ExerciseIntegrityGate.statementTaskInstructionReasons("[task][First](one)\n[task][Second](two)\n")).singleElement().asString().contains("First", "Second",
                 "no student-facing instruction");
