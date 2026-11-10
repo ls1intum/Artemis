@@ -1,9 +1,29 @@
 @if (!isHidden()) {
-    <button type="button" tumAetUiButton severity="warn" size="small" id="highlightDiffButton" class="ms-2!" (click)="toggleHighlightedProblemStatement($event)">
-        {{
-            showHighlightedDifferences()
-                ? ('artemisApp.exam.problemStatementUpdate.showNew' | artemisTranslate)
-                : ('artemisApp.exam.problemStatementUpdate.showDiff' | artemisTranslate)
-        }}
-    </button>
+    @let changesShown = showHighlightedDifferences();
+    <tumaet-ui-message
+        severity="warn"
+        [icon]="faTriangleExclamation"
+        class="mb-4! grid-rows-[auto]! [&_.tumaet-ui-message-text]:grow"
+        data-testid="problem-statement-update-banner"
+    >
+        <span class="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+            <span class="flex flex-col">
+                <span class="font-bold">{{ 'artemisApp.exam.problemStatementUpdate.title' | artemisTranslate }}</span>
+                <span class="font-normal">
+                    {{
+                        changesShown
+                            ? ('artemisApp.exam.problemStatementUpdate.changesHighlighted' | artemisTranslate)
+                            : ('artemisApp.exam.problemStatementUpdate.changesHidden' | artemisTranslate)
+                    }}
+                </span>
+            </span>
+            <button type="button" tumAetUiButton severity="warn" variant="outlined" size="small" id="highlightDiffButton" (click)="toggleHighlightedProblemStatement($event)">
+                {{
+                    changesShown
+                        ? ('artemisApp.exam.problemStatementUpdate.hideChanges' | artemisTranslate)
+                        : ('artemisApp.exam.problemStatementUpdate.showChanges' | artemisTranslate)
+                }}
+            </button>
+        </span>
+    </tumaet-ui-message>
 }

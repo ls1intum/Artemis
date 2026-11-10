@@ -819,6 +819,23 @@ Course Info Bar
 }
 
 /* ==========================================================================
+    Problem statement differences (html-diff-ts output), e.g. after an update during an exam
+========================================================================== */
+ins.diffins,
+ins.diffmod {
+    text-decoration: none;
+    background-color: var(--artemis-alert-success-background);
+    color: var(--artemis-alert-success-color);
+    border-radius: 0.2em;
+    padding: 0 0.15em;
+}
+
+del.diffdel,
+del.diffmod {
+    color: var(--artemis-alert-danger-color);
+}
+
+/* ==========================================================================
     Markdown preview
 ========================================================================== */
 .markdown-preview {

@@ -221,8 +221,11 @@
                 "cannotDisplayExerciseDetails": "Aufgabe {{ exerciseGroupTitle }} kann nicht angezeigt werden"
             },
             "problemStatementUpdate": {
-                "showDiff": "Zeige Unterschiede",
-                "showNew": "Zeige nur neue Version"
+                "title": "Diese Aufgabe wurde während der Prüfung aktualisiert.",
+                "changesHighlighted": "Änderungen sind unten hervorgehoben.",
+                "changesHidden": "Du siehst die aktualisierte Aufgabe ohne hervorgehobene Änderungen.",
+                "hideChanges": "Änderungen ausblenden",
+                "showChanges": "Änderungen anzeigen"
             },
             "editWorkingTime": {
                 "absolute": "Absolut",

@@ -7,12 +7,13 @@ import { SafeHtml } from '@angular/platform-browser';
 import { ArtemisMarkdownService } from 'app/foundation/service/markdown.service';
 import diff from 'html-diff-ts';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective, TumAetUiMessageComponent } from '@tumaet/ui-angular';
+import { faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-exam-exercise-update-highlighter',
     templateUrl: './exam-exercise-update-highlighter.component.html',
-    imports: [ArtemisTranslatePipe, TumAetUiButtonDirective],
+    imports: [ArtemisTranslatePipe, TumAetUiButtonDirective, TumAetUiMessageComponent],
 })
 export class ExamExerciseUpdateHighlighterComponent implements OnInit, OnDestroy {
     private examExerciseUpdateService = inject(ExamExerciseUpdateService);
@@ -29,6 +30,8 @@ export class ExamExerciseUpdateHighlighterComponent implements OnInit, OnDestroy
     exercise = input.required<Exercise>();
 
     problemStatementUpdateEvent = output<SafeHtml>();
+
+    protected readonly faTriangleExclamation = faTriangleExclamation;
 
     ngOnInit(): void {
         this.subscriptionToLiveExamExerciseUpdates = this.examExerciseUpdateService.currentExerciseIdAndProblemStatement.subscribe((update) => {

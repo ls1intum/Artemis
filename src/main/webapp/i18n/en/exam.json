@@ -221,8 +221,11 @@
                 "cannotDisplayExerciseDetails": "Exercise {{ exerciseGroupTitle }} cannot be displayed properly"
             },
             "problemStatementUpdate": {
-                "showDiff": "Show Difference",
-                "showNew": "Only show new Version"
+                "title": "This task was updated during the exam.",
+                "changesHighlighted": "Changes are highlighted below.",
+                "changesHidden": "You're viewing the updated task without highlighted changes.",
+                "hideChanges": "Hide changes",
+                "showChanges": "Show changes"
             },
             "editWorkingTime": {
                 "absolute": "Absolute",
