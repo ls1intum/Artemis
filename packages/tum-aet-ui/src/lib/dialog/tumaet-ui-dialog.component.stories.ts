@@ -11,6 +11,7 @@ interface DialogStoryArgs {
     closable: boolean;
     closeOnEscape: boolean;
     confirmLabel: string;
+    contentPadding: 'default' | 'none';
     description: string;
     header: string;
     hidden: () => void;
@@ -29,6 +30,7 @@ const meta = {
         closable: true,
         closeOnEscape: true,
         confirmLabel: 'Enroll',
+        contentPadding: 'default',
         description: 'Enroll in Advanced Software Engineering?',
         header: 'Confirm enrollment',
         hidden: fn(),
@@ -37,6 +39,7 @@ const meta = {
         size: 'medium',
         visible: false,
     },
+    argTypes: { contentPadding: { control: 'inline-radio', options: ['default', 'none'] } },
     decorators: [
         moduleMetadata({
             imports: [TumAetUiButtonDirective],
@@ -122,5 +125,32 @@ export const RequiredDecision: Story = {
         const dialog = await screen.findByRole('dialog', { name: 'Submit assessment' });
         await userEvent.keyboard('{Escape}');
         await expect(dialog).toBeVisible();
+    },
+};
+
+/** An edge-to-edge body uses the same header, footer, focus and dismissal contracts as a padded dialog. */
+export const EdgeToEdge: Story = {
+    args: { contentPadding: 'none', visible: true },
+    render: (args) => ({
+        props: args,
+        template: `
+            <tumaet-ui-dialog [(visible)]="visible" [header]="header" [size]="size" [contentPadding]="contentPadding">
+                <div class="tumaet:bg-hover-background tumaet:p-8">Course illustration</div>
+                <ng-template #footer>
+                    <button tumAetUiButton severity="secondary" (click)="visible = false">Close illustration</button>
+                </ng-template>
+            </tumaet-ui-dialog>
+        `,
+    }),
+    play: async ({ userEvent }) => {
+        const dialog = await screen.findByRole('dialog', { name: 'Confirm enrollment' });
+        const illustration = within(dialog).getByText('Course illustration');
+        await expect(illustration).toBeVisible();
+        const panelBounds = dialog.getBoundingClientRect();
+        const bodyBounds = illustration.getBoundingClientRect();
+        await expect(Math.abs(bodyBounds.left - panelBounds.left)).toBeLessThanOrEqual(2);
+        await expect(Math.abs(bodyBounds.right - panelBounds.right)).toBeLessThanOrEqual(2);
+        await userEvent.click(within(dialog).getByRole('button', { name: 'Close illustration' }));
+        await expect(dialog).not.toBeInTheDocument();
     },
 };
