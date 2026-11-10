@@ -56,6 +56,12 @@ public class RateLimitingProperties {
     private Integer authenticationRequestsPerMinute;
 
     /**
+     * Requests per minute for the authentication of git operations over HTTP and SSH.
+     * If not specified, uses the default from {@link de.tum.cit.aet.artemis.core.security.RateLimitType#GIT_AUTHENTICATION}.
+     */
+    private Integer gitAuthenticationRequestsPerMinute;
+
+    /**
      * Requests per minute for the unauthenticated login-options lookup.
      * If not specified, uses the default from {@link de.tum.cit.aet.artemis.core.security.RateLimitType#LOGIN_OPTIONS}.
      */
@@ -179,6 +185,14 @@ public class RateLimitingProperties {
 
     public Integer getAiSearchPipelineRequestsPerMinute() {
         return aiSearchPipelineRequestsPerMinute;
+    }
+
+    public Integer getGitAuthenticationRequestsPerMinute() {
+        return gitAuthenticationRequestsPerMinute;
+    }
+
+    public void setGitAuthenticationRequestsPerMinute(Integer gitAuthenticationRequestsPerMinute) {
+        this.gitAuthenticationRequestsPerMinute = gitAuthenticationRequestsPerMinute;
     }
 
     public Integer getBuildAgentCloneTokenRequestsPerMinute() {

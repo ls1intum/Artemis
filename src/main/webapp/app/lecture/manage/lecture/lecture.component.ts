@@ -2,6 +2,7 @@ import dayjs from 'dayjs/esm';
 import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { concatMap, filter, map, toArray } from 'rxjs/operators';
+import { TumLiveUploadService } from 'app/lecture/manage/lecture-units/services/tum-live-upload.service';
 import { LectureService } from '../services/lecture.service';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { Course } from 'app/course/shared/entities/course.model';
@@ -80,6 +81,7 @@ export class LectureComponent implements OnInit, OnDestroy {
     private router = inject(Router);
     private alertService = inject(AlertService);
     private sortService = inject(SortService);
+    private tumLiveUploadService = inject(TumLiveUploadService);
 
     readonly lectures = signal<Lecture[]>([]);
     isUploadingPdfs = signal(false);
@@ -159,12 +161,40 @@ export class LectureComponent implements OnInit, OnDestroy {
      * Deletes Lecture
      * @param lectureId the id of the lecture
      */
-    deleteLecture(lectureId: number) {
-        this.lectureService.delete(lectureId).subscribe({
+    deleteLecture(lectureId: number, checks: { [key: string]: boolean } = {}) {
+        this.lectureService.delete(lectureId, !!checks.deleteTumLiveRecordings).subscribe({
             next: () => {
                 this.deleteLectureFromDisplayedLectures(lectureId);
             },
             error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
+        });
+    }
+
+    /** The lectures with units that have a video Artemis uploaded to TUM.Live, also one that still converts; deleting one asks whether to delete the videos there too. */
+    readonly tumLiveUploadLectureIds = signal<Set<number>>(new Set());
+
+    /** Identifies the latest request for the uploaded units, so an older answer that arrives later does not replace a newer one. */
+    private tumLiveUploadsSequence = 0;
+
+    /** Set while reading the uploaded units failed: deleting any lecture then asks about TUM.Live, since it may have videos there. */
+    readonly tumLiveUploadsUnknown = signal(false);
+
+    private loadTumLiveUploads() {
+        const sequence = ++this.tumLiveUploadsSequence;
+        this.tumLiveUploadService.getUploadedUnits(this.courseId).subscribe({
+            next: (units) => {
+                if (sequence === this.tumLiveUploadsSequence) {
+                    this.tumLiveUploadLectureIds.set(new Set(units.map((unit) => unit.lectureId)));
+                    this.tumLiveUploadsUnknown.set(false);
+                }
+            },
+            // Say so and ask for every lecture instead of acting as if there were none: deleting a lecture would then not ask about its videos in TUM.Live.
+            error: (error: HttpErrorResponse) => {
+                if (sequence === this.tumLiveUploadsSequence) {
+                    this.tumLiveUploadsUnknown.set(true);
+                    onError(this.alertService, error);
+                }
+            },
         });
     }
 
@@ -191,6 +221,7 @@ export class LectureComponent implements OnInit, OnDestroy {
             )
             .subscribe({
                 next: (res: Lecture[]) => {
+                    this.loadTumLiveUploads();
                     this.lectures.set(
                         res.map((lectureData) => {
                             const lecture = new Lecture();
