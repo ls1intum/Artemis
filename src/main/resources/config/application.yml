@@ -483,7 +483,8 @@ eureka:
     instance:
         prefer-ip-address: true
         appname: Artemis
-        instanceId: Artemis:1
+        # Redis nodes have no Eureka, so they default to their unique Redis client name; Hazelcast nodes set no client name
+        instanceId: ${spring.data.redis.client-name:Artemis:1}
         # -----------------------------------------------------------------------------------
         # EUREKA LEASE/HEARTBEAT CONFIGURATION
         # -----------------------------------------------------------------------------------
