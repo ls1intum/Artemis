@@ -1,5 +1,9 @@
 package de.tum.cit.aet.artemis.atlas.config;
 
+import java.util.Arrays;
+import java.util.stream.Stream;
+
+import org.springframework.ai.tool.ToolCallback;
 import org.springframework.ai.tool.ToolCallbackProvider;
 import org.springframework.ai.tool.method.MethodToolCallbackProvider;
 import org.springframework.context.annotation.Bean;
@@ -24,7 +28,7 @@ import de.tum.cit.aet.artemis.atlas.service.OrchestratorReadToolsService;
  * Central wiring of the Atlas tool surfaces into per-role {@link AtlasToolSurface} beans.
  * <p>
  * Each agent or worker gets exactly one surface bean wrapping a {@link ToolCallbackProvider} that
- * exposes the {@code @Tool}-annotated methods of a single tool service. Keeping the wiring here —
+ * exposes the {@code @Tool}-annotated methods for that role, including selected shared read tools. Keeping the wiring here —
  * rather than building providers inside the consuming services — gives the orchestrator and chat
  * agents a narrow, explicit tool surface per role and lets the autonomous orchestrator compose its
  * read and planning surfaces independently of the chat agents.
@@ -84,15 +88,22 @@ public class AtlasAgentToolConfig {
     }
 
     /**
-     * Tools for the Exercise Mapper sub-agent (exercise listing and exercise-to-competency mapping).
+     * Tools for the Exercise Mapper sub-agent, including the course-scoped exercise-content read.
      *
      * @param exerciseMapperToolsService the exercise-mapper tool service
+     * @param readToolsService           shared, course-scoped content reads
      * @return the exercise-mapper tool surface
      */
     @Bean
     @Lazy
-    public AtlasToolSurface exerciseMapperToolCallbackProvider(ExerciseMappingToolsService exerciseMapperToolsService) {
-        return new AtlasToolSurface(MethodToolCallbackProvider.builder().toolObjects(exerciseMapperToolsService).build());
+    public AtlasToolSurface exerciseMapperToolCallbackProvider(ExerciseMappingToolsService exerciseMapperToolsService, OrchestratorReadToolsService readToolsService) {
+        var mappingTools = MethodToolCallbackProvider.builder().toolObjects(exerciseMapperToolsService).build();
+        var readTools = MethodToolCallbackProvider.builder().toolObjects(readToolsService).build();
+        ToolCallback[] callbacks = Stream
+                .concat(Arrays.stream(mappingTools.getToolCallbacks()),
+                        Arrays.stream(readTools.getToolCallbacks()).filter(callback -> callback.getToolDefinition().name().equals("getExerciseContent")))
+                .toArray(ToolCallback[]::new);
+        return new AtlasToolSurface(ToolCallbackProvider.from(callbacks));
     }
 
     // ---------------------------------------------------------------------------------------------

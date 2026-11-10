@@ -95,13 +95,14 @@ Prerequisites: KEDA in the cluster, and a Prometheus that scrapes the core pods.
 - **Scope the query.** `buildAgents.autoscaling.prometheus.selector` selects the metrics of this installation with label matchers. Without it, a Prometheus that scrapes several Artemis installations would
   scale these controllers with the backlog of another one. The chart refuses to render without it, unless you set your own `query`. The available labels depend on the scrape configuration of your Prometheus.
 - **Allow the scrape.** `/management/prometheus` only answers requests from `spring.prometheus.monitoringIp`, which is `127.0.0.1` by default and is not changed by the chart. Set it through
-  `artemis.extraEnv` to the exact source IP addresses of Prometheus, comma-separated. Otherwise the scrape is denied and KEDA has no metrics.
+  `artemis.extraEnv` to the source addresses of Prometheus, comma-separated, as single addresses or CIDR blocks such as `10.42.0.0/16`. Use a block that covers the pods of Prometheus, because
+  the address of a pod changes when it is rescheduled. Otherwise the scrape is denied and KEDA has no metrics.
 
 ```yaml
 artemis:
   extraEnv:
     - name: SPRING_PROMETHEUS_MONITORINGIP
-      value: "10.42.1.15"
+      value: "10.42.0.0/16"
 buildAgents:
   concurrentBuildsPerAgent: 2
   autoscaling:
@@ -131,3 +132,10 @@ their builds have finished, as in the update procedure of the documentation, and
 and override it. Builds queued while all controllers are paused can start on a new controller without a resume action: when the queue raises the target above the current replica count,
 KEDA starts a controller, and it starts unpaused.
 All values are documented in `values.yaml`.
+
+## Checking the chart
+
+`supporting_scripts/check_helm_chart.sh` lints the chart, renders it in the variants that matter (autoscaling off and on, scaling from zero, a missing autoscaling map, no build agents, the Gateway API
+resources), checks what comes out, and checks that a configuration that cannot work is refused with a message that names the value. With [kubeconform](https://github.com/yannh/kubeconform) installed, it also
+validates the objects against the Kubernetes schemas and, for KEDA and the Gateway API, against the schemas of the [CRDs catalog](https://github.com/datreeio/CRDs-catalog). It needs no cluster. The CI runs it when
+something under `deployment/helm` changes. The values it renders with are in `ci/`, which is not part of a release of the chart.

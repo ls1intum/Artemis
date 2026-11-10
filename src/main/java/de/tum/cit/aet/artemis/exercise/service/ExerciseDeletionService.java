@@ -234,7 +234,7 @@ public class ExerciseDeletionService {
      *
      * @param exercise                  the exercise to delete
      * @param deleteBaseReposBuildPlans whether the template and solution repos and build plans should be deleted (only relevant for programming exercises)
-     * @param onAccepted                runs in the request once the deletion is accepted and before it starts, for example to audit the request, to notify AtlasML or to cancel
+     * @param onAccepted                runs in the request once the deletion is accepted and before it starts, for example to audit the request or to cancel
      *                                      the schedule of a quiz. It does not run if the exercise, or the exam or exercise group it belongs to, is already being deleted.
      * @throws ConflictException if the exercise, or the exam or exercise group it belongs to, is already being deleted
      */
