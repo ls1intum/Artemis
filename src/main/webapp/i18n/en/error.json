@@ -101,7 +101,7 @@
         "rubricRequired": "A presentation graded by rubric needs a rubric with at least one criterion.",
         "rubricNotAllowed": "Only a presentation graded by rubric can have a rubric.",
         "rubricWeightSumInvalid": "The weights of the rubric criteria must add up to exactly 100%.",
-        "rubricStructureLocked": "This presentation already has instances. Criteria can no longer be added or removed, and their scale is fixed.",
+        "rubricStructureLocked": "Some presentations have already been assessed. Criteria can no longer be added or removed, and their scale is fixed.",
         "levelsDoNotMatchScale": "The number of levels of a criterion must match its rating scale.",
         "resultDoesNotMatchGradingMethod": "The result does not match the grading method of the presentation. Please reload the page and try again.",
         "resultCannotBeRemoved": "A saved result can be changed but not removed.",

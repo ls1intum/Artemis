@@ -147,13 +147,11 @@
         </div>
     </section>
 
-    <div class="presentation-instance-divider flex items-center gap-3 text-xs font-semibold tracking-[0.04em] text-(--text-body-secondary) uppercase" role="separator">
-        <span jhiTranslate="artemisApp.presentationAssessment.assessment"></span>
-    </div>
+    <h2 class="m-0! text-lg! font-semibold!">{{ 'artemisApp.presentationAssessment.assessment' | artemisTranslate }}</h2>
 
     @switch (gradingMethod()) {
         @case (PresentationGradingMethod.PASS_FAIL) {
-            <div class="grid grid-cols-1 items-start gap-6 sm:grid-cols-[minmax(18rem,22rem)_minmax(0,1fr)]">
+            <div class="grid grid-cols-1 items-start gap-6 sm:grid-cols-[minmax(20rem,26rem)_minmax(0,1fr)]">
                 <div class="flex flex-col gap-2">
                     <span id="presentation-instance-result-label" jhiTranslate="artemisApp.presentationAssessment.result.label"></span>
                     <div class="grid grid-cols-2 gap-2" role="radiogroup" aria-labelledby="presentation-instance-result-label">
@@ -161,23 +159,28 @@
                         @for (outcome of outcomes; track outcome.key) {
                             @let selected = editForm.controls.passed.value === outcome.value;
                             <label
-                                class="flex! min-h-10 cursor-pointer items-center gap-2 rounded-lg border ps-1.5 pe-3 text-sm focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-(--primary)"
-                                [class]="selected ? 'border-(--primary) bg-(--selected-option-bg) shadow-[inset_0_0_0_1px_var(--primary)]' : 'border-(--border-color)'"
+                                class="flex! min-h-10 cursor-pointer items-center gap-2 rounded-lg border ps-1.5 pe-3 text-sm"
+                                [class]="selected ? 'border-(--primary) bg-(--sidebar-card-selected-bg)' : 'border-(--border-color)'"
+                                [for]="'presentation-instance-' + outcome.key"
                                 [attr.data-testid]="'presentation-instance-' + outcome.key"
                             >
-                                <input class="sr-only" type="radio" formControlName="passed" [value]="outcome.value" />
                                 <span
-                                    class="inline-flex size-7 items-center justify-center rounded-md"
-                                    [class]="outcome.value ? 'bg-(--accent-surface-bg) text-(--primary)' : 'bg-(--hover-slightly-darker-body-bg) text-state-danger'"
+                                    class="inline-flex size-7 items-center justify-center rounded-md bg-(--hover-slightly-darker-body-bg)"
+                                    [class]="outcome.value ? 'text-(--primary)' : 'text-state-danger'"
                                     aria-hidden="true"
                                     ><fa-icon [icon]="outcome.icon"
                                 /></span>
-                                <strong>{{ 'artemisApp.presentationAssessment.result.' + outcome.key | artemisTranslate }}</strong>
-                                <span
-                                    class="ms-auto size-4.5 shrink-0 rounded-full"
-                                    [class]="selected ? 'border-[5px] border-(--primary)' : 'border border-(--border-color)'"
-                                    aria-hidden="true"
-                                ></span>
+                                <strong class="whitespace-nowrap">{{ 'artemisApp.presentationAssessment.result.' + outcome.key | artemisTranslate }}</strong>
+                                <tumaet-ui-radio-button
+                                    class="ms-auto"
+                                    [inputId]="'presentation-instance-' + outcome.key"
+                                    name="presentation-instance-passed"
+                                    [value]="outcome.value"
+                                    [ngModel]="editForm.controls.passed.value"
+                                    [ngModelOptions]="{ standalone: true }"
+                                    [disabled]="editForm.controls.passed.disabled"
+                                    (selected)="editForm.controls.passed.setValue(outcome.value)"
+                                />
                             </label>
                         }
                     </div>
@@ -242,7 +245,7 @@
         }
     }
 
-    <div class="flex items-center gap-2 border-t border-(--border-color) pt-4">
+    <div class="flex items-center gap-2">
         @if (remainingCriteria() > 0) {
             <span
                 id="rubric-remaining"

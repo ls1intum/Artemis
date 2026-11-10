@@ -7,11 +7,11 @@
             </div>
             @let total = totalState();
             <div
-                class="flex w-38 flex-col gap-1 rounded-lg border bg-(--module-bg) p-3"
+                class="flex w-40 flex-col gap-1 rounded-lg border bg-(--module-bg) p-3"
                 [class]="total === 'invalid' ? 'border-state-danger' : 'border-(--border-color)'"
                 data-testid="rubric-total-weight"
             >
-                <span class="text-[0.6875rem] tracking-[0.04em] text-(--text-body-secondary) uppercase" jhiTranslate="artemisApp.presentationAssessment.rubric.totalWeight"></span>
+                <span jhiPresentationLabel jhiTranslate="artemisApp.presentationAssessment.rubric.totalWeight"></span>
                 <strong class="text-xl" [class]="total === 'valid' ? 'text-state-success' : total === 'invalid' ? 'text-state-danger' : ''">{{ totalWeight() }} %</strong>
                 <tumaet-ui-progress-bar
                     size="small"
@@ -59,7 +59,8 @@
             </tumaet-ui-empty-state>
         }
 
-        @for (criterion of form().controls; track criterion; let index = $index) {
+        @for (view of criteria(); track view.criterion; let index = $index) {
+            @let criterion = view.criterion;
             <section
                 class="flex flex-col rounded-lg border border-(--border-color) bg-(--module-bg)"
                 [formGroup]="criterion"
@@ -68,11 +69,11 @@
             >
                 <!-- On a narrow screen the fields stack between the number and the trash button -->
                 <div
-                    class="grid grid-cols-[1.75rem_minmax(0,1fr)_2.25rem] items-start gap-4 p-4 lg:grid-cols-[1.75rem_minmax(8rem,0.75fr)_minmax(10rem,1.35fr)_6rem_18rem_2.25rem]"
+                    class="grid grid-cols-[1.75rem_minmax(0,1fr)_2.25rem] items-start gap-4 p-4 lg:grid-cols-[1.75rem_minmax(8rem,0.75fr)_minmax(10rem,1.35fr)_6rem_22rem_2.25rem]"
                 >
                     <!-- The top margin aligns the number with the inputs below their labels -->
                     <span
-                        class="row-start-1 mt-7 inline-flex size-7 items-center justify-center rounded-full bg-(--accent-surface-bg) text-sm font-semibold text-(--primary) lg:row-start-auto"
+                        class="row-start-1 mt-7 inline-flex size-7 items-center justify-center rounded-full bg-(--hover-slightly-darker-body-bg) text-sm font-semibold text-(--primary) lg:row-start-auto"
                         aria-hidden="true"
                         >{{ index + 1 }}</span
                     >
@@ -156,27 +157,27 @@
                                 class="text-(--text-body-secondary)"
                                 jhiTranslate="artemisApp.presentationAssessment.rubric.scaleHint"
                                 [translateValues]="{
-                                    count: rubricLevelCount(criterion.controls.scale.value),
-                                    lowest: rubricLevelKey(criterion.controls.scale.value, 0) | artemisTranslate,
-                                    highest: rubricLevelKey(criterion.controls.scale.value, rubricLevelCount(criterion.controls.scale.value) - 1) | artemisTranslate,
+                                    count: view.scaleHint.count,
+                                    lowest: view.scaleHint.lowestKey | artemisTranslate,
+                                    highest: view.scaleHint.highestKey | artemisTranslate,
                                 }"
                             ></span>
                             <button
                                 type="button"
                                 class="inline-flex cursor-pointer items-center gap-1 border-0 bg-transparent p-0 text-(--primary) hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--primary)"
-                                [attr.aria-expanded]="isExpanded(criterion)"
+                                [attr.aria-expanded]="view.expanded"
                                 [attr.data-testid]="'rubric-toggle-levels-' + index"
                                 (click)="toggleLevels(criterion)"
                             >
                                 <span
                                     [jhiTranslate]="
-                                        isExpanded(criterion) ? 'artemisApp.presentationAssessment.rubric.hideScale' : 'artemisApp.presentationAssessment.rubric.configureScale'
+                                        view.expanded ? 'artemisApp.presentationAssessment.rubric.hideScale' : 'artemisApp.presentationAssessment.rubric.configureScale'
                                     "
                                 ></span>
-                                <fa-icon [icon]="isExpanded(criterion) ? faChevronUp : faChevronDown" />
+                                <fa-icon [icon]="view.expanded ? faChevronUp : faChevronDown" />
                             </button>
                         </div>
-                        @if (!isExpanded(criterion) && criterion.controls.levels.invalid) {
+                        @if (!view.expanded && criterion.controls.levels.invalid) {
                             <tumaet-ui-message severity="error" [attr.data-testid]="'rubric-levels-error-' + index">
                                 <span
                                     jhiTranslate="artemisApp.presentationAssessment.rubric.validation.levelDescriptionTooLong"
@@ -199,32 +200,23 @@
                     }
                 </div>
 
-                @if (isExpanded(criterion)) {
+                @if (view.expanded) {
                     <div class="flex flex-col gap-3 rounded-b-lg border-t border-(--border-color) bg-(--hover-slightly-darker-body-bg) p-4" formArrayName="levels">
                         <h4 class="m-0! text-base! font-semibold!">{{ 'artemisApp.presentationAssessment.rubric.levelsHeading' | artemisTranslate: { number: index + 1 } }}</h4>
                         <div class="grid grid-cols-[2.5rem_minmax(0,1fr)] items-center gap-x-4 gap-y-2 sm:grid-cols-[4rem_11rem_1fr]">
-                            <span
-                                class="text-xs font-semibold tracking-[0.04em] text-(--text-body-secondary) uppercase"
-                                jhiTranslate="artemisApp.presentationAssessment.rubric.value"
-                            ></span>
-                            <span
-                                class="text-xs font-semibold tracking-[0.04em] text-(--text-body-secondary) uppercase"
-                                jhiTranslate="artemisApp.presentationAssessment.rubric.key"
-                            ></span>
-                            <span
-                                class="text-xs font-semibold tracking-[0.04em] text-(--text-body-secondary) uppercase"
-                                jhiTranslate="artemisApp.presentationAssessment.rubric.levelDescription"
-                            ></span>
-                            @for (position of positionsHighestFirst(criterion); track position) {
+                            <span class="font-semibold" jhiPresentationLabel jhiTranslate="artemisApp.presentationAssessment.rubric.value"></span>
+                            <span class="font-semibold" jhiPresentationLabel jhiTranslate="artemisApp.presentationAssessment.rubric.key"></span>
+                            <span class="font-semibold" jhiPresentationLabel jhiTranslate="artemisApp.presentationAssessment.rubric.levelDescription"></span>
+                            @for (position of view.positionsHighestFirst; track position) {
                                 <ng-container [formGroupName]="position">
                                     <span class="font-semibold">{{ position + 1 }}</span>
-                                    <span [jhiTranslate]="rubricLevelKey(criterion.controls.scale.value, position)"></span>
+                                    <span [jhiTranslate]="view.levelKeys[position]"></span>
                                     <input
                                         tumAetUiInput
                                         class="col-span-full w-full sm:col-span-1"
                                         type="text"
                                         formControlName="description"
-                                        [attr.aria-label]="rubricLevelKey(criterion.controls.scale.value, position) | artemisTranslate"
+                                        [attr.aria-label]="view.levelKeys[position] | artemisTranslate"
                                         [attr.data-testid]="'rubric-level-description-' + index + '-' + position"
                                     />
                                     @if (criterion.controls.levels.at(position).controls.description.hasError('maxlength')) {

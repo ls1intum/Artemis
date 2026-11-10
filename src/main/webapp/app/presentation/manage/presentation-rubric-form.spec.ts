@@ -3,23 +3,12 @@ import { describe, expect, it } from 'vitest';
 
 import { PresentationRubricCriterion, PresentationRubricScale } from 'app/presentation/shared/entities/presentation-assessment.model';
 import { createCriterionForm, createLevelForms, createRubricForm, notBlank, readRubricForm, rubricTotalWeight } from 'app/presentation/manage/presentation-rubric-form';
-
-function criterion(id: number, name: string, weight: number, scale: PresentationRubricScale): PresentationRubricCriterion {
-    const levelCount = scale === PresentationRubricScale.THREE_POINT ? 3 : 5;
-    return {
-        id,
-        name,
-        description: `${name} description`,
-        weight,
-        scale,
-        levels: Array.from({ length: levelCount }, (_, position) => ({ id: id * 10 + position + 1, description: `${name} level ${position + 1}` })),
-    };
-}
+import { rubricCriterion } from 'test/helpers/presentation-rubric-test-helpers';
 
 const criteria: PresentationRubricCriterion[] = [
-    criterion(1, 'Content', 50, PresentationRubricScale.FIVE_POINT),
-    criterion(2, 'Delivery', 30, PresentationRubricScale.THREE_POINT),
-    criterion(3, 'Slides', 20, PresentationRubricScale.FIVE_POINT),
+    rubricCriterion('Content', 50, PresentationRubricScale.FIVE_POINT, { id: 1, texts: true }),
+    rubricCriterion('Delivery', 30, PresentationRubricScale.THREE_POINT, { id: 2, texts: true }),
+    rubricCriterion('Slides', 20, PresentationRubricScale.FIVE_POINT, { id: 3, texts: true }),
 ];
 
 describe('presentation rubric form', () => {

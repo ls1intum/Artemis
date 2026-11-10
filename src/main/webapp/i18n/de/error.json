@@ -101,7 +101,7 @@
         "rubricRequired": "Eine Präsentation mit Rubrik braucht eine Rubrik mit mindestens einem Kriterium.",
         "rubricNotAllowed": "Nur eine Präsentation mit Rubrik kann eine Rubrik haben.",
         "rubricWeightSumInvalid": "Die Gewichte der Rubrik-Kriterien müssen zusammen genau 100 % ergeben.",
-        "rubricStructureLocked": "Diese Präsentation hat bereits Instanzen. Kriterien können nicht mehr hinzugefügt oder entfernt werden, und ihre Skala ist festgelegt.",
+        "rubricStructureLocked": "Einige Präsentationen wurden bereits bewertet. Kriterien können nicht mehr hinzugefügt oder entfernt werden, und ihre Skala ist festgelegt.",
         "levelsDoNotMatchScale": "Die Anzahl der Stufen eines Kriteriums muss zu seiner Bewertungsskala passen.",
         "resultDoesNotMatchGradingMethod": "Das Ergebnis passt nicht zur Bewertungsmethode der Präsentation. Bitte lade die Seite neu und versuche es erneut.",
         "resultCannotBeRemoved": "Ein gespeichertes Ergebnis kann geändert, aber nicht entfernt werden.",

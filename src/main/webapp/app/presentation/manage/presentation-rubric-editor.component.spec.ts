@@ -6,15 +6,11 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { PresentationRubricEditorComponent } from 'app/presentation/manage/presentation-rubric-editor.component';
 import { RubricForm, createRubricForm } from 'app/presentation/manage/presentation-rubric-form';
-import { PresentationRubricCriterion, PresentationRubricScale } from 'app/presentation/shared/entities/presentation-assessment.model';
+import { PresentationRubricScale } from 'app/presentation/shared/entities/presentation-assessment.model';
 import { provideArtemisTumAetUiTranslator } from 'app/shared-ui/tum-aet-ui-integration/artemis-tumaet-ui-translator';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { typeIntoInputNumber } from 'src/test/javascript/spec/helpers/input-number-test-helpers';
-
-function criterion(name: string, weight: number, scale = PresentationRubricScale.FIVE_POINT): PresentationRubricCriterion {
-    const levelCount = scale === PresentationRubricScale.THREE_POINT ? 3 : 5;
-    return { name, weight, scale, levels: Array.from({ length: levelCount }, () => ({})) };
-}
+import { rubricCriterion } from 'test/helpers/presentation-rubric-test-helpers';
 
 describe('PresentationRubricEditorComponent', () => {
     let fixture: ComponentFixture<PresentationRubricEditorComponent>;
@@ -73,7 +69,7 @@ describe('PresentationRubricEditorComponent', () => {
         { weights: [60], expectedWeight: 40 },
         { weights: [60, 40], expectedWeight: undefined },
     ])('should give a new criterion the weight still missing to 100 percent: $weights', ({ weights, expectedWeight }) => {
-        const form = render(createRubricForm(weights.map((weight, index) => criterion(`Criterion ${index}`, weight))));
+        const form = render(createRubricForm(weights.map((weight, index) => rubricCriterion(`Criterion ${index}`, weight))));
 
         click('rubric-add-criterion');
 
@@ -84,14 +80,14 @@ describe('PresentationRubricEditorComponent', () => {
     });
 
     it('should stop adding criteria at the maximum and say why', () => {
-        render(createRubricForm(Array.from({ length: 20 }, (_, index) => criterion(`Criterion ${index}`, 5))));
+        render(createRubricForm(Array.from({ length: 20 }, (_, index) => rubricCriterion(`Criterion ${index}`, 5))));
 
         expect((query('rubric-add-criterion') as HTMLButtonElement).disabled).toBe(true);
         expect(fixture.nativeElement.querySelector('[jhiTranslate="artemisApp.presentationAssessment.rubric.maxCriteriaReached"]')).not.toBeNull();
     });
 
     it('should remove a criterion', () => {
-        const form = render(createRubricForm([criterion('Content', 60), criterion('Delivery', 40)]));
+        const form = render(createRubricForm([rubricCriterion('Content', 60), rubricCriterion('Delivery', 40)]));
 
         click('rubric-remove-criterion-0');
 
@@ -100,21 +96,15 @@ describe('PresentationRubricEditorComponent', () => {
         expect(form.dirty).toBe(true);
     });
 
-    it('should show the total weight in red until it reaches 100 percent and in green then', () => {
+    it('should show the total weight of the criteria', () => {
         const total = () => query('rubric-total-weight')!;
-        const severity = () => total().querySelector('[data-severity]')!.getAttribute('data-severity');
-        render(createRubricForm());
-        expect(severity()).toBe('primary');
-
-        render(createRubricForm([criterion('Content', 60)]));
+        render(createRubricForm([rubricCriterion('Content', 60)]));
         expect(total().textContent).toContain('60 %');
-        expect(severity()).toBe('danger');
 
         typeIntoInputNumber(fixture.nativeElement.querySelector('input#rubric-criterion-weight-0'), '100');
         fixture.detectChanges();
 
         expect(total().textContent).toContain('100 %');
-        expect(severity()).toBe('success');
     });
 
     it('should show the errors of the whole rubric only when asked to', () => {
@@ -124,12 +114,12 @@ describe('PresentationRubricEditorComponent', () => {
         render(createRubricForm(), { showErrors: true });
         expect(query('rubric-empty-error')).not.toBeNull();
 
-        render(createRubricForm([criterion('Content', 60)]), { showErrors: true });
+        render(createRubricForm([rubricCriterion('Content', 60)]), { showErrors: true });
         expect(query('rubric-weight-sum-error')).not.toBeNull();
     });
 
     it('should label the name and description of a criterion', () => {
-        render(createRubricForm([criterion('Content', 100)]));
+        render(createRubricForm([rubricCriterion('Content', 100)]));
 
         for (const field of ['name', 'description']) {
             const label = fixture.nativeElement.querySelector(`label[for="rubric-criterion-${field}-0"]`) as HTMLLabelElement;
@@ -138,7 +128,7 @@ describe('PresentationRubricEditorComponent', () => {
     });
 
     it('should explain a missing name once the field was touched', () => {
-        const form = render(createRubricForm([criterion('Content', 100)]));
+        const form = render(createRubricForm([rubricCriterion('Content', 100)]));
         const nameError = () => query('rubric-criterion-0')!.querySelector('[jhiTranslate="artemisApp.presentationAssessment.rubric.validation.nameRequired"]');
         form.at(0).controls.name.setValue('   ');
         fixture.detectChanges();
@@ -151,7 +141,7 @@ describe('PresentationRubricEditorComponent', () => {
     });
 
     it('should explain descriptions that are too long, also while the scale is collapsed', () => {
-        const form = render(createRubricForm([criterion('Content', 100)]));
+        const form = render(createRubricForm([rubricCriterion('Content', 100)]));
         form.at(0).controls.description.setValue('x'.repeat(1001));
         form.at(0).controls.levels.at(0).controls.description.setValue('x'.repeat(1001));
         fixture.detectChanges();
@@ -161,7 +151,7 @@ describe('PresentationRubricEditorComponent', () => {
     });
 
     it('should show the levels highest first and hide them again', () => {
-        render(createRubricForm([criterion('Content', 100)]));
+        render(createRubricForm([rubricCriterion('Content', 100)]));
         const levelInputs = () => Array.from(fixture.nativeElement.querySelectorAll('[data-testid^="rubric-level-description-0-"]')) as HTMLElement[];
         expect(levelInputs()).toHaveLength(0);
 
@@ -176,7 +166,7 @@ describe('PresentationRubricEditorComponent', () => {
     });
 
     it('should change the scale at once while no level has a description', () => {
-        const form = render(createRubricForm([criterion('Content', 100)]));
+        const form = render(createRubricForm([rubricCriterion('Content', 100)]));
 
         chooseScale(form, 0, PresentationRubricScale.THREE_POINT);
 
@@ -185,7 +175,7 @@ describe('PresentationRubricEditorComponent', () => {
     });
 
     it('should keep the levels when the same scale is chosen again', () => {
-        const form = render(createRubricForm([criterion('Content', 100)]));
+        const form = render(createRubricForm([rubricCriterion('Content', 100)]));
         form.at(0).controls.levels.at(4).controls.description.setValue('Outstanding');
 
         chooseScale(form, 0, PresentationRubricScale.FIVE_POINT);
@@ -195,7 +185,7 @@ describe('PresentationRubricEditorComponent', () => {
     });
 
     it('should ask before discarding level descriptions and replace the levels once confirmed', () => {
-        const form = render(createRubricForm([criterion('Content', 100)]));
+        const form = render(createRubricForm([rubricCriterion('Content', 100)]));
         form.at(0).controls.levels.at(4).controls.description.setValue('Outstanding');
 
         chooseScale(form, 0, PresentationRubricScale.THREE_POINT);
@@ -213,7 +203,7 @@ describe('PresentationRubricEditorComponent', () => {
     });
 
     it('should keep the scale and the level descriptions when the change is cancelled', () => {
-        const form = render(createRubricForm([criterion('Content', 100)]));
+        const form = render(createRubricForm([rubricCriterion('Content', 100)]));
         form.at(0).controls.levels.at(4).controls.description.setValue('Outstanding');
 
         chooseScale(form, 0, PresentationRubricScale.THREE_POINT);
@@ -236,7 +226,7 @@ describe('PresentationRubricEditorComponent', () => {
     });
 
     it('should not let a locked rubric add or remove criteria', () => {
-        const form = render(createRubricForm([criterion('Content', 100)], true), { locked: true });
+        const form = render(createRubricForm([rubricCriterion('Content', 100)], true), { locked: true });
 
         expect(query('rubric-locked-hint')).not.toBeNull();
         expect(query('rubric-add-criterion')).toBeNull();

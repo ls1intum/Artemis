@@ -1,11 +1,11 @@
 import { NgTemplateOutlet } from '@angular/common';
 import { Component, DestroyRef, computed, effect, inject, input, output, signal, untracked } from '@angular/core';
 import { outputFromObservable, takeUntilDestroyed, toObservable, toSignal } from '@angular/core/rxjs-interop';
-import { AbstractControl, FormBuilder, ReactiveFormsModule, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
+import { AbstractControl, FormBuilder, FormsModule, ReactiveFormsModule, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
 import { Observable, startWith } from 'rxjs';
 
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faArrowLeft, faArrowRight, faBan, faCheck, faSave, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faCheck, faTrash } from '@fortawesome/free-solid-svg-icons';
 import {
     TumAetUiAutoCompleteComponent,
     TumAetUiAutoCompleteSearchEvent,
@@ -13,6 +13,7 @@ import {
     TumAetUiButtonDirective,
     TumAetUiInputDirective,
     TumAetUiMessageComponent,
+    TumAetUiRadioButtonComponent,
 } from '@tumaet/ui-angular';
 
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -33,6 +34,13 @@ export interface PresentationAssessmentFormDialogResult {
 /** The steps of creating a presentation; a presentation graded by pass/fail has no configuration step. */
 type PresentationFormStep = 'details' | 'method' | 'configuration';
 
+/** A step of creating as the step indicator shows it. */
+interface PresentationFormStepState {
+    step: PresentationFormStep;
+    /** Whether the step lies before the current one. */
+    isComplete: boolean;
+}
+
 const MAX_POINTS_UPPER_BOUND = 10000;
 const MIN_POINTS = 0.001;
 /** The autocomplete writes the typed text into the control; only a selected exercise (an object) or an empty field is a valid value. */
@@ -44,6 +52,7 @@ const exerciseSelected: ValidatorFn = (control: AbstractControl): ValidationErro
     styleUrl: './presentation-assessment-form-dialog.component.scss',
     imports: [
         NgTemplateOutlet,
+        FormsModule,
         ReactiveFormsModule,
         TranslateDirective,
         ArtemisTranslatePipe,
@@ -54,6 +63,7 @@ const exerciseSelected: ValidatorFn = (control: AbstractControl): ValidationErro
         TumAetUiInputDirective,
         PointsInputComponent,
         TumAetUiMessageComponent,
+        TumAetUiRadioButtonComponent,
         DeleteButtonDirective,
         PresentationRubricEditorComponent,
     ],
@@ -76,10 +86,6 @@ export class PresentationAssessmentFormDialogComponent {
     protected readonly ActionType = ActionType;
     protected readonly PresentationGradingMethod = PresentationGradingMethod;
     protected readonly gradingMethods = Object.values(PresentationGradingMethod);
-    protected readonly faArrowLeft = faArrowLeft;
-    protected readonly faArrowRight = faArrowRight;
-    protected readonly faBan = faBan;
-    protected readonly faSave = faSave;
     protected readonly faTrash = faTrash;
     protected readonly faCheck = faCheck;
     protected readonly gradingMethodIcons = GRADING_METHOD_ICONS;
@@ -100,11 +106,13 @@ export class PresentationAssessmentFormDialogComponent {
     protected readonly isEdit = computed(() => this.presentationAssessment() !== undefined);
     protected readonly step = signal<PresentationFormStep>('details');
     protected readonly selectedGradingMethod = toSignal(this.editForm.controls.gradingMethod.valueChanges.pipe(startWith(this.editForm.controls.gradingMethod.value)));
-    protected readonly steps = computed<PresentationFormStep[]>(() =>
-        this.selectedGradingMethod() === PresentationGradingMethod.PASS_FAIL ? ['details', 'method'] : ['details', 'method', 'configuration'],
-    );
+    protected readonly steps = computed<PresentationFormStepState[]>(() => {
+        const names: PresentationFormStep[] = this.selectedGradingMethod() === PresentationGradingMethod.PASS_FAIL ? ['details', 'method'] : ['details', 'method', 'configuration'];
+        const currentIndex = names.indexOf(this.step());
+        return names.map((step, index) => ({ step, isComplete: index < currentIndex }));
+    });
     /** Whether the current step is the last one of creating, where saving replaces continuing. */
-    protected readonly isLastStep = computed(() => this.step() === this.steps().at(-1));
+    protected readonly isLastStep = computed(() => this.step() === this.steps().at(-1)?.step);
     /** Whether the rubric errors are shown, which they are only after an attempt to save. */
     protected readonly showRubricErrors = signal(false);
     /** Only the rubric editor needs the wide dialog; the dialog itself belongs to the management view. */
@@ -155,32 +163,13 @@ export class PresentationAssessmentFormDialogComponent {
         this.filteredExercises.set(query ? this.exercises().filter((exercise) => exercise.title?.toLocaleLowerCase().includes(query)) : this.exercises());
     }
 
-    /** Moves to the next step of creating once the current one is valid; otherwise shows its errors. */
+    /** Moves to the next step of creating; the continue button is only enabled while the current step is valid. */
     continue(): void {
-        const controls = this.editForm.controls;
-        if (this.step() === 'details') {
-            if (controls.title.invalid || controls.exercise.invalid || controls.description.invalid) {
-                controls.title.markAsTouched();
-                controls.exercise.markAsTouched();
-                controls.description.markAsTouched();
-                return;
-            }
-            this.step.set('method');
-        } else if (this.step() === 'method') {
-            if (controls.gradingMethod.invalid) {
-                controls.gradingMethod.markAsTouched();
-                return;
-            }
-            this.step.set('configuration');
-        }
+        this.step.update((step) => (step === 'details' ? 'method' : 'configuration'));
     }
 
     back(): void {
         this.step.update((step) => (step === 'configuration' ? 'method' : 'details'));
-    }
-
-    protected isStepComplete(candidate: PresentationFormStep): boolean {
-        return this.steps().indexOf(candidate) < this.steps().indexOf(this.step());
     }
 
     save(): void {

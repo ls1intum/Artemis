@@ -16,14 +16,10 @@ import { TranslateService } from '@ngx-translate/core';
 import { User } from 'app/account/user/user.model';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { Course } from 'app/course/shared/entities/course.model';
-import {
-    PresentationAssessmentMode,
-    PresentationGradingMethod,
-    PresentationRubricCriterion,
-    PresentationRubricScale,
-} from 'app/presentation/shared/entities/presentation-assessment.model';
+import { PresentationAssessmentMode, PresentationGradingMethod, PresentationRubricScale } from 'app/presentation/shared/entities/presentation-assessment.model';
 import { PresentationAssessmentPresenterSelectorComponent } from 'app/presentation/manage/presentation-assessment-presenter-selector.component';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { rubricCriterion } from 'test/helpers/presentation-rubric-test-helpers';
 
 describe('PresentationAssessmentInstanceFormDialogComponent', () => {
     let fixture: ComponentFixture<PresentationAssessmentInstanceFormDialogComponent>;
@@ -364,15 +360,6 @@ describe('PresentationAssessmentInstanceFormDialogComponent', () => {
         fixture.detectChanges();
     }
 
-    it('should ask for the presenters first, then the details and then the assessment', () => {
-        const presenters = query('jhi-presentation-assessment-presenter-selector')!;
-        const details = query('h2')!;
-        const assessment = query('[jhiTranslate="artemisApp.presentationAssessment.assessment"]')!;
-
-        expect(presenters.compareDocumentPosition(details) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-        expect(details.compareDocumentPosition(assessment) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-    });
-
     describe('graded by pass/fail', () => {
         beforeEach(() => setPresentation(PresentationGradingMethod.PASS_FAIL));
 
@@ -387,11 +374,6 @@ describe('PresentationAssessmentInstanceFormDialogComponent', () => {
                 kind: 'update',
                 instance: expect.objectContaining({ id: 11, passed: false, resultPoints: undefined, ratings: undefined }),
             });
-        });
-
-        it('should take a short remark next to the result', () => {
-            expect(query('input#presentation-instance-remark')).not.toBeNull();
-            expect(query('textarea#presentation-instance-remark')).toBeNull();
         });
     });
 
@@ -429,15 +411,10 @@ describe('PresentationAssessmentInstanceFormDialogComponent', () => {
         const RATINGS_URL = 'api/assessment/courses/1/presentation-assessments/42/instances/11/ratings';
         let httpMock: HttpTestingController;
 
-        function criterion(id: number, name: string, weight: number, scale: PresentationRubricScale): PresentationRubricCriterion {
-            const levelCount = scale === PresentationRubricScale.THREE_POINT ? 3 : 5;
-            return { id, name, weight, scale, levels: Array.from({ length: levelCount }, (_, position) => ({ id: id * 10 + position + 1 })) };
-        }
-
         const criteria = [
-            criterion(1, 'Content', 50, PresentationRubricScale.FIVE_POINT),
-            criterion(2, 'Delivery', 30, PresentationRubricScale.THREE_POINT),
-            criterion(3, 'Slides', 20, PresentationRubricScale.FIVE_POINT),
+            rubricCriterion('Content', 50, PresentationRubricScale.FIVE_POINT, { id: 1 }),
+            rubricCriterion('Delivery', 30, PresentationRubricScale.THREE_POINT, { id: 2 }),
+            rubricCriterion('Slides', 20, PresentationRubricScale.FIVE_POINT, { id: 3 }),
         ];
 
         beforeEach(() => {
@@ -453,7 +430,7 @@ describe('PresentationAssessmentInstanceFormDialogComponent', () => {
         async function openInstance(ratings: object[], rubricScore?: number): Promise<void> {
             fixture.componentRef.setInput('instance', { id: 11, presentationDate, rubricScore, student: { login: 'student1' } });
             setPresentation(PresentationGradingMethod.RUBRIC);
-            httpMock.expectOne({ method: 'GET', url: RUBRIC_URL }).flush({ criteria, instanceCount: 1, assessedInstanceCount: 0 });
+            httpMock.expectOne({ method: 'GET', url: RUBRIC_URL }).flush({ criteria, assessedInstanceCount: 0 });
             httpMock.expectOne({ method: 'GET', url: RATINGS_URL }).flush(ratings);
             await fixture.whenStable();
             fixture.detectChanges();
@@ -476,7 +453,7 @@ describe('PresentationAssessmentInstanceFormDialogComponent', () => {
             expect(query('tumaet-ui-progress-spinner')).not.toBeNull();
             expect(saveButton().disabled).toBe(true);
 
-            httpMock.expectOne({ method: 'GET', url: RUBRIC_URL }).flush({ criteria, instanceCount: 0, assessedInstanceCount: 0 });
+            httpMock.expectOne({ method: 'GET', url: RUBRIC_URL }).flush({ criteria, assessedInstanceCount: 0 });
             httpMock.expectNone(RATINGS_URL);
             await fixture.whenStable();
             fixture.detectChanges();
@@ -488,7 +465,7 @@ describe('PresentationAssessmentInstanceFormDialogComponent', () => {
         it('should create an instance without a result while no criterion is rated', async () => {
             fixture.componentRef.setInput('instance', undefined);
             setPresentation(PresentationGradingMethod.RUBRIC);
-            httpMock.expectOne({ method: 'GET', url: RUBRIC_URL }).flush({ criteria, instanceCount: 0, assessedInstanceCount: 0 });
+            httpMock.expectOne({ method: 'GET', url: RUBRIC_URL }).flush({ criteria, assessedInstanceCount: 0 });
             await fixture.whenStable();
             component.editForm.controls.presentationDate.setValue(presentationDate);
             fixture.detectChanges();
@@ -513,12 +490,9 @@ describe('PresentationAssessmentInstanceFormDialogComponent', () => {
             expect(query('[data-testid="rubric-grading-overall"]')!.textContent).toContain('72.5 %');
         });
 
-        it('should take the general remark below the criteria', async () => {
+        it('should ask for a general remark', async () => {
             await openInstance([]);
 
-            const remark = query('textarea#presentation-instance-remark')!;
-            expect(remark).not.toBeNull();
-            expect(query('jhi-presentation-rubric-grading')!.contains(remark)).toBe(true);
             expect(query('label[for="presentation-instance-remark"]')!.textContent).toContain('artemisApp.presentationAssessment.generalRemark');
         });
 

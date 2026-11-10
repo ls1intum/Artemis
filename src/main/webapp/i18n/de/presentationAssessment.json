@@ -38,7 +38,6 @@
                 "pointsMax": "Punkte dürfen {{ max }} nicht überschreiten.",
                 "exerciseNotSelected": "Wähle eine Aufgabe aus der Liste aus oder leere das Feld.",
                 "meetingLinkInvalid": "Bitte gib einen Link ein, der mit http:// oder https:// beginnt.",
-                "gradingMethodRequired": "Bitte wähle eine Bewertungsmethode.",
                 "resultRequired": "Ein gespeichertes Ergebnis kann geändert, aber nicht entfernt werden."
             },
             "gradingMethod": {
@@ -180,7 +179,7 @@
                 "removeCriterion": "Kriterium entfernen",
                 "maxCriteriaReached": "Eine Rubrik kann höchstens {{ max }} Kriterien haben.",
                 "totalWeight": "Gesamtgewicht",
-                "lockedHint": "Diese Präsentation hat bereits Instanzen. Kriterien können nicht mehr hinzugefügt oder entfernt werden, und ihre Skala ist festgelegt.",
+                "lockedHint": "Einige Präsentationen wurden bereits bewertet. Kriterien können nicht mehr hinzugefügt oder entfernt werden, und ihre Skala ist festgelegt.",
                 "scaleChange": {
                     "header": "Skala ändern",
                     "message": "Beim Ändern der Skala werden die Beschreibungen der Stufen dieses Kriteriums verworfen.",

@@ -198,12 +198,6 @@ $slightly-darker-body-bg: darken($body-bg, 10);
 $brighter-body-bg: lighten($body-bg, 10);
 $hover-slightly-darker-body-bg: transparentize(#fff, 0.9);
 
-// The surface of an option the user selected, such as a chosen card or rating level
-$selected-option-bg: mix($primary, $module-bg, 6%);
-
-// The surface behind an icon or a number that marks an item, such as the tile of a method card
-$accent-surface-bg: mix($primary, $module-bg, 12%);
-
 $dropdown-bg: $neutral-dark;
 $popover-bg: $neutral-dark-l-5;
 $popover-header-bg: $gray-700;

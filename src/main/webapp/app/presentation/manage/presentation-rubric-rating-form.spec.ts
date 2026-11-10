@@ -1,17 +1,13 @@
 import { describe, expect, it } from 'vitest';
 
-import { PresentationRubricCriterion, PresentationRubricScale } from 'app/presentation/shared/entities/presentation-assessment.model';
+import { PresentationRubricScale } from 'app/presentation/shared/entities/presentation-assessment.model';
 import { RatingsForm, countUnrated, createRatingsForm, readRatingsForm, rubricPreviewScore } from 'app/presentation/manage/presentation-rubric-rating-form';
-
-function criterion(id: number, weight: number, scale: PresentationRubricScale): PresentationRubricCriterion {
-    const levelCount = scale === PresentationRubricScale.THREE_POINT ? 3 : 5;
-    return { id, name: `Criterion ${id}`, weight, scale, levels: Array.from({ length: levelCount }, (_, position) => ({ id: id * 10 + position + 1 })) };
-}
+import { rubricCriterion } from 'test/helpers/presentation-rubric-test-helpers';
 
 const criteria = [
-    criterion(1, 50, PresentationRubricScale.FIVE_POINT),
-    criterion(2, 30, PresentationRubricScale.THREE_POINT),
-    criterion(3, 20, PresentationRubricScale.FIVE_POINT),
+    rubricCriterion('Criterion 1', 50, PresentationRubricScale.FIVE_POINT, { id: 1 }),
+    rubricCriterion('Criterion 2', 30, PresentationRubricScale.THREE_POINT, { id: 2 }),
+    rubricCriterion('Criterion 3', 20, PresentationRubricScale.FIVE_POINT, { id: 3 }),
 ];
 
 /** Rates every criterion at the given position, counting from 0 at the lowest level. */
@@ -83,6 +79,7 @@ describe('presentation rubric rating form', () => {
 
         // score = Σ weight · position / (level count − 1), with position 0 for the lowest level
         //       = 50 % · 3/4 + 30 % · 2/2 + 20 % · 1/4 = 72.5 %
+        // The same example pins the server calculation in PresentationGradingMethodIntegrationTest
         expect(rubricPreviewScore(criteria, form)).toBe(72.5);
     });
 });

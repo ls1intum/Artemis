@@ -4,8 +4,6 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
 import { map, tap } from 'rxjs';
 
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faBan, faSave } from '@fortawesome/free-solid-svg-icons';
 import { TumAetUiButtonComponent, TumAetUiConfirmDialogComponent, TumAetUiConfirmationService, TumAetUiProgressSpinnerComponent } from '@tumaet/ui-angular';
 
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -24,7 +22,6 @@ import { PresentationRubricEditorComponent } from 'app/presentation/manage/prese
     imports: [
         TranslateDirective,
         ArtemisTranslatePipe,
-        FaIconComponent,
         TumAetUiButtonComponent,
         TumAetUiConfirmDialogComponent,
         TumAetUiProgressSpinnerComponent,
@@ -43,9 +40,6 @@ export class PresentationRubricDialogComponent {
     readonly saved = output<PresentationRubricCriterion[]>();
     readonly cancelled = output<void>();
 
-    protected readonly faBan = faBan;
-    protected readonly faSave = faSave;
-
     private readonly rubricResource = rxResource({
         params: () => ({ courseId: this.courseId(), presentationAssessmentId: this.presentationAssessmentId() }),
         stream: ({ params }) =>
@@ -58,11 +52,11 @@ export class PresentationRubricDialogComponent {
     protected readonly showErrors = signal(false);
     protected readonly isLoading = computed(() => this.rubricResource.isLoading());
     private readonly rubric = computed(() => (this.rubricResource.hasValue() ? this.rubricResource.value() : undefined));
-    /** Instances fix the structure of the rubric; only texts and weights stay editable. */
-    protected readonly locked = computed(() => (this.rubric()?.instanceCount ?? 0) > 0);
+    /** Assessed instances fix the structure of the rubric; only texts and weights stay editable. */
+    protected readonly locked = computed(() => (this.rubric()?.assessedInstanceCount ?? 0) > 0);
     protected readonly form = computed(() => {
         const rubric = this.rubric();
-        return rubric ? createRubricForm(rubric.criteria, rubric.instanceCount > 0) : undefined;
+        return rubric ? createRubricForm(rubric.criteria, rubric.assessedInstanceCount > 0) : undefined;
     });
 
     /** Saves the rubric; if new weights change the results of assessed presentations, only after a confirmation that names how many. */

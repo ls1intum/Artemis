@@ -114,27 +114,27 @@
         </div>
     } @else {
         <ol
-            class="presentation-assessment-steps m-0! flex list-none gap-4 rounded-lg border border-(--border-color) bg-(--hover-slightly-darker-body-bg) px-5! py-4 text-(--text-body-secondary)"
+            class="presentation-assessment-steps m-0! flex list-none gap-3 rounded-lg border border-(--border-color) bg-(--hover-slightly-darker-body-bg) px-5! py-4 text-(--text-body-secondary)"
             data-testid="presentation-steps"
         >
-            @for (candidate of steps(); track candidate; let index = $index) {
+            @for (candidate of steps(); track candidate.step; let index = $index) {
                 <li
-                    class="presentation-assessment-steps__step flex min-w-0 flex-1 items-center gap-3"
-                    [class.presentation-assessment-steps__step--current]="candidate === step()"
-                    [attr.aria-current]="candidate === step() ? 'step' : null"
+                    class="presentation-assessment-steps__step flex min-w-0 flex-auto items-center gap-3 last:flex-none"
+                    [class.presentation-assessment-steps__step--current]="candidate.step === step()"
+                    [attr.aria-current]="candidate.step === step() ? 'step' : null"
                 >
                     <span
                         class="inline-flex size-7 shrink-0 items-center justify-center rounded-full border text-sm font-semibold"
                         [class]="
-                            candidate === step()
+                            candidate.step === step()
                                 ? 'border-(--primary) bg-(--primary) text-(--module-bg)'
-                                : isStepComplete(candidate)
-                                  ? 'border-transparent bg-(--accent-surface-bg) text-(--primary)'
+                                : candidate.isComplete
+                                  ? 'border-transparent bg-(--hover-slightly-darker-body-bg) text-(--primary)'
                                   : 'border-(--border-color) bg-(--module-bg)'
                         "
                         aria-hidden="true"
                     >
-                        @if (isStepComplete(candidate)) {
+                        @if (candidate.isComplete) {
                             <fa-icon [icon]="faCheck" />
                         } @else {
                             {{ index + 1 }}
@@ -142,11 +142,11 @@
                     </span>
                     <span class="presentation-assessment-steps__text flex min-w-0 flex-col">
                         <span
-                            class="text-[0.6875rem] tracking-[0.04em] uppercase"
+                            class="text-xs tracking-wider uppercase"
                             jhiTranslate="artemisApp.presentationAssessment.step.number"
                             [translateValues]="{ number: index + 1 }"
                         ></span>
-                        <strong class="sm:whitespace-nowrap" [jhiTranslate]="'artemisApp.presentationAssessment.step.' + candidate"></strong>
+                        <strong class="sm:whitespace-nowrap" [jhiTranslate]="'artemisApp.presentationAssessment.step.' + candidate.step"></strong>
                     </span>
                 </li>
             }
@@ -167,17 +167,23 @@
                     @for (method of gradingMethods; track method) {
                         @let selected = selectedGradingMethod() === method;
                         <label
-                            class="relative flex! cursor-pointer flex-col gap-2 rounded-lg border px-3.5 py-3.5 focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-(--primary)"
-                            [class]="selected ? 'border-(--primary) bg-(--selected-option-bg) shadow-[inset_0_0_0_1px_var(--primary)]' : 'border-(--border-color) bg-(--module-bg)'"
+                            class="relative flex! cursor-pointer flex-col gap-2 rounded-lg border px-3.5 py-3.5"
+                            [class]="selected ? 'border-(--primary) bg-(--sidebar-card-selected-bg)' : 'border-(--border-color) bg-(--module-bg)'"
+                            [for]="'grading-method-' + method"
                             [attr.data-testid]="'grading-method-' + method"
                         >
-                            <input class="sr-only" type="radio" formControlName="gradingMethod" [value]="method" />
-                            <span
-                                class="absolute top-3.5 right-3.5 size-4.5 rounded-full"
-                                [class]="selected ? 'border-[5px] border-(--primary)' : 'border border-(--border-color)'"
-                                aria-hidden="true"
-                            ></span>
-                            <span class="mb-2 inline-flex size-10.5 items-center justify-center rounded-lg bg-(--accent-surface-bg) text-(--primary)" aria-hidden="true">
+                            <span class="absolute top-3.5 right-3.5">
+                                <tumaet-ui-radio-button
+                                    [inputId]="'grading-method-' + method"
+                                    name="presentation-grading-method"
+                                    [value]="method"
+                                    [ngModel]="editForm.controls.gradingMethod.value"
+                                    [ngModelOptions]="{ standalone: true }"
+                                    [disabled]="editForm.controls.gradingMethod.disabled"
+                                    (selected)="editForm.controls.gradingMethod.setValue(method)"
+                                />
+                            </span>
+                            <span class="mb-2 inline-flex size-10 items-center justify-center rounded-lg bg-(--hover-slightly-darker-body-bg) text-(--primary)" aria-hidden="true">
                                 <fa-icon [icon]="gradingMethodIcons[method]" />
                             </span>
                             <strong>{{ 'artemisApp.presentationAssessment.gradingMethod.' + method | artemisTranslate }}</strong>
@@ -187,24 +193,17 @@
                         </label>
                     }
                 </fieldset>
-                @if (editForm.controls.gradingMethod.invalid && editForm.controls.gradingMethod.touched) {
-                    <tumaet-ui-message severity="error" data-testid="presentation-grading-method-error">
-                        <span jhiTranslate="artemisApp.presentationAssessment.validation.gradingMethodRequired"></span>
-                    </tumaet-ui-message>
-                }
             }
             @case ('configuration') {
                 @if (selectedGradingMethod() === PresentationGradingMethod.RUBRIC) {
                     <jhi-presentation-rubric-editor [form]="rubricForm" [showErrors]="showRubricErrors()" />
                 } @else {
-                    <section class="mx-auto flex w-full max-w-140 flex-col gap-4 text-center">
+                    <section class="flex flex-col gap-4">
                         <div class="flex flex-col gap-1">
                             <h3 class="m-0! text-lg! font-semibold!">{{ 'artemisApp.presentationAssessment.scoreConfiguration.title' | artemisTranslate }}</h3>
                             <p class="m-0! text-sm text-(--text-body-secondary)" jhiTranslate="artemisApp.presentationAssessment.scoreConfiguration.hint"></p>
                         </div>
-                        <div class="flex justify-center text-start">
-                            <ng-container [ngTemplateOutlet]="maxPointsField" />
-                        </div>
+                        <ng-container [ngTemplateOutlet]="maxPointsField" />
                     </section>
                 }
             }
@@ -212,7 +211,7 @@
         }
     }
 
-    <div class="flex flex-col-reverse gap-2 border-t border-(--border-color) pt-4 sm:flex-row">
+    <div class="flex flex-col-reverse gap-2 sm:flex-row">
         @if (isEdit() && canDelete()) {
             <button
                 tumAetUiButton
@@ -235,18 +234,15 @@
         }
         @if (!isEdit() && step() !== 'details') {
             <tumaet-ui-button severity="secondary" variant="text" type="button" data-testid="back-presentation-button" [disabled]="isSaving()" (clicked)="back()">
-                <fa-icon [icon]="faArrowLeft" />
                 <span jhiTranslate="entity.action.back"></span>
             </tumaet-ui-button>
         }
         <div class="flex gap-2 sm:ms-auto">
             <tumaet-ui-button severity="secondary" type="button" (clicked)="cancel()">
-                <fa-icon [icon]="faBan" />
                 <span jhiTranslate="entity.action.cancel"></span>
             </tumaet-ui-button>
             @if (isEdit() || isLastStep()) {
                 <tumaet-ui-button type="submit" data-testid="save-presentation-button" [disabled]="isSaving() || editForm.invalid">
-                    <fa-icon [icon]="faSave" />
                     <span jhiTranslate="entity.action.save"></span>
                 </tumaet-ui-button>
             } @else {
@@ -260,7 +256,6 @@
                     "
                 >
                     <span jhiTranslate="entity.action.continue"></span>
-                    <fa-icon [icon]="faArrowRight" />
                 </tumaet-ui-button>
             }
         </div>

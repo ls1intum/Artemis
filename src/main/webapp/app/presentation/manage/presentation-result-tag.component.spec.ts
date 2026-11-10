@@ -24,25 +24,19 @@ describe('PresentationResultTagComponent', () => {
         return fixture.nativeElement.querySelector('[data-testid="instance-result"]');
     }
 
-    function severity(tag: HTMLElement): string | null {
-        return tag.querySelector('[data-severity]')?.getAttribute('data-severity') ?? null;
-    }
-
     it.each([
-        { passed: true, key: 'passed', expectedSeverity: 'success' },
-        { passed: false, key: 'failed', expectedSeverity: 'danger' },
-    ])('should show a pass/fail result as $key', ({ passed, key, expectedSeverity }) => {
+        { passed: true, key: 'passed' },
+        { passed: false, key: 'failed' },
+    ])('should show a pass/fail result as $key', ({ passed, key }) => {
         const tag = render({ gradingMethod: PresentationGradingMethod.PASS_FAIL }, { passed });
 
         expect(tag.textContent).toContain(`artemisApp.presentationAssessment.result.${key}`);
-        expect(severity(tag)).toBe(expectedSeverity);
     });
 
     it('should show a rubric result in percent', () => {
         const tag = render({ gradingMethod: PresentationGradingMethod.RUBRIC }, { rubricScore: 72.5 });
 
         expect(tag.textContent?.trim()).toBe('72.5 %');
-        expect(severity(tag)).toBe('info');
     });
 
     it.each([PresentationGradingMethod.SCORE, undefined])('should show the points against the maximum for the method %s', (gradingMethod) => {

@@ -70,7 +70,6 @@ export interface PresentationRubricCriterion {
 
 export interface PresentationRubric {
     criteria: PresentationRubricCriterion[];
-    instanceCount: number;
     assessedInstanceCount: number;
 }
 

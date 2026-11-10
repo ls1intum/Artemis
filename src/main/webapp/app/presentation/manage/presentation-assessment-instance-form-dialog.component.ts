@@ -1,9 +1,9 @@
 import { NgTemplateOutlet } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, computed, effect, inject, input, output, signal } from '@angular/core';
-import { rxResource, takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
-import { AbstractControl, FormBuilder, ReactiveFormsModule, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
-import { forkJoin, map, merge, of, pairwise, tap } from 'rxjs';
+import { rxResource, takeUntilDestroyed, toObservable, toSignal } from '@angular/core/rxjs-interop';
+import { AbstractControl, FormBuilder, FormsModule, ReactiveFormsModule, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
+import { forkJoin, map, merge, of, pairwise, startWith, switchMap, tap } from 'rxjs';
 import dayjs from 'dayjs/esm';
 
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -14,6 +14,7 @@ import {
     TumAetUiInputDirective,
     TumAetUiMessageComponent,
     TumAetUiProgressSpinnerComponent,
+    TumAetUiRadioButtonComponent,
     TumAetUiSelectComponent,
 } from '@tumaet/ui-angular';
 
@@ -37,7 +38,7 @@ import { PresentationAssessmentPresenterSelectorComponent } from 'app/presentati
 import { PointsInputComponent } from 'app/shared-ui/tum-aet-ui-integration/points-input/points-input.component';
 import { PresentationAssessmentService } from 'app/presentation/manage/presentation-assessment.service';
 import { PresentationRubricGradingComponent } from 'app/presentation/manage/presentation-rubric-grading.component';
-import { countUnrated, createRatingsForm, readRatingsForm } from 'app/presentation/manage/presentation-rubric-rating-form';
+import { RatingsForm, countUnrated, createRatingsForm, readRatingsForm } from 'app/presentation/manage/presentation-rubric-rating-form';
 import { isSet } from 'app/presentation/shared/presentation.util';
 
 const resultPointsDoNotExceedMaxPoints: ValidatorFn = (control: AbstractControl): ValidationErrors | null => {
@@ -54,6 +55,10 @@ const RESULT_POINTS_UPPER_BOUND = 10000;
 const MIN_PRESENTATION_DATE = dayjs('1970-01-01T00:00:00');
 const minimumPresentationDate: ValidatorFn = (control: AbstractControl): ValidationErrors | null =>
     control.value && dayjs(control.value).isBefore(MIN_PRESENTATION_DATE) ? { minDate: true } : null;
+/** The criteria still to rate while a rubric is rated incompletely, or 0 while it is rated completely or, being optional, not at all. */
+function remainingCriteriaOf(ratingsForm: RatingsForm): number {
+    return ratingsForm.hasError('ratingsIncomplete') || ratingsForm.hasError('ratingsRequired') ? countUnrated(ratingsForm) : 0;
+}
 const OUTCOMES = [
     { key: 'passed', value: true, icon: faCheck },
     { key: 'failed', value: false, icon: faXmark },
@@ -64,9 +69,9 @@ export type PresentationAssessmentInstanceFormResult =
 @Component({
     selector: 'jhi-presentation-assessment-instance-form-dialog',
     templateUrl: './presentation-assessment-instance-form-dialog.component.html',
-    styleUrl: './presentation-assessment-instance-form-dialog.component.scss',
     imports: [
         NgTemplateOutlet,
+        FormsModule,
         ReactiveFormsModule,
         FaIconComponent,
         TranslateDirective,
@@ -78,6 +83,7 @@ export type PresentationAssessmentInstanceFormResult =
         PointsInputComponent,
         TumAetUiMessageComponent,
         TumAetUiProgressSpinnerComponent,
+        TumAetUiRadioButtonComponent,
         TumAetUiSelectComponent,
         PresentationRubricGradingComponent,
     ],
@@ -157,6 +163,20 @@ export class PresentationAssessmentInstanceFormDialogComponent {
     });
     /** Saving without the loaded rubric would drop the ratings of the instance. */
     protected readonly rubricUnavailable = computed(() => this.gradingMethod() === PresentationGradingMethod.RUBRIC && !this.ratingsForm());
+    /** The number of criteria still to rate while the rubric is rated incompletely, updated with every change of the ratings. */
+    protected readonly remainingCriteria = toSignal(
+        toObservable(this.ratingsForm).pipe(
+            switchMap((ratingsForm) =>
+                ratingsForm
+                    ? ratingsForm.events.pipe(
+                          startWith(undefined),
+                          map(() => remainingCriteriaOf(ratingsForm)),
+                      )
+                    : of(0),
+            ),
+        ),
+        { initialValue: 0 },
+    );
 
     editForm = this.formBuilder.group(
         {
@@ -289,11 +309,5 @@ export class PresentationAssessmentInstanceFormDialogComponent {
 
     cancel(): void {
         this.cancelled.emit();
-    }
-
-    /** The criteria still to rate once rating has begun, or a saved rubric result requires all of them. */
-    protected remainingCriteria(): number {
-        const ratingsForm = this.ratingsForm();
-        return ratingsForm && (ratingsForm.hasError('ratingsIncomplete') || ratingsForm.hasError('ratingsRequired')) ? countUnrated(ratingsForm) : 0;
     }
 }

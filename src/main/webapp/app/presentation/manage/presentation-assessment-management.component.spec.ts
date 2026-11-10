@@ -6,7 +6,7 @@ import { HttpErrorResponse, HttpHeaders, HttpResponse } from '@angular/common/ht
 import { BehaviorSubject, Subject, of, throwError } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { MockComponent } from 'ng-mocks';
-import { TumAetUiDialogComponent, TumAetUiDialogService } from '@tumaet/ui-angular';
+import { TumAetUiDialogService } from '@tumaet/ui-angular';
 import { MockInstance, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { PresentationAssessmentManagementComponent } from 'app/presentation/manage/presentation-assessment-management.component';
@@ -1495,20 +1495,18 @@ describe('PresentationAssessmentManagementComponent', () => {
             fixture.detectChanges();
         }
 
-        it('should offer the rubric before editing a presentation graded by rubric', () => {
+        it('should offer the rubric of a presentation graded by rubric', () => {
             openPresentation(rubricPresentation);
 
-            const rubricButton = query('[data-testid="edit-rubric-button"]')!;
-            expect(rubricButton.compareDocumentPosition(query('[data-testid="edit-presentation-button"]')!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+            expect(query('[data-testid="edit-rubric-button"]')).not.toBeNull();
             expect(query('[data-testid="presentation-grading-method-tag"]')).toBeNull();
         });
 
-        it.each([PresentationGradingMethod.PASS_FAIL, PresentationGradingMethod.SCORE])('should show the grading method %s as a badge with its icon', (gradingMethod) => {
+        it.each([PresentationGradingMethod.PASS_FAIL, PresentationGradingMethod.SCORE])('should show the grading method %s as a badge', (gradingMethod) => {
             openPresentation({ ...presentationAssessment, gradingMethod });
 
             const badge = query('[data-testid="presentation-grading-method-tag"]')!;
             expect(badge.textContent).toContain(`artemisApp.presentationAssessment.gradingMethod.${gradingMethod}`);
-            expect(badge.querySelector('fa-icon')).not.toBeNull();
             expect(query('[data-testid="edit-rubric-button"]')).toBeNull();
         });
 
@@ -1586,19 +1584,6 @@ describe('PresentationAssessmentManagementComponent', () => {
             fixture.detectChanges();
 
             expect(component.rubricDialogVisible()).toBe(false);
-        });
-
-        it('should widen the presentation dialog while its rubric is configured', () => {
-            component.startCreate();
-            fixture.detectChanges();
-            const presentationDialogFrame = () => fixture.debugElement.queryAll(By.directive(TumAetUiDialogComponent))[0].componentInstance as TumAetUiDialogComponent;
-            expect(presentationDialogFrame().size()).toBe('medium');
-
-            // wideChanged comes from a signal and has no emit(), so the event goes through the template binding
-            fixture.debugElement.query(By.directive(PresentationAssessmentFormDialogComponent)).triggerEventHandler('wideChanged', true);
-            fixture.detectChanges();
-
-            expect(presentationDialogFrame().size()).toBe('large');
         });
 
         it('should give the grading dialog the course, whose settings round rubric results', () => {

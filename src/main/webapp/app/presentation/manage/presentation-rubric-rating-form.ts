@@ -54,7 +54,7 @@ export function readRatingsForm(criteria: PresentationRubricCriterion[], form: R
 }
 
 /**
- * The rubric score in percent as the server calculates it, unrounded, or undefined while a criterion is unrated:
+ * The rubric score in percent as the server calculates it in PresentationRubricService.calculateScore, unrounded, or undefined while a criterion is unrated:
  * the lowest level counts nothing and the highest the full weight of its criterion.
  */
 export function rubricPreviewScore(criteria: PresentationRubricCriterion[], form: RatingsForm): number | undefined {

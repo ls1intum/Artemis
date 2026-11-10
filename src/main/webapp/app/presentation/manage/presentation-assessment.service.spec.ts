@@ -247,7 +247,6 @@ describe('PresentationAssessmentService', () => {
     it('should fetch the rubric of a presentation', () => {
         const rubric = {
             criteria: [{ id: 3, name: 'Content', weight: 100, scale: PresentationRubricScale.THREE_POINT, levels: [{ id: 31 }, { id: 32 }, { id: 33 }] }],
-            instanceCount: 2,
             assessedInstanceCount: 1,
         };
 

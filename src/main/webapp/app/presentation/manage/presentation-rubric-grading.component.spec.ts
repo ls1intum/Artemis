@@ -5,26 +5,15 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { Course } from 'app/course/shared/entities/course.model';
 import { PresentationRubricGradingComponent } from 'app/presentation/manage/presentation-rubric-grading.component';
 import { RatingsForm, createRatingsForm } from 'app/presentation/manage/presentation-rubric-rating-form';
-import { PresentationRubricCriterion, PresentationRubricScale } from 'app/presentation/shared/entities/presentation-assessment.model';
+import { PresentationRubricScale } from 'app/presentation/shared/entities/presentation-assessment.model';
 import { provideArtemisTumAetUiTranslator } from 'app/shared-ui/tum-aet-ui-integration/artemis-tumaet-ui-translator';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-
-function criterion(id: number, name: string, weight: number, scale: PresentationRubricScale): PresentationRubricCriterion {
-    const levelCount = scale === PresentationRubricScale.THREE_POINT ? 3 : 5;
-    return {
-        id,
-        name,
-        description: `${name} description`,
-        weight,
-        scale,
-        levels: Array.from({ length: levelCount }, (_, position) => ({ id: id * 10 + position + 1, description: `${name} level ${position + 1}` })),
-    };
-}
+import { rubricCriterion } from 'test/helpers/presentation-rubric-test-helpers';
 
 const criteria = [
-    criterion(1, 'Content', 50, PresentationRubricScale.FIVE_POINT),
-    criterion(2, 'Delivery', 30, PresentationRubricScale.THREE_POINT),
-    criterion(3, 'Slides', 20, PresentationRubricScale.FIVE_POINT),
+    rubricCriterion('Content', 50, PresentationRubricScale.FIVE_POINT, { id: 1, texts: true }),
+    rubricCriterion('Delivery', 30, PresentationRubricScale.THREE_POINT, { id: 2, texts: true }),
+    rubricCriterion('Slides', 20, PresentationRubricScale.FIVE_POINT, { id: 3, texts: true }),
 ];
 
 describe('PresentationRubricGradingComponent', () => {

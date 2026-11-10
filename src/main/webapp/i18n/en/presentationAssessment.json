@@ -38,7 +38,6 @@
                 "pointsMax": "Points must not exceed {{ max }}.",
                 "exerciseNotSelected": "Select an exercise from the list or clear the field.",
                 "meetingLinkInvalid": "Please enter a link that starts with http:// or https://.",
-                "gradingMethodRequired": "Please choose a grading method.",
                 "resultRequired": "A saved result can be changed but not removed."
             },
             "gradingMethod": {
@@ -180,7 +179,7 @@
                 "removeCriterion": "Remove criterion",
                 "maxCriteriaReached": "A rubric can have at most {{ max }} criteria.",
                 "totalWeight": "Total weight",
-                "lockedHint": "This presentation already has instances. Criteria can no longer be added or removed, and their scale is fixed.",
+                "lockedHint": "Some presentations have already been assessed. Criteria can no longer be added or removed, and their scale is fixed.",
                 "scaleChange": {
                     "header": "Change scale",
                     "message": "Changing the scale discards the level descriptions of this criterion.",

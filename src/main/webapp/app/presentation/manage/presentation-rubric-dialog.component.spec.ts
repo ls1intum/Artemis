@@ -14,13 +14,12 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 
 const RUBRIC_URL = 'api/assessment/courses/1/presentation-assessments/42/rubric';
 
-function rubric(instanceCount: number, assessedInstanceCount: number): PresentationRubric {
+function rubric(assessedInstanceCount: number): PresentationRubric {
     return {
         criteria: [
             { id: 1, name: 'Content', weight: 60, scale: PresentationRubricScale.THREE_POINT, levels: [{ id: 11 }, { id: 12 }, { id: 13 }] },
             { id: 2, name: 'Delivery', weight: 40, scale: PresentationRubricScale.THREE_POINT, levels: [{ id: 21 }, { id: 22 }, { id: 23 }] },
         ],
-        instanceCount,
         assessedInstanceCount,
     };
 }
@@ -73,7 +72,7 @@ describe('PresentationRubricDialogComponent', () => {
         fixture.detectChanges();
         expect(fixture.nativeElement.querySelector('tumaet-ui-progress-spinner')).not.toBeNull();
 
-        httpMock.expectOne({ method: 'GET', url: RUBRIC_URL }).flush(rubric(0, 0));
+        httpMock.expectOne({ method: 'GET', url: RUBRIC_URL }).flush(rubric(0));
         await fixture.whenStable();
         fixture.detectChanges();
 
@@ -82,15 +81,15 @@ describe('PresentationRubricDialogComponent', () => {
         expect(query('rubric-locked-hint')).toBeNull();
     });
 
-    it('should lock the structure of a rubric whose presentation has instances', async () => {
-        const form = await load(rubric(1, 0));
+    it('should lock the structure of a rubric whose presentation has assessed instances', async () => {
+        const form = await load(rubric(1));
 
         expect(query('rubric-locked-hint')).not.toBeNull();
         expect(form.at(0).controls.scale.disabled).toBe(true);
     });
 
     it('should show the errors and not save an invalid rubric', async () => {
-        const form = await load(rubric(0, 0));
+        const form = await load(rubric(0));
         form.at(0).controls.weight.setValue(50);
 
         click('save-rubric-button');
@@ -100,7 +99,7 @@ describe('PresentationRubricDialogComponent', () => {
     });
 
     it('should save at once while no instance is assessed', async () => {
-        const form = await load(rubric(2, 0));
+        const form = await load(rubric(0));
         form.at(0).controls.weight.setValue(70);
         form.at(1).controls.weight.setValue(30);
 
@@ -114,7 +113,7 @@ describe('PresentationRubricDialogComponent', () => {
     });
 
     it('should save at once when only texts change', async () => {
-        const form = await load(rubric(2, 2));
+        const form = await load(rubric(2));
         form.at(0).controls.name.setValue('Structure');
 
         click('save-rubric-button');
@@ -124,7 +123,7 @@ describe('PresentationRubricDialogComponent', () => {
     });
 
     it('should ask before new weights recalculate assessed results and save once confirmed', async () => {
-        const form = await load(rubric(3, 2));
+        const form = await load(rubric(2));
         form.at(0).controls.weight.setValue(70);
         form.at(1).controls.weight.setValue(30);
 
@@ -137,7 +136,7 @@ describe('PresentationRubricDialogComponent', () => {
     });
 
     it('should not save when the recalculation is cancelled', async () => {
-        const form = await load(rubric(3, 2));
+        const form = await load(rubric(2));
         form.at(0).controls.weight.setValue(70);
         form.at(1).controls.weight.setValue(30);
 
@@ -160,7 +159,7 @@ describe('PresentationRubricDialogComponent', () => {
     });
 
     it('should not save while saving and close when cancelled', async () => {
-        await load(rubric(0, 0));
+        await load(rubric(0));
         fixture.componentRef.setInput('isSaving', true);
         fixture.detectChanges();
 
