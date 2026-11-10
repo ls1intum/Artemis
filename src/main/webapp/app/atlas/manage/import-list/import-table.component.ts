@@ -7,7 +7,7 @@ import { AlertService } from 'app/foundation/service/alert.service';
 import { onError } from 'app/foundation/util/global.utils';
 import { faSort, faSortDown, faSortUp, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { BaseApiHttpService } from 'app/foundation/service/base-api-http.service';
-import { NgbTypeaheadModule } from '@ng-bootstrap/ng-bootstrap';
+import { SearchHighlightComponent } from 'app/admin/shared/search-highlight.component';
 import { PaginatorModule, PaginatorState } from 'primeng/paginator';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -28,7 +28,7 @@ export type Column<T extends BaseEntity> = {
 
 @Component({
     selector: 'jhi-import-table',
-    imports: [PaginatorModule, ArtemisTranslatePipe, TranslateDirective, FontAwesomeModule, FormsModule, NgbTypeaheadModule, CommonModule],
+    imports: [PaginatorModule, ArtemisTranslatePipe, TranslateDirective, FontAwesomeModule, FormsModule, SearchHighlightComponent, CommonModule],
     templateUrl: './import-table.component.html',
     styleUrl: './import-table.component.scss',
 })
