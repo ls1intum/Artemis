@@ -233,27 +233,27 @@ describe('SystemNotificationManagementUpdateComponent', () => {
             fixture.detectChanges();
         });
 
-        it('should have no maxlength error when title is exactly 50 characters', () => {
+        it('should have no maxlength error when title is exactly 255 characters', () => {
             const control = component.form.get('title');
-            control?.setValue('a'.repeat(50));
+            control?.setValue('a'.repeat(255));
             fixture.detectChanges();
 
             expect(control?.hasError('maxlength')).toBe(false);
             expect(fixture.nativeElement.querySelector('#title-maxlength-error')).toBeNull();
         });
 
-        it('should have a maxlength error when title exceeds 50 characters', () => {
+        it('should have a maxlength error when title exceeds 255 characters', () => {
             const control = component.form.get('title');
-            control?.setValue('a'.repeat(51));
+            control?.setValue('a'.repeat(256));
             fixture.detectChanges();
 
             expect(control?.hasError('maxlength')).toBe(true);
             expect(fixture.nativeElement.querySelector('#title-maxlength-error')).not.toBeNull();
         });
 
-        it('should disable the save button when title exceeds 50 characters', () => {
+        it('should disable the save button when title exceeds 255 characters', () => {
             const control = component.form.get('title');
-            control?.setValue('a'.repeat(51));
+            control?.setValue('a'.repeat(256));
             fixture.detectChanges();
 
             const saveButton = fixture.nativeElement.querySelector('#saveButton') as HTMLButtonElement;
@@ -262,16 +262,16 @@ describe('SystemNotificationManagementUpdateComponent', () => {
 
         it('should show the maxlength error even on an untouched title field', () => {
             const control = component.form.get('title');
-            control?.setValue('a'.repeat(51));
+            control?.setValue('a'.repeat(256));
             fixture.detectChanges();
 
             expect(fixture.nativeElement.querySelector('#title-maxlength-error')).not.toBeNull();
             expect(fixture.nativeElement.querySelector('#title')?.getAttribute('aria-describedby')).toBe('title-maxlength-error');
         });
 
-        it('should set aria-invalid and aria-describedby when title exceeds 50 characters', () => {
+        it('should set aria-invalid and aria-describedby when title exceeds 255 characters', () => {
             const control = component.form.get('title');
-            control?.setValue('a'.repeat(51));
+            control?.setValue('a'.repeat(256));
             fixture.detectChanges();
 
             const input = fixture.nativeElement.querySelector('#title') as HTMLInputElement;

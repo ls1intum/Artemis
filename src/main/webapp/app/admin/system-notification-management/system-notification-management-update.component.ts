@@ -81,7 +81,7 @@ export class SystemNotificationManagementUpdateComponent implements OnInit {
     readonly form = new FormGroup<SystemNotificationForm>(
         {
             id: new FormControl<number | undefined>(undefined),
-            title: new FormControl<string | undefined>(undefined, [Validators.required, Validators.minLength(1), Validators.maxLength(50)]),
+            title: new FormControl<string | undefined>(undefined, [Validators.required, Validators.minLength(1), Validators.maxLength(255)]),
             text: new FormControl<string | undefined>(undefined, [Validators.maxLength(2000)]),
             type: new FormControl<SystemNotificationType | undefined>(undefined, [Validators.required]),
             notificationDate: new FormControl<dayjs.Dayjs | undefined>(undefined, [Validators.required]),
