@@ -59,9 +59,21 @@ public class NodeRegistryService {
 
     private final String instanceId;
 
-    public NodeRegistryService(Optional<DistributedDataProvider> distributedDataProvider, @Value("${eureka.instance.instanceId:}") String instanceId) {
+    /**
+     * The instance id is a human-readable node name. Hazelcast deployments set it through {@code eureka.instance.instanceId}, which they need for discovery anyway;
+     * Redis deployments have no Eureka, so it falls back to {@code spring.data.redis.client-name}, which is unique per node there. The Eureka key can go together
+     * with Hazelcast in Artemis 11.
+     *
+     * An empty Eureka value counts as absent, because a placeholder default only applies to a missing property.
+     *
+     * @param distributedDataProvider the distributed data provider, if any
+     * @param eurekaInstanceId        the Eureka instance id, possibly empty
+     * @param redisClientName         the Redis client name, used if the Eureka instance id is empty
+     */
+    public NodeRegistryService(Optional<DistributedDataProvider> distributedDataProvider, @Value("${eureka.instance.instanceId:}") String eurekaInstanceId,
+            @Value("${spring.data.redis.client-name:}") String redisClientName) {
         this.distributedDataProvider = distributedDataProvider;
-        this.instanceId = instanceId;
+        this.instanceId = eurekaInstanceId.isEmpty() ? redisClientName : eurekaInstanceId;
     }
 
     /**
