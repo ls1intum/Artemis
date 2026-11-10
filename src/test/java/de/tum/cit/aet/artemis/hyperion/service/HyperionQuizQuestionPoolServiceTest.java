@@ -35,6 +35,7 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
+import de.tum.cit.aet.artemis.core.exception.ServiceUnavailableAlertException;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.hyperion.domain.HyperionCourseSettings;
@@ -98,6 +99,9 @@ class HyperionQuizQuestionPoolServiceTest {
     @Mock
     private CourseTestRepository courseRepository;
 
+    @Mock
+    private HyperionQuizQuestionPoolModelService modelService;
+
     private HyperionQuizQuestionPoolService service;
 
     private AutoCloseable mocks;
@@ -107,8 +111,9 @@ class HyperionQuizQuestionPoolServiceTest {
     @BeforeEach
     void setup() {
         mocks = MockitoAnnotations.openMocks(this);
+        when(modelService.isConfigured()).thenReturn(true);
         service = new HyperionQuizQuestionPoolService(buildService, taskService, itemRepository, settingsService, Optional.of(courseCompetencyApi), Optional.of(lectureUnitApi),
-                lectureUnitRepository, buildRepository, materialService, courseRepository);
+                lectureUnitRepository, buildRepository, materialService, courseRepository, modelService);
         course = new Course();
         course.setId(5L);
         lenient().when(buildRepository.findAllByCourseIdNewestFirst(eq(5L), any())).thenReturn(List.of());
@@ -131,6 +136,15 @@ class HyperionQuizQuestionPoolServiceTest {
 
         assertThat(result).isEqualTo(new QuizQuestionPoolBuildStartDTO(true, 12));
         verify(taskService).runBuildAsync(5L, 7L, 3L, "lease");
+    }
+
+    @Test
+    void startBuild_isRefusedWithoutAConfiguredModel() {
+        when(modelService.isConfigured()).thenReturn(false);
+
+        assertThatThrownBy(() -> service.startBuild(course, 7L)).isInstanceOf(ServiceUnavailableAlertException.class).hasMessageContaining("no local model configured");
+        verify(buildService, never()).tryStart(anyLong());
+        verify(buildService, never()).enqueue(course);
     }
 
     @Test
@@ -181,7 +195,7 @@ class HyperionQuizQuestionPoolServiceTest {
 
         QuizQuestionPoolProgressDTO progress = service.getProgress(5L);
 
-        assertThat(progress).isEqualTo(new QuizQuestionPoolProgressDTO(true, 17, 4, 2, 10, 8, 2, 1, null, null));
+        assertThat(progress).isEqualTo(new QuizQuestionPoolProgressDTO(true, 17, 4, 2, 10, 8, 2, 1, null, null, true));
     }
 
     @Test

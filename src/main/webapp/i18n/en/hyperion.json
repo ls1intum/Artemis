@@ -39,7 +39,8 @@
                     "lastBuildFinished": "finished {{ time }}.",
                     "lastBuildRunning": "running since {{ time }}.",
                     "lastBuildCounts": "{{ enqueued }} added, {{ generated }} generated, {{ accepted }} accepted, {{ rejected }} rejected, {{ failed }} failed.",
-                    "lastBuildFailure": "Stopped early: {{ failure }}"
+                    "lastBuildFailure": "Stopped early: {{ failure }}",
+                    "modelMissing": "Smart Quizzes needs a self-hosted language model, which is not configured correctly on this server. Ask your Artemis administrator to set it up; until then no questions can be generated."
                 },
                 "settings": {
                     "title": "Settings",

@@ -26,7 +26,6 @@ import java.util.stream.Collectors;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.prompt.ChatOptions;
 import org.springframework.beans.factory.annotation.Value;
@@ -44,7 +43,6 @@ import de.tum.cit.aet.artemis.atlas.api.CourseCompetencyApi;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
 import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.core.exception.ApiConditionNotPresentException;
-import de.tum.cit.aet.artemis.core.exception.InternalServerErrorAlertException;
 import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
 import de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap;
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -82,8 +80,8 @@ import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
  * unit whose material changed and flagging the approved ones, then tops every cell up to its target; it is idempotent. {@link #build}
  * works the pool to completion in a loop of conditional claims, so a build can be resumed after an interruption and several nodes
  * can share one pool. One build per course runs at a time across the cluster, guarded by an expiring lease that the running build
- * refreshes after every unit of work. The generator model configured under {@code artemis.hyperion.quiz-pool.generator-model} is
- * bound onto every generation call.
+ * refreshes after every unit of work. Every generation call goes to the pool's own endpoint with its generator model, both provided by
+ * {@link HyperionQuizQuestionPoolModelService}.
  */
 @Service
 @Lazy
@@ -145,8 +143,7 @@ public class HyperionQuizQuestionPoolBuildService {
 
     static final String STOPPED_AT_DEADLINE = "The overnight window ended; the next scheduled build continues";
 
-    @Nullable
-    private final ChatClient chatClient;
+    private final HyperionQuizQuestionPoolModelService modelService;
 
     private final HyperionPromptTemplateService templateService;
 
@@ -178,21 +175,18 @@ public class HyperionQuizQuestionPoolBuildService {
 
     private final Duration leaseDuration;
 
-    private final String generatorModel;
-
     private final int generationBatchSize;
 
     private final Duration staleClaimAge;
 
-    public HyperionQuizQuestionPoolBuildService(@Nullable ChatClient chatClient, HyperionPromptTemplateService templateService,
+    public HyperionQuizQuestionPoolBuildService(HyperionQuizQuestionPoolModelService modelService, HyperionPromptTemplateService templateService,
             HyperionQuizQuestionPoolMaterialService materialService, Optional<CourseCompetencyApi> courseCompetencyApi, HyperionQuizQuestionFilterService filterService,
             LLMTokenUsageService llmTokenUsageService, QuizQuestionPoolItemRepository itemRepository, HyperionCourseSettingsService settingsService,
             CourseRepository courseRepository, QuizQuestionPoolLectureUnitRepository lectureUnitRepository, QuizQuestionPoolBuildRepository buildRepository,
-            DistributedDataProvider distributedDataProvider, @Value("${artemis.hyperion.quiz-pool.generator-model:}") String generatorModel,
-            @Value("${artemis.hyperion.quiz-pool.generation-batch-size:8}") int generationBatchSize,
+            DistributedDataProvider distributedDataProvider, @Value("${artemis.hyperion.quiz-pool.generation-batch-size:8}") int generationBatchSize,
             @Value("${artemis.hyperion.quiz-pool.stale-claim-minutes:30}") int staleClaimMinutes,
             @Value("${artemis.hyperion.quiz-pool.build-lease-minutes:10}") int buildLeaseMinutes) {
-        this.chatClient = chatClient;
+        this.modelService = modelService;
         this.templateService = templateService;
         this.materialService = materialService;
         this.courseCompetencyApi = courseCompetencyApi;
@@ -204,7 +198,6 @@ public class HyperionQuizQuestionPoolBuildService {
         this.lectureUnitRepository = lectureUnitRepository;
         this.buildRepository = buildRepository;
         this.distributedDataProvider = distributedDataProvider;
-        this.generatorModel = generatorModel == null ? "" : generatorModel.trim();
         if (generationBatchSize < 1) {
             throw new IllegalArgumentException("artemis.hyperion.quiz-pool.generation-batch-size must be at least 1, got " + generationBatchSize);
         }
@@ -720,9 +713,7 @@ public class HyperionQuizQuestionPoolBuildService {
      * @return what the build did
      */
     public BuildOutcome build(long courseId, @Nullable Long userId, String leaseToken, @Nullable ZonedDateTime deadline) {
-        if (chatClient == null) {
-            throw new InternalServerErrorAlertException("AI chat client is not configured", "QuizQuestionPool", "QuizQuestionPool.chatClientNotConfigured");
-        }
+        modelService.chatClient();
         Course course = courseRepository.findByIdElseThrow(courseId);
         ZonedDateTime now = ZonedDateTime.now();
         int released = itemRepository.releaseStaleClaims(courseId, QuizQuestionPoolItemState.GENERATING, QuizQuestionPoolItemState.PENDING, now.minus(staleClaimAge), now)
@@ -842,11 +833,8 @@ public class HyperionQuizQuestionPoolBuildService {
 
         ChatResponse chatResponse;
         try {
-            var request = chatClient.prompt().system(systemPrompt).user(userPrompt);
-            if (!generatorModel.isEmpty()) {
-                request = request.options(ChatOptions.builder().model(generatorModel));
-            }
-            chatResponse = request.call().chatResponse();
+            chatResponse = modelService.chatClient().prompt().options(ChatOptions.builder().model(modelService.generatorModel())).system(systemPrompt).user(userPrompt).call()
+                    .chatResponse();
         }
         catch (Exception e) {
             log.warn("Generation of {} pool questions for lecture unit [{}] in course [{}] failed", batch.size(), first.getLectureUnitId(), course.getId(), e);
@@ -869,7 +857,7 @@ public class HyperionQuizQuestionPoolBuildService {
             }
             usable++;
             item.setQuestion(question);
-            item.setGeneratorModel(generatorModel.isEmpty() ? null : generatorModel);
+            item.setGeneratorModel(modelService.generatorModel());
             item.setGenerationAttempts(item.getGenerationAttempts() + 1);
             item.setFailure(null);
             item.setState(QuizQuestionPoolItemState.GENERATED);

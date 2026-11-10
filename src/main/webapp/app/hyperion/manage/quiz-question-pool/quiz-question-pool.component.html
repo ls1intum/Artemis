@@ -20,7 +20,7 @@
                 <span [jhiTranslate]="isCancelling() ? 'artemisApp.hyperion.quizQuestionPool.progress.cancelling' : 'artemisApp.hyperion.quizQuestionPool.progress.cancel'"></span>
             </button>
         } @else {
-            <button tumAetUiButton type="button" size="small" data-testid="pool-build-button" [disabled]="isStartingBuild()" (click)="startBuild()">
+            <button tumAetUiButton type="button" size="small" data-testid="pool-build-button" [disabled]="isStartingBuild() || isModelMissing()" (click)="startBuild()">
                 <fa-icon [icon]="faPlay" class="me-1" />
                 <span jhiTranslate="artemisApp.hyperion.quizQuestionPool.progress.build"></span>
             </button>
@@ -63,6 +63,10 @@
 
 <div class="flex flex-col gap-4">
     <p class="m-0 text-muted-color" jhiTranslate="artemisApp.hyperion.quizQuestionPool.intro"></p>
+
+    @if (isModelMissing()) {
+        <tumaet-ui-message severity="warn" data-testid="pool-model-missing" [text]="'artemisApp.hyperion.quizQuestionPool.progress.modelMissing' | artemisTranslate" />
+    }
 
     <tumaet-ui-card [header]="'artemisApp.hyperion.quizQuestionPool.progress.title' | artemisTranslate" data-testid="pool-progress-card">
         @if (progress(); as progressValue) {
@@ -152,7 +156,14 @@
                     [description]="'artemisApp.hyperion.quizQuestionPool.progress.empty' | artemisTranslate"
                 >
                     @if (isInstructor()) {
-                        <button tumAetUiEmptyStateActions tumAetUiButton type="button" size="small" [disabled]="isStartingBuild() || isRunning()" (click)="startBuild()">
+                        <button
+                            tumAetUiEmptyStateActions
+                            tumAetUiButton
+                            type="button"
+                            size="small"
+                            [disabled]="isStartingBuild() || isRunning() || isModelMissing()"
+                            (click)="startBuild()"
+                        >
                             <fa-icon [icon]="faPlay" class="me-1" />
                             <span jhiTranslate="artemisApp.hyperion.quizQuestionPool.progress.build"></span>
                         </button>

@@ -82,10 +82,12 @@ public class HyperionQuizQuestionPoolService {
 
     private final CourseRepository courseRepository;
 
+    private final HyperionQuizQuestionPoolModelService modelService;
+
     public HyperionQuizQuestionPoolService(HyperionQuizQuestionPoolBuildService buildService, HyperionQuizQuestionPoolTaskService taskService,
             QuizQuestionPoolItemRepository itemRepository, HyperionCourseSettingsService settingsService, Optional<CourseCompetencyApi> courseCompetencyApi,
             Optional<LectureUnitApi> lectureUnitApi, QuizQuestionPoolLectureUnitRepository lectureUnitRepository, QuizQuestionPoolBuildRepository buildRepository,
-            HyperionQuizQuestionPoolMaterialService materialService, CourseRepository courseRepository) {
+            HyperionQuizQuestionPoolMaterialService materialService, CourseRepository courseRepository, HyperionQuizQuestionPoolModelService modelService) {
         this.buildService = buildService;
         this.taskService = taskService;
         this.itemRepository = itemRepository;
@@ -96,6 +98,7 @@ public class HyperionQuizQuestionPoolService {
         this.buildRepository = buildRepository;
         this.materialService = materialService;
         this.courseRepository = courseRepository;
+        this.modelService = modelService;
     }
 
     /**
@@ -104,8 +107,12 @@ public class HyperionQuizQuestionPoolService {
      * @param course the course
      * @param userId the user the token usage is attributed to; may be {@code null}
      * @return whether a build was started, and how many items were added
+     * @throws de.tum.cit.aet.artemis.core.exception.ServiceUnavailableAlertException if the pool has no model endpoint configured
      */
     public QuizQuestionPoolBuildStartDTO startBuild(Course course, @Nullable Long userId) {
+        if (!modelService.isConfigured()) {
+            throw HyperionQuizQuestionPoolModelService.notConfigured();
+        }
         long courseId = course.getId();
         String leaseToken = buildService.tryStart(courseId);
         if (leaseToken == null) {
@@ -182,7 +189,7 @@ public class HyperionQuizQuestionPoolService {
         QuizQuestionPoolBuildDTO lastBuild = buildRepository.findAllByCourseIdNewestFirst(courseId, PageRequest.of(0, 1)).stream().findFirst().map(QuizQuestionPoolBuildDTO::of)
                 .orElse(null);
         return new QuizQuestionPoolProgressDTO(buildService.isRunning(courseId), total, toGenerate, toJudge, judged, accepted, rejected, failed,
-                buildSettings == null ? null : HyperionCourseSettingsDTO.of(buildSettings), lastBuild);
+                buildSettings == null ? null : HyperionCourseSettingsDTO.of(buildSettings), lastBuild, modelService.isConfigured());
     }
 
     /**

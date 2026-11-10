@@ -7,6 +7,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -40,7 +41,7 @@ import de.tum.cit.aet.artemis.admin.service.LLMTokenUsageService;
 import de.tum.cit.aet.artemis.atlas.api.CourseCompetencyApi;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
-import de.tum.cit.aet.artemis.core.exception.InternalServerErrorAlertException;
+import de.tum.cit.aet.artemis.core.exception.ServiceUnavailableAlertException;
 import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
 import de.tum.cit.aet.artemis.core.service.distributed.local.LocalMap;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
@@ -448,10 +449,9 @@ class HyperionQuizQuestionPoolBuildServiceTest {
 
     @Test
     void constructor_rejectsAnEmptyLease() {
-        assertThatThrownBy(
-                () -> new HyperionQuizQuestionPoolBuildService(null, new HyperionPromptTemplateService(), materialService, Optional.of(courseCompetencyApi), filterService,
-                        llmTokenUsageService, itemRepository, settingsService, courseRepository, lectureUnitRepository, buildRepository, distributedDataProvider, "", 8, 30, 0))
-                .isInstanceOf(IllegalArgumentException.class).hasMessageContaining("build-lease-minutes");
+        assertThatThrownBy(() -> new HyperionQuizQuestionPoolBuildService(mock(HyperionQuizQuestionPoolModelService.class), new HyperionPromptTemplateService(), materialService,
+                Optional.of(courseCompetencyApi), filterService, llmTokenUsageService, itemRepository, settingsService, courseRepository, lectureUnitRepository, buildRepository,
+                distributedDataProvider, 8, 30, 0)).isInstanceOf(IllegalArgumentException.class).hasMessageContaining("build-lease-minutes");
     }
 
     @Test
@@ -695,10 +695,10 @@ class HyperionQuizQuestionPoolBuildServiceTest {
     }
 
     @Test
-    void build_throwsWhenChatClientIsNull() {
+    void build_throwsWithoutAConfiguredModel() {
         HyperionQuizQuestionPoolBuildService service = service();
 
-        assertThatThrownBy(() -> service.build(5L, 7L, "lease")).isInstanceOf(InternalServerErrorAlertException.class).hasMessageContaining("AI chat client is not configured");
+        assertThatThrownBy(() -> service.build(5L, 7L, "lease")).isInstanceOf(ServiceUnavailableAlertException.class).hasMessageContaining("no local model configured");
     }
 
     @Test
@@ -775,13 +775,18 @@ class HyperionQuizQuestionPoolBuildServiceTest {
     }
 
     private HyperionQuizQuestionPoolBuildService service() {
-        return new HyperionQuizQuestionPoolBuildService(null, new HyperionPromptTemplateService(), materialService, Optional.of(courseCompetencyApi), filterService,
-                llmTokenUsageService, itemRepository, settingsService, courseRepository, lectureUnitRepository, buildRepository, distributedDataProvider, "", 8, 30, 10);
+        HyperionQuizQuestionPoolModelService models = mock(HyperionQuizQuestionPoolModelService.class);
+        lenient().when(models.chatClient()).thenThrow(HyperionQuizQuestionPoolModelService.notConfigured());
+        return new HyperionQuizQuestionPoolBuildService(models, new HyperionPromptTemplateService(), materialService, Optional.of(courseCompetencyApi), filterService,
+                llmTokenUsageService, itemRepository, settingsService, courseRepository, lectureUnitRepository, buildRepository, distributedDataProvider, 8, 30, 10);
     }
 
     private HyperionQuizQuestionPoolBuildService serviceWithChatClient() {
-        return new HyperionQuizQuestionPoolBuildService(ChatClient.create(chatModel), new HyperionPromptTemplateService(), materialService, Optional.of(courseCompetencyApi),
-                filterService, llmTokenUsageService, itemRepository, settingsService, courseRepository, lectureUnitRepository, buildRepository, distributedDataProvider, "", 8, 30,
-                10);
+        HyperionQuizQuestionPoolModelService models = mock(HyperionQuizQuestionPoolModelService.class);
+        lenient().when(models.isConfigured()).thenReturn(true);
+        lenient().when(models.chatClient()).thenReturn(ChatClient.create(chatModel));
+        lenient().when(models.generatorModel()).thenReturn("generator-x");
+        return new HyperionQuizQuestionPoolBuildService(models, new HyperionPromptTemplateService(), materialService, Optional.of(courseCompetencyApi), filterService,
+                llmTokenUsageService, itemRepository, settingsService, courseRepository, lectureUnitRepository, buildRepository, distributedDataProvider, 8, 30, 10);
     }
 }

@@ -2,7 +2,7 @@
 id: quiz-generation
 title: 'Quiz Question Generation & Refinement'
 sidebar_label: 'Quiz Question Generation & Refinement'
-last_reviewed: 2026-11-09
+last_reviewed: 2026-11-10
 ---
 
 import Image, {ImageSize} from "../../../src/components/Image/Image";
@@ -117,7 +117,7 @@ Generation uses `generate_quiz_question_pool_system.st` and `generate_quiz_quest
 
 `HyperionQuizQuestionFilterService` renders `filter_quiz_question_system.st` and `filter_quiz_question_user.st` and asks the judge for a severity from 0 to 1 on each of the five failure modes in `QuizQuestionFailureMode`: factual error, ambiguous correct answer, off topic, near duplicate and ill-formed distractors. A verdict that omits a mode is discarded. The aggregate score is one minus the worst severity among the gating modes, and the question is accepted when the aggregate reaches 0.7. Near duplicate is reported but never gates, because a question grounded in lecture material necessarily resembles it. Every verdict is stored with the item, so the pool page can show why a question was flagged or rejected.
 
-The generator and the judge model are set by the administrator under `artemis.hyperion.quiz-pool.generator-model` and `judge-model`; a blank value uses the default chat model. Both are bound onto the request through `ChatOptions`, and every call is recorded through `LLMTokenUsageService` under the pipeline ids `HYPERION_QUIZ_POOL_GENERATION` and `HYPERION_QUIZ_QUESTION_FILTER`.
+The pool reaches its models only through `HyperionQuizQuestionPoolModelService`, which builds its own `OpenAiChatModel` and `ChatClient` from `artemis.hyperion.quiz-pool.base-url`, `api-key` and `timeout` and registers neither as a bean, so the `ChatClient` that the rest of Hyperion injects is untouched and the pool never falls back to it. The administrator sets `generator-model` and `judge-model`, and both must appear in `allowed-models`. The service validates the configuration at startup: with the endpoint and both models empty the pool is off, `POST …/build` answers `503 Service Unavailable` with the key `quizQuestionPoolModelNotConfigured`, and the progress response reports `modelConfigured: false`; a partial configuration, a model outside the allowlist, a URL that is not http(s), or a host on a known cloud provider (`HyperionQuizQuestionPoolModelService.CLOUD_HOSTS`) leaves the pool off in the same way and logs a warning with the reason, which the client never receives. Both models are bound onto the request through `ChatOptions`, and every call is recorded through `LLMTokenUsageService` under the pipeline ids `HYPERION_QUIZ_POOL_GENERATION` and `HYPERION_QUIZ_QUESTION_FILTER`.
 
 ## REST Endpoints
 
