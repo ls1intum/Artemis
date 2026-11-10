@@ -264,6 +264,30 @@ describe('IrisOnboardingModalComponent', () => {
             vi.useRealTimers();
         });
 
+        it('keeps the second step card inside the viewport below the suggestion chips', () => {
+            vi.useFakeTimers();
+            vi.spyOn(document, 'querySelectorAll').mockImplementation((selector: string) => {
+                if (selector === '[data-onboarding-target="suggestion-chips"]') {
+                    return [createMockElement({ top: 650, left: 1100, right: 1190, bottom: 690, width: 90, height: 40 })] as unknown as NodeListOf<Element>;
+                }
+                return [] as unknown as NodeListOf<Element>;
+            });
+            Object.defineProperty(window, 'innerWidth', { value: 1200, configurable: true });
+            Object.defineProperty(window, 'innerHeight', { value: 800, configurable: true });
+
+            component.step.set(1);
+            component.next();
+            vi.advanceTimersByTime(200);
+
+            expect(component.isStepPositionReady()).toBe(true);
+            expect(component.tooltipConfig()).toMatchObject({
+                currentStep: 2,
+                arrowDirection: 'up',
+                titleTranslationKey: 'artemisApp.iris.onboarding.step2.title',
+                tooltipPosition: { top: 608, left: 908 },
+            });
+        });
+
         it('should calculate tooltip position for step 3 (info icon)', () => {
             vi.useFakeTimers();
             vi.spyOn(document, 'querySelectorAll').mockImplementation((selector: string) => {

@@ -16,7 +16,7 @@ import { IrisStatusService } from 'app/iris/overview/services/iris-status.servic
 import { IrisChatHttpService } from 'app/iris/overview/services/iris-chat-http.service';
 import { ChatServiceMode, IrisChatService } from 'app/iris/overview/services/iris-chat.service';
 import { IrisWebsocketService } from 'app/iris/overview/services/iris-websocket.service';
-import { Subject, of } from 'rxjs';
+import { Subject, of, throwError } from 'rxjs';
 import { signal } from '@angular/core';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
@@ -2196,6 +2196,18 @@ describe('IrisBaseChatbotComponent', () => {
             expect(successSpy).toHaveBeenCalledWith('artemisApp.iris.chatHistory.deleteSessionSuccess');
         });
 
+        it('should report a failed deletion without showing success', () => {
+            vi.spyOn(confirmationService, 'confirm').mockImplementation((confirmation) => confirmation.accept());
+            vi.spyOn(chatService, 'deleteSession').mockReturnValue(throwError(() => new Error('Delete failed')));
+            const error = vi.spyOn(alertService, 'error');
+            const success = vi.spyOn(alertService, 'success');
+
+            component.onDeleteSession(mockSession);
+
+            expect(error).toHaveBeenCalledWith('artemisApp.iris.chatHistory.deleteSessionError');
+            expect(success).not.toHaveBeenCalled();
+        });
+
         it('should not call deleteSession on rejection', () => {
             vi.spyOn(confirmationService, 'confirm').mockImplementation((confirmation) => {
                 confirmation.reject?.();
@@ -2209,6 +2221,35 @@ describe('IrisBaseChatbotComponent', () => {
     });
 
     describe('MCQ content rendering', () => {
+        it('persists a submitted answer for the active chat session', () => {
+            const save = vi.spyOn(httpService, 'saveMcqResponse').mockReturnValue(of(new HttpResponse<void>()));
+            vi.spyOn(component, 'currentSessionId').mockReturnValue(42);
+            const sessionId = component.currentSessionId();
+            const message = cloneWith(mockServerMessage, { id: 20 });
+
+            component.onMcqAnswerChanged(message, { selectedIndex: 1, submitted: true });
+
+            expect(save).toHaveBeenCalledWith(sessionId, 20, { selectedIndex: 1, submitted: true });
+        });
+
+        it('persists the selected question when a quiz response is saved', () => {
+            const save = vi.spyOn(httpService, 'saveMcqResponse').mockReturnValue(of(new HttpResponse<void>()));
+            vi.spyOn(component, 'currentSessionId').mockReturnValue(42);
+            const response = { questionIndex: 2, selectedIndex: 0, submitted: true };
+            const message = cloneWith(mockServerMessage, { id: 20 });
+
+            component.onMcqResponseSaved(message, response);
+
+            expect(save).toHaveBeenCalledWith(component.currentSessionId(), 20, response);
+        });
+
+        it('does not persist an answer before it is submitted', () => {
+            const save = vi.spyOn(httpService, 'saveMcqResponse');
+            component.onMcqAnswerChanged(mockServerMessage, { selectedIndex: 1, submitted: false });
+            component.onMcqResponseSaved(mockServerMessage, { selectedIndex: 1, submitted: false });
+            expect(save).not.toHaveBeenCalled();
+        });
+
         it('should identify MCQ content using isMcqContent helper', () => {
             const mcqContent = new IrisJsonMessageContent({
                 type: 'mcq',

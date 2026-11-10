@@ -346,62 +346,6 @@
         }
     }
 
-    // Arrow pointing down-left — tooltip is above-right of the target
-    &.tooltip-arrow-down-left {
-        transform-origin: left bottom;
-
-        &::before,
-        &::after {
-            content: '';
-            position: absolute;
-            bottom: -9px;
-            left: 24px;
-            width: 0;
-            height: 0;
-        }
-
-        &::before {
-            bottom: -10px;
-            border-left: 9px solid transparent;
-            border-right: 9px solid transparent;
-            border-top: 9px solid var(--border-color);
-        }
-
-        &::after {
-            border-left: 8px solid transparent;
-            border-right: 8px solid transparent;
-            border-top: 8px solid var(--onboarding-modal-surface);
-        }
-    }
-
-    // Arrow pointing left — tooltip is to the right of the target
-    &.tooltip-arrow-left {
-        transform-origin: left top;
-
-        &::before,
-        &::after {
-            content: '';
-            position: absolute;
-            top: 24px;
-            width: 0;
-            height: 0;
-        }
-
-        &::before {
-            left: -9px;
-            border-top: 9px solid transparent;
-            border-bottom: 9px solid transparent;
-            border-right: 9px solid var(--border-color);
-        }
-
-        &::after {
-            left: -8px;
-            border-top: 8px solid transparent;
-            border-bottom: 8px solid transparent;
-            border-right: 8px solid var(--onboarding-modal-surface);
-        }
-    }
-
     // Arrow pointing right — tooltip is to the left of the target
     &.tooltip-arrow-right {
         transform-origin: right center;

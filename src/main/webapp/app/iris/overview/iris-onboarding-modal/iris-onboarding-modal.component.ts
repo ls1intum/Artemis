@@ -30,7 +30,7 @@ const TOOLTIP_WIDTH_PX = 280;
 const TOOLTIP_HEIGHT_PX = 180;
 // Distance between the spotlight edge and the tooltip card.
 const TOOLTIP_GAP_PX = 16;
-// Smaller gap used directly above/below the spotlight (for `up`/`down`/`down-left`)
+// Smaller gap used directly above/below the spotlight (for `up`/`down`)
 // so the arrow visually touches the highlighted element without overlap.
 const TOOLTIP_VERTICAL_OFFSET_PX = 8;
 // Minimum padding kept between the tooltip card and the viewport edges.
@@ -50,7 +50,7 @@ const TOTAL_TOUR_STEPS = 3;
 // Step value reserved for the initial welcome screen, before the tour starts.
 const WELCOME_STEP = 0;
 
-type ArrowDirection = 'up' | 'down' | 'down-left' | 'left' | 'right';
+type ArrowDirection = 'up' | 'down' | 'right';
 
 type TooltipConfig = {
     spotlight: { top: number; left: number; width: number; height: number };
@@ -249,28 +249,6 @@ export class IrisOnboardingModalComponent {
                 const preferredLeft = spotlight.left + spotlight.width / 2 - TOOLTIP_WIDTH_PX / 2;
                 tooltipPos = {
                     top: Math.max(TOOLTIP_VIEWPORT_PADDING_PX, preferredTop),
-                    left: Math.max(TOOLTIP_VIEWPORT_PADDING_PX, Math.min(preferredLeft, window.innerWidth - TOOLTIP_WIDTH_PX - TOOLTIP_VIEWPORT_PADDING_PX)),
-                };
-                break;
-            }
-            case 'down-left': {
-                // Tooltip above and to the right, arrow pointing down-left
-                const preferredTop = spotlight.top - TOOLTIP_HEIGHT_PX - TOOLTIP_VERTICAL_OFFSET_PX;
-                const preferredLeft = spotlight.left + spotlight.width / 2;
-                tooltipPos = {
-                    top: Math.max(TOOLTIP_VIEWPORT_PADDING_PX, preferredTop),
-                    left: Math.max(TOOLTIP_VIEWPORT_PADDING_PX, Math.min(preferredLeft, window.innerWidth - TOOLTIP_WIDTH_PX - TOOLTIP_VIEWPORT_PADDING_PX)),
-                };
-                break;
-            }
-            case 'left': {
-                // Tooltip to the right of target, arrow pointing left.
-                // Prefer aligning near the top of the spotlight so the tooltip doesn't
-                // get pushed off the bottom edge when the target is low on screen.
-                const preferredTop = spotlight.top;
-                const preferredLeft = spotlight.left + spotlight.width + TOOLTIP_GAP_PX;
-                tooltipPos = {
-                    top: Math.max(TOOLTIP_VIEWPORT_PADDING_PX, Math.min(preferredTop, window.innerHeight - TOOLTIP_HEIGHT_PX - TOOLTIP_VIEWPORT_PADDING_PX)),
                     left: Math.max(TOOLTIP_VIEWPORT_PADDING_PX, Math.min(preferredLeft, window.innerWidth - TOOLTIP_WIDTH_PX - TOOLTIP_VIEWPORT_PADDING_PX)),
                 };
                 break;

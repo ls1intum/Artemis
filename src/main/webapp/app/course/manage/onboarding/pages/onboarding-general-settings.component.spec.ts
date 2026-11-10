@@ -18,7 +18,8 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
-import { ARTEMIS_DEFAULT_COLOR, MODULE_FEATURE_ATHENA } from 'app/app.constants';
+import { IrisCourseSettingsWithRateLimitDTO } from 'app/iris/shared/entities/settings/iris-course-settings.model';
+import { ARTEMIS_DEFAULT_COLOR, MODULE_FEATURE_ATHENA, MODULE_FEATURE_IRIS } from 'app/app.constants';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Subject, of, throwError } from 'rxjs';
 import { AboutIrisModalComponent } from 'app/iris/overview/about-iris-modal/about-iris-modal.component';
@@ -107,6 +108,54 @@ describe('OnboardingGeneralSettingsComponent', () => {
         expect(comp['aboutIrisModalVisible']()).toBe(false);
         comp.openAboutIrisModal();
         expect(comp['aboutIrisModalVisible']()).toBe(true);
+    });
+
+    describe('Iris settings', () => {
+        it('loads the course settings when Iris is active', () => {
+            activeModuleFeatures = [MODULE_FEATURE_IRIS];
+            const load = vi.spyOn(TestBed.inject(IrisSettingsService), 'getCourseSettingsWithRateLimit');
+            createComponent();
+
+            expect(load).toHaveBeenCalledWith(course.id);
+            expect(comp.isIrisEnabled()).toBe(true);
+        });
+
+        it('keeps the optimistic choice separate from the original settings and adopts the saved response', () => {
+            activeModuleFeatures = [MODULE_FEATURE_IRIS];
+            createComponent();
+            const original = comp.irisSettings();
+            const response = new Subject<HttpResponse<IrisCourseSettingsWithRateLimitDTO>>();
+            const update = vi.spyOn(TestBed.inject(IrisSettingsService), 'updateCourseSettings').mockReturnValue(response);
+
+            comp.setIrisEnabled(false);
+            expect(comp.isIrisEnabled()).toBe(false);
+            expect(original?.enabled).toBe(true);
+            expect(update).toHaveBeenCalledWith(course.id, expect.objectContaining({ enabled: false }));
+
+            response.next(new HttpResponse({ body: { courseId: 1, settings: { enabled: true, variant: 'default' }, effectiveRateLimit: {}, applicationRateLimitDefaults: {} } }));
+            expect(comp.isIrisEnabled()).toBe(true);
+        });
+
+        it('restores the original setting and reports a failed save', () => {
+            activeModuleFeatures = [MODULE_FEATURE_IRIS];
+            createComponent();
+            const original = comp.irisSettings();
+            const error = new HttpErrorResponse({ status: 403 });
+            vi.spyOn(TestBed.inject(IrisSettingsService), 'updateCourseSettings').mockReturnValue(throwError(() => error));
+            const alert = vi.spyOn(TestBed.inject(AlertService), 'error');
+
+            comp.setIrisEnabled(false);
+
+            expect(comp.irisSettings()).toBe(original);
+            expect(comp.isIrisEnabled()).toBe(true);
+            expect(alert).toHaveBeenCalledWith('error.http.403');
+        });
+
+        it('does not save before settings have loaded', () => {
+            const update = vi.spyOn(TestBed.inject(IrisSettingsService), 'updateCourseSettings');
+            comp.setIrisEnabled(true);
+            expect(update).not.toHaveBeenCalled();
+        });
     });
 
     it('should have language options for English and German', () => {
