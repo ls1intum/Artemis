@@ -934,6 +934,30 @@ class ExerciseIntegrityGateTest {
     }
 
     @Test
+    void sourceReadingTests_traceAPathVariablePassedToAScanner() {
+        String sourceRead = """
+                class ParserTest {
+                    @Test void readsTheSource() throws Exception {
+                        var source = java.nio.file.Path.of("src", "de", "example", "Client.java");
+                        var scanner = new java.util.Scanner(source);
+                    }
+                }
+                """;
+        String textScanner = """
+                class ParserTest {
+                    @Test void scansText() {
+                        String input = "3 4";
+                        assertEquals(3, new java.util.Scanner(input).nextInt());
+                        assertEquals(2, new java.util.Scanner(System.in).hashCode() * 0 + 2);
+                    }
+                }
+                """;
+
+        assertThat(ExerciseIntegrityGate.sourceReadingTestReasons(map("test/ParserTest.java", sourceRead))).singleElement().asString().contains("Client.java");
+        assertThat(ExerciseIntegrityGate.sourceReadingTestReasons(map("test/ParserTest.java", textScanner))).isEmpty();
+    }
+
+    @Test
     void statementTasks_requireInstructionTextBeforeTheNextTask() {
         assertThat(ExerciseIntegrityGate.statementTaskInstructionReasons("[task][First](one)\n[task][Second](two)\n")).singleElement().asString().contains("First", "Second",
                 "no student-facing instruction");

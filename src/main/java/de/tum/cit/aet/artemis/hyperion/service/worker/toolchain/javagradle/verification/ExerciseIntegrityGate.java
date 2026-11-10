@@ -559,8 +559,9 @@ public final class ExerciseIntegrityGate {
     private static final Pattern FILE_READ = Pattern
             .compile("\\bFiles\\s*\\.\\s*(?:readString|readAllLines|readAllBytes|lines|newBufferedReader|newInputStream|newByteChannel)\\s*\\("
                     + "|\\bnew\\s+(?:java\\s*\\.\\s*io\\s*\\.\\s*)?(?:FileReader|FileInputStream|RandomAccessFile)\\s*\\("
-                    + "|\\bnew\\s+(?:java\\s*\\.\\s*util\\s*\\.\\s*)?Scanner\\s*\\(\\s*(?:new\\s+(?:java\\s*\\.\\s*io\\s*\\.\\s*)?File\\b|(?:java\\s*\\.\\s*nio\\s*\\.\\s*file\\s*\\.\\s*)?(?:Path\\s*\\.\\s*of|Paths\\s*\\.\\s*get)\\b)"
-                    + "|\\bgetResource(?:AsStream)?\\s*\\(|\\bFileUtils\\s*\\.\\s*read\\w*\\s*\\(");
+                    + "|\\bnew\\s+(?:java\\s*\\.\\s*util\\s*\\.\\s*)?Scanner\\s*\\(\\s*(?:new\\s+(?:java\\s*\\.\\s*io\\s*\\.\\s*)?File\\b|(?:java\\s*\\.\\s*nio\\s*\\.\\s*file\\s*\\.\\s*)?(?:Path\\s*\\.\\s*of|Paths\\s*\\.\\s*get)\\b"
+                    // A variable may hold a path or file; its traced value must still name a source path, so a scanner over ordinary text is not flagged.
+                    + "|[A-Za-z_$][\\w$]*\\s*\\))|\\bgetResource(?:AsStream)?\\s*\\(|\\bFileUtils\\s*\\.\\s*read\\w*\\s*\\(");
 
     /** A double-quoted literal on one line; the possessive repetition keeps a long literal from overflowing the stack. */
     private static final Pattern STRING_LITERAL = Pattern.compile("\"((?:[^\"\\\\\\n]|\\\\.)*+)\"");
