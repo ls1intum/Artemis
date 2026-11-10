@@ -204,6 +204,11 @@ jobs:
                   ".github/workflows/ci-skills.yml",
                   "supporting_scripts/check_skill_references.py",
               },
+              "has_helm": {
+                  ".github/workflows/ci.yml",
+                  ".github/workflows/ci-helm.yml",
+                  "supporting_scripts/check_helm_chart.sh",
+              },
           }
 
           failed = False
