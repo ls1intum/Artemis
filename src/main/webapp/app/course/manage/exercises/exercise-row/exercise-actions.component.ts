@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, DestroyRef, computed, inject, input
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Observable, Subject, finalize, take } from 'rxjs';
-import { faChartBar, faClipboardList, faEye, faLightbulb, faListAlt, faPencilAlt, faRedo, faRobot, faTrash, faUsers, faWrench } from '@fortawesome/free-solid-svg-icons';
+import { faChartBar, faClipboardList, faCode, faEye, faLightbulb, faListAlt, faPencilAlt, faRedo, faRobot, faTrash, faUsers } from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
 import { Exercise, ExerciseMode, ExerciseType, getExerciseUrlSegment } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { QuizExercise, QuizMode, QuizStatus } from 'app/quiz/shared/entities/quiz-exercise.model';
@@ -239,7 +239,7 @@ export class ExerciseActionsComponent {
             items.push({
                 id: 'edit-in-editor',
                 labelKey: 'entity.action.editInEditor',
-                icon: faPencilAlt,
+                icon: faCode,
                 severity: 'warn',
                 kind: 'link',
                 link: ['/course-management', cid, 'programming-exercises', ex.id!, 'code-editor', RepositoryType.TEMPLATE, -1],
@@ -252,7 +252,7 @@ export class ExerciseActionsComponent {
                 items.push({
                     id: 'edit',
                     labelKey: 'entity.action.edit',
-                    icon: faWrench,
+                    icon: faPencilAlt,
                     severity: 'warn',
                     kind: 'link',
                     link: ['/course-management', cid, seg, ex.id!, 'edit'],
@@ -265,7 +265,7 @@ export class ExerciseActionsComponent {
                 items.push({
                     id: 'edit',
                     labelKey: 'entity.action.edit',
-                    icon: faWrench,
+                    icon: faPencilAlt,
                     severity: 'warn',
                     kind: 'link',
                     link: ['/course-management', cid, seg, ex.id!, 'edit'],
