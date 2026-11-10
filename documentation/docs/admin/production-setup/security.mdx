@@ -2,7 +2,7 @@
 id: security
 title: Security
 sidebar_label: Security
-last_reviewed: 2026-11-03
+last_reviewed: 2026-11-09
 ---
 
 import Callout from "../../../src/components/Callout/Callout";
@@ -508,6 +508,7 @@ artemis:
     enabled: true # the default
     account-management-requests-per-minute: 5
     authentication-requests-per-minute: 30
+    git-authentication-requests-per-minute: 30
     login-options-requests-per-minute: 30
     client-error-report-requests-per-minute: 60
 ```
@@ -521,8 +522,15 @@ artemis:
   reduce the number of logins a shared address can perform)
 - Username/password login
 - WebAuthn authentication
-- Git over SSH and HTTP operations, in the same bucket as the login, so `authentication-requests-per-minute` also sets how many git authentications one client IP may make.
-  Raise it where many students share one address, for example behind a campus NAT.
+- Git over SSH and HTTP operations, in a bucket of their own, `git-authentication-requests-per-minute`. What consumes it:
+    - **HTTP:** the `/info/refs` request that starts a clone, fetch or push, when it carries credentials. The requests that follow it, `git-upload-pack` and `git-receive-pack`, are authenticated too but do not consume it.
+    - **SSH:** the user authentication with a key that is recognized and has not expired.
+
+  The bucket is separate from the login so that students who push from a lecture hall behind one address cannot use up the logins of everyone else on it. Raise it where many students share one address,
+  for example behind a campus NAT. It starts at the same 30 as the login, and git over HTTP can verify a password like a login does, so raise it deliberately and not to an arbitrary value.
+  **When you upgrade:** git used to share `authentication-requests-per-minute`, and with the defaults one address could make 30 requests of both kinds in total. Now it can make up to 30 logins and up to 30 git authentications.
+  With a login limit of your own, the git limit is a separate 30 on top of it.
+  Review the git setting on every installation, whether you raised, lowered or never set the login limit, see [10.7 in the Upgrade Guide](/admin/upgrade-guide#107-rate-limit-of-git-operations).
 - [Client error reports](/admin/client-error-reports) of clients that are not signed in
 
 We plan to add the rate-limit to more endpoints (like Oauth2) in the future.
