@@ -1,79 +1,129 @@
 @if (exercise(); as exercise) {
-    <div class="d-flex flex-wrap gap-2">
-        <!-- Edit -->
-        @if (exercise.isAtLeastEditor) {
-            <a [routerLink]="baseResource() + 'edit'" class="btn btn-warning btn-sm">
-                <fa-icon [icon]="faWrench" />
-                <span class="d-none d-md-inline" jhiTranslate="entity.action.edit"></span>
-            </a>
-        }
-        <!-- Participations  -->
-        @if (course() && canAccessParticipationsAndScores()) {
-            <a [routerLink]="baseResource() + 'participations'" class="btn btn-primary btn-sm">
-                <fa-icon [icon]="faListAlt" />
-                <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.participations"></span>
-            </a>
-        }
-        <!-- Slot for extra host-provided actions (e.g. the Atlas "Suggest competencies" trigger).
-             Placed next to Participations so it flows inline with these buttons and groups with the
-             other primary-styled action; Delete stays the terminal (destructive) button. -->
-        <ng-content />
-        <!-- Teams -->
-        @if (exercise.teamMode && exercise.isAtLeastTutor) {
-            <a [routerLink]="teamBaseResource() + 'teams'" class="btn btn-primary btn-sm">
-                <fa-icon [icon]="faUsers" />
-                <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.teams"></span>
-            </a>
-        }
-        <!-- Exercise Dashboard -->
-        @if (exercise.assessmentType === AssessmentType.SEMI_AUTOMATIC || exercise.assessmentType === AssessmentType.MANUAL || exercise.allowComplaintsForAutomaticAssessments) {
-            <a [routerLink]="shortBaseResource() + 'assessment-dashboard/' + exercise.id" class="btn btn-info btn-sm">
-                <fa-icon [icon]="faUserCheck" />
-                <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.exerciseAssessmentDashboard"></span>
-            </a>
-        }
-        @if (course() && canAccessParticipationsAndScores()) {
-            <!--Statistics -->
-            <a [routerLink]="baseResource() + 'exercise-statistics'" class="btn btn-info btn-sm">
-                <fa-icon [icon]="faChartBar" />
-                <span class="d-none d-md-inline" jhiTranslate="statistics.statistics-title"></span>
-            </a>
-        }
-        @if (irisEnabled() && exercise.type === ExerciseType.TEXT && exercise.isAtLeastInstructor && exercise.course && !isExamExercise()) {
-            <!-- Iris Settings -->
-            <a
-                [routerLink]="baseResource() + 'iris-settings'"
-                ngbTooltip="{{ 'artemisApp.iris.settings.button.textExercise.tooltip' | artemisTranslate }}"
-                class="btn btn-warning btn-sm"
-            >
-                <fa-icon [icon]="faRobot" />
-                <span jhiTranslate="artemisApp.iris.settings.button.textExercise.title"></span>
-            </a>
-        }
-        <!-- Example Submission -->
-        @if (exercise.isAtLeastEditor && (exercise.type === ExerciseType.MODELING || exercise.type === ExerciseType.TEXT)) {
-            <a [routerLink]="baseResource() + 'example-submissions'" class="btn btn-success btn-sm" data-testid="example-submissions-button">
-                <fa-icon [icon]="faBook" />
-                <span class="d-none d-md-inline" jhiTranslate="entity.action.exampleSubmissions"></span>
-            </a>
-        }
-        <!-- Tutor Effort Statistics -->
-        @if (exercise.isAtLeastInstructor && exercise.type === ExerciseType.TEXT) {
-            <a [routerLink]="baseResource() + 'tutor-effort-statistics'" class="btn btn-success btn-sm">
-                <fa-icon [icon]="faChartBar" />
-                <span class="d-none d-md-inline" jhiTranslate="artemisApp.textExercise.tutorEffortStatistics.title"></span>
-            </a>
-        }
-        <!-- Plagiarism -->
-        @if (exercise.type === ExerciseType.TEXT && exercise.isAtLeastEditor) {
-            <jhi-feature-overlay [enabled]="plagiarismEnabled()">
-                <a class="btn btn-info btn-sm" id="check-plagiarism-download" routerLink="plagiarism">
-                    <span jhiTranslate="artemisApp.textExercise.checkPlagiarism"></span>
-                </a>
-            </jhi-feature-overlay>
-        }
-        <!-- Delete exercise -->
-        @if (course() && exercise.isAtLeastInstructor) {
+    @if (section() === 'actions') {
+        <jhi-exercise-detail-actions>
+            <ng-container detailNavigationActions>
+                @if (course() && canAccessParticipationsAndScores()) {
+                    <a
+                        tumAetUiButton
+                        size="small"
+                        severity="primary"
+                        [routerLink]="baseResource() + 'participations'"
+                        [attr.aria-label]="'artemisApp.exercise.participations' | artemisTranslate"
+                        [tumAetUiTooltip]="'artemisApp.exercise.participations' | artemisTranslate"
+                        ><fa-icon [icon]="faListAlt" /><span class="hidden sm:inline" jhiTranslate="artemisApp.exercise.participations"></span
+                    ></a>
+                }
+                @if (exercise.teamMode && exercise.isAtLeastTutor) {
+                    <a
+                        tumAetUiButton
+                        size="small"
+                        severity="primary"
+                        [routerLink]="teamBaseResource() + 'teams'"
+                        [attr.aria-label]="'artemisApp.exercise.teams' | artemisTranslate"
+                        [tumAetUiTooltip]="'artemisApp.exercise.teams' | artemisTranslate"
+                        ><fa-icon [icon]="faUsers" /><span class="hidden sm:inline" jhiTranslate="artemisApp.exercise.teams"></span
+                    ></a>
+                }
+                @if (
+                    exercise.assessmentType === AssessmentType.SEMI_AUTOMATIC ||
+                    exercise.assessmentType === AssessmentType.MANUAL ||
+                    exercise.allowComplaintsForAutomaticAssessments
+                ) {
+                    <a
+                        tumAetUiButton
+                        size="small"
+                        severity="info"
+                        [routerLink]="shortBaseResource() + 'assessment-dashboard/' + exercise.id"
+                        [attr.aria-label]="'artemisApp.exercise.exerciseAssessmentDashboard' | artemisTranslate"
+                        [tumAetUiTooltip]="'artemisApp.exercise.exerciseAssessmentDashboard' | artemisTranslate"
+                        ><fa-icon [icon]="faUserCheck" /><span class="hidden sm:inline" jhiTranslate="artemisApp.exercise.exerciseAssessmentDashboard"></span
+                    ></a>
+                }
+                @if (course() && canAccessParticipationsAndScores()) {
+                    <a
+                        tumAetUiButton
+                        size="small"
+                        severity="info"
+                        [routerLink]="baseResource() + 'exercise-statistics'"
+                        [attr.aria-label]="'statistics.statistics-title' | artemisTranslate"
+                        [tumAetUiTooltip]="'statistics.statistics-title' | artemisTranslate"
+                        ><fa-icon [icon]="faChartBar" /><span class="hidden sm:inline" jhiTranslate="statistics.statistics-title"></span
+                    ></a>
+                }
+                @if (exercise.isAtLeastEditor && (exercise.type === ExerciseType.MODELING || exercise.type === ExerciseType.TEXT)) {
+                    <a
+                        tumAetUiButton
+                        size="small"
+                        severity="success"
+                        [routerLink]="baseResource() + 'example-submissions'"
+                        [attr.aria-label]="'entity.action.exampleSubmissions' | artemisTranslate"
+                        [tumAetUiTooltip]="'entity.action.exampleSubmissions' | artemisTranslate"
+                        data-testid="example-submissions-button"
+                        ><fa-icon [icon]="faBook" /><span class="hidden sm:inline" jhiTranslate="entity.action.exampleSubmissions"></span
+                    ></a>
+                }
+            </ng-container>
+            <ng-container detailEditingActions>
+                @if (exercise.isAtLeastEditor) {
+                    <a
+                        tumAetUiButton
+                        size="small"
+                        severity="warn"
+                        [routerLink]="baseResource() + 'edit'"
+                        [attr.aria-label]="'entity.action.edit' | artemisTranslate"
+                        [tumAetUiTooltip]="'entity.action.edit' | artemisTranslate"
+                        ><fa-icon [icon]="faWrench" /><span jhiTranslate="entity.action.edit"></span
+                    ></a>
+                }
+            </ng-container>
+            <ng-container detailMoreActions>
+                @if (exercise.type === ExerciseType.TEXT && (exercise.isAtLeastEditor || exercise.isAtLeastInstructor)) {
+                    <button
+                        tumAetUiButton
+                        type="button"
+                        severity="secondary"
+                        size="small"
+                        [tumAetUiMenuTrigger]="moreActions"
+                        [attr.aria-label]="'artemisApp.exerciseDetail.moreActions' | artemisTranslate"
+                        [tumAetUiTooltip]="'artemisApp.exerciseDetail.moreActions' | artemisTranslate"
+                        data-testid="exercise-more-actions"
+                    >
+                        <fa-icon [icon]="faEllipsis" /><span class="hidden sm:inline" jhiTranslate="artemisApp.exerciseDetail.moreActions"></span>
+                    </button>
+                    <ng-template #moreActions
+                        ><tumaet-ui-menu>
+                            @if (exercise.isAtLeastEditor) {
+                                <a tumAetUiMenuItem [routerLink]="plagiarismEnabled() ? 'plagiarism' : undefined" [disabled]="!plagiarismEnabled()" id="check-plagiarism-download"
+                                    ><span jhiTranslate="artemisApp.textExercise.checkPlagiarism"></span
+                                ></a>
+                            }
+                            @if (exercise.isAtLeastInstructor) {
+                                <a tumAetUiMenuItem [routerLink]="baseResource() + 'tutor-effort-statistics'"
+                                    ><fa-icon [icon]="faChartBar" /><span jhiTranslate="artemisApp.textExercise.tutorEffortStatistics.title"></span
+                                ></a>
+                            }</tumaet-ui-menu
+                    ></ng-template>
+                }
+            </ng-container>
+        </jhi-exercise-detail-actions>
+    }
+    @if (section() === 'configuration') {
+        <div class="my-6! flex flex-wrap items-center gap-2">
+            @if (irisEnabled() && exercise.type === ExerciseType.TEXT && exercise.isAtLeastInstructor && exercise.course && !isExamExercise()) {
+                <a
+                    tumAetUiButton
+                    size="small"
+                    severity="warn"
+                    [routerLink]="baseResource() + 'iris-settings'"
+                    tumAetUiTooltip="{{ 'artemisApp.iris.settings.button.textExercise.tooltip' | artemisTranslate }}"
+                    ><fa-icon [icon]="faRobot" /><span jhiTranslate="artemisApp.iris.settings.button.textExercise.title"></span
+                ></a>
+            }
+            <ng-content />
+        </div>
+    }
+    @if (section() === 'administration' && course() && exercise.isAtLeastInstructor) {
+        <div class="flex flex-wrap items-center gap-2">
             <button
                 type="button"
                 jhiDeleteButton
@@ -81,7 +131,7 @@
                 deleteQuestion="artemisApp.exercise.delete.question"
                 deleteConfirmationText="artemisApp.exercise.delete.typeNameToConfirm"
                 entitySummaryTitle="artemisApp.exercise.delete.summary.title"
-                [fetchEntitySummary]="fetchExerciseDeletionSummary()"
+                [fetchCategorizedEntitySummary]="fetchExerciseDeletionSummary()"
                 [translateValues]="{
                     courseTitle: course().title,
                     courseType: course().testCourse ? ('artemisApp.exercise.delete.testCourse' | artemisTranslate) : ('artemisApp.exercise.delete.realCourse' | artemisTranslate),
@@ -91,6 +141,6 @@
             >
                 <fa-icon [icon]="faTrash" />
             </button>
-        }
-    </div>
+        </div>
+    }
 }

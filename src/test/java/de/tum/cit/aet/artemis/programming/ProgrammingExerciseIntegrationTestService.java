@@ -86,6 +86,7 @@ import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
+import de.tum.cit.aet.artemis.exercise.util.AsyncDeletionTestUtilService;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.fileupload.util.ZipFileTestUtilService;
 import de.tum.cit.aet.artemis.localci.service.LocalVCLocalCITestService;
@@ -172,6 +173,9 @@ public class ProgrammingExerciseIntegrationTestService {
 
     @Autowired
     private CourseTestRepository courseRepository;
+
+    @Autowired
+    private AsyncDeletionTestUtilService asyncDeletionTestUtilService;
 
     @Autowired
     private ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
@@ -386,7 +390,7 @@ public class ProgrammingExerciseIntegrationTestService {
         final var path = "/api/programming/programming-exercises/" + programmingExercise.getId() + "/export-repos-by-participation-ids/" + String.join(",", participationIds);
         var exportOptions = new RepositoryExportOptionsDTO(false, false, false, null, excludePracticeSubmissions, false, false, false, false);
 
-        downloadedFile = request.postWithResponseBodyFile(path, exportOptions, HttpStatus.OK);
+        downloadedFile = request.postWithResponseBodyFile(path + "/for-instructor", exportOptions, HttpStatus.OK);
         assertThat(downloadedFile).exists();
 
         return unzipExportedFile();
@@ -438,7 +442,7 @@ public class ProgrammingExerciseIntegrationTestService {
                 + String.join(",", List.of(participation.get().getId().toString()));
         var exportOptions = new RepositoryExportOptionsDTO(false, false, false, null, false, true, false, false, false);
 
-        downloadedFile = request.postWithResponseBodyFile(path, exportOptions, HttpStatus.OK);
+        downloadedFile = request.postWithResponseBodyFile(path + "/for-instructor", exportOptions, HttpStatus.OK);
         assertThat(downloadedFile).exists();
 
         // Read exported project files and assert participant identifier appended
@@ -478,7 +482,7 @@ public class ProgrammingExerciseIntegrationTestService {
         // addParticipantName is on, so the export tries to rename the project and runs into the unparseable files
         var exportOptions = new RepositoryExportOptionsDTO(false, false, false, null, false, true, false, false, false);
 
-        downloadedFile = request.postWithResponseBodyFile(path, exportOptions, HttpStatus.OK);
+        downloadedFile = request.postWithResponseBodyFile(path + "/for-instructor", exportOptions, HttpStatus.OK);
         assertThat(downloadedFile).exists();
 
         // The export still succeeds, and the files it could not rename are exported unchanged instead of being corrupted or dropped.
@@ -504,7 +508,7 @@ public class ProgrammingExerciseIntegrationTestService {
         // all options false by default, only test if export works at all
         var exportOptions = new RepositoryExportOptionsDTO();
 
-        downloadedFile = request.postWithResponseBodyFile(path, exportOptions, HttpStatus.OK);
+        downloadedFile = request.postWithResponseBodyFile(path + "/for-instructor", exportOptions, HttpStatus.OK);
         assertThat(downloadedFile).exists();
 
         List<Path> entries = unzipExportedFile();
@@ -615,7 +619,8 @@ public class ProgrammingExerciseIntegrationTestService {
             mockDelegate.mockDeleteBuildPlan(projectKey, projectKey + "-" + planName.toUpperCase(Locale.ROOT), false);
         }
         mockDelegate.mockDeleteBuildPlanProject(projectKey, false);
-        request.delete(path, HttpStatus.OK, params);
+        request.delete(path, HttpStatus.ACCEPTED, params);
+        asyncDeletionTestUtilService.awaitExerciseDeletion(programmingExercise.getId());
     }
 
     void testProgrammingExerciseDelete_failToDeleteBuildPlan() throws Exception {
@@ -630,7 +635,9 @@ public class ProgrammingExerciseIntegrationTestService {
         }
         mockDelegate.mockDeleteBuildPlanProject(projectKey, false);
 
-        request.delete(path, HttpStatus.INTERNAL_SERVER_ERROR, params);
+        // the deletion is accepted and fails in the background
+        request.delete(path, HttpStatus.ACCEPTED, params);
+        asyncDeletionTestUtilService.awaitExerciseDeletionFailure(programmingExercise.getId());
     }
 
     void testProgrammingExerciseDelete_buildPlanDoesntExist() throws Exception {
@@ -645,7 +652,8 @@ public class ProgrammingExerciseIntegrationTestService {
         }
         mockDelegate.mockDeleteBuildPlanProject(projectKey, false);
 
-        request.delete(path, HttpStatus.OK, params);
+        request.delete(path, HttpStatus.ACCEPTED, params);
+        asyncDeletionTestUtilService.awaitExerciseDeletion(programmingExercise.getId());
     }
 
     void testProgrammingExerciseDelete_failToDeleteCiProject() throws Exception {
@@ -660,7 +668,9 @@ public class ProgrammingExerciseIntegrationTestService {
         }
         mockDelegate.mockDeleteBuildPlanProject(projectKey, true);
 
-        request.delete(path, HttpStatus.INTERNAL_SERVER_ERROR, params);
+        // the deletion is accepted and fails in the background
+        request.delete(path, HttpStatus.ACCEPTED, params);
+        asyncDeletionTestUtilService.awaitExerciseDeletionFailure(programmingExercise.getId());
     }
 
     // VCS project deletion uses local VCS in the test environment, so no external call fails.
@@ -677,7 +687,8 @@ public class ProgrammingExerciseIntegrationTestService {
         }
         mockDelegate.mockDeleteBuildPlanProject(projectKey, false);
 
-        request.delete(path, HttpStatus.OK, params);
+        request.delete(path, HttpStatus.ACCEPTED, params);
+        asyncDeletionTestUtilService.awaitExerciseDeletion(programmingExercise.getId());
     }
 
     // VCS repository deletion uses local VCS in the test environment, so no external call fails.
@@ -694,13 +705,14 @@ public class ProgrammingExerciseIntegrationTestService {
         }
         mockDelegate.mockDeleteBuildPlanProject(projectKey, false);
 
-        request.delete(path, HttpStatus.OK, params);
+        request.delete(path, HttpStatus.ACCEPTED, params);
+        asyncDeletionTestUtilService.awaitExerciseDeletion(programmingExercise.getId());
     }
 
-    void testProgrammingExerciseDelete_invalidId_notFound() throws Exception {
+    void testProgrammingExerciseDelete_invalidId_forbidden() throws Exception {
         programmingExercise.setId(getMaxProgrammingExerciseId() + 1);
         final var path = "/api/programming/programming-exercises/" + programmingExercise.getId();
-        request.delete(path, HttpStatus.NOT_FOUND);
+        request.delete(path, HttpStatus.FORBIDDEN);
     }
 
     void testProgrammingExerciseDelete_instructorNotInCourse_forbidden() throws Exception {
@@ -813,10 +825,10 @@ public class ProgrammingExerciseIntegrationTestService {
         request.get(path, HttpStatus.FORBIDDEN, ProgrammingExerciseResponseDTO.class);
     }
 
-    void testGetProgrammingExerciseWithSetupParticipations_invalidId_notFound() throws Exception {
+    void testGetProgrammingExerciseWithSetupParticipations_invalidId_forbidden() throws Exception {
         programmingExercise.setId(getMaxProgrammingExerciseId() + 1);
         final var path = "/api/programming/programming-exercises/" + programmingExercise.getId() + "/with-participations";
-        request.get(path, HttpStatus.NOT_FOUND, ProgrammingExerciseResponseDTO.class);
+        request.get(path, HttpStatus.FORBIDDEN, ProgrammingExerciseResponseDTO.class);
     }
 
     void testGetProgrammingExercisesForCourse() throws Exception {
@@ -1083,10 +1095,10 @@ public class ProgrammingExerciseIntegrationTestService {
         request.patchWithResponseBody(endpoint, "a new problem statement", ProgrammingExercise.class, HttpStatus.FORBIDDEN, MediaType.TEXT_PLAIN);
     }
 
-    void updateProblemStatement_invalidId_notFound() throws Exception {
+    void updateProblemStatement_invalidId_forbidden() throws Exception {
         programmingExercise.setId(getMaxProgrammingExerciseId() + 1);
         final var endpoint = "/api/programming/programming-exercises/" + programmingExercise.getId() + "/problem-statement";
-        request.patchWithResponseBody(endpoint, "a new problem statement", ProgrammingExercise.class, HttpStatus.NOT_FOUND, MediaType.TEXT_PLAIN);
+        request.patchWithResponseBody(endpoint, "a new problem statement", ProgrammingExercise.class, HttpStatus.FORBIDDEN, MediaType.TEXT_PLAIN);
     }
 
     void createProgrammingExercise_exerciseIsNull_badRequest() throws Exception {
@@ -1528,8 +1540,8 @@ public class ProgrammingExerciseIntegrationTestService {
         request.post(getDefaultAPIEndpointForExportRepos(), options, HttpStatus.FORBIDDEN);
     }
 
-    void generateStructureOracleForExercise_exerciseDoesNotExist_badRequest() throws Exception {
-        request.put("/api/programming/programming-exercises/" + (programmingExercise.getId() + 8337) + "/generate-tests", programmingExercise, HttpStatus.NOT_FOUND);
+    void generateStructureOracleForExercise_exerciseDoesNotExist_forbidden() throws Exception {
+        request.put("/api/programming/programming-exercises/" + (programmingExercise.getId() + 8337) + "/generate-tests", programmingExercise, HttpStatus.FORBIDDEN);
     }
 
     void generateStructureOracleForExercise_userIsNotAdminInCourse_badRequest() throws Exception {
@@ -1546,8 +1558,8 @@ public class ProgrammingExerciseIntegrationTestService {
         request.put("/api/programming/programming-exercises/" + programmingExercise.getId() + "/generate-tests", programmingExercise, HttpStatus.BAD_REQUEST);
     }
 
-    void getTestCaseState_exerciseDoesNotExist_notFound() throws Exception {
-        request.get("/api/programming/programming-exercises/" + (programmingExercise.getId() + 1337) + "/test-case-state", HttpStatus.NOT_FOUND, String.class);
+    void getTestCaseState_exerciseDoesNotExist_forbidden() throws Exception {
+        request.get("/api/programming/programming-exercises/" + (programmingExercise.getId() + 1337) + "/test-case-state", HttpStatus.FORBIDDEN, String.class);
     }
 
     void getTestCaseState_isNotTeachingAssistant_forbidden() throws Exception {
@@ -1630,10 +1642,10 @@ public class ProgrammingExerciseIntegrationTestService {
         assertThat(testCasesResponse).isNotNull();
     }
 
-    void updateTestCases_nonExistingExercise_notFound() throws Exception {
+    void updateTestCases_nonExistingExercise_forbidden() throws Exception {
         final var update = new ProgrammingExerciseTestCaseDTO(null, null, null, null, null);
         final var endpoint = "/programming/programming-exercises/" + (programmingExercise.getId() + 1337) + "/update-test-cases";
-        request.patchWithResponseBody("/api" + endpoint, List.of(update), String.class, HttpStatus.NOT_FOUND);
+        request.patchWithResponseBody("/api" + endpoint, List.of(update), String.class, HttpStatus.FORBIDDEN);
     }
 
     void updateTestCases_instructorInWrongCourse_forbidden() throws Exception {
@@ -1970,7 +1982,7 @@ public class ProgrammingExerciseIntegrationTestService {
     }
 
     void testGetPlagiarismResultWithoutExercise() throws Exception {
-        PlagiarismResult result = request.get("/api/programming/programming-exercises/-1/plagiarism-result", HttpStatus.NOT_FOUND, PlagiarismResult.class);
+        PlagiarismResult result = request.get("/api/programming/programming-exercises/-1/plagiarism-result", HttpStatus.FORBIDDEN, PlagiarismResult.class);
         assertThat(result).isNull();
     }
 
@@ -2041,7 +2053,7 @@ public class ProgrammingExerciseIntegrationTestService {
     }
 
     void testGetAuxiliaryRepositoriesMissingExercise() throws Exception {
-        request.get(defaultGetAuxReposEndpoint(-1L), HttpStatus.NOT_FOUND, List.class);
+        request.get(defaultGetAuxReposEndpoint(-1L), HttpStatus.FORBIDDEN, List.class);
     }
 
     void testGetAuxiliaryRepositoriesOk() throws Exception {
@@ -2081,7 +2093,7 @@ public class ProgrammingExerciseIntegrationTestService {
 
     void testResetExerciseNotFound() throws Exception {
         var resetOptions = new ProgrammingExerciseResetOptionsDTO(false, false);
-        request.put(defaultResetEndpoint(-1L), resetOptions, HttpStatus.NOT_FOUND);
+        request.put(defaultResetEndpoint(-1L), resetOptions, HttpStatus.FORBIDDEN);
     }
 
     void testResetOnlyDeleteStudentParticipationsSubmissionsAndResultsSuccess() throws Exception {
@@ -2094,7 +2106,7 @@ public class ProgrammingExerciseIntegrationTestService {
         assertThat(programmingExerciseStudentParticipationRepository.findByExerciseId(programmingExercise.getId())).hasSize(2);
 
         var resetOptions = new ProgrammingExerciseResetOptionsDTO(true, false);
-        request.put(defaultResetEndpoint(programmingExercise.getId()), resetOptions, HttpStatus.OK);
+        request.put(defaultResetEndpoint(programmingExercise.getId()) + "-participations", resetOptions, HttpStatus.OK);
 
         // No participations exist after reset
         assertThat(programmingExerciseStudentParticipationRepository.findByExerciseId(programmingExercise.getId())).isEmpty();
@@ -2266,9 +2278,9 @@ public class ProgrammingExerciseIntegrationTestService {
                 UpdateProgrammingExerciseDTO.of(programmingExercise, programmingExerciseUtilService.buildConfigOf(programmingExercise)), HttpStatus.FORBIDDEN);
     }
 
-    void testReEvaluateAndUpdateProgrammingExercise_notFound() throws Exception {
+    void testReEvaluateAndUpdateProgrammingExercise_unknownExercise_forbidden() throws Exception {
         request.put("/api/programming/programming-exercises/" + 123456789 + "/re-evaluate",
-                UpdateProgrammingExerciseDTO.of(programmingExercise, programmingExerciseUtilService.buildConfigOf(programmingExercise)), HttpStatus.NOT_FOUND);
+                UpdateProgrammingExerciseDTO.of(programmingExercise, programmingExerciseUtilService.buildConfigOf(programmingExercise)), HttpStatus.FORBIDDEN);
     }
 
     void testReEvaluateAndUpdateProgrammingExercise_isNotSameGivenExerciseIdInRequestBody_conflict() throws Exception {

@@ -7,7 +7,10 @@ buildscript {
     // This is a build-time-only dependency (client code generation), not shipped in the WAR.
     configurations.classpath {
         resolutionStrategy {
-            force "com.github.jknack:handlebars:4.5.5"
+            // Plugin dependencies resolve independently of the application constraint below.
+            // Guava < 33.7.2 is affected by CVE-2026-102554 (deserialization memory exhaustion).
+            force "com.google.guava:guava:33.7.2-jre"
+            force "com.github.jknack:handlebars:4.5.7"
             // Force the patched Apache HttpComponents onto the build-script / plugin classpath too. The
             // org.owasp.dependencycheck and org.springframework.boot plugins drag in httpclient5 5.6.1 /
             // httpcore5 5.4.2 / httpcore5-h2 5.4, which the GitHub dependency graph reports and Dependabot flags
@@ -24,10 +27,10 @@ buildscript {
             force "org.apache.httpcomponents.core5:httpcore5-h2:5.4.4"
             // Force the patched jsoup onto the build-script / plugin classpath as well. org.owasp.dependencycheck
             // (dependency-check-core 13.0.0) resolves jsoup 1.23.1 there, which is affected by CVE-2026-75140 and is
-            // reported by the GitHub dependency graph even though the shipped WAR declares 1.23.2 directly. Build-time
+            // reported by the GitHub dependency graph even though the shipped WAR declares 1.24.1 directly. Build-time
             // only, not shipped. Keep equal to the project-level jsoup version below and to the minimum in
             // gradle/dependency-families.gradle (verifyBuildscriptClasspathPins).
-            force "org.jsoup:jsoup:1.23.2"
+            force "org.jsoup:jsoup:1.24.1"
         }
     }
     // The custom OpenAPI generator (generatorName "angular22", https://github.com/ls1intum/openapi-generator-angular22)
@@ -50,7 +53,7 @@ buildscript {
             mavenCentral()
         }
         dependencies {
-            classpath "de.tum.cit.aet:openapi-generator-angular22:1.0.0"
+            classpath "de.tum.cit.aet:openapi-generator-angular22:3.0.0"
         }
     }
     dependencies {
@@ -79,17 +82,17 @@ plugins {
     id "com.adarshr.test-logger" version "4.0.0"
     id "com.diffplug.spotless" version "${spotless_plugin_version}"
     id "com.github.andygoossens.modernizer" version "${modernizer_plugin_version}"
-    id "io.github.ben-manes.versions" version "0.66.0"
+    id "io.github.ben-manes.versions" version "0.67.0"
     id "com.github.node-gradle.node" version "${gradle_node_plugin_version}"
     id "com.google.cloud.tools.jib" version "3.5.4"
     id "com.gorylenko.gradle-git-properties" version "4.0.1"
     id "io.spring.dependency-management" version "1.1.7"
-    id "nebula.lint" version "21.3.0"
+    id "nebula.lint" version "21.4.1"
     id "org.liquibase.gradle" version "${liquibase_plugin_version}"
     id "org.owasp.dependencycheck" version "13.0.0"
     id "org.sonarqube" version "${sonarqube_plugin_version}"
     id "org.springframework.boot" version "${spring_boot_version}"
-    id "org.springdoc.openapi-gradle-plugin" version "1.9.0"
+    id "org.springdoc.openapi-gradle-plugin" version "2.1.0"
     // Bump this one by hand, never on the strength of a green build. The custom "angular22" generator on the
     // buildscript classpath above declares openapi-generator 7.21.0 and is discovered through ServiceLoader, so
     // raising the plugin runs that generator against a core it was not compiled against - and nothing in CI would
@@ -99,8 +102,9 @@ plugins {
     // src/main/webapp/app/openapi aside, `git checkout` it, switch version, regenerate, diff.
     // 7.21.0 -> 7.25.0 was checked that way: the generator loads and emits a complete client, and the only
     // difference is `{ [key: string]: any }` becoming `{ [key: string]: any | null }` for free-form maps, which is
-    // the same type in TypeScript.
-    id "org.openapi.generator" version "7.25.0"
+    // the same type in TypeScript. 7.25.0 -> 7.27.0 was checked the same way and produced an identical client apart
+    // from .openapi-generator/VERSION.
+    id "org.openapi.generator" version "7.27.0"
     id "com.google.osdetector" version "1.7.3"
     id "org.cyclonedx.bom" version "3.5.1"
 }
@@ -113,7 +117,7 @@ envProperties.each { key, value ->
 }
 
 group = "de.tum.cit.aet.artemis"
-version = "10.5"
+version = "10.7"
 description = "Interactive Learning with Individual Feedback"
 
 java {
@@ -123,7 +127,7 @@ java {
 }
 
 wrapper {
-    gradleVersion = "9.8.2"
+    gradleVersion = "9.9.0"
 }
 
 node {
@@ -242,6 +246,7 @@ tasks.named('generateGitProperties') {
 //         this build uses today; after a Spring Boot bump the graph walks 4.1.1's imports as well.
 ext["hazelcast.version"] = hazelcast_version
 ext["testcontainers-redis-module.version"] = testcontainers_redis_version
+ext["logback.version"] = logback_version
 
 // Pin the entire Jackson 2.x and 3.x families to releases outside every known jackson-databind vulnerable
 // range. Spring Boot / Spring AI manage older jackson BOMs as dependency-management constraints, which beat
@@ -259,8 +264,12 @@ ext["testcontainers-redis-module.version"] = testcontainers_redis_version
 // com.fasterxml.jackson.core:jackson-annotations (that artifact never moved to the tools.jackson group) at a
 // version trailing the Jackson 2 line, and io.spring.dependency-management lets a later import override an
 // earlier one. Keeping the Jackson 2 BOM last is what stops it from dragging jackson-annotations backwards.
+// OpenTelemetry is pinned the same way: the Spring Boot BOM manages opentelemetry-api at an older line (1.62.0),
+// which the GitHub dependency graph reports (GHSA-ccrj-gw8r-854m, fixed in 1.67.0) although the resolutionStrategy
+// force above already puts every runtime configuration on ${opentelemetry_version}.
 dependencyManagement {
     imports {
+        mavenBom "io.opentelemetry:opentelemetry-bom:${opentelemetry_version}"
         mavenBom "tools.jackson:jackson-bom:3.2.4"
         mavenBom "com.fasterxml.jackson:jackson-bom:2.22.4"
     }
@@ -268,6 +277,7 @@ dependencyManagement {
 
 configurations {
     mockitoAgent
+    structuralOracleGrader
 }
 
 repositories {
@@ -459,7 +469,6 @@ dependencies {
         }
     }
 
-    // Sentry depends on this
     implementation "org.apache.logging.log4j:log4j-to-slf4j:2.26.1"
     // Declared explicitly so the direct version wins over the log4j-bom version managed by the Spring Boot BOM, which
     // still sits in the range vulnerable to the improper encoding of non-finite floating-point values during
@@ -496,14 +505,11 @@ dependencies {
     }
 
     implementation "com.thoughtworks.qdox:qdox:2.2.0"
-    implementation "io.sentry:sentry-logback:${sentry_version}"
-    // Use sentry-spring-boot-4-starter for Spring Boot 4 compatibility (replaces sentry-spring-boot-starter-jakarta)
-    implementation "io.sentry:sentry-spring-boot-4-starter:${sentry_version}"
 
     implementation "ch.qos.logback:logback-classic"
     implementation "ch.qos.logback:logback-core"
 
-    implementation "org.jsoup:jsoup:1.23.2"
+    implementation "org.jsoup:jsoup:1.24.1"
     // Shibboleth 9.2.3 decodes all Base64 with a STRICT 76-column codec. Since commons-codec 1.23.0,
     // this rejects valid SAML metadata certificates and SAML messages with different whitespace.
     // Update commons-codec to 1.23.0 once the OpenSAML dependency brings in shib-support 9.3.0 with the fix for
@@ -631,7 +637,7 @@ dependencies {
     // passkey functionality to simplify login — Spring Security versions managed by the Spring Boot BOM.
     implementation "org.springframework.security:spring-security-webauthn"
     implementation "com.webauthn4j:webauthn4j-spring-security-core:0.12.0.RELEASE"
-    implementation "com.webauthn4j:webauthn4j-core:0.31.11.RELEASE"
+    implementation "com.webauthn4j:webauthn4j-core:0.32.0.RELEASE"
 
     implementation "org.springframework.security:spring-security-messaging"
     implementation "org.springframework.security:spring-security-ldap"
@@ -664,6 +670,10 @@ dependencies {
             version { strictly("33.7.2-jre") }
             because("Force the newest guava across its many transitive users to avoid outdated-dependency CVEs")
         }
+        checkstyle("com.google.guava:guava") {
+            version { strictly("33.7.2-jre") }
+            because("Checkstyle has a separate classpath; patch CVE-2026-102554 there as well")
+        }
         implementation("org.apache.santuario:xmlsec") {
             version { strictly("4.0.4") }
             because("Pulled transitively by OpenSAML (SAML2); force the newest version to avoid CVEs")
@@ -693,20 +703,21 @@ dependencies {
     implementation "org.bouncycastle:bcpg-jdk18on:1.86"
 
     // required for database connections
+    // REMOVE_IN_ARTEMIS_11 (MySQL): remove the driver once MySQL support is removed
     implementation "com.mysql:mysql-connector-j:${mysql_connector_version}"
     implementation "org.postgresql:postgresql:42.7.14"
 
     // Required by JPlag
-    implementation "com.ibm.icu:icu4j-charset:78.3"
+    implementation "com.ibm.icu:icu4j-charset:79.1"
     // Required by exam session service
     implementation "com.github.seancfoley:ipaddress:5.6.2"
 
     // used for testing and Java Template Upgrade Service
     implementation "org.apache.pdfbox:pdfbox:3.0.8"
     implementation "org.apache.commons:commons-csv:1.14.1"
-    implementation "org.commonmark:commonmark:0.31.0"
-    implementation "org.commonmark:commonmark-ext-gfm-tables:0.31.0"
-    implementation "org.commonmark:commonmark-ext-gfm-strikethrough:0.31.0"
+    implementation "org.commonmark:commonmark:0.32.0"
+    implementation "org.commonmark:commonmark-ext-gfm-tables:0.32.0"
+    implementation "org.commonmark:commonmark-ext-gfm-strikethrough:0.32.0"
 
     implementation "commons-fileupload:commons-fileupload:1.6.0"
 
@@ -719,7 +730,7 @@ dependencies {
     checkstyle "org.apache.commons:commons-lang3:${commons_lang3_version}"
     checkstyle "org.apache.commons:commons-text:${commons_text_version}"
     // needed for OpenAPI generation (v3 required for Spring Boot 4)
-    implementation "org.springdoc:springdoc-openapi-starter-webmvc-ui:3.1.1"
+    implementation "org.springdoc:springdoc-openapi-starter-webmvc-ui:3.2.0"
 
 
     // NOTE: we want to keep the same unique version for all configurations, implementation and annotationProcessor
@@ -766,15 +777,15 @@ dependencies {
     }
     testImplementation "org.mockito:mockito-junit-jupiter:${mockito_version}"
 
-    testImplementation "io.github.classgraph:classgraph:4.8.199"
+    testImplementation "io.github.classgraph:classgraph:4.8.200"
     testImplementation "org.awaitility:awaitility:4.3.0"
     testImplementation "org.apache.maven.shared:maven-invoker:3.3.0"
-    testImplementation "org.gradle:gradle-tooling-api:9.8.2"
-    testImplementation "org.apache.maven.surefire:surefire-report-parser:3.6.0"
+    testImplementation "org.gradle:gradle-tooling-api:9.9.0"
+    testImplementation "org.apache.maven.surefire:surefire-report-parser:3.6.1"
     testImplementation "io.zonky.test:embedded-database-spring-test:2.8.0"
     testImplementation "com.redis:testcontainers-redis:${testcontainers_redis_version}"
     testImplementation "org.testcontainers:testcontainers-weaviate:${testcontainers_version}"
-    testImplementation "com.icegreen:greenmail-junit5:2.1.14"
+    testImplementation "com.icegreen:greenmail-junit5:2.1.15"
     testImplementation "com.tngtech.archunit:archunit:1.5.1"
 
     // we only need the database present at runtime
@@ -782,6 +793,9 @@ dependencies {
 
     // Lightweight JSON library needed for the internals of the MockRestServiceServer
     testImplementation "org.json:json:20260814"
+    structuralOracleGrader("de.tum.cit.ase:ares:2.2.1") {
+        transitive = false
+    }
 
     testImplementation "org.junit.jupiter:junit-jupiter:${junit_version}"
     testImplementation "org.junit.jupiter:junit-jupiter-api:${junit_version}"
@@ -796,8 +810,15 @@ dependencies {
 
 // we have to apply the test.gradle file after the dependencies block, otherwise we get the error  Cannot change dependencies of dependency configuration ':mockitoAgent' after it has been resolved
 apply from: "gradle/test.gradle"
-apply from: "gradle/openapi.gradle"
 
+// Keep Ares' own global test configuration off the Artemis test classpath.
+tasks.withType(Test).configureEach {
+    inputs.files(configurations.structuralOracleGrader)
+    doFirst {
+        systemProperty "artemis.test.structuralOracleGraderJar", configurations.structuralOracleGrader.singleFile.absolutePath
+    }
+}
+apply from: "gradle/openapi.gradle"
 
 dependencyManagement {
     imports {
@@ -847,6 +868,7 @@ configurations.matching { it.name in ["compileClasspath", "runtimeClasspath", "t
 configurations.matching { it.name != 'mockitoAgent' }.configureEach {
     resolutionStrategy {
         dependencySubstitution {
+            // REMOVE_IN_ARTEMIS_11 (MySQL): remove the testcontainers mysql substitution
             substitute module("org.testcontainers:mysql") using module("org.testcontainers:testcontainers-mysql:${testcontainers_version}")
             substitute module("org.testcontainers:postgresql") using module("org.testcontainers:testcontainers-postgresql:${testcontainers_version}")
             substitute module("org.testcontainers:jdbc") using module("org.testcontainers:testcontainers-jdbc:${testcontainers_version}")
@@ -918,6 +940,7 @@ tasks.named("dependencyUpdates").configure {
 // 2) Execute tests (PostgreSQL, Docker required):  ./gradlew test -x webapp
 // 2a) Execute tests with coverage report:          ./gradlew test jacocoTestReport -x webapp
 // 2b) Execute tests with H2 (no Docker needed):    ./gradlew test -x webapp -Dzonky.test.database.type=H2
+// REMOVE_IN_ARTEMIS_11 (MySQL): remove the testMysql task and this line
 // 2c) Execute tests with MySQL test container:     ./gradlew testMysql -x webapp  (requires Docker)
 // 2d) Run a single test:                           ./gradlew test --tests ExamIntegrationTest -x webapp or ./gradlew test --tests ExamIntegrationTest.testGetExamScore -x webapp
 // 2e) Run tests for modules:                       ./gradlew test -DincludeModules=athena,atlas -x webapp (executes all tests in directories ./src/main/test/.../athena and ./src/main/test/.../atlas) + ArchitectureTests
@@ -933,6 +956,6 @@ tasks.named("dependencyUpdates").configure {
 // 11) Create changelog between Java and DB         ./gradlew liquibaseDiffChangeLog (make sure to set the correct username and password in liquibase.gradle)
 // 12) Generate initial schema from DB              ./gradlew liquibaseGenerateChangelog (make sure to set the correct username and password in liquibase.gradle)
 // 13) Find unused dependencies                     ./gradlew lintGradle -x webapp
-// 14) Generate OpenAPI client services & DTOs:     ./gradlew openApiGenerate -x webapp (only relevant for tutorial groups and hyperion at the moment)
-// 15) Generate OpenAPI spec:                       ./gradlew generateApiDocs -x webapp (only relevant for tutorial groups and hyperion at the moment)
+// 14) Generate OpenAPI client services & DTOs:     ./gradlew openApiGenerate -x webapp
+// 15) Generate OpenAPI spec:                       ./gradlew generateOpenApiDocs pruneOpenApiSpec -x webapp
 // 16) Generate SBOM (Software Bill of Materials):  ./gradlew -Pprod -Psbom cyclonedxBom -x webapp

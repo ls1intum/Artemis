@@ -1,3 +1,5 @@
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
+import { EditorViewingPurpose } from 'app/exercise/shared/exercise-submission.interface';
 import { Component, ViewEncapsulation, effect, inject, input, signal, untracked } from '@angular/core';
 import { TextSubmissionService } from 'app/text/overview/service/text-submission.service';
 import { FromToElement } from 'app/plagiarism/shared/entities/PlagiarismSubmissionElement';
@@ -27,12 +29,13 @@ type FilesWithType = { [p: string]: FileType };
     styleUrls: ['./text-submission-viewer.component.scss'],
     templateUrl: './text-submission-viewer.component.html',
     encapsulation: ViewEncapsulation.None,
-    imports: [SplitPaneHeaderComponent, FaIconComponent, TranslateDirective, NgClass],
+    imports: [TumAetUiButtonDirective, SplitPaneHeaderComponent, FaIconComponent, TranslateDirective, NgClass],
 })
 export class TextSubmissionViewerComponent {
     private repositoryService = inject(CodeEditorRepositoryFileService);
     private textSubmissionService = inject(TextSubmissionService);
 
+    viewingPurpose = input<EditorViewingPurpose>('owner');
     exercise = input<ProgrammingExercise | TextExercise | PlagiarismCaseExercise>();
     matches = input<Map<string, FromToElement[]>>();
     plagiarismSubmission = input<PlagiarismSubmission>();
@@ -92,10 +95,11 @@ export class TextSubmissionViewerComponent {
 
     constructor() {
         // Replaces ngOnChanges: (re)load the submission's files/content whenever the plagiarism submission changes.
-        // The load runs untracked so only plagiarismSubmission() retriggers it (hideContent()/exercise() are read at
+        // The load runs untracked so only the submission and viewing purpose retrigger it (hideContent()/exercise() are read at
         // load time, not as triggers, mirroring the former `if (changes.plagiarismSubmission)` guard).
         effect(() => {
             const plagiarismSubmission = this.plagiarismSubmission();
+            this.viewingPurpose();
             untracked(() => {
                 if (plagiarismSubmission && !this.hideContent()) {
                     this.loading.set(true);
@@ -171,7 +175,7 @@ export class TextSubmissionViewerComponent {
     private loadTextExercise(currentPlagiarismSubmission: PlagiarismSubmission) {
         this.isProgrammingExercise.set(false);
 
-        this.textSubmissionService.getTextSubmission(currentPlagiarismSubmission.submissionId).subscribe({
+        this.textSubmissionService.getTextSubmission(currentPlagiarismSubmission.submissionId, this.viewingPurpose()).subscribe({
             next: (submission: TextSubmission) => {
                 this.loading.set(false);
                 this.fileContent.set(this.insertMatchTokens(submission.text || ''));

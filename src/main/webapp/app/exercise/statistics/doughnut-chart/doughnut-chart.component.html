@@ -1,4 +1,4 @@
-<div class="mx-2 d-flex flex-column justify-content-between h-100" data-testid="exercise-statistic-card">
+<div class="mx-2 flex flex-col justify-between h-full" data-testid="exercise-statistic-card">
     @if (titleLink()) {
         <a [routerLink]="titleLink()">
             <h4 class="text-center doughnut-chart-heading" data-testid="exercise-statistic-heading">{{ 'exercise-statistics.' + doughnutChartTitle() | artemisTranslate }}</h4>
@@ -8,7 +8,7 @@
         <h4 class="text-center doughnut-chart-heading" data-testid="exercise-statistic-heading">{{ 'exercise-statistics.' + doughnutChartTitle() | artemisTranslate }}</h4>
     }
     <div
-        class="doughnut-chart-container position-relative"
+        class="doughnut-chart-container relative"
         [ngClass]="titleLink() ? 'clickable' : ''"
         (click)="openCorrespondingPage()"
         #keyboardAction10

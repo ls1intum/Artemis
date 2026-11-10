@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.assessment.service;
 
 import java.util.Collection;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -23,14 +24,9 @@ public final class GradingCriteriaMapper {
      * @return new criteria retaining every unpersisted row
      */
     public static Set<GradingCriterion> create(Collection<GradingCriterionDTO> requested, Exercise exercise) {
-        if (requested == null) {
-            return new java.util.HashSet<>();
-        }
-        return requested.stream().map(dto -> {
-            GradingCriterion criterion = dto.toEntity();
-            criterion.setExercise(exercise);
-            return criterion;
-        }).collect(Collectors.toSet());
+        Set<GradingCriterion> criteria = GradingCriterionDTO.toEntities(requested);
+        criteria.forEach(criterion -> criterion.setExercise(exercise));
+        return criteria;
     }
 
     /**
@@ -43,7 +39,9 @@ public final class GradingCriteriaMapper {
         Set<GradingCriterion> managedCriteria = exercise.ensureGradingCriteriaSet();
         Map<Long, GradingCriterion> existingById = managedCriteria.stream().filter(criterion -> criterion.getId() != null)
                 .collect(Collectors.toMap(GradingCriterion::getId, criterion -> criterion, (first, second) -> first));
-        Set<GradingCriterion> updated = requested.stream().map(dto -> {
+        Set<GradingCriterion> updated = new LinkedHashSet<>();
+        long position = 0;
+        for (GradingCriterionDTO dto : requested) {
             GradingCriterion criterion = dto.id() != null ? existingById.get(dto.id()) : null;
             if (criterion == null) {
                 criterion = dto.toEntity();
@@ -52,8 +50,9 @@ public final class GradingCriteriaMapper {
             else {
                 dto.applyTo(criterion);
             }
-            return criterion;
-        }).collect(Collectors.toSet());
+            criterion.setSortOrder(position++);
+            updated.add(criterion);
+        }
         managedCriteria.clear();
         managedCriteria.addAll(updated);
     }

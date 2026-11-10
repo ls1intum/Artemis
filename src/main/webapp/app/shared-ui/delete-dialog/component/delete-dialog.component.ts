@@ -1,41 +1,60 @@
-import { Component, DestroyRef, OnInit, inject, signal, viewChild } from '@angular/core';
+import { Component, DestroyRef, OnInit, computed, inject, signal, viewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
+import {
+    TumAetUiButtonDirective,
+    TumAetUiCheckboxComponent,
+    TumAetUiDialogConfig,
+    TumAetUiDialogRef,
+    TumAetUiProgressSpinnerComponent,
+    TumAetUiTableDirective,
+} from '@tumaet/ui-angular';
 import { mapValues } from 'lodash-es';
 import {
     ActionType,
+    DeleteDialogData,
     DeleteDialogDeleteHandler,
     EntitySummary,
     EntitySummaryCategory,
     EntitySummaryItem,
     triggerDeleteDialogDelete,
 } from 'app/shared-ui/delete-dialog/delete-dialog.model';
+import { hasLargeSummaryCount } from 'app/shared-ui/delete-dialog/entity-summary.util';
 import { Observable } from 'rxjs';
 import { AlertService } from 'app/foundation/service/alert.service';
-import { faBan, faCheck, faSpinner, faTimes, faTrash, faUndo } from '@fortawesome/free-solid-svg-icons';
+import { faBan, faCheck, faExclamationTriangle, faSpinner, faTimes, faTrash, faUndo } from '@fortawesome/free-solid-svg-icons';
 import { ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
 import { FormsModule, NgForm } from '@angular/forms';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ConfirmEntityNameComponent } from '../../confirm-entity-name/confirm-entity-name.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { TableModule } from 'primeng/table';
-import { ButtonModule } from 'primeng/button';
-import { CheckboxModule } from 'primeng/checkbox';
-import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { HttpErrorResponse } from '@angular/common/http';
+
+let nextSummaryId = 0;
 
 @Component({
     selector: 'jhi-delete-dialog',
     templateUrl: './delete-dialog.component.html',
     styleUrls: ['./delete-dialog.component.scss'],
-    imports: [FormsModule, TranslateDirective, ConfirmEntityNameComponent, FaIconComponent, ArtemisTranslatePipe, TableModule, ButtonModule, CheckboxModule, ProgressSpinnerModule],
+    imports: [
+        FormsModule,
+        TranslateDirective,
+        ConfirmEntityNameComponent,
+        FaIconComponent,
+        ArtemisTranslatePipe,
+        TumAetUiTableDirective,
+        TumAetUiButtonDirective,
+        TumAetUiCheckboxComponent,
+        TumAetUiProgressSpinnerComponent,
+    ],
 })
 export class DeleteDialogComponent implements OnInit {
-    private dialogRef = inject(DynamicDialogRef);
-    private dialogConfig = inject(DynamicDialogConfig);
+    private dialogRef = inject(TumAetUiDialogRef);
+    private dialogConfig = inject<TumAetUiDialogConfig<DeleteDialogData>>(TumAetUiDialogConfig);
     private alertService = inject(AlertService);
     private destroyRef = inject(DestroyRef);
+
+    protected readonly summaryId = `delete-summary-${nextSummaryId++}`;
 
     protected readonly faBan = faBan;
     protected readonly faSpinner = faSpinner;
@@ -43,8 +62,10 @@ export class DeleteDialogComponent implements OnInit {
     protected readonly faTrash = faTrash;
     protected readonly faCheck = faCheck;
     protected readonly faUndo = faUndo;
+    protected readonly faExclamationTriangle = faExclamationTriangle;
 
     readonly actionTypes = ActionType;
+    protected readonly ButtonType = ButtonType;
     private delete!: DeleteDialogDeleteHandler; // set in ngOnInit() from dialog config data
 
     // Signals for reactive state
@@ -54,6 +75,8 @@ export class DeleteDialogComponent implements OnInit {
     entitySummary = signal<EntitySummary | undefined>({});
     categorizedEntitySummary = signal<EntitySummaryCategory[] | undefined>(undefined);
     isLoadingSummary = signal(false);
+    // warn when the summary lists a lot of data, so nobody deletes an entity with much student work by accident
+    readonly hasLargeCount = computed(() => hasLargeSummaryCount(this.categorizedEntitySummary()));
 
     // Regular properties for ngModel two-way binding
     confirmEntityName = '';
@@ -92,12 +115,14 @@ export class DeleteDialogComponent implements OnInit {
      * Life cycle hook called by Angular to indicate that Angular is done creating the component
      */
     ngOnInit(): void {
-        // Get data from DynamicDialogConfig
         const data = this.dialogConfig.data;
-        this.entityTitle.set(data.entityTitle);
-        this.deleteQuestion.set(data.deleteQuestion);
+        if (!data) {
+            throw new Error('Delete dialog requires its entity and action configuration');
+        }
+        this.entityTitle.set(data.entityTitle ?? '');
+        this.deleteQuestion.set(data.deleteQuestion ?? 'entity.action.deleteQuestion');
         this.translateValues.set(data.translateValues);
-        this.deleteConfirmationText.set(data.deleteConfirmationText);
+        this.deleteConfirmationText.set(data.deleteConfirmationText ?? '');
         this.additionalChecks.set(data.additionalChecks);
         this.entitySummaryTitle.set(data.entitySummaryTitle);
         this.actionType.set(data.actionType);

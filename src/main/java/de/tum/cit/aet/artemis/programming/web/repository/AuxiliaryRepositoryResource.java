@@ -33,15 +33,16 @@ import org.springframework.web.server.ResponseStatusException;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
+import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
+import de.tum.cit.aet.artemis.core.security.annotations.ManualConfig;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.localvc.service.GitService;
+import de.tum.cit.aet.artemis.localvc.service.LocalVCPushProcessingService;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
-import de.tum.cit.aet.artemis.localvc.service.LocalVCServletService;
 import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
 import de.tum.cit.aet.artemis.programming.domain.FileType;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -67,9 +68,10 @@ public class AuxiliaryRepositoryResource extends RepositoryResource {
     private final AuxiliaryRepositoryRepository auxiliaryRepositoryRepository;
 
     public AuxiliaryRepositoryResource(UserRepository userRepository, AuthorizationCheckService authCheckService, GitService gitService, RepositoryService repositoryService,
-            ProgrammingExerciseRepository programmingExerciseRepository, RepositoryAccessService repositoryAccessService, Optional<LocalVCServletService> localVCServletService,
-            AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, ProgrammingExerciseMutationGuardService programmingExerciseMutationGuard) {
-        super(userRepository, authCheckService, gitService, repositoryService, programmingExerciseRepository, repositoryAccessService, localVCServletService,
+            ProgrammingExerciseRepository programmingExerciseRepository, RepositoryAccessService repositoryAccessService,
+            Optional<LocalVCPushProcessingService> localVCPushProcessingService, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository,
+            ProgrammingExerciseMutationGuardService programmingExerciseMutationGuard) {
+        super(userRepository, authCheckService, gitService, repositoryService, programmingExerciseRepository, repositoryAccessService, localVCPushProcessingService,
                 programmingExerciseMutationGuard);
         this.auxiliaryRepositoryRepository = auxiliaryRepositoryRepository;
     }
@@ -115,21 +117,24 @@ public class AuxiliaryRepositoryResource extends RepositoryResource {
 
     @Override
     @GetMapping(value = "{auxiliaryRepositoryId}/files", produces = MediaType.APPLICATION_JSON_VALUE)
-    @EnforceAtLeastTutor
+    @EnforceAtLeastStudent
+    @ManualConfig
     public ResponseEntity<Map<String, FileType>> getFiles(@PathVariable Long auxiliaryRepositoryId) {
         return super.getFiles(auxiliaryRepositoryId);
     }
 
     @Override
     @GetMapping(value = "{auxiliaryRepositoryId}/file", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
-    @EnforceAtLeastTutor
+    @EnforceAtLeastStudent
+    @ManualConfig
     public ResponseEntity<byte[]> getFile(@PathVariable Long auxiliaryRepositoryId, @RequestParam("file") String filename) {
         return super.getFile(auxiliaryRepositoryId, filename);
     }
 
     @Override
     @PostMapping(value = "{auxiliaryRepositoryId}/file", produces = MediaType.APPLICATION_JSON_VALUE)
-    @EnforceAtLeastTutor
+    @EnforceAtLeastStudent
+    @ManualConfig
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<Void> createFile(@PathVariable Long auxiliaryRepositoryId, @RequestParam("file") String filePath, HttpServletRequest request) {
         return super.createFile(auxiliaryRepositoryId, filePath, request);
@@ -137,7 +142,8 @@ public class AuxiliaryRepositoryResource extends RepositoryResource {
 
     @Override
     @PostMapping(value = "{auxiliaryRepositoryId}/folder", produces = MediaType.APPLICATION_JSON_VALUE)
-    @EnforceAtLeastTutor
+    @EnforceAtLeastStudent
+    @ManualConfig
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<Void> createFolder(@PathVariable Long auxiliaryRepositoryId, @RequestParam("folder") String folderPath, HttpServletRequest request) {
         return super.createFolder(auxiliaryRepositoryId, folderPath, request);
@@ -145,7 +151,8 @@ public class AuxiliaryRepositoryResource extends RepositoryResource {
 
     @Override
     @PostMapping(value = "{auxiliaryRepositoryId}/rename-file", produces = MediaType.APPLICATION_JSON_VALUE)
-    @EnforceAtLeastTutor
+    @EnforceAtLeastStudent
+    @ManualConfig
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<Void> renameFile(@PathVariable Long auxiliaryRepositoryId, @RequestBody FileMove fileMove) {
         return super.renameFile(auxiliaryRepositoryId, fileMove);
@@ -153,7 +160,8 @@ public class AuxiliaryRepositoryResource extends RepositoryResource {
 
     @Override
     @DeleteMapping(value = "{auxiliaryRepositoryId}/file", produces = MediaType.APPLICATION_JSON_VALUE)
-    @EnforceAtLeastTutor
+    @EnforceAtLeastStudent
+    @ManualConfig
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<Void> deleteFile(@PathVariable Long auxiliaryRepositoryId, @RequestParam("file") String filename) {
         return super.deleteFile(auxiliaryRepositoryId, filename);
@@ -164,14 +172,16 @@ public class AuxiliaryRepositoryResource extends RepositoryResource {
     // SameSite=Lax - the only thing standing in for CSRF tokens here - still sends the auth cookie on a cross-site
     // top-level GET navigation. See the comment on csrf(...) in SecurityConfiguration.
     @PostMapping(value = "{auxiliaryRepositoryId}/pull", produces = MediaType.APPLICATION_JSON_VALUE)
-    @EnforceAtLeastTutor
+    @EnforceAtLeastStudent
+    @ManualConfig
     public ResponseEntity<Void> pullChanges(@PathVariable Long auxiliaryRepositoryId) {
         return super.pullChanges(auxiliaryRepositoryId);
     }
 
     @Override
     @PostMapping(value = "{auxiliaryRepositoryId}/commit", produces = MediaType.APPLICATION_JSON_VALUE)
-    @EnforceAtLeastTutor
+    @EnforceAtLeastStudent
+    @ManualConfig
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<Void> commitChanges(@PathVariable Long auxiliaryRepositoryId) {
         return super.commitChanges(auxiliaryRepositoryId);
@@ -179,7 +189,8 @@ public class AuxiliaryRepositoryResource extends RepositoryResource {
 
     @Override
     @PostMapping(value = "{auxiliaryRepositoryId}/reset", produces = MediaType.APPLICATION_JSON_VALUE)
-    @EnforceAtLeastTutor
+    @EnforceAtLeastStudent
+    @ManualConfig
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<Void> resetToLastCommit(@PathVariable Long auxiliaryRepositoryId) {
         return super.resetToLastCommit(auxiliaryRepositoryId);
@@ -187,7 +198,8 @@ public class AuxiliaryRepositoryResource extends RepositoryResource {
 
     @Override
     @GetMapping(value = "{auxiliaryRepositoryId}", produces = MediaType.APPLICATION_JSON_VALUE)
-    @EnforceAtLeastTutor
+    @EnforceAtLeastStudent
+    @ManualConfig
     public ResponseEntity<RepositoryStatusDTO> getStatus(@PathVariable Long auxiliaryRepositoryId) throws GitAPIException {
         return super.getStatus(auxiliaryRepositoryId);
     }
@@ -202,7 +214,8 @@ public class AuxiliaryRepositoryResource extends RepositoryResource {
      * @return {@code Map<String, String>} file submissions or the appropriate http error
      */
     @PutMapping("{auxiliaryRepositoryId}/files")
-    @EnforceAtLeastTutor
+    @EnforceAtLeastStudent
+    @ManualConfig
     public ResponseEntity<Map<String, String>> updateAuxiliaryFiles(@PathVariable("auxiliaryRepositoryId") Long auxiliaryRepositoryId,
             @RequestBody List<FileSubmission> submissions, @RequestParam Boolean commit, Principal principal) {
 

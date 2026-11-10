@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import dayjs from 'dayjs/esm';
-import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
+import { TumAetUiDialogConfig, TumAetUiDialogRef } from '@tumaet/ui-angular';
 import { TranslateService } from '@ngx-translate/core';
 import { Subject } from 'rxjs';
 
@@ -21,8 +21,9 @@ import { OnlineIdeExperienceLevel } from 'app/programming/shared/entities/progra
 describe('ExerciseMetadataConflictModalComponent', () => {
     let fixture: ComponentFixture<ExerciseMetadataConflictModalComponent>;
     let component: ExerciseMetadataConflictModalComponent;
-    let dialogRef: DynamicDialogRef;
+    let dialogRef: TumAetUiDialogRef;
     let dialogRefCloseSpy: ReturnType<typeof vi.fn>;
+    let dialogConfig: { data?: unknown };
 
     const createConflict = (field: string, currentValue: unknown = 'local', incomingValue: unknown = 'incoming'): ExerciseMetadataConflictItem => ({
         field,
@@ -33,16 +34,17 @@ describe('ExerciseMetadataConflictModalComponent', () => {
 
     beforeEach(async () => {
         dialogRefCloseSpy = vi.fn();
+        dialogConfig = { data: undefined };
         dialogRef = {
             close: dialogRefCloseSpy,
             onClose: new Subject<any>(),
-        } as unknown as DynamicDialogRef;
+        } as unknown as TumAetUiDialogRef;
 
         await TestBed.configureTestingModule({
             imports: [ExerciseMetadataConflictModalComponent],
             providers: [
-                { provide: DynamicDialogRef, useValue: dialogRef },
-                { provide: DynamicDialogConfig, useValue: { data: undefined } },
+                { provide: TumAetUiDialogRef, useValue: dialogRef },
+                { provide: TumAetUiDialogConfig, useValue: dialogConfig },
                 { provide: TranslateService, useClass: MockTranslateService },
             ],
         }).compileComponents();
@@ -183,8 +185,8 @@ describe('ExerciseMetadataConflictModalComponent', () => {
         expect(component.authorName()).toBe('fallback-login');
     });
 
-    it('reads data from DynamicDialogConfig on init', async () => {
-        const config = TestBed.inject(DynamicDialogConfig);
+    it('reads data from TumAetUiDialogConfig on init', async () => {
+        const config = dialogConfig;
         config.data = {
             conflicts: [createConflict('title')],
             author: { login: 'test-author' },
@@ -333,7 +335,7 @@ describe('ExerciseMetadataConflictModalComponent', () => {
     });
 
     it('renders conflict tiles with left tile selected by default', () => {
-        const config = TestBed.inject(DynamicDialogConfig);
+        const config = dialogConfig;
         config.data = {
             conflicts: [createConflict('title'), createConflict('categories', ['a'], ['b'])],
             author: { firstName: 'Ada', lastName: 'Lovelace', login: 'ada' },
@@ -356,7 +358,7 @@ describe('ExerciseMetadataConflictModalComponent', () => {
     });
 
     it('renders global toggle buttons', () => {
-        const config = TestBed.inject(DynamicDialogConfig);
+        const config = dialogConfig;
         config.data = {
             conflicts: [createConflict('title')],
             author: { login: 'test' },

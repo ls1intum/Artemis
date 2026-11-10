@@ -1,3 +1,4 @@
+import { TumAetUiDialogService } from '@tumaet/ui-angular';
 import { expect, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ResultComponent } from 'app/exercise/result/result.component';
@@ -16,7 +17,7 @@ import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.m
 import { Participation, ParticipationType } from 'app/exercise/shared/entities/participation/participation.model';
 import dayjs from 'dayjs/esm';
 import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
-import { DialogService } from 'primeng/dynamicdialog';
+
 import * as utils from 'app/exercise/feedback/feedback.utils';
 import { FeedbackComponentPreparedParams } from 'app/exercise/feedback/feedback.utils';
 import { FeedbackComponent } from 'app/exercise/feedback/feedback.component';
@@ -82,7 +83,7 @@ const participationServiceMock = {
 describe('ResultComponent', () => {
     let comp: ResultComponent;
     let fixture: ComponentFixture<ResultComponent>;
-    let dialogService: DialogService;
+    let dialogService: TumAetUiDialogService;
     let router: Router;
 
     beforeEach(async () => {
@@ -101,7 +102,7 @@ describe('ResultComponent', () => {
         await TestBed.configureTestingModule({
             imports: [ResultComponent],
             providers: [
-                { provide: DialogService, useClass: MockDialogService },
+                { provide: TumAetUiDialogService, useClass: MockDialogService },
                 { provide: ParticipationService, useValue: participationServiceMock },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AccountService, useClass: MockAccountService },
@@ -126,7 +127,7 @@ describe('ResultComponent', () => {
 
         fixture = TestBed.createComponent(ResultComponent);
         comp = fixture.componentInstance;
-        dialogService = TestBed.inject(DialogService);
+        dialogService = TestBed.inject(TumAetUiDialogService);
         router = TestBed.inject(Router);
 
         participationServiceMock.downloadArtifact = vi.fn();
@@ -260,6 +261,27 @@ describe('ResultComponent', () => {
             expect(comp.resultIconClass()).toBe(faCheckCircle);
         });
 
+        describe('exercises that carry no course', () => {
+            const resultWithManyDecimals: Result = { id: 8, score: 42.4567, rated: true, completionDate: dayjs().subtract(1, 'hour'), submission: { id: 22 } };
+            const exerciseWithoutCourse = { id: 4, type: ExerciseType.TEXT, maxPoints: 10 } as Exercise;
+
+            beforeEach(() => {
+                fixture.componentRef.setInput('exercise', exerciseWithoutCourse);
+                fixture.componentRef.setInput('result', resultWithManyDecimals);
+                fixture.componentRef.setInput('short', true);
+            });
+
+            it('rounds the score to the accuracy of the passed course', () => {
+                const instantSpy = vi.spyOn(TestBed.inject(TranslateService), 'instant');
+                fixture.componentRef.setInput('course', { accuracyOfScores: 3 });
+                fixture.detectChanges();
+
+                comp.resultString();
+
+                expect(instantSpy).toHaveBeenCalledWith('artemisApp.result.resultString.short', { relativeScore: 42.457 });
+            });
+        });
+
         describe('results that belong to no participation', () => {
             const exampleSubmissionResult: Result = {
                 id: 7,
@@ -324,17 +346,11 @@ describe('ResultComponent', () => {
                 FeedbackComponent,
                 expect.objectContaining({
                     header: 'artemisApp.result.detail.feedback',
-                    width: '80rem',
-                    breakpoints: {
-                        '1400px': '75vw',
-                        '1200px': '85vw',
-                        '992px': '95vw',
-                    },
-                    modal: true,
+                    size: 'large',
                     closable: true,
                     closeOnEscape: true,
                     dismissableMask: true,
-                    focusOnShow: false,
+                    autoFocus: 'dialog',
                     inputValues: expect.objectContaining({
                         exercise: preparedFeedback.exercise,
                         result: preparedFeedback.result,

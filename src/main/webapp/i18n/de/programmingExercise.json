@@ -1,6 +1,22 @@
 {
     "artemisApp": {
         "programmingExercise": {
+            "instructionTableLabel": "Tabelle in der Aufgabenstellung",
+            "repositoryBuildOverview": {
+                "title": "Repositories und Builds",
+                "template": "Vorlage",
+                "solution": "Lösung",
+                "tests": "Tests",
+                "auxiliary": "Zusätzliches Repository",
+                "templateDescription": "Der Ausgangspunkt für Studierende.",
+                "solutionDescription": "Die Referenzimplementierung.",
+                "templateExpectedScore": "Erwartete Bewertung: 0%, bevor Studierende die Lösung implementieren.",
+                "solutionExpectedScore": "Erwartete Bewertung: 100% für die Referenzimplementierung.",
+                "result": "Build-Ergebnis",
+                "resultsLoading": "Build-Ergebnis wird geladen…",
+                "checkoutLoading": "Checkout-Verzeichnisse werden geladen…",
+                "checkoutUnavailable": "Checkout-Verzeichnisse konnten nicht geladen werden."
+            },
             "home": {
                 "title": "Programmieraufgabe",
                 "createLabel": "Programmieraufgabe erstellen",
@@ -254,11 +270,6 @@
             },
             "importFromFile": {
                 "title": "Programmieraufgabe aus Datei importieren",
-                "description": "Die Datei muss ein Zip-Archiv sein, das die Aufgabenkonfiguration im JSON-Format auf der obersten Ebene enthält und für jedes Repository (template, solution, tests) ein Zip-Archiv enthält. Eine solche Datei kann mit dem Aufgabenexport erstellt werden.",
-                "uploadForImport": "Programmieraufgabe für den Import hochladen",
-                "fileTooBigError": "Die Datei {{ fileName }} ist zu groß. Die maximale Dateigröße beträgt 20 MB.",
-                "fileTypeNotSupportedError": "Der Dateityp wird nicht unterstützt. Bitte wähle eine Datei mit der Endung .zip.",
-                "noExerciseDetailsJsonAtRootLevel": "Es konnte keine JSON-Datei im Wurzelverzeichnis des Zip-Archivs gefunden werden, die die Aufgabendetails enthält.",
                 "notSupportedProgrammingLanguage": "Die Programmiersprache {{ programmingLanguage }} wird noch nicht für den Import aus einer Datei unterstützt.",
                 "GccNotSupportedForC": "Der Projekttyp GCC wird noch nicht für den Import aus einer Datei unterstützt."
             },
@@ -316,7 +327,7 @@
                 "generationError": "Fehler beim Generieren der Aufgabenstellung. Bitte versuche es erneut.",
                 "refinementSuccess": "Aufgabenstellung wurde erfolgreich verfeinert.",
                 "refinementError": "Fehler beim Verfeinern der Aufgabenstellung. Bitte versuche es erneut.",
-                "cannotRefineEmpty": "Eine leere Aufgabenstellung kann nicht verfeinert werden. Bitte f\u00fcge zuerst Inhalt hinzu.",
+                "cannotRefineEmpty": "Eine leere Aufgabenstellung kann nicht verfeinert werden. Bitte füge zuerst Inhalt hinzu.",
                 "problemStatementTooLong": "Die Aufgabenstellung ist zu lang zum Verfeinern. Bitte kürze den Inhalt und versuche es erneut.",
                 "tooLong": "Die Aufgabenstellung darf {{max}} Zeichen nicht überschreiten.",
                 "reviewChanges": "KI-Vorschläge prüfen",
@@ -345,66 +356,9 @@
                 },
                 "diffLineStatTooltip": "Zeilen, die durch die KI-Verfeinerung hinzugefügt und entfernt wurden."
             },
-            "codeGeneration": {
-                "creationAssistance": "Erstellungsassistenz",
-                "generateCode": "Code generieren",
-                "generateWithAi": "Mit KI generieren",
-                "generating": "Generiere...",
-                "runningTitle": "Code-Generierung läuft",
-                "runningText": "Die Code-Generierung läuft aktuell für diese Übung durch einen anderen Benutzer. Bitte versuchen Sie es später erneut.",
-                "description": "Generiere Lösung, Template und Test-Code mit KI",
-                "tooltip": "KI Code-Generierung - Generiere Lösung, Template und Test-Code",
-                "confirmTitle": "Code-Generierung bestätigen",
-                "confirmText": "Diese Aktion nutzt ein LLM, kann Zeit benötigen und Credits kosten. Möchten Sie fortfahren?",
-                "success": "{{repositoryType}} Code-Generierung abgeschlossen.",
-                "warning": "{{repositoryType}} Code-Generierung mit Problemen abgeschlossen.",
-                "error": "{{repositoryType}} Code-Generierung fehlgeschlagen. Bitte versuchen Sie es später erneut.",
-                "timeoutDetails": "Die Generierung hat nach zu langer Wartezeit das Zeitlimit erreicht.",
-                "queueReleaseTimeoutDetails": "Die vorherige Repository-Generierung hat die Bereinigung nicht rechtzeitig abgeschlossen, daher konnte das nächste Repository nicht gestartet werden.",
-                "unsupportedRepository": "Code-Generierung wird nur für Template-, Lösung- und Test-Repositories unterstützt.",
-                "noRepositorySelected": "Wähle mindestens ein Repository aus, bevor du die Code-Generierung startest.",
-                "settingsTitle": "Generierungs-Einstellungen",
-                "settingsTooltip": "Repositories für die Generierung auswählen",
-                "statusTitle": "Generierungsstatus",
-                "statusTooltip": "Live-Status der Generierung anzeigen",
-                "executionOrder": "Ausgewählte Repositories werden nacheinander in dieser Reihenfolge generiert: Lösung, Template, Test.",
-                "selectedFeedback": {
-                    "title": "Ausgewählte Feedback-Threads",
-                    "description": "Diese ausgewählten Threads werden der Code-Generierung als Feedback-Kontext mitgegeben.",
-                    "count": "{{count}} ausgewählt",
-                    "empty": "Aktuell sind keine Threads als Feedback ausgewählt.",
-                    "showThreads": "Threads anzeigen",
-                    "hideThreads": "Threads ausblenden",
-                    "viewThread": "Thread anzeigen",
-                    "line": "Zeile {{line}}",
-                    "unknownLocation": "Unbekannte Position"
-                },
-                "repositories": {
-                    "template": "Template Repository",
-                    "solution": "Solution Repository",
-                    "tests": "Tests Repository"
-                },
-                "activityTitle": "Dateiaktivität",
-                "iteration": "Iteration {{iteration}}",
-                "noActivity": "Es wurden noch keine Dateien erstellt, aktualisiert oder entfernt.",
-                "attempts": "Versuche: {{attempts}}",
-                "status": {
-                    "idle": "Nicht gestartet",
-                    "queued": "In Warteschlange",
-                    "running": "Läuft",
-                    "success": "Abgeschlossen",
-                    "warning": "Mit Problemen abgeschlossen",
-                    "error": "Fehlgeschlagen",
-                    "skipped": "Übersprungen",
-                    "skippedMessage": "Übersprungen, weil eine vorherige Repository-Generierung fehlgeschlagen ist.",
-                    "fileCreated": "erstellt",
-                    "fileUpdated": "aktualisiert",
-                    "fileDeleted": "entfernt"
-                }
-            },
             "status": {
-                "solutionFailsTest": "Das Solution-Repository erfüllt einen oder mehrere Testfälle nicht. Das könnte auf ein Problem mit dem Solution-Repository oder den Testfällen hinweisen.",
-                "templateFulfillsTest": "Das Template-Repository erfüllt bereits einen oder mehrere Testfälle. Das könnte auf ein Problem mit dem Template-Repository oder den Testfällen hinweisen."
+                "solutionFailsTest": "Die Musterlösung sollte 100% erreichen und alle Tests bestehen. Prüfe das Solution-Repository und die Testfälle.",
+                "templateFulfillsTest": "Die Vorlage sollte 0% erreichen. Prüfe bei einer abweichenden Bewertung das Template-Repository und die Testfälle."
             },
             "testCaseAnalysis": {
                 "invalidTestCases": "{{number}} Testfälle sind Teil der Aufgabenstellung aber können nicht im Test-Repository gefunden werden:",
@@ -847,7 +801,9 @@
             },
             "projectTypes": {
                 "PLAIN_GRADLE": "Gradle",
+                "GRADLE_GRADLE": "Gradle",
                 "PLAIN_MAVEN": "Maven",
+                "MAVEN_MAVEN": "Maven",
                 "MAVEN_BLACKBOX": "DejaGnu",
                 "PLAIN": "Plain",
                 "XCODE": "Xcode",
@@ -996,6 +952,13 @@
                 },
                 "outdated": "Veraltet",
                 "reanalyze": "Erneut analysieren"
+            },
+            "buildNotifications": {
+                "enable": "Browser-Benachrichtigungen für Build-Ergebnisse aktivieren",
+                "disable": "Browser-Benachrichtigungen für Build-Ergebnisse deaktivieren",
+                "blocked": "Benachrichtigungen sind blockiert. Erlaube sie in deinen Browser-Einstellungen.",
+                "error": "Browser-Benachrichtigungen sind nicht verfügbar. Das Tab-Symbol zeigt weiterhin Build-Ergebnisse an.",
+                "resultReceived": "Build-Ergebnis erhalten"
             }
         },
         "checklistAnalysisRequest": {

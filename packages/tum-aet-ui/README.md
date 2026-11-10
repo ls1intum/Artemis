@@ -76,7 +76,8 @@ Foundations:
   corresponding `--tumaet-ui-line-height-*` properties;
 - shape: `--tumaet-ui-radius-{sm,md,xl,2xl}`;
 - elevation: `--tumaet-ui-shadow-{xs,sm,md,lg,xl}`;
-- focus: `--tumaet-ui-focus-color`.
+- focus: `--tumaet-ui-focus-color`;
+- resizable panel divider: `--tumaet-ui-splitter-divider-size` (defaults to `6px`).
 
 Colors:
 
@@ -92,6 +93,11 @@ Colors:
   `--tumaet-ui-highlight-focus-background`;
 - states: `--tumaet-ui-state-{danger,success,warning,info}` and each corresponding
   `--tumaet-ui-state-*-contrast` and `--tumaet-ui-state-*-foreground`;
+- button-only palette: `--tumaet-ui-button-{primary,secondary,success,info,warn,danger,contrast}-background`,
+  `-contrast`, and `-foreground`, plus `--tumaet-ui-button-secondary-border`,
+  `--tumaet-ui-button-focus-color`, `--tumaet-ui-button-hover-overlay`, and
+  `--tumaet-ui-button-active-overlay`; most default to semantic aliases and can be overridden
+  independently of status messages/tags;
 - specialized roles: `--tumaet-ui-contrast-background`, `--tumaet-ui-contrast-color`,
   `--tumaet-ui-table-striped-background`, `--tumaet-ui-tooltip-background`,
   `--tumaet-ui-tooltip-color`.
@@ -100,6 +106,13 @@ Primary is the brand fill; accent is the brand foreground for content and contro
 token is a fill or border, its `-contrast` token is text on that fill, and its `-foreground` token
 is text on content or a tinted state surface. Maintain readable contrast in both themes and keep
 focus indicators distinguishable from adjacent surfaces.
+
+Solid primary buttons use their own background/contrast pair so that a host brand override cannot
+silently make their text unreadable. Override `--tumaet-ui-button-primary-background` and
+`--tumaet-ui-button-primary-contrast` together to customize that pair; changing
+`--tumaet-ui-primary-color` alone does not recolor primary buttons. Use
+`--tumaet-ui-button-primary-foreground` for outlined/text buttons. Define and check these overrides
+in both themes.
 
 Responsive thresholds are fixed at 40rem, 48rem, 64rem, 80rem, and 96rem; host Tailwind
 configuration does not change them.
@@ -145,6 +158,39 @@ Contributors working in the Artemis repository should follow the
 [TUM AET UI package guide](https://docs.artemis.tum.de/developer/guidelines/tum-aet-ui-kit). It covers
 contribution, testing, and publishing.
 
+Consumer checks install minimum and latest compatible library peers with strict npm peer
+validation. Both modes use the workspace catalog version of `@angular/build`, keeping the
+build tool and its transitive dependencies separate from the library peer matrix.
+
 ## License
 
 [MIT](https://github.com/ls1intum/Artemis/blob/develop/packages/tum-aet-ui/LICENSE).
+
+### Splitter
+
+`TumAetUiSplitterComponent` arranges two persistent template panels. Import it from
+`@tumaet/ui-angular` and mark each panel template with `#panel`:
+
+```html
+<tumaet-ui-splitter [panelSizes]="[65, 35]" [minSizes]="[20, 15]" ariaLabel="Resize document and notes" (resizeEnd)="saveSizes($event)">
+    <ng-template #panel>Document</ng-template>
+    <ng-template #panel>Notes</ng-template>
+</tumaet-ui-splitter>
+```
+
+The separator supports pointer dragging over embedded frames, axis arrow keys (two
+percentage points, or ten with Shift), Home, and End. `layout="vertical"` stacks the
+panels. Sizes and minimums are percentages of the available space excluding the
+gutter. `gutterSize` overrides its pixel width; otherwise
+`--tumaet-ui-splitter-divider-size` applies, defaulting to `6px`.
+
+`sizesChange` emits percentage pairs during dragging; `resizeEnd` commits keyboard
+or pointer changes. Cancellation restores the previous sizes without committing.
+An optional `stateKey` persists the first percentage in local storage under
+`${stateKey}-${layout}`, retaining an independent split for each orientation.
+Consumers can instead persist `resizeEnd` values themselves. When `ariaLabel` is
+omitted, the separator uses the translated `tumAetUi.splitter.resize` label.
+
+Consumers must hide or make their own content inert when using
+`collapsedSecondSize` to replace the second panel with a fixed-size collapsed rail.
+Panel templates stay mounted during resizing and collapse.

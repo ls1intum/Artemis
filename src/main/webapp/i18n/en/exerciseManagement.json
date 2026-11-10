@@ -7,7 +7,7 @@
             "action": {
                 "import": "Import",
                 "export": "Export",
-                "createVariantWithAi": "Create Variant with AI"
+                "createVariantWithAi": "Create Variant"
             },
             "error": {
                 "onlyIndividualQuiz": "Only individual-mode quizzes can be added to an exercise group.",
@@ -65,10 +65,12 @@
                 "tab": {
                     "create": "Create",
                     "import": "Import",
-                    "export": "Export"
+                    "export": "Export",
+                    "generate": "Generate"
                 },
                 "createHint": "Select an exercise type. You can customise all details in the next step.",
                 "importHint": "Select what you want to import.",
+                "exportHint": "Select an exercise type, then the exercise to download as a zip file. You can import the file into any course with Import and From file.",
                 "cta": {
                     "create": "Create",
                     "select": "Select"
@@ -91,6 +93,13 @@
                     "MODELING": "UML diagrams and model-based exercises with semi-automatic assessment.",
                     "TEXT": "Free-text essays and open-ended questions with manual review.",
                     "FILE_UPLOAD": "Worksheet or document submissions reviewed by instructors."
+                },
+                "generateHint": "Describe what students should learn. Review and refine the generated exercise before publishing.",
+                "export": {
+                    "empty": "This course has no exercises of this type.",
+                    "exportButton": "Export",
+                    "exportExercise": "Export {{ title }}",
+                    "failed": "The exercise could not be exported."
                 }
             },
             "groupEdit": {

@@ -308,17 +308,20 @@ public class WorkerSupervisorService implements AutoCloseable {
         flushTerminal();
     }
 
-    /** Retries an undelivered terminal event and expires work only when core stops renewing its exact assignment. */
+    /** Expires assignments independently of provider I/O so blocked publication cannot delay cancellation. */
+    @Scheduled(fixedDelayString = "${artemis.aiworker.heartbeat-interval:PT10S}")
+    public synchronized void expireExecutions() {
+        for (ActiveExecution execution : active.values()) {
+            if (nanoTime.getAsLong() - execution.renewedAt > settings.connectionGrace().toNanos()) {
+                cancel(execution);
+            }
+        }
+        admitted.values().removeIf(deadline -> !deadline.isAfter(Instant.now()));
+    }
+
+    /** Retries undelivered events before publishing current capacity. */
     @Scheduled(fixedDelayString = "${artemis.aiworker.heartbeat-interval:PT10S}")
     public void heartbeat() {
-        synchronized (this) {
-            for (ActiveExecution execution : active.values()) {
-                if (nanoTime.getAsLong() - execution.renewedAt > settings.connectionGrace().toNanos()) {
-                    cancel(execution);
-                }
-            }
-            admitted.values().removeIf(deadline -> !deadline.isAfter(Instant.now()));
-        }
         flushTerminal();
         publishBestEffort(event(WorkerEventType.HEARTBEAT, currentIdentity(), null, null));
     }
@@ -468,27 +471,34 @@ public class WorkerSupervisorService implements AutoCloseable {
         return message.length() <= 8_192 ? message : message.substring(0, 8_192);
     }
 
+    /** Stops work and attempts final event delivery within the configured shutdown timeout. */
     @Override
     @PreDestroy
     public void close() {
+        long deadline = System.nanoTime() + settings.shutdownTimeout().toNanos();
         synchronized (this) {
+            if (executor.isShutdown()) {
+                return;
+            }
             draining = true;
             active.values().forEach(this::cancel);
+            executor.shutdown();
+            cancellationExecutor.shutdown();
         }
-        deliveryExecutor.shutdownNow();
-        executor.shutdown();
-        cancellationExecutor.shutdown();
         try {
-            if (!executor.awaitTermination(settings.shutdownTimeout().toMillis(), TimeUnit.MILLISECONDS)) {
-                executor.shutdownNow();
-                cancellationExecutor.shutdownNow();
+            if (executor.awaitTermination(Math.max(0, deadline - System.nanoTime()), TimeUnit.NANOSECONDS) && deadline - System.nanoTime() > 0) {
+                deliveryExecutor.submit(this::flushTerminal);
+                deliveryExecutor.shutdown();
+                deliveryExecutor.awaitTermination(Math.max(0, deadline - System.nanoTime()), TimeUnit.NANOSECONDS);
             }
         }
         catch (InterruptedException e) {
-            executor.shutdownNow();
-            cancellationExecutor.shutdownNow();
             Thread.currentThread().interrupt();
         }
-        flushTerminal();
+        finally {
+            executor.shutdownNow();
+            cancellationExecutor.shutdownNow();
+            deliveryExecutor.shutdownNow();
+        }
     }
 }

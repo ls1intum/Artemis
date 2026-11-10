@@ -7,7 +7,6 @@ import java.util.stream.Collectors;
 import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.http.HttpStatus;
@@ -30,7 +29,6 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.service.featureusage.UsageInteraction;
 import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
-import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 
 /**
  * REST controller for managing ScienceSettings.
@@ -43,9 +41,6 @@ import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 public class ScienceSettingsResource {
 
     private static final Logger log = LoggerFactory.getLogger(ScienceSettingsResource.class);
-
-    @Value("${jhipster.clientApp.name}")
-    private String applicationName;
 
     private final UserRepository userRepository;
 
@@ -106,6 +101,6 @@ public class ScienceSettingsResource {
             throw new BadRequestAlertException("Error occurred during saving of Science Settings", "ScienceSettings", "scienceSettingsEmptyAfterSave");
         }
         ScienceSettingDTO[] persistedSettingArray = persistedSettingList.stream().map(ScienceSettingDTO::of).toArray(ScienceSettingDTO[]::new);
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, "scienceSetting", "test")).body(persistedSettingArray);
+        return ResponseEntity.ok(persistedSettingArray);
     }
 }

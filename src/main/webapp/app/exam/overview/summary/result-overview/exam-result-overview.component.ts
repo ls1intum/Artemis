@@ -1,5 +1,5 @@
 import { Component, OnInit, computed, effect, inject, input, signal } from '@angular/core';
-import { Exercise, IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ArtemisServerDateService } from 'app/foundation/service/server-date.service';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { GradeType } from 'app/assessment/shared/entities/grading-scale.model';
@@ -10,7 +10,7 @@ import { faChevronRight } from '@fortawesome/free-solid-svg-icons';
 import { roundScorePercentSpecifiedByCourseSettings } from 'app/foundation/util/utils';
 import { MIN_SCORE_GREEN, MIN_SCORE_ORANGE } from 'app/app.constants';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
-import { captureException } from '@sentry/angular';
+import { captureException } from 'app/core/error-reporting/capture-exception';
 import { isExamResultPublished } from 'app/exam/overview/exam.utils';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { CollapsibleCardComponent } from '../collapsible-card/collapsible-card.component';
@@ -19,6 +19,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NoDataComponent } from 'app/shared-ui/components/no-data/no-data-component';
 import { GradingKeyTableComponent } from 'app/assessment/manage/grading/grading-key/grading-key-table.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/submission/submission.model';
 
 type ExerciseInfo = {
@@ -46,10 +47,28 @@ export class ExamResultOverviewComponent implements OnInit {
     readonly isBonusGradingKeyCollapsed = input(true);
     readonly exerciseInfos = input<Record<number, ExerciseInfo>>(undefined!);
     readonly isTestRun = input(false);
+    readonly gradingKeyPurpose = input<'student' | 'management'>('student');
 
     // Derived from the (async) studentExamWithGrade input — computed so the grading-key card renders under zoneless
     // once the grade DTO arrives (previously set only in ngOnInit via setExamGrade + a manual detectChanges).
-    readonly gradingScaleExists = computed(() => !!this.areResultsPublished() && this.studentExamWithGrade()?.studentResult?.overallGrade != undefined);
+    readonly gradingScaleExists = computed(() => this.hasAutomaticScore() && !!this.areResultsPublished() && !!this.studentExamWithGrade()?.studentResult?.overallGrade);
+    readonly isTestExam = computed(() => !!this.studentExamWithGrade()?.studentExam?.exam?.testExam);
+    readonly pendingExerciseIds = computed(() => new Set(this.isTestExam() ? (this.studentExamWithGrade()?.pendingExerciseIds ?? []) : []));
+    readonly hasAutomaticScore = computed(() => !this.isTestExam() || (this.studentExamWithGrade()?.maxPoints > 0 && this.pendingExerciseIds().size === 0));
+    readonly manuallyAssessedExerciseIds = computed(
+        () =>
+            new Set(
+                (this.isTestExam() ? (this.studentExamWithGrade()?.studentExam?.exercises ?? []) : [])
+                    .filter(
+                        (exercise) =>
+                            exercise.type !== ExerciseType.QUIZ &&
+                            !(exercise.type === ExerciseType.PROGRAMMING && (!exercise.assessmentType || exercise.assessmentType === AssessmentType.AUTOMATIC)),
+                    )
+                    .map((exercise) => exercise.id),
+            ),
+    );
+    readonly hasManuallyAssessedExercises = computed(() => this.manuallyAssessedExerciseIds().size > 0);
+    readonly bonusPending = computed(() => !!this.studentExamWithGrade()?.studentResult?.gradeWithBonus?.pending);
     readonly grade = computed(() => this.studentExamWithGrade()?.studentResult?.overallGrade);
     readonly isBonus = computed(() => this.studentExamWithGrade()?.gradeType === GradeType.BONUS);
     // Gated on gradingScaleExists to preserve the previous behavior: without a grading scale
@@ -119,11 +138,12 @@ export class ExamResultOverviewComponent implements OnInit {
     }
 
     private areResultsPublished() {
-        return isExamResultPublished(this.isTestRun(), this.studentExamWithGrade()?.studentExam?.exam, this.serverDateService);
+        const studentExam = this.studentExamWithGrade()?.studentExam;
+        return studentExam?.exam?.testExam ? !!studentExam.submitted : isExamResultPublished(this.isTestRun(), studentExam?.exam, this.serverDateService);
     }
 
     private updateLocalVariables() {
-        this.showResultOverview.set(!!(this.areResultsPublished() && this.hasAtLeastOneResult()));
+        this.showResultOverview.set(!!(this.areResultsPublished() && (this.isTestExam() || this.hasAtLeastOneResult())));
         this.showIncludedInScoreColumn.set(this.containsExerciseThatIsNotIncludedCompletely());
         this.maxPoints.set(this.studentExamWithGrade()?.maxPoints ?? 0);
         this.isBonusGradingKeyDisplayed.set(this.studentExamWithGrade().studentResult.gradeWithBonus?.bonusGrade != undefined);
@@ -152,7 +172,7 @@ export class ExamResultOverviewComponent implements OnInit {
 
     private getOverallAchievedPoints() {
         const overallAchievedPoints = this.studentExamWithGrade()?.studentResult.overallPointsAchieved;
-        if (overallAchievedPoints === undefined || overallAchievedPoints === 0) {
+        if (overallAchievedPoints == null) {
             return this.sumExerciseScores();
         }
 
@@ -161,9 +181,7 @@ export class ExamResultOverviewComponent implements OnInit {
 
     private getOverallAchievedPercentageRoundedByCourseSettings() {
         let overallScoreAchieved = this.studentExamWithGrade().studentResult.overallScoreAchieved;
-        if (overallScoreAchieved === undefined || overallScoreAchieved === 0) {
-            overallScoreAchieved = this.summedAchievedExerciseScorePercentage();
-        }
+        overallScoreAchieved ??= this.summedAchievedExerciseScorePercentage();
 
         return roundScorePercentSpecifiedByCourseSettings(overallScoreAchieved / 100, this.studentExamWithGrade().studentExam?.exam?.course);
     }

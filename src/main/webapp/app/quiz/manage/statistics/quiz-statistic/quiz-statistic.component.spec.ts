@@ -9,10 +9,9 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Course } from 'app/course/shared/entities/course.model';
 import { QuizStatisticsOverviewResponse } from 'app/quiz/manage/statistics/quiz-statistics-response.model';
-import { HttpResponse, provideHttpClient } from '@angular/common/http';
+import { provideHttpClient } from '@angular/common/http';
 import { Observable, Subject, of } from 'rxjs';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
-import { QuizQuestion } from 'app/quiz/shared/entities/quiz-question.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { QuizStatisticComponent } from 'app/quiz/manage/statistics/quiz-statistic/quiz-statistic.component';
@@ -22,24 +21,23 @@ import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.
 import { TumAetUiChartTooltipConfig } from '@tumaet/ui-angular';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
-const question = { id: 1 } as QuizQuestion;
+const question = { id: 1 };
 const course = { id: 2 } as Course;
 let quizExercise = { id: 42, quizStarted: true, course, quizQuestions: [question] } as QuizStatisticsOverviewResponse;
 
 const route = { params: of({ courseId: 2, exerciseId: 42 }) };
 
-const quizQuestionStatOne = { ratedCorrectCounter: 1, unRatedCorrectCounter: 3 };
-const quizQuestionStatTwo = { ratedCorrectCounter: 2, unRatedCorrectCounter: 4 };
+const quizQuestionStatOne = { type: 'multiple-choice' as const, ratedCorrectCounter: 1, unRatedCorrectCounter: 3 };
+const quizQuestionStatTwo = { type: 'multiple-choice' as const, ratedCorrectCounter: 2, unRatedCorrectCounter: 4 };
 
 describe('QuizStatisticComponent', () => {
     let comp: QuizStatisticComponent;
     let fixture: ComponentFixture<QuizStatisticComponent>;
     let quizService: QuizExerciseService;
-    let accountService: AccountService;
-    let accountSpy: MockInstance<AccountService['hasAnyAuthorityDirect']>;
+    let accountService: MockAccountService;
     let websocketService: MockWebsocketService;
     let router: Router;
-    let quizServiceFindSpy: MockInstance<QuizExerciseService['find']>;
+    let quizServiceFindSpy: MockInstance<QuizExerciseService['findStatisticsOverview']>;
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
@@ -59,7 +57,7 @@ describe('QuizStatisticComponent', () => {
             .compileComponents();
 
         quizService = TestBed.inject(QuizExerciseService);
-        accountService = TestBed.inject(AccountService);
+        accountService = TestBed.inject(AccountService) as unknown as MockAccountService;
         websocketService = TestBed.inject(WebsocketService) as unknown as MockWebsocketService;
         router = TestBed.inject(Router);
     });
@@ -78,7 +76,7 @@ describe('QuizStatisticComponent', () => {
             fixture = TestBed.createComponent(QuizStatisticComponent);
             comp = fixture.componentInstance;
             // Re-setup the quizServiceFindSpy after clearing
-            quizServiceFindSpy = vi.spyOn(quizService, 'findStatisticsOverview').mockReturnValue(of(new HttpResponse({ body: quizExercise })));
+            quizServiceFindSpy = vi.spyOn(quizService, 'findStatisticsOverview').mockReturnValue(of(quizExercise));
         });
 
         it('should call functions on Init', async () => {
@@ -86,41 +84,40 @@ describe('QuizStatisticComponent', () => {
             const loadQuizSuccessSpy = vi.spyOn(comp, 'loadQuizSuccess');
             vi.spyOn(comp, 'loadData');
             quizExercise.quizQuestions = [
-                { quizQuestionStatistic: quizQuestionStatOne, points: 5, invalid: false, exportQuiz: false, randomizeOrder: true },
-                { quizQuestionStatistic: quizQuestionStatTwo, points: 6, invalid: false, exportQuiz: false, randomizeOrder: true },
+                { quizQuestionStatistic: quizQuestionStatOne, points: 5, invalid: false },
+                { quizQuestionStatistic: quizQuestionStatTwo, points: 6, invalid: false },
             ];
             quizExercise.participantsRated = 42;
-            accountSpy = vi.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(true);
+            accountService.isAtLeastTutor.set(true);
 
             // call
             comp.ngOnInit();
             await fixture.whenStable();
 
             // check
-            expect(accountSpy).toHaveBeenCalled();
             expect(quizServiceFindSpy).toHaveBeenCalledWith(42);
             expect(loadQuizSuccessSpy).toHaveBeenCalledWith(quizExercise);
         });
 
         it('should ignore a superseded initial overview response', () => {
-            vi.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(true);
-            const initialRequest = new Subject<HttpResponse<QuizStatisticsOverviewResponse>>();
-            const refreshRequest = new Subject<HttpResponse<QuizStatisticsOverviewResponse>>();
+            accountService.isAtLeastTutor.set(true);
+            const initialRequest = new Subject<QuizStatisticsOverviewResponse>();
+            const refreshRequest = new Subject<QuizStatisticsOverviewResponse>();
             quizServiceFindSpy.mockReturnValueOnce(initialRequest.asObservable()).mockReturnValueOnce(refreshRequest.asObservable());
             const initialOverview = cloneWith(quizExercise, { participantsRated: 1 });
             const refreshedOverview = cloneWith(quizExercise, { participantsRated: 2 });
 
             comp.ngOnInit();
             websocketService.emit('/topic/statistic/42', 42);
-            refreshRequest.next(new HttpResponse({ body: refreshedOverview }));
+            refreshRequest.next(refreshedOverview);
             expect(comp.quizExercise()).toBe(refreshedOverview);
 
-            initialRequest.next(new HttpResponse({ body: initialOverview }));
+            initialRequest.next(initialOverview);
             expect(comp.quizExercise()).toBe(refreshedOverview);
         });
 
         it('should cancel superseded overview requests and the active request on destroy', () => {
-            vi.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(true);
+            accountService.isAtLeastTutor.set(true);
             let nextRequestId = 0;
             const cancelledRequestIds: number[] = [];
             quizServiceFindSpy.mockImplementation(
@@ -142,14 +139,13 @@ describe('QuizStatisticComponent', () => {
 
         it('should not load QuizSuccess if not authorised', async () => {
             // setup
-            accountSpy = vi.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(false);
+            accountService.isAtLeastTutor.set(false);
 
             // call
             comp.ngOnInit();
             await fixture.whenStable();
 
             // check
-            expect(accountSpy).toHaveBeenCalled();
             expect(quizServiceFindSpy).not.toHaveBeenCalled();
         });
     });
@@ -159,18 +155,18 @@ describe('QuizStatisticComponent', () => {
             // Create component for these tests
             fixture = TestBed.createComponent(QuizStatisticComponent);
             comp = fixture.componentInstance;
-            quizServiceFindSpy = vi.spyOn(quizService, 'findStatisticsOverview').mockReturnValue(of(new HttpResponse({ body: quizExercise })));
+            quizServiceFindSpy = vi.spyOn(quizService, 'findStatisticsOverview').mockReturnValue(of(quizExercise));
         });
 
         it('should set data', () => {
             // setup
             const loadDataSpy = vi.spyOn(comp, 'loadData');
             quizExercise.quizQuestions = [
-                { quizQuestionStatistic: quizQuestionStatOne, points: 5, invalid: false, exportQuiz: false, randomizeOrder: true },
-                { quizQuestionStatistic: quizQuestionStatTwo, points: 6, invalid: false, exportQuiz: false, randomizeOrder: true },
+                { quizQuestionStatistic: quizQuestionStatOne, points: 5, invalid: false },
+                { quizQuestionStatistic: quizQuestionStatTwo, points: 6, invalid: false },
             ];
             quizExercise.participantsRated = 42;
-            accountSpy = vi.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(true);
+            accountService.isAtLeastTutor.set(true);
 
             // call
             comp.loadQuizSuccess(quizExercise);
@@ -184,11 +180,11 @@ describe('QuizStatisticComponent', () => {
         it('should call navigate to courses if called by student', () => {
             // setup
             quizExercise.quizQuestions = [
-                { quizQuestionStatistic: quizQuestionStatOne, points: 5, invalid: false, exportQuiz: false, randomizeOrder: true },
-                { quizQuestionStatistic: quizQuestionStatTwo, points: 6, invalid: false, exportQuiz: false, randomizeOrder: true },
+                { quizQuestionStatistic: quizQuestionStatOne, points: 5, invalid: false },
+                { quizQuestionStatistic: quizQuestionStatTwo, points: 6, invalid: false },
             ];
             quizExercise.participantsRated = 42;
-            accountSpy = vi.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(false);
+            accountService.isAtLeastTutor.set(false);
             const routerSpy = vi.spyOn(router, 'navigate');
 
             // call
@@ -204,17 +200,17 @@ describe('QuizStatisticComponent', () => {
             // Create component for these tests
             fixture = TestBed.createComponent(QuizStatisticComponent);
             comp = fixture.componentInstance;
-            quizServiceFindSpy = vi.spyOn(quizService, 'findStatisticsOverview').mockReturnValue(of(new HttpResponse({ body: quizExercise })));
+            quizServiceFindSpy = vi.spyOn(quizService, 'findStatisticsOverview').mockReturnValue(of(quizExercise));
         });
 
         it('should return MaxScore by looping over scores', () => {
             // setup
             quizExercise.quizQuestions = [
-                { quizQuestionStatistic: quizQuestionStatOne, points: 1, invalid: false, exportQuiz: false, randomizeOrder: true },
-                { quizQuestionStatistic: quizQuestionStatTwo, points: 2, invalid: false, exportQuiz: false, randomizeOrder: true },
+                { quizQuestionStatistic: quizQuestionStatOne, points: 1, invalid: false },
+                { quizQuestionStatistic: quizQuestionStatTwo, points: 2, invalid: false },
             ];
             comp.quizExercise.set(quizExercise);
-            accountSpy = vi.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(true);
+            accountService.isAtLeastTutor.set(true);
             vi.spyOn(comp, 'loadData').mockImplementation(() => {});
 
             // call
@@ -229,7 +225,7 @@ describe('QuizStatisticComponent', () => {
             quizExercise.quizQuestions = undefined;
             quizExercise.maxPoints = 42;
             comp.quizExercise.set(quizExercise);
-            accountSpy = vi.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(true);
+            accountService.isAtLeastTutor.set(true);
             vi.spyOn(comp, 'loadData').mockImplementation(() => {});
 
             // call
@@ -250,8 +246,8 @@ describe('QuizStatisticComponent', () => {
         it('should use values of quizExercise and rated data', () => {
             // setup
             quizExercise.quizQuestions = [
-                { quizQuestionStatistic: quizQuestionStatOne, points: 5, invalid: false, exportQuiz: false, randomizeOrder: true },
-                { quizQuestionStatistic: quizQuestionStatTwo, points: 6, invalid: false, exportQuiz: false, randomizeOrder: true },
+                { quizQuestionStatistic: quizQuestionStatOne, points: 5, invalid: false },
+                { quizQuestionStatistic: quizQuestionStatTwo, points: 6, invalid: false },
             ];
             quizExercise.participantsRated = 42;
             comp.quizExercise.set(quizExercise);
@@ -274,8 +270,8 @@ describe('QuizStatisticComponent', () => {
         it('should use values of quizExercise and unrated data', () => {
             // setup
             quizExercise.quizQuestions = [
-                { quizQuestionStatistic: quizQuestionStatOne, points: 5, invalid: false, exportQuiz: false, randomizeOrder: true },
-                { quizQuestionStatistic: quizQuestionStatTwo, points: 6, invalid: false, exportQuiz: false, randomizeOrder: true },
+                { quizQuestionStatistic: quizQuestionStatOne, points: 5, invalid: false },
+                { quizQuestionStatistic: quizQuestionStatTwo, points: 6, invalid: false },
             ];
             quizExercise.participantsRated = 42;
             comp.quizExercise.set(quizExercise);
@@ -291,7 +287,7 @@ describe('QuizStatisticComponent', () => {
         });
 
         it('should use zero counters for questions without calculated statistics', () => {
-            quizExercise.quizQuestions = [{ points: 5, invalid: false, exportQuiz: false, randomizeOrder: true }] as QuizStatisticsOverviewResponse['quizQuestions'];
+            quizExercise.quizQuestions = [{ points: 5, invalid: false }];
             quizExercise.participantsRated = 0;
             comp.quizExercise.set(quizExercise);
             comp.rated = true;

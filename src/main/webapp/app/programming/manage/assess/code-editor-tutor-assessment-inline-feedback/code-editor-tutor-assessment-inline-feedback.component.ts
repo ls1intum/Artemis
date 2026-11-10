@@ -1,3 +1,4 @@
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
 import { Component, ElementRef, computed, inject, input, linkedSignal, output, viewChild } from '@angular/core';
 import { Feedback, FeedbackType, buildFeedbackTextForReview } from 'app/assessment/shared/entities/feedback.model';
 import { StructuredGradingCriterionService } from 'app/exercise/structured-grading-criterion/structured-grading-criterion.service';
@@ -12,11 +13,12 @@ import { deepClone } from 'app/foundation/util/deep-clone.util';
     selector: 'jhi-code-editor-tutor-assessment-inline-feedback',
     templateUrl: './code-editor-tutor-assessment-inline-feedback.component.html',
     styleUrl: './code-editor-tutor-assessment-inline-feedback.component.scss',
-    imports: [TranslateDirective, FaIconComponent, UnifiedFeedbackComponent],
-    // Monaco anchors the widget on this component's own host element (see `elementRef` below), so the id/width it
-    // needs live on the host directly instead of behind an extra wrapping div in the template.
+    imports: [TumAetUiButtonDirective, TranslateDirective, FaIconComponent, UnifiedFeedbackComponent],
+    // Monaco anchors the widget on this host. Several cards may share a line, so the line is a data attribute,
+    // not an HTML id that would be duplicated when two suggestions refer to the same location.
     host: {
-        '[attr.id]': "'code-editor-inline-feedback-' + codeLine()",
+        'data-testid': 'code-editor-inline-feedback',
+        '[attr.data-code-line]': 'codeLine()',
         '[style.max-width.%]': '95',
     },
 })

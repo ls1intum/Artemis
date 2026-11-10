@@ -4,6 +4,7 @@ import {
     faBell,
     faBookOpen,
     faBroom,
+    faBug,
     faChartLine,
     faClipboardList,
     faCubes,
@@ -25,7 +26,6 @@ import {
     faToggleOn,
     faUniversity,
     faUser,
-    faUserShield,
 } from '@fortawesome/free-solid-svg-icons';
 import { TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -61,7 +61,6 @@ export class AdminSidebarComponent {
     layoutService = inject(LayoutService);
 
     protected readonly faChevronRight = faChevronRight;
-    protected readonly faUserShield = faUserShield;
 
     isNavbarCollapsed = input<boolean>(false);
     localCIActive = input<boolean>(false);
@@ -72,6 +71,8 @@ export class AdminSidebarComponent {
     passkeyEnabled = input<boolean>(false);
     isSuperAdmin = input<boolean>(false);
     irisEnabled = input<boolean>(false);
+    hyperionGenerationEnabled = input<boolean>(false);
+    aiWorkerEnabled = input<boolean>(false);
     weaviateEnabled = input<boolean>(false);
 
     toggleCollapseState = output<void>();
@@ -228,6 +229,13 @@ export class AdminSidebarComponent {
                 testId: 'admin-feature-usage',
             },
             {
+                routerLink: '/admin/error-analysis',
+                icon: faBug,
+                title: 'Error Analysis',
+                translation: 'global.menu.admin.sidebar.errorAnalysis',
+                testId: 'admin-error-analysis',
+            },
+            {
                 routerLink: '/admin/websocket',
                 icon: faPlug,
                 title: 'Websocket',
@@ -235,6 +243,16 @@ export class AdminSidebarComponent {
                 testId: 'admin-websocket',
             },
         ];
+
+        if (this.hyperionGenerationEnabled() || this.aiWorkerEnabled()) {
+            monitoringItems.push({
+                routerLink: '/admin/ai-generation',
+                icon: faRobot,
+                title: 'AI Generation',
+                translation: 'artemisApp.hyperion.workers.title',
+                testId: 'admin-ai-generation',
+            });
+        }
 
         // Only surface the ingestion dashboard when the global search (Weaviate) integration is enabled for this instance.
         if (this.weaviateEnabled()) {

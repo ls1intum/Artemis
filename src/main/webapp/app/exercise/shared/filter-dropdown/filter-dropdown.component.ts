@@ -1,8 +1,8 @@
-import { Component, ViewEncapsulation, computed, input, output } from '@angular/core';
+import { Component, computed, input, output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { faChevronDown } from '@fortawesome/free-solid-svg-icons';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { SelectModule } from 'primeng/select';
-import { OverlayOptions } from 'primeng/api';
 
 export interface FilterGroup {
     /** i18n key for the group header label. Empty string renders no header. */
@@ -14,10 +14,11 @@ export interface FilterGroup {
     selector: 'jhi-filter-dropdown',
     templateUrl: './filter-dropdown.component.html',
     styleUrls: ['./filter-dropdown.component.scss'],
-    imports: [FormsModule, ArtemisTranslatePipe, SelectModule],
-    encapsulation: ViewEncapsulation.None,
+    imports: [FormsModule, ArtemisTranslatePipe, FaIconComponent],
 })
 export class FilterDropdownComponent {
+    protected readonly faChevronDown = faChevronDown;
+
     readonly filters = input<string[]>([]);
     readonly groupedFilters = input<FilterGroup[] | undefined>(undefined);
     readonly activeFilter = input.required<string>();
@@ -28,9 +29,6 @@ export class FilterDropdownComponent {
     /** i18n key prefix prepended to each filter value for item labels. */
     readonly translationPrefix = input<string>('artemisApp.exercise.show');
     readonly filterChange = output<string>();
-
-    // The popup is attached to its trigger, so ancestor scrolling keeps it aligned.
-    readonly overlayOptions: OverlayOptions = { listener: (_event, options) => options?.type !== 'scroll' && options?.valid };
 
     readonly isFiltered = computed(() => this.activeFilter() !== this.allValue());
 }

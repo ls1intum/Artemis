@@ -1,17 +1,20 @@
-<div class="modal-body" style="padding-bottom: 10rem">
+<div class="p-4!" style="padding-bottom: 10rem">
     <input
         [attr.aria-label]="'accessibility.importExercise' | artemisTranslate"
         type="file"
+        data-testid="import-from-file-input"
         accept="application/zip"
         (change)="setFileForExerciseImport($event)"
         style="margin-right: -10px; padding-right: -10px"
     />
-    <jhi-button
+    <tumaet-ui-button
+        severity="secondary"
         id="upload-exercise-btn"
-        [disabled]="fileForImport() === undefined"
+        data-testid="upload-exercise-btn"
+        [disabled]="fileForImport() === undefined || isImporting()"
         [icon]="faUpload"
-        [title]="'artemisApp.programmingExercise.importFromFile.uploadForImport'"
-        (onClick)="uploadExercise()"
-    />
-    <jhi-help-icon text="artemisApp.programmingExercise.importFromFile.description" style="margin-left: 15px" />
+        (clicked)="uploadExercise()"
+        ><span jhiTranslate="artemisApp.exercise.importFromFile.uploadForImport"></span
+    ></tumaet-ui-button>
+    <jhi-help-icon text="artemisApp.exercise.importFromFile.description" style="margin-left: 15px" />
 </div>

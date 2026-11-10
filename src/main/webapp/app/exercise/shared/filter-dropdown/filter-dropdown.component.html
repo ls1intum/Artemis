@@ -1,57 +1,32 @@
-@if (groupedFilters()) {
-    <!-- Grouped mode -->
-    <p-select
-        size="small"
-        appendTo="self"
-        [overlayOptions]="overlayOptions"
-        [group]="true"
-        [options]="groupedFilters()!"
-        optionGroupLabel="labelKey"
-        optionGroupChildren="items"
-        [ngModel]="isFiltered() ? activeFilter() : null"
-        [showClear]="isFiltered()"
-        [placeholder]="filterLabelKey() | artemisTranslate"
-        (onChange)="filterChange.emit($event.value ?? allValue())"
-        [class]="isFiltered() ? 'filter-dropdown-active' : 'filter-dropdown-default'"
-        aria-label="Filter Dropdown"
+<span class="relative inline-block">
+    <select
+        class="[&_option]:text-text [&_optgroup]:text-text h-10.5 appearance-none rounded-md border border-border bg-(--tumaet-ui-control-background) py-2 ps-3 pe-9 text-sm"
+        [ngModel]="activeFilter()"
+        (ngModelChange)="filterChange.emit($event ?? allValue())"
+        [attr.aria-label]="filterLabelKey() | artemisTranslate"
+        [class.text-state-success]="isFiltered()"
     >
-        <ng-template #selectedItem>
-            <div class="d-flex align-items-center">
-                <i class="pi pi-filter"></i>
-                <span class="ms-2">{{ filterLabelKey() | artemisTranslate }}: {{ translationPrefix() + activeFilter() | artemisTranslate }}</span>
-            </div>
-        </ng-template>
-        <ng-template #group let-group>
-            @if (group.labelKey) {
-                <span>{{ group.labelKey | artemisTranslate }}</span>
+        <option [ngValue]="allValue()">{{ filterLabelKey() | artemisTranslate }}</option>
+        @if (groupedFilters(); as groups) {
+            @for (group of groups; track $index) {
+                @if (group.labelKey) {
+                    <optgroup [label]="group.labelKey | artemisTranslate">
+                        @for (filter of group.items; track filter) {
+                            <option [ngValue]="filter">{{ translationPrefix() + filter | artemisTranslate }}</option>
+                        }
+                    </optgroup>
+                } @else {
+                    @for (filter of group.items; track filter) {
+                        <option [ngValue]="filter">{{ translationPrefix() + filter | artemisTranslate }}</option>
+                    }
+                }
             }
-        </ng-template>
-        <ng-template #item let-filter>
-            {{ translationPrefix() + filter | artemisTranslate }}
-        </ng-template>
-    </p-select>
-} @else {
-    <!-- Flat mode -->
-    <p-select
-        size="small"
-        appendTo="self"
-        [overlayOptions]="overlayOptions"
-        [options]="filters()"
-        [ngModel]="isFiltered() ? activeFilter() : null"
-        [showClear]="isFiltered()"
-        [placeholder]="filterLabelKey() | artemisTranslate"
-        (onChange)="filterChange.emit($event.value ?? allValue())"
-        [class]="isFiltered() ? 'filter-dropdown-active' : 'filter-dropdown-default'"
-        aria-label="Filter Dropdown"
-    >
-        <ng-template #selectedItem>
-            <div class="d-flex align-items-center">
-                <i class="pi pi-filter"></i>
-                <span class="ms-2">{{ filterLabelKey() | artemisTranslate }}: {{ translationPrefix() + activeFilter() | artemisTranslate }}</span>
-            </div>
-        </ng-template>
-        <ng-template #item let-filter>
-            {{ translationPrefix() + filter | artemisTranslate }}
-        </ng-template>
-    </p-select>
-}
+        } @else {
+            @for (filter of filters(); track filter) {
+                <option [ngValue]="filter">{{ translationPrefix() + filter | artemisTranslate }}</option>
+            }
+        }
+    </select>
+    <!-- The native chevron sits high and tight against the edge, so it is drawn here, centered on the select. -->
+    <fa-icon [icon]="faChevronDown" class="pointer-events-none absolute end-3 top-1/2 -translate-y-1/2 text-xs text-text-secondary" />
+</span>

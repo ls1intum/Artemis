@@ -9,7 +9,7 @@ import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ArtemisServerDateService } from 'app/foundation/service/server-date.service';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { BehaviorSubject, Observable, Subject, Subscription, combineLatest, of, throwError } from 'rxjs';
-import { catchError, distinctUntilChanged, filter, map, tap, throttleTime, timeout } from 'rxjs/operators';
+import { catchError, distinctUntilChanged, filter, map, takeUntil, tap, throttleTime, timeout } from 'rxjs/operators';
 import { InitializationState } from 'app/exercise/shared/entities/participation/participation.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { ComponentCanDeactivate } from 'app/foundation/guard/can-deactivate.model';
@@ -17,7 +17,7 @@ import { TranslateService } from '@ngx-translate/core';
 import dayjs from 'dayjs/esm';
 import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
 import { Course } from 'app/course/shared/entities/course.model';
-import { captureException } from '@sentry/angular';
+import { captureException } from 'app/core/error-reporting/capture-exception';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ExamPage } from 'app/exam/shared/entities/exam-page.model';
 import { AUTOSAVE_CHECK_INTERVAL, AUTOSAVE_EXERCISE_INTERVAL } from 'app/foundation/constants/exercise-exam-constants';
@@ -64,6 +64,8 @@ import { ExamPageComponent } from 'app/exam/overview/exercises/exam-page.compone
 import { SidebarCardElement, SidebarData } from 'app/foundation/types/sidebar';
 import { TumAetUiButtonDirective, TumAetUiMessageComponent, TumAetUiProgressSpinnerComponent } from '@tumaet/ui-angular';
 import { deepClone, hydrate } from 'app/foundation/util/deep-clone.util';
+import { QuizSubmissionApi } from 'app/openapi/api/quiz-submission-api';
+import { toQuizSubmissionFromLiveClient } from 'app/quiz/shared/util/generated-quiz-exercise.util';
 
 type GenerateParticipationStatus = 'generating' | 'failed' | 'success';
 
@@ -102,6 +104,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     private route = inject(ActivatedRoute);
     private router = inject(Router);
     private examParticipationService = inject(ExamParticipationService);
+    private quizSubmissionApi = inject(QuizSubmissionApi);
     private modelingSubmissionService = inject(ModelingSubmissionService);
     private programmingSubmissionService = inject(ProgrammingSubmissionService);
     private textSubmissionService = inject(TextSubmissionService);
@@ -212,6 +215,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     private synchronizationAlert = new Subject<void>();
 
     private programmingSubmissionSubscriptions: Subscription[] = [];
+    private readonly participationStartCancelled = new Subject<void>();
 
     readonly loadingExam = signal<boolean>(undefined!);
     // Render-version signal read by the template-bound isOver()/isGracePeriodOver() getters. Bumped whenever
@@ -274,12 +278,8 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                 this.loadTestExamStudentExamForSummary();
             } else {
                 this.examLoadSubscription = this.examParticipationService.getOwnStudentExam(this.courseId(), this.examId()).subscribe({
-                    next: (studentExam) => {
-                        this.handleStudentExam(studentExam);
-                    },
-                    error: () => {
-                        this.handleNoStudentExam();
-                    },
+                    next: (studentExam) => this.handleStudentExam(studentExam),
+                    error: () => this.handleNoStudentExam(),
                 });
             }
         });
@@ -380,6 +380,8 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
      * one, in the case of a working-time update even reconstructing a student exam that was just dropped (#13317).
      */
     private stopConductionOfPreviousExam(): void {
+        this.participationStartCancelled.next();
+        this.generateParticipationStatus.next('success');
         this.stopAutoSaveTimer();
         this.workingTimeUpdateEventsSubscription?.unsubscribe();
         this.workingTimeUpdateEventsSubscription = undefined;
@@ -822,6 +824,8 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     }
 
     ngOnDestroy(): void {
+        this.participationStartCancelled.next();
+        this.participationStartCancelled.complete();
         this.programmingSubmissionSubscriptions.forEach((subscription) => {
             subscription.unsubscribe();
         });
@@ -989,6 +993,8 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
      * @param exerciseChange
      */
     onPageChange(exerciseChange: { overViewChange: boolean; exercise?: Exercise; forceSave: boolean }): void {
+        this.participationStartCancelled.next();
+        this.generateParticipationStatus.next('success');
         const activeComponent = this.activePageComponent;
         if (activeComponent) {
             activeComponent.onDeactivate();
@@ -1033,6 +1039,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                 }
             });
         } else {
+            this.generateParticipationStatus.next('success');
             this.activateActiveComponent();
         }
     }
@@ -1041,6 +1048,14 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         this.activeExamPage().isOverviewPage = true;
         this.activeExamPage().exercise = undefined;
         this.exerciseIndex.set(-1);
+    }
+
+    /** Retries the active exercise with the same activation and programming submission setup as its initial start. */
+    retryParticipationForExercise(): void {
+        const exercise = this.activeExamPage().exercise;
+        if (this.generateParticipationStatus.value === 'failed' && exercise) {
+            this.initializeExercise(exercise);
+        }
     }
 
     /**
@@ -1099,6 +1114,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     createParticipationForExercise(exercise: Exercise): Observable<StudentParticipation | undefined> {
         this.generateParticipationStatus.next('generating');
         return this.courseExerciseService.startExercise(exercise.id!, exercise).pipe(
+            takeUntil(this.participationStartCancelled),
             map((createdParticipation: StudentParticipation) => {
                 // note: it is important that we exchange the existing student participation and that we do not push it
                 exercise.studentParticipations = [createdParticipation];
@@ -1188,7 +1204,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                         break;
                     case ExerciseType.QUIZ:
                         this.examParticipationService.setSubmissionSaving(submissionToSync.submission, true);
-                        this.examParticipationService.updateQuizSubmission(submissionToSync.exercise.id!, submissionToSync.submission).subscribe({
+                        this.quizSubmissionApi.submitQuizForExam(submissionToSync.exercise.id!, toQuizSubmissionFromLiveClient(submissionToSync.submission)).subscribe({
                             next: () => this.onSaveSubmissionSuccess(submissionToSync.submission),
                             error: (error: HttpErrorResponse) => this.onSaveSubmissionError(error, submissionToSync.submission),
                         });

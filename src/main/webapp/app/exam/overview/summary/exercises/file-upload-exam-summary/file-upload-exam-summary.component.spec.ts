@@ -83,4 +83,11 @@ describe('FileUploadExamSummaryComponent', () => {
         expect(childComponent).toBeTruthy();
         expect(childComponent.submission()?.filePathUrl).toBe('api/core/files/file-upload-exercises/123/submissions/456/test.pdf');
     });
+    it.each(['owner', 'staff-preview'] as const)('passes explicit %s purpose to its reusable editor', (purpose) => {
+        fixture.componentRef.setInput('viewingPurpose', purpose);
+        fixture.componentRef.setInput('exercise', { studentParticipations: [{ id: 1 }] } as FileUploadExercise);
+        fixture.detectChanges();
+        const editor = fixture.debugElement.query(By.directive(FileUploadSubmissionComponent)).componentInstance as FileUploadSubmissionComponent;
+        expect(editor.viewingPurpose()).toBe(purpose);
+    });
 });

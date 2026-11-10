@@ -1,10 +1,11 @@
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
 import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, effect, inject, input, model, output, signal, untracked } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { TranslateService } from '@ngx-translate/core';
-import { catchError, finalize, switchMap, tap } from 'rxjs/operators';
-import { Observable, Subscription, of, throwError } from 'rxjs';
+import { catchError, finalize, map, switchMap, tap } from 'rxjs/operators';
+import { EMPTY, Observable, Subscription, of, throwError } from 'rxjs';
 import { isEmpty as _isEmpty } from 'lodash-es';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
@@ -28,7 +29,7 @@ import { CodeEditorResolveConflictModalComponent } from 'app/programming/shared/
     selector: 'jhi-code-editor-actions',
     templateUrl: './code-editor-actions.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [FeatureToggleDirective, NgbTooltip, FaIconComponent, TranslateDirective, ArtemisTranslatePipe, RouterLink],
+    imports: [TumAetUiButtonDirective, FeatureToggleDirective, NgbTooltip, FaIconComponent, TranslateDirective, ArtemisTranslatePipe, RouterLink],
 })
 export class CodeEditorActionsComponent implements OnInit, OnDestroy {
     private readonly repositoryService = inject(CodeEditorRepositoryService);
@@ -174,6 +175,9 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy {
     }
 
     onRefresh() {
+        if (this.disableActions()) {
+            return;
+        }
         if (this.editorState() !== EditorState.CLEAN) {
             this.refreshModalRef =
                 this.dialogService.open(CodeEditorConfirmRefreshModalComponent, {
@@ -185,40 +189,55 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy {
                     dismissableMask: false,
                 }) ?? undefined;
             this.refreshModalRef?.onClose.subscribe((confirmed: boolean | undefined) => {
-                if (confirmed) {
-                    this.executeRefresh();
+                if (confirmed && !this.disableActions()) {
+                    this.executeRefresh().subscribe();
                 }
             });
         } else {
-            this.executeRefresh();
+            this.executeRefresh().subscribe();
         }
     }
 
-    executeRefresh() {
+    executeRefresh(): Observable<boolean> {
+        if (this.disableActions()) {
+            return EMPTY;
+        }
+        return this.refreshRepository();
+    }
+
+    private refreshRepository(): Observable<boolean> {
         this.editorState.set(EditorState.REFRESHING);
-        this.repositoryService.pull().subscribe({
-            next: () => {
+        return this.repositoryService.pull().pipe(
+            map(() => {
                 this.onRefreshFiles.emit();
                 this.editorState.set(EditorState.CLEAN);
-            },
-            error: (error: Error) => {
+                return true;
+            }),
+            catchError((error: Error) => {
                 this.editorState.set(EditorState.UNSAVED_CHANGES);
                 if (error.message === ConnectionError.message) {
                     this.onError.emit('refreshFailed' + error.message);
                 } else {
                     this.onError.emit('refreshFailed');
                 }
-            },
-        });
+                return of(false);
+            }),
+        );
     }
 
     onSave() {
+        if (this.disableActions()) {
+            return;
+        }
         this.saveChangedFiles()
             .pipe(catchError(() => of()))
             .subscribe();
     }
 
     saveChangedFiles(andCommit = false): Observable<FileSubmission | FileSubmissionError | undefined> {
+        if (this.disableActions()) {
+            return EMPTY;
+        }
         const unsavedFilesValue = this.unsavedFiles();
         if (!_isEmpty(unsavedFilesValue)) {
             this.editorState.set(EditorState.SAVING);
@@ -226,7 +245,12 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy {
             return this.repositoryFileService.updateFiles(unsavedFiles, andCommit).pipe(
                 tap((fileSubmission: FileSubmission | FileSubmissionError) => {
                     if (!('error' in fileSubmission)) {
-                        this.onSavedFiles.emit(fileSubmission);
+                        const completedFiles = Object.fromEntries(
+                            Object.entries(fileSubmission).filter(([fileName, error]) => error || this.unsavedFiles()[fileName] === unsavedFilesValue[fileName]),
+                        );
+                        if (!_isEmpty(completedFiles)) {
+                            this.onSavedFiles.emit(completedFiles);
+                        }
                     }
                 }),
                 catchError((error: Error) => {
@@ -244,7 +268,7 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy {
     }
 
     commit() {
-        if (this.commitState() === CommitState.COMMITTING) {
+        if (this.disableActions() || this.commitState() === CommitState.COMMITTING) {
             return;
         }
         of(undefined)
@@ -294,7 +318,7 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy {
     }
 
     resetRepository() {
-        if (this.isResolvingConflict()) {
+        if (this.disableActions() || this.isResolvingConflict()) {
             return;
         }
         this.conflictModalRef =
@@ -307,9 +331,7 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy {
                 dismissableMask: false,
             }) ?? undefined;
         this.conflictModalRef?.onClose.subscribe((confirmed: boolean | undefined) => {
-            // The dialog can report a confirmation more than once (e.g. a double click on its submit button),
-            // so ignore it while a reset is already running
-            if (!confirmed || this.isResolvingConflict()) {
+            if (!confirmed || this.disableActions() || this.isResolvingConflict()) {
                 return;
             }
             this.isResolvingConflict.set(true);
@@ -319,7 +341,7 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy {
                 .subscribe({
                     next: () => {
                         this.conflictService.notifyConflictState(GitConflictState.OK);
-                        this.executeRefresh();
+                        this.executeRefresh().subscribe();
                     },
                     error: () => {
                         this.onError.emit('resetFailed');

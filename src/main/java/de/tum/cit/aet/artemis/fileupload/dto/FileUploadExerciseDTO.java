@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.fileupload.dto;
 
 import java.time.ZonedDateTime;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -70,7 +71,7 @@ public record FileUploadExerciseDTO(Long id, String type, @Nullable String title
         @Nullable Boolean presentationScoreEnabled, @Nullable Boolean secondCorrectionEnabled, @Nullable String gradingInstructions, @Nullable ZonedDateTime releaseDate,
         @Nullable ZonedDateTime startDate, @Nullable ZonedDateTime dueDate, @Nullable ZonedDateTime assessmentDueDate, @Nullable ZonedDateTime exampleSolutionPublicationDate,
         @Nullable String exampleSolution, @Nullable String filePattern, boolean gradingInstructionFeedbackUsed, @Nullable CourseContextDTO course,
-        @Nullable ExerciseGroupContextDTO exerciseGroup, @Nullable ExerciseVariantGroupReferenceDTO exerciseVariantGroup, @Nullable Set<GradingCriterionDTO> gradingCriteria,
+        @Nullable ExerciseGroupContextDTO exerciseGroup, @Nullable ExerciseVariantGroupReferenceDTO exerciseVariantGroup, @Nullable List<GradingCriterionDTO> gradingCriteria,
         @Nullable Set<CompetencyLinkDTO> competencyLinks, @Nullable FileUploadPlagiarismDetectionConfigDTO plagiarismDetectionConfig) implements CourseManagementExerciseDTO {
 
     /**
@@ -84,8 +85,9 @@ public record FileUploadExerciseDTO(Long id, String type, @Nullable String title
     }
 
     /**
-     * Maps the record written into the exercise details file of an archive: the full response without the id of the
-     * team assignment configuration, which is a row of this instance and means nothing in a file read back elsewhere.
+     * Maps the record written into the exercise details file of an archive: the full response without the ids of the
+     * team assignment configuration and the grading criteria, which are rows of this instance and mean nothing in a file
+     * read back elsewhere.
      * The plagiarism configuration of a file upload exercise carries no id.
      *
      * @param exercise the exercise to export
@@ -118,13 +120,11 @@ public record FileUploadExerciseDTO(Long id, String type, @Nullable String title
 
     private static FileUploadExerciseDTO map(FileUploadExercise exercise, boolean includeContext, boolean includeInitializedAssociations, boolean forExport) {
         Set<String> categories = initialized(exercise.getCategories()) ? Set.copyOf(exercise.getCategories()) : null;
-        FileUploadTeamAssignmentConfigDTO teamAssignmentConfig = includeInitializedAssociations && initialized(exercise.getTeamAssignmentConfig())
-                ? FileUploadTeamAssignmentConfigDTO.of(exercise.getTeamAssignmentConfig())
-                : null;
-        if (forExport && teamAssignmentConfig != null) {
-            teamAssignmentConfig = teamAssignmentConfig.withoutId();
+        FileUploadTeamAssignmentConfigDTO teamAssignmentConfig = mapTeamAssignmentConfig(exercise, includeInitializedAssociations, forExport);
+        List<GradingCriterionDTO> gradingCriteria = includeInitializedAssociations ? mapGradingCriteria(exercise.getGradingCriteria()) : null;
+        if (forExport && gradingCriteria != null) {
+            gradingCriteria = gradingCriteria.stream().map(GradingCriterionDTO::withoutIds).toList();
         }
-        Set<GradingCriterionDTO> gradingCriteria = includeInitializedAssociations ? mapGradingCriteria(exercise.getGradingCriteria()) : null;
         Set<CompetencyLinkDTO> competencyLinks = includeInitializedAssociations && initialized(exercise.getCompetencyLinks())
                 ? exercise.getCompetencyLinks().stream().map(CompetencyLinkDTO::of).collect(Collectors.toSet())
                 : null;
@@ -144,12 +144,20 @@ public record FileUploadExerciseDTO(Long id, String type, @Nullable String title
                 plagiarismDetectionConfig);
     }
 
-    private static Set<GradingCriterionDTO> mapGradingCriteria(@Nullable Set<GradingCriterion> gradingCriteria) {
+    private static @Nullable FileUploadTeamAssignmentConfigDTO mapTeamAssignmentConfig(FileUploadExercise exercise, boolean includeInitializedAssociations, boolean forExport) {
+        if (!includeInitializedAssociations || !initialized(exercise.getTeamAssignmentConfig())) {
+            return null;
+        }
+        FileUploadTeamAssignmentConfigDTO config = FileUploadTeamAssignmentConfigDTO.of(exercise.getTeamAssignmentConfig());
+        return forExport ? config.withoutId() : config;
+    }
+
+    private static List<GradingCriterionDTO> mapGradingCriteria(@Nullable Set<GradingCriterion> gradingCriteria) {
         if (!initialized(gradingCriteria)
                 || gradingCriteria.stream().map(GradingCriterion::getStructuredGradingInstructions).anyMatch(instructions -> !Hibernate.isInitialized(instructions))) {
             return null;
         }
-        return gradingCriteria.stream().map(GradingCriterionDTO::of).collect(Collectors.toSet());
+        return GradingCriterionDTO.ofAll(gradingCriteria);
     }
 
     private static boolean initialized(@Nullable Object association) {

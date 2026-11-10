@@ -1,7 +1,6 @@
 package de.tum.cit.aet.artemis.exercise.dto;
 
 import java.time.ZonedDateTime;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -252,8 +251,7 @@ public record ExerciseResponseDTO(long id, String type, ExerciseType exerciseTyp
         if (criteria == null) {
             return null;
         }
-        return criteria.stream().filter(Objects::nonNull).sorted(Comparator.comparing(GradingCriterion::getId, Comparator.nullsLast(Comparator.naturalOrder())))
-                .map(GradingCriterionDTO::of).toList();
+        return GradingCriterionDTO.ofAll(criteria);
     }
 
     private static @Nullable List<ExampleSubmissionDTO> exampleSubmissions(Exercise exercise) {

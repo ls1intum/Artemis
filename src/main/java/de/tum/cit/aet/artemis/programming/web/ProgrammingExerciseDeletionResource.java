@@ -6,7 +6,6 @@ import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
@@ -20,15 +19,16 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.security.Role;
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastEditorInExercise;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastInstructorInExercise;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
-import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDeletionService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionService;
@@ -52,9 +52,6 @@ public class ProgrammingExerciseDeletionResource {
     private static final Logger log = LoggerFactory.getLogger(ProgrammingExerciseDeletionResource.class);
 
     private static final String ENTITY_NAME = "programmingExercise";
-
-    @Value("${jhipster.clientApp.name}")
-    private String applicationName;
 
     private final AuthorizationCheckService authCheckService;
 
@@ -90,25 +87,25 @@ public class ProgrammingExerciseDeletionResource {
     }
 
     /**
-     * DELETE /programming-exercises/:id : delete the "id" programmingExercise.
+     * DELETE /programming-exercises/:id : delete the "id" programmingExercise in the background. The progress is sent over the websocket topic of the exercise.
      *
      * @param exerciseId                the id of the programmingExercise to delete
      * @param deleteBaseReposBuildPlans boolean which states whether the base repos and build plans should be deleted as well, this is true by default because for LocalVC and
      *                                      LocalCI, it does not make sense to keep these artifacts
-     * @return the ResponseEntity with status 200 (OK) when programming exercise has been successfully deleted or with status 404 (Not Found)
+     * @return the ResponseEntity with status 202 (Accepted) when the deletion is scheduled, 404 (Not Found), or 409 (Conflict) if the exercise is already being deleted
      */
     @DeleteMapping("programming-exercises/{exerciseId}")
-    @EnforceAtLeastInstructor
+    @EnforceAtLeastInstructorInExercise
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<Void> deleteProgrammingExercise(@PathVariable long exerciseId, @RequestParam(defaultValue = "true") boolean deleteBaseReposBuildPlans) {
         log.info("REST request to delete ProgrammingExercise : {}", exerciseId);
         var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationCategoriesAndCompetenciesElseThrow(exerciseId);
         User user = userRepository.getUserWithAuthorities();
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, programmingExercise, user);
-        exerciseService.logDeletion(programmingExercise, programmingExercise.getCourseViaExerciseGroupOrCourseMemberElseThrow(), user);
-        exerciseDeletionService.delete(exerciseId, deleteBaseReposBuildPlans);
+        var course = programmingExercise.getCourseViaExerciseGroupOrCourseMemberElseThrow();
+        // The request is audited only once the deletion is accepted, so a request that is refused because the exercise is already being deleted is not logged as a deletion.
+        exerciseDeletionService.startAsyncDeletion(programmingExercise, deleteBaseReposBuildPlans, () -> exerciseService.logDeletion(programmingExercise, course, user));
 
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, programmingExercise.getTitle())).build();
+        return ResponseEntity.accepted().build();
     }
 
     /**
@@ -124,20 +121,39 @@ public class ProgrammingExerciseDeletionResource {
      * @return ResponseEntity<Void> - The ResponseEntity with status 200 (OK) if the reset was successful.
      */
     @PutMapping("programming-exercises/{exerciseId}/reset")
-    @EnforceAtLeastEditor
+    @EnforceAtLeastEditorInExercise
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<Void> reset(@PathVariable Long exerciseId, @RequestBody ProgrammingExerciseResetOptionsDTO programmingExerciseResetOptionsDTO) {
+        if (programmingExerciseResetOptionsDTO.deleteParticipationsSubmissionsAndResults()) {
+            throw new AccessForbiddenException("Deleting participations requires the instructor reset operation");
+        }
+        return executeReset(exerciseId, programmingExerciseResetOptionsDTO);
+    }
+
+    /**
+     * Resets student participations, submissions and results, optionally recreating the base build plans.
+     *
+     * @param exerciseId the programming exercise
+     * @param options    the explicitly selected reset actions
+     * @return an empty successful response
+     */
+    @PutMapping("programming-exercises/{exerciseId}/reset-participations")
+    @EnforceAtLeastInstructorInExercise
+    @FeatureToggle(Feature.ProgrammingExercises)
+    public ResponseEntity<Void> resetParticipations(@PathVariable Long exerciseId, @RequestBody ProgrammingExerciseResetOptionsDTO options) {
+        if (!options.deleteParticipationsSubmissionsAndResults()) {
+            throw new BadRequestAlertException("Select participation deletion for this operation", ENTITY_NAME, "missingResetAction");
+        }
+        return executeReset(exerciseId, options);
+    }
+
+    private ResponseEntity<Void> executeReset(Long exerciseId, ProgrammingExerciseResetOptionsDTO programmingExerciseResetOptionsDTO) {
         log.debug("REST request to reset programming exercise {} with options {}", exerciseId, programmingExerciseResetOptionsDTO);
         var programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesElseThrow(exerciseId);
         final var user = userRepository.getUserWithAuthorities();
 
-        if (programmingExerciseResetOptionsDTO.recreateBuildPlans()) {
-            authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, programmingExercise, user);
-        }
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, programmingExercise, user);
 
-        if (programmingExerciseResetOptionsDTO.deleteParticipationsSubmissionsAndResults()) {
-            authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, programmingExercise, user);
-        }
         try (var lease = programmingExerciseMutationGuard.claimExternalMutation(exerciseId)) {
             if (lease.coordinated()) {
                 programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesElseThrow(exerciseId);
@@ -167,13 +183,12 @@ public class ProgrammingExerciseDeletionResource {
      *         or with status {@code 400 (Bad Request) if the exerciseId is not valid}.
      */
     @DeleteMapping("programming-exercises/{exerciseId}/tasks")
-    @EnforceAtLeastEditor
+    @EnforceAtLeastEditorInExercise
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<Void> deleteTasks(@PathVariable Long exerciseId) {
         log.debug("REST request to delete tasks for ProgrammingExercise with id : {}", exerciseId);
         ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
         User user = userRepository.getUserWithAuthorities();
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, exercise, user);
 
         try (var lease = programmingExerciseMutationGuard.claimExternalMutation(exerciseId)) {
             if (lease.coordinated()) {

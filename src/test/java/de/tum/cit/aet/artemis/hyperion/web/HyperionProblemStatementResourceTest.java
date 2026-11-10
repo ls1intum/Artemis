@@ -160,7 +160,7 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void shouldReturnConsistencyIssuesEmptyForInstructor() throws Exception {
         long exerciseId = persistedExerciseId;
         mockConsistencyNoIssues();
@@ -170,7 +170,7 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = { "USER", "EDITOR" })
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void shouldReturnConsistencyIssuesEmptyForEditor() throws Exception {
         long exerciseId = persistedExerciseId;
         mockConsistencyNoIssues();
@@ -180,7 +180,7 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void shouldPersistConsistencyIssuesAsReviewComments() throws Exception {
         long exerciseId = persistedExerciseId;
         mockConsistencyWithIssue();
@@ -210,7 +210,7 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void shouldNotPersistConsistencyThreadsWhenSkipThreadContextIsTrue() throws Exception {
         long exerciseId = persistedExerciseId;
         mockConsistencyWithIssue();
@@ -224,7 +224,7 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = { "USER", "TA" })
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void shouldReturnForbiddenForConsistencyCheckTutor() throws Exception {
         long exerciseId = persistedExerciseId;
 
@@ -235,7 +235,7 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = { "USER", "STUDENT" })
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldReturnForbiddenForConsistencyCheckStudent() throws Exception {
         long exerciseId = persistedExerciseId;
 
@@ -246,7 +246,7 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void shouldRewriteProblemStatementForInstructor() throws Exception {
         long courseId = persistedCourseId;
         mockRewriteImproved();
@@ -258,7 +258,7 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = { "USER", "EDITOR" })
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void shouldRewriteProblemStatementForEditor() throws Exception {
         long courseId = persistedCourseId;
         mockRewriteImproved();
@@ -270,7 +270,7 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = { "USER", "TA" })
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void shouldReturnForbiddenForRewriteTutor() throws Exception {
         long courseId = persistedCourseId;
 
@@ -283,7 +283,7 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = { "USER", "STUDENT" })
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldReturnForbiddenForRewriteStudent() throws Exception {
         long courseId = persistedCourseId;
         userUtilService.changeUser(TEST_PREFIX + "student1");
@@ -294,7 +294,7 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void shouldGenerateProblemStatementForInstructor() throws Exception {
         long courseId = persistedCourseId;
         mockChatSuccess("Draft problem statement generated successfully.");
@@ -306,7 +306,7 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = { "USER", "EDITOR" })
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void shouldGenerateProblemStatementForEditor() throws Exception {
         long courseId = persistedCourseId;
         mockChatSuccess("Draft problem statement generated successfully.");
@@ -318,7 +318,7 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = { "USER", "TA" })
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void shouldReturnForbiddenForGenerateTutor() throws Exception {
         long courseId = persistedCourseId;
 
@@ -331,7 +331,7 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = { "USER", "STUDENT" })
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldReturnForbiddenForGenerateStudent() throws Exception {
         long courseId = persistedCourseId;
         userUtilService.changeUser(TEST_PREFIX + "student1");
@@ -342,7 +342,7 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void shouldReturnInternalServerErrorWhenGenerationFails() throws Exception {
         long courseId = persistedCourseId;
         mockChatFailure();
@@ -356,7 +356,7 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void shouldRefineProblemStatementGloballyForInstructor() throws Exception {
         long courseId = persistedCourseId;
         mockChatSuccess("Refined problem statement generated successfully.");
@@ -368,7 +368,7 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = { "USER", "EDITOR" })
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void shouldRefineProblemStatementForEditor() throws Exception {
         long courseId = persistedCourseId;
         mockChatSuccess("Refined problem statement generated successfully.");
@@ -380,7 +380,7 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = { "USER", "TA" })
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void shouldReturnForbiddenForRefineTutor() throws Exception {
         long courseId = persistedCourseId;
 
@@ -393,7 +393,7 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = { "USER", "STUDENT" })
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldReturnForbiddenForRefineStudent() throws Exception {
         long courseId = persistedCourseId;
         userUtilService.changeUser(TEST_PREFIX + "student1");
@@ -404,7 +404,7 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void shouldReturnInternalServerErrorWhenRefinementFails() throws Exception {
         long courseId = persistedCourseId;
         mockChatFailure();
@@ -418,7 +418,7 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void shouldReturnBadRequestForEmptyRefinement() throws Exception {
         long courseId = persistedCourseId;
         userUtilService.changeUser(TEST_PREFIX + "instructor1");
@@ -430,7 +430,7 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void shouldReturnForbiddenForGenerateWithNonExistentCourse() throws Exception {
         long nonExistentCourseId = 999999L;
         userUtilService.changeUser(TEST_PREFIX + "instructor1");
@@ -440,7 +440,7 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void shouldReturnForbiddenForRefineWithNonExistentCourse() throws Exception {
         long nonExistentCourseId = 999999L;
         userUtilService.changeUser(TEST_PREFIX + "instructor1");
@@ -451,7 +451,7 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void shouldReturnForbiddenForTargetedRefineWithNonExistentCourse() throws Exception {
         long nonExistentCourseId = 999999L;
         userUtilService.changeUser(TEST_PREFIX + "instructor1");
@@ -462,7 +462,7 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void shouldReturnBadRequestForBlankGenerateUserPrompt() throws Exception {
         long courseId = persistedCourseId;
         userUtilService.changeUser(TEST_PREFIX + "instructor1");
@@ -473,7 +473,7 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void shouldReturnBadRequestForOverlongGenerateUserPrompt() throws Exception {
         long courseId = persistedCourseId;
         userUtilService.changeUser(TEST_PREFIX + "instructor1");
@@ -485,7 +485,7 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void shouldAnalyzeChecklistForInstructor() throws Exception {
         long courseId = persistedCourseId;
 
@@ -520,7 +520,7 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void shouldRefineTargetedForInstructor() throws Exception {
         long courseId = persistedCourseId;
         mockChatSuccess("Refined targeted problem statement.");
@@ -532,7 +532,7 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = { "USER", "EDITOR" })
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void shouldAnalyzeChecklistForEditor() throws Exception {
         long courseId = persistedCourseId;
 
@@ -549,7 +549,7 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = { "USER", "EDITOR" })
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void shouldRefineTargetedForEditor() throws Exception {
         long courseId = persistedCourseId;
         mockChatSuccess("Refined targeted problem statement.");
@@ -561,7 +561,7 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = { "USER", "TA" })
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void shouldReturnForbiddenForChecklistAnalysisTutor() throws Exception {
         long courseId = persistedCourseId;
         userUtilService.changeUser(TEST_PREFIX + "tutor1");
@@ -572,7 +572,7 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = { "USER", "TA" })
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void shouldReturnForbiddenForTargetedRefineTutor() throws Exception {
         long courseId = persistedCourseId;
         userUtilService.changeUser(TEST_PREFIX + "tutor1");
@@ -583,7 +583,7 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = { "USER", "STUDENT" })
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldReturnForbiddenForChecklistAnalysisStudent() throws Exception {
         long courseId = persistedCourseId;
         userUtilService.changeUser(TEST_PREFIX + "student1");
@@ -594,7 +594,7 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = { "USER", "STUDENT" })
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldReturnForbiddenForTargetedRefineStudent() throws Exception {
         long courseId = persistedCourseId;
         userUtilService.changeUser(TEST_PREFIX + "student1");
@@ -605,7 +605,7 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void shouldReturnBadRequestForChecklistAnalysisCourseMismatch() throws Exception {
         // Create a second course with its own exercise
         Course otherCourse = CourseFactory.generateMinimalCourse();
@@ -626,7 +626,7 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void shouldReturnBadRequestForTargetedRefineStartLineGreaterThanEndLine() throws Exception {
         long courseId = persistedCourseId;
         userUtilService.changeUser(TEST_PREFIX + "instructor1");
@@ -638,7 +638,7 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void shouldAnalyzeChecklistSectionQualityForInstructor() throws Exception {
         long courseId = persistedCourseId;
 
@@ -654,7 +654,7 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = { "USER", "EDITOR" })
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void shouldAnalyzeChecklistSectionDifficultyForEditor() throws Exception {
         long courseId = persistedCourseId;
 
@@ -671,7 +671,7 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = { "USER", "TA" })
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void shouldReturnForbiddenForChecklistSectionAnalysisTutor() throws Exception {
         long courseId = persistedCourseId;
         userUtilService.changeUser(TEST_PREFIX + "tutor1");
@@ -683,7 +683,7 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = { "USER", "STUDENT" })
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldReturnForbiddenForChecklistSectionAnalysisStudent() throws Exception {
         long courseId = persistedCourseId;
         userUtilService.changeUser(TEST_PREFIX + "student1");
@@ -695,7 +695,7 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void shouldReturnBadRequestForTargetedRefineEmptyInstruction() throws Exception {
         long courseId = persistedCourseId;
         userUtilService.changeUser(TEST_PREFIX + "instructor1");
@@ -706,7 +706,7 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void shouldReturnBadRequestForChecklistSectionAnalysisCourseMismatch() throws Exception {
         Course otherCourse = CourseFactory.generateMinimalCourse();
         otherCourse.setTitle("Other Course Section");
@@ -726,7 +726,7 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void shouldReturnBadRequestForTargetedRefineEmptyProblemStatement() throws Exception {
         long courseId = persistedCourseId;
         userUtilService.changeUser(TEST_PREFIX + "instructor1");
@@ -737,7 +737,7 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void shouldApplyChecklistActionForInstructor() throws Exception {
         long courseId = persistedCourseId;
         mockChecklistAction();
@@ -750,7 +750,7 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = { "USER", "EDITOR" })
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void shouldApplyChecklistActionForEditor() throws Exception {
         long courseId = persistedCourseId;
         mockChecklistAction();
@@ -763,7 +763,7 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = { "USER", "TA" })
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void shouldReturnForbiddenForChecklistActionTutor() throws Exception {
         long courseId = persistedCourseId;
         userUtilService.changeUser(TEST_PREFIX + "tutor1");
@@ -774,7 +774,7 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = { "USER", "STUDENT" })
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldReturnForbiddenForChecklistActionStudent() throws Exception {
         long courseId = persistedCourseId;
         userUtilService.changeUser(TEST_PREFIX + "student1");
@@ -785,7 +785,7 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void shouldReturnBadRequestForTargetedRefineInvalidColumnRange() throws Exception {
         long courseId = persistedCourseId;
         userUtilService.changeUser(TEST_PREFIX + "instructor1");
@@ -797,7 +797,7 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void shouldReturnBadRequestForTargetedRefineSameLineStartColumnGreaterThanEndColumn() throws Exception {
         long courseId = persistedCourseId;
         userUtilService.changeUser(TEST_PREFIX + "instructor1");
@@ -809,7 +809,7 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void shouldReturnBadRequestForTargetedRefineZeroWidthSelection() throws Exception {
         long courseId = persistedCourseId;
         userUtilService.changeUser(TEST_PREFIX + "instructor1");
@@ -821,7 +821,7 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void shouldReturnInternalServerErrorWhenTargetedRefinementFails() throws Exception {
         long courseId = persistedCourseId;
         mockChatFailure();
@@ -835,7 +835,7 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void shouldRefineTargetedWithColumnRange() throws Exception {
         long courseId = persistedCourseId;
         mockChatSuccess("Refined with column range.");

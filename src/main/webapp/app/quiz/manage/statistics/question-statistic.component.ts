@@ -82,7 +82,7 @@ export abstract class QuestionStatisticComponent extends AbstractQuizStatisticCo
             )
             .subscribe(({ response, questionId, refresh }) => {
                 this.questionIdParam = questionId;
-                this.loadQuiz(response.body!, refresh);
+                this.loadQuiz(response, refresh);
             });
     }
 
@@ -150,13 +150,14 @@ export abstract class QuestionStatisticComponent extends AbstractQuizStatisticCo
         // Use the page-specific question response instead of loading every question in the quiz.
         this.quizExercise.set(quiz);
         const updatedQuestion = quiz.quizQuestion;
+        const questionStatistic = quiz.quizQuestionStatistic;
         // if anyone finds a way to the Website, with a wrong combination of QuizId and QuestionId, go back to Courses
-        if (this.questionIdParam !== updatedQuestion.id) {
+        if (!updatedQuestion || !questionStatistic || this.questionIdParam !== updatedQuestion.id) {
             void this.router.navigateByUrl('courses');
             return undefined;
         }
         this.question = updatedQuestion;
-        this.questionStatistic = quiz.quizQuestionStatistic;
+        this.questionStatistic = questionStatistic;
         return updatedQuestion;
     }
 

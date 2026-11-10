@@ -2,11 +2,6 @@ import { ProgrammingLanguage, ProjectType } from 'app/programming/shared/entitie
 import { Saml2Config } from 'app/core/home/saml2-login/saml2.config';
 import { ActiveFeatureToggles } from 'app/foundation/feature-toggle/feature-toggle.service';
 
-/** Instantiated and/or deserialized from server data; fields are populated after construction, hence the definite-assignment (!) markers. */
-export class SentryConfig {
-    public dsn?: string;
-}
-
 export interface GitCommitId {
     describe?: string;
     abbrev: string;
@@ -137,6 +132,7 @@ export class ProfileInfo {
     public allowedEmailPatternReadable?: string;
     public allowedLdapUsernamePattern?: string;
     public build!: Build;
+    // REMOVE_IN_ARTEMIS_11 (Jenkins): only set on Jenkins instances, remove with Jenkins support
     public buildPlanURLTemplate?: string; // only available on Artemis instances with Jenkins
     public buildTimeoutDefault!: number;
     public buildTimeoutMax!: number;
@@ -161,7 +157,6 @@ export class ProfileInfo {
     public registrationEnabled?: boolean;
     public repositoryAuthenticationMechanisms!: string[];
     public saml2?: Saml2Config;
-    public sentry!: SentryConfig;
     public sshCloneURLTemplate!: string;
     public studentExamStoreSessionData!: boolean;
     public testServer!: boolean;

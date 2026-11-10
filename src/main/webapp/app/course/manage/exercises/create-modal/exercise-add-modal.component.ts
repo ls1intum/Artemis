@@ -1,20 +1,26 @@
-import { ChangeDetectionStrategy, Component, Type, computed, effect, inject, input, output, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, input, output, signal, viewChild } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
-import { DialogService } from 'primeng/dynamicdialog';
+import { TumAetUiButtonComponent, TumAetUiDialogComponent, TumAetUiDialogService } from '@tumaet/ui-angular';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { MODULE_FEATURE_FILEUPLOAD, MODULE_FEATURE_MODELING, MODULE_FEATURE_TEXT } from 'app/app.constants';
+import { MODULE_FEATURE_FILEUPLOAD, MODULE_FEATURE_HYPERION_EXERCISE_GENERATION, MODULE_FEATURE_MODELING, MODULE_FEATURE_TEXT } from 'app/app.constants';
 import { FeatureToggle, FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faArrowLeft, faArrowRight, faCheckDouble, faFileUpload, faFont, faKeyboard, faLayerGroup, faProjectDiagram } from '@fortawesome/free-solid-svg-icons';
-import { TumAetUiDialogComponent } from '@tumaet/ui-angular';
+import { faArrowLeft, faArrowRight, faCheckDouble, faDownload, faFileUpload, faFont, faKeyboard, faLayerGroup, faProjectDiagram } from '@fortawesome/free-solid-svg-icons';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { ExerciseImportComponent, ExerciseImportDialogData } from 'app/exercise/import/exercise-import.component';
+import { ExerciseImportDialogData } from 'app/exercise/import/exercise-import.component';
 import { ExerciseImportTabsComponent } from 'app/exercise/import/exercise-import-tabs/exercise-import-tabs.component';
 import { IMPORT_DIALOG_BACK, ImportDialogFooterComponent } from 'app/course/manage/exercises/create-modal/import-dialog-footer.component';
 import { DialogTranslateHeaderComponent } from 'app/shared-ui/dynamic-dialog/dialog-translate-header.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { facArtemisIntelligence } from 'app/foundation/icons/icons';
+import { HyperionBriefDialogComponent } from 'app/hyperion/exercise-generation/create/hyperion-brief-dialog.component';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
+import { importFromFileNavigation } from 'app/exercise/import/import-from-file-navigation';
+import { ExerciseService } from 'app/exercise/services/exercise.service';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { downloadZipFileFromResponse } from 'app/foundation/util/download.util';
 
 export type AddModalMode = 'create' | 'import' | 'export' | 'unified';
 
@@ -68,22 +74,29 @@ const EXERCISE_TYPE_CARDS: ExerciseTypeCard[] = [
     selector: 'jhi-exercise-add-modal',
     templateUrl: './exercise-add-modal.component.html',
     styleUrl: './exercise-add-modal.component.scss',
-    imports: [TumAetUiDialogComponent, FaIconComponent, ArtemisTranslatePipe, TranslateDirective],
+    imports: [TumAetUiDialogComponent, TumAetUiButtonComponent, FaIconComponent, ArtemisTranslatePipe, TranslateDirective, HyperionBriefDialogComponent],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ExerciseAddModalComponent {
     private readonly profileService = inject(ProfileService);
     private readonly featureToggleService = inject(FeatureToggleService);
     private readonly router = inject(Router);
-    private readonly dialogService = inject(DialogService);
+    private readonly dialogService = inject(TumAetUiDialogService);
+    private readonly exerciseService = inject(ExerciseService);
+    private readonly alertService = inject(AlertService);
 
     readonly visible = input<boolean>(false);
     readonly mode = input<AddModalMode>('create');
     readonly courseId = input<number | undefined>(undefined);
+    /** The exercises of the course, from which the Export tab offers those of the chosen type. */
+    readonly exercises = input<Exercise[]>([]);
+    /** Whether the user may export, which the server allows instructors only. */
+    readonly canExport = input<boolean>(false);
 
     readonly visibleChange = output<boolean>();
     readonly groupCreate = output<void>();
-    readonly exportRequested = output<void>();
+    readonly exerciseCreated = output<ProgrammingExercise>();
+    readonly exerciseDeleted = output<number>();
 
     /** Whether programming exercises are enabled server-side; defaults to active until the toggle resolves. */
     private readonly programmingEnabled = toSignal(this.featureToggleService.getFeatureToggleActive(FeatureToggle.ProgrammingExercises), { initialValue: true });
@@ -109,11 +122,21 @@ export class ExerciseAddModalComponent {
         }),
     );
 
-    readonly activeTab = signal<'create' | 'import' | 'export'>('create');
+    readonly activeTab = signal<'create' | 'generate' | 'import' | 'export'>('create');
+    readonly briefDialogVisible = signal(false);
+    /** The exercise type whose exercises the Export tab lists; undefined while it shows the type cards. */
+    protected readonly exportType = signal<ExerciseType | undefined>(undefined);
+    protected readonly exercisesToExport = computed(() => this.exercises().filter((exercise) => exercise.type === this.exportType()));
+    protected readonly exportingExerciseId = signal<number | undefined>(undefined);
+    protected readonly faDownload = faDownload;
+    private readonly briefDialog = viewChild(HyperionBriefDialogComponent);
+    protected readonly generationEnabled = computed(() => this.programmingEnabled() && this.profileService.isModuleFeatureActive(MODULE_FEATURE_HYPERION_EXERCISE_GENERATION));
+    protected readonly facArtemisIntelligence = facArtemisIntelligence;
 
     protected readonly faArrowRight = faArrowRight;
     protected readonly faArrowLeft = faArrowLeft;
     protected readonly faLayerGroup = faLayerGroup;
+    protected readonly faKeyboard = faKeyboard;
 
     constructor() {
         effect(() => {
@@ -138,28 +161,42 @@ export class ExerciseAddModalComponent {
         this.close();
     }
 
-    setActiveTab(tab: 'create' | 'import' | 'export'): void {
+    setActiveTab(tab: 'create' | 'generate' | 'import' | 'export'): void {
         this.activeTab.set(tab);
+        this.exportType.set(undefined);
+    }
+
+    /** Hands over to the brief dialog. Deliberately no navigation: the exercise does not exist until the brief is sent. */
+    protected openProgrammingGeneration(): void {
+        if (!this.generationEnabled() || this.courseId() === undefined) {
+            return;
+        }
+        this.briefDialog()?.reset();
+        this.close();
+        this.briefDialogVisible.set(true);
+    }
+
+    protected backToGenerationTypes(): void {
+        this.briefDialogVisible.set(false);
+        this.activeTab.set('generate');
+        this.visibleChange.emit(true);
     }
 
     /**
-     * Opens the regular Artemis import dialog for the type. Mirrors {@link ExerciseImportButtonComponent}: programming
-     * uses the tabbed variant (which also imports from a file), everything else the direct list.
+     * Opens the regular Artemis import dialog for the type, with a tab to import an existing exercise and one to import an exported
+     * file. Mirrors {@link ExerciseImportButtonComponent}.
      */
     startImport(type: ExerciseType): void {
         this.close();
 
         const headerKey = type === ExerciseType.FILE_UPLOAD ? 'artemisApp.fileUploadExercise.home.importLabel' : `artemisApp.${type}Exercise.home.importLabel`;
-        const dialogData: ExerciseImportDialogData & { headerKey: string } = { exerciseType: type, headerKey };
-        const componentToOpen: Type<unknown> = type === ExerciseType.PROGRAMMING ? ExerciseImportTabsComponent : ExerciseImportComponent;
+        const dialogData: ExerciseImportDialogData & { headerKey: string } = { exerciseType: type, courseId: this.courseId(), headerKey };
 
-        const dialogRef = this.dialogService.open(componentToOpen, {
-            width: '50rem',
-            modal: true,
+        const dialogRef = this.dialogService.open<ExerciseImportTabsComponent, Exercise | string, ExerciseImportDialogData & { headerKey: string }>(ExerciseImportTabsComponent, {
+            size: 'large',
             closable: true,
             closeOnEscape: true,
             dismissableMask: false,
-            draggable: false,
             data: dialogData,
             // Reactive title (re-translates on a language switch) and a "Back" button in the footer that returns to this
             // modal's exercise-type selection (see onClose). PrimeNG's static `header` string would not re-translate.
@@ -176,10 +213,15 @@ export class ExerciseAddModalComponent {
                     return;
                 }
                 const exercise = result as Exercise;
-                if (type === ExerciseType.PROGRAMMING) {
-                    this.handleProgrammingImport(exercise, courseId);
+                if (exercise.id === undefined) {
+                    // An exercise read from a file has no id.
+                    const { segments, extras } = importFromFileNavigation(exercise);
+                    void this.router.navigate(['/course-management', courseId, ...segments], extras);
                 } else {
-                    void this.router.navigate(['/course-management', courseId, type + '-exercises', exercise.id, 'import']);
+                    const importSegments = type === ExerciseType.PROGRAMMING ? ['programming-exercises', 'import', exercise.id] : [`${type}-exercises`, exercise.id, 'import'];
+                    void this.router.navigate(['/course-management', courseId, ...importSegments], {
+                        queryParams: { sourceIsExamExercise: !!exercise.exerciseGroup },
+                    });
                 }
             }
         });
@@ -191,24 +233,19 @@ export class ExerciseAddModalComponent {
         this.visibleChange.emit(true);
     }
 
-    private handleProgrammingImport(result: Exercise, courseId: number): void {
-        // When the exercise is imported from a file, the id is undefined.
-        if (result.id === undefined) {
-            void this.router.navigate(['/course-management', courseId, 'programming-exercises', 'import-from-file'], {
-                state: { programmingExerciseForImportFromFile: result },
-            });
-        } else {
-            void this.router.navigate(['/course-management', courseId, 'programming-exercises', 'import', result.id]);
-        }
-    }
-
-    /**
-     * Asks the host to open the quiz export dialog (the develop quiz export page shown as a modal component). Quiz
-     * exercises are currently the only exercise type that supports export.
-     */
-    requestExport(): void {
-        this.exportRequested.emit();
-        this.close();
+    /** Downloads the exercise as a zip file that the import from file reads. */
+    protected exportExercise(exercise: Exercise): void {
+        this.exportingExerciseId.set(exercise.id);
+        this.exerciseService.exportToFile(exercise).subscribe({
+            next: (response) => {
+                downloadZipFileFromResponse(response);
+                this.exportingExerciseId.set(undefined);
+            },
+            error: () => {
+                this.alertService.error('artemisApp.exerciseManagement.addModal.export.failed');
+                this.exportingExerciseId.set(undefined);
+            },
+        });
     }
 
     createGroup(): void {

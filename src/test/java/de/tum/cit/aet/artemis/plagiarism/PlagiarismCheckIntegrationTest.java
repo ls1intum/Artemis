@@ -27,7 +27,7 @@ class PlagiarismCheckIntegrationTest extends AbstractSpringIntegrationIndependen
     private final int submissionsAmount = 5;
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void testCheckPlagiarismResultForTextExercise() throws Exception {
         // given
         var exerciseId = plagiarismUtilService.createTextExerciseAndSimilarSubmissions(TEST_PREFIX, TEXT_SUBMISSION, submissionsAmount);
@@ -40,7 +40,7 @@ class PlagiarismCheckIntegrationTest extends AbstractSpringIntegrationIndependen
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void testCheckPlagiarismResultForTeamTextExercise() throws Exception {
         // given
         var exerciseId = plagiarismUtilService.createTeamTextExerciseAndSimilarSubmissions(TEST_PREFIX, TEXT_SUBMISSION, submissionsAmount);
@@ -53,7 +53,7 @@ class PlagiarismCheckIntegrationTest extends AbstractSpringIntegrationIndependen
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void testCheckPlagiarismIsRefusedWhileTheCourseIsAlreadyBeingChecked() throws Exception {
         // given: a check is already running somewhere in the cluster for this course
         var exerciseId = plagiarismUtilService.createTextExerciseAndSimilarSubmissions(TEST_PREFIX, TEXT_SUBMISSION, submissionsAmount);

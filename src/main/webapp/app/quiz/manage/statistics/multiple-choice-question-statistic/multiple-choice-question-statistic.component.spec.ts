@@ -9,7 +9,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Course } from 'app/course/shared/entities/course.model';
 import { QuizQuestionStatisticResponse } from 'app/quiz/manage/statistics/quiz-statistics-response.model';
-import { HttpResponse, provideHttpClient } from '@angular/common/http';
+import { provideHttpClient } from '@angular/common/http';
 import { Subject, of } from 'rxjs';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
@@ -38,10 +38,9 @@ describe('QuizExercise Multiple Choice Question Statistic Component', () => {
     let comp: MultipleChoiceQuestionStatisticComponent;
     let fixture: ComponentFixture<MultipleChoiceQuestionStatisticComponent>;
     let quizService: QuizExerciseService;
-    let accountService: AccountService;
+    let accountService: MockAccountService;
     let websocketService: MockWebsocketService;
     let router: Router;
-    let accountSpy: any;
     let quizServiceFindSpy: any;
 
     beforeEach(() => {
@@ -65,9 +64,9 @@ describe('QuizExercise Multiple Choice Question Statistic Component', () => {
                 fixture = TestBed.createComponent(MultipleChoiceQuestionStatisticComponent);
                 comp = fixture.componentInstance;
                 quizService = TestBed.inject(QuizExerciseService);
-                accountService = TestBed.inject(AccountService);
+                accountService = TestBed.inject(AccountService) as unknown as MockAccountService;
                 websocketService = TestBed.inject(WebsocketService) as unknown as MockWebsocketService;
-                quizServiceFindSpy = vi.spyOn(quizService, 'findQuestionStatistic').mockReturnValue(of(new HttpResponse({ body: quizExercise })));
+                quizServiceFindSpy = vi.spyOn(quizService, 'findQuestionStatistic').mockReturnValue(of(quizExercise));
                 router = TestBed.inject(Router);
             });
     });
@@ -78,33 +77,31 @@ describe('QuizExercise Multiple Choice Question Statistic Component', () => {
 
     describe('onInit', () => {
         it('should call functions on Init', () => {
-            accountSpy = vi.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(true);
+            accountService.isAtLeastTutor.set(true);
             const loadQuizSpy = vi.spyOn(comp, 'loadQuiz');
             comp.websocketChannelForData = '';
 
             comp.ngOnInit();
 
-            expect(accountSpy).toHaveBeenCalledTimes(2);
             expect(quizServiceFindSpy).toHaveBeenCalledWith(22, 1);
             expect(loadQuizSpy).toHaveBeenCalledWith(quizExercise, false);
             expect(comp.websocketChannelForData).toBe('/topic/statistic/22');
         });
 
         it('should not load Quiz if not authorised', () => {
-            accountSpy = vi.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(false);
+            accountService.isAtLeastTutor.set(false);
             const loadQuizSpy = vi.spyOn(comp, 'loadQuiz');
 
             comp.ngOnInit();
 
-            expect(accountSpy).toHaveBeenCalledOnce();
             expect(quizServiceFindSpy).not.toHaveBeenCalled();
             expect(loadQuizSpy).not.toHaveBeenCalled();
         });
 
         it('should ignore an older request after a websocket refresh completes', () => {
-            accountSpy = vi.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(true);
-            const initialResponse = new Subject<HttpResponse<QuizQuestionStatisticResponse>>();
-            const refreshedResponse = new Subject<HttpResponse<QuizQuestionStatisticResponse>>();
+            accountService.isAtLeastTutor.set(true);
+            const initialResponse = new Subject<QuizQuestionStatisticResponse>();
+            const refreshedResponse = new Subject<QuizQuestionStatisticResponse>();
             const refreshedStatistic = { answerCounters: [answerCounter] } as MultipleChoiceQuestionStatistic;
             const refreshedQuiz = { ...quizExercise, quizQuestionStatistic: refreshedStatistic };
             quizServiceFindSpy.mockReset().mockReturnValueOnce(initialResponse).mockReturnValueOnce(refreshedResponse);
@@ -112,8 +109,8 @@ describe('QuizExercise Multiple Choice Question Statistic Component', () => {
 
             comp.ngOnInit();
             websocketService.emit('/topic/statistic/22', 22);
-            refreshedResponse.next(new HttpResponse({ body: refreshedQuiz }));
-            initialResponse.next(new HttpResponse({ body: quizExercise }));
+            refreshedResponse.next(refreshedQuiz);
+            initialResponse.next(quizExercise);
 
             expect(loadQuizSpy).toHaveBeenCalledOnce();
             expect(loadQuizSpy).toHaveBeenCalledWith(refreshedQuiz, true);
@@ -123,7 +120,7 @@ describe('QuizExercise Multiple Choice Question Statistic Component', () => {
 
     describe('loadLayout', () => {
         it('should call functions from loadLayout', () => {
-            accountSpy = vi.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(true);
+            accountService.isAtLeastTutor.set(true);
             const resetLabelsSpy = vi.spyOn(comp, 'resetLabelsColors');
             const addLastBarSpy = vi.spyOn(comp, 'addLastBarLayout');
             const loadInvalidLayoutSpy = vi.spyOn(comp, 'loadInvalidLayout');
@@ -147,7 +144,7 @@ describe('QuizExercise Multiple Choice Question Statistic Component', () => {
             labels = ['test', 'test2', 'test3', 'test4'];
         });
         it('should call functions from loadData', () => {
-            accountSpy = vi.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(true);
+            accountService.isAtLeastTutor.set(true);
             const resetDataSpy = vi.spyOn(comp, 'resetData');
             const addDataSpy = vi.spyOn(comp, 'addData');
             const updateDataSpy = vi.spyOn(comp, 'updateData');
@@ -189,7 +186,7 @@ describe('QuizExercise Multiple Choice Question Statistic Component', () => {
         });
 
         it('should navigate back if the response question does not match the requested question', () => {
-            accountSpy = vi.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(true);
+            accountService.isAtLeastTutor.set(true);
             const navigateByUrlMock = vi.spyOn(router, 'navigateByUrl').mockResolvedValue(true);
             const mismatchedQuizExercise: QuizQuestionStatisticResponse = { ...quizExercise, quizQuestion: { ...question, id: 2 } };
 

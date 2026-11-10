@@ -27,6 +27,18 @@ class SpringAIAutoConfigurationFilterTest {
     }
 
     @Test
+    void hyperionWorkerLoadsItsChatModelWithoutCore() {
+        assertThat(match(environment(false, false).withProperty("artemis.aiworker.workload", "hyperion-generation"), "aiworker")).containsExactly(true, true);
+        assertThat(match(environment(false, false).withProperty("artemis.aiworker.workload", "other"), "aiworker")).containsExactly(false, true);
+    }
+
+    @Test
+    void genericWorkerIgnoresInheritedServerAiFlags() {
+        assertThat(match(environment(true, true).withProperty("artemis.aiworker.workload", "document-check"), "aiworker")).containsExactly(false, true);
+        assertThat(match(environment(true, true).withProperty("artemis.aiworker.workload", "hyperion-generation"), "aiworker")).containsExactly(true, true);
+    }
+
+    @Test
     void nullCandidatesAreTolerated() {
         var filter = new SpringAIAutoConfigurationFilter();
         filter.setEnvironment(environment(false, false));

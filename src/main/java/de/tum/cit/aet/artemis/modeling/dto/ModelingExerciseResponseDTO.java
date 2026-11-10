@@ -54,8 +54,8 @@ public record ModelingExerciseResponseDTO(Long id, String title, String shortNam
 
     /**
      * Creates the record written into the exercise details file of an archive. It is the response record without the
-     * ids of the plagiarism detection and the team assignment configuration: those are rows of this instance, and a
-     * file read back elsewhere must not carry them.
+     * ids of the plagiarism detection and the team assignment configuration and of the grading criteria: those are rows
+     * of this instance, and a file read back elsewhere must not carry them.
      *
      * @param exercise the modeling exercise to export (may be {@code null})
      * @return the corresponding DTO, or {@code null} if the input was {@code null}
@@ -71,7 +71,9 @@ public record ModelingExerciseResponseDTO(Long id, String title, String shortNam
 
         var context = ExerciseResponseContextDTO.of(exercise, ModelingExerciseExamGroupDTO::of);
 
-        List<GradingCriterionDTO> gradingCriterionDTOs = ModelingDtoCollections.listFromInitializedSet(exercise.getGradingCriteria(), GradingCriterionDTO::of);
+        List<GradingCriterionDTO> gradingCriterionDTOs = exercise.getGradingCriteria() != null && Hibernate.isInitialized(exercise.getGradingCriteria())
+                ? GradingCriterionDTO.ofAll(exercise.getGradingCriteria())
+                : null;
 
         Set<CompetencyLinkDTO> competencyLinkDTOs = ModelingDtoCollections.setFromInitializedSet(exercise.getCompetencyLinks(), CompetencyLinkDTO::of);
 
@@ -86,6 +88,7 @@ public record ModelingExerciseResponseDTO(Long id, String title, String shortNam
         if (forExport) {
             teamAssignmentConfigDTO = teamAssignmentConfigDTO == null ? null : teamAssignmentConfigDTO.withoutId();
             plagiarismDetectionConfigDTO = plagiarismDetectionConfigDTO == null ? null : plagiarismDetectionConfigDTO.withoutId();
+            gradingCriterionDTOs = gradingCriterionDTOs == null ? null : gradingCriterionDTOs.stream().map(GradingCriterionDTO::withoutIds).toList();
         }
 
         // Only populated on the single-exercise detail endpoint, which explicitly loads example submissions; null/omitted elsewhere.

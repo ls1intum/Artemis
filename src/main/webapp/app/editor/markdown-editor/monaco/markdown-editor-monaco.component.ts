@@ -46,6 +46,7 @@ import { TextEditorDomainAction } from 'app/editor/monaco-editor/model/actions/t
 import { TextEditorDomainActionWithOptions } from 'app/editor/monaco-editor/model/actions/text-editor-domain-action-with-options.model';
 import { MonacoEditorOptionPreset } from 'app/editor/monaco-editor/model/monaco-editor-option-preset.model';
 import { SafeHtml } from '@angular/platform-browser';
+import { ActivatedRouteSnapshot, Router } from '@angular/router';
 import { ArtemisMarkdownService } from 'app/foundation/service/markdown.service';
 import { parseMarkdownForDomainActions } from 'app/editor/markdown-editor/monaco/markdown-editor-parsing.helper';
 import { DEFAULT_MARKDOWN_EDITOR_OPTIONS } from 'app/editor/monaco-editor/monaco-editor-option.helper';
@@ -56,13 +57,13 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { Tag } from 'primeng/tag';
 import { TranslateService } from '@ngx-translate/core';
-import { ArtemisIntelligenceService } from 'app/editor/monaco-editor/model/actions/artemis-intelligence/artemis-intelligence.service';
+import { ArtemisIntelligenceService } from 'app/hyperion/editor/artemis-intelligence/artemis-intelligence.service';
 import { FileUploadResponse, FileUploaderService } from 'app/foundation/service/file-uploader.service';
 import { facArtemisIntelligence } from 'app/foundation/icons/icons';
 import { CommentThread, CommentThreadLocationType, ReviewThreadLocation } from 'app/exercise/shared/entities/review/comment-thread.model';
 import { ReviewCommentWidgetManager } from 'app/exercise/review/review-comment-widget-manager';
 import { ExerciseReviewCommentService } from 'app/exercise/review/exercise-review-comment.service';
-import { EditorSelectionWithPosition, InstructionSelectionPosition } from 'app/programming/manage/shared/problem-statement.utils';
+import { EditorSelectionWithPosition, InstructionSelectionPosition } from 'app/hyperion/problem-statement/problem-statement.utils';
 import { generateUuid } from 'app/foundation/util/crypto.utils';
 
 /** Cached selection with Monaco-compatible data used by scroll re-positioning. */
@@ -126,6 +127,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     private readonly viewContainerRef = inject(ViewContainerRef);
     private readonly exerciseReviewCommentService = inject(ExerciseReviewCommentService);
     private readonly injector = inject(Injector);
+    private readonly router = inject(Router);
 
     readonly monacoEditor = viewChild(MonacoEditorComponent);
     readonly fullElement = viewChild.required<ElementRef<HTMLDivElement>>('fullElement');
@@ -155,6 +157,11 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     readonly currentMarkdown = signal<string | undefined>(undefined);
 
     readonly enableFileUpload = input<boolean>(true);
+    /**
+     * The course the edited text belongs to. The server authorizes file uploads by the role of the user in this course.
+     * Defaults to the course of the current route (the closest route with a `courseId` parameter).
+     */
+    readonly courseId = input<number>();
     readonly enableResize = input<boolean>(true);
     readonly showPreviewButton = input<boolean>(true);
     readonly showVisualButton = input<boolean>(false);
@@ -212,6 +219,17 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
 
     readonly enableExerciseReviewComments = input<boolean>(false);
     readonly showLocationWarning = input<boolean>(false);
+
+    /**
+     * The id of an element that describes the editor's content (for example a form validation error),
+     * forwarded to the inner Monaco textarea as `aria-describedby`. Only the textarea is a tab stop
+     * and screen readers announce `aria-describedby` from the focused control, so setting the attribute
+     * on the host wrapper would not reach the editing control.
+     */
+    readonly ariaDescribedBy = input<string | undefined>(undefined);
+
+    /** Forwards `aria-invalid` to the inner Monaco textarea. */
+    readonly ariaInvalid = input<boolean>(false);
 
     readonly isAiLoading = input<boolean>(false);
     readonly showMarkdownInfoText = input<boolean>(true);
@@ -316,7 +334,16 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     protected readonly TAB_PREVIEW = MarkdownEditorMonacoComponent.TAB_PREVIEW;
     protected readonly TAB_VISUAL = MarkdownEditorMonacoComponent.TAB_VISUAL;
 
-    private reviewCommentManager?: ReviewCommentWidgetManager;
+    // Lazy manager creation must invalidate draft checks made before it exists.
+    private readonly reviewCommentManagerValue = signal<ReviewCommentWidgetManager | undefined>(undefined);
+
+    private get reviewCommentManager(): ReviewCommentWidgetManager | undefined {
+        return this.reviewCommentManagerValue();
+    }
+
+    private set reviewCommentManager(manager: ReviewCommentWidgetManager | undefined) {
+        this.reviewCommentManagerValue.set(manager);
+    }
 
     constructor() {
         this.uniqueMarkdownEditorId.set('markdown-editor-' + generateUuid());
@@ -351,6 +378,18 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
             this.reviewCommentManager?.tryUpdateThreadInputs(threads);
         });
 
+        // Forward `aria-describedby` / `aria-invalid` to the inner Monaco textarea once it exists so screen readers
+        // announce the described content (such as a form validation error) when focus lands on the editing control.
+        effect(() => {
+            // Depend on the signals so the sync re-runs when either input changes; the sync method reads them again
+            // so a direct call from the mode-change callback (where the new diff-mode textarea has just appeared)
+            // picks up the current values too.
+            this.ariaDescribedBy();
+            this.ariaInvalid();
+            this.monacoEditor();
+            this.syncAriaAttributes();
+        });
+
         // Adjust editor dimensions when mode changes (e.g. entering/leaving diff mode).
         // Skip the initial run: the editor is already laid out by ngAfterViewInit, and an
         // extra layout() call in tests triggers Monaco's monospace-font-assumption scheduler.
@@ -363,6 +402,9 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
                         () => {
                             if (this.monacoEditor()) {
                                 this.adjustEditorDimensions();
+                                // Mode changes do not touch the ARIA inputs, so the aria effect does not re-run; a diff
+                                // editor materialised here needs the current values pushed into its new textarea.
+                                this.syncAriaAttributes();
                             }
                         },
                         { injector: this.injector },
@@ -371,6 +413,21 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
             }
             lastObservedMode = currentMode;
         });
+    }
+
+    /**
+     * Pushes the current `ariaDescribedBy` / `ariaInvalid` inputs into the active Monaco editor's accessible
+     * editing control (the element that actually receives focus and that screen readers describe). Safe to call
+     * before the editor exists; it just no-ops in that case. Monaco uses an input `<textarea>` on older builds
+     * and a `div.native-edit-context` (role=textbox, backed by the EditContext API) on newer ones; the sync
+     * covers whichever the active editor currently renders so Chromium users get the same wiring as the textarea
+     * path.
+     */
+    private syncAriaAttributes(): void {
+        const target = this.monacoEditor()?.getActiveEditor()?.getDomNode()?.querySelector<HTMLElement>('textarea, .native-edit-context');
+        if (target) {
+            this.applyAriaAttributesToTextarea(target, this.ariaDescribedBy(), this.ariaInvalid());
+        }
     }
 
     /**
@@ -606,6 +663,21 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     }
 
     /**
+     * Applies the given accessibility attributes to Monaco's accessible editing control (either the inner
+     * `<textarea>` or the newer `div.native-edit-context` role=textbox element) so screen readers reach them
+     * when focus is on that control. The host wrapper would be ignored. Exposed for direct unit testing
+     * because the hosting effect depends on Monaco having been initialized.
+     */
+    applyAriaAttributesToTextarea(target: HTMLElement, describedBy: string | undefined, invalid: boolean): void {
+        if (describedBy) {
+            target.setAttribute('aria-describedby', describedBy);
+        } else {
+            target.removeAttribute('aria-describedby');
+        }
+        target.setAttribute('aria-invalid', invalid ? 'true' : 'false');
+    }
+
+    /**
      * Called when the user moves the resize handle.
      * @param event The drag event caused by the user moving the resize handle.
      */
@@ -796,7 +868,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
         }
         files.forEach((file) => {
             void this.fileUploaderService
-                .uploadMarkdownFile(file)
+                .uploadMarkdownFile(file, this.courseId() ?? this.courseIdFromRoute())
                 .then(
                     (response) => this.processFileUploadResponse(response, file),
                     (error) => {
@@ -809,6 +881,23 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
                 )
                 .then(() => this.resetInputElement(inputElement));
         });
+    }
+
+    /**
+     * Determines the course id of the current route by walking the active route tree from the root to the deepest child.
+     * @return the id of the closest route segment with a numeric `courseId` parameter, or undefined if the page has no course
+     */
+    private courseIdFromRoute(): number | undefined {
+        let courseId: number | undefined;
+        let route: ActivatedRouteSnapshot | null = this.router.routerState.snapshot.root;
+        while (route) {
+            const parameter = Number(route.params['courseId']);
+            if (Number.isInteger(parameter) && parameter > 0) {
+                courseId = parameter;
+            }
+            route = route.firstChild;
+        }
+        return courseId;
     }
 
     private processFileUploadResponse(response: FileUploadResponse, file: File): void {
@@ -873,6 +962,10 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
         this.reviewCommentManager?.clearDrafts();
     }
 
+    hasReviewCommentDrafts(): boolean {
+        return this.reviewCommentManager?.hasDrafts() ?? false;
+    }
+
     private getReviewCommentManager(): ReviewCommentWidgetManager | undefined {
         if (!this.monacoEditor()) {
             return undefined;
@@ -893,7 +986,6 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
                 onApplyInlineFix: ({ thread }) => this.onApplyInlineFix.emit({ threadId: thread.id }),
                 onNavigateToLocation: (location) => this.onNavigateToReviewCommentLocation.emit(location),
                 showLocationWarning: () => this.showLocationWarning(),
-                showFeedbackAction: () => false,
             });
         }
         return this.reviewCommentManager;

@@ -1,6 +1,9 @@
 @if (isInCourseManagement()) {
     <a
-        class="btn btn-secondary navbar-btn me-3 open-repository-button"
+        tumAetUiButton
+        size="small"
+        severity="secondary"
+        class="me-3 open-repository-button"
         [routerLink]="repositoryLink()"
         target="_blank"
         rel="noopener noreferrer"
@@ -15,9 +18,12 @@
         <button
             id="resolve_conflict_button"
             type="button"
-            class="btn btn-danger navbar-btn me-3"
+            tumAetUiButton
+            size="small"
+            severity="danger"
+            class="me-3"
             [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
-            [overwriteDisabled]="disableActions() || isResolvingConflict()"
+            [forceDisabled]="disableActions() || isResolvingConflict()"
             (click)="resetRepository()"
             [ngbTooltip]="'artemisApp.editor.conflict.resetRepository' | artemisTranslate"
         >
@@ -36,9 +42,12 @@
     <button
         id="refresh_button"
         type="button"
-        class="btn btn-primary navbar-btn me-3"
+        tumAetUiButton
+        size="small"
+        severity="secondary"
+        class="me-3"
         [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
-        [overwriteDisabled]="disableActions() || editorState() === EditorState.REFRESHING || editorState() === EditorState.SAVING || commitState() === CommitState.COMMITTING"
+        [forceDisabled]="disableActions() || editorState() === EditorState.REFRESHING || editorState() === EditorState.SAVING || commitState() === CommitState.COMMITTING"
         (click)="onRefresh()"
         [ngbTooltip]="'artemisApp.editor.refresh.refreshFilesDescription' | artemisTranslate"
     >
@@ -55,9 +64,11 @@
     <button
         id="submit_button"
         type="button"
-        class="btn btn-success navbar-btn"
+        tumAetUiButton
+        size="small"
+        severity="success"
         [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
-        [overwriteDisabled]="
+        [forceDisabled]="
             disableActions() ||
             editorState() === EditorState.REFRESHING ||
             editorState() === EditorState.SAVING ||

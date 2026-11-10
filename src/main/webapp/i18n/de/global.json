@@ -7,6 +7,7 @@
             "no": "Nein",
             "you": "Du",
             "emptyList": "Keine Elemente verfügbar",
+            "serverNotReachable": "Server ist nicht erreichbar",
             "filterOptions": "Optionen filtern",
             "noMatchingOptions": "Keine passenden Optionen",
             "selectedCount": "{{ count }} ausgewählt",
@@ -22,7 +23,9 @@
             "expandMenu": "Menü aufklappen (Strg + M)",
             "collapseMenu": "Menü einklappen (Strg + M)",
             "enabled": "Aktiviert",
-            "disabled": "Deaktiviert"
+            "disabled": "Deaktiviert",
+            "resizePanels": "Bereichsgröße ändern",
+            "selectAllRows": "Alle Zeilen auswählen"
         },
         "weekdays": {
             "monday": "Montag",
@@ -308,6 +311,7 @@
                     "metrics": "Metriken",
                     "statistics": "Statistiken",
                     "featureUsage": "Feature-Nutzung",
+                    "errorAnalysis": "Fehleranalyse",
                     "websocket": "Websocket",
                     "buildAgents": "Build Agenten",
                     "buildQueue": "Build Übersicht",
@@ -453,6 +457,13 @@
         },
         "imageCropper": {
             "sourceImage": "Bild zum Zuschneiden"
+        },
+        "stepState": {
+            "pending": "Noch nicht begonnen",
+            "current": "Läuft",
+            "complete": "Fertig",
+            "failed": "Fehlgeschlagen",
+            "skipped": "Übersprungen"
         }
     },
     "entity": {
@@ -553,7 +564,10 @@
             "value": "Wert"
         },
         "delete": {
-            "title": "Löschen bestätigen"
+            "title": "Löschen bestätigen",
+            "summary": {
+                "largeCountWarning": "Es werden sehr viele Daten gelöscht. Bitte prüfe die folgenden Zahlen sorgfältig, bevor du bestätigst."
+            }
         },
         "unlink": {
             "title": "Trennen bestätigen"

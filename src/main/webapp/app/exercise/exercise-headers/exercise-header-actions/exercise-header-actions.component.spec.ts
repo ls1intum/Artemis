@@ -2,6 +2,7 @@ import { ApplicationRef } from '@angular/core';
 import { FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { describe, expect, it } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import { provideRouter } from '@angular/router';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { TranslateService } from '@ngx-translate/core';
@@ -35,7 +36,9 @@ import { LLMSelectionDecision } from 'app/account/user/shared/dto/updateLLMSelec
 import { ParticipationMode } from 'app/exercise/exercise-headers/participation-mode-toggle/participation-mode-toggle.component';
 import dayjs from 'dayjs/esm';
 import { Subject, of, throwError } from 'rxjs';
-import { HttpErrorResponse } from '@angular/common/http';
+import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { ParticipationWebsocketService } from 'app/course/shared/services/participation-websocket.service';
 import { Router } from '@angular/router';
 import { InitializationState } from 'app/exercise/shared/entities/participation/participation.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
@@ -68,8 +71,11 @@ describe('ExerciseHeaderActionsComponent', () => {
         return exercise;
     }
 
-    function createComponent(exercise: Exercise, options: { athenaEnabled?: boolean; examMode?: boolean; llmAccepted?: boolean; quizStatus?: QuizStatus } = {}) {
-        const { athenaEnabled = true, examMode = false, llmAccepted = true, quizStatus } = options;
+    function createComponent(
+        exercise: Exercise,
+        options: { athenaEnabled?: boolean; examMode?: boolean; llmAccepted?: boolean; quizStatus?: QuizStatus; realCourseExercise?: boolean } = {},
+    ) {
+        const { athenaEnabled = true, examMode = false, llmAccepted = true, quizStatus, realCourseExercise = false } = options;
 
         const accountService = new MockAccountService();
         if (llmAccepted) {
@@ -84,7 +90,10 @@ describe('ExerciseHeaderActionsComponent', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 MockProvider(QuizExerciseService, { getStatus: () => quizStatus as QuizStatus }),
                 MockProvider(AlertService),
-                MockProvider(CourseExerciseService),
+                realCourseExercise ? CourseExerciseService : MockProvider(CourseExerciseService),
+                provideHttpClient(),
+                provideHttpClientTesting(),
+                MockProvider(ParticipationWebsocketService),
                 MockProvider(ParticipationService, {
                     getSpecificStudentParticipation: (participations: StudentParticipation[], testRun: boolean) =>
                         participations.find((participation) => !!participation.testRun === testRun),
@@ -539,6 +548,23 @@ describe('ExerciseHeaderActionsComponent', () => {
             return exercise;
         };
 
+        it('should provide a participation token for a team participation', () => {
+            const exercise = programmingExercise([
+                {
+                    id: 10,
+                    testRun: false,
+                    initializationState: InitializationState.INITIALIZED,
+                    repositoryUri: 'https://vcs.example.com/course/exercise.git',
+                    team: { id: 3 },
+                } as StudentParticipation,
+            ]);
+            exercise.allowOfflineIde = true;
+            createComponent(exercise);
+
+            const codeButton = fixture.debugElement.query(By.directive(CodeButtonComponent)).componentInstance as CodeButtonComponent;
+            expect(codeButton.vcsAccessTokenSourceInfo()).toEqual({ returnedTokenType: 'participation-token', participationId: 10 });
+        });
+
         it('should replace a known participation and emit it', () => {
             createComponent(programmingExercise([{ id: 10, testRun: false, initializationState: InitializationState.INACTIVE } as StudentParticipation]));
             const emitted: StudentParticipation[] = [];
@@ -571,12 +597,12 @@ describe('ExerciseHeaderActionsComponent', () => {
             const practice = { id: 20, testRun: true } as StudentParticipation;
             createComponent(programmingExercise([practice]));
 
-            expect(fixture.componentInstance.routerLinkForRepositoryView()).toEqual(['/courses', 1, 'exercises', 7]);
+            expect(fixture.componentInstance.repositoryViewLink()).toEqual(['/courses', 1, 'exercises', 7]);
 
             fixture.componentRef.setInput('participationMode', 'practice');
             fixture.detectChanges();
 
-            expect(fixture.componentInstance.routerLinkForRepositoryView()).toEqual(['/courses', 1, 'exercises', 7, 'repository', 20]);
+            expect(fixture.componentInstance.repositoryViewLink()).toEqual(['/courses', 1, 'exercises', 7, 'repository', 20]);
         });
 
         it('should fall back to the graded participation in the practice mode as long as no practice participation exists', () => {
@@ -775,12 +801,150 @@ describe('ExerciseHeaderActionsComponent', () => {
             expect(fixture.componentInstance.isLoading()).toBe(false);
         });
 
+        it.each([
+            ['start', 'exercise change'],
+            ['start', 'destroy'],
+            ['resume', 'exercise change'],
+            ['resume', 'destroy'],
+        ])('cancels %s when its action surface leaves on %s', (operation, cancellation) => {
+            const exercise = programming(true);
+            exercise.studentParticipations = [{ id: 10, testRun: false, initializationState: InitializationState.INACTIVE }];
+            createComponent(exercise);
+            const pending = new Subject<StudentParticipation>();
+            const service = TestBed.inject(CourseExerciseService);
+            vi.spyOn(service, 'startExercise').mockReturnValue(pending);
+            vi.spyOn(service, 'resumeProgrammingExercise').mockReturnValue(pending);
+            const output = vi.spyOn(fixture.componentInstance.newParticipation, 'emit');
+            if (operation === 'resume') {
+                fixture.componentInstance.resumeProgrammingExercise(false);
+            } else {
+                fixture.componentInstance.startExercise();
+            }
+            expect(pending.observed).toBe(true);
+            if (cancellation === 'destroy') {
+                fixture.destroy();
+            } else {
+                const replacement = programming(true);
+                replacement.id = 8;
+                fixture.componentRef.setInput('exercise', replacement);
+                fixture.detectChanges();
+            }
+            expect(pending.observed).toBe(false);
+            expect(fixture.componentInstance.isLoading()).toBe(false);
+            pending.next({ id: 42 });
+            expect(output).not.toHaveBeenCalled();
+        });
+
+        it.each(['start', 'resume'])('keeps an in-flight %s when the same exercise is refreshed', (operation) => {
+            const exercise = programming(true);
+            exercise.studentParticipations = [{ id: 10, testRun: false, initializationState: InitializationState.INACTIVE }];
+            createComponent(exercise);
+            const pending = new Subject<StudentParticipation>();
+            const service = TestBed.inject(CourseExerciseService);
+            vi.spyOn(service, 'startExercise').mockReturnValue(pending);
+            vi.spyOn(service, 'resumeProgrammingExercise').mockReturnValue(pending);
+            const output = vi.spyOn(fixture.componentInstance.newParticipation, 'emit');
+            if (operation === 'resume') {
+                fixture.componentInstance.resumeProgrammingExercise(false);
+            } else {
+                fixture.componentInstance.startExercise();
+            }
+            fixture.componentRef.setInput('exercise', programming(true));
+            fixture.detectChanges();
+            expect(pending.observed).toBe(true);
+            expect(fixture.componentInstance.isLoading()).toBe(true);
+            pending.next({ id: 42, initializationState: InitializationState.INITIALIZED });
+            pending.complete();
+            expect(output).toHaveBeenCalledOnce();
+            expect(fixture.componentInstance.isLoading()).toBe(false);
+        });
+
+        it('reports an ordinary resume failure immediately and lets the student retry', () => {
+            const exercise = programming(true);
+            exercise.studentParticipations = [{ id: 10, testRun: false, initializationState: InitializationState.INACTIVE }];
+            createComponent(exercise, { realCourseExercise: true });
+            const http = TestBed.inject(HttpTestingController);
+            const error = vi.spyOn(TestBed.inject(AlertService), 'error');
+            fixture.componentInstance.resumeProgrammingExercise(false);
+            http.expectOne('api/exercise/exercises/7/participations/10/resume-programming-participation').flush(
+                { entityName: 'programmingExercise', errorKey: 'unavailable' },
+                { status: 500, statusText: 'Failure' },
+            );
+            fixture.detectChanges();
+            expect(error).toHaveBeenCalledExactlyOnceWith('artemisApp.programmingExercise.errors.unavailable');
+            expect(fixture.componentInstance.isLoading()).toBe(false);
+            const button = fixture.nativeElement.querySelector('#resume-exercise-7') as HTMLButtonElement;
+            expect(button).not.toBeNull();
+            expect(button.disabled).toBe(false);
+            button.click();
+            const retry = http.expectOne('api/exercise/exercises/7/participations/10/resume-programming-participation');
+            fixture.destroy();
+            expect(retry.cancelled).toBe(true);
+            http.verify();
+        });
+
+        it('ignores a second resume click before rendering so the first request remains tracked', () => {
+            const exercise = programming(true);
+            exercise.studentParticipations = [{ id: 10, testRun: false, initializationState: InitializationState.INACTIVE }];
+            createComponent(exercise);
+            const pending = new Subject<StudentParticipation>();
+            const resume = vi.spyOn(TestBed.inject(CourseExerciseService), 'resumeProgrammingExercise').mockReturnValue(pending);
+            fixture.componentInstance.resumeProgrammingExercise(false);
+            fixture.componentInstance.resumeProgrammingExercise(false);
+            expect(resume).toHaveBeenCalledOnce();
+            fixture.destroy();
+            expect(pending.observed).toBe(false);
+        });
+
+        it.each([
+            { label: 'null body', body: null },
+            { label: 'missing body', body: undefined },
+            { label: 'text body', body: 'Service unavailable' },
+            { label: 'empty body', body: {} },
+            { label: 'array body', body: [] },
+            { label: 'missing error key', body: { entityName: 'participation' } },
+            { label: 'non-string entity', body: { entityName: 42, errorKey: 'resumeFailed' } },
+            { label: 'non-string error key', body: { entityName: 'participation', errorKey: false } },
+            { label: 'blank entity', body: { entityName: ' ', errorKey: 'resumeFailed' } },
+            { label: 'blank error key', body: { entityName: 'participation', errorKey: '' } },
+        ])('reports a generic resume failure for $label without changing participation', ({ body }) => {
+            const exercise = programming(true);
+            const participation = { id: 10, testRun: false, initializationState: InitializationState.INACTIVE } as StudentParticipation;
+            exercise.studentParticipations = [participation];
+            createComponent(exercise);
+            vi.spyOn(TestBed.inject(CourseExerciseService), 'resumeProgrammingExercise').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500, error: body })));
+            const errorSpy = vi.spyOn(TestBed.inject(AlertService), 'error');
+            const output = vi.spyOn(fixture.componentInstance.newParticipation, 'emit');
+
+            fixture.componentInstance.resumeProgrammingExercise(false);
+
+            expect(errorSpy).toHaveBeenCalledExactlyOnceWith('artemisApp.exercise.startError');
+            expect(fixture.componentInstance.isLoading()).toBe(false);
+            expect(output).not.toHaveBeenCalled();
+            expect(exercise.studentParticipations[0]).toBe(participation);
+        });
+
+        it('reports a generic resume failure for an actual network error', () => {
+            const exercise = programming(true);
+            exercise.studentParticipations = [{ id: 10, testRun: false, initializationState: InitializationState.INACTIVE }];
+            createComponent(exercise, { realCourseExercise: true });
+            const http = TestBed.inject(HttpTestingController);
+            const errorSpy = vi.spyOn(TestBed.inject(AlertService), 'error');
+
+            fixture.componentInstance.resumeProgrammingExercise(false);
+            http.expectOne('api/exercise/exercises/7/participations/10/resume-programming-participation').error(new ProgressEvent('error'));
+
+            expect(errorSpy).toHaveBeenCalledExactlyOnceWith('artemisApp.exercise.startError');
+            expect(fixture.componentInstance.isLoading()).toBe(false);
+            http.verify();
+        });
+
         it('should alert the error key of the server when resuming fails', () => {
             const exercise = programming(true);
             exercise.studentParticipations = [{ id: 10, testRun: false } as StudentParticipation];
             createComponent(exercise);
             vi.spyOn(TestBed.inject(CourseExerciseService), 'resumeProgrammingExercise').mockReturnValue(
-                throwError(() => ({ error: { entityName: 'participation', errorKey: 'resumeFailed' } })),
+                throwError(() => new HttpErrorResponse({ status: 400, error: { entityName: 'participation', errorKey: 'resumeFailed' } })),
             );
             const errorSpy = vi.spyOn(TestBed.inject(AlertService), 'error');
 
@@ -848,14 +1012,14 @@ describe('ExerciseHeaderActionsComponent', () => {
         createComponent(exercise);
         const gradedButton = fixture.nativeElement.querySelector('#resume-exercise-7');
         const practiceButton = fixture.nativeElement.querySelector('#resume-practice-exercise-7');
-        expect(gradedButton.classList.contains('btn-secondary')).toBe(true);
-        expect(practiceButton.classList.contains('btn-primary')).toBe(true);
+        expect(gradedButton.classList.contains('tumaet:bg-button-secondary')).toBe(true);
+        expect(practiceButton.classList.contains('tumaet:bg-button-primary')).toBe(true);
 
         const updated = Object.assign(new ProgrammingExercise(undefined, undefined), exercise, { studentParticipations: [graded] });
         fixture.componentRef.setInput('exercise', updated);
         fixture.detectChanges();
         expect(fixture.nativeElement.querySelector('#resume-practice-exercise-7')).toBeNull();
-        expect(fixture.nativeElement.querySelector('#resume-exercise-7').classList.contains('btn-primary')).toBe(true);
+        expect(fixture.nativeElement.querySelector('#resume-exercise-7').classList.contains('tumaet:bg-button-primary')).toBe(true);
     });
 
     describe('quiz action', () => {
@@ -971,7 +1135,7 @@ describe('ExerciseHeaderActionsComponent', () => {
             vi.spyOn(popover, 'isOpen').mockReturnValue(true);
             const closeSpy = vi.spyOn(popover, 'close').mockImplementation(() => {});
             const insidePopover = document.createElement('div');
-            insidePopover.className = 'popover';
+            insidePopover.setAttribute('role', 'dialog');
 
             fixture.componentInstance.onDocumentClick({ target: fixture.nativeElement } as unknown as MouseEvent);
             fixture.componentInstance.onDocumentClick({ target: insidePopover } as unknown as MouseEvent);
@@ -987,6 +1151,121 @@ describe('ExerciseHeaderActionsComponent', () => {
             fixture.componentInstance.onDocumentClick({ target: document.body } as unknown as MouseEvent);
 
             expect(closeSpy).not.toHaveBeenCalled();
+        });
+    });
+    describe('pending text and modeling feedback', () => {
+        function withFeedback(type: ExerciseType, result: Result): Exercise {
+            const exercise = withCourse(createExerciseOfType(type), true);
+            exercise.id = 7;
+            exercise.releaseDate = dayjs().subtract(1, 'day');
+            exercise.dueDate = dayjs().add(1, 'day');
+            exercise.studentParticipations = [
+                {
+                    id: 10,
+                    testRun: false,
+                    initializationState: InitializationState.FINISHED,
+                    submissions: [
+                        { id: 1, submitted: true, results: [result] },
+                        { id: 2, submitted: true, results: [] },
+                    ],
+                } as StudentParticipation,
+            ];
+            return exercise;
+        }
+
+        it.each([ExerciseType.TEXT, ExerciseType.MODELING])('disables restored %s Submit while any submission has pending feedback', (type) => {
+            const exercise = withFeedback(type, { id: 11, assessmentType: AssessmentType.AUTOMATIC_ATHENA, completionDate: dayjs().add(5, 'minutes') } as Result);
+            createComponent(exercise);
+            const submit = vi.fn();
+            fixture.componentRef.setInput('onSubmitExercise', submit);
+            fixture.detectChanges();
+
+            const button = fixture.nativeElement.querySelector('[data-testid="submit-exercise-popover"]') as HTMLButtonElement;
+            expect(button.disabled).toBe(true);
+            button.click();
+            expect(submit).not.toHaveBeenCalled();
+        });
+
+        it.each([ExerciseType.TEXT, ExerciseType.MODELING])('handles a raw websocket deadline for %s and unlocks when it expires', async (type) => {
+            vi.useFakeTimers();
+            try {
+                const exercise = withFeedback(type, { id: 11, assessmentType: AssessmentType.AUTOMATIC_ATHENA, completionDate: dayjs().add(1, 'second') } as Result);
+                createComponent(exercise);
+                fixture.componentRef.setInput('onSubmitExercise', vi.fn());
+                const wireParticipation = JSON.parse(JSON.stringify(exercise.studentParticipations![0])) as StudentParticipation;
+                fixture.componentInstance.receiveNewParticipation(wireParticipation);
+                fixture.detectChanges();
+                const button = fixture.nativeElement.querySelector('[data-testid="submit-exercise-popover"]') as HTMLButtonElement;
+                expect(button.disabled).toBe(true);
+
+                await vi.advanceTimersByTimeAsync(1001);
+                fixture.detectChanges();
+                expect(button.disabled).toBe(false);
+            } finally {
+                vi.useRealTimers();
+            }
+        });
+
+        it.each([true, false])('unlocks Submit after feedback becomes terminal (successful=%s)', (successful) => {
+            createComponent(withFeedback(ExerciseType.TEXT, { id: 11, assessmentType: AssessmentType.AUTOMATIC_ATHENA, completionDate: dayjs().add(5, 'minutes') } as Result));
+            fixture.componentRef.setInput('onSubmitExercise', vi.fn());
+            fixture.detectChanges();
+            expect((fixture.nativeElement.querySelector('[data-testid="submit-exercise-popover"]') as HTMLButtonElement).disabled).toBe(true);
+
+            fixture.componentInstance.receiveNewParticipation({
+                id: 10,
+                testRun: false,
+                initializationState: InitializationState.FINISHED,
+                submissions: [{ id: 1, submitted: true, results: [{ id: 11, assessmentType: AssessmentType.AUTOMATIC_ATHENA, completionDate: dayjs(), successful }] }],
+            } as StudentParticipation);
+            fixture.detectChanges();
+            expect((fixture.nativeElement.querySelector('[data-testid="submit-exercise-popover"]') as HTMLButtonElement).disabled).toBe(false);
+        });
+
+        it('unlocks at the pending deadline without a websocket event or reload', async () => {
+            vi.useFakeTimers();
+            try {
+                createComponent(
+                    withFeedback(ExerciseType.MODELING, { id: 11, assessmentType: AssessmentType.AUTOMATIC_ATHENA, completionDate: dayjs().add(1, 'second') } as Result),
+                    { llmAccepted: false },
+                );
+                fixture.componentRef.setInput('onSubmitExercise', vi.fn());
+                fixture.detectChanges();
+                const button = fixture.nativeElement.querySelector('#submit-exercise') as HTMLButtonElement;
+                expect(button.disabled).toBe(true);
+
+                await vi.advanceTimersByTimeAsync(1001);
+                fixture.detectChanges();
+                expect(button.disabled).toBe(false);
+            } finally {
+                vi.useRealTimers();
+            }
+        });
+
+        it('does not keep a previously selected participation deadline on another participation', () => {
+            createComponent(withFeedback(ExerciseType.TEXT, { id: 11, assessmentType: AssessmentType.AUTOMATIC_ATHENA, completionDate: dayjs().add(5, 'minutes') } as Result));
+            fixture.componentRef.setInput('onSubmitExercise', vi.fn());
+            fixture.detectChanges();
+            expect((fixture.nativeElement.querySelector('[data-testid="submit-exercise-popover"]') as HTMLButtonElement).disabled).toBe(true);
+
+            fixture.componentInstance.receiveNewParticipation({
+                id: 10,
+                testRun: false,
+                initializationState: InitializationState.FINISHED,
+                submissions: [],
+            } as StudentParticipation);
+            fixture.detectChanges();
+            expect((fixture.nativeElement.querySelector('[data-testid="submit-exercise-popover"]') as HTMLButtonElement).disabled).toBe(false);
+        });
+
+        it('preserves programming Submit behavior while Athena feedback is pending', () => {
+            createComponent(
+                withFeedback(ExerciseType.PROGRAMMING, { id: 11, assessmentType: AssessmentType.AUTOMATIC_ATHENA, completionDate: dayjs().add(5, 'minutes') } as Result),
+                { llmAccepted: false },
+            );
+            fixture.componentRef.setInput('onSubmitExercise', vi.fn());
+            fixture.detectChanges();
+            expect((fixture.nativeElement.querySelector('#submit-exercise') as HTMLButtonElement).disabled).toBe(false);
         });
     });
 });

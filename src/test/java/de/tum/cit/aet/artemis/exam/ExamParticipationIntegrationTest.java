@@ -74,6 +74,7 @@ import de.tum.cit.aet.artemis.exercise.team.TeamUtilService;
 import de.tum.cit.aet.artemis.exercise.test_repository.ParticipationTestRepository;
 import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.exercise.test_repository.SubmissionTestRepository;
+import de.tum.cit.aet.artemis.exercise.util.AsyncDeletionTestUtilService;
 import de.tum.cit.aet.artemis.localvc.util.LocalVCTestRepository;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCase;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismVerdict;
@@ -97,6 +98,9 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsL
     private static final String TEST_PREFIX = "examparticipationtest";
 
     private static final Logger log = LoggerFactory.getLogger(ExamParticipationIntegrationTest.class);
+
+    @Autowired
+    private AsyncDeletionTestUtilService asyncDeletionTestUtilService;
 
     @Autowired
     private QuizExerciseTestRepository quizExerciseRepository;
@@ -292,7 +296,7 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsL
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testDeleteStudent_AfterParticipatingInExam() throws Exception {
         // Create an exam with registered students
         Exam exam = examUtilService.setupExamWithExerciseGroupsExercisesRegisteredStudents(TEST_PREFIX, course1, 3);
@@ -338,11 +342,12 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsL
         assertThat(participationsStudent2).hasSize(studentExam2.getExercises().size());
 
         // Make sure delete also works if so many objects have been created before
-        request.delete("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId(), HttpStatus.OK);
+        request.delete("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId(), HttpStatus.ACCEPTED);
+        asyncDeletionTestUtilService.awaitExamDeletion(exam.getId());
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGenerateStudentExamsCleanupOldParticipations() throws Exception {
         Exam exam = examUtilService.setupExamWithExerciseGroupsExercisesRegisteredStudents(TEST_PREFIX, course1, NUMBER_OF_STUDENTS);
 
@@ -371,11 +376,12 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsL
         assertThat(studentParticipations).hasSize(12);
 
         // Make sure delete also works if so many objects have been created before
-        request.delete("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId(), HttpStatus.OK);
+        request.delete("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId(), HttpStatus.ACCEPTED);
+        asyncDeletionTestUtilService.awaitExamDeletion(exam.getId());
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testDeleteStudentWithParticipationsAndSubmissions() throws Exception {
         // Create an exam with registered students
         Exam exam = examUtilService.setupExamWithExerciseGroupsExercisesRegisteredStudents(TEST_PREFIX, course1, 3);
@@ -418,12 +424,13 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsL
         assertThat(participationsStudent1).isEmpty();
 
         // Make sure delete also works if so many objects have been created before
-        request.delete("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId(), HttpStatus.OK);
+        request.delete("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId(), HttpStatus.ACCEPTED);
+        asyncDeletionTestUtilService.awaitExamDeletion(exam.getId());
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @ValueSource(ints = { 0, 1, 2 })
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetStatsForExamAssessmentDashboard(int numberOfCorrectionRounds) throws Exception {
         log.debug("testGetStatsForExamAssessmentDashboard: step 1 done");
 
@@ -721,7 +728,7 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsL
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetLockedSubmissionsForExam_wirePinsAssessmentLocksDTO() throws Exception {
         User tutor = userTestRepository.findOneByLogin(TEST_PREFIX + "tutor1").orElseThrow();
 
@@ -740,6 +747,7 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsL
         Result lockedResult = new Result();
         lockedResult.setAssessor(tutor);
         lockedResult.setScore(55D);
+        lockedResult.setCorrectionRound(1);
         lockedResult.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
         lockedResult.setSubmission(textSubmission);
         lockedResult.setExerciseId(textExercise.getId());
@@ -762,17 +770,19 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsL
         assertThat(lockedSubmissionDTO.participation().exercise().id()).isEqualTo(textExercise.getId());
         assertThat(lockedSubmissionDTO.participation().exercise().type()).isEqualTo(ExerciseType.TEXT);
         assertThat(lockedSubmissionDTO.participation().exercise().title()).isEqualTo(textExercise.getTitle());
+        assertThat(lockedSubmissionDTO.participation().exercise().exerciseGroup().id()).isEqualTo(exerciseGroup.getId());
         assertThat(lockedSubmissionDTO.participation().submissionCount()).isEqualTo(1);
         assertThat(lockedSubmissionDTO.results()).hasSize(1);
         LockedExamSubmissionDTO.LockedSubmissionResultDTO resultDTO = lockedSubmissionDTO.results().getFirst();
         assertThat(resultDTO.score()).isEqualTo(55D);
+        assertThat(resultDTO.correctionRound()).isEqualTo(1);
         // The assessment is still in progress, so no completion date has been set yet.
         assertThat(resultDTO.completionDate()).isNull();
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @CsvSource({ "false, false", "true, false", "false, true", "true, true" })
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetExamScore(boolean withCourseBonus, boolean withSecondCorrectionAndStarted) throws Exception {
         programmingExerciseTestService.setup(this, versionControlService);
         jenkinsRequestMockProvider.enableMockingOfRequests();
@@ -1113,7 +1123,8 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsL
         userUtilService.changeUser(TEST_PREFIX + "instructor1");
         // Make sure delete also works if so many objects have been created before
         waitForParticipantScores();
-        request.delete("/api/exam/courses/" + course.getId() + "/exams/" + exam.getId(), HttpStatus.OK);
+        request.delete("/api/exam/courses/" + course.getId() + "/exams/" + exam.getId(), HttpStatus.ACCEPTED);
+        asyncDeletionTestUtilService.awaitExamDeletion(exam.getId());
         assertThat(examRepository.findById(exam.getId())).isEmpty();
     }
 

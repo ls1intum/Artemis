@@ -27,6 +27,7 @@
                 "isOnline": "is Online, ist Online, isonline -> ist Online"
             },
             "errorMessages": {
+                "invalidIsOnline": "Der Wert für Is Online muss in den folgenden Zeilen true oder false sein: ",
                 "genericErrorMessage": "Import von Übungsgruppen sind fehlgeschlagen!",
                 "withoutTitle": "Die folgenden Zeilen enthalten keinen Übungsgruppen Titel: ",
                 "invalidTitle": "Die folgenden Zeilen haben einen ungültigen Titel für die Übungsgruppe (Titel dürfen nur Buchstaben, Zahlen, Leerzeichen, Bindestriche und maximal 19 Zeichen enthalten): ",

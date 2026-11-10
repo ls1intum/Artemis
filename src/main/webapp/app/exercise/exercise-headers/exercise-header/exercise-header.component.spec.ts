@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { ProgrammingBuildNotificationsComponent } from 'app/programming/overview/build-notifications/programming-build-notifications.component';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
@@ -32,6 +33,8 @@ import { signal } from '@angular/core';
 import { User } from 'app/account/user/user.model';
 import { LLMSelectionDecision } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
+import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
+import { InitializationState } from 'app/exercise/shared/entities/participation/participation.model';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 
@@ -98,8 +101,14 @@ describe('ExerciseHeaderComponent', () => {
         // than rendered because the real ones reach all the way down to the result history's PrimeNG dialog service;
         // what the header owns is the decision to show them, which the mock still reports.
         TestBed.overrideComponent(ExerciseHeaderComponent, {
-            remove: { imports: [ParticipationModeToggleComponent, ExerciseHeadersInformationComponent] },
-            add: { imports: [MockComponent(ParticipationModeToggleComponent), MockComponent(ExerciseHeadersInformationComponent)] },
+            remove: { imports: [ParticipationModeToggleComponent, ExerciseHeadersInformationComponent, ProgrammingBuildNotificationsComponent] },
+            add: {
+                imports: [
+                    MockComponent(ParticipationModeToggleComponent),
+                    MockComponent(ExerciseHeadersInformationComponent),
+                    MockComponent(ProgrammingBuildNotificationsComponent),
+                ],
+            },
         });
 
         // Mock complex child imports of ExerciseHeaderActionsComponent to avoid deep dependency chains
@@ -124,6 +133,29 @@ describe('ExerciseHeaderComponent', () => {
 
     afterEach(() => {
         globalThis.ResizeObserver = originalResizeObserver;
+    });
+
+    it('binds build notifications to the active graded or practice participation', () => {
+        const exercise = new ProgrammingExercise(undefined, undefined);
+        exercise.id = 1;
+        const graded = new StudentParticipation();
+        graded.id = 2;
+        const practice = new StudentParticipation();
+        practice.id = 3;
+        practice.testRun = true;
+        fixture.componentRef.setInput('exercise', exercise);
+        fixture.componentRef.setInput('courseId', 5);
+        fixture.componentRef.setInput('studentParticipation', graded);
+        fixture.componentRef.setInput('practiceParticipation', practice);
+        fixture.detectChanges();
+        const notifications = fixture.debugElement.query(By.directive(ProgrammingBuildNotificationsComponent)).componentInstance as ProgrammingBuildNotificationsComponent;
+        expect(notifications.participation()).toBe(graded);
+        fixture.componentInstance.participationMode.set('practice');
+        fixture.detectChanges();
+        expect(notifications.participation()).toBe(practice);
+        fixture.componentInstance.participationMode.set('graded');
+        fixture.detectChanges();
+        expect(notifications.participation()).toBe(graded);
     });
 
     it('should hide submit button when the due date has passed', () => {
@@ -374,7 +406,7 @@ describe('ExerciseHeaderComponent', () => {
 
         // The bar itself is the title row now; there is no inner row element to reach for.
         const titleRow = fixture.debugElement.query(By.css('#exercise-header')).nativeElement as HTMLElement;
-        const sidebarToggle = titleRow.querySelector('.btn-sidebar-collapse');
+        const sidebarToggle = titleRow.querySelector('[data-testid="course-sidebar-toggle"]');
         const heading = titleRow.querySelector('h5');
 
         expect(sidebarToggle).not.toBeNull();
@@ -393,7 +425,7 @@ describe('ExerciseHeaderComponent', () => {
         fixture.componentRef.setInput('isSidebarCollapsed', false);
         fixture.detectChanges();
 
-        expect(fixture.debugElement.query(By.css('.btn-sidebar-collapse'))).toBeNull();
+        expect(fixture.debugElement.query(By.css('[data-testid="course-sidebar-toggle"]'))).toBeNull();
     });
 
     it('should emit toggleSidebar when the sidebar collapse button is clicked', () => {
@@ -408,7 +440,7 @@ describe('ExerciseHeaderComponent', () => {
         fixture.componentRef.setInput('isSidebarCollapsed', true);
         fixture.detectChanges();
 
-        fixture.debugElement.query(By.css('.btn-sidebar-collapse')).triggerEventHandler('click');
+        fixture.debugElement.query(By.css('[data-testid="course-sidebar-toggle"]')).triggerEventHandler('click');
 
         expect(emitSpy).toHaveBeenCalledOnce();
     });
@@ -424,7 +456,48 @@ describe('ExerciseHeaderComponent', () => {
         fixture.componentRef.setInput('isSidebarCollapsed', true);
         fixture.detectChanges();
 
-        expect(fixture.debugElement.query(By.css('.btn-sidebar-collapse')).classes['is-collapsed']).toBeTruthy();
+        expect(fixture.debugElement.query(By.css('[data-testid="course-sidebar-toggle"]')).classes['is-collapsed']).toBeTruthy();
+    });
+
+    describe('live Athena completion', () => {
+        it.each(
+            [ExerciseType.TEXT, ExerciseType.MODELING].flatMap((type) => [true, false].flatMap((successful) => [false, true].map((testRun) => ({ type, successful, testRun })))),
+        )('unlocks $type Submit for terminal feedback (successful=$successful, practice=$testRun) without replacing the exercise', ({ type, successful, testRun }) => {
+            const exercise = type === ExerciseType.TEXT ? new TextExercise(undefined, undefined) : new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, undefined);
+            exercise.id = 7;
+            exercise.course = { athenaFormativeFeedbackEnabled: true };
+            exercise.releaseDate = dayjs().subtract(1, 'day');
+            exercise.dueDate = dayjs().add(1, 'day');
+            const pending: StudentParticipation = {
+                id: 10,
+                testRun,
+                initializationState: InitializationState.FINISHED,
+                submissions: [{ id: 1, submitted: true, results: [{ id: 77, assessmentType: AssessmentType.AUTOMATIC_ATHENA, completionDate: dayjs().add(5, 'minutes') }] }],
+            };
+            exercise.studentParticipations = [pending];
+            fixture.componentRef.setInput('exercise', exercise);
+            fixture.componentRef.setInput('courseId', 5);
+            fixture.componentRef.setInput(testRun ? 'practiceParticipation' : 'studentParticipation', pending);
+            fixture.componentRef.setInput('participationMode', testRun ? 'practice' : 'graded');
+            fixture.componentRef.setInput('onSubmitExercise', submitCallback);
+            fixture.detectChanges();
+            const button: HTMLButtonElement = fixture.nativeElement.querySelector('[data-testid="submit-exercise-popover"]');
+            expect(button.disabled).toBe(true);
+
+            const completed: StudentParticipation = {
+                id: 10,
+                testRun,
+                initializationState: InitializationState.FINISHED,
+                submissions: [{ id: 1, submitted: true, results: [{ id: 77, assessmentType: AssessmentType.AUTOMATIC_ATHENA, completionDate: dayjs(), successful }] }],
+            };
+            // The details view updates the participation input while retaining its original exercise snapshot.
+            fixture.componentRef.setInput(testRun ? 'practiceParticipation' : 'studentParticipation', completed);
+            fixture.detectChanges();
+
+            expect(button.disabled).toBe(false);
+            expect(exercise.studentParticipations[0]).toBe(pending);
+            expect(pending.submissions![0].results![0].successful).toBeUndefined();
+        });
     });
 
     describe('hasGradedSubmission', () => {

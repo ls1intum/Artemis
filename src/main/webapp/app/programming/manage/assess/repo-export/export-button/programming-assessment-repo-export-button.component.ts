@@ -13,7 +13,7 @@ import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.
     template: `
         <jhi-button
             [disabled]="!programmingExercises()"
-            [btnType]="ButtonType.INFO"
+            [btnType]="ButtonType.SECONDARY"
             [btnSize]="ButtonSize.SMALL"
             [shouldSubmit]="false"
             [featureToggle]="[FeatureToggle.ProgrammingExercises, FeatureToggle.Exports]"

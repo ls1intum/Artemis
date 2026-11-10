@@ -22,7 +22,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import tools.jackson.core.JacksonException;
 import tools.jackson.core.type.TypeReference;
-import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
@@ -61,7 +60,11 @@ public class ExamRoomService {
 
     /* Multiple records that will be used internally for Jackson deserialization */
     private record ExamRoomInput(@JsonProperty("number") String alternativeNumber, String name, @JsonProperty("shortname") String alternativeName, String building,
-            List<RowInput> rows, Map<String, JsonNode> layouts) {
+            List<RowInput> rows, Map<String, LayoutInput> layouts) {
+    }
+
+    /* The layout types are mutually exclusive: exactly one of the two properties is expected to be present */
+    private record LayoutInput(@JsonProperty("auto_layout") RelativeDistanceInput autoLayout, @JsonProperty("useable_seats") List<FixedSelectionSeatInput> useableSeats) {
     }
 
     private record RowInput(String label, List<SeatInput> seats) {
@@ -232,64 +235,47 @@ public class ExamRoomService {
     }
 
     /**
-     * Converts {@code layoutNamesToLayoutNode} to {@link List<LayoutStrategy>},
+     * Converts {@code layoutNamesToLayoutInput} to {@link List<LayoutStrategy>},
      * and associates each {@link LayoutStrategy} with the {@code room}.
      * <p/>
-     * The content of the JSON nodes depends on the layout type.
+     * The parameters of a layout depend on the layout type, which is given by the single key of the layout input.
      *
-     * @param layoutNamesToLayoutNode Mapping of layout names to layout JSON nodes
-     * @param room                    The exam room for which the parsed layout strategies are.
+     * @param layoutNamesToLayoutInput Mapping of layout names to the layout inputs
+     * @param room                     The exam room for which the parsed layout strategies are.
      * @return A list of all layout strategies this room has to offer.
      */
-    private List<LayoutStrategy> convertLayoutInputsToLayoutStrategies(Map<String, JsonNode> layoutNamesToLayoutNode, ExamRoom room) {
-        if (layoutNamesToLayoutNode == null) {
+    private List<LayoutStrategy> convertLayoutInputsToLayoutStrategies(Map<String, LayoutInput> layoutNamesToLayoutInput, ExamRoom room) {
+        if (layoutNamesToLayoutInput == null) {
             throw new BadRequestAlertException("Couldn't parse room " + room.getRoomNumber() + " because the layouts are missing", ENTITY_NAME, "room.missingLayouts",
                     Map.of("roomNumber", room.getRoomNumber()));
         }
 
         List<LayoutStrategy> layouts = new ArrayList<>();
 
-        layoutNamesToLayoutNode.forEach((layoutName, layoutNode) -> {
-            if (layoutNode == null || layoutNode.propertyNames().isEmpty()) {
+        layoutNamesToLayoutInput.forEach((layoutName, layoutInput) -> {
+            // We assume there's exactly one layout type, e.g., "auto_layout" or "useable_seats"
+            if (layoutInput == null || (layoutInput.autoLayout() == null) == (layoutInput.useableSeats() == null)) {
                 throw new BadRequestAlertException("Couldn't parse room " + room.getRoomNumber() + " because the layouts couldn't be converted", ENTITY_NAME,
                         "room.malformedLayout", Map.of("roomNumber", room.getRoomNumber(), "layoutName", layoutName));
             }
 
-            // We assume there's only a single layout type, e.g., "auto_layout" or "usable_seats"
-            final String layoutType = layoutNode.propertyNames().iterator().next();
-            final JsonNode layoutDetailNode = layoutNode.path(layoutType);
-
             LayoutStrategy layoutStrategy = new LayoutStrategy();
             layoutStrategy.setName(layoutName);
             layoutStrategy.setExamRoom(room);
-            switch (layoutType) {
-                case "auto_layout" -> layoutStrategy.setType(LayoutStrategyType.RELATIVE_DISTANCE);
-                case "useable_seats" -> layoutStrategy.setType(LayoutStrategyType.FIXED_SELECTION);
-                default -> throw new BadRequestAlertException("Couldn't parse room " + room.getRoomNumber() + " because the layouts couldn't be converted", ENTITY_NAME,
-                        "room.unknownLayoutType", Map.of("roomNumber", room.getRoomNumber(), "layoutName", layoutName, "layoutType", layoutType));
-            }
-            layoutStrategy.setParametersJson(String.valueOf(layoutDetailNode));
 
             // pre-calculate the capacity
-            switch (layoutStrategy.getType()) {
-                case LayoutStrategyType.FIXED_SELECTION -> {
-                    if (!layoutDetailNode.isArray()) {
-                        throw new BadRequestAlertException("Couldn't parse room " + room.getRoomNumber() + " because the layouts couldn't be converted", ENTITY_NAME,
-                                "room.malformedLayout", Map.of("roomNumber", room.getRoomNumber(), "layoutName", layoutName));
-                    }
-
-                    // We could just straight up use layoutDetailNode.size() here, but by doing it like this we also ensure that the data will be parseable
-                    int capacity = getUsableSeatsFixedSelection(room, layoutStrategy).size();
-                    layoutStrategy.setCapacity(capacity);
-                }
-                case LayoutStrategyType.RELATIVE_DISTANCE -> {
-                    if (!layoutDetailNode.isObject()) {
-                        throw new BadRequestAlertException("Couldn't parse room " + room.getRoomNumber() + " because the layouts couldn't be converted", ENTITY_NAME,
-                                "room.malformedLayout", Map.of("roomNumber", room.getRoomNumber(), "layoutName", layoutName));
-                    }
-                    int capacity = getUsableSeatsRelativeDistance(room, layoutStrategy).size();
-                    layoutStrategy.setCapacity(capacity);
-                }
+            if (layoutInput.autoLayout() != null) {
+                layoutStrategy.setType(LayoutStrategyType.RELATIVE_DISTANCE);
+                layoutStrategy.setParametersJson(objectMapper.writeValueAsString(layoutInput.autoLayout()));
+                int capacity = getUsableSeatsRelativeDistance(room, layoutStrategy).size();
+                layoutStrategy.setCapacity(capacity);
+            }
+            else {
+                layoutStrategy.setType(LayoutStrategyType.FIXED_SELECTION);
+                layoutStrategy.setParametersJson(objectMapper.writeValueAsString(layoutInput.useableSeats()));
+                // We could just straight up use the size of the seats here, but by doing it like this we also ensure that the data will be parseable
+                int capacity = getUsableSeatsFixedSelection(room, layoutStrategy).size();
+                layoutStrategy.setCapacity(capacity);
             }
 
             layouts.add(layoutStrategy);

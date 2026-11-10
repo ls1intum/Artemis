@@ -64,4 +64,11 @@ describe('TextExamSummaryComponent', () => {
         expect(textEditorComponent.participationId()).toBe(1);
         expect(textEditorComponent.inputSubmission().text).toBe(submissionText);
     });
+    it.each(['owner', 'staff-preview'] as const)('passes explicit %s purpose to its reusable editor', (purpose) => {
+        fixture.componentRef.setInput('viewingPurpose', purpose);
+        fixture.componentRef.setInput('exercise', { studentParticipations: [{ id: 1 }] } as Exercise);
+        fixture.detectChanges();
+        const editor = fixture.debugElement.query(By.directive(TextEditorComponent)).componentInstance as TextEditorComponent;
+        expect(editor.viewingPurpose()).toBe(purpose);
+    });
 });

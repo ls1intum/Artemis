@@ -2,19 +2,15 @@ import { Component, computed, input, model } from '@angular/core';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { faCircleNotch } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { NgClass } from '@angular/common';
+import { TumAetUiButtonSeverity, tumAetUiButtonClasses } from '@tumaet/ui-angular';
 
 @Component({
     selector: 'button[jhi-exercise-action-button]',
     templateUrl: './exercise-action-button.component.html',
-    styleUrls: ['../../../../course/overview/course-overview/course-overview.scss'],
-    imports: [FaIconComponent, NgClass],
+    imports: [FaIconComponent],
     host: {
-        '[class.btn]': 'true',
-        '[class.btn-outline-primary]': 'outlined()',
-        '[class.btn-sm]': 'smallButton()',
-        '[class.btn-primary]': 'isPrimary()',
-        '[class.btn-secondary]': 'isSecondary()',
+        '[class]': 'buttonClasses()',
+        '[attr.aria-busy]': 'buttonLoading() ? true : null',
         '[disabled]': 'isDisabled()',
     },
 })
@@ -24,18 +20,26 @@ export class ExerciseActionButtonComponent {
     buttonLabel = input<string | undefined>(undefined);
     hideLabelMobile = input(true);
     hideLabelBreakpoint = input<'md' | 'xl'>('md');
-    overwriteDisabled = input(false);
+    forceDisabled = input(false);
     buttonLoading = input(false);
     outlined = input(false);
     smallButton = input(false);
 
+    /** Explicit action intent takes precedence over the legacy primary/secondary toggle. */
+    severity = input<TumAetUiButtonSeverity>();
+
     /** Allows parent to override primary/secondary styling programmatically. */
     overrideSecondary = model<boolean | undefined>(undefined);
 
-    protected isPrimary = computed(() => !this.outlined() && !(this.overrideSecondary() ?? false));
-    protected isSecondary = computed(() => !this.outlined() && (this.overrideSecondary() ?? false));
+    protected readonly buttonClasses = computed(() =>
+        tumAetUiButtonClasses({
+            severity: this.severity() ?? (this.overrideSecondary() ? 'secondary' : 'primary'),
+            variant: this.outlined() ? 'outlined' : 'solid',
+            size: this.smallButton() ? 'small' : 'default',
+        }),
+    );
 
-    protected isDisabled = computed(() => this.buttonLoading() || this.overwriteDisabled());
+    protected isDisabled = computed(() => this.buttonLoading() || this.forceDisabled());
 
     // Icons
     faCircleNotch = faCircleNotch;

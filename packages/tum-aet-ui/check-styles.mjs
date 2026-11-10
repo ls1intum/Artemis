@@ -65,7 +65,13 @@ for (const className of cdkOverlayClasses) {
         errors.push(`CDK overlay selector .${className} is missing`);
     }
 }
-const runtimeClasses = new Set(runtimeSources.flatMap((source) => [...source.matchAll(/tumaet:[^\s"'`$]+/g)].map((match) => match[0])));
+// `tumaet:` matches the required utility prefix.
+// `[^\s"'`$]+?` lazily matches one or more characters that are not whitespace, string delimiters, or a template-interpolation marker.
+// `(?=...)` is a positive lookahead that requires, but does not consume, one of the following boundaries.
+// `]\s*=` identifies the closing bracket, optional whitespace, and equals sign at the end of an Angular class binding, for example the `]=` in `[class.tumaet:p-3]="condition"`.
+// `[\s"'`$]` identifies regular whitespace, a string delimiter, or a template-interpolation boundary, representing other delimiters that can follow a class.
+const runtimeUtilityPattern = /tumaet:[^\s"'`$]+?(?=]\s*=|[\s"'`$])/g;
+const runtimeClasses = new Set(runtimeSources.flatMap((source) => [...source.matchAll(runtimeUtilityPattern)].map((match) => match[0])));
 for (const className of runtimeClasses) {
     if (!compiledClasses.has(className)) {
         errors.push(`runtime utility .${className} is missing`);
@@ -90,6 +96,33 @@ const contrastRule = ruleFor('tumaet:text-primary-contrast');
 if (declarationValue(contrastRule, 'color') !== 'var(--tumaet-ui-primary-contrast-color)') {
     errors.push('the primary contrast selector does not use its package token');
 }
+// Button colors are a public customization axis, independent of status/validation feedback.
+for (const severity of ['primary', 'secondary', 'success', 'info', 'warn', 'danger', 'contrast']) {
+    for (const [suffix, utility, property] of [
+        ['background', `tumaet:bg-button-${severity}`, 'background-color'],
+        ['contrast', `tumaet:text-button-${severity}-contrast`, 'color'],
+        ['foreground', `tumaet:text-button-${severity}-foreground`, 'color'],
+    ]) {
+        const token = `--tumaet-ui-button-${severity}-${suffix}`;
+        if (declarationValue(ruleFor(utility), property) !== `var(${token})`) {
+            errors.push(`button utility ${utility} does not consume ${token}`);
+        }
+        for (const theme of ['light', 'dark']) {
+            let defined = false;
+            stylesheet.walkRules((rule) => {
+                if (rule.selector.includes(`[data-theme=${theme}]`)) {
+                    rule.walkDecls(token, () => {
+                        defined = true;
+                    });
+                }
+            });
+            if (!defined) {
+                errors.push(`button token ${token} is missing from the ${theme} palette`);
+            }
+        }
+    }
+}
+
 const controlBackgroundRule = ruleFor('tumaet:bg-control-background');
 if (declarationValue(controlBackgroundRule, 'background-color') !== 'var(--tumaet-ui-control-background)') {
     errors.push('the control background selector does not use its semantic package token');

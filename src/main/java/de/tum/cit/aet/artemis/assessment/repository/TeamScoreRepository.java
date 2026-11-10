@@ -18,6 +18,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.assessment.domain.TeamScore;
+import de.tum.cit.aet.artemis.assessment.dto.score.OwnExerciseScoreDTO;
+import de.tum.cit.aet.artemis.assessment.dto.score.PeerExerciseAverageDTO;
+import de.tum.cit.aet.artemis.assessment.dto.score.StudentScoreAverageDTO;
 import de.tum.cit.aet.artemis.assessment.dto.score.TeamScoreSumDTO;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
@@ -27,6 +30,48 @@ import de.tum.cit.aet.artemis.exercise.domain.Team;
 @Lazy
 @Repository
 public interface TeamScoreRepository extends ArtemisJpaRepository<TeamScore, Long> {
+
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.assessment.dto.score.OwnExerciseScoreDTO(s.exercise.id, s.lastRatedScore)
+            FROM TeamScore s JOIN s.team.students student
+            WHERE s.exercise.id IN :exerciseIds AND student.id = :studentId AND s.lastRatedResult IS NOT NULL AND s.lastRatedScore IS NOT NULL
+            """)
+    List<OwnExerciseScoreDTO> findOwnRatedScores(@Param("exerciseIds") Set<Long> exerciseIds, @Param("studentId") long studentId);
+
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.assessment.dto.score.StudentScoreAverageDTO(student.id, SUM(s.lastRatedScore), COUNT(s.id))
+            FROM TeamScore s
+                JOIN s.team.students student
+                JOIN student.courseRoles role
+            WHERE s.exercise.id IN :exerciseIds AND s.lastRatedResult IS NOT NULL AND s.lastRatedScore IS NOT NULL
+                AND role.course.id = :courseId AND role.role = de.tum.cit.aet.artemis.core.domain.CourseRole.STUDENT
+                AND student.deleted = FALSE
+            GROUP BY student.id
+            """)
+    List<StudentScoreAverageDTO> findStudentAveragesForComparison(@Param("courseId") long courseId, @Param("exerciseIds") Set<Long> exerciseIds);
+
+    /**
+     * Aggregates cohort members' team results while excluding every member of the requester's own team.
+     * The mean is weighted by matching cohort members; the sample size counts independent team scores.
+     *
+     * @param exerciseIds         the eligible exercises
+     * @param studentIds          the selected cohort's student ids
+     * @param requestingStudentId the student whose own team must be excluded
+     * @return one mean and independent-team count per exercise with peer results
+     */
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.assessment.dto.score.PeerExerciseAverageDTO(s.exercise.id, AVG(s.lastRatedScore), COUNT(DISTINCT s.id))
+            FROM TeamScore s
+                JOIN s.team team
+                JOIN team.students student
+                LEFT JOIN team.students ownStudent ON ownStudent.id = :requestingStudentId
+            WHERE s.exercise.id IN :exerciseIds AND student.id IN :studentIds
+                AND s.lastRatedResult IS NOT NULL AND s.lastRatedScore IS NOT NULL
+                AND ownStudent.id IS NULL
+            GROUP BY s.exercise.id
+            """)
+    List<PeerExerciseAverageDTO> findPeerExerciseAverages(@Param("exerciseIds") Set<Long> exerciseIds, @Param("studentIds") Set<Long> studentIds,
+            @Param("requestingStudentId") long requestingStudentId);
 
     @Transactional // ok because of delete
     @Modifying

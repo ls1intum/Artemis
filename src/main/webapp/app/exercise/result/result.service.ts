@@ -12,11 +12,11 @@ import { map, tap } from 'rxjs/operators';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
 import { convertDateFromClient, convertDateFromServer } from 'app/foundation/util/date.utils';
 import { TranslateService } from '@ngx-translate/core';
-import { roundValueSpecifiedByCourseSettings } from 'app/foundation/util/utils';
+import { CourseScoreAccuracy, roundValueSpecifiedByCourseSettings } from 'app/foundation/util/utils';
 import { isResultPreliminary } from 'app/programming/shared/utils/programming-exercise.utils';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
-import { captureException } from '@sentry/angular';
+import { captureException } from 'app/core/error-reporting/capture-exception';
 import { Participation, ParticipationType } from 'app/exercise/shared/entities/participation/participation.model';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { SubmissionService } from 'app/exercise/submission/submission.service';
@@ -70,7 +70,7 @@ export class ResultService implements IResultService {
     /**
      * Generates the result string for the given exercise and result.
      * Contains the score, achieved points and if it's a programming exercise the tests and code issues as well
-     * If the result or the exercise is undefined the error is forwarded to sentry and an empty string is returned.
+     * If the result or the exercise is undefined the error is reported and an empty string is returned.
      *
      * A missing `participation` is NOT an error: example submissions own a result without belonging to a
      * participation. Only the programming branch reads the participation, and it degrades gracefully without one.
@@ -78,10 +78,11 @@ export class ResultService implements IResultService {
      * @param exercise the exercise where the result belongs to
      * @param participation the participation of the exercise and result, if the result belongs to one
      * @param short flag that indicates if the resultString should use the short format
+     * @param course what of the course of the exercise the rounding of the score needs, if the exercise carries no course. A course that the exercise carries takes precedence.
      */
-    getResultString(result: Result | undefined, exercise: Exercise | undefined, participation: Participation | undefined, short?: boolean): string {
+    getResultString(result: Result | undefined, exercise: Exercise | undefined, participation: Participation | undefined, short?: boolean, course?: CourseScoreAccuracy): string {
         if (result && exercise) {
-            return this.getResultStringDefinedParameters(result, exercise, participation, short);
+            return this.getResultStringDefinedParameters(result, exercise, participation, short, course);
         } else {
             captureException('Tried to generate a result string, but either the result or exercise was undefined');
             return '';
@@ -95,10 +96,18 @@ export class ResultService implements IResultService {
      * @param exercise the exercise where the result belongs to
      * @param participation the participation of the exercise and result
      * @param short flag that indicates if the resultString should use the short format
+     * @param course what of the course of the exercise the rounding of the score needs, if the exercise carries no course
      */
-    private getResultStringDefinedParameters(result: Result, exercise: Exercise, participation: Participation | undefined, short: boolean | undefined): string {
-        const relativeScore = roundValueSpecifiedByCourseSettings(result.score, getCourseFromExercise(exercise));
-        const points = roundValueSpecifiedByCourseSettings((result.score! * exercise.maxPoints!) / 100, getCourseFromExercise(exercise));
+    private getResultStringDefinedParameters(
+        result: Result,
+        exercise: Exercise,
+        participation: Participation | undefined,
+        short: boolean | undefined,
+        course: CourseScoreAccuracy | undefined,
+    ): string {
+        const courseOfScore = getCourseFromExercise(exercise) ?? course;
+        const relativeScore = roundValueSpecifiedByCourseSettings(result.score, courseOfScore);
+        const points = roundValueSpecifiedByCourseSettings((result.score! * exercise.maxPoints!) / 100, courseOfScore);
         if (exercise.type !== ExerciseType.PROGRAMMING) {
             if (isAthenaAIResult(result)) {
                 return this.getResultStringNonProgrammingExerciseWithAIFeedback(result, relativeScore, points, short);

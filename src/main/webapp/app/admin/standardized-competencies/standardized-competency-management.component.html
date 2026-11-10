@@ -24,11 +24,11 @@
         <h3 class="me-1 mb-0" jhiTranslate="artemisApp.standardizedCompetency.title"></h3>
         <tumaet-ui-button
             size="small"
-            severity="secondary"
+            severity="primary"
             variant="outlined"
             (clicked)="openNewKnowledgeArea(undefined)"
             [tumAetUiTooltip]="'artemisApp.knowledgeArea.manage.createButtonTooltip' | artemisTranslate"
-            [attr.aria-label]="'artemisApp.knowledgeArea.manage.createButtonTooltip' | artemisTranslate"
+            [ariaLabel]="'artemisApp.knowledgeArea.manage.createButtonTooltip' | artemisTranslate"
         >
             <fa-icon [icon]="faPlus" />
         </tumaet-ui-button>
@@ -38,7 +38,7 @@
             variant="outlined"
             (clicked)="knowledgeAreaTreeComponent?.collapseAll()"
             [tumAetUiTooltip]="'artemisApp.standardizedCompetency.manage.collapseButtonTooltip' | artemisTranslate"
-            [attr.aria-label]="'artemisApp.standardizedCompetency.manage.collapseButtonTooltip' | artemisTranslate"
+            [ariaLabel]="'artemisApp.standardizedCompetency.manage.collapseButtonTooltip' | artemisTranslate"
         >
             <fa-icon [icon]="faMinimize" />
         </tumaet-ui-button>
@@ -48,7 +48,7 @@
             variant="outlined"
             (clicked)="knowledgeAreaTreeComponent?.expandAll()"
             [tumAetUiTooltip]="'artemisApp.standardizedCompetency.manage.expandButtonTooltip' | artemisTranslate"
-            [attr.aria-label]="'artemisApp.standardizedCompetency.manage.expandButtonTooltip' | artemisTranslate"
+            [ariaLabel]="'artemisApp.standardizedCompetency.manage.expandButtonTooltip' | artemisTranslate"
         >
             <fa-icon [icon]="faMaximize" />
         </tumaet-ui-button>
@@ -71,9 +71,7 @@
                     (resizeMove)="detailPanelWidth.set($event.width)"
                     data-testid="sc-detail-panel"
                 >
-                    <div class="draggable-left" data-testid="sc-detail-resize-handle">
-                        <fa-icon [icon]="faGripLinesVertical" />
-                    </div>
+                    <div class="draggable-left panel-divider-x" data-testid="sc-detail-resize-handle"></div>
                     <div class="detail-content">
                         <ng-container [ngTemplateOutlet]="detailTemplate" />
                     </div>
