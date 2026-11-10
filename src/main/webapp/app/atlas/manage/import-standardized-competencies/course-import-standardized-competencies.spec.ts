@@ -161,6 +161,36 @@ describe('CourseImportStandardizedCompetenciesComponent', () => {
         expect(sortSpy).toHaveBeenCalledWith([], 'title', true);
     });
 
+    it('should remember the sort state and convert the table sort event', () => {
+        const sortService = TestBed.inject(SortService);
+        const sortSpy = vi.spyOn(sortService, 'sortByProperty').mockReturnValue([]);
+
+        component['onSelectedSortChange']({ field: 'title', order: -1 });
+
+        expect(sortSpy).toHaveBeenCalledWith([], 'title', false);
+        expect(component['selectedSortField']).toBe('title');
+        expect(component['selectedSortAscending']).toBe(false);
+
+        component['onSelectedSortChange']({ field: 'description', order: 1 });
+
+        expect(sortSpy).toHaveBeenLastCalledWith([], 'description', true);
+        expect(component['selectedSortField']).toBe('description');
+        expect(component['selectedSortAscending']).toBe(true);
+    });
+
+    it('should warn before unloading the page only while competencies are selected', () => {
+        component['isLoading'].set(false);
+        const event = { preventDefault: vi.fn() } as unknown as BeforeUnloadEvent;
+
+        expect(component.unloadNotification(event)).toBe(true);
+        expect(event.preventDefault).not.toHaveBeenCalled();
+
+        component['selectedCompetencies'] = [{ id: 1, isVisible: true }];
+
+        expect(component.unloadNotification(event)).toBe('pendingChanges');
+        expect(event.preventDefault).toHaveBeenCalledOnce();
+    });
+
     it('should navigate after importing competencies', () => {
         const router: Router = TestBed.inject(Router);
         const navigateSpy = vi.spyOn(router, 'navigate');

@@ -160,6 +160,26 @@ describe('CourseRegistrationComponent', () => {
         });
     });
 
+    it('should store the sort event and write it to the URL when a column header sorts', () => {
+        const activatedRoute = TestBed.inject(ActivatedRoute);
+        component.searchTermString = '';
+
+        component.onSort({ field: 'semester', order: -1 });
+
+        expect(component.predicate()).toBe('semester');
+        expect(component.ascending()).toBe(false);
+        expect(navigateSpy).toHaveBeenCalledOnce();
+        expect(navigateSpy).toHaveBeenCalledWith(
+            ['/courses/enroll'],
+            expect.objectContaining({ relativeTo: activatedRoute.parent, queryParams: expect.objectContaining({ sort: 'semester,desc' }) }),
+        );
+
+        component.onSort({ field: 'title', order: 1 });
+
+        expect(component.ascending()).toBe(true);
+        expect(navigateSpy).toHaveBeenLastCalledWith(['/courses/enroll'], expect.objectContaining({ queryParams: expect.objectContaining({ sort: 'title,asc' }) }));
+    });
+
     it('should call transition with descending sort', () => {
         const activatedRoute = TestBed.inject(ActivatedRoute);
         component.predicate.set('semester');

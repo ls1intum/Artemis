@@ -93,4 +93,57 @@ describe('TutorialRegistrationsStudentsTable', () => {
         remove.click();
         expect(removeActionColumnInfo.onRemove).toHaveBeenCalledWith(expect.any(MouseEvent), firstStudent);
     });
+    describe('sorting', () => {
+        const thirdStudent: TutorialGroupStudent = { id: 3, name: 'grace Hopper', login: 'grace', email: 'grace@tum.de', registrationNumber: 'ab12cde' };
+        const names = () =>
+            Array.from(fixture.nativeElement.querySelectorAll('tbody tr') as NodeListOf<HTMLElement>).map((row) => row.querySelector('td span')!.lastChild!.textContent!.trim());
+
+        beforeEach(() => {
+            fixture.componentRef.setInput('students', [thirdStudent, secondStudent, firstStudent]);
+            fixture.detectChanges();
+        });
+
+        it('should sort by name ascending by default, ignoring case', () => {
+            expect(fixture.componentInstance.sortField()).toBe('name');
+            expect(fixture.componentInstance.sortOrder()).toBe(1);
+            expect(names()).toEqual(['Ada Lovelace', 'Alan Turing', 'grace Hopper']);
+        });
+
+        it('should store the sort event and reorder the rows', () => {
+            fixture.componentInstance.onSort({ field: 'login', order: -1 });
+            fixture.detectChanges();
+
+            expect(fixture.componentInstance.sortField()).toBe('login');
+            expect(fixture.componentInstance.sortOrder()).toBe(-1);
+            expect(names()).toEqual(['grace Hopper', 'Alan Turing', 'Ada Lovelace']);
+        });
+
+        it('should sort by registration number and treat missing values as empty', () => {
+            fixture.componentRef.setInput('students', [thirdStudent, { ...secondStudent, registrationNumber: undefined }, firstStudent]);
+            fixture.componentInstance.onSort({ field: 'registrationNumber', order: 1 });
+            fixture.detectChanges();
+
+            expect(names()).toEqual(['Alan Turing', 'grace Hopper', 'Ada Lovelace']);
+        });
+
+        it('should reorder the rows when a sortable header is clicked', () => {
+            const header = fixture.nativeElement.querySelector('th[scope="col"]:nth-child(3)') as HTMLElement;
+            (header.querySelector('button') ?? header).click();
+            fixture.detectChanges();
+
+            expect(fixture.componentInstance.sortField()).toBe('email');
+            expect(names()).toEqual(['Ada Lovelace', 'Alan Turing', 'grace Hopper']);
+        });
+    });
+
+    it('should show the toolbar slot only when hasToolbar is set', () => {
+        fixture.componentRef.setInput('students', [firstStudent]);
+        fixture.detectChanges();
+        const toolbar = () => fixture.nativeElement.querySelector('[tumAetUiTableToolbar]') as HTMLElement;
+        expect(toolbar().hidden).toBe(true);
+
+        fixture.componentRef.setInput('hasToolbar', true);
+        fixture.detectChanges();
+        expect(toolbar().hidden).toBe(false);
+    });
 });

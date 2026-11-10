@@ -13,6 +13,8 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { of, throwError } from 'rxjs';
+import { By } from '@angular/platform-browser';
+import { TumAetUiPaginatorComponent } from '@tumaet/ui-angular';
 import dayjs from 'dayjs/esm';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -61,6 +63,7 @@ describe('AdminDataExportsComponent', () => {
     const mockAdminDataExportsService = {
         getAllDataExports: vi.fn().mockReturnValue(of(mockPageableResult)),
         downloadDataExport: vi.fn(),
+        cancelDataExport: vi.fn(),
     };
 
     const mockAlertService = {
@@ -177,5 +180,79 @@ describe('AdminDataExportsComponent', () => {
         expect(component.first()).toBe(0);
         expect(component.rows()).toBe(20);
         expect(component.totalRecords()).toBe(0);
+    });
+    describe('table frame', () => {
+        const element = () => fixture.nativeElement as HTMLElement;
+        const paginator = () => fixture.debugElement.query(By.directive(TumAetUiPaginatorComponent)).componentInstance as TumAetUiPaginatorComponent;
+
+        beforeEach(async () => {
+            mockAdminDataExportsService.getAllDataExports.mockReturnValue(of(mockPageableResult));
+            fixture.detectChanges();
+            await fixture.whenStable();
+            fixture.detectChanges();
+        });
+
+        it('should render the exports in the table layout with the paginator in its footer', () => {
+            expect(element().querySelector('tumaet-ui-table-layout [data-testid="data-exports-table"]')).not.toBeNull();
+            expect(element().querySelectorAll('[data-testid="data-exports-table"] tbody tr')).toHaveLength(2);
+            expect(element().querySelector('tumaet-ui-table-layout [tumAetUiTableFooter]')).not.toBeNull();
+            expect(paginator().totalRecords()).toBe(50);
+            expect(paginator().pageSize()).toBe(20);
+            expect(paginator().page()).toBe(0);
+        });
+
+        it('should label the download button for screen readers and offer it only for downloadable exports', () => {
+            const downloadButtons = element().querySelectorAll('[data-testid="download-btn"]');
+
+            expect(downloadButtons).toHaveLength(1);
+            expect(downloadButtons[0].querySelector('button')!.getAttribute('aria-label')).toBe('entity.action.download');
+        });
+
+        it('should load the matching page when the paginator emits a zero-based page', async () => {
+            vi.clearAllMocks();
+
+            paginator().pageChange.emit(2);
+            await fixture.whenStable();
+            fixture.detectChanges();
+
+            expect(adminDataExportsService.getAllDataExports).toHaveBeenCalledWith(2, 20);
+            expect(paginator().page()).toBe(2);
+        });
+
+        it('should reload from the first page when the paginator emits a new page size', async () => {
+            vi.clearAllMocks();
+
+            paginator().pageSizeChange.emit(10);
+            await fixture.whenStable();
+
+            expect(adminDataExportsService.getAllDataExports).toHaveBeenCalledWith(0, 10);
+        });
+    });
+
+    describe('cancelExport', () => {
+        beforeEach(() => {
+            mockAdminDataExportsService.getAllDataExports.mockReturnValue(of(mockPageableResult));
+        });
+
+        it('should report success and reload the exports', () => {
+            mockAdminDataExportsService.cancelDataExport.mockReturnValue(of(undefined));
+            vi.clearAllMocks();
+
+            component.cancelExport(mockExports[1]);
+
+            expect(mockAdminDataExportsService.cancelDataExport).toHaveBeenCalledWith(2);
+            expect(mockAlertService.success).toHaveBeenCalledWith('artemisApp.dataExport.admin.cancelSuccess', { login: 'user2' });
+            expect(mockAdminDataExportsService.getAllDataExports).toHaveBeenCalledOnce();
+        });
+
+        it('should report an error and not reload when cancelling fails', () => {
+            mockAdminDataExportsService.cancelDataExport.mockReturnValue(throwError(() => new Error('failed')));
+            vi.clearAllMocks();
+
+            component.cancelExport(mockExports[1]);
+
+            expect(mockAlertService.error).toHaveBeenCalledWith('artemisApp.dataExport.admin.cancelError', { login: 'user2' });
+            expect(mockAdminDataExportsService.getAllDataExports).not.toHaveBeenCalled();
+        });
     });
 });

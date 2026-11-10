@@ -60,6 +60,22 @@ describe('ImportAllCompetenciesComponent', () => {
         expect(component.disabledIds).toContain(42);
     });
 
+    it('applies the competency type provided via dialog data', () => {
+        dialogConfig.data = { competencyType: 'prerequisite' };
+        fixture.detectChanges();
+        expect(component.competencyType()).toBe('prerequisite');
+    });
+
+    it('closes the dialog with the selected course and the relation import choice', () => {
+        fixture.detectChanges();
+        const course = { id: 5, title: 'Selected' };
+        component['importRelations'] = false;
+
+        component.selectImport(course as any);
+
+        expect(dialogRef.close).toHaveBeenCalledWith({ courseForImportDTO: course, importRelations: false });
+    });
+
     it('should extract competency properties', () => {
         const course: Course = {
             title: 'Course Title',

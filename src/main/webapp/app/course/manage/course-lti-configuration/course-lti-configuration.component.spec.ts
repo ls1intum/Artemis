@@ -173,4 +173,25 @@ describe('Course LTI Configuration Component', () => {
 
         expect(sortService.sortByProperty).toHaveBeenCalledOnce();
     });
+
+    it('should store the sort event and sort both the exercises and the lectures with it', () => {
+        const sortSpy = vi.spyOn(sortService, 'sortByProperty').mockImplementation((array) => array);
+        findWithExercisesStub.mockReturnValue(of(new HttpResponse({ body: courseWithExercisesAndLectures, status: 200 })));
+        fixture.detectChanges();
+        sortSpy.mockClear();
+
+        comp.onSort({ field: 'title', order: -1 });
+
+        expect(comp.predicate()).toBe('title');
+        expect(comp.reverse()).toBe(false);
+        expect(sortSpy).toHaveBeenCalledTimes(2);
+        expect(sortSpy).toHaveBeenNthCalledWith(1, comp.exercises(), 'title', false);
+        expect(sortSpy).toHaveBeenNthCalledWith(2, comp.lectures(), 'title', false);
+
+        comp.onSort({ field: 'dueDate', order: 1 });
+
+        expect(comp.predicate()).toBe('dueDate');
+        expect(comp.reverse()).toBe(true);
+        expect(sortSpy).toHaveBeenLastCalledWith(comp.lectures(), 'dueDate', true);
+    });
 });

@@ -108,4 +108,15 @@ describe('OrchestrationResultDialogComponent', () => {
         fixture.detectChanges();
         expect(fixture.componentInstance.visible()).toBe(false);
     });
+    it('renders one translated type tag per applied action type and keeps the table inside the table layout', async () => {
+        const types = [AppliedActionType.Create, AppliedActionType.Edit, AppliedActionType.Assign, AppliedActionType.Unassign, AppliedActionType.Delete];
+        fixture.componentInstance.actions.set(types.map((type, index) => ({ type, competencyId: index, competencyTitle: `Competency ${index}`, detail: '', justification: '' })));
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        const rows = Array.from(document.querySelectorAll('[data-testid="orchestration-actions"] tbody tr'));
+        expect(rows).toHaveLength(5);
+        expect(rows.map((row) => row.querySelector('td')!.textContent!.trim())).toEqual(types.map((type) => expect.stringContaining(type)));
+        expect(document.querySelector('tumaet-ui-table-layout [data-testid="orchestration-actions"]')).not.toBeNull();
+    });
 });
