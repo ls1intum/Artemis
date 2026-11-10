@@ -1068,6 +1068,26 @@ class SecurityFrameworkServiceTest {
     }
 
     @Test
+    void reactivationFailsInsteadOfLeavingANewTestClassOutOfAPolicyThatCannotBeRewritten() throws Exception {
+        // A flow list over several lines is valid YAML, but Artemis does not rewrite it.
+        String policy = CUSTOM_POLICY.replace("  theFollowingClassesAreTestClasses:\n    - \"de.example.SortingTest\"\n",
+                "  theFollowingClassesAreTestClasses: [\"de.example.SortingTest\",\n    \"de.example.OtherTest\"]\n");
+        pushPolicyAndVersion(policy, "2.2.1");
+        ProgrammingExercise exercise = exercise(ProgrammingLanguage.JAVA);
+        securityFrameworkService.deactivate(exercise, user);
+        // The new class is written while the sandbox is off, so reactivating switches its annotation on.
+        pushCheckoutChange(checkout -> FileUtils.writeStringToFile(checkout.resolve("test/de/example/NewTest.java").toFile(),
+                NEW_TEST_CLASS.replace(SecurityPolicyTestAnnotations.ACTIVE_ANNOTATION, SecurityPolicyTestAnnotations.INACTIVE_ANNOTATION), StandardCharsets.UTF_8));
+        int commitsBefore = pushedCommitCount();
+
+        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> securityFrameworkService.activate(exercise, "2.2.1", user))
+                .matches(exception -> "securityFrameworkTestClassesNotAdded".equals(exception.getErrorKey()));
+        assertThat(pushedCommitCount()).isEqualTo(commitsBefore);
+        assertThat(readPushed(SecurityPolicyRepositoryFiles.POLICY_FILE_NAME)).isEmpty();
+        assertThat(securityFrameworkService.getConfig(exercise).status()).isEqualTo(SecurityActivationStatus.INACTIVE.name());
+    }
+
+    @Test
     void addingTheDiscoveredTestClassesIsRejectedWhileInactive() throws Exception {
         ProgrammingExercise exercise = exercise(ProgrammingLanguage.JAVA);
         securityFrameworkService.deactivate(exercise, user);

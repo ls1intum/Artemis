@@ -363,15 +363,26 @@ public class SecurityFrameworkService {
                 throw new BadRequestAlertException("Test classes can only be added while the Security Framework is configured for this exercise.", ENTITY_NAME,
                         "securityFrameworkNotActive");
             }
-            for (SecurityFrameworkState.PolicyFile policyFile : state.policyFiles()) {
-                if (policyFile.problem() == null && !policyFile.missingTestClasses().isEmpty()
-                        && !SecurityPolicyRepositoryFiles.addTestClassesToPolicy(root, policyFile.policyPath(), policyFile.missingTestClasses())) {
-                    // Reporting success without a change would leave the classes missing while the card stops offering the action.
-                    throw new BadRequestAlertException("The test classes cannot be added to " + policyFile.policyPath() + " automatically, because its list of test classes is"
-                            + " written in a form Artemis does not rewrite. Add them to the file yourself.", ENTITY_NAME, "securityFrameworkTestClassesNotAdded");
-                }
-            }
+            // Reporting success without a change would leave the classes missing while the card stops offering the action.
+            addMissingTestClasses(root, state);
         });
+    }
+
+    /**
+     * Adds the test classes that the policy files do not list yet (decision B5 of Ares2 issue #386). A class that is missing from the policy is treated as
+     * student code by Ares, which can block its reflection or file access, so a list that cannot be rewritten rejects the operation before anything is
+     * committed.
+     *
+     * @throws BadRequestAlertException if a policy file lists its test classes in a form Artemis does not rewrite
+     */
+    private static void addMissingTestClasses(Path root, SecurityFrameworkState state) {
+        for (SecurityFrameworkState.PolicyFile policyFile : state.policyFiles()) {
+            if (policyFile.problem() == null && !policyFile.missingTestClasses().isEmpty()
+                    && !SecurityPolicyRepositoryFiles.addTestClassesToPolicy(root, policyFile.policyPath(), policyFile.missingTestClasses())) {
+                throw new BadRequestAlertException("The test classes cannot be added to " + policyFile.policyPath() + " automatically, because its list of test classes is"
+                        + " written in a form Artemis does not rewrite. Add them to the file yourself.", ENTITY_NAME, "securityFrameworkTestClassesNotAdded");
+            }
+        }
     }
 
     /**
@@ -513,11 +524,7 @@ public class SecurityFrameworkService {
                 throw policyNotRepairable(policyFile);
             }
         }
-        for (SecurityFrameworkState.PolicyFile policyFile : SecurityPolicyRepositoryFiles.evaluate(root).policyFiles()) {
-            if (policyFile.problem() == null && !policyFile.missingTestClasses().isEmpty()) {
-                SecurityPolicyRepositoryFiles.addTestClassesToPolicy(root, policyFile.policyPath(), policyFile.missingTestClasses());
-            }
-        }
+        addMissingTestClasses(root, SecurityPolicyRepositoryFiles.evaluate(root));
         // A policy restored from the history may use fields the release does not know.
         requireCompatiblePolicyFiles(root, SecurityPolicyRepositoryFiles.evaluate(root), frameworkVersion);
         requireUsablePolicyFiles(root);
