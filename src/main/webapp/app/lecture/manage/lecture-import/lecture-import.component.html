@@ -1,4 +1,8 @@
-<tumaet-ui-table-layout class="[--table-layout-offset:16rem]" [loading]="loading()" [empty]="content().resultsOnPage.length === 0 && !loading()">
+<tumaet-ui-table-layout
+    class="[--table-layout-offset:16rem] max-md:[--table-layout-offset:24rem]"
+    [loading]="loading()"
+    [empty]="content().resultsOnPage.length === 0 && !loading()"
+>
     <div tumAetUiTableToolbar class="flex min-w-0 flex-1 items-center gap-2">
         <input
             tumAetUiInput
@@ -6,7 +10,7 @@
             id="lecture-import-search"
             name="search"
             type="search"
-            class="max-w-72 min-w-24 flex-1"
+            class="max-w-96 min-w-24 flex-1"
             [(ngModel)]="searchTerm"
             [placeholder]="'artemisApp.lecture.import.search' | artemisTranslate"
             [attr.aria-label]="'artemisApp.lecture.import.search' | artemisTranslate"

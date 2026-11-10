@@ -3,7 +3,7 @@
         <!-- Step 1: Course Selection -->
         <div class="course-selection-step">
             <tumaet-ui-table-layout
-                class="[--table-layout-offset:22rem]"
+                class="[--table-layout-offset:22rem] max-md:[--table-layout-offset:30rem]"
                 [loading]="isLoadingCourses()"
                 [empty]="courses().length === 0 && !isLoadingCourses()"
                 emptyTitle="artemisApp.course.import.noCourses"
@@ -13,7 +13,7 @@
                         tumAetUiInput
                         tumAetUiInputSize="small"
                         type="search"
-                        class="max-w-72 min-w-24 flex-1"
+                        class="max-w-96 min-w-24 flex-1"
                         [attr.aria-label]="'artemisApp.course.import.searchPlaceholder' | artemisTranslate"
                         [ngModel]="searchTerm()"
                         (ngModelChange)="searchTerm.set($event)"

@@ -15,7 +15,11 @@
     </div>
     @if (exercise(); as exercise) {
         <div class="p-4">
-            <tumaet-ui-table-layout [loading]="loading()" [empty]="content().resultsOnPage.length === 0 && !loading()" class="[--table-layout-offset:20rem]">
+            <tumaet-ui-table-layout
+                [loading]="loading()"
+                [empty]="content().resultsOnPage.length === 0 && !loading()"
+                class="[--table-layout-offset:20rem] max-md:[--table-layout-offset:28rem]"
+            >
                 <div tumAetUiTableToolbar class="flex min-w-0 flex-1 items-center gap-2">
                     <input
                         tumAetUiInput
@@ -23,7 +27,7 @@
                         type="search"
                         name="searchParticipant"
                         id="searchParticipant"
-                        class="max-w-72 min-w-24 flex-1"
+                        class="max-w-96 min-w-24 flex-1"
                         [(ngModel)]="searchTerm"
                         [placeholder]="'artemisApp.exampleSubmission.searchSubmission' | artemisTranslate"
                         [attr.aria-label]="'artemisApp.exampleSubmission.searchSubmission' | artemisTranslate"

@@ -4,7 +4,7 @@
     }
     <p class="create-exercise-unit-hint m-0 text-sm" jhiTranslate="artemisApp.exerciseUnit.createExerciseUnit.description"></p>
     <tumaet-ui-table-layout
-        class="[--table-layout-offset:20rem]"
+        class="[--table-layout-offset:20rem] max-md:[--table-layout-offset:28rem]"
         [loading]="isLoading()"
         [empty]="exercisesAvailableForUnitCreation().length === 0 && !isLoading()"
         [emptyTitle]="hasCourseExercises() ? 'artemisApp.exerciseUnit.createExerciseUnit.noExercises' : 'artemisApp.exerciseUnit.createExerciseUnit.noCourseExercises'"
