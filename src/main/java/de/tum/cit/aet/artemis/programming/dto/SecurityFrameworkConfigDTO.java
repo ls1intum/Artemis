@@ -32,6 +32,7 @@ public record SecurityFrameworkConfigDTO(String status, @Nullable String framewo
      * @param location the file, relative to the repository root
      * @param api      the type or wildcard-imported package, relative to the Ares package, e.g. {@code StrictTimeout} or {@code structural.*}
      */
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public record AresApiUseDTO(String location, String api) {
     }
 

@@ -57,6 +57,8 @@ final class AresTestSources {
     /** The security extension registered directly, e.g. in {@code @ExtendWith(JupiterSecurityExtension.class)}, with or without its package. */
     private static final Pattern SECURITY_EXTENSION_USE = Pattern.compile("(" + Pattern.quote(ARES_JUPITER_PACKAGE + ".") + ")?" + SECURITY_EXTENSION + "\\s*\\.\\s*class\\b");
 
+    private static final Pattern WHITESPACE = Pattern.compile("\\s");
+
     private static final Pattern WILDCARD_IMPORT = Pattern.compile("\\bimport\\s+([\\w.]+)\\.\\*\\s*;");
 
     private static final Pattern ARES_JUPITER_WILDCARD_IMPORT = Pattern.compile("\\bimport\\s+" + Pattern.quote(ARES_JUPITER_PACKAGE) + "\\.\\*\\s*;");
@@ -224,7 +226,7 @@ final class AresTestSources {
         Set<String> apis = new TreeSet<>();
         Matcher references = ARES_2_REFERENCE.matcher(masked);
         while (references.find()) {
-            String api = references.group(1).replaceAll("\\s", "").substring(1);
+            String api = WHITESPACE.matcher(references.group(1)).replaceAll("").substring(1);
             if (!SANDBOX_APIS.contains(api)) {
                 apis.add(api);
             }
