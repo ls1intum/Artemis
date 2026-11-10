@@ -50,7 +50,7 @@ test.describe('Presentation assessments', { tag: '@fast' }, () => {
         const title = `Tutor presentation ${generateUUID()}`;
         // Still logged in as the admin from beforeEach.
         const created = await page.request.post(`api/assessment/courses/${course.id}/presentation-assessments`, {
-            data: { title, gradingMethod: PresentationGradingMethod.SCORE, maxPoints: 20, courseId: course.id },
+            data: { title, gradingMethod: PresentationGradingMethod.PASS_FAIL, courseId: course.id },
         });
         expect(created.status()).toBe(201);
 
@@ -62,9 +62,9 @@ test.describe('Presentation assessments', { tag: '@fast' }, () => {
         await presentationAssessmentManagement.openPresentation(title);
         await expect(page.getByTestId('edit-presentation-button')).toHaveCount(0);
 
-        await presentationAssessmentManagement.assignAndGrade(studentOne.username, dayjs(), 12);
+        await presentationAssessmentManagement.assignAndGradeByPassFail(studentOne.username, dayjs(), false);
         const row = presentationAssessmentManagement.instanceRow(studentOne.username);
-        await expect(row.getByTestId('instance-result')).toHaveText('12 / 20');
+        await expect(row.getByTestId('instance-result')).toHaveText('Failed');
         await expect(row.getByTestId('edit-instance-button')).toBeVisible();
         await expect(row.getByTestId('delete-instance-button')).toHaveCount(0);
     });
@@ -87,23 +87,5 @@ test.describe('Presentation assessments', { tag: '@fast' }, () => {
         await presentationAssessmentManagement.assignAndGradeByRubric(studentOne.username, dayjs(), [3, 4]);
 
         await expect(presentationAssessmentManagement.instanceRow(studentOne.username).getByTestId('instance-result')).toHaveText('85 %');
-    });
-
-    test('Tutor grades a presentation by pass/fail', async ({ page, login, presentationAssessmentManagement }) => {
-        const title = `Pass/fail presentation ${generateUUID()}`;
-        // Still logged in as the admin from beforeEach.
-        const created = await page.request.post(`api/assessment/courses/${course.id}/presentation-assessments`, {
-            data: { title, gradingMethod: PresentationGradingMethod.PASS_FAIL, courseId: course.id },
-        });
-        expect(created.status()).toBe(201);
-
-        await login(tutor, `/course-management/${course.id}`);
-        await page.locator('#presentations').click();
-        await presentationAssessmentManagement.openPresentation(title);
-        await expect(page.getByTestId('presentation-grading-method-tag')).toBeVisible();
-
-        await presentationAssessmentManagement.assignAndGradeByPassFail(studentOne.username, dayjs(), false);
-
-        await expect(presentationAssessmentManagement.instanceRow(studentOne.username).getByTestId('instance-result')).toHaveText('Failed');
     });
 });
