@@ -73,6 +73,8 @@
                     "summaryMultipleOnFixed": "{{ count }} Multiple-Choice-Fragen pro Vorlesungseinheit mit {{ min }} richtigen Optionen",
                     "summaryMultipleOff": "keine Multiple-Choice-Fragen",
                     "summaryMix": "Schwierigkeit {{ easy }} / {{ medium }} / {{ hard }} %",
+                    "summaryOvernightOn": "nächtliche Läufe an",
+                    "summaryOvernightOff": "nächtliche Läufe aus",
                     "countHint": "Zwischen {{ min }} und {{ max }}.",
                     "summaryRunningBuild": "Aktueller Lauf:",
                     "summaryNextBuild": "Nächster Lauf:",

@@ -1030,7 +1030,7 @@ describe('QuizQuestionPoolComponent', () => {
 
         expect(component.runningBuildSettings()).toEqual(buildSettings);
         expect(component.runningBuildFacts().map((fact) => fact.values['count'])).toEqual([10, 5, 12, undefined]);
-        expect(component.settingsFacts().map((fact) => fact.changed)).toEqual([false, true, true, false]);
+        expect(component.settingsFacts().map((fact) => fact.changed)).toEqual([false, true, true, false, false]);
         expect(fixture.nativeElement.querySelector('[data-testid="pool-build-settings-summary"]')).not.toBeNull();
         expect(fixture.nativeElement.querySelectorAll('[data-testid="pool-settings-summary"] [data-changed]')).toHaveLength(2);
 
