@@ -31,6 +31,28 @@ class ManagementEndpointAccessTest extends AbstractSpringIntegrationIndependentT
         return mockMvc.perform(get(path)).andReturn().getResponse().getStatus();
     }
 
+    private int statusFromPeer(String path, String peerAddress) throws Exception {
+        return mockMvc.perform(get(path).with(request -> {
+            request.setRemoteAddr(peerAddress);
+            return request;
+        })).andReturn().getResponse().getStatus();
+    }
+
+    /**
+     * The metrics endpoint is guarded by the address of the peer, not by a user, so the rule has to decide the same way
+     * for a caller who is not logged in. The test configuration keeps the default of {@code spring.prometheus.monitoringIp}, the
+     * loopback address. Matching blocks and malformed values are covered by {@link MonitoringAccessPolicyTest}; this
+     * only pins that the rule asks the policy with the peer address.
+     */
+    @Test
+    @WithAnonymousUser
+    void prometheusShouldBeReadableFromTheConfiguredAddressOnly() throws Exception {
+        // Allowed: the authorization layer lets it through, so what follows is 404 here (the endpoint is unmapped in this slice) or 200.
+        assertThat(statusFromPeer("/management/prometheus", "127.0.0.1")).isNotIn(401, 403);
+        // Denied: any other peer is turned away before dispatch.
+        assertThat(statusFromPeer("/management/prometheus", "203.0.113.9")).isIn(401, 403);
+    }
+
     @Test
     @WithMockUser(username = "management-contract-user", roles = { "USER" })
     void generalManagementRuleShouldRequireAdminForNonAdmins() throws Exception {

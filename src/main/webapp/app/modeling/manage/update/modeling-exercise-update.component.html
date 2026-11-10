@@ -56,7 +56,6 @@
                     id="competencies"
                     [labelName]="'artemisApp.competency.link.title' | artemisTranslate"
                     [labelTooltip]="'artemisApp.competency.link.exercise' | artemisTranslate"
-                    [exerciseDescription]="modelingExercise.problemStatement"
                     [ngModel]="modelingExercise.competencyLinks"
                     (ngModelChange)="exerciseState.patch('competencyLinks', $event)"
                     name="competencyLinks"
