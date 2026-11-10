@@ -176,6 +176,32 @@ describe('IrisBaseChatbotComponent', () => {
         expect(component).toBeTruthy();
     });
 
+    it('keeps modal focus when messages arrive while the chat is hidden, then resumes chat autofocus after dismissal', () => {
+        vi.useFakeTimers();
+        const modalButton = document.createElement('button');
+        document.body.appendChild(modalButton);
+        modalButton.focus();
+        const textarea = fixture.nativeElement.querySelector('textarea') as HTMLTextAreaElement;
+        try {
+            fixture.nativeElement.setAttribute('aria-hidden', 'true');
+            chatService.messages.next([mockServerMessage]);
+            fixture.detectChanges();
+            vi.advanceTimersByTime(150);
+            expect(document.activeElement).toBe(modalButton);
+
+            fixture.nativeElement.removeAttribute('aria-hidden');
+            chatService.messages.next([mockServerMessage, { ...mockServerMessage, id: 999 }]);
+            fixture.detectChanges();
+            vi.advanceTimersByTime(150);
+            expect(document.activeElement).toBe(textarea);
+        } finally {
+            fixture.nativeElement.removeAttribute('aria-hidden');
+            modalButton.remove();
+            vi.clearAllTimers();
+            vi.useRealTimers();
+        }
+    });
+
     it('names the native icon controls and keeps the composer as a TUM textarea', () => {
         fixture.componentRef.setInput('fullSize', false);
         fixture.componentRef.setInput('showCloseButton', true);

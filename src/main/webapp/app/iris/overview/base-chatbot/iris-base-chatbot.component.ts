@@ -616,7 +616,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
                 } else if (this.isScrolledToBottom() && !this.isSuggestionAnimating()) {
                     this.scrollToBottom('smooth');
                 }
-                const timeoutId = setTimeout(() => this.messageTextarea()?.nativeElement?.focus(), 10);
+                const timeoutId = setTimeout(() => this.focusChatInput(), 10);
                 onCleanup(() => clearTimeout(timeoutId));
             }
             // Track new messages for animation (compare against previous IDs, not current).
@@ -687,15 +687,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         });
 
         // Focus on message textarea after initialization
-        const focusTimeoutId = setTimeout(() => {
-            const textarea = this.messageTextarea();
-            const acceptBtn = this.acceptButton();
-            if (textarea) {
-                textarea.nativeElement.focus();
-            } else if (acceptBtn) {
-                acceptBtn.nativeElement.focus();
-            }
-        }, 150);
+        const focusTimeoutId = setTimeout(() => this.focusChatInput(), 150);
         this.destroyRef.onDestroy(() => clearTimeout(focusTimeoutId));
         this.destroyRef.onDestroy(() => this.resetLiveAssistantDraftState());
         this.destroyRef.onDestroy(() => {
@@ -847,13 +839,16 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     }
 
     private focusInputAfterAcceptance() {
-        setTimeout(() => {
-            if (this.messageTextarea()) {
-                this.messageTextarea()!.nativeElement.focus();
-            } else if (this.acceptButton()) {
-                this.acceptButton()!.nativeElement.focus();
-            }
-        }, 150);
+        setTimeout(() => this.focusChatInput(), 150);
+    }
+
+    private focusChatInput(): void {
+        const input = this.messageTextarea()?.nativeElement ?? this.acceptButton()?.nativeElement;
+        // CDK dialogs hide the page from assistive technology. A delayed chat update must not take
+        // focus back from the welcome dialog (or another modal) into that hidden page.
+        if (input && !input.closest('[aria-hidden="true"]')) {
+            input.focus();
+        }
     }
 
     /**

@@ -1,4 +1,15 @@
 .chat-history-item {
+    border-radius: 6px;
+
+    &:hover,
+    &:focus-within {
+        background-color: var(--iris-accent-background);
+    }
+
+    &--selected {
+        background-color: var(--iris-tertiary-background);
+    }
+
     &__menu-trigger {
         opacity: 0;
     }
