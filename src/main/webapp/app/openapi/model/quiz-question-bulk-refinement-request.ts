@@ -8,13 +8,14 @@
  * NOTE: This file is auto-generated. Do not edit manually.
  */
 
+import type { GeneratedQuizQuestion } from './generated-quiz-question';
 
 /**
  * Request to refine multiple quiz questions at once using a single user prompt
  */
 export interface QuizQuestionBulkRefinementRequest {
     /** The quiz questions to refine */
-    questions: Array<any>;
+    questions: Array<GeneratedQuizQuestion>;
     /** User instructions describing how all questions should be changed */
     refinementPrompt: string;
 }

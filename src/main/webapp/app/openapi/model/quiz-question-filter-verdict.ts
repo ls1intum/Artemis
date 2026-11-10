@@ -21,6 +21,8 @@ export interface QuizQuestionFilterVerdict {
     triggered?: boolean;
     /** One-sentence justification of the severity */
     justification?: string;
+    /** Whether this verdict asks a reviewer to look at an accepted question */
+    flagged?: boolean;
 }
 
 export type QuizQuestionFilterVerdictModeEnum = 'FACTUAL_ERROR' | 'AMBIGUOUS_CORRECT_ANSWER' | 'OFF_TOPIC' | 'NEAR_DUPLICATE' | 'ILL_FORMED_DISTRACTORS';
