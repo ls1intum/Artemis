@@ -4,7 +4,7 @@ title: TUM AET UI package
 sidebar_label: TUM AET UI package
 slug: /guidelines/tum-aet-ui-kit
 description: Architecture, integration, contribution, testing, and publishing for the TUM AET UI component library.
-last_reviewed: 2026-11-06
+last_reviewed: 2026-11-10
 ---
 
 import Callout from '../../../src/components/Callout/Callout';
@@ -132,6 +132,65 @@ dismissal. Hide a tested story from the sidebar and AutoDocs only when the inter
 but its final state is not a useful reference; do not create hidden duplicates of unit tests. Query
 by accessible role and name. Do not assert CSS classes, duplicate unit-test matrices, add snapshots,
 or disable accessibility rules to make a story pass.
+
+## Data table design template
+
+Every data table in Artemis follows one design, built by `tumaet-ui-table-layout` together with `table[tumAetUiTable]`
+and `tumaet-ui-paginator`. User management is the reference page. The Storybook story **Data Display / Table Layout**
+shows it live: resize it, switch the theme and sort the columns. Pages assemble the frame as described in
+[Data tables](/developer/guidelines/client-development#data-tables).
+
+### Anatomy
+
+```text
+┌──────────────────────────────────────────────────────────────────────────┐
+│ [⌕ Search users]  0 selected                  Delete  Filter  [+ Create]  │ toolbar    40px, sticky
+├──────────────────────────────────────────────────────────────────────────┤
+│ ☐  ID ▲   Login ⇅   Name ⇅   Email ⇅   Language   Created ⇅   Actions     │ header     30px, sticky
+│ ☐  1037   aturing37  Alan Turing  …                                      │ rows       36px
+│ ☐  1038   ghopper38  Grace Hopper …                    only this part ↕  │ body       scrolls, also sideways
+├──────────────────────────────────────────────────────────────────────────┤
+│ 1–50 of 1,284 users                  Rows [50]   «  ‹  [1] 2 3  ›  »     │ footer     40px, sticky
+└──────────────────────────────────────────────────────────────────────────┘
+```
+
+| Part    | Size               | Rules                                                                                                                     |
+| ------- | ------------------ | ------------------------------------------------------------------------------------------------------------------------- |
+| Toolbar | at most 40px       | One line, never wraps. Search on the left, bulk and page actions on the right. Absent when there is nothing to put in it. |
+| Header  | 30px               | Sticks to the top of the body. One line of text; a long label widens its column. Sortable columns show an arrow.          |
+| Body    | rows of about 36px | The only part that scrolls, vertically and horizontally. Striping and row hover are optional.                             |
+| Footer  | at most 40px       | One line. Range and total on the left, page size and pager on the right. Omit it for lists shown completely.              |
+
+The frame is as tall as its rows, but never taller than the space left below it in its scroll container. A short table
+leaves no empty area, and a long one keeps toolbar and footer in view whatever sits above it.
+
+### Responsive behaviour
+
+The toolbar and the footer never wrap. They give up detail instead:
+
+| Width of the table | Footer                                                                                     |
+| ------------------ | ------------------------------------------------------------------------------------------ |
+| from 42rem         | range and total, page size with its label, first, previous, three page numbers, next, last |
+| from 36rem         | the same, with the page size select but without its label                                  |
+| from 28rem         | range and total, first, previous, "page / pages", next, last                               |
+| below 28rem        | only the total, first, previous, "page / pages", next, last                                |
+
+The footer follows the width of the table, not the screen, so dialogs behave the same.
+
+The toolbar shows button labels from the `md` breakpoint of the viewport and icons only below it. A toolbar that is still
+too wide scrolls sideways instead of breaking into a second line.
+
+### States and details
+
+- **Loading:** the body is dimmed with a spinner and the frame is announced as busy; the pager is disabled so that
+  overlapping requests cannot show the wrong page.
+- **Empty:** show the message in the first row of the body, not a separate block.
+- **Sorting:** the active column shows its direction and exposes `aria-sort`. Sorting resets the pager to the first page.
+- **Accessibility:** an icon-only button needs an accessible name, the pager is a labelled `nav`, and the selected page is
+  marked with `aria-current`.
+- **Theming:** use semantic colour tokens only, so the table looks the same in the light and the dark theme.
+- **Not for every table:** key/value tables and tables with a few fixed rows stay a plain `<table tumAetUiTable>`. They
+  keep the 30px header but have no toolbar or footer.
 
 ## Consuming the package
 

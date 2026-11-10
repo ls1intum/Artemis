@@ -160,13 +160,9 @@ export class TumAetUiTableComponent<T> {
         return col.hideBelow ? HIDE_BELOW_CLASSES[col.hideBelow] : '';
     }
 
-    /**
-     * A header that cannot wrap is a floor the column can never go below, so a long one costs its full width in every
-     * layout however little the cells under it hold. `wrapHeader` trades a two-line heading for that width.
-     */
+    /** Headers are 30px high, so they never wrap: a long heading widens its column instead. */
     protected headerCellClasses(col: ColumnDef<T>): string {
-        const whitespace = col.wrapHeader ? '' : 'tumaet:whitespace-nowrap';
-        return `${this.columnVisibilityClasses(col)} ${whitespace}`.trim();
+        return `${this.columnVisibilityClasses(col)} tumaet:whitespace-nowrap`.trim();
     }
 
     protected ariaSortFor(col: ColumnDef<T>): 'ascending' | 'descending' | 'none' | undefined {

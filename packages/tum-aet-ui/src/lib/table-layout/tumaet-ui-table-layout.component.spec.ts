@@ -1,4 +1,5 @@
 import { Component, signal } from '@angular/core';
+import { vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TumAetUiTableLayoutComponent } from './tumaet-ui-table-layout.component';
 
@@ -83,5 +84,82 @@ describe('TumAetUiTableLayoutComponent', () => {
 
         expect(style.maxHeight).toContain('14rem');
         expect(style.maxHeight).toContain('--table-layout-offset');
+    });
+    describe('available height measurement', () => {
+        @Component({
+            imports: [TumAetUiTableLayoutComponent],
+            template: `
+                <div class="scroller" style="overflow-y: auto">
+                    <tumaet-ui-table-layout [fill]="fill()"><table></table></tumaet-ui-table-layout>
+                </div>
+            `,
+        })
+        class ScrollHostComponent {
+            readonly fill = signal(false);
+        }
+
+        let resizeCallbacks: (() => void)[];
+
+        beforeEach(() => {
+            resizeCallbacks = [];
+            vi.stubGlobal(
+                'ResizeObserver',
+                class {
+                    constructor(callback: () => void) {
+                        resizeCallbacks.push(callback);
+                    }
+                    observe = vi.fn();
+                    disconnect = vi.fn();
+                },
+            );
+            vi.spyOn(HTMLElement.prototype, 'clientHeight', 'get').mockReturnValue(600);
+            vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (this: HTMLElement) {
+                const top = this.tagName.toLowerCase() === 'tumaet-ui-table-layout' ? 100 : 0;
+                return { top, bottom: top, left: 0, right: 0, width: 0, height: 0, x: 0, y: top, toJSON: () => ({}) };
+            });
+        });
+
+        afterEach(() => {
+            vi.unstubAllGlobals();
+            vi.restoreAllMocks();
+        });
+
+        function create(): { layout: HTMLElement; host: ComponentFixture<ScrollHostComponent> } {
+            const host = TestBed.createComponent(ScrollHostComponent);
+            host.detectChanges();
+            return { layout: host.nativeElement.querySelector('tumaet-ui-table-layout') as HTMLElement, host };
+        }
+
+        it('caps the frame at the space left below it in its scroll container, whatever sits above it', () => {
+            const { layout } = create();
+
+            // 600px container - 100px of content above the frame - 12px gap.
+            expect(layout.style.maxHeight).toBe('488px');
+        });
+
+        it('keeps a usable minimum when little space is left', () => {
+            vi.spyOn(HTMLElement.prototype, 'clientHeight', 'get').mockReturnValue(250);
+
+            expect(create().layout.style.maxHeight).toBe('224px');
+        });
+
+        it('follows resizes of the container', () => {
+            const { layout, host } = create();
+            vi.spyOn(HTMLElement.prototype, 'clientHeight', 'get').mockReturnValue(900);
+
+            resizeCallbacks.forEach((callback) => callback());
+            host.detectChanges();
+
+            expect(layout.style.maxHeight).toBe('788px');
+        });
+
+        it('does not measure when the frame fills its parent', () => {
+            const { layout, host } = create();
+
+            host.componentInstance.fill.set(true);
+            host.detectChanges();
+
+            expect(layout.style.maxHeight).toBe('');
+        });
     });
 });

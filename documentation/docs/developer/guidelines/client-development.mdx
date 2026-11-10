@@ -2,7 +2,7 @@
 id: client-development
 title: Client Development
 sidebar_label: Client Development
-last_reviewed: 2026-11-03
+last_reviewed: 2026-11-10
 ---
 
 import Callout from '../../../src/components/Callout/Callout';
@@ -870,7 +870,8 @@ one in percentages or with its own pixel value.
 ### Data tables
 
 Every table that is the main content of a page or of a large dialog uses the same frame, so tables look and behave
-alike and the controls never leave the screen:
+alike and the controls never leave the screen. The [design template](/developer/guidelines/tum-aet-ui-kit#data-table-design-template)
+describes the anatomy, sizes and responsive behaviour; the Storybook story **Data Display / Table Layout** shows it live:
 
 ```html
 <tumaet-ui-table-layout [loading]="isLoading()">
@@ -892,9 +893,10 @@ alike and the controls never leave the screen:
 - Only the body scrolls, in both directions. The footer is at most 40px high, shows the range ("1–50 of 1,284") and a
   slim pager on one line, and adapts to the width of the table, so it also works inside dialogs. Skip it for lists that
   are shown completely.
-- The frame is as tall as its rows, up to the free height of the viewport. Set `--table-layout-offset` (the
-  height of everything around the table, default `12rem`) where the page chrome is smaller or larger, or pass `fill`
-  inside a flex-column parent that provides a height.
+- The frame is as tall as its rows, up to the space left below it in its scroll container. It measures its own position,
+  so content above the table needs no manual offset. Where that cannot work, for example several frames stacked on one
+  page, set `--table-layout-offset` (the height of everything around the table) to switch to a viewport based cap, or pass
+  `fill` inside a parent that provides a height.
 - Make columns sortable with `tumAetUiSortableColumn` wherever the sort is meaningful, server-side for paged data and in
   memory for complete lists.
 - Do not wrap a slotted node (`tumAetUiTableToolbar`, `tumAetUiTableFooter`) directly in `@if`. The application keeps
