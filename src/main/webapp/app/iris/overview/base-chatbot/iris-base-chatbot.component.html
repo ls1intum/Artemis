@@ -6,44 +6,54 @@
         <div class="chat-history" [class.chat-history-open]="isChatHistoryOpen()">
             @if (!isChatHistoryOpen()) {
                 <div class="chat-history-collapsed">
-                    <button
-                        type="button"
-                        class="collapsed-icon-button"
-                        (click)="setChatHistoryVisibility(true)"
-                        [attr.aria-label]="'artemisApp.iris.chatHistory.openChatHistory' | artemisTranslate"
-                    >
-                        <fa-icon [icon]="faAnglesRight" />
-                    </button>
-                    <button
-                        type="button"
-                        class="collapsed-icon-button"
-                        (click)="setChatHistoryVisibility(true)"
-                        [attr.aria-label]="'artemisApp.iris.chatHistory.searchChatHistory' | artemisTranslate"
-                    >
-                        <fa-icon [icon]="faMagnifyingGlass" />
-                    </button>
-                    <div
-                        class="new-chat-button"
-                        (click)="openNewSession()"
-                        role="button"
-                        tabindex="0"
-                        (keydown.enter)="openNewSession()"
-                        (keydown.space)="openNewSession()"
-                        [attr.aria-label]="'artemisApp.iris.chatHistory.newChat' | artemisTranslate"
-                    >
-                        <fa-icon [icon]="faPenToSquare" class="new-chat-icon" />
-                    </div>
+                    <tumaet-ui-button
+                        size="small"
+                        severity="secondary"
+                        variant="text"
+                        [rounded]="true"
+                        [icon]="faAnglesRight"
+                        [ariaLabel]="'artemisApp.iris.chatHistory.openChatHistory' | artemisTranslate"
+                        [tumAetUiTooltip]="'artemisApp.iris.chatHistory.openChatHistory' | artemisTranslate"
+                        [tumAetUiTooltipDescribesHost]="false"
+                        (clicked)="setChatHistoryVisibility(true)"
+                    />
+                    <tumaet-ui-button
+                        size="small"
+                        severity="secondary"
+                        variant="text"
+                        [rounded]="true"
+                        [icon]="faMagnifyingGlass"
+                        [ariaLabel]="'artemisApp.iris.chatHistory.searchChatHistory' | artemisTranslate"
+                        [tumAetUiTooltip]="'artemisApp.iris.chatHistory.searchChatHistory' | artemisTranslate"
+                        [tumAetUiTooltipDescribesHost]="false"
+                        (clicked)="setChatHistoryVisibility(true)"
+                    />
+                    <tumaet-ui-button
+                        size="small"
+                        severity="primary"
+                        variant="text"
+                        [rounded]="true"
+                        [icon]="faPenToSquare"
+                        data-button-intent="workflow"
+                        [ariaLabel]="'artemisApp.iris.chatHistory.newChat' | artemisTranslate"
+                        [tumAetUiTooltip]="'artemisApp.iris.chatHistory.newChat' | artemisTranslate"
+                        [tumAetUiTooltipDescribesHost]="false"
+                        (clicked)="openNewSession()"
+                    />
                     @if (!isChatGptWrapper()) {
                         <div class="collapsed-bottom">
-                            <button
-                                type="button"
-                                class="collapsed-icon-button"
+                            <tumaet-ui-button
+                                size="small"
+                                severity="secondary"
+                                variant="text"
+                                [rounded]="true"
+                                [icon]="faCircleInfo"
+                                [ariaLabel]="'artemisApp.iris.chatHistory.aboutIris' | artemisTranslate"
+                                [tumAetUiTooltip]="'artemisApp.iris.chatHistory.aboutIris' | artemisTranslate"
+                                [tumAetUiTooltipDescribesHost]="false"
+                                (clicked)="openAboutIrisModal()"
                                 data-onboarding-target="info-icon"
-                                (click)="openAboutIrisModal()"
-                                [attr.aria-label]="'artemisApp.iris.chatHistory.aboutIris' | artemisTranslate"
-                            >
-                                <fa-icon [icon]="faCircleInfo" class="info-button" />
-                            </button>
+                            />
                         </div>
                     }
                 </div>
@@ -56,10 +66,18 @@
                             <jhi-course-sidebar-toggle-button [isCollapsed]="false" (toggleSidebar)="setChatHistoryVisibility(false)" />
                         </div>
 
-                        <div class="new-chat-button" (click)="openNewSession()" role="button" tabindex="0" (keydown.enter)="openNewSession()" (keydown.space)="openNewSession()">
+                        <button
+                            tumAetUiButton
+                            type="button"
+                            size="small"
+                            severity="primary"
+                            variant="text"
+                            class="mx-2 w-[calc(100%-1rem)] justify-start!"
+                            (click)="openNewSession()"
+                        >
                             <fa-icon [icon]="faPenToSquare" class="new-chat-icon" />
                             <span jhiTranslate="artemisApp.iris.chatHistory.newChat"></span>
-                        </div>
+                        </button>
                         <div class="chat-history-divider"></div>
                     </div>
 
@@ -138,18 +156,19 @@
                     @if (!isChatGptWrapper()) {
                         <div class="chat-history-bottom">
                             <div class="chat-history-divider"></div>
-                            <div
-                                class="about-iris-button"
+                            <button
+                                tumAetUiButton
+                                type="button"
+                                size="small"
+                                severity="secondary"
+                                variant="text"
+                                class="mx-2 mb-2 w-[calc(100%-1rem)] justify-start!"
                                 data-onboarding-target="info-icon"
                                 (click)="openAboutIrisModal()"
-                                role="button"
-                                tabindex="0"
-                                (keydown.enter)="openAboutIrisModal()"
-                                (keydown.space)="$event.preventDefault(); openAboutIrisModal()"
                             >
                                 <fa-icon [icon]="faCircleInfo" />
                                 <span jhiTranslate="artemisApp.iris.chatHistory.aboutIris"></span>
-                            </div>
+                            </button>
                         </div>
                     }
                 </div>
@@ -163,29 +182,39 @@
                 @if (hasSessionSwitcher()) {
                     <button
                         type="button"
-                        class="session-title-trigger"
+                        tumAetUiButton
+                        severity="secondary"
+                        variant="text"
+                        size="small"
+                        class="session-title-trigger max-w-[250px]"
                         [tumAetUiMenuTrigger]="sessionMenu"
                         (menuOpened)="sessionMenuOpen.set(true)"
                         (menuClosed)="sessionMenuOpen.set(false)"
                         [attr.aria-label]="'artemisApp.iris.chatHistory.switchSession' | artemisTranslate"
                     >
-                        <span class="session-title-text">{{ currentSessionTitle() }}</span>
-                        <fa-icon [icon]="faChevronDown" class="session-title-chevron" [class.rotated]="sessionMenuOpen()" />
+                        <span class="truncate">{{ currentSessionTitle() }}</span>
+                        <fa-icon
+                            [icon]="faChevronDown"
+                            class="text-xs shrink-0 transition-transform duration-200 motion-reduce:transition-none"
+                            [class.rotate-180]="sessionMenuOpen()"
+                        />
                     </button>
                     <ng-template #sessionMenu>
-                        <tumaet-ui-menu class="session-switcher-menu">
+                        <tumaet-ui-menu class="w-[300px] max-h-[220px] overflow-y-auto">
                             @for (group of sessionMenuGroups(); track group.labelKey) {
                                 <div role="group" [attr.aria-label]="group.labelKey | artemisTranslate">
-                                    <div class="session-menu-group-label" aria-hidden="true">{{ group.labelKey | artemisTranslate }}</div>
+                                    <div class="iris-chat__menu-group-label px-3! pt-2 pb-1 text-xs font-medium!" aria-hidden="true" [jhiTranslate]="group.labelKey"></div>
                                     @for (item of group.items; track item.session.id) {
                                         <button
                                             type="button"
                                             tumAetUiMenuItem
-                                            class="session-menu-item"
-                                            [class.session-menu-item-active]="item.isActive"
+                                            class="w-full"
                                             [attr.aria-current]="item.isActive ? 'true' : null"
                                             (triggered)="onSessionClick(item.session)"
                                         >
+                                            @if (item.isActive) {
+                                                <fa-icon [icon]="faCheck" aria-hidden="true" />
+                                            }
                                             {{ item.label }}
                                         </button>
                                     }
@@ -196,18 +225,26 @@
                 }
                 <div class="flex gap-2">
                     @if (relatedEntityRoute() && relatedEntityLinkButtonLabel() && isChatHistoryAvailable()) {
-                        <div class="toolbox">
-                            <button type="button" [routerLink]="relatedEntityRoute()" [queryParamsHandling]="'preserve'" class="related-entity-button header-control">
+                        <div class="flex items-center gap-1">
+                            <a
+                                tumAetUiButton
+                                severity="primary"
+                                variant="text"
+                                size="small"
+                                [routerLink]="relatedEntityRoute()"
+                                queryParamsHandling="preserve"
+                                class="related-entity-button"
+                            >
                                 <div>
                                     {{ relatedEntityLinkButtonLabel() | artemisTranslate }}
                                 </div>
                                 <fa-icon [icon]="faLink" />
-                            </button>
+                            </a>
                         </div>
                     }
                     @if (rateLimitInfo()?.rateLimit; as rateLimit) {
                         @if (rateLimit > 0) {
-                            <div class="toolbox">
+                            <div class="flex items-center gap-1">
                                 <span
                                     class="rate-limit"
                                     [tumAetUiTooltip]="'artemisApp.exerciseChatbot.rateLimitTooltip' | artemisTranslate: { hours: rateLimitInfo()?.rateLimitTimeframeHours }"
@@ -218,37 +255,63 @@
                             </div>
                         }
                     }
-                    <div class="toolbox">
+                    <div class="flex items-center gap-1">
                         @if (!isChatHistoryAvailable() && !isChatGptWrapper()) {
-                            <button
-                                type="button"
-                                (click)="openAboutIrisModal()"
-                                class="header-control"
-                                [attr.aria-label]="'artemisApp.iris.chatHistory.aboutIris' | artemisTranslate"
-                            >
-                                <fa-icon [icon]="faCircleInfo" />
-                            </button>
+                            <tumaet-ui-button
+                                size="small"
+                                severity="secondary"
+                                variant="text"
+                                [rounded]="true"
+                                [icon]="faCircleInfo"
+                                [ariaLabel]="'artemisApp.iris.chatHistory.aboutIris' | artemisTranslate"
+                                [tumAetUiTooltip]="'artemisApp.iris.chatHistory.aboutIris' | artemisTranslate"
+                                [tumAetUiTooltipDescribesHost]="false"
+                                (clicked)="openAboutIrisModal()"
+                                data-onboarding-target="info-icon"
+                            />
                         }
                         @if (!isChatHistoryAvailable() && messages().length >= 1) {
-                            <button type="button" id="clear-chat-button" (click)="openNewSession()" class="header-control">
-                                <fa-icon [icon]="faPenToSquare" />
-                            </button>
+                            <tumaet-ui-button
+                                size="small"
+                                severity="primary"
+                                variant="text"
+                                [rounded]="true"
+                                [icon]="faPenToSquare"
+                                data-button-intent="workflow"
+                                [ariaLabel]="'artemisApp.iris.chatHistory.newChat' | artemisTranslate"
+                                [tumAetUiTooltip]="'artemisApp.iris.chatHistory.newChat' | artemisTranslate"
+                                [tumAetUiTooltipDescribesHost]="false"
+                                (clicked)="openNewSession()"
+                                id="clear-chat-button"
+                            />
                         }
 
                         @if (fullSize() !== undefined) {
-                            <button type="button" (click)="fullSizeToggle.emit()" class="header-control">
-                                @if (!fullSize()) {
-                                    <fa-icon [icon]="faExpand" />
-                                } @else {
-                                    <fa-icon [icon]="faCompress" />
-                                }
-                            </button>
+                            <tumaet-ui-button
+                                size="small"
+                                severity="secondary"
+                                variant="text"
+                                [rounded]="true"
+                                [icon]="fullSize() ? faCompress : faExpand"
+                                [ariaLabel]="(fullSize() ? 'global.generic.collapse' : 'global.generic.expand') | artemisTranslate"
+                                [tumAetUiTooltip]="(fullSize() ? 'global.generic.collapse' : 'global.generic.expand') | artemisTranslate"
+                                [tumAetUiTooltipDescribesHost]="false"
+                                (clicked)="fullSizeToggle.emit()"
+                            />
                         }
 
                         @if (showCloseButton()) {
-                            <button type="button" (click)="closeChat()" class="header-control">
-                                <fa-icon [icon]="faXmark" />
-                            </button>
+                            <tumaet-ui-button
+                                size="small"
+                                severity="secondary"
+                                variant="text"
+                                [rounded]="true"
+                                [icon]="faXmark"
+                                [ariaLabel]="'artemisApp.iris.chatHistory.closeChat' | artemisTranslate"
+                                [tumAetUiTooltip]="'artemisApp.iris.chatHistory.closeChat' | artemisTranslate"
+                                [tumAetUiTooltipDescribesHost]="false"
+                                (clicked)="closeChat()"
+                            />
                         }
                     </div>
                 </div>
@@ -312,43 +375,45 @@
                                         }
 
                                         @if (isLastAssistantMessage(i)) {
-                                            <div class="rate-message-buttons toolbox">
-                                                <button
-                                                    type="button"
-                                                    class="rate-button rate-button-not-clicked"
-                                                    (click)="copyMessage(message, i)"
-                                                    [attr.aria-label]="'artemisApp.exerciseChatbot.actions.copy' | artemisTranslate"
-                                                    [title]="'artemisApp.exerciseChatbot.actions.copy' | artemisTranslate"
-                                                >
-                                                    <fa-icon [icon]="isCopied(message, i) ? faCheck : faCopy" />
-                                                </button>
+                                            <div class="iris-chat__message-actions flex w-fit justify-end gap-1">
+                                                <tumaet-ui-button
+                                                    size="small"
+                                                    severity="secondary"
+                                                    variant="text"
+                                                    [rounded]="true"
+                                                    [icon]="isCopied(message, i) ? faCheck : faCopy"
+                                                    [ariaLabel]="'artemisApp.exerciseChatbot.actions.copy' | artemisTranslate"
+                                                    [tumAetUiTooltip]="'artemisApp.exerciseChatbot.actions.copy' | artemisTranslate"
+                                                    [tumAetUiTooltipDescribesHost]="false"
+                                                    (clicked)="copyMessage(message, i)"
+                                                />
                                                 @if (canRateMessage(message)) {
-                                                    <button
-                                                        type="button"
-                                                        class="rate-button"
-                                                        [class.thumbs-up-clicked]="(message | as: IrisAssistantMessage).helpful"
-                                                        [class.clickable]="!(message | as: IrisAssistantMessage).helpful"
-                                                        [class.rate-button-not-clicked]="!(message | as: IrisAssistantMessage).helpful"
-                                                        (click)="rateMessage(message, true)"
-                                                        [disabled]="(message | as: IrisAssistantMessage).helpful"
-                                                        [attr.aria-label]="'artemisApp.exerciseChatbot.actions.goodResponse' | artemisTranslate"
-                                                        [title]="'artemisApp.exerciseChatbot.actions.goodResponse' | artemisTranslate"
-                                                    >
-                                                        <fa-icon [icon]="faThumbsUp" />
-                                                    </button>
-                                                    <button
-                                                        type="button"
-                                                        class="rate-button"
-                                                        [class.thumbs-down-clicked]="(message | as: IrisAssistantMessage).helpful === false"
-                                                        [class.clickable]="(message | as: IrisAssistantMessage).helpful !== false"
-                                                        [class.rate-button-not-clicked]="(message | as: IrisAssistantMessage).helpful !== false"
-                                                        (click)="rateMessage(message, false)"
+                                                    <tumaet-ui-button
+                                                        size="small"
+                                                        [severity]="(message | as: IrisAssistantMessage).helpful === true ? 'success' : 'secondary'"
+                                                        variant="text"
+                                                        [rounded]="true"
+                                                        [icon]="faThumbsUp"
+                                                        [ariaLabel]="'artemisApp.exerciseChatbot.actions.goodResponse' | artemisTranslate"
+                                                        [tumAetUiTooltip]="'artemisApp.exerciseChatbot.actions.goodResponse' | artemisTranslate"
+                                                        [tumAetUiTooltipDescribesHost]="false"
+                                                        (clicked)="rateMessage(message, true)"
+                                                        [disabled]="(message | as: IrisAssistantMessage).helpful === true"
+                                                        [ariaPressed]="(message | as: IrisAssistantMessage).helpful === true"
+                                                    />
+                                                    <tumaet-ui-button
+                                                        size="small"
+                                                        [severity]="(message | as: IrisAssistantMessage).helpful === false ? 'danger' : 'secondary'"
+                                                        variant="text"
+                                                        [rounded]="true"
+                                                        [icon]="faThumbsDown"
+                                                        [ariaLabel]="'artemisApp.exerciseChatbot.actions.badResponse' | artemisTranslate"
+                                                        [tumAetUiTooltip]="'artemisApp.exerciseChatbot.actions.badResponse' | artemisTranslate"
+                                                        [tumAetUiTooltipDescribesHost]="false"
+                                                        (clicked)="rateMessage(message, false)"
                                                         [disabled]="(message | as: IrisAssistantMessage).helpful === false"
-                                                        [attr.aria-label]="'artemisApp.exerciseChatbot.actions.badResponse' | artemisTranslate"
-                                                        [title]="'artemisApp.exerciseChatbot.actions.badResponse' | artemisTranslate"
-                                                    >
-                                                        <fa-icon [icon]="faThumbsDown" />
-                                                    </button>
+                                                        [ariaPressed]="(message | as: IrisAssistantMessage).helpful === false"
+                                                    />
                                                 }
                                             </div>
                                         }
@@ -365,18 +430,28 @@
                                 <div class="bubble-left streaming-draft-bubble">
                                     <jhi-iris-citation-text [text]="displayedLiveAssistantDraftText()" [citationInfo]="citationInfo()" />
                                     <div class="streaming-draft-meta" aria-hidden="true">
-                                        <fa-icon [icon]="faCircleNotch" animation="spin" />
+                                        <fa-icon [icon]="faCircleNotch" [animation]="reducedMotion() ? undefined : 'spin'" />
                                     </div>
                                 </div>
                             </div>
                         }
                         @if (canShowSuggestions()) {
                             <div animate.enter="suggestion-entering" animate.leave="suggestion-leaving">
-                                <div class="suggestions-container">
+                                <div class="suggestions-container flex flex-wrap gap-4! justify-center items-stretch">
                                     @for (suggestion of suggestions(); track $index) {
-                                        <button type="button" class="suggestion-button" (click)="onSuggestionClick(suggestion)" [disabled]="isLoading()">
+                                        <button
+                                            type="button"
+                                            tumAetUiButton
+                                            severity="secondary"
+                                            variant="outlined"
+                                            size="small"
+                                            class="iris-chat__suggestion flex-1 whitespace-normal!"
+                                            [attr.aria-label]="suggestion"
+                                            (click)="onSuggestionClick(suggestion)"
+                                            [disabled]="isLoading()"
+                                        >
                                             @if (clickedSuggestion() === suggestion) {
-                                                <fa-icon [icon]="faCircleNotch" animation="spin" />
+                                                <fa-icon [icon]="faCircleNotch" [animation]="reducedMotion() ? undefined : 'spin'" />
                                             } @else {
                                                 <span>{{ suggestion }}</span>
                                             }
@@ -388,7 +463,7 @@
                         @if (shouldShowThinkingBubble()) {
                             <div class="llm-message-wrapper">
                                 <div class="thinking-indicator" role="status" [attr.aria-label]="thinkingMessage()">
-                                    <fa-icon [icon]="faCircleNotch" animation="spin" />
+                                    <fa-icon [icon]="faCircleNotch" [animation]="reducedMotion() ? undefined : 'spin'" />
                                     <span class="thinking-indicator-text">{{ thinkingMessage() }}</span>
                                 </div>
                             </div>
@@ -437,17 +512,22 @@
             @if (isAIEnabled()) {
                 <div class="chat-input">
                     <div class="chat-input-inner">
-                        <button
-                            type="button"
+                        <tumaet-ui-button
+                            size="small"
+                            severity="secondary"
+                            variant="outlined"
+                            [rounded]="true"
+                            [icon]="faArrowDown"
+                            [ariaLabel]="'artemisApp.exerciseChatbot.scrollToBottom' | artemisTranslate"
+                            [tumAetUiTooltip]="'artemisApp.exerciseChatbot.scrollToBottom' | artemisTranslate"
+                            [tumAetUiTooltipDescribesHost]="false"
+                            (clicked)="scrollToBottom('smooth')"
                             class="scroll-to-bottom"
-                            [hidden]="isScrolledToBottom()"
-                            (click)="scrollToBottom('smooth')"
-                            [attr.aria-label]="'artemisApp.exerciseChatbot.scrollToBottom' | artemisTranslate"
-                        >
-                            <fa-icon [icon]="faArrowDown" />
-                        </button>
+                            [class.hidden!]="isScrolledToBottom()"
+                        />
                         <div class="textarea-wrapper">
                             <textarea
+                                tumAetUiTextarea
                                 [attr.aria-label]="'accessibility.message' | artemisTranslate"
                                 [ngModel]="newMessageTextContent()"
                                 (ngModelChange)="newMessageTextContent.set($event)"
@@ -483,7 +563,17 @@
                                         (contextChanged)="onContextChangedDuringOnboarding()"
                                     />
                                 }
-                                <jhi-button id="irisSendButton" (onClick)="onSend()" [btnType]="ButtonType.SUCCESS_OUTLINE" [icon]="faPaperPlane" [disabled]="isSendDisabled()" />
+                                <tumaet-ui-button
+                                    size="small"
+                                    severity="primary"
+                                    [icon]="faPaperPlane"
+                                    [ariaLabel]="'artemisApp.exerciseChatbot.actions.send' | artemisTranslate"
+                                    [tumAetUiTooltip]="'artemisApp.exerciseChatbot.actions.send' | artemisTranslate"
+                                    [tumAetUiTooltipDescribesHost]="false"
+                                    (clicked)="onSend()"
+                                    id="irisSendButton"
+                                    [disabled]="isSendDisabled()"
+                                />
                             </div>
                         </div>
                     </div>
@@ -492,6 +582,10 @@
                             @for (chip of activeSuggestionChips(); track chip.translationKey) {
                                 <button
                                     type="button"
+                                    tumAetUiButton
+                                    severity="secondary"
+                                    variant="outlined"
+                                    size="small"
                                     class="prompt-suggestion-chip"
                                     [disabled]="isInputDisabled()"
                                     (click)="applyChipText(chip.starterKey, chip.translationKey)"

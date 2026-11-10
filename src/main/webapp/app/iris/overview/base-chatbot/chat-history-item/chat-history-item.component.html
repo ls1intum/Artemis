@@ -1,52 +1,62 @@
-<div
-    class="chat-history-item"
-    [ngClass]="{ 'chat-history-item-selected': active() }"
-    (click)="onItemClick()"
-    role="button"
-    tabindex="0"
-    (keydown.space)="onItemClick()"
-    (keydown.enter)="onItemClick()"
->
-    <div class="chat-history-text">
+<div class="chat-history-item flex items-center gap-1 mx-2" [class.chat-history-item--selected]="active()">
+    <button
+        type="button"
+        tumAetUiButton
+        size="small"
+        [severity]="active() ? 'primary' : 'secondary'"
+        [variant]="active() ? 'solid' : 'text'"
+        class="flex-1 min-w-0 justify-start!"
+        [attr.aria-current]="active() ? 'true' : null"
+        data-button-intent="selection"
+        data-button-intent-reason="Selects the displayed chat session"
+        (click)="onItemClick()"
+    >
         @if (isNewChat()) {
-            <fa-icon [icon]="faPlus" class="new-chat-icon" />
+            <fa-icon [icon]="faPlus" aria-hidden="true" />
         }
-        <span class="chat-history-label">{{ session().title ? session().title : (session().creationDate | date: 'dd.MM.yy HH:mm') }}</span>
-        @if (!isNewChat()) {
-            <!-- Keep the click from also choosing the session row; the menu already stops the Enter and Space it opens on. -->
-            <button
-                type="button"
-                class="menu-trigger"
-                [tumAetUiMenuTrigger]="sessionActions"
-                (click)="$event.stopPropagation()"
-                [attr.aria-label]="'artemisApp.iris.chatHistory.sessionMenuAriaLabel' | artemisTranslate"
-            >
-                <fa-icon [icon]="faEllipsisVertical" />
-            </button>
-            <ng-template #sessionActions>
-                <tumaet-ui-menu>
-                    <button type="button" tumAetUiMenuItem class="delete-session-item" (triggered)="onDeleteClick()">
-                        <fa-icon [icon]="faTrash" aria-hidden="true" />
-                        <span>{{ 'artemisApp.iris.chatHistory.deleteSession' | artemisTranslate }}</span>
-                    </button>
-                </tumaet-ui-menu>
-            </ng-template>
-        }
-    </div>
+        <span class="truncate">{{ session().title ? session().title : (session().creationDate | date: 'dd.MM.yy HH:mm') }}</span>
+    </button>
+    @if (!isNewChat()) {
+        <button
+            type="button"
+            tumAetUiButton
+            size="small"
+            severity="secondary"
+            variant="text"
+            class="chat-history-item__menu-trigger shrink-0"
+            [rounded]="true"
+            [tumAetUiMenuTrigger]="sessionActions"
+            [attr.aria-label]="'artemisApp.iris.chatHistory.sessionMenuAriaLabel' | artemisTranslate"
+            [tumAetUiTooltip]="'artemisApp.iris.chatHistory.sessionMenuAriaLabel' | artemisTranslate"
+            [tumAetUiTooltipDescribesHost]="false"
+        >
+            <fa-icon [icon]="faEllipsisVertical" aria-hidden="true" />
+        </button>
+        <ng-template #sessionActions>
+            <tumaet-ui-menu>
+                <button type="button" tumAetUiMenuItem (triggered)="onDeleteClick()">
+                    <fa-icon [icon]="faTrash" aria-hidden="true" />
+                    <span jhiTranslate="artemisApp.iris.chatHistory.deleteSession"></span>
+                </button>
+            </tumaet-ui-menu>
+        </ng-template>
+    }
     @if (icon() && entityRoute()) {
         <a
-            class="related-entity-icon"
+            tumAetUiButton
+            severity="primary"
+            variant="text"
+            size="small"
+            class="chat-history-item__entity-link shrink-0"
+            [rounded]="true"
             [routerLink]="entityRoute()!"
             queryParamsHandling="preserve"
             [tumAetUiTooltip]="tooltipText()"
             tumAetUiTooltipPlacement="right"
             [tumAetUiTooltipDescribesHost]="false"
             [attr.aria-label]="ariaLabelText()!"
-            (click)="onEntityIconClick($event)"
-            (keydown.enter)="$event.stopPropagation()"
-            (keydown.space)="$event.stopPropagation()"
         >
-            <fa-icon [icon]="icon()!" />
+            <fa-icon [icon]="icon()!" aria-hidden="true" />
         </a>
     }
 </div>

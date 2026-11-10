@@ -140,129 +140,8 @@ $iris-border-radius-lg: 0.5rem; // 8px — cards, menus, text areas
     overflow-anchor: none;
 }
 
-.suggestions-container {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 16px;
-    justify-content: center;
-    align-items: stretch;
-}
-
-.suggestion-button {
-    background-color: var(--iris-secondary-background);
-    color: var(--body-color);
-    padding: 8px 16px;
-    cursor: pointer;
-    font-size: 12px;
-    text-wrap: wrap;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition:
-        background-color 0.3s,
-        color 0.3s;
-    border: 1px solid var(--border-color);
-    border-radius: $iris-border-radius-sm;
-    flex: 1;
-
-    &:hover {
-        background-color: var(--iris-tertiary-background);
-    }
-}
-
-.toolbox {
-    display: flex;
-    gap: 4px;
-
-    .header-control {
-        background-color: var(--iris-secondary-background);
-        border: none;
-        border-radius: $iris-border-radius-sm;
-        color: var(--secondary);
-    }
-
-    button:hover {
-        background-color: var(--iris-accent-background);
-    }
-}
-
-.session-title-trigger {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    background: none;
-    border: none;
-    cursor: pointer;
-    padding: 4px 8px;
-    border-radius: $iris-border-radius-sm;
-    color: var(--body-color);
-    font-size: 14px;
-    max-width: 250px;
-
-    &:hover {
-        background-color: var(--iris-tertiary-background);
-    }
-}
-
-.session-title-text {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-.session-title-chevron {
-    font-size: 12px;
-    transition: transform 0.2s;
-    flex-shrink: 0;
+.iris-chat__menu-group-label {
     color: var(--iris-label-color);
-
-    &.rotated {
-        transform: rotate(180deg);
-    }
-}
-
-// The switcher menu renders in an overlay at the end of the document; its elements are declared in this template, so these
-// rules still reach them.
-.session-switcher-menu {
-    width: 300px;
-    max-height: 220px;
-    padding: 8px;
-    border-radius: 0.5rem;
-    background-color: var(--iris-secondary-background);
-    font-size: 14px;
-    scrollbar-width: thin;
-    scrollbar-color: var(--border-color) transparent;
-}
-
-.session-menu-group-label {
-    padding: 8px 12px 4px;
-    color: var(--iris-label-color);
-    font-size: 12px;
-    font-weight: 500;
-}
-
-.session-menu-item {
-    width: 100%;
-    border-radius: 0.5rem;
-    color: var(--body-color);
-    font-size: 14px;
-    line-height: 1.5;
-
-    &:hover {
-        background-color: var(--iris-accent-background);
-    }
-
-    &.session-menu-item-active {
-        background-color: var(--iris-tertiary-background);
-    }
-}
-
-.related-entity-button {
-    background-color: var(--iris-secondary-background);
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 0.8rem;
 }
 
 .rate-limit {
@@ -286,31 +165,6 @@ $iris-border-radius-lg: 0.5rem; // 8px — cards, menus, text areas
     justify-content: center;
     width: fit-content;
     margin-inline: auto;
-}
-
-.prompt-suggestion-chip {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    padding: 4px 12px;
-    font-size: 0.85rem;
-    border: 1px solid var(--border-color);
-    border-radius: 0.25rem;
-    background-color: var(--iris-secondary-background);
-    color: var(--body-color);
-    cursor: pointer;
-    transition:
-        background-color 0.2s,
-        border-color 0.2s;
-
-    &:not(:disabled):hover {
-        background-color: var(--iris-tertiary-background);
-    }
-
-    &:disabled {
-        opacity: 0.5;
-        cursor: not-allowed;
-    }
 }
 
 :host {
@@ -355,10 +209,6 @@ jhi-iris-mcq-question {
 
     .bubble-left {
         margin-bottom: 0;
-
-        ::ng-deep p:last-child {
-            margin-bottom: 0;
-        }
     }
 }
 
@@ -479,11 +329,6 @@ pre {
         &:has(.session-title-trigger) {
             justify-content: space-between;
         }
-
-        button {
-            // Safari doing Safari things
-            padding-block: 1px;
-        }
     }
 
     .chat-body {
@@ -570,11 +415,6 @@ pre {
     textarea {
         display: block;
         width: 100%;
-        appearance: none;
-        font-size: 1rem;
-        font-weight: 400;
-        color: var(--body-color);
-        background-color: var(--iris-secondary-background);
         flex: 1 0 auto;
         padding: 16px;
         resize: none;
@@ -593,15 +433,6 @@ pre {
         // scroll range than the wide layout has.
         max-height: max(160px, calc((var(--iris-input-lines) + 4) * var(--iris-input-line-height) + 32px));
         overflow-y: auto;
-
-        &:focus {
-            outline: none;
-            box-shadow: none;
-        }
-
-        &::placeholder {
-            color: var(--text-body-secondary);
-        }
 
         &:disabled {
             cursor: not-allowed;
@@ -633,7 +464,7 @@ pre {
         flex: 1;
         min-width: 0;
         position: relative;
-        background-color: var(--iris-secondary-background);
+        background-color: var(--artemis-control-background);
         border: 1px solid var(--border-color);
         border-radius: $iris-border-radius-lg;
 
@@ -738,19 +569,6 @@ pre {
     }
 }
 
-.new-chat-button {
-    padding: 8px;
-    margin: 0 8px;
-    cursor: pointer;
-    border-radius: $iris-border-radius-sm;
-
-    &:hover {
-        background-color: var(--iris-accent-background);
-        border-radius: $iris-border-radius-md;
-        padding: 8px;
-    }
-}
-
 // chat sidebar on client ui
 .chat-history {
     border-radius: $iris-border-radius-sm 0 0 $iris-border-radius-sm;
@@ -791,19 +609,6 @@ pre {
         @include custom-scrollbar(4px);
     }
 
-    .about-iris-button {
-        padding: 8px;
-        margin: 0 8px 8px;
-        cursor: pointer;
-        border-radius: 0.25rem;
-        color: var(--body-color);
-
-        &:hover {
-            background-color: var(--iris-accent-background);
-            border-radius: 6px;
-        }
-    }
-
     &-label p {
         color: var(--iris-label-color);
         font-size: 0.8rem;
@@ -817,22 +622,6 @@ pre {
         margin: 0.5rem 0.75rem;
     }
 
-    .collapsed-icon-button {
-        padding: 4px 8px;
-        cursor: pointer;
-        border-radius: $iris-border-radius-sm;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: var(--body-color);
-        background-color: transparent;
-        border: none;
-
-        &:hover {
-            background-color: var(--iris-accent-background);
-        }
-    }
-
     &-collapsed {
         display: flex;
         flex-direction: column;
@@ -840,14 +629,6 @@ pre {
         padding-top: 16px;
         height: 100%;
         gap: 4px;
-
-        .new-chat-button {
-            margin: 0;
-            padding: 6px 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
 
         .collapsed-bottom {
             margin-top: auto;
@@ -894,57 +675,7 @@ pre {
     bottom: calc(100% + 8px);
     left: 50%;
     transform: translateX(-50%);
-    width: 30px;
-    height: 30px;
-    border-radius: 50%;
-    background-color: var(--iris-primary-background);
-    color: var(--iris-label-color);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    cursor: pointer;
     z-index: 1;
-    border: 1px solid var(--border-color);
-}
-
-.rate-message-buttons {
-    display: flex;
-    justify-content: flex-end;
-    width: fit-content;
-
-    .rate-button {
-        padding: 4px 6px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        border: none;
-        border-radius: $iris-border-radius-sm;
-        background-color: transparent;
-        font-size: 0.875rem;
-        line-height: 1.5;
-        cursor: pointer;
-
-        &:hover {
-            background-color: var(--iris-tertiary-background);
-        }
-
-        &:disabled {
-            pointer-events: none;
-            opacity: 0.65;
-        }
-    }
-}
-
-.thumbs-up-clicked {
-    color: var(--success);
-}
-
-.thumbs-down-clicked {
-    color: var(--danger);
-}
-
-.rate-button-not-clicked {
-    color: var(--secondary);
 }
 
 #irisSendButton {
@@ -956,4 +687,32 @@ cdk-global-scrollblock {
     position: fixed;
     width: 100%;
     overflow-y: auto;
+}
+
+@media (forced-colors: active) {
+    .chat-input textarea:focus-visible {
+        outline: 2px solid Highlight;
+        outline-offset: 2px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .message-entering.animate-enabled,
+    .suggestion-entering,
+    .suggestion-leaving {
+        animation: none;
+        grid-template-rows: 1fr;
+        transform: none;
+        opacity: 1;
+    }
+
+    .chat-history,
+    .chat-input textarea.placeholder-fade-in::placeholder,
+    .chat-input textarea.placeholder-fade-out::placeholder {
+        transition: none;
+    }
+
+    .chat-input textarea.placeholder-fade-out::placeholder {
+        opacity: 1;
+    }
 }

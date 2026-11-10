@@ -1,4 +1,4 @@
-.thinking-bubble {
+.iris-thinking-bubble {
     display: flex;
     align-items: center;
     gap: 8px;
@@ -10,13 +10,13 @@
     max-width: fit-content;
 }
 
-.thinking-dots {
+.iris-thinking-bubble__dots {
     display: flex;
     gap: 4px;
     align-items: center;
 }
 
-.dot {
+.iris-thinking-bubble__dot {
     width: 6px;
     height: 6px;
     border-radius: 50%;
@@ -36,7 +36,7 @@
     }
 }
 
-.thinking-text {
+.iris-thinking-bubble__text {
     font-size: 0.875rem;
 }
 
@@ -51,5 +51,13 @@
     40% {
         opacity: 1;
         transform: scale(1);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .iris-thinking-bubble__dot {
+        animation: none;
+        opacity: 1;
+        transform: none;
     }
 }

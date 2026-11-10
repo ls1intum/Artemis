@@ -104,6 +104,11 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+    :host {
+        --fa-animation-duration: 0s;
+        --fa-animation-iteration-count: 1;
+    }
+
     .iris-activity-summary,
     .iris-activity-summary-caret {
         transition: none;

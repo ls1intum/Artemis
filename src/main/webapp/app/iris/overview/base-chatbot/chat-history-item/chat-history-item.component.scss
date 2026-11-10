@@ -1,95 +1,19 @@
 .chat-history-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    cursor: pointer;
-    gap: 4px;
-
-    // Compact spacing to fit within the 17rem sidebar width (see .chat-history-open in parent SCSS)
-    margin: 0 8px;
-    font-size: 14px;
-
-    .chat-history-text {
-        display: flex;
-        align-items: center;
-        padding: 6px;
-        flex: 1;
-        min-width: 0;
-
-        .chat-history-label {
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-            flex: 1;
-            min-width: 0;
-        }
+    &__menu-trigger {
+        opacity: 0;
     }
 
     &:hover,
-    &:focus-within {
-        .chat-history-text {
-            background-color: var(--iris-accent-background);
-            border-radius: 6px;
-        }
-
-        .menu-trigger {
-            display: block;
-        }
-    }
-
-    .related-entity-icon {
-        color: var(--body-color);
-        text-decoration: none;
-        flex-shrink: 0;
-        font-size: 14px;
-
-        &:hover,
-        &:focus {
-            color: var(--primary);
-        }
-
-        &:focus-visible {
-            outline: 2px solid var(--primary);
-            border-radius: 2px;
-        }
-    }
-
-    .menu-trigger {
-        flex-shrink: 0;
-        display: none;
-        background: none;
-        border: none;
-        cursor: pointer;
-        padding: 4px;
-        border-radius: 4px;
-        color: var(--body-color);
-        font-size: 12px;
-        line-height: 1;
-
-        &:hover {
-            background-color: var(--iris-accent-border-color);
-        }
-    }
-
-    &.chat-history-item-selected {
-        .chat-history-text {
-            background-color: var(--iris-tertiary-background);
-            border-radius: 6px;
-
-            .menu-trigger {
-                display: block;
-            }
+    &:focus-within,
+    &--selected {
+        .chat-history-item__menu-trigger {
+            opacity: 1;
         }
     }
 }
 
-// The menu renders in an overlay at the end of the document; the entry is declared in this template, so this rule still
-// reaches it.
-.delete-session-item {
-    color: var(--danger);
-
-    &:hover {
-        background-color: var(--iris-accent-background);
-        color: var(--danger);
+@media (hover: none) {
+    .chat-history-item__menu-trigger {
+        opacity: 1;
     }
 }

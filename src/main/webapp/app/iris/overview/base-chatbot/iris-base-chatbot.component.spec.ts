@@ -19,7 +19,6 @@ import { IrisWebsocketService } from 'app/iris/overview/services/iris-websocket.
 import { Subject, of, throwError } from 'rxjs';
 import { signal } from '@angular/core';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
 import {
     mockClientMessage,
     mockServerMessage,
@@ -31,6 +30,10 @@ import {
     mockWebsocketServerMessage,
 } from 'test/helpers/sample/iris-sample-data';
 import { By } from '@angular/platform-browser';
+import { Clipboard } from '@angular/cdk/clipboard';
+import { MenuHarness } from '@angular/aria/menu/testing';
+import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
+import { TestKey, manualChangeDetection } from '@angular/cdk/testing';
 import { IrisAssistantMessage, IrisSender, IrisUserMessage } from 'app/iris/shared/entities/iris-message.model';
 import { IrisMessageResponseDTO } from 'app/iris/shared/entities/iris-message-response-dto.model';
 import { IrisJsonMessageContent, IrisMessageContentType, IrisTextMessageContent, getMcqData, isMcqContent } from 'app/iris/shared/entities/iris-content-type.model';
@@ -104,12 +107,11 @@ describe('IrisBaseChatbotComponent', () => {
                 IrisBaseChatbotComponent,
                 FontAwesomeModule,
                 RouterModule,
-                MockPipe(ArtemisTranslatePipe),
+                MockPipe(ArtemisTranslatePipe, (key) => key ?? ''),
                 MockDirective(MarkdownDirective),
                 MockDirective(TranslateDirective),
                 MockComponent(ChatStatusBarComponent),
                 MockComponent(IrisLogoComponent),
-                MockComponent(ButtonComponent),
                 MockComponent(ContextSelectionComponent),
             ],
             providers: [
@@ -172,6 +174,123 @@ describe('IrisBaseChatbotComponent', () => {
 
     it('should create', () => {
         expect(component).toBeTruthy();
+    });
+
+    it('names the native icon controls and keeps the composer as a TUM textarea', () => {
+        fixture.componentRef.setInput('fullSize', false);
+        fixture.componentRef.setInput('showCloseButton', true);
+        chatService.messages.next([mockServerMessage]);
+        fixture.detectChanges();
+
+        const buttons = Array.from(fixture.nativeElement.querySelectorAll('tumaet-ui-button button')) as HTMLButtonElement[];
+        const labels = buttons.map((button) => button.getAttribute('aria-label'));
+        expect(labels).toEqual(
+            expect.arrayContaining([
+                'artemisApp.iris.chatHistory.newChat',
+                'global.generic.expand',
+                'artemisApp.iris.chatHistory.closeChat',
+                'artemisApp.exerciseChatbot.actions.send',
+                'artemisApp.exerciseChatbot.actions.copy',
+                'artemisApp.exerciseChatbot.actions.goodResponse',
+                'artemisApp.exerciseChatbot.actions.badResponse',
+            ]),
+        );
+        expect(buttons.every((button) => !!button.getAttribute('aria-label'))).toBe(true);
+        const textarea = fixture.nativeElement.querySelector('textarea') as HTMLTextAreaElement;
+        expect(textarea.hasAttribute('tumAetUiTextarea')).toBe(true);
+        expect(textarea.getAttribute('aria-label')).toBe('accessibility.message');
+        textarea.focus();
+        expect(document.activeElement).toBe(textarea);
+
+        fixture.componentRef.setInput('fullSize', true);
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelector('button[aria-label="global.generic.collapse"]')).not.toBeNull();
+    });
+
+    it('sends through the native TUM send button and respects its disabled state', () => {
+        loadChatSession();
+        const send = vi.spyOn(component, 'onSend').mockImplementation(() => {});
+        component.newMessageTextContent.set('A question');
+        fixture.detectChanges();
+        const button = fixture.nativeElement.querySelector('#irisSendButton button') as HTMLButtonElement;
+        button.click();
+        expect(send).toHaveBeenCalledOnce();
+
+        component.isLoading.set(true);
+        fixture.detectChanges();
+        expect(button.disabled).toBe(true);
+        button.click();
+        expect(send).toHaveBeenCalledOnce();
+    });
+
+    it('keeps rating selection disabled and pressed while allowing the opposite rating', () => {
+        const message = deepClone(mockServerMessage);
+        message.helpful = undefined;
+        chatService.messages.next([message]);
+        const rate = vi.spyOn(chatService, 'rateMessage').mockReturnValue(of(undefined));
+        fixture.detectChanges();
+        const good = fixture.nativeElement.querySelector('button[aria-label="artemisApp.exerciseChatbot.actions.goodResponse"]') as HTMLButtonElement;
+        const bad = fixture.nativeElement.querySelector('button[aria-label="artemisApp.exerciseChatbot.actions.badResponse"]') as HTMLButtonElement;
+        good.click();
+        fixture.detectChanges();
+        expect(rate).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({ id: message.id, helpful: true }), true);
+        expect(good.disabled).toBe(true);
+        expect(good.getAttribute('aria-pressed')).toBe('true');
+        expect(bad.disabled).toBe(false);
+        good.click();
+        expect(rate).toHaveBeenCalledOnce();
+
+        bad.click();
+        fixture.detectChanges();
+        expect(rate).toHaveBeenLastCalledWith(expect.objectContaining({ id: message.id, helpful: false }), false);
+        expect(bad.disabled).toBe(true);
+        expect(bad.getAttribute('aria-pressed')).toBe('true');
+        expect(good.disabled).toBe(false);
+    });
+
+    it('copies from the TUM copy control and shows its confirmation icon', () => {
+        const copy = vi.spyOn(TestBed.inject(Clipboard), 'copy').mockReturnValue(true);
+        chatService.messages.next([mockServerMessage]);
+        fixture.detectChanges();
+        const button = fixture.nativeElement.querySelector('button[aria-label="artemisApp.exerciseChatbot.actions.copy"]') as HTMLButtonElement;
+        button.click();
+        fixture.detectChanges();
+        expect(copy).toHaveBeenCalledOnce();
+        expect(button.querySelector('.fa-check')).not.toBeNull();
+    });
+
+    it('reveals streamed text immediately and scrolls without motion for reduced motion', async () => {
+        component['reducedMotion'].set(true);
+        chatService.liveAssistantDraft.next({ runId: 'reduced-motion', text: 'The streamed answer' });
+        fixture.detectChanges();
+        expect(component.displayedLiveAssistantDraftText()).toBe('The streamed answer');
+        expect(component['liveDraftAnimationIntervalId']).toBeUndefined();
+        expect(fixture.nativeElement.querySelector('.streaming-draft-meta .fa-spin')).toBeNull();
+
+        component.scrollToBottom('smooth');
+        await new Promise((resolve) => setTimeout(resolve, 0));
+        const messages = fixture.nativeElement.querySelector('.messages') as HTMLElement;
+        expect(messages.scrollTo).toHaveBeenLastCalledWith({ top: messages.scrollHeight, behavior: 'instant' });
+    });
+
+    it('responds to OS motion preference changes and releases its listener on destroy', () => {
+        const query = window.matchMedia('(prefers-reduced-motion: reduce)');
+        const add = vi.spyOn(query, 'addEventListener');
+        const remove = vi.spyOn(query, 'removeEventListener');
+        vi.spyOn(window, 'matchMedia').mockReturnValue(query);
+        fixture = TestBed.createComponent(IrisBaseChatbotComponent);
+        component = fixture.componentInstance;
+        fixture.detectChanges();
+        expect(add).toHaveBeenCalledWith('change', expect.any(Function));
+        const listener = add.mock.calls[0][1] as (event: MediaQueryListEvent) => void;
+        chatService.liveAssistantDraft.next({ runId: 'motion-toggle', text: 'A complete answer' });
+        fixture.detectChanges();
+        listener({ matches: true } as MediaQueryListEvent);
+        expect(component['reducedMotion']()).toBe(true);
+        expect(component.displayedLiveAssistantDraftText()).toBe('A complete answer');
+        expect(component['liveDraftAnimationIntervalId']).toBeUndefined();
+        fixture.destroy();
+        expect(remove).toHaveBeenCalledWith('change', listener);
     });
 
     it('should hide the context selector when context selection is not available', () => {
@@ -308,7 +427,7 @@ describe('IrisBaseChatbotComponent', () => {
         fixture.detectChanges();
 
         // An intermediate message is not an answer — neither copy nor rating is offered, regardless of run state.
-        expect(fixture.nativeElement.querySelector('.rate-message-buttons')).toBeFalsy();
+        expect(fixture.nativeElement.querySelector('.iris-chat__message-actions')).toBeFalsy();
         expect(fixture.nativeElement.querySelector('.fa-copy')).toBeFalsy();
         expect(fixture.nativeElement.querySelector('.fa-thumbs-up')).toBeFalsy();
         expect(fixture.nativeElement.querySelector('.fa-thumbs-down')).toBeFalsy();
@@ -319,26 +438,26 @@ describe('IrisBaseChatbotComponent', () => {
         fixture.detectChanges();
 
         // Two assistant messages in the conversation, but only one toolbox (under the last one)
-        const toolboxes = fixture.nativeElement.querySelectorAll('.rate-message-buttons');
+        const toolboxes = fixture.nativeElement.querySelectorAll('.iris-chat__message-actions');
         expect(toolboxes).toHaveLength(1);
 
         const lastAssistant = fixture.nativeElement.querySelector(`[data-message-id="${mockServerMessage2.id}"]`);
-        expect(lastAssistant.querySelector('.rate-message-buttons')).toBeTruthy();
+        expect(lastAssistant.querySelector('.iris-chat__message-actions')).toBeTruthy();
         const firstAssistant = fixture.nativeElement.querySelector(`[data-message-id="${mockServerMessage.id}"]`);
-        expect(firstAssistant.querySelector('.rate-message-buttons')).toBeFalsy();
+        expect(firstAssistant.querySelector('.iris-chat__message-actions')).toBeFalsy();
     });
 
     it('should hide the copy/rate toolbox while a new response is being generated', () => {
         chatService.messages.next([mockUserMessageWithContent('question'), mockServerMessage]);
         fixture.detectChanges();
         // Toolbox is present once the previous answer is final
-        expect(fixture.nativeElement.querySelector('.rate-message-buttons')).toBeTruthy();
+        expect(fixture.nativeElement.querySelector('.iris-chat__message-actions')).toBeTruthy();
 
         // A new response starts streaming: the run is RUNNING again → toolbox disappears
         chatService.runInfo.next({ runId: 'run-next', state: IrisRunState.RUNNING });
         fixture.detectChanges();
         expect(component.awaitingAnswer()).toBe(true);
-        expect(fixture.nativeElement.querySelector('.rate-message-buttons')).toBeFalsy();
+        expect(fixture.nativeElement.querySelector('.iris-chat__message-actions')).toBeFalsy();
     });
 
     it('should not expose the toolbox for an intermediate assistant message left after a failed run', () => {
@@ -349,7 +468,7 @@ describe('IrisBaseChatbotComponent', () => {
 
         // The failed run cleared awaitingAnswer, but no final answer was ever produced → no toolbox.
         expect(component.awaitingAnswer()).toBe(false);
-        expect(fixture.nativeElement.querySelector('.rate-message-buttons')).toBeFalsy();
+        expect(fixture.nativeElement.querySelector('.iris-chat__message-actions')).toBeFalsy();
     });
 
     it('should not expose the toolbox for a persisted intermediate assistant message without run info', () => {
@@ -358,7 +477,7 @@ describe('IrisBaseChatbotComponent', () => {
         fixture.detectChanges();
 
         expect(component.runInfo()).toBeUndefined();
-        expect(fixture.nativeElement.querySelector('.rate-message-buttons')).toBeFalsy();
+        expect(fixture.nativeElement.querySelector('.iris-chat__message-actions')).toBeFalsy();
     });
 
     it('should not expose the toolbox for an intermediate assistant message after a finished run', () => {
@@ -368,7 +487,7 @@ describe('IrisBaseChatbotComponent', () => {
         fixture.detectChanges();
 
         expect(component.awaitingAnswer()).toBe(false);
-        expect(fixture.nativeElement.querySelector('.rate-message-buttons')).toBeFalsy();
+        expect(fixture.nativeElement.querySelector('.iris-chat__message-actions')).toBeFalsy();
     });
 
     it('should expose the toolbox for a final assistant message following an intermediate one', () => {
@@ -377,10 +496,10 @@ describe('IrisBaseChatbotComponent', () => {
         chatService.runInfo.next({ runId: 'run-1', state: IrisRunState.FINISHED });
         fixture.detectChanges();
 
-        const toolboxes = fixture.nativeElement.querySelectorAll('.rate-message-buttons');
+        const toolboxes = fixture.nativeElement.querySelectorAll('.iris-chat__message-actions');
         expect(toolboxes).toHaveLength(1);
         const lastAssistant = fixture.nativeElement.querySelector(`[data-message-id="${mockServerMessage2.id}"]`);
-        expect(lastAssistant.querySelector('.rate-message-buttons')).toBeTruthy();
+        expect(lastAssistant.querySelector('.iris-chat__message-actions')).toBeTruthy();
     });
 
     it('should not rate intermediate assistant messages defensively', async () => {
@@ -1061,7 +1180,7 @@ describe('IrisBaseChatbotComponent', () => {
         fixture.changeDetectorRef.detectChanges();
         const sendButton = fixture.debugElement.query(By.css('#irisSendButton')).componentInstance;
 
-        expect(sendButton.disabled).toBeTruthy();
+        expect(sendButton.disabled()).toBe(true);
     });
 
     it('should not render submit button if userAccepted is undefined or NO_AI', () => {
@@ -1138,7 +1257,7 @@ describe('IrisBaseChatbotComponent', () => {
 
         it('should render suggestions when suggestions array is not empty', () => {
             const suggestionsElement: HTMLElement = fixture.nativeElement.querySelector('.suggestions-container');
-            const suggestionButtons = suggestionsElement.querySelectorAll('.suggestion-button');
+            const suggestionButtons = suggestionsElement.querySelectorAll('.iris-chat__suggestion');
             expect(suggestionButtons).toHaveLength(expectedSuggestions.length);
             suggestionButtons.forEach((button, index) => {
                 expect(button.textContent).toBe(expectedSuggestions[index]);
@@ -1149,7 +1268,7 @@ describe('IrisBaseChatbotComponent', () => {
             component.isLoading.set(true);
             fixture.changeDetectorRef.detectChanges();
 
-            const suggestionButtons = fixture.nativeElement.querySelectorAll('.suggestion-button');
+            const suggestionButtons = fixture.nativeElement.querySelectorAll('.iris-chat__suggestion');
             expect(suggestionButtons).toHaveLength(expectedSuggestions.length);
             suggestionButtons.forEach((button: HTMLButtonElement) => {
                 expect(button.disabled).toBe(true);
@@ -1160,7 +1279,7 @@ describe('IrisBaseChatbotComponent', () => {
             component.userAccepted.set(LLMSelectionDecision.NO_AI);
             fixture.changeDetectorRef.detectChanges();
 
-            const suggestionButtons = fixture.nativeElement.querySelectorAll('.suggestion-button');
+            const suggestionButtons = fixture.nativeElement.querySelectorAll('.iris-chat__suggestion');
             expect(suggestionButtons).toHaveLength(0);
         });
     });
@@ -1175,7 +1294,7 @@ describe('IrisBaseChatbotComponent', () => {
             fixture.nativeElement.querySelector('.chat-body').scrollTo = vi.fn();
             fixture.detectChanges();
 
-            const suggestionButtons = fixture.nativeElement.querySelectorAll('.suggestion-button');
+            const suggestionButtons = fixture.nativeElement.querySelectorAll('.iris-chat__suggestion');
             expect(suggestionButtons).toHaveLength(0);
         });
 
@@ -1189,7 +1308,7 @@ describe('IrisBaseChatbotComponent', () => {
             fixture.nativeElement.querySelector('.chat-body').scrollTo = vi.fn();
             fixture.detectChanges();
 
-            const suggestionButtons = fixture.nativeElement.querySelectorAll('.suggestion-button');
+            const suggestionButtons = fixture.nativeElement.querySelectorAll('.iris-chat__suggestion');
             expect(suggestionButtons).toHaveLength(0);
         });
 
@@ -1203,7 +1322,7 @@ describe('IrisBaseChatbotComponent', () => {
             fixture.nativeElement.querySelector('.chat-body').scrollTo = vi.fn();
             fixture.detectChanges();
 
-            const suggestionButtons = fixture.nativeElement.querySelectorAll('.suggestion-button');
+            const suggestionButtons = fixture.nativeElement.querySelectorAll('.iris-chat__suggestion');
             expect(suggestionButtons).toHaveLength(0);
         });
 
@@ -1217,7 +1336,7 @@ describe('IrisBaseChatbotComponent', () => {
             chatService.runInfo.next({ runId: 'run-1', state: IrisRunState.RUNNING });
             fixture.detectChanges();
 
-            const suggestionButtons = fixture.nativeElement.querySelectorAll('.suggestion-button');
+            const suggestionButtons = fixture.nativeElement.querySelectorAll('.iris-chat__suggestion');
             expect(suggestionButtons).toHaveLength(0);
         });
     });
@@ -1234,7 +1353,7 @@ describe('IrisBaseChatbotComponent', () => {
 
             fixture.detectChanges();
             await fixture.whenStable();
-            const button: HTMLInputElement = fixture.debugElement.nativeElement.querySelector('#clear-chat-button');
+            const button: HTMLButtonElement = fixture.debugElement.nativeElement.querySelector('#clear-chat-button button');
 
             button.click();
             await fixture.whenStable();
@@ -1244,7 +1363,7 @@ describe('IrisBaseChatbotComponent', () => {
         });
 
         it('should not render clear chat button if the history is empty', () => {
-            const button: HTMLInputElement = fixture.debugElement.nativeElement.querySelector('#clear-chat-button');
+            const button: HTMLButtonElement = fixture.debugElement.nativeElement.querySelector('#clear-chat-button button');
             expect(button).toBeNull();
         });
     });
@@ -1602,8 +1721,10 @@ describe('IrisBaseChatbotComponent', () => {
             fixture.detectChanges();
             await fixture.whenStable();
 
-            const relatedEntityButton = fixture.nativeElement.querySelector('.related-entity-button') as HTMLButtonElement;
+            const relatedEntityButton = fixture.nativeElement.querySelector('.related-entity-button') as HTMLAnchorElement;
             expect(relatedEntityButton).not.toBeNull();
+            expect(relatedEntityButton.tagName).toBe('A');
+            expect(relatedEntityButton.getAttribute('href')).toBe(component.relatedEntityRoute());
             expect(component.relatedEntityRoute()).toBe('/courses/456/lectures/55');
         });
 
@@ -1621,8 +1742,10 @@ describe('IrisBaseChatbotComponent', () => {
             fixture.detectChanges();
             await fixture.whenStable();
 
-            const relatedEntityButton = fixture.nativeElement.querySelector('.related-entity-button') as HTMLButtonElement;
+            const relatedEntityButton = fixture.nativeElement.querySelector('.related-entity-button') as HTMLAnchorElement;
             expect(relatedEntityButton).not.toBeNull();
+            expect(relatedEntityButton.tagName).toBe('A');
+            expect(relatedEntityButton.getAttribute('href')).toBe(component.relatedEntityRoute());
             expect(component.relatedEntityRoute()).toBe('/courses/456/exercises/99');
         });
 
@@ -1639,8 +1762,10 @@ describe('IrisBaseChatbotComponent', () => {
             fixture.detectChanges();
             await fixture.whenStable();
 
-            const relatedEntityButton = fixture.nativeElement.querySelector('.related-entity-button') as HTMLButtonElement;
+            const relatedEntityButton = fixture.nativeElement.querySelector('.related-entity-button') as HTMLAnchorElement;
             expect(relatedEntityButton).not.toBeNull();
+            expect(relatedEntityButton.tagName).toBe('A');
+            expect(relatedEntityButton.getAttribute('href')).toBe(component.relatedEntityRoute());
             expect(component.relatedEntityRoute()).toBe('/courses/456/exercises/77');
             expect(component.relatedEntityLinkButtonLabel()).toBe('artemisApp.exerciseChatbot.goToRelatedEntityButton.exerciseLabel');
         });
@@ -1931,38 +2056,60 @@ describe('IrisBaseChatbotComponent', () => {
             expect(items.some((item) => item.isActive)).toBe(false);
         });
 
-        // These tests run on fake timers, so change detection is driven directly instead of awaiting stability.
+        // Keep the fixed session dates while manually advancing change detection around the harness.
         const openSessionMenu = async () => {
-            fixture.nativeElement.querySelector('.session-title-trigger').click();
+            fixture.debugElement.query(By.css('.session-title-trigger')).nativeElement.click();
             fixture.detectChanges();
-            return [...document.querySelectorAll<HTMLButtonElement>('.session-menu-item')];
+            return TestbedHarnessEnvironment.documentRootLoader(fixture).getHarness(MenuHarness);
         };
 
         it('should render the grouped sessions as menu entries and mark the current one', async () => {
-            const entries = await openSessionMenu();
+            await manualChangeDetection(async () => {
+                const menu = await openSessionMenu();
+                const entries = await menu.getItems();
 
-            expect(entries.map((entry) => entry.textContent?.trim())).toEqual(['Help with recursion', 'Other exercise chat', 'Lecture question', 'Array sorting question']);
-            expect(entries.every((entry) => entry.getAttribute('role') === 'menuitem')).toBe(true);
-            expect(entries[0].getAttribute('aria-current')).toBe('true');
-            expect(entries[3].getAttribute('aria-current')).toBeNull();
-            expect(document.querySelectorAll('.session-switcher-menu [role="group"]')).toHaveLength(2);
-            expect(component.sessionMenuOpen()).toBe(true);
+                expect(await Promise.all(entries.map((entry) => entry.getText()))).toEqual([
+                    'Help with recursion',
+                    'Other exercise chat',
+                    'Lecture question',
+                    'Array sorting question',
+                ]);
+                expect(await (await entries[0].host()).getAttribute('aria-current')).toBe('true');
+                expect(await (await entries[3].host()).getAttribute('aria-current')).toBeNull();
+                expect(await menu.isOpen()).toBe(true);
+                expect(component.sessionMenuOpen()).toBe(true);
+            });
         });
 
         it.each([
             [0, 'today', () => exerciseSession1],
             [3, 'yesterday', () => exerciseSession2],
         ])('should switch to the chosen %s session and close the menu', async (index, _group, expectedSession) => {
-            vi.spyOn(chatService, 'switchToSession').mockImplementation(() => {});
-            const onSessionClickSpy = vi.spyOn(component, 'onSessionClick');
+            await manualChangeDetection(async () => {
+                vi.spyOn(chatService, 'switchToSession').mockImplementation(() => {});
+                const onSessionClickSpy = vi.spyOn(component, 'onSessionClick');
+                const menu = await openSessionMenu();
+                const entries = await menu.getItems();
+                await entries[index].click();
+                fixture.detectChanges();
 
-            const entries = await openSessionMenu();
-            entries[index].click();
-            fixture.detectChanges();
+                expect(onSessionClickSpy).toHaveBeenCalledExactlyOnceWith(expectedSession());
+                expect(component.sessionMenuOpen()).toBe(false);
+                expect(await TestbedHarnessEnvironment.documentRootLoader(fixture).getAllHarnesses(MenuHarness)).toHaveLength(0);
+            });
+        });
 
-            expect(onSessionClickSpy).toHaveBeenCalledWith(expectedSession());
-            expect(component.sessionMenuOpen()).toBe(false);
-            expect(document.querySelector('.session-switcher-menu')).toBeNull();
+        it('should close the session menu with Escape and return focus to its trigger', async () => {
+            await manualChangeDetection(async () => {
+                const menu = await openSessionMenu();
+                await (await menu.host()).sendKeys(TestKey.ESCAPE);
+                fixture.detectChanges();
+
+                const trigger = fixture.debugElement.query(By.css('.session-title-trigger')).nativeElement;
+                expect(document.activeElement).toBe(trigger);
+                expect(trigger.getAttribute('aria-expanded')).toBe('false');
+                expect(component.sessionMenuOpen()).toBe(false);
+            });
         });
 
         it('should have hasHeaderContent true for widget layout', () => {

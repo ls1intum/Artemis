@@ -23,7 +23,6 @@ import { Clipboard } from '@angular/cdk/clipboard';
 import { IrisAssistantMessage, IrisMessage, IrisSender } from 'app/iris/shared/entities/iris-message.model';
 import { IrisErrorMessageKey } from 'app/iris/shared/entities/iris-errors.model';
 import { IrisMessageContextDTO } from 'app/iris/shared/entities/iris-message-context-dto.model';
-import { ButtonComponent, ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
 import { TranslateService } from '@ngx-translate/core';
 import { IrisLogoComponent, IrisLogoSize } from 'app/iris/overview/iris-logo/iris-logo.component';
 import { IrisStatusService } from 'app/iris/overview/services/iris-status.service';
@@ -73,9 +72,11 @@ import { routeForContext } from 'app/iris/overview/context-selection/iris-contex
 import { IrisActivityItem, IrisActivityState, IrisRunState } from 'app/iris/shared/entities/iris-activity.model';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
 import {
+    TumAetUiButtonComponent,
     TumAetUiButtonDirective,
     TumAetUiConfirmDialogComponent,
     TumAetUiConfirmationService,
+    TumAetUiInputDirective,
     TumAetUiMenuComponent,
     TumAetUiMenuItemDirective,
     TumAetUiMenuTriggerDirective,
@@ -127,7 +128,6 @@ const LIVE_DRAFT_CATCH_UP_MS = 400;
         TranslateDirective,
         ChatStatusBarComponent,
         FormsModule,
-        ButtonComponent,
         ArtemisTranslatePipe,
         AsPipe,
         MarkdownDirective,
@@ -146,7 +146,9 @@ const LIVE_DRAFT_CATCH_UP_MS = 400;
         IrisContextSwitchDividerComponent,
         IrisPointOutMarkerComponent,
         CourseSidebarToggleButtonComponent,
+        TumAetUiButtonComponent,
         TumAetUiButtonDirective,
+        TumAetUiInputDirective,
     ],
     providers: [TumAetUiConfirmationService],
     changeDetection: ChangeDetectionStrategy.OnPush,
@@ -164,6 +166,9 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     private readonly clipboard = inject(Clipboard);
     private readonly onboardingService = inject(IrisOnboardingService);
     private readonly irisChatHttpService = inject(IrisChatHttpService);
+
+    private readonly reducedMotionQuery = window.matchMedia?.('(prefers-reduced-motion: reduce)');
+    protected readonly reducedMotion = signal(this.reducedMotionQuery?.matches ?? false);
 
     // Known "new chat" titles from all languages (server-side: messages*.properties, client-side: iris.json).
     // Must match the values in src/main/resources/i18n/messages*.properties (iris.chat.session.newChatTitle)
@@ -336,7 +341,6 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     private previousMessageCount = 0;
     private previousMessageIds = new Set<number>();
     private copyResetTimeoutId: ReturnType<typeof setTimeout> | undefined;
-    protected readonly ButtonType = ButtonType;
     readonly copiedMessageKey = signal<number | undefined>(undefined);
 
     protected readonly activeSuggestionChips = createActiveSuggestionChips(this.currentChatMode);
@@ -520,6 +524,16 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     }
 
     constructor() {
+        const onMotionPreferenceChange = (event: MediaQueryListEvent) => {
+            this.reducedMotion.set(event.matches);
+            if (event.matches) {
+                this.stopLiveAssistantDraftAnimationLoop();
+                this.displayedLiveAssistantDraftText.set(this.liveAssistantDraftTargetText);
+            }
+        };
+        this.reducedMotionQuery?.addEventListener('change', onMotionPreferenceChange);
+        this.destroyRef.onDestroy(() => this.reducedMotionQuery?.removeEventListener('change', onMotionPreferenceChange));
+
         // Initialize user acceptance state
         this.checkIfUserAcceptedLLMUsage();
 
@@ -1079,6 +1093,12 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
             }
         }
 
+        if (this.reducedMotion()) {
+            this.stopLiveAssistantDraftAnimationLoop();
+            this.displayedLiveAssistantDraftText.set(this.liveAssistantDraftTargetText);
+            return;
+        }
+
         if (Array.from(this.liveAssistantDraftTargetText).length > Array.from(this.displayedLiveAssistantDraftText()).length) {
             this.ensureLiveAssistantDraftAnimationLoop();
         } else {
@@ -1140,7 +1160,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         this.updateExchangeSpacer();
         container.scrollTo({
             top: this.getAnchorTop(container, anchorElement),
-            behavior: 'smooth',
+            behavior: this.reducedMotion() ? 'instant' : 'smooth',
         });
     }
 
@@ -1187,7 +1207,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
             if (!messagesElement) return;
             messagesElement.scrollTo({
                 top: messagesElement.scrollHeight,
-                behavior: behavior,
+                behavior: this.reducedMotion() ? 'instant' : behavior,
             });
         });
     }

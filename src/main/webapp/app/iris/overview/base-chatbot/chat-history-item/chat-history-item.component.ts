@@ -1,15 +1,16 @@
 import { ChangeDetectionStrategy, Component, Signal, computed, inject, input, output } from '@angular/core';
 import { getCurrentLocaleSignal } from 'app/foundation/util/global.utils';
-import { DatePipe, NgClass } from '@angular/common';
+import { DatePipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { IrisSessionDTO } from 'app/iris/shared/entities/iris-session-dto.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faChalkboardUser, faEllipsisVertical, faFont, faKeyboard, faPlus, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { TranslateService } from '@ngx-translate/core';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ChatServiceMode } from 'app/iris/overview/services/iris-chat.service';
-import { TumAetUiMenuComponent, TumAetUiMenuItemDirective, TumAetUiMenuTriggerDirective, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective, TumAetUiMenuComponent, TumAetUiMenuItemDirective, TumAetUiMenuTriggerDirective, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 
 @Component({
     selector: 'jhi-chat-history-item',
@@ -17,8 +18,9 @@ import { TumAetUiMenuComponent, TumAetUiMenuItemDirective, TumAetUiMenuTriggerDi
     styleUrl: './chat-history-item.component.scss',
     standalone: true,
     imports: [
+        TumAetUiButtonDirective,
+        TranslateDirective,
         DatePipe,
-        NgClass,
         FaIconComponent,
         ArtemisTranslatePipe,
         RouterLink,
@@ -59,10 +61,6 @@ export class ChatHistoryItemComponent {
 
     onItemClick(): void {
         this.sessionClicked.emit(this.session());
-    }
-
-    onEntityIconClick(event: Event): void {
-        event.stopPropagation();
     }
 
     onDeleteClick(): void {
