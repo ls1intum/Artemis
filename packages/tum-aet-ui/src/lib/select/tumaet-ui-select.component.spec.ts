@@ -136,6 +136,49 @@ describe('TumAetUiSelectComponent', () => {
         expect(emitSpy).toHaveBeenCalledWith('b');
     });
 
+    describe('optionDisabled', () => {
+        const WITH_DISABLED = [
+            { label: 'Alpha', value: 'a' },
+            { label: 'Bravo', value: 'b', unavailable: true },
+            { label: 'Charlie', value: 'c' },
+        ];
+
+        beforeEach(() => {
+            fixture.componentRef.setInput('options', WITH_DISABLED);
+            fixture.componentRef.setInput('optionDisabled', 'unavailable');
+            component.writeValue('a');
+            fixture.detectChanges();
+        });
+
+        it('shows a disabled option but neither changes the value nor emits when it is clicked', () => {
+            const onChangeCallback = vi.fn();
+            component.registerOnChange(onChangeCallback);
+            const emitSpy = vi.spyOn(component.selectionChange, 'emit');
+            openPanel();
+            expect(optionElements()[1].getAttribute('aria-disabled')).toBe('true');
+            expect(optionElements()[0].getAttribute('aria-disabled')).toBeNull();
+
+            optionElements()[1].click();
+            fixture.detectChanges();
+
+            expect(onChangeCallback).not.toHaveBeenCalled();
+            expect(emitSpy).not.toHaveBeenCalled();
+            expect(labelText()).toBe('Alpha');
+            expect(listbox()).not.toBeNull();
+        });
+
+        it('skips a disabled option with the keyboard', () => {
+            const emitSpy = vi.spyOn(component.selectionChange, 'emit');
+            openPanel();
+            triggerButton().dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', keyCode: DOWN_ARROW, bubbles: true }));
+            fixture.detectChanges();
+            expect(triggerButton().getAttribute('aria-activedescendant')).toBe(optionElements()[2].id);
+            triggerButton().dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+            fixture.detectChanges();
+            expect(emitSpy).toHaveBeenCalledWith('c');
+        });
+    });
+
     it('keyboard: ArrowDown stops at the final option', () => {
         openPanel();
         triggerButton().dispatchEvent(new KeyboardEvent('keydown', { key: 'End', keyCode: END, bubbles: true }));

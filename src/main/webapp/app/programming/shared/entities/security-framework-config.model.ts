@@ -126,6 +126,8 @@ export interface SecurityAresApiUse {
 export interface SecurityFrameworkVersionOption {
     version: string;
     label: string;
+    /** The version does not accept the policy files (B10); the dropdown shows it, but it cannot be selected. */
+    incompatible?: boolean;
 }
 
 /**

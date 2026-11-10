@@ -68,6 +68,7 @@
                     [id]="optionId(i)"
                     role="option"
                     [attr.aria-selected]="isSelected(option) ? 'true' : 'false'"
+                    [attr.aria-disabled]="isOptionDisabled(option) ? 'true' : null"
                     [class]="optionClasses(option, i)"
                     tabindex="-1"
                     (click)="selectOption(option)"

@@ -999,6 +999,37 @@ describe('ProgrammingExerciseSecurityComponent rendering', () => {
         expect(query(element, 'security-add-test-classes')).toBeNull();
     });
 
+    it('does not let the real select choose a version that does not accept the policy, so the shown version stays the saved one (B10)', async () => {
+        const element = renderEdit({
+            ...configuredConfig('3.4.1'),
+            versionCompatibilities: [
+                { version: '3.4.1', verdict: SecurityVersionCompatibilityVerdict.COMPATIBLE },
+                { version: '3.3.0', verdict: SecurityVersionCompatibilityVerdict.INCOMPATIBLE, incompatibilities: ['SecurityPolicy.yaml: a.b'] },
+                { version: '3.2.2', verdict: SecurityVersionCompatibilityVerdict.COMPATIBLE },
+            ],
+        });
+        // ngModel writes its value to the select asynchronously.
+        await fixture.whenStable();
+        fixture.detectChanges();
+        const trigger = query(element, 'security-framework-version-select')?.querySelector('button[aria-haspopup="listbox"]') as HTMLButtonElement;
+        const shownVersion = () => trigger.textContent?.trim();
+        expect(shownVersion()).toBe('3.4.1 artemisApp.programmingExercise.security.latestSuffix');
+
+        trigger.click();
+        fixture.detectChanges();
+        const options = Array.from(document.querySelectorAll('[role="option"]')) as HTMLElement[];
+        const incompatible = options.find((option) => option.textContent?.includes('3.3.0'))!;
+        expect(incompatible.getAttribute('aria-disabled')).toBe('true');
+        incompatible.click();
+        fixture.detectChanges();
+        await fixture.whenStable();
+        fixture.detectChanges();
+
+        expect(service.updateFrameworkVersion).not.toHaveBeenCalled();
+        expect(shownVersion()).toBe('3.4.1 artemisApp.programmingExercise.security.latestSuffix');
+        expect(fixture.componentInstance.config().frameworkVersion).toBe('3.4.1');
+    });
+
     it('shows no list of incompatible versions when the server checked no policy file', () => {
         const element = renderEdit(configuredConfig('3.4.1'));
         expect(query(element, 'security-incompatible-versions')).toBeNull();

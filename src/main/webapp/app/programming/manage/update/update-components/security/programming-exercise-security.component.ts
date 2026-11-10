@@ -181,7 +181,7 @@ export class ProgrammingExerciseSecurityComponent {
             } else if (verdict === SecurityVersionCompatibilityVerdict.UNVERIFIED) {
                 suffixes.push(this.translateService.instant('artemisApp.programmingExercise.security.unverifiedSuffix'));
             }
-            return { version, label: [version, ...suffixes].join(' ') };
+            return { version, label: [version, ...suffixes].join(' '), incompatible: verdict === SecurityVersionCompatibilityVerdict.INCOMPATIBLE };
         });
         const current = this.config().frameworkVersion;
         if (current && !selectable.includes(current)) {
@@ -530,7 +530,8 @@ export class ProgrammingExerciseSecurityComponent {
     onFrameworkVersionChanged(version: unknown): void {
         const newVersion = String(version);
         // Only selectable versions can be pinned; the version an exercise already pins is listed even if it no longer is, but cannot be chosen again.
-        // A version that does not accept the policy files is listed so the instructor sees why, but the server would refuse it (decision B10).
+        // A version that does not accept the policy files is listed so the instructor sees why, but the select does not let it be chosen and the server
+        // would refuse it (decision B10); this check only guards a programmatic call.
         if (!this.selectableVersions().includes(newVersion) || !this.isVersionSaved() || this.isIncompatibleVersion(newVersion)) {
             return;
         }

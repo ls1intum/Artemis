@@ -72,6 +72,12 @@ export class TumAetUiSelectComponent extends OptionControl implements ControlVal
 
     readonly filterPlaceholder = input<string>();
 
+    /**
+     * Boolean property marking object options that stay visible but cannot be selected, e.g. a choice that is
+     * offered for reference only. Pointer, keyboard and typeahead skip such options.
+     */
+    readonly optionDisabled = input<string>();
+
     readonly size = input<TumAetUiSelectSize>();
 
     /**
@@ -139,7 +145,7 @@ export class TumAetUiSelectComponent extends OptionControl implements ControlVal
     protected readonly showClearButton = computed(() => this.showClear() && this.hasSelection() && !this.isDisabled());
     protected readonly triggerClasses = computed(() => `${this.buildTriggerClasses()} ${this.showClearButton() ? 'tumaet:pe-17' : 'tumaet:pe-10'}`);
     protected readonly activeOptionId = computed(() => (this.activeIndex() >= 0 ? this.optionId(this.activeIndex()) : undefined));
-    private readonly keyManagerOptions = computed(() => this.visibleOptions().map((option) => ({ getLabel: () => this.label(option) })));
+    private readonly keyManagerOptions = computed(() => this.visibleOptions().map((option) => ({ getLabel: () => this.label(option), disabled: this.isOptionDisabled(option) })));
     private readonly keyManager = new ListKeyManager(this.keyManagerOptions, this.injector).withVerticalOrientation().withHomeAndEnd().withTypeAhead(TYPEAHEAD_DEBOUNCE_MS);
     private typeaheadSequence = '';
     private pendingFilterFocus = false;
@@ -280,6 +286,9 @@ export class TumAetUiSelectComponent extends OptionControl implements ControlVal
     }
 
     protected selectOption(option: unknown): void {
+        if (this.isOptionDisabled(option)) {
+            return;
+        }
         const value = this.resolveValue(option);
         this.selectedValue.set(value);
         this.onChangeCallback(value);
@@ -386,7 +395,10 @@ export class TumAetUiSelectComponent extends OptionControl implements ControlVal
             this.keyManager.cancelTypeahead();
             const options = this.keyManagerOptions();
             const start = Math.max(this.activeIndex(), -1);
-            const nextMatch = options.findIndex((_, offset) => options[(start + offset + 1) % options.length]?.getLabel().toLocaleLowerCase().startsWith(character));
+            const nextMatch = options.findIndex((_, offset) => {
+                const candidate = options[(start + offset + 1) % options.length];
+                return !candidate?.disabled && candidate?.getLabel().toLocaleLowerCase().startsWith(character);
+            });
             if (nextMatch >= 0) {
                 this.keyManager.setActiveItem((start + nextMatch + 1) % options.length);
             }
@@ -425,7 +437,15 @@ export class TumAetUiSelectComponent extends OptionControl implements ControlVal
         }
         return `${base} ${size} ${state}`;
     }
+    protected isOptionDisabled(option: unknown): boolean {
+        const key = this.optionDisabled();
+        return !!(key && option !== null && typeof option === 'object' && (option as Record<string, unknown>)[key]);
+    }
+
     protected optionClasses(option: unknown, index: number): string {
+        if (this.isOptionDisabled(option)) {
+            return 'tumaet-ui-select-option tumaet:flex tumaet:cursor-default tumaet:items-center tumaet:px-3 tumaet:py-2 tumaet:text-disabled';
+        }
         const base = 'tumaet-ui-select-option tumaet:flex tumaet:cursor-pointer tumaet:items-center tumaet:px-3 tumaet:py-2';
         const active = this.activeIndex() === index;
         if (this.isSelected(option)) {
