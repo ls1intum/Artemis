@@ -12,7 +12,7 @@
  */
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { of, throwError } from 'rxjs';
+import { Subject, of, throwError } from 'rxjs';
 import { By } from '@angular/platform-browser';
 import { TumAetUiPaginatorComponent } from '@tumaet/ui-angular';
 import dayjs from 'dayjs/esm';
@@ -217,6 +217,20 @@ describe('AdminDataExportsComponent', () => {
 
             expect(adminDataExportsService.getAllDataExports).toHaveBeenCalledWith(2, 20);
             expect(paginator().page()).toBe(2);
+        });
+
+        it('should disable the paginator while a page is loading, so overlapping responses cannot show the wrong page', () => {
+            const pending = new Subject<typeof mockPageableResult>();
+            mockAdminDataExportsService.getAllDataExports.mockReturnValue(pending);
+
+            paginator().pageChange.emit(1);
+            fixture.detectChanges();
+            expect(paginator().disabled()).toBe(true);
+
+            pending.next(mockPageableResult);
+            pending.complete();
+            fixture.detectChanges();
+            expect(paginator().disabled()).toBe(false);
         });
 
         it('should reload from the first page when the paginator emits a new page size', async () => {

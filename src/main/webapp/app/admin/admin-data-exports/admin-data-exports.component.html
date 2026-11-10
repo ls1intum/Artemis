@@ -90,6 +90,7 @@
             [pageSize]="rows()"
             [totalRecords]="totalRecords()"
             [pageSizeOptions]="[10, 20, 50]"
+            [disabled]="loading()"
             (pageChange)="onPageChange($event)"
             (pageSizeChange)="onPageSizeChange($event)"
         />
