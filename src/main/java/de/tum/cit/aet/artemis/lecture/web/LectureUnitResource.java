@@ -32,6 +32,8 @@ import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
+import de.tum.cit.aet.artemis.core.security.allowedScopes.AgentScope;
+import de.tum.cit.aet.artemis.core.security.allowedScopes.AllowedScopes;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInLecture.EnforceAtLeastEditorInLecture;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInLectureUnit.EnforceAtLeastEditorInLectureUnit;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInLectureUnit.EnforceAtLeastInstructorInLectureUnit;
@@ -60,6 +62,8 @@ import de.tum.cit.aet.artemis.lecture.repository.LectureUnitRepository;
 import de.tum.cit.aet.artemis.lecture.service.LectureContentProcessingService;
 import de.tum.cit.aet.artemis.lecture.service.LectureService;
 import de.tum.cit.aet.artemis.lecture.service.LectureUnitService;
+import de.tum.cit.aet.artemis.lecture.service.TumLiveUploadService;
+import io.swagger.v3.oas.annotations.Operation;
 
 @Conditional(LectureEnabled.class)
 @Lazy
@@ -95,10 +99,13 @@ public class LectureUnitResource {
 
     private final Optional<SearchableEntityWeaviateService> searchableEntityWeaviateService;
 
+    private final TumLiveUploadService tumLiveUploadService;
+
     public LectureUnitResource(UserRepository userRepository, LectureRepository lectureRepository, LectureUnitRepository lectureUnitRepository,
             LectureUnitService lectureUnitService, Optional<CompetencyProgressApi> competencyProgressApi, Optional<LectureContentProcessingService> lectureContentProcessingService,
             LectureUnitProcessingStateRepository processingStateRepository, LectureTranscriptionRepository transcriptionRepository,
-            Optional<SearchableEntityWeaviateService> searchableEntityWeaviateServiceOptional, LectureService lectureService) {
+            Optional<SearchableEntityWeaviateService> searchableEntityWeaviateServiceOptional, LectureService lectureService, TumLiveUploadService tumLiveUploadService) {
+        this.tumLiveUploadService = tumLiveUploadService;
         this.userRepository = userRepository;
         this.lectureUnitRepository = lectureUnitRepository;
         this.lectureRepository = lectureRepository;
@@ -186,13 +193,15 @@ public class LectureUnitResource {
     /**
      * DELETE lectures/:lectureId/lecture-units/:lectureUnitId
      *
-     * @param lectureId     the id of the lecture to which the unit belongs
-     * @param lectureUnitId the id of the lecture unit to remove
+     * @param lectureId               the id of the lecture to which the unit belongs
+     * @param lectureUnitId           the id of the lecture unit to remove
+     * @param deleteTumLiveRecordings whether to delete in TUM.Live the video Artemis uploaded for the unit; an upload not attached yet is always deleted
      * @return the ResponseEntity with status 200 (OK)
      */
     @DeleteMapping("lectures/{lectureId}/lecture-units/{lectureUnitId}")
     @EnforceAtLeastInstructorInLectureUnit
-    public ResponseEntity<Void> deleteLectureUnit(@PathVariable long lectureUnitId, @PathVariable Long lectureId) {
+    public ResponseEntity<Void> deleteLectureUnit(@PathVariable long lectureUnitId, @PathVariable Long lectureId,
+            @RequestParam(defaultValue = "false") boolean deleteTumLiveRecordings) {
         log.info("REST request to delete lecture unit: {}", lectureUnitId);
         LectureUnit lectureUnit = lectureUnitRepository.findByIdElseThrow(lectureUnitId);
         if (lectureUnit.getLecture() == null || lectureUnit.getLecture().getCourse() == null) {
@@ -208,6 +217,7 @@ public class LectureUnitResource {
         }
         long unitId = lectureUnitId;
         lectureUnitService.removeLectureUnit(lectureUnit);
+        tumLiveUploadService.releaseForDeletion(List.of(unitId), deleteTumLiveRecordings);
 
         searchableEntityWeaviateService.ifPresent(service -> service.deleteEntityAsync(SearchableEntitySchema.TypeValues.LECTURE_UNIT, unitId));
 
@@ -271,6 +281,11 @@ public class LectureUnitResource {
     @FeatureUsage(UserFeature.LECTURE_CONTENT_PROCESSING)
     @GetMapping("lectures/{lectureId}/lecture-units/statuses")
     @EnforceAtLeastEditorInLecture
+    @AllowedScopes(AgentScope.LECTURES_WRITE)
+    @Operation(summary = "Get the processing status of the units of a lecture", description = """
+            Reports, for each attachment video unit of the lecture, how far the background processing of its slides and video has \
+            come: processingPhase is IDLE, TRANSCRIBING, INGESTING, DONE, FAILED or SKIPPED. Poll this after uploading slides; DONE or \
+            SKIPPED means nothing more is pending. The list is empty when processing is not enabled on this instance.""")
     public ResponseEntity<List<LectureUnitCombinedStatusDTO>> getUnitStatuses(@PathVariable Long lectureId) {
         log.debug("REST request to get combined statuses for all lecture units in lecture: {}", lectureId);
 

@@ -1,6 +1,7 @@
 import { Component } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
+import { Router } from '@angular/router';
 import { Mock, vi } from 'vitest';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { MockComponent, MockProvider } from 'ng-mocks';
@@ -341,7 +342,7 @@ describe('MarkdownEditorMonacoComponent', () => {
         expect(dragOver.defaultPrevented).toBe(true);
         expect(drop.defaultPrevented).toBe(true);
         await vi.waitFor(() => expect(insertAttachment).toHaveBeenCalledOnce());
-        expect(upload).toHaveBeenCalledExactlyOnceWith(file);
+        expect(upload).toHaveBeenCalledExactlyOnceWith(file, undefined);
         expect(insertAttachment).toHaveBeenCalledWith({ text: 'image.png', url: '/files/dropped-image.png' });
     });
 
@@ -361,6 +362,18 @@ describe('MarkdownEditorMonacoComponent', () => {
         expect(dragOver.defaultPrevented).toBe(false);
         expect(drop.defaultPrevented).toBe(true);
         expect(upload).not.toHaveBeenCalled();
+    });
+
+    it('should upload files for the course of the current route if no course is given', async () => {
+        const router = TestBed.inject(Router);
+        const routeSnapshot = { params: {}, firstChild: { params: { courseId: '5' }, firstChild: { params: { examId: '9' }, firstChild: null } } };
+        vi.spyOn(router, 'routerState', 'get').mockReturnValue({ snapshot: { root: routeSnapshot } } as unknown as Router['routerState']);
+        const uploadMarkdownFileStub = vi.spyOn(fileUploaderService, 'uploadMarkdownFile').mockRejectedValue(new Error('Test error'));
+        vi.spyOn(TestBed.inject(AlertService), 'addAlert').mockReturnValue({} as ReturnType<AlertService['addAlert']>);
+        const files = [new File([''], 'test.png')];
+        fixture.detectChanges();
+        comp.embedFiles(files);
+        await vi.waitFor(() => expect(uploadMarkdownFileStub).toHaveBeenCalledWith(files[0], 5));
     });
 
     it('should notify if the upload of a markdown file failed', async () => {
@@ -402,6 +415,7 @@ describe('MarkdownEditorMonacoComponent', () => {
             { file: new File([''], 'test.pdf'), url: 'https://test.invalid/generated1234.pdf' },
         ];
         fixture.componentRef.setInput('defaultActions', [urlAction, attachmentAction]);
+        fixture.componentRef.setInput('courseId', 7);
         const files = [new File([''], 'test.png'), new File([''], 'test.pdf')];
         const uploadMarkdownFileStub = vi.spyOn(fileUploaderService, 'uploadMarkdownFile').mockImplementation((file: File) => {
             const path = file.name.endsWith('.png') ? fileInformation[0].url : fileInformation[1].url;
@@ -417,8 +431,8 @@ describe('MarkdownEditorMonacoComponent', () => {
             expect(urlStub).toHaveBeenCalledOnce();
         });
         // Each file should be uploaded.
-        expect(uploadMarkdownFileStub).toHaveBeenNthCalledWith(1, files[0]);
-        expect(uploadMarkdownFileStub).toHaveBeenNthCalledWith(2, files[1]);
+        expect(uploadMarkdownFileStub).toHaveBeenNthCalledWith(1, files[0], 7);
+        expect(uploadMarkdownFileStub).toHaveBeenNthCalledWith(2, files[1], 7);
         // Each file should be embedded. PDFs should be embedded as URLs.
         expect(attachmentStub).toHaveBeenCalledWith({
             url: fileInformation[0].url,
@@ -668,6 +682,102 @@ describe('MarkdownEditorMonacoComponent', () => {
         const result = comp.getSelection();
 
         expect(result).toBeUndefined();
+    });
+
+    describe('applyAriaAttributesToTextarea', () => {
+        it('sets aria-describedby and aria-invalid when given', () => {
+            fixture.detectChanges();
+            const textarea = document.createElement('textarea');
+
+            comp.applyAriaAttributesToTextarea(textarea, 'field_error_id', true);
+
+            expect(textarea.getAttribute('aria-describedby')).toBe('field_error_id');
+            expect(textarea.getAttribute('aria-invalid')).toBe('true');
+        });
+
+        it('removes aria-describedby and clears aria-invalid when the describedBy id is undefined', () => {
+            fixture.detectChanges();
+            const textarea = document.createElement('textarea');
+            textarea.setAttribute('aria-describedby', 'leftover');
+            textarea.setAttribute('aria-invalid', 'true');
+
+            comp.applyAriaAttributesToTextarea(textarea, undefined, false);
+
+            expect(textarea.hasAttribute('aria-describedby')).toBe(false);
+            expect(textarea.getAttribute('aria-invalid')).toBe('false');
+        });
+    });
+
+    it('forwards aria-describedby and aria-invalid to the active Monaco textarea when the inputs change', () => {
+        fixture.detectChanges();
+
+        // Supply a textarea through the mocked active editor so the forwarding effect has a real DOM target. This
+        // covers the effect -> helper wiring end to end; the applyAriaAttributesToTextarea tests only exercise the
+        // helper in isolation and would still pass if the effect were disconnected from it.
+        const textarea = document.createElement('textarea');
+        const domNode = document.createElement('div');
+        domNode.appendChild(textarea);
+        (comp.monacoEditor()! as any).getActiveEditor = vi.fn().mockReturnValue({
+            getDomNode: () => domNode,
+        });
+
+        fixture.componentRef.setInput('ariaDescribedBy', 'field_codeOfConduct_error');
+        fixture.componentRef.setInput('ariaInvalid', true);
+        fixture.detectChanges();
+
+        expect(textarea.getAttribute('aria-describedby')).toBe('field_codeOfConduct_error');
+        expect(textarea.getAttribute('aria-invalid')).toBe('true');
+    });
+
+    it('forwards aria-describedby and aria-invalid to the native-edit-context element when Monaco uses the EditContext API', () => {
+        fixture.detectChanges();
+
+        // Newer Monaco builds (Chromium with EditContext API) render a focusable `<div class="native-edit-context" role="textbox">`
+        // instead of a `<textarea>`. Prove the forwarding reaches that element too — regression for a reviewer finding where the
+        // aria attributes landed nowhere on Chromium because the selector only looked for `<textarea>`.
+        const nativeEditContext = document.createElement('div');
+        nativeEditContext.className = 'native-edit-context';
+        nativeEditContext.setAttribute('role', 'textbox');
+        const domNode = document.createElement('div');
+        domNode.appendChild(nativeEditContext);
+        (comp.monacoEditor()! as any).getActiveEditor = vi.fn().mockReturnValue({
+            getDomNode: () => domNode,
+        });
+
+        fixture.componentRef.setInput('ariaDescribedBy', 'field_codeOfConduct_error');
+        fixture.componentRef.setInput('ariaInvalid', true);
+        fixture.detectChanges();
+
+        expect(nativeEditContext.getAttribute('aria-describedby')).toBe('field_codeOfConduct_error');
+        expect(nativeEditContext.getAttribute('aria-invalid')).toBe('true');
+    });
+
+    it('re-pushes aria attributes to the new diff-mode textarea even when the inputs did not change', () => {
+        fixture.detectChanges();
+        // Set the aria state with the normal-mode textarea in place first. The effect fires here.
+        const normalTextarea = document.createElement('textarea');
+        const normalDomNode = document.createElement('div');
+        normalDomNode.appendChild(normalTextarea);
+        (comp.monacoEditor()! as any).getActiveEditor = vi.fn().mockReturnValue({ getDomNode: () => normalDomNode });
+        fixture.componentRef.setInput('ariaDescribedBy', 'field_codeOfConduct_error');
+        fixture.componentRef.setInput('ariaInvalid', true);
+        fixture.detectChanges();
+        expect(normalTextarea.getAttribute('aria-describedby')).toBe('field_codeOfConduct_error');
+
+        // Entering diff mode swaps the active editor for a brand-new one with an untouched textarea.
+        // The aria inputs have not changed, so only the mode-change callback must sync the state onto it.
+        const diffTextarea = document.createElement('textarea');
+        const diffDomNode = document.createElement('div');
+        diffDomNode.appendChild(diffTextarea);
+        (comp.monacoEditor()! as any).getActiveEditor = vi.fn().mockReturnValue({ getDomNode: () => diffDomNode });
+
+        fixture.componentRef.setInput('mode', 'diff');
+        // The first pass runs the mode effect, the second one flushes the afterNextRender callback it schedules.
+        fixture.detectChanges();
+        fixture.detectChanges();
+
+        expect(diffTextarea.getAttribute('aria-describedby')).toBe('field_codeOfConduct_error');
+        expect(diffTextarea.getAttribute('aria-invalid')).toBe('true');
     });
 
     describe('projected preview content', () => {

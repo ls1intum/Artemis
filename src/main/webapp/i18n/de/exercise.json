@@ -27,12 +27,29 @@
                 "testCourse": "Testkurses",
                 "realCourse": "echten Kurses",
                 "summary": {
-                    "title": "Aufgaben-Zusammenfassung",
-                    "numberOfStudentParticipations": "Anzahl der Studierendenteilnahmen",
-                    "numberOfAssessments": "Anzahl der Bewertungen",
-                    "numberOfCommunicationPosts": "Anzahl der Kommunikationsbeiträge",
-                    "numberOfAnswerPosts": "Anzahl der Antworten",
-                    "numberOfBuilds": "Anzahl der Builds"
+                    "title": "Was gelöscht wird",
+                    "category": {
+                        "studentWork": "Studierendenleistungen",
+                        "assessment": "Bewertung",
+                        "plagiarism": "Plagiatsprüfungen",
+                        "communication": "Kommunikation",
+                        "content": "Aufgabeninhalte und Verknüpfungen",
+                        "infrastructure": "Infrastruktur"
+                    },
+                    "numberOfStudentParticipations": "Teilnahmen von Studierenden",
+                    "numberOfTeams": "Teams",
+                    "numberOfSubmissions": "Abgaben",
+                    "numberOfStudentExams": "Klausuren von Studierenden, die diese Aufgabe enthalten",
+                    "numberOfResults": "Ergebnisse",
+                    "numberOfAssessments": "Manuelle Bewertungen",
+                    "numberOfComplaints": "Beschwerden und Feedback-Anfragen",
+                    "numberOfPlagiarismComparisons": "Plagiatsvergleiche",
+                    "numberOfCommunicationPosts": "Beiträge im Aufgabenkanal",
+                    "numberOfAnswerPosts": "Antworten im Aufgabenkanal",
+                    "numberOfExampleSubmissions": "Beispielabgaben",
+                    "numberOfCompetencyLinks": "Verknüpfte Kompetenzen",
+                    "numberOfLectureUnitLinks": "Verknüpfte Vorlesungseinheiten",
+                    "numberOfBuilds": "Build-Jobs"
                 }
             },
             "reset": {
@@ -83,8 +100,17 @@
                 "tabTitle": "Von dieser Instanz"
             },
             "importFromFile": {
-                "notSupportedExerciseType": "Der Import von Dateien wird für den Aufgabentyp {{ exerciseType }} nicht unterstützt.",
-                "tabTitle": "Aus einer Datei"
+                "tabTitle": "Aus einer Datei",
+                "description": "Wähle eine Zip-Datei, die du mit Exportieren in der Aufgabenübersicht eines Kurses heruntergeladen hast. Artemis öffnet dann den Aufgabeneditor mit den Einstellungen aus der Datei, sodass du sie vor dem Speichern prüfen kannst.",
+                "uploadForImport": "Aufgabe aus Datei importieren",
+                "fileCountError": "Wähle genau eine Datei.",
+                "fileTooBigError": "Die Datei {{ fileName }} ist zu groß. Die maximale Dateigröße beträgt 20 MB.",
+                "fileTypeNotSupportedError": "Der Dateityp wird nicht unterstützt. Wähle eine Datei mit der Endung .zip.",
+                "noExerciseDetailsJson": "Das Zip-Archiv enthält nicht genau eine JSON-Datei mit den Aufgabendetails.",
+                "exerciseTypeDoesntMatch": "Die Datei enthält keine Aufgabe des gewählten Typs.",
+                "missingImage": "Das Zip-Archiv enthält das Bild {{ fileName }} nicht.",
+                "imageUploadFailed": "Das Bild {{ fileName }} konnte nicht hochgeladen werden.",
+                "importFailed": "Der Aufgabenimport konnte nicht vorbereitet werden. Bitte versuche es erneut."
             },
             "exercise": "Aufgabe",
             "results": "Ergebnisse",
@@ -183,7 +209,6 @@
             "no": "Nein",
             "createAction": "Erstellen",
             "importAction": "Importieren",
-            "exportAction": "Exportieren",
             "difficulty": "Schwierigkeit",
             "noLevel": "Keine Angabe",
             "easy": "Leicht",

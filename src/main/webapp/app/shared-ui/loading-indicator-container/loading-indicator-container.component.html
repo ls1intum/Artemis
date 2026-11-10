@@ -1,10 +1,9 @@
 @if (isLoading()) {
-    <div class="d-flex justify-content-center spinner">
-        <div class="spinner-border" role="status">
-            <span class="visually-hidden" jhiTranslate="loading"></span>
-        </div>
+    <div class="flex justify-center spinner">
+        <tumaet-ui-progress-spinner [ariaLabel]="'loading' | artemisTranslate" />
     </div>
 } @else {
+    <!-- The page-height styles in global.scss target this wrapper, rather than projected content. -->
     <div>
         <ng-content />
     </div>

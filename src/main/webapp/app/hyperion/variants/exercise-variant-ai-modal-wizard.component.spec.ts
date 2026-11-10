@@ -10,7 +10,10 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { NEVER, Subject, of, throwError } from 'rxjs';
-import { MockComponent, MockPipe } from 'ng-mocks';
+import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
+import { provideHttpClient } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { EntityTitleService } from 'app/core/navbar/entity-title.service';
 import { typeIntoInputNumber } from 'src/test/javascript/spec/helpers/input-number-test-helpers';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ExerciseVariantAiModalWizardComponent } from 'app/hyperion/variants/exercise-variant-ai-modal-wizard.component';
@@ -58,7 +61,14 @@ describe('ExerciseVariantAiModalWizardComponent (exam path)', () => {
                 { provide: Router, useValue: routerMock },
                 { provide: ExerciseVariantGenerationService, useValue: generationServiceMock },
                 { provide: ExerciseVariantGroupService, useValue: groupServiceMock },
-                { provide: ExerciseService, useValue: { find: vi.fn().mockReturnValue(of({ body: undefined })) } },
+                {
+                    provide: ExerciseService,
+                    useValue: {
+                        find: vi.fn().mockReturnValue(of({ body: undefined })),
+                        findForExamManagement: vi.fn().mockReturnValue(of({ body: undefined })),
+                        findForStaff: vi.fn().mockReturnValue(of({ body: undefined })),
+                    },
+                },
                 {
                     provide: TranslateService,
                     useValue: { instant: (key: string) => key, get: (key: string) => of(key), onLangChange: of(), onTranslationChange: of(), onDefaultLangChange: of() },
@@ -77,6 +87,14 @@ describe('ExerciseVariantAiModalWizardComponent (exam path)', () => {
         fixture.componentRef.setInput('courseId', 7);
         fixture.componentRef.setInput('examExercise', true);
         fixture.componentRef.setInput('visible', true);
+    });
+
+    it('should choose exam management from the source exam flag before fetching the generated variant', () => {
+        const exercises = TestBed.inject(ExerciseService);
+        component['showResult'](99);
+        expect(exercises.findForExamManagement).toHaveBeenCalledExactlyOnceWith(99);
+        expect(exercises.findForStaff).not.toHaveBeenCalled();
+        expect(exercises.find).not.toHaveBeenCalled();
     });
 
     it('detects the exam context from the explicit input even without a nested exerciseGroup', () => {
@@ -126,6 +144,41 @@ describe('ExerciseVariantAiModalWizardComponent (exam path)', () => {
         expect(request.domainText).toBe('banking');
     });
 
+    it('shows a rejected start request as an analyzing failure without a completed variant', () => {
+        fixture.detectChanges();
+        component.changeDomain.set(true);
+        component.domainText.set('banking');
+        generationServiceMock.startGeneration.mockReturnValue(throwError(() => new Error('Unavailable')));
+        component.startGeneration();
+        fixture.detectChanges();
+        expect(component.failurePhase()).toBe('ANALYZING');
+        expect(component.failureDetail()).toBe('artemisApp.exerciseVariantGeneration.wizard.startFailed');
+        expect(component.jobPhase()).toBe('FAILED');
+        expect(component.wizardStep()).toBe(5);
+        expect(component.jobId()).toBeUndefined();
+    });
+
+    it('retains the failing live phase and failure detail when a monitored job fails', () => {
+        const events = new Subject<import('app/hyperion/services/exercise-variant-websocket.service').VariantGenerationEvent>();
+        generationServiceMock.jobEvents.mockReturnValue(events);
+        fixture.detectChanges();
+        component.changeDomain.set(true);
+        component.domainText.set('banking');
+        component.startGeneration();
+        events.next({ type: 'PHASE_CHANGED', phase: 'VERIFYING' });
+        events.next({ type: 'ATTEMPT', attempt: 1, maxAttempts: 3, detail: 'Checking build' });
+        events.next({ type: 'PHASE_CHANGED', phase: 'ANALYZING' });
+        expect(component.attempt()).toBeUndefined();
+        expect(component.progressDetail()).toBeUndefined();
+        events.next({ type: 'FAILED', phase: 'FAILED', detail: 'Build could not be repaired' });
+        fixture.detectChanges();
+        expect(component.failurePhase()).toBe('ANALYZING');
+        expect(component.failureDetail()).toBe('Build could not be repaired');
+        expect(component.jobPhase()).toBe('FAILED');
+        expect(component.wizardStep()).toBe(5);
+        expect(generationServiceMock.getJobDetail).toHaveBeenCalledWith('job-exam');
+    });
+
     afterEach(() => {
         fixture.destroy();
         TestBed.resetTestingModule();
@@ -162,7 +215,10 @@ describe('ExerciseVariantAiModalWizardComponent (new-group placement availabilit
                     },
                 },
                 { provide: ExerciseVariantGroupService, useValue: groupServiceMock },
-                { provide: ExerciseService, useValue: { find: vi.fn().mockReturnValue(of({ body: undefined })) } },
+                {
+                    provide: ExerciseService,
+                    useValue: { findForExamManagement: vi.fn().mockReturnValue(of({ body: undefined })), findForStaff: vi.fn().mockReturnValue(of({ body: undefined })) },
+                },
                 {
                     provide: TranslateService,
                     useValue: { instant: (key: string) => key, get: (key: string) => of(key), onLangChange: of(), onTranslationChange: of(), onDefaultLangChange: of() },
@@ -413,7 +469,10 @@ describe('ExerciseVariantAiModalWizardComponent (storytelling)', () => {
                     },
                 },
                 { provide: ExerciseVariantGroupService, useValue: { getGroupsForCourse: vi.fn().mockReturnValue(of([])) } },
-                { provide: ExerciseService, useValue: { find: vi.fn().mockReturnValue(of({ body: undefined })) } },
+                {
+                    provide: ExerciseService,
+                    useValue: { findForExamManagement: vi.fn().mockReturnValue(of({ body: undefined })), findForStaff: vi.fn().mockReturnValue(of({ body: undefined })) },
+                },
                 {
                     provide: TranslateService,
                     useValue: { instant: (key: string) => key, get: (key: string) => of(key), onLangChange: of(), onTranslationChange: of(), onDefaultLangChange: of() },
@@ -535,7 +594,10 @@ describe('ExerciseVariantAiModalWizardComponent (step-output history)', () => {
                     },
                 },
                 { provide: ExerciseVariantGroupService, useValue: { getGroupsForCourse: vi.fn().mockReturnValue(of([])) } },
-                { provide: ExerciseService, useValue: { find: vi.fn().mockReturnValue(of({ body: undefined })) } },
+                {
+                    provide: ExerciseService,
+                    useValue: { findForExamManagement: vi.fn().mockReturnValue(of({ body: undefined })), findForStaff: vi.fn().mockReturnValue(of({ body: undefined })) },
+                },
                 {
                     provide: TranslateService,
                     useValue: { instant: (key: string) => key, get: (key: string) => of(key), onLangChange: of(), onTranslationChange: of(), onDefaultLangChange: of() },
@@ -620,7 +682,10 @@ describe('ExerciseVariantAiModalWizardComponent (job-detail refresh resilience)'
                     },
                 },
                 { provide: ExerciseVariantGroupService, useValue: { getGroupsForCourse: vi.fn().mockReturnValue(of([])) } },
-                { provide: ExerciseService, useValue: { find: vi.fn().mockReturnValue(of({ body: undefined })) } },
+                {
+                    provide: ExerciseService,
+                    useValue: { findForExamManagement: vi.fn().mockReturnValue(of({ body: undefined })), findForStaff: vi.fn().mockReturnValue(of({ body: undefined })) },
+                },
                 {
                     provide: TranslateService,
                     useValue: { instant: (key: string) => key, get: (key: string) => of(key), onLangChange: of(), onTranslationChange: of(), onDefaultLangChange: of() },
@@ -682,7 +747,10 @@ describe('ExerciseVariantAiModalWizardComponent (fresh reopen for parallel gener
                     },
                 },
                 { provide: ExerciseVariantGroupService, useValue: { getGroupsForCourse: vi.fn().mockReturnValue(of([])) } },
-                { provide: ExerciseService, useValue: { find: vi.fn().mockReturnValue(of({ body: undefined })) } },
+                {
+                    provide: ExerciseService,
+                    useValue: { findForExamManagement: vi.fn().mockReturnValue(of({ body: undefined })), findForStaff: vi.fn().mockReturnValue(of({ body: undefined })) },
+                },
                 {
                     provide: TranslateService,
                     useValue: { instant: (key: string) => key, get: (key: string) => of(key), onLangChange: of(), onTranslationChange: of(), onDefaultLangChange: of() },
@@ -762,7 +830,10 @@ describe('ExerciseVariantAiModalWizardComponent (late job-detail response)', () 
                     },
                 },
                 { provide: ExerciseVariantGroupService, useValue: { getGroupsForCourse: vi.fn().mockReturnValue(of([])) } },
-                { provide: ExerciseService, useValue: { find: vi.fn().mockReturnValue(of({ body: undefined })) } },
+                {
+                    provide: ExerciseService,
+                    useValue: { findForExamManagement: vi.fn().mockReturnValue(of({ body: undefined })), findForStaff: vi.fn().mockReturnValue(of({ body: undefined })) },
+                },
                 {
                     provide: TranslateService,
                     useValue: { instant: (key: string) => key, get: (key: string) => of(key), onLangChange: of(), onTranslationChange: of(), onDefaultLangChange: of() },
@@ -892,7 +963,7 @@ describe('ExerciseVariantAiModalWizardComponent (late job-detail response)', () 
     it('discards a variant lookup that arrives after the wizard was reset for a new generation', () => {
         const variantLookup = new Subject<any>();
         const exerciseService = TestBed.inject(ExerciseService);
-        vi.spyOn(exerciseService, 'find').mockReturnValue(variantLookup as any);
+        vi.spyOn(exerciseService, 'findForStaff').mockReturnValue(variantLookup as any);
 
         component.changeDomain.set(true);
         component.domainText.set('space');
@@ -900,7 +971,7 @@ describe('ExerciseVariantAiModalWizardComponent (late job-detail response)', () 
         component.startGeneration();
         // The terminal event starts the lookup of the generated exercise; its response is still pending.
         jobEvents.next({ type: 'DONE', phase: 'COMPLETED', variantExerciseId: 4711 });
-        expect(exerciseService.find).toHaveBeenCalledWith(4711);
+        expect(exerciseService.findForStaff).toHaveBeenCalledWith(4711);
 
         // Reopening for a parallel generation resets the wizard while the lookup is still in flight.
         component.onClose(false);
@@ -942,7 +1013,10 @@ describe('ExerciseVariantAiModalWizardComponent (open in editor & flagged drafts
                     },
                 },
                 { provide: ExerciseVariantGroupService, useValue: { getGroupsForCourse: vi.fn().mockReturnValue(of([])) } },
-                { provide: ExerciseService, useValue: { find: vi.fn().mockReturnValue(of({ body: undefined })) } },
+                {
+                    provide: ExerciseService,
+                    useValue: { findForExamManagement: vi.fn().mockReturnValue(of({ body: undefined })), findForStaff: vi.fn().mockReturnValue(of({ body: undefined })) },
+                },
                 {
                     provide: TranslateService,
                     useValue: { instant: (key: string) => key, get: (key: string) => of(key), onLangChange: of(), onTranslationChange: of(), onDefaultLangChange: of() },
@@ -1041,7 +1115,13 @@ describe('ExerciseVariantAiModalWizardComponent (cancelled with a surviving clon
                     },
                 },
                 { provide: ExerciseVariantGroupService, useValue: { getGroupsForCourse: vi.fn().mockReturnValue(of([])) } },
-                { provide: ExerciseService, useValue: { find: vi.fn().mockReturnValue(of({ body: { id: 4711, type: ExerciseType.QUIZ, course: { id: 9 } } as Exercise })) } },
+                {
+                    provide: ExerciseService,
+                    useValue: {
+                        findForExamManagement: vi.fn().mockReturnValue(of({ body: undefined })),
+                        findForStaff: vi.fn().mockReturnValue(of({ body: { id: 4711, type: ExerciseType.QUIZ, course: { id: 9 } } as Exercise })),
+                    },
+                },
                 {
                     provide: TranslateService,
                     useValue: { instant: (key: string) => key, get: (key: string) => of(key), onLangChange: of(), onTranslationChange: of(), onDefaultLangChange: of() },
@@ -1226,5 +1306,46 @@ describe('ExerciseVariantAiModalWizardComponent (shared programming authoring)',
         started.next({ jobId: 'run', exerciseId: 81 });
         expect(track).not.toHaveBeenCalled();
         expect(routerMock.navigate).not.toHaveBeenCalled();
+    });
+});
+
+describe('Exercise variant wizard stored monitor source', () => {
+    it.each(['SAME_EXAM_GROUP', 'STANDALONE'] as const)('selects the exercise read from the stored %s request before fetching the variant', async (placement) => {
+        const detail = {
+            job: { jobId: 'stored-job', phase: 'COMPLETED', variantExerciseId: 99, sourceExerciseTitle: 'Source', exerciseType: 'text' },
+            stepOutputs: {},
+            request: { domainText: 'Space', placement: { type: placement } },
+        };
+        await TestBed.configureTestingModule({
+            imports: [ExerciseVariantAiModalWizardComponent],
+            providers: [
+                provideHttpClient(),
+                provideHttpClientTesting(),
+                { provide: Router, useValue: routerMock },
+                MockProvider(AccountService),
+                MockProvider(EntityTitleService),
+                MockProvider(ExerciseVariantGroupService),
+                { provide: ExerciseVariantGenerationService, useValue: { getJobDetail: vi.fn().mockReturnValue(of(detail)) } },
+                { provide: TranslateService, useValue: { instant: (key: string) => key } },
+            ],
+        })
+            .overrideTemplate(ExerciseVariantAiModalWizardComponent, '')
+            .compileComponents();
+        const fixture = TestBed.createComponent(ExerciseVariantAiModalWizardComponent);
+        fixture.componentRef.setInput('monitorJobId', 'stored-job');
+        fixture.componentRef.setInput('visible', true);
+        fixture.detectChanges();
+        const http = TestBed.inject(HttpTestingController);
+        const request = http.expectOne((r) => r.url.startsWith('api/exercise/exercises/99'));
+        request.flush({
+            id: 99,
+            type: ExerciseType.TEXT,
+            ...(placement === 'SAME_EXAM_GROUP' ? { exerciseGroup: { id: 8, exam: { id: 9, course: { id: 7 } } } } : { course: { id: 7 } }),
+        });
+        http.verify();
+        expect(request.request.url).toBe(`api/exercise/exercises/99/${placement === 'SAME_EXAM_GROUP' ? 'for-exam-management' : 'for-staff'}`);
+        expect(request.request.params.keys()).toEqual([]);
+        expect(fixture.componentInstance.generatedVariant()?.id).toBe(99);
+        fixture.destroy();
     });
 });

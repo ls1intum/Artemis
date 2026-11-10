@@ -61,6 +61,8 @@ export class OnlineUnitFormComponent extends LectureUnitReleaseDateFormDirective
 
     formData = input<OnlineUnitFormData>();
     isEditMode = input<boolean>(false);
+    /** The course of the lecture the unit belongs to, needed by the server to authorize fetching the metadata of the link. */
+    readonly courseId = input.required<number>();
 
     formSubmitted = output<OnlineUnitFormData>();
 
@@ -160,7 +162,7 @@ export class OnlineUnitFormComponent extends LectureUnitReleaseDateFormDirective
 
         if (this.sourceControl?.valid) {
             this.onlineUnitService
-                .getOnlineResource(this.sourceControl.value)
+                .getOnlineResource(this.sourceControl.value, this.courseId())
                 .pipe(map((response: HttpResponse<OnlineResourceDTO>) => response.body!))
                 .subscribe({
                     next: (onlineResource) => {

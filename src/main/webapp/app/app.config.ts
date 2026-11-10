@@ -5,7 +5,16 @@ import { FullscreenOverlayContainer, OVERLAY_DEFAULT_CONFIG, OverlayContainer } 
 import { ScrollingModule } from '@angular/cdk/scrolling';
 import { DatePipe } from '@angular/common';
 import { HTTP_INTERCEPTORS, provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
-import { ApplicationConfig, ErrorHandler, LOCALE_ID, importProvidersFrom, inject, provideAppInitializer, provideZonelessChangeDetection } from '@angular/core';
+import {
+    ApplicationConfig,
+    ErrorHandler,
+    LOCALE_ID,
+    importProvidersFrom,
+    inject,
+    provideAppInitializer,
+    provideBrowserGlobalErrorListeners,
+    provideZonelessChangeDetection,
+} from '@angular/core';
 import { Title } from '@angular/platform-browser';
 import { RouteReuseStrategy, provideRouter, withPreloading, withRouterConfig } from '@angular/router';
 import { ServiceWorkerModule } from '@angular/service-worker';
@@ -17,6 +26,7 @@ import { ArtemisVersionInterceptor, WINDOW_INJECTOR_TOKEN } from 'app/core/inter
 import { AuthExpiredInterceptor } from 'app/core/interceptor/auth-expired.interceptor';
 import { BrowserFingerprintInterceptor } from 'app/core/interceptor/browser-fingerprint.interceptor.service';
 import { ErrorHandlerInterceptor } from 'app/core/interceptor/errorhandler.interceptor';
+import { ClientErrorHandler } from 'app/core/error-reporting/client-error.handler';
 import { NotificationInterceptor } from 'app/core/interceptor/notification.interceptor';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { AccountService } from 'app/core/auth/account.service';
@@ -25,7 +35,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { JhiLanguageHelper } from 'app/core/language/shared/language.helper';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { lastValueFrom } from 'rxjs';
-import { SentryErrorHandler } from 'app/core/sentry/sentry.error-handler';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { LoadingNotificationInterceptor } from 'app/core/loading-notification/loading-notification.interceptor';
 import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.utils';
@@ -57,6 +66,8 @@ export const appConfig: ApplicationConfig = {
             },
         }),
         provideZonelessChangeDetection(),
+        // Without zone.js nothing else forwards an uncaught error or an unhandled promise rejection to the ErrorHandler, which reports it
+        provideBrowserGlobalErrorListeners(),
 
         // TODO: we should add withComponentInputBinding here
         //  this would set non-route inputs to undefined, which not all components can handle, currently
@@ -73,11 +84,7 @@ export const appConfig: ApplicationConfig = {
         provideHttpClient(withInterceptorsFromDi()),
         Title,
         { provide: LOCALE_ID, useValue: 'en' },
-        // Sentry's TraceService / BrowserTracing is no longer eagerly wired up from here. The
-        // tracing integration is attached by `SentryErrorHandler.initSentry()` once the profile
-        // is known, so production traffic keeps full Sentry performance coverage while the
-        // initial JS bundle avoids the router-instrumentation overhead.
-        { provide: ErrorHandler, useClass: SentryErrorHandler },
+        { provide: ErrorHandler, useClass: ClientErrorHandler },
         { provide: WINDOW_INJECTOR_TOKEN, useValue: window },
         DatePipe,
         provideAppInitializer(() => {
@@ -102,9 +109,9 @@ export const appConfig: ApplicationConfig = {
                       // from booting. We log so the failure is observable but recover by rendering
                       // the landing page (or sign-in if the user navigates there manually).
                       .catch((error) => {
-                          // Runs inside APP_INITIALIZER, before AppComponent initializes Sentry (see app.main), so
-                          // captureException would be a no-op here; log to the console so the failure stays observable.
-                          // eslint-disable-next-line no-console, no-undef -- app-initializer diagnostic; Sentry is not yet initialized
+                          // Runs inside APP_INITIALIZER, before the application has started; log to the console so the
+                          // failure stays observable.
+                          // eslint-disable-next-line no-console, no-undef -- app-initializer diagnostic
                           console.warn('SAML2 second-step exchange failed during app initialization', error);
                           return undefined;
                       })
@@ -125,9 +132,9 @@ export const appConfig: ApplicationConfig = {
             // and a flaky i18n endpoint must degrade gracefully (missing-key placeholders, same as
             // the previous fire-and-forget behavior) rather than block the SPA from booting at all.
             const translationsLoaded = lastValueFrom(translateService.use(languageKey)).catch((error) => {
-                // Runs inside APP_INITIALIZER, before AppComponent initializes Sentry (see app.main), so
-                // captureException would be a no-op here; log to the console so a flaky i18n load stays observable.
-                // eslint-disable-next-line no-console, no-undef -- app-initializer diagnostic; Sentry is not yet initialized
+                // Runs inside APP_INITIALIZER, before the application has started; log to the console so a flaky
+                // i18n load stays observable.
+                // eslint-disable-next-line no-console, no-undef -- app-initializer diagnostic
                 console.warn('Translation load failed during app initialization', error);
                 return undefined;
             });

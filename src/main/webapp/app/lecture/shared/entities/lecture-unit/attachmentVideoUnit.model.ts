@@ -12,11 +12,15 @@ export class AttachmentVideoUnit extends LectureUnit {
     public description?: string;
     public attachment?: Attachment;
     public slides?: Slide[];
+    /** The previous PDF revision still owns the slide metadata while the replacement is being processed. */
+    public slideMetadataPending?: boolean;
     public videoSource?: string;
     public videoSourceType?: 'TUM_LIVE' | 'YOUTUBE' | null;
     public youtubeVideoId?: string | null;
     public transcriptionProperties?: LectureTranscriptionDTO;
     public attachmentUpdateIntent?: AttachmentUpdateIntent;
+    /** Sent with an update: the video link the editor was loaded with. The server changes the link only if the editor changed it, and only if the unit still has this one. */
+    public loadedVideoSource?: string;
 
     constructor() {
         super(LectureUnitType.ATTACHMENT_VIDEO);

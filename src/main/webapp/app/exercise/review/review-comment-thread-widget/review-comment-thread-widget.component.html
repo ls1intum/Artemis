@@ -1,5 +1,5 @@
 <div class="monaco-review-comment-widget monaco-review-comment-thread" [class.monaco-review-comment-thread--collapsed]="!showThreadBody()">
-    <p-confirmdialog [key]="deleteCommentDialogKey()" appendTo="body" />
+    <tumaet-ui-confirm-dialog [key]="deleteCommentDialogKey()" />
     <div class="monaco-review-comment-thread-header">
         <div class="monaco-review-comment-thread-title">
             @if (showLocationWarning()) {
@@ -43,7 +43,16 @@
                 </span>
             }
         </div>
-        <button pButton type="button" text size="small" class="monaco-review-comment-thread-toggle" (click)="toggleThreadBody()">
+        <button
+            variant="text"
+            tumAetUiButton
+            type="button"
+            size="small"
+            class="monaco-review-comment-thread-toggle"
+            [attr.aria-label]="'artemisApp.review.threadTitle' | artemisTranslate"
+            [attr.aria-expanded]="showThreadBody()"
+            (click)="toggleThreadBody()"
+        >
             <span class="monaco-review-comment-thread-toggle-icon" [class.monaco-review-comment-thread-toggle--collapsed]="!showThreadBody()" aria-hidden="true"></span>
         </button>
     </div>
@@ -72,61 +81,50 @@
                     </div>
                     <div class="monaco-review-comment-menu">
                         <button
-                            pButton
+                            variant="text"
+                            tumAetUiButton
                             type="button"
-                            text
                             size="small"
                             class="monaco-review-comment-menu-trigger"
                             [attr.aria-label]="'artemisApp.review.commentMenu' | artemisTranslate"
                             [title]="'artemisApp.review.commentMenu' | artemisTranslate"
                             [disabled]="commentVm.comment.id === undefined"
                             aria-haspopup="true"
-                            (click)="commentMenu.toggle($event)"
+                            [tumAetUiMenuTrigger]="commentMenuContent"
+                            #commentMenu
                         >
                             <fa-icon [icon]="faEllipsisVertical" />
                         </button>
-                        <p-menu
-                            #commentMenu
-                            [popup]="true"
-                            appendTo="body"
-                            styleClass="monaco-review-comment-menu-overlay"
-                            [model]="isUserComment(commentVm.comment) ? userCommentMenuItems() : nonUserCommentMenuItems()"
-                        >
-                            <ng-template #item let-item>
-                                <button
-                                    pButton
-                                    type="button"
-                                    text
-                                    size="small"
-                                    class="monaco-review-comment-menu-item"
-                                    [class.monaco-review-comment-menu-item-delete]="item.id === 'delete'"
-                                    [attr.aria-label]="(item.id === 'edit' ? 'artemisApp.review.editComment' : 'artemisApp.review.deleteComment') | artemisTranslate"
-                                    (click)="handleCommentMenuAction(item.id, commentVm.comment); commentMenu.hide()"
-                                >
-                                    @if (item.id === 'edit') {
-                                        <fa-icon [icon]="faPen" />
-                                        <span>{{ 'artemisApp.review.editComment' | artemisTranslate }}</span>
-                                    } @else {
-                                        <fa-icon [icon]="faTrash" />
-                                        <span>{{ 'artemisApp.review.deleteComment' | artemisTranslate }}</span>
-                                    }
-                                </button>
-                            </ng-template>
-                        </p-menu>
+                        <ng-template #commentMenuContent>
+                            <tumaet-ui-menu>
+                                @for (item of isUserComment(commentVm.comment) ? userCommentMenuItems() : nonUserCommentMenuItems(); track item.id) {
+                                    <button
+                                        tumAetUiMenuItem
+                                        type="button"
+                                        class="monaco-review-comment-menu-item"
+                                        [class.text-state-danger]="item.id === 'delete'"
+                                        (triggered)="handleCommentMenuAction(item.id, commentVm.comment)"
+                                    >
+                                        <fa-icon [icon]="item.id === 'edit' ? faPen : faTrash" /><span>{{ item.label }}</span>
+                                    </button>
+                                }
+                            </tumaet-ui-menu>
+                        </ng-template>
                     </div>
                 </div>
                 @if (editingCommentId() === commentVm.comment.id) {
                     <textarea
+                        tumAetUiInput
                         [attr.aria-label]="'accessibility.editComment' | artemisTranslate"
                         class="monaco-review-comment-textarea"
                         [ngModel]="editText()"
                         (ngModelChange)="editText.set($event)"
                     ></textarea>
                     <div class="monaco-review-comment-actions">
-                        <button pButton type="button" severity="secondary" size="small" (click)="cancelEditing()">
+                        <button tumAetUiButton type="button" severity="secondary" size="small" (click)="cancelEditing()">
                             {{ 'artemisApp.review.editCancel' | artemisTranslate }}
                         </button>
-                        <button pButton type="button" size="small" (click)="saveEditing()">
+                        <button tumAetUiButton type="button" size="small" (click)="saveEditing()">
                             {{ 'artemisApp.review.editSubmit' | artemisTranslate }}
                         </button>
                     </div>
@@ -151,7 +149,7 @@
                                         </span>
                                     }
                                     <button
-                                        pButton
+                                        tumAetUiButton
                                         type="button"
                                         size="small"
                                         class="monaco-review-comment-inline-diff-apply"
@@ -182,9 +180,9 @@
                             <span class="monaco-review-comment-related-location-entry">
                                 <span class="monaco-review-comment-related-location-label">{{ location.locationLabel }}</span>
                                 <button
-                                    pButton
+                                    variant="text"
+                                    tumAetUiButton
                                     type="button"
-                                    text
                                     size="small"
                                     class="monaco-review-comment-related-location-go-to"
                                     [attr.aria-label]="'artemisApp.review.goToRelatedLocation' | artemisTranslate"
@@ -202,6 +200,7 @@
         <div class="monaco-review-comment-reply">
             <div class="monaco-review-comment-separator"></div>
             <textarea
+                tumAetUiInput
                 [attr.aria-label]="'artemisApp.review.replyPlaceholder' | artemisTranslate"
                 class="monaco-review-comment-textarea monaco-review-comment-textarea--compact"
                 [placeholder]="'artemisApp.review.replyPlaceholder' | artemisTranslate"
@@ -236,7 +235,7 @@
                     }
                 }
                 <div class="monaco-review-comment-resolve-controls">
-                    <button pButton type="button" severity="secondary" size="small" class="monaco-review-comment-resolve-main-button" (click)="toggleResolved()">
+                    <button tumAetUiButton type="button" severity="secondary" size="small" class="monaco-review-comment-resolve-main-button" (click)="toggleResolved()">
                         @if (thread().resolved) {
                             {{ 'artemisApp.review.unresolveThread' | artemisTranslate }}
                         } @else {
@@ -245,34 +244,30 @@
                     </button>
                     @if (resolveGroupMenuItems().length > 0) {
                         <button
-                            pButton
+                            tumAetUiButton
                             type="button"
                             severity="secondary"
                             size="small"
                             class="monaco-review-comment-resolve-menu-trigger"
                             [attr.aria-label]="'artemisApp.review.resolveThreadOptions' | artemisTranslate"
                             [title]="'artemisApp.review.resolveThreadOptions' | artemisTranslate"
-                            (click)="resolveGroupMenu.toggle($event)"
+                            [tumAetUiMenuTrigger]="resolveGroupMenuContent"
+                            #resolveGroupMenu
                         >
                             <fa-icon [icon]="faChevronDown" />
                         </button>
-                        <p-menu #resolveGroupMenu [popup]="true" appendTo="body" styleClass="monaco-review-comment-menu-overlay" [model]="resolveGroupMenuItems()">
-                            <ng-template #item let-item>
-                                <button
-                                    pButton
-                                    type="button"
-                                    text
-                                    size="small"
-                                    class="monaco-review-comment-menu-item"
-                                    (click)="handleResolveGroupMenuAction(item.id); resolveGroupMenu.hide()"
-                                >
-                                    <span>{{ item.label }}</span>
-                                </button>
-                            </ng-template>
-                        </p-menu>
+                        <ng-template #resolveGroupMenuContent>
+                            <tumaet-ui-menu>
+                                @for (item of resolveGroupMenuItems(); track item.id) {
+                                    <button tumAetUiMenuItem type="button" class="monaco-review-comment-menu-item" (triggered)="handleResolveGroupMenuAction(item.id)">
+                                        {{ item.label }}
+                                    </button>
+                                }
+                            </tumaet-ui-menu>
+                        </ng-template>
                     }
                 </div>
-                <button pButton type="button" size="small" (click)="submitReply()">
+                <button tumAetUiButton type="button" size="small" (click)="submitReply()">
                     {{ 'artemisApp.review.replySubmit' | artemisTranslate }}
                 </button>
             </div>

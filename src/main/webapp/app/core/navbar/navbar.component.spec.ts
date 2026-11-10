@@ -180,6 +180,26 @@ describe('NavbarComponent', () => {
         vi.restoreAllMocks();
     });
 
+    it('keeps course enrollment reachable through mobile account navigation', () => {
+        vi.spyOn(TestBed.inject(AccountService), 'isAuthenticated').mockReturnValue(true);
+        fixture.detectChanges();
+        component.currAccount.set({ login: 'student' } as User);
+        component.iconsMovedToMenu.set(true);
+        component.isNavbarCollapsed.set(false);
+        fixture.detectChanges();
+
+        const enrollmentLink: HTMLAnchorElement = fixture.nativeElement.querySelector('[data-testid="mobile-course-enrollment"]');
+        expect(enrollmentLink).toBeTruthy();
+        enrollmentLink.click();
+        expect(router.createUrlTree).toHaveBeenCalledWith(['/courses/enroll'], expect.any(Object));
+        expect(router.navigateByUrl).toHaveBeenCalled();
+        expect(component.isNavbarCollapsed()).toBe(true);
+
+        component.isExamActive.set(true);
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelector('[data-testid="mobile-course-enrollment"]')).toBeNull();
+    });
+
     it('should initialize component', () => {
         fixture.detectChanges();
         expect(component).not.toBeNull();
@@ -208,6 +228,12 @@ describe('NavbarComponent', () => {
         const titleElement = fixture.debugElement.query(By.css('#test-course-title'));
         expect(titleElement).toBeTruthy();
         expect(titleElement.nativeElement.textContent).toBe('Course1');
+        expect(component.navigationContextIndicatorData()).toEqual({
+            type: 'course',
+            routerLink: ['/courses', 1],
+            title: 'Course1',
+            imagePath: 'path/to/icon.png',
+        });
         expect(fixture.nativeElement.querySelector('jhi-image')).not.toBeNull();
     });
 
@@ -218,6 +244,28 @@ describe('NavbarComponent', () => {
 
         expect(fixture.nativeElement.querySelector('jhi-image')).toBeNull();
         expect(fixture.nativeElement.querySelector('.course-circle')?.textContent.trim()).toBe('C');
+    });
+
+    it.each([
+        ['/admin/user-management', 'administration', '/admin', 'global.menu.admin.main'],
+        ['/user-settings/credentials', 'userSettings', '/user-settings', 'artemisApp.userSettings.userSettings'],
+    ] as const)('should display the navbar context without an image on %s', (url, type, routerLink, translationKey) => {
+        router.setUrl(url);
+
+        fixture.detectChanges();
+
+        expect(component.navigationContextIndicatorData()).toEqual({ type, routerLink, translationKey });
+        expect(fixture.nativeElement.querySelector('#test-navbar-context-title')).not.toBeNull();
+        expect(fixture.nativeElement.querySelector('jhi-image')).toBeNull();
+    });
+
+    it('should not display a navbar context outside administration and user settings', () => {
+        router.setUrl('/courses');
+
+        fixture.detectChanges();
+
+        expect(component.navigationContextIndicatorData()).toBeUndefined();
+        expect(fixture.nativeElement.querySelector('#test-navbar-context-title')).toBeNull();
     });
 
     it('should link the current course to the management overview when in a management route', () => {
@@ -573,6 +621,15 @@ describe('NavbarComponent', () => {
             });
         });
 
+        it('ignores the URL fragment when building the breadcrumbs', () => {
+            router.setUrl('/course-management/1/programming-exercises/45#artemisApp.programmingExercise.wizardMode.detailedSteps.difficultyStepTitle');
+            fixture.detectChanges();
+
+            const uris = component.breadcrumbs().map((crumb) => crumb.uri);
+            expect(uris.every((uri) => !uri.includes('#'))).toBe(true);
+            expect(component.breadcrumbs().some((crumb) => crumb.label.includes('difficultyStepTitle') || crumb.label.includes('45#'))).toBe(false);
+        });
+
         it.each(['/17', '/17/exercises/42'])('ends the breadcrumbs at the presentations overview for the selected presentation route %s', (suffix) => {
             router.setUrl(`/course-management/1/presentations${suffix}`);
             fixture.detectChanges();
@@ -741,16 +798,33 @@ describe('NavbarComponent', () => {
             } as MockBreadcrumb);
         });
 
+        it('should translate the Athena settings breadcrumb', () => {
+            router.setUrl('/course-management/1/athena-settings');
+
+            fixture.detectChanges();
+
+            expect(component.breadcrumbs()).toHaveLength(3);
+            expect(component.breadcrumbs()[0]).toEqual(courseOverviewCrumb);
+            expect(component.breadcrumbs()[1]).toEqual(testCourseCrumb);
+            expect(component.breadcrumbs()[2]).toEqual({
+                label: 'artemisApp.course.athenaConfig.settingsPage.title',
+                translate: true,
+                uri: '/course-management/1/athena-settings/',
+            } as MockBreadcrumb);
+        });
+
         it('should show the exercise title and correct exercise link for generic exercise routes', () => {
             const exerciseService = TestBed.inject(ExerciseService);
-            vi.spyOn(exerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: { title: 'Programming Exercise', type: ExerciseType.PROGRAMMING } as Exercise })));
+            vi.spyOn(exerciseService, 'findForStaff').mockReturnValue(
+                of(new HttpResponse({ body: { title: 'Programming Exercise', type: ExerciseType.PROGRAMMING } as Exercise })),
+            );
             const testUrl = '/course-management/1/exercises/2';
             router.setUrl(testUrl);
 
             fixture.detectChanges();
 
-            expect(exerciseService.find).toHaveBeenCalledOnce();
-            expect(exerciseService.find).toHaveBeenCalledWith(2);
+            expect(exerciseService.findForStaff).toHaveBeenCalledOnce();
+            expect(exerciseService.findForStaff).toHaveBeenCalledWith(2);
             expect(component.breadcrumbs()).toHaveLength(4);
             expect(component.breadcrumbs()[3]).toEqual({
                 label: 'Programming Exercise',

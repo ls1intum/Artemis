@@ -89,6 +89,8 @@
                                             "
                                         >
                                             <tumaet-ui-button
+                                                data-button-intent="destructive"
+                                                data-button-intent-reason="Stops the selected generation job"
                                                 severity="danger"
                                                 variant="outlined"
                                                 size="small"
@@ -139,7 +141,13 @@
             <tumaet-ui-button severity="secondary" variant="outlined" [disabled]="cancelling()" (clicked)="cancelDialogVisible.set(false)"
                 ><span jhiTranslate="artemisApp.hyperion.workers.keepRunning"></span
             ></tumaet-ui-button>
-            <tumaet-ui-button severity="danger" [disabled]="!canSubmitCancellation()" (clicked)="cancelGeneration()" data-testid="hyperion-admin-confirm-cancel"
+            <tumaet-ui-button
+                data-button-intent="destructive"
+                data-button-intent-reason="Stops the selected generation job"
+                severity="danger"
+                [disabled]="!canSubmitCancellation()"
+                (clicked)="cancelGeneration()"
+                data-testid="hyperion-admin-confirm-cancel"
                 ><span jhiTranslate="artemisApp.hyperion.workers.cancel"></span
             ></tumaet-ui-button>
         </div>

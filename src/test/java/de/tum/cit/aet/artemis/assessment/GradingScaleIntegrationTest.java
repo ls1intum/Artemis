@@ -35,11 +35,15 @@ import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
+import de.tum.cit.aet.artemis.exercise.util.AsyncDeletionTestUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentBatchTest;
 
 class GradingScaleIntegrationTest extends AbstractSpringIntegrationIndependentBatchTest {
 
     private static final String TEST_PREFIX = "gradingscale";
+
+    @Autowired
+    private AsyncDeletionTestUtilService asyncDeletionTestUtilService;
 
     @Autowired
     private GradingScaleRepository gradingScaleRepository;
@@ -102,10 +106,30 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationIndependentBa
     }
 
     /**
+     * The exam endpoints must refuse an exam that does not belong to the course of the path, even if the user is an instructor of that course
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testExamGradingScaleEndpointsRejectExamOfOtherCourse() throws Exception {
+        var instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
+        Course otherCourse = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
+        userUtilService.enrollUserInCourse(instructor, otherCourse, CourseRole.INSTRUCTOR);
+        gradeSteps = gradingScaleUtilService.generateGradeStepSet(examGradingScale, true);
+        examGradingScale.setGradeSteps(gradeSteps);
+        gradingScaleRepository.save(examGradingScale);
+
+        String url = "/api/assessment/courses/" + otherCourse.getId() + "/exams/" + exam.getId() + "/grading-scale";
+        request.get(url, HttpStatus.CONFLICT, GradingScaleDTO.class);
+        request.post(url, toDTO(examGradingScale, null), HttpStatus.CONFLICT);
+        request.put(url, toDTO(examGradingScale, null), HttpStatus.CONFLICT);
+        request.delete(url, HttpStatus.CONFLICT);
+    }
+
+    /**
      * Test get request for non-existing grading scale
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetGradingScaleForCourseNotFound() throws Exception {
         request.get("/api/assessment/courses/" + course.getId() + "/grading-scale", HttpStatus.OK, Void.class);
     }
@@ -123,7 +147,7 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationIndependentBa
      * Test get request for a grading scale
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetGradingScaleForCourse() throws Exception {
         courseGradingScale.setGradeSteps(Set.of());
         gradingScaleRepository.save(courseGradingScale);
@@ -137,7 +161,7 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationIndependentBa
      * Test get request for non-existing grading scale
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetGradingScaleForExamNotFound() throws Exception {
         request.get("/api/assessment/courses/" + course.getId() + "/exams/" + exam.getId() + "/grading-scale", HttpStatus.OK, Void.class);
     }
@@ -146,7 +170,7 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationIndependentBa
      * Test get request for a grading scale
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetGradingScaleForExam() throws Exception {
         examGradingScale.setGradeSteps(Set.of());
         gradingScaleRepository.save(examGradingScale);
@@ -161,7 +185,7 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationIndependentBa
      * Test post request for existing grading scale
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testSaveGradingScaleForCourseGradingScaleAlreadyExists() throws Exception {
         gradingScaleRepository.save(courseGradingScale);
 
@@ -172,7 +196,7 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationIndependentBa
      * Test post-request for a grading scale without set grade steps
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testSaveGradingScaleForCourseGradeStepsAreNotSet() throws Exception {
         courseGradingScale.setGradeSteps(Set.of());
 
@@ -183,7 +207,7 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationIndependentBa
      * Test post request for existing grading scale
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testSaveGradingScaleForExamGradingScaleAlreadyExists() throws Exception {
         gradingScaleRepository.save(examGradingScale);
 
@@ -194,7 +218,7 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationIndependentBa
      * Test post-request for a grading scale without set grade steps
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testSaveGradingScaleForExamGradeStepsAreNotSet() throws Exception {
         examGradingScale.setGradeSteps(Set.of());
 
@@ -205,7 +229,7 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationIndependentBa
      * Test post-request with invalid grade steps
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testSaveGradingScaleForCourseInvalidGradeSteps() throws Exception {
         gradeSteps = gradingScaleUtilService.generateGradeStepSet(courseGradingScale, false);
         courseGradingScale.setGradeSteps(gradeSteps);
@@ -217,7 +241,7 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationIndependentBa
      * Test post-request with invalid presentation configuration for basic presentations
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testSaveGradingScaleForCourseInvalidBasicPresentationConfiguration() throws Exception {
         gradeSteps = gradingScaleUtilService.generateGradeStepSet(courseGradingScale, true);
         courseGradingScale.setGradeSteps(gradeSteps);
@@ -239,7 +263,7 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationIndependentBa
      * Test post-request with invalid presentation configuration for graded presentations
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testSaveGradingScaleForCourseInvalidGradedPresentationConfiguration() throws Exception {
         gradeSteps = gradingScaleUtilService.generateGradeStepSet(courseGradingScale, true);
         courseGradingScale.setGradeSteps(gradeSteps);
@@ -260,7 +284,7 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationIndependentBa
      * Test post-request with invalid presentation configuration for graded presentations
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testSaveGradingScaleForCourseWithChangedPresentationScore() throws Exception {
         gradeSteps = gradingScaleUtilService.generateGradeStepSet(courseGradingScale, true);
         courseGradingScale.setGradeSteps(gradeSteps);
@@ -280,7 +304,7 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationIndependentBa
      * Test post-request for a grading scale
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testSaveGradingScaleForCourse() throws Exception {
         gradeSteps = gradingScaleUtilService.generateGradeStepSet(courseGradingScale, true);
         courseGradingScale.setGradeSteps(gradeSteps);
@@ -300,7 +324,7 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationIndependentBa
      * Test post-request for a grading scale with plagiarism and no-participation special grades
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testSaveGradingScaleWithSpecialGrades() throws Exception {
         gradeSteps = gradingScaleUtilService.generateGradeStepSet(courseGradingScale, true);
         courseGradingScale.setGradeSteps(gradeSteps);
@@ -320,7 +344,7 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationIndependentBa
      * Test post-request with invalid grade steps
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testSaveGradingScaleForExamInvalidGradeSteps() throws Exception {
         exam.setExamMaxPoints(null);
         examRepository.save(exam);
@@ -334,7 +358,7 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationIndependentBa
      * Test post-request for a grading scale
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testSaveGradingScaleForExam() throws Exception {
         gradeSteps = gradingScaleUtilService.generateGradeStepSet(examGradingScale, true);
         examGradingScale.setGradeSteps(gradeSteps);
@@ -355,7 +379,7 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationIndependentBa
      * A course max points value above the allowed limit must be rejected.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testSaveGradingScaleForCourseRejectsCourseMaxPointsAboveLimit() throws Exception {
         gradeSteps = gradingScaleUtilService.generateGradeStepSet(courseGradingScale, true);
         courseGradingScale.setGradeSteps(gradeSteps);
@@ -368,7 +392,7 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationIndependentBa
      * A course presentation score above the allowed limit must be rejected.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testSaveGradingScaleForCourseRejectsCoursePresentationScoreAboveLimit() throws Exception {
         gradeSteps = gradingScaleUtilService.generateGradeStepSet(courseGradingScale, true);
         courseGradingScale.setGradeSteps(gradeSteps);
@@ -380,7 +404,7 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationIndependentBa
      * A presentations number above the allowed limit must be rejected.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testSaveGradingScaleForCourseRejectsPresentationsNumberAboveLimit() throws Exception {
         gradeSteps = gradingScaleUtilService.generateGradeStepSet(courseGradingScale, true);
         courseGradingScale.setGradeSteps(gradeSteps);
@@ -394,7 +418,7 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationIndependentBa
      * An exam max points value above the allowed limit must be rejected.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testSaveGradingScaleForExamRejectsExamMaxPointsAboveLimit() throws Exception {
         exam.setExamMaxPoints(null);
         examRepository.save(exam);
@@ -409,7 +433,7 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationIndependentBa
      * A course presentation score of 0 is valid (it disables the feature) and must stay accepted.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testSaveGradingScaleForCourseAllowsCoursePresentationScoreZero() throws Exception {
         gradeSteps = gradingScaleUtilService.generateGradeStepSet(courseGradingScale, true);
         courseGradingScale.setGradeSteps(gradeSteps);
@@ -421,7 +445,7 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationIndependentBa
      * A course max points value exactly at the allowed limit must be accepted.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testSaveGradingScaleForCourseAcceptsCourseMaxPointsAtLimit() throws Exception {
         gradeSteps = gradingScaleUtilService.generateGradeStepSet(courseGradingScale, true);
         courseGradingScale.setGradeSteps(gradeSteps);
@@ -434,7 +458,7 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationIndependentBa
      * An exam max points value exactly at the allowed limit must be accepted through the grading scale path.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testSaveGradingScaleForExamAcceptsExamMaxPointsAtLimit() throws Exception {
         exam.setExamMaxPoints(null);
         examRepository.save(exam);
@@ -449,7 +473,7 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationIndependentBa
      * A negative course max points value must be rejected.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testSaveGradingScaleForCourseRejectsNegativeCourseMaxPoints() throws Exception {
         gradeSteps = gradingScaleUtilService.generateGradeStepSet(courseGradingScale, true);
         courseGradingScale.setGradeSteps(gradeSteps);
@@ -462,7 +486,7 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationIndependentBa
      * A course max points value above the allowed limit must also be rejected on the update path.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testUpdateGradingScaleForCourseRejectsCourseMaxPointsAboveLimit() throws Exception {
         gradingScaleRepository.save(courseGradingScale);
         gradeSteps = gradingScaleUtilService.generateGradeStepSet(courseGradingScale, true);
@@ -477,7 +501,7 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationIndependentBa
      * writes the value directly to the exam and bypasses the numeric limit check in ExamResource.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testUpdateGradingScaleForExamRejectsExamMaxPointsAboveLimit() throws Exception {
         exam.setExamMaxPoints(null);
         examRepository.save(exam);
@@ -494,7 +518,7 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationIndependentBa
      * grading configuration and would divide by zero in downstream score calculations).
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testSaveGradingScaleForCourseRejectsCourseMaxPointsZero() throws Exception {
         gradeSteps = gradingScaleUtilService.generateGradeStepSet(courseGradingScale, true);
         courseGradingScale.setGradeSteps(gradeSteps);
@@ -507,7 +531,7 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationIndependentBa
      * A course presentation score exactly at the new limit (100) must be accepted, one above it (101) rejected.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testSaveGradingScaleForCourseHandlesCoursePresentationScoreBoundary() throws Exception {
         gradeSteps = gradingScaleUtilService.generateGradeStepSet(courseGradingScale, true);
         courseGradingScale.setGradeSteps(gradeSteps);
@@ -520,7 +544,7 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationIndependentBa
      * A presentations number exactly at the new limit (100) must be accepted, one above it (101) rejected.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testSaveGradingScaleForCourseHandlesPresentationsNumberBoundary() throws Exception {
         gradeSteps = gradingScaleUtilService.generateGradeStepSet(courseGradingScale, true);
         courseGradingScale.setGradeSteps(gradeSteps);
@@ -538,7 +562,7 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationIndependentBa
      * A fractional JSON number for an integer point field must be rejected instead of being silently truncated.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testSaveGradingScaleForCourseRejectsDecimalCourseMaxPoints() throws Exception {
         gradeSteps = gradingScaleUtilService.generateGradeStepSet(courseGradingScale, true);
         courseGradingScale.setGradeSteps(gradeSteps);
@@ -552,7 +576,7 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationIndependentBa
      * A decimal value passed as a JSON string for an integer point field must also be rejected.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testSaveGradingScaleForCourseRejectsDecimalStringCourseMaxPoints() throws Exception {
         gradeSteps = gradingScaleUtilService.generateGradeStepSet(courseGradingScale, true);
         courseGradingScale.setGradeSteps(gradeSteps);
@@ -566,7 +590,7 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationIndependentBa
      * Test put request for non-existing grading scale
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testUpdateNonExistingGradingScaleForCourseGradingScale_ShouldReturnNotFound() throws Exception {
         gradeSteps = gradingScaleUtilService.generateGradeStepSet(courseGradingScale, true);
         courseGradingScale.setGradeSteps(gradeSteps);
@@ -577,7 +601,7 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationIndependentBa
      * Test put request with invalid grade steps
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testUpdateGradingScaleForCourseInvalidGradeSteps_ShouldReturnBadRequests() throws Exception {
         gradingScaleRepository.save(courseGradingScale);
         gradeSteps = gradingScaleUtilService.generateGradeStepSet(courseGradingScale, false);
@@ -590,7 +614,7 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationIndependentBa
      * Test put request for a grading scale
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testUpdateGradingScaleForCourse() throws Exception {
         gradingScaleRepository.save(courseGradingScale);
         gradeSteps = gradingScaleUtilService.generateGradeStepSet(courseGradingScale, true);
@@ -610,7 +634,7 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationIndependentBa
      * Test put request for non-existing grading scale
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testUpdateNonExistingGradingScaleForExamGradingScale_ShouldReturnNotFound() throws Exception {
         gradeSteps = gradingScaleUtilService.generateGradeStepSet(examGradingScale, true);
         examGradingScale.setGradeSteps(gradeSteps);
@@ -621,7 +645,7 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationIndependentBa
      * Test put request with invalid grade steps
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testUpdateGradingScaleForExamInvalidGradeSteps_ShouldReturnBadRequests() throws Exception {
         exam.setExamMaxPoints(null);
         examRepository.save(exam);
@@ -636,7 +660,7 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationIndependentBa
      * Test put request for a grading scale
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testUpdateGradingScaleForExam() throws Exception {
         gradingScaleRepository.save(examGradingScale);
         gradeSteps = gradingScaleUtilService.generateGradeStepSet(examGradingScale, true);
@@ -658,7 +682,7 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationIndependentBa
      * Test delete request for non-existing grading scale
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testDeleteGradingScaleForCourseNotFound() throws Exception {
         request.delete("/api/assessment/courses/" + course.getId() + "/grading-scale", HttpStatus.NOT_FOUND);
     }
@@ -667,7 +691,7 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationIndependentBa
      * Test delete request for grading scale
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testDeleteGradingScaleForCourse() throws Exception {
         gradingScaleRepository.save(courseGradingScale);
 
@@ -678,7 +702,7 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationIndependentBa
      * Test delete request for non-existing grading scale
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testDeleteGradingScaleForExamNotFound() throws Exception {
         request.delete("/api/assessment/courses/" + course.getId() + "/exams/" + exam.getId() + "/grading-scale", HttpStatus.NOT_FOUND);
     }
@@ -687,7 +711,7 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationIndependentBa
      * Test delete request for grading scale
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testDeleteGradingScaleForExam() throws Exception {
         gradingScaleRepository.save(examGradingScale);
 
@@ -702,7 +726,9 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationIndependentBa
     void testDeleteCourseDeletesGradingScale() throws Exception {
         gradingScaleRepository.save(courseGradingScale);
 
-        request.delete("/api/admin/courses/" + course.getId(), HttpStatus.OK);
+        request.delete("/api/admin/courses/" + course.getId(), HttpStatus.ACCEPTED);
+
+        asyncDeletionTestUtilService.awaitCourseDeletion(course.getId());
 
         Optional<GradingScale> foundGradingScale = gradingScaleRepository.findByCourseId(course.getId());
         assertThat(foundGradingScale).isEmpty();
@@ -712,11 +738,12 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationIndependentBa
      * Test delete request for exam should delete the grading scale of that exam as well
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testDeleteExamDeletesGradingScale() throws Exception {
         gradingScaleRepository.save(examGradingScale);
 
-        request.delete("/api/exam/courses/" + course.getId() + "/exams/" + exam.getId(), HttpStatus.OK);
+        request.delete("/api/exam/courses/" + course.getId() + "/exams/" + exam.getId(), HttpStatus.ACCEPTED);
+        asyncDeletionTestUtilService.awaitExamDeletion(exam.getId());
 
         Optional<GradingScale> foundGradingScale = gradingScaleRepository.findByExamId(exam.getId());
         assertThat(foundGradingScale).isEmpty();
@@ -750,7 +777,7 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationIndependentBa
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetAllGradingScalesInInstructorGroupOnPageWithInstructor() throws Exception {
 
         String url = "/api/assessment/grading-scales";

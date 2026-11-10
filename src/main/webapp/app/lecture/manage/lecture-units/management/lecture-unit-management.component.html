@@ -110,7 +110,7 @@
                                 [attr.aria-label]="'artemisApp.lectureUnit.management.actions' | artemisTranslate: { name: unitName }"
                             >
                                 @if (currentLecture.isAtLeastInstructor && isOrchestrationAvailable(lectureUnit)) {
-                                    <jhi-atlas-orchestration-trigger [lectureUnitId]="lectureUnit.id!" [showLabel]="false" [buttonClass]="'btn btn-link btn-sm'" />
+                                    <jhi-atlas-orchestration-trigger [lectureUnitId]="lectureUnit.id!" [showLabel]="false" />
                                 }
                                 @if (currentLecture.isAtLeastEditor && lectureUnit.type === LectureUnitType.ATTACHMENT_VIDEO && isProcessingFailed(lectureUnit)) {
                                     @let retryLabel = 'artemisApp.lectureUnit.retryProcessing' | artemisTranslate;
@@ -137,7 +137,7 @@
                                     @let viewLabel = 'entity.action.view' | artemisTranslate;
                                     <a
                                         tumAetUiButton
-                                        severity="secondary"
+                                        severity="success"
                                         variant="text"
                                         size="small"
                                         data-testid="lecture-unit-view"
@@ -171,7 +171,7 @@
                                             #editButton
                                             tumAetUiButton
                                             type="button"
-                                            severity="secondary"
+                                            severity="warn"
                                             variant="text"
                                             size="small"
                                             class="edit"
@@ -187,7 +187,7 @@
                                     } @else {
                                         <a
                                             tumAetUiButton
-                                            severity="secondary"
+                                            severity="warn"
                                             variant="text"
                                             size="small"
                                             class="edit"
@@ -220,7 +220,8 @@
                                         [entityTitle]="unitName"
                                         [deleteQuestion]="getDeleteQuestionKey(lectureUnit)"
                                         [deleteConfirmationText]="getDeleteConfirmationTextKey(lectureUnit)"
-                                        (delete)="deleteLectureUnit(lectureUnit.id!)"
+                                        [additionalChecks]="asksAboutTumLiveVideo(lectureUnit) ? { deleteTumLiveRecordings: 'artemisApp.tumLiveUpload.deleteRecording' } : {}"
+                                        (delete)="deleteLectureUnit(lectureUnit.id!, $event)"
                                         [dialogError]="dialogError$"
                                     >
                                         <fa-icon [icon]="faTrash" />

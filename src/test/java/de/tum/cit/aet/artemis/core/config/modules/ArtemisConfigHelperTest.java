@@ -33,24 +33,6 @@ class ArtemisConfigHelperTest {
         testProperty(artemisConfigHelper::isAtlasEnabled, Constants.ATLAS_ENABLED_PROPERTY_NAME);
     }
 
-    @Test
-    void testAtlasMLProperty() {
-        mockProperty(Constants.ATLAS_ENABLED_PROPERTY_NAME, true);
-
-        mockProperty(Constants.ATLASML_ENABLED_PROPERTY_NAME, true);
-        assertThat(artemisConfigHelper.isAtlasMLEnabled(mockEnv)).isTrue();
-
-        mockProperty(Constants.ATLASML_ENABLED_PROPERTY_NAME, false);
-        assertThat(artemisConfigHelper.isAtlasMLEnabled(mockEnv)).isFalse();
-
-        mockProperty(Constants.ATLASML_ENABLED_PROPERTY_NAME, null);
-        assertThatThrownBy(() -> artemisConfigHelper.isAtlasMLEnabled(mockEnv)).isInstanceOf(RuntimeException.class).hasMessageContaining(Constants.ATLASML_ENABLED_PROPERTY_NAME);
-
-        mockProperty(Constants.ATLAS_ENABLED_PROPERTY_NAME, false);
-        mockProperty(Constants.ATLASML_ENABLED_PROPERTY_NAME, true);
-        assertThat(artemisConfigHelper.isAtlasMLEnabled(mockEnv)).isFalse();
-    }
-
     /**
      * The last case is the one that matters in production: a build agent runs with the Atlas module off and never
      * defines the AtlasLLM property, so the short-circuit on the module flag is what keeps it from throwing.
@@ -168,13 +150,13 @@ class ArtemisConfigHelperTest {
         MockEnvironment environment = new MockEnvironment();
         environment.setActiveProfiles(profiles.split(","));
         assertThat(artemisConfigHelper.getEnabledFeatures(environment)).isEmpty();
-        for (String property : List.of(Constants.ATLAS_ENABLED_PROPERTY_NAME, Constants.ATLASML_ENABLED_PROPERTY_NAME, Constants.ATLASLLM_ENABLED_PROPERTY_NAME,
-                Constants.HYPERION_ENABLED_PROPERTY_NAME, Constants.HYPERION_EXERCISE_GENERATION_ENABLED_PROPERTY_NAME, Constants.DEIMOS_ENABLED_PROPERTY_NAME,
-                Constants.IRIS_ENABLED_PROPERTY_NAME, Constants.EXAM_ENABLED_PROPERTY_NAME, Constants.PLAGIARISM_ENABLED_PROPERTY_NAME, Constants.TEXT_ENABLED_PROPERTY_NAME,
-                Constants.MODELING_ENABLED_PROPERTY_NAME, Constants.FILEUPLOAD_ENABLED_PROPERTY_NAME, Constants.LECTURE_ENABLED_PROPERTY_NAME,
-                Constants.TUTORIAL_GROUP_ENABLED_PROPERTY_NAME, Constants.PASSKEY_ENABLED_PROPERTY_NAME, Constants.SHARING_ENABLED_PROPERTY_NAME,
-                Constants.LTI_ENABLED_PROPERTY_NAME, Constants.ATHENA_ENABLED_PROPERTY_NAME, Constants.APOLLON_ENABLED_PROPERTY_NAME, Constants.LDAP_ENABLED_PROPERTY_NAME,
-                Constants.SAML2_ENABLED_PROPERTY_NAME, Constants.OIDC_ENABLED_PROPERTY_NAME, Constants.THEIA_ENABLED_PROPERTY_NAME, Constants.WEAVIATE_ENABLED_PROPERTY_NAME)) {
+        for (String property : List.of(Constants.ATLAS_ENABLED_PROPERTY_NAME, Constants.ATLASLLM_ENABLED_PROPERTY_NAME, Constants.HYPERION_ENABLED_PROPERTY_NAME,
+                Constants.HYPERION_EXERCISE_GENERATION_ENABLED_PROPERTY_NAME, Constants.DEIMOS_ENABLED_PROPERTY_NAME, Constants.IRIS_ENABLED_PROPERTY_NAME,
+                Constants.EXAM_ENABLED_PROPERTY_NAME, Constants.PLAGIARISM_ENABLED_PROPERTY_NAME, Constants.TEXT_ENABLED_PROPERTY_NAME, Constants.MODELING_ENABLED_PROPERTY_NAME,
+                Constants.FILEUPLOAD_ENABLED_PROPERTY_NAME, Constants.LECTURE_ENABLED_PROPERTY_NAME, Constants.TUTORIAL_GROUP_ENABLED_PROPERTY_NAME,
+                Constants.PASSKEY_ENABLED_PROPERTY_NAME, Constants.SHARING_ENABLED_PROPERTY_NAME, Constants.LTI_ENABLED_PROPERTY_NAME, Constants.ATHENA_ENABLED_PROPERTY_NAME,
+                Constants.APOLLON_ENABLED_PROPERTY_NAME, Constants.LDAP_ENABLED_PROPERTY_NAME, Constants.SAML2_ENABLED_PROPERTY_NAME, Constants.OIDC_ENABLED_PROPERTY_NAME,
+                Constants.THEIA_ENABLED_PROPERTY_NAME, Constants.WEAVIATE_ENABLED_PROPERTY_NAME, Constants.AGENT_ACCESS_ENABLED_PROPERTY_NAME)) {
             environment.setProperty(property, "true");
         }
         assertThat(artemisConfigHelper.getEnabledFeatures(environment)).isEmpty();
@@ -191,6 +173,22 @@ class ArtemisConfigHelperTest {
         assertThat(artemisConfigHelper.isAtlasEnabled(environment)).isTrue();
         environment.setProperty(Constants.ATLAS_ENABLED_PROPERTY_NAME, "false");
         assertThat(artemisConfigHelper.isAtlasEnabled(environment)).isFalse();
+    }
+
+    /**
+     * Unlike the other modules, agent access needs no explicit configuration to be off: an instance that never heard of it
+     * must not start accepting personal access tokens, and must not fail to start either.
+     */
+    @ParameterizedTest
+    @ValueSource(strings = { "core", "prod,core", "aiworker,core" })
+    void agentAccessIsOffUnlessExplicitlyEnabled(String profiles) {
+        MockEnvironment environment = new MockEnvironment();
+        environment.setActiveProfiles(profiles.split(","));
+        assertThat(artemisConfigHelper.isAgentAccessEnabled(environment)).isFalse();
+        environment.setProperty(Constants.AGENT_ACCESS_ENABLED_PROPERTY_NAME, "true");
+        assertThat(artemisConfigHelper.isAgentAccessEnabled(environment)).isTrue();
+        environment.setProperty(Constants.AGENT_ACCESS_ENABLED_PROPERTY_NAME, "false");
+        assertThat(artemisConfigHelper.isAgentAccessEnabled(environment)).isFalse();
     }
 
     private void testProperty(Function<Environment, Boolean> propertyTest, String propertyName) {

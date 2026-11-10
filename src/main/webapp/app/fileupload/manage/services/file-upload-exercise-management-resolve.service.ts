@@ -1,3 +1,5 @@
+import { exerciseForImportFromFile } from 'app/exercise/import/import-from-file-navigation';
+import { isExamExerciseRoute } from 'app/exercise/util/exercise-detail-route-context';
 import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
 import { FileUploadExerciseService } from 'app/fileupload/manage/services/file-upload-exercise.service';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
@@ -5,13 +7,14 @@ import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-g
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { Course } from 'app/course/shared/entities/course.model';
 import { Service, inject } from '@angular/core';
-import { ActivatedRouteSnapshot, Resolve } from '@angular/router';
+import { ActivatedRouteSnapshot, Resolve, Router } from '@angular/router';
 import { HttpResponse } from '@angular/common/http';
 import { filter, map, of } from 'rxjs';
 
 @Service()
 export class FileUploadExerciseManagementResolve implements Resolve<FileUploadExercise> {
     private fileUploadExerciseService = inject(FileUploadExerciseService);
+    private router = inject(Router);
     private courseService = inject(CourseManagementService);
     private exerciseGroupService = inject(ExerciseGroupService);
 
@@ -22,7 +25,11 @@ export class FileUploadExerciseManagementResolve implements Resolve<FileUploadEx
      */
     resolve(route: ActivatedRouteSnapshot) {
         if (route.params['exerciseId']) {
-            return this.fileUploadExerciseService.find(route.params['exerciseId']).pipe(
+            return (
+                isExamExerciseRoute(route)
+                    ? this.fileUploadExerciseService.findForExam(route.params['exerciseId'])
+                    : this.fileUploadExerciseService.find(route.params['exerciseId'])
+            ).pipe(
                 filter((res) => !!res.body),
                 map((fileUploadExercise: HttpResponse<FileUploadExercise>) => fileUploadExercise.body!),
             );
@@ -31,15 +38,23 @@ export class FileUploadExerciseManagementResolve implements Resolve<FileUploadEx
                 return this.exerciseGroupService.find(route.params['courseId'], route.params['examId'], route.params['exerciseGroupId']).pipe(
                     filter((res) => !!res.body),
                     map((exerciseGroup: HttpResponse<ExerciseGroup>) => {
+                        const fromFile = exerciseForImportFromFile<FileUploadExercise>(this.router, undefined, exerciseGroup.body!);
+                        if (fromFile) {
+                            return fromFile;
+                        }
                         const fileUploadExercise = new FileUploadExercise(undefined, exerciseGroup.body!);
                         fileUploadExercise.filePattern = 'pdf, png';
                         return fileUploadExercise;
                     }),
                 );
             } else {
-                return this.courseService.find(route.params['courseId']).pipe(
+                return this.courseService.findForManagement(route.params['courseId']).pipe(
                     filter((res) => !!res.body),
                     map((course: HttpResponse<Course>) => {
+                        const fromFile = exerciseForImportFromFile<FileUploadExercise>(this.router, course.body!, undefined);
+                        if (fromFile) {
+                            return fromFile;
+                        }
                         const fileUploadExercise = new FileUploadExercise(course.body!, undefined);
                         fileUploadExercise.filePattern = 'pdf, png';
                         return fileUploadExercise;

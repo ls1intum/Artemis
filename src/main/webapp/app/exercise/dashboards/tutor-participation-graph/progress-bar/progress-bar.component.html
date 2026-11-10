@@ -1,15 +1,28 @@
-<div class="progress position-relative" [pTooltip]="tooltip()">
-    <div
-        class="progress-bar"
-        role="progressbar"
-        [ngClass]="backgroundColorClass()"
-        [style.width]="normalizedPercentage() + '%'"
-        attr.aria-valuenow="{{ normalizedPercentage() }}"
-        aria-valuemin="0"
-        aria-valuemax="100"
+<div class="relative" [tumAetUiTooltip]="tooltip()">
+    <tumaet-ui-progress-bar
+        class="h-4! rounded-sm!"
+        data-testid="tutor-progress-track"
+        [ariaLabel]="tooltip()"
+        [value]="normalizedPercentage()"
+        [showValue]="false"
+        [severity]="normalizedPercentage() < 50 ? 'danger' : normalizedPercentage() < 100 ? 'warn' : 'success'"
+    />
+    <span class="absolute inset-0 flex items-center justify-center text-xs leading-4 font-medium text-text" data-testid="tutor-progress-label">
+        {{ numerator() }} / {{ denominator() }} ({{ normalizedPercentage() + '%' }})
+    </span>
+    <span
+        class="absolute inset-0 flex items-center justify-center text-xs leading-4 font-medium filled-label"
+        [style.clip-path]="'inset(0 ' + (100 - normalizedPercentage()) + '% 0 0)'"
+        [style.color]="
+            normalizedPercentage() < 50
+                ? 'var(--tumaet-ui-state-danger-contrast)'
+                : normalizedPercentage() < 100
+                  ? 'var(--tumaet-ui-state-warning-contrast)'
+                  : 'var(--tumaet-ui-state-success-contrast)'
+        "
+        aria-hidden="true"
+        data-testid="tutor-progress-filled-label"
     >
-        <span class="justify-content-center d-flex position-absolute w-100" [ngClass]="foregroundColorClass()">
-            {{ numerator() }} / {{ denominator() }} ({{ normalizedPercentage() + '%' }})
-        </span>
-    </div>
+        {{ numerator() }} / {{ denominator() }} ({{ normalizedPercentage() + '%' }})
+    </span>
 </div>

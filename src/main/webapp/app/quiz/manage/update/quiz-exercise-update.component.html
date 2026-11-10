@@ -12,7 +12,7 @@
                         }
                     </div>
                     <div class="d-flex gap-2 mt-3">
-                        <button type="button" class="btn btn-secondary" (click)="navigateBack()">
+                        <button type="button" tumAetUiButton severity="secondary" size="small" (click)="navigateBack()">
                             <fa-icon [icon]="faArrowLeft" class="me-1" />
                             <span jhiTranslate="entity.action.back"></span>
                         </button>
@@ -68,7 +68,7 @@
                             <div class="form-group position-relative">
                                 <label class="form-control-label" jhiTranslate="artemisApp.exercise.categories"></label>
                                 <jhi-help-icon text="artemisApp.exercise.categoriesTooltip" />
-                                <jhi-category-selector-primeng
+                                <jhi-category-selector
                                     [categories]="exerciseCategories()"
                                     [existingCategories]="existingCategories()"
                                     (selectedCategories)="updateCategories($event)"
@@ -327,7 +327,6 @@
                                         id="competencies"
                                         [labelName]="'artemisApp.competency.link.title' | artemisTranslate"
                                         [labelTooltip]="'artemisApp.competency.link.exercise' | artemisTranslate"
-                                        [exerciseDescription]="getEnhancedDescriptionForSuggestions()"
                                         [(ngModel)]="quizExercise().competencyLinks"
                                         (ngModelChange)="cacheValidation()"
                                         name="competencyLinks"
@@ -401,16 +400,20 @@
                             }
                             @if (quizExercise().course || quizExercise().exerciseGroup) {
                                 <button
+                                    [attr.data-button-intent]="pendingChangesCache() ? 'destructive' : 'utility'"
+                                    data-button-intent-reason="Cancel discards pending quiz edits; Back only navigates"
                                     type="button"
                                     id="quiz-cancel-back-button"
-                                    class="section-header-action"
-                                    [class.danger]="pendingChangesCache()"
+                                    tumAetUiButton
+                                    size="small"
+                                    variant="outlined"
+                                    [severity]="pendingChangesCache() ? 'danger' : 'secondary'"
                                     (click)="previousState()"
                                     jhiTranslate="{{ pendingChangesCache() ? 'entity.action.cancel' : 'entity.action.back' }}"
                                 ></button>
                             }
                             @if (!quizExercise().isEditable && quizExercise().quizEnded && quizExercise().isAtLeastInstructor) {
-                                <button type="button" class="section-header-action" [routerLink]="reEvaluateUrl">
+                                <button type="button" tumAetUiButton severity="warn" variant="outlined" size="small" [routerLink]="reEvaluateUrl">
                                     <fa-icon [icon]="faWrench" class="me-1" />
                                     <span jhiTranslate="entity.action.re-evaluate"></span>
                                 </button>
@@ -430,7 +433,10 @@
                             <button
                                 data-testid="quiz-save"
                                 type="button"
-                                class="footer-save-btn aria-disabled:opacity-60 aria-disabled:cursor-not-allowed"
+                                tumAetUiButton
+                                severity="primary"
+                                size="small"
+                                class="aria-disabled:opacity-60 aria-disabled:cursor-not-allowed"
                                 (click)="onSaveClick()"
                                 [tumAetUiTooltip]="saveBlockedReasons()"
                                 [tumAetUiTooltipDescribesHost]="false"
@@ -449,8 +455,10 @@
             <div class="global-refinement-fab-container">
                 @if (!isRefinementFabOpen()) {
                     <button
-                        pButton
+                        tumAetUiButton
                         type="button"
+                        severity="warn"
+                        size="small"
                         class="global-refinement-fab"
                         (click)="isRefinementFabOpen.set(true)"
                         [attr.aria-label]="'artemisApp.quizExercise.aiGeneration.refinement.globalRefineFabLabel' | artemisTranslate"
@@ -460,10 +468,13 @@
                 } @else {
                     <div class="global-refinement-fab-expanded">
                         <button
-                            pButton
+                            tumAetUiButton
                             type="button"
                             severity="secondary"
+                            size="small"
+                            [attr.aria-label]="'entity.action.close' | artemisTranslate"
                             class="global-refinement-fab-action-button global-refinement-fab-close-button"
+                            data-testid="global-refinement-close"
                             (click)="closeRefinementFab()"
                         >
                             <fa-icon [icon]="faXmark" />
@@ -480,8 +491,12 @@
                             (keydown.enter)="onGlobalRefinementEnterKey($event)"
                         ></textarea>
                         <button
-                            pButton
+                            tumAetUiButton
                             type="button"
+                            severity="warn"
+                            size="small"
+                            [attr.aria-label]="'entity.action.submit' | artemisTranslate"
+                            [attr.aria-busy]="isGlobalRefining()"
                             class="global-refinement-fab-action-button"
                             [disabled]="!globalRefinementPrompt().trim() || isGlobalRefining()"
                             (click)="submitGlobalRefinement()"

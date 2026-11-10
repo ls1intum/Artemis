@@ -66,7 +66,7 @@ describe('ExportModalComponent', () => {
 
     it('should dismiss modal if close or cancel button are clicked', () => {
         const closeSpy = vi.spyOn(dialogRef, 'close');
-        const closeButton = fixture.debugElement.query(By.css('button.btn-close'));
+        const closeButton = fixture.debugElement.query(By.css('[data-testid="export-options-close"]'));
         expect(closeButton).not.toBeNull();
         closeButton.nativeElement.click();
         expect(closeSpy).toHaveBeenCalledOnce();

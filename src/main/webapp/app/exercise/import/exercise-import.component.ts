@@ -16,9 +16,7 @@ import { FormsModule } from '@angular/forms';
 import { SortDirective } from 'app/foundation/sort/directive/sort.directive';
 import { SortByDirective } from 'app/foundation/sort/directive/sort-by.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { NgbHighlight } from '@ng-bootstrap/ng-bootstrap';
-import { PaginatorModule } from 'primeng/paginator';
-import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
+import { TumAetUiCheckboxComponent, TumAetUiInputDirective, TumAetUiPaginatorComponent, TumAetUiTableDirective } from '@tumaet/ui-angular';
 import { ExerciseCourseTitlePipe } from 'app/foundation/pipes/exercise-course-title.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ArtemisDurationFromSecondsPipe } from 'app/foundation/pipes/artemis-duration-from-seconds.pipe';
@@ -32,6 +30,8 @@ import { AlertService } from 'app/foundation/service/alert.service';
 export interface ExerciseImportDialogData {
     exerciseType: ExerciseType;
     programmingLanguage?: ProgrammingLanguage;
+    /** The course to import into, for the import from a file. */
+    courseId?: number;
 }
 
 /** The row the user asked a preview for, together with the complete quiz loaded for it. */
@@ -51,9 +51,10 @@ const DEFAULT_SORT_COLUMN = 'ID';
         SortDirective,
         SortByDirective,
         FaIconComponent,
-        NgbHighlight,
-        ButtonComponent,
-        PaginatorModule,
+        TumAetUiCheckboxComponent,
+        TumAetUiInputDirective,
+        TumAetUiPaginatorComponent,
+        TumAetUiTableDirective,
         ExerciseCourseTitlePipe,
         ArtemisTranslatePipe,
         ArtemisDurationFromSecondsPipe,
@@ -206,8 +207,7 @@ export class ExerciseImportComponent extends ImportComponent<Exercise> implement
         }
         this.previewTrigger = event?.currentTarget instanceof HTMLElement ? event.currentTarget : undefined;
         this.previewLoadingId.set(exercise.id);
-        this.quizExerciseService
-            .find(exercise.id)
+        (exercise.exerciseGroup ? this.quizExerciseService.findForExam(exercise.id) : this.quizExerciseService.find(exercise.id))
             .pipe(takeUntilDestroyed(this.previewDestroyRef))
             .subscribe({
                 next: (quiz) => {
@@ -273,6 +273,24 @@ export class ExerciseImportComponent extends ImportComponent<Exercise> implement
             return;
         }
         this.selectImport(preview.exercise);
+    }
+
+    highlightParts(value: string | undefined): { text: string; highlighted: boolean }[] {
+        if (!value || !this.searchTerm) {
+            return [{ text: value ?? '', highlighted: false }];
+        }
+        const parts: { text: string; highlighted: boolean }[] = [];
+        const term = this.searchTerm.toLocaleLowerCase();
+        let start = 0;
+        let match = value.toLocaleLowerCase().indexOf(term);
+        while (match !== -1) {
+            parts.push({ text: value.slice(start, match), highlighted: false });
+            parts.push({ text: value.slice(match, match + term.length), highlighted: true });
+            start = match + term.length;
+            match = value.toLocaleLowerCase().indexOf(term, start);
+        }
+        parts.push({ text: value.slice(start), highlighted: false });
+        return parts;
     }
 
     asProgrammingExercise(exercise: Exercise): ProgrammingExercise {

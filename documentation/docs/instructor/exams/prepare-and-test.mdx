@@ -2,6 +2,7 @@
 id: prepare-and-test
 title: Prepare and Test an Exam
 sidebar_label: Prepare and Test
+last_reviewed: 2026-11-07
 ---
 
 import Callout from "../../../src/components/Callout/Callout";
@@ -15,6 +16,7 @@ import createTestRunPopup from './assets/create_test_run.png';
 import testRunConduction from './assets/test_run_conduction.png';
 import examChecklist from './assets/exam_checklist.png';
 import examChecklistOverview from './assets/exam_checklist_overview.png';
+import contextualRoomOverview from './assets/contextual-room-overview.jpg';
 
 Between building an exam and running it there are three things to get right: the students who may sit it, the
 individual exam each of them receives, and a rehearsal to confirm the whole thing works. All of it happens on the
@@ -24,7 +26,7 @@ exam's **Students** page, whose actions are grouped into three menus — **Stude
 ## Register Students
 
 Registration alone does not let anyone sit the exam; it only records who is entitled to one. The individual exams
-come afterwards.
+come afterwards. Once individual exams have already been generated, adding students asks for confirmation and generates the missing individual exams automatically. If exercises have already been prepared, Artemis prepares them for the new students too. Registration remains available during the exam and closes immediately at its end date.
 
 The **Students** menu offers four ways to add people:
 
@@ -48,7 +50,12 @@ in the database and still counts in exports.
 
 The **Logistics** menu covers what an on-site exam needs beyond a list of names. **Distribute students** assigns
 rooms and seats. **Upload images** takes a PDF of participant photographs, and **Verify attendance** shows who has
-started the exam in Artemis but not yet checked in with a supervisor.
+checked in with a supervisor. After the exam ends, instructors can confirm or clear the identity checks without
+providing a signature. Existing signatures are retained, and attendance changes are recorded in the application audit log.
+
+In **Distribute students**, open **Exam Room Management** to view the available rooms and their capacities. This link keeps the current course and exam context, so an Instructor in that course can view the overview without administrator privileges. Uploading room data and deleting outdated rooms remain administrator operations.
+
+<Image src={contextualRoomOverview} alt="Exam room overview listing Friedrich L. Bauer Hörsaal with its building and default and maximum capacities" size={ImageSize.large} caption="The room overview available to the course Instructor from the exam’s room-distribution dialog." />
 
 <Callout variant={CalloutVariant.info}>
 
@@ -70,8 +77,8 @@ again and it overwrites what is there, so use **Generate missing individual exam
 
 <Callout variant={CalloutVariant.warning}>
 
-  Generation is locked once the exam becomes visible to students. Register everyone and generate before the
-  **Visible from** date, because after it you can no longer change who has an exam or what is in it.
+  Complete initial generation before the exam starts. Later registrations automatically receive missing individual
+  exams until registration closes at the exam's end date, while existing exercise assignments stay unchanged.
 
 </Callout>
 
@@ -112,7 +119,7 @@ exam scores, so it is the safe way to find out that an exercise is unsolvable or
 as many exercises as there are exercise groups, regardless of **Number of exercises in exam**; groups with no
 exercises are skipped.
 
-<Image src={createTestRunPopup} alt="Create test run dialog with one exercise chosen per exercise group" size={ImageSize.large} caption="Choosing the exercises for a test run" />
+<Image src={createTestRunPopup} alt="Create a Test Run dialog with the working time and the exercises of each exercise group" size={ImageSize.large} caption="Choosing the exercises for a test run" />
 
 From there you work through the exam as a student would, submit, and end the run. A banner marks the whole time as
 a test run so it cannot be confused with the real thing.
@@ -133,6 +140,11 @@ in a test exam. A counter next to the button shows how many requests you have us
   Delete your test runs before the real conduction begins.
 
 </Callout>
+
+Deleting an exam or an exercise group removes everything inside it. The confirmation dialog first lists the exercise
+groups, exercises by type, registered students, student exams, participations, submissions, results, complaints,
+plagiarism comparisons, builds, posts and test runs that will be deleted, and highlights large amounts. The deletion then runs in the
+background with a progress dialog. While it runs, the exam and its exercise groups cannot be deleted again.
 
 ## Work Through the Exam Checklist
 

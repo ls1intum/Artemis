@@ -31,6 +31,7 @@ spring:
     # profile emit pretty-printed responses that no longer match production byte for byte. Re-enable deliberately.
     datasource:
         type: com.zaxxer.hikari.HikariDataSource
+        # REMOVE_IN_ARTEMIS_11 (MySQL): switch the dev datasource to PostgreSQL before MySQL support is removed
         url: jdbc:mysql://localhost:3306/Artemis?createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true&useUnicode=true&characterEncoding=utf8&connectionCollation=utf8mb4_unicode_ci&useSSL=false&useLegacyDatetimeCode=false&serverTimezone=UTC
         username: root
         password:
@@ -198,11 +199,6 @@ artemis:
         #     max-inputs-per-request: 32             # Chunks sent in one embedding request (at most 256)
         #     background-max-rows-per-minute: 600    # Background index writes per minute
         #     background-max-requests-per-minute: 30 # Background embedding requests per minute
-
-# Needs to be provided so Sentry's LogbackAppender picks up a sensible configuration
-sentry:
-  traces-sample-rate: 0.0
-  environment: local
 
 helios:
   status:

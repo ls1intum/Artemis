@@ -14,6 +14,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { ThemeService } from 'app/core/theme/shared/theme.service';
 import { AlertOverlayComponent } from 'app/core/alert/alert-overlay.component';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { ClientErrorHandler } from 'app/core/error-reporting/client-error.handler';
 import { LazyRouteRecoveryService } from 'app/core/navigation/lazy-route-recovery.service';
 import { PageRibbonComponent } from 'app/core/layouts/profiles/page-ribbon.component';
 import { FooterComponent } from 'app/core/layouts/footer/footer.component';
@@ -25,7 +26,6 @@ import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.serv
 import { ExamParticipationService } from 'app/exam/overview/services/exam-participation.service';
 import { LtiService } from 'app/foundation/service/lti.service';
 import { FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
-import { SentryErrorHandler } from 'app/core/sentry/sentry.error-handler';
 import { JhiLanguageHelper } from 'app/core/language/shared/language.helper';
 
 class MockThemeService {
@@ -55,6 +55,7 @@ describe('AppComponent', () => {
             providers: [
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ThemeService, useClass: MockThemeService },
+                { provide: ClientErrorHandler, useValue: { reportIfPasskeyIsNotSupported: vi.fn() } },
                 { provide: ProfileService, useClass: MockProfileService },
                 { provide: ExamParticipationService, useValue: { examIsStarted$: of(false), testRunStarted$: of(false) } },
                 { provide: LtiService, useValue: { isShownViaLti$: of(false) } },
@@ -62,7 +63,6 @@ describe('AppComponent', () => {
                     provide: FeatureToggleService,
                     useValue: { getFeatureToggleActive: () => of(false), subscribeFeatureToggleUpdates: () => {}, unsubscribeFeatureToggleUpdates: () => {} },
                 },
-                { provide: SentryErrorHandler, useValue: { initSentry: vi.fn() } },
                 { provide: JhiLanguageHelper, useValue: { updateTitle: vi.fn() } },
                 { provide: LazyRouteRecoveryService, useValue: { handleNavigationError } },
                 provideHttpClient(),

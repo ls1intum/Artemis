@@ -1,3 +1,4 @@
+import { isExamExerciseRoute } from 'app/exercise/util/exercise-detail-route-context';
 import { ChangeDetectionStrategy, Component, DestroyRef, computed, effect, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute } from '@angular/router';
@@ -20,8 +21,7 @@ import {
     getExerciseProblemDetailSection,
 } from 'app/exercise/util/utils';
 import { ArtemisMarkdownService } from 'app/foundation/service/markdown.service';
-import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { DocumentationButtonComponent } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
+import { ExerciseDetailHeaderComponent } from 'app/exercise/detail/exercise-detail-header.component';
 import { DetailOverviewListComponent } from 'app/shared-ui/detail-overview-list/detail-overview-list.component';
 import { map } from 'rxjs/operators';
 import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
@@ -32,8 +32,7 @@ import { AtlasOrchestrationTriggerComponent } from 'app/atlas/manage/orchestrati
     selector: 'jhi-file-upload-exercise-detail',
     templateUrl: './file-upload-exercise-detail.component.html',
     imports: [
-        TranslateDirective,
-        DocumentationButtonComponent,
+        ExerciseDetailHeaderComponent,
         NonProgrammingExerciseDetailCommonActionsComponent,
         ExerciseDetailStatisticsComponent,
         DetailOverviewListComponent,
@@ -110,7 +109,7 @@ export class FileUploadExerciseDetailComponent {
 
             if (!id) return;
 
-            const exerciseSub = this.fileUploadExerciseService.find(id).subscribe({
+            const exerciseSub = (isExamExerciseRoute(this.route.snapshot) ? this.fileUploadExerciseService.findForExam(id) : this.fileUploadExerciseService.find(id)).subscribe({
                 next: (res) => {
                     if (res.body) {
                         this.fileUploadExercise.set(res.body);

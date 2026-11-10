@@ -25,15 +25,18 @@ import org.springframework.web.bind.annotation.RestController;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.service.GradingCriteriaMapper;
-import de.tum.cit.aet.artemis.atlas.api.AtlasMLApi;
 import de.tum.cit.aet.artemis.atlas.api.CompetencyApi;
 import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
-import de.tum.cit.aet.artemis.atlas.dto.atlasml.SaveCompetencyRequestDTO.OperationTypeDTO;
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.security.Role;
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
+import de.tum.cit.aet.artemis.core.security.allowedScopes.AgentDraftRules;
+import de.tum.cit.aet.artemis.core.security.allowedScopes.AgentScope;
+import de.tum.cit.aet.artemis.core.security.allowedScopes.AllowedScopes;
+import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
+import de.tum.cit.aet.artemis.core.security.annotations.ManualConfig;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastEditorInExercise;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
@@ -56,6 +59,8 @@ import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.dto.TextExerciseResponseDTO;
 import de.tum.cit.aet.artemis.text.dto.UpdateTextExerciseDTO;
 import de.tum.cit.aet.artemis.text.repository.TextExerciseRepository;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 
 /**
  * REST controller for creating and updating text exercises.
@@ -89,8 +94,6 @@ public class TextExerciseCreationUpdateResource {
 
     private final Optional<SlideApi> slideApi;
 
-    private final Optional<AtlasMLApi> atlasMLApi;
-
     private final TextExerciseRepository textExerciseRepository;
 
     private final TeamAssignmentConfigRepository teamAssignmentConfigRepository;
@@ -113,9 +116,9 @@ public class TextExerciseCreationUpdateResource {
             CourseService courseService, ParticipationRepository participationRepository, ExerciseService exerciseService,
             GroupNotificationScheduleService groupNotificationScheduleService, InstanceMessageSendService instanceMessageSendService, ChannelService channelService,
             ExerciseVersionService exerciseVersionService, Optional<CompetencyProgressApi> competencyProgressApi, Optional<CompetencyApi> competencyApi,
-            Optional<SlideApi> slideApi, Optional<AtlasMLApi> atlasMLApi, CompetencyExerciseLinkService competencyExerciseLinkService,
-            ExerciseVariantGroupService exerciseVariantGroupService, TeamAssignmentConfigRepository teamAssignmentConfigRepository,
-            PlagiarismDetectionConfigRepository plagiarismDetectionConfigRepository, ExerciseConfigurationService exerciseConfigurationService) {
+            Optional<SlideApi> slideApi, CompetencyExerciseLinkService competencyExerciseLinkService, ExerciseVariantGroupService exerciseVariantGroupService,
+            TeamAssignmentConfigRepository teamAssignmentConfigRepository, PlagiarismDetectionConfigRepository plagiarismDetectionConfigRepository,
+            ExerciseConfigurationService exerciseConfigurationService) {
         this.teamAssignmentConfigRepository = teamAssignmentConfigRepository;
         this.plagiarismDetectionConfigRepository = plagiarismDetectionConfigRepository;
         this.exerciseConfigurationService = exerciseConfigurationService;
@@ -132,7 +135,6 @@ public class TextExerciseCreationUpdateResource {
         this.competencyProgressApi = competencyProgressApi;
         this.competencyApi = competencyApi;
         this.slideApi = slideApi;
-        this.atlasMLApi = atlasMLApi;
         this.competencyExerciseLinkService = competencyExerciseLinkService;
         this.exerciseVariantGroupService = exerciseVariantGroupService;
     }
@@ -147,7 +149,15 @@ public class TextExerciseCreationUpdateResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping("text-exercises")
-    @EnforceAtLeastEditor
+    @EnforceAtLeastStudent
+    @ManualConfig
+    @AllowedScopes(AgentScope.EXERCISES_DRAFT)
+    @Operation(summary = "Create a text exercise", description = """
+            Creates a text exercise in a course (set courseId; exercise groups of exams are not available to tokens). A request with a \
+            personal access token must set releaseDate to a time in the future. The exercise becomes visible automatically at releaseDate, \
+            so the instructor must review it before that date and can move the date in the Artemis web interface. \
+            title, maxPoints, includedInOverallScore and courseId are required.""")
+    @ApiResponse(responseCode = "201", description = "The exercise was created as a draft.")
     public ResponseEntity<TextExerciseResponseDTO> createTextExercise(@RequestBody UpdateTextExerciseDTO createTextExerciseDTO) throws URISyntaxException {
         log.debug("REST request to save TextExercise : {}", createTextExerciseDTO);
         if (createTextExerciseDTO.id() != null) {
@@ -169,6 +179,7 @@ public class TextExerciseCreationUpdateResource {
         if (textExercise.getTitle() == null) {
             throw new BadRequestAlertException("A new textExercise needs a title", ENTITY_NAME, "missingtitle");
         }
+        textExercise.validateTitle();
         // validates general settings: points, dates
         textExercise.validateGeneralSettings();
         // Valid exercises have set either a course or an exerciseGroup
@@ -178,6 +189,8 @@ public class TextExerciseCreationUpdateResource {
         Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(textExercise);
         // Check that the user is authorized to create the exercise
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
+        // After the role check, so that a caller who may not create exercises is not told what the dates should be.
+        AgentDraftRules.requireDraftDatesForCreate(textExercise.getReleaseDate(), textExercise.getStartDate());
 
         // Validate plagiarism detection config
         PlagiarismDetectionConfigHelper.validatePlagiarismDetectionConfigOrThrow(textExercise, ENTITY_NAME);
@@ -200,9 +213,6 @@ public class TextExerciseCreationUpdateResource {
         groupNotificationScheduleService.checkNotificationsForNewExerciseAsync(textExercise);
         competencyProgressApi.ifPresent(api -> api.updateProgressByLearningObjectAsync(result));
 
-        // Notify AtlasML about the new text exercise
-        notifyAtlasML(result, OperationTypeDTO.UPDATE, "text exercise creation");
-
         exerciseVersionService.createExerciseVersion(result);
 
         return ResponseEntity.created(new URI("/api/text/text-exercises/" + result.getId())).body(TextExerciseResponseDTO.of(result));
@@ -219,7 +229,13 @@ public class TextExerciseCreationUpdateResource {
      *         with status 500 (Internal Server Error) if the textExercise couldn't be updated
      */
     @PutMapping("text-exercises")
-    @EnforceAtLeastEditor
+    @EnforceAtLeastStudent
+    @ManualConfig
+    @AllowedScopes(AgentScope.EXERCISES_DRAFT)
+    @Operation(summary = "Update a text exercise", description = """
+            Replaces the editable fields of an existing text exercise, so send the whole exercise. A request with a personal access \
+            token can change only an exercise that students cannot see yet (its releaseDate is in the future), and the change must \
+            keep releaseDate in the future. Published exercises can be changed only in the Artemis web interface.""")
     public ResponseEntity<TextExerciseResponseDTO> updateTextExercise(@RequestBody UpdateTextExerciseDTO updateTextExerciseDTO,
             @RequestParam(value = "notificationText", required = false) String notificationText) {
         log.debug("REST request to update TextExercise : {}", updateTextExerciseDTO);
@@ -259,6 +275,11 @@ public class TextExerciseCreationUpdateResource {
             throw new ConflictException("The exercise group cannot be changed here.", ENTITY_NAME, "exerciseGroupCannotChange");
         }
 
+        // A personal access token may only change an exercise that is still a draft, and must not publish it. Checked before
+        // update() applies the DTO to the managed entity.
+        AgentDraftRules.requireStillDraft(originalExercise.getReleaseDate(), originalExercise.getStartDate(), updateTextExerciseDTO.releaseDate(),
+                updateTextExerciseDTO.startDate());
+
         ZonedDateTime oldDueDate = originalExercise.getDueDate();
         ZonedDateTime oldAssessmentDueDate = originalExercise.getAssessmentDueDate();
         ZonedDateTime oldReleaseDate = originalExercise.getReleaseDate();
@@ -296,9 +317,6 @@ public class TextExerciseCreationUpdateResource {
 
         competencyProgressApi.ifPresent(api -> api.updateProgressForUpdatedLearningObjectAsyncWithOriginalCompetencyIds(originalCompetencyIds, persistedExercise));
 
-        // Notify AtlasML about the text exercise update
-        atlasMLApi.ifPresent(api -> api.notifyExerciseUpdated(persistedExercise));
-
         exerciseVersionService.createExerciseVersion(persistedExercise);
 
         return ResponseEntity.ok(TextExerciseResponseDTO.of(persistedExercise));
@@ -320,7 +338,7 @@ public class TextExerciseCreationUpdateResource {
      *         with status 500 (Internal Server Error) if the textExercise couldn't be updated
      */
     @PutMapping("text-exercises/{exerciseId}/re-evaluate")
-    @EnforceAtLeastEditor
+    @EnforceAtLeastEditorInExercise
     public ResponseEntity<TextExerciseResponseDTO> reEvaluateAndUpdateTextExercise(@PathVariable long exerciseId, @RequestBody UpdateTextExerciseDTO updateTextExerciseDTO,
             @RequestParam(value = "deleteFeedback", required = false) Boolean deleteFeedbackAfterGradingInstructionUpdate) {
         log.debug("REST request to re-evaluate TextExercise : {}", updateTextExerciseDTO);
@@ -342,8 +360,8 @@ public class TextExerciseCreationUpdateResource {
         var user = userRepository.getUserWithAuthorities();
         // Apply DTO changes BEFORE re-evaluation so that updated grading criteria take effect.
         TextExercise exerciseForReevaluation = update(updateTextExerciseDTO, existingExercise);
-        Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(exerciseForReevaluation);
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, user);
+        // Loads the course (or the exercise group with its exam) of the exercise for the logging and notifications below
+        courseService.retrieveCourseOverExerciseGroupOrCourseId(exerciseForReevaluation);
         PlagiarismDetectionConfigHelper.validatePlagiarismDetectionConfigOrThrow(exerciseForReevaluation, ENTITY_NAME);
 
         exerciseService.reEvaluateExercise(exerciseForReevaluation, deleteFeedbackAfterGradingInstructionUpdate);
@@ -477,20 +495,5 @@ public class TextExerciseCreationUpdateResource {
             exerciseGroup.setId(dto.exerciseGroupId());
             exercise.setExerciseGroup(exerciseGroup);
         }
-    }
-
-    /**
-     * Helper method to notify AtlasML about text exercise changes with consistent
-     * error handling.
-     */
-    private void notifyAtlasML(TextExercise exercise, OperationTypeDTO operationType, String operationDescription) {
-        atlasMLApi.ifPresent(api -> {
-            try {
-                api.saveExerciseWithCompetencies(exercise, operationType);
-            }
-            catch (Exception e) {
-                log.warn("Failed to notify AtlasML about {}: {}", operationDescription, e.getMessage());
-            }
-        });
     }
 }

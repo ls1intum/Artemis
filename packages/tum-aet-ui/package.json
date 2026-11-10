@@ -55,11 +55,11 @@
         "./styles.css": "./styles.css"
     },
     "peerDependencies": {
-        "@angular/aria": "^22.2.4",
-        "@angular/cdk": "^22.2.4",
-        "@angular/common": "^22.2.3",
-        "@angular/core": "^22.2.3",
-        "@angular/forms": "^22.2.3",
+        "@angular/aria": "^22.2.6",
+        "@angular/cdk": "^22.2.6",
+        "@angular/common": "^22.2.5",
+        "@angular/core": "^22.2.5",
+        "@angular/forms": "^22.2.5",
         "@fortawesome/angular-fontawesome": "^5.1.0",
         "@fortawesome/fontawesome-svg-core": "^7.3.1",
         "rxjs": "^7.8.2"
@@ -68,7 +68,7 @@
         "@fortawesome/free-solid-svg-icons": "7.3.1",
         "dayjs": "1.11.23",
         "lodash-es": "4.18.1",
-        "tslib": "2.8.1"
+        "tslib": "2.9.1"
     },
     "devDependencies": {
         "@angular-devkit/architect": "catalog:",

@@ -30,13 +30,12 @@ import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
-import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationAuthorizationCheckService;
 import de.tum.cit.aet.artemis.exercise.test_repository.ParticipationTestRepository;
 import de.tum.cit.aet.artemis.localvc.service.GitService;
-import de.tum.cit.aet.artemis.localvc.service.LocalVCServletService;
+import de.tum.cit.aet.artemis.localvc.service.LocalVCPushProcessingService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
@@ -106,7 +105,7 @@ class RepositoryProgrammingExerciseParticipationResourceTest {
     private RepositoryAccessService repositoryAccessService;
 
     @Mock
-    private LocalVCServletService localVCServletService;
+    private LocalVCPushProcessingService localVCPushProcessingService;
 
     @Mock
     private RepositoryParticipationService repositoryParticipationService;
@@ -126,7 +125,7 @@ class RepositoryProgrammingExerciseParticipationResourceTest {
     void setUp() {
         resource = new RepositoryProgrammingExerciseParticipationResource(userRepository, authCheckService, participationAuthCheckService, gitService, repositoryService,
                 participationService, programmingExerciseRepository, participationRepository, buildLogService, programmingSubmissionRepository, submissionPolicyRepository,
-                repositoryAccessService, Optional.of(localVCServletService), repositoryParticipationService,
+                repositoryAccessService, Optional.of(localVCPushProcessingService), repositoryParticipationService,
                 org.mockito.Mockito.mock(de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseMutationGuardService.class));
         exercise = new ProgrammingExercise();
         exercise.setId(EXERCISE_ID);
@@ -146,6 +145,7 @@ class RepositoryProgrammingExerciseParticipationResourceTest {
     private void withAccessibleParticipation() throws Exception {
         lenient().when(participationRepository.findByIdElseThrow(PARTICIPATION_ID)).thenReturn(participation);
         lenient().when(programmingExerciseRepository.getProgrammingExerciseFromParticipation(participation)).thenReturn(exercise);
+        lenient().when(programmingExerciseRepository.getProgrammingExerciseFromParticipationElseThrow(participation)).thenReturn(exercise);
         lenient().when(userRepository.getUserWithAuthorities()).thenReturn(user);
         lenient().when(repositoryParticipationService.getRepositoryFromGitService(anyBoolean(), any())).thenReturn(repository);
     }
@@ -265,7 +265,6 @@ class RepositoryProgrammingExerciseParticipationResourceTest {
         when(participationRepository.findByIdElseThrow(PARTICIPATION_ID)).thenReturn(participation);
         when(programmingExerciseRepository.getProgrammingExerciseFromParticipationElseThrow(participation)).thenReturn(exercise);
         when(userRepository.getUserWithAuthorities()).thenReturn(user);
-        doThrow(new AccessForbiddenException("not an editor")).when(authCheckService).checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, exercise, user);
 
         assertThatExceptionOfType(AccessForbiddenException.class).isThrownBy(() -> resource.getFilesAtCommit("abc123", PARTICIPATION_ID, RepositoryType.SOLUTION));
 
@@ -401,7 +400,7 @@ class RepositoryProgrammingExerciseParticipationResourceTest {
         when(repositoryService.savePreliminaryCodeEditorAccessLog(repository, user, PARTICIPATION_ID)).thenReturn(Optional.empty());
 
         assertThat(resource.commitChanges(PARTICIPATION_ID).getStatusCode()).isEqualTo(HttpStatus.OK);
-        verify(localVCServletService).processNewPush(eq(null), eq(repository), eq(user), any(), any(), eq(Optional.empty()), eq("commit-hash"));
+        verify(localVCPushProcessingService).processNewPush(eq(null), eq(repository), eq(user), any(), any(), eq(Optional.empty()), eq("commit-hash"));
     }
 
     @Test

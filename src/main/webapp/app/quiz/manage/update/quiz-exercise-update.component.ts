@@ -1,8 +1,11 @@
+import { TumAetUiButtonDirective, TumAetUiDatePickerComponent, TumAetUiFormFieldComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { isExamExerciseRoute } from 'app/exercise/util/exercise-detail-route-context';
 import { JsonPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, DestroyRef, HostListener, OnInit, ViewEncapsulation, computed, inject, signal, viewChild, viewChildren } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ExerciseTitleChannelNameComponent } from 'app/exercise/exercise-title-channel-name/exercise-title-channel-name.component';
 import { QuizExerciseService } from '../service/quiz-exercise.service';
+import { EXERCISE_FOR_IMPORT_FROM_FILE } from 'app/exercise/import/import-from-file-navigation';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Location } from '@angular/common';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
@@ -14,7 +17,6 @@ import { DragAndDropQuestionUtil } from 'app/quiz/shared/service/drag-and-drop-q
 import { ShortAnswerQuestionUtil } from 'app/quiz/shared/service/short-answer-question-util.service';
 import { Duration } from '../interfaces/quiz-exercise-interfaces';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { TumAetUiDatePickerComponent, TumAetUiFormFieldComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 import { DialogService } from 'primeng/dynamicdialog';
 import dayjs from 'dayjs/esm';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -56,14 +58,13 @@ import { ShortAnswerQuestion } from 'app/quiz/shared/entities/short-answer-quest
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FormsModule } from '@angular/forms';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
-import { CategorySelectorPrimengComponent } from 'app/exercise/category-selector-primeng/category-selector-primeng.component';
+import { CategorySelectorComponent } from 'app/exercise/category-selector/category-selector.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { CompetencySelectionComponent } from 'app/atlas/shared/competency-selection/competency-selection.component';
 import { CalendarService } from 'app/calendar/shared/service/calendar.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MODULE_FEATURE_HYPERION } from 'app/app.constants';
-import { ButtonModule } from 'primeng/button';
 import { TextareaModule } from 'primeng/textarea';
 import { ExerciseGroupDateNoticeComponent } from 'app/exercise/exercise-group-date-notice/exercise-group-date-notice.component';
 import { ExerciseGroupTimelineLockComponent } from 'app/course/manage/exercises/group-timeline-lock/exercise-group-timeline-lock.component';
@@ -91,12 +92,13 @@ const MAX_TIMEOUT_DELAY = 2_147_483_647;
     styleUrls: ['./quiz-exercise-update.component.scss', '../../shared/quiz.scss'],
     encapsulation: ViewEncapsulation.None,
     imports: [
+        TumAetUiButtonDirective,
         TranslateDirective,
         DocumentationButtonComponent,
         FormsModule,
         ExerciseTitleChannelNameComponent,
         HelpIconComponent,
-        CategorySelectorPrimengComponent,
+        CategorySelectorComponent,
         CompetencySelectionComponent,
         QuizQuestionListEditComponent,
         NgbTooltip,
@@ -104,7 +106,6 @@ const MAX_TIMEOUT_DELAY = 2_147_483_647;
         FaIconComponent,
         ArtemisTranslatePipe,
         RouterLink,
-        ButtonModule,
         TextareaModule,
         CheckboxModule,
         InputTextModule,
@@ -315,10 +316,17 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
         if (this.router.url.includes('/import')) {
             this.isImport.set(true);
         }
+        // A quiz read from a file arrives on the route of a new quiz and is then saved like an imported one.
+        const quizFromFile: QuizExercise | undefined = history.state?.[EXERCISE_FOR_IMPORT_FROM_FILE];
+        if (!quizId && quizFromFile) {
+            quizFromFile.quizQuestions ??= [];
+            this.quizExercise.set(quizFromFile);
+            this.isImport.set(true);
+        }
 
         /** Query the courseService for the participationId given by the params */
         if (this.courseId()) {
-            this.courseService.find(this.courseId()!).subscribe((response: HttpResponse<Course>) => {
+            this.courseService.findForManagement(this.courseId()!).subscribe((response: HttpResponse<Course>) => {
                 this.course = response.body!;
                 // Load exerciseGroup and set exam mode
                 if (this.isExamMode()) {
@@ -349,7 +357,7 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
             });
         }
         if (quizId) {
-            this.quizExerciseService.find(quizId).subscribe((quiz) => {
+            (isExamExerciseRoute(this.route.snapshot) ? this.quizExerciseService.findForExam(quizId) : this.quizExerciseService.find(quizId)).subscribe((quiz) => {
                 quiz.quizQuestions ??= [];
                 this.quizExercise.set(quiz);
                 this.init();
@@ -1047,41 +1055,5 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
 
     private isSingleChoiceType(type: GeneratedQuestionType): boolean {
         return type === 'single-choice' || type === 'true-false';
-    }
-
-    /**
-     * Generate enhanced description for AtlasML suggestions by including quiz questions
-     * @returns Enhanced description combining title and quiz questions
-     */
-    getEnhancedDescriptionForSuggestions(): string {
-        if (!this.quizExercise()) {
-            return '';
-        }
-
-        let description = this.quizExercise().title || '';
-
-        // Add quiz questions if they exist
-        const quizQuestions = this.quizExercise().quizQuestions;
-        if (quizQuestions && quizQuestions.length > 0) {
-            const questionTexts = quizQuestions
-                .map((question) => {
-                    const questionTitle = question.title || '';
-                    const questionText = question.text || '';
-                    return `${questionTitle} ${questionText}`.trim();
-                })
-                .filter((text) => text.length > 0)
-                .join(' ');
-
-            if (questionTexts) {
-                description = `${description} ${questionTexts}`.trim();
-            }
-        }
-
-        // Fallback to problem statement if available
-        if (!description && this.quizExercise().problemStatement) {
-            description = this.quizExercise().problemStatement!;
-        }
-
-        return description;
     }
 }

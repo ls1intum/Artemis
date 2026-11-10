@@ -34,8 +34,8 @@ import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.localvc.service.GitService;
+import de.tum.cit.aet.artemis.localvc.service.LocalVCPushProcessingService;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
-import de.tum.cit.aet.artemis.localvc.service.LocalVCServletService;
 import de.tum.cit.aet.artemis.programming.domain.File;
 import de.tum.cit.aet.artemis.programming.domain.FileType;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
@@ -71,18 +71,18 @@ public abstract class RepositoryResource {
 
     protected final ProgrammingExerciseMutationGuardService programmingExerciseMutationGuard;
 
-    private final Optional<LocalVCServletService> localVCServletService;
+    private final Optional<LocalVCPushProcessingService> localVCPushProcessingService;
 
     public RepositoryResource(UserRepository userRepository, AuthorizationCheckService authCheckService, GitService gitService, RepositoryService repositoryService,
-            ProgrammingExerciseRepository programmingExerciseRepository, RepositoryAccessService repositoryAccessService, Optional<LocalVCServletService> localVCServletService,
-            ProgrammingExerciseMutationGuardService programmingExerciseMutationGuard) {
+            ProgrammingExerciseRepository programmingExerciseRepository, RepositoryAccessService repositoryAccessService,
+            Optional<LocalVCPushProcessingService> localVCPushProcessingService, ProgrammingExerciseMutationGuardService programmingExerciseMutationGuard) {
         this.userRepository = userRepository;
         this.authCheckService = authCheckService;
         this.gitService = gitService;
         this.repositoryService = repositoryService;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.repositoryAccessService = repositoryAccessService;
-        this.localVCServletService = localVCServletService;
+        this.localVCPushProcessingService = localVCPushProcessingService;
         this.programmingExerciseMutationGuard = programmingExerciseMutationGuard;
     }
 
@@ -310,7 +310,7 @@ public abstract class RepositoryResource {
         var vcsAccessLog = repositoryService.savePreliminaryCodeEditorAccessLog(repository, user, domainId);
 
         // Trigger a build, and process the result. Jenkins webhooks perform the equivalent notification for remote repositories.
-        localVCServletService.orElseThrow().processNewPush(null, repository, user, Optional.empty(), Optional.empty(), vcsAccessLog, createdCommitHash);
+        localVCPushProcessingService.orElseThrow().processNewPush(null, repository, user, Optional.empty(), Optional.empty(), vcsAccessLog, createdCommitHash);
         return new ResponseEntity<>(HttpStatus.OK);
     }
 

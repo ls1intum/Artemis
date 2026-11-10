@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.atlas.web;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -28,9 +27,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
-import de.tum.cit.aet.artemis.atlas.api.AtlasMLApi;
 import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
-import de.tum.cit.aet.artemis.atlas.config.AtlasMLNotPresentException;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyImportOptionsDTO;
@@ -38,32 +35,26 @@ import de.tum.cit.aet.artemis.atlas.dto.CompetencyImportResponseDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyWithTailRelationDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CourseCompetencyRequestDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CourseCompetencyResponseDTO;
-import de.tum.cit.aet.artemis.atlas.dto.atlasml.SaveCompetencyRequestDTO.OperationTypeDTO;
-import de.tum.cit.aet.artemis.atlas.dto.atlasml.SuggestCompetencyRelationsResponseDTO;
-import de.tum.cit.aet.artemis.atlas.dto.atlasml.SuggestCompetencyRequestDTO;
-import de.tum.cit.aet.artemis.atlas.dto.atlasml.SuggestCompetencyResponseDTO;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyRepository;
 import de.tum.cit.aet.artemis.atlas.repository.CourseCompetencyRepository;
-import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyAtlasMLNotificationService;
 import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyService;
 import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyValidationService;
 import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyWithTailRelation;
 import de.tum.cit.aet.artemis.atlas.service.competency.CourseCompetencyService;
-import de.tum.cit.aet.artemis.core.domain.FeatureInteraction;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.security.Role;
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
+import de.tum.cit.aet.artemis.core.security.allowedScopes.AgentScope;
+import de.tum.cit.aet.artemis.core.security.allowedScopes.AllowedScopes;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastEditorInCourse;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastStudentInCourse;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
-import de.tum.cit.aet.artemis.core.service.feature.Feature;
-import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
-import de.tum.cit.aet.artemis.core.service.featureusage.UsageInteraction;
 import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 
 @Conditional(AtlasEnabled.class)
 @Lazy
@@ -93,16 +84,11 @@ public class CompetencyResource {
 
     private final CourseCompetencyService courseCompetencyService;
 
-    private final Optional<AtlasMLApi> atlasMLApi;
-
     private final CompetencyValidationService competencyValidator;
-
-    private final CompetencyAtlasMLNotificationService atlasMLNotificationService;
 
     public CompetencyResource(CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService, UserRepository userRepository,
             CompetencyRepository competencyRepository, CompetencyService competencyService, CourseCompetencyRepository courseCompetencyRepository,
-            CourseCompetencyService courseCompetencyService, Optional<AtlasMLApi> atlasMLApi, CompetencyValidationService competencyValidator,
-            CompetencyAtlasMLNotificationService atlasMLNotificationService) {
+            CourseCompetencyService courseCompetencyService, CompetencyValidationService competencyValidator) {
         this.courseRepository = courseRepository;
         this.authorizationCheckService = authorizationCheckService;
         this.userRepository = userRepository;
@@ -110,9 +96,7 @@ public class CompetencyResource {
         this.competencyService = competencyService;
         this.courseCompetencyRepository = courseCompetencyRepository;
         this.courseCompetencyService = courseCompetencyService;
-        this.atlasMLApi = atlasMLApi;
         this.competencyValidator = competencyValidator;
-        this.atlasMLNotificationService = atlasMLNotificationService;
     }
 
     /**
@@ -124,6 +108,10 @@ public class CompetencyResource {
     @FeatureUsage(UserFeature.COMPETENCY_PROGRESS)
     @GetMapping("courses/{courseId}/competencies")
     @EnforceAtLeastStudentInCourse
+    @AllowedScopes(AgentScope.COMPETENCIES_READ)
+    @Operation(summary = "List the competencies of a course", description = """
+            Returns the competencies of the course. Each one carries the caller's own learning progress. Links to \
+            exercises and lecture units are not included; get a single competency for those.""")
     public ResponseEntity<List<CourseCompetencyResponseDTO>> getCompetenciesWithProgress(@PathVariable long courseId) {
         log.debug("REST request to get competencies for course with id: {}", courseId);
         User user = userRepository.getUserWithAuthorities();
@@ -142,6 +130,8 @@ public class CompetencyResource {
     @FeatureUsage(UserFeature.COMPETENCY_PROGRESS)
     @GetMapping("courses/{courseId}/competencies/{competencyId}")
     @EnforceAtLeastStudentInCourse
+    @AllowedScopes(AgentScope.COMPETENCIES_READ)
+    @Operation(summary = "Get one competency", description = "Returns a competency with the exercises and lecture units linked to it, as far as the caller may see them.")
     public ResponseEntity<CourseCompetencyResponseDTO> getCompetency(@PathVariable long competencyId, @PathVariable long courseId) {
         log.info("REST request to get Competency : {}", competencyId);
         var currentUser = userRepository.getUserWithAuthorities();
@@ -164,9 +154,15 @@ public class CompetencyResource {
      */
     @PostMapping("courses/{courseId}/competencies")
     @EnforceAtLeastEditorInCourse
+    @AllowedScopes(AgentScope.COMPETENCIES_WRITE)
+    @Operation(summary = "Create a competency", description = """
+            Creates a competency in the course. The title (at most 255 characters) and the mastery threshold are \
+            required. To link the competency to lecture units or exercises, set competencyLinks on those objects; \
+            this endpoint does not link anything.""")
+    @ApiResponse(responseCode = "201", description = "The competency was created.")
     public ResponseEntity<CourseCompetencyResponseDTO> createCompetency(@PathVariable long courseId, @Valid @RequestBody CourseCompetencyRequestDTO competencyRequest)
             throws URISyntaxException {
-        return createCompetency(courseId, competencyRequest, false, "competency creation");
+        return createCompetency(courseId, competencyRequest, false);
     }
 
     /**
@@ -183,11 +179,11 @@ public class CompetencyResource {
     @EnforceAtLeastEditorInCourse
     public ResponseEntity<CourseCompetencyResponseDTO> createCompetencyGeneratedFromHyperionChecklist(@PathVariable long courseId,
             @Valid @RequestBody CourseCompetencyRequestDTO competencyRequest) throws URISyntaxException {
-        return createCompetency(courseId, competencyRequest, true, "competency creation from Hyperion checklist");
+        return createCompetency(courseId, competencyRequest, true);
     }
 
-    private ResponseEntity<CourseCompetencyResponseDTO> createCompetency(long courseId, CourseCompetencyRequestDTO competencyRequest, boolean generatedByAi,
-            String notificationReason) throws URISyntaxException {
+    private ResponseEntity<CourseCompetencyResponseDTO> createCompetency(long courseId, CourseCompetencyRequestDTO competencyRequest, boolean generatedByAi)
+            throws URISyntaxException {
         log.debug("REST request to create Competency : {}", competencyRequest);
         Competency competency = CourseCompetencyRequestDTO.toEntity(competencyRequest, Competency::new);
         competency.setGeneratedByAi(generatedByAi);
@@ -196,9 +192,6 @@ public class CompetencyResource {
         var course = courseRepository.findWithEagerCompetenciesAndPrerequisitesByIdElseThrow(courseId);
 
         final var persistedCompetency = competencyService.createCourseCompetency(competency, course);
-
-        // Notify AtlasML about the new competency
-        atlasMLNotificationService.notifyAtlasML(List.of(persistedCompetency), OperationTypeDTO.UPDATE, notificationReason);
 
         return ResponseEntity.created(new URI("/api/atlas/courses/" + courseId + "/competencies/" + persistedCompetency.getId()))
                 .body(CourseCompetencyResponseDTO.of(persistedCompetency));
@@ -214,9 +207,12 @@ public class CompetencyResource {
      */
     @PostMapping("courses/{courseId}/competencies/bulk")
     @EnforceAtLeastEditorInCourse
+    @AllowedScopes(AgentScope.COMPETENCIES_WRITE)
+    @Operation(summary = "Create several competencies", description = "Creates all given competencies in one request. The request is rejected as a whole if one of them is invalid.")
+    @ApiResponse(responseCode = "201", description = "The competencies were created.")
     public ResponseEntity<List<CourseCompetencyResponseDTO>> createCompetencies(@PathVariable Long courseId,
             @Valid @RequestBody List<@NotNull @Valid CourseCompetencyRequestDTO> competencies) throws URISyntaxException {
-        return createCompetencies(courseId, competencies, false, "competency creation");
+        return createCompetencies(courseId, competencies, false);
     }
 
     /**
@@ -232,11 +228,21 @@ public class CompetencyResource {
     @EnforceAtLeastEditorInCourse
     public ResponseEntity<List<CourseCompetencyResponseDTO>> createCompetenciesGeneratedFromDescription(@PathVariable Long courseId,
             @Valid @RequestBody List<@NotNull @Valid CourseCompetencyRequestDTO> competencies) throws URISyntaxException {
-        return createCompetencies(courseId, competencies, true, "competency creation from course description");
+        return createCompetencies(courseId, competencies, true);
     }
 
-    private ResponseEntity<List<CourseCompetencyResponseDTO>> createCompetencies(Long courseId, List<CourseCompetencyRequestDTO> competencies, boolean generatedByAi,
-            String notificationReason) throws URISyntaxException {
+    /**
+     * Validates the complete batch before persisting it, sharing creation behavior between manual and AI recommendation routes.
+     * The calling route determines AI provenance instead of accepting that decision from the request body.
+     *
+     * @param courseId      the receiving course
+     * @param competencies  the requested competency definitions
+     * @param generatedByAi whether the calling route represents AI-generated recommendations
+     * @return the created competencies and their collection location
+     * @throws URISyntaxException if the collection location cannot be represented as a URI
+     */
+    private ResponseEntity<List<CourseCompetencyResponseDTO>> createCompetencies(Long courseId, List<CourseCompetencyRequestDTO> competencies, boolean generatedByAi)
+            throws URISyntaxException {
         log.debug("REST request to create Competencies : {}", competencies);
         var competencyEntities = competencies.stream().map(request -> CourseCompetencyRequestDTO.toEntity(request, Competency::new)).toList();
         for (Competency competency : competencyEntities) {
@@ -246,9 +252,6 @@ public class CompetencyResource {
         var course = courseRepository.findWithEagerCompetenciesAndPrerequisitesByIdElseThrow(courseId);
 
         var createdCompetencies = competencyService.createCompetencies(competencyEntities, course);
-
-        // Notify AtlasML about the new competencies
-        atlasMLNotificationService.notifyAtlasML(createdCompetencies, OperationTypeDTO.UPDATE, notificationReason + " for " + createdCompetencies.size() + " competencies");
 
         return ResponseEntity.created(new URI("/api/atlas/courses/" + courseId + "/competencies/"))
                 .body(createdCompetencies.stream().map(CourseCompetencyResponseDTO::of).toList());
@@ -363,6 +366,9 @@ public class CompetencyResource {
     @FeatureUsage(UserFeature.STANDARDIZED_COMPETENCIES)
     @PostMapping("courses/{courseId}/competencies/import-standardized")
     @EnforceAtLeastEditorInCourse
+    @AllowedScopes(AgentScope.COMPETENCIES_WRITE)
+    @Operation(summary = "Import standardized competencies", description = "Adds competencies from the catalogue of standardized competencies to the course. The body is a list of catalogue ids.")
+    @ApiResponse(responseCode = "201", description = "The competencies were imported.")
     public ResponseEntity<List<CompetencyImportResponseDTO>> importStandardizedCompetencies(@PathVariable long courseId, @RequestBody List<Long> competencyIdsToImport)
             throws URISyntaxException {
         log.info("REST request to import standardized competencies with ids: {}", competencyIdsToImport);
@@ -383,6 +389,10 @@ public class CompetencyResource {
      */
     @PutMapping("courses/{courseId}/competencies")
     @EnforceAtLeastEditorInCourse
+    @AllowedScopes(AgentScope.COMPETENCIES_WRITE)
+    @Operation(summary = "Update a competency", description = """
+            Replaces the editable fields of an existing competency. The id in the body identifies it, so send the \
+            full competency, not only the changed fields. Nothing is deleted.""")
     public ResponseEntity<CourseCompetencyResponseDTO> updateCompetency(@PathVariable long courseId, @Valid @RequestBody CourseCompetencyRequestDTO competencyRequest) {
         log.debug("REST request to update Competency : {}", competencyRequest);
         Competency competency = CourseCompetencyRequestDTO.toEntity(competencyRequest, Competency::new);
@@ -393,9 +403,6 @@ public class CompetencyResource {
         checkCourseForCompetency(course, existingCompetency);
 
         var persistedCompetency = competencyService.updateCourseCompetency(existingCompetency, competency);
-
-        // Notify AtlasML about the competency update
-        atlasMLNotificationService.notifyAtlasML(List.of(persistedCompetency), OperationTypeDTO.UPDATE, "competency update");
 
         return ResponseEntity.ok(CourseCompetencyResponseDTO.of(persistedCompetency));
     }
@@ -416,68 +423,9 @@ public class CompetencyResource {
         var competency = courseCompetencyRepository.findByIdWithExercisesAndLectureUnitsBidirectionalElseThrow(competencyId);
         checkCourseForCompetency(course, competency);
 
-        // Notify AtlasML about the competency deletion before actual deletion
-        Competency competencyForAtlasMl = new Competency(competency);
-        competencyForAtlasMl.setId(competency.getId());
-        atlasMLNotificationService.notifyAtlasML(List.of(competencyForAtlasMl), OperationTypeDTO.DELETE, "competency deletion");
-
         courseCompetencyService.deleteCourseCompetency(competency, course);
 
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, competency.getTitle())).build();
-    }
-
-    /**
-     * POST atlas/competencies/suggest : suggests competencies using AtlasML.
-     * <p>
-     * The target course is carried in the request body ({@code course_id}). {@code @EnforceAtLeastEditor} only gates the
-     * general editor role, so the caller must additionally be at least an editor in <em>that</em> course; this is
-     * checked programmatically below to prevent a user from requesting suggestions for a course they cannot edit.
-     *
-     * @param request the request containing the description and the target course id for competency suggestions
-     * @return the ResponseEntity with status 200 (OK) and with body the suggested competencies
-     */
-    @FeatureUsage(UserFeature.AI_COMPETENCY_GENERATION)
-    @PostMapping("competencies/suggest")
-    @EnforceAtLeastEditor
-    @FeatureToggle(Feature.AtlasML)
-    public ResponseEntity<SuggestCompetencyResponseDTO> suggestCompetencies(@RequestBody SuggestCompetencyRequestDTO request) {
-        log.debug("REST request to suggest competencies using AtlasML with description: {}", request.description());
-        var course = courseRepository.findByIdElseThrow(request.courseId());
-        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
-
-        var api = atlasMLApi.orElseThrow(() -> new AtlasMLNotPresentException(AtlasMLApi.class));
-        try {
-            SuggestCompetencyResponseDTO result = api.suggestCompetencies(request);
-            return ResponseEntity.ok(result);
-        }
-        catch (Exception e) {
-            log.error("Error while suggesting competencies", e);
-            throw new BadRequestAlertException("Error suggesting competencies: " + e.getMessage(), ENTITY_NAME, "suggestionError");
-        }
-    }
-
-    /**
-     * GET courses/:courseId/competencies/relations/suggest : suggests competency relations using AtlasML.
-     *
-     * @param courseId the course identifier
-     * @return the ResponseEntity with status 200 (OK) and with body the suggested competency relations
-     */
-    @FeatureUsage(UserFeature.AI_COMPETENCY_GENERATION)
-    @UsageInteraction(FeatureInteraction.ACTION)
-    @GetMapping("courses/{courseId}/competencies/relations/suggest")
-    @EnforceAtLeastEditorInCourse
-    @FeatureToggle(Feature.AtlasML)
-    public ResponseEntity<SuggestCompetencyRelationsResponseDTO> suggestCompetencyRelations(@PathVariable long courseId) {
-        log.debug("REST request to suggest competency relations using AtlasML for course: {}", courseId);
-        var api = atlasMLApi.orElseThrow(() -> new AtlasMLNotPresentException(AtlasMLApi.class));
-        try {
-            SuggestCompetencyRelationsResponseDTO result = api.suggestCompetencyRelations(courseId);
-            return ResponseEntity.ok(result);
-        }
-        catch (Exception e) {
-            log.error("Error while suggesting competency relations", e);
-            throw new BadRequestAlertException("Error suggesting competency relations: " + e.getMessage(), ENTITY_NAME, "suggestionError");
-        }
     }
 
     /**

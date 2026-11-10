@@ -10,17 +10,24 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.io.ClassPathResource;
 
-import tools.jackson.databind.JsonNode;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+import tools.jackson.core.JsonParser;
+import tools.jackson.core.JsonToken;
+import tools.jackson.databind.DeserializationContext;
+import tools.jackson.databind.ValueDeserializer;
+import tools.jackson.databind.annotation.JsonDeserialize;
 import tools.jackson.databind.json.JsonMapper;
-import tools.jackson.databind.node.ArrayNode;
-import tools.jackson.databind.node.ObjectNode;
 
 import de.tum.cit.aet.artemis.aiworker.api.InteractiveSandbox;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.GenerationInput;
@@ -52,13 +59,7 @@ public class StructuralOracleSeeder {
 
     private static final Pattern PACKAGE_PLACEHOLDER_DECLARATION = Pattern.compile("(?m)^\\s*package\\s+" + Pattern.quote(PACKAGE_PLACEHOLDER) + "\\s*;\\s*\\n");
 
-    private static final Pattern PACKAGE_DECLARATION = Pattern.compile("(?m)^\\s*package\\s+([\\w.]+)\\s*;");
-
     private static final JsonMapper MAPPER = JsonMapper.builder().build();
-
-    /** Captures the optional {@code public} modifier, because only a public solution type may be seeded. */
-    private static final Pattern TYPE_DECLARATION = Pattern
-            .compile("(?m)(?:^|\\s)(public\\s+)?(?:abstract\\s+|final\\s+|sealed\\s+|non-sealed\\s+|strictfp\\s+)*(?:class|interface|enum|record)\\s+(\\w+)");
 
     private final GenerationWorkspace workspace;
 
@@ -114,7 +115,7 @@ public class StructuralOracleSeeder {
                 }
                 names.addAll(structuralTestNames(oracle.getValue()));
             }
-            catch (IOException | RuntimeException exception) {
+            catch (RuntimeException exception) {
                 valid = false;
                 log.warn("Ignoring malformed baseline structural oracle for session {}: {}", sessionId, exception.getMessage());
                 break;
@@ -147,8 +148,7 @@ public class StructuralOracleSeeder {
         if (approvedSpecification.isEmpty()) {
             return restoreBaselineStructuralBundle(sandbox, sessionId);
         }
-        Set<String> allowedDesignTypes = StageChecks.designTableRows(approvedSpecification.get()).stream().map(StageChecks.DesignRow::type)
-                .collect(java.util.stream.Collectors.toSet());
+        Set<String> allowedDesignTypes = StageChecks.designTableRows(approvedSpecification.get()).stream().map(StageChecks.DesignRow::type).collect(Collectors.toSet());
         ApprovedStructuralContract.ParseResult parsedContract = ApprovedStructuralContract.parse(approvedSpecification.get(), allowedDesignTypes, expectedStudentCreatedTypes);
         if (!parsedContract.valid()) {
             throw new IllegalStateException("The approved Java Public API contract is invalid: " + parsedContract.errors());
@@ -174,7 +174,7 @@ public class StructuralOracleSeeder {
                         + "grading harness while materializing approved student-created types " + expectedStudentCreatedTypes);
             }
 
-            String oracle = parsedContract.contract().toOracle(packageName, MAPPER, expectedStudentCreatedTypes);
+            String oracle = parsedContract.contract().toOracle(packageName, expectedStudentCreatedTypes);
 
             if (isStructurallyEmpty(oracle)) {
                 if (!expectedStudentCreatedTypes.isEmpty()) {
@@ -284,27 +284,26 @@ public class StructuralOracleSeeder {
      * {@code class} node carries a property beyond {@code name} and {@code package} (Ares' {@code ClassTestProvider} skips the others), while member names exist only where that
      * oracle section is non-empty. Reconstructed from the oracle rather than matched by name shape, which the agent could imitate.
      */
-    private static Set<String> structuralTestNames(String oracle) throws IOException {
+    private static Set<String> structuralTestNames(String oracle) {
         Set<String> names = new LinkedHashSet<>();
-        for (JsonNode entry : (ArrayNode) MAPPER.readTree(oracle)) {
-            JsonNode classNode = entry.path("class");
-            String className = classNode.path("name").asText("");
+        for (OracleEntry entry : readOracleEntries(oracle)) {
+            String className = entry.className();
             if (className.isEmpty()) {
                 continue;
             }
-            if (hasAdditionalClassProperties(classNode)) {
+            if (entry.hasAdditionalClassProperties()) {
                 names.add("testClass[" + className + "]");
             }
-            if (entry.has("genericApi")) {
+            if (entry.hasGenericApi()) {
                 names.add("testClass[GenericApi:" + className + "]");
             }
-            if (hasEntries(entry, "methods")) {
+            if (entry.hasMethods()) {
                 names.add("testMethods[" + className + "]");
             }
-            if (hasEntries(entry, "attributes")) {
+            if (entry.hasAttributes()) {
                 names.add("testAttributes[" + className + "]");
             }
-            if (hasEntries(entry, "constructors")) {
+            if (entry.hasConstructors()) {
                 names.add("testConstructors[" + className + "]");
             }
         }
@@ -315,55 +314,201 @@ public class StructuralOracleSeeder {
      * Only providers with at least one dynamic test to create (see class javadoc on the shared factory name). {@code ClassTest.java} is included only when at least one class
      * qualifies for {@code testClass[...]}, because Ares' {@code ClassTest} fails with "No tests for classes available" otherwise.
      */
-    private static List<String> requiredStructuralClasses(String oracle) throws IOException {
-        ArrayNode entries = (ArrayNode) MAPPER.readTree(oracle);
+    private static List<String> requiredStructuralClasses(String oracle) {
+        List<OracleEntry> entries = readOracleEntries(oracle);
         List<String> classes = new ArrayList<>();
-        for (JsonNode entry : entries) {
-            if (hasAdditionalClassProperties(entry.path("class"))) {
-                classes.add("ClassTest.java");
-                break;
-            }
+        if (entries.stream().anyMatch(OracleEntry::hasAdditionalClassProperties)) {
+            classes.add("ClassTest.java");
         }
-        for (JsonNode entry : entries) {
-            if (entry.has("genericApi")) {
-                classes.add("GenericTypeTest.java");
-                break;
-            }
+        if (entries.stream().anyMatch(OracleEntry::hasGenericApi)) {
+            classes.add("GenericTypeTest.java");
         }
-        if (hasEntries(entries, "methods")) {
+        if (entries.stream().anyMatch(OracleEntry::hasMethods)) {
             classes.add("MethodTest.java");
         }
-        if (hasEntries(entries, "attributes")) {
+        if (entries.stream().anyMatch(OracleEntry::hasAttributes)) {
             classes.add("AttributeTest.java");
         }
-        if (hasEntries(entries, "constructors")) {
+        if (entries.stream().anyMatch(OracleEntry::hasConstructors)) {
             classes.add("ConstructorTest.java");
         }
         return List.copyOf(classes);
     }
 
     /**
-     * Ares' {@code ClassTestProvider} generates {@code testClass[...]} only for a class whose {@code class} node specifies something to check beyond its identity, such as
-     * {@code modifiers}, {@code superclass}, {@code interfaces}, {@code isInterface}, {@code isEnum}, {@code isAbstract} or {@code annotations}.
+     * Reads what the structural tests need to know about each class of an oracle.
+     *
+     * @param oracle the content of an oracle file
+     * @return the entries of the oracle in file order
+     * @throws IllegalArgumentException if the oracle is not a JSON array
      */
-    private static boolean hasAdditionalClassProperties(JsonNode classNode) {
-        if (!classNode.isObject()) {
-            return false;
+    private static List<OracleEntry> readOracleEntries(String oracle) {
+        OracleDocument document = MAPPER.readValue(oracle, OracleDocument.class);
+        if (document == null || document.entries() == null) {
+            throw new IllegalArgumentException("The structural oracle is not a JSON array");
         }
-        return classNode.properties().stream().map(Map.Entry::getKey).anyMatch(property -> !"name".equals(property) && !"package".equals(property));
+        return document.entries();
     }
 
-    private static boolean hasEntries(JsonNode entries, String field) {
-        if (entries.isArray()) {
-            for (JsonNode entry : entries) {
-                if (hasEntries(entry, field)) {
-                    return true;
+    /**
+     * An oracle file, reduced to its class entries; the content of the members is not needed and not read.
+     *
+     * @param entries the class entries, absent when the file is not a JSON array
+     */
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    @JsonDeserialize(using = OracleDocumentDeserializer.class)
+    private record OracleDocument(@Nullable List<OracleEntry> entries) {
+    }
+
+    /**
+     * One class of an oracle, reduced to the keys that decide which structural tests exist.
+     *
+     * @param classHeader      the {@code class} node, absent when it is missing or {@code null}
+     * @param methodCount      the number of {@code methods}, absent when the key is missing or not an array
+     * @param attributeCount   the number of {@code attributes}, absent when the key is missing or not an array
+     * @param constructorCount the number of {@code constructors}, absent when the key is missing or not an array
+     * @param genericApi       {@code true} when the key {@code genericApi} is present with any value, absent when it is missing
+     */
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    private record OracleEntry(@Nullable @JsonProperty("class") @JsonDeserialize(using = ClassHeaderDeserializer.class) ClassHeader classHeader,
+            @Nullable @JsonProperty("methods") @JsonDeserialize(using = ElementCountDeserializer.class) Integer methodCount,
+            @Nullable @JsonProperty("attributes") @JsonDeserialize(using = ElementCountDeserializer.class) Integer attributeCount,
+            @Nullable @JsonProperty("constructors") @JsonDeserialize(using = ElementCountDeserializer.class) Integer constructorCount,
+            @Nullable @JsonDeserialize(using = PresenceDeserializer.class) Boolean genericApi) {
+
+        /** What an entry that is not even an object reads as: no class and no members. */
+        private static final OracleEntry EMPTY = new OracleEntry(null, null, null, null, null);
+
+        /** The name of the class, empty when the oracle does not give a usable one. */
+        String className() {
+            return classHeader == null ? "" : classHeader.name();
+        }
+
+        /**
+         * Ares' {@code ClassTestProvider} generates {@code testClass[...]} only for a class whose {@code class} node specifies something to check beyond its identity, such as
+         * {@code modifiers}, {@code superclass}, {@code interfaces}, {@code isInterface}, {@code isEnum}, {@code isAbstract} or {@code annotations}.
+         */
+        boolean hasAdditionalClassProperties() {
+            return classHeader != null && classHeader.additionalProperties();
+        }
+
+        boolean hasGenericApi() {
+            return Boolean.TRUE.equals(genericApi);
+        }
+
+        boolean hasMethods() {
+            return methodCount != null && methodCount > 0;
+        }
+
+        boolean hasAttributes() {
+            return attributeCount != null && attributeCount > 0;
+        }
+
+        boolean hasConstructors() {
+            return constructorCount != null && constructorCount > 0;
+        }
+    }
+
+    /**
+     * The {@code class} node of an oracle entry.
+     *
+     * @param name                 the name of the class, empty when it is missing or not a scalar
+     * @param additionalProperties whether the node carries a key other than {@code name} and {@code package}, whatever its value
+     */
+    private record ClassHeader(String name, boolean additionalProperties) {
+
+        /** What a {@code class} value that is not an object reads as. */
+        private static final ClassHeader NOT_AN_OBJECT = new ClassHeader("", false);
+    }
+
+    /** Reads the entries of an oracle; an element that is not an object still counts as an entry, with no class and no members, and any other root value has no entries. */
+    static final class OracleDocumentDeserializer extends ValueDeserializer<OracleDocument> {
+
+        @Override
+        public OracleDocument deserialize(JsonParser parser, DeserializationContext context) {
+            if (parser.currentToken() != JsonToken.START_ARRAY) {
+                parser.skipChildren();
+                return new OracleDocument(null);
+            }
+            List<OracleEntry> entries = new ArrayList<>();
+            while (parser.nextToken() != JsonToken.END_ARRAY) {
+                if (parser.currentToken() == JsonToken.START_OBJECT) {
+                    entries.add(context.readValue(parser, OracleEntry.class));
+                }
+                else {
+                    parser.skipChildren();
+                    entries.add(OracleEntry.EMPTY);
                 }
             }
-            return false;
+            return new OracleDocument(entries);
         }
-        JsonNode values = entries.path(field);
-        return values.isArray() && !values.isEmpty();
+    }
+
+    /** Reads the {@code class} node: its name when it is a scalar, and whether it has any key besides {@code name} and {@code package}. Any other value is not a class node. */
+    static final class ClassHeaderDeserializer extends ValueDeserializer<ClassHeader> {
+
+        @Override
+        public ClassHeader deserialize(JsonParser parser, DeserializationContext context) {
+            if (parser.currentToken() != JsonToken.START_OBJECT) {
+                parser.skipChildren();
+                return ClassHeader.NOT_AN_OBJECT;
+            }
+            String name = "";
+            boolean additionalProperties = false;
+            for (String property = parser.nextName(); property != null; property = parser.nextName()) {
+                JsonToken value = parser.nextToken();
+                if ("name".equals(property)) {
+                    boolean scalar = value == JsonToken.VALUE_STRING || value == JsonToken.VALUE_NUMBER_INT || value == JsonToken.VALUE_NUMBER_FLOAT
+                            || value == JsonToken.VALUE_TRUE || value == JsonToken.VALUE_FALSE;
+                    name = scalar ? parser.getString() : "";
+                }
+                else if (!"package".equals(property)) {
+                    additionalProperties = true;
+                }
+                // A scalar has no children, so this only consumes the container values.
+                parser.skipChildren();
+            }
+            return new ClassHeader(name, additionalProperties);
+        }
+    }
+
+    /** Reads the number of elements of an array without reading the elements; any other value has no elements and reads as absent. */
+    static final class ElementCountDeserializer extends ValueDeserializer<Integer> {
+
+        @Override
+        public Integer deserialize(JsonParser parser, DeserializationContext context) {
+            if (parser.currentToken() != JsonToken.START_ARRAY) {
+                parser.skipChildren();
+                return null;
+            }
+            int count = 0;
+            while (parser.nextToken() != JsonToken.END_ARRAY) {
+                parser.skipChildren();
+                count++;
+            }
+            return count;
+        }
+    }
+
+    /** Reads whether a key is present at all, whatever its value, which includes an explicit {@code null}; a missing key stays absent. */
+    static final class PresenceDeserializer extends ValueDeserializer<Boolean> {
+
+        @Override
+        public Boolean deserialize(JsonParser parser, DeserializationContext context) {
+            parser.skipChildren();
+            return Boolean.TRUE;
+        }
+
+        @Override
+        public Boolean getNullValue(DeserializationContext context) {
+            return Boolean.TRUE;
+        }
+
+        @Override
+        public Boolean getAbsentValue(DeserializationContext context) {
+            return null;
+        }
     }
 
     private static String locateStructuralAssetDirectory(Map<String, String> testFiles) {
@@ -398,13 +543,13 @@ public class StructuralOracleSeeder {
 
     private static boolean isStructuralOracle(String content) {
         try {
-            JsonNode root = MAPPER.readTree(content);
-            if (!(root instanceof ArrayNode entries) || entries.isEmpty()) {
+            List<OracleEntry> entries = readOracleEntries(content);
+            if (entries.isEmpty()) {
                 return false;
             }
             Set<String> names = new HashSet<>();
-            for (JsonNode entry : entries) {
-                String name = entry.path("class").path("name").asText("");
+            for (OracleEntry entry : entries) {
+                String name = entry.className();
                 if (name.isBlank() || !names.add(name)) {
                     return false;
                 }
@@ -432,15 +577,10 @@ public class StructuralOracleSeeder {
                 throw new IllegalStateException("The pre-authoring structural bundle in '" + candidate + "' is incomplete or malformed");
             }
             if (requireComplete && oracleValid) {
-                try {
-                    List<String> requiredProviders = requiredStructuralClasses(oracle);
-                    if (!recognizedProviders.containsAll(requiredProviders)) {
-                        throw new IllegalStateException("The pre-authoring structural bundle in '" + candidate + "' is missing required provider(s) "
-                                + requiredProviders.stream().filter(provider -> !recognizedProviders.contains(provider)).toList());
-                    }
-                }
-                catch (IOException exception) {
-                    throw new IllegalStateException("The pre-authoring structural oracle in '" + candidate + "' is malformed", exception);
+                List<String> requiredProviders = requiredStructuralClasses(oracle);
+                if (!recognizedProviders.containsAll(requiredProviders)) {
+                    throw new IllegalStateException("The pre-authoring structural bundle in '" + candidate + "' is missing required provider(s) "
+                            + requiredProviders.stream().filter(provider -> !recognizedProviders.contains(provider)).toList());
                 }
             }
         }
@@ -493,90 +633,6 @@ public class StructuralOracleSeeder {
 
     private enum StructuralAssetOwnership {
         NONE, HYPERION_MANAGED, UNMANAGED,
-    }
-
-    private static String parsePackage(Map<String, String> solutionFiles) {
-        for (Map.Entry<String, String> entry : solutionFiles.entrySet()) {
-            if (!entry.getKey().endsWith(".java")) {
-                continue;
-            }
-            Matcher matcher = PACKAGE_DECLARATION.matcher(entry.getValue());
-            if (matcher.find()) {
-                return matcher.group(1);
-            }
-        }
-        return "";
-    }
-
-    /** Keeps only classes the student must create (public in the solution, absent from the template) and only their public/protected members; {@code []} when none qualify. */
-    static String filterOracleToCreatedPublicApi(String oracle, Map<String, String> templateFiles, Map<String, String> solutionFiles) throws IOException {
-        return filterOracleToCreatedPublicApi(oracle, templateFiles, solutionFiles, Set.of(), false);
-    }
-
-    static String filterOracleToCreatedPublicApi(String oracle, Map<String, String> templateFiles, Map<String, String> solutionFiles, Set<String> approvedStudentCreatedTypes)
-            throws IOException {
-        return filterOracleToCreatedPublicApi(oracle, templateFiles, solutionFiles, approvedStudentCreatedTypes, true);
-    }
-
-    private static String filterOracleToCreatedPublicApi(String oracle, Map<String, String> templateFiles, Map<String, String> solutionFiles,
-            Set<String> approvedStudentCreatedTypes, boolean approvedContractPresent) throws IOException {
-        if (isStructurallyEmpty(oracle)) {
-            return "[]";
-        }
-        Set<String> templateTypes = declaredTypes(templateFiles, false);
-        Set<String> publicSolutionTypes = declaredTypes(solutionFiles, true);
-        ArrayNode result = MAPPER.createArrayNode();
-        for (JsonNode entry : (ArrayNode) MAPPER.readTree(oracle)) {
-            String className = entry.path("class").path("name").asText("");
-            boolean approved = !approvedContractPresent || approvedStudentCreatedTypes.contains(className);
-            if (className.isEmpty() || !approved || templateTypes.contains(className) || !publicSolutionTypes.contains(className)) {
-                continue;
-            }
-            ObjectNode kept = ((ObjectNode) entry).deepCopy();
-            stripNonPublicMembers(kept, "methods");
-            stripNonPublicMembers(kept, "attributes");
-            stripNonPublicMembers(kept, "constructors");
-            result.add(kept);
-        }
-        return result.isEmpty() ? "[]" : MAPPER.writerWithDefaultPrettyPrinter().writeValueAsString(result);
-    }
-
-    /** Private and package-private members are implementation details, not part of the graded contract. */
-    private static void stripNonPublicMembers(ObjectNode classEntry, String field) {
-        if (!(classEntry.get(field) instanceof ArrayNode members)) {
-            return;
-        }
-        ArrayNode kept = MAPPER.createArrayNode();
-        for (JsonNode member : members) {
-            JsonNode modifiers = member.path("modifiers");
-            boolean isPublicApi = false;
-            if (modifiers.isArray()) {
-                for (JsonNode modifier : modifiers) {
-                    if ("public".equals(modifier.asText()) || "protected".equals(modifier.asText())) {
-                        isPublicApi = true;
-                        break;
-                    }
-                }
-            }
-            if (isPublicApi) {
-                kept.add(member);
-            }
-        }
-        classEntry.set(field, kept);
-    }
-
-    /** Simple names of top-level types; when {@code publicOnly}, restricted to those declared {@code public}. */
-    private static Set<String> declaredTypes(Map<String, String> files, boolean publicOnly) {
-        Set<String> names = new HashSet<>();
-        for (String content : files.values()) {
-            Matcher matcher = TYPE_DECLARATION.matcher(content);
-            while (matcher.find()) {
-                if (!publicOnly || matcher.group(1) != null) {
-                    names.add(matcher.group(2));
-                }
-            }
-        }
-        return names;
     }
 
     /** An oracle with no class diffs serialises to an empty JSON array, which means there is nothing to seed. */

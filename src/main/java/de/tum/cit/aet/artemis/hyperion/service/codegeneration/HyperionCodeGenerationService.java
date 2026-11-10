@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.hyperion.service.codegeneration;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -10,6 +11,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
@@ -20,6 +22,9 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.openai.errors.InternalServerException;
 import com.openai.errors.OpenAIException;
 import com.openai.errors.OpenAIIoException;
@@ -27,10 +32,8 @@ import com.openai.errors.OpenAIRetryableException;
 import com.openai.errors.RateLimitException;
 
 import tools.jackson.core.JacksonException;
-import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.exc.MismatchedInputException;
 import tools.jackson.databind.json.JsonMapper;
-import tools.jackson.databind.node.ArrayNode;
-import tools.jackson.databind.node.ObjectNode;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.admin.domain.LLMRequest;
@@ -237,23 +240,22 @@ public abstract class HyperionCodeGenerationService {
         return truncateSelectedFeedbackThreadsToValidatedObject(sanitized);
     }
 
+    /**
+     * Drops whole trailing threads from a well-formed payload until it fits the limit.
+     *
+     * @param sanitized the sanitized payload, longer than the limit
+     * @return the trimmed payload, the empty default when the payload is well-formed but has no usable {@code threads} array, or {@code null} when it is not well-formed JSON
+     */
     private String tryTrimParsedSelectedFeedbackThreads(String sanitized) {
         try {
-            JsonNode parsed = OBJECT_MAPPER.readTree(sanitized);
-            if (!(parsed instanceof ObjectNode payload)) {
-                return DEFAULT_SELECTED_FEEDBACK_THREADS;
-            }
-            JsonNode threadsNode = payload.get("threads");
-            if (!(threadsNode instanceof ArrayNode threads)) {
+            SelectedFeedbackPayload payload = OBJECT_MAPPER.readValue(sanitized, SelectedFeedbackPayload.class);
+            if (payload == null || payload.threads() == null) {
                 return DEFAULT_SELECTED_FEEDBACK_THREADS;
             }
 
-            ObjectNode limitedPayload = payload.deepCopy();
-            ArrayNode limitedThreads = threads.deepCopy();
-            limitedPayload.set("threads", limitedThreads);
-
+            List<SelectedFeedbackThread> limitedThreads = new ArrayList<>(payload.threads());
             while (true) {
-                String serialized = serializeIfWithinSelectedFeedbackThreadsLimit(limitedPayload);
+                String serialized = serializeIfWithinSelectedFeedbackThreadsLimit(new SelectedFeedbackPayload(payload.repositoryType(), limitedThreads));
                 if (serialized != null) {
                     return serialized;
                 }
@@ -262,6 +264,10 @@ public abstract class HyperionCodeGenerationService {
                 }
                 limitedThreads.remove(limitedThreads.size() - 1);
             }
+        }
+        catch (MismatchedInputException ignored) {
+            // Well-formed JSON that is not an object with a threads array has the wrong schema.
+            return DEFAULT_SELECTED_FEEDBACK_THREADS;
         }
         catch (JacksonException ignored) {
             return null;
@@ -278,8 +284,8 @@ public abstract class HyperionCodeGenerationService {
 
             String candidate = sanitized.substring(0, closingBraceIndex + 1).trim();
             try {
-                JsonNode parsed = OBJECT_MAPPER.readTree(candidate);
-                String serialized = serializeIfWithinSelectedFeedbackThreadsLimit(parsed);
+                SelectedFeedbackPayload parsed = OBJECT_MAPPER.readValue(candidate, SelectedFeedbackPayload.class);
+                String serialized = parsed == null || parsed.threads() == null ? null : serializeIfWithinSelectedFeedbackThreadsLimit(parsed);
                 if (serialized != null) {
                     return serialized;
                 }
@@ -292,9 +298,50 @@ public abstract class HyperionCodeGenerationService {
         return DEFAULT_SELECTED_FEEDBACK_THREADS;
     }
 
-    private String serializeIfWithinSelectedFeedbackThreadsLimit(JsonNode payload) {
+    private String serializeIfWithinSelectedFeedbackThreadsLimit(SelectedFeedbackPayload payload) {
         String serialized = OBJECT_MAPPER.writeValueAsString(payload);
         return serialized.length() <= MAX_SELECTED_FEEDBACK_THREADS_LENGTH ? serialized : null;
+    }
+
+    /**
+     * The selected review-thread context as the prompts receive it. It is produced by the server, so the shape is fixed; keys without a value are left out, and an empty
+     * {@code threads} array is kept because the prompts always expect it.
+     *
+     * @param repositoryType the repository the threads belong to, absent for a context that spans repositories
+     * @param threads        the selected threads, newest or highest priority first
+     */
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    @JsonPropertyOrder({ "repositoryType", "threads" })
+    private record SelectedFeedbackPayload(@Nullable String repositoryType, @Nullable @JsonInclude() List<SelectedFeedbackThread> threads) {
+    }
+
+    /**
+     * One selected review thread.
+     *
+     * @param id         the id of the thread
+     * @param targetType the repository the thread points at
+     * @param filePath   the file the thread points at
+     * @param lineNumber the line the thread points at
+     * @param comments   the comments of the thread, oldest first
+     */
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    @JsonPropertyOrder({ "id", "targetType", "filePath", "lineNumber", "comments" })
+    private record SelectedFeedbackThread(@Nullable Long id, @Nullable String targetType, @Nullable String filePath, @Nullable Integer lineNumber,
+            @Nullable List<SelectedFeedbackComment> comments) {
+    }
+
+    /**
+     * One comment of a selected review thread.
+     *
+     * @param type the type of the comment
+     * @param text the sanitized text of the comment
+     */
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    @JsonPropertyOrder({ "type", "text" })
+    private record SelectedFeedbackComment(@Nullable String type, @Nullable String text) {
     }
 
     private String normalizePromptContext(String input, String nullMessage, String emptyFallback, int maxLength) {

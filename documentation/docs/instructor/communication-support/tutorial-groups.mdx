@@ -2,6 +2,7 @@
 id: tutorial-groups
 title: Tutorial Groups
 sidebar_label: Tutorial Groups
+last_reviewed: 2026-11-05
 ---
 
 import Callout from "../../../src/components/Callout/Callout";
@@ -50,7 +51,7 @@ Before the tutorial group feature can be used, three configurations need to be s
 
 * Deleting the channel when the tutorial group is deleted
 
-If not all of these configurations are done, the instructor will see a checklist page with the missing configurations. These configurations can also be changed later in the <code>Global Configuration</code> section of the tutorial group page. A link to this section is hidden behind the <code>More...</code> button.
+If not all of these configurations are done, the instructor will see a checklist page with the missing configurations. Instructors can change the configuration later with the gear button (tooltip <code>Edit Global Configuration</code>) at the top of the tutorial group management page.
 
 <Image src={instructorsChecklistImg} alt={"instructors-checklist"} size={ImageSize.large} />
 
@@ -62,14 +63,14 @@ Tutorial groups can be created manually or by importing a CSV file. Importing a 
 
 The assigned tutor and the session schedule are the most important settings of a tutorial group. The tutor holds the sessions, tracks the number of attending students, and gives feedback to the students. The tutor can also register or unregister students and edit the sessions by cancelling or rescheduling them. The meeting schedule shows the regular times of the sessions during the semester. It is used to create the individual sessions automatically.
 
-<Image src={instructorsTutGroupFormImg} alt={"instructors-tutorial-group-form"} size={ImageSize.large} />
-<Image src={instructorsCsvImportImg} alt={"instructors-csv-import"} size={ImageSize.large} />
+<Image src={instructorsTutGroupFormImg} alt={"Form to create a tutorial group, with its general information and the switch for the session schedule"} size={ImageSize.large} />
+<Image src={instructorsCsvImportImg} alt={"Dialog to import tutorial groups and their registrations from a CSV file"} size={ImageSize.large} />
 
 ## Defining Tutorial Group Free Days
 
 By clicking on the <code>Holidays</code> button, the instructor can define course-wide days where no tutorial group sessions are held (no matter which tutorial group). If such a day overlaps with a tutorial group session, the session is automatically cancelled and the holiday given as the reason.
 
-<Image src={instructorsHolidaysImg} alt={"instructors-holidays"} size={ImageSize.large} />
+<Image src={instructorsHolidaysImg} alt={"Holidays page with the calendar of the month and the list of holidays"} size={ImageSize.large} />
 
 ## Managing Tutorial Groups as a Tutor
 
@@ -83,23 +84,23 @@ The groups for which the tutor is responsible have a blue background.
 
 </Callout>
 
-<Image src={tutorOverviewImg} alt={"tutor-overview"} size={ImageSize.large} />
+<Image src={tutorOverviewImg} alt={"Tutorial groups page of a tutor, with the groups, their utilization and registrations"} size={ImageSize.large} />
 
 ## Managing the Registration of a Tutorial Group
 
-By clicking on the <code>Registered Students</code> button, the tutor can view the list of students that are registered for the tutorial group. From this list, the tutor can register or unregister students for the tutorial group. Only users that are enrolled in the course can be registered for a tutorial group.
+By clicking on the <code>Registrations</code> button of a tutorial group, the tutor can view the list of students that are registered for the tutorial group. From this list, the tutor can register or unregister students for the tutorial group. Only users that are enrolled in the course can be registered for a tutorial group.
 
 <Callout variant={CalloutVariant.info}>
 
-    An instructor can also import student registrations from a CSV file and export the list of registered students as a CSV file. Extra buttons for these actions are available in the <code>Registered Students</code> page of the tutorial group page for instructors.
+    An instructor can also import student registrations from a CSV file and export the list of registered students as a CSV file. Extra buttons for these actions are available in the <code>Registrations</code> page of the tutorial group page for instructors.
 
 </Callout>
 
-<Image src={tutorRegistrationsImg} alt={"tutor-registrations"} size={ImageSize.large} />
+<Image src={tutorRegistrationsImg} alt={"Registrations page of a tutorial group with its registered students"} size={ImageSize.large} />
 
 ## Managing the Sessions of a Tutorial Group
 
-By clicking on the <code>Sessions</code> button, the tutor can view the list of sessions that are scheduled for the tutorial group. From this list, the tutor can cancel or reschedule sessions. The tutor can also create new sessions by clicking on the <code>Create New Tutorial Group Session</code> button. Furthermore, the tutor can enter the number of attending students for each session. This information is used to calculate the utilization of the tutorial group.
+By clicking on the title of a tutorial group, the tutor can view the group's details, including the list of <code>Sessions</code> that are scheduled for the tutorial group. From this list, the tutor can cancel or reschedule sessions. The tutor can also create new sessions by clicking on the <code>Create Session</code> button. Furthermore, the tutor can enter the number of attending students for each session. This information is used to calculate the utilization of the tutorial group.
 
 <Callout variant={CalloutVariant.info}>
 
@@ -107,4 +108,4 @@ By clicking on the <code>Sessions</code> button, the tutor can view the list of 
 
 </Callout>
 
-<Image src={tutorSessionsImg} alt={"tutor-sessions"} size={ImageSize.large} />
+<Image src={tutorSessionsImg} alt={"Detail page of a tutorial group with its sessions"} size={ImageSize.large} />

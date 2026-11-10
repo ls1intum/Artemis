@@ -1,0 +1,48 @@
+name: Helm Chart
+
+# Checks the Helm chart in deployment/helm/artemis without a cluster, apart from ci-quality.yml and ci-test.yml, because a chart change
+# touches neither the server nor the client. What it proves, and why, is documented in supporting_scripts/check_helm_chart.sh.
+
+on:
+  workflow_call:
+    inputs:
+      commit_sha:
+        description: 'SHA to check. PR runs use the PR head SHA (matching ci-build.yml).'
+        required: true
+        type: string
+
+permissions: {}
+
+jobs:
+  helm-chart-checks:
+    name: Helm Chart Renders and Validates
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    env:
+      # The checksum comes from the CHECKSUMS file of the release, so that a changed archive fails here instead of being run.
+      KUBECONFORM_VERSION: '0.8.0'
+      KUBECONFORM_SHA256: '9bc2bffbf71f261128533edaf912153948b7ff238f9a531ae6d34466ec287883'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ inputs.commit_sha }}
+
+      # Helm is part of the runner image. Naming its version makes a change of the major version visible in the log.
+      - name: Helm version
+        run: helm version
+
+      - name: Install kubeconform
+        run: |
+          set -Eeuo pipefail
+          archive="kubeconform-linux-amd64.tar.gz"
+          curl --silent --show-error --fail --location --output "$archive" "https://github.com/yannh/kubeconform/releases/download/v${KUBECONFORM_VERSION}/${archive}"
+          echo "${KUBECONFORM_SHA256}  ${archive}" | sha256sum --check
+          tar --extract --gzip --file "$archive" kubeconform
+          sudo install kubeconform /usr/local/bin/kubeconform
+          kubeconform -v
+
+      - name: Lint, render and validate the chart
+        run: supporting_scripts/check_helm_chart.sh

@@ -4,7 +4,6 @@ import static de.tum.cit.aet.artemis.core.config.Constants.AIWORKER_ENABLED_PROP
 import static de.tum.cit.aet.artemis.core.config.Constants.APOLLON_ENABLED_PROPERTY_NAME;
 import static de.tum.cit.aet.artemis.core.config.Constants.ATHENA_ENABLED_PROPERTY_NAME;
 import static de.tum.cit.aet.artemis.core.config.Constants.ATLASLLM_ENABLED_PROPERTY_NAME;
-import static de.tum.cit.aet.artemis.core.config.Constants.ATLASML_ENABLED_PROPERTY_NAME;
 import static de.tum.cit.aet.artemis.core.config.Constants.ATLAS_ENABLED_PROPERTY_NAME;
 import static de.tum.cit.aet.artemis.core.config.Constants.DEIMOS_ENABLED_PROPERTY_NAME;
 import static de.tum.cit.aet.artemis.core.config.Constants.EXAM_ENABLED_PROPERTY_NAME;
@@ -86,16 +85,6 @@ public class ArtemisConfigHelper {
      */
     public boolean isAtlasLLMEnabled(Environment environment) {
         return isAtlasEnabled(environment) && getPropertyOrExitArtemis(ATLASLLM_ENABLED_PROPERTY_NAME, environment);
-    }
-
-    /**
-     * Check if the AtlasML submodule is enabled.
-     *
-     * @param environment the Spring environment
-     * @return true if the AtlasML module is enabled, false otherwise
-     */
-    public boolean isAtlasMLEnabled(Environment environment) {
-        return isAtlasEnabled(environment) && getPropertyOrExitArtemis(ATLASML_ENABLED_PROPERTY_NAME, environment);
     }
 
     /**
@@ -311,9 +300,6 @@ public class ArtemisConfigHelper {
         if (isAtlasEnabled(environment)) {
             enabledFeatures.add(Constants.MODULE_FEATURE_ATLAS);
         }
-        if (isAtlasMLEnabled(environment)) {
-            enabledFeatures.add(Constants.MODULE_FEATURE_ATLASML);
-        }
         if (isAtlasLLMEnabled(environment)) {
             enabledFeatures.add(Constants.MODULE_FEATURE_ATLASLLM);
         }
@@ -383,8 +369,21 @@ public class ArtemisConfigHelper {
         if (isWeaviateEnabled(environment)) {
             enabledFeatures.add(Constants.MODULE_FEATURE_GLOBAL_SEARCH);
         }
+        if (isAgentAccessEnabled(environment)) {
+            enabledFeatures.add(Constants.MODULE_FEATURE_AGENT_ACCESS);
+        }
 
         return enabledFeatures;
+    }
+
+    /**
+     * Check if agent access (personal access tokens and the endpoints built on them) is enabled. Off unless explicitly configured.
+     *
+     * @param environment the Spring environment
+     * @return true if {@code artemis.agent-access.enabled} is true on a node that serves the core application
+     */
+    public boolean isAgentAccessEnabled(Environment environment) {
+        return !isWorkerOnly(environment) && Boolean.TRUE.equals(environment.getProperty(Constants.AGENT_ACCESS_ENABLED_PROPERTY_NAME, Boolean.class));
     }
 
     private boolean isWorkerOnly(Environment environment) {

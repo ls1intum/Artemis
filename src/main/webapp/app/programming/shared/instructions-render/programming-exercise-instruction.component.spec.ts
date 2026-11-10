@@ -3,7 +3,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { By } from '@angular/platform-browser';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
-import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
+import { TumAetUiDialogRef, TumAetUiDialogService } from '@tumaet/ui-angular';
 import { ApplicationRef, DebugElement, VERSION, WritableSignal } from '@angular/core';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { Theme, ThemeService } from 'app/core/theme/shared/theme.service';
@@ -40,6 +40,8 @@ import { MockModule } from 'ng-mocks';
 import { ProgrammingExerciseGradingService } from 'app/programming/manage/services/programming-exercise-grading.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
+import { ExamExerciseUpdateService } from 'app/exam/manage/services/exam-exercise-update.service';
+import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 
 /**
  * Typed view onto the private/internal fields of {@link ProgrammingExerciseInstructionComponent}
@@ -83,14 +85,14 @@ describe('ProgrammingExerciseInstructionComponent', () => {
     let participationWebsocketService: ParticipationWebsocketService;
     let programmingExerciseParticipationService: ProgrammingExerciseParticipationService;
     let programmingExerciseGradingService: ProgrammingExerciseGradingService;
-    let dialogService: DialogService;
+    let dialogService: TumAetUiDialogService;
     let themeService: ThemeService;
 
     let subscribeForLatestResultOfParticipationStub: ReturnType<typeof vi.spyOn>;
     let openModalStub: ReturnType<typeof vi.spyOn>;
     let getLatestResultWithFeedbacks: ReturnType<typeof vi.spyOn>;
 
-    const dialogRef = {} as unknown as DynamicDialogRef;
+    const dialogRef = {} as unknown as TumAetUiDialogRef;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -104,7 +106,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
                 { provide: ResultService, useClass: MockResultService },
                 { provide: ProgrammingExerciseParticipationService, useClass: MockProgrammingExerciseParticipationService },
                 { provide: ParticipationWebsocketService, useClass: MockParticipationWebsocketService },
-                { provide: DialogService, useClass: MockDialogService },
+                { provide: TumAetUiDialogService, useClass: MockDialogService },
                 { provide: ProgrammingExerciseGradingService, useValue: { getTestCases: () => of() } },
                 { provide: ProfileService, useClass: MockProfileService },
                 provideHttpClient(),
@@ -118,7 +120,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         participationWebsocketService = TestBed.inject(ParticipationWebsocketService);
         programmingExerciseParticipationService = TestBed.inject(ProgrammingExerciseParticipationService);
         programmingExerciseGradingService = TestBed.inject(ProgrammingExerciseGradingService);
-        dialogService = TestBed.inject(DialogService);
+        dialogService = TestBed.inject(TumAetUiDialogService);
         themeService = TestBed.inject(ThemeService);
 
         subscribeForLatestResultOfParticipationStub = vi.spyOn(participationWebsocketService, 'subscribeForLatestResultOfParticipation');
@@ -130,6 +132,91 @@ describe('ProgrammingExerciseInstructionComponent', () => {
 
     afterEach(() => {
         vi.restoreAllMocks();
+    });
+
+    it('makes each scrolling table keyboard-focusable with a localized accessible name', () => {
+        vi.spyOn(TestBed.inject(TranslateService), 'instant').mockReturnValue('Tabelle in der Aufgabenstellung');
+        const rendered = comp.addStylesForTables('<table><tr><td>Wide content</td></tr></table>');
+        const table = new DOMParser().parseFromString(rendered!, 'text/html').querySelector('table')!;
+
+        expect(table.style.overflowX).toBe('scroll');
+        expect(table.tabIndex).toBe(0);
+        expect(table.getAttribute('aria-label')).toBe('Tabelle in der Aufgabenstellung');
+        expect(table.querySelector('td')?.textContent).toBe('Wide content');
+    });
+
+    it('keeps authored table names and supplies a localized fallback only for unnamed rendered tables', async () => {
+        vi.spyOn(TestBed.inject(TranslateService), 'instant').mockReturnValue('Instruction table');
+        subscribeForLatestResultOfParticipationStub.mockReturnValue(of());
+        fixture.componentRef.setInput('exercise', {
+            id: 3,
+            problemStatement: `
+<table><caption>Input constraints</caption><tr><td>Captioned content</td></tr></table>
+<table aria-label="Expected output"><tr><td>Named content</td></tr></table>
+<h3 id="complexity-heading">Complexity bounds</h3>
+<table aria-labelledby="complexity-heading"><tr><td>Referenced content</td></tr></table>
+<table title="Example runs"><tr><td>Titled content</td></tr></table>
+<table><tr><td>Unnamed content</td></tr></table>
+<table aria-label="  " aria-labelledby=" " title=" "><caption> </caption><tr><td>Empty names</td></tr></table>`,
+        } as ProgrammingExercise);
+        fixture.componentRef.setInput('participation', { id: 2, submissions: [{ results: [{ id: 1, feedbacks: [] }] }] });
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        const content: HTMLElement = fixture.nativeElement.querySelector('#programming-exercise-instructions-content');
+        const tables = Array.from(content.querySelectorAll('table'));
+        expect(tables).toHaveLength(6);
+        expect(tables[0].caption?.textContent).toBe('Input constraints');
+        expect(tables[0].hasAttribute('aria-label')).toBe(false);
+        expect(tables[1].getAttribute('aria-label')).toBe('Expected output');
+        expect(tables[2].getAttribute('aria-labelledby')).toBe('complexity-heading');
+        expect(content.querySelector('#complexity-heading')?.textContent).toBe('Complexity bounds');
+        expect(tables[2].hasAttribute('aria-label')).toBe(false);
+        expect(tables[3].title).toBe('Example runs');
+        expect(tables[3].hasAttribute('aria-label')).toBe(false);
+        expect(tables[4].getAttribute('aria-label')).toBe('Instruction table');
+        expect(tables[5].getAttribute('aria-label')).toBe('Instruction table');
+        for (const table of tables) {
+            expect(table.tabIndex).toBe(0);
+            expect(table.style.overflowX).toBe('scroll');
+        }
+    });
+
+    it('preserves accessible tables when a live exam update displays instruction differences', async () => {
+        vi.spyOn(TestBed.inject(TranslateService), 'instant').mockReturnValue('Instruction table');
+        subscribeForLatestResultOfParticipationStub.mockReturnValue(of());
+        fixture.componentRef.setInput('exercise', {
+            id: 3,
+            type: ExerciseType.PROGRAMMING,
+            exerciseGroup: { id: 5 },
+            problemStatement: '<table><caption>Exercise requirements</caption><tr><td>Before update</td></tr></table>',
+        } as ProgrammingExercise);
+        fixture.componentRef.setInput('participation', { id: 2, submissions: [{ results: [{ id: 1, feedbacks: [] }] }] });
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        const content: HTMLElement = fixture.nativeElement.querySelector('#programming-exercise-instructions-content');
+        expect(content.textContent).toContain('Before update');
+        expect(content.textContent).not.toContain('After update');
+
+        TestBed.inject(ExamExerciseUpdateService).updateLiveExamExercise(3, '<table><caption>Exercise requirements</caption><tr><td>After update</td></tr></table>');
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        // The live update must display both the removed and added text, rather than silently replacing the instructions.
+        expect(content.textContent).toContain('Before');
+        expect(content.textContent).toContain('After update');
+        expect(content.querySelector('del')?.textContent).toContain('Before');
+        expect(content.querySelector('ins')?.textContent).toContain('After');
+        const tables = Array.from(content.querySelectorAll('table'));
+        expect(tables.length).toBeGreaterThan(0);
+        for (const table of tables) {
+            expect(table.tabIndex).toBe(0);
+            expect(table.caption?.textContent).toBe('Exercise requirements');
+            expect(table.hasAttribute('aria-label')).toBe(false);
+            expect(table.style.overflowX).toBe('scroll');
+        }
+        expect(fixture.nativeElement.querySelector('#highlightDiffButton')).not.toBeNull();
     });
 
     it('should on participation change clear old subscription for participation results set up new one', async () => {
@@ -551,11 +638,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
             FeedbackComponent,
             expect.objectContaining({
                 header: 'artemisApp.result.detail.feedbackForTask',
-                width: '50rem',
-                breakpoints: {
-                    '850px': '95vw',
-                },
-                modal: true,
+                size: 'large',
                 closable: true,
                 closeOnEscape: true,
                 dismissableMask: true,
@@ -618,7 +701,7 @@ describe('ProgrammingExerciseInstructionComponent - PlantUML exam mode isolation
                 { provide: ResultService, useClass: MockResultService },
                 { provide: ProgrammingExerciseParticipationService, useClass: MockProgrammingExerciseParticipationService },
                 { provide: ParticipationWebsocketService, useClass: MockParticipationWebsocketService },
-                { provide: DialogService, useClass: MockDialogService },
+                { provide: TumAetUiDialogService, useClass: MockDialogService },
                 { provide: ProgrammingExerciseGradingService, useValue: { getTestCases: () => of() } },
                 { provide: ProfileService, useClass: MockProfileService },
                 provideHttpClient(),

@@ -41,7 +41,7 @@ import {
 } from 'app/foundation/constants/input.constants';
 import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
 import { ExerciseUpdateWarningService } from 'app/exercise/exercise-update-warning/exercise-update-warning.service';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { TumAetUiDialogService } from '@tumaet/ui-angular';
 import { AuxiliaryRepository } from 'app/programming/shared/entities/programming-exercise-auxiliary-repository-model';
 import { SubmissionPolicyType } from 'app/exercise/shared/entities/submission/submission-policy.model';
 import { ModePickerOption } from 'app/exercise/mode-picker/mode-picker.component';
@@ -70,7 +70,7 @@ import { CalendarService } from 'app/calendar/shared/service/calendar.service';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { ExerciseEditorSyncService } from 'app/exercise/synchronization/services/exercise-editor-sync.service';
 import { ExerciseMetadataSyncService } from 'app/exercise/synchronization/services/exercise-metadata-sync.service';
-import { deepClone } from 'app/foundation/util/deep-clone.util';
+import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
 
 export const LOCAL_STORAGE_KEY_IS_SIMPLE_MODE = 'isSimpleMode';
 
@@ -121,7 +121,7 @@ const GRADING_FIELD_REASON_KEYS = new Set([
 export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDestroy, OnInit {
     private readonly programmingExerciseService = inject(ProgrammingExerciseService);
     private readonly programmingExerciseSharingService = inject(ProgrammingExerciseSharingService);
-    private readonly modalService = inject(NgbModal);
+    private readonly modalService = inject(TumAetUiDialogService);
     private readonly popupService = inject(ExerciseUpdateWarningService);
     private readonly courseService = inject(CourseManagementService);
     private readonly alertService = inject(AlertService);
@@ -654,7 +654,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
                             } else if (params['courseId']) {
                                 this.courseId.set(params['courseId']);
                                 this.isExamMode.set(false);
-                                this.courseService.find(this.courseId()).subscribe((res) => {
+                                this.courseService.findForManagement(this.courseId()).subscribe((res) => {
                                     this.programmingExercise.course = res.body!;
                                     if (
                                         !params['exerciseId'] &&
@@ -729,6 +729,13 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
             exerciseId: this.programmingExercise.id,
             exerciseType: this.programmingExercise.type ?? ExerciseType.PROGRAMMING,
             getCurrentExercise: () => this.programmingExercise,
+            setCurrentExercise: (exercise) => {
+                const updated = cloneWith(new ProgrammingExercise(undefined, undefined), exercise);
+                // Re-seed the selector's linked signal and keep its separate creation-config binding in sync.
+                updated.categories = [...(exercise.categories ?? [])];
+                this.exerciseCategories = updated.categories;
+                this.programmingExercise = updated;
+            },
             getBaselineExercise: () => this.backupExercise,
             setBaselineExercise: (exercise) => (this.backupExercise = exercise),
         });
@@ -834,6 +841,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         this.originalStaticCodeAnalysisEnabled = this.programmingExercise.staticCodeAnalysisEnabled;
         // The source exercise is injected via the Resolver. The route parameters determine the target exerciseGroup or course
         const courseId = params['courseId'];
+        this.courseId.set(courseId);
         if (courseId && params['examId'] && params['exerciseGroupId']) {
             this.exerciseGroupService.find(params['courseId'], params['examId'], params['exerciseGroupId']).subscribe((res) => {
                 this.programmingExercise.exerciseGroup = res.body!;
@@ -843,7 +851,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
             this.isExamMode.set(true);
             this.importOptions.setTestCaseVisibilityToAfterDueDate = true;
         } else if (courseId) {
-            this.courseService.find(courseId).subscribe((res) => {
+            this.courseService.findForManagement(courseId).subscribe((res) => {
                 this.programmingExercise.course = res.body!;
                 // Set exerciseGroup to undefined if an exam exercise is imported
                 this.programmingExercise.exerciseGroup = undefined;
@@ -887,8 +895,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         this.saveWithModalCheck(
             () => this.saveExercise(),
             (reference) => {
-                const requestOptions: { deleteFeedback?: unknown } = {};
-                requestOptions.deleteFeedback = reference.componentInstance.deleteFeedback;
+                const requestOptions = { deleteFeedback: reference.componentInstance.deleteFeedback() };
                 if (this.generationFullSaveBlocked()) return;
                 this.revalidateGenerationContents().subscribe((valid) => {
                     if (valid && !this.generationFullSaveBlocked())
@@ -913,7 +920,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         const preUpdateModalRef = this.popupService.checkExerciseBeforeUpdate(this.programmingExercise, this.backupExercise, this.isExamMode());
         this.determineProjectTypeIfNotSelectedAndInSimpleMode();
 
-        if (!this.modalService.hasOpenModals()) {
+        if (!this.modalService.hasOpenDialogs()) {
             onConfirmed();
             return;
         }

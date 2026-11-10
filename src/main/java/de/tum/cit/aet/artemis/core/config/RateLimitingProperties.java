@@ -25,10 +25,10 @@ import org.springframework.context.annotation.Profile;
 public class RateLimitingProperties {
 
     /**
-     * Whether rate limiting is enabled globally.
-     * Default: false (disabled)
+     * Whether rate limiting is enabled globally. The limit for client error reports is not affected: it cannot be disabled.
+     * Default: true (enabled)
      */
-    private boolean enabled = false;
+    private boolean enabled = true;
 
     /**
      * Addresses exempt from every rate limit, as literal IPv4 or IPv6 addresses or CIDR blocks.
@@ -54,6 +54,12 @@ public class RateLimitingProperties {
      * If not specified, uses the default from {@link de.tum.cit.aet.artemis.core.security.RateLimitType#AUTHENTICATION}.
      */
     private Integer authenticationRequestsPerMinute;
+
+    /**
+     * Requests per minute for the authentication of git operations over HTTP and SSH.
+     * If not specified, uses the default from {@link de.tum.cit.aet.artemis.core.security.RateLimitType#GIT_AUTHENTICATION}.
+     */
+    private Integer gitAuthenticationRequestsPerMinute;
 
     /**
      * Requests per minute for the unauthenticated login-options lookup.
@@ -90,6 +96,18 @@ public class RateLimitingProperties {
      * If not specified, uses the default from {@link de.tum.cit.aet.artemis.core.security.RateLimitType#BUILD_AGENT_CLONE_TOKEN}.
      */
     private Integer buildAgentCloneTokenRequestsPerMinute;
+
+    /**
+     * Requests per minute for the editor-facing online-resource metadata fetch.
+     * If not specified, uses the default from {@link de.tum.cit.aet.artemis.core.security.RateLimitType#ONLINE_RESOURCE_FETCH}.
+     */
+    private Integer onlineResourceFetchRequestsPerMinute;
+
+    /**
+     * Requests per minute for client error reports of unauthenticated clients.
+     * If not specified, uses the default from {@link de.tum.cit.aet.artemis.core.security.RateLimitType#CLIENT_ERROR_REPORT}.
+     */
+    private Integer clientErrorReportRequestsPerMinute;
 
     public List<String> getExemptAddresses() {
         return exemptAddresses;
@@ -143,6 +161,14 @@ public class RateLimitingProperties {
         return aiSearchPipelineRequestsPerMinute;
     }
 
+    public Integer getGitAuthenticationRequestsPerMinute() {
+        return gitAuthenticationRequestsPerMinute;
+    }
+
+    public void setGitAuthenticationRequestsPerMinute(Integer gitAuthenticationRequestsPerMinute) {
+        this.gitAuthenticationRequestsPerMinute = gitAuthenticationRequestsPerMinute;
+    }
+
     public Integer getBuildAgentCloneTokenRequestsPerMinute() {
         return buildAgentCloneTokenRequestsPerMinute;
     }
@@ -169,5 +195,21 @@ public class RateLimitingProperties {
 
     public void setContentSearchRequestsPerMinute(Integer contentSearchRequestsPerMinute) {
         this.contentSearchRequestsPerMinute = contentSearchRequestsPerMinute;
+    }
+
+    public Integer getOnlineResourceFetchRequestsPerMinute() {
+        return onlineResourceFetchRequestsPerMinute;
+    }
+
+    public void setOnlineResourceFetchRequestsPerMinute(Integer onlineResourceFetchRequestsPerMinute) {
+        this.onlineResourceFetchRequestsPerMinute = onlineResourceFetchRequestsPerMinute;
+    }
+
+    public Integer getClientErrorReportRequestsPerMinute() {
+        return clientErrorReportRequestsPerMinute;
+    }
+
+    public void setClientErrorReportRequestsPerMinute(Integer clientErrorReportRequestsPerMinute) {
+        this.clientErrorReportRequestsPerMinute = clientErrorReportRequestsPerMinute;
     }
 }

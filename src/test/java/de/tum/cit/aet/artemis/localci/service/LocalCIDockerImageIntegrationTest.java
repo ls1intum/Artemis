@@ -193,13 +193,13 @@ class LocalCIDockerImageIntegrationTest extends AbstractProgrammingIntegrationLo
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void setupCExerciseWithGcc_usesConfiguredDockerImage() throws Exception {
         assertSuccessfulStudentBuildUsesDockerImage(ProjectType.GCC, GCC_DOCKER_IMAGE, expectedSuccessfulTestCaseCount(ProjectType.GCC));
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void setupCExerciseWithFact_usesConfiguredDockerImage() throws Exception {
         assertSuccessfulStudentBuildUsesDockerImage(ProjectType.FACT, FACT_DOCKER_IMAGE, FACT_SUCCESSFUL_TEST_CASES);
     }

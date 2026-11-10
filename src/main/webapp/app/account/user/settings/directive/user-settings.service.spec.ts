@@ -5,7 +5,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { UserSettingsService } from './user-settings.service';
 import { SettingId, UserSettingsCategory } from 'app/foundation/constants/user-settings.constants';
 import { Setting, UserSettingsStructure } from 'app/account/user/settings/user-settings.model';
-import { ScienceSetting } from 'app/account/user/settings/science-settings/science-settings-structure';
+import { ScienceSetting } from 'app/account/user/settings/profile/science-settings/science-settings-structure';
 import { User } from 'app/account/user/user.model';
 
 describe('UserSettingsService', () => {

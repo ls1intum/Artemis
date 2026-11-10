@@ -104,6 +104,8 @@ export const MODULE_FEATURE_THEIA = 'theia';
 
 export const MODULE_FEATURE_GLOBAL_SEARCH = 'globalsearch';
 
+export const MODULE_FEATURE_AGENT_ACCESS = 'agent-access';
+
 export type ModuleFeature =
     | typeof MODULE_FEATURE_PASSKEY
     | typeof MODULE_FEATURE_PASSKEY_REQUIRE_ADMIN
@@ -128,7 +130,8 @@ export type ModuleFeature =
     | typeof MODULE_FEATURE_LDAP
     | typeof MODULE_FEATURE_SAML2
     | typeof MODULE_FEATURE_THEIA
-    | typeof MODULE_FEATURE_GLOBAL_SEARCH;
+    | typeof MODULE_FEATURE_GLOBAL_SEARCH
+    | typeof MODULE_FEATURE_AGENT_ACCESS;
 
 export const PROFILE_LOCALCI = 'localci';
 
@@ -142,6 +145,7 @@ export const PROFILE_DEV = 'dev';
 
 export const PROFILE_TEST = 'test';
 
+// REMOVE_IN_ARTEMIS_11 (Jenkins): remove the profile constant and its union member below
 export const PROFILE_JENKINS = 'jenkins';
 
 export type ProfileFeature =

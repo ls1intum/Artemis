@@ -26,7 +26,7 @@ class ApprovedStructuralContractTest {
                 """, Set.of("RoastProfile"));
 
         assertThat(parsed.errors()).isEmpty();
-        JsonNode oracle = MAPPER.readTree(parsed.contract().toOracle("example", MAPPER)).get(0);
+        JsonNode oracle = MAPPER.readTree(parsed.contract().toOracle("example")).get(0);
         assertThat(oracle.at("/genericApi/signatures").toString()).contains("superclass:Enum<RoastProfile>", "method:labels[]:List<String>");
     }
 
@@ -138,7 +138,7 @@ class ApprovedStructuralContractTest {
                 """, Set.of("Container"));
 
         assertThat(parsed.errors()).isEmpty();
-        JsonNode oracle = MAPPER.readTree(parsed.contract().toOracle("example", MAPPER)).get(0);
+        JsonNode oracle = MAPPER.readTree(parsed.contract().toOracle("example")).get(0);
         assertThat(oracle.at("/genericApi/parameterCount").asInt()).isEqualTo(1);
         assertThat(oracle.at("/genericApi/signatures").toString()).contains("method:get[]:$0", "method:values[]:List<$0>", "method:replace[$0[]]:void", "constructor:[$0]");
         assertThat(oracle.at("/methods/0/returnType").asText()).isEqualTo("Object");
@@ -160,7 +160,7 @@ class ApprovedStructuralContractTest {
                 ```
                 """, Set.of("Container"));
         assertThat(parsed.errors()).isEmpty();
-        JsonNode oracle = MAPPER.readTree(parsed.contract().toOracle("example", MAPPER)).get(0);
+        JsonNode oracle = MAPPER.readTree(parsed.contract().toOracle("example")).get(0);
         assertThat(oracle.at("/genericApi/signatures").toString()).contains("method:get[]:$0", "method:raw[]:Object", "method:values[]:List<$0>",
                 "method:rawValues[]:List<Object>");
     }
@@ -304,7 +304,7 @@ class ApprovedStructuralContractTest {
                 """, Set.of("NearestStrategy", "ElevatorDispatcher"));
 
         assertThat(result.errors()).isEmpty();
-        JsonNode oracle = MAPPER.readTree(result.contract().toOracle("seededexercise", MAPPER));
+        JsonNode oracle = MAPPER.readTree(result.contract().toOracle("seededexercise"));
         assertThat(oracle.toString()).contains("\"name\":\"NearestStrategy\"", "\"interfaces\":[\"DispatchStrategy\"]", "\"name\":\"selectElevator\"",
                 "\"parameters\":[\"List\",\"int\"]", "\"name\":\"ElevatorDispatcher\"").doesNotContain("attributes", "classNearestStrategyimplements");
     }
@@ -332,7 +332,7 @@ class ApprovedStructuralContractTest {
                 """, Set.of("Alpha", "Beta", "Gamma"));
 
         assertThat(result.errors()).isEmpty();
-        JsonNode oracle = MAPPER.readTree(result.contract().toOracle("example", MAPPER));
+        JsonNode oracle = MAPPER.readTree(result.contract().toOracle("example"));
         JsonNode alpha = oracle.get(0);
         assertThat(alpha.path("methods").toString()).contains("combine", "Beta", "Gamma");
     }
@@ -361,7 +361,7 @@ class ApprovedStructuralContractTest {
                 """, Set.of("Worker"));
 
         assertThat(result.errors()).isEmpty();
-        JsonNode oracle = MAPPER.readTree(result.contract().toOracle("example", MAPPER));
+        JsonNode oracle = MAPPER.readTree(result.contract().toOracle("example"));
         assertThat(oracle.at("/0/class/isInterface").asBoolean()).isFalse();
         assertThat(oracle.at("/0/class/isEnum").asBoolean()).isFalse();
         assertThat(oracle.at("/0/class/isAbstract").asBoolean()).isFalse();
@@ -381,7 +381,7 @@ class ApprovedStructuralContractTest {
                 ```
                 """, Set.of("Reader"));
         assertThat(parsed.errors()).isEmpty();
-        var oracle = MAPPER.readTree(parsed.contract().toOracle("example", MAPPER));
+        var oracle = MAPPER.readTree(parsed.contract().toOracle("example"));
         assertThat(oracle.at("/0/genericApi/signatures").size()).isEqualTo(3);
         assertThat(oracle.at("/0/genericApi/signatures").toString()).contains("constructor:[]:throws=[java.io.IOException]",
                 "method:read[]:int:throws=[java.io.IOException, java.sql.SQLException]", "method:close[]:void:throws=[]");
@@ -390,7 +390,7 @@ class ApprovedStructuralContractTest {
     @Test
     void serializesTheImplicitConstructorsEmptyExceptionContract() throws Exception {
         var parsed = ApprovedStructuralContract.parse("## Public API\n```java\npublic class Reader {}\n```", Set.of("Reader"));
-        var oracle = MAPPER.readTree(parsed.contract().toOracle("example", MAPPER));
+        var oracle = MAPPER.readTree(parsed.contract().toOracle("example"));
         assertThat(oracle.at("/0/genericApi/signatures/0").asString()).isEqualTo("constructor:[]:throws=[]");
     }
 
@@ -469,7 +469,7 @@ class ApprovedStructuralContractTest {
                 }
                 """, "src/Elevator.java", "package seededexercise; public class Elevator {}"))).isEmpty();
 
-        JsonNode oracle = MAPPER.readTree(result.contract().toOracle("seededexercise", MAPPER, Set.of("DispatchStrategy")));
+        JsonNode oracle = MAPPER.readTree(result.contract().toOracle("seededexercise", Set.of("DispatchStrategy")));
         assertThat(oracle.at("/0/methods/0/parameters/0").asText()).isEqualTo("List");
     }
 
@@ -509,7 +509,7 @@ class ApprovedStructuralContractTest {
                 """, Set.of("GivenType", "StudentType"), Set.of("StudentType"));
 
         assertThat(result.errors()).isEmpty();
-        var oracle = MAPPER.readTree(result.contract().toOracle("example", MAPPER, Set.of("StudentType")));
+        var oracle = MAPPER.readTree(result.contract().toOracle("example", Set.of("StudentType")));
         assertThat(oracle.size()).isEqualTo(1);
         assertThat(oracle.at("/0/class/name").asString()).isEqualTo("StudentType");
         assertThat(result.contract().typeNames()).containsExactlyInAnyOrder("GivenType", "StudentType");

@@ -575,8 +575,14 @@ public class TutorialGroupService {
         Set<TutorialGroup> tutorialGroups = tutorialGroupRepository.findAllByCourseIdWithTeachingAssistantRegistrationsAndSchedule(course.getId());
         // TODO: this is some overkill, we calculate way too many information with way too many database calls, we must reduce this
         tutorialGroups.forEach(tutorialGroup -> this.setTransientPropertiesForUser(user, tutorialGroup));
+        // The flag only tells the requesting user which groups they teach, which the student view shows as their own groups. It is kept there for a user who
+        // still is a tutor of the course, but not for one whose tutor role was revoked while the group is still assigned to them.
+        boolean keepTutorFlag = revealStaffOverview || userRepository.isAtLeastTeachingAssistantInCourse(user.getLogin(), course.getId());
         tutorialGroups.forEach(tutorialGroup -> {
-            if (!this.userHasManagingRightsForTutorialGroup(tutorialGroup, user, isAdminOrInstructor)) {
+            if (!keepTutorFlag) {
+                tutorialGroup.setIsUserTutor(false);
+            }
+            if (!revealStaffOverview || !this.userHasManagingRightsForTutorialGroup(tutorialGroup, user, isAdminOrInstructor)) {
                 String tutorName = tutorialGroup.getTeachingAssistantName();
                 Integer numberOfRegisteredUsers = tutorialGroup.getNumberOfRegisteredUsers();
                 tutorialGroup.hidePrivacySensitiveInformation();

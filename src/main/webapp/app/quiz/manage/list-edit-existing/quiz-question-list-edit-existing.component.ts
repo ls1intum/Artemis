@@ -17,13 +17,13 @@ import { onError } from 'app/foundation/util/global.utils';
 import { checkForInvalidFlaggedQuestions } from 'app/quiz/shared/service/quiz-manage-util.service';
 import { strFromU8 } from 'fflate';
 import { ZipEntries, readZipEntries } from 'app/foundation/util/zip.util';
-import { KeyValuePipe, NgClass } from '@angular/common';
+import { KeyValuePipe } from '@angular/common';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FormsModule } from '@angular/forms';
 import { FileService } from 'app/foundation/service/file.service';
 import { parseJson } from 'app/foundation/util/json.util';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { TumAetUiButtonComponent, TumAetUiDialogComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonComponent, TumAetUiButtonDirective, TumAetUiDialogComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 import { faEye } from '@fortawesome/free-solid-svg-icons';
 import { QuizQuestionPreviewComponent } from 'app/quiz/manage/quiz-question-preview/quiz-question-preview.component';
 
@@ -40,11 +40,11 @@ export enum State {
     styleUrls: ['../../shared/quiz.scss'],
     encapsulation: ViewEncapsulation.None,
     imports: [
-        NgClass,
         TranslateDirective,
         FormsModule,
         KeyValuePipe,
         ArtemisTranslatePipe,
+        TumAetUiButtonDirective,
         TumAetUiButtonComponent,
         TumAetUiDialogComponent,
         TumAetUiTooltipDirective,
@@ -118,7 +118,7 @@ export class QuizQuestionListEditExistingComponent {
         }
         const selectedCourse = this.courses().find((course) => course.id === Number(this.selectedCourseId))!;
         this.quizExerciseService.findForCourse(selectedCourse.id!).subscribe({
-            next: (quizExercises) => this.applyQuestionsAndFilter(quizExercises),
+            next: (quizExercises) => this.applyQuestionsAndFilter(quizExercises, 'COURSE'),
             error: (error: HttpErrorResponse) => onError(this.alertService, error),
         });
     }
@@ -138,8 +138,8 @@ export class QuizQuestionListEditExistingComponent {
         const selectedExam = this.exams().find((exam) => exam.id === Number(this.selectedExamId))!;
 
         // For the given exam, get list of all quiz exercises. And for all quiz exercises, get list of all questions in a quiz exercise
-        this.quizExerciseService.findForExam(selectedExam.id!).subscribe({
-            next: (quizExercises) => this.applyQuestionsAndFilter(quizExercises),
+        this.quizExerciseService.findAllForExam(selectedExam.id!).subscribe({
+            next: (quizExercises) => this.applyQuestionsAndFilter(quizExercises, 'EXAM'),
             error: (error: HttpErrorResponse) => onError(this.alertService, error),
         });
     }
@@ -342,10 +342,11 @@ export class QuizQuestionListEditExistingComponent {
      * Find all QuizQuestions that belong to the given list of QuizExercise and add them to allExistingQuestions. Then, call applyFilter
      *
      * @param quizExercises the list of QuizExercise of which the QuizQuestions are to be retrieved and added
+     * @param source the audience of the list request that produced these rows, which carry no course or exam group context
      */
-    private applyQuestionsAndFilter(quizExercises: QuizExercise[]) {
+    private applyQuestionsAndFilter(quizExercises: QuizExercise[], source: 'COURSE' | 'EXAM') {
         for (const quizExercise of quizExercises) {
-            this.quizExerciseService.find(quizExercise.id!).subscribe((quizExerciseResponse) => {
+            (source === 'EXAM' ? this.quizExerciseService.findForExam(quizExercise.id!) : this.quizExerciseService.find(quizExercise.id!)).subscribe((quizExerciseResponse) => {
                 if (quizExerciseResponse.quizQuestions && quizExerciseResponse.quizQuestions.length > 0) {
                     for (const question of quizExerciseResponse.quizQuestions) {
                         question.exercise = quizExercise;

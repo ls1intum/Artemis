@@ -1,3 +1,5 @@
+import { PanelModule } from 'primeng/panel';
+import { ProgrammingExerciseExampleSolutionRepoDownloadComponent } from 'app/programming/shared/actions/example-solution-repo-download/programming-exercise-example-solution-repo-download.component';
 import { signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
@@ -458,6 +460,8 @@ describe('ExerciseSplitPanelComponent details panel with its real template', () 
                         ResizablePanelsComponent,
                         PanelDirective,
                         TeamPracticeHintComponent,
+                        PanelModule,
+                        MockComponent(ProgrammingExerciseExampleSolutionRepoDownloadComponent),
                         MockComponent(ExerciseHeadersInformationComponent),
                         MockComponent(ProblemStatementComponent),
                         MockComponent(CompetencyContributionComponent),
@@ -488,6 +492,20 @@ describe('ExerciseSplitPanelComponent details panel with its real template', () 
         fixture.componentRef.setInput('practiceParticipation', practice);
         fixture.detectChanges();
     };
+
+    it.each([false, true])('passes the known course staff purpose %s to both snapshot downloads', (isAtLeastTutor) => {
+        fixture.componentRef.setInput('exampleSolutionInfo', {
+            exampleSolutionPublished: true,
+            programmingExercise: { releaseTestsWithExampleSolution: true },
+        });
+        render({ type: ExerciseType.PROGRAMMING, isAtLeastTutor }, 'graded');
+        const downloads = fixture.debugElement.queryAll(By.directive(ProgrammingExerciseExampleSolutionRepoDownloadComponent));
+        expect(downloads).toHaveLength(2);
+        for (const download of downloads) {
+            expect(download.componentInstance.forStaff()).toBe(isAtLeastTutor);
+        }
+        expect(downloads[1].componentInstance.includeTests()).toBe(true);
+    });
 
     it('should explain at the top of the details of a team exercise that practice is individual', () => {
         render({ type: ExerciseType.TEXT, teamMode: true }, 'graded');

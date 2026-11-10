@@ -23,7 +23,6 @@ class ModuleFeatureInfoContributorTest {
     // @formatter:off
     private static final List<String> modulePropertyNames = List.of(
         Constants.ATLAS_ENABLED_PROPERTY_NAME,
-        Constants.ATLASML_ENABLED_PROPERTY_NAME,
         Constants.ATLASLLM_ENABLED_PROPERTY_NAME,
         Constants.HYPERION_ENABLED_PROPERTY_NAME,
         Constants.AIWORKER_ENABLED_PROPERTY_NAME,
@@ -44,14 +43,14 @@ class ModuleFeatureInfoContributorTest {
         Constants.APOLLON_ENABLED_PROPERTY_NAME,
         Constants.LDAP_ENABLED_PROPERTY_NAME,
         Constants.SAML2_ENABLED_PROPERTY_NAME,
-        Constants.WEAVIATE_ENABLED_PROPERTY_NAME
+        Constants.WEAVIATE_ENABLED_PROPERTY_NAME,
+        Constants.AGENT_ACCESS_ENABLED_PROPERTY_NAME
     );
     // @formatter:on
 
     // @formatter:off
     private static final List<String> moduleFeatures = List.of(
         Constants.MODULE_FEATURE_ATLAS,
-        Constants.MODULE_FEATURE_ATLASML,
         Constants.MODULE_FEATURE_ATLASLLM,
         Constants.MODULE_FEATURE_HYPERION,
         Constants.MODULE_FEATURE_HYPERION_EXERCISE_GENERATION,
@@ -73,7 +72,8 @@ class ModuleFeatureInfoContributorTest {
         Constants.MODULE_FEATURE_APOLLON,
         Constants.MODULE_FEATURE_LDAP,
         Constants.MODULE_FEATURE_SAML2,
-        Constants.MODULE_FEATURE_GLOBAL_SEARCH
+        Constants.MODULE_FEATURE_GLOBAL_SEARCH,
+        Constants.MODULE_FEATURE_AGENT_ACCESS
     );
     // @formatter:on
 
