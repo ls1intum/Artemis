@@ -394,6 +394,10 @@ class GenerationAttemptLoopTest {
         loop.run();
 
         verify(accounting, times(2)).recordAttempt();
+        // The paused outcome consumed 60 of the job's 100 turns, so the continuation may use only the remaining 40.
+        var limits = Mockito.inOrder(stagedGenerationRunner);
+        limits.verify(stagedGenerationRunner).withTurnLimit(100);
+        limits.verify(stagedGenerationRunner).withTurnLimit(40);
         verify(verifier, times(1)).verify(any(), anyString(), any(), any(VerificationRequest.class), any(Runnable.class));
         verify(agentLoopRunner, never()).runSession(anyString(), any(), anyString(), any(), anyInt(), any(), any(), any());
         assertThat(loop.terminationReason()).isEqualTo(TerminationReason.CONVERGED);

@@ -1152,8 +1152,9 @@ class StagedGenerationRunnerTest {
         SpecFidelityCritic reviewer = mockSpecificationReviewer();
         SpecFidelityCritic.SpecificationReview firstReview = new SpecFidelityCritic.SpecificationReview(true, List.of("measured concern"));
         when(reviewer.reviewSpecification(anyString(), anyString(), any(), any())).thenReturn(firstReview);
+        // Like the real critic, a malformed verdict keeps the risk history of the review it followed.
         when(reviewer.reviewSpecification(anyString(), isNull(), anyString(), eq(firstReview), any(), any()))
-                .thenReturn(new SpecFidelityCritic.SpecificationReview(false, false, false, List.of(), "malformed verdict"));
+                .thenReturn(new SpecFidelityCritic.SpecificationReview(false, false, false, List.of(), "malformed verdict", null, firstReview.riskHistory()));
         runner = new StagedGenerationRunner(agentLoopRunner, systemPromptService, stageCheckService, new AgentTranscriptWriter(""), approvedSpecs, reviewer, "FRESH");
         AtomicInteger calls = new AtomicInteger();
         when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenAnswer(invocation -> {
@@ -1168,10 +1169,11 @@ class StagedGenerationRunnerTest {
                 () -> SeededStructuralTests.EMPTY);
 
         assertThat(outcome.result().status()).isEqualTo(AgentLoopResult.Status.COMPLETED);
-        // The latest revision answered the measured concern; restoring the measured draft would bring back what the agent had already corrected.
+        // The latest gate-passing revision is frozen rather than the older measured draft, but a comment-only revision does not answer the measured concern: it stays for
+        // instructor review.
         assertThat(approvedSpecs.approved("s")).contains(unmeasuredDraft);
         verify(baseTools, never()).writeFile("SPEC.md", measuredDraft);
-        assertThat(outcome.unresolvedSpecificationFindings()).singleElement().asString().contains("quality review was inconclusive").doesNotContain("measured concern");
+        assertThat(outcome.unresolvedSpecificationFindings()).anyMatch(finding -> finding.contains("measured concern"));
     }
 
     @Test
