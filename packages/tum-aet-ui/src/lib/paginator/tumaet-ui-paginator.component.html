@@ -43,16 +43,19 @@
     @if (showRowsPerPage()) {
         <label class="tumaet:ms-2 tumaet:flex tumaet:items-center tumaet:gap-2 tumaet:whitespace-nowrap">
             <span>{{ 'tumAetUi.paginator.rowsPerPage' | tumAetUiTranslate }}</span>
-            <select
-                class="tumaet:box-border tumaet:h-9 tumaet:cursor-pointer tumaet:rounded-md tumaet:border tumaet:border-control-border tumaet:bg-control-background tumaet:px-2.5 tumaet:text-sm tumaet:text-text tumaet:focus-visible:outline tumaet:focus-visible:outline-2 tumaet:focus-visible:outline-focus tumaet:focus-visible:outline-offset-2"
-                [ngModel]="pageSize()"
-                [disabled]="disabled()"
-                (ngModelChange)="onPageSizeChange($event)"
-            >
-                @for (option of pageSizeOptions(); track option) {
-                    <option [ngValue]="option">{{ option }}</option>
-                }
-            </select>
+            <span class="tumaet:relative tumaet:inline-flex tumaet:items-center">
+                <select
+                    class="tumaet:box-border tumaet:h-9 tumaet:cursor-pointer tumaet:appearance-none tumaet:rounded-md tumaet:border tumaet:border-control-border tumaet:bg-control-background tumaet:ps-2.5 tumaet:pe-9 tumaet:text-sm tumaet:text-text tumaet:focus-visible:outline tumaet:focus-visible:outline-2 tumaet:focus-visible:outline-focus tumaet:focus-visible:outline-offset-2"
+                    [ngModel]="pageSize()"
+                    [disabled]="disabled()"
+                    (ngModelChange)="onPageSizeChange($event)"
+                >
+                    @for (option of pageSizeOptions(); track option) {
+                        <option [ngValue]="option">{{ option }}</option>
+                    }
+                </select>
+                <fa-icon [icon]="pageSizeIcon" aria-hidden="true" class="tumaet:pointer-events-none tumaet:absolute tumaet:end-3 tumaet:text-xs" />
+            </span>
         </label>
     }
 </nav>

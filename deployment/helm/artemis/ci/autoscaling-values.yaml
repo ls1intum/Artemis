@@ -1,0 +1,10 @@
+# Turns the automatic scaling of the build agents on, on top of base-values.yaml.
+buildAgents:
+  concurrentBuildsPerAgent: 2
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 8
+    prometheus:
+      serverAddress: http://prometheus-server.monitoring.svc:80
+      selector: namespace="artemis"

@@ -14,8 +14,9 @@ export class FileUploadEditorPage {
     }
 
     async attachFileExam(filePath: string) {
-        await this.page.locator('#fileUploadInput').setInputFiles(filePath);
-        await this.page.locator('[data-testid="file-upload-submit"]').click();
+        const responsePromise = this.page.waitForResponse(`${BASE_API}/fileupload/exercises/*/file-upload-submissions`);
+        await this.page.getByTestId('exam-file-upload-area').filter({ visible: true }).getByTestId('exam-file-upload-input').setInputFiles(filePath);
+        await responsePromise;
     }
 
     async saveAndContinue() {

@@ -38,8 +38,8 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 DOCS_ROOT = REPO_ROOT / "documentation" / "docs"
 MANIFEST = REPO_ROOT / "documentation" / "screenshots" / "manifest.json"
 IMAGE_SUFFIXES = {".png", ".jpg", ".jpeg", ".gif", ".webp"}
-# {courseId} is the demo course. {exercise:Title}, {exam:Title} and {lecture:Title} are the id of the item of the demo course with that title.
-PLACEHOLDERS = {"courseId": False, "exercise": True, "exam": True, "lecture": True}
+# {courseId} is the demo course. {exercise:Title}, {exam:Title}, {lecture:Title} and {competency:Title} are the id of the item of the demo course with that title.
+PLACEHOLDERS = {"courseId": False, "exercise": True, "exam": True, "lecture": True, "competency": True}
 PLACEHOLDER = re.compile(r"\{([A-Za-z]+)(?::([^}]*))?\}")
 IMPORT_PATH = re.compile(r"""(?:from|require\()\s*['"]([^'"]+\.(?:png|jpe?g|gif|webp))['"]""", re.IGNORECASE)
 PNG_SIGNATURE =b"\x89PNG\r\n\x1a\n"
@@ -156,10 +156,28 @@ def validate(manifest: dict, repo_root: Path, docs_root: Path) -> list[str]:
             problems.append(f"{label}: `threshold` must be a share of the pixels between 0 and 1")
         if limit is not None and not str(entry.get("note", "")).strip():
             problems.append(f"{label}: a `threshold` of its own needs a `note` that says why the image varies")
-        for key in ("selector", "waitFor"):
+        for key in ("selector", "waitFor", "until"):
             if key in entry and not (isinstance(entry[key], str) and entry[key].strip()):
                 problems.append(f"{label}: `{key}` must be a CSS selector")
-        for key in ("source", "mask", "maskSelector"):
+        if "until" in entry and (not entry.get("selector") or entry.get("padding")):
+            problems.append(f"{label}: `until` needs a `selector` and is not combined with `padding`")
+        padding = entry.get("padding")
+        if padding is not None and (not isinstance(padding, int) or isinstance(padding, bool) or padding <= 0 or not entry.get("selector")):
+            problems.append(f"{label}: `padding` needs a positive integer and a `selector`")
+        steps = entry.get("steps", [])
+        if not isinstance(steps, list):
+            problems.append(f"{label}: `steps` must be a list")
+            steps = []
+        for number, step in enumerate(steps, 1):
+            problems.extend(f"{label}: step {number} {problem}" for problem in step_problems(step))
+            upload = step.get("upload") if isinstance(step, dict) else None
+            if isinstance(upload, dict) and isinstance(upload.get("file"), str):
+                upload_path = Path(upload["file"])
+                if upload_path.is_absolute() or ".." in upload_path.parts:
+                    problems.append(f"{label}: step {number} uploads `{upload['file']}`, which must be a path below the repository root, without `..`")
+                elif not (repo_root / upload_path).is_file():
+                    problems.append(f"{label}: step {number} uploads `{upload['file']}`, which does not exist")
+        for key in ("source", "mask", "maskSelector", "hide"):
             values = entry.get(key, [])
             if not isinstance(values, list) or not all(isinstance(value, str) for value in values):
                 problems.append(f"{label}: `{key}` must be a list of strings")
@@ -167,6 +185,26 @@ def validate(manifest: dict, repo_root: Path, docs_root: Path) -> list[str]:
             if isinstance(source, str) and not (repo_root / source).exists():
                 problems.append(f"{label}: source `{source}` does not exist")
     return problems
+
+
+STEP_FIELDS = {"fill": ("selector", "value"), "select": ("selector", "label"), "click": None, "clickIfPresent": None, "check": None, "upload": ("selector", "file"), "waitFor": None}
+
+
+def step_problems(step: object) -> list[str]:
+    """The problems of one step of an entry: exactly one action, with the strings that it needs."""
+    if not isinstance(step, dict):
+        return ["must be an object"]
+    actions = [key for key in step if key in STEP_FIELDS]
+    if len(actions) != 1 or len(step) != 1:
+        return [f"needs exactly one of {', '.join(STEP_FIELDS)}"]
+    action = actions[0]
+    value = step[action]
+    fields = STEP_FIELDS[action]
+    if fields is None:
+        return [] if isinstance(value, str) and value.strip() else [f"`{action}` must be a selector"]
+    if not isinstance(value, dict) or set(value) != set(fields) or not all(isinstance(value[field], str) and value[field].strip() for field in fields):
+        return [f"`{action}` needs the strings {' and '.join(fields)}"]
+    return []
 
 
 def uncovered_images(manifest: dict, docs_root: Path) -> tuple[int, int]:
@@ -403,6 +441,7 @@ def make_png(width: int, height: int, pixel, color: int = 2, method: int = 0) ->
 
 
 def self_test() -> None:
+    """Exercise manifest validation, PNG decoding and screenshot comparison with self-contained fixtures."""
     def gradient(x, y):
         return (x * 20 % 256, y * 30 % 256, (x + y) * 10 % 256)
 
@@ -471,6 +510,22 @@ def self_test() -> None:
         assert broken(threshold=0.05, note="a graph with a random layout") == []
         assert any("must start with /" in problem for problem in broken(route="courses/1"))
         assert any("source `gone` does not exist" in problem for problem in broken(source=["gone"]))
+        assert broken(steps=[{"fill": {"selector": "#title", "value": "Demo"}}, {"click": "text=Save"}, {"select": {"selector": "select", "label": "WS26/27"}}, {"waitFor": "main"}]) == []
+        assert any("step 1 needs exactly one" in problem for problem in broken(steps=[{"click": "a", "waitFor": "b"}])), "a step does two things"
+        assert any("step 1 needs exactly one" in problem for problem in broken(steps=[{"hover": "a"}])), "an unknown action is a problem"
+        assert any("step 2 `fill` needs" in problem for problem in broken(steps=[{"click": "a"}, {"fill": {"selector": "a"}}])), "a fill without a value"
+        assert any("`steps` must be a list" in problem for problem in broken(steps="click"))
+        assert any("uploads `gone.png`" in problem for problem in broken(steps=[{"upload": {"selector": "input", "file": "gone.png"}}]))
+        assert any("uploads `src`" in problem for problem in broken(steps=[{"upload": {"selector": "input", "file": "src"}}])), "a directory is not a file"
+        assert any("without `..`" in problem for problem in broken(steps=[{"upload": {"selector": "input", "file": "../gone.png"}}])), "an upload stays below the repository"
+        assert broken(selector="main", padding=12) == []
+        assert any("`padding`" in problem for problem in broken(padding=12)), "padding without a selector"
+        assert any("`padding`" in problem for problem in broken(selector="main", padding=0))
+        assert broken(selector="h3", until="h4") == []
+        for invalid_until in ("", "  ", None, 12):
+            assert any("`until` must be a CSS selector" in problem for problem in broken(selector="h3", until=invalid_until)), invalid_until
+        assert any("`until`" in problem for problem in broken(until="h4")), "until without a selector"
+        assert any("`until`" in problem for problem in broken(selector="h3", until="h4", padding=8))
         assert any("viewport" in problem for problem in broken(viewport={"width": 0, "height": 5}))
         assert any("kebab-case" in problem for problem in broken(id="Shot_1"))
         assert any("described twice" in problem or "duplicate id" in problem for problem in validate({"users": good["users"], "screenshots": [entry, entry]}, root, docs))

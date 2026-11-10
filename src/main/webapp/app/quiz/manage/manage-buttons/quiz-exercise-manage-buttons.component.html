@@ -21,7 +21,7 @@
                     ></tumaet-ui-button>
                 }
                 @if (quizExercise().isAtLeastEditor) {
-                    <jhi-create-variant-with-ai-button [exercise]="quizExercise()" styleClass="min-w-0 flex-1 @7xl:flex-none [&>tumaet-ui-button]:w-full" />
+                    <jhi-create-variant-with-ai-button [exercise]="quizExercise()" styleClass="min-w-0 flex-1 [&>tumaet-ui-button]:w-full" />
                 }
             </ng-container>
             <ng-container detailMoreActions>
@@ -51,43 +51,38 @@
         }
     }
     @if (detailPageSection() === 'administration' && quizExercise().isAtLeastInstructor) {
-        <section class="mt-8! border-t border-border pt-6!" aria-labelledby="quiz-administration-heading">
-            <h3 id="quiz-administration-heading" class="mb-4! text-lg font-semibold" jhiTranslate="artemisApp.exerciseDetail.administration"></h3>
-            <div class="flex flex-wrap gap-2">
-                <button
-                    type="button"
-                    jhiDeleteButton
-                    [entityTitle]="quizExercise().title || ''"
-                    [actionType]="ActionType.Reset"
-                    deleteConfirmationText="artemisApp.exercise.delete.typeNameToConfirm"
-                    (delete)="resetQuizExercise()"
-                    [dialogError]="dialogError$"
-                    deleteQuestion="artemisApp.quizExercise.reset.question"
-                >
-                    <fa-icon [icon]="faUndo" />
-                </button>
-                <button
-                    type="button"
-                    jhiDeleteButton
-                    [entityTitle]="quizExercise().title || ''"
-                    deleteQuestion="artemisApp.exercise.delete.question"
-                    deleteConfirmationText="artemisApp.exercise.delete.typeNameToConfirm"
-                    entitySummaryTitle="artemisApp.exercise.delete.summary.title"
-                    [fetchEntitySummary]="fetchExerciseDeletionSummary()"
-                    [translateValues]="{
-                        courseTitle: course()?.title,
-                        courseType: course()?.testCourse
-                            ? ('artemisApp.exercise.delete.testCourse' | artemisTranslate)
-                            : ('artemisApp.exercise.delete.realCourse' | artemisTranslate),
-                    }"
-                    (delete)="deleteQuizExercise()"
-                    [dialogError]="dialogError$"
-                    id="delete-quiz-{{ quizExercise().id }}"
-                >
-                    <fa-icon [icon]="faTrash" />
-                </button>
-            </div>
-        </section>
+        <div class="flex flex-wrap items-center gap-2">
+            <button
+                type="button"
+                jhiDeleteButton
+                [entityTitle]="quizExercise().title || ''"
+                [actionType]="ActionType.Reset"
+                deleteConfirmationText="artemisApp.exercise.delete.typeNameToConfirm"
+                (delete)="resetQuizExercise()"
+                [dialogError]="dialogError$"
+                deleteQuestion="artemisApp.quizExercise.reset.question"
+            >
+                <fa-icon [icon]="faUndo" />
+            </button>
+            <button
+                type="button"
+                jhiDeleteButton
+                [entityTitle]="quizExercise().title || ''"
+                deleteQuestion="artemisApp.exercise.delete.question"
+                deleteConfirmationText="artemisApp.exercise.delete.typeNameToConfirm"
+                entitySummaryTitle="artemisApp.exercise.delete.summary.title"
+                [fetchCategorizedEntitySummary]="fetchExerciseDeletionSummary()"
+                [translateValues]="{
+                    courseTitle: course()?.title,
+                    courseType: course()?.testCourse ? ('artemisApp.exercise.delete.testCourse' | artemisTranslate) : ('artemisApp.exercise.delete.realCourse' | artemisTranslate),
+                }"
+                (delete)="deleteQuizExercise()"
+                [dialogError]="dialogError$"
+                id="delete-quiz-{{ quizExercise().id }}"
+            >
+                <fa-icon [icon]="faTrash" />
+            </button>
+        </div>
     }
 } @else {
     <div class="flex gap-2">
@@ -107,7 +102,7 @@
                     deleteQuestion="artemisApp.exercise.delete.question"
                     deleteConfirmationText="artemisApp.exercise.delete.typeNameToConfirm"
                     entitySummaryTitle="artemisApp.exercise.delete.summary.title"
-                    [fetchEntitySummary]="fetchExerciseDeletionSummary()"
+                    [fetchCategorizedEntitySummary]="fetchExerciseDeletionSummary()"
                     [translateValues]="{
                         courseTitle: course()?.title,
                         courseType: course()?.testCourse

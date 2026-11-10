@@ -49,10 +49,26 @@
         <button tumAetUiButton size="small" severity="secondary" type="button" (click)="closeDialog()">
             <span jhiTranslate="artemisApp.tutorialGroupExportDialog.cancel"></span>
         </button>
-        <button tumAetUiButton size="small" type="button" (click)="exportJSON()" data-testid="tutorial-groups-export-json" [disabled]="selectedFields().length === 0">
+        <button
+            tumAetUiButton
+            severity="secondary"
+            size="small"
+            type="button"
+            (click)="exportJSON()"
+            data-testid="tutorial-groups-export-json"
+            [disabled]="selectedFields().length === 0"
+        >
             <span jhiTranslate="artemisApp.tutorialGroupExportDialog.exportJSON"></span>
         </button>
-        <button tumAetUiButton size="small" type="button" (click)="exportCSV()" data-testid="tutorial-groups-export-csv" [disabled]="selectedFields().length === 0">
+        <button
+            tumAetUiButton
+            severity="secondary"
+            size="small"
+            type="button"
+            (click)="exportCSV()"
+            data-testid="tutorial-groups-export-csv"
+            [disabled]="selectedFields().length === 0"
+        >
             <span jhiTranslate="artemisApp.tutorialGroupExportDialog.exportCSV"></span>
         </button>
     </ng-template>

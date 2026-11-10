@@ -90,34 +90,39 @@ public interface ExamUserRepository extends ArtemisJpaRepository<ExamUser, Long>
                 examUser.user.registrationNumber,
                 examUser.signingImagePath,
                 studentExams.started,
-                studentExams.submitted
+                studentExams.submitted,
+                examUser.didCheckImage,
+                examUser.didCheckName,
+                examUser.didCheckLogin,
+                examUser.didCheckRegistrationNumber,
+                CASE WHEN examUser.didCheckImage = TRUE AND examUser.didCheckLogin = TRUE
+                    AND examUser.didCheckRegistrationNumber = TRUE AND examUser.didCheckName = TRUE
+                    AND ((examUser.signingImagePath IS NOT NULL AND examUser.signingImagePath <> '')
+                        OR exam.endDate <= CURRENT_TIMESTAMP)
+                    THEN TRUE ELSE FALSE END
             )
             FROM ExamUser examUser
                 LEFT JOIN examUser.exam exam
                 LEFT JOIN exam.studentExams studentExams ON studentExams.user.id = examUser.user.id
+                    AND (studentExams.testRun IS NULL OR studentExams.testRun = FALSE)
             WHERE exam.id = :examId
-                AND studentExams.started = TRUE
-                AND (examUser.signingImagePath IS NULL
-                    OR examUser.signingImagePath = ''
-                    OR examUser.didCheckImage = FALSE
-                    OR examUser.didCheckLogin = FALSE
-                    OR examUser.didCheckRegistrationNumber = FALSE
-                    OR examUser.didCheckName = FALSE
-                )
+                AND (:includeAll = TRUE OR (studentExams.started = TRUE
+                    AND NOT (examUser.didCheckImage = TRUE AND examUser.didCheckLogin = TRUE
+                        AND examUser.didCheckRegistrationNumber = TRUE AND examUser.didCheckName = TRUE
+                        AND ((examUser.signingImagePath IS NOT NULL AND examUser.signingImagePath <> '')
+                            OR exam.endDate <= CURRENT_TIMESTAMP))))
             """)
-    Set<ExamUserAttendanceCheckDTO> findAllExamUsersWhoDidNotSign(@Param("examId") long examId);
+    Set<ExamUserAttendanceCheckDTO> findForAttendanceCheck(@Param("examId") long examId, @Param("includeAll") boolean includeAll);
 
     @Query("""
             SELECT COUNT(examUser) > 0
             FROM ExamUser examUser
             WHERE examUser.exam.id = :examId
                 AND examUser.user.login = :login
-                AND examUser.signingImagePath IS NOT NULL
-                AND examUser.signingImagePath != ''
-                AND examUser.didCheckImage = TRUE
-                AND examUser.didCheckLogin = TRUE
-                AND examUser.didCheckRegistrationNumber = TRUE
-                AND examUser.didCheckName = TRUE
+                AND examUser.didCheckImage = TRUE AND examUser.didCheckLogin = TRUE
+                AND examUser.didCheckRegistrationNumber = TRUE AND examUser.didCheckName = TRUE
+                AND ((examUser.signingImagePath IS NOT NULL AND examUser.signingImagePath <> '')
+                    OR examUser.exam.endDate <= CURRENT_TIMESTAMP)
             """)
     boolean isAttendanceChecked(@Param("examId") long examId, @Param("login") String login);
 

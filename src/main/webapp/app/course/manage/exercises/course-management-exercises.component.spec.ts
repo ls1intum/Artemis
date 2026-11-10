@@ -35,6 +35,10 @@ import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { ParticipationWebsocketService } from 'app/course/shared/services/participation-websocket.service';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { ExerciseTableComponent } from 'app/course/manage/exercises/exercise-row/exercise-table.component';
+import { EntityDeletionStatus } from 'app/shared-ui/delete-dialog/entity-deletion-progress.model';
+import { EntitySummaryCategory } from 'app/shared-ui/delete-dialog/delete-dialog.model';
+import { EntityDeletionService } from 'app/shared-ui/delete-dialog/service/entity-deletion.service';
+import { MockEntityDeletionService } from 'test/helpers/mocks/service/mock-entity-deletion.service';
 
 describe('Course Management Exercises Component', () => {
     let comp: CourseManagementExercisesComponent;
@@ -64,6 +68,7 @@ describe('Course Management Exercises Component', () => {
         await TestBed.configureTestingModule({
             imports: [CourseManagementExercisesComponent],
             providers: [
+                { provide: EntityDeletionService, useClass: MockEntityDeletionService },
                 { provide: ActivatedRoute, useValue: route },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AlertService, useClass: MockAlertService },
@@ -484,6 +489,19 @@ describe('Course Management Exercises Component', () => {
         });
     });
 
+    describe('outcome of a deletion that is not known', () => {
+        it('reads the exercises from the server again and keeps every row, because the exercise may still exist', () => {
+            comp.ngOnInit();
+            const reloadSpy = vi.spyOn(courseManagementService, 'findWithExercises');
+            const idsBefore = comp.exercises().map((exercise) => exercise.id);
+
+            comp.reloadCourseExercises();
+
+            expect(reloadSpy).toHaveBeenCalledOnce();
+            expect(comp.exercises().map((exercise) => exercise.id)).toEqual(idsBefore);
+        });
+    });
+
     describe('deleteSelectedExercises', () => {
         let programmingDelete: ReturnType<typeof vi.spyOn>;
         let textDelete: ReturnType<typeof vi.spyOn>;
@@ -543,8 +561,9 @@ describe('Course Management Exercises Component', () => {
             nextFixture.destroy();
         });
 
-        it('lets remaining deletes settle and surfaces the first error on partial failure', () => {
+        it('lets remaining deletes settle when one request is refused and still reloads', () => {
             programmingDelete.mockReturnValue(throwError(() => new HttpErrorResponse({ error: 'boom', status: 500 })));
+            const reloadSpy = vi.spyOn(courseManagementService, 'findWithExercises');
             const errors: string[] = [];
             comp.selectedDeleteError$.subscribe((e) => errors.push(e));
             comp.toggleSelection(1);
@@ -553,8 +572,86 @@ describe('Course Management Exercises Component', () => {
             comp.deleteSelectedExercises();
 
             expect(textDelete).toHaveBeenCalled();
-            expect(errors).toHaveLength(1);
-            expect(errors[0]).not.toBe('');
+            expect(errors).toEqual(['']);
+            expect(reloadSpy).toHaveBeenCalled();
+        });
+
+        it('reports a rejected request that the global error handling stays silent about, such as an unstructured 502', () => {
+            const errorAlert = vi.spyOn(TestBed.inject(AlertService), 'error');
+            programmingDelete.mockReturnValue(throwError(() => new HttpErrorResponse({ error: '<html>Bad Gateway</html>', status: 502 })));
+            comp.toggleSelection(1);
+            comp.toggleSelection(2);
+
+            comp.deleteSelectedExercises();
+
+            // only the rejected exercise is reported, the other one was accepted
+            expect(errorAlert).toHaveBeenCalledOnce();
+            expect(errorAlert).toHaveBeenCalledWith('artemisApp.deletionProgress.requestRejected', { title: expect.any(String) });
+        });
+
+        it('does not repeat an alert that the global error handling already shows for a rejected request', () => {
+            const errorAlert = vi.spyOn(TestBed.inject(AlertService), 'error');
+            const rejection = new HttpErrorResponse({ error: { title: 'Another deletion is already in progress' }, status: 409 });
+            const alertedSpy = vi.spyOn(TestBed.inject(AlertService), 'showsHttpErrorAlert').mockReturnValue(true);
+            programmingDelete.mockReturnValue(throwError(() => rejection));
+            comp.toggleSelection(1);
+
+            comp.deleteSelectedExercises();
+
+            // the decision comes from the alert handling itself, so the rejection is not reported a second time
+            expect(alertedSpy).toHaveBeenCalledWith(rejection);
+            expect(errorAlert).not.toHaveBeenCalled();
+        });
+
+        it('does not open one progress dialog per exercise and announces the batch', () => {
+            const alertSpy = vi.spyOn(TestBed.inject(AlertService), 'info');
+            comp.toggleSelection(1);
+            comp.toggleSelection(2);
+
+            comp.deleteSelectedExercises();
+
+            const deletionService = TestBed.inject(EntityDeletionService) as unknown as MockEntityDeletionService;
+            expect(deletionService.delete).toHaveBeenCalledTimes(2);
+            expect(deletionService.delete).toHaveBeenCalledWith(expect.objectContaining({ entityId: 1 }), expect.anything(), { silent: true });
+            expect(alertSpy).toHaveBeenCalledWith('artemisApp.deletionProgress.bulkStarted', { count: 2 });
+        });
+
+        it('ends the confirmation dialog and reloads when a background deletion failed, leaving the report of the failure to the service', () => {
+            const deletionService = TestBed.inject(EntityDeletionService) as unknown as MockEntityDeletionService;
+            deletionService.status = EntityDeletionStatus.FAILED;
+            deletionService.errorMessage = 'Repository is locked';
+            const reloadSpy = vi.spyOn(courseManagementService, 'findWithExercises');
+            const errors: string[] = [];
+            comp.selectedDeleteError$.subscribe((e) => errors.push(e));
+            comp.toggleSelection(1);
+            comp.toggleSelection(2);
+
+            comp.deleteSelectedExercises();
+
+            expect(errors).toEqual(['']);
+            expect(reloadSpy).toHaveBeenCalled();
+        });
+
+        it('adds up the deletion summaries of all selected exercises', () => {
+            const summarySpy = vi
+                .spyOn(TestBed.inject(ExerciseService), 'getDeletionSummary')
+                .mockReturnValue(of([{ titleKey: 'work', items: [{ labelKey: 'participations', value: 300 }] }]));
+            comp.toggleSelection(1);
+            comp.toggleSelection(2);
+            let merged: EntitySummaryCategory[] | undefined;
+
+            comp.fetchSelectedExercisesDeletionSummary().subscribe((value) => (merged = value));
+
+            expect(summarySpy).toHaveBeenCalledTimes(2);
+            expect(merged).toEqual([{ titleKey: 'work', items: [{ labelKey: 'participations', value: 600, highlight: true }] }]);
+        });
+
+        it('has no summary when nothing is selected', () => {
+            let merged: EntitySummaryCategory[] | undefined;
+
+            comp.fetchSelectedExercisesDeletionSummary().subscribe((value) => (merged = value));
+
+            expect(merged).toEqual([]);
         });
 
         it('forwards the delete dialog cleanup flags to each selected programming exercise deletion', () => {
@@ -646,7 +743,7 @@ describe('Course Management Exercises Component', () => {
 
             expect(comp.showEditSelected()).toBe(true);
             expect(comp.editSelectedData()).toEqual(comp.selectedProgrammingExercises());
-            comp['onEditSelectedSaved']();
+            comp.reloadCourseExercises();
             expect(reloadSpy).toHaveBeenCalled();
         });
 
@@ -684,24 +781,16 @@ describe('Course Management Exercises Component', () => {
             expect(comp.addModalVisible()).toBe(true);
         });
 
-        it('shows the quiz export dialog and returns to the add modal on back', () => {
-            comp.openQuizExportDialog();
-            expect(comp.showQuizExport()).toBe(true);
-
-            comp['onQuizExportBack']();
-            expect(comp.addModalMode()).toBe('create');
+        it('opens the add modal in export mode', () => {
+            comp.openExportModal();
+            expect(comp.addModalMode()).toBe('export');
             expect(comp.addModalVisible()).toBe(true);
         });
 
-        it('does not reopen the add modal when the export dialog closes without back', () => {
-            comp.openQuizExportDialog();
-            expect(comp.addModalVisible()).toBe(false);
-        });
-
-        it('does not show the export dialog without a course id', () => {
-            comp.course.set(undefined);
-            comp.openQuizExportDialog();
-            expect(comp.showQuizExport()).toBe(false);
+        it('allows the export to instructors only', () => {
+            expect(comp.canExport()).toBe(true);
+            comp.course.set({ ...course, isAtLeastInstructor: false });
+            expect(comp.canExport()).toBe(false);
         });
     });
 

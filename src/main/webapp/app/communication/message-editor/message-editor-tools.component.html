@@ -182,7 +182,9 @@
         </div>
         @if (picker() !== 'emoji') {
             <div class="message-resource-footer mt-2 flex shrink-0 justify-end border-t pt-2" data-testid="message-resource-footer">
-                <button type="button" tumAetUiButton variant="text" size="small" (click)="close()">{{ 'artemisApp.communication.cancel' | artemisTranslate }}</button>
+                <button severity="secondary" type="button" tumAetUiButton variant="text" size="small" (click)="close()">
+                    {{ 'artemisApp.communication.cancel' | artemisTranslate }}
+                </button>
             </div>
         }
     </div>
