@@ -67,6 +67,7 @@ import de.tum.cit.aet.artemis.exercise.dto.ExerciseVariantGroupAssignmentDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseVariantGroupDTO;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
 import de.tum.cit.aet.artemis.exercise.repository.TeamAssignmentConfigRepository;
+import de.tum.cit.aet.artemis.exercise.util.AsyncDeletionTestUtilService;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadSubmission;
@@ -81,6 +82,9 @@ import de.tum.cit.aet.artemis.lecture.dto.CompetencyLinkDTO;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismDetectionConfig;
 
 class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTest {
+
+    @Autowired
+    private AsyncDeletionTestUtilService asyncDeletionTestUtilService;
 
     @Autowired
     private ConversationUtilService conversationUtilService;
@@ -474,7 +478,8 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
         Course course = fileUploadExerciseUtilService.addEnrolledCourseWithThreeFileUploadExercise(TEST_PREFIX);
         var exerciseIds = course.getExercises().stream().map(Exercise::getId).toList();
         for (var exercise : course.getExercises()) {
-            request.delete("/api/fileupload/file-upload-exercises/" + exercise.getId(), HttpStatus.OK);
+            request.delete("/api/fileupload/file-upload-exercises/" + exercise.getId(), HttpStatus.ACCEPTED);
+            asyncDeletionTestUtilService.awaitExerciseDeletion(exercise.getId());
         }
         assertThat(exerciseRepository.findByCourseIdWithCategories(course.getId())).isEmpty();
         for (var exerciseId : exerciseIds) {
@@ -489,7 +494,8 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
         FileUploadExercise fileUploadExercise = fileUploadExerciseRepository.findByCourseIdWithCategories(course.getId()).getFirst();
         Channel exerciseChannel = conversationUtilService.addChannelToExercise(fileUploadExercise);
 
-        request.delete("/api/fileupload/file-upload-exercises/" + fileUploadExercise.getId(), HttpStatus.OK);
+        request.delete("/api/fileupload/file-upload-exercises/" + fileUploadExercise.getId(), HttpStatus.ACCEPTED);
+        asyncDeletionTestUtilService.awaitExerciseDeletion(fileUploadExercise.getId());
 
         Optional<Channel> exerciseChannelAfterDelete = channelRepository.findById(exerciseChannel.getId());
         assertThat(exerciseChannelAfterDelete).isEmpty();
@@ -500,7 +506,8 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
     void testDeleteFileUploadExerciseWithCompetency() throws Exception {
         fileUploadExercise = fileUploadExerciseRepository.save(fileUploadExercise);
         competencyExerciseLinkRepository.save(new CompetencyExerciseLink(competency, fileUploadExercise, 1));
-        request.delete("/api/fileupload/file-upload-exercises/" + fileUploadExercise.getId(), HttpStatus.OK);
+        request.delete("/api/fileupload/file-upload-exercises/" + fileUploadExercise.getId(), HttpStatus.ACCEPTED);
+        asyncDeletionTestUtilService.awaitExerciseDeletion(fileUploadExercise.getId());
 
         verify(competencyProgressApi).updateProgressByCompetencyAsync(eq(competency));
     }
@@ -537,7 +544,8 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void deleteExamFileUploadExercise() throws Exception {
         FileUploadExercise fileUploadExercise = fileUploadExerciseUtilService.addEnrolledCourseExamExerciseGroupWithOneFileUploadExercise(TEST_PREFIX, false);
-        request.delete("/api/fileupload/file-upload-exercises/" + fileUploadExercise.getId(), HttpStatus.OK);
+        request.delete("/api/fileupload/file-upload-exercises/" + fileUploadExercise.getId(), HttpStatus.ACCEPTED);
+        asyncDeletionTestUtilService.awaitExerciseDeletion(fileUploadExercise.getId());
         assertThat(exerciseRepository.findByCourseIdWithCategories(fileUploadExercise.getCourseViaExerciseGroupOrCourseMember().getId())).isEmpty();
     }
 
@@ -1057,7 +1065,8 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
                     FileUploadExerciseDTO.class, HttpStatus.OK);
 
             // Delete
-            request.delete("/api/fileupload/file-upload-exercises/" + persisted.getId(), HttpStatus.OK);
+            request.delete("/api/fileupload/file-upload-exercises/" + persisted.getId(), HttpStatus.ACCEPTED);
+            asyncDeletionTestUtilService.awaitExerciseDeletion(persisted.getId());
         }
         finally {
             featureToggleService.disableFeature(Feature.AtlasML);
@@ -1357,4 +1366,26 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
         request.get(courseUrl, HttpStatus.OK, FileUploadExerciseDTO.class);
     }
 
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void exportExercise() throws Exception {
+        fileUploadExercise.setProblemStatement("Upload a file");
+        fileUploadExercise.setCategories(Set.of("{\"category\":\"export\"}"));
+        fileUploadExercise = fileUploadExerciseRepository.save(fileUploadExercise);
+        gradingCriterionRepository.saveAll(exerciseUtilService.addGradingInstructionsToExercise(fileUploadExercise));
+
+        var export = exerciseUtilService.readExerciseExport(request.getFile("/api/fileupload/file-upload-exercises/" + fileUploadExercise.getId() + "/export", HttpStatus.OK));
+
+        assertThat(export.details()).containsEntry("type", "file-upload").containsKey("categories");
+        ExerciseUtilService.assertExportedGradingCriteriaWithoutIds(export.details());
+        assertThat(export.entries().keySet()).anyMatch(name -> name.startsWith("Problem-Statement-"));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
+    void exportExercise_asEditor_forbidden() throws Exception {
+        // the exercise of the setup is not saved yet
+        fileUploadExercise = fileUploadExerciseRepository.save(fileUploadExercise);
+        request.getFile("/api/fileupload/file-upload-exercises/" + fileUploadExercise.getId() + "/export", HttpStatus.FORBIDDEN);
+    }
 }

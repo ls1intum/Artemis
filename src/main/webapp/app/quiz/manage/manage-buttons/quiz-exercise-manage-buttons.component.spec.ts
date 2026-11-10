@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
-import { of, throwError } from 'rxjs';
+import { Observable, Subject, of, throwError } from 'rxjs';
 import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
@@ -15,11 +15,15 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { AlertService } from 'app/foundation/service/alert.service';
+import { EventManager } from 'app/foundation/service/event-manager.service';
 import { MockComponent, MockProvider } from 'ng-mocks';
 import { CreateVariantWithAiButtonComponent } from 'app/hyperion/variants/create-variant-with-ai-button.component';
 import { DialogService } from 'primeng/dynamicdialog';
 import { QuizExerciseDeletionApi } from 'app/openapi/api/quiz-exercise-deletion-api';
 import { QuizExerciseEvaluationApi } from 'app/openapi/api/quiz-exercise-evaluation-api';
+import { EntityDeletionProgress, EntityDeletionStatus, EntityDeletionType } from 'app/shared-ui/delete-dialog/entity-deletion-progress.model';
+import { EntityDeletionService } from 'app/shared-ui/delete-dialog/service/entity-deletion.service';
+import { MockEntityDeletionService } from 'test/helpers/mocks/service/mock-entity-deletion.service';
 
 describe('QuizExercise Management Buttons Component', () => {
     let comp: QuizExerciseManageButtonsComponent;
@@ -40,6 +44,7 @@ describe('QuizExercise Management Buttons Component', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             providers: [
+                { provide: EntityDeletionService, useClass: MockEntityDeletionService },
                 { provide: ActivatedRoute, useValue: route },
                 LocalStorageService,
                 SessionStorageService,
@@ -206,6 +211,7 @@ describe('QuizExercise Management Buttons Component - Exam Mode', () => {
         TestBed.configureTestingModule({
             providers: [
                 { provide: ActivatedRoute, useValue: examRoute },
+                { provide: EntityDeletionService, useClass: MockEntityDeletionService },
                 LocalStorageService,
                 SessionStorageService,
                 { provide: TranslateService, useClass: MockTranslateService },
@@ -263,6 +269,237 @@ describe('QuizExercise Management Buttons Component - Exam Mode', () => {
 
         expect(quizExerciseDeletionApi.deleteQuizExercise).toHaveBeenCalledWith(456);
         expect(navigateSpy).toHaveBeenCalledWith(['course-management', 123, 'exercises']);
+    });
+
+    it('should not navigate when the deletion ends while the reused component shows another quiz', () => {
+        const deletionService = TestBed.inject(EntityDeletionService) as unknown as MockEntityDeletionService;
+        const ended$ = new Subject<EntityDeletionProgress>();
+        deletionService.delete.mockReturnValueOnce(ended$);
+        const quizExerciseDeletionApi = TestBed.inject(QuizExerciseDeletionApi);
+        const router = TestBed.inject(Router);
+        vi.spyOn(quizExerciseDeletionApi, 'deleteQuizExercise').mockReturnValue(of(undefined));
+        const navigateSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+        fixture.componentRef.setInput('quizExercise', quizExercise);
+        fixture.componentRef.setInput('isDetailPage', true);
+        comp.ngOnInit();
+        comp.deleteQuizExercise();
+
+        fixture.componentRef.setInput('quizExercise', { ...quizExercise, id: 999 });
+        ended$.next({
+            entityType: EntityDeletionType.EXERCISE,
+            entityId: quizExercise.id!,
+            status: EntityDeletionStatus.COMPLETED,
+            stepsCompleted: 1,
+            totalSteps: 1,
+            itemsProcessed: 0,
+            totalItems: 0,
+            weightedProgressPercent: 100,
+        });
+
+        expect(navigateSpy).not.toHaveBeenCalled();
+    });
+
+    it('should stay on the detail page when the background deletion failed', () => {
+        (TestBed.inject(EntityDeletionService) as unknown as MockEntityDeletionService).status = EntityDeletionStatus.FAILED;
+        const quizExerciseDeletionApi = TestBed.inject(QuizExerciseDeletionApi);
+        const router = TestBed.inject(Router);
+        vi.spyOn(quizExerciseDeletionApi, 'deleteQuizExercise').mockReturnValue(of(undefined));
+        const navigateSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+        fixture.componentRef.setInput('quizExercise', quizExercise);
+        fixture.componentRef.setInput('isDetailPage', true);
+        comp.ngOnInit();
+
+        comp.deleteQuizExercise();
+
+        expect(navigateSpy).not.toHaveBeenCalled();
+    });
+
+    it('should reload the quiz and stay on the detail page when it is not known how the background deletion ended', () => {
+        (TestBed.inject(EntityDeletionService) as unknown as MockEntityDeletionService).status = EntityDeletionStatus.UNKNOWN;
+        const quizExerciseDeletionApi = TestBed.inject(QuizExerciseDeletionApi);
+        const router = TestBed.inject(Router);
+        vi.spyOn(quizExerciseDeletionApi, 'deleteQuizExercise').mockReturnValue(of(undefined));
+        const navigateSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+        const loadSpy = vi.spyOn(comp.loadQuizExercises, 'emit');
+        fixture.componentRef.setInput('quizExercise', quizExercise);
+        fixture.componentRef.setInput('isDetailPage', true);
+        comp.ngOnInit();
+
+        comp.deleteQuizExercise();
+
+        // The quiz may still exist: the page reads it from the server instead of announcing a deletion or leaving.
+        expect(loadSpy).toHaveBeenCalledOnce();
+        expect(navigateSpy).not.toHaveBeenCalled();
+    });
+
+    it('should hand the quiz to the background deletion', () => {
+        const quizExerciseDeletionApi = TestBed.inject(QuizExerciseDeletionApi);
+        vi.spyOn(quizExerciseDeletionApi, 'deleteQuizExercise').mockReturnValue(of(undefined));
+        fixture.componentRef.setInput('quizExercise', quizExercise);
+        comp.ngOnInit();
+
+        comp.deleteQuizExercise();
+
+        const deletionService = TestBed.inject(EntityDeletionService) as unknown as MockEntityDeletionService;
+        expect(deletionService.delete).toHaveBeenCalledWith(
+            expect.objectContaining({ entityType: EntityDeletionType.EXERCISE, entityId: 456, successAlertKey: 'artemisApp.quizExercise.deleted' }),
+            expect.anything(),
+        );
+    });
+});
+
+describe('QuizExercise Management Buttons Component - resuming a running deletion', () => {
+    let comp: QuizExerciseManageButtonsComponent;
+    let fixture: ComponentFixture<QuizExerciseManageButtonsComponent>;
+    let deletionService: MockEntityDeletionService;
+
+    const course = { id: 123 } as Course;
+    const quiz = (id: number, isAtLeastInstructor = true): QuizExercise => {
+        const quizExercise = new QuizExercise(course, undefined);
+        quizExercise.id = id;
+        quizExercise.title = 'Quiz ' + id;
+        quizExercise.quizQuestions = [];
+        quizExercise.isAtLeastInstructor = isAtLeastInstructor;
+        return quizExercise;
+    };
+    const progress = (status: EntityDeletionStatus, entityId: number): EntityDeletionProgress => ({
+        entityType: EntityDeletionType.EXERCISE,
+        entityId,
+        status,
+        stepsCompleted: 1,
+        totalSteps: 1,
+        itemsProcessed: 0,
+        totalItems: 0,
+        weightedProgressPercent: 100,
+    });
+    const showAdministrationSection = (quizExercise: QuizExercise) => {
+        fixture.componentRef.setInput('quizExercise', quizExercise);
+        fixture.componentRef.setInput('isDetailPage', true);
+        fixture.componentRef.setInput('detailPageSection', 'administration');
+    };
+
+    beforeEach(() => {
+        TestBed.configureTestingModule({
+            providers: [
+                { provide: ActivatedRoute, useValue: { snapshot: { paramMap: convertToParamMap({ courseId: course.id }) } } },
+                { provide: EntityDeletionService, useClass: MockEntityDeletionService },
+                LocalStorageService,
+                SessionStorageService,
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: AccountService, useClass: MockAccountService },
+                MockProvider(Router),
+                provideHttpClient(),
+            ],
+        })
+            .overrideTemplate(QuizExerciseManageButtonsComponent, '')
+            .compileComponents();
+
+        fixture = TestBed.createComponent(QuizExerciseManageButtonsComponent);
+        comp = fixture.componentInstance;
+        deletionService = TestBed.inject(EntityDeletionService) as unknown as MockEntityDeletionService;
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
+    it('should show the progress of a deletion that is already running when an instructor opens the detail page', () => {
+        showAdministrationSection(quiz(456));
+
+        fixture.detectChanges();
+
+        expect(deletionService.resume).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({ entityType: EntityDeletionType.EXERCISE, entityId: 456 }), expect.anything());
+    });
+
+    it('should check for a running deletion only in the section that holds the delete button, so it is not handled twice', () => {
+        fixture.componentRef.setInput('quizExercise', quiz(456));
+        fixture.componentRef.setInput('isDetailPage', true);
+
+        fixture.detectChanges();
+
+        expect(deletionService.resume).not.toHaveBeenCalled();
+    });
+
+    it('should not check for a running deletion when the user is no instructor of the quiz', () => {
+        showAdministrationSection(quiz(456, false));
+
+        fixture.detectChanges();
+
+        expect(deletionService.resume).not.toHaveBeenCalled();
+    });
+
+    it('should not check for a running deletion outside the detail page', () => {
+        fixture.componentRef.setInput('quizExercise', quiz(456));
+
+        fixture.detectChanges();
+
+        expect(deletionService.resume).not.toHaveBeenCalled();
+    });
+
+    it('should navigate to the exercises when the resumed deletion completes while the page still shows the quiz', () => {
+        deletionService.resume.mockReturnValueOnce(of(progress(EntityDeletionStatus.COMPLETED, 456)));
+        const router = TestBed.inject(Router);
+        const navigateSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+        const broadcastSpy = vi.spyOn(TestBed.inject(EventManager), 'broadcast');
+        showAdministrationSection(quiz(456));
+
+        fixture.detectChanges();
+
+        expect(broadcastSpy).toHaveBeenCalledWith({ name: 'quizExerciseListModification', content: 'Deleted an quizExercise' });
+        expect(navigateSpy).toHaveBeenCalledExactlyOnceWith(['course-management', 123, 'exercises']);
+    });
+
+    it('should reload the quiz and stay on the page when the resumed deletion ends with an unknown outcome', () => {
+        deletionService.resume.mockReturnValueOnce(of(progress(EntityDeletionStatus.UNKNOWN, 456)));
+        const router = TestBed.inject(Router);
+        const navigateSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+        const loadSpy = vi.spyOn(comp.loadQuizExercises, 'emit');
+        showAdministrationSection(quiz(456));
+
+        fixture.detectChanges();
+
+        expect(loadSpy).toHaveBeenCalledOnce();
+        expect(navigateSpy).not.toHaveBeenCalled();
+    });
+
+    it('should end the pending check and look at the other quiz when the reused component shows another quiz', () => {
+        showAdministrationSection(quiz(456));
+        fixture.detectChanges();
+        let checkEnded = false;
+        (deletionService.resume.mock.calls[0][1] as Observable<unknown>).subscribe(() => (checkEnded = true));
+        expect(checkEnded).toBe(false);
+
+        // the status response of the first quiz must not open its dialog over the second one, which is checked itself
+        fixture.componentRef.setInput('quizExercise', quiz(457));
+        fixture.detectChanges();
+
+        expect(checkEnded).toBe(true);
+        expect(deletionService.resume).toHaveBeenCalledTimes(2);
+        expect(deletionService.resume.mock.calls[1][0]).toEqual(expect.objectContaining({ entityType: EntityDeletionType.EXERCISE, entityId: 457 }));
+    });
+
+    it('should end the pending check without a new one when the reused component shows a quiz of which the user is no instructor', () => {
+        showAdministrationSection(quiz(456));
+        fixture.detectChanges();
+        let checkEnded = false;
+        (deletionService.resume.mock.calls[0][1] as Observable<unknown>).subscribe(() => (checkEnded = true));
+
+        fixture.componentRef.setInput('quizExercise', quiz(457, false));
+        fixture.detectChanges();
+
+        expect(checkEnded).toBe(true);
+        expect(deletionService.resume).toHaveBeenCalledOnce();
+    });
+
+    it('should end the pending check when the component is destroyed', () => {
+        showAdministrationSection(quiz(456));
+        fixture.detectChanges();
+        let checkEnded = false;
+        (deletionService.resume.mock.calls[0][1] as Observable<unknown>).subscribe(() => (checkEnded = true));
+
+        fixture.destroy();
+
+        expect(checkEnded).toBe(true);
     });
 });
 
@@ -323,12 +560,12 @@ describe('QuizExercise Management Buttons Component evaluate button', () => {
         render(true, true);
         fixture.componentRef.setInput('detailPageSection', 'administration');
         fixture.detectChanges();
-        expect(fixture.nativeElement.querySelector('section [id="delete-quiz-456"]')).not.toBeNull();
-        expect(fixture.nativeElement.querySelectorAll('section [jhiDeleteButton]')).toHaveLength(2);
+        expect(fixture.nativeElement.querySelector('[id="delete-quiz-456"]')).not.toBeNull();
+        expect(fixture.nativeElement.querySelectorAll('[jhiDeleteButton]')).toHaveLength(2);
         expect(fixture.nativeElement.querySelector('jhi-exercise-detail-actions')).toBeNull();
         fixture.componentRef.setInput('quizExercise', Object.assign(new QuizExercise({ id: 123 }, undefined), { id: 456, isAtLeastTutor: true }));
         fixture.detectChanges();
-        expect(fixture.nativeElement.querySelector('section')).toBeNull();
+        expect(fixture.nativeElement.querySelector('[jhiDeleteButton]')).toBeNull();
     });
 
     it('preserves the edit lock while a quiz is running', () => {

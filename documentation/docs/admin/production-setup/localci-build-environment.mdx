@@ -1,0 +1,242 @@
+---
+id: localci-build-environment
+title: LocalCI Build Environment
+sidebar_label: LocalCI Build Environment
+description: What a LocalCI build sees and what an administrator can change - environment variables, user, network, Docker images and registries, dependency caches, templates and build logs.
+last_reviewed: 2026-11-09
+---
+
+import Callout from "../../../src/components/Callout/Callout";
+import {CalloutVariant} from "../../../src/components/Callout/Callout.types";
+
+This page describes the environment in which a LocalCI build runs and which parts of it an administrator controls.
+It covers how a script can tell that it runs in CI, which user runs it, whether it has network access, where images come from,
+and how to give builds a dependency mirror.
+How a build agent executes the build, and the choice between Docker and Kubernetes, is described in
+[LocalCI Build Runners](/admin/production-setup/build-runners). The statements below are about the default Docker runner, and
+name the Kubernetes runner where it differs.
+
+## What a build sees
+
+Every build job gets its own container, created from the Docker image of the exercise and removed afterwards.
+The build agent clones the repositories itself and copies them into the container, so git credentials never enter it.
+
+| | Value |
+| --- | --- |
+| Working directory | `/var/tmp/testing-dir`. The repositories are checked out below it, see [checkout paths](/instructor/exercises/programming-exercise/configure-the-build#edit-repositories-checkout-paths-optional). |
+| Script | One bash script that Artemis generates from the build phases of the exercise. Every phase is a function that runs in its own `bash` process, in the order of the phases. `set -e` is active, so the first failing command ends the phase. |
+| Resources | Per build `--cpus 2`, `--memory 2g`, `--memory-swap 2g` and `--pids-limit 1000`, unless the exercise requests other CPU and memory values within your limits, see [Container Resource Restrictions](/admin/production-setup/programming-exercise-adjustments#container-resource-restrictions). |
+| Time | The build timeout of the exercise, at most `build-timeout-seconds.max` (240 seconds by default). Image pulls are generally excluded from this timeout, but because the timeout is checked in steps of 250 milliseconds, part of a pull can count towards it. A pull has its own limits, see [Pull policy](#pull-policy). |
+| Result files | Collected from the result paths of the phases after the script has finished, and parsed by Artemis. |
+
+### Detecting that a script runs in LocalCI
+
+LocalCI does **not** set the `CI` variable or any other variable that a tool might use to detect a CI system. Some tools
+change their behavior when `CI=true`, for example by disabling interactive prompts and progress bars.
+
+The following are always present in a LocalCI build, and are therefore safe to test for:
+
+| Marker | Where it exists |
+| --- | --- |
+| `INITIAL_WORKING_DIRECTORY` | Exported by the generated script, so every phase sees it. It is the directory `/var/tmp/testing-dir`. |
+| `SCRIPT` | Docker runner only. It holds the text of the generated script. |
+| `HTTP_PROXY`, `HTTPS_PROXY`, `NO_PROXY` | Only when `artemis.continuous-integration.proxies.use-system-proxy` is `true`. |
+
+```bash
+if [ -n "${INITIAL_WORKING_DIRECTORY}" ]; then
+  echo "running in Artemis LocalCI"
+fi
+```
+
+If your tests or tools need a `CI` variable, or any other value, instructors can set **environment variables** per exercise
+in the container configuration of the build plan editor (`KEY=value`, see
+[Edit Container Configuration](/instructor/exercises/programming-exercise/configure-the-build#edit-container-configuration-optional)).
+There is currently no setting that adds variables to the builds of all exercises of an installation. If you need one, give the Docker image
+a default instead, with an `ENV` line in its `Dockerfile`.
+
+### Which user runs the build
+
+The build script runs as the **default user of the Docker image**, which is the `USER` of its `Dockerfile` and `root` when it has none.
+Artemis does not pass a user or a UID of its own. Only the housekeeping steps run as `root`, so that they work with every image: copying the repositories into the container,
+making the working directory writable for every user, writing the script, and moving the result files.
+
+Check the user of an image with `docker run --rm <image> id`. If you require a non-root user, build the image with `USER <name>`.
+Do not rely on a fixed UID: for a custom image you choose it, and for the images that Artemis ships the user is part of the image.
+A user inside the container is not automatically a different user on the host. Running the Docker daemon in
+[rootless mode or with Podman](/admin/production-setup/integrated-code-lifecycle-setup#podman-as-docker-alternative) limits what a container escape could do.
+
+On Kubernetes, the user is also the one of the image, and the Pod does not restrict privilege escalation, see
+[Isolation and permissions](/admin/production-setup/build-runners#isolation-and-permissions).
+
+## Network access
+
+Cloning the repositories and delivering the results happen on the build agent, outside the container. The network setting of the container
+therefore only affects what the **build script and the student code** can reach.
+
+- A container belongs to **one network for all of its phases**. There is no setting that allows the network for the compile phase and
+  forbids it for the test phase. A build that needs a download first and isolation afterwards has to get its dependencies another way,
+  see [Dependencies and Maven configuration](#dependencies-and-maven-configuration).
+- An exercise that selects no network uses the **default network of Docker**, which allows outbound connections. There is no setting for a different default
+  for all exercises of an installation. The exceptions are the builds that [Hyperion](/admin/hyperion) triggers to synchronize the test cases of an exercise. They always run with
+  the network `none` and without the environment variables of the exercise, so a dependency that is not in the image or in an offline cache cannot be downloaded there.
+- Do not rely on the network `none` as the only isolation boundary on Kubernetes. The Kubernetes runner enforces it with firewall rules in the Pod, and a build that runs as root keeps the default
+  capabilities of the container, among them `CAP_NET_RAW`, which allows packet sockets that do not pass through those rules. Where the network of student code must be restricted, enforce the egress
+  independently, for example with a network policy in the build namespace, see [Operating LocalCI on Kubernetes](/admin/production-setup/localci-on-kubernetes#what-is-left-to-the-cluster).
+- Instructors select a network per exercise, from the list in `artemis.continuous-integration.container-flags-limit.allowed-custom-networks`.
+  `none` disables the network completely, and is the default entry of that list. Other entries must exist on every build agent host.
+  See [Custom Docker Networks](/admin/production-setup/programming-exercise-adjustments#custom-docker-networks).
+- A common restriction for secret tests is a Docker network that only reaches your dependency mirror, combined with the mirror as the only source of dependencies.
+
+## Docker images
+
+### Which image a build uses
+
+A new exercise gets the image that `artemis.continuous-integration.build.images` assigns to its language and project type, and stores it with the build plan.
+Instructors can change the image of an exercise in the build plan editor. To change what **new** exercises get, override the key in the configuration of the core nodes.
+The default for a language is `default`, and a project type such as `maven_blackbox` can override it:
+
+```yaml
+artemis:
+    continuous-integration:
+        build:
+            images:
+                java:
+                    default: "registry.example.org/artemis/java:25-1"
+```
+
+Exercises that already exist keep the image that they stored.
+
+### Images from a private registry
+
+The Docker runner pulls with the credentials of the **Docker daemon connection of the build agent**. The Docker client library inside Artemis reads the `auths` entries of
+`config.json` in the Docker configuration directory of the user who runs the agent (`~/.docker`, or the directory in the environment variable `DOCKER_CONFIG`).
+Log in as that user on every build agent host:
+
+```bash
+docker login registry.example.org
+```
+
+Four details decide whether this works:
+
+- The login must end up in `config.json` itself, as an entry below `auths`. Artemis does **not** run Docker credential helpers, so a `credsStore` or `credHelpers` entry (the default on Docker Desktop and some Linux packages)
+  keeps the password where Artemis cannot read it. Removing the entry does not always help, because Docker can still pick an installed helper on its own. After the login, check that the registry
+  appears below `auths` with a credential, and write that entry yourself if it does not.
+- The Docker client of the build agent reads the configuration when it is created. **Restart the build agent** after you log in or rotate the credential, otherwise pulls of images that are not on the host yet can fail.
+- A build agent that runs **in a container** has its own filesystem. Mount a `config.json` into it and set `DOCKER_CONFIG` to the directory, because a login on the host does not reach the container.
+- Use a pull-only token for the registry, because the credentials are readable by anyone who can read the Docker configuration of that user.
+
+Artemis does not store registry credentials in its own configuration or in the exercise, and instructors never enter them. An exercise only names the image.
+The Kubernetes runner uses `image-pull-secrets` instead, see [LocalCI Build Runners](/admin/production-setup/build-runners#configuration).
+
+### Pull policy
+
+The Docker runner has **one policy, and it is not configurable**: it inspects the image on the build agent, and pulls it only when the image is not present there.
+It never checks whether the tag now points at a newer image. Therefore:
+
+- A tag that you overwrite, such as `latest`, is not updated on an agent that already has it. Use immutable, versioned tags, and change the image of the exercise (or the default above) to roll out a new one.
+- To update an image everywhere at once, run `docker pull` on every build agent host, or remove it there with `docker rmi`.
+- `artemis.continuous-integration.image-cleanup` removes images that have not been used for `expiry-days` days, which forces a new pull afterwards.
+- A pull has its own limits, `image-pull-timeout-seconds` (300) and `image-pull-stall-timeout-seconds` (60), independent of the build timeout. A registry that is not reachable
+  fails the build with a message about that.
+- The Kubernetes runner has `kubernetes.image-pull-policy` (`IfNotPresent` by default).
+
+To avoid long first builds, pull the images of your languages on each new build agent before you let it take jobs.
+The architecture of the image must match `artemis.continuous-integration.image-architecture`.
+
+## Dependencies and Maven configuration
+
+A build that downloads its dependencies from the internet is slow, fails when the mirror is unreachable, and cannot run with the network disabled.
+LocalCI has no installation-wide Maven or Gradle configuration, because the build is whatever the build phases run inside the image.
+Choose where the configuration lives:
+
+| Goal | Where to put it |
+| --- | --- |
+| Dependencies for **all** exercises of a language, no download at build time | Put them in the **image**: build a custom image from the Artemis one that runs the build once, and use it as the default image above. Combine it with the network `none` and `mvn -o` in the phases. |
+| A mirror or repository credentials for **all** exercises | Put a `settings.xml` in the image (`/root/.m2/settings.xml` or the directory of the image user), and let the default phase scripts use it. Or override the default phases, see below. |
+| A mirror for **one** exercise | `.mvn/maven.config` and `.mvn/local-settings.xml` in the test repository, see [Adding proxy to a Maven build](/admin/production-setup/programming-exercise-adjustments#option-2-more-rigorous-alternative). |
+| A cache that survives between builds on a build agent | A Docker volume, see below. |
+| Offline mode for **one** exercise | Add `-o` to the Maven command of the phase and use the network `none`. |
+
+<Callout variant={CalloutVariant.warning}>
+
+  **Everything in the container is readable by the student code that runs in it:** environment variables, files of the image, and the contents of a `settings.xml`.
+  Never put a credential there that can do more than download public artifacts. Use a mirror that serves anonymous or read-only access from your internal network,
+  and, where it matters, restrict the container to that network.
+
+</Callout>
+
+The container configuration of LocalCI has no setting for Docker volumes, so a per-host dependency cache is not available. Use a mirror such as [Sonatype Nexus](/admin/production-setup/programming-exercise-adjustments#caching-sonatype-nexus) in the local network instead:
+it is shared between all build agents, which a per-host volume is not.
+
+## How far the default build can be adapted
+
+There are three levels, from the instructor to the administrator:
+
+| Level | What can change | Who |
+| --- | --- | --- |
+| One exercise | The phases and their scripts, conditions, result paths and the order, the Docker image, the timeout, CPU, memory, network and environment variables. Also static code analysis and sequential test runs when the language supports them. | Instructors, in the [build plan editor](/instructor/exercises/programming-exercise/configure-the-build) |
+| New exercises | The default phases, by placing a modified `templates/phases/<language>/<template>.yaml` next to the `.war` of the core nodes, see [Templates](/admin/production-setup/programming-exercise-adjustments#templates). And the default image, see above. | Administrators |
+| The whole installation | The limits for what an exercise may request: timeout, CPU, memory, swap and networks. The number of concurrent builds and the cleanup per build agent. | Administrators |
+
+What is **not** adjustable is the frame around the phases: one container per build, the generated script with its `set -e`, the clone of the repositories by the agent, and the result parsing.
+
+### Which template a new exercise gets
+
+The default phases are chosen by language and project type, and by whether static code analysis and sequential test runs are on.
+For Java without a project type, Artemis assumes plain Maven. The base of the file name comes from the project type, and `_static` and `_sequential` are appended for these options,
+for example `templates/phases/java/plain_maven_static.yaml`. The files of every language are in `templates/phases/<language>`. The base name is not always the name of the project type:
+
+| Project type | Base of the file name |
+| --- | --- |
+| `MAVEN_BLACKBOX` | `plain_maven_blackbox` |
+| `MAVEN_MAVEN` (Maven with an exemplary dependency) | `plain_maven`, because the dependency only changes the exercise and solution repositories |
+| `GRADLE_GRADLE` (Gradle with an exemplary dependency) | `plain_gradle` |
+| Any other project type | The name of the project type in lower case, for example `plain_gradle` or `gcc` |
+| No project type | `default` |
+
+An override with a base name that Artemis does not select, such as `maven_maven.yaml`, is never used. Take the name from the files that already exist for the language.
+Templates are read when the core node starts, so restart it after you change one. The change affects exercises that are created afterwards.
+A template file is a list of phases, for example:
+
+```yaml
+- name: compile
+  script: 'mvn -B clean compile'
+- name: test
+  script: 'mvn -B test'
+  resultPaths:
+    - '**/target/surefire-reports/*.xml'
+```
+
+## Build logs
+
+Build logs are kept per build job, up to `artemis.continuous-integration.build-logs.max-lines-per-job` lines (10,000 by default),
+each at most `max-chars-per-line` characters (1,024 by default, which is also the maximum of the Docker client).
+Both are set in `application-buildagent.yml`, see [Build Log Configuration](/admin/production-setup/programming-exercise-adjustments#build-log-configuration).
+The **first** lines of a build are kept and everything after the limit is dropped **silently**, without a note. A log that ends early therefore does not mean that the build stopped. A longer line is cut after `max-chars-per-line` characters.
+The limits exist to bound memory on the build agent, so raise `max-lines-per-job` only if exercises with very verbose output need it, and then watch the memory of the agents.
+The test results themselves do not come from the log but from the result files, so a truncated log does not lose feedback.
+
+## Settings at a glance
+
+Everything on this page that an administrator can change, with the key under `artemis.continuous-integration` unless a full path is given.
+Set agent settings on the build agents and core settings on the core nodes, see [Which setting goes on which node](/admin/production-setup/multiple-artemis-instances#which-setting-goes-on-which-node).
+
+| What | Key | Default | Node |
+| --- | --- | --- | --- |
+| Default CPU, memory, swap and process limit of a build | `build.default-docker-flags` (a list of `flag` and `value` pairs: `--cpus`, `--memory`, `--memory-swap`, `--pids-limit`) | 2 CPUs, 2g, 2g, 1000 | Build agent |
+| Upper limits an exercise may request | `container-flags-limit.max-cpu-count`, `max-memory`, `max-memory-swap` | see `application-buildagent.yml` | Core and build agent |
+| Networks an instructor may select | `container-flags-limit.allowed-custom-networks` | `none` | Core and build agent |
+| Default Docker image per language and project type | `build.images.<language>.default` and `build.images.<language>.<project type>` | Artemis images, see `application.yml` | Core |
+| Architecture of the images to pull | `image-architecture` | `amd64` | Build agent |
+| Build timeout | `build-timeout-seconds.min`, `default`, `max` | 10, 120, 240 | Core and build agent |
+| Docker connection | `docker-connection-uri` | `unix:///var/run/docker.sock` | Build agent |
+| Image pull limits | `image-pull-timeout-seconds`, `image-pull-stall-timeout-seconds` | 300, 60 | Build agent |
+| Removal of unused images | `image-cleanup.enabled`, `expiry-days`, `cleanup-schedule-time` | off, 2, `0 0 3 * * *` | Build agent |
+| Removal of hanging containers | `container-cleanup.expiry-minutes`, `cleanup-schedule-minutes` | 5, 60 | Build agent |
+| Proxy for builds | `proxies.use-system-proxy` and `proxies.default.*` | off | Build agent |
+| Build log size | `build-logs.max-lines-per-job`, `max-chars-per-line` | 10000, 1024 | Build agent |
+| Concurrent builds | `specify-concurrent-builds`, `concurrent-build-size` | derived from CPUs, 1 | Build agent |
+| Default build phases of new exercises | Files `templates/phases/<language>/<template>.yaml` below `artemis.template-path` | Artemis templates | Core |
+| Registry login | `config.json` in `DOCKER_CONFIG` of the agent user, outside the Artemis configuration | none | Build agent |
+
+Not configurable at all: the marker `INITIAL_WORKING_DIRECTORY`, the working directory, the user (the image decides), the pull policy of the Docker runner, and the generated build script.

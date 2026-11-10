@@ -17,6 +17,7 @@
                 "suggested": "AI Feedback Suggestion",
                 "adapted": "Adapted AI Feedback Suggestion"
             },
+            "gradingInstructionUsageWarning": "This instruction is used {{count}} times. Only {{limit}} uses count toward the total score. You can keep using it for additional feedback.",
             "subsequentFeedback": "This is subsequent feedback which is not included in the total score.",
             "error": {
                 "assessmentDueDateOver": "The assessment due date of this exercise has passed."
