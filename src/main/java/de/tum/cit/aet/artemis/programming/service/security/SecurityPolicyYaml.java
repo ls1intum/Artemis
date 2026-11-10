@@ -30,7 +30,8 @@ final class SecurityPolicyYaml {
 
     private static final String TEST_CLASSES_KEY = "theFollowingClassesAreTestClasses";
 
-    private static final Pattern SUPERVISED_CODE_LINE = Pattern.compile("^" + SUPERVISED_CODE_KEY + ":\\s*$", Pattern.MULTILINE);
+    /** The section header, optionally followed by a comment, which in YAML needs whitespace before its {@code #}. */
+    private static final Pattern SUPERVISED_CODE_LINE = Pattern.compile("^" + SUPERVISED_CODE_KEY + ":(?:[ \\t]+#[^\\r\\n]*)?[ \\t]*\\r?$", Pattern.MULTILINE);
 
     private static final Pattern TEST_CLASSES_LINE = Pattern.compile("^([ \\t]+)" + TEST_CLASSES_KEY + ":(.*)$", Pattern.MULTILINE);
 

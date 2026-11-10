@@ -363,6 +363,7 @@
         "buildPlanConfigurationTooLarge": "Die Build-Plan-Konfiguration ist zu groß, um verarbeitet zu werden. Bitte reduziere die Größe deiner Build-Phasen.",
         "securityFrameworkPolicyNotRepairable": "Artemis kann eine ungültige, zu große oder unlesbare Richtliniendatei nicht automatisch reparieren. Korrigiere die Datei im Test-Repository oder deaktiviere das Security Framework.",
         "securityFrameworkVersionIncompatible": "Ares {{ version }} akzeptiert diese Teile der Sicherheitsrichtlinie nicht, daher würde jeder Test fehlschlagen: {{ details }}. Entferne sie oder wähle eine neuere Version.",
+        "securityFrameworkTestClassesNotAdded": "Die Testklassen konnten nicht automatisch hinzugefügt werden, weil die Liste der Testklassen in der Richtlinie in einer Form geschrieben ist, die Artemis nicht umschreibt. Füge sie selbst in die Datei ein.",
         "sharingInfoMissing": "Die Informationen der Sharing-Plattform fehlen.",
         "problemStatementTooLong": "Die Aufgabenstellung darf 100.000 Zeichen nicht überschreiten.",
         "generationBriefRequired": "Gib eine Aufgabenbeschreibung ein, bevor du eine Aufgabe ohne Problemstellung generierst.",

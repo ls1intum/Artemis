@@ -1036,6 +1036,38 @@ class SecurityFrameworkServiceTest {
     }
 
     @Test
+    void addingTheDiscoveredTestClassesKeepsACommentBehindTheSectionHeader() throws Exception {
+        String policy = CUSTOM_POLICY.replace("regardingTheSupervisedCode:\n", "regardingTheSupervisedCode: # sandbox settings\n");
+        pushPolicyAndVersion(policy, "2.2.1");
+        pushCheckoutChange(checkout -> FileUtils.writeStringToFile(checkout.resolve("test/de/example/NewTest.java").toFile(), NEW_TEST_CLASS, StandardCharsets.UTF_8));
+        int commitsBefore = pushedCommitCount();
+
+        securityFrameworkService.addDiscoveredTestClasses(exercise(ProgrammingLanguage.JAVA), user);
+
+        assertThat(pushedCommitCount()).isEqualTo(commitsBefore + 1);
+        assertThat(readPushed(SecurityPolicyRepositoryFiles.POLICY_FILE_NAME))
+                .contains(policy.replace("    - \"de.example.SortingTest\"\n", "    - \"de.example.SortingTest\"\n    - \"de.example.NewTest\"\n"));
+    }
+
+    @Test
+    void addingTheDiscoveredTestClassesFailsInsteadOfReportingSuccessWhenTheListCannotBeRewritten() throws Exception {
+        // A flow list over several lines is valid YAML, but Artemis does not rewrite it.
+        String policy = CUSTOM_POLICY.replace("  theFollowingClassesAreTestClasses:\n    - \"de.example.SortingTest\"\n",
+                "  theFollowingClassesAreTestClasses: [\"de.example.SortingTest\",\n    \"de.example.OtherTest\"]\n");
+        pushPolicyAndVersion(policy, "2.2.1");
+        pushCheckoutChange(checkout -> FileUtils.writeStringToFile(checkout.resolve("test/de/example/NewTest.java").toFile(), NEW_TEST_CLASS, StandardCharsets.UTF_8));
+        ProgrammingExercise exercise = exercise(ProgrammingLanguage.JAVA);
+        assertThat(securityFrameworkService.getConfig(exercise).policyFiles()).singleElement()
+                .satisfies(policyFile -> assertThat(policyFile.missingTestClasses()).containsExactly("de.example.NewTest"));
+        int commitsBefore = pushedCommitCount();
+
+        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> securityFrameworkService.addDiscoveredTestClasses(exercise, user))
+                .matches(exception -> "securityFrameworkTestClassesNotAdded".equals(exception.getErrorKey()));
+        assertThat(pushedCommitCount()).isEqualTo(commitsBefore);
+        assertThat(readPushed(SecurityPolicyRepositoryFiles.POLICY_FILE_NAME)).contains(policy);
+    }
+
+    @Test
     void addingTheDiscoveredTestClassesIsRejectedWhileInactive() throws Exception {
         ProgrammingExercise exercise = exercise(ProgrammingLanguage.JAVA);
         securityFrameworkService.deactivate(exercise, user);

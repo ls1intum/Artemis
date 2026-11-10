@@ -536,6 +536,12 @@ export class ProgrammingExerciseSecurityComponent {
             return;
         }
         const exerciseId = this.editExerciseId();
+        if (exerciseId !== undefined && this.isMisconfigured()) {
+            // Repairing activates with the chosen version, which checks the policy against that version: a policy that only the pinned version refuses
+            // becomes usable, and Repair may be disabled exactly then, so a version picked here must not stay a local, unsaved choice.
+            this.runOperation({ status: SecurityActivationStatus.GENERATING, frameworkVersion: newVersion }, () => this.securityService.activate(exerciseId, newVersion));
+            return;
+        }
         if (exerciseId === undefined || !this.isActive()) {
             this.patchConfig({ frameworkVersion: newVersion });
             if (exerciseId === undefined) {
@@ -632,6 +638,8 @@ export class ProgrammingExerciseSecurityComponent {
             return;
         }
         const statusOnFailure = this.isMisconfigured() ? SecurityActivationStatus.MISCONFIGURED : SecurityActivationStatus.ERROR;
+        // A misconfigured exercise falls back to its settled state on failure, which includes the version the repository still pins.
+        const versionBefore = this.config().frameworkVersion;
         this.pendingOperation = { transientPatch, run };
         this.patchConfig(cloneWith(transientPatch, { errorDetail: undefined }));
         run().subscribe({
@@ -651,7 +659,11 @@ export class ProgrammingExerciseSecurityComponent {
                         : error instanceof Error
                           ? error.message
                           : String(error);
-                this.patchConfig({ status: statusOnFailure, errorDetail });
+                if (statusOnFailure === SecurityActivationStatus.MISCONFIGURED) {
+                    this.patchConfig({ status: statusOnFailure, errorDetail, frameworkVersion: versionBefore });
+                } else {
+                    this.patchConfig({ status: statusOnFailure, errorDetail });
+                }
             },
         });
     }

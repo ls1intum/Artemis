@@ -364,8 +364,11 @@ public class SecurityFrameworkService {
                         "securityFrameworkNotActive");
             }
             for (SecurityFrameworkState.PolicyFile policyFile : state.policyFiles()) {
-                if (policyFile.problem() == null && !policyFile.missingTestClasses().isEmpty()) {
-                    SecurityPolicyRepositoryFiles.addTestClassesToPolicy(root, policyFile.policyPath(), policyFile.missingTestClasses());
+                if (policyFile.problem() == null && !policyFile.missingTestClasses().isEmpty()
+                        && !SecurityPolicyRepositoryFiles.addTestClassesToPolicy(root, policyFile.policyPath(), policyFile.missingTestClasses())) {
+                    // Reporting success without a change would leave the classes missing while the card stops offering the action.
+                    throw new BadRequestAlertException("The test classes cannot be added to " + policyFile.policyPath() + " automatically, because its list of test classes is"
+                            + " written in a form Artemis does not rewrite. Add them to the file yourself.", ENTITY_NAME, "securityFrameworkTestClassesNotAdded");
                 }
             }
         });

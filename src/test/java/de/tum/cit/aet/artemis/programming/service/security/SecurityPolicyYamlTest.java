@@ -74,6 +74,14 @@ class SecurityPolicyYamlTest {
     }
 
     @Test
+    void acceptsACommentBehindTheSectionHeader() {
+        String commented = BLOCK_LIST_POLICY.replace("regardingTheSupervisedCode:\n", "regardingTheSupervisedCode: # sandbox settings\n");
+
+        assertThat(SecurityPolicyYaml.addTestClasses(commented, List.of("de.example.NewTest")))
+                .contains(commented.replace("    - de.example.ClassTest\n", "    - de.example.ClassTest\n    - \"de.example.NewTest\"\n"));
+    }
+
+    @Test
     void refusesListsItCannotLocateUnambiguously() {
         String withoutList = "regardingTheSupervisedCode:\n  theMainClassInsideThisPackageIs: \"Client\"\n";
         String twoSupervisedCodes = "regardingTheSupervisedCode:\n  theFollowingClassesAreTestClasses: [ ]\n---\nregardingTheSupervisedCode:\n  x: 1\n";

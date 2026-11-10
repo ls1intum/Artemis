@@ -814,6 +814,32 @@ describe('ProgrammingExerciseSecurityComponent', () => {
             expect(comp.hasUnrepairableProblem()).toBe(false);
         });
 
+        it('repairs with a newly chosen version, because that version may accept a policy the pinned one refuses', () => {
+            initEdit(misconfiguredConfig(SecurityPolicyFileProblem.UNPARSEABLE));
+            const activate$ = new Subject<SecurityFrameworkConfig>();
+            service.activate.mockReturnValue(activate$.asObservable());
+
+            comp.onFrameworkVersionChanged('3.4.1');
+
+            expect(service.activate).toHaveBeenCalledExactlyOnceWith(42, '3.4.1');
+            expect(comp.status()).toBe(SecurityActivationStatus.GENERATING);
+            activate$.next(configuredConfig('3.4.1'));
+            activate$.complete();
+            expect(comp.status()).toBe(SecurityActivationStatus.CONFIGURED);
+            expect(comp.config().frameworkVersion).toBe('3.4.1');
+        });
+
+        it('keeps the pinned version when the chosen one cannot repair the policy either', () => {
+            initEdit(misconfiguredConfig(SecurityPolicyFileProblem.UNPARSEABLE));
+            service.activate.mockReturnValue(throwError(() => new Error('STILL_INVALID')));
+
+            comp.onFrameworkVersionChanged('3.4.1');
+
+            expect(comp.status()).toBe(SecurityActivationStatus.MISCONFIGURED);
+            expect(comp.config().frameworkVersion).toBe('3.3.0');
+            expect(comp.config().errorDetail).toBe('STILL_INVALID');
+        });
+
         it('stays MISCONFIGURED after a failed repair, so Deactivate remains available', () => {
             initEdit(misconfiguredConfig(SecurityPolicyFileProblem.MISSING));
             service.activate.mockReturnValue(throwError(() => new Error('REPAIR_FAILED')));
@@ -1055,6 +1081,23 @@ describe('ProgrammingExerciseSecurityComponent rendering', () => {
     it('enables Repair for a missing policy file', () => {
         const element = renderEdit(misconfiguredConfig(SecurityPolicyFileProblem.MISSING));
         expect((query(element, 'security-repair') as HTMLButtonElement).disabled).toBe(false);
+    });
+
+    it('sends the version chosen in the real select of a misconfigured exercise to the server, even though Repair is disabled', async () => {
+        const element = renderEdit(misconfiguredConfig(SecurityPolicyFileProblem.UNPARSEABLE));
+        service.activate.mockReturnValue(of(configuredConfig('3.4.1')));
+        await fixture.whenStable();
+        fixture.detectChanges();
+        expect((query(element, 'security-repair') as HTMLButtonElement).disabled).toBe(true);
+
+        (query(element, 'security-framework-version-select')?.querySelector('button[aria-haspopup="listbox"]') as HTMLButtonElement).click();
+        fixture.detectChanges();
+        const option = (Array.from(document.querySelectorAll('[role="option"]')) as HTMLElement[]).find((candidate) => candidate.textContent?.includes('3.4.1'))!;
+        option.click();
+        fixture.detectChanges();
+
+        expect(service.activate).toHaveBeenCalledExactlyOnceWith(42, '3.4.1');
+        expect(query(element, 'security-card')?.classList).toContain('sf-card--configured');
     });
 
     it('shows why a repair failed and keeps Repair and Deactivate', () => {
