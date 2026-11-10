@@ -126,6 +126,24 @@ public class SecurityFrameworkResource {
     }
 
     /**
+     * PUT programming-exercises/:exerciseId/security-framework/test-classes : adds the test classes that are missing from the policy files.
+     *
+     * @param exerciseId of the programming exercise
+     * @return 200 (OK) with the resulting config
+     */
+    @PutMapping("programming-exercises/{exerciseId}/security-framework/test-classes")
+    @EnforceAtLeastInstructorInExercise
+    public ResponseEntity<SecurityFrameworkConfigDTO> addDiscoveredTestClasses(@PathVariable Long exerciseId) {
+        log.debug("REST request to add the discovered test classes to the security policy of programming exercise {}", exerciseId);
+        ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
+        User user = userRepository.getUserWithAuthorities();
+        // Coordinates with live saves and generation runs that change the same repositories.
+        try (var _ = mutationGuard.claimExternalMutation(exerciseId)) {
+            return ResponseEntity.ok(securityFrameworkService.addDiscoveredTestClasses(exercise, user));
+        }
+    }
+
+    /**
      * PUT programming-exercises/:exerciseId/security-framework/framework-version : pins another Ares version for an active exercise.
      *
      * @param exerciseId       of the programming exercise

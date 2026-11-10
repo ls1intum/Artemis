@@ -11,8 +11,20 @@ import org.jspecify.annotations.Nullable;
  * @param disabledTestClasses the test classes whose {@code @Policy} annotation is switched off, sorted
  * @param policyFiles         the policy files that an active {@code @Policy} annotation points to, sorted by path
  * @param unsupportedReasons  why the repository cannot be managed automatically; empty if it can
+ * @param aresApiUses         the parts of Ares the tests use besides the sandbox, by file, sorted; removing the Ares library would break these files
  */
-public record SecurityFrameworkState(SecurityActivationStatus status, List<String> disabledTestClasses, List<PolicyFile> policyFiles, List<UnsupportedReason> unsupportedReasons) {
+public record SecurityFrameworkState(SecurityActivationStatus status, List<String> disabledTestClasses, List<PolicyFile> policyFiles, List<UnsupportedReason> unsupportedReasons,
+        List<AresApiUse> aresApiUses) {
+
+    /**
+     * A part of Ares a test file uses besides the sandbox, e.g. a structural test provider, {@code @StrictTimeout} or {@code ReflectionTestUtils}. Decision B4
+     * of Ares2 issue #386 removes the Ares library when the sandbox is switched off, which only works for tests that use none of these.
+     *
+     * @param location the file, relative to the repository root
+     * @param api      the type or wildcard-imported package, relative to the Ares package, e.g. {@code StrictTimeout} or {@code structural.*}
+     */
+    public record AresApiUse(String location, String api) {
+    }
 
     /**
      * A policy file that an active {@code @Policy} annotation points to.

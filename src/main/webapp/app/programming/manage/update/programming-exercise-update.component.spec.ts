@@ -750,7 +750,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             });
 
             it('puts a chosen version into the setup request', () => {
-                vi.spyOn(securityFrameworkService, 'getConfig').mockReturnValue(of({ status: SecurityActivationStatus.ACTIVE, frameworkVersion: '2.3.0' }));
+                vi.spyOn(securityFrameworkService, 'getConfig').mockReturnValue(of({ status: SecurityActivationStatus.CONFIGURED, frameworkVersion: '2.3.0' }));
                 const alertSpy = vi.spyOn(alertService, 'warning');
                 comp.stagedSecurityChoice.set(pinVersion);
 
@@ -797,7 +797,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             });
 
             it('warns when the created exercise pins another version than the chosen one', () => {
-                vi.spyOn(securityFrameworkService, 'getConfig').mockReturnValue(of({ status: SecurityActivationStatus.ACTIVE, frameworkVersion: '2.2.1' }));
+                vi.spyOn(securityFrameworkService, 'getConfig').mockReturnValue(of({ status: SecurityActivationStatus.CONFIGURED, frameworkVersion: '2.2.1' }));
                 const alertSpy = vi.spyOn(alertService, 'warning');
                 comp.stagedSecurityChoice.set(pinVersion);
 
@@ -852,7 +852,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
                 comp.isImportFromSharing = true;
                 comp.stagedSecurityChoice.set(pinVersion);
                 vi.spyOn(programmingExerciseSharingService, 'setUpFromSharingImport').mockReturnValue(of(new HttpResponse({ body: { ...entity, id: 9 } })));
-                vi.spyOn(securityFrameworkService, 'getConfig').mockReturnValue(of({ status: SecurityActivationStatus.ACTIVE, frameworkVersion: '2.3.0' }));
+                vi.spyOn(securityFrameworkService, 'getConfig').mockReturnValue(of({ status: SecurityActivationStatus.CONFIGURED, frameworkVersion: '2.3.0' }));
 
                 comp.save();
 

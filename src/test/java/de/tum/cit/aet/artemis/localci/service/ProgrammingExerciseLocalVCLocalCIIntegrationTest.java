@@ -1383,7 +1383,7 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
         params.add("frameworkVersion",
                 request.get("/api/programming/security-framework/versions", HttpStatus.OK, SecurityFrameworkVersionsDTO.class).selectableVersions().getFirst());
         var activated = request.putWithResponseBodyAndParams(securityPath + "/activate", null, SecurityFrameworkConfigDTO.class, HttpStatus.OK, params);
-        assertThat(activated.status()).isEqualTo(SecurityActivationStatus.ACTIVE.name());
+        assertThat(activated.status()).isEqualTo(SecurityActivationStatus.CONFIGURED.name());
         assertThat(readFileOf(createdExercise, RepositoryType.TESTS, "SecurityPolicy.yaml")).isEqualTo(templatePolicy);
     }
 

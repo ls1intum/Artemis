@@ -15,6 +15,7 @@ import {
     SecurityFrameworkVersions,
     SecurityPolicyFileProblem,
     SecurityUnsupportedReasonType,
+    SecurityVersionCompatibilityVerdict,
 } from 'app/programming/shared/entities/security-framework-config.model';
 import { SecurityFrameworkService } from 'app/programming/shared/services/security-framework.service';
 import { ProgrammingExerciseSecurityComponent } from 'app/programming/manage/update/update-components/security/programming-exercise-security.component';
@@ -25,7 +26,7 @@ const VERSIONS: SecurityFrameworkVersions = {
 };
 
 const inactiveConfig = (): SecurityFrameworkConfig => ({ status: SecurityActivationStatus.INACTIVE, frameworkVersion: '3.4.1' });
-const activeConfig = (version = '3.4.1'): SecurityFrameworkConfig => ({ status: SecurityActivationStatus.ACTIVE, frameworkVersion: version });
+const configuredConfig = (version = '3.4.1'): SecurityFrameworkConfig => ({ status: SecurityActivationStatus.CONFIGURED, frameworkVersion: version });
 const misconfiguredConfig = (problem = SecurityPolicyFileProblem.MISSING): SecurityFrameworkConfig => ({
     status: SecurityActivationStatus.MISCONFIGURED,
     frameworkVersion: '3.3.0',
@@ -45,6 +46,7 @@ type SecurityServiceMock = {
     activate: ReturnType<typeof vi.fn>;
     deactivate: ReturnType<typeof vi.fn>;
     updateFrameworkVersion: ReturnType<typeof vi.fn>;
+    addDiscoveredTestClasses: ReturnType<typeof vi.fn>;
 };
 
 const createServiceMock = (): SecurityServiceMock => ({
@@ -53,6 +55,7 @@ const createServiceMock = (): SecurityServiceMock => ({
     activate: vi.fn(),
     deactivate: vi.fn(),
     updateFrameworkVersion: vi.fn(),
+    addDiscoveredTestClasses: vi.fn(),
 });
 
 const javaExercise = (id?: number, projectType = ProjectType.PLAIN_GRADLE): ProgrammingExercise => {
@@ -203,15 +206,15 @@ describe('ProgrammingExerciseSecurityComponent', () => {
     });
 
     it('loads the persisted config from the server in edit mode', () => {
-        initEdit(activeConfig('3.3.0'));
+        initEdit(configuredConfig('3.3.0'));
         expect(service.getConfig).toHaveBeenCalledWith(42);
-        expect(comp.status()).toBe(SecurityActivationStatus.ACTIVE);
+        expect(comp.status()).toBe(SecurityActivationStatus.CONFIGURED);
         expect(comp.config().frameworkVersion).toBe('3.3.0');
     });
 
-    it('create mode starts ACTIVE with the template version, like the Java template', () => {
+    it('create mode starts CONFIGURED with the template version, like the Java template', () => {
         initCreate();
-        expect(comp.status()).toBe(SecurityActivationStatus.ACTIVE);
+        expect(comp.status()).toBe(SecurityActivationStatus.CONFIGURED);
         expect(comp.isToggleOn()).toBe(true);
         expect(comp.config().frameworkVersion).toBe('3.2.2');
     });
@@ -253,7 +256,7 @@ describe('ProgrammingExerciseSecurityComponent', () => {
         fixture.destroy();
         createComponent();
         initEdit({ status: SecurityActivationStatus.INACTIVE, frameworkVersion: '2.0.0' });
-        service.activate.mockReturnValue(of(activeConfig('2.0.0')));
+        service.activate.mockReturnValue(of(configuredConfig('2.0.0')));
 
         comp.onToggleChanged(true);
 
@@ -261,7 +264,7 @@ describe('ProgrammingExerciseSecurityComponent', () => {
     });
 
     it('ignores choosing a version that is not selectable', () => {
-        initEdit(activeConfig('2.0.0'));
+        initEdit(configuredConfig('2.0.0'));
         comp.onFrameworkVersionChanged('2.0.0');
         expect(service.updateFrameworkVersion).not.toHaveBeenCalled();
     });
@@ -279,17 +282,71 @@ describe('ProgrammingExerciseSecurityComponent', () => {
 
     it('activates an exercise that pins a no longer selectable version with the template version', () => {
         initEdit({ status: SecurityActivationStatus.INACTIVE, frameworkVersion: '2.0.0' });
-        service.activate.mockReturnValue(of(activeConfig('3.2.2')));
+        service.activate.mockReturnValue(of(configuredConfig('3.2.2')));
         comp.onToggleChanged(true);
         expect(service.activate).toHaveBeenCalledWith(42, '3.2.2');
     });
 
     it('labels the newest version and marks a no longer supported version the exercise pins', () => {
-        initEdit(activeConfig('2.0.0'));
+        initEdit(configuredConfig('2.0.0'));
         expect(comp.frameworkVersions().map((option) => option.version)).toEqual(['3.4.1', '3.3.0', '3.2.2', '2.0.0']);
         expect(comp.frameworkVersions()[0].label).toBe('3.4.1 artemisApp.programmingExercise.security.latestSuffix');
         expect(comp.frameworkVersions()[1].label).toBe('3.3.0');
         expect(comp.frameworkVersions()[3].label).toBe('2.0.0 artemisApp.programmingExercise.security.noLongerSupportedSuffix');
+    });
+
+    describe('versions that do not accept the policy (B10)', () => {
+        const INCOMPATIBILITY = 'SecurityPolicy.yaml: regardingTheSupervisedCode.theFollowingTestBehaviorIsConfigured.regardingStrictTimeouts';
+        const withCompatibilities = (): SecurityFrameworkConfig => ({
+            ...configuredConfig('3.4.1'),
+            versionCompatibilities: [
+                { version: '3.4.1', verdict: SecurityVersionCompatibilityVerdict.COMPATIBLE },
+                { version: '3.3.0', verdict: SecurityVersionCompatibilityVerdict.INCOMPATIBLE, incompatibilities: [INCOMPATIBILITY] },
+                { version: '3.2.2', verdict: SecurityVersionCompatibilityVerdict.UNVERIFIED },
+            ],
+        });
+
+        it('marks incompatible and unverified versions in the dropdown', () => {
+            initEdit(withCompatibilities());
+            expect(comp.frameworkVersions().map((option) => option.label)).toEqual([
+                '3.4.1 artemisApp.programmingExercise.security.latestSuffix',
+                '3.3.0 artemisApp.programmingExercise.security.incompatibleSuffix',
+                '3.2.2 artemisApp.programmingExercise.security.unverifiedSuffix',
+            ]);
+            expect(comp.incompatibleVersions().map((compatibility) => compatibility.version)).toEqual(['3.3.0']);
+        });
+
+        it('does not request a version that does not accept the policy, but still allows the others', () => {
+            initEdit(withCompatibilities());
+            service.updateFrameworkVersion.mockReturnValue(of(configuredConfig('3.2.2')));
+
+            comp.onFrameworkVersionChanged('3.3.0');
+            expect(service.updateFrameworkVersion).not.toHaveBeenCalled();
+            expect(comp.status()).toBe(SecurityActivationStatus.CONFIGURED);
+
+            comp.onFrameworkVersionChanged('3.2.2');
+            expect(service.updateFrameworkVersion).toHaveBeenCalledWith(42, '3.2.2');
+        });
+
+        it('marks nothing when the server checked no policy file', () => {
+            initEdit(configuredConfig('3.4.1'));
+            expect(comp.frameworkVersions()[1].label).toBe('3.3.0');
+            expect(comp.incompatibleVersions()).toEqual([]);
+        });
+
+        it('passes the parameters of a refused version to the translation of the error', () => {
+            initEdit(configuredConfig('3.4.1'));
+            const instant = vi.spyOn(TestBed.inject(TranslateService), 'instant').mockReturnValue('Ares 3.3.0 does not accept it');
+            const params = { version: '3.3.0', details: INCOMPATIBILITY };
+            service.updateFrameworkVersion.mockReturnValue(
+                throwError(() => new HttpErrorResponse({ status: 400, error: { message: 'error.securityFrameworkVersionIncompatible', params } })),
+            );
+
+            comp.onFrameworkVersionChanged('3.3.0');
+
+            expect(instant).toHaveBeenCalledWith('error.securityFrameworkVersionIncompatible', params);
+            expect(comp.config().errorDetail).toBe('Ares 3.3.0 does not accept it');
+        });
     });
 
     it('disables the version selector when no versions are known', () => {
@@ -301,12 +358,12 @@ describe('ProgrammingExerciseSecurityComponent', () => {
         expect(comp.isVersionSelectDisabled()).toBe(true);
     });
 
-    it('create mode stages ACTIVE/INACTIVE locally without calling the server', () => {
+    it('create mode stages CONFIGURED/INACTIVE locally without calling the server', () => {
         initCreate();
         comp.onToggleChanged(false);
         expect(comp.status()).toBe(SecurityActivationStatus.INACTIVE);
         comp.onToggleChanged(true);
-        expect(comp.status()).toBe(SecurityActivationStatus.ACTIVE);
+        expect(comp.status()).toBe(SecurityActivationStatus.CONFIGURED);
         expectNoWriteRequest();
     });
 
@@ -318,7 +375,7 @@ describe('ProgrammingExerciseSecurityComponent', () => {
         expect(comp.showStagedDeactivationHint()).toBe(true);
     });
 
-    it('edit mode activation goes GENERATING then ACTIVE', () => {
+    it('edit mode activation goes GENERATING then CONFIGURED', () => {
         initEdit(inactiveConfig());
         const activate$ = new Subject<SecurityFrameworkConfig>();
         service.activate.mockReturnValue(activate$.asObservable());
@@ -326,13 +383,13 @@ describe('ProgrammingExerciseSecurityComponent', () => {
         expect(comp.status()).toBe(SecurityActivationStatus.GENERATING);
         expect(comp.isBusy()).toBe(true);
         expect(service.activate).toHaveBeenCalledWith(42, '3.4.1');
-        activate$.next(activeConfig());
+        activate$.next(configuredConfig());
         activate$.complete();
-        expect(comp.status()).toBe(SecurityActivationStatus.ACTIVE);
+        expect(comp.status()).toBe(SecurityActivationStatus.CONFIGURED);
     });
 
     it('edit mode deactivation asks for confirmation, then goes DELETING then INACTIVE', () => {
-        initEdit(activeConfig());
+        initEdit(configuredConfig());
         const deactivate$ = new Subject<SecurityFrameworkConfig>();
         service.deactivate.mockReturnValue(deactivate$.asObservable());
         const request = captureConfirmation();
@@ -350,8 +407,39 @@ describe('ProgrammingExerciseSecurityComponent', () => {
         expect(comp.status()).toBe(SecurityActivationStatus.INACTIVE);
     });
 
+    it('names the other parts of Ares the tests use in the confirmation, because the Ares library then stays in the build (B4)', () => {
+        initEdit({
+            ...configuredConfig(),
+            aresApiUses: [
+                { location: 'test/test/ClassTest.java', api: 'structural.ClassTestProvider' },
+                { location: 'test/test/ClassTest.java', api: 'StrictTimeout' },
+                { location: 'test/test/MethodTest.java', api: 'StrictTimeout' },
+            ],
+        });
+        const request = captureConfirmation();
+        const instant = vi.spyOn(TestBed.inject(TranslateService), 'instant');
+
+        comp.onToggleChanged(false);
+
+        expect(request().message).toBe(
+            'artemisApp.programmingExercise.security.deactivateConfirmation.message artemisApp.programmingExercise.security.deactivateConfirmation.aresLibraryStays',
+        );
+        expect(instant).toHaveBeenCalledWith('artemisApp.programmingExercise.security.deactivateConfirmation.aresLibraryStays', {
+            apis: 'structural.ClassTestProvider, StrictTimeout',
+        });
+    });
+
+    it('leaves the library sentence out of the confirmation when the tests use only the sandbox', () => {
+        initEdit(configuredConfig());
+        const request = captureConfirmation();
+
+        comp.onToggleChanged(false);
+
+        expect(request().message).toBe('artemisApp.programmingExercise.security.deactivateConfirmation.message');
+    });
+
     it('cancelling the deactivation confirmation sends no request and turns the switch back on', () => {
-        initEdit(activeConfig());
+        initEdit(configuredConfig());
         const request = captureConfirmation();
 
         comp.onToggleChanged(false);
@@ -359,23 +447,23 @@ describe('ProgrammingExerciseSecurityComponent', () => {
         request().reject!();
 
         expect(service.deactivate).not.toHaveBeenCalled();
-        expect(comp.status()).toBe(SecurityActivationStatus.ACTIVE);
+        expect(comp.status()).toBe(SecurityActivationStatus.CONFIGURED);
         expect(comp.isToggleOn()).toBe(true);
     });
 
-    it('drops to ERROR on activation failure, then retry re-runs it to ACTIVE', () => {
+    it('drops to ERROR on activation failure, then retry re-runs it to CONFIGURED', () => {
         initEdit(inactiveConfig());
         service.activate.mockReturnValueOnce(throwError(() => new Error('SYNC_FAILED')));
         comp.onToggleChanged(true);
         expect(comp.status()).toBe(SecurityActivationStatus.ERROR);
-        service.activate.mockReturnValueOnce(of(activeConfig()));
+        service.activate.mockReturnValueOnce(of(configuredConfig()));
         comp.onRetry();
-        expect(comp.status()).toBe(SecurityActivationStatus.ACTIVE);
+        expect(comp.status()).toBe(SecurityActivationStatus.CONFIGURED);
         expect(service.activate).toHaveBeenCalledTimes(2);
     });
 
     it('disables the version selector in ERROR so the shown version cannot diverge from the retried operation', () => {
-        initEdit(activeConfig());
+        initEdit(configuredConfig());
         expect(comp.isVersionSelectDisabled()).toBe(false);
         service.updateFrameworkVersion.mockReturnValueOnce(throwError(() => new Error('SYNC_FAILED')));
         comp.onFrameworkVersionChanged('3.3.0');
@@ -384,7 +472,7 @@ describe('ProgrammingExerciseSecurityComponent', () => {
     });
 
     it('retry re-runs the operation that actually failed (deactivation, not activation)', () => {
-        initEdit(activeConfig());
+        initEdit(configuredConfig());
         service.deactivate.mockReturnValueOnce(throwError(() => new Error('SYNC_FAILED')));
         deactivateConfirmed();
         expect(comp.status()).toBe(SecurityActivationStatus.ERROR);
@@ -396,15 +484,15 @@ describe('ProgrammingExerciseSecurityComponent', () => {
     });
 
     it('re-syncs when the framework version changes on an active exercise', () => {
-        initEdit(activeConfig('3.4.1'));
+        initEdit(configuredConfig('3.4.1'));
         const update$ = new Subject<SecurityFrameworkConfig>();
         service.updateFrameworkVersion.mockReturnValue(update$.asObservable());
         comp.onFrameworkVersionChanged('3.3.0');
         expect(comp.status()).toBe(SecurityActivationStatus.GENERATING);
         expect(service.updateFrameworkVersion).toHaveBeenCalledWith(42, '3.3.0');
-        update$.next(activeConfig('3.3.0'));
+        update$.next(configuredConfig('3.3.0'));
         update$.complete();
-        expect(comp.status()).toBe(SecurityActivationStatus.ACTIVE);
+        expect(comp.status()).toBe(SecurityActivationStatus.CONFIGURED);
         expect(comp.config().frameworkVersion).toBe('3.3.0');
     });
 
@@ -439,7 +527,7 @@ describe('ProgrammingExerciseSecurityComponent', () => {
     });
 
     it('on ERROR keeps the toggle on after a failed deactivation', () => {
-        initEdit(activeConfig());
+        initEdit(configuredConfig());
         service.deactivate.mockReturnValueOnce(throwError(() => new Error('SYNC_FAILED')));
         deactivateConfirmed();
         expect(comp.status()).toBe(SecurityActivationStatus.ERROR);
@@ -454,10 +542,10 @@ describe('ProgrammingExerciseSecurityComponent', () => {
         fixture.detectChanges();
         expect(comp.loadFailed()).toBe(true);
 
-        service.getConfig.mockReturnValue(of(activeConfig()));
+        service.getConfig.mockReturnValue(of(configuredConfig()));
         comp.retryLoadConfig();
         expect(comp.loadFailed()).toBe(false);
-        expect(comp.status()).toBe(SecurityActivationStatus.ACTIVE);
+        expect(comp.status()).toBe(SecurityActivationStatus.CONFIGURED);
     });
 
     it('blocks the toggle and version selector while the edit-mode config is loading', () => {
@@ -470,10 +558,10 @@ describe('ProgrammingExerciseSecurityComponent', () => {
         expect(comp.isBusy()).toBe(true);
         expect(comp.isVersionSelectDisabled()).toBe(true);
 
-        load$.next(activeConfig());
+        load$.next(configuredConfig());
         load$.complete();
         expect(comp.isBusy()).toBe(false);
-        expect(comp.status()).toBe(SecurityActivationStatus.ACTIVE);
+        expect(comp.status()).toBe(SecurityActivationStatus.CONFIGURED);
     });
 
     it('ignores a late config load while an operation is in flight so it cannot overwrite the result', () => {
@@ -492,9 +580,9 @@ describe('ProgrammingExerciseSecurityComponent', () => {
         load$.complete();
         expect(comp.status()).toBe(SecurityActivationStatus.GENERATING);
 
-        activate$.next(activeConfig());
+        activate$.next(configuredConfig());
         activate$.complete();
-        expect(comp.status()).toBe(SecurityActivationStatus.ACTIVE);
+        expect(comp.status()).toBe(SecurityActivationStatus.CONFIGURED);
     });
 
     it('never sends a write request outside edit mode, even for an exercise with an id', () => {
@@ -562,10 +650,10 @@ describe('ProgrammingExerciseSecurityComponent', () => {
 
     describe('import from an exercise', () => {
         it('loads the source config read-only and sends no write request, including version changes and retry', () => {
-            initImportFromExercise(activeConfig('3.4.1'));
+            initImportFromExercise(configuredConfig('3.4.1'));
             expect(service.getConfig).toHaveBeenCalledOnce();
             expect(service.getConfig).toHaveBeenCalledWith(7);
-            expect(comp.status()).toBe(SecurityActivationStatus.ACTIVE);
+            expect(comp.status()).toBe(SecurityActivationStatus.CONFIGURED);
 
             const confirmSpy = vi.spyOn(confirmationService(), 'confirm');
             comp.onToggleChanged(false);
@@ -585,7 +673,7 @@ describe('ProgrammingExerciseSecurityComponent', () => {
         });
 
         it('locks the version selector while the import is deactivated and shows the version of the source it keeps', () => {
-            initImportFromExercise(activeConfig('3.4.1'));
+            initImportFromExercise(configuredConfig('3.4.1'));
             comp.onFrameworkVersionChanged('3.3.0');
             expect(comp.config().frameworkVersion).toBe('3.3.0');
 
@@ -632,7 +720,7 @@ describe('ProgrammingExerciseSecurityComponent', () => {
             expect(service.getConfig).toHaveBeenLastCalledWith(8);
             expect(comp.status()).toBe(SecurityActivationStatus.INACTIVE);
 
-            firstLoad$.next(activeConfig());
+            firstLoad$.next(configuredConfig());
             firstLoad$.complete();
             expect(comp.status()).toBe(SecurityActivationStatus.INACTIVE);
             expect(comp.sourceConfig()?.status).toBe(SecurityActivationStatus.INACTIVE);
@@ -691,14 +779,14 @@ describe('ProgrammingExerciseSecurityComponent', () => {
     describe('MISCONFIGURED in edit mode', () => {
         it('repairs by activating with the current version', () => {
             initEdit(misconfiguredConfig());
-            service.activate.mockReturnValue(of(activeConfig('3.3.0')));
+            service.activate.mockReturnValue(of(configuredConfig('3.3.0')));
             expect(comp.showToggle()).toBe(false);
             expect(comp.isBusy()).toBe(false);
 
             comp.onRepair();
 
             expect(service.activate).toHaveBeenCalledExactlyOnceWith(42, '3.3.0');
-            expect(comp.status()).toBe(SecurityActivationStatus.ACTIVE);
+            expect(comp.status()).toBe(SecurityActivationStatus.CONFIGURED);
         });
 
         it('deactivates only after confirmation', () => {
@@ -753,11 +841,11 @@ describe('ProgrammingExerciseSecurityComponent', () => {
             initEdit(misconfiguredConfig(SecurityPolicyFileProblem.MISSING));
             service.activate.mockReturnValueOnce(throwError(() => new Error('REPAIR_FAILED')));
             comp.onRepair();
-            service.activate.mockReturnValueOnce(of(activeConfig('3.3.0')));
+            service.activate.mockReturnValueOnce(of(configuredConfig('3.3.0')));
 
             comp.onRepair();
 
-            expect(comp.status()).toBe(SecurityActivationStatus.ACTIVE);
+            expect(comp.status()).toBe(SecurityActivationStatus.CONFIGURED);
             expect(comp.config().errorDetail).toBeUndefined();
         });
 
@@ -798,7 +886,7 @@ describe('ProgrammingExerciseSecurityComponent', () => {
 
     it('lists the test classes missing in an active policy and the policy files that could not be checked', () => {
         initEdit({
-            status: SecurityActivationStatus.ACTIVE,
+            status: SecurityActivationStatus.CONFIGURED,
             frameworkVersion: '3.4.1',
             disabledTestClasses: ['de.x.OffTest'],
             policyFiles: [
@@ -806,10 +894,51 @@ describe('ProgrammingExerciseSecurityComponent', () => {
                 { policyPath: 'Other.yaml', referencedBy: ['de.x.B'], problem: SecurityPolicyFileProblem.TEST_CLASS_LIST_NOT_FOUND },
             ],
         });
-        expect(comp.status()).toBe(SecurityActivationStatus.ACTIVE);
+        expect(comp.status()).toBe(SecurityActivationStatus.CONFIGURED);
         expect(comp.missingTestClasses()).toEqual(['de.x.New']);
         expect(comp.uncheckedPolicyFiles()).toEqual(['Other.yaml']);
         expect(comp.problemMessages()).toEqual([]);
+    });
+
+    describe('adding the discovered test classes (B5)', () => {
+        const withMissingClass = (): SecurityFrameworkConfig => ({
+            ...configuredConfig(),
+            policyFiles: [{ policyPath: 'SecurityPolicy.yaml', referencedBy: ['de.x.A', 'de.x.New'], missingTestClasses: ['de.x.New'] }],
+        });
+
+        it('commits the missing test classes through the server and settles on the returned config', () => {
+            initEdit(withMissingClass());
+            const add$ = new Subject<SecurityFrameworkConfig>();
+            service.addDiscoveredTestClasses.mockReturnValue(add$.asObservable());
+
+            comp.onAddDiscoveredTestClasses();
+
+            expect(service.addDiscoveredTestClasses).toHaveBeenCalledWith(42);
+            expect(comp.status()).toBe(SecurityActivationStatus.GENERATING);
+            add$.next({ ...configuredConfig(), policyFiles: [{ policyPath: 'SecurityPolicy.yaml', referencedBy: ['de.x.A', 'de.x.New'] }] });
+            add$.complete();
+            expect(comp.status()).toBe(SecurityActivationStatus.CONFIGURED);
+            expect(comp.missingTestClasses()).toEqual([]);
+        });
+
+        it('drops to ERROR if the server refuses, and retry runs the same operation again', () => {
+            initEdit(withMissingClass());
+            service.addDiscoveredTestClasses.mockReturnValueOnce(throwError(() => new Error('PUSH_FAILED')));
+
+            comp.onAddDiscoveredTestClasses();
+            expect(comp.status()).toBe(SecurityActivationStatus.ERROR);
+
+            service.addDiscoveredTestClasses.mockReturnValueOnce(of(configuredConfig()));
+            comp.onRetry();
+            expect(service.addDiscoveredTestClasses).toHaveBeenCalledTimes(2);
+            expect(comp.status()).toBe(SecurityActivationStatus.CONFIGURED);
+        });
+
+        it('never sends the request outside edit mode', () => {
+            initCreate();
+            comp.onAddDiscoveredTestClasses();
+            expect(service.addDiscoveredTestClasses).not.toHaveBeenCalled();
+        });
     });
 });
 
@@ -836,6 +965,44 @@ describe('ProgrammingExerciseSecurityComponent rendering', () => {
     }
 
     const query = (element: HTMLElement, testId: string) => element.querySelector(`[data-testid="${testId}"]`);
+
+    it('renders a configured sandbox as CONFIGURED, never as confirmed ready, because no Ares build result confirms it yet (B11)', () => {
+        const element = renderEdit(configuredConfig('3.3.0'));
+        expect(query(element, 'security-card')?.classList).toContain('sf-card--configured');
+        expect(query(element, 'security-status-pill')?.classList).toContain('sf-pill--configured');
+        expect(element.querySelector('[class*="--active"]')).toBeNull();
+    });
+
+    it('lists what each version that does not accept the policy does not accept, and nothing without a checked policy (B10)', () => {
+        const element = renderEdit({
+            ...configuredConfig('3.4.1'),
+            versionCompatibilities: [
+                { version: '3.4.1', verdict: SecurityVersionCompatibilityVerdict.COMPATIBLE },
+                { version: '3.3.0', verdict: SecurityVersionCompatibilityVerdict.INCOMPATIBLE, incompatibilities: ['SecurityPolicy.yaml: a.b'] },
+            ],
+        });
+        const items = query(element, 'security-incompatible-versions')?.querySelectorAll('li');
+        expect(items).toHaveLength(1);
+        expect(items?.[0].textContent).toContain('artemisApp.programmingExercise.security.versionIncompatible');
+    });
+
+    it('offers to add the missing test classes in edit mode only while some are missing (B5)', () => {
+        const element = renderEdit({
+            ...configuredConfig('3.4.1'),
+            policyFiles: [{ policyPath: 'SecurityPolicy.yaml', referencedBy: ['de.x.A', 'de.x.New'], missingTestClasses: ['de.x.New'] }],
+        });
+        expect(query(element, 'security-add-test-classes')).not.toBeNull();
+    });
+
+    it('does not offer to add test classes when every test class is listed', () => {
+        const element = renderEdit(configuredConfig('3.4.1'));
+        expect(query(element, 'security-add-test-classes')).toBeNull();
+    });
+
+    it('shows no list of incompatible versions when the server checked no policy file', () => {
+        const element = renderEdit(configuredConfig('3.4.1'));
+        expect(query(element, 'security-incompatible-versions')).toBeNull();
+    });
 
     it('renders MISCONFIGURED with the broken policy file, Repair and Deactivate, and no switch', () => {
         const element = renderEdit(misconfiguredConfig(SecurityPolicyFileProblem.TOO_LARGE));

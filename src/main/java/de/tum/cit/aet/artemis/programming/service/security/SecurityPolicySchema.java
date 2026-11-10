@@ -26,7 +26,7 @@ import org.yaml.snakeyaml.resolver.Resolver;
 
 /**
  * Checks a policy file against the rules Ares {@value #VERIFIED_ARES_VERSION} applies when the tests run, so an exercise whose policy Ares would refuse is
- * reported as misconfigured instead of active.
+ * reported as misconfigured instead of configured.
  * <p>
  * Ares is not a dependency of the server, so the rules are copied from its {@code SecurityPolicySchemaValidator}, {@code PolicyValueValidator} and the
  * constructors of its policy records. They are only valid for that version, which is why {@link SecurityPolicyRepositoryFiles} applies them only to a
@@ -207,6 +207,24 @@ final class SecurityPolicySchema {
         }
         catch (YAMLException | NumberFormatException e) {
             return INVALID_POLICY;
+        }
+    }
+
+    /**
+     * Reads a policy file the way Ares reads it, without checking it against the rules of any Ares version.
+     *
+     * @param yaml the content of a policy file
+     * @return the only document of the file as nested maps, lists and scalars; empty if it is too large or is no single YAML document Ares could read
+     */
+    static Optional<Object> readTree(String yaml) {
+        if (yaml.length() > SecurityPolicyYaml.MAX_POLICY_SIZE) {
+            return Optional.empty();
+        }
+        try {
+            return Optional.ofNullable(readDocument(yaml));
+        }
+        catch (YAMLException | NumberFormatException e) {
+            return Optional.empty();
         }
     }
 

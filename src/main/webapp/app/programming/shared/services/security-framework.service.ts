@@ -41,6 +41,11 @@ export class SecurityFrameworkService {
         return this.http.put<SecurityFrameworkConfig>(`${this.resourceUrl(exerciseId)}/deactivate`, null);
     }
 
+    /** Adds the test classes that are missing from the policy files (decision B5); the server never removes an entry. */
+    addDiscoveredTestClasses(exerciseId: number): Observable<SecurityFrameworkConfig> {
+        return this.http.put<SecurityFrameworkConfig>(`${this.resourceUrl(exerciseId)}/test-classes`, null);
+    }
+
     /** Pins another Ares version while active. */
     updateFrameworkVersion(exerciseId: number, frameworkVersion: string): Observable<SecurityFrameworkConfig> {
         return this.http.put<SecurityFrameworkConfig>(`${this.resourceUrl(exerciseId)}/framework-version`, null, {

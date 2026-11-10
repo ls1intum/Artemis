@@ -74,6 +74,44 @@ class SecurityPolicyRepositoryFilesTest {
     }
 
     @Test
+    void reportsThePartsOfAresTheTestsUseBesidesTheSandbox() throws IOException {
+        writeBuildFile();
+        writeSource(SecurityPolicyRepositoryFiles.POLICY_FILE_NAME, POLICY);
+        writeSource("test/de/example/SortingTest.java", """
+                package de.example;
+
+                import static de.tum.cit.ase.ares.api.util.ReflectionTestUtils.*;
+
+                import org.junit.jupiter.api.Test;
+
+                import de.tum.cit.ase.ares.api.StrictTimeout;
+                import de.tum.cit.ase.ares.api.jupiter.*;
+                import de.tum.cit.ase.ares.api.structural.*;
+
+                // de.tum.cit.ase.ares.api.InAComment is no use
+                @Public
+                @de.tum.cit.ase.ares.api.Policy(value = "SecurityPolicy.yaml")
+                @StrictTimeout(5)
+                class SortingTest {
+
+                    private static final String TEXT = "de.tum.cit.ase.ares.api.InAString";
+
+                    @Test
+                    void runs() {
+                        de.tum.cit.ase.ares.api.structural.ClassTestProvider provider = null;
+                    }
+                }
+                """);
+        writeTestClass("test/de/example/OnlySandboxTest.java", "de.example", "OnlySandboxTest");
+
+        assertThat(SecurityPolicyRepositoryFiles.evaluate(root).aresApiUses()).containsExactly(
+                new SecurityFrameworkState.AresApiUse("test/de/example/SortingTest.java", "StrictTimeout"),
+                new SecurityFrameworkState.AresApiUse("test/de/example/SortingTest.java", "structural.*"),
+                new SecurityFrameworkState.AresApiUse("test/de/example/SortingTest.java", "structural.ClassTestProvider"),
+                new SecurityFrameworkState.AresApiUse("test/de/example/SortingTest.java", "util.ReflectionTestUtils"));
+    }
+
+    @Test
     void scansSourcePackagesNamedLikeBuildOutput() throws IOException {
         FileUtils.writeStringToFile(root.resolve("build.gradle").toFile(), "ext {\n    aresVersion = '2.2.1'\n}\n", StandardCharsets.UTF_8);
         writeTestClass("test/de/example/build/BuildTest.java", "de.example.build", "BuildTest");
@@ -139,7 +177,7 @@ class SecurityPolicyRepositoryFilesTest {
         });
 
         SecurityPolicyRepositoryFiles.writePolicy(root, "SecurityPolicy.yaml", POLICY);
-        assertThat(SecurityPolicyRepositoryFiles.evaluate(root).status()).isEqualTo(SecurityActivationStatus.ACTIVE);
+        assertThat(SecurityPolicyRepositoryFiles.evaluate(root).status()).isEqualTo(SecurityActivationStatus.CONFIGURED);
     }
 
     @Test
@@ -150,8 +188,8 @@ class SecurityPolicyRepositoryFilesTest {
         Path notNormalized = Files.createDirectories(root.resolve("module")).resolve("..").resolve(".");
         Path relative = Path.of("").toAbsolutePath().relativize(root).resolve("module").resolve("..");
 
-        assertThat(SecurityPolicyRepositoryFiles.evaluate(notNormalized).status()).isEqualTo(SecurityActivationStatus.ACTIVE);
-        assertThat(SecurityPolicyRepositoryFiles.evaluate(relative).status()).isEqualTo(SecurityActivationStatus.ACTIVE);
+        assertThat(SecurityPolicyRepositoryFiles.evaluate(notNormalized).status()).isEqualTo(SecurityActivationStatus.CONFIGURED);
+        assertThat(SecurityPolicyRepositoryFiles.evaluate(relative).status()).isEqualTo(SecurityActivationStatus.CONFIGURED);
 
         SecurityPolicyRepositoryFiles.deletePolicy(root);
         assertThat(SecurityPolicyRepositoryFiles.evaluate(notNormalized).status()).isEqualTo(SecurityActivationStatus.MISCONFIGURED);
@@ -250,7 +288,7 @@ class SecurityPolicyRepositoryFilesTest {
         SecurityPolicyRepositoryFiles.writePolicy(root, "SecurityPolicy.yaml", POLICY);
 
         SecurityFrameworkState state = SecurityPolicyRepositoryFiles.evaluate(root);
-        assertThat(state.status()).isEqualTo(SecurityActivationStatus.ACTIVE);
+        assertThat(state.status()).isEqualTo(SecurityActivationStatus.CONFIGURED);
         assertThat(state.disabledTestClasses()).containsExactly("de.example.ClassTest");
 
         SecurityPolicyRepositoryFiles.setPolicyAnnotationsActive(root, false);
@@ -265,7 +303,7 @@ class SecurityPolicyRepositoryFilesTest {
         SecurityPolicyRepositoryFiles.writePolicy(root, "SecurityPolicy.yaml", POLICY);
 
         SecurityFrameworkState state = SecurityPolicyRepositoryFiles.evaluate(root);
-        assertThat(state.status()).isEqualTo(SecurityActivationStatus.ACTIVE);
+        assertThat(state.status()).isEqualTo(SecurityActivationStatus.CONFIGURED);
         assertThat(state.policyFiles()).singleElement().satisfies(policyFile -> assertThat(policyFile.missingTestClasses()).containsExactly("de.example.NewTest"));
 
         assertThat(SecurityPolicyRepositoryFiles.addTestClassesToPolicy(root, "SecurityPolicy.yaml", List.of("de.example.NewTest"))).isTrue();
@@ -351,7 +389,7 @@ class SecurityPolicyRepositoryFilesTest {
         writeSource("test/de/helpers/SortingTestHelper.java", "package de.helpers;\n\nimport de.example.*;\n\nclass SortingTestHelper extends SortingTest {\n}\n");
         SecurityPolicyRepositoryFiles.writePolicy(root, "SecurityPolicy.yaml", POLICY);
 
-        assertThat(SecurityPolicyRepositoryFiles.evaluate(root).status()).isEqualTo(SecurityActivationStatus.ACTIVE);
+        assertThat(SecurityPolicyRepositoryFiles.evaluate(root).status()).isEqualTo(SecurityActivationStatus.CONFIGURED);
     }
 
     @Test
@@ -372,7 +410,7 @@ class SecurityPolicyRepositoryFilesTest {
                         .replace("@Public\n", "@Public\n@de.other.JupiterAresTest\n"));
         SecurityPolicyRepositoryFiles.writePolicy(root, "SecurityPolicy.yaml", POLICY);
 
-        assertThat(SecurityPolicyRepositoryFiles.evaluate(root).status()).isEqualTo(SecurityActivationStatus.ACTIVE);
+        assertThat(SecurityPolicyRepositoryFiles.evaluate(root).status()).isEqualTo(SecurityActivationStatus.CONFIGURED);
     }
 
     @Test
@@ -437,7 +475,7 @@ class SecurityPolicyRepositoryFilesTest {
 
         FileUtils.writeStringToFile(root.resolve("build.gradle").toFile(), "ext {\n    aresVersion = '2.3.0'\n}\n", StandardCharsets.UTF_8);
         assertThat(onlyPolicyFileProblem()).isEqualTo(SecurityFrameworkState.PolicyFileProblem.TEST_CLASS_LIST_NOT_FOUND);
-        assertThat(SecurityPolicyRepositoryFiles.evaluate(root).status()).isEqualTo(SecurityActivationStatus.ACTIVE);
+        assertThat(SecurityPolicyRepositoryFiles.evaluate(root).status()).isEqualTo(SecurityActivationStatus.CONFIGURED);
     }
 
     @Test

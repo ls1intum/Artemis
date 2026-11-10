@@ -1149,7 +1149,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
 
     /** Warns if the new exercise's Security Framework state does not match the choice sent with the create or import request. */
     private warnIfSecurityChoiceNotApplied(config: SecurityFrameworkConfig, choice: SecurityFrameworkChoice) {
-        const expectedStatus = choice.action === SecurityFrameworkAction.ACTIVATE ? SecurityActivationStatus.ACTIVE : SecurityActivationStatus.INACTIVE;
+        const expectedStatus = choice.action === SecurityFrameworkAction.ACTIVATE ? SecurityActivationStatus.CONFIGURED : SecurityActivationStatus.INACTIVE;
         if (config.status !== expectedStatus) {
             const status = this.translateService.instant(`artemisApp.programmingExercise.security.status.${config.status.toLowerCase()}`);
             const details = securityFrameworkProblemMessages(config)

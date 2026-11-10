@@ -288,7 +288,7 @@
             },
             "security": {
                 "title": "Sicherheit",
-                "description": "Ares 2 führt den Code der Studierenden während der Tests in einer Sandbox aus. Java-Aufgaben starten mit aktivierter Sandbox; beim Deaktivieren wird die Sicherheitsrichtlinie aus dem Test-Repository entfernt.",
+                "description": "Ares 2 führt den Code der Studierenden während der Tests in einer Sandbox aus. Java-Aufgaben starten mit aktivierter Sandbox; beim Deaktivieren wird Ares vollständig abgeschaltet.",
                 "activateLabel": "Security Framework aktivieren",
                 "subtitle": "Sicherheitsframework für Programmieraufgaben",
                 "frameworkVersion": "Framework-Version",
@@ -296,7 +296,7 @@
                 "status": {
                     "inactive": "Inaktiv",
                     "generating": "Wird erstellt",
-                    "active": "Aktiv",
+                    "configured": "Konfiguriert",
                     "deleting": "Wird entfernt",
                     "error": "Fehler",
                     "misconfigured": "Fehlkonfiguriert",
@@ -306,11 +306,11 @@
                 "desc": {
                     "inactive": "Alle Testklassen laufen ohne Sandbox.",
                     "generating": "Die Sicherheitsrichtlinie wird in das Test-Repository committet.",
-                    "activeEdit": "Die Tests setzen die Sandbox durch.",
-                    "activeCreate": "Die Sicherheitsrichtlinie der Vorlage ist Teil des Test-Repositorys, mit dem die Aufgabe erstellt wird.",
+                    "configuredEdit": "Das Test-Repository ist für die Sandbox eingerichtet. Artemis hat die Dateien geprüft, aber noch kein Ares-Build hat bestätigt, dass Ares die Richtlinie akzeptiert.",
+                    "configuredCreate": "Die Sicherheitsrichtlinie der Vorlage ist Teil des Test-Repositorys, mit dem die Aufgabe erstellt wird. Ob Ares sie akzeptiert, ist noch durch keinen Build bestätigt.",
                     "deleting": "Das Security Framework wird aus dieser Aufgabe entfernt.",
                     "error": "Der letzte Vorgang des Security Frameworks ist fehlgeschlagen. Wiederhole ihn, um die Sicherheitsrichtlinie zu synchronisieren.",
-                    "missingTestClasses": "Diese Testklassen fehlen in der Richtlinie und werden wie Code der Studierenden behandelt: {{ classes }}",
+                    "missingTestClasses": "Diese Testklassen fehlen in der Richtlinie und werden wie Code der Studierenden behandelt: {{ classes }}. Beim Hinzufügen wird kein Eintrag entfernt.",
                     "testClassListNotFound": "Die Liste der Testklassen in der Richtliniendatei {{ path }} konnte nicht geprüft werden.",
                     "notRepairable": "Artemis kann eine ungültige, zu große oder unlesbare Richtliniendatei nicht automatisch reparieren. Korrigiere die Datei im Test-Repository oder deaktiviere das Security Framework.",
                     "unsupported": "Artemis kann die Sandbox dieses Test-Aufbaus nicht automatisch verwalten:",
@@ -337,7 +337,7 @@
                 "sync": {
                     "inactive": "Beim Aktivieren wird die vorherige Richtlinie wiederhergestellt oder eine Standardrichtlinie erzeugt.",
                     "generating": "Richtlinie wird in das exercise-tests-Repository committet …",
-                    "active": "Richtlinie ist im Test-Repository committet.",
+                    "configured": "Richtlinie ist im Test-Repository committet · noch nicht durch einen Ares-Build bestätigt.",
                     "deleting": "Die Sicherheitsrichtlinie wird aus dem Test-Repository entfernt …",
                     "error": "Synchronisierung fehlgeschlagen · versuche es erneut.",
                     "misconfigured": "Ares lässt die betroffenen Tests fehlschlagen, bis die Richtlinie repariert oder deaktiviert wird.",
@@ -350,14 +350,16 @@
                     "deactivate": "Deaktivieren",
                     "repairHint": "Beim Aktivieren werden fehlende Richtliniendateien repariert."
                 },
+                "addTestClasses": "Fehlende Testklassen hinzufügen",
                 "repair": "Reparieren",
                 "deactivate": "Deaktivieren",
                 "deactivateConfirmation": {
                     "header": "Security Framework deaktivieren?",
-                    "message": "Beim Deaktivieren wird ein Commit im Test-Repository erstellt, der die Sicherheitsrichtlinie löscht, und die Builds der Vorlage und der Lösung laufen erneut. Der Code der Studierenden läuft danach ohne Sandbox.",
+                    "message": "Beim Deaktivieren wird ein Commit im Test-Repository erstellt, der die Sicherheitsrichtlinie mit allen ihren Einstellungen löscht, und die Builds der Vorlage und der Lösung laufen erneut. Damit wird Ares vollständig abgeschaltet: die Sandbox für den Code der Studierenden und alles, was die Richtlinie für die Tests festlegt, etwa Timeouts, die Zeitsteuerung versteckter Tests, die Behandlung der Ausgabe und das Melden von Fehlern. Versteckte Tests schützen dann nur noch die Sichtbarkeitseinstellungen der Tests in Artemis, nicht Ares. Beim erneuten Aktivieren wird die letzte Richtlinie aus dem Verlauf des Repositorys wiederhergestellt oder eine Standardrichtlinie erzeugt, falls keine gefunden wird.",
+                    "aresLibraryStays": "Die Tests verwenden außerdem andere Teile von Ares ({{ apis }}), daher bleibt die Ares-Bibliothek in der Build-Datei.",
                     "confirm": "Deaktivieren"
                 },
-                "stagedDeactivationHint": "Sobald die Aufgabe gespeichert ist, läuft der Code der Studierenden ohne Sandbox.",
+                "stagedDeactivationHint": "Sobald die Aufgabe gespeichert ist, läuft der Code der Studierenden ohne Sandbox, und nichts, was die Sicherheitsrichtlinie für die Tests festlegt, gilt mehr. Versteckte Tests schützen dann nur noch die Sichtbarkeitseinstellungen der Tests in Artemis.",
                 "templateVersionUnsupported": "Die Vorlage verwendet Version {{ version }}, die nicht mehr unterstützt wird.",
                 "notApplied": {
                     "status": "Die Aufgabe wurde gespeichert, aber ihre Einstellung des Security Frameworks wurde nicht angewendet. Ihr Status ist {{ status }}. {{ details }}",
@@ -367,7 +369,10 @@
                 "retry": "Erneut versuchen",
                 "loadError": "Sicherheitsstatus konnte nicht geladen werden.",
                 "latestSuffix": "(neueste)",
-                "noLongerSupportedSuffix": "(nicht mehr unterstützt)"
+                "noLongerSupportedSuffix": "(nicht mehr unterstützt)",
+                "incompatibleSuffix": "(akzeptiert die Richtlinie nicht)",
+                "unverifiedSuffix": "(Kompatibilität nicht geprüft)",
+                "versionIncompatible": "Ares {{ version }} kann nicht festgelegt werden, weil es diese Teile der Richtlinie nicht akzeptiert: {{ details }}"
             },
             "onlineIdeExperienceLevel": {
                 "title": "Anfängliche Erfahrungsstufe in der Online IDE",

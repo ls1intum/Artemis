@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -24,7 +26,9 @@ import de.tum.cit.aet.artemis.programming.domain.security.SecurityFrameworkState
  */
 final class AresTestSources {
 
-    private static final String ARES_JUPITER_PACKAGE = "de.tum.cit.ase.ares.api.jupiter";
+    private static final String ARES_2_PACKAGE = "de.tum.cit.ase.ares.api";
+
+    private static final String ARES_JUPITER_PACKAGE = ARES_2_PACKAGE + ".jupiter";
 
     private static final String ARES_1_PACKAGE = "de.tum.in.test.api";
 
@@ -56,6 +60,20 @@ final class AresTestSources {
     private static final Pattern WILDCARD_IMPORT = Pattern.compile("\\bimport\\s+([\\w.]+)\\.\\*\\s*;");
 
     private static final Pattern ARES_JUPITER_WILDCARD_IMPORT = Pattern.compile("\\bimport\\s+" + Pattern.quote(ARES_JUPITER_PACKAGE) + "\\.\\*\\s*;");
+
+    /**
+     * A reference to an Ares 2 type or package in an import, an annotation or the code: the package, any lower-case subpackages and then a type or the
+     * {@code *} of a wildcard import. A static import ends at the type, so its member is not part of the match.
+     */
+    private static final Pattern ARES_2_REFERENCE = Pattern
+            .compile("(?<![\\w$.])" + Pattern.quote(ARES_2_PACKAGE) + "((?:\\s*\\.\\s*[a-z_][\\w$]*)*\\s*\\.\\s*(?:[A-Z][\\w$]*|\\*))");
+
+    /**
+     * The parts of Ares the Security Framework itself switches on and off: the policy annotation and the markers and extension that register the sandbox,
+     * relative to {@link #ARES_2_PACKAGE}. Tests that use only these keep working without the Ares library once the sandbox is off.
+     */
+    private static final Set<String> SANDBOX_APIS = Stream.concat(Stream.of("Policy", "jupiter.*", "jupiter." + SECURITY_EXTENSION, "jupiter." + UNSUPPORTED_ARES_MARKER),
+            Stream.concat(ARES_CLASS_MARKERS.stream(), ARES_METHOD_MARKERS.stream()).map(marker -> "jupiter." + marker)).collect(Collectors.toUnmodifiableSet());
 
     /** The uses of each Ares marker, with or without its package, compiled once. */
     private static final Map<String, Pattern> MARKER_USES = Stream.of(ARES_CLASS_MARKERS.stream(), ARES_METHOD_MARKERS.stream(), Stream.of(UNSUPPORTED_ARES_MARKER))
@@ -92,8 +110,9 @@ final class AresTestSources {
      * @param topLevelTypes its top-level types, in their order
      * @param problems      the parts of the file the Security Framework cannot manage
      * @param usesAres1     whether the file refers to Ares 1, whose own sandbox runs independently of the Security Framework
+     * @param aresApis      the other parts of Ares 2 the file uses, see {@link #aresApis(String)}
      */
-    record Summary(String path, List<TypeDeclaration> topLevelTypes, List<SecurityFrameworkState.UnsupportedReasonType> problems, boolean usesAres1) {
+    record Summary(String path, List<TypeDeclaration> topLevelTypes, List<SecurityFrameworkState.UnsupportedReasonType> problems, boolean usesAres1, List<String> aresApis) {
     }
 
     private record Declaration(int start, int bodyStart, int bodyEnd, boolean annotationType, String simpleName, @Nullable String superclass) {
@@ -189,7 +208,28 @@ final class AresTestSources {
         if (types.stream().filter(TypeDeclaration::isRelevant).count() > 1) {
             addOnce(problems, SecurityFrameworkState.UnsupportedReasonType.MULTIPLE_TOP_LEVEL_TYPES);
         }
-        return new Summary(path, List.copyOf(types), List.copyOf(problems), masked.contains(ARES_1_PACKAGE));
+        return new Summary(path, List.copyOf(types), List.copyOf(problems), masked.contains(ARES_1_PACKAGE), aresApis(masked));
+    }
+
+    /**
+     * Finds the parts of Ares 2 a file uses besides the sandbox, e.g. the structural test providers, {@code @StrictTimeout} or {@code ReflectionTestUtils}.
+     * Removing the Ares library from the build would break such a file, so it shows what has to be migrated first (decision B4 of Ares2 issue #386). The
+     * search runs on the masked source and therefore ignores comments and string literals.
+     *
+     * @param masked the masked source of a file, see {@link AresPolicyAnnotations#mask(String)}
+     * @return the types and wildcard-imported packages, relative to the Ares package (e.g. {@code StrictTimeout} or {@code structural.*}), sorted and
+     *         each once
+     */
+    static List<String> aresApis(String masked) {
+        Set<String> apis = new TreeSet<>();
+        Matcher references = ARES_2_REFERENCE.matcher(masked);
+        while (references.find()) {
+            String api = references.group(1).replaceAll("\\s", "").substring(1);
+            if (!SANDBOX_APIS.contains(api)) {
+                apis.add(api);
+            }
+        }
+        return List.copyOf(apis);
     }
 
     /**

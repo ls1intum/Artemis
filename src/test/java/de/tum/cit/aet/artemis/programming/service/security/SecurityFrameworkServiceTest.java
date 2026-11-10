@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -112,6 +113,15 @@ class SecurityFrameworkServiceTest {
                 regardingPackageImports: [ ]
                 regardingTimeouts: [ ]
             """;
+
+    /** A valid policy except for a test-behaviour category that no listed Ares release accepts yet (Ares #303). */
+    private static final String BEHAVIOR_POLICY = CUSTOM_POLICY + """
+              theFollowingTestBehaviorIsConfigured:
+                regardingStrictTimeouts:
+                  theTimeoutIs: 2
+            """;
+
+    private static final String UNKNOWN_BEHAVIOR_FIELD = "regardingTheSupervisedCode.theFollowingTestBehaviorIsConfigured.regardingStrictTimeouts";
 
     /** Valid YAML that Ares 2.2.1 refuses, because the required fields are missing. */
     private static final String PARTIAL_POLICY = "regardingTheSupervisedCode:\n  theFollowingClassesAreTestClasses:\n    - \"de.example.SortingTest\"\n";
@@ -309,7 +319,7 @@ class SecurityFrameworkServiceTest {
     void templateLikeRepositoryIsActiveByDefault() {
         SecurityFrameworkConfigDTO config = securityFrameworkService.getConfig(exercise(ProgrammingLanguage.JAVA));
 
-        assertThat(config.status()).isEqualTo(SecurityActivationStatus.ACTIVE.name());
+        assertThat(config.status()).isEqualTo(SecurityActivationStatus.CONFIGURED.name());
         assertThat(config.frameworkVersion()).isEqualTo("2.2.1");
     }
 
@@ -328,7 +338,7 @@ class SecurityFrameworkServiceTest {
         assertThat(securityFrameworkService.getConfig(exercise(ProgrammingLanguage.JAVA)).status()).isEqualTo(SecurityActivationStatus.INACTIVE.name());
 
         SecurityFrameworkConfigDTO config = securityFrameworkService.activate(exercise(ProgrammingLanguage.JAVA), "2.2.1", user);
-        assertThat(config.status()).isEqualTo(SecurityActivationStatus.ACTIVE.name());
+        assertThat(config.status()).isEqualTo(SecurityActivationStatus.CONFIGURED.name());
         assertThat(readPushed("test/de/example/SortingTest.java")).contains(TEST_CLASS);
     }
 
@@ -363,12 +373,12 @@ class SecurityFrameworkServiceTest {
             git.push().call();
         }
         ProgrammingExercise exercise = exercise(ProgrammingLanguage.JAVA);
-        assertThat(securityFrameworkService.getConfig(exercise).status()).isEqualTo(SecurityActivationStatus.ACTIVE.name());
+        assertThat(securityFrameworkService.getConfig(exercise).status()).isEqualTo(SecurityActivationStatus.CONFIGURED.name());
 
         assertThat(securityFrameworkService.deactivate(exercise, user).status()).isEqualTo(SecurityActivationStatus.INACTIVE.name());
         assertThat(readPushed("test/de/example/SortingTest.java")).hasValueSatisfying(content -> assertThat(content).contains("value = \"custom.yaml\", activated = false"));
 
-        assertThat(securityFrameworkService.activate(exercise, "2.2.1", user).status()).isEqualTo(SecurityActivationStatus.ACTIVE.name());
+        assertThat(securityFrameworkService.activate(exercise, "2.2.1", user).status()).isEqualTo(SecurityActivationStatus.CONFIGURED.name());
         assertThat(readPushed("test/de/example/SortingTest.java")).hasValueSatisfying(content -> assertThat(content).contains("value = \"custom.yaml\")"));
         assertThat(readPushed("custom.yaml")).contains(CUSTOM_POLICY);
         assertThat(readPushed(SecurityPolicyRepositoryFiles.POLICY_FILE_NAME)).isEmpty();
@@ -396,7 +406,7 @@ class SecurityFrameworkServiceTest {
 
         assertThat(securityFrameworkService.getConfig(exercise).status()).isEqualTo(SecurityActivationStatus.INACTIVE.name());
 
-        assertThat(securityFrameworkService.activate(exercise, "2.2.1", user).status()).isEqualTo(SecurityActivationStatus.ACTIVE.name());
+        assertThat(securityFrameworkService.activate(exercise, "2.2.1", user).status()).isEqualTo(SecurityActivationStatus.CONFIGURED.name());
         assertThat(readPushed("test/de/example/SortingTest.java")).contains(TEST_CLASS);
     }
 
@@ -404,12 +414,12 @@ class SecurityFrameworkServiceTest {
     void aRelativePathToTheRootPolicySurvivesADeactivateActivateCycle() throws Exception {
         pushTestClassChange(source -> source.replace("value = \"SecurityPolicy.yaml\"", "value = \"./SecurityPolicy.yaml\""));
         ProgrammingExercise exercise = exercise(ProgrammingLanguage.JAVA);
-        assertThat(securityFrameworkService.getConfig(exercise).status()).isEqualTo(SecurityActivationStatus.ACTIVE.name());
+        assertThat(securityFrameworkService.getConfig(exercise).status()).isEqualTo(SecurityActivationStatus.CONFIGURED.name());
 
         assertThat(securityFrameworkService.deactivate(exercise, user).status()).isEqualTo(SecurityActivationStatus.INACTIVE.name());
         assertThat(readPushed(SecurityPolicyRepositoryFiles.POLICY_FILE_NAME)).isEmpty();
 
-        assertThat(securityFrameworkService.activate(exercise, "2.2.1", user).status()).isEqualTo(SecurityActivationStatus.ACTIVE.name());
+        assertThat(securityFrameworkService.activate(exercise, "2.2.1", user).status()).isEqualTo(SecurityActivationStatus.CONFIGURED.name());
         assertThat(readPushed(SecurityPolicyRepositoryFiles.POLICY_FILE_NAME)).contains(CUSTOM_POLICY);
         assertThat(readPushed("test/de/example/SortingTest.java"))
                 .hasValueSatisfying(content -> assertThat(content).contains("@de.tum.cit.ase.ares.api.Policy(value = \"./SecurityPolicy.yaml\")"));
@@ -471,8 +481,8 @@ class SecurityFrameworkServiceTest {
                 TEST_CLASS.replace(SecurityPolicyTestAnnotations.ACTIVE_ANNOTATION, SecurityPolicyTestAnnotations.INACTIVE_ANNOTATION), StandardCharsets.UTF_8));
         ProgrammingExercise exercise = exercise(ProgrammingLanguage.JAVA);
 
-        assertThat(securityFrameworkService.getConfig(exercise).status()).isEqualTo(SecurityActivationStatus.ACTIVE.name());
-        assertThat(securityFrameworkService.updateFrameworkVersion(exercise, "2.3.0", user).status()).isEqualTo(SecurityActivationStatus.ACTIVE.name());
+        assertThat(securityFrameworkService.getConfig(exercise).status()).isEqualTo(SecurityActivationStatus.CONFIGURED.name());
+        assertThat(securityFrameworkService.updateFrameworkVersion(exercise, "2.3.0", user).status()).isEqualTo(SecurityActivationStatus.CONFIGURED.name());
         assertThat(readPushed("build.gradle")).hasValueSatisfying(content -> assertThat(content).contains("aresVersion = '2.3.0'"));
     }
 
@@ -486,7 +496,7 @@ class SecurityFrameworkServiceTest {
 
         // The test class in the package named build is scanned: its switched off policy is reported, while the other test class keeps the framework active.
         assertThat(securityFrameworkService.getConfig(exercise).disabledTestClasses()).containsExactly("de.example.build.SortingTest");
-        assertThat(securityFrameworkService.getConfig(exercise).status()).isEqualTo(SecurityActivationStatus.ACTIVE.name());
+        assertThat(securityFrameworkService.getConfig(exercise).status()).isEqualTo(SecurityActivationStatus.CONFIGURED.name());
     }
 
     @ParameterizedTest
@@ -540,7 +550,7 @@ class SecurityFrameworkServiceTest {
 
         SecurityFrameworkConfigDTO config = securityFrameworkService.activate(exercise, "2.3.0", user);
 
-        assertThat(config.status()).isEqualTo(SecurityActivationStatus.ACTIVE.name());
+        assertThat(config.status()).isEqualTo(SecurityActivationStatus.CONFIGURED.name());
         assertThat(config.frameworkVersion()).isEqualTo("2.3.0");
         assertThat(readPushed(SecurityPolicyRepositoryFiles.POLICY_FILE_NAME)).contains(CUSTOM_POLICY);
         assertThat(readPushed("test/de/example/SortingTest.java")).contains(TEST_CLASS);
@@ -564,11 +574,44 @@ class SecurityFrameworkServiceTest {
 
         SecurityFrameworkConfigDTO config = securityFrameworkService.activate(exercise(ProgrammingLanguage.JAVA), "2.2.1", user);
 
-        assertThat(config.status()).isEqualTo(SecurityActivationStatus.ACTIVE.name());
+        assertThat(config.status()).isEqualTo(SecurityActivationStatus.CONFIGURED.name());
         String policy = readPushed(SecurityPolicyRepositoryFiles.POLICY_FILE_NAME).orElseThrow();
         assertThat(SecurityPolicySchema.read(policy).valid()).isTrue();
         assertThat(policy).contains("java.util.concurrent.ThreadLocalRandom").contains("org.apache.commons.lang3");
         assertThat(policy).doesNotContain("AttributeTest").doesNotContain("packageName").doesNotContain("theMainClassInsideThisPackageIs");
+    }
+
+    @Test
+    void aGeneratedPolicyIsAnExplicitFileThatTheVerifiedVersionAccepts() throws Exception {
+        initRemote(false);
+
+        securityFrameworkService.activate(exercise(ProgrammingLanguage.JAVA), "2.2.1", user);
+
+        // B9: the generated default spells out every permission category instead of referring to a preset or another policy file.
+        String policy = readPushed(SecurityPolicyRepositoryFiles.POLICY_FILE_NAME).orElseThrow();
+        assertThat(policy).contains("regardingFileSystemInteractions:", "regardingNetworkConnections:", "regardingCommandExecutions:", "regardingThreadCreations:",
+                "regardingPackageImports:", "regardingTimeouts:");
+        assertThat(policy).doesNotContain("basedOnTheFollowingPreset").doesNotContain("extendsThePolicyFile");
+        // B10: what Artemis generates must be accepted by the release it pins.
+        assertThat(securityFrameworkService.getConfig(exercise(ProgrammingLanguage.JAVA)).versionCompatibilities())
+                .contains(new SecurityFrameworkConfigDTO.VersionCompatibilityDTO("2.2.1", "COMPATIBLE", List.of()));
+    }
+
+    @Test
+    void changingThePolicyKeepsTestBehaviourAndCommentsArtemisDoesNotEdit() throws Exception {
+        // B13: fields without a control, such as test behaviour that a newer release accepts, and the instructor's comments survive every change Artemis makes.
+        String policy = "# Keep the strict timeout, the sorting tests loop otherwise\n" + BEHAVIOR_POLICY;
+        String withNewTestClass = policy.replace("    - \"de.example.SortingTest\"\n", "    - \"de.example.SortingTest\"\n    - \"de.example.NewTest\"\n");
+        pushPolicyAndVersion(policy, "2.3.0");
+        pushCheckoutChange(checkout -> FileUtils.writeStringToFile(checkout.resolve("test/de/example/NewTest.java").toFile(), NEW_TEST_CLASS, StandardCharsets.UTF_8));
+        ProgrammingExercise exercise = exercise(ProgrammingLanguage.JAVA);
+
+        securityFrameworkService.addDiscoveredTestClasses(exercise, user);
+        assertThat(readPushed(SecurityPolicyRepositoryFiles.POLICY_FILE_NAME)).contains(withNewTestClass);
+
+        securityFrameworkService.deactivate(exercise, user);
+        securityFrameworkService.activate(exercise, "2.3.0", user);
+        assertThat(readPushed(SecurityPolicyRepositoryFiles.POLICY_FILE_NAME)).contains(withNewTestClass);
     }
 
     private void useTemplatePolicy(Resource resource) throws IOException {
@@ -617,7 +660,7 @@ class SecurityFrameworkServiceTest {
 
         SecurityFrameworkConfigDTO config = securityFrameworkService.activate(exercise(ProgrammingLanguage.JAVA), "2.2.1", user);
 
-        assertThat(config.status()).isEqualTo(SecurityActivationStatus.ACTIVE.name());
+        assertThat(config.status()).isEqualTo(SecurityActivationStatus.CONFIGURED.name());
         assertThat(readPushed(SecurityPolicyRepositoryFiles.POLICY_FILE_NAME)).hasValueSatisfying(policy -> assertThat(policy).contains("regardingThreadCreations: [ ]"));
     }
 
@@ -640,7 +683,7 @@ class SecurityFrameworkServiceTest {
         assertThat(securityFrameworkService.getConfig(exercise).status()).isEqualTo(SecurityActivationStatus.MISCONFIGURED.name());
 
         pushPolicyAndVersion(PARTIAL_POLICY, "2.3.0");
-        assertThat(securityFrameworkService.getConfig(exercise).status()).isEqualTo(SecurityActivationStatus.ACTIVE.name());
+        assertThat(securityFrameworkService.getConfig(exercise).status()).isEqualTo(SecurityActivationStatus.CONFIGURED.name());
     }
 
     @Test
@@ -676,8 +719,75 @@ class SecurityFrameworkServiceTest {
 
         SecurityFrameworkConfigDTO config = securityFrameworkService.activate(exercise, "2.3.0", user);
 
-        assertThat(config.status()).isEqualTo(SecurityActivationStatus.ACTIVE.name());
+        assertThat(config.status()).isEqualTo(SecurityActivationStatus.CONFIGURED.name());
         assertThat(readPushed("build.gradle")).hasValueSatisfying(content -> assertThat(content).contains("aresVersion = '2.3.0'"));
+    }
+
+    private static void assertVersionIncompatible(ThrowingCallable action) {
+        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(action).satisfies(exception -> {
+            assertThat(exception.getErrorKey()).isEqualTo("securityFrameworkVersionIncompatible");
+            assertThat(exception.getBody().getProperties()).containsEntry("message", "error.securityFrameworkVersionIncompatible");
+            assertThat(exception.getMessage()).contains("2.2.1", SecurityPolicyRepositoryFiles.POLICY_FILE_NAME + ": " + UNKNOWN_BEHAVIOR_FIELD);
+        });
+    }
+
+    @Test
+    void pinningAVersionThatDoesNotAcceptAPolicyFieldIsRefusedAndNamesTheField() throws Exception {
+        pushPolicyAndVersion(BEHAVIOR_POLICY, "2.3.0");
+        ProgrammingExercise exercise = exercise(ProgrammingLanguage.JAVA);
+        int commitsBefore = pushedCommitCount();
+
+        assertVersionIncompatible(() -> securityFrameworkService.updateFrameworkVersion(exercise, "2.2.1", user));
+        assertVersionIncompatible(() -> securityFrameworkService.activate(exercise, "2.2.1", user));
+
+        assertThat(pushedCommitCount()).isEqualTo(commitsBefore);
+        assertThat(readPushed("build.gradle")).hasValueSatisfying(content -> assertThat(content).contains("aresVersion = '2.3.0'"));
+    }
+
+    @Test
+    void restoringAPolicyThatTheChosenVersionDoesNotAcceptIsRefused() throws Exception {
+        pushPolicyAndVersion(BEHAVIOR_POLICY, "2.3.0");
+        ProgrammingExercise exercise = exercise(ProgrammingLanguage.JAVA);
+        securityFrameworkService.deactivate(exercise, user);
+        int commitsBefore = pushedCommitCount();
+
+        assertVersionIncompatible(() -> securityFrameworkService.activate(exercise, "2.2.1", user));
+
+        assertThat(pushedCommitCount()).isEqualTo(commitsBefore);
+        assertThat(readPushed(SecurityPolicyRepositoryFiles.POLICY_FILE_NAME)).isEmpty();
+    }
+
+    @Test
+    void theConfigTellsWhichVersionsAcceptThePolicy() throws Exception {
+        ProgrammingExercise exercise = exercise(ProgrammingLanguage.JAVA);
+
+        pushPolicyAndVersion(BEHAVIOR_POLICY, "2.3.0");
+        assertThat(securityFrameworkService.getConfig(exercise).versionCompatibilities()).containsExactly(
+                new SecurityFrameworkConfigDTO.VersionCompatibilityDTO("2.3.0", "UNVERIFIED", List.of()), new SecurityFrameworkConfigDTO.VersionCompatibilityDTO("2.2.1",
+                        "INCOMPATIBLE", List.of(SecurityPolicyRepositoryFiles.POLICY_FILE_NAME + ": " + UNKNOWN_BEHAVIOR_FIELD)));
+
+        pushPolicyAndVersion(CUSTOM_POLICY, "2.2.1");
+        assertThat(securityFrameworkService.getConfig(exercise).versionCompatibilities()).containsExactly(
+                new SecurityFrameworkConfigDTO.VersionCompatibilityDTO("2.3.0", "UNVERIFIED", List.of()),
+                new SecurityFrameworkConfigDTO.VersionCompatibilityDTO("2.2.1", "COMPATIBLE", List.of()));
+
+        securityFrameworkService.deactivate(exercise, user);
+        assertThat(securityFrameworkService.getConfig(exercise).versionCompatibilities()).isEmpty();
+    }
+
+    @Test
+    void creatingFromATemplateIsRefusedIfTheChosenVersionDoesNotAcceptTheTemplatePolicy() throws Exception {
+        // The real templates are accepted by every listed release.
+        securityFrameworkService.validateChoiceAgainstTemplate(ProjectType.PLAIN_GRADLE, new SecurityFrameworkChoiceDTO(SecurityFrameworkAction.ACTIVATE, "2.2.1"));
+        securityFrameworkService.validateChoiceAgainstTemplate(ProjectType.MAVEN_MAVEN, new SecurityFrameworkChoiceDTO(SecurityFrameworkAction.ACTIVATE, "2.2.1"));
+
+        useTemplatePolicy(new ByteArrayResource(BEHAVIOR_POLICY.getBytes(StandardCharsets.UTF_8)));
+
+        assertVersionIncompatible(
+                () -> securityFrameworkService.validateChoiceAgainstTemplate(ProjectType.PLAIN_GRADLE, new SecurityFrameworkChoiceDTO(SecurityFrameworkAction.ACTIVATE, "2.2.1")));
+        // A release the manifest does not list cannot be checked, and a deactivated exercise pins nothing that runs the policy.
+        securityFrameworkService.validateChoiceAgainstTemplate(ProjectType.PLAIN_GRADLE, new SecurityFrameworkChoiceDTO(SecurityFrameworkAction.ACTIVATE, "2.3.0"));
+        securityFrameworkService.validateChoiceAgainstTemplate(ProjectType.PLAIN_GRADLE, new SecurityFrameworkChoiceDTO(SecurityFrameworkAction.DEACTIVATE, "2.2.1"));
     }
 
     @Test
@@ -887,7 +997,7 @@ class SecurityFrameworkServiceTest {
         ProgrammingExercise exercise = exercise(ProgrammingLanguage.JAVA);
 
         SecurityFrameworkConfigDTO mixed = securityFrameworkService.getConfig(exercise);
-        assertThat(mixed.status()).isEqualTo(SecurityActivationStatus.ACTIVE.name());
+        assertThat(mixed.status()).isEqualTo(SecurityActivationStatus.CONFIGURED.name());
         assertThat(mixed.disabledTestClasses()).containsExactly("de.example.ClassTest");
 
         securityFrameworkService.deactivate(exercise, user);
@@ -896,12 +1006,44 @@ class SecurityFrameworkServiceTest {
                 NEW_TEST_CLASS.replace(SecurityPolicyTestAnnotations.ACTIVE_ANNOTATION, SecurityPolicyTestAnnotations.INACTIVE_ANNOTATION), StandardCharsets.UTF_8));
         SecurityFrameworkConfigDTO config = securityFrameworkService.activate(exercise, "2.2.1", user);
 
-        assertThat(config.status()).isEqualTo(SecurityActivationStatus.ACTIVE.name());
+        assertThat(config.status()).isEqualTo(SecurityActivationStatus.CONFIGURED.name());
         assertThat(config.disabledTestClasses()).containsExactly("de.example.ClassTest");
         assertThat(readPushed("test/de/example/SortingTest.java")).contains(TEST_CLASS);
         assertThat(readPushed("test/de/example/NewTest.java")).contains(NEW_TEST_CLASS);
         assertThat(readPushed(SecurityPolicyRepositoryFiles.POLICY_FILE_NAME))
                 .contains(CUSTOM_POLICY.replace("    - \"de.example.SortingTest\"\n", "    - \"de.example.SortingTest\"\n    - \"de.example.NewTest\"\n"));
+    }
+
+    @Test
+    void addingTheDiscoveredTestClassesListsTheMissingOnesOnceAndKeepsEveryEntry() throws Exception {
+        pushCheckoutChange(checkout -> FileUtils.writeStringToFile(checkout.resolve("test/de/example/NewTest.java").toFile(), NEW_TEST_CLASS, StandardCharsets.UTF_8));
+        ProgrammingExercise exercise = exercise(ProgrammingLanguage.JAVA);
+        assertThat(securityFrameworkService.getConfig(exercise).policyFiles()).singleElement()
+                .satisfies(policyFile -> assertThat(policyFile.missingTestClasses()).containsExactly("de.example.NewTest"));
+        int commitsBefore = pushedCommitCount();
+
+        SecurityFrameworkConfigDTO config = securityFrameworkService.addDiscoveredTestClasses(exercise, user);
+
+        assertThat(config.status()).isEqualTo(SecurityActivationStatus.CONFIGURED.name());
+        assertThat(config.policyFiles()).singleElement().satisfies(policyFile -> assertThat(policyFile.missingTestClasses()).isEmpty());
+        assertThat(pushedCommitCount()).isEqualTo(commitsBefore + 1);
+        assertThat(readPushed(SecurityPolicyRepositoryFiles.POLICY_FILE_NAME))
+                .contains(CUSTOM_POLICY.replace("    - \"de.example.SortingTest\"\n", "    - \"de.example.SortingTest\"\n    - \"de.example.NewTest\"\n"));
+
+        // Nothing is missing any more, so a second run changes nothing.
+        securityFrameworkService.addDiscoveredTestClasses(exercise, user);
+        assertThat(pushedCommitCount()).isEqualTo(commitsBefore + 1);
+    }
+
+    @Test
+    void addingTheDiscoveredTestClassesIsRejectedWhileInactive() throws Exception {
+        ProgrammingExercise exercise = exercise(ProgrammingLanguage.JAVA);
+        securityFrameworkService.deactivate(exercise, user);
+        int commitsBefore = pushedCommitCount();
+
+        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> securityFrameworkService.addDiscoveredTestClasses(exercise, user))
+                .matches(exception -> "securityFrameworkNotActive".equals(exception.getErrorKey()));
+        assertThat(pushedCommitCount()).isEqualTo(commitsBefore);
     }
 
     @Test
@@ -923,7 +1065,7 @@ class SecurityFrameworkServiceTest {
 
         SecurityFrameworkConfigDTO repaired = securityFrameworkService.activate(exercise, "2.2.1", user);
 
-        assertThat(repaired.status()).isEqualTo(SecurityActivationStatus.ACTIVE.name());
+        assertThat(repaired.status()).isEqualTo(SecurityActivationStatus.CONFIGURED.name());
         assertThat(repaired.disabledTestClasses()).containsExactly("de.example.ClassTest");
         assertThat(readPushed(SecurityPolicyRepositoryFiles.POLICY_FILE_NAME)).contains(CUSTOM_POLICY);
     }
@@ -945,7 +1087,7 @@ class SecurityFrameworkServiceTest {
         ProgrammingExercise exercise = exercise(ProgrammingLanguage.JAVA);
         securityFrameworkService.deactivate(exercise, user);
 
-        assertThat(securityFrameworkService.activate(exercise, "2.2.1", user).status()).isEqualTo(SecurityActivationStatus.ACTIVE.name());
+        assertThat(securityFrameworkService.activate(exercise, "2.2.1", user).status()).isEqualTo(SecurityActivationStatus.CONFIGURED.name());
     }
 
     @Test

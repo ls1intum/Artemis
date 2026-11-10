@@ -7,6 +7,7 @@ import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
 import java.nio.file.LinkOption;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
@@ -22,7 +23,6 @@ import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import org.apache.commons.io.FileUtils;
 import org.jspecify.annotations.Nullable;
@@ -158,8 +158,8 @@ public final class SecurityPolicyRepositoryFiles {
      * {@link SecurityFrameworkState.UnsupportedReasonType};</li>
      * <li>{@code MISCONFIGURED} if an active {@code @Policy} annotation points to a policy file that is missing, invalid or unreadable, because Ares then fails
      * the tests. A repository that pins the Ares version {@link SecurityPolicySchema} was verified against has its policy files checked against the rules of
-     * that version; for any other version a file only has to be a YAML mapping, so {@code ACTIVE} does not establish that this Ares version accepts it;</li>
-     * <li>{@code ACTIVE} if at least one test class has an active {@code @Policy} annotation;</li>
+     * that version; for any other version a file only has to be a YAML mapping, so {@code CONFIGURED} does not establish that this Ares version accepts it;</li>
+     * <li>{@code CONFIGURED} if at least one test class has an active {@code @Policy} annotation;</li>
      * <li>{@code INACTIVE} otherwise.</li>
      * </ul>
      * Only the policy files of active annotations are read, because Ares does not read the others either.
@@ -171,6 +171,9 @@ public final class SecurityPolicyRepositoryFiles {
      */
     public static SecurityFrameworkState evaluate(Map<String, String> javaSources, PolicyFileReader reader, BuildFiles buildFiles) {
         List<AresTestSources.Summary> summaries = javaSources.entrySet().stream().map(source -> AresTestSources.analyze(source.getKey(), source.getValue())).toList();
+        List<SecurityFrameworkState.AresApiUse> aresApiUses = summaries.stream()
+                .flatMap(summary -> summary.aresApis().stream().map(api -> new SecurityFrameworkState.AresApiUse(summary.path(), api)))
+                .sorted(Comparator.comparing(SecurityFrameworkState.AresApiUse::location).thenComparing(SecurityFrameworkState.AresApiUse::api)).toList();
         List<SecurityFrameworkState.UnsupportedReason> reasons = new ArrayList<>();
         boolean usesAres1 = buildFiles.usesAres1() || summaries.stream().anyMatch(AresTestSources.Summary::usesAres1);
         if (usesAres1) {
@@ -188,7 +191,7 @@ public final class SecurityPolicyRepositoryFiles {
             reasons.addAll(testClassReasons(testClasses));
         }
         if (!reasons.isEmpty()) {
-            return new SecurityFrameworkState(SecurityActivationStatus.UNSUPPORTED, List.of(), List.of(), List.copyOf(reasons));
+            return new SecurityFrameworkState(SecurityActivationStatus.UNSUPPORTED, List.of(), List.of(), List.copyOf(reasons), aresApiUses);
         }
 
         List<String> disabledTestClasses = new ArrayList<>();
@@ -213,10 +216,10 @@ public final class SecurityPolicyRepositoryFiles {
             status = SecurityActivationStatus.MISCONFIGURED;
         }
         else {
-            status = anyActive ? SecurityActivationStatus.ACTIVE : SecurityActivationStatus.INACTIVE;
+            status = anyActive ? SecurityActivationStatus.CONFIGURED : SecurityActivationStatus.INACTIVE;
         }
         disabledTestClasses.sort(String::compareTo);
-        return new SecurityFrameworkState(status, List.copyOf(disabledTestClasses), List.copyOf(policyFiles), List.of());
+        return new SecurityFrameworkState(status, List.copyOf(disabledTestClasses), List.copyOf(policyFiles), List.of(), aresApiUses);
     }
 
     /**
@@ -672,16 +675,45 @@ public final class SecurityPolicyRepositoryFiles {
         return links;
     }
 
+    /**
+     * Collects the Java sources of a checkout. The directories {@link #isJavaSourcePath} ignores anyway, above all {@code .git}, are not entered: Git and JGit
+     * create and delete lock files there at any time, e.g. {@code gc.log.lock} after a commit, and a file that disappears while the tree is walked would
+     * otherwise fail the whole evaluation. A file elsewhere that disappears in between is skipped for the same reason.
+     */
     private static List<Path> javaFiles(Path repositoryRoot) {
-        try (Stream<Path> files = Files.walk(repositoryRoot)) {
-            Predicate<String> isFile = relativePath -> Files.isRegularFile(repositoryRoot.resolve(relativePath), LinkOption.NOFOLLOW_LINKS);
-            return files
-                    .filter(path -> Files.isRegularFile(path, LinkOption.NOFOLLOW_LINKS) && isJavaSourcePath(repositoryRoot.relativize(path).toString().replace('\\', '/'), isFile))
-                    .sorted().toList();
+        Predicate<String> isFile = relativePath -> Files.isRegularFile(repositoryRoot.resolve(relativePath), LinkOption.NOFOLLOW_LINKS);
+        List<Path> files = new ArrayList<>();
+        try {
+            Files.walkFileTree(repositoryRoot, new SimpleFileVisitor<>() {
+
+                @Override
+                public FileVisitResult preVisitDirectory(Path directory, BasicFileAttributes attributes) {
+                    return !directory.equals(repositoryRoot) && IGNORED_DIRECTORIES.contains(directory.getFileName().toString()) ? FileVisitResult.SKIP_SUBTREE
+                            : FileVisitResult.CONTINUE;
+                }
+
+                @Override
+                public FileVisitResult visitFile(Path file, BasicFileAttributes attributes) {
+                    if (attributes.isRegularFile() && isJavaSourcePath(repositoryRoot.relativize(file).toString().replace('\\', '/'), isFile)) {
+                        files.add(file);
+                    }
+                    return FileVisitResult.CONTINUE;
+                }
+
+                @Override
+                public FileVisitResult visitFileFailed(Path file, IOException exception) throws IOException {
+                    if (exception instanceof NoSuchFileException) {
+                        return FileVisitResult.CONTINUE;
+                    }
+                    throw exception;
+                }
+            });
         }
         catch (IOException e) {
             throw new UncheckedIOException(e);
         }
+        files.sort(Path::compareTo);
+        return files;
     }
 
     private static Path buildFile(Path repositoryRoot, BuildTool buildTool) {

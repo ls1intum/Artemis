@@ -9,8 +9,11 @@ import { ProjectType } from 'app/programming/shared/entities/programming-exercis
  *
  * Settled states, derived by the server from the tests repository:
  * - INACTIVE:      every test class has switched its policy off; student code runs without a sandbox.
- * - ACTIVE:        at least one test class enforces a policy. Java exercises start out ACTIVE, because the
- *                  Java templates ship with Ares enabled.
+ * - CONFIGURED:    at least one test class has an active policy and the files Ares needs are present. This is a
+ *                  static check of the tests repository, not a confirmation that Ares accepted the policy; only a
+ *                  build result reported by Ares can confirm readiness (decision B11 of Ares2 issue #386), and
+ *                  Artemis does not receive one yet. Java exercises start out CONFIGURED, because the Java
+ *                  templates ship with Ares enabled.
  * - MISCONFIGURED: an active policy points to a policy file that is missing, invalid or unreadable, so Ares
  *                  fails the tests.
  * - UNSUPPORTED:   the tests use Ares in a way Artemis cannot manage automatically, e.g. Ares 1 or no Ares.
@@ -26,7 +29,7 @@ import { ProjectType } from 'app/programming/shared/entities/programming-exercis
 export enum SecurityActivationStatus {
     INACTIVE = 'INACTIVE',
     GENERATING = 'GENERATING',
-    ACTIVE = 'ACTIVE',
+    CONFIGURED = 'CONFIGURED',
     DELETING = 'DELETING',
     ERROR = 'ERROR',
     MISCONFIGURED = 'MISCONFIGURED',
@@ -93,6 +96,32 @@ export interface SecurityFrameworkVersions {
     templateVersions?: Partial<Record<ProjectType, string>>;
 }
 
+/** Whether an Ares version accepts the policy files of an exercise, mirroring the server's {@code AresCompatibilityManifest.Verdict} (decision B10). */
+export enum SecurityVersionCompatibilityVerdict {
+    /** The version accepts every field and the format version of every policy file. */
+    COMPATIBLE = 'COMPATIBLE',
+    /** The version does not accept something in a policy file, so Ares would fail every test; the server refuses to pin it. */
+    INCOMPATIBLE = 'INCOMPATIBLE',
+    /** The compatibility manifest does not list the version, or a file could not be checked. */
+    UNVERIFIED = 'UNVERIFIED',
+}
+
+/** Whether one selectable Ares version accepts the policy files of the exercise. */
+export interface SecurityVersionCompatibility {
+    version: string;
+    verdict: SecurityVersionCompatibilityVerdict;
+    /** Per policy file, what the version does not accept, e.g. `SecurityPolicy.yaml: a.b, a.c`; only for INCOMPATIBLE. */
+    incompatibilities?: string[];
+}
+
+/** A part of Ares a test file uses besides the sandbox, e.g. `StrictTimeout` or `structural.*` (decision B4). */
+export interface SecurityAresApiUse {
+    /** The file, relative to the repository root. */
+    location: string;
+    /** The type or wildcard-imported package, relative to the Ares package. */
+    api: string;
+}
+
 /** One selectable Ares release in the "Framework Version" dropdown. */
 export interface SecurityFrameworkVersionOption {
     version: string;
@@ -113,6 +142,10 @@ export interface SecurityFrameworkConfig {
     policyFiles?: SecurityPolicyFile[];
     /** Why the repository cannot be managed automatically; only for UNSUPPORTED. */
     unsupportedReasons?: SecurityUnsupportedReason[];
+    /** Whether each selectable Ares version accepts the policy files; absent if no policy file was read, e.g. while inactive or before creation. */
+    versionCompatibilities?: SecurityVersionCompatibility[];
+    /** The parts of Ares the tests use besides the sandbox; the Ares library cannot be removed from the build without migrating them first. */
+    aresApiUses?: SecurityAresApiUse[];
     /** Human-readable reason for the client-only ERROR status, if any (shown in the error line). */
     errorDetail?: string;
 }
@@ -141,9 +174,12 @@ export function withSecurityFrameworkChoice<T extends object>(body: T, choice: S
 /** Which form the card is part of: creating, editing or importing an exercise. Only `edit` changes a repository directly. */
 export type SecurityCardMode = 'create' | 'edit' | 'import';
 
-/** True when the sandbox is fully activated and enforcing (derived, never stored separately). */
-export function isSecurityActive(config: SecurityFrameworkConfig): boolean {
-    return config.status === SecurityActivationStatus.ACTIVE;
+/**
+ * True when the sandbox is switched on and its files are in place (derived, never stored separately). It does not mean that
+ * Ares has confirmed the policy in a build.
+ */
+export function isSecurityConfigured(config: SecurityFrameworkConfig): boolean {
+    return config.status === SecurityActivationStatus.CONFIGURED;
 }
 
 /** Whether two choices would send the same request. */

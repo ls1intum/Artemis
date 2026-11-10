@@ -30,10 +30,12 @@ import {
     SecurityFrameworkVersionOption,
     SecurityFrameworkVersions,
     SecurityPolicyFileProblem,
+    SecurityVersionCompatibility,
+    SecurityVersionCompatibilityVerdict,
     TRANSIENT_SECURITY_STATUSES,
     UNREPAIRABLE_POLICY_FILE_PROBLEMS,
     isSameSecurityChoice,
-    isSecurityActive,
+    isSecurityConfigured,
     securityFrameworkProblemMessages,
 } from 'app/programming/shared/entities/security-framework-config.model';
 import { SecurityFrameworkService } from 'app/programming/shared/services/security-framework.service';
@@ -49,7 +51,7 @@ const DEACTIVATE_CONFIRMATION_KEY = 'securityDeactivateConfirmation';
  *
  * Design principles:
  * - The card is rendered only for {@link SUPPORTED_LANGUAGES}; today just Java, whose templates ship with
- *   Ares enabled. Hence a new exercise starts out ACTIVE, and turning it off is the explicit choice.
+ *   Ares enabled. Hence a new exercise starts out CONFIGURED, and turning it off is the explicit choice.
  * - A single {@link SecurityActivationStatus} drives every visual (tint, pill, toggle, sync line,
  *   warning); the card can never show two contradictory states at once.
  * - The parent decides the {@link mode}. Only in `edit` mode does the card change a repository (through
@@ -155,13 +157,32 @@ export class ProgrammingExerciseSecurityComponent {
     /** The version a staged activation pins unless the instructor picks one: the template's version, or the newest selectable one if it is no longer selectable. */
     private readonly stagedDefaultVersion = computed(() => (this.unsupportedTemplateVersion() !== undefined ? this.latestVersion() : this.defaultVersion()));
 
+    /** Whether each selectable version accepts the policy files of the exercise, by version (decision B10); empty if the server checked no policy file. */
+    private readonly versionCompatibilities = computed(
+        () => new Map<string, SecurityVersionCompatibility>((this.config().versionCompatibilities ?? []).map((compatibility) => [compatibility.version, compatibility])),
+    );
+
+    /** The selectable versions that do not accept the policy files, with what they do not accept. The server refuses to pin them. */
+    readonly incompatibleVersions = computed(() =>
+        [...this.versionCompatibilities().values()].filter((compatibility) => compatibility.verdict === SecurityVersionCompatibilityVerdict.INCOMPATIBLE),
+    );
+
     /** Dropdown options: the selectable versions, plus the version the exercise currently pins if it is no longer selectable. */
     readonly frameworkVersions = computed<SecurityFrameworkVersionOption[]>(() => {
         const selectable = this.selectableVersions();
-        const options = selectable.map((version) => ({
-            version,
-            label: version === this.latestVersion() ? `${version} ${this.translateService.instant('artemisApp.programmingExercise.security.latestSuffix')}` : version,
-        }));
+        const options = selectable.map((version) => {
+            const suffixes: string[] = [];
+            if (version === this.latestVersion()) {
+                suffixes.push(this.translateService.instant('artemisApp.programmingExercise.security.latestSuffix'));
+            }
+            const verdict = this.versionCompatibilities().get(version)?.verdict;
+            if (verdict === SecurityVersionCompatibilityVerdict.INCOMPATIBLE) {
+                suffixes.push(this.translateService.instant('artemisApp.programmingExercise.security.incompatibleSuffix'));
+            } else if (verdict === SecurityVersionCompatibilityVerdict.UNVERIFIED) {
+                suffixes.push(this.translateService.instant('artemisApp.programmingExercise.security.unverifiedSuffix'));
+            }
+            return { version, label: [version, ...suffixes].join(' ') };
+        });
         const current = this.config().frameworkVersion;
         if (current && !selectable.includes(current)) {
             options.push({ version: current, label: `${current} ${this.translateService.instant('artemisApp.programmingExercise.security.noLongerSupportedSuffix')}` });
@@ -171,9 +192,9 @@ export class ProgrammingExerciseSecurityComponent {
 
     /**
      * The one source of truth. Every derived value below reads from this. In edit mode it is the state of the repository (plus the
-     * transient client states), in create and import mode the state the card stages. A new Java exercise starts ACTIVE, as its template does.
+     * transient client states), in create and import mode the state the card stages. A new Java exercise starts CONFIGURED, as its template does.
      */
-    readonly config = signal<SecurityFrameworkConfig>({ status: SecurityActivationStatus.ACTIVE });
+    readonly config = signal<SecurityFrameworkConfig>({ status: SecurityActivationStatus.CONFIGURED });
     readonly status = computed(() => this.config().status);
     /** The state of the source exercise of an import, as loaded; the staged {@link config} is compared with it to decide what to send. */
     readonly sourceConfig = signal<SecurityFrameworkConfig | undefined>(undefined);
@@ -191,7 +212,7 @@ export class ProgrammingExerciseSecurityComponent {
     /** True while the persisted (edit) or source (import) config is loading. Keeps the controls disabled until it settles, so an early toggle cannot be overwritten by a late load. */
     readonly loading = signal(false);
 
-    readonly isActive = computed(() => isSecurityActive(this.config()));
+    readonly isActive = computed(() => isSecurityConfigured(this.config()));
     /** In progress - loading the config, or activating/deactivating: spinner on, controls locked to prevent a double-submit or acting on not-yet-loaded state. */
     readonly isBusy = computed(() => this.loading() || TRANSIENT_SECURITY_STATUSES.has(this.status()));
     /** Import from a file or the sharing platform: the state is only known after the import, and a MISCONFIGURED source can only be kept, repaired or deactivated. */
@@ -228,12 +249,12 @@ export class ProgrammingExerciseSecurityComponent {
         if (status === SecurityActivationStatus.ERROR) {
             return this.lastSettledActive();
         }
-        return status === SecurityActivationStatus.ACTIVE || status === SecurityActivationStatus.GENERATING;
+        return status === SecurityActivationStatus.CONFIGURED || status === SecurityActivationStatus.GENERATING;
     });
 
     /** Import from a file or the sharing platform: the state of the tests is only known after the import. */
     readonly isStateUnknown = computed(() => this.isImportMode() && this.sourceExerciseId() === undefined);
-    /** Lowercase status name, used to key the state-based CSS class (sf-card--active, etc.) and the pill label. */
+    /** Lowercase status name, used to key the state-based CSS class (sf-card--configured, etc.) and the pill label. */
     readonly statusVariant = computed(() => (this.isStateUnknown() ? 'unknown' : this.status().toLowerCase()));
     /** Why the config is MISCONFIGURED or UNSUPPORTED, one translatable message per broken policy file or reason. */
     readonly problemMessages = computed(() => securityFrameworkProblemMessages(this.config()));
@@ -266,14 +287,14 @@ export class ProgrammingExerciseSecurityComponent {
             const action = this.importAction();
             return action === 'KEEP' ? undefined : { action };
         }
-        const baseline = this.isCreateMode() ? { status: SecurityActivationStatus.ACTIVE, frameworkVersion: this.defaultVersion() } : this.sourceConfig();
+        const baseline = this.isCreateMode() ? { status: SecurityActivationStatus.CONFIGURED, frameworkVersion: this.defaultVersion() } : this.sourceConfig();
         if (!baseline || baseline.status === SecurityActivationStatus.UNSUPPORTED) {
             return undefined;
         }
         const config = this.config();
         const version = config.frameworkVersion;
         const versionChanged = version !== undefined && version !== baseline.frameworkVersion;
-        const baselineActive = isSecurityActive(baseline);
+        const baselineActive = isSecurityConfigured(baseline);
         if (config.status === SecurityActivationStatus.INACTIVE && baselineActive) {
             const choice: SecurityFrameworkChoice = { action: SecurityFrameworkAction.DEACTIVATE };
             // Creating writes the version even when deactivated, so a later activation pins it; deactivating an import ignores it.
@@ -282,7 +303,7 @@ export class ProgrammingExerciseSecurityComponent {
             }
             return choice;
         }
-        if (config.status === SecurityActivationStatus.ACTIVE && (!baselineActive || versionChanged)) {
+        if (config.status === SecurityActivationStatus.CONFIGURED && (!baselineActive || versionChanged)) {
             const choice: SecurityFrameworkChoice = { action: SecurityFrameworkAction.ACTIVATE };
             if (version !== undefined) {
                 choice.frameworkVersion = version;
@@ -373,7 +394,7 @@ export class ProgrammingExerciseSecurityComponent {
 
     private applyStagedChoice(choice: SecurityFrameworkChoice): void {
         const active = choice.action === SecurityFrameworkAction.ACTIVATE;
-        this.patchConfig({ status: active ? SecurityActivationStatus.ACTIVE : SecurityActivationStatus.INACTIVE });
+        this.patchConfig({ status: active ? SecurityActivationStatus.CONFIGURED : SecurityActivationStatus.INACTIVE });
         if (choice.frameworkVersion) {
             this.patchConfig({ frameworkVersion: choice.frameworkVersion });
             this.versionPicked.set(true);
@@ -393,7 +414,7 @@ export class ProgrammingExerciseSecurityComponent {
                     return;
                 }
                 this.config.set(config);
-                this.lastSettledActive.set(isSecurityActive(config));
+                this.lastSettledActive.set(isSecurityConfigured(config));
             },
             error: () => {
                 this.loading.set(false);
@@ -418,7 +439,7 @@ export class ProgrammingExerciseSecurityComponent {
                 this.loading.set(false);
                 this.sourceConfig.set(config);
                 this.config.set(config);
-                this.lastSettledActive.set(isSecurityActive(config));
+                this.lastSettledActive.set(isSecurityConfigured(config));
                 const reseed = this.pendingReseed;
                 this.pendingReseed = undefined;
                 if (reseed && this.usesImportActionChoice()) {
@@ -453,8 +474,8 @@ export class ProgrammingExerciseSecurityComponent {
     }
 
     /**
-     * Create and import mode only stage ACTIVE/INACTIVE locally (sent with the create or import request). Edit mode runs the real
-     * transient flow: GENERATING/DELETING immediately, settling to ACTIVE/INACTIVE when the server has committed the change.
+     * Create and import mode only stage CONFIGURED/INACTIVE locally (sent with the create or import request). Edit mode runs the real
+     * transient flow: GENERATING/DELETING immediately, settling to CONFIGURED/INACTIVE when the server has committed the change.
      * Deactivating an existing exercise asks for confirmation first.
      */
     onToggleChanged(checked: boolean): void {
@@ -471,6 +492,14 @@ export class ProgrammingExerciseSecurityComponent {
     }
 
     /** MISCONFIGURED in edit mode: activating again writes the missing policy files with the selected version. */
+    /** CONFIGURED in edit mode: adds the test classes that point to a policy file but are missing from it, so Ares does not treat them like student code. */
+    onAddDiscoveredTestClasses(): void {
+        const exerciseId = this.editExerciseId();
+        if (exerciseId !== undefined) {
+            this.runOperation({ status: SecurityActivationStatus.GENERATING }, () => this.securityService.addDiscoveredTestClasses(exerciseId));
+        }
+    }
+
     onRepair(): void {
         const exerciseId = this.editExerciseId();
         if (exerciseId !== undefined) {
@@ -501,7 +530,8 @@ export class ProgrammingExerciseSecurityComponent {
     onFrameworkVersionChanged(version: unknown): void {
         const newVersion = String(version);
         // Only selectable versions can be pinned; the version an exercise already pins is listed even if it no longer is, but cannot be chosen again.
-        if (!this.selectableVersions().includes(newVersion) || !this.isVersionSaved()) {
+        // A version that does not accept the policy files is listed so the instructor sees why, but the server would refuse it (decision B10).
+        if (!this.selectableVersions().includes(newVersion) || !this.isVersionSaved() || this.isIncompatibleVersion(newVersion)) {
             return;
         }
         const exerciseId = this.editExerciseId();
@@ -529,7 +559,7 @@ export class ProgrammingExerciseSecurityComponent {
 
     private stageToggle(checked: boolean): void {
         if (checked) {
-            this.patchConfig({ status: SecurityActivationStatus.ACTIVE, frameworkVersion: this.versionToActivate() });
+            this.patchConfig({ status: SecurityActivationStatus.CONFIGURED, frameworkVersion: this.versionToActivate() });
         } else if (this.isImportMode()) {
             // Deactivating an import keeps the version of the source, so show that one instead of a version picked while it was active.
             this.patchConfig({ status: SecurityActivationStatus.INACTIVE, frameworkVersion: this.sourceConfig()?.frameworkVersion });
@@ -557,13 +587,27 @@ export class ProgrammingExerciseSecurityComponent {
         this.runOperation({ status: SecurityActivationStatus.GENERATING, frameworkVersion: version }, () => this.securityService.activate(exerciseId, version));
     }
 
+    /**
+     * The confirmation text. If the tests use other parts of Ares, it also names them, because the Ares library then has to stay in the build (decision B4):
+     * the sandbox is switched off, but those tests still need the library.
+     */
+    private deactivationMessage(): string {
+        const message = this.translateService.instant('artemisApp.programmingExercise.security.deactivateConfirmation.message');
+        const apis = [...new Set((this.config().aresApiUses ?? []).map((use) => use.api))];
+        if (apis.length === 0) {
+            return message;
+        }
+        const library = this.translateService.instant('artemisApp.programmingExercise.security.deactivateConfirmation.aresLibraryStays', { apis: apis.join(', ') });
+        return `${message} ${library}`;
+    }
+
     /** Deactivating commits to the tests repository and runs the builds again, so the instructor confirms it; cancelling leaves everything as it was. */
     private confirmDeactivation(exerciseId: number): void {
         this.deactivationPending.set(true);
         this.confirmationService.confirm({
             key: DEACTIVATE_CONFIRMATION_KEY,
             header: this.translateService.instant('artemisApp.programmingExercise.security.deactivateConfirmation.header'),
-            message: this.translateService.instant('artemisApp.programmingExercise.security.deactivateConfirmation.message'),
+            message: this.deactivationMessage(),
             acceptLabel: this.translateService.instant('artemisApp.programmingExercise.security.deactivateConfirmation.confirm'),
             rejectLabel: this.translateService.instant('entity.action.cancel'),
             acceptSeverity: 'danger',
@@ -611,13 +655,21 @@ export class ProgrammingExerciseSecurityComponent {
         });
     }
 
-    /** The server names the translation of its error in the message field; undefined if the translations do not contain it, and the English text is shown instead. */
+    private isIncompatibleVersion(version: string): boolean {
+        return this.versionCompatibilities().get(version)?.verdict === SecurityVersionCompatibilityVerdict.INCOMPATIBLE;
+    }
+
+    /**
+     * The server names the translation of its error in the message field, and its parameters in the params field; undefined if the translations do not
+     * contain it, and the English text is shown instead.
+     */
     private translatedServerError(error: HttpErrorResponse): string | undefined {
         const translationKey = error.error?.message;
         if (typeof translationKey !== 'string' || !translationKey.startsWith('error.')) {
             return undefined;
         }
-        const translated = this.translateService.instant(translationKey);
+        const params = error.error?.params;
+        const translated = this.translateService.instant(translationKey, typeof params === 'object' && params !== null ? params : undefined);
         return translated.startsWith(translationNotFoundMessage) ? undefined : translated;
     }
 
@@ -628,6 +680,6 @@ export class ProgrammingExerciseSecurityComponent {
     private settle(next: SecurityFrameworkConfig): void {
         // The server has committed this state to the tests repository; the returned config is the source of truth.
         this.config.set(next);
-        this.lastSettledActive.set(isSecurityActive(next));
+        this.lastSettledActive.set(isSecurityConfigured(next));
     }
 }

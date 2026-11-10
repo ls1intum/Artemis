@@ -7,10 +7,12 @@ import java.lang.module.ModuleDescriptor;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.EnumMap;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -18,6 +20,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Predicate;
 
 import org.apache.commons.io.FileUtils;
@@ -41,6 +44,7 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.exception.ErrorConstants;
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorAlertException;
 import de.tum.cit.aet.artemis.core.service.ResourceLoaderService;
 import de.tum.cit.aet.artemis.core.service.TempFileUtilService;
@@ -108,6 +112,9 @@ public class SecurityFrameworkService {
             Path.of("templates", "java", "test", "gradle", "projectTemplate", SecurityPolicyRepositoryFiles.POLICY_FILE_NAME), BuildTool.MAVEN,
             Path.of("templates", "java", "test", "maven", "projectTemplate", SecurityPolicyRepositoryFiles.POLICY_FILE_NAME));
 
+    /** Which policy fields each Ares release accepts, see {@link AresCompatibilityManifest}. */
+    private static final Path COMPATIBILITY_MANIFEST = Path.of("security-framework", "ares-compatibility.yml");
+
     /** Marks the commits of this service whose push processing it runs itself, so a retry can tell an unprocessed change of its own from any other commit. */
     private static final String COMMIT_TRAILER = "Changed-by: Artemis Security Framework";
 
@@ -150,6 +157,8 @@ public class SecurityFrameworkService {
 
     private final DistributedDataProvider distributedDataProvider;
 
+    private final AresCompatibilityManifest compatibilityManifest;
+
     public SecurityFrameworkService(GitService gitService, BareGitRepositoryService bareGitRepositoryService, TempFileUtilService tempFileUtilService,
             ProgrammingExerciseBuildConfigRepository buildConfigRepository, ResourceLoaderService resourceLoaderService,
             Optional<LocalVCPushProcessingService> localVCPushProcessingService, SolutionProgrammingExerciseParticipationRepository solutionParticipationRepository,
@@ -168,6 +177,21 @@ public class SecurityFrameworkService {
         this.defaultBranch = defaultBranch;
         this.configuredFrameworkVersions = Arrays.stream(configuredFrameworkVersions).map(String::trim).filter(version -> !version.isEmpty()).distinct()
                 .filter(SecurityFrameworkService::isSupportedConfiguredVersion).toList();
+        this.compatibilityManifest = loadCompatibilityManifest(resourceLoaderService);
+    }
+
+    /**
+     * Without a readable manifest, no release can be checked. Every release is then reported as not verified, which is what the instructor is told, instead of
+     * blocking every activation.
+     */
+    private static AresCompatibilityManifest loadCompatibilityManifest(ResourceLoaderService resourceLoaderService) {
+        try {
+            return AresCompatibilityManifest.parse(resourceLoaderService.getResource(COMPATIBILITY_MANIFEST).getContentAsString(StandardCharsets.UTF_8));
+        }
+        catch (IOException | IllegalArgumentException e) {
+            log.error("Could not read the Ares compatibility manifest {}; no Ares version can be checked against the policies", COMPATIBILITY_MANIFEST, e);
+            return AresCompatibilityManifest.empty();
+        }
     }
 
     private static boolean isSupportedConfiguredVersion(String version) {
@@ -246,19 +270,20 @@ public class SecurityFrameworkService {
      */
     public SecurityFrameworkConfigDTO getConfig(ProgrammingExercise exercise) {
         if (exercise.getProgrammingLanguage() != ProgrammingLanguage.JAVA) {
-            return SecurityFrameworkConfigDTO.of(new SecurityFrameworkState(SecurityActivationStatus.INACTIVE, List.of(), List.of(), List.of()), null);
+            return SecurityFrameworkConfigDTO.of(new SecurityFrameworkState(SecurityActivationStatus.INACTIVE, List.of(), List.of(), List.of(), List.of()), null, List.of());
         }
         LocalVCRepositoryUri testRepositoryUri = testRepositoryUri(exercise);
         String branch = repositoryBranch(exercise);
         try (Repository repository = bareGitRepositoryService.getBareRepository(testRepositoryUri, branch, false); RevWalk revWalk = new RevWalk(repository)) {
             ObjectId head = repository.resolve(Constants.R_HEADS + branch);
             if (head == null) {
-                return SecurityFrameworkConfigDTO.of(new SecurityFrameworkState(SecurityActivationStatus.INACTIVE, List.of(), List.of(), List.of()), null);
+                return SecurityFrameworkConfigDTO.of(new SecurityFrameworkState(SecurityActivationStatus.INACTIVE, List.of(), List.of(), List.of(), List.of()), null, List.of());
             }
             RevTree tree = revWalk.parseCommit(head).getTree();
             String frameworkVersion = SecurityPolicyRepositoryFiles
                     .parseAresVersion(readFile(repository, tree, "build.gradle").orElse(null), readFile(repository, tree, "pom.xml").orElse(null)).orElse(null);
-            return SecurityFrameworkConfigDTO.of(evaluate(repository, tree), frameworkVersion);
+            SecurityFrameworkState state = evaluate(repository, tree);
+            return SecurityFrameworkConfigDTO.of(state, frameworkVersion, versionCompatibilities(state, path -> readPolicyFile(repository, tree, path).content()));
         }
         catch (IOException e) {
             log.error("Could not read the tests repository of exercise {}", exercise.getId(), e);
@@ -310,12 +335,39 @@ public class SecurityFrameworkService {
         return changeTestRepository(exercise, user, "Use Ares " + frameworkVersion + " for the security policy", "version", true, repository -> {
             Path root = repository.getLocalPath();
             SecurityFrameworkState state = requireSupported(SecurityPolicyRepositoryFiles.evaluate(root));
-            if (state.status() != SecurityActivationStatus.ACTIVE) {
+            if (state.status() != SecurityActivationStatus.CONFIGURED) {
                 throw new BadRequestAlertException("The framework version cannot be changed because the Security Framework is not active for this exercise.", ENTITY_NAME,
                         "securityFrameworkNotActive");
             }
+            requireCompatiblePolicyFiles(root, state, frameworkVersion);
             SecurityPolicyRepositoryFiles.writeAresVersion(root, frameworkVersion);
             requireUsablePolicyFiles(root);
+        });
+    }
+
+    /**
+     * Adds the test classes that point to a policy file but are missing from its {@code theFollowingClassesAreTestClasses} to that file, and commits and pushes
+     * the change (decision B5 of Ares2 issue #386). Ares treats a missing class like student code, so its own file access or reflection fails the test. The
+     * list is never shortened, and an exercise whose lists are complete is not changed.
+     *
+     * @param exercise the programming exercise
+     * @param user     the acting user, who authors the commit
+     * @return the resulting state
+     */
+    public SecurityFrameworkConfigDTO addDiscoveredTestClasses(ProgrammingExercise exercise, User user) {
+        validateJavaExercise(exercise);
+        return changeTestRepository(exercise, user, "Add the discovered test classes to the security policy", "test-classes", true, repository -> {
+            Path root = repository.getLocalPath();
+            SecurityFrameworkState state = requireSupported(SecurityPolicyRepositoryFiles.evaluate(root));
+            if (state.status() != SecurityActivationStatus.CONFIGURED) {
+                throw new BadRequestAlertException("Test classes can only be added while the Security Framework is configured for this exercise.", ENTITY_NAME,
+                        "securityFrameworkNotActive");
+            }
+            for (SecurityFrameworkState.PolicyFile policyFile : state.policyFiles()) {
+                if (policyFile.problem() == null && !policyFile.missingTestClasses().isEmpty()) {
+                    SecurityPolicyRepositoryFiles.addTestClassesToPolicy(root, policyFile.policyPath(), policyFile.missingTestClasses());
+                }
+            }
         });
     }
 
@@ -337,6 +389,31 @@ public class SecurityFrameworkService {
         }
         if (choice.frameworkVersion() != null) {
             validateFrameworkVersion(choice.frameworkVersion());
+        }
+    }
+
+    /**
+     * Validates the choice of an exercise that is created from a template. It starts with the policy of its template, so pinning a release that does not
+     * accept that policy would fail every test of the new exercise (decision B10 of Ares2 issue #386). An imported exercise keeps its own policy, which is
+     * checked when the choice is applied. A template whose policy cannot be read is left to the checks that run when the repository is set up.
+     *
+     * @param projectType the project type of the new exercise
+     * @param choice      a choice that {@link #validateChoice} accepted
+     */
+    public void validateChoiceAgainstTemplate(@Nullable ProjectType projectType, SecurityFrameworkChoiceDTO choice) {
+        if (choice.action() != SecurityFrameworkAction.ACTIVATE || choice.frameworkVersion() == null || projectType == null) {
+            return;
+        }
+        String frameworkVersion = choice.frameworkVersion();
+        BuildTool buildTool = projectType == ProjectType.PLAIN_MAVEN || projectType == ProjectType.MAVEN_MAVEN ? BuildTool.MAVEN : BuildTool.GRADLE;
+        try {
+            String templatePolicy = resourceLoaderService.getResource(TEMPLATE_POLICY_FILES.get(buildTool)).getContentAsString(StandardCharsets.UTF_8);
+            describeIncompatibility(SecurityPolicyRepositoryFiles.POLICY_FILE_NAME, compatibilityManifest.check(frameworkVersion, templatePolicy)).ifPresent(details -> {
+                throw versionIncompatible(frameworkVersion, details);
+            });
+        }
+        catch (IOException e) {
+            log.warn("Could not read the policy of the {} template to check it against Ares {}", buildTool, frameworkVersion, e);
         }
     }
 
@@ -421,6 +498,8 @@ public class SecurityFrameworkService {
             SecurityPolicyRepositoryFiles.setPolicyAnnotationsActive(root, annotationStatesBeforeLastDeactivation(repository));
             state = SecurityPolicyRepositoryFiles.evaluate(root);
         }
+        // A policy that uses fields the release does not know would otherwise be reported as not repairable, which hides the actual reason.
+        requireCompatiblePolicyFiles(root, state, frameworkVersion);
         for (SecurityFrameworkState.PolicyFile policyFile : state.policyFiles()) {
             if (policyFile.problem() == SecurityFrameworkState.PolicyFileProblem.MISSING) {
                 String path = SecurityPolicyRepositoryFiles.validatePolicyPath(policyFile.policyPath()).orElseThrow();
@@ -436,7 +515,59 @@ public class SecurityFrameworkService {
                 SecurityPolicyRepositoryFiles.addTestClassesToPolicy(root, policyFile.policyPath(), policyFile.missingTestClasses());
             }
         }
+        // A policy restored from the history may use fields the release does not know.
+        requireCompatiblePolicyFiles(root, SecurityPolicyRepositoryFiles.evaluate(root), frameworkVersion);
         requireUsablePolicyFiles(root);
+    }
+
+    /**
+     * Rejects pinning a release that does not accept a field or the format version of a policy file, because Ares would then fail every test (decision B10
+     * of Ares2 issue #386). Files that cannot be read are left to {@link #requireUsablePolicyFiles(Path)}, and a release the manifest does not list is not
+     * checked.
+     *
+     * @throws BadRequestAlertException with the incompatible files and fields as translation parameters
+     */
+    private void requireCompatiblePolicyFiles(Path root, SecurityFrameworkState state, String frameworkVersion) {
+        List<String> incompatibilities = new ArrayList<>();
+        for (SecurityFrameworkState.PolicyFile policyFile : state.policyFiles()) {
+            Optional<String> path = SecurityPolicyRepositoryFiles.validatePolicyPath(policyFile.policyPath());
+            if (path.isEmpty()) {
+                continue;
+            }
+            String content = SecurityPolicyRepositoryFiles.readPolicyFile(root, path.get()).content();
+            if (content != null) {
+                describeIncompatibility(path.get(), compatibilityManifest.check(frameworkVersion, content)).ifPresent(incompatibilities::add);
+            }
+        }
+        if (!incompatibilities.isEmpty()) {
+            throw versionIncompatible(frameworkVersion, String.join("; ", incompatibilities));
+        }
+    }
+
+    /**
+     * @param details per policy file, what the release does not accept
+     * @return the error that refuses to pin the release; the client shows its translation with the files and fields, so the message names the translation
+     *         and the parameters are passed along
+     */
+    private static BadRequestAlertException versionIncompatible(String frameworkVersion, String details) {
+        return new BadRequestAlertException(ErrorConstants.PARAMETERIZED_TYPE, "Ares " + frameworkVersion + " does not accept these parts of the security policy: " + details,
+                ENTITY_NAME, "securityFrameworkVersionIncompatible",
+                Map.of("message", "error.securityFrameworkVersionIncompatible", "params", Map.of("version", frameworkVersion, "details", details)));
+    }
+
+    /**
+     * @return the file and what the release does not accept in it, e.g. {@code SecurityPolicy.yaml: a.b, a.c}; empty if the release accepts the file or it
+     *         could not be checked
+     */
+    private static Optional<String> describeIncompatibility(String policyPath, AresCompatibilityManifest.Check check) {
+        if (check.verdict() != AresCompatibilityManifest.Verdict.INCOMPATIBLE) {
+            return Optional.empty();
+        }
+        List<String> parts = new ArrayList<>(check.unsupportedFields());
+        if (check.unsupportedFormatVersion() != null) {
+            parts.addFirst("thisPolicyFileCompliesToThePolicyVersion " + check.unsupportedFormatVersion());
+        }
+        return Optional.of(policyPath + ": " + String.join(", ", parts));
     }
 
     /**
@@ -670,7 +801,47 @@ public class SecurityFrameworkService {
 
     private SecurityFrameworkConfigDTO readConfig(Repository repository) {
         Path root = repository.getLocalPath();
-        return SecurityFrameworkConfigDTO.of(SecurityPolicyRepositoryFiles.evaluate(root), SecurityPolicyRepositoryFiles.readAresVersion(root).orElse(null));
+        SecurityFrameworkState state = SecurityPolicyRepositoryFiles.evaluate(root);
+        return SecurityFrameworkConfigDTO.of(state, SecurityPolicyRepositoryFiles.readAresVersion(root).orElse(null),
+                versionCompatibilities(state, path -> SecurityPolicyRepositoryFiles.readPolicyFile(root, path).content()));
+    }
+
+    /**
+     * Checks every selectable Ares version against the policy files of a state, so the client can tell which versions can be pinned before the instructor
+     * picks one. A version is {@code INCOMPATIBLE} as soon as one file uses something it does not accept, and {@code UNVERIFIED} if it is not incompatible but
+     * one file could not be checked.
+     *
+     * @param state         the state whose policy files are checked
+     * @param contentByPath reads a policy file by its validated path; null if it cannot be read
+     * @return one entry per selectable version, newest first; empty if the state has no policy file to check
+     */
+    private List<SecurityFrameworkConfigDTO.VersionCompatibilityDTO> versionCompatibilities(SecurityFrameworkState state, Function<String, @Nullable String> contentByPath) {
+        Map<String, String> contents = new LinkedHashMap<>();
+        for (SecurityFrameworkState.PolicyFile policyFile : state.policyFiles()) {
+            SecurityPolicyRepositoryFiles.validatePolicyPath(policyFile.policyPath()).ifPresent(path -> {
+                String content = contentByPath.apply(path);
+                if (content != null) {
+                    contents.put(path, content);
+                }
+            });
+        }
+        if (contents.isEmpty()) {
+            return List.of();
+        }
+        List<SecurityFrameworkConfigDTO.VersionCompatibilityDTO> compatibilities = new ArrayList<>();
+        for (String version : getFrameworkVersions().selectableVersions()) {
+            List<String> incompatibilities = new ArrayList<>();
+            boolean unverified = false;
+            for (Map.Entry<String, String> file : contents.entrySet()) {
+                AresCompatibilityManifest.Check check = compatibilityManifest.check(version, file.getValue());
+                unverified |= check.verdict() == AresCompatibilityManifest.Verdict.UNVERIFIED;
+                describeIncompatibility(file.getKey(), check).ifPresent(incompatibilities::add);
+            }
+            AresCompatibilityManifest.Verdict verdict = !incompatibilities.isEmpty() ? AresCompatibilityManifest.Verdict.INCOMPATIBLE
+                    : unverified ? AresCompatibilityManifest.Verdict.UNVERIFIED : AresCompatibilityManifest.Verdict.COMPATIBLE;
+            compatibilities.add(new SecurityFrameworkConfigDTO.VersionCompatibilityDTO(version, verdict.name(), incompatibilities));
+        }
+        return compatibilities;
     }
 
     private LocalVCRepositoryUri testRepositoryUri(ProgrammingExercise exercise) {

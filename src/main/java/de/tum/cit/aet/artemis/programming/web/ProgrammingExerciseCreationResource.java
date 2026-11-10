@@ -203,6 +203,7 @@ public class ProgrammingExerciseCreationResource {
             return null;
         }
         securityFrameworkService.validateChoice(programmingExercise.getProgrammingLanguage(), programmingExercise.getProjectType(), choice);
+        securityFrameworkService.validateChoiceAgainstTemplate(programmingExercise.getProjectType(), choice);
         if (!securityFrameworkService.deviatesFromTemplate(programmingExercise.getProjectType(), choice)) {
             return null;
         }

@@ -140,7 +140,7 @@ class SecurityFrameworkIntegrationTest extends AbstractProgrammingIntegrationLoc
     void editorsCanReadTheStateAndTheVersions() throws Exception {
         SecurityFrameworkConfigDTO config = getConfig();
 
-        assertThat(config.status()).isEqualTo(SecurityActivationStatus.ACTIVE.name());
+        assertThat(config.status()).isEqualTo(SecurityActivationStatus.CONFIGURED.name());
         assertThat(config.frameworkVersion()).isEqualTo("2.2.1");
         assertThat(request.get("/api/programming/security-framework/versions", HttpStatus.OK, SecurityFrameworkVersionsDTO.class).selectableVersions()).contains("2.2.1");
     }
@@ -153,6 +153,7 @@ class SecurityFrameworkIntegrationTest extends AbstractProgrammingIntegrationLoc
         put("deactivate", null, HttpStatus.FORBIDDEN);
         put("activate", "2.2.1", HttpStatus.FORBIDDEN);
         put("framework-version", "2.2.1", HttpStatus.FORBIDDEN);
+        put("test-classes", null, HttpStatus.FORBIDDEN);
 
         assertThat(pushedHead()).isEqualTo(headBefore);
     }
@@ -166,6 +167,7 @@ class SecurityFrameworkIntegrationTest extends AbstractProgrammingIntegrationLoc
         put("deactivate", null, HttpStatus.FORBIDDEN);
         put("activate", "2.2.1", HttpStatus.FORBIDDEN);
         put("framework-version", "2.2.1", HttpStatus.FORBIDDEN);
+        put("test-classes", null, HttpStatus.FORBIDDEN);
 
         assertThat(pushedHead()).isEqualTo(headBefore);
     }
@@ -188,6 +190,7 @@ class SecurityFrameworkIntegrationTest extends AbstractProgrammingIntegrationLoc
         put("deactivate", null, HttpStatus.FORBIDDEN);
         put("activate", "2.2.1", HttpStatus.FORBIDDEN);
         put("framework-version", "2.2.1", HttpStatus.FORBIDDEN);
+        put("test-classes", null, HttpStatus.FORBIDDEN);
 
         assertThat(pushedHead()).isEqualTo(headBefore);
     }
@@ -212,7 +215,7 @@ class SecurityFrameworkIntegrationTest extends AbstractProgrammingIntegrationLoc
 
         SecurityFrameworkConfigDTO activated = put("activate", "2.2.1", HttpStatus.OK);
 
-        assertThat(activated.status()).isEqualTo(SecurityActivationStatus.ACTIVE.name());
+        assertThat(activated.status()).isEqualTo(SecurityActivationStatus.CONFIGURED.name());
         repository = pulledTestsRepository();
         assertThat(Files.readString(repository.resolve("SecurityPolicy.yaml"))).isEqualTo(POLICY);
         assertThat(Files.readString(repository.resolve(SORTING_TEST_PATH))).isEqualTo(TEST_CLASS);
@@ -221,18 +224,18 @@ class SecurityFrameworkIntegrationTest extends AbstractProgrammingIntegrationLoc
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
-    void aMixedStateIsActiveAndActivatingKeepsTheExceptionAndAddsNewTestClasses() throws Exception {
+    void aMixedStateIsConfiguredAndActivatingKeepsTheExceptionAndAddsNewTestClasses() throws Exception {
         pushTestFiles(Map.of("test/de/example/ClassTest.java", TEST_CLASS.replace("SortingTest", "ClassTest").replace(ACTIVE_ANNOTATION, INACTIVE_ANNOTATION)));
 
         SecurityFrameworkConfigDTO mixed = getConfig();
-        assertThat(mixed.status()).isEqualTo(SecurityActivationStatus.ACTIVE.name());
+        assertThat(mixed.status()).isEqualTo(SecurityActivationStatus.CONFIGURED.name());
         assertThat(mixed.disabledTestClasses()).containsExactly("de.example.ClassTest");
 
         put("deactivate", null, HttpStatus.OK);
         pushTestFiles(Map.of("test/de/example/NewTest.java", TEST_CLASS.replace("SortingTest", "NewTest").replace(ACTIVE_ANNOTATION, INACTIVE_ANNOTATION)));
         SecurityFrameworkConfigDTO activated = put("activate", "2.2.1", HttpStatus.OK);
 
-        assertThat(activated.status()).isEqualTo(SecurityActivationStatus.ACTIVE.name());
+        assertThat(activated.status()).isEqualTo(SecurityActivationStatus.CONFIGURED.name());
         assertThat(activated.disabledTestClasses()).containsExactly("de.example.ClassTest");
         Path repository = pulledTestsRepository();
         assertThat(Files.readString(repository.resolve("test/de/example/NewTest.java"))).contains(ACTIVE_ANNOTATION);
@@ -254,7 +257,7 @@ class SecurityFrameworkIntegrationTest extends AbstractProgrammingIntegrationLoc
             assertThat(policyFile.problem()).isEqualTo("MISSING");
         });
 
-        assertThat(put("activate", "2.2.1", HttpStatus.OK).status()).isEqualTo(SecurityActivationStatus.ACTIVE.name());
+        assertThat(put("activate", "2.2.1", HttpStatus.OK).status()).isEqualTo(SecurityActivationStatus.CONFIGURED.name());
         assertThat(Files.readString(pulledTestsRepository().resolve("SecurityPolicy.yaml"))).isEqualTo(POLICY);
     }
 
@@ -281,7 +284,7 @@ class SecurityFrameworkIntegrationTest extends AbstractProgrammingIntegrationLoc
         put("activate", "2.1.0", HttpStatus.BAD_REQUEST);
         put("framework-version", "9.9.9", HttpStatus.BAD_REQUEST);
         // The same version is no change, so nothing is committed.
-        assertThat(put("framework-version", "2.2.1", HttpStatus.OK).status()).isEqualTo(SecurityActivationStatus.ACTIVE.name());
+        assertThat(put("framework-version", "2.2.1", HttpStatus.OK).status()).isEqualTo(SecurityActivationStatus.CONFIGURED.name());
         assertThat(pushedHead()).isEqualTo(headBefore);
 
         put("deactivate", null, HttpStatus.OK);

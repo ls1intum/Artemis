@@ -288,7 +288,7 @@
             },
             "security": {
                 "title": "Security",
-                "description": "Ares 2 sandboxes the student code while the tests run. Java exercises start with it activated; deactivating it removes the security policy from the tests repository.",
+                "description": "Ares 2 sandboxes the student code while the tests run. Java exercises start with it activated; deactivating it switches off all of Ares.",
                 "activateLabel": "Activate Security Framework",
                 "subtitle": "Programming Exercise Security Framework",
                 "frameworkVersion": "Framework version",
@@ -296,7 +296,7 @@
                 "status": {
                     "inactive": "Inactive",
                     "generating": "Generating",
-                    "active": "Active",
+                    "configured": "Configured",
                     "deleting": "Deleting",
                     "error": "Error",
                     "misconfigured": "Misconfigured",
@@ -306,11 +306,11 @@
                 "desc": {
                     "inactive": "All test classes run without the sandbox.",
                     "generating": "Committing the security policy to the tests repository.",
-                    "activeEdit": "The tests enforce the sandbox.",
-                    "activeCreate": "The template's security policy is part of the tests repository the exercise is created with.",
+                    "configuredEdit": "The tests repository is set up for the sandbox. Artemis checked its files, but no Ares build has confirmed yet that Ares accepted the policy.",
+                    "configuredCreate": "The template's security policy is part of the tests repository the exercise is created with. Whether Ares accepts it is not confirmed by a build yet.",
                     "deleting": "Removing the Security Framework from this exercise.",
                     "error": "The last Security Framework operation failed. Retry it to sync the security policy.",
-                    "missingTestClasses": "These test classes are missing in the policy and are treated like student code: {{ classes }}",
+                    "missingTestClasses": "These test classes are missing in the policy and are treated like student code: {{ classes }}. Adding them never removes an entry.",
                     "testClassListNotFound": "The list of test classes in the policy file {{ path }} could not be checked.",
                     "notRepairable": "Artemis cannot repair an invalid, too large or unreadable policy file automatically. Fix the file in the tests repository or deactivate the Security Framework.",
                     "unsupported": "Artemis cannot manage the sandbox of this test setup automatically:",
@@ -337,7 +337,7 @@
                 "sync": {
                     "inactive": "Activating restores the previous policy or generates a default one.",
                     "generating": "Committing policy to the exercise-tests repository…",
-                    "active": "Policy committed to the tests repository.",
+                    "configured": "Policy committed to the tests repository · not yet confirmed by an Ares build.",
                     "deleting": "Removing the security policy from the tests repository…",
                     "error": "Sync failed · retry the operation.",
                     "misconfigured": "Ares fails the affected tests until the policy is repaired or deactivated.",
@@ -350,14 +350,16 @@
                     "deactivate": "Deactivate",
                     "repairHint": "Activating repairs missing policy files."
                 },
+                "addTestClasses": "Add missing test classes",
                 "repair": "Repair",
                 "deactivate": "Deactivate",
                 "deactivateConfirmation": {
                     "header": "Deactivate the Security Framework?",
-                    "message": "Deactivating creates a commit in the tests repository that deletes the security policy, and the template and solution builds run again. Student code then runs without the sandbox.",
+                    "message": "Deactivating creates a commit in the tests repository that deletes the security policy with all its settings, and the template and solution builds run again. This switches off all of Ares: the sandbox for student code and everything the policy configures for the tests, such as timeouts, hidden-test scheduling, output handling and failure reporting. Hidden tests are then protected only by the test visibility settings of Artemis, not by Ares. Activating again restores the last policy from the repository history, or generates a default policy if none is found.",
+                    "aresLibraryStays": "The tests also use other parts of Ares ({{ apis }}), so the Ares library stays in the build file.",
                     "confirm": "Deactivate"
                 },
-                "stagedDeactivationHint": "Once the exercise is saved, student code runs without the sandbox.",
+                "stagedDeactivationHint": "Once the exercise is saved, student code runs without the sandbox, and nothing the security policy configures for the tests applies. Hidden tests are then protected only by the test visibility settings of Artemis.",
                 "templateVersionUnsupported": "The template uses {{ version }}, which is no longer supported.",
                 "notApplied": {
                     "status": "The exercise was saved, but its Security Framework setting was not applied. Its status is {{ status }}. {{ details }}",
@@ -367,7 +369,10 @@
                 "retry": "Retry",
                 "loadError": "Couldn't load the security status.",
                 "latestSuffix": "(latest)",
-                "noLongerSupportedSuffix": "(no longer supported)"
+                "noLongerSupportedSuffix": "(no longer supported)",
+                "incompatibleSuffix": "(does not accept the policy)",
+                "unverifiedSuffix": "(compatibility not verified)",
+                "versionIncompatible": "Ares {{ version }} cannot be pinned, because it does not accept these parts of the policy: {{ details }}"
             },
             "onlineIdeExperienceLevel": {
                 "title": "Starting experience level in the Online IDE",

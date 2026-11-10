@@ -55,11 +55,11 @@
                                         @case (SecurityActivationStatus.ERROR) {
                                             <span jhiTranslate="artemisApp.programmingExercise.security.desc.error"></span>
                                         }
-                                        @case (SecurityActivationStatus.ACTIVE) {
+                                        @case (SecurityActivationStatus.CONFIGURED) {
                                             @if (isCreateMode()) {
-                                                <span jhiTranslate="artemisApp.programmingExercise.security.desc.activeCreate"></span>
+                                                <span jhiTranslate="artemisApp.programmingExercise.security.desc.configuredCreate"></span>
                                             } @else {
-                                                <span jhiTranslate="artemisApp.programmingExercise.security.desc.activeEdit"></span>
+                                                <span jhiTranslate="artemisApp.programmingExercise.security.desc.configuredEdit"></span>
                                             }
                                             @if (missingTestClasses().length) {
                                                 <span
@@ -68,6 +68,18 @@
                                                     [translateValues]="{ classes: missingTestClasses().join(', ') }"
                                                     data-testid="security-missing-test-classes"
                                                 ></span>
+                                                @if (isEditMode()) {
+                                                    <button
+                                                        type="button"
+                                                        tumAetUiButton
+                                                        size="small"
+                                                        class="mt-1"
+                                                        [disabled]="isBusy() || isSaving()"
+                                                        (click)="onAddDiscoveredTestClasses()"
+                                                        data-testid="security-add-test-classes"
+                                                        jhiTranslate="artemisApp.programmingExercise.security.addTestClasses"
+                                                    ></button>
+                                                }
                                             }
                                             @for (policyPath of uncheckedPolicyFiles(); track policyPath) {
                                                 <span
@@ -193,6 +205,16 @@
                                 data-testid="security-framework-version-select"
                             />
                         </div>
+                        @if (incompatibleVersions().length > 0) {
+                            <ul class="sf-list text-sm" data-testid="security-incompatible-versions">
+                                @for (compatibility of incompatibleVersions(); track compatibility.version) {
+                                    <li
+                                        jhiTranslate="artemisApp.programmingExercise.security.versionIncompatible"
+                                        [translateValues]="{ version: compatibility.version, details: (compatibility.incompatibilities ?? []).join('; ') }"
+                                    ></li>
+                                }
+                            </ul>
+                        }
                     }
                 </div>
 
@@ -211,8 +233,8 @@
                                 <fa-icon [icon]="faCircleNotch" class="sf-spin" />
                                 <span jhiTranslate="artemisApp.programmingExercise.security.sync.deleting"></span>
                             }
-                            @case (SecurityActivationStatus.ACTIVE) {
-                                <span jhiTranslate="artemisApp.programmingExercise.security.sync.active"></span>
+                            @case (SecurityActivationStatus.CONFIGURED) {
+                                <span jhiTranslate="artemisApp.programmingExercise.security.sync.configured"></span>
                             }
                             @case (SecurityActivationStatus.MISCONFIGURED) {
                                 <fa-icon [icon]="faTriangleExclamation" />

@@ -2,7 +2,7 @@
 id: security-framework
 title: Security Framework (Ares 2 Sandbox)
 sidebar_label: Security Framework
-last_reviewed: 2026-11-05
+last_reviewed: 2026-11-10
 ---
 
 import Callout from "../../../../src/components/Callout/Callout";
@@ -52,10 +52,17 @@ instructors see the card and can change it.
 The card always shows the state of the tests repository as Ares applies it when the tests run. Artemis stores no
 separate setting, so a change you make in the repository yourself is reflected the next time you open the form.
 
-### Active
+### Configured
 
-At least one test class enforces a policy. A test class you switched off yourself (with `activated = false`) does
-not change this, as long as another class still enforces a policy.
+At least one test class has an active policy, and the policy files and the Ares version pin it needs are in place.
+A test class you switched off yourself (with `activated = false`) does not change this, as long as another class
+still has an active policy.
+
+**Configured** is not the same as **confirmed ready**. Artemis checks the files itself (see
+[Misconfigured](#misconfigured)) but does not run Ares, so a policy that Ares rejects can still show as
+**Configured**. Only a result that Ares reports from a build can confirm that Ares started with the policy, and
+Artemis does not receive one yet. Check the results of the template and solution builds after each change: if Ares
+rejects the policy, every test fails.
 
 ### Inactive
 
@@ -78,7 +85,7 @@ repository by hand.
 For an exercise that pins Ares 2.2.1, Artemis checks the policy file against the rules of that version, requires the
 package in `theSupervisedCodeUsesTheFollowingPackage`, and rejects a path, package, class or host name longer than
 1024 characters. For any other version, Artemis only checks that
-the file is a YAML mapping, so **Active** does not guarantee that Ares accepts the policy. Check the template and
+the file is a YAML mapping, so **Configured** does not guarantee that Ares accepts the policy. Check the template and
 solution results after you switch to another version.
 
 ### Not Supported
@@ -103,7 +110,9 @@ the policy by hand.
 
 The card also warns when a test class enforces a policy but is not listed in that policy's
 `theFollowingClassesAreTestClasses`. Ares treats such a class like student code, so its own file access or
-reflection can fail the test. Add the class to the list, or activate the sandbox again, which adds it for you.
+reflection can fail the test. Click **Add missing test classes** in the card, which adds every listed class to its
+policy in one commit and runs the template and solution builds again, or add the class to the list yourself. Artemis
+never removes an entry, so a class you deleted stays in the list until you remove it.
 
 ### Error
 
@@ -119,7 +128,15 @@ one commit in the tests repository that:
 - sets `activated = false` on every `@Policy` annotation. Other arguments, such as a custom policy path, stay.
 
 The template and solution builds then run again. The Ares library stays in the build file, because tests also use
-its other features, such as structural tests, `@StrictTimeout` and the reflection helpers.
+its other features, such as structural tests, `@StrictTimeout` and the reflection helpers. The dialog names the
+features the tests of the exercise use, for example `StrictTimeout` or `structural.ClassTestProvider`, because
+these tests would no longer compile without the library. The tests of the Java template use several of them.
+
+Deactivating switches off all of Ares, not only the restrictions on student code. Everything the policy configures
+for the tests no longer applies either: timeouts, the scheduling of hidden tests, output handling and failure
+reporting. Hidden tests are then protected only by the test visibility settings of Artemis, so check those before
+you deactivate. The dialog warns about this, because the settings in the deleted policy file are lost from the
+current state of the repository. Activating again restores the last policy from the repository history.
 
 Deactivating an exercise that is already inactive changes nothing.
 
@@ -147,13 +164,26 @@ Artemis changes nothing and shows an error instead.
 offer further versions with the `artemis.programming.security-framework.supported-versions` setting; it should only
 list published versions, and versions older than 2.2.1 are ignored.
 
-The version can only be changed while the sandbox is active, and the change is again one commit followed by new
+The version can only be changed while the sandbox is configured, and the change is again one commit followed by new
 template and solution builds. If the repository pins a version that is no longer offered, the selector shows it as
 no longer supported, and you can switch to a supported one.
 
+Ares fails every test if the policy uses a field that the pinned version does not know. Artemis therefore checks
+each version against the policy files of the exercise, using a compatibility manifest that lists the fields and
+policy-format versions each Ares release accepts:
+
+- A version that does not accept the policy is marked **does not accept the policy**, and the card lists which
+  fields it does not accept. Artemis refuses to pin it, also when it activates the sandbox, restores a policy from
+  the repository history or creates an exercise with the policy of its template. Remove the fields or choose a newer version.
+- A version that the manifest does not list is marked **compatibility not verified**. You can still pin it, but check
+  the template and solution results afterwards.
+
+The manifest is `security-framework/ares-compatibility.yml` in the Artemis resources. An instance can extend it by
+placing a copy with the same path in its resources folder; the file explains how to add a new Ares release.
+
 ## When You Create an Exercise
 
-The card starts as **Active** with the version of the selected template. Artemis applies your choice to the tests
+The card starts as **Configured** with the version of the selected template. Artemis applies your choice to the tests
 repository before the first build, so the exercise is built only once.
 
 If you create the exercise with the sandbox switched off, the template's `SecurityPolicy.yaml` stays in the
