@@ -1,5 +1,8 @@
 {
     "error": {
+        "quizQuestionPoolModelNotConfigured": "Smart Quizzes is not set up on this server. Ask your administrator to configure a local language model.",
+        "tumLiveUploadInProgress": "The pending upload is already being sent to TUM.Live. Discard it to start another one.",
+        "tumLiveNotConnected": "The course is not connected to TUM.Live.",
         "registrationClosed": "Registration is closed because the exam has ended.",
         "attendanceCorrectionNotAllowed": "Attendance can only be corrected after a real exam has ended.",
         "exerciseGenerationCancellationUnavailable": "The cancellation could not be confirmed. Check the current run status, then try again.",

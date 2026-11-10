@@ -1,99 +1,130 @@
 <div class="mb-3 flex items-center justify-between">
     <h2 class="mb-0 text-xl! font-bold!" jhiTranslate="artemisApp.userSettings.accountInformation"></h2>
     @if (currentUser()?.internal) {
-        <a tumAetUiButton size="small" severity="warn" [routerLink]="['/account', 'settings']">
-            <fa-icon [icon]="faPen" />
-            <span class="hidden md:inline" jhiTranslate="artemisApp.userSettings.accountInformationPage.editAccountSettings"></span>
-        </a>
+        <tumaet-ui-button
+            data-button-intent="workflow"
+            data-button-intent-reason="This is the sole entry point into the account-information editing workflow"
+            data-testid="account-settings-edit-button"
+            size="small"
+            (clicked)="accountSettingsDialogVisible.set(true)"
+        >
+            <span jhiTranslate="entity.action.edit"></span>
+        </tumaet-ui-button>
     }
 </div>
 @if (currentUser(); as user) {
-    <tumaet-ui-list [ariaLabel]="'artemisApp.userSettings.accountInformation' | artemisTranslate">
-        @if (user.name) {
-            <li tumAetUiListItem>
-                <dl class="mb-0">
-                    <dt jhiTranslate="artemisApp.userSettings.accountInformationPage.fullName"></dt>
-                    <dd>{{ user.name }}</dd>
-                </dl>
-            </li>
-        }
-        @if (user.login) {
-            <li tumAetUiListItem>
-                <dl class="mb-0">
-                    <dt jhiTranslate="artemisApp.userSettings.accountInformationPage.login"></dt>
-                    <dd>{{ user.login }}</dd>
-                </dl>
-            </li>
-        }
-        @if (user.email) {
-            <li tumAetUiListItem>
-                <dl class="mb-0">
-                    <dt jhiTranslate="artemisApp.userSettings.accountInformationPage.email"></dt>
-                    <dd>{{ user.email }}</dd>
-                </dl>
-            </li>
-        }
-        @if (user.visibleRegistrationNumber) {
-            <li tumAetUiListItem>
-                <dl class="mb-0">
-                    <dt jhiTranslate="artemisApp.userSettings.accountInformationPage.registrationNumber"></dt>
-                    <dd>{{ user.visibleRegistrationNumber }}</dd>
-                </dl>
-            </li>
-        }
-        @if (user.createdDate) {
-            <li tumAetUiListItem>
-                <dl class="mb-0">
-                    <dt jhiTranslate="artemisApp.userSettings.accountInformationPage.joinedArtemis"></dt>
-                    <dd>{{ user.createdDate | artemisDate }}</dd>
-                </dl>
-            </li>
-        }
-        <li tumAetUiListItem>
-            <span class="font-medium" jhiTranslate="artemisApp.userSettings.accountInformationPage.profilePicture"></span>
-            <input
-                [attr.aria-label]="'artemisApp.userSettings.accountInformationPage.profilePicture' | artemisTranslate"
-                type="file"
-                accept="image/png, image/jpeg"
-                #fileInput
-                class="hidden"
-                (change)="setUserImage($event)"
-            />
-            @if (user.imageUrl && !imageLoadFailed()) {
-                <div class="relative inline-block overflow-hidden rounded-lg">
-                    <jhi-image class="secured-image" [src]="addPublicFilePrefix(user.imageUrl)!" (loadingStatus)="onImageLoadingStatus($event)" />
+    <div class="flex flex-col items-center gap-4 md:grid md:grid-cols-[auto_minmax(0,1fr)] md:items-stretch">
+        <input
+            [attr.aria-label]="'artemisApp.userSettings.accountInformationPage.profilePicture' | artemisTranslate"
+            type="file"
+            accept="image/png, image/jpeg"
+            #fileInput
+            class="hidden"
+            (change)="setUserImage($event)"
+        />
+        <div class="flex size-48 shrink-0 items-center justify-center md:h-0 md:min-h-full md:w-auto md:aspect-square" style="contain: size">
+            <div class="relative size-full overflow-hidden rounded-lg" style="background-color: var(--tumaet-ui-table-striped-background)">
+                @if (user.imageUrl && !imageLoadFailed()) {
+                    <jhi-image
+                        class="block size-full [&>img]:size-full [&>img]:object-cover"
+                        [src]="addPublicFilePrefix(user.imageUrl)!"
+                        [alt]="'artemisApp.userSettings.accountInformationPage.profilePicture' | artemisTranslate"
+                        (loadingStatus)="onImageLoadingStatus($event)"
+                    />
 
                     <tumaet-ui-button
                         data-testid="profile-picture-delete-button"
-                        class="absolute bottom-0 start-0 mb-1 ms-1"
-                        severity="danger"
+                        data-button-intent="utility"
+                        data-button-intent-reason="Uses the same neutral compact overlay treatment as the adjacent profile-picture edit action"
+                        class="absolute bottom-2 start-2 [&>button]:size-8 [&>button]:p-0"
+                        severity="secondary"
                         size="small"
+                        rounded
+                        [icon]="faTrash"
                         [ariaLabel]="'entity.action.delete' | artemisTranslate"
-                        (clicked)="deleteUserImage()"
-                    >
-                        <fa-icon [icon]="faTrash" />
-                    </tumaet-ui-button>
+                        (clicked)="confirmDeleteUserImage()"
+                    />
 
                     <tumaet-ui-button
                         data-testid="profile-picture-edit-button"
-                        class="absolute end-0 bottom-0 mb-1 me-1"
-                        severity="warn"
+                        data-button-intent="utility"
+                        data-button-intent-reason="Uses a neutral compact overlay so both profile-picture actions remain visually symmetric"
+                        class="absolute end-2 bottom-2 [&>button]:size-8 [&>button]:p-0"
+                        severity="secondary"
                         size="small"
+                        rounded
+                        [icon]="faPen"
                         [ariaLabel]="'entity.action.edit' | artemisTranslate"
                         (clicked)="triggerUserImageFileInput()"
-                    >
-                        <fa-icon [icon]="faPen" />
-                    </tumaet-ui-button>
-                </div>
-            } @else {
-                <tumaet-ui-button class="mt-1 inline-block" size="small" (clicked)="triggerUserImageFileInput()">
-                    <fa-icon [icon]="faPlus" />
-                    <span jhiTranslate="artemisApp.userSettings.accountInformationPage.addProfilePicture"></span>
-                </tumaet-ui-button>
+                    />
+                } @else {
+                    <div class="flex size-full flex-col items-center justify-center gap-2">
+                        <span class="text-muted-color text-sm" jhiTranslate="artemisApp.userSettings.accountInformationPage.noImage"></span>
+                        <tumaet-ui-button
+                            data-testid="profile-picture-add-button"
+                            data-button-intent="utility"
+                            data-button-intent-reason="Adds a profile picture from the otherwise empty profile-picture frame"
+                            class="[&>button]:size-10 [&>button]:p-0"
+                            severity="secondary"
+                            size="small"
+                            rounded
+                            [icon]="faPlus"
+                            [ariaLabel]="'artemisApp.userSettings.accountInformationPage.addProfilePicture' | artemisTranslate"
+                            (clicked)="triggerUserImageFileInput()"
+                        />
+                    </div>
+                }
+            </div>
+        </div>
+
+        <tumaet-ui-list class="w-full min-w-0" [ariaLabel]="'artemisApp.userSettings.accountInformation' | artemisTranslate">
+            @if (user.name) {
+                <li tumAetUiListItem>
+                    <dl class="mb-0 flex min-w-0 items-center gap-1">
+                        <dt class="text-muted-color shrink-0"><span jhiTranslate="artemisApp.userSettings.accountInformationPage.fullName"></span>:</dt>
+                        <dd class="mb-0! min-w-0 break-words text-base!">{{ user.name }}</dd>
+                    </dl>
+                </li>
             }
-        </li>
-    </tumaet-ui-list>
+            @if (user.login) {
+                <li tumAetUiListItem>
+                    <dl class="mb-0 flex min-w-0 items-center gap-1">
+                        <dt class="text-muted-color shrink-0"><span jhiTranslate="artemisApp.userSettings.accountInformationPage.login"></span>:</dt>
+                        <dd class="mb-0! min-w-0 break-words text-base!">{{ user.login }}</dd>
+                    </dl>
+                </li>
+            }
+            @if (user.email) {
+                <li tumAetUiListItem>
+                    <dl class="mb-0 flex min-w-0 items-center gap-1">
+                        <dt class="text-muted-color shrink-0"><span jhiTranslate="artemisApp.userSettings.accountInformationPage.email"></span>:</dt>
+                        <dd class="mb-0! min-w-0 break-words text-base!">{{ user.email }}</dd>
+                    </dl>
+                </li>
+            }
+            @if (user.visibleRegistrationNumber) {
+                <li tumAetUiListItem>
+                    <dl class="mb-0 flex min-w-0 items-center gap-1">
+                        <dt class="text-muted-color shrink-0"><span jhiTranslate="artemisApp.userSettings.accountInformationPage.registrationNumber"></span>:</dt>
+                        <dd class="mb-0! min-w-0 break-words text-base!">{{ user.visibleRegistrationNumber }}</dd>
+                    </dl>
+                </li>
+            }
+            @if (user.createdDate) {
+                <li tumAetUiListItem>
+                    <dl class="mb-0 flex min-w-0 items-center gap-1">
+                        <dt class="text-muted-color shrink-0"><span jhiTranslate="artemisApp.userSettings.accountInformationPage.joinedArtemis"></span>:</dt>
+                        <dd class="mb-0! min-w-0 break-words text-base!">{{ user.createdDate | artemisDate }}</dd>
+                    </dl>
+                </li>
+            }
+        </tumaet-ui-list>
+    </div>
 }
+
+<jhi-account-settings-dialog [(visible)]="accountSettingsDialogVisible" />
+
+<tumaet-ui-confirm-dialog [key]="deleteProfilePictureConfirmationKey" />
 
 <tumaet-ui-dialog
     [visible]="!!imageToCrop()"

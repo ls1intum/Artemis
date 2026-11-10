@@ -170,7 +170,7 @@ export class ProgrammingExerciseSecurityComponent {
     /** Dropdown options: the selectable versions, plus the version the exercise currently pins if it is no longer selectable. */
     readonly frameworkVersions = computed<SecurityFrameworkVersionOption[]>(() => {
         const selectable = this.selectableVersions();
-        const options = selectable.map((version) => {
+        const options: SecurityFrameworkVersionOption[] = selectable.map((version) => {
             const suffixes: string[] = [];
             if (version === this.latestVersion()) {
                 suffixes.push(this.translateService.instant('artemisApp.programmingExercise.security.latestSuffix'));
