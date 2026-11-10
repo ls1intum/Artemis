@@ -87,14 +87,16 @@
 
 <div class="course-body-container">
     <div class="selection-container">
-        <div class="field-group mb-4!">
-            <span class="colon-suffix shrink-0" jhiTranslate="{{ isExam() ? 'artemisApp.examManagement.maxPoints.title' : 'artemisApp.course.maxPoints.title' }}"></span>
-            @if (!isExam()) {
-                <jhi-help-icon text="artemisApp.course.maxPoints.info" />
-            }
-            @if (isExam()) {
-                <fa-icon [icon]="faExclamationTriangle" class="text-state-warning" [tumAetUiTooltip]="'artemisApp.examManagement.maxPoints.warning' | artemisTranslate" />
-            }
+        <div class="field-group">
+            <div class="field-label">
+                <span class="colon-suffix" jhiTranslate="{{ isExam() ? 'artemisApp.examManagement.maxPoints.title' : 'artemisApp.course.maxPoints.title' }}"></span>
+                @if (!isExam()) {
+                    <jhi-help-icon text="artemisApp.course.maxPoints.info" />
+                }
+                @if (isExam()) {
+                    <fa-icon [icon]="faExclamationTriangle" class="text-state-warning" [tumAetUiTooltip]="'artemisApp.examManagement.maxPoints.warning' | artemisTranslate" />
+                }
+            </div>
             <jhi-points-input
                 fluid
                 [ariaLabel]="'artemisApp.gradingSystem.info.maxPoints.title' | artemisTranslate"
@@ -105,8 +107,8 @@
                 [max]="MAX_GRADING_POINTS"
             />
         </div>
-        <div class="field-group mb-4!">
-            <span class="colon-suffix shrink-0" jhiTranslate="artemisApp.gradingSystem.gradeType.title"></span>
+        <div class="field-group">
+            <div class="field-label"><span class="colon-suffix" jhiTranslate="artemisApp.gradingSystem.gradeType.title"></span></div>
             <tumaet-ui-select
                 [options]="[
                     { value: GradeType.GRADE, label: ('artemisApp.gradingSystem.gradeType.grade' | artemisTranslate) },
@@ -119,8 +121,8 @@
                 [ariaLabel]="'artemisApp.gradingSystem.gradeType.title' | artemisTranslate"
             />
         </div>
-        <div class="field-group mb-4!">
-            <span class="colon-suffix shrink-0" jhiTranslate="artemisApp.gradingSystem.inclusivity.title"></span>
+        <div class="field-group">
+            <div class="field-label"><span class="colon-suffix" jhiTranslate="artemisApp.gradingSystem.inclusivity.title"></span></div>
             <tumaet-ui-select
                 [options]="[
                     { value: true, label: ('artemisApp.gradingSystem.inclusivity.lower' | artemisTranslate) },
@@ -133,9 +135,9 @@
                 [ariaLabel]="'artemisApp.gradingSystem.inclusivity.title' | artemisTranslate"
             />
         </div>
-        <div class="field-group mb-4!">
+        <div class="field-group">
             @if (gradingScale.gradeType === GradeType.GRADE) {
-                <span class="colon-suffix shrink-0" jhiTranslate="artemisApp.gradingSystem.firstPassingGrade"></span>
+                <div class="field-label"><span class="colon-suffix" jhiTranslate="artemisApp.gradingSystem.firstPassingGrade"></span></div>
                 <tumaet-ui-select
                     data-testid="grading-first-passing-grade"
                     [options]="gradeStepsWithNonemptyNames()"
@@ -149,37 +151,37 @@
         </div>
     </div>
     <jhi-grading-presentations
+        class="mt-6 block"
         [gradingScale]="presentationGradingScale()"
         [presentationsConfig]="presentationsConfig()"
         (presentationsConfigChange)="onPresentationsConfigChange($event)"
     />
 </div>
-<tumaet-ui-select-button
-    id="tab-bar"
-    class="my-4!"
-    data-testid="grading-view-mode"
-    [options]="[
-        { value: GradingViewMode.INTERVAL, label: ('artemisApp.gradingSystem.intervalTab.title' | artemisTranslate) },
-        { value: GradingViewMode.DETAILED, label: ('artemisApp.gradingSystem.detailedTab.title' | artemisTranslate) },
-    ]"
-    optionLabel="label"
-    optionValue="value"
-    [ngModel]="viewMode()"
-    (ngModelChange)="setViewMode($event)"
-    [allowEmpty]="false"
-/>
+<div class="mt-6 mb-4 flex flex-wrap items-end justify-between gap-4">
+    <tumaet-ui-select-button
+        id="tab-bar"
+        data-testid="grading-view-mode"
+        [options]="[
+            { value: GradingViewMode.INTERVAL, label: ('artemisApp.gradingSystem.intervalTab.title' | artemisTranslate) },
+            { value: GradingViewMode.DETAILED, label: ('artemisApp.gradingSystem.detailedTab.title' | artemisTranslate) },
+        ]"
+        optionLabel="label"
+        optionValue="value"
+        [ngModel]="viewMode()"
+        (ngModelChange)="setViewMode($event)"
+        [allowEmpty]="false"
+    />
+    @if (viewMode() === GradingViewMode.INTERVAL) {
+        <div class="flex items-center gap-2">
+            <span class="colon-suffix shrink-0" jhiTranslate="artemisApp.gradingSystem.intervalTab.mode"></span>
+            <jhi-mode-picker [options]="intervalModePickerOptions" [(value)]="gradeEditMode" />
+        </div>
+    }
+</div>
 <div class="course-body-container">
     <!-- Interval View -->
     @if (viewMode() === GradingViewMode.INTERVAL) {
         <div>
-            <div>
-                <div class="selection-container">
-                    <div class="field-group mb-4!">
-                        <span class="colon-suffix shrink-0" jhiTranslate="artemisApp.gradingSystem.intervalTab.mode"></span>
-                        <jhi-mode-picker [options]="intervalModePickerOptions" [(value)]="gradeEditMode" />
-                    </div>
-                </div>
-            </div>
             <div>
                 <table class="w-full text-left align-middle" tumAetUiTable [striped]="true">
                     <thead>
@@ -274,8 +276,8 @@
                                         />
                                     </td>
                                 }
-                                <td>
-                                    <button (click)="deleteGradeStep(i)" type="button" style="float: right" tumAetUiButton severity="danger">
+                                <td class="text-end">
+                                    <button (click)="deleteGradeStep(i)" type="button" tumAetUiButton severity="danger" size="small">
                                         <fa-icon [icon]="faTimes" />
                                         <span jhiTranslate="artemisApp.gradingSystem.delete"></span>
                                     </button>
@@ -389,8 +391,8 @@
                                         />
                                     </td>
                                 }
-                                <td>
-                                    <button (click)="deleteGradeStep(i)" type="button" style="float: right" tumAetUiButton severity="danger">
+                                <td class="text-end">
+                                    <button (click)="deleteGradeStep(i)" type="button" tumAetUiButton severity="danger" size="small">
                                         <fa-icon [icon]="faTimes" />
                                         <span jhiTranslate="artemisApp.gradingSystem.delete"></span>
                                     </button>
