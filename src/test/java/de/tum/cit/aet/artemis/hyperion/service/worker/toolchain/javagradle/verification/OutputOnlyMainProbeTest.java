@@ -351,6 +351,22 @@ class OutputOnlyMainProbeTest {
         assertThat(built).isEmpty();
     }
 
+    /** Reading a static field of another exercise type initializes that type, whose static code could print the transcript before the silent main runs. */
+    @Test
+    void aStaticFieldReadOfAnExerciseTypeGivesNoSilentVerdict() {
+        String readingOnLoad = SOLUTION.replace("public class Library {", "public class Library {\n    static int trigger = Printer.value;");
+        Map<String, String> sources = Map.of(PATH, readingOnLoad, "src/example/Printer.java",
+                "package example; class Printer { static int value; static { System.out.println(\"Books: 1\"); } }");
+        SemanticMutantExecution.ProbeRunner passing = (mutant, ignored) -> new BuildSummary(1, 0, 0, false, List.of("printsTheSize"), List.of(), List.of(), "");
+        SemanticMutant stale = SemanticMutant.printedTranscript(PATH, SOLUTION, OutputOnlyMainProbe.transcriptOnlyVariant(SOLUTION, "Books: 1\n").orElseThrow(), "Library");
+
+        assertThat(OutputOnlyMainProbe.resolveStale(sources, PLAN, List.of(stale), passing)).extracting(SemanticMutantOutcome::disposition)
+                .containsExactly(Disposition.INCONCLUSIVE);
+        assertThat(OutputOnlyMainProbe.resolveStale(Map.of(PATH, SOLUTION.replace("public class Library {", "public class Library {\n    static double scale = Math.PI;")), PLAN,
+                List.of(stale), passing)).as("a JDK type prints nothing on initialization").extracting(SemanticMutantOutcome::disposition)
+                .containsExactly(Disposition.KILLED_BY_GRADED_SUITE);
+    }
+
     @Test
     void theVariantCompilesKeepsEveryOtherMemberAndPrintsExactlyTheTranscript(@TempDir Path directory) throws Exception {
         String transcript = "Books: 1 { \"quoted\" }\n\ttab \\ backslash \u001b[0m é世 😀\r\n" + "x".repeat(1_500) + "\n";

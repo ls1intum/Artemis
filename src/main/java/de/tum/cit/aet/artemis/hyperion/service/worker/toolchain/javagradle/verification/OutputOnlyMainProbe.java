@@ -74,6 +74,12 @@ final class OutputOnlyMainProbe {
     /** A static initializer block, or a static field initializer that calls a method or constructor; matched on masked source. */
     private static final Pattern STATIC_INITIALIZATION_CODE = Pattern.compile("\\bstatic\\s*\\{|\\bstatic\\b[^;{}()=]*=[^;{}]*\\(");
 
+    /** The value of a static field initializer, on masked source. */
+    private static final Pattern STATIC_FIELD_VALUE = Pattern.compile("\\bstatic\\b[^;{}()=]*=([^;{}]*)");
+
+    /** A simple name used as the qualifier of a member access, such as {@code Printer} in {@code Printer.value}. */
+    private static final Pattern QUALIFIER = Pattern.compile("(?<![\\w$.])([A-Za-z_$][\\w$]*)\\s*\\.");
+
     private static final Pattern READS_STANDARD_INPUT = Pattern.compile("\\bSystem\\s*\\.\\s*in\\b");
 
     /** The student source tree the exercise build compiles as the assignment; student-written tests and build files live elsewhere. */
@@ -206,12 +212,24 @@ final class OutputOnlyMainProbe {
      */
     private static Disposition silentMainOutcome(String solutionPath, String source, SemanticMutant probe, Map<String, String> solutionFiles, Predicate<String> graded,
             SemanticMutantExecution.ProbeRunner runner) {
-        if (STATIC_INITIALIZATION_CODE.matcher(JavaSourceText.maskCommentsAndLiterals(source)).find()) {
+        String masked = JavaSourceText.maskCommentsAndLiterals(source);
+        if (STATIC_INITIALIZATION_CODE.matcher(masked).find() || initializesExerciseType(masked, solutionFiles)) {
             return Disposition.INCONCLUSIVE;
         }
         Optional<SemanticMutant> silent = transcriptOnlyVariant(source, "")
                 .map(variant -> new SemanticMutant(probe.ruleId(), solutionPath, source, variant, probe.counterexample(), null, SemanticMutant.Evidence.PRINTED_TRANSCRIPT));
         return silent.isEmpty() ? Disposition.INCONCLUSIVE : SemanticMutantExecution.recheck(solutionFiles, List.of(silent.get()), graded, runner).getFirst().disposition();
+    }
+
+    /**
+     * Whether a static field initializer names a type of the exercise, as in {@code static int trigger = Printer.value}: reading it initializes that type, whose own static
+     * code could print the transcript before the silent {@code main} runs.
+     */
+    private static boolean initializesExerciseType(String masked, Map<String, String> solutionFiles) {
+        Set<String> exerciseTypes = solutionFiles.keySet().stream().filter(JavaSourceInspector::isJavaSource)
+                .map(path -> path.substring(path.lastIndexOf('/') + 1, path.length() - ".java".length())).collect(Collectors.toUnmodifiableSet());
+        return STATIC_FIELD_VALUE.matcher(masked).results()
+                .anyMatch(value -> QUALIFIER.matcher(value.group(1)).results().anyMatch(qualifier -> exerciseTypes.contains(qualifier.group(1))));
     }
 
     /**
