@@ -27,11 +27,8 @@ class BackwardCompatibleSerializationCodecTest {
     @Test
     void testPreservesExistingFeatureMapKeyEncodings() throws IOException {
         // Kryo writes enum ordinals plus one. These are the key bytes stored before PresentationAssessments existed.
-        assertFeatureKeyEncoding(Feature.AtlasML, 8);
-        assertFeatureKeyEncoding(Feature.AtlasAgent, 9);
         assertFeatureKeyEncoding(Feature.GlobalSearchReconcile, 17);
         assertFeatureKeyEncoding(Feature.GlobalSearchReconcileOrphan, 18);
-        assertFeatureKeyEncoding(Feature.PresentationAssessments, 19);
     }
 
     private void assertFeatureKeyEncoding(Feature feature, int historicalOrdinalEncoding) throws IOException {

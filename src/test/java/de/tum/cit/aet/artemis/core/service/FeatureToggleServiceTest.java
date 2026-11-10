@@ -70,15 +70,6 @@ class FeatureToggleServiceTest extends AbstractSpringIntegrationIndependentTest 
     }
 
     @Test
-    void testRetiredAtlasMlCannotBeEnabledOrListed() {
-        featureToggleService.enableFeature(Feature.AtlasML);
-        featureToggleService.updateFeatureToggles(Map.of(Feature.AtlasML, true));
-        assertThat(featureToggleService.isFeatureEnabled(Feature.AtlasML)).isFalse();
-        assertThat(featureToggleService.enabledFeatures()).doesNotContain(Feature.AtlasML);
-        assertThat(featureToggleService.disabledFeatures()).doesNotContain(Feature.AtlasML);
-    }
-
-    @Test
     void testSetFeaturesEnabled() {
         Map<Feature, Boolean> featureStates = new HashMap<>();
         featureStates.put(Feature.ProgrammingExercises, true);

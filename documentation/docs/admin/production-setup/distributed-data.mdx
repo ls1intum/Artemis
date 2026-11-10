@@ -115,14 +115,6 @@ Do not edit the schema metadata or move keys manually. A node refuses to start w
 a newer schema, or a schema for which the release has no adjacent migration. Resolve the version mismatch instead of
 bypassing this protection.
 
-## Deployments that ran the removed schema 2 migration
-
-A short-lived development build migrated Redis or Valkey data from schema `1` to `2` when AtlasML was removed.
-The current code uses schema `1` and refuses to start against a store already marked as schema `2`. Stop all
-Artemis nodes and restore the backup taken before that migration before starting this code. Changes to distributed
-state made after the backup are lost. Do not change the metadata or copy schema `2` keys into schema `1`: feature
-toggle keys use different encodings.
-
 ## Rollback
 
 <Callout variant={CalloutVariant.danger}>
