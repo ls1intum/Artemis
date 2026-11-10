@@ -1,6 +1,6 @@
 <tumaet-ui-table-layout [loading]="loading()" [fill]="fill()" [empty]="rows().length === 0 && !loading()" [emptyTitle]="emptyMessage()">
     <!-- Two siblings in the toolbar slot, so the frame can hide the toolbar when the search is off and the consumer projects nothing. -->
-    <div tumAetUiTableToolbar class="tumaet:relative tumaet:min-w-16 tumaet:max-w-96 tumaet:flex-1" [hidden]="!showSearch()">
+    <div tumAetUiTableToolbar class="tumaet:relative tumaet:min-w-16 tumaet:max-w-lg tumaet:flex-1" [hidden]="!showSearch()">
         <fa-icon
             [icon]="faMagnifyingGlass"
             class="tumaet:pointer-events-none tumaet:absolute tumaet:start-2.5 tumaet:top-1/2 tumaet:-translate-y-1/2 tumaet:text-xs tumaet:text-muted"

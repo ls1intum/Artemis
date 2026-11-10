@@ -84,13 +84,20 @@ export class TumAetUiTableLayoutComponent {
         afterNextRender(() => this.observeAvailableHeight());
     }
 
+    /** An explicit offset, set by the page on the frame or an ancestor, keeps the viewport based cap of the stylesheet. */
+    private hasExplicitOffset(): boolean {
+        return getComputedStyle(this.host).getPropertyValue(OFFSET_PROPERTY).trim() !== '';
+    }
+
     private observeAvailableHeight(): void {
-        // An explicit offset keeps the viewport based cap of the stylesheet; a missing observer is a test environment.
-        if (typeof ResizeObserver === 'undefined' || getComputedStyle(this.host).getPropertyValue(OFFSET_PROPERTY).trim() !== '') {
+        // A missing observer is a test environment.
+        if (typeof ResizeObserver === 'undefined') {
             return;
         }
         const container = scrollParent(this.host);
-        const measure = () => this.measuredHeight.set(this.availableHeight(container));
+        // Checked on every measurement, not once: styles of a frame that is created inside an overlay may not be resolved yet
+        // when it renders for the first time, and the later resize that follows must not keep a measured cap.
+        const measure = () => this.measuredHeight.set(this.hasExplicitOffset() ? undefined : this.availableHeight(container));
         const observer = new ResizeObserver(measure);
         observer.observe(container ?? document.documentElement);
         if (this.host.parentElement) {

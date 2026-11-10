@@ -157,6 +157,17 @@ describe('TumAetUiTableLayoutComponent', () => {
             expect(layout.style.maxHeight).toBe('788px');
         });
 
+        it('drops a measured cap as soon as an explicit offset is set on the frame', () => {
+            const { layout, host } = create();
+            expect(layout.style.maxHeight).toBe('488px');
+
+            layout.style.setProperty('--table-layout-offset', '22rem');
+            resizeCallbacks.forEach((callback) => callback());
+            host.detectChanges();
+
+            expect(layout.style.maxHeight).toBe('');
+        });
+
         it('does not measure when the frame fills its parent', () => {
             const { layout, host } = create();
 

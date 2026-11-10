@@ -7,7 +7,7 @@
     <!-- `hidden` instead of @if: an @if around a projected node is not projected into its slot when whitespace is preserved (NG8011). -->
     <div tumAetUiTableToolbar class="flex min-w-0 flex-1 items-center gap-2" [hidden]="!showCaption()">
         @if (resolvedOptions().showSearch) {
-            <jhi-search-filter class="min-w-24 max-w-96 flex-1" [placeholderKey]="resolvedOptions().searchPlaceholder" (newSearchEvent)="onGlobalSearch($event)" />
+            <jhi-search-filter class="min-w-24 max-w-lg flex-1" [placeholderKey]="resolvedOptions().searchPlaceholder" (newSearchEvent)="onGlobalSearch($event)" />
         }
         @if (tableActions()) {
             <ng-container [ngTemplateOutlet]="tableActions()!" />
