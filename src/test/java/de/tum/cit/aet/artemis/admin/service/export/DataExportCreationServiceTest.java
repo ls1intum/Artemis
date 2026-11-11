@@ -32,6 +32,8 @@ import org.apache.commons.csv.CSVParser;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.ResourceAccessMode;
+import org.junit.jupiter.api.parallel.ResourceLock;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -79,6 +81,7 @@ import de.tum.cit.aet.artemis.programming.util.RepositoryExportTestUtil;
 import de.tum.cit.aet.artemis.quiz.util.QuizExerciseUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationJenkinsLocalVCBatchTest;
 
+@ResourceLock(value = "FilePathConverter", mode = ResourceAccessMode.READ)
 class DataExportCreationServiceTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTest {
 
     private static final String TEST_PREFIX = "dataexportcreation";

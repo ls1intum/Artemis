@@ -5,6 +5,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.time.ZonedDateTime;
 import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -21,6 +22,7 @@ import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureTranscription;
 import de.tum.cit.aet.artemis.lecture.domain.LectureTranscriptionSegment;
+import de.tum.cit.aet.artemis.lecture.domain.TextUnit;
 import de.tum.cit.aet.artemis.lecture.domain.TranscriptionStatus;
 import de.tum.cit.aet.artemis.lecture.repository.LectureTranscriptionRepository;
 import de.tum.cit.aet.artemis.lecture.test_repository.LectureTestRepository;
@@ -97,10 +99,63 @@ class LectureTranscriptionResourceIntegrationTest extends AbstractSpringIntegrat
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "USER")
+    void getTranscript_unitWithoutVideo_notFound() throws Exception {
+        // only an attachment video unit has a transcript, so the id of any other unit of the lecture is answered like an id without transcript
+        TextUnit textUnit = new TextUnit();
+        textUnit.setName("Text unit");
+        textUnit.setLecture(lecture);
+        lecture.addLectureUnit(textUnit);
+        lecture = lectureRepository.saveAndFlush(lecture);
+        long textUnitId = lecture.getLectureUnits().stream().filter(unit -> unit instanceof TextUnit).findFirst().orElseThrow().getId();
+
+        restLectureTranscriptionMockMvc.perform(get("/api/lecture/lecture-units/{lectureUnitId}/transcript", textUnitId)).andExpect(status().isNotFound());
+    }
+
+    @Test
     @WithMockUser(username = TEST_PREFIX + "student", roles = "USER")
     void getTranscript_asStudent_forbidden() throws Exception {
         // Students should not be able to access transcripts without proper permissions
         restLectureTranscriptionMockMvc.perform(get("/api/lecture/lecture-units/{lectureUnitId}/transcript", lectureUnit.getId())).andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "enrolledstudent", roles = "USER")
+    void getTranscript_unitNotReleasedYet_forbiddenForStudents() throws Exception {
+        User enrolledStudent = userUtilService.createAndSaveUser(TEST_PREFIX + "enrolledstudent");
+        userUtilService.enrollUserInCourse(enrolledStudent, course, CourseRole.STUDENT);
+        lectureTranscriptionRepository.save(createCompletedTranscription());
+        lectureUnit.setReleaseDate(ZonedDateTime.now().plusDays(1));
+        lecture = lectureRepository.saveAndFlush(lecture);
+
+        restLectureTranscriptionMockMvc.perform(get("/api/lecture/lecture-units/{lectureUnitId}/transcript", lectureUnit.getId())).andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "USER")
+    void getTranscript_unitNotReleasedYet_availableForStaff() throws Exception {
+        lectureTranscriptionRepository.save(createCompletedTranscription());
+        lectureUnit.setReleaseDate(ZonedDateTime.now().plusDays(1));
+        lecture = lectureRepository.saveAndFlush(lecture);
+
+        restLectureTranscriptionMockMvc.perform(get("/api/lecture/lecture-units/{lectureUnitId}/transcript", lectureUnit.getId())).andExpect(status().isOk());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "enrolledstudent", roles = "USER")
+    void getTranscript_unitReleased_availableForStudents() throws Exception {
+        User enrolledStudent = userUtilService.createAndSaveUser(TEST_PREFIX + "enrolledstudent");
+        userUtilService.enrollUserInCourse(enrolledStudent, course, CourseRole.STUDENT);
+        lectureTranscriptionRepository.save(createCompletedTranscription());
+
+        restLectureTranscriptionMockMvc.perform(get("/api/lecture/lecture-units/{lectureUnitId}/transcript", lectureUnit.getId())).andExpect(status().isOk());
+    }
+
+    private LectureTranscription createCompletedTranscription() {
+        var segments = List.of(new LectureTranscriptionSegment(0.0, 5.0, "Hello world", 1));
+        var transcription = new LectureTranscription("en", segments, lectureUnit);
+        transcription.setTranscriptionStatus(TranscriptionStatus.COMPLETED);
+        return transcription;
     }
 
     @Test

@@ -339,8 +339,9 @@ public class ConversationService {
      * @param course       the course in which the conversation is located
      * @param users        the users to be removed
      * @param conversation the conversation from which the users are removed
+     * @return the users that were participants of the conversation and have been removed; the other given users are ignored
      */
-    public void deregisterUsersFromAConversation(Course course, Set<User> users, Conversation conversation) {
+    public Set<User> deregisterUsersFromAConversation(Course course, Set<User> users, Conversation conversation) {
         var existingUsers = conversationParticipantRepository.findConversationParticipantsByConversationId(conversation.getId()).stream().map(ConversationParticipant::getUser)
                 .collect(Collectors.toSet());
         var usersToBeDeregistered = users.stream().filter(existingUsers::contains).collect(Collectors.toSet());
@@ -352,6 +353,7 @@ public class ConversationService {
             broadcastOnConversationMembershipChannel(course, CommunicationCrudAction.DELETE, conversation, usersToBeDeregistered);
             broadcastOnConversationMembershipChannel(course, CommunicationCrudAction.UPDATE, conversation, remainingUsers);
         }
+        return usersToBeDeregistered;
     }
 
     /**
@@ -557,6 +559,37 @@ public class ConversationService {
             return new HashSet<>();
         }
         return userRepository.findAllByCourseIdAndCourseRolesIn(course.getId(), roles);
+    }
+
+    /**
+     * Finds the users with the given logins that are members of the given course. Logins of users outside the course, of unknown users and of deleted users are ignored.
+     * The users are loaded together with their course roles and authorities, so that checking the membership needs no further query per user.
+     *
+     * @param course     the course the users have to belong to
+     * @param userLogins the logins to resolve
+     * @return the matching users that are at least students in the course
+     */
+    public Set<User> findCourseUsersInDatabase(Course course, List<String> userLogins) {
+        Set<String> logins = userLogins.stream().filter(login -> login != null && !login.isEmpty()).collect(Collectors.toSet());
+        if (logins.isEmpty()) {
+            return new HashSet<>();
+        }
+        Set<User> users = new HashSet<>(userRepository.findAllWithCourseRolesAndAuthoritiesByDeletedIsFalseAndLoginIn(logins));
+        users.removeIf(user -> !authorizationCheckService.isAtLeastStudentInCourse(course, user));
+        return users;
+    }
+
+    /**
+     * Finds a user by id, provided the user is a member of the given course.
+     *
+     * @param course the course the user has to belong to
+     * @param userId the id of the user
+     * @return the user
+     * @throws EntityNotFoundException if no user with this id exists or the user is not a member of the course
+     */
+    public User findCourseUserByIdElseThrow(Course course, long userId) {
+        return userRepository.findById(userId).filter(user -> authorizationCheckService.isAtLeastStudentInCourse(course, user))
+                .orElseThrow(() -> new EntityNotFoundException("User", userId));
     }
 
     /**

@@ -51,7 +51,7 @@ public sealed interface QuizQuestionWithoutSolutionDTO extends QuizQuestionForEx
         return switch (quizQuestion) {
             case MultipleChoiceQuestion question -> new MultipleChoiceQuizQuestionWithoutSolutionDTO(base, MultipleChoiceQuestionWithoutSolutionDTO.of(question));
             case DragAndDropQuestion question -> new DragAndDropQuizQuestionWithoutSolutionDTO(base, DragAndDropQuestionWithoutSolutionDTO.of(question));
-            case ShortAnswerQuestion question -> new ShortAnswerQuizQuestionWithoutSolutionDTO(base, ShortAnswerQuestionWithoutMappingDTO.of(question));
+            case ShortAnswerQuestion question -> new ShortAnswerQuizQuestionWithoutSolutionDTO(base, ShortAnswerQuestionWithoutMappingDTO.ofWithoutSolutions(question));
             default -> throw new IllegalArgumentException("Unsupported quiz question type: " + quizQuestion.getClass().getSimpleName());
         };
     }
@@ -87,7 +87,7 @@ record DragAndDropQuizQuestionWithoutSolutionDTO(@JsonUnwrapped QuizQuestionBase
  * The solution-hidden projection of a short-answer question.
  *
  * @param quizQuestionBaseDTO                  the fields shared by every question type
- * @param shortAnswerQuestionWithoutMappingDTO the short-answer fields, with the correct mappings removed
+ * @param shortAnswerQuestionWithoutMappingDTO the short-answer fields, with the solutions and correct mappings removed
  */
 @Schema(requiredProperties = { "type" })
 @SchemaProperty(name = "type", schema = @Schema(type = "string", allowableValues = { "short-answer" }, defaultValue = "short-answer"))
