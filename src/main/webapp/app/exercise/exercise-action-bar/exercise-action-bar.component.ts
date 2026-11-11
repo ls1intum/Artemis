@@ -33,6 +33,7 @@ const GAP_PX = 4;
 const ELLIPSIS_WIDTH_PX = 34;
 const SAFETY_MARGIN_PX = 8;
 const EXTRA_ACTION_PRIORITY = 1000;
+const COLLAPSE_FIRST_PRIORITY = 2000;
 
 let nextBarId = 0;
 
@@ -47,8 +48,8 @@ function widthOf(element: HTMLElement): number {
 
 /**
  * Owned, data-driven action row: renders every {@link ActionItem} as an icon button and folds whatever doesn't fit into
- * a trailing ellipsis menu (Delete/Edit/Edit in editor/Participations kept longest via {@link keepPriorityIds}), based on
- * measured button widths and the row's available width.
+ * a trailing ellipsis menu (Edit/Participations/Edit in editor kept longest via {@link keepPriorityIds}, Delete folded first
+ * via {@link collapseFirstIds}), based on measured button widths and the row's available width.
  *
  * Both exercise row-action components render through this bar — `ExerciseActionsComponent` (course exercises) and
  * `ExamExerciseRowButtonsComponent` (exam exercises) — so they look and collapse identically; only the `ActionItem[]`
@@ -88,7 +89,13 @@ export class ExerciseActionBarComponent {
      * Ids kept inline longest when the row runs out of width (in priority order); any id not listed shares the next
      * priority tier, in original display order (the collapse sort is stable).
      */
-    readonly keepPriorityIds = input<string[]>(['delete', 'edit', 'edit-in-editor', 'participations']);
+    readonly keepPriorityIds = input<string[]>(['edit', 'participations', 'edit-in-editor']);
+    /**
+     * Ids folded into the ellipsis menu before any other action (in this order). Delete, the last trailing action, goes
+     * first, so the ellipsis trigger, as wide as a button, takes its place and the remaining trailing actions stay in line
+     * with the other rows.
+     */
+    readonly collapseFirstIds = input<string[]>(['delete']);
     /**
      * Ids rendered last, in this order, after all other actions. Every row then ends in the same buttons, so they line up
      * across the rows of a table.
@@ -149,7 +156,12 @@ export class ExerciseActionBarComponent {
 
     private readonly keepPriorityOf = (action: ActionItem): number => {
         const index = this.keepPriorityIds().indexOf(action.id);
-        return index === -1 ? EXTRA_ACTION_PRIORITY : index;
+        if (index !== -1) {
+            return index;
+        }
+        // Reversed, so the first id of collapseFirstIds gets the lowest priority and folds first.
+        const collapseIndex = this.collapseFirstIds().indexOf(action.id);
+        return collapseIndex === -1 ? EXTRA_ACTION_PRIORITY : COLLAPSE_FIRST_PRIORITY - collapseIndex;
     };
 
     /** Signature that determines a button's rendered width: same signature ⇒ same width. Uses the translated label so a
@@ -314,7 +326,8 @@ export class ExerciseActionBarComponent {
                 return;
             }
             const buttons = actions.reduce((sum, action) => sum + (widths.get(this.signatureOf(action)) ?? 0), 0) + (actions.length - 1) * GAP_PX;
-            this.naturalWidthChange.emit(buttons + (reserved > 0 ? reserved + GAP_PX : 0) + SAFETY_MARGIN_PX);
+            // Rounded up: measured widths are fractional, and a column a fraction too narrow would fold a button.
+            this.naturalWidthChange.emit(Math.ceil(buttons + (reserved > 0 ? reserved + GAP_PX : 0)) + SAFETY_MARGIN_PX);
         });
     }
 

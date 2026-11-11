@@ -71,7 +71,7 @@ describe('ExerciseActionBarComponent', () => {
             component['buttonWidths'].set(widths);
         };
 
-        it('keeps the default-priority ids inline and collapses the other actions first', () => {
+        it('folds delete first, then the other actions, and keeps the default-priority ids inline longest', () => {
             fixture.componentRef.setInput('items', buildActions(['teams', 'participations', 'statistics', 'preview', 'edit-in-editor', 'edit', 'delete']));
             // Each button 100px wide. With a 460px row (available 452 after the safety margin, budget 414 after the
             // ellipsis + gap) exactly four 100px buttons plus their gaps fit.
@@ -80,7 +80,18 @@ describe('ExerciseActionBarComponent', () => {
             component['rowWidth'].set(460);
 
             expect(component.hasOverflow()).toBe(true);
-            expect(component.hiddenActions().map((a) => a.id)).toEqual(['teams', 'statistics', 'preview']);
+            expect(component.hiddenActions().map((a) => a.id)).toEqual(['statistics', 'preview', 'delete']);
+        });
+
+        it('folds only delete when one button is too many, so the ellipsis takes its place at the end', () => {
+            fixture.componentRef.setInput('items', buildActions(['teams', 'participations', 'edit', 'delete']));
+            // Four buttons (412px incl. gaps) exceed a 400px row (available 392); after the ellipsis and its gap the budget
+            // is 354px, so three fit.
+            seedEqualWidths(100);
+            component['reservedWidth'].set(0);
+            component['rowWidth'].set(400);
+
+            expect(component.hiddenActions().map((a) => a.id)).toEqual(['delete']);
         });
 
         it('respects a custom keepPriorityIds ordering', () => {
