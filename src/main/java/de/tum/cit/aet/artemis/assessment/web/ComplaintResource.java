@@ -111,13 +111,14 @@ public class ComplaintResource {
     public ResponseEntity<ComplaintDTO> createComplaint(@RequestBody ComplaintRequestDTO complaint, Principal principal) throws URISyntaxException {
         log.debug("REST request to save Complaint: {}", complaint);
 
-        // Load the result and enforce ownership before any other check. A non-owner, or a request for a result
-        // that does not exist, must receive the same 404. Otherwise the differing error responses of the later
-        // checks (an already existing complaint, the exam/course component mismatch, the complaint time window)
-        // reveal whether a foreign result exists and roughly how old it is.
+        // Load the result and enforce ownership before any other check. A request for a result that does not exist,
+        // whose participation is not a student participation, or that is owned by someone else must all receive the
+        // same 404. Otherwise the differing error responses of the later checks (an already existing complaint, the
+        // exam/course component mismatch, the complaint time window) reveal whether a foreign result exists and
+        // roughly how old it is.
         Result result = resultRepository.findByIdElseThrow(complaint.resultId());
-        StudentParticipation participation = (StudentParticipation) result.getSubmission().getParticipation();
-        if (!authCheckService.isOwnerOfParticipation(participation, userRepository.getUserWithAuthorities())) {
+        if (!(result.getSubmission().getParticipation() instanceof StudentParticipation participation)
+                || !authCheckService.isOwnerOfParticipation(participation, userRepository.getUserWithAuthorities())) {
             throw new EntityNotFoundException("Result", complaint.resultId());
         }
 
@@ -137,6 +138,10 @@ public class ComplaintResource {
                 throw new BadRequestAlertException("A complaint for an exam exercise cannot be filed using this component", COMPLAINT_ENTITY_NAME,
                         "complaintAboutExamExerciseWrongComponent");
             }
+            // The owner must still be enrolled as a student in the course to file a complaint: ownership of a
+            // participation can outlive enrollment. This runs after the ownership check, so it is reached only by the
+            // owner and therefore cannot reveal whether a foreign result exists.
+            authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.STUDENT, participation.getExercise(), null);
         }
         Complaint savedComplaint = complaintService.createComplaint(complaint, principal);
 
