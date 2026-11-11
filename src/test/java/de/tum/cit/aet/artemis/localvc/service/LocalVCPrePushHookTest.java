@@ -340,4 +340,14 @@ class LocalVCPrePushHookTest {
 
         assertThat(command.getResult()).isEqualTo(ReceiveCommand.Result.NOT_ATTEMPTED);
     }
+
+    @Test
+    void onPreReceive_pathThatNamesTheMetadataDirectory_isRejected() throws Exception {
+        ReceiveCommand command = receive(commitWithRegularFile("src/.GIT./config", "[core]".getBytes(StandardCharsets.UTF_8)), DEFAULT_REF);
+
+        run(command);
+
+        assertThat(command.getResult()).isEqualTo(ReceiveCommand.Result.REJECTED_OTHER_REASON);
+        assertThat(command.getMessage()).contains("metadata directory");
+    }
 }

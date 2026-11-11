@@ -82,6 +82,15 @@ public class RepositoryService {
 
     static final long MAX_SELECTED_FILE_SIZE_BYTES = 1024L * 1024;
 
+    /** The largest file whose content is read into memory when all files of a repository are read. Larger files are left out. */
+    static final long MAX_FILE_CONTENT_BYTES = 10L * 1024 * 1024;
+
+    /** The most that the files of one repository add up to when all of them are read into memory. Files beyond that are left out. */
+    static final long MAX_TOTAL_CONTENT_BYTES = 100L * 1024 * 1024;
+
+    /** The most entries of a tree that are visited when all files of a repository are read. */
+    static final int MAX_TREE_ENTRIES = 100_000;
+
     static final long MAX_SELECTED_FILES_TOTAL_SIZE_BYTES = 5L * 1024 * 1024;
 
     private enum BinaryFileFilter {
@@ -166,7 +175,7 @@ public class RepositoryService {
                 return Map.of();
             }
             if (selectedFilePaths == null) {
-                return getFileContentFromBareRepositoryForCommitId(repository, commitObjectId, null, BinaryFileFilter.EXTENSION, Long.MAX_VALUE, Long.MAX_VALUE);
+                return getFileContentFromBareRepositoryForCommitId(repository, commitObjectId, null, BinaryFileFilter.EXTENSION, MAX_FILE_CONTENT_BYTES, MAX_TOTAL_CONTENT_BYTES);
             }
             return getFileContentFromBareRepositoryForCommitId(repository, commitObjectId, selectedFilePaths, BinaryFileFilter.CONTENT, MAX_SELECTED_FILE_SIZE_BYTES,
                     MAX_SELECTED_FILES_TOTAL_SIZE_BYTES);
@@ -332,7 +341,7 @@ public class RepositoryService {
         if (commitId == null) {
             return Map.of();
         }
-        return getFileContentFromBareRepositoryForCommitId(repository, commitId, null, BinaryFileFilter.EXTENSION, Long.MAX_VALUE, Long.MAX_VALUE);
+        return getFileContentFromBareRepositoryForCommitId(repository, commitId, null, BinaryFileFilter.EXTENSION, MAX_FILE_CONTENT_BYTES, MAX_TOTAL_CONTENT_BYTES);
     }
 
     /**
@@ -354,7 +363,8 @@ public class RepositoryService {
             return Optional.empty();
         }
         return Optional.ofNullable(
-                getFileContentFromBareRepositoryForCommitId(repository, commitId, Set.of(filePath), BinaryFileFilter.NONE, Long.MAX_VALUE, Long.MAX_VALUE).get(filePath));
+                getFileContentFromBareRepositoryForCommitId(repository, commitId, Set.of(filePath), BinaryFileFilter.NONE, MAX_FILE_CONTENT_BYTES, MAX_TOTAL_CONTENT_BYTES)
+                        .get(filePath));
     }
 
     /**
@@ -372,7 +382,7 @@ public class RepositoryService {
             return Map.of();
         }
 
-        return getFileContentFromBareRepositoryForCommitId(repository, headCommitId, null, BinaryFileFilter.EXTENSION, Long.MAX_VALUE, Long.MAX_VALUE);
+        return getFileContentFromBareRepositoryForCommitId(repository, headCommitId, null, BinaryFileFilter.EXTENSION, MAX_FILE_CONTENT_BYTES, MAX_TOTAL_CONTENT_BYTES);
     }
 
     /**
@@ -424,7 +434,8 @@ public class RepositoryService {
 
             for (RevCommit commit : walk) {
                 if (((long) commit.getCommitTime()) <= epochSeconds) {
-                    return getFileContentFromBareRepositoryForCommitId(repository, commit.getId(), null, BinaryFileFilter.EXTENSION, Long.MAX_VALUE, Long.MAX_VALUE);
+                    return getFileContentFromBareRepositoryForCommitId(repository, commit.getId(), null, BinaryFileFilter.EXTENSION, MAX_FILE_CONTENT_BYTES,
+                            MAX_TOTAL_CONTENT_BYTES);
                 }
             }
         }
@@ -480,7 +491,12 @@ public class RepositoryService {
                 treeWalk.setFilter(PathFilterGroup.createFromStrings(selectedFilePaths));
             }
 
+            long visitedEntries = 0;
             while (treeWalk.next()) {
+                if (++visitedEntries > MAX_TREE_ENTRIES) {
+                    log.warn("Stopped reading the files of the commit {} after {} entries", commitId.name(), MAX_TREE_ENTRIES);
+                    break;
+                }
                 String path = treeWalk.getPathString();
                 if (selectedFilePaths != null && !selectedFilePaths.contains(path)) {
                     continue;

@@ -23,6 +23,7 @@ import org.slf4j.LoggerFactory;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.localvc.exception.LocalVCInternalException;
+import de.tum.cit.aet.artemis.localvc.service.git.GitPathNames;
 
 /**
  * Contains an onPreReceive method that is called by JGit before a push is received (i.e. before the pushed files are written to disk but after the authorization check was
@@ -157,6 +158,12 @@ public record LocalVCPrePushHook(LocalVCServletService localVCServletService, Us
                     break;
                 }
                 FileMode mode = treeWalk.getFileMode(0);
+                if (GitPathNames.containsGitMetadataName(treeWalk.getPathString())) {
+                    command.setResult(ReceiveCommand.Result.REJECTED_OTHER_REASON,
+                            "The path '%s' is not allowed: a name that denotes the metadata directory of a repository cannot be part of the content."
+                                    .formatted(treeWalk.getPathString()));
+                    break;
+                }
                 if (FileMode.SYMLINK.equals(mode)) {
                     command.setResult(ReceiveCommand.Result.REJECTED_OTHER_REASON, """
                             Symbolic links are not allowed: '%s'.
