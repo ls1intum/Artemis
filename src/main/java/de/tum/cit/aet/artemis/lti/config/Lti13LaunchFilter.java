@@ -11,6 +11,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
+import org.springframework.security.authentication.InternalAuthenticationServiceException;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.oidc.OidcIdToken;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
@@ -98,6 +99,11 @@ public class Lti13LaunchFilter extends OncePerRequestFilter {
             // since DispatcherServlet's HandlerExceptionResolver does not run for exceptions thrown inside filters.
             log.error("LTI 1.3 launch request failed with status {}: {}", ex.getStatusCode().value(), ex.getMessage(), ex);
             response.sendError(ex.getStatusCode().value(), "LTI 1.3 Launch failed");
+        }
+        catch (InternalAuthenticationServiceException ex) {
+            // The launch cannot be tied to an account: it has no email address, or the course requires an existing account that has this address
+            log.warn("LTI 1.3 launch was refused: {}", ex.getMessage());
+            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "LTI 1.3 Launch failed");
         }
         catch (HttpClientErrorException | OAuth2AuthenticationException | IllegalStateException | IllegalArgumentException ex) {
             // IllegalArgumentException is thrown by Lti13Service.launchRequestFrom when an id_token claim cannot be

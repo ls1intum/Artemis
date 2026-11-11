@@ -323,7 +323,6 @@ class LtiServiceTest {
         trustExternalSystems();
         user.setEmail("inactive@test.com");
         user.setActivated(false);
-        when(userLtiRepository.existsByUserIdAndCreatedByLaunchIsTrueAndInitializedIsFalse(user.getId())).thenReturn(false);
         when(userRepository.findOneByEmailIgnoreCase("inactive@test.com")).thenReturn(Optional.of(user));
         when(userRepository.findOneWithAuthoritiesByEmailIgnoreCase("inactive@test.com")).thenReturn(Optional.of(user));
 
@@ -333,7 +332,7 @@ class LtiServiceTest {
     }
 
     @Test
-    void authenticateLtiUser_trustedPlatformCanSignInAnAccountThatAnEarlierLaunchCreatedAndNobodyInitialisedYet() throws Exception {
+    void authenticateLtiUser_trustedPlatformCannotSignInAnAccountThatAnEarlierLaunchCreatedAndNobodyInitialisedYet() throws Exception {
         SecurityContextHolder.getContext().setAuthentication(null);
         trustExternalSystems();
         user.setEmail("student@test.com");
@@ -342,9 +341,8 @@ class LtiServiceTest {
         when(userRepository.findOneByEmailIgnoreCase("student@test.com")).thenReturn(Optional.of(user));
         when(userRepository.findOneWithAuthoritiesByEmailIgnoreCase("student@test.com")).thenReturn(Optional.of(user));
 
-        ltiService.authenticateLtiUser("student@test.com", "username", "first", "last", false);
-
-        assertThat(SecurityContextHolder.getContext().getAuthentication().getPrincipal()).isEqualTo(user.getLogin());
+        // Such an account cannot be told from one that an administrator deactivated
+        assertThatExceptionOfType(LtiEmailAlreadyInUseException.class).isThrownBy(() -> ltiService.authenticateLtiUser("student@test.com", "username", "first", "last", false));
     }
 
     @Test
