@@ -2,12 +2,12 @@ package de.tum.cit.aet.artemis.localvc.service;
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.concurrent.TimeUnit;
 
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.FileMode;
 import org.eclipse.jgit.lib.ObjectId;
-import org.eclipse.jgit.lib.ObjectLoader;
 import org.eclipse.jgit.lib.ObjectReader;
 import org.eclipse.jgit.lib.Ref;
 import org.eclipse.jgit.lib.Repository;
@@ -38,6 +38,20 @@ public record LocalVCPrePushHook(LocalVCServletService localVCServletService, Us
     }
 
     private static final long MAX_BLOB_SIZE_BYTES = 10L * 1024 * 1024; // 10MB
+
+    /** The most entries of the tree of the pushed commit that are examined. A tree can reference the same subtree many times, so its paths are far more than its objects. */
+    static final int MAX_TREE_ENTRIES = 100_000;
+
+    /** The deepest directory nesting of the pushed tree. */
+    static final int MAX_TREE_DEPTH = 100;
+
+    /** The most that all files of the pushed tree add up to. */
+    static final long MAX_TREE_BYTES = 500L * 1024 * 1024;
+
+    /** The time that the examination of the tree may take. */
+    static final long MAX_TREE_NANOS = TimeUnit.SECONDS.toNanos(20);
+
+    private static final String TREE_LIMIT_MESSAGE = "The repository exceeds the limits for the number of files, the depth of the directories or the total size.";
 
     /**
      * Called by JGit before a push is received (i.e. before the pushed files are written to disk but after the authorization check was successful).
@@ -134,7 +148,14 @@ public record LocalVCPrePushHook(LocalVCServletService localVCServletService, Us
             RevCommit newCommit = revWalk.parseCommit(command.getNewId());
             treeWalk.addTree(newCommit.getTree());
             treeWalk.setRecursive(true);
+            final long startNanos = System.nanoTime();
+            long entries = 0;
+            long totalBytes = 0;
             while (treeWalk.next()) {
+                if (++entries > MAX_TREE_ENTRIES || treeWalk.getDepth() > MAX_TREE_DEPTH || System.nanoTime() - startNanos > MAX_TREE_NANOS) {
+                    command.setResult(ReceiveCommand.Result.REJECTED_OTHER_REASON, TREE_LIMIT_MESSAGE);
+                    break;
+                }
                 FileMode mode = treeWalk.getFileMode(0);
                 if (FileMode.SYMLINK.equals(mode)) {
                     command.setResult(ReceiveCommand.Result.REJECTED_OTHER_REASON, """
@@ -164,10 +185,16 @@ public record LocalVCPrePushHook(LocalVCServletService localVCServletService, Us
                 }
 
                 ObjectId objectId = treeWalk.getObjectId(0);
-                ObjectLoader loader = reader.open(objectId);
-                if (loader.getType() == Constants.OBJ_BLOB && loader.getSize() > MAX_BLOB_SIZE_BYTES) {
+                // Only the size is read, the content of the file is not loaded
+                long size = reader.getObjectSize(objectId, Constants.OBJ_BLOB);
+                if (size > MAX_BLOB_SIZE_BYTES) {
                     command.setResult(ReceiveCommand.Result.REJECTED_OTHER_REASON,
-                            "File '%s' exceeds 10MB size limit (%.2f MB)".formatted(treeWalk.getPathString(), loader.getSize() / (1024.0 * 1024.0)));
+                            "File '%s' exceeds 10MB size limit (%.2f MB)".formatted(treeWalk.getPathString(), size / (1024.0 * 1024.0)));
+                    break;
+                }
+                totalBytes += size;
+                if (totalBytes > MAX_TREE_BYTES) {
+                    command.setResult(ReceiveCommand.Result.REJECTED_OTHER_REASON, TREE_LIMIT_MESSAGE);
                     break;
                 }
             }

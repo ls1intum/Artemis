@@ -5,9 +5,12 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALVC;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
+import java.time.Duration;
 import java.util.Optional;
 
+import org.apache.sshd.common.util.threads.CloseableExecutorService;
 import org.apache.sshd.common.util.threads.ThreadUtils;
+import org.apache.sshd.core.CoreModuleProperties;
 import org.apache.sshd.server.SshServer;
 import org.apache.sshd.server.keyprovider.SimpleGeneratorHostKeyProvider;
 import org.slf4j.Logger;
@@ -34,6 +37,16 @@ import de.tum.cit.aet.artemis.localvc.service.SshGitLocationResolverService;
 public class SshConfiguration {
 
     private static final Logger log = LoggerFactory.getLogger(SshConfiguration.class);
+
+    /** The git commands (clone, fetch, push) that run at the same time. Further commands wait for a free thread. */
+    private static final int MAX_CONCURRENT_GIT_COMMANDS = 32;
+
+    private static final int AUTHENTICATION_TIMEOUT_SECONDS = 30;
+
+    private static final int MAX_AUTHENTICATION_ATTEMPTS = 6;
+
+    /** A git command uses one channel, so a session does not need many. */
+    private static final int MAX_CHANNELS_PER_SESSION = 4;
 
     @Value("${artemis.version-control.ssh-port:7921}")
     private int sshPort;
@@ -80,8 +93,14 @@ public class SshConfiguration {
 
             sshd.setKeyPairProvider(new SimpleGeneratorHostKeyProvider(Path.of("local", "tmp", "hostkey.ser")));
         }
+        // One bounded pool serves all git commands. The pool is shared, so a command must not close it.
+        CloseableExecutorService gitCommandExecutor = ThreadUtils.newFixedThreadPool("git-ssh", MAX_CONCURRENT_GIT_COMMANDS);
         sshd.setCommandFactory(
-                sshGitCommandFactoryService.withGitLocationResolver(sshGitLocationResolverService).withExecutorServiceProvider(() -> ThreadUtils.newFixedThreadPool("git-ssh", 8)));
+                sshGitCommandFactoryService.withGitLocationResolver(sshGitLocationResolverService).withExecutorServiceProvider(() -> ThreadUtils.noClose(gitCommandExecutor)));
+        // Clients that do not authenticate quickly, or keep many channels open, are dropped instead of holding resources of the server.
+        CoreModuleProperties.AUTH_TIMEOUT.set(sshd, Duration.ofSeconds(AUTHENTICATION_TIMEOUT_SECONDS));
+        CoreModuleProperties.MAX_AUTH_REQUESTS.set(sshd, MAX_AUTHENTICATION_ATTEMPTS);
+        CoreModuleProperties.MAX_CONCURRENT_CHANNELS.set(sshd, MAX_CHANNELS_PER_SESSION);
         sshd.setPublickeyAuthenticator(gitPublickeyAuthenticatorService);
         // Recovers the real client address when a load balancer forwards this port at the TCP level. Installed
         // unconditionally: without configured proxy protocol sources it only removes headers, so that a proxy with

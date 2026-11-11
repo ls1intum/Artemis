@@ -28,6 +28,7 @@ import de.tum.cit.aet.artemis.localvc.service.LocalVCFetchPreUploadHookSSH;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCPostPushHook;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCPrePushHook;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCPushProcessingService;
+import de.tum.cit.aet.artemis.localvc.service.LocalVCReceivePackLimits;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCServletService;
 import de.tum.cit.aet.artemis.localvc.service.PasswordAuthenticationNoticeService;
 
@@ -137,7 +138,7 @@ public class SshGitCommand extends GitPackCommand {
                     case RemoteConfig.DEFAULT_RECEIVE_PACK -> {
                         var exercise = getServerSession().getAttribute(SshConstants.REPOSITORY_EXERCISE_KEY);
                         try (var _ = pushProcessingService.claimProgrammingExerciseMutation(repository, exercise)) {
-                            ReceivePack receivePack = new ReceivePack(repository);
+                            ReceivePack receivePack = LocalVCReceivePackLimits.apply(new ReceivePack(repository));
 
                             receivePack.setPreReceiveHook(new LocalVCPrePushHook(localVCServletService, user));
                             receivePack.setPostReceiveHook(

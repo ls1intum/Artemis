@@ -269,4 +269,75 @@ class LocalVCPrePushHookTest {
         refUpdate.setForceUpdate(true);
         refUpdate.update();
     }
+
+    /** Builds a commit with the given root tree. */
+    private ObjectId commitWithTree(ObjectInserter inserter, ObjectId treeId) throws IOException {
+        CommitBuilder commitBuilder = new CommitBuilder();
+        commitBuilder.setTreeId(treeId);
+        PersonIdent author = new PersonIdent("Ada Lovelace", "ada@example.com");
+        commitBuilder.setAuthor(author);
+        commitBuilder.setCommitter(author);
+        commitBuilder.setMessage("a commit");
+        ObjectId commitId = inserter.insert(commitBuilder);
+        inserter.flush();
+        return commitId;
+    }
+
+    @Test
+    void onPreReceive_treeThatReferencesSubtreesRepeatedly_isRejectedAfterTheEntryLimit() throws Exception {
+        // Three levels of 100 entries that all point to the same subtree: a few kilobytes of objects, but a million paths when the tree is walked.
+        try (ObjectInserter inserter = repository.newObjectInserter()) {
+            ObjectId blobId = inserter.insert(Constants.OBJ_BLOB, "x".getBytes(StandardCharsets.UTF_8));
+            ObjectId level = null;
+            for (int depth = 0; depth < 3; depth++) {
+                TreeFormatter formatter = new TreeFormatter();
+                for (int index = 0; index < 100; index++) {
+                    String name = "e%03d".formatted(index);
+                    if (level == null) {
+                        formatter.append(name, FileMode.REGULAR_FILE, blobId);
+                    }
+                    else {
+                        formatter.append(name, FileMode.TREE, level);
+                    }
+                }
+                level = inserter.insert(formatter);
+            }
+            ReceiveCommand command = receive(commitWithTree(inserter, level), DEFAULT_REF);
+
+            run(command);
+
+            assertThat(command.getResult()).isEqualTo(ReceiveCommand.Result.REJECTED_OTHER_REASON);
+            assertThat(command.getMessage()).contains("limits for the number of files");
+        }
+    }
+
+    @Test
+    void onPreReceive_treeNestedDeeperThanTheLimit_isRejected() throws Exception {
+        try (ObjectInserter inserter = repository.newObjectInserter()) {
+            ObjectId blobId = inserter.insert(Constants.OBJ_BLOB, "x".getBytes(StandardCharsets.UTF_8));
+            TreeFormatter leaf = new TreeFormatter();
+            leaf.append("file", FileMode.REGULAR_FILE, blobId);
+            ObjectId tree = inserter.insert(leaf);
+            for (int depth = 0; depth <= LocalVCPrePushHook.MAX_TREE_DEPTH; depth++) {
+                TreeFormatter formatter = new TreeFormatter();
+                formatter.append("d", FileMode.TREE, tree);
+                tree = inserter.insert(formatter);
+            }
+            ReceiveCommand command = receive(commitWithTree(inserter, tree), DEFAULT_REF);
+
+            run(command);
+
+            assertThat(command.getResult()).isEqualTo(ReceiveCommand.Result.REJECTED_OTHER_REASON);
+            assertThat(command.getMessage()).contains("limits for the number of files");
+        }
+    }
+
+    @Test
+    void onPreReceive_ordinaryTree_isAccepted() throws Exception {
+        ReceiveCommand command = receive(commitWithRegularFile("src/Main.java", "class Main {}".getBytes(StandardCharsets.UTF_8)), DEFAULT_REF);
+
+        run(command);
+
+        assertThat(command.getResult()).isEqualTo(ReceiveCommand.Result.NOT_ATTEMPTED);
+    }
 }
