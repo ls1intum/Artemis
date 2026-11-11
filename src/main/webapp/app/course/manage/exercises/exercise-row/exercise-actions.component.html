@@ -6,7 +6,7 @@
 >
     <ng-container actionBarReserved>
         @if (quizExercise(); as quiz) {
-            <jhi-quiz-exercise-lifecycle-buttons [quizExercise]="quiz" (handleNewQuizExercise)="onQuizLifecycleUpdate($event)" (loadOne)="onQuizReload()" />
+            <jhi-quiz-exercise-lifecycle-buttons variant="outlined" [quizExercise]="quiz" (handleNewQuizExercise)="onQuizLifecycleUpdate($event)" (loadOne)="onQuizReload()" />
         }
     </ng-container>
 </jhi-exercise-action-bar>
