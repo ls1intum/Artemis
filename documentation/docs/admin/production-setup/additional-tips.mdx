@@ -139,6 +139,20 @@ The `$forwarded_proto` map above then passes on the `X-Forwarded-Proto` header o
 Use it only if the load balancer is the sole client that can reach nginx and overwrites this header, otherwise clients can set it themselves.
 If the load balancer or NAT also changes the port, set `X-Forwarded-Port` to the port users see instead of `$server_port`.
 
+If another load balancer or proxy sits in front of nginx, `$remote_addr` is the address of that proxy, and all users would share one rate limit and one recorded address.
+In this case let nginx take the client address from the header of that proxy, and only from it.
+Put this into the `http` or `server` block and list only the addresses of your own load balancers:
+
+```nginx
+set_real_ip_from  <address or network of the load balancer>;
+real_ip_header    X-Forwarded-For;
+real_ip_recursive off;
+```
+
+nginx then sets `$remote_addr` to the client address that the load balancer passes on, and the `proxy_set_header X-Forwarded-For $remote_addr;` line above forwards it to Artemis.
+Requests from any other source keep their own address, so clients cannot choose it.
+The load balancer must overwrite `X-Forwarded-For` with the address it accepted, not append to what a client sent.
+
 Do not use `$http_host` for `X-Forwarded-Host`.
 Some nginx versions no longer handle it as before, and users are then redirected to `https://localhost/…` when they log in with SAML2.
 

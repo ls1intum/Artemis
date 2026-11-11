@@ -180,7 +180,7 @@ public class RepositoryService {
             }
             if (selectedFilePaths == null) {
                 return getFileContentFromBareRepositoryForCommitId(repository, commitObjectId, null, BinaryFileFilter.EXTENSION, MAX_FILE_CONTENT_BYTES, MAX_TOTAL_CONTENT_BYTES,
-                        true, false);
+                        false, false);
             }
             return getFileContentFromBareRepositoryForCommitId(repository, commitObjectId, selectedFilePaths, BinaryFileFilter.CONTENT, MAX_SELECTED_FILE_SIZE_BYTES,
                     MAX_SELECTED_FILES_TOTAL_SIZE_BYTES, false, false);
@@ -346,7 +346,7 @@ public class RepositoryService {
         if (commitId == null) {
             return Map.of();
         }
-        return getFileContentFromBareRepositoryForCommitId(repository, commitId, null, BinaryFileFilter.EXTENSION, MAX_FILE_CONTENT_BYTES, MAX_TOTAL_CONTENT_BYTES, true, false);
+        return getFileContentFromBareRepositoryForCommitId(repository, commitId, null, BinaryFileFilter.EXTENSION, MAX_FILE_CONTENT_BYTES, MAX_TOTAL_CONTENT_BYTES, false, false);
     }
 
     /**
@@ -386,7 +386,7 @@ public class RepositoryService {
             return Map.of();
         }
 
-        return getFileContentFromBareRepositoryForCommitId(repository, headCommitId, null, BinaryFileFilter.EXTENSION, MAX_FILE_CONTENT_BYTES, MAX_TOTAL_CONTENT_BYTES, true,
+        return getFileContentFromBareRepositoryForCommitId(repository, headCommitId, null, BinaryFileFilter.EXTENSION, MAX_FILE_CONTENT_BYTES, MAX_TOTAL_CONTENT_BYTES, false,
                 false);
     }
 
@@ -440,7 +440,7 @@ public class RepositoryService {
             for (RevCommit commit : walk) {
                 if (((long) commit.getCommitTime()) <= epochSeconds) {
                     return getFileContentFromBareRepositoryForCommitId(repository, commit.getId(), null, BinaryFileFilter.EXTENSION, MAX_FILE_CONTENT_BYTES,
-                            MAX_TOTAL_CONTENT_BYTES, true, false);
+                            MAX_TOTAL_CONTENT_BYTES, false, false);
                 }
             }
         }
@@ -477,7 +477,7 @@ public class RepositoryService {
      * @param binaryFileFilter    The strategy used to exclude binary files.
      * @param maxFileSizeBytes    The maximum size of an individual returned file.
      * @param maxTotalSizeBytes   The maximum aggregate size of all returned files.
-     * @param failOnLimit         Whether a total size above its maximum is an error. Otherwise the file is left out.
+     * @param failOnLimit         Whether a total size above its maximum is an error. Otherwise the files that no longer fit are left out.
      * @param failOnOversizedFile Whether a file above its maximum is an error. Otherwise the file is left out.
      * @return A map of repository-relative file paths to UTF-8 content.
      * @throws IOException If the commit or file content cannot be read, if the tree has more entries than {@link #MAX_TREE_ENTRIES}, or if a size limit is exceeded and
@@ -523,9 +523,10 @@ public class RepositoryService {
                     }
                     if (blobSize > maxTotalSizeBytes - totalSize) {
                         if (failOnLimit) {
-                            // A partial snapshot would look like a repository without the remaining files
                             throw new IOException("The files of the commit add up to more than " + maxTotalSizeBytes + " bytes.");
                         }
+                        // Files that fit stay available. Failing would hide all files of a repository that only has a few large ones, e.g. in a dependency folder.
+                        log.debug("Leaving out the file {} of the commit {}: the files read so far use up the budget of {} bytes", path, commitId.name(), maxTotalSizeBytes);
                         continue;
                     }
                     byte[] bytes;
