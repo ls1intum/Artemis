@@ -256,8 +256,9 @@ public class BuildContainerIsolationProbe {
      * Rootless Docker, networks without a route to the gateway, and a service that a container on the same network publishes are not covered.
      */
     private Verdict probeThroughHostAddress(String network, Target target) {
-        String script = "addresses=$(awk '/" + HOST_NAME + "/ {print $1}' /etc/hosts); [ -n \"$addresses\" ] || exit " + EXIT_NO_HOST_ENTRY
-                + "; for address in $addresses; do nc -w " + CONNECT_TIMEOUT_SECONDS + " -z \"$address\" " + target.port() + " && exit 0; done; exit " + EXIT_CONNECTION_FAILED;
+        String script = "addresses=$(awk '/" + HOST_NAME + "/ {print $1}' /etc/hosts); [ -n \"$addresses\" ] || exit " + EXIT_NO_HOST_ENTRY + "; result=" + EXIT_CONNECTION_FAILED
+                + "; for address in $addresses; do nc -w " + CONNECT_TIMEOUT_SECONDS + " -z \"$address\" " + target.port()
+                + "; code=$?; [ \"$code\" -eq 0 ] && exit 0; [ \"$code\" -eq " + EXIT_CONNECTION_FAILED + " ] || result=$code; done; exit \"$result\"";
         Integer exitCode = runInContainer(network, true, target + " on the host", "sh", "-c", script);
         if (Integer.valueOf(0).equals(exitCode)) {
             return Verdict.REACHABLE;
