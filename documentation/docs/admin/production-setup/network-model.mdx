@@ -56,7 +56,7 @@ Keep the services above out of the reach of build containers:
 
 ## What Artemis Checks
 
-- **At startup of a core node or build agent**, the configured networks are checked. A default network or an allowed network that shares the namespace of the host or of another container stops the start.
+- **Validation of the configured networks.** A core node checks the default network of the builds (`container-defaults.network`) at startup, and a default that shares the network namespace of the host (`host`) or of another container (`container:<name>`) stops the start. An exercise that selects such a network is rejected when it is saved, and a build agent refuses to create a container on it. A network in the list of allowed networks that nobody selects is not checked at startup.
 - **At startup of a build agent that runs builds in Docker**, Artemis starts a short-lived container on every network that builds can use, and tries to connect to the queue store, to the cluster port of the node and to the
   services that you list. The check runs about one minute after the start and does not delay it. If a container can connect, the agent logs an error that names the network and the service, for example
   `Build containers on the network 'default' can reach [10.0.0.5:6379]`. The log lines are the result: watch for this error after every change of the network, the firewall or the Docker configuration.

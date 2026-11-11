@@ -18,6 +18,7 @@ import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Answers;
+import org.mockito.Mockito;
 
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.CreateContainerCmd;
@@ -43,13 +44,15 @@ class BuildContainerIsolationProbeTest {
 
     private RemoveContainerCmd removeCommand;
 
+    private CreateContainerCmd createCommand;
+
     @BeforeEach
     void setUp() throws Exception {
         dockerClient = mock(DockerClient.class);
         InspectImageCmd inspectImage = mock(InspectImageCmd.class);
         when(dockerClient.inspectImageCmd(IMAGE)).thenReturn(inspectImage);
 
-        CreateContainerCmd createCommand = mock(CreateContainerCmd.class, Answers.RETURNS_SELF);
+        createCommand = mock(CreateContainerCmd.class, Answers.RETURNS_SELF);
         CreateContainerResponse response = new CreateContainerResponse();
         response.setId("probe-container");
         doReturn(response).when(createCommand).exec();
@@ -187,7 +190,26 @@ class BuildContainerIsolationProbeTest {
         assertThat(result.notReachable()).isEmpty();
         assertThat(result.reachable()).isEmpty();
         assertThat(result.inconclusive()).containsExactly(unresolvable);
-        // Only the self test ran
-        verify(dockerClient, times(1)).createContainerCmd(IMAGE);
+        // The self test and the attempt by name in the container ran, and no connection to an address
+        verify(dockerClient, times(2)).createContainerCmd(IMAGE);
+    }
+
+    @Test
+    void reportsANameThatTheContainerReachesThroughItsOwnResolution() throws Exception {
+        // The agent resolves localhost and every address refuses, but the container reaches the name, as it would through an alias of the network.
+        when(waitCallback.awaitStatusCode(anyLong(), eq(TimeUnit.SECONDS))).thenAnswer(invocation -> {
+            // The command of the container that was created last
+            var invocations = Mockito.mockingDetails(createCommand).getInvocations().stream().filter(call -> call.getMethod().getName().equals("withCmd")).toList();
+            String[] command = (String[]) invocations.getLast().getRawArguments()[0];
+            boolean selfTest = command[0].equals("sh");
+            boolean byName = command[0].equals("nc") && command[4].equals("localhost");
+            return selfTest || byName ? 0 : 1;
+        });
+        Target aliased = new Target("localhost", 6379);
+
+        Result result = new BuildContainerIsolationProbe(dockerClient, IMAGE).run(null, List.of(aliased));
+
+        assertThat(result.reachable()).containsExactly(aliased);
+        assertThat(result.notReachable()).isEmpty();
     }
 }

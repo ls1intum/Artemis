@@ -184,15 +184,13 @@ public class BuildContainerIsolationProbe {
     }
 
     /**
-     * Connects to every address of the target. The names are resolved here and not in the container, because the {@code nc} of the container makes one connection to one of
-     * the addresses of a name and exits with the same code when a name cannot be resolved as when a connection is refused.
+     * Connects to every address of the target. The names are resolved here, because the {@code nc} of the container makes one connection to one of the addresses of a name and
+     * exits with the same code when a name cannot be resolved as when a connection is refused. A name is also tried inside the container, because a network can resolve it
+     * differently, for example through an alias. That attempt can only show that the target is reachable: a failure of it says nothing, as it may be a failed resolution.
      */
     private Verdict probe(String network, Target target) {
         List<String> addresses = resolve(target.host());
-        if (addresses.isEmpty()) {
-            return Verdict.INCONCLUSIVE;
-        }
-        boolean allRefused = true;
+        boolean allRefused = !addresses.isEmpty();
         for (String address : addresses) {
             Integer exitCode = runInContainer(network, target + " at " + address, "nc", "-w", String.valueOf(CONNECT_TIMEOUT_SECONDS), "-z", address,
                     String.valueOf(target.port()));
@@ -201,7 +199,23 @@ public class BuildContainerIsolationProbe {
             }
             allRefused &= Integer.valueOf(EXIT_CONNECTION_FAILED).equals(exitCode);
         }
+        if (!isAddress(target.host())) {
+            Integer exitCode = runInContainer(network, target.toString(), "nc", "-w", String.valueOf(CONNECT_TIMEOUT_SECONDS), "-z", target.host(), String.valueOf(target.port()));
+            if (Integer.valueOf(0).equals(exitCode)) {
+                return Verdict.REACHABLE;
+            }
+        }
         return allRefused ? Verdict.NOT_REACHABLE : Verdict.INCONCLUSIVE;
+    }
+
+    private static boolean isAddress(String host) {
+        try {
+            InetAddress.ofLiteral(host);
+            return true;
+        }
+        catch (IllegalArgumentException _) {
+            return false;
+        }
     }
 
     private static List<String> resolve(String host) {

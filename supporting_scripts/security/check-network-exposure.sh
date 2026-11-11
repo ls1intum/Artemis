@@ -52,35 +52,55 @@ is_open() {
     [ "$(probe "$1" "$2")" = "open" ]
 }
 
+# Prints every address of a name, one per line. A name has more than one address on dual-stack hosts and behind round robin DNS, and a connection goes to only one of them.
+addresses_of() {
+    if command -v python3 >/dev/null 2>&1; then
+        python3 -c 'import socket,sys
+try:
+    seen=[]
+    for info in socket.getaddrinfo(sys.argv[1], None, type=socket.SOCK_STREAM):
+        if info[4][0] not in seen:
+            seen.append(info[4][0]); print(info[4][0])
+except OSError:
+    pass' "$1"
+    else
+        echo "$1"
+    fi
+}
+
 for host in "$@"; do
-    echo "Host ${host}"
-    if [ "$(probe "${host}" 443)" = "error" ]; then
+    ADDRESSES="$(addresses_of "${host}")"
+    if [ -z "${ADDRESSES}" ]; then
+        echo "Host ${host}"
         echo "FAIL  the name ${host} cannot be resolved, so nothing was checked"
         FAILURES=$((FAILURES + 1))
         continue
     fi
-    for port in ${INTERNAL_PORTS}; do
-        if is_open "${host}" "${port}"; then
-            echo "FAIL  port ${port} is reachable but belongs to an internal service"
-            FAILURES=$((FAILURES + 1))
-        else
-            echo "ok    port ${port} is closed"
-        fi
-    done
-    for port in ${EXPECTED_PORTS}; do
-        if is_open "${host}" "${port}"; then
-            echo "ok    port ${port} is open, as expected"
-        else
-            echo "FAIL  port ${port} is expected to be open but is not reachable"
-            FAILURES=$((FAILURES + 1))
-        fi
-    done
-    for port in ${OPTIONAL_PORTS}; do
-        if is_open "${host}" "${port}"; then
-            echo "info  port ${port} is open"
-        else
-            echo "info  port ${port} is closed"
-        fi
+    for address in ${ADDRESSES}; do
+        echo "Host ${host} (${address})"
+        for port in ${INTERNAL_PORTS}; do
+            if is_open "${address}" "${port}"; then
+                echo "FAIL  port ${port} is reachable but belongs to an internal service"
+                FAILURES=$((FAILURES + 1))
+            else
+                echo "ok    port ${port} is closed"
+            fi
+        done
+        for port in ${EXPECTED_PORTS}; do
+            if is_open "${address}" "${port}"; then
+                echo "ok    port ${port} is open, as expected"
+            else
+                echo "FAIL  port ${port} is expected to be open but is not reachable"
+                FAILURES=$((FAILURES + 1))
+            fi
+        done
+        for port in ${OPTIONAL_PORTS}; do
+            if is_open "${address}" "${port}"; then
+                echo "info  port ${port} is open"
+            else
+                echo "info  port ${port} is closed"
+            fi
+        done
     done
 done
 
