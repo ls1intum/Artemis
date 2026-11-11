@@ -228,7 +228,7 @@ artemis:
       base-url: https://logos.example.org/v1 # the pool's own self-hosted, OpenAI-compatible endpoint, including the /v1 prefix
       api-key: <api-key> # leave empty if the endpoint needs none
       timeout: 5m # HTTP timeout of one model call
-      allowed-models: openai/gpt-oss-120b,Qwen/Qwen3.8-27B # self-hosted models the pool may use
+      allowed-models: openai/gpt-oss-120b # self-hosted models the pool may use
       generator-model: openai/gpt-oss-120b # model that generates pool questions; must be listed in allowed-models
       judge-model: openai/gpt-oss-120b # model that judges generated questions; must be listed in allowed-models
       generation-batch-size: 8 # questions requested per generation call
@@ -243,7 +243,7 @@ artemis:
     The pool sends lecture material to its model endpoint. It must be a self-hosted endpoint inside your institution, never a cloud provider. The pool does not use the chat model configured under `spring.ai` for Hyperion and Atlas, and it does not fall back to it.
 </Callout>
 
-The pool connects only through `base-url`, `api-key` and `timeout` above, independently of the `spring.ai` configuration. Both models must be served by that endpoint, and both must appear in `allowed-models`; `application-artemis.yml` ships the list of self-hosted models the pool has been evaluated with, so using another model is an explicit change of that list. If the endpoint is a gateway that also routes to hosted models, such as Logos, the allowlist is what keeps the pool on the self-hosted ones.
+The pool connects only through `base-url`, `api-key` and `timeout` above, independently of the `spring.ai` configuration. Both models must be served by that endpoint, and both must appear in `allowed-models`; `application-artemis.yml` ships `openai/gpt-oss-120b`, the self-hosted model the pool has been evaluated with, so using another model is an explicit change of that list. If the endpoint is a gateway that also routes to hosted models, such as Logos, the allowlist is what keeps the pool on the self-hosted ones.
 
 The server checks this configuration at startup:
 

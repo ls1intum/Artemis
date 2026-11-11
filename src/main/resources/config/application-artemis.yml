@@ -173,7 +173,7 @@ artemis:
       # HTTP timeout of one model call.
       timeout: 5m
       # Self-hosted models the pool may use; generator-model and judge-model must each be one of them.
-      allowed-models: openai/gpt-oss-120b,Qwen/Qwen3.8-27B
+      allowed-models: openai/gpt-oss-120b
       # Model that generates pool questions.
       generator-model:
       # Model that judges generated questions.
