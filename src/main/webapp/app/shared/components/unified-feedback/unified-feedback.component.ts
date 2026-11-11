@@ -21,7 +21,7 @@ import { GradingInstructionLinkIconComponent } from 'app/shared-ui/grading-instr
 import { FeedbackSuggestionBadgeComponent } from 'app/exercise/feedback/feedback-suggestion-badge/feedback-suggestion-badge.component';
 import { AssessmentCorrectionRoundBadgeComponent } from 'app/assessment/manage/unreferenced-feedback-detail/assessment-correction-round-badge/assessment-correction-round-badge.component';
 import { FormsModule } from '@angular/forms';
-import { PointsInputComponent } from 'app/shared-ui/tum-aet-ui-integration/points-input/points-input.component';
+import { POINTS_MAX_FRACTION_DIGITS, PointsInputComponent } from 'app/shared-ui/tum-aet-ui-integration/points-input/points-input.component';
 import { autogrowTextarea } from 'app/foundation/util/textarea-autogrow.util';
 
 export type FeedbackType = 'correct' | 'needs_revision' | 'not_attempted' | 'non_compliant';
@@ -214,7 +214,7 @@ export class UnifiedFeedbackComponent {
     /** Signed, compact points label for the read-only pill, e.g. `+10`, `-5`, `0` (no "Point(s)" word). */
     readonly pointsLabel = computed(() => {
         const points = this.effectivePoints();
-        const formatted = this.localeConversionService.toLocaleString(points, this.scoreAccuracy());
+        const formatted = this.localeConversionService.toLocaleString(points, this.assessmentLayout() ? POINTS_MAX_FRACTION_DIGITS : this.scoreAccuracy());
         return points > 0 ? `+${formatted}` : formatted;
     });
 
@@ -362,6 +362,9 @@ export class UnifiedFeedbackComponent {
      * shows the snapped value again because {@link feedbackCredits} is bound to it with `[ngModel]`.
      */
     onCreditsCommit(): void {
+        if (this.feedback()?.gradingInstruction) {
+            return;
+        }
         const normalized = this.normalizedCredits(this.feedbackCredits());
         if (normalized !== this.feedbackCredits()) {
             this.feedbackCredits.set(normalized);
