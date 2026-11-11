@@ -101,8 +101,6 @@ export class ExerciseActionsComponent {
 
     /** Controls the AI variant generation wizard/modal opened via the "Create Variant with AI" action. */
     protected readonly aiVariantModalVisible = signal(false);
-    /** Whether the quiz lifecycle buttons show icons only, because the row has no room for their labels. */
-    protected readonly quizButtonsCompact = signal(false);
 
     /** The current exercise typed as a quiz, or `undefined` for non-quiz exercises. Drives the lifecycle buttons. */
     readonly quizExercise = computed<QuizExercise | undefined>(() => {

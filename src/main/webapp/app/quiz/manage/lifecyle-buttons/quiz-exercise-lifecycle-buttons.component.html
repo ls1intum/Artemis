@@ -12,7 +12,7 @@
     tumAetUiTooltipPlacement="top"
     tumAetUiTooltipDescribesHost="false"
 >
-    <fa-icon [icon]="faPlayCircle" /><span class="ms-1" data-compactable-label [hidden]="compact()" jhiTranslate="artemisApp.quizExercise.startQuiz"></span>
+    <fa-icon [icon]="faPlayCircle" /><span class="ms-1" [hidden]="compact()" jhiTranslate="artemisApp.quizExercise.startQuiz"></span>
 </button>
 <button
     id="instructor-quiz-batches-{{ quizExercise().id }}"
@@ -30,7 +30,6 @@
 >
     <fa-icon [icon]="faBoxesStacked" /><span
         class="ms-1"
-        data-compactable-label
         [hidden]="compact()"
         jhiTranslate="artemisApp.quizExercise.batches"
         [translateValues]="{ count: quizExercise().quizBatches?.length ?? 0 }"
@@ -101,7 +100,7 @@
     [dialogError]="dialogError$"
     [hidden]="!showEndButton()"
 >
-    <fa-icon [icon]="faStopCircle" /><span class="ms-1" data-compactable-label [hidden]="compact()" jhiTranslate="artemisApp.quizExercise.endQuiz"></span>
+    <fa-icon [icon]="faStopCircle" /><span class="ms-1" [hidden]="compact()" jhiTranslate="artemisApp.quizExercise.endQuiz"></span>
 </button>
 <button
     id="quiz-set-visible-{{ quizExercise().id }}"
@@ -120,5 +119,5 @@
     tumAetUiTooltipPlacement="top"
     [hidden]="!showSetVisibleButton()"
 >
-    <fa-icon [icon]="faEye" /><span class="ms-1" data-compactable-label [hidden]="compact()" jhiTranslate="artemisApp.quizExercise.showNow"></span>
+    <fa-icon [icon]="faEye" /><span class="ms-1" [hidden]="compact()" jhiTranslate="artemisApp.quizExercise.showNow"></span>
 </button>

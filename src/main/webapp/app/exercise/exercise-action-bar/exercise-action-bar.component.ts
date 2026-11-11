@@ -47,9 +47,10 @@ function widthOf(element: HTMLElement): number {
 }
 
 /**
- * Owned, data-driven action row: renders every {@link ActionItem} as an icon button and folds whatever doesn't fit into
- * a trailing ellipsis menu (Edit/Participations/Edit in editor kept longest via {@link keepPriorityIds}, Delete folded first
- * via {@link collapseFirstIds}), based on measured button widths and the row's available width.
+ * Owned, data-driven action row: renders the {@link inlineIds} actions as icon buttons, at most {@link maxInline} of
+ * them, and every other {@link ActionItem} in a trailing ellipsis menu. Once the menu shows, Delete goes into it
+ * ({@link collapseFirstIds}); buttons that don't fit the row's available width fold into it too, Edit/Participations/Edit
+ * in editor last ({@link keepPriorityIds}), based on measured button widths.
  *
  * Both exercise row-action components render through this bar — `ExerciseActionsComponent` (course exercises) and
  * `ExamExerciseRowButtonsComponent` (exam exercises) — so they look and collapse identically; only the `ActionItem[]`
@@ -96,7 +97,12 @@ export class ExerciseActionBarComponent {
      * with the other rows.
      */
     readonly collapseFirstIds = input<string[]>(['delete']);
-    /** Most buttons shown inline; a row with more shows this many (in keep-priority order) and the rest in the menu. */
+    /** Ids that may show as buttons; every other action always sits in the ellipsis menu. */
+    readonly inlineIds = input<string[]>(['edit-in-editor', 'participations', 'edit', 'delete']);
+    /**
+     * Most buttons shown inline. A row with more actions shows the ellipsis, the {@link collapseFirstIds} ones always go
+     * into it, and at most this many of the rest stay inline (in keep-priority order).
+     */
     readonly maxInline = input<number>(3);
     /**
      * Ids rendered last, in this order, after all other actions. Every row then ends in the same buttons, so they line up
@@ -115,11 +121,6 @@ export class ExerciseActionBarComponent {
      * widest row needs and the leftover width goes to the other columns.
      */
     readonly naturalWidthChange = output<number>();
-    /**
-     * Whether the reserved content should drop its labels (marked `data-compactable-label`) and show icons only: true once
-     * the row cannot show every action next to the labelled reserved content. Its labels then never fold a button.
-     */
-    readonly reservedCompactChange = output<boolean>();
 
     protected readonly faEllipsis = faEllipsis;
 
@@ -137,12 +138,6 @@ export class ExerciseActionBarComponent {
     /** Full row width (updated by a ResizeObserver) and the reserved width of the always-visible prefix content. */
     private readonly rowWidth = signal(0);
     private readonly reservedWidth = signal(0);
-    /** Width of the reserved content's currently visible labels, and the last non-zero one, kept while they are hidden. */
-    private readonly reservedLabelsWidth = signal(0);
-    private readonly lastReservedLabelsWidth = signal(0);
-    /** Reserved width with icons only and with labels; neither depends on whether the labels currently show. */
-    private readonly compactReservedWidth = computed<number>(() => this.reservedWidth() - this.reservedLabelsWidth());
-    private readonly fullReservedWidth = computed<number>(() => this.compactReservedWidth() + this.lastReservedLabelsWidth());
     /** Width available for the collapsible main buttons: the row minus the reserved prefix content. */
     private readonly availableWidth = computed<number>(() => this.rowWidth() - this.reservedWidth());
     /** Natural width per button, keyed by a signature (id + label) so changing labels re-measure. */
@@ -232,14 +227,25 @@ export class ExerciseActionBarComponent {
         );
     });
 
-    /** Ids beyond the {@link maxInline} limit, whatever the width: the lowest keep-priority ones, so Delete goes first. */
+    /**
+     * Ids in the ellipsis menu whatever the width: the actions outside {@link inlineIds}, and once the menu shows, the
+     * {@link collapseFirstIds} ones and any beyond the {@link maxInline} limit (lowest keep-priority first).
+     */
     private readonly countHiddenIds = computed<ReadonlySet<string>>(() => {
         const actions = this.orderedItems();
-        if (actions.length <= this.maxInline()) {
-            return new Set();
+        const inlineIds = this.inlineIds();
+        const hidden = new Set(actions.filter((action) => !inlineIds.includes(action.id)).map((action) => action.id));
+        let inline = actions.filter((action) => !hidden.has(action.id));
+        if (hidden.size === 0 && inline.length <= this.maxInline()) {
+            return hidden;
         }
-        const byPriority = [...actions].sort((a, b) => this.keepPriorityOf(a) - this.keepPriorityOf(b));
-        return new Set(byPriority.slice(this.maxInline()).map((action) => action.id));
+        // The ellipsis shows, so Delete goes into it, keeping the other buttons in line with rows that end in Delete.
+        const collapseFirstIds = this.collapseFirstIds();
+        inline.filter((action) => collapseFirstIds.includes(action.id)).forEach((action) => hidden.add(action.id));
+        inline = inline.filter((action) => !hidden.has(action.id));
+        const byPriority = [...inline].sort((a, b) => this.keepPriorityOf(a) - this.keepPriorityOf(b));
+        byPriority.slice(this.maxInline()).forEach((action) => hidden.add(action.id));
+        return hidden;
     });
 
     /**
@@ -265,7 +271,7 @@ export class ExerciseActionBarComponent {
 
     readonly hasOverflow = computed<boolean>(() => this.hiddenIds().size > 0);
 
-    /** Natural width of the buttons within the {@link maxInline} limit, plus the ellipsis when the limit needs it; undefined until they are measured. */
+    /** Natural width of the buttons outside the menu, plus the ellipsis when the menu shows; undefined until they are measured. */
     private readonly buttonsWidth = computed<number | undefined>(() => {
         const countHidden = this.countHiddenIds();
         const actions = this.orderedItems().filter((action) => !countHidden.has(action.id));
@@ -275,20 +281,6 @@ export class ExerciseActionBarComponent {
         }
         const buttons = actions.reduce((sum, action) => sum + (widths.get(this.signatureOf(action)) ?? 0), 0) + (actions.length - 1) * GAP_PX;
         return buttons + (countHidden.size > 0 ? GAP_PX + ELLIPSIS_WIDTH_PX : 0);
-    });
-
-    /**
-     * Whether the reserved content drops its labels. Decided from widths that do not change with the decision (the row,
-     * the buttons and the labelled reserved width), so hiding the labels never flips it back.
-     */
-    private readonly reservedCompact = computed<boolean>(() => {
-        const buttons = this.buttonsWidth();
-        const labels = this.lastReservedLabelsWidth();
-        const row = this.rowWidth();
-        if (buttons === undefined || labels === 0 || row <= 0) {
-            return false;
-        }
-        return row - SAFETY_MARGIN_PX < this.fullReservedWidth() + GAP_PX + buttons;
     });
 
     /** The collapsed actions, shown in the ellipsis menu in display order. */
@@ -325,15 +317,6 @@ export class ExerciseActionBarComponent {
                     this.rowWidth.set(widthOf(rowEl));
                 }
                 this.reservedWidth.set(reservedEl ? widthOf(reservedEl) : 0);
-                // A hidden label measures 0, and its margin only takes up room while it shows.
-                const labels = [...(reservedEl?.querySelectorAll<HTMLElement>('[data-compactable-label]') ?? [])].reduce((sum, label) => {
-                    const width = widthOf(label);
-                    return width > 0 ? sum + width + (parseFloat(getComputedStyle(label).marginInlineStart) || 0) : sum;
-                }, 0);
-                this.reservedLabelsWidth.set(labels);
-                if (labels > 0) {
-                    this.lastReservedLabelsWidth.set(labels);
-                }
             };
 
             const observer = new ResizeObserver(() => {
@@ -373,20 +356,16 @@ export class ExerciseActionBarComponent {
         // includes its own trailing separator) plus the gap, the ellipsis trigger, and a safety margin against
         // sub-pixel clipping. Reserved-content width doesn't depend on the column width, so this never feeds back.
         // Rows without reserved content report 0.
-        // The reserved content counts with icons only: it drops its labels before the column scrolls.
         effect(() => {
-            const reserved = this.compactReservedWidth();
+            const reserved = this.reservedWidth();
             this.columnMinWidthChange.emit(reserved > 0 ? reserved + GAP_PX + ELLIPSIS_WIDTH_PX + SAFETY_MARGIN_PX : 0);
         });
 
-        effect(() => this.reservedCompactChange.emit(this.reservedCompact()));
-
         // Report the width that shows every button: the measured buttons (collapsed ones keep their last width), their
         // gaps and the reserved content. None of these depend on the column width, so this never feeds back either.
-        // The reserved content counts with its labels, which it shows whenever the row is this wide.
         effect(() => {
             const buttons = this.buttonsWidth();
-            const reserved = this.fullReservedWidth();
+            const reserved = this.reservedWidth();
             if (buttons === undefined) {
                 this.naturalWidthChange.emit(0);
                 return;
