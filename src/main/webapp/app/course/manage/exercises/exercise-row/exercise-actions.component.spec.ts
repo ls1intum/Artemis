@@ -37,6 +37,8 @@ import { MockEntityDeletionService } from 'test/helpers/mocks/service/mock-entit
 @Component({ selector: 'jhi-quiz-exercise-lifecycle-buttons', template: '' })
 class QuizLifecycleButtonsStubComponent {
     quizExercise = input.required<QuizExercise>();
+    variant = input<'solid' | 'outlined'>('solid');
+    compact = input(false);
     loadOne = output<number>();
     handleNewQuizExercise = output<QuizExercise>();
 }

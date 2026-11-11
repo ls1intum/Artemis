@@ -31,13 +31,23 @@ describe('ExerciseActionBarComponent', () => {
     afterEach(() => vi.restoreAllMocks());
 
     describe('hiddenIds / hasOverflow', () => {
-        it('shows every action inline, without the ellipsis, before the row width is measured', () => {
-            fixture.componentRef.setInput('items', buildActions(['teams', 'participations', 'statistics', 'edit', 'delete']));
+        it('shows up to four actions inline, without the ellipsis, before the row width is measured', () => {
+            fixture.componentRef.setInput('items', buildActions(['teams', 'participations', 'edit', 'delete']));
             fixture.detectChanges();
 
             expect(component.hiddenIds().size).toBe(0);
             expect(component.hasOverflow()).toBe(false);
             expect(component.hiddenActions()).toEqual([]);
+        });
+
+        it('shows at most four actions and folds delete first, then the other actions, however wide the row', () => {
+            fixture.componentRef.setInput('items', buildActions(['statistics', 'preview', 'solution', 'participations', 'edit', 'delete']));
+            seedEqualWidths(30);
+            component['reservedWidth'].set(0);
+            component['rowWidth'].set(2000);
+
+            expect(component.hasOverflow()).toBe(true);
+            expect(component.hiddenActions().map((a) => a.id)).toEqual(['solution', 'delete']);
         });
 
         it('renders the trailing actions last, set apart from the others before them', () => {
