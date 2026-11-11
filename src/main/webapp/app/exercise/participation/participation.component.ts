@@ -270,6 +270,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
     readonly tableOptions = computed<TableViewOptions>(() => ({
         dataKey: 'participationId',
         searchSize: 'small',
+        searchFullWidth: true,
         striped: true,
         fill: true,
         showSearch: !this.hideParticipantInformation(),

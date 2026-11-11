@@ -1,14 +1,15 @@
 <tumaet-ui-table-layout
     [loading]="loading()"
     [fill]="resolvedOptions().fill"
+    [autoToolbarHeight]="!!resolvedOptions().searchFullWidth"
     [empty]="visibleValues().length === 0 && !loading()"
     [emptyTitle]="resolvedOptions().emptyMessageTranslation"
 >
     <!-- `hidden` instead of @if: an @if around a projected node is not projected into its slot when whitespace is preserved (NG8011). -->
-    <div tumAetUiTableToolbar class="flex min-w-0 flex-1 items-center gap-2" [hidden]="!showCaption()">
+    <div tumAetUiTableToolbar class="flex min-w-0 flex-1 gap-2" [class]="resolvedOptions().searchFullWidth ? 'flex-col items-stretch' : 'items-center'" [hidden]="!showCaption()">
         @if (resolvedOptions().showSearch) {
             <jhi-search-filter
-                class="min-w-24 max-w-lg flex-1"
+                [class]="resolvedOptions().searchFullWidth ? 'min-w-0 w-full' : 'min-w-24 max-w-lg flex-1'"
                 [size]="resolvedOptions().searchSize"
                 [placeholderKey]="resolvedOptions().searchPlaceholder"
                 (newSearchEvent)="onGlobalSearch($event)"
