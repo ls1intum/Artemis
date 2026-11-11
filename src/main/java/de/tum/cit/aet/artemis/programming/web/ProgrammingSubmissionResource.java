@@ -428,6 +428,31 @@ public class ProgrammingSubmissionResource {
 
         authCheckService.checkTeamAssessmentAccessElseThrow(programmingSubmission);
 
+        programmingSubmission = lockSubmissionIfNeeded(programmingSubmission, participation, programmingExercise, submissionId, correctionRound, numberOfEnabledCorrectionRounds);
+
+        // prepare programming submission for response (double-blind assessment: removes the participant for tutors)
+        programmingSubmissionService.hideDetails(programmingSubmission, user);
+
+        // Only the manual result of the requested correction round belongs in the response, read off the correction
+        // round stored on the result itself. The automatic results are filtered in the mapper instead of by mutating
+        // the managed submission, whose result collection is mapped with orphanRemoval.
+        var resultForCorrectionRound = programmingSubmission.getResultForCorrectionRound(correctionRound);
+        List<Result> resultsForResponse;
+        if (resultForCorrectionRound == null) {
+            resultsForResponse = List.of();
+        }
+        else {
+            // the copied automatic test-case and SCA feedback lives in the JSON-ignored typed collections -
+            // attach the synthesized legacy views so the tutor sees the automatic feedback in the editor
+            programmingFeedbackSynthesizerService.attachSynthesizedFeedback(resultForCorrectionRound, programmingExercise, false);
+            resultsForResponse = List.of(resultForCorrectionRound);
+        }
+
+        return ResponseEntity.ok(ProgrammingSubmissionForTutorAssessmentDTO.of(programmingSubmission, programmingExercise, resultsForResponse));
+    }
+
+    private ProgrammingSubmission lockSubmissionIfNeeded(ProgrammingSubmission programmingSubmission, Participation participation, ProgrammingExercise programmingExercise,
+            Long submissionId, int correctionRound, int numberOfEnabledCorrectionRounds) {
         long numberOfManualResults = programmingSubmission.getResults().stream().filter(Result::isManual).count();
 
         // this makes sure that new results are only created if it is really necessary.
@@ -457,26 +482,7 @@ public class ProgrammingSubmissionResource {
                 && programmingSubmission.getResultForCorrectionRound(correctionRound).getCompletionDate() == null) {
             programmingSubmission = programmingSubmissionService.lockAndGetProgrammingSubmission(programmingSubmission.getId(), correctionRound);
         }
-
-        // prepare programming submission for response (double-blind assessment: removes the participant for tutors)
-        programmingSubmissionService.hideDetails(programmingSubmission, user);
-
-        // Only the manual result of the requested correction round belongs in the response, read off the correction
-        // round stored on the result itself. The automatic results are filtered in the mapper instead of by mutating
-        // the managed submission, whose result collection is mapped with orphanRemoval.
-        var resultForCorrectionRound = programmingSubmission.getResultForCorrectionRound(correctionRound);
-        List<Result> resultsForResponse;
-        if (resultForCorrectionRound == null) {
-            resultsForResponse = List.of();
-        }
-        else {
-            // the copied automatic test-case and SCA feedback lives in the JSON-ignored typed collections -
-            // attach the synthesized legacy views so the tutor sees the automatic feedback in the editor
-            programmingFeedbackSynthesizerService.attachSynthesizedFeedback(resultForCorrectionRound, programmingExercise, false);
-            resultsForResponse = List.of(resultForCorrectionRound);
-        }
-
-        return ResponseEntity.ok(ProgrammingSubmissionForTutorAssessmentDTO.of(programmingSubmission, programmingExercise, resultsForResponse));
+        return programmingSubmission;
     }
 
     /**
