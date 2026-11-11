@@ -42,6 +42,7 @@ import java.util.stream.Collectors;
 
 import javax.imageio.ImageIO;
 
+import org.assertj.core.api.InstanceOfAssertFactories;
 import org.assertj.core.data.Offset;
 import org.jspecify.annotations.NonNull;
 import org.mockito.MockedStatic;
@@ -1847,6 +1848,26 @@ public class CourseTestService {
         assertThat(currentTutorLeaderboard.numberOfTutorMoreFeedbackRequests()).isZero();
         assertThat(currentTutorLeaderboard.numberOfAssessments()).isZero();
         assertThat(currentTutorLeaderboard.points()).isZero();
+
+        // The generated client relies on what the course route leaves out of the JSON: properties it does not set are omitted,
+        // while a set count of 0 is sent, and the due-date statistic has exactly its two counts.
+        Map<String, Object> json = getJsonObject("/api/course/courses/" + testCourse.getId() + "/stats-for-assessment-dashboard");
+        assertThat(json).doesNotContainKeys("numberOfStudents", "complaintsEnabled", "feedbackRequestEnabled", "numberOfAssessmentsOfCorrectionRounds",
+                "numberOfLockedAssessmentByOtherTutorsOfCorrectionRound", "numberOfAutomaticAssistedAssessments");
+        assertThat(json).containsEntry("totalNumberOfAssessments", 0).containsEntry("numberOfRatings", 0).containsEntry("numberOfComplaints", 0)
+                .containsEntry("numberOfOpenComplaints", 0).containsEntry("numberOfAssessmentLocks", 0).containsEntry("totalNumberOfAssessmentLocks", 0);
+        assertThat(json.get("numberOfSubmissions")).asInstanceOf(InstanceOfAssertFactories.map(String.class, Object.class)).containsOnlyKeys("inTime", "late")
+                .allSatisfy((key, count) -> assertThat(count).isInstanceOf(Number.class));
+        assertThat(json.get("tutorLeaderboardEntries")).asInstanceOf(InstanceOfAssertFactories.LIST).isNotEmpty();
+    }
+
+    /**
+     * Reads a JSON object response as raw fields, so that a test can tell an omitted property from one deserialized to its default.
+     */
+    private Map<String, Object> getJsonObject(String path) throws Exception {
+        String json = request.get(path, HttpStatus.OK, String.class);
+        return objectMapper.readValue(json, new TypeReference<>() {
+        });
     }
 
     // Test
@@ -3086,6 +3107,13 @@ public class CourseTestService {
 
         // Check results
         assertThat(courseDTO).isNotNull();
+
+        // A course without exercises sends every figure, including the LLM cost, as a real 0 rather than leaving it out
+        Map<String, Object> json = getJsonObject("/api/course/courses/" + course.getId() + "/management-detail");
+        assertThat(json).containsOnlyKeys("currentPercentageAssessments", "currentAbsoluteAssessments", "currentMaxAssessments", "currentPercentageComplaints",
+                "currentAbsoluteComplaints", "currentMaxComplaints", "currentPercentageMoreFeedbacks", "currentAbsoluteMoreFeedbacks", "currentMaxMoreFeedbacks",
+                "currentPercentageAverageScore", "currentAbsoluteAverageScore", "currentMaxAverageScore", "currentTotalLlmCostInEur");
+        assertThat(json.values()).allSatisfy(value -> assertThat(((Number) value).doubleValue()).isZero());
     }
 
     // Test
@@ -3294,6 +3322,22 @@ public class CourseTestService {
         course1.setEndDate(now.plusWeeks(20));
         activeStudents = request.get("/api/course/courses/" + course1.getId() + "/statistics", HttpStatus.OK, Integer[].class, parameters);
         assertThat(activeStudents).isNotNull();
+
+        // Without a period size, a course long enough for a full period gets the default of 17 weeks
+        course2.setStartDate(now.minusWeeks(30));
+        course2.setEndDate(now.plusWeeks(1));
+        courseRepo.save(course2);
+        LinkedMultiValueMap<String, String> periodIndexOnly = new LinkedMultiValueMap<>();
+        periodIndexOnly.add("periodIndex", "0");
+        LinkedMultiValueMap<String, String> explicitDefaultSize = new LinkedMultiValueMap<>();
+        explicitDefaultSize.add("periodIndex", "0");
+        explicitDefaultSize.add("periodSize", "17");
+        Integer[] defaultSizeStudents = request.get("/api/course/courses/" + course2.getId() + "/statistics", HttpStatus.OK, Integer[].class, periodIndexOnly);
+        Integer[] explicitSizeStudents = request.get("/api/course/courses/" + course2.getId() + "/statistics", HttpStatus.OK, Integer[].class, explicitDefaultSize);
+        assertThat(defaultSizeStudents).hasSize(17).isEqualTo(explicitSizeStudents);
+
+        // The period index is required
+        request.get("/api/course/courses/" + course2.getId() + "/statistics", HttpStatus.BAD_REQUEST, Integer[].class);
     }
 
     // Test
