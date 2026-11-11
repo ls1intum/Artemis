@@ -92,9 +92,22 @@
                                     <jhi-presentation-assessment-instances-table
                                         [rows]="studentRows()"
                                         [presentationAssessment]="presentationAssessment"
+                                        [sortField]="studentSortField()"
+                                        [sortOrder]="studentSortOrder()"
                                         [canDelete]="isAtLeastEditor()"
+                                        (sortChange)="onStudentSort($event)"
                                         (editInstance)="startEditInstance($event.presentationAssessment, $event.instance)"
                                         (deleteInstance)="deleteInstance($event.presentationAssessment, $event.instance)"
+                                    />
+                                    <tumaet-ui-paginator
+                                        tumAetUiTableFooter
+                                        [page]="overviewPage()"
+                                        [pageSize]="overviewPageSize()"
+                                        [pageSizeOptions]="[10, 25, 50, 100]"
+                                        [totalRecords]="totalStudentRows()"
+                                        [disabled]="isLoadingStudentRows()"
+                                        (pageChange)="overviewPage.set($event)"
+                                        (pageSizeChange)="updateOverviewPageSize($event)"
                                     />
                                     <div tumAetUiTableEmptyActions>
                                         <tumaet-ui-button size="small" (clicked)="startCreateInstance(presentationAssessment)" data-testid="empty-create-instance-button">

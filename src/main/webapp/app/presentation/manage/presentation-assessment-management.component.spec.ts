@@ -1355,6 +1355,37 @@ describe('PresentationAssessmentManagementComponent', () => {
         expect(presentationAssessmentService.findStudentRows).toHaveBeenLastCalledWith(courseId, expect.objectContaining({ sortField: 'resultPoints', page: 0 }));
     });
 
+    it('should sort the students of a presentation on the server and page through more than 25 of them', () => {
+        presentationAssessmentService.findStudentRows.mockReturnValue(
+            of(
+                new HttpResponse({
+                    body: instances.map((instance) => ({ presentationAssessment, instance })),
+                    headers: new HttpHeaders({ 'X-Total-Count': '60' }),
+                }),
+            ),
+        );
+        routeParamMap.next(convertToParamMap({ courseId, presentationId: presentationAssessment.id }));
+        fixture.detectChanges();
+        presentationAssessmentService.findStudentRows.mockClear();
+
+        const header = query('[data-testid="presentation-instances-table"] th[tumAetUiSortableColumn="resultPoints"]')!;
+        ((header.querySelector('button') ?? header) as HTMLElement).click();
+        fixture.detectChanges();
+
+        expect(presentationAssessmentService.findStudentRows).toHaveBeenLastCalledWith(
+            courseId,
+            expect.objectContaining({ sortField: 'resultPoints', page: 0, assessmentId: presentationAssessment.id }),
+        );
+
+        (query('button[aria-label="global.paginator.next"]') as HTMLButtonElement).click();
+        fixture.detectChanges();
+
+        expect(presentationAssessmentService.findStudentRows).toHaveBeenLastCalledWith(
+            courseId,
+            expect.objectContaining({ sortField: 'resultPoints', page: 1, size: 25, assessmentId: presentationAssessment.id }),
+        );
+    });
+
     it('should load the next page of the overview from the paginator', () => {
         // More rows than fit on one page (25), so the paginator offers a next page.
         presentationAssessmentService.findStudentRows.mockReturnValue(

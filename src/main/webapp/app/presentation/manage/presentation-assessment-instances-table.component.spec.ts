@@ -1,7 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { DialogService } from 'primeng/dynamicdialog';
-import dayjs from 'dayjs/esm';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { User } from 'app/account/user/user.model';
@@ -39,6 +38,8 @@ describe('PresentationAssessmentInstancesTableComponent', () => {
         fixture.componentRef.setInput('rows', rows);
         fixture.componentRef.setInput('presentationAssessment', presentationAssessment);
         fixture.componentRef.setInput('canDelete', canDelete);
+        fixture.componentRef.setInput('sortField', 'studentLogin');
+        fixture.componentRef.setInput('sortOrder', 1);
         fixture.detectChanges();
     }
 
@@ -115,68 +116,26 @@ describe('PresentationAssessmentInstancesTableComponent', () => {
         fixture.detectChanges();
         expect(query('.presentation-detail-row')).toBeNull();
     });
+
     describe('sorting', () => {
-        const rows = () => [
-            createRow({ studentLogin: 'b', rowKey: '1:b', displayName: 'bob', assessed: true, instance: { id: 1, resultPoints: 5, presentationDate: dayjs('2026-02-01') } }),
-            createRow({ studentLogin: 'a', rowKey: '2:a', displayName: 'Alice', assessed: false, instance: { id: 2 } }),
-            createRow({ studentLogin: 'c', rowKey: '3:c', displayName: 'carol', assessed: true, instance: { id: 3, resultPoints: 15, presentationDate: dayjs('2026-01-01') } }),
-        ];
-        const order = () => Array.from(element().querySelectorAll<HTMLElement>('[data-testid="toggle-row-details"]')).map((el) => el.textContent!.trim());
-        const sortBy = (field: string, direction: 1 | -1) => {
-            component['onSortChange']({ field, order: direction });
-            fixture.detectChanges();
-        };
+        it('should emit the sort event of a server sortable header and keep the order of the rows', () => {
+            const sortSpy = vi.fn();
+            component.sortChange.subscribe(sortSpy);
+            const rows = [createRow({ studentLogin: 'b', rowKey: '1:b', displayName: 'bob' }), createRow({ studentLogin: 'a', rowKey: '2:a', displayName: 'Alice' })];
+            render(rows);
 
-        it('should keep the incoming order until a column is selected', () => {
-            render(rows());
-            expect(component['sortField']()).toBeUndefined();
-            expect(component['sortedRows']().map((row) => row.studentLogin)).toEqual(['b', 'a', 'c']);
+            const header = query('th[tumAetUiSortableColumn="resultPoints"]')!;
+            ((header.querySelector('button') ?? header) as HTMLElement).click();
+
+            expect(sortSpy).toHaveBeenCalledWith(expect.objectContaining({ field: 'resultPoints' }));
+            const names = Array.from(element().querySelectorAll<HTMLElement>('[data-testid="toggle-row-details"]')).map((el) => el.textContent!.trim());
+            expect(names[0]).toContain('bob');
         });
 
-        it('should store the sort event and sort by the lower-cased display name', () => {
-            render(rows());
-            sortBy('displayName', 1);
-            expect(component['sortField']()).toBe('displayName');
-            expect(component['sortOrder']()).toBe(1);
-            expect(component['sortedRows']().map((row) => row.studentLogin)).toEqual(['a', 'b', 'c']);
-            sortBy('displayName', -1);
-            expect(component['sortedRows']().map((row) => row.studentLogin)).toEqual(['c', 'b', 'a']);
-        });
-
-        it('should sort pending rows before assessed ones ascending by status', () => {
-            render(rows());
-            sortBy('assessed', 1);
-            expect(component['sortedRows']()[0].studentLogin).toBe('a');
-            sortBy('assessed', -1);
-            expect(component['sortedRows']()[2].studentLogin).toBe('a');
-        });
-
-        it('should sort by result points and treat missing points as the lowest value', () => {
-            render(rows());
-            sortBy('resultPoints', 1);
-            expect(component['sortedRows']().map((row) => row.studentLogin)).toEqual(['a', 'b', 'c']);
-            sortBy('resultPoints', -1);
-            expect(component['sortedRows']().map((row) => row.studentLogin)).toEqual(['c', 'b', 'a']);
-        });
-
-        it('should sort by presentation date and treat missing dates as the earliest', () => {
-            render(rows());
-            sortBy('presentationDate', 1);
-            expect(component['sortedRows']().map((row) => row.studentLogin)).toEqual(['a', 'c', 'b']);
-            sortBy('presentationDate', -1);
-            expect(component['sortedRows']().map((row) => row.studentLogin)).toEqual(['b', 'c', 'a']);
-        });
-
-        it('should render the rows in the selected order when a sortable header is clicked', () => {
-            render(rows());
-            const header = query('th[tumAetUiSortableColumn="displayName"]')!;
-            const trigger = (header.querySelector('button') ?? header) as HTMLElement;
-            trigger.click();
-            fixture.detectChanges();
-
-            expect(component['sortField']()).toBe('displayName');
-            expect(order()).toHaveLength(3);
-            expect(order()[0]).toContain('Alice');
+        it('should not offer sorting by the status because the server cannot sort by it', () => {
+            render([createRow()]);
+            expect(query('th[tumAetUiSortableColumn="assessed"]')).toBeNull();
+            expect(element().querySelectorAll('th[tumAetUiSortableColumn]')).toHaveLength(3);
         });
     });
 });

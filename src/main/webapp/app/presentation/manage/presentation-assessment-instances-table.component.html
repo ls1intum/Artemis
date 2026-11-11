@@ -1,8 +1,8 @@
-<table tumAetUiTable size="small" [sortField]="sortField()" [sortOrder]="sortOrder()" (sortChange)="onSortChange($event)" data-testid="presentation-instances-table">
+<table tumAetUiTable size="small" [sortField]="sortField()" [sortOrder]="sortOrder()" (sortChange)="sortChange.emit($event)" data-testid="presentation-instances-table">
     <thead>
         <tr>
-            <th tumAetUiSortableColumn="displayName"><span jhiTranslate="artemisApp.presentationAssessment.student"></span></th>
-            <th tumAetUiSortableColumn="assessed"><span jhiTranslate="artemisApp.presentationAssessment.status"></span></th>
+            <th tumAetUiSortableColumn="studentLogin"><span jhiTranslate="artemisApp.presentationAssessment.student"></span></th>
+            <th><span jhiTranslate="artemisApp.presentationAssessment.status"></span></th>
             <th tumAetUiSortableColumn="resultPoints"><span jhiTranslate="artemisApp.presentationAssessment.assessment"></span></th>
             <th tumAetUiSortableColumn="presentationDate"><span jhiTranslate="artemisApp.presentationAssessment.presentationDate"></span></th>
             <th><span jhiTranslate="artemisApp.presentationAssessment.remark"></span></th>
@@ -10,7 +10,7 @@
         </tr>
     </thead>
     <tbody>
-        @for (row of sortedRows(); track row.rowKey) {
+        @for (row of rows(); track row.rowKey) {
             @let expanded = expandedRowKeys().includes(row.rowKey);
             <tr>
                 <td>
