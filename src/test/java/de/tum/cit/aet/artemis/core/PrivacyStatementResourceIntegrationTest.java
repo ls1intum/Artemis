@@ -6,6 +6,11 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.never;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -21,7 +26,10 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.mockito.MockedStatic;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
+
+import tools.jackson.databind.node.ObjectNode;
 
 import de.tum.cit.aet.artemis.admin.dto.PrivacyStatementDTO;
 import de.tum.cit.aet.artemis.core.domain.Language;
@@ -40,8 +48,11 @@ class PrivacyStatementResourceIntegrationTest extends AbstractSpringIntegrationI
     }
 
     @Test
-    void testGetPrivacyStatement_unsupportedLanguageBadRequest() throws Exception {
-        request.get("/api/core/public/privacy-statement?language=fr", HttpStatus.BAD_REQUEST, PrivacyStatementDTO.class);
+    void testGetPrivacyStatement_invalidLanguageBadRequest() throws Exception {
+        request.performMvcRequest(get("/api/core/public/privacy-statement")).andExpect(status().isBadRequest());
+        request.performMvcRequest(get("/api/core/public/privacy-statement").param("language", "fr")).andExpect(status().isBadRequest());
+        request.performMvcRequest(get("/api/core/public/privacy-statement").param("language", "EN")).andExpect(status().isBadRequest());
+        request.performMvcRequest(get("/api/core/public/privacy-statement").param("language", "")).andExpect(status().isBadRequest());
     }
 
     @Test
@@ -99,28 +110,15 @@ class PrivacyStatementResourceIntegrationTest extends AbstractSpringIntegrationI
     @ParameterizedTest
     @EnumSource(value = Language.class, names = { "GERMAN", "ENGLISH" })
     void testGetPrivacyStatementReturnsOtherLanguageIfFirstLanguageNotFound(Language language) throws Exception {
-        PrivacyStatementDTO response;
+        Language fallback = language == Language.GERMAN ? Language.ENGLISH : Language.GERMAN;
+        String filename = "privacy_statement_" + fallback.getShortName() + ".md";
+        String text = fallback == Language.ENGLISH ? "Privacy Statement" : "Datenschutzerklärung";
         try (MockedStatic<Files> mockedFiles = mockStatic(Files.class)) {
-            if ("de".equals(language.getShortName())) {
-                mockedFiles.when(() -> Files.exists(argThat(path -> path.toString().contains("_de")))).thenReturn(false);
-                mockedFiles.when(() -> Files.exists(argThat(path -> path.toString().contains("_en")))).thenReturn(true);
-                mockedFiles.when(() -> Files.readString(argThat(path -> path.toString().contains("_en")))).thenReturn("Privacy Statement");
-            }
-            else {
-                mockedFiles.when(() -> Files.exists(argThat(path -> path.toString().contains("_de")))).thenReturn(true);
-                mockedFiles.when(() -> Files.exists(argThat(path -> path.toString().contains("_en")))).thenReturn(false);
-                mockedFiles.when(() -> Files.readString(argThat(path -> path.toString().contains("_de")))).thenReturn("Datenschutzerklärung");
-            }
+            mockedFiles.when(() -> Files.exists(argThat(path -> path.endsWith(filename)))).thenReturn(true);
+            mockedFiles.when(() -> Files.readString(argThat(path -> path.endsWith(filename)))).thenReturn(text);
 
-            response = request.get("/api/core/public/privacy-statement?language=" + language.getShortName(), HttpStatus.OK, PrivacyStatementDTO.class);
-        }
-        if ("de".equals(language.getShortName())) {
-            assertThat(response.language()).isEqualTo(Language.ENGLISH);
-            assertThat(response.text()).isEqualTo("Privacy Statement");
-        }
-        else {
-            assertThat(response.language()).isEqualTo(Language.GERMAN);
-            assertThat(response.text()).isEqualTo("Datenschutzerklärung");
+            request.performMvcRequest(get("/api/core/public/privacy-statement").param("language", language.getShortName())).andExpect(status().isOk())
+                    .andExpect(jsonPath("$.type").value("PRIVACY_STATEMENT")).andExpect(jsonPath("$.language").value(fallback.name())).andExpect(jsonPath("$.text").value(text));
         }
     }
 
@@ -142,68 +140,65 @@ class PrivacyStatementResourceIntegrationTest extends AbstractSpringIntegrationI
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
-    void testGetPrivacyStatementForUpdate_unsupportedLanguageBadRequest() throws Exception {
-        request.get("/api/admin/privacy-statement-for-update?language=fr", HttpStatus.BAD_REQUEST, PrivacyStatementDTO.class);
+    void testGetPrivacyStatementForUpdate_invalidLanguageBadRequest() throws Exception {
+        request.performMvcRequest(get("/api/admin/privacy-statement-for-update")).andExpect(status().isBadRequest());
+        request.restoreSecurityContext();
+        request.performMvcRequest(get("/api/admin/privacy-statement-for-update").param("language", "fr")).andExpect(status().isBadRequest());
+        request.restoreSecurityContext();
+        request.performMvcRequest(get("/api/admin/privacy-statement-for-update").param("language", "EN")).andExpect(status().isBadRequest());
+        request.restoreSecurityContext();
+        request.performMvcRequest(get("/api/admin/privacy-statement-for-update").param("language", "")).andExpect(status().isBadRequest());
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
     void testGetPrivacyStatementForUpdateFileDoesntExist() throws Exception {
-        PrivacyStatementDTO response;
         try (MockedStatic<Files> mockedFiles = mockStatic(Files.class)) {
             mockedFiles.when(() -> Files.exists(any())).thenReturn(false);
-            response = request.get("/api/admin/privacy-statement-for-update?language=de", HttpStatus.OK, PrivacyStatementDTO.class);
+
+            request.performMvcRequest(get("/api/admin/privacy-statement-for-update").param("language", "de")).andExpect(status().isOk())
+                    .andExpect(jsonPath("$.type").value("PRIVACY_STATEMENT")).andExpect(jsonPath("$.language").value("GERMAN")).andExpect(jsonPath("$.text").doesNotHaveJsonPath());
         }
-        assertThat(response.text()).isNull();
-        assertThat(response.language()).isEqualTo(Language.GERMAN);
     }
 
     @ParameterizedTest
     @EnumSource(value = Language.class, names = { "GERMAN", "ENGLISH" })
     void testGetPrivacyStatementReturnsCorrectFileContent(Language language) throws Exception {
-        PrivacyStatementDTO response;
+        String filename = "privacy_statement_" + language.getShortName() + ".md";
+        String text = language == Language.ENGLISH ? "Privacy Statement" : "Datenschutzerklärung";
         try (MockedStatic<Files> mockedFiles = mockStatic(Files.class)) {
-            mockedFiles.when(() -> Files.exists(any())).thenReturn(true);
-            if (language == Language.ENGLISH) {
-                mockedFiles.when(() -> Files.readString(argThat(path -> path.toString().contains("_en")))).thenReturn("Privacy Statement");
-            }
-            else {
-                mockedFiles.when(() -> Files.readString(argThat(path -> path.toString().contains("_de")))).thenReturn("Datenschutzerklärung");
-            }
-            response = request.get("/api/core/public/privacy-statement?language=" + language.getShortName(), HttpStatus.OK, PrivacyStatementDTO.class);
-        }
+            mockedFiles.when(() -> Files.exists(argThat(path -> path.endsWith(filename)))).thenReturn(true);
+            mockedFiles.when(() -> Files.readString(argThat(path -> path.endsWith(filename)))).thenReturn(text);
 
-        assertThat(response.language()).isEqualTo(language);
-        if (language == Language.ENGLISH) {
-            assertThat(response.text()).isEqualTo("Privacy Statement");
-        }
-        else {
-            assertThat(response.text()).isEqualTo("Datenschutzerklärung");
+            request.performMvcRequest(get("/api/core/public/privacy-statement").param("language", language.getShortName())).andExpect(status().isOk())
+                    .andExpect(jsonPath("$.type").value("PRIVACY_STATEMENT")).andExpect(jsonPath("$.language").value(language.name())).andExpect(jsonPath("$.text").value(text));
         }
     }
 
     @ParameterizedTest
     @EnumSource(value = Language.class, names = { "GERMAN", "ENGLISH" })
     @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
-    void testGetPrivacyStatementForUpdateReturnsCorrectFileContent(Language language) throws Exception {
-        PrivacyStatementDTO response;
-        try (MockedStatic<Files> mockedFiles = mockStatic(Files.class)) {
+    void testPrivacyStatementEditRoundTrip(Language language) throws Exception {
+        String filename = "privacy_statement_" + language.getShortName() + ".md";
+        String text = language == Language.ENGLISH ? "Privacy Statement" : "Datenschutzerklärung";
+        String editedText = "## Aktualisierter Text für " + text;
+        try (MockedStatic<Files> mockedFiles = mockStatic(Files.class); MockedStatic<FileUtils> mockedFileUtils = mockStatic(FileUtils.class)) {
             mockedFiles.when(() -> Files.exists(any())).thenReturn(true);
-            if ("de".equals(language.getShortName())) {
-                mockedFiles.when(() -> Files.readString(argThat(path -> path.toString().contains("_de")))).thenReturn("Datenschutzerklärung");
-            }
-            else {
-                mockedFiles.when(() -> Files.readString(argThat(path -> path.toString().contains("_en")))).thenReturn("Privacy Statement");
-            }
-            response = request.get("/api/admin/privacy-statement-for-update?language=" + language.getShortName(), HttpStatus.OK, PrivacyStatementDTO.class);
-        }
+            mockedFiles.when(() -> Files.readString(argThat(path -> path.endsWith(filename)))).thenReturn(text);
 
-        assertThat(response.language()).isEqualTo(language);
-        if ("de".equals(language.getShortName())) {
-            assertThat(response.text()).isEqualTo("Datenschutzerklärung");
-        }
-        else {
-            assertThat(response.text()).isEqualTo("Privacy Statement");
+            var response = request.performMvcRequest(get("/api/admin/privacy-statement-for-update").param("language", language.getShortName())).andExpect(status().isOk())
+                    .andExpect(jsonPath("$.type").value("PRIVACY_STATEMENT")).andExpect(jsonPath("$.language").value(language.name())).andExpect(jsonPath("$.text").value(text))
+                    .andReturn().getResponse();
+
+            request.restoreSecurityContext();
+            var mapper = request.getObjectMapper();
+            var payload = (ObjectNode) mapper.readTree(response.getContentAsByteArray());
+            payload.put("text", editedText);
+            request.performMvcRequest(put("/api/admin/privacy-statement").contentType(MediaType.APPLICATION_JSON).content(mapper.writeValueAsBytes(payload)))
+                    .andExpect(status().isOk()).andExpect(jsonPath("$.type").value("PRIVACY_STATEMENT")).andExpect(jsonPath("$.language").value(language.name()))
+                    .andExpect(jsonPath("$.text").value(editedText));
+            mockedFileUtils.verify(() -> FileUtils.writeStringToFile(argThat(file -> file.toPath().endsWith(filename)), eq(editedText), eq(StandardCharsets.UTF_8)));
+            mockedFiles.verify(() -> Files.createDirectories(any()), never());
         }
     }
 
@@ -214,20 +209,11 @@ class PrivacyStatementResourceIntegrationTest extends AbstractSpringIntegrationI
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
-    void testUpdatePrivacyStatement_writesFile_ReturnsUpdatedFileContent() throws Exception {
-        PrivacyStatementDTO requestBody = new PrivacyStatementDTO("Datenschutzerklärung", Language.GERMAN);
-        try (MockedStatic<Files> mockedFiles = mockStatic(Files.class); MockedStatic<FileUtils> mockedFileUtils = mockStatic(FileUtils.class)) {
-            mockedFiles.when(() -> Files.exists(any())).thenReturn(true);
-
-            PrivacyStatementDTO response = request.putWithResponseBody("/api/admin/privacy-statement", requestBody, PrivacyStatementDTO.class, HttpStatus.OK);
-            mockedFileUtils.verify(() -> FileUtils.writeStringToFile(argThat(file -> file.toString().contains("_de")), anyString(), eq(StandardCharsets.UTF_8)));
-            // we explicitly check the method calls to ensure createDirectories is not called when the directory exists
-            mockedFiles.verify(() -> Files.exists(any()));
-            mockedFiles.verifyNoMoreInteractions();
-            assertThat(response.language()).isEqualTo(Language.GERMAN);
-            assertThat(response.text()).isEqualTo("Datenschutzerklärung");
-        }
+    void testAdminPrivacyStatementRequiresAuthentication() throws Exception {
+        request.performMvcRequest(get("/api/admin/privacy-statement-for-update").param("language", "de")).andExpect(status().isUnauthorized());
+        var body = new PrivacyStatementDTO("Markdown", Language.GERMAN);
+        request.performMvcRequest(put("/api/admin/privacy-statement").contentType(MediaType.APPLICATION_JSON).content(JsonObjectMapper.get().writeValueAsBytes(body)))
+                .andExpect(status().isUnauthorized());
     }
 
     @Test
