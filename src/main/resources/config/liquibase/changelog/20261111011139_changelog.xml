@@ -9,21 +9,21 @@
         maximum points, and restoring the constraint fails once such a row exists: rolling back after presentations graded by pass/fail
         or rubric were created needs the backup taken immediately before this migration.
     -->
-    <changeSet id="20261026152205-01-add-presentation-grading-method" author="suckart">
+    <changeSet id="20261111011139-01-add-presentation-grading-method" author="suckart">
         <addColumn tableName="presentation_assessment">
             <column name="grading_method" type="varchar(20)" defaultValue="SCORE"><constraints nullable="false"/></column>
         </addColumn>
         <dropNotNullConstraint tableName="presentation_assessment" columnName="max_points" columnDataType="double"/>
     </changeSet>
 
-    <changeSet id="20261026152205-02-add-presentation-instance-results" author="suckart">
+    <changeSet id="20261111011139-02-add-presentation-instance-results" author="suckart">
         <addColumn tableName="presentation_assessment_instance">
             <column name="passed" type="boolean"/>
             <column name="rubric_score" type="double"/>
         </addColumn>
     </changeSet>
 
-    <changeSet id="20261026152205-03-create-presentation-rubric" author="suckart">
+    <changeSet id="20261111011139-03-create-presentation-rubric" author="suckart">
         <createTable tableName="presentation_rubric_criterion">
             <column name="id" type="bigint" autoIncrement="true">
                 <constraints primaryKey="true" primaryKeyName="pk_presentation_rubric_criterion" nullable="false"/>
