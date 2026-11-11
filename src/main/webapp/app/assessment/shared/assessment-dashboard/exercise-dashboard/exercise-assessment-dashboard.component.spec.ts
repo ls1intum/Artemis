@@ -1036,6 +1036,70 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         expect(sortServiceFunctionSpy).toHaveBeenCalledWith(comp.submissionsWithMoreFeedbackRequests(), expect.any(Function), false);
     });
 
+    it('should apply a column header sort of the assessed submissions of a correction round', () => {
+        comp.exercise.set(modelingExercise);
+        const sortService = TestBed.inject(SortService);
+        const sortByPropertySpy = vi.spyOn(sortService, 'sortByProperty');
+        const firstSubmission = { id: 2 } as Submission;
+        const secondSubmission = { id: 1 } as Submission;
+        comp.assessedSubmissionsByRound.set([[], [firstSubmission, secondSubmission]]);
+
+        comp['onSubmissionSort'](1, { field: 'id', order: 1 });
+
+        expect(comp.sortPredicates[0]).toBe('id');
+        expect(comp.reverseOrders[0]).toBe(true);
+        expect(sortByPropertySpy).toHaveBeenCalledExactlyOnceWith(expect.any(Array), 'id', true);
+        // Only the rows of the given correction round are re-sorted (on a copy).
+        expect(sortByPropertySpy.mock.calls[0][0]).toEqual([firstSubmission, secondSubmission]);
+        expect(comp.assessedSubmissionsByRound()[0]).toEqual([]);
+
+        comp['onSubmissionSort'](1, { field: 'id', order: -1 });
+
+        expect(comp.reverseOrders[0]).toBe(false);
+        expect(sortByPropertySpy).toHaveBeenLastCalledWith(expect.any(Array), 'id', false);
+        expect(sortByPropertySpy).toHaveBeenCalledTimes(2);
+    });
+
+    it('should apply a column header sort of the complaints', () => {
+        const sortService = TestBed.inject(SortService);
+        const sortByPropertySpy = vi.spyOn(sortService, 'sortByProperty');
+        const sortByFunctionSpy = vi.spyOn(sortService, 'sortByFunction');
+
+        comp['onComplaintSort']({ field: 'complaint.submittedTime', order: -1 });
+
+        expect(comp.sortPredicates[1]).toBe('complaint.submittedTime');
+        expect(comp.reverseOrders[1]).toBe(false);
+        expect(sortByPropertySpy).toHaveBeenLastCalledWith(comp.submissionsWithComplaints(), 'complaint.submittedTime', false);
+
+        comp['onComplaintSort']({ field: 'responseTime', order: 1 });
+
+        expect(comp.sortPredicates[1]).toBe('responseTime');
+        expect(comp.reverseOrders[1]).toBe(true);
+        expect(sortByFunctionSpy).toHaveBeenCalledWith(comp.submissionsWithComplaints(), expect.any(Function), true);
+        // The other tables keep their own sort state.
+        expect(comp.sortPredicates[2]).toBe('complaint.accepted');
+        expect(comp.reverseOrders[2]).toBe(false);
+    });
+
+    it('should apply a column header sort of the more feedback requests', () => {
+        const sortService = TestBed.inject(SortService);
+        const sortByPropertySpy = vi.spyOn(sortService, 'sortByProperty');
+        const sortByFunctionSpy = vi.spyOn(sortService, 'sortByFunction');
+
+        comp['onMoreFeedbackSort']({ field: 'complaint.accepted', order: 1 });
+
+        expect(comp.sortPredicates[2]).toBe('complaint.accepted');
+        expect(comp.reverseOrders[2]).toBe(true);
+        expect(sortByPropertySpy).toHaveBeenLastCalledWith(comp.submissionsWithMoreFeedbackRequests(), 'complaint.accepted', true);
+
+        comp['onMoreFeedbackSort']({ field: 'responseTime', order: -1 });
+
+        expect(comp.sortPredicates[2]).toBe('responseTime');
+        expect(comp.reverseOrders[2]).toBe(false);
+        expect(sortByFunctionSpy).toHaveBeenCalledWith(comp.submissionsWithMoreFeedbackRequests(), expect.any(Function), false);
+        expect(comp.sortPredicates[1]).toBe('complaint.accepted');
+    });
+
     it('should return submission language', () => {
         expect(comp.language(textSubmission)).toBe(textSubmission.language);
         const unkownLanguage = 'UNKNOWN';

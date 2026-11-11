@@ -21,6 +21,7 @@ import {
     TumAetUiTabPanelComponent,
     TumAetUiTabPanelsComponent,
     TumAetUiTableDirective,
+    TumAetUiTableLayoutComponent,
     TumAetUiTableSortEvent,
     TumAetUiTableSortableColumnComponent,
     TumAetUiTabsComponent,
@@ -30,7 +31,6 @@ import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.
 import { CopyToClipboardButtonComponent } from 'app/shared-ui/components/buttons/copy-to-clipboard-button/copy-to-clipboard-button.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
-import { ItemCountComponent } from 'app/foundation/pagination/item-count.component';
 import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-title.directive';
 
 /**
@@ -42,6 +42,7 @@ import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-ti
     templateUrl: './lti-configuration.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
+        TumAetUiTableLayoutComponent,
         FormsModule,
         TranslateDirective,
         ArtemisTranslatePipe,
@@ -56,7 +57,6 @@ import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-ti
         RouterLink,
         FaIconComponent,
         DeleteButtonDirective,
-        ItemCountComponent,
         TumAetUiPaginatorComponent,
         TumAetUiTableDirective,
         TumAetUiTableSortableColumnComponent,

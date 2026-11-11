@@ -52,6 +52,7 @@
                 class="rounded-[0.15rem]! px-3! text-[0.9rem]! leading-normal!"
                 severity="secondary"
                 variant="outlined"
+                [attr.aria-label]="'entity.action.cancel' | artemisTranslate"
                 (click)="cancelRequested.emit()"
                 data-testid="hyperion-cancel-ai-operation"
             >

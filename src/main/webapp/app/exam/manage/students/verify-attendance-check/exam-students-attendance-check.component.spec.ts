@@ -10,7 +10,6 @@ import { ExamManagementService } from 'app/exam/manage/services/exam-management.
 import { ExamStudentsAttendanceCheckComponent } from 'app/exam/manage/students/verify-attendance-check/exam-students-attendance-check.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { SortService } from 'app/foundation/service/sort.service';
-import { SortDirective } from 'app/foundation/sort/directive/sort.directive';
 import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { Observable, of, throwError } from 'rxjs';
 import { MockDirective, MockPipe } from 'ng-mocks';
@@ -45,7 +44,7 @@ describe('ExamStudentsAttendanceCheckComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [ExamStudentsAttendanceCheckComponent, MockDirective(TranslateDirective), MockDirective(SortDirective), MockPipe(ArtemisTranslatePipe)],
+            imports: [ExamStudentsAttendanceCheckComponent, MockDirective(TranslateDirective), MockPipe(ArtemisTranslatePipe)],
             providers: [
                 provideRouter([]),
                 { provide: TranslateService, useClass: MockTranslateService },
@@ -280,6 +279,24 @@ describe('ExamStudentsAttendanceCheckComponent', () => {
         fixture.detectChanges();
         component.sortRows();
         expect(sortServiceSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should apply the column header sort and re-sort the attendance rows', () => {
+        const sortServiceSpy = vi.spyOn(sortService, 'sortByProperty');
+        fixture.detectChanges();
+        sortServiceSpy.mockClear();
+
+        component['onSortChange']({ field: 'login', order: -1 });
+
+        expect(component.predicate()).toBe('login');
+        expect(component.ascending()).toBe(false);
+        expect(sortServiceSpy).toHaveBeenCalledExactlyOnceWith(component.allExamUsersAttendanceCheck(), 'login', false);
+
+        component['onSortChange']({ field: 'registrationNumber', order: 1 });
+
+        expect(component.predicate()).toBe('registrationNumber');
+        expect(component.ascending()).toBe(true);
+        expect(sortServiceSpy).toHaveBeenLastCalledWith(component.allExamUsersAttendanceCheck(), 'registrationNumber', true);
     });
 
     it('should call exam management service', () => {
