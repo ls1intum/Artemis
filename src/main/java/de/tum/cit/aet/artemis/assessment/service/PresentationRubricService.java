@@ -122,7 +122,7 @@ public class PresentationRubricService {
                 .toList();
 
         long assessedInstanceCount = presentationAssessmentInstanceRepository.countByPresentationAssessmentIdAndRubricScoreIsNotNull(assessmentId);
-        return new PresentationRubricDTO(criterionDtos, assessedInstanceCount);
+        return new PresentationRubricDTO(criterionDtos, assessedInstanceCount, assessment.getVersion());
     }
 
     /**

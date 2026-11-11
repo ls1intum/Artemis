@@ -8,7 +8,7 @@ import { Mock, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { PresentationRubricDialogComponent } from 'app/presentation/manage/presentation-rubric-dialog.component';
 import { RubricForm } from 'app/presentation/manage/presentation-rubric-form';
-import { PresentationRubric, PresentationRubricCriterion, PresentationRubricScale } from 'app/presentation/shared/entities/presentation-assessment.model';
+import { PresentationRubric, PresentationRubricSave, PresentationRubricScale } from 'app/presentation/shared/entities/presentation-assessment.model';
 import { provideArtemisTumAetUiTranslator } from 'app/shared-ui/tum-aet-ui-integration/artemis-tumaet-ui-translator';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
@@ -21,13 +21,14 @@ function rubric(assessedInstanceCount: number): PresentationRubric {
             { id: 2, name: 'Delivery', weight: 40, scale: PresentationRubricScale.THREE_POINT, levels: [{ id: 21 }, { id: 22 }, { id: 23 }] },
         ],
         assessedInstanceCount,
+        version: 7,
     };
 }
 
 describe('PresentationRubricDialogComponent', () => {
     let fixture: ComponentFixture<PresentationRubricDialogComponent>;
     let httpMock: HttpTestingController;
-    let saved: Mock<(criteria: PresentationRubricCriterion[]) => void>;
+    let saved: Mock<(save: PresentationRubricSave) => void>;
     let cancelled: Mock<() => void>;
 
     beforeEach(async () => {
@@ -106,10 +107,10 @@ describe('PresentationRubricDialogComponent', () => {
         click('save-rubric-button');
 
         expect(confirmation()).toBeUndefined();
-        expect(saved).toHaveBeenCalledWith([
-            expect.objectContaining({ id: 1, weight: 70, scale: PresentationRubricScale.THREE_POINT }),
-            expect.objectContaining({ id: 2, weight: 30 }),
-        ]);
+        expect(saved).toHaveBeenCalledWith({
+            criteria: [expect.objectContaining({ id: 1, weight: 70, scale: PresentationRubricScale.THREE_POINT }), expect.objectContaining({ id: 2, weight: 30 })],
+            version: 7,
+        });
     });
 
     it('should save at once when only texts change', async () => {
@@ -119,7 +120,7 @@ describe('PresentationRubricDialogComponent', () => {
         click('save-rubric-button');
 
         expect(confirmation()).toBeUndefined();
-        expect(saved).toHaveBeenCalledWith([expect.objectContaining({ name: 'Structure', weight: 60 }), expect.objectContaining({ name: 'Delivery' })]);
+        expect(saved).toHaveBeenCalledWith({ criteria: [expect.objectContaining({ name: 'Structure', weight: 60 }), expect.objectContaining({ name: 'Delivery' })], version: 7 });
     });
 
     it('should ask before new weights recalculate assessed results and save once confirmed', async () => {

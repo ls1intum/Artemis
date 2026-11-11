@@ -228,7 +228,8 @@ class PresentationGradingMethodIntegrationTest extends AbstractSpringIntegration
         @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void changingTheGradingMethod_shouldBeRejected() throws Exception {
             PresentationAssessmentDTO created = createPresentation(PresentationGradingMethod.SCORE, 20.0, null);
-            var update = new PresentationAssessmentRequestDTO(created.id(), created.title(), created.description(), PresentationGradingMethod.PASS_FAIL, null, null, null, null);
+            var update = new PresentationAssessmentRequestDTO(created.id(), created.title(), created.description(), PresentationGradingMethod.PASS_FAIL, null, null, null, null,
+                    null);
 
             expectError(MockMvcRequestBuilders.put(assessmentUrl(course, created.id())), update, "gradingMethodImmutable");
         }
@@ -263,7 +264,7 @@ class PresentationGradingMethodIntegrationTest extends AbstractSpringIntegration
         void withoutCriteriaInTheRequest_shouldKeepTheRubric() throws Exception {
             PresentationAssessmentDTO created = createPresentation(PresentationGradingMethod.RUBRIC, null, standardRubric());
             PresentationRubricDTO before = getRubric(created.id());
-            var update = new PresentationAssessmentRequestDTO(created.id(), "Renamed presentation", created.description(), PresentationGradingMethod.RUBRIC, null, null, null,
+            var update = new PresentationAssessmentRequestDTO(created.id(), "Renamed presentation", created.description(), PresentationGradingMethod.RUBRIC, null, null, null, null,
                     null);
 
             updatePresentation(update, HttpStatus.OK);
@@ -712,7 +713,7 @@ class PresentationGradingMethodIntegrationTest extends AbstractSpringIntegration
             long presentationId = createRubricPresentationAsInstructor();
             PresentationRubricDTO rubric = getRubric(presentationId);
             var update = new PresentationAssessmentRequestDTO(presentationId, "Final presentation", "Presentation of the project", PresentationGradingMethod.RUBRIC, null, null,
-                    null, withWeights(rubric, 40, 40, 20));
+                    null, withWeights(rubric, 40, 40, 20), null);
 
             updatePresentation(update, HttpStatus.FORBIDDEN);
 
@@ -726,6 +727,21 @@ class PresentationGradingMethodIntegrationTest extends AbstractSpringIntegration
      */
     @Nested
     class ConcurrentRubricChanges {
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+        void savingARubricLoadedBeforeAnotherChange_shouldBeRejected() throws Exception {
+            PresentationAssessmentDTO created = createPresentation(PresentationGradingMethod.RUBRIC, null, standardRubric());
+            PresentationRubricDTO loadedByFirstEditor = getRubric(created.id());
+            // A second editor changes the weights while the first one still has the rubric open
+            updatePresentation(rubricUpdate(created, withWeights(loadedByFirstEditor, 40, 40, 20)), HttpStatus.OK);
+
+            var staleUpdate = new PresentationAssessmentRequestDTO(created.id(), created.title(), created.description(), PresentationGradingMethod.RUBRIC, null, null, null,
+                    loadedByFirstEditor.criteria(), loadedByFirstEditor.version());
+
+            updatePresentation(staleUpdate, HttpStatus.CONFLICT);
+            assertThat(getRubric(created.id()).criteria()).extracting(PresentationRubricCriterionDTO::weight).containsExactly(40, 40, 20);
+        }
 
         @Test
         @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
@@ -866,12 +882,12 @@ class PresentationGradingMethodIntegrationTest extends AbstractSpringIntegration
     // Data
 
     private static PresentationAssessmentRequestDTO presentation(PresentationGradingMethod gradingMethod, Double maxPoints, List<PresentationRubricCriterionDTO> criteria) {
-        return new PresentationAssessmentRequestDTO(null, "Final presentation", "Presentation of the project", gradingMethod, maxPoints, null, null, criteria);
+        return new PresentationAssessmentRequestDTO(null, "Final presentation", "Presentation of the project", gradingMethod, maxPoints, null, null, criteria, null);
     }
 
     private static PresentationAssessmentRequestDTO rubricUpdate(PresentationAssessmentDTO presentation, List<PresentationRubricCriterionDTO> criteria) {
         return new PresentationAssessmentRequestDTO(presentation.id(), presentation.title(), presentation.description(), PresentationGradingMethod.RUBRIC, null, null, null,
-                criteria);
+                criteria, null);
     }
 
     /** A rubric with three criteria of different weights and scales: content 50 % on five points, delivery 30 % on three points, slides 20 % on five points. */

@@ -33,7 +33,7 @@ import {
     PresentationAssessmentStudentRow,
     PresentationAssessmentStudentRowsRequest,
     PresentationGradingMethod,
-    PresentationRubricCriterion,
+    PresentationRubricSave,
 } from 'app/presentation/shared/entities/presentation-assessment.model';
 import { PresentationAssessmentService } from 'app/presentation/manage/presentation-assessment.service';
 import { Course } from 'app/course/shared/entities/course.model';
@@ -685,7 +685,7 @@ export class PresentationAssessmentManagementComponent implements OnInit {
         this.deletePresentationAssessment(presentationAssessment);
     }
 
-    handleRubricDialogSave(rubricCriteria: PresentationRubricCriterion[]): void {
+    handleRubricDialogSave(save: PresentationRubricSave): void {
         const presentationAssessment = this.dialogRubricPresentationAssessment();
         if (!presentationAssessment || this.isSaving()) {
             return;
@@ -694,7 +694,7 @@ export class PresentationAssessmentManagementComponent implements OnInit {
         const generation = this.courseContextGeneration;
         this.isSaving.set(true);
         this.presentationAssessmentService
-            .update(courseId, cloneWith(presentationAssessment, { rubricCriteria }))
+            .update(courseId, cloneWith(presentationAssessment, { rubricCriteria: save.criteria, version: save.version }))
             .pipe(
                 finalize(() => {
                     if (generation === this.courseContextGeneration) {
