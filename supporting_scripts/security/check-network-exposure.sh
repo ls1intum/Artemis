@@ -12,7 +12,7 @@
 #
 # Environment:
 #   INTERNAL_PORTS   space separated ports that must be closed (default: the standard ports of the services below)
-#   EXPECTED_PORTS   space separated ports that must be open (default: 443)
+#   EXPECTED_PORTS   space separated ports that must be open (default: 443; set it to an empty value for a host without a public listener, such as a build agent)
 #   OPTIONAL_PORTS   space separated ports that may be open, reported as information (default: 80 7921)
 #   CONNECT_TIMEOUT  seconds to wait for a connection (default 3)
 #
@@ -29,9 +29,9 @@ if ! command -v nc >/dev/null 2>&1; then
 fi
 
 # 5701-5703 Hazelcast, 6379 Redis or Valkey, 5432 PostgreSQL, 3306 MySQL, 61613 and 61616 ActiveMQ, 8080 Artemis behind the reverse proxy, 8761 service registry
-INTERNAL_PORTS="${INTERNAL_PORTS:-5701 5702 5703 6379 5432 3306 61613 61616 8080 8761}"
-EXPECTED_PORTS="${EXPECTED_PORTS:-443}"
-OPTIONAL_PORTS="${OPTIONAL_PORTS:-80 7921}"
+INTERNAL_PORTS="${INTERNAL_PORTS-5701 5702 5703 6379 5432 3306 61613 61616 8080 8761}"
+EXPECTED_PORTS="${EXPECTED_PORTS-443}"
+OPTIONAL_PORTS="${OPTIONAL_PORTS-80 7921}"
 CONNECT_TIMEOUT="${CONNECT_TIMEOUT:-3}"
 
 FAILURES=0

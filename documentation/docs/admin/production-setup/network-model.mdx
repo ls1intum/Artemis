@@ -46,8 +46,11 @@ Keep the services above out of the reach of build containers:
 1. **Choose the networks.** Builds run on the default network of the container runtime unless an exercise selects another one. Set `container-defaults.network: none` where the builds need no network, and list only the networks
    that exercises must select in `container-flags-limit.allowed-custom-networks`. See [build environment](/admin/production-setup/localci-build-environment). Artemis refuses a network that shares the namespace of the
    host (`host`) or of another container (`container:<name>`), for exercises and for the defaults.
-2. **Restrict the container subnets.** Add firewall rules that drop connections from the subnets that Docker assigns to its networks to the addresses of the services above. Rules in the `DOCKER-USER` chain apply
-   before the rules of Docker. The `firewall` role of the Ansible collection offers `firewall_container_subnets_ipv4` and `firewall_container_restricted_destinations_ipv4` (and the `_ipv6` variants) for this.
+2. **Restrict the container subnets.** Add firewall rules that drop connections from the subnets that Docker assigns to its networks to the addresses of the services above. Two paths need a rule each: traffic from a
+   container to another machine or to another container is forwarded and passes the `DOCKER-USER` chain, which is evaluated before the rules of Docker, while traffic to a service that runs on the Docker host itself
+   passes the `INPUT` chain. A rule in `DOCKER-USER` alone does not protect the cluster port or the queue store of the host. The `firewall` role of the Ansible collection offers
+   `firewall_container_subnets_ipv4` and `firewall_container_restricted_destinations_ipv4` (and the `_ipv6` variants) for the forwarded path, and its default policy for `INPUT` drops what is not allowed explicitly.
+   Check both paths, see below.
 3. **Keep IPv6 in mind.** If you enable IPv6 on the Docker bridge, the same rules are needed for IPv6, because a container then reaches the services over the IPv6 addresses of the host.
 4. **Keep private addresses private.** The metadata endpoint of a cloud provider and the management interfaces of your infrastructure are internal services too.
 
@@ -87,7 +90,9 @@ adjust the lists, for example when the database listens on a non-standard port.
 docker run --rm --network <network of your builds> busybox:1.37.0 nc -w 3 -z <address of the service> <port>
 ```
 
-An exit code of 0 means the container reached the service. For a service that must be unreachable, any other exit code is the expected result.
+An exit code of 0 means the container reached the service. An exit code of 1 means that `nc` tried to connect and the connection was refused or timed out, which is the expected result for a service that must be unreachable.
+Any other exit code, such as 125, 126 or 127 from Docker or 2 from a command that did not accept its options, means that no connection was tried: the check did not run and proves nothing. The check of the agents handles this the same
+way and reports such a result as inconclusive.
 
 <Callout variant={CalloutVariant.info}>
     A check that passes proves only what it tried. Add every internal service of your installation to the `targets` list, and repeat the checks when you add a service.

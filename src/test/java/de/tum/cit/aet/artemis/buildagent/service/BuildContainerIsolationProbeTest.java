@@ -7,6 +7,7 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -74,7 +75,8 @@ class BuildContainerIsolationProbeTest {
 
     @Test
     void reportsATargetThatTheContainerCanConnectTo() throws Exception {
-        when(waitCallback.awaitStatusCode(anyLong(), eq(TimeUnit.SECONDS))).thenReturn(0);
+        // The first container is the self test of the image, the second one the connection to the target.
+        when(waitCallback.awaitStatusCode(anyLong(), eq(TimeUnit.SECONDS))).thenReturn(0, 0);
         Target store = new Target("10.0.0.5", 6379);
 
         Result result = new BuildContainerIsolationProbe(dockerClient, IMAGE).run(null, List.of(store));
@@ -82,24 +84,24 @@ class BuildContainerIsolationProbeTest {
         assertThat(result.reachable()).containsExactly(store);
         assertThat(result.notReachable()).isEmpty();
         assertThat(result.inconclusive()).isEmpty();
-        verify(removeCommand).exec();
+        verify(removeCommand, times(2)).exec();
     }
 
     @Test
     void acceptsATargetThatTheContainerCannotConnectTo() throws Exception {
-        when(waitCallback.awaitStatusCode(anyLong(), eq(TimeUnit.SECONDS))).thenReturn(1);
+        when(waitCallback.awaitStatusCode(anyLong(), eq(TimeUnit.SECONDS))).thenReturn(0, 1);
         Target store = new Target("10.0.0.5", 6379);
 
         Result result = new BuildContainerIsolationProbe(dockerClient, IMAGE).run(null, List.of(store));
 
         assertThat(result.reachable()).isEmpty();
         assertThat(result.notReachable()).containsExactly(store);
-        verify(removeCommand).exec();
+        verify(removeCommand, times(2)).exec();
     }
 
     @Test
     void doesNotCountAMissingCommandAsIsolation() throws Exception {
-        when(waitCallback.awaitStatusCode(anyLong(), eq(TimeUnit.SECONDS))).thenReturn(127);
+        when(waitCallback.awaitStatusCode(anyLong(), eq(TimeUnit.SECONDS))).thenReturn(0, 127);
         Target store = new Target("10.0.0.5", 6379);
 
         Result result = new BuildContainerIsolationProbe(dockerClient, IMAGE).run(null, List.of(store));
@@ -110,14 +112,42 @@ class BuildContainerIsolationProbeTest {
 
     @Test
     void doesNotCountAContainerThatDidNotFinishAsIsolation() throws Exception {
-        doThrow(new RuntimeException("timeout")).when(waitCallback).awaitStatusCode(anyLong(), eq(TimeUnit.SECONDS));
+        when(waitCallback.awaitStatusCode(anyLong(), eq(TimeUnit.SECONDS))).thenReturn(0).thenThrow(new RuntimeException("timeout"));
         Target store = new Target("10.0.0.5", 6379);
 
         Result result = new BuildContainerIsolationProbe(dockerClient, IMAGE).run(null, List.of(store));
 
         assertThat(result.notReachable()).isEmpty();
         assertThat(result.inconclusive()).containsExactly(store);
-        verify(removeCommand).exec();
+        verify(removeCommand, times(2)).exec();
+    }
+
+    @Test
+    void doesNotCountAnAbnormalExitAsIsolation() throws Exception {
+        // 2 is what a command exits with after a usage error, 137 is a container that was killed. Neither says anything about the connection.
+        when(waitCallback.awaitStatusCode(anyLong(), eq(TimeUnit.SECONDS))).thenReturn(0, 2, 137);
+        Target store = new Target("10.0.0.5", 6379);
+        Target database = new Target("10.0.0.6", 5432);
+
+        Result result = new BuildContainerIsolationProbe(dockerClient, IMAGE).run(null, List.of(store, database));
+
+        assertThat(result.notReachable()).isEmpty();
+        assertThat(result.inconclusive()).containsExactly(store, database);
+    }
+
+    @Test
+    void doesNotCountTargetsAsIsolatedWhenTheImageFailsItsSelfTest() throws Exception {
+        // The nc of the image does not support the options of the probe, so a failed connection would mean nothing.
+        when(waitCallback.awaitStatusCode(anyLong(), eq(TimeUnit.SECONDS))).thenReturn(1);
+        Target store = new Target("10.0.0.5", 6379);
+
+        Result result = new BuildContainerIsolationProbe(dockerClient, IMAGE).run(null, List.of(store));
+
+        assertThat(result.notReachable()).isEmpty();
+        assertThat(result.reachable()).isEmpty();
+        assertThat(result.inconclusive()).containsExactly(store);
+        // Only the self test ran, no connection to a target was tried.
+        verify(dockerClient, times(1)).createContainerCmd(IMAGE);
     }
 
     @Test
