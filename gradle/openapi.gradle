@@ -49,11 +49,11 @@
             jvmArgs = [
                 "-Dspring.profiles.active=test,artemis,core,atlas,scheduling,athena,apollon,theia,dev,localci,localvc",
                 "-Dartemis.lti.enabled=true",
-                // The application specification covers only the packages that are fully DTO-based. The agent specification is
-                // picked by an annotation instead, so it has to scan everything: the global setting applies to its group too.
+                // The application specification covers DTO-based endpoints. The agent specification is picked by an
+                // annotation instead, so it has to scan everything: the global setting applies to its group too.
                 "-Dspringdoc.packages-to-scan=" + (openApiGroup
                     ? "de.tum.cit.aet.artemis"
-                    : "de.tum.cit.aet.artemis.aiworker.web,de.tum.cit.aet.artemis.tutorialgroup.web,de.tum.cit.aet.artemis.hyperion.web,de.tum.cit.aet.artemis.calendar.web,de.tum.cit.aet.artemis.globalsearch.web,de.tum.cit.aet.artemis.quiz.web"),
+                    : "de.tum.cit.aet.artemis.aiworker.web,de.tum.cit.aet.artemis.tutorialgroup.web,de.tum.cit.aet.artemis.hyperion.web,de.tum.cit.aet.artemis.calendar.web,de.tum.cit.aet.artemis.globalsearch.web,de.tum.cit.aet.artemis.quiz.web,de.tum.cit.aet.artemis.core.web.open,de.tum.cit.aet.artemis.admin.web"),
                 // Legacy URL aliases stay mapped in Java for old clients (canonical path first, legacy second), but are kept out
                 // of the specification: in the generated client each alias would become a name/name_ method pair.
                 "-Dspringdoc.paths-to-exclude=/api/quiz/quiz-exercises/*/start-batch,/api/tutorialgroup/courses/*/tutorial-groups-configuration,/api/tutorialgroup/courses/*/tutorial-groups-configuration/**",
@@ -76,6 +76,26 @@
                 "-Dspring.jpa.hibernate.ddl-auto=create",
                 "-Dspring.main.banner-mode=off"
             ]
+
+            // Limit core and admin application coverage to the legal documents while preserving agent discovery.
+            if (!openApiGroup) {
+                def applicationPaths = [
+                    "/api/aiworker/**",
+                    "/api/calendar/**",
+                    "/api/global-search/**",
+                    "/api/search/**",
+                    "/api/hyperion/**",
+                    "/api/quiz/**",
+                    "/api/tutorialgroup/**",
+                    "/api/core/public/imprint",
+                    "/api/core/public/privacy-statement",
+                    "/api/admin/imprint-for-update",
+                    "/api/admin/imprint",
+                    "/api/admin/privacy-statement-for-update",
+                    "/api/admin/privacy-statement",
+                ]
+                jvmArgs.add("-Dspringdoc.paths-to-match=" + applicationPaths.join(","))
+            }
 
             // TODO add package later add ${System.getProperty("springdoc.packages-to-scan")} package via cli property
             args.set([
