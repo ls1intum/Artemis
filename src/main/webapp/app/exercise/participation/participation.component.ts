@@ -271,8 +271,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
         dataKey: 'participationId',
         searchSize: 'small',
         striped: true,
-        scrollable: true,
-        scrollHeight: 'flex',
+        fill: true,
         showSearch: !this.hideParticipantInformation(),
         searchPlaceholder: this.exercise()?.teamMode ? 'artemisApp.participation.searchTeams' : 'artemisApp.participation.searchStudents',
     }));
