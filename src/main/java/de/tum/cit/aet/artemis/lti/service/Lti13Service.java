@@ -5,6 +5,7 @@ import java.net.URISyntaxException;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.regex.Pattern;
@@ -22,6 +23,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.client.registration.ClientRegistration;
 import org.springframework.security.oauth2.core.oidc.OidcIdToken;
@@ -173,15 +175,29 @@ public class Lti13Service {
             throw new BadRequestAlertException("LTI is not configured for this course", "LTI", "ltiNotConfigured");
         }
 
+        // The target has to belong to the course whose configuration the launch refers to.
+        if (targetExercise.isPresent() && !belongsToCourse(targetExercise.get(), course)) {
+            log.error("The exercise of the target link {} does not belong to the launched course", targetLinkUrl);
+            throw new BadRequestAlertException("Content not found", "LTI", "ltiContentNotFound");
+        }
+        if (targetLecture.isPresent() && !Objects.equals(targetLecture.get().getCourse() != null ? targetLecture.get().getCourse().getId() : null, course.getId())) {
+            log.error("The lecture of the target link {} does not belong to the launched course", targetLinkUrl);
+            throw new BadRequestAlertException("Content not found", "LTI", "ltiContentNotFound");
+        }
+
         Optional<String> optionalUsername = artemisAuthenticationProvider.getUsernameForEmail(ltiIdToken.getEmail())
                 .or(() -> userRepository.findOneByEmailIgnoreCase(ltiIdToken.getEmail()).map(User::getLogin));
 
+        // The login of a newly created account is not always the derived one, so the account is looked up under the login it actually got.
+        String createdLogin = null;
         if (!onlineCourseConfiguration.isRequireExistingUser() && optionalUsername.isEmpty()) {
-            SecurityContextHolder.getContext().setAuthentication(ltiService.createNewUserFromLaunchRequest(ltiIdToken.getEmail(),
-                    createUsernameFromLaunchRequest(ltiIdToken, onlineCourseConfiguration), ltiIdToken.getGivenName(), ltiIdToken.getFamilyName()));
+            Authentication authentication = ltiService.createNewUserFromLaunchRequest(ltiIdToken.getEmail(), createUsernameFromLaunchRequest(ltiIdToken, onlineCourseConfiguration),
+                    ltiIdToken.getGivenName(), ltiIdToken.getFamilyName());
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+            createdLogin = authentication != null ? authentication.getName() : null;
         }
 
-        String username = optionalUsername.orElseGet(() -> createUsernameFromLaunchRequest(ltiIdToken, onlineCourseConfiguration));
+        String username = createdLogin != null ? createdLogin : optionalUsername.orElseGet(() -> createUsernameFromLaunchRequest(ltiIdToken, onlineCourseConfiguration));
         User user = userRepository.findOneWithAuthoritiesByLogin(username).orElseThrow();
         Lti13LaunchRequest launchRequest = launchRequestFrom(ltiIdToken, clientRegistrationId);
 
@@ -196,6 +212,15 @@ public class Lti13Service {
             log.error("No course content to launch at {}", targetLinkUrl);
             throw new BadRequestAlertException("Content not found", "LTI", "ltiContentNotFound");
         }
+    }
+
+    private static boolean belongsToCourse(Exercise exercise, Course course) {
+        // An exam exercise is not part of the course content that a platform links to, and is reached through the exam only.
+        if (exercise.isExamExercise()) {
+            return false;
+        }
+        Course exerciseCourse = exercise.getCourseViaExerciseGroupOrCourseMember();
+        return exerciseCourse != null && Objects.equals(exerciseCourse.getId(), course.getId());
     }
 
     /**

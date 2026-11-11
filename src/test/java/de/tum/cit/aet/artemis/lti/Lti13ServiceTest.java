@@ -54,6 +54,7 @@ import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseTestRepository;
@@ -263,6 +264,34 @@ class Lti13ServiceTest {
 
         verify(launchRepository).findByIssAndSubAndDeploymentIdAndResourceLinkId("https://otherDomain.com", "1", "1", "resourceLinkUrl");
         verify(launchRepository).save(any());
+    }
+
+    @Test
+    void performLaunch_exerciseOfAnotherCourse_isRefused() {
+        MockExercise exerciseOfOtherCourse = getMockExercise(true);
+        long launchedCourseId = 13;
+        prepareForPerformLaunch(launchedCourseId, "https://some-artemis-domain.org/courses/" + launchedCourseId + "/exercises/" + exerciseOfOtherCourse.exerciseId(), true);
+
+        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> lti13Service.performLaunch(oidcIdToken, clientRegistrationId))
+                .withMessageContaining("Content not found");
+
+        verify(launchRepository, never()).save(any());
+        verify(ltiService, never()).onSuccessfulLtiAuthentication(any(), any());
+    }
+
+    @Test
+    void performLaunch_examExercise_isRefused() {
+        MockExercise exercise = getMockExercise(true);
+        Exercise examExercise = new TextExercise();
+        examExercise.setId(135L);
+        examExercise.setExerciseGroup(new ExerciseGroup());
+        doReturn(Optional.of(examExercise)).when(exerciseRepository).findById(135L);
+        prepareForPerformLaunch(exercise.courseId(), "https://some-artemis-domain.org/courses/" + exercise.courseId() + "/exercises/135", true);
+
+        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> lti13Service.performLaunch(oidcIdToken, clientRegistrationId))
+                .withMessageContaining("Content not found");
+
+        verify(launchRepository, never()).save(any());
     }
 
     @Test
