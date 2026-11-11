@@ -2,6 +2,9 @@ package de.tum.cit.aet.artemis.athena;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
+import static org.hamcrest.Matchers.endsWith;
+import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
+import static org.springframework.test.web.client.response.MockRestResponseCreators.withStatus;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -16,12 +19,15 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.NullAndEmptySource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.web.client.MockRestServiceServer;
+import org.springframework.test.web.client.match.MockRestRequestMatchers;
 import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
@@ -176,9 +182,18 @@ class AthenaResourceIntegrationTest extends AbstractAthenaTest {
         RepositoryExportTestUtil.cleanupTrackedRepositories();
     }
 
-    @Test
+    @ParameterizedTest
+    @NullAndEmptySource
+    @ValueSource(strings = "A text submission")
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
-    void testGetFeedbackSuggestionsSuccessText() throws Exception {
+    void testGetFeedbackSuggestionsSuccessText(String text) throws Exception {
+        textSubmission.setText(text);
+        textSubmissionRepository.save(textSubmission);
+        var result = new Result().submission(textSubmission);
+        result.setExerciseId(textExercise.getId());
+        result.setAssessmentType(AssessmentType.MANUAL);
+        resultRepository.save(result);
+
         // Enable Athena grading feedback at course level
         var course = textExercise.getCourseViaExerciseGroupOrCourseMember();
         var athenaConfig = new CourseAthenaConfig();
@@ -187,7 +202,8 @@ class AthenaResourceIntegrationTest extends AbstractAthenaTest {
         course.setAthenaConfig(athenaConfig);
         courseUtilService.saveWithConfigurations(course);
 
-        athenaRequestMockProvider.mockGetFeedbackSuggestionsAndExpect("text");
+        athenaRequestMockProvider.mockGetFeedbackSuggestionsAndExpect("text", MockRestRequestMatchers.jsonPath("$.submission.text").value(text == null ? "" : text),
+                MockRestRequestMatchers.jsonPath("$.latestSubmission.text").value(text == null ? "" : text));
         List<Feedback> response = request.getList("/api/athena/text-exercises/" + textExercise.getId() + "/submissions/" + textSubmission.getId() + "/feedback-suggestions",
                 HttpStatus.OK, Feedback.class);
         assertThat(response).as("response is not empty").isNotEmpty();
@@ -227,6 +243,35 @@ class AthenaResourceIntegrationTest extends AbstractAthenaTest {
                 "/api/athena/modeling-exercises/" + modelingExercise.getId() + "/submissions/" + modelingSubmission.getId() + "/feedback-suggestions", HttpStatus.OK,
                 Feedback.class);
         assertThat(response).as("response is not empty").isNotEmpty();
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "text", "programming", "modeling" })
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void testGetFeedbackSuggestionsAthenaHttpError(String exerciseType) throws Exception {
+        var exercise = switch (exerciseType) {
+            case "text" -> textExercise;
+            case "programming" -> programmingExercise;
+            default -> modelingExercise;
+        };
+        var submission = switch (exerciseType) {
+            case "text" -> textSubmission;
+            case "programming" -> programmingSubmission;
+            default -> modelingSubmission;
+        };
+        var course = exercise.getCourseViaExerciseGroupOrCourseMember();
+        var athenaConfig = new CourseAthenaConfig();
+        athenaConfig.setCourse(course);
+        athenaConfig.setGradingFeedbackEnabled(true);
+        course.setAthenaConfig(athenaConfig);
+        courseUtilService.saveWithConfigurations(course);
+
+        var server = MockRestServiceServer.createServer(athenaRequestMockProvider.getRestTemplate());
+        server.expect(requestTo(endsWith("/feedback_suggestions"))).andRespond(withStatus(HttpStatus.INTERNAL_SERVER_ERROR));
+
+        request.get("/api/athena/" + exerciseType + "-exercises/" + exercise.getId() + "/submissions/" + submission.getId() + "/feedback-suggestions",
+                HttpStatus.SERVICE_UNAVAILABLE, List.class);
+        server.verify();
     }
 
     @Test

@@ -53,6 +53,7 @@ import de.tum.cit.aet.artemis.lecture.web.LectureResource;
 import de.tum.cit.aet.artemis.lecture.web.LectureResource.SimpleLectureDTO.CourseDTO;
 import de.tum.cit.aet.artemis.notification.domain.CourseNotification;
 import de.tum.cit.aet.artemis.notification.test_repository.CourseNotificationTestRepository;
+import de.tum.cit.aet.artemis.notification.test_repository.UserCourseNotificationStatusTestRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
@@ -97,6 +98,9 @@ class ChannelIntegrationTest extends AbstractConversationTest {
 
     @Autowired
     private CourseNotificationTestRepository courseNotificationRepository;
+
+    @Autowired
+    private UserCourseNotificationStatusTestRepository userCourseNotificationStatusRepository;
 
     @BeforeEach
     @Override
@@ -581,6 +585,39 @@ class ChannelIntegrationTest extends AbstractConversationTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void grantChannelModeratorRole_loginsOfUsersWithoutCourseRole_areIgnored() throws Exception {
+        Course course = courseUtilService.createEnrolledCourseWithMessagingEnabled(TEST_PREFIX);
+        Channel channel = conversationUtilService.createCourseWideChannel(course, "test");
+        userUtilService.createAndSaveUser(testPrefix + "noncourseuser1");
+
+        request.postWithoutResponseBody("/api/communication/courses/" + course.getId() + "/channels/" + channel.getId() + "/grant-channel-moderator",
+                List.of(testPrefix + "noncourseuser1", testPrefix + "student1"), HttpStatus.OK);
+
+        assertUsersAreChannelModerators(channel.getId(), "student1");
+        assertUserAreNotConversationMembers(channel.getId(), "noncourseuser1");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void updateChannel_asModeratorWithoutCourseRole_isRejected() throws Exception {
+        var channel = createChannel(true, TEST_PREFIX + "1");
+        userUtilService.createAndSaveUser(testPrefix + "noncourseuser1");
+        addUserAsChannelModerators(channel, "noncourseuser1");
+        var updateDTO = new ChannelDTO();
+        updateDTO.setName(TEST_PREFIX + "2");
+        updateDTO.setDescription("new description");
+        updateDTO.setTopic("new topic");
+
+        userUtilService.changeUser(testPrefix + "noncourseuser1");
+        request.putWithResponseBody("/api/communication/courses/" + exampleCourseId + "/channels/" + channel.getId(), updateDTO, ChannelDTO.class, HttpStatus.FORBIDDEN);
+
+        // the channel is unchanged
+        assertThat(channelRepository.findByIdElseThrow(channel.getId()).getName()).isEqualTo(channel.getName());
+        conversationRepository.deleteById(channel.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void revokeChannelModeratorRoleToUserWhoIsNotAParticipantInCourseWideChannel() throws Exception {
         Course course = courseUtilService.createEnrolledCourseWithMessagingEnabled(TEST_PREFIX);
         Channel channel = conversationUtilService.createCourseWideChannel(course, "test");
@@ -768,6 +805,34 @@ class ChannelIntegrationTest extends AbstractConversationTest {
         verifyNoParticipantTopicWebsocketSentExceptAction(CommunicationCrudAction.UPDATE, CommunicationCrudAction.CREATE);
 
         // cleanup
+        conversationRepository.deleteById(channel.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void joinPublicChannel_asUserWithoutCourseRole_isRejected() throws Exception {
+        var channel = createChannel(true, TEST_PREFIX);
+        userUtilService.createAndSaveUser(testPrefix + "noncourseuser1");
+
+        userUtilService.changeUser(testPrefix + "noncourseuser1");
+        request.postWithoutResponseBody("/api/communication/courses/" + exampleCourseId + "/channels/" + channel.getId() + "/register", List.of(testPrefix + "noncourseuser1"),
+                HttpStatus.FORBIDDEN);
+        assertUserAreNotConversationMembers(channel.getId(), "noncourseuser1");
+
+        conversationRepository.deleteById(channel.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void registerUsersToChannel_loginsOfUsersWithoutCourseRole_areIgnored() throws Exception {
+        var channel = createChannel(true, TEST_PREFIX);
+        userUtilService.createAndSaveUser(testPrefix + "noncourseuser1");
+
+        request.postWithoutResponseBody("/api/communication/courses/" + exampleCourseId + "/channels/" + channel.getId() + "/register",
+                List.of(testPrefix + "noncourseuser1", testPrefix + "student1"), HttpStatus.OK);
+        assertUsersAreConversationMembers(channel.getId(), "student1");
+        assertUserAreNotConversationMembers(channel.getId(), "noncourseuser1");
+
         conversationRepository.deleteById(channel.getId());
     }
 
@@ -1170,6 +1235,37 @@ class ChannelIntegrationTest extends AbstractConversationTest {
         });
 
         conversationRepository.deleteById(channel.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void shouldOnlyNotifyTheRemovedParticipantsWhenLoginsOfNoParticipantsAreDeregistered() throws Exception {
+        var channel = createChannel(true, TEST_PREFIX + "notification");
+        addUsersToConversation(channel.getId(), "student1");
+        Set<Long> notificationsBefore = removedFromChannelNotificationIds();
+
+        userUtilService.changeUser(testPrefix + "instructor1");
+        // student2 belongs to the course without being a participant of the channel
+        request.postWithoutResponseBody("/api/communication/courses/" + exampleCourseId + "/channels/" + channel.getId() + "/deregister",
+                List.of(testPrefix + "student1", testPrefix + "student2"), HttpStatus.OK);
+
+        assertUserAreNotConversationMembers(channel.getId(), "student1", "student2");
+        long removedUserId = userRepository.findOneByLogin(testPrefix + "student1").orElseThrow().getId();
+        await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> {
+            Set<Long> newNotifications = removedFromChannelNotificationIds();
+            newNotifications.removeAll(notificationsBefore);
+            assertThat(newNotifications).hasSize(1);
+            Set<Long> recipientIds = userCourseNotificationStatusRepository.findAllByCourseNotificationId(newNotifications.iterator().next()).stream()
+                    .map(status -> status.getUser().getId()).collect(Collectors.toSet());
+            assertThat(recipientIds).containsExactly(removedUserId);
+        });
+
+        conversationRepository.deleteById(channel.getId());
+    }
+
+    private Set<Long> removedFromChannelNotificationIds() {
+        return courseNotificationRepository.findAll().stream().filter(notification -> notification.getCourse().getId().equals(exampleCourseId) && notification.getType() == 20)
+                .map(CourseNotification::getId).collect(Collectors.toCollection(HashSet::new));
     }
 
     @Test

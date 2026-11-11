@@ -742,6 +742,141 @@ describe('TextSubmissionAssessmentComponent', () => {
         expect(component.textBlockRefs).toEqual(expect.arrayContaining([expect.objectContaining({ block: expect.objectContaining({ text: 'Second ' }) })]));
     });
 
+    it('should retain the full submission when automatic blocks contain other automatic and manual blocks', () => {
+        submission.text = 'Strategy explanation.\n\nThe bridge pattern is not behavioral but structural. There are two elements. Only at startup time, they are bound.';
+        const bridgeStart = submission.text.indexOf('The bridge');
+        const elementsStart = submission.text.indexOf('There are');
+        const elementsEnd = submission.text.indexOf(' Only');
+        const startupStart = submission.text.indexOf('startup time,');
+        const ranges: [number, number, TextBlockType][] = [
+            [0, bridgeStart - 2, TextBlockType.AUTOMATIC],
+            [bridgeStart, submission.text.length, TextBlockType.AUTOMATIC],
+            [elementsStart, elementsEnd, TextBlockType.AUTOMATIC],
+            [startupStart, startupStart + 'startup time,'.length, TextBlockType.MANUAL],
+        ];
+        submission.blocks = ranges.map(([startIndex, endIndex, type]) => {
+            const block = new TextBlock();
+            block.startIndex = startIndex;
+            block.endIndex = endIndex;
+            block.type = type;
+            block.setTextFromSubmission(submission);
+            return block;
+        });
+        getLatestSubmissionResult(submission)!.feedbacks = [{ reference: submission.blocks[3].id, credits: 1, type: FeedbackType.MANUAL }];
+
+        component['setPropertiesFromServerResponse']({ participation, correctionRound: 0 });
+
+        expect(component.textBlockRefs.map(({ block }) => block!.text).join('')).toBe(submission.text);
+    });
+
+    it('should display and save feedback with missing text blocks without losing points', () => {
+        exercise.maxPoints = 4;
+        const feedbacks: Feedback[] = [
+            { id: 1, reference: 'missing-strategy-block', credits: 1, detailText: 'Correct strategy explanation', type: FeedbackType.MANUAL },
+            { id: 2, reference: 'missing-bridge-block', credits: 1, detailText: 'Correct bridge explanation', type: FeedbackType.MANUAL },
+            { id: 3, reference: submission.blocks![0].id, credits: 1, type: FeedbackType.MANUAL },
+            { id: 4, credits: 0, detailText: 'General feedback', type: FeedbackType.MANUAL_UNREFERENCED },
+        ];
+        getLatestSubmissionResult(submission)!.feedbacks = feedbacks;
+        component['setPropertiesFromServerResponse']({ participation, correctionRound: 0 });
+
+        expect(component.totalScore()).toBe(3);
+        expect(component.allAssessmentFeedbacks()).toHaveLength(4);
+        expect(component.unreferencedFeedback()).toEqual([
+            { ...feedbacks[0], reference: undefined, type: FeedbackType.MANUAL_UNREFERENCED },
+            { ...feedbacks[1], reference: undefined, type: FeedbackType.MANUAL_UNREFERENCED },
+            feedbacks[3],
+        ]);
+        // Loading the editor must not rewrite the original result (also used for complaint comparisons).
+        expect(feedbacks[0].reference).toBe('missing-strategy-block');
+        const saveSpy = vi.spyOn(textAssessmentService, 'save').mockReturnValue(of(new HttpResponse({ body: component.result()! })));
+
+        component.validateFeedback();
+        expect(component.assessmentsAreValid()).toBe(true);
+        expect(component.totalScore()).toBe(3);
+        component.save();
+
+        expect(saveSpy.mock.calls[0][2]).toEqual(expect.arrayContaining(component.allAssessmentFeedbacks()));
+        expect(saveSpy.mock.calls[0][2]).toHaveLength(4);
+    });
+
+    it.each([
+        { automaticRanges: [[12, 24]], suggestionRanges: [[0, 24]] },
+        {
+            automaticRanges: [],
+            suggestionRanges: [
+                [0, 20],
+                [10, 24],
+            ],
+        },
+        {
+            automaticRanges: [],
+            suggestionRanges: [
+                [10, 24],
+                [0, 24],
+            ],
+        },
+        {
+            automaticRanges: [],
+            suggestionRanges: [
+                [10, 24],
+                [5, 15],
+            ],
+        },
+    ])('should preserve inline references through suggestion resizing, saving and reloading ($suggestionRanges)', ({ automaticRanges, suggestionRanges }) => {
+        component.textBlockRefs = automaticRanges.map(([start, end]) => {
+            const block = new TextBlock();
+            block.startIndex = start;
+            block.endIndex = end;
+            block.type = TextBlockType.AUTOMATIC;
+            block.setTextFromSubmission(submission);
+            return new TextBlockRef(block);
+        });
+        component.unusedTextBlockRefs = [];
+        component.unreferencedFeedback.set([]);
+        const suggestions = suggestionRanges.map(([start, end]) => {
+            const ref = createTextBlockRefWithFeedbackFromTo(start, end);
+            ref.block!.setTextFromSubmission(submission);
+            ref.feedback!.reference = ref.block!.id;
+            ref.feedback!.type = FeedbackType.MANUAL;
+            ref.feedback!.text = 'FeedbackSuggestion:accepted:Explanation';
+            return ref;
+        });
+        const originalReferences = suggestions.map(({ feedback }) => feedback!.reference);
+        vi.spyOn(athenaService, 'getTextFeedbackSuggestions').mockReturnValue(of(suggestions));
+
+        component.loadFeedbackSuggestions();
+
+        // Each scenario resizes an incoming or existing suggestion, which changes its block ID.
+        expect(suggestions.some(({ block }, index) => block!.id !== originalReferences[index])).toBe(true);
+        for (const { block, feedback } of component.textBlockRefs) {
+            if (feedback) {
+                expect(feedback.reference).toBe(block!.id);
+            }
+        }
+        component.save();
+        const request = TestBed.inject(HttpTestingController).expectOne({
+            method: 'PUT',
+            url: `api/text/participations/${participation.id}/results/${component.result()!.id}/text-assessment`,
+        });
+        const body = request.request.body as { textBlocks: TextBlock[]; feedbacks: Feedback[] };
+        expect(body.feedbacks).toHaveLength(suggestions.length);
+        expect(body.feedbacks.every(({ reference }) => body.textBlocks.some(({ id }) => id === reference))).toBe(true);
+        request.flush({ id: component.result()!.id, correctionRound: 0, feedbacks: body.feedbacks });
+        // The server defaults custom blocks without an explicit type to MANUAL.
+        body.textBlocks.forEach((block) => (block.type ??= TextBlockType.MANUAL));
+        submission.blocks = body.textBlocks;
+        component.textBlockRefs = [];
+        component.unusedTextBlockRefs = [];
+
+        component['setPropertiesFromServerResponse']({ participation, correctionRound: 0 });
+
+        expect(component.unreferencedFeedback()).toEqual([]);
+        expect(component.textBlockRefs.filter(({ feedback }) => !!feedback)).toHaveLength(suggestions.length);
+        expect(component.totalScore()).toBe(suggestions.length);
+        expect(component.textBlockRefs.map(({ block }) => block!.text).join('')).toBe(submission.text);
+    });
+
     it('should load feedback suggestions', async () => {
         // preparation already added an assessment, but we need to remove it to test the loading
         component.textBlockRefs = [];
