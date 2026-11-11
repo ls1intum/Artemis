@@ -9,6 +9,7 @@ import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyBoolean;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -302,6 +303,23 @@ class Lti13ServiceTest {
 
         verify(userRepository).findOneWithAuthoritiesByLogin("prefix_john2");
         verify(userRepository, times(1)).findOneWithAuthoritiesByLogin(any());
+    }
+
+    @Test
+    void performLaunch_refusedAccount_leavesNoLaunchAssociationBehind() {
+        MockExercise result = getMockExercise(true);
+        when(oidcIdToken.getClaim("sub")).thenReturn("1");
+        when(oidcIdToken.getClaim("iss")).thenReturn("https://otherDomain.com");
+        when(oidcIdToken.getClaim(Claims.LTI_DEPLOYMENT_ID)).thenReturn("1");
+        ObjectNode jsonObject = JsonObjectMapper.get().createObjectNode();
+        jsonObject.put("id", "resourceLinkUrl");
+        when(oidcIdToken.getClaim(Claims.RESOURCE_LINK)).thenReturn(jsonObject);
+        prepareForPerformExerciseLaunch(result.courseId(), result.exerciseId(), true);
+        doThrow(new InternalAuthenticationServiceException("refused")).when(ltiService).authenticateLtiUser(any(), any(), any(), any(), anyBoolean());
+
+        assertThatExceptionOfType(InternalAuthenticationServiceException.class).isThrownBy(() -> lti13Service.performLaunch(oidcIdToken, clientRegistrationId));
+
+        verify(launchRepository, never()).save(any());
     }
 
     @Test

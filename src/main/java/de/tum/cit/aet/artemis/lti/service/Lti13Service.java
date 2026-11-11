@@ -544,10 +544,11 @@ public class Lti13Service {
     }
 
     private void handleLaunchRequest(Lti13LaunchRequest launchRequest, User user, Exercise exercise, OidcIdToken ltiIdToken, OnlineCourseConfiguration onlineCourseConfiguration) {
-        createOrUpdateResourceLaunch(launchRequest, user, exercise);
-
+        // The account is checked first: a refused launch must not leave an association behind that later results are published through.
         ltiService.authenticateLtiUser(ltiIdToken.getEmail(), createUsernameFromLaunchRequest(ltiIdToken, onlineCourseConfiguration), ltiIdToken.getGivenName(),
                 ltiIdToken.getFamilyName(), onlineCourseConfiguration.isRequireExistingUser());
+
+        createOrUpdateResourceLaunch(launchRequest, user, exercise);
 
         if (exercise != null) {
             ltiService.onSuccessfulLtiAuthentication(user, exercise);
