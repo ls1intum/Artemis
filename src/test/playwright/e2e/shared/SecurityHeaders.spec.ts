@@ -61,8 +61,17 @@ test.describe('Security headers and session cookie', { tag: '@fast' }, () => {
     test('A request without a session is refused by a protected endpoint', async ({ baseURL }) => {
         const context = await request.newContext({ baseURL, ignoreHTTPSErrors: true });
         try {
-            const response = await context.get('/api/core/courses/for-dashboard');
+            const path = '/api/course/courses/for-dashboard';
+            const response = await context.get(path);
             expect([401, 403]).toContain(response.status());
+
+            // The same path answers a signed-in user, so the refusal above is not caused by a path that does not exist
+            const signIn = await context.post('/api/core/public/authenticate', {
+                data: { username: studentOne.username, password: studentOne.password, rememberMe: false },
+            });
+            expect(signIn.ok()).toBe(true);
+            const signedIn = await context.get(path);
+            expect(signedIn.ok()).toBe(true);
         } finally {
             await context.dispose();
         }
