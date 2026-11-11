@@ -17,7 +17,7 @@ import { Exam } from 'app/exam/shared/entities/exam.model';
 import dayjs from 'dayjs/esm';
 import { EventManager } from 'app/foundation/service/event-manager.service';
 import { TranslateService } from '@ngx-translate/core';
-import { faBook, faExclamationTriangle, faEye, faFileSignature, faPencilAlt, faRobot, faSignal, faTrash, faUsers, faWrench } from '@fortawesome/free-solid-svg-icons';
+import { faBook, faCode, faExclamationTriangle, faEye, faFileSignature, faPencilAlt, faRobot, faSignal, faTrash, faUsers, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
 import { MODULE_FEATURE_HYPERION, PROFILE_LOCALCI } from 'app/app.constants';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
@@ -235,7 +235,7 @@ export class ExamExerciseRowButtonsComponent {
             items.push({
                 id: 'edit-in-editor',
                 labelKey: 'entity.action.editInEditor',
-                icon: faPencilAlt,
+                icon: faCode,
                 severity: 'warn',
                 kind: 'link',
                 link: ['/course-management', cid, 'programming-exercises', ex.id!, 'code-editor', RepositoryType.TEMPLATE, -1],
@@ -272,7 +272,7 @@ export class ExamExerciseRowButtonsComponent {
                 items.push({
                     id: 'edit',
                     labelKey: 'entity.action.edit',
-                    icon: faWrench,
+                    icon: faPencilAlt,
                     severity: 'warn',
                     kind: 'link',
                     link: [...typeSeg, 'edit'],
@@ -281,7 +281,7 @@ export class ExamExerciseRowButtonsComponent {
                 });
             }
         } else if (course.isAtLeastEditor) {
-            items.push({ id: 'edit', labelKey: 'entity.action.edit', icon: faWrench, severity: 'warn', kind: 'link', link: [...typeSeg, 'edit'] });
+            items.push({ id: 'edit', labelKey: 'entity.action.edit', icon: faPencilAlt, severity: 'warn', kind: 'link', link: [...typeSeg, 'edit'] });
         }
         if (course.isAtLeastInstructor) {
             items.push({
