@@ -256,6 +256,18 @@ class BuildContainerIsolationProbeTest {
     }
 
     @Test
+    void doesNotCountARefusalByTheHostAsIsolationWhenTheAgentRunsInAContainer() throws Exception {
+        // A loopback address names the namespace of the agent, and the host of the Docker daemon does not share it
+        when(waitCallback.awaitStatusCode(anyLong(), eq(TimeUnit.SECONDS))).thenReturn(0, 1);
+        Target store = new Target("127.0.0.1", 6379);
+
+        Result result = new BuildContainerIsolationProbe(dockerClient, IMAGE, true).run(null, List.of(store));
+
+        assertThat(result.notReachable()).isEmpty();
+        assertThat(result.inconclusive()).containsExactly(store);
+    }
+
+    @Test
     void doesNotCountAMissingEntryForTheHostAsIsolation() throws Exception {
         // The container has no entry for the name of the host, which the probe reports with its own exit code
         when(waitCallback.awaitStatusCode(anyLong(), eq(TimeUnit.SECONDS))).thenReturn(0, 3);

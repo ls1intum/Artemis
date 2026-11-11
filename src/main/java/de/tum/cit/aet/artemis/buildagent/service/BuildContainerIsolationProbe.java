@@ -2,6 +2,8 @@ package de.tum.cit.aet.artemis.buildagent.service;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -96,9 +98,17 @@ public class BuildContainerIsolationProbe {
     /** Whether the image is available, known after the first check. A probe of several networks pulls at most once. */
     private Boolean imageAvailable;
 
+    /** Whether the agent runs in a container itself. A loopback address then names the namespace of the agent, which the host of the Docker daemon does not share. */
+    private final boolean agentInContainer;
+
     public BuildContainerIsolationProbe(DockerClient dockerClient, String image) {
+        this(dockerClient, image, Files.exists(Path.of("/.dockerenv")) || Files.exists(Path.of("/run/.containerenv")));
+    }
+
+    BuildContainerIsolationProbe(DockerClient dockerClient, String image, boolean agentInContainer) {
         this.dockerClient = dockerClient;
         this.image = image;
+        this.agentInContainer = agentInContainer;
     }
 
     /**
@@ -213,7 +223,8 @@ public class BuildContainerIsolationProbe {
             if (hostVerdict == Verdict.REACHABLE) {
                 return Verdict.REACHABLE;
             }
-            allRefused &= hostVerdict == Verdict.NOT_REACHABLE;
+            // A refusal by the host says nothing about a service in the namespace of an agent that runs in a container
+            allRefused &= hostVerdict == Verdict.NOT_REACHABLE && !agentInContainer;
         }
         for (String address : addresses.stream().filter(address -> !isLoopbackAddress(address)).toList()) {
             Integer exitCode = runInContainer(network, false, target + " at " + address, "nc", "-w", String.valueOf(CONNECT_TIMEOUT_SECONDS), "-z", address,
