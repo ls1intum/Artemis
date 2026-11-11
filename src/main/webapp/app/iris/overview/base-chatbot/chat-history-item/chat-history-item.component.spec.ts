@@ -4,6 +4,9 @@ import { MockPipe } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ChatHistoryItemComponent } from './chat-history-item.component';
 import { By } from '@angular/platform-browser';
+import { TestKey } from '@angular/cdk/testing';
+import { MenuHarness } from '@angular/aria/menu/testing';
+import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
 import { DatePipe } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
@@ -21,7 +24,7 @@ describe('ChatHistoryItemComponent', () => {
 
     beforeEach(async () => {
         TestBed.configureTestingModule({
-            imports: [ChatHistoryItemComponent, MockPipe(ArtemisTranslatePipe)],
+            imports: [ChatHistoryItemComponent, MockPipe(ArtemisTranslatePipe, (key) => key ?? '')],
             providers: [DatePipe, { provide: TranslateService, useClass: MockTranslateService }, provideRouter([])],
         });
 
@@ -30,6 +33,7 @@ describe('ChatHistoryItemComponent', () => {
     });
 
     afterEach(() => {
+        fixture.destroy();
         vi.restoreAllMocks();
     });
 
@@ -58,7 +62,7 @@ describe('ChatHistoryItemComponent', () => {
 
         const datePipe = new DatePipe('en-US');
         const expectedDate = datePipe.transform(component.session()!.creationDate, 'dd.MM.yy HH:mm');
-        const historyItemLabel: HTMLElement = fixture.nativeElement.querySelector('.chat-history-text');
+        const historyItemLabel: HTMLElement = fixture.nativeElement.querySelector('button[data-button-intent="selection"]');
         expect(historyItemLabel.textContent).toContain(expectedDate);
     });
 
@@ -67,7 +71,7 @@ describe('ChatHistoryItemComponent', () => {
         await fixture.whenStable();
 
         const expectedTitle = 'New chat';
-        const historyItemLabel: HTMLElement = fixture.nativeElement.querySelector('.chat-history-text');
+        const historyItemLabel: HTMLElement = fixture.nativeElement.querySelector('button[data-button-intent="selection"]');
         expect(historyItemLabel.textContent).toContain(expectedTitle);
     });
 
@@ -76,34 +80,34 @@ describe('ChatHistoryItemComponent', () => {
         vi.spyOn(component.sessionClicked, 'emit');
         await fixture.whenStable();
 
-        const itemDiv = fixture.debugElement.query(By.css('.chat-history-item'));
-        itemDiv.triggerEventHandler('click', null);
+        const sessionButton = fixture.debugElement.query(By.css('button[data-button-intent="selection"]')).nativeElement as HTMLButtonElement;
+        sessionButton.click();
 
         expect(component.sessionClicked.emit).toHaveBeenCalledWith(component.session()!);
     });
 
-    it('should add "chat-history-item-selected" class when active is true', async () => {
+    it('should add "chat-history-item--selected" class when active is true', async () => {
         fixture.componentRef.setInput('session', getSessionMock());
         fixture.componentRef.setInput('active', true);
         await fixture.whenStable();
 
         const itemDiv: HTMLElement = fixture.nativeElement.querySelector('.chat-history-item');
-        expect(itemDiv.classList).toContain('chat-history-item-selected');
+        expect(itemDiv.classList).toContain('chat-history-item--selected');
     });
 
-    it('should not add "chat-history-item-selected" class when active is false', async () => {
+    it('should not add "chat-history-item--selected" class when active is false', async () => {
         fixture.componentRef.setInput('session', getSessionMock());
         fixture.componentRef.setInput('active', false);
         await fixture.whenStable();
 
         const itemDiv: HTMLElement = fixture.nativeElement.querySelector('.chat-history-item');
-        expect(itemDiv.classList).not.toContain('chat-history-item-selected');
+        expect(itemDiv.classList).not.toContain('chat-history-item--selected');
     });
 
     function testSessionRendering(session: IrisSessionDTO, expectedIcon: IconProp, expectedTooltipKey: string, expectedEntityRoute: string) {
         fixture.componentRef.setInput('session', session);
         fixture.detectChanges();
-        const iconDebugEl = fixture.debugElement.query(By.css('.related-entity-icon fa-icon'));
+        const iconDebugEl = fixture.debugElement.query(By.css('.chat-history-item__entity-link fa-icon'));
         const iconInstance = iconDebugEl.componentInstance as FaIconComponent;
         expect(iconInstance.icon()).toBe(expectedIcon);
         expect(component.tooltipText()).toContain(expectedTooltipKey);
@@ -223,7 +227,7 @@ describe('ChatHistoryItemComponent', () => {
         fixture.componentRef.setInput('session', session);
         await fixture.whenStable();
 
-        const menuTrigger = fixture.debugElement.query(By.css('.menu-trigger'));
+        const menuTrigger = fixture.debugElement.query(By.css('.chat-history-item__menu-trigger'));
         expect(menuTrigger).toBeTruthy();
     });
 
@@ -246,82 +250,80 @@ describe('ChatHistoryItemComponent', () => {
         expect(component.deleteSession.emit).toHaveBeenCalledWith(session);
     });
 
-    it('should build menuItems with correct delete action on menu toggle', async () => {
-        const session: IrisSessionDTO = {
-            id: 12,
-            title: 'Chat with menu',
-            creationDate: new Date(),
-            mode: ChatServiceMode.COURSE,
-            entityId: 1,
-            entityName: 'Course 1',
-        };
+    const menuSession: IrisSessionDTO = {
+        id: 12,
+        title: 'Chat with menu',
+        creationDate: new Date(),
+        mode: ChatServiceMode.COURSE,
+        entityId: 1,
+        entityName: 'Course 1',
+    };
 
-        fixture.componentRef.setInput('session', session);
+    const openMenu = async () => {
+        fixture.componentRef.setInput('session', menuSession);
         await fixture.whenStable();
+        fixture.debugElement.query(By.css('.chat-history-item__menu-trigger')).nativeElement.click();
+        await fixture.whenStable();
+        return TestbedHarnessEnvironment.documentRootLoader(fixture).getHarness(MenuHarness);
+    };
 
-        // Menu items are empty before the first toggle
-        expect(component.menuItems()).toHaveLength(0);
+    it('should offer the delete action in the session menu', async () => {
+        const menu = await openMenu();
+        const entries = await menu.getItems();
 
-        // Simulate menu toggle (stopPropagation on the event, build items, toggle menu)
-        const mockEvent = { stopPropagation: vi.fn() } as unknown as Event;
-        component.onMenuToggle(mockEvent);
-
-        // After toggle, menu items should be populated with the delete action
-        expect(component.menuItems()).toHaveLength(1);
-        expect(component.menuItems()[0].styleClass).toBe('danger');
-        expect(component.menuItems()[0].label).toBeTruthy();
+        expect(entries).toHaveLength(1);
+        expect(await entries[0].getText()).toBe('artemisApp.iris.chatHistory.deleteSession');
     });
 
-    it('should emit deleteSession when menu item command is invoked', async () => {
-        const session: IrisSessionDTO = {
-            id: 13,
-            title: 'Chat to delete via menu',
-            creationDate: new Date(),
-            mode: ChatServiceMode.COURSE,
-            entityId: 1,
-            entityName: 'Course 1',
-        };
-
-        fixture.componentRef.setInput('session', session);
-        await fixture.whenStable();
-
+    it('should emit deleteSession, and not sessionClicked, when the delete action is chosen', async () => {
         vi.spyOn(component.deleteSession, 'emit');
+        vi.spyOn(component.sessionClicked, 'emit');
 
-        // Toggle to build menu items
-        const mockEvent = { stopPropagation: vi.fn() } as unknown as Event;
-        component.onMenuToggle(mockEvent);
-
-        // Invoke the command (simulates clicking the menu item)
-        component.menuItems()[0].command!({});
-
-        expect(component.deleteSession.emit).toHaveBeenCalledWith(session);
-    });
-
-    it('should use current translation when building menu items on toggle', async () => {
-        const session: IrisSessionDTO = {
-            id: 14,
-            title: 'Chat for language test',
-            creationDate: new Date(),
-            mode: ChatServiceMode.COURSE,
-            entityId: 1,
-            entityName: 'Course 1',
-        };
-
-        fixture.componentRef.setInput('session', session);
+        const menu = await openMenu();
+        const [deleteItem] = await menu.getItems({ text: 'artemisApp.iris.chatHistory.deleteSession' });
+        await deleteItem.click();
         await fixture.whenStable();
 
-        const translateService = TestBed.inject(TranslateService);
+        expect(component.deleteSession.emit).toHaveBeenCalledWith(menuSession);
+        expect(component.sessionClicked.emit).not.toHaveBeenCalled();
+    });
 
-        // First toggle in English
-        vi.spyOn(translateService, 'instant').mockReturnValue('Delete');
-        const mockEvent = { stopPropagation: vi.fn() } as unknown as Event;
-        component.onMenuToggle(mockEvent);
-        expect(component.menuItems()[0].label).toBe('Delete');
+    it('should not choose the session when the menu is opened with a click', async () => {
+        vi.spyOn(component.sessionClicked, 'emit');
 
-        // Simulate language change to German and toggle again
-        vi.spyOn(translateService, 'instant').mockReturnValue('Löschen');
-        component.onMenuToggle(mockEvent);
-        expect(component.menuItems()[0].label).toBe('Löschen');
+        const menu = await openMenu();
+
+        expect(await menu.isOpen()).toBe(true);
+        expect(component.sessionClicked.emit).not.toHaveBeenCalled();
+    });
+
+    it.each(['Enter', ' '])('should not choose the session when the menu is opened with %j', async (key) => {
+        fixture.componentRef.setInput('session', menuSession);
+        await fixture.whenStable();
+        vi.spyOn(component.sessionClicked, 'emit');
+
+        const trigger = fixture.debugElement.query(By.css('.chat-history-item__menu-trigger')).nativeElement as HTMLButtonElement;
+        trigger.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true }));
+        await fixture.whenStable();
+
+        expect(component.sessionClicked.emit).not.toHaveBeenCalled();
+        const menu = await TestbedHarnessEnvironment.documentRootLoader(fixture).getHarness(MenuHarness);
+        expect(await menu.isOpen()).toBe(true);
+        const [deleteItem] = await menu.getItems();
+        expect(await deleteItem.isFocused()).toBe(true);
+    });
+
+    it('shows the menu tooltip when the native trigger receives keyboard focus', async () => {
+        fixture.componentRef.setInput('session', menuSession);
+        await fixture.whenStable();
+        const trigger = fixture.debugElement.query(By.css('.chat-history-item__menu-trigger')).nativeElement as HTMLButtonElement;
+        trigger.focus();
+        await vi.waitFor(() => {
+            fixture.detectChanges();
+            const tooltip = document.querySelector('[role="tooltip"]');
+            expect(tooltip?.textContent).toContain('artemisApp.iris.chatHistory.sessionMenuAriaLabel');
+        });
+        expect(document.activeElement).toBe(trigger);
     });
 
     it('should not render related-entity-icon for course session', async () => {
@@ -337,29 +339,32 @@ describe('ChatHistoryItemComponent', () => {
         fixture.componentRef.setInput('session', session);
         await fixture.whenStable();
 
-        const iconDebugEl = fixture.debugElement.query(By.css('.related-entity-icon'));
+        const iconDebugEl = fixture.debugElement.query(By.css('.chat-history-item__entity-link'));
         expect(iconDebugEl).toBeNull();
     });
 
-    it('should call stopPropagation and not emit sessionClicked when entity icon is clicked', async () => {
-        const session: IrisSessionDTO = {
-            id: 20,
-            title: 'Exercise chat',
-            creationDate: new Date(),
-            mode: ChatServiceMode.PROGRAMMING_EXERCISE,
-            entityId: 99,
-            entityName: 'Exercise 1',
-        };
-
-        fixture.componentRef.setInput('session', session);
+    it('keeps selection, menu and navigation as sibling native controls', async () => {
+        fixture.componentRef.setInput('session', { ...menuSession, mode: ChatServiceMode.PROGRAMMING_EXERCISE });
         await fixture.whenStable();
 
+        const row = fixture.nativeElement.querySelector('.chat-history-item') as HTMLElement;
+        expect(row.getAttribute('role')).toBeNull();
+        expect(row.hasAttribute('tabindex')).toBe(false);
+        const controls = Array.from(row.children).filter((child) => child.matches('button, a'));
+        expect(controls.map((control) => control.tagName)).toEqual(['BUTTON', 'BUTTON', 'A']);
+        expect(controls[0].textContent).toContain(menuSession.title);
+        expect(controls[1].getAttribute('aria-label')).toBe('artemisApp.iris.chatHistory.sessionMenuAriaLabel');
+        expect(controls[2].getAttribute('href')).toContain('/exercises/1');
+    });
+
+    it('returns focus to the menu trigger on Escape without selecting the session', async () => {
         vi.spyOn(component.sessionClicked, 'emit');
+        const menu = await openMenu();
+        await (await menu.host()).sendKeys(TestKey.ESCAPE);
+        await fixture.whenStable();
 
-        const mockEvent = { stopPropagation: vi.fn() } as unknown as Event;
-        component.onEntityIconClick(mockEvent);
-
-        expect(mockEvent.stopPropagation).toHaveBeenCalled();
+        const trigger = fixture.debugElement.query(By.css('.chat-history-item__menu-trigger')).nativeElement;
+        expect(document.activeElement).toBe(trigger);
         expect(component.sessionClicked.emit).not.toHaveBeenCalled();
     });
 
@@ -378,7 +383,7 @@ describe('ChatHistoryItemComponent', () => {
 
         vi.spyOn(component.sessionClicked, 'emit');
 
-        const entityIcon = fixture.debugElement.query(By.css('.related-entity-icon'));
+        const entityIcon = fixture.debugElement.query(By.css('.chat-history-item__entity-link'));
         entityIcon.nativeElement.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
 
         expect(component.sessionClicked.emit).not.toHaveBeenCalled();
@@ -399,7 +404,7 @@ describe('ChatHistoryItemComponent', () => {
 
         vi.spyOn(component.sessionClicked, 'emit');
 
-        const entityIcon = fixture.debugElement.query(By.css('.related-entity-icon'));
+        const entityIcon = fixture.debugElement.query(By.css('.chat-history-item__entity-link'));
         entityIcon.nativeElement.dispatchEvent(new KeyboardEvent('keydown', { key: ' ', bubbles: true }));
 
         expect(component.sessionClicked.emit).not.toHaveBeenCalled();

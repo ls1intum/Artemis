@@ -25,7 +25,11 @@
             </div>
         }
 
-        <div class="tumaet-ui-dialog-content tumaet:grow tumaet:overflow-y-auto tumaet:px-4 tumaet:pb-4">
+        <div
+            class="tumaet-ui-dialog-content tumaet:grow tumaet:overflow-y-auto"
+            [class.tumaet:px-4]="contentPadding() === 'default'"
+            [class.tumaet:pb-4]="contentPadding() === 'default'"
+        >
             <ng-content />
         </div>
 

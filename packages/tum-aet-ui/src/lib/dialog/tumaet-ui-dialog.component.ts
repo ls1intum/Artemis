@@ -90,6 +90,8 @@ export class TumAetUiDialogComponent implements OnDestroy {
     readonly dismissableMask = input(false, { transform: booleanAttribute });
     /** Responsive dialog dimensions. Omit for content-sized dialogs. */
     readonly size = input<TumAetUiDialogSize>();
+    /** Body spacing only; `none` supports edge-to-edge illustrations or media. Header and footer keep their spacing. */
+    readonly contentPadding = input<'default' | 'none'>('default');
     /** Accessible name used when no visible header or header template is present. */
     readonly ariaLabel = input<string>();
     readonly closeButtonAriaLabel = input<string>();

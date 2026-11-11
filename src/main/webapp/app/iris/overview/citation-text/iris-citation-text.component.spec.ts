@@ -145,7 +145,7 @@ describe('IrisCitationTextComponent', () => {
 
         const group = el.querySelector('.iris-citation-group--has-summary') as HTMLElement;
         const bubbleText = group.querySelector('.iris-citation__text') as HTMLElement;
-        const navButtons = group.querySelectorAll('.iris-citation__nav-button') as NodeListOf<HTMLElement>;
+        const navButtons = group.querySelectorAll('.iris-citation__nav button') as NodeListOf<HTMLElement>;
 
         const initialText = bubbleText.textContent?.trim();
 
@@ -154,6 +154,32 @@ describe('IrisCitationTextComponent', () => {
 
         navButtons[0].click();
         expect(bubbleText.textContent?.trim()).toBe(initialText);
+    });
+
+    it('ignores an HTML navigation slot that has no generated citation summaries', () => {
+        expect(() => render('<span data-iris-citation-navigation></span>')).not.toThrow();
+        expect(fixture.nativeElement.querySelector('jhi-iris-citation-navigation')).toBeNull();
+    });
+
+    it('mounts named TUM controls, preserves focus and changes the active summary without navigating', () => {
+        const navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+        const citationInfo: IrisCitationMetaDTO[] = [
+            { entityId: 1, lectureTitle: 'L1', lectureUnitTitle: '', lectureId: 1, courseId: 1 },
+            { entityId: 2, lectureTitle: 'L2', lectureUnitTitle: '', lectureId: 1, courseId: 1 },
+        ];
+        const el = render('[cite:L:1::::First:S1] [cite:L:2::::Second:S2]', citationInfo);
+        const next = el.querySelector('button[aria-label="artemisApp.iris.citation.next"]') as HTMLButtonElement;
+        expect(next).not.toBeNull();
+        next.focus();
+        next.click();
+        fixture.detectChanges();
+        expect(document.activeElement).toBe(next);
+        expect(el.querySelector('.iris-citation__summary-item.is-active')?.textContent).toContain('S2');
+        expect(navigate).not.toHaveBeenCalled();
+
+        render('A replacement response without citations');
+        expect(el.querySelector('jhi-iris-citation-navigation')).toBeNull();
+        expect(next.isConnected).toBe(false);
     });
 
     describe('navigating to a citation', () => {

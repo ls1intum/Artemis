@@ -1,17 +1,26 @@
-<button
-    [ngClass]="['jhi-btn', 'btn', btnType(), btnSize()]"
-    [type]="shouldSubmit() ? 'submit' : 'button'"
-    ngbTooltip="{{ tooltip() | artemisTranslate }}"
-    (click)="onClick.emit($event)"
-    [jhiFeatureToggle]="featureToggle() ?? []"
-    [forceDisabled]="disabled() || isLoading()"
->
-    @if (isLoading()) {
-        <fa-icon class="jhi-btn__loading" [icon]="faCircleNotch" animation="spin" size="sm" />
-    } @else {
-        <jhi-iris-logo [size]="SMALL" />
+<span class="inline-flex">
+    <tumaet-ui-button
+        [severity]="buttonOptions().severity"
+        [size]="buttonOptions().size"
+        [variant]="buttonOptions().variant"
+        [type]="shouldSubmit() ? 'submit' : 'button'"
+        [rounded]="!title()"
+        [disabled]="isDisabled()"
+        [loading]="isLoading()"
+        [ariaLabel]="!title() ? (tooltip() || 'artemisApp.iris.logoButtonLabel' | artemisTranslate) : undefined"
+        [ariaDescribedBy]="title() && tooltip() ? tooltipId : undefined"
+        [tumAetUiTooltip]="tooltip() || (!title() ? 'artemisApp.iris.logoButtonLabel' : '') | artemisTranslate"
+        [tumAetUiTooltipDescribesHost]="false"
+        (clicked)="onClick.emit($event)"
+    >
+        @if (!isLoading()) {
+            <jhi-iris-logo [size]="SMALL" [decorative]="true" />
+        }
+        @if (title(); as titleValue) {
+            <span [jhiTranslate]="titleValue"></span>
+        }
+    </tumaet-ui-button>
+    @if (title() && tooltip()) {
+        <span class="sr-only" [id]="tooltipId" [jhiTranslate]="tooltip()!"></span>
     }
-    @if (title(); as titleValue) {
-        <span class="jhi-btn__title ms-1" [jhiTranslate]="titleValue"></span>
-    }
-</button>
+</span>

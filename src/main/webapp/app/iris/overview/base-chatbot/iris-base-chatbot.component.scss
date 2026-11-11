@@ -6,19 +6,17 @@ $iris-border-radius-lg: 0.5rem; // 8px — cards, menus, text areas
 // Z-index scale for layered UI within the chat widget
 // z-index: 1    — scroll-to-bottom button, sticky sidebar headers
 // z-index: 10   — chat header (sits above messages)
-// z-index: 1050 — session switcher dropdown (above header, below global modals)
-$iris-z-index-dropdown: 1050;
 
 @mixin custom-scrollbar($width: 6px) {
     scrollbar-width: thin;
-    scrollbar-color: var(--bs-border-color) transparent;
+    scrollbar-color: var(--border-color) transparent;
 
     &::-webkit-scrollbar {
         width: $width;
     }
 
     &::-webkit-scrollbar-thumb {
-        background-color: var(--bs-border-color);
+        background-color: var(--border-color);
         border-radius: $iris-border-radius-md;
     }
 
@@ -50,7 +48,7 @@ $iris-z-index-dropdown: 1050;
     padding: 10px;
     gap: 10px;
 
-    .btn {
+    > button {
         flex: 1;
     }
 }
@@ -142,101 +140,8 @@ $iris-z-index-dropdown: 1050;
     overflow-anchor: none;
 }
 
-.suggestions-container {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 16px;
-    justify-content: center;
-    align-items: stretch;
-}
-
-.suggestion-button {
-    background-color: var(--iris-secondary-background);
-    color: var(--bs-body-color);
-    padding: 8px 16px;
-    cursor: pointer;
-    font-size: 12px;
-    text-wrap: wrap;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition:
-        background-color 0.3s,
-        color 0.3s;
-    border: 1px solid var(--border-color);
-    border-radius: $iris-border-radius-sm;
-    flex: 1;
-
-    &:hover {
-        background-color: var(--iris-tertiary-background);
-    }
-}
-
-.toolbox {
-    display: flex;
-    gap: 4px;
-
-    .header-control {
-        background-color: var(--iris-secondary-background);
-        border: none;
-        border-radius: $iris-border-radius-sm;
-        color: var(--secondary);
-    }
-
-    button:hover {
-        background-color: var(--iris-accent-background);
-    }
-}
-
-.session-title-trigger {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    background: none;
-    border: none;
-    cursor: pointer;
-    padding: 4px 8px;
-    border-radius: $iris-border-radius-sm;
-    color: var(--bs-body-color);
-    font-size: 14px;
-    max-width: 250px;
-
-    &:hover {
-        background-color: var(--iris-tertiary-background);
-    }
-}
-
-.session-title-text {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-.session-title-chevron {
-    font-size: 12px;
-    transition: transform 0.2s;
-    flex-shrink: 0;
+.iris-chat__menu-group-label {
     color: var(--iris-label-color);
-
-    &.rotated {
-        transform: rotate(180deg);
-    }
-}
-
-.session-switcher-inline-menu {
-    position: absolute;
-    top: 32px;
-    left: 4px;
-    z-index: $iris-z-index-dropdown;
-    min-width: 200px;
-}
-
-.related-entity-button {
-    background-color: var(--iris-secondary-background);
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 0.8rem;
 }
 
 .rate-limit {
@@ -262,40 +167,15 @@ $iris-z-index-dropdown: 1050;
     margin-inline: auto;
 }
 
-.prompt-suggestion-chip {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    padding: 4px 12px;
-    font-size: 0.85rem;
-    border: 1px solid var(--bs-border-color);
-    border-radius: var(--bs-border-radius-lg);
-    background-color: var(--iris-secondary-background);
-    color: var(--bs-body-color);
-    cursor: pointer;
-    transition:
-        background-color 0.2s,
-        border-color 0.2s;
-
-    &:not(:disabled):hover {
-        background-color: var(--iris-tertiary-background);
-    }
-
-    &:disabled {
-        opacity: 0.5;
-        cursor: not-allowed;
-    }
-}
-
 :host {
     .bubble-left,
     .bubble-right {
-        color: var(--bs-body-color);
+        color: var(--body-color);
 
         // prettier-ignore
-        -webkit-mask: radial-gradient(var(--t) at var(--_d) 0, #0000 98%, #000 102%) var(--_d) 100% / calc(100% - var(--r)) var(--t) no-repeat,
-            conic-gradient(at var(--r) var(--r), #000 75%, #0000 0) calc(var(--r) / -2) calc(var(--r) / -2) padding-box,
-            radial-gradient(50% 50%, #000 98%, #0000 101%) 0 0 / var(--r) var(--r) space padding-box;
+        -webkit-mask: radial-gradient(var(--t) at var(--_d) 0, transparent 98%, black 102%) var(--_d) 100% / calc(100% - var(--r)) var(--t) no-repeat,
+            conic-gradient(at var(--r) var(--r), black 75%, transparent 0) calc(var(--r) / -2) calc(var(--r) / -2) padding-box,
+            radial-gradient(50% 50%, black 98%, transparent 101%) 0 0 / var(--r) var(--r) space padding-box;
         overflow-wrap: break-word;
     }
 }
@@ -329,10 +209,6 @@ jhi-iris-mcq-question {
 
     .bubble-left {
         margin-bottom: 0;
-
-        ::ng-deep p:last-child {
-            margin-bottom: 0;
-        }
     }
 }
 
@@ -396,7 +272,7 @@ jhi-iris-mcq-question {
 
 .client-chat-error {
     background-color: var(--artemis-alert-danger-background);
-    color: var(--bs-body-color);
+    color: var(--body-color);
     padding: 4px;
     border-top: 1px solid var(--artemis-alert-danger-border);
     border-radius: $iris-border-radius-sm;
@@ -446,17 +322,12 @@ pre {
         z-index: 10;
 
         &.has-content {
-            box-shadow: 0 10px 10px -15px rgba(0, 0, 0, 0.3);
-            border-bottom: 1px solid var(--bs-border-color);
+            box-shadow: 0 10px 10px -15px color-mix(in srgb, var(--iris-shadow-color) 30%, transparent);
+            border-bottom: 1px solid var(--border-color);
         }
 
         &:has(.session-title-trigger) {
             justify-content: space-between;
-        }
-
-        button {
-            // Safari doing Safari things
-            padding-block: 1px;
         }
     }
 
@@ -542,7 +413,8 @@ pre {
     --iris-input-lines: 1;
 
     textarea {
-        background-color: var(--iris-secondary-background);
+        display: block;
+        width: 100%;
         flex: 1 0 auto;
         padding: 16px;
         resize: none;
@@ -562,15 +434,7 @@ pre {
         max-height: max(160px, calc((var(--iris-input-lines) + 4) * var(--iris-input-line-height) + 32px));
         overflow-y: auto;
 
-        &:focus {
-            outline: none;
-            box-shadow: none;
-        }
-
-        // Override dark theme's .form-control:disabled { background-color: $gray-800 !important }
-        // so the textarea stays consistent with the wrapper background when disabled.
         &:disabled {
-            background-color: var(--iris-secondary-background) !important;
             cursor: not-allowed;
         }
 
@@ -600,8 +464,8 @@ pre {
         flex: 1;
         min-width: 0;
         position: relative;
-        background-color: var(--iris-secondary-background);
-        border: 1px solid var(--bs-border-color);
+        background-color: var(--artemis-control-background);
+        border: 1px solid var(--border-color);
         border-radius: $iris-border-radius-lg;
 
         &:focus-within {
@@ -657,7 +521,7 @@ pre {
         max-height: calc(var(--iris-textarea-height, calc(var(--iris-input-lines) * var(--iris-input-line-height) + 32px)) - 32px);
         border: 1px solid transparent;
         pointer-events: none;
-        font-family: var(--bs-body-font-family);
+        font-family: inherit;
         font-size: inherit;
         line-height: var(--iris-input-line-height);
         overflow-wrap: break-word;
@@ -670,12 +534,12 @@ pre {
     }
 
     .ghost-text-suggestion {
-        color: var(--bs-secondary-color);
+        color: var(--text-body-secondary);
         opacity: 0.6;
     }
 
     .chip-preview-text {
-        color: var(--bs-secondary-color);
+        color: var(--text-body-secondary);
         opacity: 1;
         white-space: pre-wrap;
     }
@@ -702,19 +566,6 @@ pre {
 @container iris-chat-body (max-width: 768px) {
     :host.layout-embedded .chat-input {
         --iris-input-lines: 3;
-    }
-}
-
-.new-chat-button {
-    padding: 8px;
-    margin: 0 8px;
-    cursor: pointer;
-    border-radius: $iris-border-radius-sm;
-
-    &:hover {
-        background-color: var(--iris-accent-background);
-        border-radius: $iris-border-radius-md;
-        padding: 8px;
     }
 }
 
@@ -758,19 +609,6 @@ pre {
         @include custom-scrollbar(4px);
     }
 
-    .about-iris-button {
-        padding: 8px;
-        margin: 0 8px 8px;
-        cursor: pointer;
-        border-radius: var(--bs-border-radius-lg);
-        color: var(--bs-body-color);
-
-        &:hover {
-            background-color: var(--iris-accent-background);
-            border-radius: 6px;
-        }
-    }
-
     &-label p {
         color: var(--iris-label-color);
         font-size: 0.8rem;
@@ -780,24 +618,8 @@ pre {
 
     &-divider {
         height: 1px;
-        background-color: var(--bs-border-color);
+        background-color: var(--border-color);
         margin: 0.5rem 0.75rem;
-    }
-
-    .collapsed-icon-button {
-        padding: 4px 8px;
-        cursor: pointer;
-        border-radius: $iris-border-radius-sm;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: var(--bs-body-color);
-        background-color: transparent;
-        border: none;
-
-        &:hover {
-            background-color: var(--iris-accent-background);
-        }
     }
 
     &-collapsed {
@@ -807,14 +629,6 @@ pre {
         padding-top: 16px;
         height: 100%;
         gap: 4px;
-
-        .new-chat-button {
-            margin: 0;
-            padding: 6px 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
 
         .collapsed-bottom {
             margin-top: auto;
@@ -834,7 +648,7 @@ pre {
 
 .p-chat {
     background-color: var(--iris-tertiary-background);
-    color: var(--bs-body-color);
+    color: var(--body-color);
     border-radius: $iris-border-radius-sm;
     display: flex;
     flex-direction: column;
@@ -846,7 +660,7 @@ pre {
     padding: 10px;
     border-top-left-radius: $iris-border-radius-lg;
     border-top-right-radius: $iris-border-radius-lg;
-    border-bottom: 1px solid var(--bs-border-color);
+    border-bottom: 1px solid var(--border-color);
 }
 
 .disclaimer-message {
@@ -861,48 +675,7 @@ pre {
     bottom: calc(100% + 8px);
     left: 50%;
     transform: translateX(-50%);
-    width: 30px;
-    height: 30px;
-    border-radius: 50%;
-    background-color: var(--iris-primary-background);
-    color: var(--iris-label-color);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    cursor: pointer;
     z-index: 1;
-    border: 1px solid var(--bs-border-color);
-}
-
-.rate-message-buttons {
-    display: flex;
-    justify-content: flex-end;
-    width: fit-content;
-
-    button.btn {
-        padding: 4px 6px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        border: none;
-
-        &:hover {
-            background-color: var(--iris-tertiary-background);
-            border-radius: $iris-border-radius-sm;
-        }
-    }
-}
-
-.thumbs-up-clicked {
-    color: var(--success);
-}
-
-.thumbs-down-clicked {
-    color: var(--danger);
-}
-
-.rate-button-not-clicked {
-    color: var(--secondary);
 }
 
 #irisSendButton {
@@ -914,4 +687,32 @@ cdk-global-scrollblock {
     position: fixed;
     width: 100%;
     overflow-y: auto;
+}
+
+@media (forced-colors: active) {
+    .chat-input textarea:focus-visible {
+        outline: 2px solid Highlight;
+        outline-offset: 2px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .message-entering.animate-enabled,
+    .suggestion-entering,
+    .suggestion-leaving {
+        animation: none;
+        grid-template-rows: 1fr;
+        transform: none;
+        opacity: 1;
+    }
+
+    .chat-history,
+    .chat-input textarea.placeholder-fade-in::placeholder,
+    .chat-input textarea.placeholder-fade-out::placeholder {
+        transition: none;
+    }
+
+    .chat-input textarea.placeholder-fade-out::placeholder {
+        opacity: 1;
+    }
 }

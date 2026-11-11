@@ -8,8 +8,16 @@ import { TumAetUiDialogComponent, TumAetUiDialogSize } from './tumaet-ui-dialog.
     selector: 'tumaet-ui-dialog-string-host',
     imports: [TumAetUiDialogComponent],
     template: `
-        <tumaet-ui-dialog [(visible)]="open" [header]="header()" [closable]="closable()" [closeOnEscape]="closeOnEscape()" [dismissableMask]="dismissableMask()">
+        <tumaet-ui-dialog
+            [(visible)]="open"
+            [header]="header()"
+            [closable]="closable()"
+            [closeOnEscape]="closeOnEscape()"
+            [dismissableMask]="dismissableMask()"
+            [contentPadding]="contentPadding()"
+        >
             <p class="body-content">Body text</p>
+            <input aria-label="Course name" />
             @if (withFooter()) {
                 <ng-template #footer>
                     <button class="footer-btn" type="button">OK</button>
@@ -25,6 +33,7 @@ class StringHeaderHostComponent {
     readonly closeOnEscape = signal(true);
     readonly dismissableMask = signal(false);
     readonly withFooter = signal(true);
+    readonly contentPadding = signal<'default' | 'none'>('default');
 }
 
 @Component({
@@ -146,6 +155,27 @@ describe('TumAetUiDialogComponent', () => {
         host.open.set(true);
         fixture.detectChanges();
         expect(document.querySelector('.tumaet-ui-dialog-content .body-content')?.textContent).toContain('Body text');
+    });
+
+    it('can switch body spacing without reopening the dialog or losing entered content and focus', () => {
+        host.open.set(true);
+        fixture.detectChanges();
+        const opened = container();
+        const input = document.querySelector<HTMLInputElement>('input[aria-label="Course name"]')!;
+        input.value = 'Advanced Software Engineering';
+        input.focus();
+
+        host.contentPadding.set('none');
+        fixture.detectChanges();
+
+        expect(container()).toBe(opened);
+        expect(input.value).toBe('Advanced Software Engineering');
+        expect(document.activeElement).toBe(input);
+        expect(document.querySelector('.tumaet-ui-dialog-title')?.textContent?.trim()).toBe('My title');
+        expect(document.querySelector('.footer-btn')).not.toBeNull();
+        document.querySelector<HTMLButtonElement>('.tumaet-ui-dialog-close')!.click();
+        fixture.detectChanges();
+        expect(host.open()).toBe(false);
     });
 
     it('renders the projected #footer template in the footer region', () => {

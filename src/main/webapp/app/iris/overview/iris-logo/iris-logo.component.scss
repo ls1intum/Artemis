@@ -4,31 +4,33 @@
 
 .iris-logo {
     width: auto;
-    filter: drop-shadow(0 3px 8px rgba(0, 0, 0, 0.24));
+    filter: drop-shadow(0 3px 8px color-mix(in srgb, var(--iris-shadow-color) 24%, transparent));
 
-    &.fluid {
+    &--fluid {
         flex: 0;
         max-height: 100%;
         aspect-ratio: 1 / 1;
     }
 
-    &.text {
+    &--text {
         height: 1.2em;
     }
 
-    &.small {
+    &--small {
         height: 35px;
     }
 
-    &.medium {
+    &--medium {
         height: 70px;
     }
 
-    &.big {
+    &--big {
+        max-width: 100%;
+        height: auto;
         max-height: 100px;
     }
 
-    &.spinning {
+    &--spinning {
         margin-left: 4px;
         animation: iris-pulse 1.5s ease-in-out infinite;
         filter: none;
@@ -49,7 +51,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-    .iris-logo.spinning {
+    .iris-logo--spinning {
         animation: none;
     }
 }

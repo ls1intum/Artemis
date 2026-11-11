@@ -1,13 +1,14 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, computed, effect, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, ElementRef, afterRenderEffect, computed, effect, inject, signal, untracked, viewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { DynamicDialogRef } from 'primeng/dynamicdialog';
+import { IrisOnboardingRef } from './iris-onboarding-ref';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 import { captureException } from 'app/core/error-reporting/capture-exception';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { IrisLogoComponent, IrisLogoSize } from 'app/iris/overview/iris-logo/iris-logo.component';
-import { ButtonComponent, ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
+import { TumAetUiButtonComponent, TumAetUiButtonDirective, TumAetUiDialogComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { faXmark } from '@fortawesome/free-solid-svg-icons';
 import { StepperComponent } from './stepper/stepper.component';
-import { CdkTrapFocus } from '@angular/cdk/a11y';
 import { IrisOnboardingService, OnboardingResult } from './iris-onboarding.service';
 
 // Data-attribute selectors for onboarding tooltip anchor elements.
@@ -24,13 +25,13 @@ const SPOTLIGHT_HIGHLIGHT_MARGIN_PX = 8;
 // Half-size of the centred coach mark dot, used to offset its top/left so the dot is
 // centred over the spotlight rather than anchored at its top-left corner.
 const COACH_MARK_HALF_SIZE_PX = 6;
-// Tooltip card dimensions; must match .step-tooltip width/min-height in the SCSS so
-// the JS-side viewport-clamp math agrees with what the browser actually renders.
+// Estimated card dimensions for the first render. Once rendered, its actual size is used to keep
+// translated text and package button sizes inside the viewport.
 const TOOLTIP_WIDTH_PX = 280;
 const TOOLTIP_HEIGHT_PX = 180;
 // Distance between the spotlight edge and the tooltip card.
 const TOOLTIP_GAP_PX = 16;
-// Smaller gap used directly above/below the spotlight (for `up`/`down`/`down-left`)
+// Smaller gap used directly above/below the spotlight (for `up`/`down`)
 // so the arrow visually touches the highlighted element without overlap.
 const TOOLTIP_VERTICAL_OFFSET_PX = 8;
 // Minimum padding kept between the tooltip card and the viewport edges.
@@ -50,7 +51,7 @@ const TOTAL_TOUR_STEPS = 3;
 // Step value reserved for the initial welcome screen, before the tour starts.
 const WELCOME_STEP = 0;
 
-type ArrowDirection = 'up' | 'down' | 'down-left' | 'left' | 'right';
+type ArrowDirection = 'up' | 'down' | 'right';
 
 type TooltipConfig = {
     spotlight: { top: number; left: number; width: number; height: number };
@@ -67,20 +68,27 @@ type TooltipConfig = {
     standalone: true,
     templateUrl: './iris-onboarding-modal.component.html',
     styleUrls: ['./iris-onboarding-modal.component.scss'],
-    imports: [TranslateDirective, ArtemisTranslatePipe, IrisLogoComponent, ButtonComponent, StepperComponent, CdkTrapFocus],
-    // Escape is handled here rather than relying on DialogService's built-in keyboard
-    // handling because the dialog is opened with closable: false (to prevent accidental
-    // dismissal) — this gives us explicit control over the Escape key behaviour.
+    imports: [
+        TranslateDirective,
+        ArtemisTranslatePipe,
+        IrisLogoComponent,
+        TumAetUiButtonComponent,
+        TumAetUiButtonDirective,
+        TumAetUiDialogComponent,
+        TumAetUiTooltipDirective,
+        StepperComponent,
+    ],
+    // The tour is mounted without a dialog shell (see IrisOnboardingTourHost), so it handles Escape itself.
     host: { '(document:keydown.escape)': 'onEscapeKey()' },
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class IrisOnboardingModalComponent {
-    private dialogRef = inject(DynamicDialogRef);
+    private dialogRef = inject(IrisOnboardingRef);
     private destroyRef = inject(DestroyRef);
     private onboardingService = inject(IrisOnboardingService);
 
     protected readonly IrisLogoSize = IrisLogoSize;
-    protected readonly ButtonType = ButtonType;
+    protected readonly faXmark = faXmark;
 
     // Timer cleanup
     private readonly pendingTimers = new Set<ReturnType<typeof setTimeout>>();
@@ -95,10 +103,44 @@ export class IrisOnboardingModalComponent {
 
     // Tooltip positioning
     readonly tooltipConfig = signal<TooltipConfig | undefined>(undefined);
+    private readonly tooltipElement = viewChild<ElementRef<HTMLElement>>('tourTooltip');
     readonly isStepPositionReady = signal(false);
     readonly isInteractiveStep = computed(() => this.step() >= 1 && this.step() <= 3);
 
     constructor() {
+        afterRenderEffect(() => {
+            const element = this.tooltipElement()?.nativeElement;
+            const config = this.tooltipConfig();
+            if (!element || !config || !element.offsetHeight || !element.offsetWidth) {
+                return;
+            }
+            // Use layout dimensions rather than the animated bounding rect. The entrance animation scales and moves it.
+            const { spotlight, arrowDirection } = config;
+            const height = element.offsetHeight;
+            const width = element.offsetWidth;
+            let top: number;
+            let left: number;
+            switch (arrowDirection) {
+                case 'up':
+                    top = spotlight.top + spotlight.height + TOOLTIP_VERTICAL_OFFSET_PX;
+                    left = spotlight.left + spotlight.width / 2 - width / 2;
+                    break;
+                case 'down':
+                    top = spotlight.top - height - TOOLTIP_VERTICAL_OFFSET_PX;
+                    left = spotlight.left + spotlight.width / 2 - width / 2;
+                    break;
+                case 'right':
+                    top = spotlight.top + spotlight.height / 2 - height / 2;
+                    left = spotlight.left - width - TOOLTIP_GAP_PX;
+                    break;
+            }
+            top = Math.max(TOOLTIP_VIEWPORT_PADDING_PX, Math.min(top, window.innerHeight - height - TOOLTIP_VIEWPORT_PADDING_PX));
+            left = Math.max(TOOLTIP_VIEWPORT_PADDING_PX, Math.min(left, window.innerWidth - width - TOOLTIP_VIEWPORT_PADDING_PX));
+            if (top !== config.tooltipPosition.top || left !== config.tooltipPosition.left) {
+                untracked(() => this.tooltipConfig.set(cloneWith(config, { tooltipPosition: { top, left } })));
+            }
+        });
+
         this.destroyRef.onDestroy(() => {
             this.isDestroyed = true;
             for (const timer of this.pendingTimers) {
@@ -167,7 +209,16 @@ export class IrisOnboardingModalComponent {
     }
 
     onEscapeKey(): void {
-        this.close();
+        // CDK owns dismissal while the welcome dialog is open. The numbered steps are non-modal.
+        if (!this.isWelcomeStep()) {
+            this.close();
+        }
+    }
+
+    onWelcomeVisibleChange(visible: boolean): void {
+        if (!visible && this.isWelcomeStep()) {
+            this.close();
+        }
     }
 
     private setStep(newStep: number): void {
@@ -251,28 +302,6 @@ export class IrisOnboardingModalComponent {
                 const preferredLeft = spotlight.left + spotlight.width / 2 - TOOLTIP_WIDTH_PX / 2;
                 tooltipPos = {
                     top: Math.max(TOOLTIP_VIEWPORT_PADDING_PX, preferredTop),
-                    left: Math.max(TOOLTIP_VIEWPORT_PADDING_PX, Math.min(preferredLeft, window.innerWidth - TOOLTIP_WIDTH_PX - TOOLTIP_VIEWPORT_PADDING_PX)),
-                };
-                break;
-            }
-            case 'down-left': {
-                // Tooltip above and to the right, arrow pointing down-left
-                const preferredTop = spotlight.top - TOOLTIP_HEIGHT_PX - TOOLTIP_VERTICAL_OFFSET_PX;
-                const preferredLeft = spotlight.left + spotlight.width / 2;
-                tooltipPos = {
-                    top: Math.max(TOOLTIP_VIEWPORT_PADDING_PX, preferredTop),
-                    left: Math.max(TOOLTIP_VIEWPORT_PADDING_PX, Math.min(preferredLeft, window.innerWidth - TOOLTIP_WIDTH_PX - TOOLTIP_VIEWPORT_PADDING_PX)),
-                };
-                break;
-            }
-            case 'left': {
-                // Tooltip to the right of target, arrow pointing left.
-                // Prefer aligning near the top of the spotlight so the tooltip doesn't
-                // get pushed off the bottom edge when the target is low on screen.
-                const preferredTop = spotlight.top;
-                const preferredLeft = spotlight.left + spotlight.width + TOOLTIP_GAP_PX;
-                tooltipPos = {
-                    top: Math.max(TOOLTIP_VIEWPORT_PADDING_PX, Math.min(preferredTop, window.innerHeight - TOOLTIP_HEIGHT_PX - TOOLTIP_VIEWPORT_PADDING_PX)),
                     left: Math.max(TOOLTIP_VIEWPORT_PADDING_PX, Math.min(preferredLeft, window.innerWidth - TOOLTIP_WIDTH_PX - TOOLTIP_VIEWPORT_PADDING_PX)),
                 };
                 break;

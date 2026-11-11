@@ -1,248 +1,59 @@
-// Container for the entire onboarding flow
-.onboarding-container {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    z-index: 1050;
-    pointer-events: none; // Allow clicks to pass through the container
-
+.iris-onboarding,
+.iris-onboarding__welcome {
     --onboarding-tooltip-enter-duration: 500ms;
     --onboarding-tooltip-enter-ease: cubic-bezier(0.2, 0.9, 0.2, 1);
     --onboarding-tooltip-enter-distance: 16px;
     --onboarding-radius: 0.5rem;
     --onboarding-modal-surface: var(--iris-primary-background);
-    --onboarding-border: 1px solid var(--bs-border-color);
+    --onboarding-border: 1px solid var(--border-color);
 }
 
-%absolute-fill {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-}
+.iris-onboarding {
+    z-index: 1050;
 
-// Full backdrop for step 0
-.full-backdrop {
-    @extend %absolute-fill;
-
-    background: var(--iris-onboarding-backdrop);
-    pointer-events: auto; // Block clicks on the backdrop
-}
-
-// Centered modal wrapper for step 0
-.centered-modal-wrapper {
-    @extend %absolute-fill;
-
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    pointer-events: none; // Allow clicks through wrapper
-}
-
-// Welcome modal with two-column layout (Step 0)
-.iris-onboarding-modal-welcome {
-    position: relative;
-    border: var(--onboarding-border);
-    border-radius: var(--onboarding-radius);
-    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
-    width: 700px;
-    max-width: 90vw;
-    height: 450px;
-    max-height: 90vh;
-    overflow-y: auto;
-    display: flex;
-    pointer-events: auto; // Enable clicks on the modal
-}
-
-// Left side - Text content
-.welcome-text-section {
-    background: var(--iris-primary-background);
-    width: 380px;
-    padding: 1.5rem;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    gap: 2.5rem;
-    border-radius: var(--onboarding-radius) 0 0 var(--onboarding-radius);
-}
-
-// Right side - Illustration
-.welcome-illustration-section {
-    flex: 1;
-    background: var(--iris-secondary-background);
-    padding: 0.5rem;
-    display: flex;
-    flex-direction: column;
-    position: relative;
-    border-radius: 0 var(--onboarding-radius) var(--onboarding-radius) 0;
-}
-
-.chat-preview {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-end;
-    gap: 0.5rem;
-}
-
-.chat-widget-preview {
-    background: var(--onboarding-modal-surface);
-    border: 0.75px solid var(--bs-border-color);
-    border-radius: var(--onboarding-radius);
-    overflow: hidden;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    width: 90%;
-    margin-left: auto; // pushes it to the right inside .chat-preview
-}
-
-.chat-header-preview {
-    background: var(--onboarding-modal-surface);
-    border-bottom: 1px solid var(--bs-border-color);
-    padding: 0.25rem;
-    display: flex;
-    justify-content: flex-end;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-}
-
-.toolbar-icons {
-    display: flex;
-    gap: 0.25rem;
-}
-
-.icon-btn {
-    width: 24px;
-    height: 20px;
-    background: var(--iris-secondary-background);
-    border-radius: 4px;
-}
-
-.chat-body-preview {
-    padding: 1rem;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 0.5rem;
-    min-height: 240px;
-    justify-content: center;
-}
-
-.chat-greeting {
-    font-size: 1rem;
-    color: var(--bs-body-color);
-    margin: 0;
-    text-align: center;
-}
-
-.chat-bubble-preview {
-    background: var(--iris-tertiary-background);
-    border-radius: var(--onboarding-radius);
-    padding: 1rem;
-    width: 200px;
-    align-self: flex-end;
-}
-
-.chat-input-preview {
-    width: 100%;
-    background: var(--onboarding-modal-surface);
-    border: 1px solid var(--bs-border-color);
-    border-radius: var(--onboarding-radius);
-    padding: 1rem;
-    margin-top: 0.25rem;
-}
-
-.input-placeholder {
-    color: var(--bs-secondary-color);
-    cursor: default;
-    font-size: 0.8rem;
-}
-
-.iris-logo-badge {
-    border-radius: var(--onboarding-radius);
-    padding: 0.5rem;
-    display: flex;
-    align-items: center;
-    justify-content: flex-start;
-}
-
-// Shared close-button base
-%close-button-base {
-    background: none;
-    border: none;
-    line-height: 1;
-    color: var(--bs-secondary-color);
-    cursor: pointer;
-    padding: 0;
-    opacity: 0.7;
-    transition: opacity 0.2s ease;
-
-    &:hover {
-        opacity: 1;
-        color: var(--bs-body-color);
+    &__title {
+        color: var(--body-color);
     }
 
-    &:focus-visible {
-        outline: 2px solid var(--primary);
-        outline-offset: 2px;
+    &__muted {
+        color: var(--text-body-secondary);
     }
-}
 
-.close-button {
-    @extend %close-button-base;
+    &__welcome-text {
+        background: var(--iris-primary-background);
+    }
 
-    position: absolute;
-    top: 0.5rem;
-    right: 0.5rem;
-    font-size: 1.4rem;
-    z-index: 10;
-}
+    &__illustration,
+    &__preview-icon {
+        background: var(--iris-secondary-background);
+    }
 
-.tooltip-close-button {
-    @extend %close-button-base;
+    &__chat-widget {
+        background: var(--onboarding-modal-surface);
+        border: 0.75px solid var(--border-color);
+        border-radius: var(--onboarding-radius);
+        box-shadow: 0 2px 8px color-mix(in srgb, var(--iris-shadow-color) 10%, transparent);
+    }
 
-    font-size: 1.1rem;
-}
+    &__chat-header {
+        border-bottom: 1px solid var(--border-color);
+        box-shadow: 0 1px 3px color-mix(in srgb, var(--iris-shadow-color) 5%, transparent);
+    }
 
-.text-content {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-    max-width: 24rem;
-}
+    &__chat-bubble {
+        background: var(--iris-tertiary-background);
+        border-radius: var(--onboarding-radius);
+    }
 
-.title {
-    font-size: 1.35rem;
-    font-weight: 700;
-    color: var(--bs-body-color);
-    margin: 0;
-    line-height: 1.2;
-}
-
-.description {
-    font-size: 0.9rem;
-    line-height: 1.6;
-    color: var(--bs-secondary-color);
-    margin: 0;
-}
-
-.note {
-    font-size: 0.75rem;
-    line-height: 1.6;
-    color: var(--bs-secondary-color);
-    margin: 0;
-}
-
-.actions {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.75rem;
-    width: 100%;
+    &__chat-input {
+        background: var(--onboarding-modal-surface);
+        border: 1px solid var(--border-color);
+        border-radius: var(--onboarding-radius);
+    }
 }
 
 // Spotlight overlay styles
-.spotlight-blocker {
+.iris-onboarding__spotlight {
     position: absolute;
     background: transparent;
     pointer-events: auto; // Block clicks on spotlight target while step is visible
@@ -250,46 +61,36 @@
     z-index: 1050;
     border-radius: var(--onboarding-radius);
 
-    &.interactive {
+    &--interactive {
         pointer-events: none;
         cursor: default;
     }
 }
 
-.spotlight-click-guard {
+.iris-onboarding__click-guard {
     position: absolute;
     inset: 0;
     pointer-events: auto; // Block clicks on non-highlighted areas
     background: transparent;
     z-index: 1049;
 
-    &.interactive {
+    &--interactive {
         pointer-events: none;
     }
 }
 
-.spotlight-blocker.rounded-cutout {
-    // No backdrop for tooltip steps — only the welcome modal uses a backdrop
-}
-
 // Onboarding tooltip styles
-.onboarding-tooltip {
-    position: absolute;
+.iris-onboarding__tooltip {
     background: var(--onboarding-modal-surface);
     border: var(--onboarding-border);
     border-radius: var(--onboarding-radius);
-    padding: 1rem;
-    box-shadow: 0 20px 25px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 20px 25px color-mix(in srgb, var(--iris-shadow-color) 10%, transparent);
     width: 280px;
-    pointer-events: auto; // Enable clicks on tooltips
     z-index: 1051;
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
     animation: onboarding-tooltip-enter var(--onboarding-tooltip-enter-duration) var(--onboarding-tooltip-enter-ease) both;
 
     // Arrow pointing up — tooltip is below the target
-    &.tooltip-arrow-up {
+    &--up {
         transform-origin: center top;
 
         &::before,
@@ -306,7 +107,7 @@
             top: -10px;
             border-left: 9px solid transparent;
             border-right: 9px solid transparent;
-            border-bottom: 9px solid var(--bs-border-color);
+            border-bottom: 9px solid var(--border-color);
         }
 
         &::after {
@@ -318,7 +119,7 @@
     }
 
     // Arrow pointing down — tooltip is above the target
-    &.tooltip-arrow-down {
+    &--down {
         transform-origin: center bottom;
 
         &::before,
@@ -336,74 +137,18 @@
             bottom: -10px;
             border-left: 9px solid transparent;
             border-right: 9px solid transparent;
-            border-top: 9px solid var(--bs-border-color);
+            border-top: 9px solid var(--border-color);
         }
 
         &::after {
             border-left: 8px solid transparent;
             border-right: 8px solid transparent;
             border-top: 8px solid var(--onboarding-modal-surface);
-        }
-    }
-
-    // Arrow pointing down-left — tooltip is above-right of the target
-    &.tooltip-arrow-down-left {
-        transform-origin: left bottom;
-
-        &::before,
-        &::after {
-            content: '';
-            position: absolute;
-            bottom: -9px;
-            left: 24px;
-            width: 0;
-            height: 0;
-        }
-
-        &::before {
-            bottom: -10px;
-            border-left: 9px solid transparent;
-            border-right: 9px solid transparent;
-            border-top: 9px solid var(--bs-border-color);
-        }
-
-        &::after {
-            border-left: 8px solid transparent;
-            border-right: 8px solid transparent;
-            border-top: 8px solid var(--onboarding-modal-surface);
-        }
-    }
-
-    // Arrow pointing left — tooltip is to the right of the target
-    &.tooltip-arrow-left {
-        transform-origin: left top;
-
-        &::before,
-        &::after {
-            content: '';
-            position: absolute;
-            top: 24px;
-            width: 0;
-            height: 0;
-        }
-
-        &::before {
-            left: -9px;
-            border-top: 9px solid transparent;
-            border-bottom: 9px solid transparent;
-            border-right: 9px solid var(--bs-border-color);
-        }
-
-        &::after {
-            left: -8px;
-            border-top: 8px solid transparent;
-            border-bottom: 8px solid transparent;
-            border-right: 8px solid var(--onboarding-modal-surface);
         }
     }
 
     // Arrow pointing right — tooltip is to the left of the target
-    &.tooltip-arrow-right {
+    &--right {
         transform-origin: right center;
 
         &::before,
@@ -420,7 +165,7 @@
             right: -9px;
             border-top: 9px solid transparent;
             border-bottom: 9px solid transparent;
-            border-left: 9px solid var(--bs-border-color);
+            border-left: 9px solid var(--border-color);
         }
 
         &::after {
@@ -444,54 +189,8 @@
     }
 }
 
-@media (prefers-reduced-motion: reduce) {
-    .onboarding-tooltip {
-        animation: none;
-    }
-
-    .coach-mark {
-        animation: none;
-
-        &::before {
-            animation: none;
-        }
-    }
-}
-
-.tooltip-header {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: 0.5rem;
-}
-
-.tooltip-header-text {
-    font-size: 0.875rem;
-    font-weight: 500;
-    color: var(--bs-body-color);
-    margin: 0;
-    line-height: 1.4;
-    flex: 1;
-}
-
-.tooltip-description {
-    font-size: 0.875rem;
-    font-weight: 400;
-    color: var(--bs-body-color);
-    margin: 0;
-    line-height: 1.6;
-}
-
-.tooltip-footer {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 0.75rem;
-    margin-top: 0.5rem;
-}
-
 // Coach mark (pulsing dot)
-.coach-mark {
+.iris-onboarding__coach-mark {
     position: absolute;
     width: 12px;
     height: 12px;
@@ -542,5 +241,14 @@
     100% {
         transform: scale(1.5);
         opacity: 0;
+    }
+}
+
+// Keep this after every animated selector, including the coach-mark ring.
+@media (prefers-reduced-motion: reduce) {
+    .iris-onboarding__tooltip,
+    .iris-onboarding__coach-mark,
+    .iris-onboarding__coach-mark::before {
+        animation: none;
     }
 }
