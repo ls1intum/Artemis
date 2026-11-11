@@ -111,6 +111,12 @@ These are Artemis-specific rules. The linked guidelines give reasons and excepti
 - Screenshots in documentation and PRs must be captured from a running Artemis instance with realistic data
   and the actual theme and background colours. Never use synthetic, AI-generated, mocked or isolated-component
   screenshots, or override theme colours or recolour a capture. Automated browser capture of the real application is allowed.
+- The programming exercise trailers are rendered by `supporting_scripts/trailer/render_trailer.py` from
+  documentation screenshots. When a PR changes a screenshot the script uses, or the programming exercise UI
+  that a trailer shows, update the trailers in the same PR; this is part of the change, not a follow-up.
+  Adjust the storyboard (crops, highlights, captions) so the trailers still match the application,
+  check the scenes with `--preview`, render both cuts, and say in the PR description what changed in them.
+  See the [trailer README](supporting_scripts/trailer/README.md).
 - Do not commit plans, design specs or scratch notes. Keep working notes in the issue or PR;
   maintained documentation belongs on the documentation site.
 
