@@ -1082,6 +1082,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
                 Arguments.of("Unwanted statement found:\n - In src/Main.java:\n   - For-Statement was found", "AST Error"),
                 Arguments.of("Unerwünschte Anweisung gefunden:\n - In src/Main.java:\n   - For-Anweisung wurde gefunden", "AST Error"),
                 Arguments.of("Unerw\u0308nschte Anweisung gefunden:\n - In src/Main.java:\n   - For-Anweisung wurde gefunden", "AST Error"),
+                Arguments.of("Unerwartet: gewünschte Anweisung gefunden", "Student Error"),
                 Arguments.of("java.lang.SecurityException: do not use System.exit(int)", "Student Error"), Arguments.of("expected: <3> but was: <4>", "Student Error"));
     }
 

@@ -1935,8 +1935,9 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
      * The category is derived from the start of the message, ignoring case: an English or German Ares security message
      * (also behind the {@code java.lang.SecurityException: } prefix a Gradle test report adds) is an "Ares Error", an English
      * or German Ares AST message is an "AST Error", and every other message is a "Student Error".
-     * The German AST pattern leaves the umlaut open, because Ares 2 writes "Unerw" followed by U+0308 (a {@code w} with a
-     * combining diaeresis) instead of "Unerwü", and stored results keep that text even once Ares corrects its message bundle.
+     * The German AST pattern leaves the umlaut open as a single-character wildcard, because Ares 2 writes "Unerw" followed by
+     * U+0308 (a {@code w} with a combining diaeresis) instead of "Unerwü", and stored results keep that text even once Ares
+     * corrects its message bundle.
      * <br>
      * It supports filtering by:
      * - Search term: Case-insensitive filtering on feedback detail text.
@@ -1990,7 +1991,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                         OR LOWER(MIN(m.text)) LIKE 'java.lang.securityexception: ares sicherheitsfehler%'
                         OR LOWER(MIN(m.text)) LIKE 'java.lang.securityexception: ares-sicherheitsfehler%' THEN 'Ares Error'
                     WHEN LOWER(MIN(m.text)) LIKE 'unwanted statement found%'
-                        OR LOWER(MIN(m.text)) LIKE 'unerw%nschte anweisung gefunden%' THEN 'AST Error'
+                        OR LOWER(MIN(m.text)) LIKE 'unerw_nschte anweisung gefunden%' THEN 'AST Error'
                     ELSE 'Student Error'
                 END,
                 CASE WHEN MAX(LENGTH(m.text)) > de.tum.cit.aet.artemis.core.config.Constants.FEEDBACK_DETAIL_TEXT_SOFT_MAX_LENGTH THEN TRUE ELSE FALSE END
@@ -2024,7 +2025,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                                 OR LOWER(m.text) LIKE 'java.lang.securityexception: ares sicherheitsfehler%'
                                 OR LOWER(m.text) LIKE 'java.lang.securityexception: ares-sicherheitsfehler%' THEN 'Ares Error'
                             WHEN LOWER(m.text) LIKE 'unwanted statement found%'
-                                OR LOWER(m.text) LIKE 'unerw%nschte anweisung gefunden%' THEN 'AST Error'
+                                OR LOWER(m.text) LIKE 'unerw_nschte anweisung gefunden%' THEN 'AST Error'
                             ELSE 'Student Error'
                         END IN (:filterErrorCategories))
             GROUP BY m.id, tc.testName
