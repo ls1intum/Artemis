@@ -8,9 +8,11 @@ import java.nio.file.Path;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -159,6 +161,34 @@ public class BuildAgentDockerService {
     @Value("${artemis.continuous-integration.image-pull-stall-timeout-seconds:60}")
     private int imagePullStallTimeoutSeconds;
 
+    @Value("${artemis.continuous-integration.network-isolation-check.enabled:true}")
+    private boolean networkIsolationCheckEnabled;
+
+    @Value("${artemis.continuous-integration.network-isolation-check.image:busybox:1.37.0}")
+    private String networkIsolationCheckImage;
+
+    /** Services that build containers must not reach, as host:port, in addition to the queue store and the cluster port that are derived from the configuration. */
+    @Value("${artemis.continuous-integration.network-isolation-check.targets:}")
+    private List<String> networkIsolationCheckTargets;
+
+    @Value("${artemis.continuous-integration.container-defaults.network:}")
+    private String defaultBuildNetwork;
+
+    @Value("${artemis.continuous-integration.container-flags-limit.allowed-custom-networks:none}")
+    private List<String> allowedCustomNetworks;
+
+    @Value("${spring.data.redis.host:}")
+    private String redisHost;
+
+    @Value("${spring.data.redis.port:6379}")
+    private int redisPort;
+
+    @Value("${spring.hazelcast.interface:}")
+    private String hazelcastInterface;
+
+    @Value("${spring.hazelcast.port:5701}")
+    private int hazelcastPort;
+
     /**
      * IDs of the build jobs that are currently pulling a Docker image, with the time the pull started.
      * <p>
@@ -206,6 +236,41 @@ public class BuildAgentDockerService {
 
         // Schedule the cleanup of dangling build containers once 10 seconds after the application has started and then every containerCleanupScheduleMinutes minutes
         taskScheduler.scheduleAtFixedRate(this::cleanUpContainers, Instant.now().plusSeconds(10), Duration.ofMinutes(containerCleanupScheduleMinutes));
+        if (networkIsolationCheckEnabled) {
+            taskScheduler.schedule(this::checkNetworkIsolation, Instant.now().plusSeconds(60));
+        }
+    }
+
+    /**
+     * Checks from a container on the default build network that the queue store, the cluster port and the configured services cannot be reached, and logs the outcome.
+     * A failure of the check itself never affects the agent.
+     */
+    void checkNetworkIsolation() {
+        try {
+            if (dockerClientNotAvailable("Cannot check the network isolation of build containers.")) {
+                return;
+            }
+            List<String> entries = new ArrayList<>(networkIsolationCheckTargets);
+            if (redisHost != null && !redisHost.isBlank()) {
+                entries.add(redisHost + ":" + redisPort);
+            }
+            if (hazelcastInterface != null && !hazelcastInterface.isBlank()) {
+                entries.add(hazelcastInterface + ":" + hazelcastPort);
+            }
+            BuildContainerIsolationProbe probe = new BuildContainerIsolationProbe(buildAgentConfiguration.getDockerClient(), networkIsolationCheckImage);
+            List<BuildContainerIsolationProbe.Target> targets = BuildContainerIsolationProbe.parseTargets(entries);
+            // Every network a build can run on: the default one and the ones instructors may select. A container without a network cannot connect anywhere.
+            Set<String> networks = new LinkedHashSet<>();
+            networks.add(defaultBuildNetwork == null ? "" : defaultBuildNetwork.trim());
+            allowedCustomNetworks.stream().filter(Objects::nonNull).map(String::trim).filter(network -> !network.isEmpty()).forEach(networks::add);
+            networks.remove("none");
+            for (String network : networks) {
+                probe.run(network, targets);
+            }
+        }
+        catch (Exception e) {
+            log.warn("The build container network check failed: {}", e.getMessage());
+        }
     }
 
     /**
