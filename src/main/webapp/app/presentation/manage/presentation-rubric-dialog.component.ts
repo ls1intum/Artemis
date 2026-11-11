@@ -10,7 +10,7 @@ import { AlertService } from 'app/foundation/service/alert.service';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { onError } from 'app/foundation/util/global.utils';
-import { PresentationRubricSave } from 'app/presentation/shared/entities/presentation-assessment.model';
+import { PresentationRubricCriterion } from 'app/presentation/shared/entities/presentation-assessment.model';
 import { PresentationAssessmentService } from 'app/presentation/manage/presentation-assessment.service';
 import { createRubricForm, readRubricForm } from 'app/presentation/manage/presentation-rubric-form';
 import { PresentationRubricEditorComponent } from 'app/presentation/manage/presentation-rubric-editor.component';
@@ -37,7 +37,7 @@ export class PresentationRubricDialogComponent {
     readonly courseId = input.required<number>();
     readonly presentationAssessmentId = input.required<number>();
     readonly isSaving = input(false);
-    readonly saved = output<PresentationRubricSave>();
+    readonly saved = output<PresentationRubricCriterion[]>();
     readonly cancelled = output<void>();
 
     private readonly rubricResource = rxResource({
@@ -72,10 +72,9 @@ export class PresentationRubricDialogComponent {
             return;
         }
         const criteria = readRubricForm(form);
-        const save = { criteria, version: rubric.version };
         const weightsChanged = criteria.some((criterion, position) => criterion.weight !== rubric.criteria[position]?.weight);
         if (rubric.assessedInstanceCount === 0 || !weightsChanged) {
-            this.saved.emit(save);
+            this.saved.emit(criteria);
             return;
         }
         this.confirmationService.confirm({
@@ -83,7 +82,7 @@ export class PresentationRubricDialogComponent {
             message: this.translateService.instant('artemisApp.presentationAssessment.rubric.weightChange.message', { count: rubric.assessedInstanceCount }),
             acceptLabel: this.translateService.instant('artemisApp.presentationAssessment.rubric.weightChange.confirm'),
             rejectLabel: this.translateService.instant('entity.action.cancel'),
-            accept: () => this.saved.emit(save),
+            accept: () => this.saved.emit(criteria),
         });
     }
 

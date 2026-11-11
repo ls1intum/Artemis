@@ -207,8 +207,7 @@ public class PresentationAssessmentService {
         if (dto.gradingMethod() != presentationAssessment.getGradingMethod()) {
             throw new BadRequestAlertException("The grading method of a presentation cannot be changed", PresentationAssessment.ENTITY_NAME, "gradingMethodImmutable");
         }
-        // A client that loaded the presentation earlier sends the version it saw, so that a change made in the meantime is rejected
-        long expectedVersion = dto.version() != null ? dto.version() : presentationAssessment.getVersion();
+        long expectedVersion = presentationAssessment.getVersion();
         ExerciseIdAndTitleDTO exercise = applyDto(presentationAssessment, dto);
 
         if (presentationAssessment.getGradingMethod() == PresentationGradingMethod.SCORE) {

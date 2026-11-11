@@ -1524,13 +1524,10 @@ describe('PresentationAssessmentManagementComponent', () => {
             expect(rubricDialog().presentationAssessmentId()).toBe(rubricPresentation.id);
             presentationAssessmentService.findStudentRows.mockClear();
 
-            rubricDialog().saved.emit({ criteria, version: 3 });
+            rubricDialog().saved.emit(criteria);
             fixture.detectChanges();
 
-            expect(presentationAssessmentService.update).toHaveBeenCalledWith(
-                courseId,
-                expect.objectContaining({ id: rubricPresentation.id, rubricCriteria: criteria, version: 3 }),
-            );
+            expect(presentationAssessmentService.update).toHaveBeenCalledWith(courseId, expect.objectContaining({ id: rubricPresentation.id, rubricCriteria: criteria }));
             expect(alertService.success).toHaveBeenCalledWith('artemisApp.presentationAssessment.rubric.saved');
             expect(component.rubricDialogVisible()).toBe(false);
             expect(presentationAssessmentService.findStudentRows).toHaveBeenCalled();
@@ -1545,7 +1542,7 @@ describe('PresentationAssessmentManagementComponent', () => {
             clickByTestId('edit-rubric-button');
             alertService.addAlert.mockClear();
 
-            rubricDialog().saved.emit({ criteria, version: 3 });
+            rubricDialog().saved.emit(criteria);
             fixture.detectChanges();
 
             expect(alertService.addAlert).toHaveBeenCalledTimes(expectedAlerts);
@@ -1558,8 +1555,8 @@ describe('PresentationAssessmentManagementComponent', () => {
             openPresentation(rubricPresentation);
             clickByTestId('edit-rubric-button');
 
-            rubricDialog().saved.emit({ criteria, version: 3 });
-            rubricDialog().saved.emit({ criteria, version: 3 });
+            rubricDialog().saved.emit(criteria);
+            rubricDialog().saved.emit(criteria);
 
             expect(presentationAssessmentService.update).toHaveBeenCalledOnce();
         });
@@ -1569,7 +1566,7 @@ describe('PresentationAssessmentManagementComponent', () => {
             presentationAssessmentService.update.mockReturnValue(response);
             openPresentation(rubricPresentation);
             clickByTestId('edit-rubric-button');
-            rubricDialog().saved.emit({ criteria, version: 3 });
+            rubricDialog().saved.emit(criteria);
 
             routeParamMap.next(convertToParamMap({ courseId: 2 }));
             fixture.detectChanges();

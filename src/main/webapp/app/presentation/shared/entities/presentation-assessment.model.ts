@@ -11,8 +11,6 @@ export interface PresentationAssessment {
     exerciseId?: number;
     exerciseTitle?: string;
     rubricCriteria?: PresentationRubricCriterion[];
-    /** The version the client loaded, sent with an update so that a change made in the meantime is rejected. */
-    version?: number;
 }
 
 export interface PresentationAssessmentInstance {
@@ -73,13 +71,6 @@ export interface PresentationRubricCriterion {
 export interface PresentationRubric {
     criteria: PresentationRubricCriterion[];
     assessedInstanceCount: number;
-    version: number;
-}
-
-/** What the rubric dialog saves: the edited criteria and the version of the presentation they were loaded with. */
-export interface PresentationRubricSave {
-    criteria: PresentationRubricCriterion[];
-    version: number;
 }
 
 export interface PresentationRubricRating {
