@@ -197,6 +197,10 @@
                 <div class="flex justify-center p-6">
                     <tumaet-ui-progress-spinner [ariaLabel]="'artemisApp.presentationAssessment.rubric.loading' | artemisTranslate" />
                 </div>
+            } @else {
+                <tumaet-ui-message severity="error" data-testid="rubric-unavailable">
+                    <span jhiTranslate="artemisApp.presentationAssessment.rubric.unavailable"></span>
+                </tumaet-ui-message>
             }
         }
         @default {

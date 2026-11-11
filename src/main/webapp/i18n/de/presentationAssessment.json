@@ -137,6 +137,7 @@
                 "heading": "Rubrik-Kriterien",
                 "hint": "Lege gewichtete Kriterien fest und wähle für jedes eine eigene Bewertungsskala.",
                 "loading": "Rubrik wird geladen",
+                "unavailable": "Die Rubrik konnte nicht geladen werden. Schließe den Dialog und versuche es erneut.",
                 "saved": "Die Rubrik wurde erfolgreich aktualisiert",
                 "weightChange": {
                     "header": "Ergebnisse neu berechnen",

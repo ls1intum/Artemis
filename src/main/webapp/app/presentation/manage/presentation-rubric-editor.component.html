@@ -91,10 +91,12 @@
                             type="text"
                             formControlName="name"
                             required
+                            [tumAetUiInputInvalid]="criterion.controls.name.invalid && criterion.controls.name.touched"
+                            [tumAetUiInputDescribedBy]="criterion.controls.name.invalid && criterion.controls.name.touched ? 'rubric-criterion-name-error-' + index : undefined"
                             [attr.data-testid]="'rubric-criterion-name-' + index"
                         />
                         @if (criterion.controls.name.invalid && criterion.controls.name.touched) {
-                            <tumaet-ui-message severity="error">
+                            <tumaet-ui-message severity="error" [id]="'rubric-criterion-name-error-' + index">
                                 <span jhiTranslate="artemisApp.presentationAssessment.rubric.validation.nameRequired"></span>
                             </tumaet-ui-message>
                         }
@@ -109,9 +111,15 @@
                             class="w-full"
                             type="text"
                             formControlName="description"
+                            [tumAetUiInputInvalid]="criterion.controls.description.hasError('maxlength')"
+                            [tumAetUiInputDescribedBy]="criterion.controls.description.hasError('maxlength') ? 'rubric-criterion-description-error-' + index : undefined"
                         />
                         @if (criterion.controls.description.hasError('maxlength')) {
-                            <tumaet-ui-message severity="error" [attr.data-testid]="'rubric-criterion-description-error-' + index">
+                            <tumaet-ui-message
+                                severity="error"
+                                [id]="'rubric-criterion-description-error-' + index"
+                                [attr.data-testid]="'rubric-criterion-description-error-' + index"
+                            >
                                 <span
                                     jhiTranslate="artemisApp.presentationAssessment.descriptionTooLong"
                                     [translateValues]="{ max: criterion.controls.description.getError('maxlength').requiredLength }"
@@ -132,10 +140,12 @@
                             [max]="weightSum"
                             suffix=" %"
                             formControlName="weight"
+                            [invalid]="criterion.controls.weight.invalid && criterion.controls.weight.touched"
+                            [ariaDescribedBy]="criterion.controls.weight.invalid && criterion.controls.weight.touched ? 'rubric-criterion-weight-error-' + index : undefined"
                             [attr.data-testid]="'rubric-criterion-weight-' + index"
                         />
                         @if (criterion.controls.weight.invalid && criterion.controls.weight.touched) {
-                            <tumaet-ui-message severity="error">
+                            <tumaet-ui-message severity="error" [id]="'rubric-criterion-weight-error-' + index">
                                 <span jhiTranslate="artemisApp.presentationAssessment.rubric.validation.weightRange" [translateValues]="{ max: weightSum }"></span>
                             </tumaet-ui-message>
                         }
@@ -216,11 +226,17 @@
                                         class="col-span-full w-full sm:col-span-1"
                                         type="text"
                                         formControlName="description"
+                                        [tumAetUiInputInvalid]="criterion.controls.levels.at(position).controls.description.hasError('maxlength')"
+                                        [tumAetUiInputDescribedBy]="
+                                            criterion.controls.levels.at(position).controls.description.hasError('maxlength')
+                                                ? 'rubric-level-description-error-' + index + '-' + position
+                                                : undefined
+                                        "
                                         [attr.aria-label]="view.levelKeys[position] | artemisTranslate"
                                         [attr.data-testid]="'rubric-level-description-' + index + '-' + position"
                                     />
                                     @if (criterion.controls.levels.at(position).controls.description.hasError('maxlength')) {
-                                        <tumaet-ui-message class="col-span-full sm:col-start-3" severity="error">
+                                        <tumaet-ui-message class="col-span-full sm:col-start-3" severity="error" [id]="'rubric-level-description-error-' + index + '-' + position">
                                             <span
                                                 jhiTranslate="artemisApp.presentationAssessment.descriptionTooLong"
                                                 [translateValues]="{ max: criterion.controls.levels.at(position).controls.description.getError('maxlength').requiredLength }"

@@ -137,6 +137,7 @@
                 "heading": "Rubric criteria",
                 "hint": "Define weighted criteria and an independent rating scale for each.",
                 "loading": "Loading rubric",
+                "unavailable": "The rubric could not be loaded. Close the dialog and try again.",
                 "saved": "The rubric was successfully updated",
                 "weightChange": {
                     "header": "Recalculate results",

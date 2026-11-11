@@ -543,6 +543,7 @@ describe('PresentationAssessmentInstanceFormDialogComponent', () => {
             fixture.detectChanges();
 
             expect(errorSpy).toHaveBeenCalledWith('error.http.404');
+            expect(query('[data-testid="rubric-unavailable"]')).not.toBeNull();
             expect(saveButton().disabled).toBe(true);
             submit();
             expect(saved).not.toHaveBeenCalled();
