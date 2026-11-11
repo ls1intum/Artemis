@@ -86,8 +86,9 @@ interface ExerciseRow {
     templateUrl: './exercise-table.component.html',
     styleUrl: './exercise-table.component.scss',
     // Floor the actions column at the widest quiz-button + ellipsis width its rows report, so the main buttons
-    // collapse into the ellipsis before the table scrolls. Unset when no row has quiz buttons.
-    host: { '[style.--actions-min-width]': 'actionsMinWidthVar()' },
+    // collapse into the ellipsis before the table scrolls. Unset when no row has quiz buttons. Size it to the widest
+    // row's buttons, so the leftover width goes to the other columns.
+    host: { '[style.--actions-min-width]': 'actionsMinWidthVar()', '[style.--actions-width]': 'actionsWidthVar()' },
     imports: [
         RouterLink,
         FormsModule,
@@ -220,6 +221,20 @@ export class ExerciseTableComponent {
         const width = this.maxQuizActionsMinWidth();
         return width > 0 ? `${width}px` : undefined;
     });
+
+    /** Largest width (px) any row needs to show all its actions inline. Grows only, like the floor above. */
+    private readonly maxActionsNaturalWidth = signal(0);
+    /** CSS value for the actions-column width, or undefined until a row has measured its buttons. */
+    readonly actionsWidthVar = computed(() => {
+        const width = this.maxActionsNaturalWidth();
+        return width > 0 ? `${width}px` : undefined;
+    });
+
+    onActionsNaturalWidth(width: number): void {
+        if (width > this.maxActionsNaturalWidth()) {
+            this.maxActionsNaturalWidth.set(width);
+        }
+    }
 
     onQuizActionsMinWidth(width: number): void {
         if (width > this.maxQuizActionsMinWidth()) {

@@ -38,8 +38,28 @@ describe('ExerciseActionBarComponent', () => {
             expect(component.hiddenIds().size).toBe(0);
             expect(component.hasOverflow()).toBe(false);
             expect(component.hiddenActions()).toEqual([]);
-            const inlineIds = [...fixture.nativeElement.querySelectorAll('.inline-item [data-testid]')].map((el: HTMLElement) => el.dataset.testid);
-            expect(inlineIds).toEqual(['exercise-action-teams', 'exercise-action-participations', 'exercise-action-statistics', 'exercise-action-edit', 'exercise-action-delete']);
+        });
+
+        it('renders the trailing actions last, set apart from the others before them', () => {
+            fixture.componentRef.setInput('items', buildActions(['teams', 'participations', 'statistics', 'edit', 'delete']));
+            fixture.detectChanges();
+
+            const items: HTMLElement[] = [...fixture.nativeElement.querySelectorAll('.inline-item')];
+            expect(items.map((item) => item.querySelector<HTMLElement>('[data-testid]')!.dataset.testid)).toEqual([
+                'exercise-action-teams',
+                'exercise-action-statistics',
+                'exercise-action-participations',
+                'exercise-action-edit',
+                'exercise-action-delete',
+            ]);
+            expect(items.map((item) => item.classList.contains('group-start'))).toEqual([false, false, true, false, false]);
+        });
+
+        it('does not set the trailing actions apart when no other action precedes them', () => {
+            fixture.componentRef.setInput('items', buildActions(['participations', 'edit', 'delete']));
+            fixture.detectChanges();
+
+            expect(fixture.nativeElement.querySelectorAll('.inline-item.group-start')).toHaveLength(0);
         });
 
         /** Seeds every current action's cached natural width to the same value, so only the row width drives collapsing. */
@@ -83,6 +103,20 @@ describe('ExerciseActionBarComponent', () => {
             component['rowWidth'].set(2000);
             expect(component.hiddenIds().size).toBe(0);
             expect(component.hasOverflow()).toBe(false);
+        });
+
+        it('reports the width that shows every action once all buttons are measured', () => {
+            const reported: number[] = [];
+            component.naturalWidthChange.subscribe((width) => reported.push(width));
+            fixture.componentRef.setInput('items', buildActions(['a', 'b', 'c']));
+            fixture.detectChanges();
+            expect(reported.at(-1)).toBe(0);
+
+            seedEqualWidths(30);
+            component['reservedWidth'].set(50);
+            fixture.detectChanges();
+            // 3 buttons and 2 gaps, then the reserved content and its gap, then the safety margin.
+            expect(reported.at(-1)).toBe(3 * 30 + 2 * 4 + 50 + 4 + 8);
         });
     });
 

@@ -148,4 +148,12 @@ describe('ExamExerciseTableComponent', () => {
         expect(component.isExerciseTypeDisabled({ type: ExerciseType.MODELING } as Exercise)).toBe(true);
         expect(component.isExerciseTypeDisabled({ type: ExerciseType.TEXT } as Exercise)).toBe(false);
     });
+
+    it('sizes the actions column to the widest row that shows all its actions', () => {
+        expect(component['actionsWidthVar']()).toBeUndefined();
+
+        component.onActionsNaturalWidth(180);
+        component.onActionsNaturalWidth(150);
+        expect(component['actionsWidthVar']()).toBe('180px');
+    });
 });

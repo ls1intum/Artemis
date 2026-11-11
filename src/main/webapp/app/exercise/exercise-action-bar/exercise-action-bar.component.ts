@@ -90,11 +90,22 @@ export class ExerciseActionBarComponent {
      */
     readonly keepPriorityIds = input<string[]>(['delete', 'edit', 'edit-in-editor', 'participations']);
     /**
+     * Ids rendered last, in this order, after all other actions. Every row then ends in the same buttons, so they line up
+     * across the rows of a table.
+     */
+    readonly trailingIds = input<string[]>(['participations', 'edit', 'delete']);
+    /**
      * Width (px) the actions column must reserve to keep this row's always-visible reserved content plus the ellipsis
      * trigger on screen; 0 when there is no reserved content. A shared table column floors itself at the max reported
      * across its rows, so the column collapses the main buttons before scrolling, never clipping reserved content.
      */
     readonly columnMinWidthChange = output<number>();
+    /**
+     * Width (px) this row needs to show every action inline, including its reserved content; 0 until all buttons are
+     * measured. A shared table column sizes itself to the max reported across its rows, so it takes no more room than the
+     * widest row needs and the leftover width goes to the other columns.
+     */
+    readonly naturalWidthChange = output<number>();
 
     protected readonly faEllipsis = faEllipsis;
 
@@ -128,6 +139,14 @@ export class ExerciseActionBarComponent {
      */
     private destroyed = false;
 
+    /** The actions in display order: the other actions first, then the {@link trailingIds} ones in that order. */
+    private readonly orderedItems = computed<ActionItem[]>(() => {
+        const trailingIds = this.trailingIds();
+        const items = this.items();
+        const trailing = trailingIds.map((id) => items.find((action) => action.id === id)).filter((action) => action !== undefined);
+        return items.filter((action) => !trailingIds.includes(action.id)).concat(trailing);
+    });
+
     private readonly keepPriorityOf = (action: ActionItem): number => {
         const index = this.keepPriorityIds().indexOf(action.id);
         return index === -1 ? EXTRA_ACTION_PRIORITY : index;
@@ -146,7 +165,7 @@ export class ExerciseActionBarComponent {
      * longest.
      */
     readonly hiddenIds = computed<ReadonlySet<string>>(() => {
-        const actions = this.items();
+        const actions = this.orderedItems();
         const widths = this.buttonWidths();
         const available = this.availableWidth() - SAFETY_MARGIN_PX;
         // Not yet measured (or sized): show everything until widths/width are known.
@@ -192,10 +211,14 @@ export class ExerciseActionBarComponent {
         // The signature embeds a translated label, so re-derive it on a language switch.
         this.languageVersion();
         const hidden = this.hiddenIds();
-        return this.items().map((action) => ({
+        const items = this.orderedItems();
+        const firstTrailing = items.findIndex((action) => this.trailingIds().includes(action.id));
+        return items.map((action, index) => ({
             action,
             signature: this.signatureOf(action),
             hidden: hidden.has(action.id),
+            // A wider gap sets the trailing actions apart from the others before them.
+            groupStart: index > 0 && index === firstTrailing,
             context: this.contextOf(action, false),
         }));
     });
@@ -203,7 +226,7 @@ export class ExerciseActionBarComponent {
     readonly hasOverflow = computed<boolean>(() => this.hiddenIds().size > 0);
 
     /** The collapsed actions, shown in the ellipsis menu in display order. */
-    readonly hiddenActions = computed<ActionItem[]>(() => this.items().filter((action) => this.hiddenIds().has(action.id)));
+    readonly hiddenActions = computed<ActionItem[]>(() => this.orderedItems().filter((action) => this.hiddenIds().has(action.id)));
 
     /** Template contexts for the menu entries, precomputed for the same reason as {@link inlineActions}. */
     protected readonly menuActions = computed(() => {
@@ -263,7 +286,7 @@ export class ExerciseActionBarComponent {
             // also seeds a brand-new signature after a language switch. The elements persist across a collapse (only
             // their `display` toggles), so this does not re-run on every resize.
             this.languageVersion();
-            this.items();
+            this.orderedItems();
             const elements = this.inlineItems();
             this.buttonObserver.disconnect();
             for (const ref of elements) {
@@ -278,6 +301,20 @@ export class ExerciseActionBarComponent {
         effect(() => {
             const reserved = this.reservedWidth();
             this.columnMinWidthChange.emit(reserved > 0 ? reserved + GAP_PX + ELLIPSIS_WIDTH_PX + SAFETY_MARGIN_PX : 0);
+        });
+
+        // Report the width that shows every button: the measured buttons (collapsed ones keep their last width), their
+        // gaps and the reserved content. None of these depend on the column width, so this never feeds back either.
+        effect(() => {
+            const actions = this.orderedItems();
+            const widths = this.buttonWidths();
+            const reserved = this.reservedWidth();
+            if (actions.length === 0 || actions.some((action) => !widths.has(this.signatureOf(action)))) {
+                this.naturalWidthChange.emit(0);
+                return;
+            }
+            const buttons = actions.reduce((sum, action) => sum + (widths.get(this.signatureOf(action)) ?? 0), 0) + (actions.length - 1) * GAP_PX;
+            this.naturalWidthChange.emit(buttons + (reserved > 0 ? reserved + GAP_PX : 0) + SAFETY_MARGIN_PX);
         });
     }
 

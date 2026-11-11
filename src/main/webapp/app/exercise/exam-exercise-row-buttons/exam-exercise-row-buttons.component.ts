@@ -84,6 +84,8 @@ export class ExamExerciseRowButtonsComponent {
      * table column can floor its width the same way.
      */
     readonly actionsMinWidth = output<number>();
+    /** Width (px) this row needs to show all its actions inline; the table sizes the shared column to the widest row. */
+    readonly actionsNaturalWidth = output<number>();
 
     private readonly dialogErrorSource = new Subject<string>();
     readonly dialogError$ = this.dialogErrorSource.asObservable();

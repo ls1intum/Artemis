@@ -230,6 +230,17 @@ describe('ExerciseTableComponent', () => {
             component.onQuizActionsMinWidth(200);
             expect(component.actionsMinWidthVar()).toBe('200px');
         });
+
+        it('sizes the column to the widest row that shows all its actions', () => {
+            expect(component.actionsWidthVar()).toBeUndefined();
+
+            component.onActionsNaturalWidth(180);
+            component.onActionsNaturalWidth(150);
+            expect(component.actionsWidthVar()).toBe('180px');
+
+            component.onActionsNaturalWidth(260);
+            expect(component.actionsWidthVar()).toBe('260px');
+        });
     });
 
     describe('group resolution and effective dates', () => {

@@ -73,6 +73,8 @@ export class ExerciseActionsComponent {
      * non-quiz rows. The table floors the shared column at the max across its rows (see exercise-table).
      */
     readonly quizActionsMinWidth = output<number>();
+    /** Width (px) this row needs to show all its actions inline; the table sizes the shared column to the widest row. */
+    readonly actionsNaturalWidth = output<number>();
 
     private readonly localCIEnabled = this.profileService.isProfileActive(PROFILE_LOCALCI);
     /** Variant generation runs in Hyperion; without the module its endpoints are not registered. */

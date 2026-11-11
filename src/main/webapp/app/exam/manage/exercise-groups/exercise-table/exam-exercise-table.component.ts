@@ -32,7 +32,8 @@ export interface ExamTableGroupChange {
     // the rows actually report — so it collapses every main button into the ellipsis before the table scrolls, yet
     // never clips the (non-collapsing) warning. Stays unset when no row reports reserved content, so the column
     // collapses fully (SCSS default). Mirrors the course exercise-table's `--actions-min-width` binding.
-    host: { '[style.--actions-min-width]': 'actionsMinWidthVar()' },
+    // `--actions-width` sizes the column to the widest row's buttons, so the leftover width goes to the other columns.
+    host: { '[style.--actions-min-width]': 'actionsMinWidthVar()', '[style.--actions-width]': 'actionsWidthVar()' },
     imports: [
         RouterLink,
         FaIconComponent,
@@ -104,6 +105,20 @@ export class ExamExerciseTableComponent {
     onActionsMinWidth(width: number): void {
         if (width > this.maxActionsMinWidth()) {
             this.maxActionsMinWidth.set(width);
+        }
+    }
+
+    /** Largest width (px) any row needs to show all its actions inline. Grows only, like the floor above. */
+    private readonly maxActionsNaturalWidth = signal(0);
+    /** CSS value for the actions-column width, or undefined until a row has measured its buttons. */
+    protected readonly actionsWidthVar = computed(() => {
+        const width = this.maxActionsNaturalWidth();
+        return width > 0 ? `${width}px` : undefined;
+    });
+
+    onActionsNaturalWidth(width: number): void {
+        if (width > this.maxActionsNaturalWidth()) {
+            this.maxActionsNaturalWidth.set(width);
         }
     }
 

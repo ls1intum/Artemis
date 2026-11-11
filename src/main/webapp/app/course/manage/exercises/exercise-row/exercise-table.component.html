@@ -150,17 +150,20 @@
                             </td>
                         }
                         <td>
-                            @if (row.quizStatusLabel) {
-                                <tumaet-ui-tag class="me-1" [severity]="row.quizStatusSeverity" [value]="row.quizStatusLabel | artemisTranslate" />
-                            }
-                            @if (row.quizModeKey) {
-                                <tumaet-ui-tag class="me-1" severity="secondary" [value]="row.quizModeKey | artemisTranslate" />
-                            }
-                            @if (row.hasCategories) {
-                                <jhi-exercise-categories [exercise]="row.exercise" />
-                            } @else if (row.showNoCategoriesPlaceholder) {
-                                <span class="text-muted fst-italic small" jhiTranslate="artemisApp.exerciseManagement.table.none"></span>
-                            }
+                            <!-- One wrapping row of labels: the categories render their labels straight into it. -->
+                            <div class="flex flex-wrap items-center gap-1">
+                                @if (row.quizStatusLabel) {
+                                    <tumaet-ui-tag [severity]="row.quizStatusSeverity" [value]="row.quizStatusLabel | artemisTranslate" />
+                                }
+                                @if (row.quizModeKey) {
+                                    <tumaet-ui-tag severity="secondary" [value]="row.quizModeKey | artemisTranslate" />
+                                }
+                                @if (row.hasCategories) {
+                                    <jhi-exercise-categories class="contents" [exercise]="row.exercise" />
+                                } @else if (row.showNoCategoriesPlaceholder) {
+                                    <span class="text-muted fst-italic small" jhiTranslate="artemisApp.exerciseManagement.table.none"></span>
+                                }
+                            </div>
                         </td>
                         <td class="col-actions">
                             <jhi-exercise-actions
@@ -171,6 +174,7 @@
                                 (exerciseDeleted)="exerciseDeleted.emit($event)"
                                 (exerciseDeletionOutcomeUnknown)="exerciseDeletionOutcomeUnknown.emit()"
                                 (quizActionsMinWidth)="onQuizActionsMinWidth($event)"
+                                (actionsNaturalWidth)="onActionsNaturalWidth($event)"
                             />
                         </td>
                     </tr>
