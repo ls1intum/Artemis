@@ -203,8 +203,8 @@ class BuildContainerIsolationProbeTest {
             // The command of the container that was created last
             var invocations = Mockito.mockingDetails(createCommand).getInvocations().stream().filter(call -> call.getMethod().getName().equals("withCmd")).toList();
             String[] command = (String[]) invocations.getLast().getRawArguments()[0];
-            boolean selfTest = command[0].equals("sh");
-            boolean byName = command[0].equals("nc") && command[4].equals("alias.internal");
+            boolean selfTest = command[0].equals("sh") && !command[2].contains("nslookup");
+            boolean byName = command[0].equals("sh") && command[2].contains("nslookup alias.internal");
             return selfTest || byName ? 0 : 1;
         });
         Target aliased = new Target("alias.internal", 6379);
@@ -213,6 +213,19 @@ class BuildContainerIsolationProbeTest {
 
         assertThat(result.reachable()).containsExactly(aliased);
         assertThat(result.notReachable()).isEmpty();
+    }
+
+    @Test
+    void asksTheContainerToTryEveryAddressOfAName() throws Exception {
+        // nc alone connects to one address of a name. The test container resolves the name itself and tries each address, so that a refusal on one of them hides no other.
+        when(waitCallback.awaitStatusCode(anyLong(), eq(TimeUnit.SECONDS))).thenReturn(0, 1);
+        Target named = new Target("alias.internal", 6379);
+
+        new BuildContainerIsolationProbe(dockerClient, IMAGE).run(null, List.of(named));
+
+        var commands = Mockito.mockingDetails(createCommand).getInvocations().stream().filter(call -> call.getMethod().getName().equals("withCmd")).toList();
+        String script = ((String[]) commands.getLast().getRawArguments()[0])[2];
+        assertThat(script).contains("nslookup alias.internal").contains("for address in $addresses").contains("exit 4");
     }
 
     @Test

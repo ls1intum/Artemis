@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Pattern;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -52,6 +53,11 @@ public class BuildContainerIsolationProbe {
 
     /** The exit code of the probe of the host when the container has no entry for the name of the host. */
     private static final int EXIT_NO_HOST_ENTRY = 3;
+
+    private static final int EXIT_NO_RESOLUTION = 4;
+
+    /** Host names that are safe to put into the script of the test container. */
+    private static final Pattern CONTAINER_NAME = Pattern.compile("[A-Za-z0-9._-]+");
 
     /** The name that a container uses for the host of the agent. */
     private static final String HOST_NAME = "host.docker.internal";
@@ -217,9 +223,12 @@ public class BuildContainerIsolationProbe {
             }
             allRefused &= Integer.valueOf(EXIT_CONNECTION_FAILED).equals(exitCode);
         }
-        if (!loopbackName && !isAddress(target.host())) {
-            Integer exitCode = runInContainer(network, false, target.toString(), "nc", "-w", String.valueOf(CONNECT_TIMEOUT_SECONDS), "-z", target.host(),
-                    String.valueOf(target.port()));
+        if (!loopbackName && !isAddress(target.host()) && CONTAINER_NAME.matcher(target.host()).matches()) {
+            // Every address that the container resolves is tried, because nc alone would connect to one of them
+            String script = "addresses=$(nslookup " + target.host()
+                    + " 2>/dev/null | awk '/^Name:/ {found=1} found && /^Address/ {print $NF}' | sort -u); [ -n \"$addresses\" ] || exit " + EXIT_NO_RESOLUTION
+                    + "; for address in $addresses; do nc -w " + CONNECT_TIMEOUT_SECONDS + " -z \"$address\" " + target.port() + " && exit 0; done; exit " + EXIT_CONNECTION_FAILED;
+            Integer exitCode = runInContainer(network, false, target.toString(), "sh", "-c", script);
             if (Integer.valueOf(0).equals(exitCode)) {
                 return Verdict.REACHABLE;
             }
