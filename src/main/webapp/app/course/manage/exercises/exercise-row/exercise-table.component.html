@@ -20,14 +20,14 @@
                     @if (showDragHandle()) {
                         <th class="col-icon"></th>
                     }
-                    <th tumAetUiSortableColumn="title"><span jhiTranslate="artemisApp.exercise.title"></span></th>
+                    <th tumAetUiSortableColumn="title" class="col-title"><span jhiTranslate="artemisApp.exercise.title"></span></th>
                     <th tumAetUiSortableColumn="dueDate" class="col-dates"><span jhiTranslate="artemisApp.exerciseManagement.table.dates"></span></th>
-                    <th tumAetUiSortableColumn="points"><span jhiTranslate="artemisApp.exercise.points"></span></th>
+                    <th tumAetUiSortableColumn="points" class="col-points"><span jhiTranslate="artemisApp.exercise.points"></span></th>
                     @if (!showGroupSelector()) {
-                        <th tumAetUiSortableColumn="difficulty"><span jhiTranslate="artemisApp.exercise.difficulty"></span></th>
+                        <th tumAetUiSortableColumn="difficulty" class="col-difficulty"><span jhiTranslate="artemisApp.exercise.difficulty"></span></th>
                     }
                     @if (showGroupSelector()) {
-                        <th jhiTranslate="artemisApp.exerciseManagement.table.group"></th>
+                        <th class="col-group" jhiTranslate="artemisApp.exerciseManagement.table.group"></th>
                     }
                     <th jhiTranslate="artemisApp.exercise.categories"></th>
                     <th class="text-end col-actions" jhiTranslate="artemisApp.exercise.actions"></th>
@@ -174,7 +174,7 @@
                                 (exerciseDeleted)="exerciseDeleted.emit($event)"
                                 (exerciseDeletionOutcomeUnknown)="exerciseDeletionOutcomeUnknown.emit()"
                                 (quizActionsMinWidth)="onQuizActionsMinWidth($event)"
-                                (actionsNaturalWidth)="onActionsNaturalWidth($event)"
+                                (actionsNaturalWidth)="actionsColumn.report(row.exercise.id!, $event)"
                             />
                         </td>
                     </tr>

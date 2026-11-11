@@ -1,5 +1,5 @@
 import { TumAetUiTableDirective } from '@tumaet/ui-angular';
-import { ChangeDetectionStrategy, Component, computed, inject, input, output, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, ElementRef, afterNextRender, computed, inject, input, output, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -18,6 +18,7 @@ import { QuizExerciseGroupCellComponent } from 'app/exam/manage/exercise-groups/
 import { ModelingExerciseGroupCellComponent } from 'app/exam/manage/exercise-groups/modeling-exercise-cell/modeling-exercise-group-cell.component';
 import { FileUploadExerciseGroupCellComponent } from 'app/exam/manage/exercise-groups/file-upload-exercise-cell/file-upload-exercise-group-cell.component';
 import dayjs from 'dayjs/esm';
+import { ActionsColumnWidth } from 'app/exercise/exercise-action-bar/actions-column-width';
 
 export interface ExamTableGroupChange {
     exercise: Exercise;
@@ -54,6 +55,8 @@ export interface ExamTableGroupChange {
 })
 export class ExamExerciseTableComponent {
     private readonly translateService = inject(TranslateService);
+    private readonly destroyRef = inject(DestroyRef);
+    private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
 
     readonly exercises = input.required<Exercise[]>();
     readonly group = input.required<ExerciseGroup>();
@@ -108,18 +111,14 @@ export class ExamExerciseTableComponent {
         }
     }
 
-    /** Largest width (px) any row needs to show all its actions inline. Grows only, like the floor above. */
-    private readonly maxActionsNaturalWidth = signal(0);
+    /** Sizes the actions column to the widest current row's buttons. */
+    protected readonly actionsColumn = new ActionsColumnWidth(computed(() => this.exercises().map((exercise) => exercise.id!)));
     /** CSS value for the actions-column width, or undefined until a row has measured its buttons. */
-    protected readonly actionsWidthVar = computed(() => {
-        const width = this.maxActionsNaturalWidth();
-        return width > 0 ? `${width}px` : undefined;
-    });
+    protected readonly actionsWidthVar = this.actionsColumn.cssWidth;
 
-    onActionsNaturalWidth(width: number): void {
-        if (width > this.maxActionsNaturalWidth()) {
-            this.maxActionsNaturalWidth.set(width);
-        }
+    constructor() {
+        // The table fills the host, so the host's width is the one the percentage refers to.
+        afterNextRender(() => this.destroyRef.onDestroy(this.actionsColumn.observe(this.host.nativeElement)));
     }
 
     icon(exercise: Exercise) {

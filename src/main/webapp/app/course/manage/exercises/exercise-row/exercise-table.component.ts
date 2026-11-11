@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, inject, input, output, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, ElementRef, afterNextRender, computed, inject, input, output, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -33,6 +33,7 @@ import { ProgrammingExerciseParticipationType } from 'app/programming/shared/ent
 import { programmingExerciseResultWarning } from 'app/programming/manage/status/programming-exercise-result-warning.util';
 import { findLatestResult } from 'app/foundation/util/utils';
 import { getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/submission/submission.model';
+import { ActionsColumnWidth } from 'app/exercise/exercise-action-bar/actions-column-width';
 
 type SortColumn = 'title' | 'dueDate' | 'points' | 'difficulty';
 
@@ -113,6 +114,8 @@ interface ExerciseRow {
 })
 export class ExerciseTableComponent {
     private readonly translateService = inject(TranslateService);
+    private readonly destroyRef = inject(DestroyRef);
+    private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
 
     protected readonly faBars = faBars;
     protected readonly faTriangleExclamation = faTriangleExclamation;
@@ -222,18 +225,14 @@ export class ExerciseTableComponent {
         return width > 0 ? `${width}px` : undefined;
     });
 
-    /** Largest width (px) any row needs to show all its actions inline. Grows only, like the floor above. */
-    private readonly maxActionsNaturalWidth = signal(0);
+    /** Sizes the actions column to the widest current row's buttons. */
+    protected readonly actionsColumn = new ActionsColumnWidth(computed(() => this.rows().map((row) => row.exercise.id!)));
     /** CSS value for the actions-column width, or undefined until a row has measured its buttons. */
-    readonly actionsWidthVar = computed(() => {
-        const width = this.maxActionsNaturalWidth();
-        return width > 0 ? `${width}px` : undefined;
-    });
+    readonly actionsWidthVar = this.actionsColumn.cssWidth;
 
-    onActionsNaturalWidth(width: number): void {
-        if (width > this.maxActionsNaturalWidth()) {
-            this.maxActionsNaturalWidth.set(width);
-        }
+    constructor() {
+        // The table fills the host, so the host's width is the one the percentage refers to.
+        afterNextRender(() => this.destroyRef.onDestroy(this.actionsColumn.observe(this.host.nativeElement)));
     }
 
     onQuizActionsMinWidth(width: number): void {

@@ -135,7 +135,7 @@
                                         (onDeleteExercise)="exerciseDeleted.emit(exercise)"
                                         (deletionOutcomeUnknown)="exerciseDeletionOutcomeUnknown.emit()"
                                         (actionsMinWidth)="onActionsMinWidth($event)"
-                                        (actionsNaturalWidth)="onActionsNaturalWidth($event)"
+                                        (actionsNaturalWidth)="actionsColumn.report(exercise.id!, $event)"
                                     />
                                 }
                             </td>
