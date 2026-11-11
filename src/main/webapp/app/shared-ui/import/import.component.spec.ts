@@ -2,16 +2,13 @@ import { Component, inject } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
 import { DynamicDialogRef } from 'primeng/dynamicdialog';
-import { PaginatorState } from 'primeng/paginator';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
 import { ImportComponent } from 'app/shared-ui/import/import.component';
 import { BaseEntity } from 'app/foundation/model/base-entity';
 import { SortService } from 'app/foundation/service/sort.service';
-import { SortByDirective } from 'app/foundation/sort/directive/sort-by.directive';
-import { SortDirective } from 'app/foundation/sort/directive/sort.directive';
 import { SearchResult, SearchTermPageableSearch, SortingOrder } from 'app/foundation/pagination/pageable-table';
-import { MockComponent, MockDirective, MockProvider } from 'ng-mocks';
+import { MockComponent, MockProvider } from 'ng-mocks';
 import { Subject, of } from 'rxjs';
 import { DummyPagingService } from 'test/helpers/mocks/service/dummy-paging-service';
 import { vi } from 'vitest';
@@ -50,7 +47,7 @@ describe('ImportComponent', () => {
         // Return the promise so the test framework awaits setup; otherwise `comp`/`searchStub` can be stale
         // across tests, which - now that ngOnInit performs a search - leaks spurious paging-service calls.
         return TestBed.configureTestingModule({
-            imports: [FormsModule, DummyImportComponent, MockComponent(ButtonComponent), MockDirective(SortByDirective), MockDirective(SortDirective)],
+            imports: [FormsModule, DummyImportComponent, MockComponent(ButtonComponent)],
             providers: [MockProvider(DummyPagingService), MockProvider(SortService), { provide: DynamicDialogRef, useValue: dialogRef }],
         })
             .compileComponents()
@@ -225,12 +222,29 @@ describe('ImportComponent', () => {
         expect(pagingServiceSpy).toHaveBeenCalledTimes(2);
     });
 
-    it('onPaginatorPageChange converts the 0-indexed PrimeNG page to a 1-indexed page', () => {
-        const onPageChangeSpy = vi.spyOn(comp, 'onPageChange');
-        comp.onPaginatorPageChange({ page: 2 } as PaginatorState);
-        expect(onPageChangeSpy).toHaveBeenCalledWith(3);
-        comp.onPaginatorPageChange({} as PaginatorState);
-        expect(onPageChangeSpy).toHaveBeenCalledWith(1);
+    it('onTableSort applies the requested column and direction in one search', () => {
+        setStateAndCallOnInit(() => {
+            comp.onTableSort({ field: 'TITLE', order: 1 });
+            vi.advanceTimersByTime(10);
+            expect(searchStub).toHaveBeenCalledWith({ ...state, sortedColumn: 'TITLE', sortingOrder: SortingOrder.ASCENDING }, undefined);
+        });
+    });
+
+    it('onTableSort applies a descending order for -1', () => {
+        setStateAndCallOnInit(() => {
+            comp.onTableSort({ field: 'TITLE', order: -1 });
+            vi.advanceTimersByTime(10);
+            expect(searchStub).toHaveBeenCalledWith({ ...state, sortedColumn: 'TITLE', sortingOrder: SortingOrder.DESCENDING }, undefined);
+        });
+    });
+
+    it('onTableSort ignores a sort event without a field', () => {
+        setStateAndCallOnInit(() => {
+            searchStub.mockClear();
+            comp.onTableSort({ field: '', order: 1 });
+            vi.advanceTimersByTime(10);
+            expect(searchStub).not.toHaveBeenCalled();
+        });
     });
 
     it('should sort rows with default values', () => {
