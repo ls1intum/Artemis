@@ -20,9 +20,9 @@
                 <tumaet-ui-popover #filters [ariaLabel]="'artemisApp.courseOverview.exerciseList.filter' | artemisTranslate: { num: activeFilters.size }">
                     <div class="flex flex-col gap-2">
                         @for (filter of [filterType.PAST, filterType.CURRENT, filterType.FUTURE, filterType.UNSPECIFIED]; track filter) {
-                            <label class="flex items-center gap-2" [for]="filter">
+                            <label class="flex cursor-pointer items-center gap-2" [for]="filter">
                                 <tumaet-ui-checkbox [inputId]="filter" [checked]="activeFilters.has(filter)" (changed)="toggleFilters([filter])" />
-                                <span [jhiTranslate]="'artemisApp.lecture.home.filterOptions.' + filter"></span>
+                                <span class="leading-5" [jhiTranslate]="'artemisApp.lecture.home.filterOptions.' + filter"></span>
                             </label>
                         }
                     </div>

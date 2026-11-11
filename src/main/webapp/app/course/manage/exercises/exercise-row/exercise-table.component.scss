@@ -16,10 +16,23 @@ tbody td {
     width: 2.5rem;
 }
 
+// The actions column takes all leftover width, so without a floor here the title is squeezed into a narrow column and
+// wraps although the row has plenty of free space.
 .col-title {
     width: 28rem;
     max-width: 28rem;
-    min-width: 14rem;
+    min-width: 18rem;
+}
+
+// Categories sit side by side and only wrap when the column is full.
+.col-categories {
+    min-width: 12rem;
+
+    jhi-exercise-categories {
+        display: inline-flex;
+        flex-wrap: wrap;
+        gap: 0.25rem;
+    }
 }
 
 .col-dates {
