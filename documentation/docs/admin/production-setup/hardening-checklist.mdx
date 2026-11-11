@@ -17,7 +17,7 @@ The remaining items depend on how and where you run Artemis, so only you can ver
 - [ ] HTTPS terminates at the reverse proxy with a valid certificate and current TLS settings.
 - [ ] The reverse proxy sets `X-Forwarded-For`, and both `server.tomcat.remoteip.internal-proxies` and `artemis.continuous-integration.build-agent-network.trusted-proxies` list only your own proxies, so the rate limit counts the real client address. See
       [Client Address of Git Requests](/admin/production-setup/security#client-address-of-git-requests).
-- [ ] The reverse proxy replaces address headers that clients send, instead of appending to them, and builds `X-Forwarded-For` from the address of the connection it accepted.
+- [ ] The internet-facing proxy replaces address headers that clients send and builds `X-Forwarded-For` from the address of the connection it accepted. Internal proxies accept requests only from trusted upstream proxies and forward the sanitized client address.
 - [ ] The websocket endpoint is reached through the same origin as the application. See [Websocket Connections](/admin/production-setup/security#websocket-connections).
 - [ ] Rate limiting is on (it is by default) and the limits fit your installation, in particular where many students share one address. See [Rate Limiting](/admin/production-setup/security#rate-limiting).
 
