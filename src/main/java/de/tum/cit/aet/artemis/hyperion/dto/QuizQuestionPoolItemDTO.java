@@ -29,6 +29,7 @@ public record QuizQuestionPoolItemDTO(@NotNull @Schema(description = "Id of the 
         @NotNull @Schema(description = "Difficulty band of the question") QuizQuestionDifficulty difficulty,
         @NotNull @Schema(description = "Lifecycle state of the item") QuizQuestionPoolItemState state,
         @NotNull @Schema(description = "The instructor's review decision") QuizQuestionReviewState reviewState,
+        @Schema(description = "Whether the filter's verdicts ask for a review, present once the question is judged") @Nullable Boolean flagged,
         @Valid @Schema(description = "The generated question, present once generated") @Nullable GeneratedQuizQuestionDTO question,
         @Valid @Schema(description = "The filter's decision, present once judged") @Nullable QuizQuestionFilterDecisionDTO decision,
         @Schema(description = "Why the last attempt failed, present after a failure") @Nullable String failure,

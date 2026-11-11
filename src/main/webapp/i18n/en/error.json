@@ -1,5 +1,6 @@
 {
     "error": {
+        "quizQuestionPoolModelNotConfigured": "Smart Quizzes is not set up on this server. Ask your administrator to configure a local language model.",
         "tumLiveUploadInProgress": "The pending upload is already being sent to TUM.Live. Discard it to start another one.",
         "tumLiveNotConnected": "The course is not connected to TUM.Live.",
         "registrationClosed": "Registration is closed because the exam has ended.",
@@ -154,6 +155,8 @@
         "cpuCountInvalid": "The CPU count is invalid. Please make sure it is a positive integer.",
         "memorySwapLimitInvalid": "The memory swap limit is invalid. Please make sure it is larger or equal to 0.",
         "dockerFlagsParsingError": "Error while parsing the docker flags.",
+        "gradedParticipationMismatch": "The selected participation does not belong to this exercise.",
+        "sharingInfoInvalid": "The sharing information of the request could not be validated. Please start the import again from the Sharing Platform.",
         "dueDateOver": {
             "noParticipationPossible": "The exercise due date is already over, you can no longer participate in this exercise.",
             "participationInPracticeMode": "The exercise due date is already over, a regular participation in the exercise is no longer possible. You can use the Practice Mode to solve the exercise.",

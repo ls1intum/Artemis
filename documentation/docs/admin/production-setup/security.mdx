@@ -2,7 +2,7 @@
 id: security
 title: Security
 sidebar_label: Security
-last_reviewed: 2026-11-09
+last_reviewed: 2026-11-10
 ---
 
 import Callout from "../../../src/components/Callout/Callout";
@@ -523,7 +523,7 @@ artemis:
 - Username/password login
 - WebAuthn authentication
 - Git over SSH and HTTP operations, in a bucket of their own, `git-authentication-requests-per-minute`. What consumes it:
-    - **HTTP:** the `/info/refs` request that starts a clone, fetch or push, when it carries credentials. The requests that follow it, `git-upload-pack` and `git-receive-pack`, are authenticated too but do not consume it.
+    - **HTTP:** the `/info/refs` request that starts a clone, fetch or push, when it carries credentials. The requests that follow it, `git-upload-pack` and `git-receive-pack`, are authenticated too. A password is charged one token before it is checked and receives it back when it is correct, for the `/info/refs` request as well as for the requests that follow it. A regular clone or push with the correct password is therefore not charged, and it completes even where the limit is a single request. Wrong passwords keep their token.
     - **SSH:** the user authentication with a key that is recognized and has not expired.
 
   The bucket is separate from the login so that students who push from a lecture hall behind one address cannot use up the logins of everyone else on it. Raise it where many students share one address,
@@ -534,3 +534,7 @@ artemis:
 - [Client error reports](/admin/client-error-reports) of clients that are not signed in
 
 We plan to add the rate-limit to more endpoints (like Oauth2) in the future.
+
+### Client Address of Git Requests
+
+The limit for Git over HTTP counts the address of the client as the reverse proxies of your installation report it. Tomcat resolves `X-Forwarded-For` for the proxies in `server.tomcat.remoteip.internal-proxies`, which are the private networks by default, and the proxies listed in `artemis.continuous-integration.build-agent-network.trusted-proxies` are believed in addition (see [Build Agent Authentication](#build-agent-authentication)). A header sent by any other peer is ignored. If your reverse proxy has a public address and is in neither list, all clients share the address of the proxy and therefore one budget, so list it in `trusted-proxies`.

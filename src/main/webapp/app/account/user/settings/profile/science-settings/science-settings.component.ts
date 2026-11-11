@@ -1,9 +1,7 @@
 import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { UserSettingsCategory } from 'app/foundation/constants/user-settings.constants';
-import { faInfoCircle } from '@fortawesome/free-solid-svg-icons';
 import { FeatureToggle, FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { Subscription } from 'rxjs';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { HasAnyAuthorityDirective } from 'app/foundation/auth/has-any-authority.directive';
@@ -18,7 +16,6 @@ import { TumAetUiListComponent, TumAetUiListItemDirective, TumAetUiToggleSwitchC
     templateUrl: 'science-settings.component.html',
     styleUrls: ['../../user-settings.scss'],
     imports: [
-        FaIconComponent,
         TranslateDirective,
         // NOTE: this is actually used in the html template, otherwise *jhiHasAnyAuthority would not work
         HasAnyAuthorityDirective,
@@ -32,8 +29,6 @@ import { TumAetUiListComponent, TumAetUiListItemDirective, TumAetUiToggleSwitchC
 export class ScienceSettingsComponent extends UserSettingsDirective implements OnInit, OnDestroy {
     private scienceSettingsService = inject(ScienceSettingsService);
     private featureToggleService = inject(FeatureToggleService);
-
-    faInfoCircle = faInfoCircle;
 
     private featureToggleActiveSubscription?: Subscription;
     private saveSubscription?: Subscription;
