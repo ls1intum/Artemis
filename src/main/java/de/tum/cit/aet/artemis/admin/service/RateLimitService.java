@@ -129,6 +129,22 @@ public class RateLimitService {
     }
 
     /**
+     * Gives one token back to the budget of a client for a rate limit type, up to the capacity of the bucket.
+     * <p>
+     * The counterpart of {@link #enforcePerMinute} for a check that is spent before it runs, so that parallel requests cannot pass it together, and
+     * that costs nothing once it turns out to be legitimate.
+     *
+     * @param clientId identifier for the client (typically an IP address)
+     * @param rpmType  the rate limit type to determine the RPM configuration
+     */
+    public void refundPerMinute(IPAddress clientId, RateLimitType rpmType) {
+        if (isSwitchedOff(rpmType) || configurationService.isExempt(clientId)) {
+            return;
+        }
+        getOrCreatePerMinuteBucket(clientId, rpmType, configurationService.getEffectiveRpm(rpmType)).addTokens(1);
+    }
+
+    /**
      * Whether the limit of a type is not enforced because rate limiting is disabled. A type that is always enforced is never switched off.
      */
     private boolean isSwitchedOff(RateLimitType rpmType) {
