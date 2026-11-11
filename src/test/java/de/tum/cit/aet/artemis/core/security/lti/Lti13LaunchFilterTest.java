@@ -237,7 +237,7 @@ class Lti13LaunchFilterTest {
 
         launchFilter.doFilter(httpRequest, httpResponse, filterChain);
 
-        verify(httpResponse).sendError(eq(HttpStatus.UNAUTHORIZED.value()), any());
+        verify(httpResponse).sendError(eq(HttpStatus.FORBIDDEN.value()), any());
     }
 
     @Test

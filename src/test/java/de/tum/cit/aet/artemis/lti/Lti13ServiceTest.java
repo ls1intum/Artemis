@@ -28,6 +28,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.NullAndEmptySource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
@@ -317,11 +318,13 @@ class Lti13ServiceTest {
         verify(userRepository, never()).findOneWithAuthoritiesByLogin(any());
     }
 
-    @Test
-    void performLaunch_withoutEmail_isRefusedBeforeAnAccountIsCreated() {
+    @ParameterizedTest
+    @NullAndEmptySource
+    @ValueSource(strings = { "  ", "no-at-sign" })
+    void performLaunch_withoutUsableEmail_isRefusedBeforeAnAccountIsCreated(String email) {
         MockExercise result = getMockExercise(true);
         prepareForPerformExerciseLaunch(result.courseId(), result.exerciseId(), true);
-        when(oidcIdToken.getEmail()).thenReturn("");
+        when(oidcIdToken.getEmail()).thenReturn(email);
 
         assertThatExceptionOfType(InternalAuthenticationServiceException.class).isThrownBy(() -> lti13Service.performLaunch(oidcIdToken, clientRegistrationId));
 

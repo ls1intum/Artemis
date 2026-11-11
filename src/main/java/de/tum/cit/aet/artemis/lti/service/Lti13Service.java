@@ -179,7 +179,7 @@ public class Lti13Service {
         requireTargetInCourse(targetExercise, targetLecture, course, targetLinkUrl);
 
         // The email address identifies the person, so a launch without one is refused before an account is looked up or created
-        if (StringUtils.isEmpty(ltiIdToken.getEmail())) {
+        if (StringUtils.isBlank(ltiIdToken.getEmail()) || !ltiIdToken.getEmail().contains("@")) {
             throw new InternalAuthenticationServiceException("No email address sent by launch request. Please make sure the user has an accessible email address.");
         }
 

@@ -103,7 +103,7 @@ public class Lti13LaunchFilter extends OncePerRequestFilter {
         catch (InternalAuthenticationServiceException ex) {
             // The launch cannot be tied to an account: it has no email address, or the course requires an existing account that has this address
             log.warn("LTI 1.3 launch was refused: {}", ex.getMessage());
-            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "LTI 1.3 Launch failed");
+            response.sendError(HttpServletResponse.SC_FORBIDDEN, "LTI 1.3 Launch failed");
         }
         catch (HttpClientErrorException | OAuth2AuthenticationException | IllegalStateException | IllegalArgumentException ex) {
             // IllegalArgumentException is thrown by Lti13Service.launchRequestFrom when an id_token claim cannot be

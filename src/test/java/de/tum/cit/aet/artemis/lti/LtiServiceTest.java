@@ -337,7 +337,6 @@ class LtiServiceTest {
         trustExternalSystems();
         user.setEmail("student@test.com");
         user.setActivated(false);
-        when(userLtiRepository.existsByUserIdAndCreatedByLaunchIsTrueAndInitializedIsFalse(user.getId())).thenReturn(true);
         when(userRepository.findOneByEmailIgnoreCase("student@test.com")).thenReturn(Optional.of(user));
         when(userRepository.findOneWithAuthoritiesByEmailIgnoreCase("student@test.com")).thenReturn(Optional.of(user));
 
