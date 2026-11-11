@@ -311,4 +311,28 @@ class RepositoryServiceFileOperationsTest {
                 .withMessageContaining("Failed to retrieve repository content");
     }
 
+    @Test
+    void readingAllFilesFailsForATextFileAboveTheSizeLimitInsteadOfLeavingItOut() throws Exception {
+        // A snapshot without the file would look like a repository that never had it, and a consumer would take it as deleted.
+        Files.writeString(workingTree.resolve("small.txt"), "small");
+        Files.write(workingTree.resolve("large.txt"), new byte[(int) (RepositoryService.MAX_FILE_CONTENT_BYTES + 1)]);
+        try (Git git = Git.open(workingTree.toFile())) {
+            git.add().addFilepattern(".").call();
+            git.commit().setMessage("files").setAuthor("a", "a@example.com").setCommitter("a", "a@example.com").call();
+        }
+
+        org.assertj.core.api.Assertions.assertThatIOException().isThrownBy(() -> repositoryService.getFilesContentFromBareRepositoryForLastCommit(repository))
+                .withMessageContaining("large.txt");
+    }
+
+    @Test
+    void readingAllFilesWithinTheLimitsReturnsThem() throws Exception {
+        Files.writeString(workingTree.resolve("small.txt"), "small");
+        try (Git git = Git.open(workingTree.toFile())) {
+            git.add().addFilepattern(".").call();
+            git.commit().setMessage("files").setAuthor("a", "a@example.com").setCommitter("a", "a@example.com").call();
+        }
+
+        assertThat(repositoryService.getFilesContentFromBareRepositoryForLastCommit(repository)).containsEntry("small.txt", "small");
+    }
 }
