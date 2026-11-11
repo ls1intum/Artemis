@@ -424,6 +424,12 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         request.postWithResponseBody("/api/exercise/exercises/" + textExercise.getId() + "/participations", null, StudentParticipation.class, HttpStatus.FORBIDDEN);
     }
 
+    private StudentExam addExerciseToOwnStudentExam(TextExercise examExercise, String studentLogin) {
+        StudentExam studentExam = examUtilService.addStudentExamWithUser(examExercise.getExam(), studentLogin);
+        studentExam.setExercises(new ArrayList<>(List.of(examExercise)));
+        return studentExamRepository.save(studentExam);
+    }
+
     /**
      * Students can start participations during the working time of the exam.
      */
@@ -434,6 +440,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         examTextExercise.getExam().setStartDate(ZonedDateTime.now().minusHours(2));
         examTextExercise.getExam().setEndDate(ZonedDateTime.now().plusHours(1));
         examTestRepository.save(examTextExercise.getExam());
+        addExerciseToOwnStudentExam(examTextExercise, TEST_PREFIX + "student1");
 
         StudentParticipationDTO participation = request.postWithResponseBody("/api/exercise/exercises/" + examTextExercise.getId() + "/participations", null,
                 StudentParticipationDTO.class, HttpStatus.CREATED);
@@ -449,6 +456,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         examTextExercise.getExam().setStartDate(ZonedDateTime.now().minusHours(2));
         examTextExercise.getExam().setEndDate(ZonedDateTime.now().plusHours(1));
         examTestRepository.save(examTextExercise.getExam());
+        addExerciseToOwnStudentExam(examTextExercise, TEST_PREFIX + "student1");
 
         StudentParticipationDTO initialParticipation = request.postWithResponseBody("/api/exercise/exercises/" + examTextExercise.getId() + "/participations", null,
                 StudentParticipationDTO.class, HttpStatus.CREATED);
@@ -478,8 +486,11 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         examTextExercise.getExam().setStartDate(ZonedDateTime.now().minusHours(2));
         examTextExercise.getExam().setEndDate(ZonedDateTime.now().minusHours(1));
         examTestRepository.save(examTextExercise.getExam());
+        // the exercise is part of the own student exam, so the end of the working time is what refuses the request
+        addExerciseToOwnStudentExam(examTextExercise, TEST_PREFIX + "student1");
 
-        request.postWithResponseBody("/api/exercise/exercises/" + examTextExercise.getId() + "/participations", null, StudentParticipation.class, HttpStatus.FORBIDDEN);
+        request.postAndExpectError("/api/exercise/exercises/" + examTextExercise.getId() + "/participations", null, HttpStatus.FORBIDDEN,
+                "dueDateOver.participationInPracticeMode");
     }
 
     /**
@@ -512,6 +523,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         StudentExam studentExam = examUtilService.addStudentExamWithUser(examTextExercise.getExam(), studentLogin);
         int threeHours = 3 * 60 * 60;
         studentExam.setWorkingTime(threeHours);
+        studentExam.setExercises(new ArrayList<>(List.of(examTextExercise)));
         studentExamRepository.save(studentExam);
 
         StudentParticipationDTO participation = request.postWithResponseBody("/api/exercise/exercises/" + examTextExercise.getId() + "/participations", null,
@@ -539,9 +551,12 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         StudentExam studentExam = examUtilService.addStudentExamWithUser(examTextExercise.getExam(), studentLogin);
         int twoHours = 2 * 60 * 60;
         studentExam.setWorkingTime(twoHours);
+        // the exercise is part of the own student exam, so the end of the individual working time is what refuses the request
+        studentExam.setExercises(new ArrayList<>(List.of(examTextExercise)));
         studentExamRepository.save(studentExam);
 
-        request.postWithResponseBody("/api/exercise/exercises/" + examTextExercise.getId() + "/participations", null, StudentParticipation.class, HttpStatus.FORBIDDEN);
+        request.postAndExpectError("/api/exercise/exercises/" + examTextExercise.getId() + "/participations", null, HttpStatus.FORBIDDEN,
+                "dueDateOver.participationInPracticeMode");
     }
 
     @Test
@@ -2868,6 +2883,119 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         exerciseAthenaConfig.setFormativeFeedbackEnabled(true);
         exerciseCourse.setAthenaConfig(exerciseAthenaConfig);
         courseUtilService.saveWithConfigurations(exerciseCourse);
+    }
+
+    /**
+     * The exercise has to be part of the student exam of the requesting user.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1")
+    void participateInExamTextExerciseNotPartOfOwnStudentExamForbidden() throws Exception {
+        TextExercise examTextExercise = examUtilService.addEnrolledCourseExamExerciseGroupWithOneTextExercise(TEST_PREFIX);
+        examTextExercise.getExam().setStartDate(ZonedDateTime.now().minusHours(2));
+        examTextExercise.getExam().setEndDate(ZonedDateTime.now().plusHours(1));
+        examTestRepository.save(examTextExercise.getExam());
+
+        // no student exam at all
+        request.postWithResponseBody("/api/exercise/exercises/" + examTextExercise.getId() + "/participations", null, StudentParticipation.class, HttpStatus.FORBIDDEN);
+
+        // a student exam that does not contain the exercise
+        examUtilService.addStudentExamWithUser(examTextExercise.getExam(), TEST_PREFIX + "student1");
+        request.postWithResponseBody("/api/exercise/exercises/" + examTextExercise.getId() + "/participations", null, StudentParticipation.class, HttpStatus.FORBIDDEN);
+    }
+
+    /**
+     * A student exam that was already handed in cannot be used to start a participation.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1")
+    void participateInExamTextExerciseAfterStudentExamSubmittedForbidden() throws Exception {
+        TextExercise examTextExercise = examUtilService.addEnrolledCourseExamExerciseGroupWithOneTextExercise(TEST_PREFIX);
+        examTextExercise.getExam().setStartDate(ZonedDateTime.now().minusHours(2));
+        examTextExercise.getExam().setEndDate(ZonedDateTime.now().plusHours(1));
+        examTestRepository.save(examTextExercise.getExam());
+        StudentExam studentExam = addExerciseToOwnStudentExam(examTextExercise, TEST_PREFIX + "student1");
+        studentExam.setSubmitted(true);
+        studentExam.setSubmissionDate(ZonedDateTime.now().minusMinutes(5));
+        studentExamRepository.save(studentExam);
+
+        request.postWithResponseBody("/api/exercise/exercises/" + examTextExercise.getId() + "/participations", null, StudentParticipation.class, HttpStatus.FORBIDDEN);
+    }
+
+    /**
+     * An instructor conducts an exam test run with a student exam of their own that is marked as test run. Without it the instructor is treated like any other user.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void participateInExamTextExerciseAsInstructorOnlyWithOwnTestRun() throws Exception {
+        TextExercise examTextExercise = examUtilService.addEnrolledCourseExamExerciseGroupWithOneTextExercise(TEST_PREFIX);
+        examTextExercise.getExam().setStartDate(ZonedDateTime.now().minusHours(2));
+        examTextExercise.getExam().setEndDate(ZonedDateTime.now().plusHours(1));
+        examTestRepository.save(examTextExercise.getExam());
+        String url = "/api/exercise/exercises/" + examTextExercise.getId() + "/participations";
+
+        // no test run yet
+        request.postWithResponseBody(url, null, StudentParticipation.class, HttpStatus.FORBIDDEN);
+
+        StudentExam testRun = ExamFactory.generateExamTestRun(examTextExercise.getExam());
+        testRun.setUser(userUtilService.getUserByLogin(TEST_PREFIX + "instructor1"));
+        testRun.addExercise(examTextExercise);
+        studentExamRepository.save(testRun);
+
+        StudentParticipationDTO participation = request.postWithResponseBody(url, null, StudentParticipationDTO.class, HttpStatus.CREATED);
+        assertThat(participation.student().getId()).isEqualTo(userUtilService.getUserByLogin(TEST_PREFIX + "instructor1").getId());
+    }
+
+    /**
+     * A test run belongs to the instructor who created it: a test run of another instructor does not open the exercise for anybody else.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1")
+    void participateInExamTextExerciseWithTestRunOfAnotherUserForbidden() throws Exception {
+        TextExercise examTextExercise = examUtilService.addEnrolledCourseExamExerciseGroupWithOneTextExercise(TEST_PREFIX);
+        examTextExercise.getExam().setStartDate(ZonedDateTime.now().minusHours(2));
+        examTextExercise.getExam().setEndDate(ZonedDateTime.now().plusHours(1));
+        examTestRepository.save(examTextExercise.getExam());
+        StudentExam testRun = ExamFactory.generateExamTestRun(examTextExercise.getExam());
+        testRun.setUser(userUtilService.getUserByLogin(TEST_PREFIX + "instructor1"));
+        testRun.addExercise(examTextExercise);
+        studentExamRepository.save(testRun);
+
+        request.postWithResponseBody("/api/exercise/exercises/" + examTextExercise.getId() + "/participations", null, StudentParticipation.class, HttpStatus.FORBIDDEN);
+    }
+
+    /**
+     * A test exam can be attempted several times: only the attempt that was not handed in yet can be used to start a participation.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1")
+    void participateInTestExamTextExerciseOnlyWithAnAttemptThatWasNotHandedIn() throws Exception {
+        TextExercise examTextExercise = examUtilService.addEnrolledCourseExamExerciseGroupWithOneTextExercise(TEST_PREFIX);
+        Exam testExam = examTextExercise.getExam();
+        testExam.setTestExam(true);
+        testExam.setStartDate(ZonedDateTime.now().minusHours(2));
+        testExam.setEndDate(ZonedDateTime.now().plusHours(1));
+        testExam.setWorkingTime(60 * 60);
+        examTestRepository.save(testExam);
+        String url = "/api/exercise/exercises/" + examTextExercise.getId() + "/participations";
+
+        StudentExam firstAttempt = examUtilService.addStudentExamForTestExam(testExam, TEST_PREFIX + "student1");
+        firstAttempt.setExercises(new ArrayList<>(List.of(examTextExercise)));
+        firstAttempt.setStartedAndStartDate(ZonedDateTime.now().minusHours(1));
+        firstAttempt.setSubmitted(true);
+        firstAttempt.setSubmissionDate(ZonedDateTime.now().minusMinutes(30));
+        studentExamRepository.save(firstAttempt);
+
+        // the only attempt was handed in already
+        request.postWithResponseBody(url, null, StudentParticipation.class, HttpStatus.FORBIDDEN);
+
+        StudentExam secondAttempt = examUtilService.addStudentExamForTestExam(testExam, TEST_PREFIX + "student1");
+        secondAttempt.setExercises(new ArrayList<>(List.of(examTextExercise)));
+        secondAttempt.setStartedAndStartDate(ZonedDateTime.now().minusMinutes(5));
+        studentExamRepository.save(secondAttempt);
+
+        StudentParticipationDTO participation = request.postWithResponseBody(url, null, StudentParticipationDTO.class, HttpStatus.CREATED);
+        assertThat(participation.student().getId()).isEqualTo(userUtilService.getUserByLogin(TEST_PREFIX + "student1").getId());
     }
 
     @Test

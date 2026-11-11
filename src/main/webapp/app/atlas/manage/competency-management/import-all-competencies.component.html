@@ -53,7 +53,7 @@
                             </td>
                             @for (column of columns; track column) {
                                 <td class="text-break col-4">
-                                    <ngb-highlight [result]="column.getProperty(course)" [term]="searchTerm" />
+                                    <jhi-search-highlight [result]="column.getProperty(course)" [term]="searchTerm" />
                                 </td>
                             }
                             <td class="col-1">
