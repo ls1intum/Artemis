@@ -103,6 +103,7 @@ public class SshConfiguration {
         }
         // One bounded pool serves all git commands: a fixed number of threads and a finite queue. A command that finds the queue full is rejected instead of waiting
         // without limit. The pool is shared, so a command must not shut it down, which the non-closing wrapper ensures. The pool is shut down together with the server.
+        @SuppressWarnings("java:S2095") // the pool is shut down by the close listener of the server below
         SshThreadPoolExecutor gitCommandPool = new SshThreadPoolExecutor(MAX_CONCURRENT_GIT_COMMANDS, MAX_CONCURRENT_GIT_COMMANDS, 0L, TimeUnit.MILLISECONDS,
                 new ArrayBlockingQueue<>(MAX_QUEUED_GIT_COMMANDS), new SshdThreadFactory("git-ssh"), new ThreadPoolExecutor.AbortPolicy());
         CloseableExecutorService gitCommandExecutor = ThreadUtils.noClose(gitCommandPool);
