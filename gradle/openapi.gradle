@@ -49,11 +49,23 @@
             jvmArgs = [
                 "-Dspring.profiles.active=test,artemis,core,atlas,scheduling,athena,apollon,theia,dev,localci,localvc",
                 "-Dartemis.lti.enabled=true",
-                // The application specification covers only the packages that are fully DTO-based. The agent specification is
-                // picked by an annotation instead, so it has to scan everything: the global setting applies to its group too.
+                // The agent specification is picked by an annotation, so it has to scan everything.
                 "-Dspringdoc.packages-to-scan=" + (openApiGroup
                     ? "de.tum.cit.aet.artemis"
-                    : "de.tum.cit.aet.artemis.aiworker.web,de.tum.cit.aet.artemis.tutorialgroup.web,de.tum.cit.aet.artemis.hyperion.web,de.tum.cit.aet.artemis.calendar.web,de.tum.cit.aet.artemis.globalsearch.web,de.tum.cit.aet.artemis.quiz.web"),
+                    : "de.tum.cit.aet.artemis.aiworker.web,de.tum.cit.aet.artemis.tutorialgroup.web,de.tum.cit.aet.artemis.hyperion.web,de.tum.cit.aet.artemis.calendar.web,de.tum.cit.aet.artemis.globalsearch.web,de.tum.cit.aet.artemis.quiz.web,de.tum.cit.aet.artemis.exercise.web"),
+                // Exercise is partially migrated. Apply the route allowlist only to the application export.
+                *(openApiGroup ? [] : ["-Dspringdoc.paths-to-match=" + [
+                    "/api/aiworker/**",
+                    "/api/calendar/**",
+                    "/api/global-search/**",
+                    "/api/search",
+                    "/api/search/**",
+                    "/api/hyperion/**",
+                    "/api/quiz/**",
+                    "/api/tutorialgroup/**",
+                    "/api/exercise/exercises/{exerciseId}/versions",
+                    "/api/exercise/exercises/{exerciseId}/versions/{versionId}"
+                ].join(",")]),
                 // Legacy URL aliases stay mapped in Java for old clients (canonical path first, legacy second), but are kept out
                 // of the specification: in the generated client each alias would become a name/name_ method pair.
                 "-Dspringdoc.paths-to-exclude=/api/quiz/quiz-exercises/*/start-batch,/api/tutorialgroup/courses/*/tutorial-groups-configuration,/api/tutorialgroup/courses/*/tutorial-groups-configuration/**",

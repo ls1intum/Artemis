@@ -2,10 +2,15 @@ package de.tum.cit.aet.artemis.exercise.versioning;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.io.IOException;
+import java.nio.file.Path;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 
 import org.junit.jupiter.api.Test;
+
+import tools.jackson.dataformat.yaml.YAMLMapper;
 
 import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
 import de.tum.cit.aet.artemis.assessment.domain.GradingInstruction;
@@ -16,6 +21,30 @@ import de.tum.cit.aet.artemis.exercise.dto.versioning.ExerciseSnapshotDTO;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 
 class ExerciseSnapshotDTOTest {
+
+    @Test
+    void describesTheExerciseVersionReadsInOpenApi() throws IOException {
+        var spec = YAMLMapper.builder().build().readTree(Path.of("config/openapi/openapi.yaml").toFile());
+        String listPath = "/api/exercise/exercises/{exerciseId}/versions";
+        var listResponse = spec.path("paths").path(listPath).path("get").path("responses").path("200");
+        var listSchema = listResponse.path("content").path("application/json").path("schema");
+        assertThat(listSchema.path("type").asString()).isEqualTo("array");
+        assertThat(listSchema.path("items").path("$ref").asString()).isEqualTo("#/components/schemas/ExerciseVersionMetadata");
+        assertThat(listResponse.path("headers").propertyNames()).containsExactlyInAnyOrder("Link", "X-Total-Count");
+
+        var snapshotResponse = spec.path("paths").path(listPath + "/{versionId}").path("get").path("responses").path("200");
+        assertThat(snapshotResponse.path("content").path("application/json").path("schema").path("$ref").asString()).isEqualTo("#/components/schemas/ExerciseSnapshot");
+
+        var schemas = spec.path("components").path("schemas");
+        var snapshot = schemas.path("ExerciseSnapshot");
+        assertThat(snapshot.path("required").values()).extracting(node -> node.asString()).containsExactly("id");
+        assertThat(snapshot.has("discriminator")).isFalse();
+        Map.of("programmingData", "ProgrammingExerciseSnapshot", "textData", "TextExerciseSnapshot", "modelingData", "ModelingExerciseSnapshot", "quizData", "QuizExerciseSnapshot",
+                "fileUploadData", "FileUploadExerciseSnapshot").forEach((property, schema) -> {
+                    assertThat(snapshot.path("properties").path(property).path("$ref").asString()).isEqualTo("#/components/schemas/" + schema);
+                    assertThat(schemas.path(schema).path("type").asString()).isEqualTo("object");
+                });
+    }
 
     @Test
     void keepsAnEmptyRubricNullAndOmitsItFromSnapshotJson() {

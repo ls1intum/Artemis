@@ -6,9 +6,10 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.dto.UserPublicInfoDTO;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record ExerciseVersionMetadataDTO(long id, UserPublicInfoDTO author, Instant createdDate) {
+public record ExerciseVersionMetadataDTO(@Schema(requiredMode = Schema.RequiredMode.REQUIRED) long id, UserPublicInfoDTO author, Instant createdDate) {
 
     /**
      * A constructor for ExerciseVersionMetadataDTO that takes a User entity and a creation date.
