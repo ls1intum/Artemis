@@ -87,10 +87,10 @@ public class OneToOneChatResource extends ConversationManagementResource {
         Long partnerId = userId != null ? userId : (chatPartner != null ? chatPartner.userId() : null);
         User otherUser;
         if (partnerId != null) {
-            otherUser = userRepository.findByIdElseThrow(partnerId);
+            otherUser = conversationService.findCourseUserByIdElseThrow(course, partnerId);
         }
         else if (chatPartner != null && chatPartner.login() != null) {
-            otherUser = findSingleOtherChatParticipantElseThrow(requestingUser, chatPartner.login());
+            otherUser = findSingleOtherChatParticipantElseThrow(course, requestingUser, chatPartner.login());
         }
         else {
             throw new BadRequestAlertException("A one-to-one chat must specify the other participant by userId or login", "oneToOneChat", "missingPartner");
@@ -105,13 +105,14 @@ public class OneToOneChatResource extends ConversationManagementResource {
     /**
      * Resolves the single other participant of a one-to-one chat from a login, ensuring exactly two distinct users (the requesting user and the partner) are involved.
      *
+     * @param course         the course of the chat, both participants have to be members of it
      * @param requestingUser the user creating the chat
      * @param partnerLogin   the login of the other participant
      * @return the other participant
      */
-    private User findSingleOtherChatParticipantElseThrow(User requestingUser, String partnerLogin) {
+    private User findSingleOtherChatParticipantElseThrow(Course course, User requestingUser, String partnerLogin) {
         var loginsToSearchFor = new HashSet<>(List.of(partnerLogin, requestingUser.getLogin()));
-        var chatMembers = new ArrayList<>(conversationService.findUsersInDatabase(loginsToSearchFor.stream().toList()));
+        var chatMembers = new ArrayList<>(conversationService.findCourseUsersInDatabase(course, loginsToSearchFor.stream().toList()));
         if (chatMembers.size() != 2) {
             throw new BadRequestAlertException("A one-to-one chat can only be started with two users", "OneToOneChat", "invalidUserCount");
         }

@@ -13,6 +13,7 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.regex.Pattern;
 
 import jakarta.annotation.PostConstruct;
 
@@ -69,6 +70,8 @@ public class BuildJobExecutionService {
     private final BuildLogsMap buildLogsMap;
 
     private static final int MAX_CLONE_RETRIES = 3;
+
+    private static final Pattern SAFE_BUILD_JOB_ID = Pattern.compile("[A-Za-z0-9_-]{1,100}");
 
     @Value("${artemis.version-control.default-branch:main}")
     private String defaultBranch;
@@ -151,6 +154,8 @@ public class BuildJobExecutionService {
      * @return the parsed LocalCI result
      */
     public BuildResult runBuildJob(BuildJobQueueItem buildJob) {
+        // The id is used as a folder name, so it is validated before the build starts.
+        validateBuildJobId(buildJob.id());
         // Bind this job's clone token to the executing thread for the whole job. Every git operation below reaches
         // the credential through BuildJobGitService, including the ones inherited from AbstractGitService that carry
         // no build job context. The finally is essential: executor threads are reused, and a token left behind would
@@ -161,6 +166,18 @@ public class BuildJobExecutionService {
         }
         finally {
             buildJobGitService.clearCloneTokenForCurrentThread();
+        }
+    }
+
+    /**
+     * Accepts only plain ids when the id is used as a folder name.
+     *
+     * @param buildJobId the id of the queued build job
+     * @throws LocalCIException if the id is empty, too long or contains anything but letters, digits, '-' and '_'
+     */
+    static void validateBuildJobId(String buildJobId) {
+        if (buildJobId == null || !SAFE_BUILD_JOB_ID.matcher(buildJobId).matches()) {
+            throw new LocalCIException("The build job id is not valid");
         }
     }
 

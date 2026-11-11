@@ -5,7 +5,7 @@ import { LearningPathAverageProgressDTO, LearningPathInformationDTO } from 'app/
 import { SearchResult, SearchTermPageableSearch, SortingOrder } from 'app/foundation/pagination/pageable-table';
 import { onError } from 'app/foundation/util/global.utils';
 import { faSpinner } from '@fortawesome/free-solid-svg-icons';
-import { NgbTypeaheadModule } from '@ng-bootstrap/ng-bootstrap';
+import { SearchHighlightComponent } from 'app/admin/shared/search-highlight.component';
 import { PaginatorModule, PaginatorState } from 'primeng/paginator';
 import { DialogService } from 'primeng/dynamicdialog';
 import { CompetencyGraphModalComponent } from 'app/atlas/manage/competency-graph-modal/competency-graph-modal.component';
@@ -25,7 +25,7 @@ enum TableColumn {
 @Component({
     selector: 'jhi-learning-paths-table',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [PaginatorModule, NgbTypeaheadModule, FormsModule, FontAwesomeModule, ArtemisTranslatePipe, TranslateDirective],
+    imports: [PaginatorModule, SearchHighlightComponent, FormsModule, FontAwesomeModule, ArtemisTranslatePipe, TranslateDirective],
     templateUrl: './learning-paths-table.component.html',
     styleUrls: ['./learning-paths-table.component.scss', '../learning-path-instructor-page/learning-path-instructor-page.component.scss'],
 })
