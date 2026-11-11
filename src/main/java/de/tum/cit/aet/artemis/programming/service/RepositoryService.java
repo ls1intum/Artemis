@@ -86,7 +86,7 @@ public class RepositoryService {
     /** The largest file whose content is read into memory when all files of a repository are read. Larger files are left out. */
     static final long MAX_FILE_CONTENT_BYTES = 10L * 1024 * 1024;
 
-    /** The most that the files of one repository add up to when all of them are read into memory. Files beyond that are left out. */
+    /** The most that the files of one repository add up to when all of them are read into memory. A repository with more is an error, and not a smaller result. */
     static final long MAX_TOTAL_CONTENT_BYTES = 100L * 1024 * 1024;
 
     /** The most entries of a tree that are visited when all files of a repository are read. */
