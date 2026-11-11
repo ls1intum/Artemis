@@ -1,3 +1,4 @@
+import { SearchHighlightComponent } from 'app/admin/shared/search-highlight.component';
 import { Component, DestroyRef, OnInit, inject, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -20,6 +21,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
         TumAetUiTableDirective,
         TumAetUiTableSortableColumnComponent,
         TranslateDirective,
+        SearchHighlightComponent,
     ],
 })
 export class LectureImportComponent implements OnInit {
@@ -74,23 +76,6 @@ export class LectureImportComponent implements OnInit {
 
     selectImport(lecture: Lecture): void {
         this.selected.emit(lecture);
-    }
-
-    /** Render text nodes rather than HTML so matching user-controlled titles stay safe. */
-    highlight(value: string | undefined): { text: string; match: boolean }[] {
-        const text = value ?? '';
-        const term = this.searchTerm;
-        if (!term) return [{ text, match: false }];
-        const parts: { text: string; match: boolean }[] = [];
-        let offset = 0;
-        let index = text.toLocaleLowerCase().indexOf(term.toLocaleLowerCase());
-        while (index >= 0) {
-            parts.push({ text: text.slice(offset, index), match: false }, { text: text.slice(index, index + term.length), match: true });
-            offset = index + term.length;
-            index = text.toLocaleLowerCase().indexOf(term.toLocaleLowerCase(), offset);
-        }
-        parts.push({ text: text.slice(offset), match: false });
-        return parts;
     }
 
     private performSearch(trigger: Subject<void>, delay: number): void {

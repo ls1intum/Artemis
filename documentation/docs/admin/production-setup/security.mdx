@@ -2,7 +2,7 @@
 id: security
 title: Security
 sidebar_label: Security
-last_reviewed: 2026-11-03
+last_reviewed: 2026-11-10
 ---
 
 import Callout from "../../../src/components/Callout/Callout";
@@ -497,7 +497,7 @@ It helps protect authentication and account management endpoints from brute-forc
 - Enforces limits for REST authentication, WebAuthn, and Git operations
 - Returns HTTP **429 Too Many Requests** with `Retry-After` header
 - Allows per-category configuration of requests per minute
-- Automatically excludes build agents from rate limiting
+- Excludes build agents that are registered with an address. An agent that clones over HTTPS without one has its own budget for clone tokens (`build-agent-clone-token-requests-per-minute`, 30 by default)
 
 
 ### Configuring the Rate Limit
@@ -508,6 +508,7 @@ artemis:
     enabled: true # the default
     account-management-requests-per-minute: 5
     authentication-requests-per-minute: 30
+    git-authentication-requests-per-minute: 30
     login-options-requests-per-minute: 30
     client-error-report-requests-per-minute: 60
 ```
@@ -521,7 +522,19 @@ artemis:
   reduce the number of logins a shared address can perform)
 - Username/password login
 - WebAuthn authentication
-- Git over SSH and HTTP operations
+- Git over SSH and HTTP operations, in a bucket of their own, `git-authentication-requests-per-minute`. What consumes it:
+    - **HTTP:** the `/info/refs` request that starts a clone, fetch or push, when it carries credentials. The requests that follow it, `git-upload-pack` and `git-receive-pack`, are authenticated too. A password is charged one token before it is checked and receives it back when it is correct, for the `/info/refs` request as well as for the requests that follow it. A regular clone or push with the correct password is therefore not charged, and it completes even where the limit is a single request. Wrong passwords keep their token.
+    - **SSH:** the user authentication with a key that is recognized and has not expired.
+
+  The bucket is separate from the login so that students who push from a lecture hall behind one address cannot use up the logins of everyone else on it. Raise it where many students share one address,
+  for example behind a campus NAT. It starts at the same 30 as the login, and git over HTTP can verify a password like a login does, so raise it deliberately and not to an arbitrary value.
+  **When you upgrade:** git used to share `authentication-requests-per-minute`, and with the defaults one address could make 30 requests of both kinds in total. Now it can make up to 30 logins and up to 30 git authentications.
+  With a login limit of your own, the git limit is a separate 30 on top of it.
+  Review the git setting on every installation, whether you raised, lowered or never set the login limit, see [10.7 in the Upgrade Guide](/admin/upgrade-guide#107-rate-limit-of-git-operations).
 - [Client error reports](/admin/client-error-reports) of clients that are not signed in
 
 We plan to add the rate-limit to more endpoints (like Oauth2) in the future.
+
+### Client Address of Git Requests
+
+The limit for Git over HTTP counts the address of the client as the reverse proxies of your installation report it. Tomcat resolves `X-Forwarded-For` for the proxies in `server.tomcat.remoteip.internal-proxies`, which are the private networks by default, and the proxies listed in `artemis.continuous-integration.build-agent-network.trusted-proxies` are believed in addition (see [Build Agent Authentication](#build-agent-authentication)). A header sent by any other peer is ignored. If your reverse proxy has a public address and is in neither list, all clients share the address of the proxy and therefore one budget, so list it in `trusted-proxies`.
