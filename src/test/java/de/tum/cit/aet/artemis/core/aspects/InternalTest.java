@@ -19,7 +19,7 @@ class InternalTest extends AbstractSpringIntegrationIndependentTest {
     @Test
     void testInternalFailsFromAnAddressOutsideTheAllowedRanges() throws Exception {
         request.performMvcRequest(get("/api/core/internal/test").with(servletRequest -> {
-            servletRequest.setRemoteAddr("10.0.0.1");
+            servletRequest.setRemoteAddr("203.0.113.10");
             return servletRequest;
         })).andExpect(status().isForbidden());
     }
@@ -27,7 +27,7 @@ class InternalTest extends AbstractSpringIntegrationIndependentTest {
     @Test
     void testInternalIgnoresAddressHeadersOfTheRequest() throws Exception {
         request.performMvcRequest(get("/api/core/internal/test").header("X-Forwarded-For", "127.0.0.1").with(servletRequest -> {
-            servletRequest.setRemoteAddr("10.0.0.1");
+            servletRequest.setRemoteAddr("203.0.113.10");
             return servletRequest;
         })).andExpect(status().isForbidden());
     }

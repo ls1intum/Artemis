@@ -15,7 +15,7 @@ public final class LocalVCReceivePackLimits {
      * The largest single object that is accepted, also in the history of the pushed branch. The pre-receive hook additionally rejects files above 10 MB in the latest commit,
      * with a message that names the file.
      */
-    public static final long MAX_OBJECT_SIZE_BYTES = 100L * 1024 * 1024;
+    public static final long MAX_OBJECT_SIZE_BYTES = 50L * 1024 * 1024;
 
     /** The largest list of commands of a push. A push updates exactly one branch. */
     public static final int MAX_COMMAND_BYTES = 16 * 1024;

@@ -104,7 +104,9 @@ public class SshConfiguration {
         @SuppressWarnings("java:S2095") // the pool is shut down by the close listener of the server below
         SshThreadPoolExecutor gitCommandPool = new SshThreadPoolExecutor(MAX_CONCURRENT_GIT_COMMANDS, MAX_CONCURRENT_GIT_COMMANDS, 0L, TimeUnit.MILLISECONDS,
                 new ArrayBlockingQueue<>(MAX_QUEUED_GIT_COMMANDS), new SshdThreadFactory("git-ssh"), (task, executor) -> {
-                    log.warn("A git command over SSH was rejected: all {} threads are busy and {} commands are waiting", MAX_CONCURRENT_GIT_COMMANDS, MAX_QUEUED_GIT_COMMANDS);
+                    if (!executor.isShutdown()) {
+                        log.warn("A git command over SSH was rejected: all {} threads are busy and {} commands are waiting", MAX_CONCURRENT_GIT_COMMANDS, MAX_QUEUED_GIT_COMMANDS);
+                    }
                     throw new RejectedExecutionException("All threads for git commands over SSH are busy");
                 });
         sshd.addCloseFutureListener(_ -> gitCommandPool.shutdown());

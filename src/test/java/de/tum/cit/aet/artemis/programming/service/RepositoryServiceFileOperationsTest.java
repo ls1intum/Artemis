@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.programming.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+import static org.assertj.core.api.Assertions.assertThatIOException;
 
 import java.io.ByteArrayInputStream;
 import java.io.FileNotFoundException;
@@ -307,13 +308,11 @@ class RepositoryServiceFileOperationsTest {
         assertThat(fallback.getFilesContentFromBareRepositoryForLastCommitBeforeOrAt(uri, java.time.ZonedDateTime.now().plusHours(1))).containsEntry("cached.txt",
                 "cached committed contents");
         org.mockito.Mockito.doThrow(new org.eclipse.jgit.api.errors.TransportException("Checkout unavailable")).when(checkout).getOrCheckoutRepository(uri, true, false);
-        org.assertj.core.api.Assertions.assertThatIOException().isThrownBy(() -> fallback.getFilesContentFromBareRepositoryForLastCommit(uri))
-                .withMessageContaining("Failed to retrieve repository content");
+        assertThatIOException().isThrownBy(() -> fallback.getFilesContentFromBareRepositoryForLastCommit(uri)).withMessageContaining("Failed to retrieve repository content");
     }
 
     @Test
-    void readingAllFilesFailsForATextFileAboveTheSizeLimitInsteadOfLeavingItOut() throws Exception {
-        // A snapshot without the file would look like a repository that never had it, and a consumer would take it as deleted.
+    void readingAllFilesLeavesOutATextFileAboveTheSizeLimitAndFailsForAReadOfThatFile() throws Exception {
         Files.writeString(workingTree.resolve("small.txt"), "small");
         Files.write(workingTree.resolve("large.txt"), new byte[(int) (RepositoryService.MAX_FILE_CONTENT_BYTES + 1)]);
         try (Git git = Git.open(workingTree.toFile())) {
@@ -321,8 +320,10 @@ class RepositoryServiceFileOperationsTest {
             git.commit().setMessage("files").setAuthor("a", "a@example.com").setCommitter("a", "a@example.com").call();
         }
 
-        org.assertj.core.api.Assertions.assertThatIOException().isThrownBy(() -> repositoryService.getFilesContentFromBareRepositoryForLastCommit(repository))
-                .withMessageContaining("large.txt");
+        // The features that read a whole repository, such as the code of an exercise for an AI model, still work with the other files
+        assertThat(repositoryService.getFilesContentFromBareRepositoryForLastCommit(repository)).containsOnlyKeys("small.txt");
+        // A read of the file itself says that it is too large, and does not report the file as missing
+        assertThatIOException().isThrownBy(() -> repositoryService.getFileContentFromBareRepository(repository, "HEAD", "large.txt")).withMessageContaining("large.txt");
     }
 
     @Test

@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.sshd.common.util.threads.CloseableExecutorService;
@@ -20,7 +21,7 @@ class SshCommandExecutorTest {
 
     private SshThreadPoolExecutor newPool() {
         return new SshThreadPoolExecutor(2, 2, 0L, TimeUnit.MILLISECONDS, new ArrayBlockingQueue<>(2), new SshdThreadFactory("git-ssh-test"), (task, executor) -> {
-            throw new java.util.concurrent.RejectedExecutionException("full");
+            throw new RejectedExecutionException("full");
         });
     }
 
