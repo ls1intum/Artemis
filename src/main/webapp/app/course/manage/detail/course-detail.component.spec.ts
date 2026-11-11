@@ -7,7 +7,7 @@ import { MockProvider } from 'ng-mocks';
 import dayjs from 'dayjs/esm';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { HttpResponse } from '@angular/common/http';
-import { CourseManagementDetailViewDto } from 'app/course/shared/entities/course-management-detail-view-dto.model';
+import { CourseManagementDetailView } from 'app/openapi/model/course-management-detail-view';
 import { EventManager } from 'app/foundation/service/event-manager.service';
 import { Course } from 'app/course/shared/entities/course.model';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -38,7 +38,7 @@ describe('Course Management Detail Component', () => {
         endDate: dayjs().subtract(5, 'minutes'),
         courseArchivePath: 'some-path',
     };
-    const dtoMock: CourseManagementDetailViewDto = {
+    const dtoMock: CourseManagementDetailView = {
         // assessments
         currentPercentageAssessments: 50,
         currentAbsoluteAssessments: 10,
@@ -98,7 +98,7 @@ describe('Course Management Detail Component', () => {
 
     beforeEach(() => {
         const statsStub = vi.spyOn(courseManagementService, 'getCourseStatisticsForDetailView');
-        statsStub.mockReturnValue(of(new HttpResponse({ body: dtoMock })));
+        statsStub.mockReturnValue(of(dtoMock));
     });
 
     afterEach(() => {
@@ -191,13 +191,21 @@ describe('Course Management Detail Component', () => {
         fixture.detectChanges();
         await fixture.whenStable();
         const statistics = vi.mocked(courseManagementService.getCourseStatisticsForDetailView);
+        expect(statistics).toHaveBeenCalledExactlyOnceWith(123);
+        expect(component.courseDTO()).toEqual(dtoMock);
         statistics.mockClear();
+        // a real 0 and a missing figure stay distinguishable
+        const refreshed: CourseManagementDetailView = { currentPercentageAssessments: 0, currentAbsoluteAssessments: 0, currentMaxAssessments: 3, currentTotalLlmCostInEur: 0 };
+        statistics.mockReturnValue(of(refreshed));
 
         events.broadcast({ name: 'courseListModification', content: 'updated' });
         fixture.detectChanges();
 
         expect(load).toHaveBeenCalledExactlyOnceWith(123);
         expect(statistics).toHaveBeenCalledExactlyOnceWith(123);
+        expect(component.courseDTO()).toEqual(refreshed);
+        expect(component.courseDTO()?.currentAbsoluteAssessments).toBe(0);
+        expect(component.courseDTO()?.currentMaxComplaints).toBeUndefined();
         expect(component.course()).toEqual(updated);
         expect(JSON.stringify(component.courseDetailSections())).toContain('Updated course');
         expect(fixture.nativeElement.textContent).toContain('Updated course');
