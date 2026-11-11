@@ -615,7 +615,12 @@ public interface SubmissionRepository extends ArtemisJpaRepository<Submission, L
             """)
     Optional<Submission> findLatestSubmissionByParticipationId(@Param("participationId") long participationId);
 
-    /** Selects existing queue submissions without answer bodies. */
+    /**
+     * Selects existing queue submissions without answer bodies.
+     *
+     * @param ids the submission ids
+     * @return submission metadata
+     */
     @Query("""
             SELECT new de.tum.cit.aet.artemis.exercise.dto.AssessmentQueueSubmissionDTO(s.id, s.submitted, s.type, s.exampleSubmission, s.submissionDate,
                 TYPE(s), p.id, p.initializationState, p.initializationDate, p.individualDueDate, team.name,

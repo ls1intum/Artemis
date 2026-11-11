@@ -2391,7 +2391,15 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
     List<TeamAssessmentQueueEntryDTO> findTeamAssessmentQueueParticipations(@Param("exerciseId") long exerciseId, @Param("teamOwnerId") Long teamOwnerId,
             @Param("correctionRound") int correctionRound);
 
-    /** Selects eligible team queue candidates without answer bodies. */
+    /**
+     * Selects eligible exam team submissions without answer bodies.
+     *
+     * @param exerciseId      the exercise id
+     * @param correctionRound the requested correction round
+     * @param teamOwnerId     the tutor id, or null for all teams
+     * @param assessorId      the assessor excluded from the previous round
+     * @return eligible submission metadata
+     */
     @Query("""
             SELECT DISTINCT new de.tum.cit.aet.artemis.exercise.dto.AssessmentQueueSubmissionDTO(s.id, s.submitted, s.type, s.exampleSubmission, s.submissionDate,
                 TYPE(s), p.id, p.initializationState, p.initializationDate, p.individualDueDate, team.name,
@@ -2443,7 +2451,14 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
     List<AssessmentQueueSubmissionDTO> findExamTeamQueueCandidates(@Param("exerciseId") long exerciseId, @Param("correctionRound") long correctionRound,
             @Param("teamOwnerId") Long teamOwnerId, @Param("assessorId") Long assessorId);
 
-    /** Selects eligible team queue candidates without answer bodies. */
+    /**
+     * Selects eligible course team submissions without answer bodies.
+     *
+     * @param exerciseId  the exercise id
+     * @param now         the time used to check individual deadlines
+     * @param teamOwnerId the tutor id, or null for all teams
+     * @return eligible submission metadata
+     */
     @Query("""
             SELECT DISTINCT new de.tum.cit.aet.artemis.exercise.dto.AssessmentQueueSubmissionDTO(s.id, s.submitted, s.type, s.exampleSubmission, s.submissionDate,
                 TYPE(s), p.id, p.initializationState, p.initializationDate, p.individualDueDate, team.name,

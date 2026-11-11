@@ -999,7 +999,12 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
             """)
     Set<Result> findLatestResultsByParticipationIds(@Param("participationIds") Set<Long> participationIds);
 
-    /** Loads queue result metadata and assessors without submission answer bodies. */
+    /**
+     * Loads queue results and assessors without answer bodies.
+     *
+     * @param ids the submission ids
+     * @return result metadata
+     */
     @Query("""
             SELECT new de.tum.cit.aet.artemis.exercise.dto.AssessmentQueueResultDTO(
                 r.submission.id, r.id, r.completionDate, r.successful, r.score, r.rated, r.assessmentType, r.correctionRound,

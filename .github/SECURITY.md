@@ -257,7 +257,7 @@ Please report potential security vulnerabilities **responsibly**.
 
 📧 **Contact:** `artemis@xcit.tum.de`  
 🔐 Encrypted email via **S/MIME** is supported:  
-[Download certificate](artemis_xcit.tum.de.pem)
+[Download certificate](https://github.com/ls1intum/Artemis/blob/develop/.github/artemis_xcit.tum.de.pem)
 
 Please report vulnerabilities in Artemis itself here. Issues in the configuration or operation of a
 specific Artemis instance should go to the institution that operates it.

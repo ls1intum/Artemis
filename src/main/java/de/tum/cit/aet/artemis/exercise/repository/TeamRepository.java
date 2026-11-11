@@ -175,7 +175,13 @@ public interface TeamRepository extends ArtemisJpaRepository<Team, Long> {
         return findWithStudentsByIdElseThrow(team.getId());
     }
 
-    /** Saves a tutor change and transfers only unfinished manual assessments across the course's matching teams. */
+    /**
+     * Saves the tutor change and transfers unfinished assessments across matching course teams.
+     *
+     * @param exercise the team's exercise
+     * @param team     the updated team
+     * @return the saved team
+     */
     @Transactional
     default Team saveWithTutorChange(Exercise exercise, Team team) {
         Team saved = save(exercise, team);
@@ -186,7 +192,12 @@ public interface TeamRepository extends ArtemisJpaRepository<Team, Long> {
         return saved;
     }
 
-    /** Transfers draft responsibility without changing completed results, feedback, or notes. */
+    /**
+     * Transfers drafts without changing completed results, feedback, or notes.
+     *
+     * @param teamIds the teams whose drafts are transferred
+     * @param owner   the new assessor, or null to unassign
+     */
     @Modifying(flushAutomatically = true)
     @Query("""
             UPDATE Result r SET r.assessor = :owner
