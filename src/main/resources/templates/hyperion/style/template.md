@@ -12,7 +12,7 @@ it" — the template is where students actually read while coding.
 
 ## TODO placement
 
-Anchor each stubbed seam with an imperative `// TODO: <mirror of the task wording>` INSIDE its owner member body, placing it
+Anchor each stubbed seam with `// TODO: <exact Observable responsibility from the Testing Strategy>` INSIDE its owner member body, placing it
 at the assigned change location (above the placeholder throw for a new unfinished body) — never between the javadoc and the signature,
 never between an annotation and the signature. Never put the specification's seam ID (`S1`, ...) in the comment: students read the
 TODO, but the statement never defines seam IDs, and the Testing Strategy already links each seam to its owner. Every unfinished member of a

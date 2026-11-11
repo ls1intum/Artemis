@@ -306,7 +306,8 @@ public final class ApprovedOwnershipGate {
     private static boolean referencesType(String maskedSource, String simpleName, String typePackage) {
         if (!typePackage.isEmpty()) {
             List<String> qualifiedNameParts = java.util.Arrays.stream((typePackage + "." + simpleName).split("\\.")).map(Pattern::quote).toList();
-            if (Pattern.compile("(?<![\\w$.])" + String.join("\\s*\\.\\s*", qualifiedNameParts) + "(?![\\w$])").matcher(maskedSource).find()) {
+            Pattern qualifiedName = Pattern.compile("(?<![\\w$.])" + String.join("\\s*\\.\\s*", qualifiedNameParts) + "(?![\\w$])");
+            if (hasTypeUse(maskedSource, qualifiedName)) {
                 return true;
             }
         }
@@ -327,8 +328,30 @@ public final class ApprovedOwnershipGate {
                 visible = true;
             }
         }
-        return visible && Pattern.compile("(?<![\\w$.])" + Pattern.quote(simpleName) + "(?![\\w$])").matcher(withoutTypeParameterScopes(maskedSource, simpleName)).find();
+        return visible && hasTypeUse(withoutTypeParameterScopes(maskedSource, simpleName), Pattern.compile("(?<![\\w$.])" + Pattern.quote(simpleName) + "(?![\\w$])"));
     }
+
+    /** Only syntactic type uses justify ownership redesign; ambiguous expression names remain ordinary build diagnostics. */
+    private static boolean hasTypeUse(String source, Pattern namePattern) {
+        Matcher name = namePattern.matcher(source);
+        while (name.find()) {
+            String before = source.substring(0, name.start()).stripTrailing();
+            String after = source.substring(name.end());
+            if (TYPE_USE_PREFIX.matcher(before).find() || TYPE_USE_SUFFIX.matcher(after).find() || TYPE_ARGUMENT_PREFIX.matcher(before).find()
+                    || before.endsWith("(") && CAST_SUFFIX.matcher(after).find()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static final Pattern TYPE_USE_PREFIX = Pattern.compile("(?:\\b(?:new|instanceof|extends|implements|throws|import)|@)\\s*$");
+
+    private static final Pattern TYPE_USE_SUFFIX = Pattern.compile("^(?:\\s*(?:\\[\\s*]\\s*)*\\s+[A-Za-z_$][\\w$]*\\s*(?:[=;,(){}\\[]|$)|\\s*\\.\\s*class\\b|\\s*::\\s*new\\b)");
+
+    private static final Pattern TYPE_ARGUMENT_PREFIX = Pattern.compile("[A-Za-z_$][\\w$.]*\\s*<(?:[^;{}()=<>]*,)?\\s*$");
+
+    private static final Pattern CAST_SUFFIX = Pattern.compile("^\\s*\\)\\s*(?:[A-Za-z_$]|\\()");
 
     /**
      * A type-parameter list: after a member modifier, a separator or an annotation for a generic method or constructor, or after the name of a generic type. A type-argument
@@ -464,10 +487,11 @@ public final class ApprovedOwnershipGate {
                 continue; // a student-created owner is absent; a malformed owner/status is rejected by the specification gate
             }
             // Only a to-do comment inside the owner's own body anchors it; one outside every declaration could stand for any type of the file.
-            boolean anchored = todoOwnersByFile.values().stream().flatMap(List::stream).anyMatch(owners -> owners.contains(row.ownerType()));
+            boolean anchored = javaFiles.values().stream().anyMatch(source -> todoAnchors(source, designTypes, row.ownerType(), row.observableResponsibility()));
             if (!anchored) {
                 reasons.add("the stubbed owner " + row.ownerType() + " of seam " + row.seamId() + " has no '// TODO: ...' inside its declaration in its declaring source. Put "
-                        + "the TODO at the unfinished student work inside the owner's body. If its student-owned members cannot be declared without an omitted student-created type, keep a "
+                        + "the TODO at the unfinished student work inside the owner's body, using the exact Observable responsibility text: '" + row.observableResponsibility()
+                        + "'. If its student-owned members cannot be declared without an omitted student-created type, keep a "
                         + "compile-safe empty owner class and put the TODO once in the class body where those members will be added; do not restore the absent type or change "
                         + "SPEC.md.");
             }
@@ -513,6 +537,32 @@ public final class ApprovedOwnershipGate {
         }
         return todoPositions.stream().map(position -> bodies.stream().filter(body -> body.open() < position && position < body.close())
                 .max(java.util.Comparator.comparingInt(DeclarationBody::open)).map(body -> Set.of(body.type())).orElse(Set.of())).toList();
+    }
+
+    private static boolean todoAnchors(String source, Set<String> designTypes, String owner, String responsibility) {
+        List<Set<String>> owners = todoOwners(source, designTypes);
+        String comments = commentsOnly(source);
+        Matcher markers = TODO_COMMENT.matcher(comments);
+        int index = 0;
+        while (markers.find()) {
+            int lineEnd = comments.indexOf('\n', markers.end());
+            int end = lineEnd < 0 ? comments.length() : lineEnd;
+            int blockEnd = comments.indexOf("*/", markers.end());
+            if (blockEnd >= 0) {
+                end = Math.min(end, blockEnd);
+            }
+            String wording = comments.substring(markers.end(), end);
+            if (owners.get(index++).contains(owner) && normalizedTask(wording).contains(normalizedTask(responsibility))) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static final Pattern TASK_PUNCTUATION = Pattern.compile("[^\\p{L}\\p{N}]+");
+
+    private static String normalizedTask(String text) {
+        return TASK_PUNCTUATION.matcher(text.toLowerCase(Locale.ROOT)).replaceAll(" ").strip();
     }
 
     private record DeclarationBody(String type, int open, int close) {

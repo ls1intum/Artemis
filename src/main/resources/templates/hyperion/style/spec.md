@@ -145,7 +145,7 @@ machine-readable:
 
 `| Seam | Owner type | Observable responsibility | Weight | Hidden variant |`
 
-A `stubbed` owner carries the seam's TODO inside its own source; a `student-creates` owner is absent and has no template TODO—the statement and tests anchor that work. Never put
+A `stubbed` owner carries the seam's TODO inside its own source, with the exact Observable responsibility on the first TODO line; a `student-creates` owner is absent and has no template TODO—the statement and tests anchor that work. Never put
 its TODO on an unrelated collaborator. If a collaborator has separately actionable student work, give it a separate seam owned by that collaborator.
 Each seam grades student-owned executable behavior, not the presence or exact signature of a supplied declaration or a placeholder that is meant to keep throwing. An ordinary
 abstract interface method has no student-owned body: mark the interface `given` when students only implement it, or `student-creates` when the brief assigns its design; do not

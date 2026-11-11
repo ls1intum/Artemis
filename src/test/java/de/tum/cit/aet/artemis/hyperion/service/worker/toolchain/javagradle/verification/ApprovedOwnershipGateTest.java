@@ -328,6 +328,29 @@ class ApprovedOwnershipGateTest {
         assertThat(ApprovedOwnershipGate.givenTypeStudentCreatedDependencies(rows, List.of("Entry"), Map.of(), map("src/de/test/Ledger.java", samePackage))).isEmpty();
     }
 
+    @ParameterizedTest
+    @ValueSource(strings = { "package de.other; class Ledger { Holder de; Object first() { return de.test.Entry; } }",
+            "package de.other; class Ledger { Holder de; void first() { accept(de.test.Entry, 1); } }",
+            "package de.other; class Ledger { Holder de; boolean first() { return de.test.Entry > 0; } }",
+            "package de.test; class Ledger { int Entry; int first() { return Entry; } }",
+            "package de.test; class Ledger { int Entry() { return 1; } int first() { return Entry(); } }" })
+    void givenDependenciesDoNotRedesignOwnershipForExpressionNames(String source) {
+        var rows = StageChecks.designTableRows("## Design\n| Type | Role | Template status |\n|---|---|---|\n| Ledger | store | given |\n");
+        assertThat(ApprovedOwnershipGate.givenTypeStudentCreatedDependencies(rows, List.of("Entry"), Map.of(),
+                map("src/Entry.java", "package de.test; public class Entry {}", "src/Ledger.java", source))).isEmpty();
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "de.test.Entry current;", "java.util.List<de.test.Entry> entries;", "java.util.Map<String, de.test.Entry> entries;",
+            "Object current = new de.test.Entry();", "Class<?> type = de.test.Entry.class;", "Object cast(Object value) { return (de.test.Entry) value; }",
+            "de.test.Entry[] entries;", "Object[] entries = new de.test.Entry[2];" })
+    void givenDependenciesStillDetectQualifiedTypeUses(String member) {
+        var rows = StageChecks.designTableRows("## Design\n| Type | Role | Template status |\n|---|---|---|\n| Ledger | store | given |\n");
+        assertThat(ApprovedOwnershipGate.givenTypeStudentCreatedDependencies(rows, List.of("Entry"), Map.of(),
+                map("src/Entry.java", "package de.test; public class Entry {}", "src/Ledger.java", "package other; class Ledger { " + member + " }")))
+                .containsExactly("Ledger->Entry");
+    }
+
     @Test
     void givenDependencies_ignoreATypeParameterThatShadowsTheStudentType() {
         String spec = "## Design\n| Type | Role | Template status |\n|---|---|---|\n| Demo | entry point | given |\n| Player | context | student-creates |\n";
@@ -587,6 +610,25 @@ class ApprovedOwnershipGateTest {
     }
 
     @Test
+    void repeatedTodosForOneSeamDoNotAnchorAnotherSeamOnTheSameOwner() {
+        String spec = """
+                ## Design
+                | Type | Role | Template status |
+                |---|---|---|
+                | Player | player | stubbed |
+                ## Testing Strategy
+                | Seam | Owner type | Observable responsibility | Weight | Hidden variant |
+                |---|---|---|---|---|
+                | S1 | Player | select strategy | 3 | no |
+                | S2 | Player | execute strategy | 2 | no |
+                """;
+        String source = "class Player { void select() { // TODO: select strategy\n } void reset() { // TODO: select strategy\n } void execute() {} }";
+        assertThat(ApprovedOwnershipGate.templateTodoSeamReasons(spec, Map.of("src/Player.java", source), Map.of())).singleElement().asString().contains("S2", "execute strategy");
+        assertThat(ApprovedOwnershipGate.templateTodoSeamReasons(spec,
+                Map.of("src/Player.java", source.replace("void execute() {}", "void execute() { // TODO: execute strategy\n }")), Map.of())).isEmpty();
+    }
+
+    @Test
     void templateTodoSeams_rejectSeamIdLabelsAndStubbedOwnersWithoutTodo() {
         String spec = """
                 ## Design
@@ -689,15 +731,15 @@ class ApprovedOwnershipGateTest {
                 | S2 | IceSpell | formula | 2 | yes |
                 | S3 | Mage | delegation and switching | 3 | yes |
                 """;
-        Map<String, String> honest = Map.of("src/Mage.java", "class Mage { // TODO: delegate and switch\n}", "src/Spell.java", "interface Spell { int cast(); }");
+        Map<String, String> honest = Map.of("src/Mage.java", "class Mage { // TODO: delegation and switching\n}", "src/Spell.java", "interface Spell { int cast(); }");
         assertThat(ApprovedOwnershipGate.templateTodoSeamReasons(spec, honest, Map.of())).isEmpty();
 
         // Student-facing files outside the Design table, such as a student test skeleton or a helper, may anchor their own work.
-        Map<String, String> studentSkeletons = Map.of("src/Mage.java", "class Mage { // TODO: delegate\n}", "src/Helper.java", "class Helper { // TODO: format the log\n}",
-                "test/MageTest.java", "class MageTest { // TODO: test switching\n}");
+        Map<String, String> studentSkeletons = Map.of("src/Mage.java", "class Mage { // TODO: delegation and switching\n}", "src/Helper.java",
+                "class Helper { // TODO: format the log\n}", "test/MageTest.java", "class MageTest { // TODO: test switching\n}");
         assertThat(ApprovedOwnershipGate.templateTodoSeamReasons(spec, studentSkeletons, Map.of())).isEmpty();
 
-        Map<String, String> givenTodo = Map.of("src/Mage.java", "class Mage { // TODO: delegate\n}", "src/Spell.java",
+        Map<String, String> givenTodo = Map.of("src/Mage.java", "class Mage { // TODO: delegation and switching\n}", "src/Spell.java",
                 "interface Spell { // TODO: create FireSpell\n int cast(); }");
         assertThat(ApprovedOwnershipGate.templateTodoSeamReasons(spec, givenTodo, Map.of())).singleElement().asString().contains("TODOs in given types", "src/Spell.java");
 
@@ -714,7 +756,7 @@ class ApprovedOwnershipGateTest {
                 .anySatisfy(reason -> assertThat(reason).contains("stubbed owner Mage", "declaring source"));
 
         // A TODO outside the owner's body anchors nothing: above the class it could stand for any type of the file.
-        Map<String, String> todoAboveTheOwner = Map.of("src/Mage.java", "// TODO: delegate and switch\nclass Mage {\n}", "src/Spell.java", "interface Spell { int cast(); }");
+        Map<String, String> todoAboveTheOwner = Map.of("src/Mage.java", "// TODO: delegation and switching\nclass Mage {\n}", "src/Spell.java", "interface Spell { int cast(); }");
         assertThat(ApprovedOwnershipGate.templateTodoSeamReasons(spec, todoAboveTheOwner, Map.of())).singleElement().asString().contains("stubbed owner Mage",
                 "inside its declaration");
 
@@ -725,7 +767,7 @@ class ApprovedOwnershipGateTest {
         assertThat(ApprovedOwnershipGate.templateTodoSeamReasons(spec, honest,
                 Map.of("test/MageTest.java", "class MageTest { @Test void hints() { assertEquals(\"// TODO: delegate\", new Mage().hint); } }"))).isEmpty();
 
-        Map<String, String> ownerMentionedOnlyInAComment = Map.of("src/Helper.java", "// class Mage would own this\nclass Helper { // TODO: delegate\n}");
+        Map<String, String> ownerMentionedOnlyInAComment = Map.of("src/Helper.java", "// class Mage would own this\nclass Helper { // TODO: delegation and switching\n}");
         assertThat(ApprovedOwnershipGate.templateTodoSeamReasons(spec, ownerMentionedOnlyInAComment, Map.of()))
                 .anySatisfy(reason -> assertThat(reason).contains("declaring source", "Mage"));
     }
