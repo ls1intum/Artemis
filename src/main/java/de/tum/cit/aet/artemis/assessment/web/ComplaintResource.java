@@ -111,30 +111,34 @@ public class ComplaintResource {
     public ResponseEntity<ComplaintDTO> createComplaint(@RequestBody ComplaintRequestDTO complaint, Principal principal) throws URISyntaxException {
         log.debug("REST request to save Complaint: {}", complaint);
 
+        // Load the result and enforce ownership before any other check. A non-owner, or a request for a result
+        // that does not exist, must receive the same 404. Otherwise the differing error responses of the later
+        // checks (an already existing complaint, the exam/course component mismatch, the complaint time window)
+        // reveal whether a foreign result exists and roughly how old it is.
+        Result result = resultRepository.findByIdElseThrow(complaint.resultId());
+        StudentParticipation participation = (StudentParticipation) result.getSubmission().getParticipation();
+        if (!authCheckService.isOwnerOfParticipation(participation, userRepository.getUserWithAuthorities())) {
+            throw new EntityNotFoundException("Result", complaint.resultId());
+        }
+
         if (complaintRepository.findByResultId(complaint.resultId()).isPresent()) {
             throw new BadRequestAlertException("A complaint for this result already exists", COMPLAINT_ENTITY_NAME, "complaintexists");
         }
 
-        Result result = resultRepository.findByIdElseThrow(complaint.resultId());
-
         String entityName = complaint.complaintType() == ComplaintType.MORE_FEEDBACK ? MORE_FEEDBACK_ENTITY_NAME : COMPLAINT_ENTITY_NAME;
-        Complaint savedComplaint;
         if (complaint.examId().isPresent()) {
-            if (!result.getSubmission().getParticipation().getExercise().isExamExercise()) {
+            if (!participation.getExercise().isExamExercise()) {
                 throw new BadRequestAlertException("A complaint for an course exercise cannot be filed using this component", COMPLAINT_ENTITY_NAME,
                         "complaintAboutCourseExerciseWrongComponent");
             }
-            authCheckService.isOwnerOfParticipationElseThrow((StudentParticipation) result.getSubmission().getParticipation());
         }
         else {
-            if (result.getSubmission().getParticipation().getExercise().isExamExercise()) {
+            if (participation.getExercise().isExamExercise()) {
                 throw new BadRequestAlertException("A complaint for an exam exercise cannot be filed using this component", COMPLAINT_ENTITY_NAME,
                         "complaintAboutExamExerciseWrongComponent");
             }
-            // Assumes user with participation in an exam exercise can file a complaint for that participation.
-            authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.STUDENT, result.getSubmission().getParticipation().getExercise(), null);
         }
-        savedComplaint = complaintService.createComplaint(complaint, principal);
+        Complaint savedComplaint = complaintService.createComplaint(complaint, principal);
 
         // Remove assessor information from the client request
         savedComplaint.getResult().filterSensitiveInformation();
