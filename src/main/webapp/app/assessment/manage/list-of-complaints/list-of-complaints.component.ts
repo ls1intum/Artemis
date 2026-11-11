@@ -14,10 +14,9 @@ import { ComplaintService } from 'app/assessment/shared/services/complaint.servi
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { Complaint, ComplaintType } from 'app/assessment/shared/entities/complaint.model';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Params, RouterLink } from '@angular/router';
 import { Course } from 'app/course/shared/entities/course.model';
 import { Observable, Subscription, combineLatestWith } from 'rxjs';
-import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { SortService } from 'app/foundation/service/sort.service';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { TranslateService } from '@ngx-translate/core';
@@ -47,6 +46,7 @@ import { ComplaintDTO } from 'app/assessment/shared/entities/complaint-dto.model
         ArtemisDurationFromSecondsPipe,
         SortDirective,
         SortByDirective,
+        RouterLink,
         TumAetUiButtonDirective,
         TumAetUiTableDirective,
         TumAetUiMessageComponent,
@@ -61,7 +61,6 @@ export class ListOfComplaintsComponent implements OnInit {
     private accountService = inject(AccountService);
     private alertService = inject(AlertService);
     private route = inject(ActivatedRoute);
-    private router = inject(Router);
     private sortService = inject(SortService);
     private translateService = inject(TranslateService);
     private artemisDatePipe = inject(ArtemisDatePipe);
@@ -78,7 +77,8 @@ export class ListOfComplaintsComponent implements OnInit {
     private tutorId!: number; // set in ngOnInit() from route query params
     private examId?: number;
     readonly course = signal<Course>(undefined!);
-    correctionRound?: number;
+    /** The correction round the list was opened for; an accepted complaint is assessed in the round after it. */
+    readonly correctionRound = signal(0);
     complaintsSortingPredicate = 'id';
     complaintsReverseOrder = false;
     readonly complaintsToShow = signal<Complaint[]>([]);
@@ -117,6 +117,18 @@ export class ListOfComplaintsComponent implements OnInit {
         return Array.from(byKey, ([key, label]) => ({ key, label })).sort((a, b) => a.label.localeCompare(b.label));
     });
 
+    /** The link and query parameters that open each shown complaint's assessment, by complaint id. Complaints that cannot be opened have no entry. */
+    readonly assessmentLinks = computed(() => {
+        const links = new Map<number, { link: string[]; queryParams: Params }>();
+        for (const complaint of this.complaintsToShow()) {
+            const assessmentLink = this.assessmentLinkFor(complaint);
+            if (complaint.id !== undefined && assessmentLink) {
+                links.set(complaint.id, assessmentLink);
+            }
+        }
+        return links;
+    });
+
     /** The scope controls serve both views, so their wording follows the complaint type of the current route. */
     readonly scopeTranslationKeyRoot = computed(() =>
         this.complaintType() === ComplaintType.MORE_FEEDBACK ? 'artemisApp.moreFeedback.list' : 'artemisApp.complaint.listOfComplaints',
@@ -150,7 +162,7 @@ export class ListOfComplaintsComponent implements OnInit {
             this.exerciseId = exerciseId;
             this.examId = examId;
             this.tutorId = tutorId;
-            this.correctionRound = Number(queryParams['correctionRound']);
+            this.correctionRound.set(Number(queryParams['correctionRound']) || 0);
             if (queryParams['filterOption']) {
                 this.filterOption.set(Number(queryParams['filterOption']));
             }
@@ -290,32 +302,25 @@ export class ListOfComplaintsComponent implements OnInit {
         this.complaintsToShow.set(filtered);
     }
 
-    openAssessmentEditor(complaint: Complaint) {
-        if (!complaint || !complaint.result || !complaint.result.submission) {
-            return;
+    private assessmentLinkFor(complaint: Complaint): { link: string[]; queryParams: Params } | undefined {
+        const submission = complaint.result?.submission;
+        const participation = submission?.participation;
+        const exercise = participation?.exercise;
+        if (!submission?.id || !exercise?.type || exercise.id === undefined) {
+            return undefined;
         }
-
-        const studentParticipation = complaint.result.submission.participation as StudentParticipation;
-        const exercise = studentParticipation.exercise;
-        const submissionId = complaint.result.submission.id;
-        if (!exercise || !exercise.type || !submissionId) {
-            return;
-        }
-        this.correctionRound = this.correctionRound || 0;
-        if (this.complaintType() == ComplaintType.COMPLAINT && complaint.accepted) {
-            this.correctionRound += 1;
-        }
-        const url = getLinkToSubmissionAssessment(
+        const acceptedComplaint = this.complaintType() === ComplaintType.COMPLAINT && complaint.accepted;
+        const link = getLinkToSubmissionAssessment(
             exercise.type,
             this.courseId,
-            exercise.id!,
-            studentParticipation.id,
-            submissionId,
+            exercise.id,
+            participation?.id,
+            submission.id,
             undefined, // even if the list of complaints are part of an exam, the assessment of non-exam exercises gets executed
             undefined,
-            complaint.result.id,
+            complaint.result!.id,
         );
-        void this.router.navigate(url, { queryParams: { 'correction-round': this.correctionRound } });
+        return { link, queryParams: { 'correction-round': this.correctionRound() + (acceptedComplaint ? 1 : 0) } };
     }
 
     sortRows() {
