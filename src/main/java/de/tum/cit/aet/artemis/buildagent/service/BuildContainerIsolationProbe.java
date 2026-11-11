@@ -249,14 +249,15 @@ public class BuildContainerIsolationProbe {
 
     /**
      * Probes a service of the host of the agent that is configured with a loopback address. A container reaches the host through the gateway of its network, which Docker names
-     * {@code host-gateway}. A service that listens on the loopback interface only is not reachable that way on Linux, a service that listens on every interface is. The address of
+     * {@code host-gateway}. A service that listens on the loopback interface only is not reachable that way on Linux, a service that listens on every interface is. The addresses
+     * of
      * the
-     * host is read from the hosts file of the container, so that a missing entry is told apart from a refused connection: the {@code nc} of busybox exits with 1 for both.
+     * host are read from the hosts file of the container, so that a missing entry is told apart from a refused connection: the {@code nc} of busybox exits with 1 for both.
      * Rootless Docker, networks without a route to the gateway, and a service that a container on the same network publishes are not covered.
      */
     private Verdict probeThroughHostAddress(String network, Target target) {
-        String script = "address=$(awk '/" + HOST_NAME + "/ {print $1; exit}' /etc/hosts); [ -n \"$address\" ] || exit " + EXIT_NO_HOST_ENTRY + "; nc -w " + CONNECT_TIMEOUT_SECONDS
-                + " -z \"$address\" " + target.port();
+        String script = "addresses=$(awk '/" + HOST_NAME + "/ {print $1}' /etc/hosts); [ -n \"$addresses\" ] || exit " + EXIT_NO_HOST_ENTRY
+                + "; for address in $addresses; do nc -w " + CONNECT_TIMEOUT_SECONDS + " -z \"$address\" " + target.port() + " && exit 0; done; exit " + EXIT_CONNECTION_FAILED;
         Integer exitCode = runInContainer(network, true, target + " on the host", "sh", "-c", script);
         if (Integer.valueOf(0).equals(exitCode)) {
             return Verdict.REACHABLE;
