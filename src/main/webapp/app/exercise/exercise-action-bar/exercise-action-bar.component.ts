@@ -346,10 +346,16 @@ export class ExerciseActionBarComponent {
                     this.rowWidth.set(widthOf(rowEl));
                 }
                 this.reservedWidth.set(reservedEl ? widthOf(reservedEl) : 0);
-                // A hidden label measures 0, and its margin only takes up room while it shows.
+                // A hidden label measures 0. Its margin and the flex gap before it in its button only take up room while it
+                // shows, so they count as part of it; otherwise the width without labels would differ with the labels shown.
                 const labels = [...(reservedEl?.querySelectorAll<HTMLElement>('[data-compactable-label]') ?? [])].reduce((sum, label) => {
                     const width = widthOf(label);
-                    return width > 0 ? sum + width + (parseFloat(getComputedStyle(label).marginInlineStart) || 0) : sum;
+                    if (width === 0) {
+                        return sum;
+                    }
+                    const margin = parseFloat(getComputedStyle(label).marginInlineStart) || 0;
+                    const gap = label.parentElement ? parseFloat(getComputedStyle(label.parentElement).columnGap) || 0 : 0;
+                    return sum + width + margin + gap;
                 }, 0);
                 this.reservedLabelsWidth.set(labels);
                 if (labels > 0) {
