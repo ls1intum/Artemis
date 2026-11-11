@@ -41,7 +41,7 @@ if ! kill -0 "${LISTENER_PID}" 2>/dev/null || ! python3 -c "import socket;socket
 fi
 
 # A sibling container on the default network, which a build container must not reach either.
-docker run --detach --name "${SIBLING_NAME}" "${BUSYBOX_IMAGE}" sh -c 'nc -l -p 8080 -k >/dev/null' >/dev/null
+docker run --detach --name "${SIBLING_NAME}" "${BUSYBOX_IMAGE}" sh -c 'nc -l -p 8080 -k -e true >/dev/null' >/dev/null
 SIBLING_IP="$(docker inspect --format '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' "${SIBLING_NAME}")"
 if [ -z "${SIBLING_IP}" ]; then
     echo "The sibling container did not get an address." >&2
