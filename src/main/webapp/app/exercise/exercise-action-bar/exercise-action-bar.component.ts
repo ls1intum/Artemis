@@ -229,7 +229,8 @@ export class ExerciseActionBarComponent {
 
     /**
      * Ids in the ellipsis menu whatever the width: the actions outside {@link inlineIds}, and once the menu shows, the
-     * {@link collapseFirstIds} ones and any beyond the {@link maxInline} limit (lowest keep-priority first).
+     * {@link collapseFirstIds} ones and any beyond the {@link maxInline} limit (lowest keep-priority first). A menu with
+     * a single entry is not worth the extra click, so that action shows as a button instead.
      */
     private readonly countHiddenIds = computed<ReadonlySet<string>>(() => {
         const actions = this.orderedItems();
@@ -245,7 +246,7 @@ export class ExerciseActionBarComponent {
         inline = inline.filter((action) => !hidden.has(action.id));
         const byPriority = [...inline].sort((a, b) => this.keepPriorityOf(a) - this.keepPriorityOf(b));
         byPriority.slice(this.maxInline()).forEach((action) => hidden.add(action.id));
-        return hidden;
+        return hidden.size === 1 ? new Set() : hidden;
     });
 
     /**

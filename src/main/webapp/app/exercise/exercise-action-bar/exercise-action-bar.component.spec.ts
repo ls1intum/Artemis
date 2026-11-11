@@ -50,13 +50,22 @@ describe('ExerciseActionBarComponent', () => {
             expect(component.hiddenActions().map((a) => a.id)).toEqual(['statistics', 'preview', 'solution', 'delete']);
         });
 
-        it('shows edit in editor, participations and edit, and delete in the menu, for a programming row', () => {
+        it('shows a single menu entry as a button instead, e.g. delete in a programming row', () => {
             fixture.componentRef.setInput('items', buildActions(['edit-in-editor', 'participations', 'edit', 'delete']));
             seedEqualWidths(30);
             component['reservedWidth'].set(0);
             component['rowWidth'].set(2000);
 
-            expect(component.hiddenActions().map((a) => a.id)).toEqual(['delete']);
+            expect(component.hasOverflow()).toBe(false);
+        });
+
+        it('shows edit in editor, participations and edit, and delete in the menu, for a programming row with more actions', () => {
+            fixture.componentRef.setInput('items', buildActions(['teams', 'edit-in-editor', 'participations', 'edit', 'delete']));
+            seedEqualWidths(30);
+            component['reservedWidth'].set(0);
+            component['rowWidth'].set(2000);
+
+            expect(component.hiddenActions().map((a) => a.id)).toEqual(['teams', 'delete']);
         });
 
         it('renders the trailing actions last, set apart from the others before them', () => {
