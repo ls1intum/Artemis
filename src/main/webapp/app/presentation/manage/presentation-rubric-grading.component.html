@@ -52,7 +52,7 @@
                                 [ngModel]="rating.controls.levelId.value"
                                 [ngModelOptions]="{ standalone: true }"
                                 [disabled]="rating.disabled"
-                                (selected)="rating.controls.levelId.setValue(level.id)"
+                                (selected)="selectLevel(rating, level.id)"
                             />
                         </span>
                     </label>

@@ -14,7 +14,7 @@ import { Course } from 'app/course/shared/entities/course.model';
 import { PresentationRubricCriterion } from 'app/presentation/shared/entities/presentation-assessment.model';
 import { rubricLevelKey } from 'app/presentation/shared/presentation-rubric.util';
 import { levelPositionsHighestFirst } from 'app/presentation/shared/presentation.util';
-import { RatingsForm, rubricPreviewScore } from 'app/presentation/manage/presentation-rubric-rating-form';
+import { RatingForm, RatingsForm, rubricPreviewScore } from 'app/presentation/manage/presentation-rubric-rating-form';
 import { PresentationLabelDirective } from 'app/presentation/manage/presentation-label.directive';
 
 @Component({
@@ -57,4 +57,10 @@ export class PresentationRubricGradingComponent {
         const score = rubricPreviewScore(this.criteria(), this.form());
         return score === undefined ? undefined : roundValueSpecifiedByCourseSettings(score, this.course());
     });
+
+    /** Selects a level of a criterion as its radio does, which leaves the rating dirty like any input of the user. */
+    protected selectLevel(rating: RatingForm, levelId: number | undefined): void {
+        rating.controls.levelId.setValue(levelId);
+        rating.markAsDirty();
+    }
 }
