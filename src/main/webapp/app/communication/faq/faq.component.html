@@ -61,29 +61,24 @@
     <br />
 
     @if (loaded() && filteredFaqs().length > 0) {
-        <div class="table-responsive">
-            <table class="table table-striped">
+        <tumaet-ui-table-layout>
+            <table tumAetUiTable size="small" [sortField]="predicate()" [sortOrder]="ascending() ? 1 : -1" (sortChange)="onSort($event)">
                 <thead>
-                    <tr jhiSort [(predicate)]="predicate" [(ascending)]="ascending" (sortChange)="sortRows()">
-                        <th class="d-md-table-cell" jhiSortBy="id">
+                    <tr>
+                        <th [tumAetUiSortableColumn]="'id'">
                             <span jhiTranslate="global.field.id"></span>
-                            <fa-icon [icon]="faSort" />
                         </th>
-                        <th jhiSortBy="questionTitle">
+                        <th [tumAetUiSortableColumn]="'questionTitle'">
                             <span jhiTranslate="artemisApp.faq.table.questionTitle"></span>
-                            <fa-icon [icon]="faSort" />
                         </th>
-                        <th jhiSortBy="questionAnswer">
+                        <th [tumAetUiSortableColumn]="'questionAnswer'">
                             <span jhiTranslate="artemisApp.faq.table.questionAnswer"></span>
-                            <fa-icon [icon]="faSort" />
                         </th>
-                        <th jhiSortBy="faqState">
+                        <th [tumAetUiSortableColumn]="'faqState'">
                             <span jhiTranslate="artemisApp.faq.table.state"></span>
-                            <fa-icon [icon]="faSort" />
                         </th>
-                        <th jhiSortBy="categories">
+                        <th [tumAetUiSortableColumn]="'categories'">
                             <span jhiTranslate="artemisApp.faq.table.categories"></span>
-                            <fa-icon [icon]="faSort" />
                         </th>
                         <th></th>
                     </tr>
@@ -104,7 +99,7 @@
                                 <p class="markdown-preview" [jhiMarkdown]="faq.faqState"></p>
                             </td>
                             <td>
-                                <div class="d-flex">
+                                <div class="flex">
                                     @for (category of faq.categories; track category) {
                                         <jhi-custom-exercise-category-badge [category]="category" />
                                     }
@@ -114,11 +109,19 @@
                                 <div class="flex flex-wrap justify-end gap-1">
                                     @if (faq.faqState === FaqState.PROPOSED && isAtLeastInstructor()) {
                                         <div class="flex flex-col gap-1">
-                                            <button tumAetUiButton size="small" severity="success" type="button" (click)="acceptProposedFaq(courseId(), faq)">
+                                            <button
+                                                [attr.aria-label]="'artemisApp.faq.home.accept' | artemisTranslate"
+                                                tumAetUiButton
+                                                size="small"
+                                                severity="success"
+                                                type="button"
+                                                (click)="acceptProposedFaq(courseId(), faq)"
+                                            >
                                                 <fa-icon [icon]="faCheck" />
-                                                <span class="d-none d-md-inline" jhiTranslate="artemisApp.faq.home.accept"></span>
+                                                <span class="hidden md:inline" jhiTranslate="artemisApp.faq.home.accept"></span>
                                             </button>
                                             <button
+                                                [attr.aria-label]="'artemisApp.faq.home.reject' | artemisTranslate"
                                                 tumAetUiButton
                                                 size="small"
                                                 severity="danger"
@@ -128,15 +131,21 @@
                                                 (click)="rejectFaq(courseId(), faq)"
                                             >
                                                 <fa-icon [icon]="faCancel" />
-                                                <span class="d-none d-md-inline" jhiTranslate="artemisApp.faq.home.reject"></span>
+                                                <span class="hidden md:inline" jhiTranslate="artemisApp.faq.home.reject"></span>
                                             </button>
                                         </div>
                                     }
                                     <div class="flex flex-col gap-1">
                                         @if (isAtLeastInstructor() || faq.faqState !== FaqState.ACCEPTED) {
-                                            <a tumAetUiButton size="small" severity="warn" [routerLink]="[faq.id, 'edit']">
+                                            <a
+                                                [attr.aria-label]="'entity.action.edit' | artemisTranslate"
+                                                tumAetUiButton
+                                                size="small"
+                                                severity="warn"
+                                                [routerLink]="[faq.id, 'edit']"
+                                            >
                                                 <fa-icon [icon]="faPencilAlt" />
-                                                <span class="d-none d-md-inline" jhiTranslate="entity.action.edit"></span>
+                                                <span class="hidden md:inline" jhiTranslate="entity.action.edit"></span>
                                             </a>
                                         }
                                         @if (isAtLeastInstructor()) {
@@ -166,7 +175,7 @@
                     }
                 </tbody>
             </table>
-        </div>
+        </tumaet-ui-table-layout>
     } @else if (loaded()) {
         <tumaet-ui-empty-state
             class="mt-5"

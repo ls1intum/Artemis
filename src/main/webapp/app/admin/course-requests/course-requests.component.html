@@ -18,7 +18,7 @@
                     <th scope="col" jhiTranslate="artemisApp.courseRequest.admin.semester"></th>
                     <th scope="col" jhiTranslate="artemisApp.courseRequest.admin.dates"></th>
                     <th scope="col" class="min-w-36" jhiTranslate="artemisApp.courseRequest.admin.requester"></th>
-                    <th scope="col" class="whitespace-normal!" jhiTranslate="artemisApp.courseRequest.admin.previousInstructor"></th>
+                    <th scope="col" jhiTranslate="artemisApp.courseRequest.admin.previousInstructor"></th>
                     <th scope="col" class="w-full min-w-40" jhiTranslate="artemisApp.courseRequest.admin.reason"></th>
                     <th scope="col" class="text-end" jhiTranslate="artemisApp.courseRequest.admin.actions"></th>
                 </tr>
@@ -138,18 +138,17 @@
                             </div>
                         </td>
                     </tr>
-                } @empty {
-                    <tr>
-                        <td colspan="7" class="text-center text-muted-color" jhiTranslate="artemisApp.courseRequest.admin.noPendingRequests"></td>
-                    </tr>
                 }
             </tbody>
         </table>
+        @if (pendingRequests().length === 0 && !loading()) {
+            <tumaet-ui-empty-state variant="plain" data-testid="pending-empty" [title]="'artemisApp.courseRequest.admin.noPendingRequests' | artemisTranslate" />
+        }
     </div>
 
     <!-- Decided Requests Table -->
     <h4 class="mb-3" jhiTranslate="artemisApp.courseRequest.admin.decidedTitle"></h4>
-    <div class="overflow-x-auto">
+    <tumaet-ui-table-layout [loading]="loading()" [empty]="decidedRequests().length === 0 && !loading()" emptyTitle="artemisApp.courseRequest.admin.noDecidedRequests">
         <table tumAetUiTable size="small" [striped]="true" data-testid="decided-table">
             <thead>
                 <tr>
@@ -211,28 +210,18 @@
                             }
                         </td>
                     </tr>
-                } @empty {
-                    <tr>
-                        <td colspan="6" class="text-center text-muted-color" jhiTranslate="artemisApp.courseRequest.admin.noDecidedRequests"></td>
-                    </tr>
                 }
             </tbody>
         </table>
-    </div>
-
-    <!-- Pagination for Decided Requests -->
-    @if (totalDecidedCount() > decidedPageSize) {
-        <div class="flex justify-center mt-3">
-            <tumaet-ui-paginator
-                [page]="decidedPage() - 1"
-                [pageSize]="decidedPageSize"
-                [totalRecords]="totalDecidedCount()"
-                [showCurrentPageReport]="false"
-                [showRowsPerPage]="false"
-                (pageChange)="onDecidedPaginatorChange($event)"
-            />
-        </div>
-    }
+        <tumaet-ui-paginator
+            tumAetUiTableFooter
+            [page]="decidedPage() - 1"
+            [pageSize]="decidedPageSize"
+            [totalRecords]="totalDecidedCount()"
+            [showRowsPerPage]="false"
+            (pageChange)="onDecidedPaginatorChange($event)"
+        />
+    </tumaet-ui-table-layout>
 </div>
 
 <tumaet-ui-dialog [(visible)]="rejectModalVisible" size="medium" header="{{ 'artemisApp.courseRequest.admin.reject' | artemisTranslate }}">
