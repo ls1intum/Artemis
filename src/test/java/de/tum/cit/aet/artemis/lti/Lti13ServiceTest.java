@@ -56,6 +56,7 @@ import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.repository.ResultGradeRepository;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.exception.LtiEmailAlreadyInUseException;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -323,6 +324,23 @@ class Lti13ServiceTest {
     }
 
     @Test
+    void performLaunch_existingAccountThatSignsInByHand_keepsTheLaunchAssociation() {
+        MockExercise result = getMockExercise(true);
+        when(oidcIdToken.getClaim("sub")).thenReturn("1");
+        when(oidcIdToken.getClaim("iss")).thenReturn("https://otherDomain.com");
+        when(oidcIdToken.getClaim(Claims.LTI_DEPLOYMENT_ID)).thenReturn("1");
+        ObjectNode jsonObject = JsonObjectMapper.get().createObjectNode();
+        jsonObject.put("id", "resourceLinkUrl");
+        when(oidcIdToken.getClaim(Claims.RESOURCE_LINK)).thenReturn(jsonObject);
+        prepareForPerformExerciseLaunch(result.courseId(), result.exerciseId(), true);
+        doThrow(new LtiEmailAlreadyInUseException()).when(ltiService).authenticateLtiUser(any(), any(), any(), any(), anyBoolean());
+
+        assertThatExceptionOfType(LtiEmailAlreadyInUseException.class).isThrownBy(() -> lti13Service.performLaunch(oidcIdToken, clientRegistrationId));
+
+        verify(launchRepository).save(any());
+    }
+
+    @Test
     void performLaunch_withoutAccountForTheEmailWhenAnExistingUserIsRequired_isRefusedBeforeAnythingIsSaved() {
         MockExercise result = getMockExercise(true);
         OnlineCourseConfiguration configuration = new OnlineCourseConfiguration();
@@ -338,7 +356,7 @@ class Lti13ServiceTest {
 
     @ParameterizedTest
     @NullAndEmptySource
-    @ValueSource(strings = { "  ", "no-at-sign" })
+    @ValueSource(strings = { "  ", "no-at-sign", "student@@example.com", "a b@example.com", "@example.com" })
     void performLaunch_withoutUsableEmail_isRefusedBeforeAnAccountIsCreated(String email) {
         MockExercise result = getMockExercise(true);
         prepareForPerformExerciseLaunch(result.courseId(), result.exerciseId(), true);

@@ -43,6 +43,7 @@ import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.repository.ResultGradeRepository;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.exception.LtiEmailAlreadyInUseException;
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
@@ -95,6 +96,9 @@ public class Lti13Service {
 
     /** A carriage return or a line feed, removed so that a logged user name cannot forge a second log line. */
     private static final Pattern LINE_BREAK = Pattern.compile("[\r\n]");
+
+    /** One address: a local part and a domain, separated by exactly one at sign, without whitespace. */
+    private static final Pattern USABLE_EMAIL = Pattern.compile("[^@\\s]+@[^@\\s]+");
 
     private final UserRepository userRepository;
 
@@ -179,7 +183,7 @@ public class Lti13Service {
         requireTargetInCourse(targetExercise, targetLecture, course, targetLinkUrl);
 
         // The email address identifies the person, so a launch without one is refused before an account is looked up or created
-        if (StringUtils.isBlank(ltiIdToken.getEmail()) || !ltiIdToken.getEmail().contains("@")) {
+        if (StringUtils.isBlank(ltiIdToken.getEmail()) || !USABLE_EMAIL.matcher(ltiIdToken.getEmail()).matches()) {
             throw new InternalAuthenticationServiceException("No email address sent by launch request. Please make sure the user has an accessible email address.");
         }
 
@@ -545,8 +549,15 @@ public class Lti13Service {
 
     private void handleLaunchRequest(Lti13LaunchRequest launchRequest, User user, Exercise exercise, OidcIdToken ltiIdToken, OnlineCourseConfiguration onlineCourseConfiguration) {
         // The account is checked first: a refused launch must not leave an association behind that later results are published through.
-        ltiService.authenticateLtiUser(ltiIdToken.getEmail(), createUsernameFromLaunchRequest(ltiIdToken, onlineCourseConfiguration), ltiIdToken.getGivenName(),
-                ltiIdToken.getFamilyName(), onlineCourseConfiguration.isRequireExistingUser());
+        try {
+            ltiService.authenticateLtiUser(ltiIdToken.getEmail(), createUsernameFromLaunchRequest(ltiIdToken, onlineCourseConfiguration), ltiIdToken.getGivenName(),
+                    ltiIdToken.getFamilyName(), onlineCourseConfiguration.isRequireExistingUser());
+        }
+        catch (LtiEmailAlreadyInUseException e) {
+            // The person has an account and signs in by hand. The launch is not repeated after the sign-in, so its association is kept as it always was.
+            createOrUpdateResourceLaunch(launchRequest, user, exercise);
+            throw e;
+        }
 
         createOrUpdateResourceLaunch(launchRequest, user, exercise);
 
