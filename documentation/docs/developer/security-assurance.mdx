@@ -117,7 +117,7 @@ The assurance case is checked from two directions. Audits examine the whole syst
 continuous checks keep what an audit established from eroding. The audits themselves are listed in the
 [security policy](https://github.com/ls1intum/Artemis/blob/develop/.github/SECURITY.md#audit-history).
 The most recent audit took place on 9 November 2026 and covered the server REST interfaces and the build
-agent infrastructure. Its findings are being fixed with tests that cover refused requests, and the behavior
+agent infrastructure. Its results led to improved input validation and to tests that cover refused requests, and the behavior
 that operators and maintainers rely on is documented in the [access rights](/admin/access-rights) and in
 [security configuration](/admin/production-setup/security).
 
@@ -140,9 +140,9 @@ The checks below keep what an audit established from eroding. The first group ru
 
 | Check                                                                                                                                       | What it supports                                                                                                                  |
 | ------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
-| [Scheduled security scans](https://github.com/ls1intum/Artemis/blob/develop/.github/workflows/nightly-security-scans.yml), once a week: API fuzzing with Schemathesis and a ZAP baseline scan | Server errors and responses that do not match the OpenAPI description of the reading endpoints, header, cookie and configuration findings |
+| [Scheduled security scans](https://github.com/ls1intum/Artemis/blob/develop/.github/workflows/nightly-security-scans.yml), once a week: API fuzzing with Schemathesis and a ZAP baseline scan | Server errors and responses that do not match the OpenAPI description of the reading endpoints, findings of the API and of the client as the development server of the client serves it |
 
-The scripts in `supporting_scripts/security` also run on a developer machine. Operators run `check-container-isolation.sh` and `check-network-exposure.sh` against their own installation, see the [hardening checklist](/admin/production-setup/hardening-checklist).
+The scripts in `supporting_scripts/security` also run on a developer machine. Operators run `check-container-isolation.sh` against their own installation, see the [hardening checklist](/admin/production-setup/hardening-checklist).
 
 A change of an authorization rule is reviewed together with the test of the refused request. A finding of
 an audit is only closed once such a test exists, so the same weakness does not return unnoticed.

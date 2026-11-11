@@ -13,4 +13,5 @@ paths = ['''documentation/docs/.*\.mdx?$''']
 # Test code holds fixtures that look like credentials: tokens of mocked services, keys of test installations and example requests of the E2E suites.
 [[allowlists]]
 description = "Fixtures in test code"
-paths = ['''src/test/.*''', '''src/main/webapp/.*\.spec\.ts$''', '''supporting_scripts/.*/tests?/.*''']
+targetRules = ["generic-api-key", "private-key", "jwt", "aws-access-token", "curl-auth-header"]
+paths = ['''^src/test/.*''', '''^src/main/webapp/.*\.spec\.ts$''', '''^supporting_scripts/(.*/)?tests?/.*''']

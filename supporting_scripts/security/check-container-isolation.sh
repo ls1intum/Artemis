@@ -62,7 +62,7 @@ if [ "${NETWORK}" != "none" ]; then
 fi
 docker run --detach --name "${SIBLING_NAME}" ${SIBLING_NETWORK_ARGS[@]+"${SIBLING_NETWORK_ARGS[@]}"} "${BUSYBOX_IMAGE}" sh -c 'nc -l -p 8080 -k -e true >/dev/null' >/dev/null
 SIBLING_IP="$(docker inspect --format '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' "${SIBLING_NAME}")"
-if [ -z "${SIBLING_IP}" ]; then
+if [ -z "${SIBLING_IP}" ] || [ "${SIBLING_IP}" = "invalid IP" ]; then
     echo "The sibling container did not get an address." >&2
     exit 2
 fi
@@ -106,6 +106,11 @@ else
     echo "info  the network has no IPv6 address for a sibling container, so no sibling is checked over IPv6"
 fi
 for target in ${CHECK_TARGETS}; do
+    # A target without a port would be passed to nc as a port and fail for that reason, which looks like isolation
+    if ! printf '%s' "${target}" | grep -Eq '^(\[[0-9A-Fa-f:.]+\]|[^:]+):[0-9]{1,5}$'; then
+        echo "CHECK_TARGETS entry '${target}' is not host:port." >&2
+        exit 2
+    fi
     expect_unreachable "the internal service ${target}" "nc -w 3 -z ${target%:*} ${target##*:}"
 done
 

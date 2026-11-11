@@ -27,10 +27,17 @@ SCHEMATHESIS_IMAGE="schemathesis/schemathesis@sha256:ddf8b3c9e0b3ee7edfa65dad4d0
 ZAP_IMAGE="ghcr.io/zaproxy/zaproxy@sha256:9624669db72f54d86c4b46a7064518bd9bf79d8c61a4c31befa9923489f328af"            # stable
 
 REPOSITORY_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-mkdir -p "${OUTPUT_DIRECTORY}"
+# The scanner containers run as another user than the one who runs this script and write their reports into the directory. A directory that this script creates is opened
+# for them. An existing directory, such as the current one, keeps its permissions and has to be writable for them.
+OUTPUT_DIRECTORY_CREATED=0
+if [ ! -d "${OUTPUT_DIRECTORY}" ]; then
+    mkdir -p "${OUTPUT_DIRECTORY}"
+    OUTPUT_DIRECTORY_CREATED=1
+fi
 OUTPUT_DIRECTORY="$(cd "${OUTPUT_DIRECTORY}" && pwd)"
-# The scanner containers run as another user than the one who runs this script and write their reports here
-chmod a+rwx "${OUTPUT_DIRECTORY}"
+if [ "${OUTPUT_DIRECTORY_CREATED}" -eq 1 ]; then
+    chmod a+rwx "${OUTPUT_DIRECTORY}"
+fi
 
 # A local server may listen on the loopback interface only, as the development server of the client does. On Linux the scanners then share the network of the host and use the
 # address as it is. Docker Desktop does not offer that, there a container reaches the host through host.docker.internal.
@@ -61,7 +68,7 @@ JWT="$(curl --silent --show-error ${CURL_TLS_ARGS[@]+"${CURL_TLS_ARGS[@]}"} --fa
     "${BASE_URL}/api/core/public/authenticate" | tr -d '\r' | sed -n 's/^[Ss]et-[Cc]ookie: jwt=\([^;]*\);.*/\1/p' | head -n 1)"
 if [ -z "${JWT}" ]; then
     echo "The sign-in did not set the jwt cookie." >&2
-    exit 1
+    exit 2
 fi
 
 SCHEMATHESIS_STATUS=0

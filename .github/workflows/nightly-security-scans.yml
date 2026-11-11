@@ -98,4 +98,4 @@ jobs:
           github-token: ${{ github.token }}
           body: >-
             The nightly security scans failed. The reports of the run name the response that was a server error or did not match the
-            description of the API, the finding of the baseline scan, or the connection that a build container could make.
+            description of the API or the finding of the baseline scan.

@@ -237,7 +237,7 @@ that operators can see what was examined and when.
 
 | Date            | Scope                                                         | Outcome                                                                                                                                                                                                   |
 | --------------- | ------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 9 November 2026 | The server REST interfaces and the build agent infrastructure | The findings were triaged and are being fixed, each with tests that cover a refused request. The changes are released with the regular releases, and the release notes of a release list its security-relevant changes. Operators should keep their installation up to date. |
+| 9 November 2026 | The server REST interfaces and the build agent infrastructure | Improvements to input validation, to tests that cover refused requests, and to the documentation resulted. They are part of the regular releases. |
 
 An audit combines the review of maintainers, automated analysis ([CodeQL](https://codeql.github.com/)
 and static analysis in the continuous integration), the architecture tests of the repository, and

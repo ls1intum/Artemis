@@ -22,7 +22,7 @@ on:
   workflow_dispatch:
 
 concurrency:
-  group: security-scans-${{ github.event_name }}-${{ github.event.pull_request.number || github.ref }}
+  group: security-scans-${{ github.event_name }}-${{ github.event.pull_request.number || github.sha }}
   cancel-in-progress: true
 
 permissions: {}
