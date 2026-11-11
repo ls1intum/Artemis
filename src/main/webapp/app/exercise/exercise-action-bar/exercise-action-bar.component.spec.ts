@@ -31,8 +31,8 @@ describe('ExerciseActionBarComponent', () => {
     afterEach(() => vi.restoreAllMocks());
 
     describe('hiddenIds / hasOverflow', () => {
-        it('shows up to four actions inline, without the ellipsis, before the row width is measured', () => {
-            fixture.componentRef.setInput('items', buildActions(['teams', 'participations', 'edit', 'delete']));
+        it('shows up to three actions inline, without the ellipsis, before the row width is measured', () => {
+            fixture.componentRef.setInput('items', buildActions(['participations', 'edit', 'delete']));
             fixture.detectChanges();
 
             expect(component.hiddenIds().size).toBe(0);
@@ -40,14 +40,14 @@ describe('ExerciseActionBarComponent', () => {
             expect(component.hiddenActions()).toEqual([]);
         });
 
-        it('shows at most four actions and folds delete first, then the other actions, however wide the row', () => {
+        it('shows at most three actions and folds delete first, then the other actions, however wide the row', () => {
             fixture.componentRef.setInput('items', buildActions(['statistics', 'preview', 'solution', 'participations', 'edit', 'delete']));
             seedEqualWidths(30);
             component['reservedWidth'].set(0);
             component['rowWidth'].set(2000);
 
             expect(component.hasOverflow()).toBe(true);
-            expect(component.hiddenActions().map((a) => a.id)).toEqual(['solution', 'delete']);
+            expect(component.hiddenActions().map((a) => a.id)).toEqual(['preview', 'solution', 'delete']);
         });
 
         it('renders the trailing actions last, set apart from the others before them', () => {
@@ -83,6 +83,8 @@ describe('ExerciseActionBarComponent', () => {
 
         it('folds delete first, then the other actions, and keeps the default-priority ids inline longest', () => {
             fixture.componentRef.setInput('items', buildActions(['teams', 'participations', 'statistics', 'preview', 'edit-in-editor', 'edit', 'delete']));
+            // Lifted, so only the width limits the buttons here.
+            fixture.componentRef.setInput('maxInline', 10);
             // Each button 100px wide. With a 460px row (available 452 after the safety margin, budget 414 after the
             // ellipsis + gap) exactly four 100px buttons plus their gaps fit.
             seedEqualWidths(100);
@@ -95,6 +97,7 @@ describe('ExerciseActionBarComponent', () => {
 
         it('folds only delete when one button is too many, so the ellipsis takes its place at the end', () => {
             fixture.componentRef.setInput('items', buildActions(['teams', 'participations', 'edit', 'delete']));
+            fixture.componentRef.setInput('maxInline', 10);
             // Four buttons (412px incl. gaps) exceed a 400px row (available 392); after the ellipsis and its gap the budget
             // is 354px, so three fit.
             seedEqualWidths(100);

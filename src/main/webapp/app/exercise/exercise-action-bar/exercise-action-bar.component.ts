@@ -97,7 +97,7 @@ export class ExerciseActionBarComponent {
      */
     readonly collapseFirstIds = input<string[]>(['delete']);
     /** Most buttons shown inline; a row with more shows this many (in keep-priority order) and the rest in the menu. */
-    readonly maxInline = input<number>(4);
+    readonly maxInline = input<number>(3);
     /**
      * Ids rendered last, in this order, after all other actions. Every row then ends in the same buttons, so they line up
      * across the rows of a table.
