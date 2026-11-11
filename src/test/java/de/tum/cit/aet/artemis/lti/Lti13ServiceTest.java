@@ -13,6 +13,7 @@ import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -33,6 +34,7 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.oauth2.client.registration.ClientRegistration;
 import org.springframework.security.oauth2.core.oidc.OidcIdToken;
 import org.springframework.web.client.RestTemplate;
@@ -277,6 +279,27 @@ class Lti13ServiceTest {
 
         verify(launchRepository, never()).save(any());
         verify(ltiService, never()).onSuccessfulLtiAuthentication(any(), any());
+    }
+
+    @Test
+    void performLaunch_newAccountWithCollisionSuffix_isLookedUpUnderTheLoginItGot() {
+        MockExercise result = getMockExercise(true);
+        when(oidcIdToken.getClaim("sub")).thenReturn("1");
+        when(oidcIdToken.getClaim("iss")).thenReturn("https://otherDomain.com");
+        when(oidcIdToken.getClaim(Claims.LTI_DEPLOYMENT_ID)).thenReturn("1");
+        ObjectNode jsonObject = JsonObjectMapper.get().createObjectNode();
+        jsonObject.put("id", "resourceLinkUrl");
+        when(oidcIdToken.getClaim(Claims.RESOURCE_LINK)).thenReturn(jsonObject);
+        when(oidcIdToken.getPreferredUsername()).thenReturn("john");
+        prepareForPerformExerciseLaunch(result.courseId(), result.exerciseId(), true);
+        // The derived login is taken by an account with another email, so the new account got a suffix.
+        doReturn(new UsernamePasswordAuthenticationToken("prefix_john2", "password")).when(ltiService).createNewUserFromLaunchRequest(any(), any(), any(), any());
+        doReturn(Optional.of(new User())).when(userRepository).findOneWithAuthoritiesByLogin("prefix_john2");
+
+        lti13Service.performLaunch(oidcIdToken, clientRegistrationId);
+
+        verify(userRepository).findOneWithAuthoritiesByLogin("prefix_john2");
+        verify(userRepository, times(1)).findOneWithAuthoritiesByLogin(any());
     }
 
     @Test
@@ -955,6 +978,7 @@ class Lti13ServiceTest {
         }
 
         doNothing().when(ltiService).authenticateLtiUser(any(), any(), any(), any(), anyBoolean());
+        doReturn(new UsernamePasswordAuthenticationToken("created-login", "password")).when(ltiService).createNewUserFromLaunchRequest(any(), any(), any(), any());
         doNothing().when(ltiService).onSuccessfulLtiAuthentication(any(), any());
     }
 

@@ -170,7 +170,7 @@ public class LtiService {
      * @return the sign-in of the new account
      */
     @NonNull
-    protected Authentication createNewUserFromLaunchRequest(String email, String login, String firstName, String lastName) {
+    public Authentication createNewUserFromLaunchRequest(String email, String login, String firstName, String lastName) {
         final var user = userRepository.findOneByLogin(login).filter(existing -> email.equalsIgnoreCase(existing.getEmail())).orElseGet(() -> {
             var password = RandomUtil.generatePassword();
             final User newUser = createUserWithUnusedLogin(login, password, firstName, lastName, email);

@@ -186,7 +186,7 @@ public class Lti13Service {
             Authentication authentication = ltiService.createNewUserFromLaunchRequest(ltiIdToken.getEmail(), createUsernameFromLaunchRequest(ltiIdToken, onlineCourseConfiguration),
                     ltiIdToken.getGivenName(), ltiIdToken.getFamilyName());
             SecurityContextHolder.getContext().setAuthentication(authentication);
-            createdLogin = authentication != null ? authentication.getName() : null;
+            createdLogin = authentication.getName();
         }
 
         String username = createdLogin != null ? createdLogin : optionalUsername.orElseGet(() -> createUsernameFromLaunchRequest(ltiIdToken, onlineCourseConfiguration));
