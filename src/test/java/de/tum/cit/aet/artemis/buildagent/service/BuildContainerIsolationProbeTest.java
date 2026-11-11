@@ -69,11 +69,12 @@ class BuildContainerIsolationProbeTest {
     }
 
     @Test
-    void parsesHostsAndPortsAndDropsEntriesThatCannotBeChecked() {
+    void parsesHostsAndPortsAndDropsMalformedEntries() {
         List<Target> targets = BuildContainerIsolationProbe.parseTargets(Arrays.asList("10.0.0.5:6379", " db.internal:5432 ", "[2001:db8::1]:5701", "localhost:6379",
                 "127.0.0.1:6379", "::1:6379", "10.0.0.5:6379", "nonsense", "host:", ":80", "host:notaport", "host:70000", "", null));
 
-        assertThat(targets).containsExactly(new Target("10.0.0.5", 6379), new Target("db.internal", 5432), new Target("2001:db8::1", 5701));
+        assertThat(targets).containsExactly(new Target("10.0.0.5", 6379), new Target("db.internal", 5432), new Target("2001:db8::1", 5701), new Target("localhost", 6379),
+                new Target("127.0.0.1", 6379), new Target("::1", 6379));
     }
 
     @Test
@@ -196,20 +197,44 @@ class BuildContainerIsolationProbeTest {
 
     @Test
     void reportsANameThatTheContainerReachesThroughItsOwnResolution() throws Exception {
-        // The agent resolves localhost and every address refuses, but the container reaches the name, as it would through an alias of the network.
+        // The agent cannot resolve the name, but the container reaches it, as it would through an alias of the network.
         when(waitCallback.awaitStatusCode(anyLong(), eq(TimeUnit.SECONDS))).thenAnswer(invocation -> {
             // The command of the container that was created last
             var invocations = Mockito.mockingDetails(createCommand).getInvocations().stream().filter(call -> call.getMethod().getName().equals("withCmd")).toList();
             String[] command = (String[]) invocations.getLast().getRawArguments()[0];
             boolean selfTest = command[0].equals("sh");
-            boolean byName = command[0].equals("nc") && command[4].equals("localhost");
+            boolean byName = command[0].equals("nc") && command[4].equals("alias.internal");
             return selfTest || byName ? 0 : 1;
         });
-        Target aliased = new Target("localhost", 6379);
+        Target aliased = new Target("alias.internal", 6379);
 
         Result result = new BuildContainerIsolationProbe(dockerClient, IMAGE).run(null, List.of(aliased));
 
         assertThat(result.reachable()).containsExactly(aliased);
         assertThat(result.notReachable()).isEmpty();
+    }
+
+    @Test
+    void probesALoopbackTargetThroughTheNameOfTheHost() throws Exception {
+        // A service that the agent reaches as localhost is a service of the host. A container reaches the host by another name, and a connection to it succeeds when the
+        // service listens on every interface.
+        when(waitCallback.awaitStatusCode(anyLong(), eq(TimeUnit.SECONDS))).thenReturn(0, 0);
+        Target store = new Target("localhost", 6379);
+
+        Result result = new BuildContainerIsolationProbe(dockerClient, IMAGE).run(null, List.of(store));
+
+        assertThat(result.reachable()).containsExactly(store);
+        assertThat(Mockito.mockingDetails(createCommand).getInvocations().stream().filter(call -> call.getMethod().getName().equals("withCmd"))
+                .map(call -> (String[]) call.getRawArguments()[0]).toList().getLast()).contains("host.docker.internal");
+    }
+
+    @Test
+    void acceptsALoopbackTargetThatTheHostDoesNotExposeToContainers() throws Exception {
+        when(waitCallback.awaitStatusCode(anyLong(), eq(TimeUnit.SECONDS))).thenReturn(0, 1);
+        Target store = new Target("127.0.0.1", 6379);
+
+        Result result = new BuildContainerIsolationProbe(dockerClient, IMAGE).run(null, List.of(store));
+
+        assertThat(result.notReachable()).containsExactly(store);
     }
 }

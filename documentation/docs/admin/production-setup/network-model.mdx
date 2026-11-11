@@ -57,9 +57,10 @@ Keep the services above out of the reach of build containers:
 ## What Artemis Checks
 
 - **Validation of the configured networks.** A core node checks the default network of the builds (`container-defaults.network`) at startup, and a default that shares the network namespace of the host (`host`) or of another container (`container:<name>`) stops the start. An exercise that selects such a network is rejected when it is saved, and a build agent refuses to create a container on it. A network in the list of allowed networks that nobody selects is not checked at startup.
-- **At startup of a build agent that runs builds in Docker**, Artemis starts a short-lived container on every network that builds can use, and tries to connect to the queue store, to the cluster port of the node and to the
-  services that you list. The check runs about one minute after the start and does not delay it. If a container can connect, the agent logs an error that names the network and the service, for example
-  `Build containers on the network 'default' can reach [10.0.0.5:6379]`. The log lines are the result: watch for this error after every change of the network, the firewall or the Docker configuration.
+- **At startup of a build agent that runs builds in Docker**, Artemis starts a short-lived container on every network that builds can use, and tries to connect to the queue store, to the cluster port of the node (when the node is a member of the cluster, and
+  not a client of it) and to the services that you list. The networks are the default network of the build containers and the networks in the list of allowed networks of this agent, so set `container-defaults.network` and
+  `container-flags-limit.allowed-custom-networks` on the agent as on the core nodes. The log names the networks that were checked. Cluster ports of the core nodes are checked from an agent only when you list them. The check runs about one minute after the start and does not delay it. If a container can connect, the agent logs an error that names the network and the service, for example
+  `Build containers on the network 'default' can reach [10.0.0.5:6379]`. The log lines are the result: watch for this error after the start of the agent. The check runs once per start, so restart the agent after every change of the network, the firewall or the Docker configuration.
   The check only reports. It never stops the agent, and it is skipped, with an information message, when the image is not available because the agent cannot reach a registry.
 
 | Property                                                         | Default          | Meaning                                                                                                                                                                                                                 |
@@ -68,8 +69,9 @@ Keep the services above out of the reach of build containers:
 | `artemis.continuous-integration.network-isolation-check.image`   | `busybox:1.37.0` | The image of the probe container. It needs the `nc` command. A mirror of the image works as well.                                                                                                                       |
 | `artemis.continuous-integration.network-isolation-check.targets` | empty            | Further services as `host:port`, for example the database and the broker. The queue store (`spring.data.redis.host` and `port`) and the cluster port (`spring.hazelcast.interface` and `port`) are added automatically. |
 
-Loopback addresses are not probed. Inside a container they name the container itself, so a refused connection would say nothing about the host. A service that listens only on the loopback interface of the host is not
-reachable from a container, which is the strongest form of isolation.
+A service that is configured with a loopback address, such as `localhost`, is a service of the host. Inside a container the address names the container itself, so it is probed through the name that a container uses for its host.
+A service that listens on every interface of the host, for example a published port of a container, is reachable that way and is reported. A service that listens only on the loopback interface is not reachable from a container on Linux, which is the strongest
+form of isolation. Docker Desktop forwards connections to the host to its loopback interface too, so it reports such a service as reachable.
 
 ## Checking Your Installation
 
@@ -90,9 +92,9 @@ adjust the lists, for example when the database listens on a non-standard port.
 docker run --rm --network <network of your builds> busybox:1.37.0 nc -w 3 -z <address of the service> <port>
 ```
 
-An exit code of 0 means the container reached the service. An exit code of 1 means that `nc` tried to connect and the connection was refused or timed out, which is the expected result for a service that must be unreachable.
-Any other exit code, such as 125, 126 or 127 from Docker or 2 from a command that did not accept its options, means that no connection was tried: the check did not run and proves nothing. The check of the agents handles this the same
-way and reports such a result as inconclusive.
+An exit code of 0 means the container reached the service. A refused connection or a timeout gives 1, which is the expected result for a service that must be unreachable. But 1 is also the code of `nc` for a name that it cannot resolve and
+for an option that it does not accept, so use an IP address and add `-v`: the message says "refused" or "timed out" for a connection that was tried. An exit code of 125, 126 or 127 from Docker means that the container did not run.
+The check of the agents handles this itself: it resolves the names, starts with a connection that has to succeed inside the container, and reports everything it cannot decide as inconclusive.
 
 <Callout variant={CalloutVariant.info}>
     A check that passes proves only what it tried. Add every internal service of your installation to the `targets` list, and repeat the checks when you add a service.

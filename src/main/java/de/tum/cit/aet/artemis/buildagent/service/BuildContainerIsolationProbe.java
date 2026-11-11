@@ -50,6 +50,9 @@ public class BuildContainerIsolationProbe {
 
     private static final int MAX_PORT = 65535;
 
+    /** The name that a container uses for the host of the agent. */
+    private static final String HOST_NAME = "host.docker.internal";
+
     /** Runs a listener and connects to it in the same container, which shows that the {@code nc} of the image supports what the probe needs. */
     private static final String SELF_TEST_SCRIPT = "nc -l -p 18080 -e true & sleep 1; nc -w " + CONNECT_TIMEOUT_SECONDS + " -z 127.0.0.1 18080";
 
@@ -81,6 +84,9 @@ public class BuildContainerIsolationProbe {
 
     private final String image;
 
+    /** Whether the image is available, known after the first check. A probe of several networks pulls at most once. */
+    private Boolean imageAvailable;
+
     public BuildContainerIsolationProbe(DockerClient dockerClient, String image) {
         this.dockerClient = dockerClient;
         this.image = image;
@@ -88,7 +94,8 @@ public class BuildContainerIsolationProbe {
 
     /**
      * Parses {@code host:port} and {@code [IPv6]:port} entries and drops entries that cannot be checked from a container.
-     * Loopback addresses are dropped: inside a container they name the container itself, so a failed connection says nothing about the host.
+     * A loopback target names the host of the agent. It cannot be probed by its address, because inside a container the address names the container itself, so it is probed
+     * through the address that a container uses for its host.
      *
      * @param entries the configured entries, may contain null or blank values
      * @return the targets that can be probed
@@ -130,14 +137,10 @@ public class BuildContainerIsolationProbe {
             log.warn("Ignoring the network isolation target '{}': expected host:port", trimmed);
             return Optional.empty();
         }
-        if (isLoopback(host)) {
-            log.debug("Not probing the loopback target {}: a container cannot reach the loopback interface of the host", trimmed);
-            return Optional.empty();
-        }
         return Optional.of(new Target(host, port));
     }
 
-    private static boolean isLoopback(String host) {
+    static boolean isLoopback(String host) {
         String normalized = host.toLowerCase(Locale.ROOT);
         return normalized.equals("localhost") || normalized.equals("::1") || normalized.equals("0:0:0:0:0:0:0:1") || normalized.startsWith("127.") || normalized.equals("0.0.0.0");
     }
@@ -158,14 +161,17 @@ public class BuildContainerIsolationProbe {
             return new Result(reachable, notReachable, inconclusive);
         }
         String networkName = describe(network);
-        if (!ensureImage()) {
+        if (!imageAvailable()) {
             inconclusive.addAll(targets);
             log.info("The build container network check was skipped: the image {} is not available on this agent", image);
             return new Result(reachable, notReachable, inconclusive);
         }
-        if (!Integer.valueOf(0).equals(runInContainer(network, "self test", "sh", "-c", SELF_TEST_SCRIPT))) {
+        Integer selfTestExitCode = runInContainer(network, false, "self test", "sh", "-c", SELF_TEST_SCRIPT);
+        if (!Integer.valueOf(0).equals(selfTestExitCode)) {
             inconclusive.addAll(targets);
-            log.info("The build container network check on the network '{}' could not decide: the image {} does not support the connection test", networkName, image);
+            log.info(
+                    "The build container network check on the network '{}' could not decide: the test container {} (exit code {}). Is the network available on this agent, and does the image {} have 'nc'?",
+                    networkName, selfTestExitCode == null ? "did not finish" : "failed", selfTestExitCode, image);
             return new Result(reachable, notReachable, inconclusive);
         }
         for (Target target : targets) {
@@ -189,10 +195,13 @@ public class BuildContainerIsolationProbe {
      * differently, for example through an alias. That attempt can only show that the target is reachable: a failure of it says nothing, as it may be a failed resolution.
      */
     private Verdict probe(String network, Target target) {
-        List<String> addresses = resolve(target.host());
+        List<String> addresses = isLoopback(target.host()) ? List.of() : resolve(target.host());
+        if (isLoopback(target.host()) || addresses.stream().anyMatch(BuildContainerIsolationProbe::isLoopbackAddress)) {
+            return probeThroughHostAddress(network, target);
+        }
         boolean allRefused = !addresses.isEmpty();
         for (String address : addresses) {
-            Integer exitCode = runInContainer(network, target + " at " + address, "nc", "-w", String.valueOf(CONNECT_TIMEOUT_SECONDS), "-z", address,
+            Integer exitCode = runInContainer(network, false, target + " at " + address, "nc", "-w", String.valueOf(CONNECT_TIMEOUT_SECONDS), "-z", address,
                     String.valueOf(target.port()));
             if (Integer.valueOf(0).equals(exitCode)) {
                 return Verdict.REACHABLE;
@@ -200,12 +209,36 @@ public class BuildContainerIsolationProbe {
             allRefused &= Integer.valueOf(EXIT_CONNECTION_FAILED).equals(exitCode);
         }
         if (!isAddress(target.host())) {
-            Integer exitCode = runInContainer(network, target.toString(), "nc", "-w", String.valueOf(CONNECT_TIMEOUT_SECONDS), "-z", target.host(), String.valueOf(target.port()));
+            Integer exitCode = runInContainer(network, false, target.toString(), "nc", "-w", String.valueOf(CONNECT_TIMEOUT_SECONDS), "-z", target.host(),
+                    String.valueOf(target.port()));
             if (Integer.valueOf(0).equals(exitCode)) {
                 return Verdict.REACHABLE;
             }
         }
         return allRefused ? Verdict.NOT_REACHABLE : Verdict.INCONCLUSIVE;
+    }
+
+    /**
+     * Probes a service of the host of the agent that is configured with a loopback address. A container reaches the host through the gateway of its network, which Docker names
+     * {@code host-gateway}. A service that listens on the loopback interface only is not reachable that way, a service that listens on every interface is.
+     */
+    private Verdict probeThroughHostAddress(String network, Target target) {
+        Integer exitCode = runInContainer(network, true, target + " on the host", "nc", "-w", String.valueOf(CONNECT_TIMEOUT_SECONDS), "-z", HOST_NAME,
+                String.valueOf(target.port()));
+        if (Integer.valueOf(0).equals(exitCode)) {
+            return Verdict.REACHABLE;
+        }
+        return Integer.valueOf(EXIT_CONNECTION_FAILED).equals(exitCode) ? Verdict.NOT_REACHABLE : Verdict.INCONCLUSIVE;
+    }
+
+    private static boolean isLoopbackAddress(String address) {
+        try {
+            InetAddress parsed = InetAddress.ofLiteral(address);
+            return parsed.isLoopbackAddress() || parsed.isAnyLocalAddress();
+        }
+        catch (IllegalArgumentException _) {
+            return false;
+        }
     }
 
     private static boolean isAddress(String host) {
@@ -246,6 +279,13 @@ public class BuildContainerIsolationProbe {
         return network == null || network.isBlank() ? "default" : network;
     }
 
+    private boolean imageAvailable() {
+        if (imageAvailable == null) {
+            imageAvailable = ensureImage();
+        }
+        return imageAvailable;
+    }
+
     private boolean ensureImage() {
         try (var inspectCommand = dockerClient.inspectImageCmd(image)) {
             inspectCommand.exec();
@@ -262,7 +302,11 @@ public class BuildContainerIsolationProbe {
 
     private boolean pullImage() {
         try (var pullCommand = dockerClient.pullImageCmd(image)) {
-            pullCommand.start().awaitCompletion(IMAGE_PULL_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+            try (var callback = pullCommand.start()) {
+                if (!callback.awaitCompletion(IMAGE_PULL_TIMEOUT_SECONDS, TimeUnit.SECONDS)) {
+                    return false;
+                }
+            }
             try (var inspectCommand = dockerClient.inspectImageCmd(image)) {
                 inspectCommand.exec();
             }
@@ -281,18 +325,22 @@ public class BuildContainerIsolationProbe {
     /**
      * Runs a command in a short-lived container and waits for it.
      *
-     * @param network     the network of the container, or null or blank for the default network of the container runtime
-     * @param description what the command does, for the log
-     * @param command     the command with its arguments
+     * @param network      the network of the container, or null or blank for the default network of the container runtime
+     * @param withHostName whether the name of the host of the agent is made known to the container
+     * @param description  what the command does, for the log
+     * @param command      the command with its arguments
      * @return the exit code, or null if the container did not run to completion
      */
-    private Integer runInContainer(String network, String description, String... command) {
+    private Integer runInContainer(String network, boolean withHostName, String description, String... command) {
         String containerId = null;
         try {
             // Without a network the container joins the default network, like a build container that does not request another one.
             HostConfig hostConfig = HostConfig.newHostConfig();
             if (network != null && !network.isBlank()) {
                 hostConfig.withNetworkMode(network);
+            }
+            if (withHostName) {
+                hostConfig.withExtraHosts(HOST_NAME + ":host-gateway");
             }
             try (CreateContainerCmd createCommand = dockerClient.createContainerCmd(image)) {
                 CreateContainerResponse container = createCommand.withHostConfig(hostConfig).withCmd(command).exec();

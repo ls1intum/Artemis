@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.buildagent.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_BUILDAGENT;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -29,11 +30,16 @@ import jakarta.annotation.PostConstruct;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.boot.context.properties.bind.Bindable;
+import org.springframework.boot.context.properties.bind.Binder;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
+import org.springframework.core.env.Environment;
+import org.springframework.core.env.Profiles;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -50,6 +56,7 @@ import com.github.dockerjava.api.model.PullResponseItem;
 import de.tum.cit.aet.artemis.buildagent.BuildAgentConfiguration;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentStatus;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
+import de.tum.cit.aet.artemis.buildagent.dto.DockerRunConfig;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 import de.tum.cit.aet.artemis.localci.exception.LocalCIException;
 import de.tum.cit.aet.artemis.localci.service.DistributedDataAccessService;
@@ -167,9 +174,11 @@ public class BuildAgentDockerService {
     @Value("${artemis.continuous-integration.network-isolation-check.image:busybox:1.37.0}")
     private String networkIsolationCheckImage;
 
-    /** Services that build containers must not reach, as host:port, in addition to the queue store and the cluster port that are derived from the configuration. */
-    @Value("${artemis.continuous-integration.network-isolation-check.targets:}")
-    private List<String> networkIsolationCheckTargets;
+    /** Read through the environment, so that a YAML list and a comma separated value both work. */
+    @Autowired
+    private Environment environment;
+
+    private static final String NETWORK_ISOLATION_CHECK_TARGETS_PROPERTY = "artemis.continuous-integration.network-isolation-check.targets";
 
     @Value("${artemis.continuous-integration.container-defaults.network:}")
     private String defaultBuildNetwork;
@@ -250,11 +259,13 @@ public class BuildAgentDockerService {
             if (dockerClientNotAvailable("Cannot check the network isolation of build containers.")) {
                 return;
             }
-            List<String> entries = new ArrayList<>(networkIsolationCheckTargets);
+            // Services that build containers must not reach, as host:port: the ones in the configuration, the queue store, and the cluster port of this node when it is a member
+            // of the cluster. A node without the core profile is a client of the cluster and listens on no cluster port.
+            List<String> entries = new ArrayList<>(Binder.get(environment).bind(NETWORK_ISOLATION_CHECK_TARGETS_PROPERTY, Bindable.listOf(String.class)).orElse(List.of()));
             if (redisHost != null && !redisHost.isBlank()) {
                 entries.add(redisHost + ":" + redisPort);
             }
-            if (hazelcastInterface != null && !hazelcastInterface.isBlank()) {
+            if (hazelcastInterface != null && !hazelcastInterface.isBlank() && environment.acceptsProfiles(Profiles.of(PROFILE_CORE))) {
                 entries.add(hazelcastInterface + ":" + hazelcastPort);
             }
             BuildContainerIsolationProbe probe = new BuildContainerIsolationProbe(buildAgentConfiguration.getDockerClient(), networkIsolationCheckImage);
@@ -263,7 +274,10 @@ public class BuildAgentDockerService {
             Set<String> networks = new LinkedHashSet<>();
             networks.add(defaultBuildNetwork == null ? "" : defaultBuildNetwork.trim());
             allowedCustomNetworks.stream().filter(Objects::nonNull).map(String::trim).filter(network -> !network.isEmpty()).forEach(networks::add);
-            networks.remove("none");
+            // A network that shares the namespace of the host or of another container is never used for a build, and "none" cannot connect anywhere
+            networks.removeIf(network -> network.equals("none") || DockerRunConfig.sharesNetworkNamespace(network));
+            log.info("Checking from build containers on the networks {} that {} cannot be reached",
+                    networks.stream().map(network -> network.isEmpty() ? "default" : network).toList(), targets);
             for (String network : networks) {
                 probe.run(network, targets);
             }
