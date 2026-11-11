@@ -280,6 +280,29 @@ class Lti13ServiceTest {
     }
 
     @Test
+    void performLaunch_lectureOfAnotherCourse_isRefused() {
+        long launchedCourseId = 13;
+        Lecture lectureOfOtherCourse = new Lecture();
+        lectureOfOtherCourse.setCourse(getMockCourse(12));
+        when(lectureRepositoryApi.findById(456L)).thenReturn(Optional.of(lectureOfOtherCourse));
+        prepareForPerformLaunch(launchedCourseId, "https://some-artemis-domain.org/courses/" + launchedCourseId + "/lectures/456", true);
+
+        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> lti13Service.performLaunch(oidcIdToken, clientRegistrationId))
+                .withMessageContaining("Content not found");
+
+        verify(launchRepository, never()).save(any());
+    }
+
+    @Test
+    void performLaunch_lectureWithoutCourse_isRefused() {
+        long launchedCourseId = 13;
+        when(lectureRepositoryApi.findById(456L)).thenReturn(Optional.of(new Lecture()));
+        prepareForPerformLaunch(launchedCourseId, "https://some-artemis-domain.org/courses/" + launchedCourseId + "/lectures/456", true);
+
+        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> lti13Service.performLaunch(oidcIdToken, clientRegistrationId));
+    }
+
+    @Test
     void performLaunch_examExercise_isRefused() {
         MockExercise exercise = getMockExercise(true);
         Exercise examExercise = new TextExercise();

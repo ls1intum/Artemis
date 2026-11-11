@@ -175,15 +175,7 @@ public class Lti13Service {
             throw new BadRequestAlertException("LTI is not configured for this course", "LTI", "ltiNotConfigured");
         }
 
-        // The target has to belong to the course whose configuration the launch refers to.
-        if (targetExercise.isPresent() && !belongsToCourse(targetExercise.get(), course)) {
-            log.error("The exercise of the target link {} does not belong to the launched course", targetLinkUrl);
-            throw new BadRequestAlertException("Content not found", "LTI", "ltiContentNotFound");
-        }
-        if (targetLecture.isPresent() && !Objects.equals(targetLecture.get().getCourse() != null ? targetLecture.get().getCourse().getId() : null, course.getId())) {
-            log.error("The lecture of the target link {} does not belong to the launched course", targetLinkUrl);
-            throw new BadRequestAlertException("Content not found", "LTI", "ltiContentNotFound");
-        }
+        requireTargetInCourse(targetExercise, targetLecture, course, targetLinkUrl);
 
         Optional<String> optionalUsername = artemisAuthenticationProvider.getUsernameForEmail(ltiIdToken.getEmail())
                 .or(() -> userRepository.findOneByEmailIgnoreCase(ltiIdToken.getEmail()).map(User::getLogin));
@@ -210,6 +202,18 @@ public class Lti13Service {
         }
         else {
             log.error("No course content to launch at {}", targetLinkUrl);
+            throw new BadRequestAlertException("Content not found", "LTI", "ltiContentNotFound");
+        }
+    }
+
+    /**
+     * The target of a launch has to belong to the course whose configuration the launch refers to.
+     */
+    private static void requireTargetInCourse(Optional<Exercise> exercise, Optional<Lecture> lecture, Course course, String targetLinkUrl) {
+        boolean exerciseInCourse = exercise.map(target -> belongsToCourse(target, course)).orElse(true);
+        boolean lectureInCourse = lecture.map(target -> target.getCourse() != null && Objects.equals(target.getCourse().getId(), course.getId())).orElse(true);
+        if (!exerciseInCourse || !lectureInCourse) {
+            log.error("The target of the link {} does not belong to the launched course", targetLinkUrl);
             throw new BadRequestAlertException("Content not found", "LTI", "ltiContentNotFound");
         }
     }

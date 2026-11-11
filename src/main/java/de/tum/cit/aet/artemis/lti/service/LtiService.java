@@ -10,6 +10,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
 import org.springframework.security.authentication.InternalAuthenticationServiceException;
@@ -55,6 +56,8 @@ public class LtiService {
     private static final Logger log = LoggerFactory.getLogger(LtiService.class);
 
     private static final int MAX_LOGIN_SUFFIX = 1000;
+
+    private static final int MAX_CREATION_ATTEMPTS = 3;
 
     private final UserCreationService userCreationService;
 
@@ -170,7 +173,7 @@ public class LtiService {
     protected Authentication createNewUserFromLaunchRequest(String email, String login, String firstName, String lastName) {
         final var user = userRepository.findOneByLogin(login).filter(existing -> email.equalsIgnoreCase(existing.getEmail())).orElseGet(() -> {
             var password = RandomUtil.generatePassword();
-            final User newUser = userCreationService.createUser(unusedLogin(login), password, firstName, lastName, email, null, null, Constants.DEFAULT_LANGUAGE, true);
+            final User newUser = createUserWithUnusedLogin(login, password, firstName, lastName, email);
             // Marked in user_lti rather than on the user row, which the lti module does not own. createUser already saved
             // the account, so the id is available and no further save of the user itself is needed.
             userLtiRepository.save(new UserLti(newUser.getId(), true));
@@ -191,7 +194,27 @@ public class LtiService {
     }
 
     /**
-     * Returns the login, or the login with the lowest numeric suffix that no account has.
+     * Creates the account under the login or, if an account has it, under the login with the lowest numeric suffix that no account has. Two launches that choose the same
+     * free login at the same time collide when the second account is saved, so the allocation is repeated for that case. Other failures are not retried.
+     */
+    private User createUserWithUnusedLogin(String login, String password, String firstName, String lastName, String email) {
+        for (int attempt = 1; attempt <= MAX_CREATION_ATTEMPTS; attempt++) {
+            try {
+                return userCreationService.createUser(unusedLogin(login), password, firstName, lastName, email, null, null, Constants.DEFAULT_LANGUAGE, true);
+            }
+            catch (DataIntegrityViolationException e) {
+                if (attempt == MAX_CREATION_ATTEMPTS) {
+                    throw e;
+                }
+                log.info("The login for the launching user was taken in the meantime, choosing another one");
+            }
+        }
+        throw new InternalAuthenticationServiceException("Could not create the account of the launching user.");
+    }
+
+    /**
+     * Returns the login, or the login with the lowest numeric suffix that no account has. The suffix is part of the login, so the base is shortened to keep the login within its
+     * maximum length.
      *
      * @param login the derived login
      * @return a login that no account has
@@ -201,7 +224,8 @@ public class LtiService {
             return login;
         }
         for (int suffix = 2; suffix < MAX_LOGIN_SUFFIX; suffix++) {
-            String candidate = login + suffix;
+            String suffixText = String.valueOf(suffix);
+            String candidate = login.substring(0, Math.min(login.length(), Constants.USERNAME_MAX_LENGTH - suffixText.length())) + suffixText;
             if (userRepository.findOneByLogin(candidate).isEmpty()) {
                 return candidate;
             }
