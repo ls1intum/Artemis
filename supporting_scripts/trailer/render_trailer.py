@@ -6,6 +6,7 @@ There are two cuts: one for students (focus on fast, interactive feedback) and o
 
 Usage:
     python3 supporting_scripts/trailer/render_trailer.py [--cut student|instructor|all] [--out DIR]
+        [--font PATH] [--mono PATH]
     python3 supporting_scripts/trailer/render_trailer.py --cut student --preview 6,12.5,30
 
 See README.md in this directory for the requirements.
@@ -25,11 +26,15 @@ from PIL import Image, ImageDraw, ImageFilter, ImageFont
 REPO = Path(__file__).resolve().parents[2]
 DOCS = str(REPO / "documentation" / "docs")
 LOGO_PATH = REPO / "documentation" / "static" / "img" / "artemis-logo-dark-theme.png"
+# The documentation pages embed the trailers from these paths.
+VIDEO_PATHS = {
+    "student": Path(DOCS) / "student" / "exercises" / "assets" / "programming" / "trailer-student.mp4",
+    "instructor": Path(DOCS) / "instructor" / "exercises" / "assets" / "programming" / "trailer-instructor.mp4",
+}
 W, H, FPS, DUR = 1920, 1080, 30, 60.0
 OV = 0.6  # transition overlap in seconds
-# macOS system fonts; the renderer exits early with a clear message when they are missing.
-FONT = "/System/Library/Fonts/Avenir Next.ttc"
-MONO = "/System/Library/Fonts/Menlo.ttc"
+# Defaults are macOS system fonts; --font and --mono replace them. A file with a single face is used for every weight.
+FONTS = {"sans": "/System/Library/Fonts/Avenir Next.ttc", "mono": "/System/Library/Fonts/Menlo.ttc"}
 BOLD, DEMI, MED, HEAVY = 0, 2, 5, 8
 
 ACCENT = (90, 169, 255)
@@ -44,10 +49,14 @@ PS = DOCS + "/student/"
 _fonts = {}
 
 
-def font(size, idx=MED, path=FONT):
-    k = (size, idx, path)
+def font(size, idx=MED, family="sans"):
+    k = (size, idx, family)
     if k not in _fonts:
-        _fonts[k] = ImageFont.truetype(path, size, index=idx)
+        try:
+            _fonts[k] = ImageFont.truetype(FONTS[family], size, index=idx)
+        except OSError:
+            # not a collection with this face index: use the only face of the file
+            _fonts[k] = ImageFont.truetype(FONTS[family], size)
     return _fonts[k]
 
 
@@ -161,13 +170,16 @@ def render_crop(img, cx, cy, wf, cw, ch):
     x0, y0, x1, y1 = cx * iw - w / 2, cy * ih - h / 2, cx * iw + w / 2, cy * ih + h / 2
     rect = (x0, y0, x1, y1)
     if x0 < 0 or y0 < 0 or x1 > iw or y1 > ih:
-        px, py = int(max(0, -x0, x1 - iw)) + 2, int(max(0, -y0, y1 - ih)) + 2
-        key = (id(img), px, py)
-        if key not in _img:
+        need_x, need_y = int(max(0, -x0, x1 - iw)) + 2, int(max(0, -y0, y1 - ih)) + 2
+        key = (id(img), "padded")
+        cached = _img.get(key)
+        if cached is None or cached[1] < need_x or cached[2] < need_y:
+            # One padded copy per screenshot, with headroom so that a camera move rarely needs a bigger one.
+            px, py = max(need_x, iw // 4), max(need_y, ih // 4)
             pad = Image.new("RGB", (iw + 2 * px, ih + 2 * py), "white")
             pad.paste(img, (px, py))
-            _img[key] = pad
-        img = _img[key]
+            cached = _img[key] = (pad, px, py)
+        img, px, py = cached
         x0, x1, y0, y1 = x0 + px, x1 + px, y0 + py, y1 + py
     return img.resize((cw, ch), Image.LANCZOS, box=(x0, y0, x1, y1), reducing_gap=2.0), rect
 
@@ -236,29 +248,29 @@ def anim_text(d, x, y, s, f, color, lt, delay, style, alpha_mul=1.0, maxw=None, 
     return y + len(lines) * lh
 
 
-F_KICK = font(26, DEMI)
-F_TITLE = font(56, BOLD)
-F_TITLE_SIDE = font(62, BOLD)
-F_SUB = font(29, MED)
+def caption_fonts():
+    """Fonts are loaded on first use, after main() has checked that the font files exist."""
+    return font(26, DEMI), font(56, BOLD), font(62, BOLD), font(29, MED)
 
 
 def caption(layer, sc, lt, layout):
     lt -= 0.3
+    f_kick, f_title, f_title_side, f_sub = caption_fonts()
     d = ImageDraw.Draw(layer)
     style = sc.get("title_style", "slide")
     if layout == "top":
-        anim_text(d, 180, 64, sc["kicker"], F_KICK, ACCENT, lt, 0.05, "slide")
-        anim_text(d, 180, 98, sc["title"], F_TITLE, WHITE, lt, 0.15, style)
-        anim_text(d, 180, 176, sc["sub"], F_SUB, MUTED, lt, 0.35, "slide")
+        anim_text(d, 180, 64, sc["kicker"], f_kick, ACCENT, lt, 0.05, "slide")
+        anim_text(d, 180, 98, sc["title"], f_title, WHITE, lt, 0.15, style)
+        anim_text(d, 180, 176, sc["sub"], f_sub, MUTED, lt, 0.35, "slide")
     else:
         d2 = ImageDraw.Draw(layer)
-        tl = wrap(d2, sc["title"], F_TITLE_SIDE, 560)
-        sl = wrap(d2, sc["sub"], F_SUB, 540)
+        tl = wrap(d2, sc["title"], f_title_side, 560)
+        sl = wrap(d2, sc["sub"], f_sub, 540)
         block = 44 + len(tl) * 76 + 24 + len(sl) * 40
         y = 540 - block / 2
-        anim_text(d, 130, y, sc["kicker"], F_KICK, ACCENT, lt, 0.05, "rise")
-        y = anim_text(d, 130, y + 44, sc["title"], F_TITLE_SIDE, WHITE, lt, 0.15, style, maxw=560, line_h=76)
-        anim_text(d, 130, y + 24, sc["sub"], F_SUB, MUTED, lt, 0.4, "rise", maxw=540, line_h=40)
+        anim_text(d, 130, y, sc["kicker"], f_kick, ACCENT, lt, 0.05, "rise")
+        y = anim_text(d, 130, y + 44, sc["title"], f_title_side, WHITE, lt, 0.15, style, maxw=560, line_h=76)
+        anim_text(d, 130, y + 24, sc["sub"], f_sub, MUTED, lt, 0.4, "rise", maxw=540, line_h=40)
         # accent bar
         k = ease_out((lt - 0.1) / 0.6)
         d.rounded_rectangle((96, 540 - block / 2 * k, 101, 540 + block / 2 * k), 3, fill=rgba(ACCENT, k))
@@ -369,7 +381,7 @@ def draw_editor(layer, x, y, w, h, nchars, alpha, filename="BubbleSort.java", cu
     d = ImageDraw.Draw(ed)
     d.rectangle((0, 0, w, 52), fill=(62, 138, 204))
     d.text((24, 12), "src/de/tum/in/ase/" + filename, font=font(24, DEMI), fill=(255, 255, 255))
-    fm = font(25, 0, MONO)
+    fm = font(25, 0, "mono")
     lx, ly, col = 80, 76, 0
     line = 1
     d.text((24, ly), "1", font=fm, fill=(160, 166, 180))
@@ -453,7 +465,7 @@ def scene_push(layer, sc, lt):
             else:
                 pd.line((50, ty + 10, 66, ty + 26), fill=(255, 255, 255, int(255 * tk)), width=4)
                 pd.line((66, ty + 10, 50, ty + 26), fill=(255, 255, 255, int(255 * tk)), width=4)
-            pd.text((96 + (1 - tk) * 30, ty + 2), name, font=font(26, MED, FONT), fill=WHITE + (int(255 * tk),))
+            pd.text((96 + (1 - tk) * 30, ty + 2), name, font=font(26, MED), fill=WHITE + (int(255 * tk),))
         # score ring
         rk = ease_out((lt - 5.0) / 1.6)
         ring(pd, 140, 590, 70, 0.83 * rk, GREEN, 16)
@@ -509,7 +521,7 @@ def scene_terminal(layer, sc, lt):
     for i, c in enumerate([(255, 95, 86), (255, 189, 46), (39, 201, 63)]):
         d.ellipse((20 + i * 30, 14, 38 + i * 30, 32), fill=c)
     d.text((tw_ / 2 - 60, 10), "Terminal", font=font(22, DEMI), fill=(170, 175, 190))
-    fm = font(24, 0, MONO)
+    fm = font(24, 0, "mono")
     t = 0.3
     y = 76
     for prompt, txt in TERM:
@@ -587,6 +599,7 @@ def scene_intro(layer, sc, lt):
     anim_text(d, W / 2, 625, sc["sub"], font(38, MED), MUTED, lt, 1.5, "rise", center=True)
 
 
+# ProgrammingLanguage.ENABLED_LANGUAGES on the server: the languages an instructor can select for an exercise.
 LANGS = [
     "Java",
     "Python",
@@ -602,16 +615,12 @@ LANGS = [
     "Haskell",
     "OCaml",
     "Ruby",
-    "PHP",
     "Dart",
     "R",
     "MATLAB",
-    "SQL",
     "Bash",
-    "PowerShell",
     "VHDL",
     "Assembler",
-    "Ada",
 ]
 
 
@@ -619,10 +628,14 @@ def scene_langs(layer, sc, lt):
     d = ImageDraw.Draw(layer)
     centered(d, 150, sc["title"], font(80, HEAVY), WHITE, ease_out(lt / 0.6))
     centered(d, 260, sc["title2"], font(80, HEAVY), ACCENT, ease_out((lt - 0.3) / 0.6))
-    cols, cw, rh = 6, 270, 120
+    cols, cw, rh = 5, 300, 120
+    rows = math.ceil(len(LANGS) / cols)
     f = font(38, DEMI)
     x0 = (W - cols * cw) / 2
-    order = sorted(range(len(LANGS)), key=lambda i: (i % cols - 2.5) ** 2 + (i // cols - 1.5) ** 2)
+    # boxes appear from the centre of the grid outwards
+    order = sorted(
+        range(len(LANGS)), key=lambda i: (i % cols - (cols - 1) / 2) ** 2 + (i // cols - (rows - 1) / 2) ** 2
+    )
     for rank, i in enumerate(order):
         name = LANGS[i]
         r, c = divmod(i, cols)
@@ -768,11 +781,12 @@ def student():
             title="Open the editor. Start coding.",
             sub="No setup: files, tasks and build output in one browser tab.",
             title_style="words",
+            # the window from the panel headers to the last task keeps every row whole while panning
             cam=[
-                (0, 0.30, 0.52, 0.6),
-                (0.15, 0.30, 0.52, 0.6),
-                (0.85, 0.70, 0.46, 0.6, ease_io5),
-                (1, 0.70, 0.46, 0.6),
+                (0, 0.355, 0.435, 0.71),
+                (0.15, 0.355, 0.435, 0.71),
+                (0.85, 0.645, 0.435, 0.71, ease_io5),
+                (1, 0.645, 0.435, 0.71),
             ],
             spots=[(3.3, 4.75, (0.675, 0.40, 0.965, 0.70))],
         ),
@@ -797,7 +811,7 @@ def student():
             kicker="FEEDBACK IN CONTEXT",
             title="Feedback right where it matters.",
             sub="Comments appear next to the exact line of your code.",
-            cam=[(0, 0.5, 0.5, 1.0), (0.3, 0.5, 0.5, 1.0), (1, 0.32, 0.45, 0.62, ease_io5)],
+            cam=[(0, 0.5, 0.5, 1.03), (0.3, 0.5, 0.5, 1.03), (1, 0.325, 0.42, 0.65, ease_io5)],
         ),
         dict(
             kind="attempts",
@@ -830,8 +844,8 @@ def student():
                 ),
                 dict(
                     img=PS + "exercises/assets/ai-feedback/automatic-feedback-request-alert.png",
-                    box=(0.05, 0.05, 0.99, 0.27),
-                    scale=1.25,
+                    box=(0.045, 0.055, 0.985, 0.28),
+                    scale=1.33,
                     x=760,
                     y=640,
                     t=2.2,
@@ -845,14 +859,15 @@ def student():
             tin="slide",
             tick=(3, n),
             layout="side",
-            card=(880, 760),
+            card=(880, 700),
             img=PS + "learning-content/assets/iris/iris-conversation.png",
             kicker="AI TUTOR",
             title="Stuck? Ask Iris.",
             sub="Your virtual tutor guides you to the answer instead of giving it away.",
             title_style="words",
             card_in="right",
-            cam=[(0, 0.5, 0.30, 1.0), (1, 0.5, 0.27, 0.86)],
+            # ends above the paragraph that refers to a diagram from another exercise type
+            cam=[(0, 0.5, 0.285, 1.0), (0.2, 0.5, 0.285, 1.0), (1, 0.5, 0.316, 0.92)],
         ),
         dict(
             kind="terminal",
@@ -877,13 +892,23 @@ def student():
             items=[
                 dict(
                     img=PS + "exercises/assets/practice-mode/practice-mode-popover.png",
-                    scale=1.45,
+                    box=(0.0, 0.0, 0.985, 0.185),
+                    scale=1.4,
                     x=760,
-                    y=400,
+                    y=360,
                     t=0.25,
+                    spots=[(0.9, 2.1, (0.785, 0.035, 0.975, 0.175))],
+                ),
+                dict(
+                    img=PS + "exercises/assets/practice-mode/practice-mode-popover.png",
+                    box=(0.093, 0.205, 0.975, 0.925),
+                    scale=1.55,
+                    x=760,
+                    y=470,
+                    t=1.3,
                     drift=(-6, 0),
-                    spots=[(1.6, 4.3, (0.65, 0.66, 0.985, 0.95))],
-                )
+                    spots=[(2.4, 4.3, (0.835, 0.675, 0.975, 0.85))],
+                ),
             ],
         ),
         dict(
@@ -897,7 +922,7 @@ def student():
             title="The same editor in your exams.",
             sub="Nothing new to learn when it counts.",
             title_style="words",
-            cam=[(0, 0.80, 0.36, 0.45), (0.2, 0.80, 0.36, 0.45), (1, 0.5, 0.42, 1.0, ease_io5)],
+            cam=[(0, 0.8225, 0.305, 0.4), (0.25, 0.8225, 0.305, 0.4), (1, 0.5, 0.46, 1.15, ease_io5)],
         ),
         dict(
             kind="langs",
@@ -935,12 +960,16 @@ def instructor():
             end=9,
             tin="zoom",
             tick=(0, n),
+            layout="side",
+            card=(1060, 700),
+            card_in="right",
             img=PI + "create-form-language.png",
             kicker="01 · CREATE",
             title="Set up an exercise in minutes.",
-            sub="Pick a language, a build system and a template — Artemis creates the repositories.",
-            cam=[(0, 0.21, 0.42, 0.44), (1, 0.30, 0.52, 0.62)],
-            spots=[(0.9, 2.5, (0.0, 0.18, 0.99, 0.31)), (2.6, 4.5, (0.0, 0.36, 0.155, 0.5))],
+            sub="Pick a language and a build system — Artemis creates the repositories.",
+            title_style="words",
+            cam=[(0, 0.27, 0.31, 0.54), (1, 0.31, 0.43, 0.64)],
+            spots=[(0.9, 2.5, (0.0, 0.115, 0.998, 0.215)), (2.6, 4.5, (0.0, 0.235, 0.26, 0.31))],
         ),
         dict(
             kind="shot",
@@ -948,15 +977,11 @@ def instructor():
             end=14,
             tin="slide",
             tick=(1, n),
-            layout="side",
-            card=(1060, 640),
             img=PI + "hyperion-generate.png",
             kicker="02 · WRITE",
             title="Draft the problem statement with AI.",
             sub="Describe your idea. Artemis Intelligence writes the first version.",
-            title_style="words",
-            card_in="right",
-            cam=[(0, 0.30, 0.25, 0.6), (0.45, 0.30, 0.25, 0.6), (1, 0.42, 0.62, 0.72, ease_io5)],
+            cam=[(0, 0.5, 0.5, 1.06), (1, 0.5, 0.47, 1.0)],
             spots=[(0.7, 2.1, (0.005, 0.33, 0.975, 0.5)), (2.1, 4.5, (0.005, 0.56, 0.215, 0.62))],
         ),
         dict(
@@ -970,11 +995,11 @@ def instructor():
             title="Stay in control of every change.",
             sub="Accept or discard AI suggestions side by side.",
             cam=[
-                (0, 0.27, 0.45, 0.52),
-                (0.3, 0.27, 0.45, 0.52),
-                (0.7, 0.73, 0.45, 0.52, ease_io5),
-                (0.8, 0.73, 0.45, 0.52),
-                (1, 0.5, 0.45, 1.0, ease_io5),
+                (0, 0.26, 0.475, 0.5),
+                (0.3, 0.26, 0.475, 0.5),
+                (0.7, 0.74, 0.475, 0.5, ease_io5),
+                (0.8, 0.74, 0.475, 0.5),
+                (1, 0.5, 0.5, 1.02, ease_io5),
             ],
             spots=[(3.9, 4.6, (0.865, 0.16, 0.955, 0.22), GREEN)],
         ),
@@ -989,7 +1014,7 @@ def instructor():
             title="Build it together, live.",
             title_style="words",
             sub="Co-edit template, solution and tests in real time.",
-            cam=[(0, 0.5, 0.5, 1.0), (0.35, 0.5, 0.5, 1.0), (1, 0.5, 0.48, 1.0)],
+            cam=[(0, 0.5, 0.5, 1.04), (0.35, 0.5, 0.5, 1.04), (1, 0.5, 0.5, 1.0)],
             spots=[(1.2, 2.9, (0.24, 0.60, 0.47, 0.67)), (2.9, 4.6, (0.75, 0.55, 0.95, 0.67))],
         ),
         dict(
@@ -1003,8 +1028,15 @@ def instructor():
             kicker="05 · VERIFY",
             title="Know it works before students start.",
             sub="Artemis builds template and solution: one fails, one passes all tests.",
-            cam=[(0, 0.5, 0.5, 1.0), (1, 0.5, 0.5, 0.94)],
-            spots=[(0.9, 2.6, (0.015, 0.455, 0.32, 0.53), RED), (2.6, 4.6, (0.52, 0.455, 0.85, 0.53), GREEN)],
+            # template half, pan to the solution half, then the whole page
+            cam=[
+                (0, 0.25, 0.425, 0.52),
+                (0.4, 0.25, 0.425, 0.52),
+                (0.52, 0.755, 0.425, 0.52, ease_io5),
+                (0.76, 0.755, 0.425, 0.52),
+                (1, 0.5, 0.5, 1.03, ease_io5),
+            ],
+            spots=[(0.7, 1.9, (0.015, 0.455, 0.32, 0.53), RED), (2.7, 3.7, (0.52, 0.455, 0.85, 0.53), GREEN)],
         ),
         dict(
             kind="shot",
@@ -1012,12 +1044,16 @@ def instructor():
             end=34,
             tin="slide",
             tick=(5, n),
+            layout="side",
+            card=(1060, 760),
+            card_in="right",
             img=PI + "configure-grading-test-cases.png",
             kicker="06 · GRADE",
             title="Grade with your own tests.",
             sub="Weight test cases, award bonus points, re-evaluate in one click.",
             title_style="words",
-            cam=[(0, 0.5, 0.33, 1.0), (0.3, 0.5, 0.33, 1.0), (1, 0.76, 0.45, 0.5, ease_io5)],
+            cam=[(0, 0.5, 0.5, 1.02), (0.35, 0.5, 0.5, 1.02), (1, 0.815, 0.535, 0.37, ease_io5)],
+            spots=[(0.8, 1.9, (0.78, 0.18, 0.985, 0.225)), (3.7, 4.6, (0.64, 0.555, 0.975, 0.708))],
         ),
         dict(
             kind="shot",
@@ -1032,7 +1068,7 @@ def instructor():
             title="Reward clean code.",
             sub="Static code analysis turns quality issues into feedback.",
             card_in="right",
-            cam=[(0, 0.27, 0.42, 0.5), (1, 0.27, 0.62, 0.5)],
+            cam=[(0, 0.29, 0.40, 0.58), (1, 0.29, 0.645, 0.58)],
         ),
         dict(
             kind="shot",
@@ -1045,7 +1081,8 @@ def instructor():
             title="See where students struggle.",
             title_style="words",
             sub="Recurring feedback, grouped across all submissions.",
-            cam=[(0, 0.5, 0.25, 1.0), (1, 0.5, 0.45, 1.0)],
+            cam=[(0, 0.5, 0.31, 1.0), (0.3, 0.5, 0.31, 1.0), (0.8, 0.3, 0.186, 0.6, ease_io5), (1, 0.3, 0.186, 0.6)],
+            spots=[(3.2, 4.6, (0.0, 0.04, 0.58, 0.108))],
         ),
         dict(
             kind="shot",
@@ -1057,7 +1094,8 @@ def instructor():
             kicker="09 · ASSESS",
             title="Add the human touch.",
             sub="Comment on any line with manual feedback.",
-            cam=[(0, 0.42, 0.42, 0.56), (1, 0.5, 0.5, 1.0)],
+            cam=[(0, 0.45, 0.455, 0.56), (0.4, 0.45, 0.455, 0.56), (1, 0.5, 0.5, 1.03, ease_io5)],
+            spots=[(0.7, 2.1, (0.205, 0.49, 0.73, 0.73), GREEN), (3.6, 4.6, (0.0, 0.94, 0.085, 0.995))],
         ),
         dict(
             kind="kinetic",
@@ -1135,9 +1173,9 @@ def make_audio(path, cuts, bpm, sr=48000):
     t0 = 4.0 + step
     while t0 < DUR - 4:
         i0 = int(t0 * sr)
-        L = int(0.05 * sr)
-        hh = np.diff(rng.standard_normal(L + 1)) * np.exp(-np.arange(L) / sr * 80)
-        out[i0 : i0 + L] += 0.012 * hh
+        length = int(0.05 * sr)
+        hh = np.diff(rng.standard_normal(length + 1)) * np.exp(-np.arange(length) / sr * 80)
+        out[i0 : i0 + length] += 0.012 * hh
         t0 += step * 2
     for s in cuts:
         i0 = int(s * sr)
@@ -1145,8 +1183,8 @@ def make_audio(path, cuts, bpm, sr=48000):
         f = 50 + 90 * np.exp(-lt * 30)
         out[i0 : i0 + len(lt)] += 0.35 * np.sin(2 * np.pi * np.cumsum(f) / sr) * np.exp(-lt * 9)
         # whoosh just before the cut
-        L = int(0.45 * sr)
-        a0 = max(0, i0 - L)
+        length = int(0.45 * sr)
+        a0 = max(0, i0 - length)
         noise = np.convolve(rng.standard_normal(i0 - a0), np.ones(12) / 12, "same")
         out[a0:i0] += 0.06 * noise * np.linspace(0, 1, i0 - a0) ** 2
     out *= np.clip(tt / 1.0, 0, 1) * np.clip((DUR - tt) / 2.5, 0, 1)
@@ -1162,49 +1200,24 @@ def make_audio(path, cuts, bpm, sr=48000):
 def render(cut, out, preview):
     scenes = student() if cut == "student" else instructor()
     if preview:
+        out = out or REPO / "build" / "trailers"
+        out.mkdir(parents=True, exist_ok=True)
         for ts in preview:
             path = out / f"preview-{cut}-{ts:05.2f}.png"
             frame_at(ts, scenes).resize((960, 540)).save(path)
             print(path)
         return
-    wav = out / f"music-{cut}.wav"
+    mp4 = out / f"artemis-programming-exercises-{cut}.mp4" if out else VIDEO_PATHS[cut]
+    mp4.parent.mkdir(parents=True, exist_ok=True)
+    wav = mp4.with_suffix(".wav")
     make_audio(str(wav), [sc["start"] for sc in scenes[1:]], 104 if cut == "student" else 96)
-    mp4 = out / f"artemis-programming-exercises-{cut}.mp4"
+    # CRF 30 with the animation tuning keeps the screenshot text sharp at about 5 MB per trailer.
+    # The flat backgrounds and slow camera moves compress well, so a higher quality barely shows.
+    encoder = "-c:v libx264 -preset veryslow -tune animation -crf 30 -pix_fmt yuv420p -c:a aac -b:a 96k"
     ff = subprocess.Popen(
-        [
-            "ffmpeg",
-            "-y",
-            "-loglevel",
-            "error",
-            "-f",
-            "rawvideo",
-            "-pix_fmt",
-            "rgb24",
-            "-s",
-            f"{W}x{H}",
-            "-r",
-            str(FPS),
-            "-i",
-            "-",
-            "-i",
-            str(wav),
-            "-c:v",
-            "libx264",
-            "-preset",
-            "slow",
-            "-crf",
-            "18",
-            "-pix_fmt",
-            "yuv420p",
-            "-c:a",
-            "aac",
-            "-b:a",
-            "192k",
-            "-shortest",
-            "-movflags",
-            "+faststart",
-            str(mp4),
-        ],
+        ["ffmpeg", "-y", "-loglevel", "error", "-f", "rawvideo", "-pix_fmt", "rgb24", "-s", f"{W}x{H}"]
+        + ["-r", str(FPS), "-i", "-", "-i", str(wav), *encoder.split(), "-shortest", "-movflags", "+faststart"]
+        + [str(mp4)],
         stdin=subprocess.PIPE,
     )
     total = int(DUR * FPS)
@@ -1216,21 +1229,25 @@ def render(cut, out, preview):
     if ff.wait() != 0:
         sys.exit(f"ffmpeg failed for the {cut} trailer")
     wav.unlink()
-    print(f"{cut}: {mp4}")
+    print(f"{cut}: {mp4} ({mp4.stat().st_size // 1000} kB)")
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--cut", choices=["student", "instructor", "all"], default="all")
-    parser.add_argument("--out", type=Path, default=REPO / "build" / "trailers", help="output directory")
+    parser.add_argument(
+        "--out", type=Path, help="output directory; by default the videos replace the ones the documentation embeds"
+    )
     parser.add_argument("--preview", help="comma-separated timestamps in seconds; writes stills instead of a video")
+    parser.add_argument("--font", default=FONTS["sans"], help="font file or collection for the text")
+    parser.add_argument("--mono", default=FONTS["mono"], help="monospaced font file for code and the terminal")
     args = parser.parse_args()
-    for required in (FONT, MONO):
+    FONTS.update(sans=args.font, mono=args.mono)
+    for required in FONTS.values():
         if not Path(required).exists():
-            sys.exit(f"Font {required} not found. The renderer uses macOS system fonts.")
+            sys.exit(f"Font {required} not found. Pass another font file with --font or --mono.")
     if not args.preview and shutil.which("ffmpeg") is None:
         sys.exit("ffmpeg is required to encode the trailers.")
-    args.out.mkdir(parents=True, exist_ok=True)
     preview = [float(t) for t in args.preview.split(",")] if args.preview else None
     for cut in ["student", "instructor"] if args.cut == "all" else [args.cut]:
         render(cut, args.out, preview)
