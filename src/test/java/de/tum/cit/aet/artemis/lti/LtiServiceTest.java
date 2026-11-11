@@ -323,13 +323,43 @@ class LtiServiceTest {
         trustExternalSystems();
         user.setEmail("inactive@test.com");
         user.setActivated(false);
-        when(userLtiRepository.existsByUserIdAndCreatedByLaunchIsTrue(user.getId())).thenReturn(false);
+        when(userLtiRepository.existsByUserIdAndCreatedByLaunchIsTrueAndInitializedIsFalse(user.getId())).thenReturn(false);
         when(userRepository.findOneByEmailIgnoreCase("inactive@test.com")).thenReturn(Optional.of(user));
         when(userRepository.findOneWithAuthoritiesByEmailIgnoreCase("inactive@test.com")).thenReturn(Optional.of(user));
 
         assertThatExceptionOfType(LtiEmailAlreadyInUseException.class).isThrownBy(() -> ltiService.authenticateLtiUser("inactive@test.com", "username", "first", "last", false));
 
         assertThat(SecurityContextHolder.getContext().getAuthentication()).isNull();
+    }
+
+    @Test
+    void authenticateLtiUser_trustedPlatformCanSignInAnAccountThatAnEarlierLaunchCreatedAndNobodyInitialisedYet() throws Exception {
+        SecurityContextHolder.getContext().setAuthentication(null);
+        trustExternalSystems();
+        user.setEmail("student@test.com");
+        user.setActivated(false);
+        when(userLtiRepository.existsByUserIdAndCreatedByLaunchIsTrueAndInitializedIsFalse(user.getId())).thenReturn(true);
+        when(userRepository.findOneByEmailIgnoreCase("student@test.com")).thenReturn(Optional.of(user));
+        when(userRepository.findOneWithAuthoritiesByEmailIgnoreCase("student@test.com")).thenReturn(Optional.of(user));
+
+        ltiService.authenticateLtiUser("student@test.com", "username", "first", "last", false);
+
+        assertThat(SecurityContextHolder.getContext().getAuthentication().getPrincipal()).isEqualTo(user.getLogin());
+    }
+
+    @Test
+    void authenticateLtiUser_trustedPlatformCannotSignInASuperAdministrator() throws Exception {
+        SecurityContextHolder.getContext().setAuthentication(null);
+        trustExternalSystems();
+        user.setEmail("root@test.com");
+        user.setActivated(true);
+        Authority authority = new Authority();
+        authority.setName(Role.SUPER_ADMIN.getAuthority());
+        user.setAuthorities(Set.of(authority));
+        when(userRepository.findOneByEmailIgnoreCase("root@test.com")).thenReturn(Optional.of(user));
+        when(userRepository.findOneWithAuthoritiesByEmailIgnoreCase("root@test.com")).thenReturn(Optional.of(user));
+
+        assertThatExceptionOfType(LtiEmailAlreadyInUseException.class).isThrownBy(() -> ltiService.authenticateLtiUser("root@test.com", "username", "first", "last", false));
     }
 
     @Test

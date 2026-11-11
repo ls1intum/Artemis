@@ -34,6 +34,7 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
+import org.springframework.security.authentication.InternalAuthenticationServiceException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.oauth2.client.registration.ClientRegistration;
 import org.springframework.security.oauth2.core.oidc.OidcIdToken;
@@ -300,6 +301,31 @@ class Lti13ServiceTest {
 
         verify(userRepository).findOneWithAuthoritiesByLogin("prefix_john2");
         verify(userRepository, times(1)).findOneWithAuthoritiesByLogin(any());
+    }
+
+    @Test
+    void performLaunch_withoutAccountForTheEmailWhenAnExistingUserIsRequired_isRefusedBeforeAnythingIsSaved() {
+        MockExercise result = getMockExercise(true);
+        OnlineCourseConfiguration configuration = new OnlineCourseConfiguration();
+        configuration.setRequireExistingUser(true);
+        prepareForPerformExerciseLaunch(result.courseId(), result.exerciseId(), true);
+        doReturn(Optional.of(configuration)).when(onlineCourseConfigurationRepository).findByCourseId(result.courseId());
+
+        assertThatExceptionOfType(InternalAuthenticationServiceException.class).isThrownBy(() -> lti13Service.performLaunch(oidcIdToken, clientRegistrationId));
+
+        verify(launchRepository, never()).save(any());
+        verify(userRepository, never()).findOneWithAuthoritiesByLogin(any());
+    }
+
+    @Test
+    void performLaunch_withoutEmail_isRefusedBeforeAnAccountIsCreated() {
+        MockExercise result = getMockExercise(true);
+        prepareForPerformExerciseLaunch(result.courseId(), result.exerciseId(), true);
+        when(oidcIdToken.getEmail()).thenReturn("");
+
+        assertThatExceptionOfType(InternalAuthenticationServiceException.class).isThrownBy(() -> lti13Service.performLaunch(oidcIdToken, clientRegistrationId));
+
+        verify(ltiService, never()).createNewUserFromLaunchRequest(any(), any(), any(), any());
     }
 
     @Test

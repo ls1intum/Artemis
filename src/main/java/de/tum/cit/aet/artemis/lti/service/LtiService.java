@@ -148,7 +148,7 @@ public class LtiService {
     }
 
     /**
-     * Whether the account may be signed in on the word of a trusted platform: not an administrator, and either active or provisioned by a launch.
+     * Whether the account may be signed in on the word of a trusted platform: not an administrator, and either active or created by a launch that has not been initialised yet.
      *
      * @param user the account with its authorities
      * @return true if the platform may sign in as this account
@@ -156,7 +156,8 @@ public class LtiService {
     private boolean mayBeTrustedFromLaunch(User user) {
         boolean administrator = user.getAuthorities().stream().map(Authority::getName)
                 .anyMatch(name -> Role.ADMIN.getAuthority().equals(name) || Role.SUPER_ADMIN.getAuthority().equals(name));
-        return !administrator && (user.getActivated() || isLtiCreatedUser(user));
+        // An account of a launch that has not been initialised yet is inactive by design. A deactivated account is not accepted, also if a launch once created it.
+        return !administrator && (user.getActivated() || needsInitialization(user));
     }
 
     /**

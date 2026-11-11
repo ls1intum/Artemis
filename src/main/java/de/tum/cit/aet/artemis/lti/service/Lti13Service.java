@@ -23,6 +23,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
+import org.springframework.security.authentication.InternalAuthenticationServiceException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.client.registration.ClientRegistration;
@@ -177,8 +178,18 @@ public class Lti13Service {
 
         requireTargetInCourse(targetExercise, targetLecture, course, targetLinkUrl);
 
+        // The email address identifies the person, so a launch without one is refused before an account is looked up or created
+        if (StringUtils.isEmpty(ltiIdToken.getEmail())) {
+            throw new InternalAuthenticationServiceException("No email address sent by launch request. Please make sure the user has an accessible email address.");
+        }
+
         Optional<String> optionalUsername = artemisAuthenticationProvider.getUsernameForEmail(ltiIdToken.getEmail())
                 .or(() -> userRepository.findOneByEmailIgnoreCase(ltiIdToken.getEmail()).map(User::getLogin));
+
+        // Without an account for the email address there is nobody to sign in, and the derived login does not identify a person
+        if (optionalUsername.isEmpty() && onlineCourseConfiguration.isRequireExistingUser()) {
+            throw new InternalAuthenticationServiceException("Could not find existing user or create new LTI user.");
+        }
 
         // The login of a newly created account is not always the derived one, so the account is looked up under the login it actually got.
         String createdLogin = null;
