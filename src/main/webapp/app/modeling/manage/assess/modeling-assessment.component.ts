@@ -563,28 +563,32 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
                     // with the title itself right after that prefix; `detailText` holds the description,
                     // same as a regular assessment. Any edit — title, description, score or grading instruction —
                     // while still accepted flips it to adapted, rewriting the prefix with the (possibly just-edited) title.
+                    // Apollon emits an emptied title or description as undefined, so once a field is known to be shown
+                    // in Apollon, undefined means the tutor cleared it.
                     const alreadyAdapted = feedback.text?.startsWith(FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER);
+                    const lastShownTitle = this.shownTitleInApollon.get(assessment.modelElementId);
+                    const lastShownDetail = this.shownInApollon.get(assessment.modelElementId);
+                    const title = assessment.title ?? '';
+                    const detail = assessment.feedback ?? '';
                     if (alreadyAdapted) {
-                        if (assessment.title !== undefined) {
-                            feedback.text = FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER + this.titleOrDefault(assessment.title, assessment.score);
+                        if (assessment.title !== undefined || lastShownTitle !== undefined) {
+                            feedback.text = FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER + this.titleOrDefault(title, assessment.score);
                         }
-                        if (assessment.feedback !== undefined) {
-                            feedback.detailText = assessment.feedback;
+                        if (assessment.feedback !== undefined || lastShownDetail !== undefined) {
+                            feedback.detailText = detail;
                         }
                     } else {
-                        const lastShownTitle = this.shownTitleInApollon.get(assessment.modelElementId);
-                        const lastShownDetail = this.shownInApollon.get(assessment.modelElementId);
-                        const titleChanged = assessment.title !== undefined && lastShownTitle !== undefined && assessment.title !== lastShownTitle;
-                        const detailChanged = assessment.feedback !== undefined && lastShownDetail !== undefined && assessment.feedback !== lastShownDetail;
+                        const titleChanged = lastShownTitle !== undefined && title !== lastShownTitle;
+                        const detailChanged = lastShownDetail !== undefined && detail !== lastShownDetail;
                         if (titleChanged || detailChanged || scoreChanged || instructionChanged) {
-                            const newTitle = titleChanged ? assessment.title! : this.stripSuggestionPrefix(feedback.text ?? '');
+                            const newTitle = titleChanged ? title : this.stripSuggestionPrefix(feedback.text ?? '');
                             feedback.text = FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER + this.titleOrDefault(newTitle, assessment.score);
                             if (titleChanged) {
-                                this.shownTitleInApollon.set(assessment.modelElementId, assessment.title!);
+                                this.shownTitleInApollon.set(assessment.modelElementId, title);
                             }
                             if (detailChanged) {
-                                feedback.detailText = assessment.feedback;
-                                this.shownInApollon.set(assessment.modelElementId, assessment.feedback!);
+                                feedback.detailText = detail;
+                                this.shownInApollon.set(assessment.modelElementId, detail);
                             }
                         }
                         // else: auto-emit or unchanged content, keep the original accepted prefix

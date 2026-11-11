@@ -569,11 +569,41 @@ describe('ModelingAssessmentComponent', () => {
             comp['shownTitleInApollon'].set(PACKAGE_ID, 'Missing abstraction');
             comp['shownInApollon'].set(PACKAGE_ID, 'Original detail');
 
-            comp.generateFeedbackFromAssessment([assessmentFor({ title: '', feedback: 'Original detail', score: 1 })]);
+            // Apollon emits a cleared title as undefined
+            comp.generateFeedbackFromAssessment([assessmentFor({ title: undefined, feedback: 'Original detail', score: 1 })]);
             expect(suggestion.text).toBe(FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER + 'artemisApp.feedback.type.positive');
 
-            comp.generateFeedbackFromAssessment([assessmentFor({ title: '', feedback: 'Original detail', score: -1 })]);
+            comp.generateFeedbackFromAssessment([assessmentFor({ title: undefined, feedback: 'Original detail', score: -1 })]);
             expect(suggestion.text).toBe(FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER + 'artemisApp.feedback.type.needsRevision');
+        });
+
+        it('saves a cleared title and description of an adapted suggestion', () => {
+            const adapted = Feedback.forModeling(1, 'Original detail', PACKAGE_ID, 'Package');
+            adapted.text = FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER + 'Missing abstraction';
+            adapted.detailText = 'Original detail';
+            comp.elementFeedback.set(PACKAGE_ID, adapted);
+            comp['shownTitleInApollon'].set(PACKAGE_ID, 'Missing abstraction');
+            comp['shownInApollon'].set(PACKAGE_ID, 'Original detail');
+
+            // Apollon emits a cleared title and description as undefined
+            comp.generateFeedbackFromAssessment([assessmentFor({ title: undefined, feedback: undefined, score: 1 })]);
+
+            expect(adapted.text).toBe(FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER + 'artemisApp.feedback.type.positive');
+            expect(adapted.detailText).toBe('');
+        });
+
+        it('marks an accepted suggestion as adapted once its description is cleared', () => {
+            const suggestion = Feedback.forModeling(1, 'Original detail', PACKAGE_ID, 'Package');
+            suggestion.text = FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER + 'Missing abstraction';
+            suggestion.detailText = 'Original detail';
+            comp.elementFeedback.set(PACKAGE_ID, suggestion);
+            comp['shownTitleInApollon'].set(PACKAGE_ID, 'Missing abstraction');
+            comp['shownInApollon'].set(PACKAGE_ID, 'Original detail');
+
+            comp.generateFeedbackFromAssessment([assessmentFor({ title: 'Missing abstraction', feedback: undefined })]);
+
+            expect(suggestion.text).toBe(FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER + 'Missing abstraction');
+            expect(suggestion.detailText).toBe('');
         });
 
         it('leaves an already adapted suggestion titled once and still takes the newest detail', () => {
