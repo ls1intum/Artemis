@@ -7,12 +7,8 @@
     size="small"
     (click)="startQuiz()"
     [hidden]="!showStartButton()"
-    [attr.aria-label]="compact() ? ('artemisApp.quizExercise.startQuiz' | artemisTranslate) : undefined"
-    [tumAetUiTooltip]="compact() ? ('artemisApp.quizExercise.startQuiz' | artemisTranslate) : ''"
-    tumAetUiTooltipPlacement="top"
-    tumAetUiTooltipDescribesHost="false"
 >
-    <fa-icon [icon]="faPlayCircle" /><span class="ms-1" data-compactable-label [hidden]="compact()" jhiTranslate="artemisApp.quizExercise.startQuiz"></span>
+    <fa-icon [icon]="faPlayCircle" /><span class="ms-1" jhiTranslate="artemisApp.quizExercise.startQuiz"></span>
 </button>
 <button
     id="instructor-quiz-batches-{{ quizExercise().id }}"
@@ -23,15 +19,9 @@
     size="small"
     [tumAetUiPopoverTrigger]="batchMenu"
     [hidden]="!showBatchMenu()"
-    [attr.aria-label]="compact() ? ('artemisApp.quizExercise.batches' | artemisTranslate: { count: quizExercise().quizBatches?.length ?? 0 }) : undefined"
-    [tumAetUiTooltip]="compact() ? ('artemisApp.quizExercise.batches' | artemisTranslate: { count: quizExercise().quizBatches?.length ?? 0 }) : ''"
-    tumAetUiTooltipPlacement="top"
-    tumAetUiTooltipDescribesHost="false"
 >
     <fa-icon [icon]="faBoxesStacked" /><span
         class="ms-1"
-        data-compactable-label
-        [hidden]="compact()"
         jhiTranslate="artemisApp.quizExercise.batches"
         [translateValues]="{ count: quizExercise().quizBatches?.length ?? 0 }"
     ></span>
@@ -88,10 +78,7 @@
     [renderButtonText]="false"
     [disabled]="isInVariantGroup()"
     [style.pointer-events]="isInVariantGroup() ? 'auto' : undefined"
-    [attr.aria-label]="compact() ? ('artemisApp.quizExercise.endQuiz' | artemisTranslate) : undefined"
-    [tumAetUiTooltip]="
-        isInVariantGroup() ? ('artemisApp.quizExercise.actionDisabledInGroup' | artemisTranslate) : compact() ? ('artemisApp.quizExercise.endQuiz' | artemisTranslate) : ''
-    "
+    [tumAetUiTooltip]="isInVariantGroup() ? ('artemisApp.quizExercise.actionDisabledInGroup' | artemisTranslate) : ''"
     tumAetUiTooltipPlacement="top"
     [actionType]="ActionType.EndNow"
     [entityTitle]="quizExercise().title || ''"
@@ -101,7 +88,7 @@
     [dialogError]="dialogError$"
     [hidden]="!showEndButton()"
 >
-    <fa-icon [icon]="faStopCircle" /><span class="ms-1" data-compactable-label [hidden]="compact()" jhiTranslate="artemisApp.quizExercise.endQuiz"></span>
+    <fa-icon [icon]="faStopCircle" /><span class="ms-1" jhiTranslate="artemisApp.quizExercise.endQuiz"></span>
 </button>
 <button
     id="quiz-set-visible-{{ quizExercise().id }}"
@@ -113,12 +100,9 @@
     (click)="showQuiz()"
     [disabled]="isInVariantGroup()"
     [style.pointer-events]="isInVariantGroup() ? 'auto' : undefined"
-    [attr.aria-label]="compact() ? ('artemisApp.quizExercise.showNow' | artemisTranslate) : undefined"
-    [tumAetUiTooltip]="
-        isInVariantGroup() ? ('artemisApp.quizExercise.actionDisabledInGroup' | artemisTranslate) : compact() ? ('artemisApp.quizExercise.showNow' | artemisTranslate) : ''
-    "
+    [tumAetUiTooltip]="isInVariantGroup() ? ('artemisApp.quizExercise.actionDisabledInGroup' | artemisTranslate) : ''"
     tumAetUiTooltipPlacement="top"
     [hidden]="!showSetVisibleButton()"
 >
-    <fa-icon [icon]="faEye" /><span class="ms-1" data-compactable-label [hidden]="compact()" jhiTranslate="artemisApp.quizExercise.showNow"></span>
+    <fa-icon [icon]="faEye" /><span class="ms-1" jhiTranslate="artemisApp.quizExercise.showNow"></span>
 </button>

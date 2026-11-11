@@ -2,15 +2,30 @@ import { ChangeDetectionStrategy, Component, DestroyRef, computed, inject, input
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Observable, Subject, finalize, take } from 'rxjs';
-import { faChartBar, faClipboardList, faCode, faEye, faLightbulb, faListAlt, faPencilAlt, faRedo, faRobot, faTrash, faUsers } from '@fortawesome/free-solid-svg-icons';
+import {
+    faChartBar,
+    faClipboardList,
+    faCode,
+    faEye,
+    faLightbulb,
+    faListAlt,
+    faPencilAlt,
+    faPlayCircle,
+    faRedo,
+    faRobot,
+    faStopCircle,
+    faTrash,
+    faUsers,
+} from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
 import { Exercise, ExerciseMode, ExerciseType, getExerciseUrlSegment } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { QuizExercise, QuizMode, QuizStatus } from 'app/quiz/shared/entities/quiz-exercise.model';
+import { QuizExercise, QuizStatus } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { QuizExerciseLifecycleButtonsComponent } from 'app/quiz/manage/lifecyle-buttons/quiz-exercise-lifecycle-buttons.component';
+import { QuizExerciseLifecycleService, canEndQuiz, canManageQuizBatches, canSetQuizVisible, canStartQuiz } from 'app/quiz/manage/lifecyle-buttons/quiz-exercise-lifecycle.service';
 import { isQuizEditable } from 'app/quiz/shared/service/quiz-manage-util.service';
 import { Course } from 'app/course/shared/entities/course.model';
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
-import { EntitySummaryCategory } from 'app/shared-ui/delete-dialog/delete-dialog.model';
+import { ActionType, EntitySummaryCategory } from 'app/shared-ui/delete-dialog/delete-dialog.model';
 import { EntityDeletionService } from 'app/shared-ui/delete-dialog/service/entity-deletion.service';
 import { exerciseDeletionTarget, isDeletionCompleted, isDeletionOutcomeUnknown } from 'app/shared-ui/delete-dialog/entity-deletion-target.util';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
@@ -59,6 +74,7 @@ export class ExerciseActionsComponent {
     private readonly translateService = inject(TranslateService);
     private readonly profileService = inject(ProfileService);
     private readonly featureToggleService = inject(FeatureToggleService);
+    private readonly quizExerciseLifecycleService = inject(QuizExerciseLifecycleService);
 
     readonly exercise = input.required<Exercise>();
     readonly courseId = input.required<number>();
@@ -101,8 +117,6 @@ export class ExerciseActionsComponent {
 
     /** Controls the AI variant generation wizard/modal opened via the "Create Variant with AI" action. */
     protected readonly aiVariantModalVisible = signal(false);
-    /** Whether the quiz lifecycle buttons show icons only, because the row has no room for their labels. */
-    protected readonly quizButtonsCompact = signal(false);
 
     /** The current exercise typed as a quiz, or `undefined` for non-quiz exercises. Drives the lifecycle buttons. */
     readonly quizExercise = computed<QuizExercise | undefined>(() => {
@@ -110,17 +124,13 @@ export class ExerciseActionsComponent {
         return ex.type === ExerciseType.QUIZ ? ex : undefined;
     });
 
-    /** True when the lifecycle buttons component will render at least one button. Used to show/hide the separator. */
+    /**
+     * True when the quiz shows its batch menu, the only lifecycle control that is not a row action (it opens its own
+     * popover). Used to show/hide the reserved content and its separator.
+     */
     readonly hasQuizButtons = computed<boolean>(() => {
         const quiz = this.quizExercise();
-        if (!quiz) return false;
-        const showVisible = quiz.status === QuizStatus.INVISIBLE && !!quiz.isAtLeastEditor && !quiz.visibleToStudents;
-        const showStart =
-            (quiz.status === QuizStatus.VISIBLE || quiz.status === QuizStatus.INVISIBLE) && quiz.quizMode === QuizMode.SYNCHRONIZED && !!quiz.isAtLeastEditor && !quiz.quizStarted;
-        const showBatches = quiz.quizMode === QuizMode.BATCHED && (quiz.status === QuizStatus.VISIBLE || quiz.status === QuizStatus.ACTIVE);
-        const showEnd =
-            (quiz.status === QuizStatus.VISIBLE || quiz.status === QuizStatus.ACTIVE) && quiz.quizMode !== QuizMode.SYNCHRONIZED && !!quiz.isAtLeastInstructor && !quiz.quizEnded;
-        return showVisible || showStart || showBatches || showEnd;
+        return !!quiz && canManageQuizBatches(quiz);
     });
 
     readonly deletionSummary = computed<Observable<EntitySummaryCategory[]>>(() => this.exerciseService.getDeletionSummary(this.exercise()));
@@ -158,6 +168,10 @@ export class ExerciseActionsComponent {
         const seg = getExerciseUrlSegment(ex.type);
         const items: ActionItem[] = [];
 
+        const quiz = this.quizExercise();
+        if (quiz) {
+            items.push(...this.quizLifecycleActions(quiz));
+        }
         if (ex.mode === ExerciseMode.TEAM) {
             items.push({
                 id: 'teams',
@@ -337,6 +351,76 @@ export class ExerciseActionsComponent {
                     }
                 },
             });
+    }
+
+    /**
+     * Start, make visible and end the quiz as row actions: labelled like the other actions and folded into the menu when
+     * the row runs out of width. They go inert, with an explanation, for quizzes in a variant group.
+     */
+    private quizLifecycleActions(quiz: QuizExercise): ActionItem[] {
+        const inVariantGroup = !!quiz.exerciseVariantGroup;
+        const disabledTooltip = inVariantGroup ? 'artemisApp.quizExercise.actionDisabledInGroup' : undefined;
+        const run = (action: Observable<QuizExercise>) =>
+            action.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+                next: (updated) => this.onQuizLifecycleUpdate(updated),
+                error: (error: HttpErrorResponse) => {
+                    this.alertService.error(error.headers.get('X-artemisApp-error')!);
+                    this.onQuizReload();
+                },
+            });
+        const items: ActionItem[] = [];
+        if (canStartQuiz(quiz)) {
+            items.push({
+                id: 'start-quiz',
+                labelKey: 'artemisApp.quizExercise.startQuiz',
+                icon: faPlayCircle,
+                severity: 'success',
+                kind: 'button',
+                onClick: () => run(this.quizExerciseLifecycleService.startQuiz(this.quizExercise()!)),
+            });
+        }
+        if (canSetQuizVisible(quiz)) {
+            items.push({
+                id: 'set-visible',
+                labelKey: 'artemisApp.quizExercise.showNow',
+                icon: faEye,
+                severity: 'warn',
+                kind: 'button',
+                disabled: inVariantGroup || undefined,
+                disabledTooltip,
+                onClick: () => run(this.quizExerciseLifecycleService.setVisible(this.quizExercise()!)),
+            });
+        }
+        if (canEndQuiz(quiz)) {
+            items.push({
+                id: 'end-quiz',
+                labelKey: 'artemisApp.quizExercise.endQuiz',
+                icon: faStopCircle,
+                severity: 'danger',
+                kind: 'delete',
+                disabled: inVariantGroup || undefined,
+                disabledTooltip,
+                delete: {
+                    actionType: ActionType.EndNow,
+                    entityTitle: quiz.title ?? '',
+                    deleteQuestion: 'artemisApp.quizExercise.endNow.question',
+                    deleteConfirmationText: 'artemisApp.exercise.delete.typeNameToConfirm',
+                    dialogError: this.dialogError$,
+                    onDelete: () =>
+                        this.quizExerciseLifecycleService
+                            .endQuiz(this.quizExercise()!)
+                            .pipe(takeUntilDestroyed(this.destroyRef))
+                            .subscribe({
+                                next: (updated) => {
+                                    this.onQuizLifecycleUpdate(updated);
+                                    this.dialogErrorSource.next('');
+                                },
+                                error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
+                            }),
+                },
+            });
+        }
+        return items;
     }
 
     /**

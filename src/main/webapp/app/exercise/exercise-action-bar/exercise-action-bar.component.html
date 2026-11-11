@@ -64,6 +64,7 @@
                     [variant]="inMenu ? 'text' : 'outlined'"
                     size="small"
                     [disabled]="!!action.disabled"
+                    [actionType]="action.delete!.actionType ?? ActionType.Delete"
                     [entityTitle]="action.delete!.entityTitle"
                     [entitySummaryTitle]="action.delete!.entitySummaryTitle"
                     [fetchCategorizedEntitySummary]="action.delete!.fetchCategorizedEntitySummary"

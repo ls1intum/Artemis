@@ -1,6 +1,7 @@
 import { Component, computed, inject, input, output } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { QuizExercise, QuizMode, QuizStatus } from 'app/quiz/shared/entities/quiz-exercise.model';
+import { QuizExerciseLifecycleService, canEndQuiz, canManageQuizBatches, canSetQuizVisible, canStartQuiz } from 'app/quiz/manage/lifecyle-buttons/quiz-exercise-lifecycle.service';
 import { ActionType } from 'app/shared-ui/delete-dialog/delete-dialog.model';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { faBoxesStacked, faEye, faPlayCircle, faPlus, faStopCircle } from '@fortawesome/free-solid-svg-icons';
@@ -10,9 +11,6 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TumAetUiButtonDirective, TumAetUiPopoverComponent, TumAetUiPopoverTriggerDirective, TumAetUiTagComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
-import { QuizExerciseDates } from 'app/openapi/model/quiz-exercise-dates';
-import { QuizExerciseApi } from 'app/openapi/api/quiz-exercise-api';
-import { convertDateStringFromServer } from 'app/foundation/util/date.utils';
 import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
 import { QuizExerciseBatchApi } from 'app/openapi/api/quiz-exercise-batch-api';
 import { toQuizBatch } from 'app/quiz/shared/util/generated-quiz-exercise.util';
@@ -37,7 +35,7 @@ import { toQuizBatch } from 'app/quiz/shared/util/generated-quiz-exercise.util';
     ],
 })
 export class QuizExerciseLifecycleButtonsComponent {
-    private quizExerciseApi = inject(QuizExerciseApi);
+    private quizExerciseLifecycleService = inject(QuizExerciseLifecycleService);
     private quizExerciseBatchApi = inject(QuizExerciseBatchApi);
     private alertService = inject(AlertService);
 
@@ -58,64 +56,25 @@ export class QuizExerciseLifecycleButtonsComponent {
     readonly quizExercise = input.required<QuizExercise>();
     /** Style of the lifecycle buttons: outlined next to the outlined row actions of the exercise table. */
     readonly variant = input<'solid' | 'outlined'>('solid');
-    /** Shows the buttons as icons only, their label as tooltip and accessible name, where a row has no room for labels. */
-    readonly compact = input(false);
+    /** Shows only the batch menu, where the other lifecycle actions are offered elsewhere, such as the exercise table's row actions. */
+    readonly batchesOnly = input(false);
 
     readonly loadOne = output<number>();
     readonly handleNewQuizExercise = output<QuizExercise>();
 
     protected readonly isInVariantGroup = computed(() => !!this.quizExercise().exerciseVariantGroup);
 
-    readonly showBatchMenu = computed<boolean>(() => {
-        const quiz = this.quizExercise();
-        return quiz.quizMode === QuizMode.BATCHED && (quiz.status === QuizStatus.VISIBLE || quiz.status === QuizStatus.ACTIVE);
-    });
-
-    protected readonly showStartButton = computed<boolean>(() => {
-        const quiz = this.quizExercise();
-        return (
-            (quiz.status === QuizStatus.VISIBLE || quiz.status === QuizStatus.INVISIBLE) && quiz.quizMode === QuizMode.SYNCHRONIZED && !!quiz.isAtLeastEditor && !quiz.quizStarted
-        );
-    });
-
-    protected readonly showEndButton = computed<boolean>(() => {
-        const quiz = this.quizExercise();
-        return (
-            (quiz.status === QuizStatus.VISIBLE || quiz.status === QuizStatus.ACTIVE) && quiz.quizMode !== QuizMode.SYNCHRONIZED && !!quiz.isAtLeastInstructor && !quiz.quizEnded
-        );
-    });
-
-    protected readonly showSetVisibleButton = computed<boolean>(() => {
-        const quiz = this.quizExercise();
-        return quiz.status === QuizStatus.INVISIBLE && !!quiz.isAtLeastEditor && !quiz.visibleToStudents;
-    });
+    readonly showBatchMenu = computed<boolean>(() => canManageQuizBatches(this.quizExercise()));
+    protected readonly showStartButton = computed<boolean>(() => !this.batchesOnly() && canStartQuiz(this.quizExercise()));
+    protected readonly showEndButton = computed<boolean>(() => !this.batchesOnly() && canEndQuiz(this.quizExercise()));
+    protected readonly showSetVisibleButton = computed<boolean>(() => !this.batchesOnly() && canSetQuizVisible(this.quizExercise()));
 
     /**
      * Start the given quiz-exercise immediately
      */
     startQuiz() {
-        this.quizExerciseApi.performActionForQuizExercise(this.quizExercise().id!, 'start-now').subscribe({
-            next: (dates) => {
-                const updatedExercise = deepClone(this.quizExercise());
-
-                this.applyDatesToExercise(updatedExercise, dates);
-                updatedExercise.visibleToStudents = true;
-                updatedExercise.status = QuizStatus.ACTIVE;
-                const batches = updatedExercise.quizBatches ? [...updatedExercise.quizBatches] : [];
-                if (batches.length > 0) {
-                    const firstBatch = deepClone(batches[0]);
-                    firstBatch.started = true;
-                    firstBatch.startTime = updatedExercise.startDate;
-                    batches[0] = firstBatch;
-                } else {
-                    batches.push({
-                        started: true,
-                        startTime: updatedExercise.startDate,
-                    });
-                }
-                updatedExercise.quizBatches = batches;
-                this.handleNewQuizExercise.emit(updatedExercise);
-            },
+        this.quizExerciseLifecycleService.startQuiz(this.quizExercise()).subscribe({
+            next: (updatedExercise) => this.handleNewQuizExercise.emit(updatedExercise),
             error: (res: HttpErrorResponse) => {
                 this.onError(res);
             },
@@ -126,11 +85,8 @@ export class QuizExerciseLifecycleButtonsComponent {
      * End the given quiz-exercise immediately
      */
     endQuiz() {
-        return this.quizExerciseApi.endQuizExercise(this.quizExercise().id!).subscribe({
-            next: (dates) => {
-                const updatedExercise = deepClone(this.quizExercise());
-                this.applyDatesToExercise(updatedExercise, dates);
-                updatedExercise.quizEnded = true;
+        return this.quizExerciseLifecycleService.endQuiz(this.quizExercise()).subscribe({
+            next: (updatedExercise) => {
                 this.handleNewQuizExercise.emit(updatedExercise);
                 this.dialogErrorSource.next('');
             },
@@ -188,13 +144,8 @@ export class QuizExerciseLifecycleButtonsComponent {
      * Make the given quiz-exercise visible to students
      */
     showQuiz() {
-        this.quizExerciseApi.performActionForQuizExercise(this.quizExercise().id!, 'set-visible').subscribe({
-            next: (dates) => {
-                const updatedExercise = deepClone(this.quizExercise());
-                this.applyDatesToExercise(updatedExercise, dates);
-                updatedExercise.visibleToStudents = true;
-                this.handleNewQuizExercise.emit(updatedExercise);
-            },
+        this.quizExerciseLifecycleService.setVisible(this.quizExercise()).subscribe({
+            next: (updatedExercise) => this.handleNewQuizExercise.emit(updatedExercise),
             error: (res: HttpErrorResponse) => {
                 this.onError(res);
             },
@@ -204,11 +155,5 @@ export class QuizExerciseLifecycleButtonsComponent {
     private onError(error: HttpErrorResponse) {
         this.alertService.error(error.headers.get('X-artemisApp-error')!);
         this.loadOne.emit(this.quizExercise().id!);
-    }
-
-    private applyDatesToExercise(exercise: QuizExercise, dates: QuizExerciseDates) {
-        exercise.releaseDate = convertDateStringFromServer(dates.releaseDate);
-        exercise.startDate = convertDateStringFromServer(dates.startDate);
-        exercise.dueDate = convertDateStringFromServer(dates.dueDate);
     }
 }
