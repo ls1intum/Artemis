@@ -54,6 +54,8 @@ public record LocalVCPrePushHook(LocalVCServletService localVCServletService, Us
 
     private static final String METADATA_NAME_MESSAGE = "The path '%s' is not allowed: a name that denotes the metadata directory of a repository cannot be part of the content.";
 
+    private static final String TREE_TIMEOUT_MESSAGE = "The examination of the repository took too long. Please try again.";
+
     private static final String TREE_LIMIT_MESSAGE = "The repository exceeds the limits for the number of files, the depth of the directories or the total size.";
 
     /**
@@ -156,8 +158,11 @@ public record LocalVCPrePushHook(LocalVCServletService localVCServletService, Us
             long entries = 0;
             long totalBytes = 0;
             while (treeWalk.next()) {
-                if (++entries > MAX_TREE_ENTRIES || treeWalk.getDepth() > MAX_TREE_DEPTH || System.nanoTime() - startNanos > MAX_TREE_NANOS) {
-                    command.setResult(ReceiveCommand.Result.REJECTED_OTHER_REASON, TREE_LIMIT_MESSAGE);
+                boolean timedOut = System.nanoTime() - startNanos > MAX_TREE_NANOS;
+                if (++entries > MAX_TREE_ENTRIES || treeWalk.getDepth() > MAX_TREE_DEPTH || timedOut) {
+                    log.warn("Rejected a push to {}: {} entries examined, depth {}, {} bytes, {} ms", repository.getDirectory(), entries, treeWalk.getDepth(), totalBytes,
+                            TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startNanos));
+                    command.setResult(ReceiveCommand.Result.REJECTED_OTHER_REASON, timedOut ? TREE_TIMEOUT_MESSAGE : TREE_LIMIT_MESSAGE);
                     break;
                 }
                 FileMode mode = treeWalk.getFileMode(0);
@@ -210,6 +215,7 @@ public record LocalVCPrePushHook(LocalVCServletService localVCServletService, Us
                 }
                 totalBytes += size;
                 if (totalBytes > MAX_TREE_BYTES) {
+                    log.warn("Rejected a push to {}: the files add up to more than {} bytes", repository.getDirectory(), MAX_TREE_BYTES);
                     command.setResult(ReceiveCommand.Result.REJECTED_OTHER_REASON, TREE_LIMIT_MESSAGE);
                     break;
                 }

@@ -24,7 +24,7 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
  * This includes:
  * <ul>
  * <li>Static resources from /public (both classpath and file system)</li>
- * <li>Uploaded files such as course icons, profile pictures, drag-and-drop images, markdown files, and exam user images</li>
+ * <li>Uploaded files such as course icons, profile pictures, and drag-and-drop images. Markdown files and exam user images are served by the endpoints under /api/core/files</li>
  * </ul>
  * <p>
  * Cache control headers are set to enable browser caching for these resources, improving performance

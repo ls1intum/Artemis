@@ -188,7 +188,7 @@ public class RateLimitService {
      * Resolves the address of the TCP peer of the current request, which a sender cannot choose.
      *
      * <p>
-     * Unlike {@link #resolveClientId()}, this never reads {@code X-Forwarded-For} or any other header itself, so a sender cannot pick a new
+     * Like {@link #resolveClientId()}, this never reads {@code X-Forwarded-For} or any other header itself, so a sender cannot pick a new
      * rate limit budget for every request, or pick an exempt address, by sending a header. The address is what Tomcat concluded:
      * with {@code server.forward-headers-strategy: native} it believes the forwarding headers only of the proxies in
      * {@code server.tomcat.remoteip.internal-proxies}, which by default are the private networks. Behind a reverse proxy

@@ -20,6 +20,7 @@ import org.eclipse.jgit.transport.ReceivePack;
 import org.eclipse.jgit.transport.RemoteConfig;
 import org.eclipse.jgit.transport.UploadPack;
 import org.eclipse.jgit.util.FS;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.exception.HttpStatusException;
@@ -169,6 +170,10 @@ public class SshGitCommand extends GitPackCommand {
         catch (Throwable t) {
             // Notify SSH server of failure with the exception type
             onExit(-1, t.getClass().getSimpleName());
+        }
+        finally {
+            // The thread belongs to a pool that serves other commands. The processing of a push sets an authentication for the thread, which must not stay for the next command.
+            SecurityContextHolder.clearContext();
         }
     }
 }

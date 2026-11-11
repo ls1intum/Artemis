@@ -197,6 +197,12 @@ Restore the backup taken in step 4 of the upgrade procedure if the cause cannot 
 
 Some releases change behavior in a way that requires a one-time action on existing data. These steps are additional to the upgrade scenarios above.
 
+### 10.8: Client Address of Requests
+
+Artemis takes the address of a client from the address that Tomcat resolved for the request, and no longer reads `X-Forwarded-For` or other address headers itself. This applies to all rate limits, to the check of internal endpoints (`artemis.security.internal.allowed-cidrs`) and to the address that is stored in an exam session.
+Tomcat believes forwarding headers only from the proxies in `server.tomcat.remoteip.internal-proxies`, which are the private networks by default. **If your reverse proxy reaches Artemis from a public address, name it there before you upgrade.** Otherwise all clients have the address of the proxy,
+share one budget of the login rate limits, and appear with one address in their exam sessions. See [Client Address of Git Requests](/admin/production-setup/security#client-address-of-git-requests).
+
 ### 10.7: Rate Limit of Git Operations
 
 The authentication of git operations over HTTP and SSH has its own rate limit setting, `artemis.rate-limiting.git-authentication-requests-per-minute` (`ARTEMIS_RATELIMITING_GITAUTHENTICATIONREQUESTSPERMINUTE`), which is **30 per minute and client address** unless you set it.

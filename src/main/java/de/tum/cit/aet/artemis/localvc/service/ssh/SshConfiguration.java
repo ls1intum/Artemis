@@ -8,10 +8,9 @@ import java.nio.file.Path;
 import java.time.Duration;
 import java.util.Optional;
 import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 
-import org.apache.sshd.common.util.threads.CloseableExecutorService;
 import org.apache.sshd.common.util.threads.SshThreadPoolExecutor;
 import org.apache.sshd.common.util.threads.SshdThreadFactory;
 import org.apache.sshd.common.util.threads.ThreadUtils;
@@ -49,9 +48,9 @@ public class SshConfiguration {
     /** The commands that may wait for a free thread. Further commands are rejected. */
     private static final int MAX_QUEUED_GIT_COMMANDS = 256;
 
-    private static final int AUTHENTICATION_TIMEOUT_SECONDS = 30;
+    private static final int AUTHENTICATION_TIMEOUT_SECONDS = 60;
 
-    /** A client may run several git commands over one session, for example a build agent that clones for many builds, so the limit is generous. */
+    /** A git command uses one channel, so the limit is generous. */
     private static final int MAX_CHANNELS_PER_SESSION = 64;
 
     @Value("${artemis.version-control.ssh-port:7921}")
@@ -100,13 +99,17 @@ public class SshConfiguration {
             sshd.setKeyPairProvider(new SimpleGeneratorHostKeyProvider(Path.of("local", "tmp", "hostkey.ser")));
         }
         // One bounded pool serves all git commands: a fixed number of threads and a finite queue. A command that finds the queue full is rejected instead of waiting
-        // without limit. The pool is shared, so a command must not shut it down, which the non-closing wrapper ensures. The pool is shut down together with the server.
+        // without limit. The pool is shared, so a command must not shut it down. Every command gets a wrapper of its own that ignores the shutdown: a command shuts its executor
+        // down when it ends, and a wrapper that is shared would then refuse every later command. The pool is shut down together with the server.
         @SuppressWarnings("java:S2095") // the pool is shut down by the close listener of the server below
         SshThreadPoolExecutor gitCommandPool = new SshThreadPoolExecutor(MAX_CONCURRENT_GIT_COMMANDS, MAX_CONCURRENT_GIT_COMMANDS, 0L, TimeUnit.MILLISECONDS,
-                new ArrayBlockingQueue<>(MAX_QUEUED_GIT_COMMANDS), new SshdThreadFactory("git-ssh"), new ThreadPoolExecutor.AbortPolicy());
-        CloseableExecutorService gitCommandExecutor = ThreadUtils.noClose(gitCommandPool);
+                new ArrayBlockingQueue<>(MAX_QUEUED_GIT_COMMANDS), new SshdThreadFactory("git-ssh"), (task, executor) -> {
+                    log.warn("A git command over SSH was rejected: all {} threads are busy and {} commands are waiting", MAX_CONCURRENT_GIT_COMMANDS, MAX_QUEUED_GIT_COMMANDS);
+                    throw new RejectedExecutionException("All threads for git commands over SSH are busy");
+                });
         sshd.addCloseFutureListener(_ -> gitCommandPool.shutdown());
-        sshd.setCommandFactory(sshGitCommandFactoryService.withGitLocationResolver(sshGitLocationResolverService).withExecutorServiceProvider(() -> gitCommandExecutor));
+        sshd.setCommandFactory(
+                sshGitCommandFactoryService.withGitLocationResolver(sshGitLocationResolverService).withExecutorServiceProvider(() -> ThreadUtils.noClose(gitCommandPool)));
         // Clients that do not authenticate quickly are dropped, and the channels of a session are bounded, instead of holding resources of the server.
         CoreModuleProperties.AUTH_TIMEOUT.set(sshd, Duration.ofSeconds(AUTHENTICATION_TIMEOUT_SECONDS));
         CoreModuleProperties.MAX_CONCURRENT_CHANNELS.set(sshd, MAX_CHANNELS_PER_SESSION);

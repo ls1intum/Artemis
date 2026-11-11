@@ -9,10 +9,13 @@ import org.eclipse.jgit.transport.ReceivePack;
 public final class LocalVCReceivePackLimits {
 
     /** The largest pack that is accepted. A repository of an exercise holds source code, so this is generous. */
-    public static final long MAX_PACK_SIZE_BYTES = 200L * 1024 * 1024;
+    public static final long MAX_PACK_SIZE_BYTES = 500L * 1024 * 1024;
 
-    /** The largest single object that is accepted. The pre-receive hook additionally rejects files above 10 MB. */
-    public static final long MAX_OBJECT_SIZE_BYTES = 20L * 1024 * 1024;
+    /**
+     * The largest single object that is accepted, also in the history of the pushed branch. The pre-receive hook additionally rejects files above 10 MB in the latest commit,
+     * with a message that names the file.
+     */
+    public static final long MAX_OBJECT_SIZE_BYTES = 100L * 1024 * 1024;
 
     /** The largest list of commands of a push. A push updates exactly one branch. */
     public static final int MAX_COMMAND_BYTES = 16 * 1024;

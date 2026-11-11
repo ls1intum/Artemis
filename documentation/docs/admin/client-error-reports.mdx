@@ -59,7 +59,7 @@ artemis:
 
 </Callout>
 
-The limit counts the address of the TCP peer as Tomcat resolved it. Artemis does not read `X-Forwarded-For` for this limit, because a sender could put any address into the header and receive a new budget for every request. Tomcat believes the forwarding headers only of the proxies in `server.tomcat.remoteip.internal-proxies`, which by default are the private networks. If your reverse proxy is not in a private network, all clients have the address of the proxy until you name it there, and then they share one budget of 60 reports per minute, which drops the surplus reports. The other rate limits of Artemis still use the first value of `X-Forwarded-For`.
+The limit counts the address of the TCP peer as Tomcat resolved it. Artemis does not read `X-Forwarded-For` for this limit, because a sender could put any address into the header and receive a new budget for every request. Tomcat believes the forwarding headers only of the proxies in `server.tomcat.remoteip.internal-proxies`, which by default are the private networks. If your reverse proxy is not in a private network, all clients have the address of the proxy until you name it there, and then they share one budget of 60 reports per minute, which drops the surplus reports. The other rate limits of Artemis count the same address.
 
 The limit is shared by all clients behind the same address, for example a lecture hall behind one NAT. The default of 60 reports per minute leaves room for that. If the limit is exceeded, the server answers with status 429 and the client does not retry.
 
