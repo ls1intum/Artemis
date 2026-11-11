@@ -28,14 +28,15 @@ import java.util.stream.Collectors;
 
 import jakarta.annotation.PostConstruct;
 
+import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.bind.Bindable;
 import org.springframework.boot.context.properties.bind.Binder;
+import org.springframework.context.EnvironmentAware;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.env.Environment;
@@ -93,7 +94,7 @@ import de.tum.cit.aet.artemis.localci.service.DistributedDataAccessService;
 @Service
 @Profile(PROFILE_BUILDAGENT)
 @ConditionalOnProperty(prefix = "artemis.continuous-integration", name = "build-runner", havingValue = "docker", matchIfMissing = true)
-public class BuildAgentDockerService {
+public class BuildAgentDockerService implements EnvironmentAware {
 
     /**
      * Lock to serialize Docker image pull operations.
@@ -175,7 +176,6 @@ public class BuildAgentDockerService {
     private String networkIsolationCheckImage;
 
     /** Read through the environment, so that a YAML list and a comma separated value both work. */
-    @Autowired
     private Environment environment;
 
     private static final String NETWORK_ISOLATION_CHECK_TARGETS_PROPERTY = "artemis.continuous-integration.network-isolation-check.targets";
@@ -216,6 +216,11 @@ public class BuildAgentDockerService {
         this.distributedDataAccessService = distributedDataAccessService;
         this.buildJobContainerService = buildJobContainerService;
         this.taskScheduler = taskScheduler;
+    }
+
+    @Override
+    public void setEnvironment(@NonNull Environment environment) {
+        this.environment = environment;
     }
 
     /**
