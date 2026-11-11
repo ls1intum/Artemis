@@ -272,7 +272,8 @@ class LocalVCSshIntegrationTest extends LocalVCIntegrationTest {
                         channel.setOut(output);
                         channel.setErr(errors);
                         channel.open().verify(10, TimeUnit.SECONDS);
-                        channel.waitFor(EnumSet.of(ClientChannelEvent.CLOSED), TimeUnit.SECONDS.toMillis(20));
+                        assertThat(channel.waitFor(EnumSet.of(ClientChannelEvent.CLOSED), TimeUnit.SECONDS.toMillis(20))).as("command %d ends, errors: %s", command, errors)
+                                .contains(ClientChannelEvent.CLOSED);
 
                         assertThat(output.size()).as("the advertisement of the refs of command %d, errors: %s", command, errors).isGreaterThan(0);
                         assertThat(errors.toString()).as("errors of command %d", command).doesNotContain("shut down").doesNotContain("busy");
