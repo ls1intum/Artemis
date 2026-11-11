@@ -99,6 +99,8 @@ export class ExerciseActionBarComponent {
     readonly collapseFirstIds = input<string[]>(['delete']);
     /** Ids that may show as buttons; every other action always sits in the ellipsis menu. */
     readonly inlineIds = input<string[]>(['edit-in-editor', 'participations', 'edit', 'delete']);
+    /** Ids whose buttons show only their icon; every other button shows its label next to the icon. */
+    readonly iconOnlyIds = input<string[]>(['edit', 'delete']);
     /**
      * Most buttons shown inline. A row with more actions shows the ellipsis, the {@link collapseFirstIds} ones always go
      * into it, and at most this many of the rest stay inline (in keep-priority order).
@@ -410,15 +412,16 @@ export class ExerciseActionBarComponent {
      */
     private contextOf(action: ActionItem, inMenu: boolean) {
         const reasonId = action.disabled && action.disabledTooltip ? `exercise-action-reason-${this.barId}-${action.id}-${inMenu ? 'menu' : 'inline'}` : undefined;
-        return { $implicit: action, inMenu, tooltip: this.tooltipOf(action, inMenu), reasonId };
+        const iconOnly = !inMenu && this.iconOnlyIds().includes(action.id);
+        return { $implicit: action, inMenu, iconOnly, tooltip: this.tooltipOf(action, iconOnly), reasonId };
     }
 
-    /** An inline button's tooltip names it; a disabled action, inline or in the menu, explains why instead. */
-    private tooltipOf(action: ActionItem, inMenu: boolean): string {
+    /** An icon-only button's tooltip names it; a disabled action, wherever it shows, explains why instead. */
+    private tooltipOf(action: ActionItem, iconOnly: boolean): string {
         if (action.disabled && action.disabledTooltip) {
             return this.translateService.instant(action.disabledTooltip);
         }
-        return inMenu ? '' : this.translateService.instant(action.labelKey);
+        return iconOnly ? this.translateService.instant(action.labelKey) : '';
     }
 
     protected runAction(item: ActionItem): void {

@@ -83,6 +83,19 @@ describe('ExerciseActionBarComponent', () => {
             expect(items.map((item) => item.classList.contains('group-start'))).toEqual([false, false, true, false, false]);
         });
 
+        it('labels every button but edit and delete, which show only their icon and name it in the tooltip', () => {
+            fixture.componentRef.setInput('items', buildActions(['edit-in-editor', 'participations', 'edit', 'delete']));
+            fixture.detectChanges();
+
+            const button = (id: string): HTMLElement => fixture.nativeElement.querySelector(`[data-testid="exercise-action-${id}"]`);
+            expect(button('edit-in-editor').textContent).toContain('label.edit-in-editor');
+            expect(button('participations').textContent).toContain('label.participations');
+            expect(button('participations').getAttribute('aria-label')).toBeNull();
+            expect(button('edit').textContent).not.toContain('label.edit');
+            expect(button('edit').getAttribute('aria-label')).toBe('label.edit');
+            expect(button('delete').getAttribute('aria-label')).toBe('label.delete');
+        });
+
         it('does not set the trailing actions apart when no other action precedes them', () => {
             fixture.componentRef.setInput('items', buildActions(['participations', 'edit', 'delete']));
             fixture.detectChanges();
