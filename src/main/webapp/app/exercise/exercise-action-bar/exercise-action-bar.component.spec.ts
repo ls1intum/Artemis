@@ -164,6 +164,27 @@ describe('ExerciseActionBarComponent', () => {
             expect(component.hasOverflow()).toBe(false);
         });
 
+        it('drops the labels of the reserved content only when the row cannot show them next to its buttons', () => {
+            const compact: boolean[] = [];
+            component.reservedCompactChange.subscribe((value) => compact.push(value));
+            fixture.componentRef.setInput('items', buildActions(['participations', 'edit', 'delete']));
+            fixture.detectChanges();
+            seedEqualWidths(30);
+            // Reserved content 120px wide, 80px of it labels.
+            component['reservedWidth'].set(120);
+            component['reservedLabelsWidth'].set(80);
+            component['lastReservedLabelsWidth'].set(80);
+
+            // Buttons 98px (3 x 30 + 2 gaps), reserved 120px and its gap: 222px plus the safety margin fit a 300px row.
+            component['rowWidth'].set(300);
+            fixture.detectChanges();
+            expect(compact.at(-1)).toBe(false);
+
+            component['rowWidth'].set(220);
+            fixture.detectChanges();
+            expect(compact.at(-1)).toBe(true);
+        });
+
         it('reports the width that shows every action once all buttons are measured', () => {
             const reported: number[] = [];
             component.naturalWidthChange.subscribe((width) => reported.push(width));

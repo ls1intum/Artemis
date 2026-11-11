@@ -123,6 +123,12 @@ export class ExerciseActionBarComponent {
      * widest row needs and the leftover width goes to the other columns.
      */
     readonly naturalWidthChange = output<number>();
+    /**
+     * Whether the reserved content should drop its labels (marked `data-compactable-label`) and show icons only: true once
+     * the row cannot show its buttons next to the labelled reserved content. Its labels then never fold a button, and the
+     * column never has to scroll for them.
+     */
+    readonly reservedCompactChange = output<boolean>();
 
     protected readonly faEllipsis = faEllipsis;
 
@@ -140,6 +146,12 @@ export class ExerciseActionBarComponent {
     /** Full row width (updated by a ResizeObserver) and the reserved width of the always-visible prefix content. */
     private readonly rowWidth = signal(0);
     private readonly reservedWidth = signal(0);
+    /** Width of the reserved content's currently visible labels, and the last non-zero one, kept while they are hidden. */
+    private readonly reservedLabelsWidth = signal(0);
+    private readonly lastReservedLabelsWidth = signal(0);
+    /** Reserved width with icons only and with labels; neither depends on whether the labels currently show. */
+    private readonly compactReservedWidth = computed<number>(() => this.reservedWidth() - this.reservedLabelsWidth());
+    private readonly fullReservedWidth = computed<number>(() => this.compactReservedWidth() + this.lastReservedLabelsWidth());
     /** Width available for the collapsible main buttons: the row minus the reserved prefix content. */
     private readonly availableWidth = computed<number>(() => this.rowWidth() - this.reservedWidth());
     /** Natural width per button, keyed by a signature (id + label) so changing labels re-measure. */
@@ -274,6 +286,20 @@ export class ExerciseActionBarComponent {
 
     readonly hasOverflow = computed<boolean>(() => this.hiddenIds().size > 0);
 
+    /**
+     * Whether the reserved content drops its labels. Decided from widths that do not change with the decision (the row,
+     * the buttons and the labelled reserved width), so hiding the labels never flips it back.
+     */
+    private readonly reservedCompact = computed<boolean>(() => {
+        const buttons = this.buttonsWidth();
+        const labels = this.lastReservedLabelsWidth();
+        const row = this.rowWidth();
+        if (buttons === undefined || labels === 0 || row <= 0) {
+            return false;
+        }
+        return row - SAFETY_MARGIN_PX < this.fullReservedWidth() + GAP_PX + buttons;
+    });
+
     /** Natural width of the buttons outside the menu, plus the ellipsis when the menu shows; undefined until they are measured. */
     private readonly buttonsWidth = computed<number | undefined>(() => {
         const countHidden = this.countHiddenIds();
@@ -320,6 +346,15 @@ export class ExerciseActionBarComponent {
                     this.rowWidth.set(widthOf(rowEl));
                 }
                 this.reservedWidth.set(reservedEl ? widthOf(reservedEl) : 0);
+                // A hidden label measures 0, and its margin only takes up room while it shows.
+                const labels = [...(reservedEl?.querySelectorAll<HTMLElement>('[data-compactable-label]') ?? [])].reduce((sum, label) => {
+                    const width = widthOf(label);
+                    return width > 0 ? sum + width + (parseFloat(getComputedStyle(label).marginInlineStart) || 0) : sum;
+                }, 0);
+                this.reservedLabelsWidth.set(labels);
+                if (labels > 0) {
+                    this.lastReservedLabelsWidth.set(labels);
+                }
             };
 
             const observer = new ResizeObserver(() => {
@@ -358,17 +393,21 @@ export class ExerciseActionBarComponent {
         // Report the width this row's actions column must reserve: the reserved content (its measured width already
         // includes its own trailing separator) plus the gap, the ellipsis trigger, and a safety margin against
         // sub-pixel clipping. Reserved-content width doesn't depend on the column width, so this never feeds back.
-        // Rows without reserved content report 0.
+        // Rows without reserved content report 0. The reserved content counts with icons only: it drops its labels before
+        // the column scrolls.
         effect(() => {
-            const reserved = this.reservedWidth();
+            const reserved = this.compactReservedWidth();
             this.columnMinWidthChange.emit(reserved > 0 ? reserved + GAP_PX + ELLIPSIS_WIDTH_PX + SAFETY_MARGIN_PX : 0);
         });
 
+        effect(() => this.reservedCompactChange.emit(this.reservedCompact()));
+
         // Report the width that shows every button: the measured buttons (collapsed ones keep their last width), their
         // gaps and the reserved content. None of these depend on the column width, so this never feeds back either.
+        // The reserved content counts with its labels, which it shows whenever the row is this wide.
         effect(() => {
             const buttons = this.buttonsWidth();
-            const reserved = this.reservedWidth();
+            const reserved = this.fullReservedWidth();
             if (buttons === undefined) {
                 this.naturalWidthChange.emit(0);
                 return;

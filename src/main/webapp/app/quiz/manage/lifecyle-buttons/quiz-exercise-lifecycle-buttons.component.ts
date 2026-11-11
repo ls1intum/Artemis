@@ -58,6 +58,8 @@ export class QuizExerciseLifecycleButtonsComponent {
     readonly quizExercise = input.required<QuizExercise>();
     /** Style of the lifecycle buttons: outlined next to the outlined row actions of the exercise table. */
     readonly variant = input<'solid' | 'outlined'>('solid');
+    /** Shows the buttons as icons only, their label as tooltip and accessible name, where a row has no room for labels. */
+    readonly compact = input(false);
 
     readonly loadOne = output<number>();
     readonly handleNewQuizExercise = output<QuizExercise>();

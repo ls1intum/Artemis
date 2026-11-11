@@ -38,6 +38,7 @@ import { MockEntityDeletionService } from 'test/helpers/mocks/service/mock-entit
 class QuizLifecycleButtonsStubComponent {
     quizExercise = input.required<QuizExercise>();
     variant = input<'solid' | 'outlined'>('solid');
+    compact = input(false);
     loadOne = output<number>();
     handleNewQuizExercise = output<QuizExercise>();
 }
