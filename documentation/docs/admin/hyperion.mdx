@@ -245,6 +245,8 @@ artemis:
 
 The pool connects only through `base-url`, `api-key` and `timeout` above, independently of the `spring.ai` configuration. Both models must be served by that endpoint, and both must appear in `allowed-models`; `application-artemis.yml` ships `openai/gpt-oss-120b`, the self-hosted model the pool has been evaluated with, so using another model is an explicit change of that list. If the endpoint is a gateway that also routes to hosted models, such as Logos, the allowlist is what keeps the pool on the self-hosted ones.
 
+An institution without its own model gateway hosts gpt-oss-120b itself on an OpenAI-compatible server; it needs a GPU with about 80 GB of memory. With [vLLM](https://docs.vllm.ai/), `vllm serve openai/gpt-oss-120b` serves the model under the name `openai/gpt-oss-120b`, which `allowed-models` already contains; set `base-url` to `http://<host>:8000/v1`. [Ollama](https://ollama.com/library/gpt-oss) names the same model `gpt-oss:120b` and serves it at `http://<host>:11434/v1`; set both models to `gpt-oss:120b` and add that name to `allowed-models`. Leave `api-key` empty if the server requires none.
+
 The server checks this configuration at startup:
 
 - With `base-url`, `generator-model` and `judge-model` all empty, the pool is off. The pool page tells instructors that no local model is configured, and builds are refused. The log reads `The quiz question pool is off: no model endpoint is configured`.
