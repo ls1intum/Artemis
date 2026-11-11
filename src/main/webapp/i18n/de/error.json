@@ -155,6 +155,8 @@
         "cpuCountInvalid": "Die CPU-Anzahl ist ungültig. Bitte stelle sicher, dass es sich um eine positive Ganzzahl handelt.",
         "memorySwapLimitInvalid": "Die maximale Swap-Speichergröße ist ungültig. Bitte stelle sicher, dass er größer oder gleich 0 ist.",
         "dockerFlagsParsingError": "Fehler beim Parsen der Docker-Flags.",
+        "gradedParticipationMismatch": "Die ausgewählte Teilnahme gehört nicht zu dieser Aufgabe.",
+        "sharingInfoInvalid": "Die Sharing-Informationen der Anfrage konnten nicht validiert werden. Bitte starte den Import erneut über die Sharing Platform.",
         "dueDateOver": {
             "noParticipationPossible": "Das Abgabedatum der Übung ist bereits abgelaufen, du kannst nicht mehr an dieser Übung teilnehmen.",
             "participationInPracticeMode": "Das Abgabedatum der Übung ist bereits abgelaufen, eine reguläre Teilnahme an der Übung ist nicht mehr möglich. Du kannst den Übungsmodus verwenden, um die Übung zu lösen.",
