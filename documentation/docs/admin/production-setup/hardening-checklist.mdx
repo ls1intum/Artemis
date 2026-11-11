@@ -15,7 +15,7 @@ The remaining items depend on how and where you run Artemis, so only you can ver
 
 - [ ] Only the reverse proxy is reachable from the internet. The database, the broker, the distributed data provider and the build agents are on a private network.
 - [ ] HTTPS terminates at the reverse proxy with a valid certificate and current TLS settings.
-- [ ] The reverse proxy sets `X-Forwarded-For`, and `server.tomcat.remoteip.internal-proxies` lists only your own proxies, so the rate limit counts the real client address. See
+- [ ] The reverse proxy sets `X-Forwarded-For`, and both `server.tomcat.remoteip.internal-proxies` and `artemis.continuous-integration.build-agent-network.trusted-proxies` list only your own proxies, so the rate limit counts the real client address. See
       [Client Address of Git Requests](/admin/production-setup/security#client-address-of-git-requests).
 - [ ] The websocket endpoint is reached through the same origin as the application. See [Websocket Connections](/admin/production-setup/security#websocket-connections).
 - [ ] Rate limiting is on (it is by default) and the limits fit your installation, in particular where many students share one address. See [Rate Limiting](/admin/production-setup/security#rate-limiting).

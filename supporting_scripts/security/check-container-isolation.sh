@@ -35,10 +35,23 @@ echo "Starting a listener on port ${LISTENER_PORT} of the host"
 python3 -m http.server "${LISTENER_PORT}" --bind 0.0.0.0 >/dev/null 2>&1 &
 LISTENER_PID=$!
 sleep 1
+if ! kill -0 "${LISTENER_PID}" 2>/dev/null || ! python3 -c "import socket;socket.create_connection(('127.0.0.1',${LISTENER_PORT}),2)"; then
+    echo "The listener on port ${LISTENER_PORT} did not start." >&2
+    exit 2
+fi
 
 # A sibling container on the default network, which a build container must not reach either.
 docker run --detach --name "${SIBLING_NAME}" "${BUSYBOX_IMAGE}" sh -c 'nc -l -p 8080 -k >/dev/null' >/dev/null
 SIBLING_IP="$(docker inspect --format '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' "${SIBLING_NAME}")"
+if [ -z "${SIBLING_IP}" ]; then
+    echo "The sibling container did not get an address." >&2
+    exit 2
+fi
+# Wait until the sibling listens, so that an unreachable result means isolation and not a late start.
+for _ in 1 2 3 4 5 6 7 8 9 10; do
+    docker run --rm "${BUSYBOX_IMAGE}" nc -w 1 -z "${SIBLING_IP}" 8080 >/dev/null 2>&1 && break
+    sleep 1
+done
 
 # Runs a command in a build-like container and reports whether it succeeded.
 in_container() {
@@ -56,9 +69,7 @@ expect_unreachable() {
 }
 
 expect_unreachable "a service on the host (host.docker.internal:${LISTENER_PORT})" "wget -q -T 3 -O /dev/null http://host.docker.internal:${LISTENER_PORT}/"
-if [ -n "${SIBLING_IP}" ]; then
-    expect_unreachable "a sibling container (${SIBLING_IP}:8080)" "nc -w 3 -z ${SIBLING_IP} 8080"
-fi
+expect_unreachable "a sibling container (${SIBLING_IP}:8080)" "nc -w 3 -z ${SIBLING_IP} 8080"
 expect_unreachable "the internet (1.1.1.1:443)" "nc -w 3 -z 1.1.1.1 443"
 expect_unreachable "a name server (example.com)" "nslookup -timeout=3 example.com"
 

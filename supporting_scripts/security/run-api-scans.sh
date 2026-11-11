@@ -31,11 +31,17 @@ mkdir -p "${OUTPUT_DIRECTORY}"
 OUTPUT_DIRECTORY="$(cd "${OUTPUT_DIRECTORY}" && pwd)"
 
 # A container reaches the host through this name, on macOS as well as on Linux.
-CONTAINER_URL="${BASE_URL/localhost/host.docker.internal}"
+CONTAINER_URL="$(printf '%s' "${BASE_URL}" | sed -E 's#^(https?://)(localhost|127\.0\.0\.1)([:/]|$)#\1host.docker.internal\3#')"
 DOCKER_HOST_ARGS=(--add-host=host.docker.internal:host-gateway)
 
+# The E2E stack uses a self-signed certificate, so verification is only skipped for a local address. Set CURL_CA_BUNDLE for other installations.
+CURL_TLS_ARGS=()
+if printf '%s' "${BASE_URL}" | grep -Eq '^https?://(localhost|127\.0\.0\.1)([:/]|$)'; then
+    CURL_TLS_ARGS=(--insecure)
+fi
+
 echo "Signing in as ${SCAN_USERNAME} at ${BASE_URL}"
-JWT="$(curl --silent --show-error --insecure --fail --dump-header - --output /dev/null \
+JWT="$(curl --silent --show-error ${CURL_TLS_ARGS[@]+"${CURL_TLS_ARGS[@]}"} --fail --dump-header - --output /dev/null \
     --header 'Content-Type: application/json' \
     --data "{\"username\":\"${SCAN_USERNAME}\",\"password\":\"${SCAN_PASSWORD}\",\"rememberMe\":false}" \
     "${BASE_URL}/api/core/public/authenticate" | tr -d '\r' | sed -n 's/^[Ss]et-[Cc]ookie: jwt=\([^;]*\);.*/\1/p' | head -n 1)"

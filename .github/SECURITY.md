@@ -237,7 +237,7 @@ that operators can see what was examined, when, and which releases contain the r
 
 | Date            | Scope                                                         | Outcome                                                                                                                                                                                                   |
 | --------------- | ------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 9 November 2026 | The server REST interfaces and the build agent infrastructure | The findings were triaged and fixed, and each fix received tests that cover a refused request. The fixes are part of release 10.7 and are backported to 9.9.x. Operators should update to these releases. |
+| 9 November 2026 | The server REST interfaces and the build agent infrastructure | The findings were triaged and fixed, and each fix received tests that cover a refused request. The fixes are part of release 10.7. They are also on the 9.9.x branch, and the release notes of the first 9.9.x patch release that contains them say so. Operators should update to these releases. |
 
 An audit combines the review of maintainers, automated analysis ([CodeQL](https://codeql.github.com/)
 and static analysis in the continuous integration), the architecture tests of the repository, and
