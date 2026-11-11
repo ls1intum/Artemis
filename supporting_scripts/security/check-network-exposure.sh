@@ -33,9 +33,9 @@ if ! command -v python3 >/dev/null 2>&1; then
     echo "python3 is required." >&2
     exit 2
 fi
-# nc of macOS needs -G for the time of a connection, -w only bounds the time of a connection that is idle
+# nc of macOS needs -G for the time of a connection, -w only bounds the time of a connection that is idle. Other implementations do not have the option.
 NC_CONNECT_ARGS=()
-if nc -h 2>&1 | grep -q -- '-G '; then
+if [ "$(uname -s)" = "Darwin" ]; then
     NC_CONNECT_ARGS=(-G "${CONNECT_TIMEOUT:-3}")
 fi
 
@@ -45,6 +45,15 @@ EXPECTED_PORTS="${EXPECTED_PORTS-443}"
 OPTIONAL_PORTS="${OPTIONAL_PORTS-80 7921}"
 CONNECT_TIMEOUT="${CONNECT_TIMEOUT:-3}"
 
+# A time that nc does not accept would turn every port into a result that says nothing, so it is refused here
+case "${CONNECT_TIMEOUT}" in
+    '' | *[!0-9]* | 0)
+        echo "CONNECT_TIMEOUT has to be a whole number of seconds of at least 1." >&2
+        exit 2
+        ;;
+    *) ;;
+esac
+
 FAILURES=0
 
 # Sets STATE to open, closed or error. The exit code of nc is 1 for a refused connection, a timeout, a name that cannot be resolved and an option that is not supported, so the
@@ -53,7 +62,7 @@ probe() {
     local output
     if output="$(nc -vz ${NC_CONNECT_ARGS[@]+"${NC_CONNECT_ARGS[@]}"} -w "${CONNECT_TIMEOUT}" "$1" "$2" 2>&1)"; then
         STATE=open
-    elif printf '%s' "${output}" | grep -Eqi 'refused|timed out|timeout|unreachable|no route'; then
+    elif printf '%s' "${output}" | grep -Eqi 'connection refused|timed out|timeout\.|no route to host'; then
         STATE=closed
     else
         STATE=error
@@ -62,8 +71,7 @@ probe() {
 
 # Prints every address of a name, one per line. A name has more than one address on dual-stack hosts and behind round robin DNS, and a connection goes to only one of them.
 addresses_of() {
-    if command -v python3 >/dev/null 2>&1; then
-        python3 -c 'import socket,sys
+    python3 -c 'import socket,sys
 try:
     seen=[]
     for info in socket.getaddrinfo(sys.argv[1], None, type=socket.SOCK_STREAM):
@@ -71,9 +79,6 @@ try:
             seen.append(info[4][0]); print(info[4][0])
 except OSError:
     pass' "$1"
-    else
-        echo "$1"
-    fi
 }
 
 for host in "$@"; do

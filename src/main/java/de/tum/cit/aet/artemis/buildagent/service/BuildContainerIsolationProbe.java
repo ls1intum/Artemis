@@ -50,6 +50,9 @@ public class BuildContainerIsolationProbe {
 
     private static final int MAX_PORT = 65535;
 
+    /** The exit code of the probe of the host when the container has no entry for the name of the host. */
+    private static final int EXIT_NO_HOST_ENTRY = 3;
+
     /** The name that a container uses for the host of the agent. */
     private static final String HOST_NAME = "host.docker.internal";
 
@@ -195,12 +198,18 @@ public class BuildContainerIsolationProbe {
      * differently, for example through an alias. That attempt can only show that the target is reachable: a failure of it says nothing, as it may be a failed resolution.
      */
     private Verdict probe(String network, Target target) {
-        List<String> addresses = isLoopback(target.host()) ? List.of() : resolve(target.host());
-        if (isLoopback(target.host()) || addresses.stream().anyMatch(BuildContainerIsolationProbe::isLoopbackAddress)) {
-            return probeThroughHostAddress(network, target);
+        boolean loopbackName = isLoopback(target.host());
+        List<String> addresses = loopbackName ? List.of() : resolve(target.host());
+        boolean allRefused = loopbackName || !addresses.isEmpty();
+        // An address of the host itself is reached through the name that a container uses for its host. The other addresses are tried as they are.
+        if (loopbackName || addresses.stream().anyMatch(BuildContainerIsolationProbe::isLoopbackAddress)) {
+            Verdict hostVerdict = probeThroughHostAddress(network, target);
+            if (hostVerdict == Verdict.REACHABLE) {
+                return Verdict.REACHABLE;
+            }
+            allRefused &= hostVerdict == Verdict.NOT_REACHABLE;
         }
-        boolean allRefused = !addresses.isEmpty();
-        for (String address : addresses) {
+        for (String address : addresses.stream().filter(address -> !isLoopbackAddress(address)).toList()) {
             Integer exitCode = runInContainer(network, false, target + " at " + address, "nc", "-w", String.valueOf(CONNECT_TIMEOUT_SECONDS), "-z", address,
                     String.valueOf(target.port()));
             if (Integer.valueOf(0).equals(exitCode)) {
@@ -208,7 +217,7 @@ public class BuildContainerIsolationProbe {
             }
             allRefused &= Integer.valueOf(EXIT_CONNECTION_FAILED).equals(exitCode);
         }
-        if (!isAddress(target.host())) {
+        if (!loopbackName && !isAddress(target.host())) {
             Integer exitCode = runInContainer(network, false, target.toString(), "nc", "-w", String.valueOf(CONNECT_TIMEOUT_SECONDS), "-z", target.host(),
                     String.valueOf(target.port()));
             if (Integer.valueOf(0).equals(exitCode)) {
@@ -220,11 +229,15 @@ public class BuildContainerIsolationProbe {
 
     /**
      * Probes a service of the host of the agent that is configured with a loopback address. A container reaches the host through the gateway of its network, which Docker names
-     * {@code host-gateway}. A service that listens on the loopback interface only is not reachable that way, a service that listens on every interface is.
+     * {@code host-gateway}. A service that listens on the loopback interface only is not reachable that way on Linux, a service that listens on every interface is. The address of
+     * the
+     * host is read from the hosts file of the container, so that a missing entry is told apart from a refused connection: the {@code nc} of busybox exits with 1 for both.
+     * Rootless Docker, networks without a route to the gateway, and a service that a container on the same network publishes are not covered.
      */
     private Verdict probeThroughHostAddress(String network, Target target) {
-        Integer exitCode = runInContainer(network, true, target + " on the host", "nc", "-w", String.valueOf(CONNECT_TIMEOUT_SECONDS), "-z", HOST_NAME,
-                String.valueOf(target.port()));
+        String script = "address=$(awk '/" + HOST_NAME + "/ {print $1; exit}' /etc/hosts); [ -n \"$address\" ] || exit " + EXIT_NO_HOST_ENTRY + "; nc -w " + CONNECT_TIMEOUT_SECONDS
+                + " -z \"$address\" " + target.port();
+        Integer exitCode = runInContainer(network, true, target + " on the host", "sh", "-c", script);
         if (Integer.valueOf(0).equals(exitCode)) {
             return Verdict.REACHABLE;
         }

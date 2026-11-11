@@ -30,6 +30,7 @@ import com.github.dockerjava.api.command.StartContainerCmd;
 import com.github.dockerjava.api.command.WaitContainerCmd;
 import com.github.dockerjava.api.command.WaitContainerResultCallback;
 import com.github.dockerjava.api.exception.NotFoundException;
+import com.github.dockerjava.api.model.HostConfig;
 
 import de.tum.cit.aet.artemis.buildagent.service.BuildContainerIsolationProbe.Result;
 import de.tum.cit.aet.artemis.buildagent.service.BuildContainerIsolationProbe.Target;
@@ -224,8 +225,11 @@ class BuildContainerIsolationProbeTest {
         Result result = new BuildContainerIsolationProbe(dockerClient, IMAGE).run(null, List.of(store));
 
         assertThat(result.reachable()).containsExactly(store);
-        assertThat(Mockito.mockingDetails(createCommand).getInvocations().stream().filter(call -> call.getMethod().getName().equals("withCmd"))
-                .map(call -> (String[]) call.getRawArguments()[0]).toList().getLast()).contains("host.docker.internal");
+        var invocations = Mockito.mockingDetails(createCommand).getInvocations();
+        String[] lastCommand = (String[]) invocations.stream().filter(call -> call.getMethod().getName().equals("withCmd")).toList().getLast().getRawArguments()[0];
+        assertThat(lastCommand[2]).as("the address of the host is read from the hosts file of the container").contains("/etc/hosts");
+        HostConfig lastHostConfig = (HostConfig) invocations.stream().filter(call -> call.getMethod().getName().equals("withHostConfig")).toList().getLast().getRawArguments()[0];
+        assertThat(lastHostConfig.getExtraHosts()).contains("host.docker.internal:host-gateway");
     }
 
     @Test
@@ -236,5 +240,17 @@ class BuildContainerIsolationProbeTest {
         Result result = new BuildContainerIsolationProbe(dockerClient, IMAGE).run(null, List.of(store));
 
         assertThat(result.notReachable()).containsExactly(store);
+    }
+
+    @Test
+    void doesNotCountAMissingEntryForTheHostAsIsolation() throws Exception {
+        // The container has no entry for the name of the host, which the probe reports with its own exit code
+        when(waitCallback.awaitStatusCode(anyLong(), eq(TimeUnit.SECONDS))).thenReturn(0, 3);
+        Target store = new Target("localhost", 6379);
+
+        Result result = new BuildContainerIsolationProbe(dockerClient, IMAGE).run(null, List.of(store));
+
+        assertThat(result.notReachable()).isEmpty();
+        assertThat(result.inconclusive()).containsExactly(store);
     }
 }
