@@ -4,14 +4,12 @@ import { AlertService } from 'app/foundation/service/alert.service';
 import { LearningPathAverageProgressDTO, LearningPathInformationDTO } from 'app/atlas/shared/entities/learning-path.model';
 import { SearchResult, SearchTermPageableSearch, SortingOrder } from 'app/foundation/pagination/pageable-table';
 import { onError } from 'app/foundation/util/global.utils';
-import { faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { SearchHighlightComponent } from 'app/admin/shared/search-highlight.component';
-import { PaginatorModule, PaginatorState } from 'primeng/paginator';
+import { TumAetUiInputDirective, TumAetUiPaginatorComponent, TumAetUiTableDirective, TumAetUiTableLayoutComponent } from '@tumaet/ui-angular';
 import { DialogService } from 'primeng/dynamicdialog';
 import { CompetencyGraphModalComponent } from 'app/atlas/manage/competency-graph-modal/competency-graph-modal.component';
 import { BaseApiHttpService } from 'app/foundation/service/base-api-http.service';
 import { FormsModule } from '@angular/forms';
-import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 
@@ -25,16 +23,22 @@ enum TableColumn {
 @Component({
     selector: 'jhi-learning-paths-table',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [PaginatorModule, SearchHighlightComponent, FormsModule, FontAwesomeModule, ArtemisTranslatePipe, TranslateDirective],
+    imports: [
+        TumAetUiPaginatorComponent,
+        TumAetUiTableDirective,
+        TumAetUiTableLayoutComponent,
+        TumAetUiInputDirective,
+        SearchHighlightComponent,
+        FormsModule,
+        ArtemisTranslatePipe,
+        TranslateDirective,
+    ],
     templateUrl: './learning-paths-table.component.html',
-    styleUrls: ['./learning-paths-table.component.scss', '../learning-path-instructor-page/learning-path-instructor-page.component.scss'],
 })
 export class LearningPathsTableComponent {
     private readonly learningPathApiService = inject(LearningPathApiService);
     private readonly alertService = inject(AlertService);
     private readonly dialogService = inject(DialogService);
-
-    protected readonly faSpinner = faSpinner;
 
     readonly courseId = input.required<number>();
 
@@ -102,11 +106,6 @@ export class LearningPathsTableComponent {
     async setPage(pageNumber: number): Promise<void> {
         this.page.set(pageNumber);
         await this.loadLearningPaths(this.courseId());
-    }
-
-    /** PrimeNG paginator page change (0-indexed) converted to the 1-indexed page used here. */
-    onPageChange(event: PaginatorState): void {
-        void this.setPage((event.page ?? 0) + 1);
     }
 
     openCompetencyGraph(learningPathId: number, name: string | undefined): void {

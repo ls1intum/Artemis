@@ -2,7 +2,14 @@ import { ChangeDetectionStrategy, Component, computed, input, output, signal } f
 import { DecimalPipe } from '@angular/common';
 import { faChartLine, faChevronDown, faChevronRight } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TumAetUiButtonDirective, TumAetUiTableDirective, TumAetUiTagComponent, TumAetUiTagSeverity, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import {
+    TumAetUiButtonDirective,
+    TumAetUiTableDirective,
+    TumAetUiTableLayoutComponent,
+    TumAetUiTagComponent,
+    TumAetUiTagSeverity,
+    TumAetUiTooltipDirective,
+} from '@tumaet/ui-angular';
 
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -40,6 +47,7 @@ const INTERACTION_SEVERITY: Record<FeatureInteraction, TumAetUiTagSeverity> = {
     templateUrl: './feature-usage-tree.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
+        TumAetUiTableLayoutComponent,
         DecimalPipe,
         FaIconComponent,
         TranslateDirective,

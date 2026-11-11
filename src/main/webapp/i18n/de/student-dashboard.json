@@ -32,7 +32,6 @@
                 "coursePrerequisites": "Voraussetzungen",
                 "noCourse": "Keine Kurse zur Einschreibung verfügbar",
                 "courseLoading": "Kurs wird geladen...",
-                "coursesLoading": "Kurse werden geladen...",
                 "courseEnrollmentConfirmationTitle": "Bestätigung der Einschreibung für Kurs \"{{ courseName }}\""
             },
             "course": "Kurs"
