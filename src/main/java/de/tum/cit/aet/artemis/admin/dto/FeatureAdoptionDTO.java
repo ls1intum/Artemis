@@ -5,6 +5,7 @@ import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
  * How many entities have one optional feature switched on.
@@ -19,5 +20,6 @@ import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
  * @param total   how many entities of that kind exist
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
+@Schema(requiredProperties = { "module", "key", "count", "total" })
 public record FeatureAdoptionDTO(String module, String key, @Nullable UserFeature feature, long count, long total) {
 }
