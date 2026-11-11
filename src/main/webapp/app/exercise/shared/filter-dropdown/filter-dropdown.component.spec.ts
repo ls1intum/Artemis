@@ -27,6 +27,29 @@ describe('Participation filter toolbar', () => {
         await fixture.whenStable();
     });
 
+    it('switches segmented results and clears them with All while retaining assessment selections', async () => {
+        fixture.componentRef.setInput('groupedFilters', [
+            { labelKey: 'Results', items: ['Successful', 'Unsuccessful'], segmented: true },
+            { labelKey: 'Assessment', items: ['Manual', 'Automatic'] },
+        ]);
+        fixture.componentRef.setInput('activeFilters', ['Manual', 'Automatic']);
+        fixture.detectChanges();
+        await fixture.whenStable();
+        fixture.detectChanges();
+        const buttons = fixture.nativeElement.querySelectorAll('tumaet-ui-select-button button') as NodeListOf<HTMLButtonElement>;
+        expect(buttons).toHaveLength(3);
+        expect(buttons[0].getAttribute('aria-pressed')).toBe('true');
+        buttons[1].click();
+        fixture.detectChanges();
+        expect(changed).toHaveBeenLastCalledWith(['Manual', 'Automatic', 'Successful']);
+        buttons[2].click();
+        fixture.detectChanges();
+        expect(changed).toHaveBeenLastCalledWith(['Manual', 'Automatic', 'Unsuccessful']);
+        buttons[0].click();
+        fixture.detectChanges();
+        expect(changed).toHaveBeenLastCalledWith(['Manual', 'Automatic']);
+    });
+
     function openGroup(index: number): HTMLElement {
         const trigger = fixture.nativeElement.querySelectorAll('[role="combobox"]')[index] as HTMLElement;
         trigger.click();

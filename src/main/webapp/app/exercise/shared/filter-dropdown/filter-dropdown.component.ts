@@ -6,6 +6,7 @@ import {
     TumAetUiCheckboxComponent,
     TumAetUiChipComponent,
     TumAetUiMultiSelectComponent,
+    TumAetUiSelectButtonComponent,
     TumAetUiSelectComponent,
     TumAetUiTooltipDirective,
 } from '@tumaet/ui-angular';
@@ -15,6 +16,7 @@ export interface FilterGroup {
     labelKey: string;
     items: string[];
     single?: boolean;
+    segmented?: boolean;
 }
 
 @Component({
@@ -27,6 +29,7 @@ export interface FilterGroup {
         TumAetUiCheckboxComponent,
         TumAetUiChipComponent,
         TumAetUiMultiSelectComponent,
+        TumAetUiSelectButtonComponent,
         TumAetUiSelectComponent,
         TumAetUiTooltipDirective,
     ],
@@ -43,6 +46,7 @@ export class FilterDropdownComponent {
         this.groupedFilters()
             .map((group) => ({
                 single: group.single,
+                segmented: group.segmented,
                 labelKey: group.labelKey,
                 items: group.items,
                 selected: group.items.filter((item) => this.activeFilters().includes(item)),
@@ -52,7 +56,7 @@ export class FilterDropdownComponent {
 
     protected singleOptions(group: FilterGroup): { value: string; label: string }[] {
         return [
-            { value: 'All', label: this.translateService.instant(group.labelKey) + ': ' + this.translateService.instant('artemisApp.exercise.showAll') },
+            { value: 'All', label: (group.segmented ? '' : this.translateService.instant(group.labelKey) + ': ') + this.translateService.instant('artemisApp.exercise.showAll') },
             ...group.items.map((value) => ({ value, label: this.translateService.instant('artemisApp.exercise.show' + value) })),
         ];
     }

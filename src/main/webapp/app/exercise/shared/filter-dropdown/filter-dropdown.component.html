@@ -9,6 +9,17 @@
                 />
                 <label [for]="'participation-filter-' + group.items[0]">{{ 'artemisApp.exercise.show' + group.items[0] | artemisTranslate }}</label>
             </div>
+        } @else if (group.segmented) {
+            <tumaet-ui-select-button
+                [options]="singleOptions(group)"
+                optionLabel="label"
+                optionValue="value"
+                [ngModel]="group.selected.length === 1 ? group.selected[0] : 'All'"
+                (ngModelChange)="updateGroup(group, [$event])"
+                [allowEmpty]="false"
+                [attr.aria-label]="group.labelKey | artemisTranslate"
+                size="small"
+            />
         } @else if (group.single) {
             <tumaet-ui-select
                 [matchTriggerWidth]="false"
