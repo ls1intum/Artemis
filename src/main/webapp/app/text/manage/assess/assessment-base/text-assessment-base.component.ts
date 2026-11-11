@@ -129,6 +129,8 @@ export abstract class TextAssessmentBaseComponent implements OnInit {
                     captureException('Overlapping Text Blocks with nothing? previousIndex: ' + previousIndex + ' nextIndex: ' + nextIndex);
                 } else if ([ref, previousRef].every((r) => r.block?.type === TextBlockType.AUTOMATIC)) {
                     captureException('Overlapping AUTOMATIC Text Blocks! previousIndex: ' + previousIndex + ' nextIndex: ' + nextIndex);
+                    // Preserve the prefix of the previous block instead of hiding part of the submission.
+                    TextAssessmentBaseComponent.addTextBlockByIndices(previousRef.block!.startIndex!, nextIndex, submission!, textBlockRefs);
                 } else if ([ref, previousRef].every((r) => r.block?.type === TextBlockType.MANUAL)) {
                     // Make sure to select a TextBlockRef that has a feedback.
                     let selectedRef = ref;

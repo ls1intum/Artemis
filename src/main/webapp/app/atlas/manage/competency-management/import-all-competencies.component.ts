@@ -8,7 +8,7 @@ export interface ImportAllCompetenciesDialogData {
     disabledIds?: number[];
     competencyType?: CourseCompetencyType | 'courseCompetency';
 }
-import { NgbTypeaheadModule } from '@ng-bootstrap/ng-bootstrap';
+import { SearchHighlightComponent } from 'app/admin/shared/search-highlight.component';
 import { PaginatorModule } from 'primeng/paginator';
 import { ButtonComponent, ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -59,7 +59,7 @@ export type ImportAllFromCourseResult = {
         FontAwesomeModule,
         FormsModule,
         CommonModule,
-        NgbTypeaheadModule,
+        SearchHighlightComponent,
     ],
 })
 export class ImportAllCompetenciesComponent extends ImportComponent<CourseForImportDTO> implements OnInit {
