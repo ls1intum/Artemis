@@ -175,4 +175,19 @@ class BuildContainerIsolationProbeTest {
         assertThat(result.inconclusive()).isEmpty();
         verify(dockerClient, never()).createContainerCmd(IMAGE);
     }
+
+    @Test
+    void doesNotCountAnUnresolvableNameAsIsolation() throws Exception {
+        // The nc of the container exits with the code of a refused connection when it cannot resolve a name, so the names are resolved before a container is started.
+        when(waitCallback.awaitStatusCode(anyLong(), eq(TimeUnit.SECONDS))).thenReturn(0, 1);
+        Target unresolvable = new Target("no-such-host.invalid", 6379);
+
+        Result result = new BuildContainerIsolationProbe(dockerClient, IMAGE).run(null, List.of(unresolvable));
+
+        assertThat(result.notReachable()).isEmpty();
+        assertThat(result.reachable()).isEmpty();
+        assertThat(result.inconclusive()).containsExactly(unresolvable);
+        // Only the self test ran
+        verify(dockerClient, times(1)).createContainerCmd(IMAGE);
+    }
 }

@@ -36,12 +36,29 @@ CONNECT_TIMEOUT="${CONNECT_TIMEOUT:-3}"
 
 FAILURES=0
 
+# Prints open, closed or error. The exit code of nc is 1 for a refused connection, a timeout and a name that cannot be resolved alike, so the message decides.
+probe() {
+    local output
+    if output="$(nc -vz -w "${CONNECT_TIMEOUT}" "$1" "$2" 2>&1)"; then
+        echo open
+    elif printf '%s' "${output}" | grep -Eqi 'getaddrinfo|bad address|name or service|not known|resolve'; then
+        echo error
+    else
+        echo closed
+    fi
+}
+
 is_open() {
-    nc -z -w "${CONNECT_TIMEOUT}" "$1" "$2" >/dev/null 2>&1
+    [ "$(probe "$1" "$2")" = "open" ]
 }
 
 for host in "$@"; do
     echo "Host ${host}"
+    if [ "$(probe "${host}" 443)" = "error" ]; then
+        echo "FAIL  the name ${host} cannot be resolved, so nothing was checked"
+        FAILURES=$((FAILURES + 1))
+        continue
+    fi
     for port in ${INTERNAL_PORTS}; do
         if is_open "${host}" "${port}"; then
             echo "FAIL  port ${port} is reachable but belongs to an internal service"

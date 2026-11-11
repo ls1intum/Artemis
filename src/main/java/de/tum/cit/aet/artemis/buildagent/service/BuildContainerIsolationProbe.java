@@ -1,6 +1,9 @@
 package de.tum.cit.aet.artemis.buildagent.service;
 
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Locale;
@@ -166,19 +169,49 @@ public class BuildContainerIsolationProbe {
             return new Result(reachable, notReachable, inconclusive);
         }
         for (Target target : targets) {
-            Integer exitCode = runInContainer(network, target.toString(), "nc", "-w", String.valueOf(CONNECT_TIMEOUT_SECONDS), "-z", target.host(), String.valueOf(target.port()));
-            if (Integer.valueOf(0).equals(exitCode)) {
-                reachable.add(target);
-            }
-            else if (Integer.valueOf(EXIT_CONNECTION_FAILED).equals(exitCode)) {
-                notReachable.add(target);
-            }
-            else {
-                inconclusive.add(target);
+            switch (probe(network, target)) {
+                case REACHABLE -> reachable.add(target);
+                case NOT_REACHABLE -> notReachable.add(target);
+                case INCONCLUSIVE -> inconclusive.add(target);
             }
         }
         report(networkName, reachable, notReachable, inconclusive);
         return new Result(reachable, notReachable, inconclusive);
+    }
+
+    private enum Verdict {
+        REACHABLE, NOT_REACHABLE, INCONCLUSIVE
+    }
+
+    /**
+     * Connects to every address of the target. The names are resolved here and not in the container, because the {@code nc} of the container makes one connection to one of
+     * the addresses of a name and exits with the same code when a name cannot be resolved as when a connection is refused.
+     */
+    private Verdict probe(String network, Target target) {
+        List<String> addresses = resolve(target.host());
+        if (addresses.isEmpty()) {
+            return Verdict.INCONCLUSIVE;
+        }
+        boolean allRefused = true;
+        for (String address : addresses) {
+            Integer exitCode = runInContainer(network, target + " at " + address, "nc", "-w", String.valueOf(CONNECT_TIMEOUT_SECONDS), "-z", address,
+                    String.valueOf(target.port()));
+            if (Integer.valueOf(0).equals(exitCode)) {
+                return Verdict.REACHABLE;
+            }
+            allRefused &= Integer.valueOf(EXIT_CONNECTION_FAILED).equals(exitCode);
+        }
+        return allRefused ? Verdict.NOT_REACHABLE : Verdict.INCONCLUSIVE;
+    }
+
+    private static List<String> resolve(String host) {
+        try {
+            return Arrays.stream(InetAddress.getAllByName(host)).map(InetAddress::getHostAddress).distinct().toList();
+        }
+        catch (UnknownHostException e) {
+            log.info("The build container network check could not resolve {}: {}", host, e.getMessage());
+            return List.of();
+        }
     }
 
     private void report(String networkName, List<Target> reachable, List<Target> notReachable, List<Target> inconclusive) {
