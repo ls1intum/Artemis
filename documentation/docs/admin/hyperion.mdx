@@ -2,7 +2,7 @@
 id: hyperion
 title: Hyperion Service
 sidebar_label: Hyperion Setup
-last_reviewed: 2026-11-03
+last_reviewed: 2026-11-10
 ---
 
 import { CalloutVariant } from '../../src/components/Callout/Callout.types';
@@ -219,23 +219,39 @@ management:
 
 ## Configure the quiz question pool
 
-Hyperion can pre-generate a pool of multiple-choice questions per course, competency and linked lecture unit, each grounded in that unit's slides, transcript or text and judged by a second model call before an instructor reviews them. The pool uses the default chat model configured above unless you name other models here. Instructors do not choose models; they only decide how many questions the pool holds per lecture unit.
+Hyperion can pre-generate a pool of multiple-choice questions per course, competency and linked lecture unit, each grounded in that unit's slides, transcript or text and judged by a second model call before an instructor reviews them. Instructors do not choose models; on the pool page they choose the question types, how many questions each lecture unit receives and the mix of difficulties.
 
 ```yaml
 artemis:
   hyperion:
     quiz-pool:
-      generator-model: # model (Azure: deployment name) that generates pool questions; blank uses the default chat model
-      judge-model: # model (Azure: deployment name) that judges generated questions; blank uses the default chat model
-      question-types: single-choice,multiple-choice # cells of the pool per competency, lecture unit and difficulty
-      difficulties: easy,medium,hard
+      base-url: https://logos.example.org/v1 # the pool's own self-hosted, OpenAI-compatible endpoint, including the /v1 prefix
+      api-key: <api-key> # leave empty if the endpoint needs none
+      timeout: 5m # HTTP timeout of one model call
+      allowed-models: openai/gpt-oss-120b,Qwen/Qwen3.8-27B # self-hosted models the pool may use
+      generator-model: openai/gpt-oss-120b # model that generates pool questions; must be listed in allowed-models
+      judge-model: openai/gpt-oss-120b # model that judges generated questions; must be listed in allowed-models
       generation-batch-size: 8 # questions requested per generation call
       stale-claim-minutes: 30 # a claim older than this counts as abandoned by a dead node and is released at the next build
       max-material-characters: 60000 # characters of a lecture unit's text that a generation prompt receives at most
       build-lease-minutes: 10 # a build that stops renewing its lease for this long counts as dead and frees the course for the next build; keep it longer than the longest model call
 ```
 
-Both models must be reachable through the configured Spring AI endpoint. On Azure OpenAI / Microsoft Foundry a model name is the deployment name. Every generation and filter call is recorded in the LLM token usage tracking, so add the two models to `artemis.llm.model-costs` if you want their cost reported.
+<Callout variant={CalloutVariant.warning}>
+    The pool sends lecture material to its model endpoint. It must be a self-hosted endpoint inside your institution, never a cloud provider. The pool does not use the chat model configured under `spring.ai` for Hyperion and Atlas, and it does not fall back to it.
+</Callout>
+
+The pool connects only through `base-url`, `api-key` and `timeout` above, independently of the `spring.ai` configuration. Both models must be served by that endpoint, and both must appear in `allowed-models`; `application-artemis.yml` ships the list of self-hosted models the pool has been evaluated with, so using another model is an explicit change of that list. If the endpoint is a gateway that also routes to hosted models, such as Logos, the allowlist is what keeps the pool on the self-hosted ones.
+
+The server checks this configuration at startup:
+
+- With `base-url`, `generator-model` and `judge-model` all empty, the pool is off. The pool page tells instructors that no local model is configured, and builds are refused. The log reads `The quiz question pool is off: no model endpoint is configured`.
+- If only some of the three are set, if a model is missing from `allowed-models`, or if `base-url` is not an http(s) URL or points at a known cloud provider (for example Azure OpenAI, OpenAI, Anthropic or Google), the pool stays off in the same way and the log shows a warning that names the setting to fix: `The quiz question pool is off because its model configuration is invalid: …`. The rest of Artemis starts normally. Instructors only see that an administrator has to configure the pool; the details appear in the log alone.
+- Otherwise the log names the endpoint and the two models: `The quiz question pool uses the endpoint … with the generator model … and the judge model …`.
+
+Every generation and filter call is recorded in the LLM token usage tracking, so add the two models to `artemis.llm.model-costs` if you want their cost reported.
+
+Every server log line of the pool starts with `Quiz question pool`, so `grep "Quiz question pool"` shows its activity. A build logs one line when it starts (course, user, new questions, settings and models) and one when it ends (duration, and how many questions were generated, accepted, rejected, regenerated after a rejection, and failed, with the failure reasons such as `CALL_FAILED` or `NO_MATERIAL`). Refused builds, cancel requests, deletions and settings changes are logged with the user who made them; failed model calls and lecture units without usable material are logged as warnings.
 
 ## Verifying the integration
 
