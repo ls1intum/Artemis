@@ -313,11 +313,11 @@ class RepositoryServiceFileOperationsTest {
 
     @Test
     void readingAllFilesLeavesOutATextFileAboveTheSizeLimitAndFailsForAReadOfThatFile() throws Exception {
-        Files.writeString(workingTree.resolve("small.txt"), "small");
-        Files.write(workingTree.resolve("large.txt"), new byte[(int) (RepositoryService.MAX_FILE_CONTENT_BYTES + 1)]);
+        FileUtils.writeStringToFile(workingTree.resolve("small.txt").toFile(), "small", StandardCharsets.UTF_8);
+        FileUtils.writeByteArrayToFile(workingTree.resolve("large.txt").toFile(), new byte[(int) (RepositoryService.MAX_FILE_CONTENT_BYTES + 1)]);
         try (Git git = Git.open(workingTree.toFile())) {
             git.add().addFilepattern(".").call();
-            git.commit().setMessage("files").setAuthor("a", "a@example.com").setCommitter("a", "a@example.com").call();
+            GitService.commit(git).setMessage("files").setAuthor("a", "a@example.com").call();
         }
 
         // The features that read a whole repository, such as the code of an exercise for an AI model, still work with the other files
@@ -328,10 +328,10 @@ class RepositoryServiceFileOperationsTest {
 
     @Test
     void readingAllFilesWithinTheLimitsReturnsThem() throws Exception {
-        Files.writeString(workingTree.resolve("small.txt"), "small");
+        FileUtils.writeStringToFile(workingTree.resolve("small.txt").toFile(), "small", StandardCharsets.UTF_8);
         try (Git git = Git.open(workingTree.toFile())) {
             git.add().addFilepattern(".").call();
-            git.commit().setMessage("files").setAuthor("a", "a@example.com").setCommitter("a", "a@example.com").call();
+            GitService.commit(git).setMessage("files").setAuthor("a", "a@example.com").call();
         }
 
         assertThat(repositoryService.getFilesContentFromBareRepositoryForLastCommit(repository)).containsEntry("small.txt", "small");
