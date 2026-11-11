@@ -44,17 +44,15 @@ public class SshConfiguration {
     private static final Logger log = LoggerFactory.getLogger(SshConfiguration.class);
 
     /** The git commands (clone, fetch, push) that run at the same time. Further commands wait for a free thread. */
-    private static final int MAX_CONCURRENT_GIT_COMMANDS = 32;
+    private static final int MAX_CONCURRENT_GIT_COMMANDS = 256;
 
     /** The commands that may wait for a free thread. Further commands are rejected. */
-    private static final int MAX_QUEUED_GIT_COMMANDS = 64;
+    private static final int MAX_QUEUED_GIT_COMMANDS = 256;
 
     private static final int AUTHENTICATION_TIMEOUT_SECONDS = 30;
 
-    private static final int MAX_AUTHENTICATION_ATTEMPTS = 6;
-
-    /** A git command uses one channel, so a session does not need many. */
-    private static final int MAX_CHANNELS_PER_SESSION = 4;
+    /** A client may run several git commands over one session, for example a build agent that clones for many builds, so the limit is generous. */
+    private static final int MAX_CHANNELS_PER_SESSION = 64;
 
     @Value("${artemis.version-control.ssh-port:7921}")
     private int sshPort;
@@ -109,9 +107,8 @@ public class SshConfiguration {
         CloseableExecutorService gitCommandExecutor = ThreadUtils.noClose(gitCommandPool);
         sshd.addCloseFutureListener(_ -> gitCommandPool.shutdown());
         sshd.setCommandFactory(sshGitCommandFactoryService.withGitLocationResolver(sshGitLocationResolverService).withExecutorServiceProvider(() -> gitCommandExecutor));
-        // Clients that do not authenticate quickly, or keep many channels open, are dropped instead of holding resources of the server.
+        // Clients that do not authenticate quickly are dropped, and the channels of a session are bounded, instead of holding resources of the server.
         CoreModuleProperties.AUTH_TIMEOUT.set(sshd, Duration.ofSeconds(AUTHENTICATION_TIMEOUT_SECONDS));
-        CoreModuleProperties.MAX_AUTH_REQUESTS.set(sshd, MAX_AUTHENTICATION_ATTEMPTS);
         CoreModuleProperties.MAX_CONCURRENT_CHANNELS.set(sshd, MAX_CHANNELS_PER_SESSION);
         sshd.setPublickeyAuthenticator(gitPublickeyAuthenticatorService);
         // Recovers the real client address when a load balancer forwards this port at the TCP level. Installed

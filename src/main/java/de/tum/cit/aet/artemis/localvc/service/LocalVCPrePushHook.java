@@ -50,7 +50,7 @@ public record LocalVCPrePushHook(LocalVCServletService localVCServletService, Us
     static final long MAX_TREE_BYTES = 500L * 1024 * 1024;
 
     /** The time that the examination of the tree may take. */
-    static final long MAX_TREE_NANOS = TimeUnit.SECONDS.toNanos(20);
+    static final long MAX_TREE_NANOS = TimeUnit.SECONDS.toNanos(60);
 
     private static final String METADATA_NAME_MESSAGE = "The path '%s' is not allowed: a name that denotes the metadata directory of a repository cannot be part of the content.";
 

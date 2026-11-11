@@ -177,10 +177,10 @@ public class RepositoryService {
             }
             if (selectedFilePaths == null) {
                 return getFileContentFromBareRepositoryForCommitId(repository, commitObjectId, null, BinaryFileFilter.EXTENSION, MAX_FILE_CONTENT_BYTES, MAX_TOTAL_CONTENT_BYTES,
-                        true);
+                        true, false);
             }
             return getFileContentFromBareRepositoryForCommitId(repository, commitObjectId, selectedFilePaths, BinaryFileFilter.CONTENT, MAX_SELECTED_FILE_SIZE_BYTES,
-                    MAX_SELECTED_FILES_TOTAL_SIZE_BYTES, false);
+                    MAX_SELECTED_FILES_TOTAL_SIZE_BYTES, false, false);
         }
     }
 
@@ -343,7 +343,7 @@ public class RepositoryService {
         if (commitId == null) {
             return Map.of();
         }
-        return getFileContentFromBareRepositoryForCommitId(repository, commitId, null, BinaryFileFilter.EXTENSION, MAX_FILE_CONTENT_BYTES, MAX_TOTAL_CONTENT_BYTES, true);
+        return getFileContentFromBareRepositoryForCommitId(repository, commitId, null, BinaryFileFilter.EXTENSION, MAX_FILE_CONTENT_BYTES, MAX_TOTAL_CONTENT_BYTES, true, false);
     }
 
     /**
@@ -364,9 +364,8 @@ public class RepositoryService {
         if (commitId == null) {
             return Optional.empty();
         }
-        return Optional.ofNullable(
-                getFileContentFromBareRepositoryForCommitId(repository, commitId, Set.of(filePath), BinaryFileFilter.NONE, MAX_FILE_CONTENT_BYTES, MAX_TOTAL_CONTENT_BYTES, true)
-                        .get(filePath));
+        return Optional.ofNullable(getFileContentFromBareRepositoryForCommitId(repository, commitId, Set.of(filePath), BinaryFileFilter.NONE, MAX_FILE_CONTENT_BYTES,
+                MAX_TOTAL_CONTENT_BYTES, true, true).get(filePath));
     }
 
     /**
@@ -384,7 +383,8 @@ public class RepositoryService {
             return Map.of();
         }
 
-        return getFileContentFromBareRepositoryForCommitId(repository, headCommitId, null, BinaryFileFilter.EXTENSION, MAX_FILE_CONTENT_BYTES, MAX_TOTAL_CONTENT_BYTES, true);
+        return getFileContentFromBareRepositoryForCommitId(repository, headCommitId, null, BinaryFileFilter.EXTENSION, MAX_FILE_CONTENT_BYTES, MAX_TOTAL_CONTENT_BYTES, true,
+                false);
     }
 
     /**
@@ -437,7 +437,7 @@ public class RepositoryService {
             for (RevCommit commit : walk) {
                 if (((long) commit.getCommitTime()) <= epochSeconds) {
                     return getFileContentFromBareRepositoryForCommitId(repository, commit.getId(), null, BinaryFileFilter.EXTENSION, MAX_FILE_CONTENT_BYTES,
-                            MAX_TOTAL_CONTENT_BYTES, true);
+                            MAX_TOTAL_CONTENT_BYTES, true, false);
                 }
             }
         }
@@ -468,19 +468,21 @@ public class RepositoryService {
     /**
      * Reads file content through one shared JGit traversal for full-repository exports, selected files, and single-file lookups.
      *
-     * @param repository        The repository from which file contents are retrieved.
-     * @param commitId          The commit from which file contents are retrieved.
-     * @param selectedFilePaths The paths to retrieve, or null to traverse all files.
-     * @param binaryFileFilter  The strategy used to exclude binary files.
-     * @param maxFileSizeBytes  The maximum size of an individual returned file.
-     * @param maxTotalSizeBytes The maximum aggregate size of all returned files.
-     * @param failOnLimit       Whether a file or total size above its maximum is an error. Otherwise the file is left out.
+     * @param repository          The repository from which file contents are retrieved.
+     * @param commitId            The commit from which file contents are retrieved.
+     * @param selectedFilePaths   The paths to retrieve, or null to traverse all files.
+     * @param binaryFileFilter    The strategy used to exclude binary files.
+     * @param maxFileSizeBytes    The maximum size of an individual returned file.
+     * @param maxTotalSizeBytes   The maximum aggregate size of all returned files.
+     * @param failOnLimit         Whether a total size above its maximum is an error. Otherwise the file is left out.
+     * @param failOnOversizedFile Whether a file above its maximum is an error. Otherwise the file is left out.
      * @return A map of repository-relative file paths to UTF-8 content.
      * @throws IOException If the commit or file content cannot be read, if the tree has more entries than {@link #MAX_TREE_ENTRIES}, or if a size limit is exceeded and
-     *                         {@code failOnLimit} is set.
+     *                         {@code failOnLimit} or {@code failOnOversizedFile} is set.
      */
     private Map<String, String> getFileContentFromBareRepositoryForCommitId(org.eclipse.jgit.lib.Repository repository, @NonNull ObjectId commitId,
-            @Nullable Set<String> selectedFilePaths, BinaryFileFilter binaryFileFilter, long maxFileSizeBytes, long maxTotalSizeBytes, boolean failOnLimit) throws IOException {
+            @Nullable Set<String> selectedFilePaths, BinaryFileFilter binaryFileFilter, long maxFileSizeBytes, long maxTotalSizeBytes, boolean failOnLimit,
+            boolean failOnOversizedFile) throws IOException {
         Map<String, String> filesWithContent = new HashMap<>();
         long totalSize = 0;
 
@@ -509,9 +511,11 @@ public class RepositoryService {
                     var blobLoader = repository.open(objectId);
                     long blobSize = blobLoader.getSize();
                     if (blobSize > maxFileSizeBytes) {
-                        if (failOnLimit) {
+                        if (failOnOversizedFile) {
                             throw new IOException("The file " + path + " is larger than " + maxFileSizeBytes + " bytes.");
                         }
+                        // A file that is too large for the content of a snapshot is left out, like a binary file
+                        log.debug("Leaving out the file {} of the commit {}: it is larger than {} bytes", path, commitId.name(), maxFileSizeBytes);
                         continue;
                     }
                     if (blobSize > maxTotalSizeBytes - totalSize) {
