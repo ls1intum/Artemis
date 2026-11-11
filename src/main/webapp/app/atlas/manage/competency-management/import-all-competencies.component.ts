@@ -8,7 +8,7 @@ export interface ImportAllCompetenciesDialogData {
     disabledIds?: number[];
     competencyType?: CourseCompetencyType | 'courseCompetency';
 }
-import { NgbTypeaheadModule } from '@ng-bootstrap/ng-bootstrap';
+import { SearchHighlightComponent } from 'app/admin/shared/search-highlight.component';
 import { TumAetUiInputDirective, TumAetUiPaginatorComponent, TumAetUiTableDirective, TumAetUiTableLayoutComponent, TumAetUiTableSortableColumnComponent } from '@tumaet/ui-angular';
 import { ButtonComponent, ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -55,7 +55,7 @@ export type ImportAllFromCourseResult = {
         TranslateDirective,
         ArtemisTranslatePipe,
         FormsModule,
-        NgbTypeaheadModule,
+        SearchHighlightComponent,
     ],
 })
 export class ImportAllCompetenciesComponent extends ImportComponent<CourseForImportDTO> implements OnInit {

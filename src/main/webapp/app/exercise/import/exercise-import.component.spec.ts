@@ -787,27 +787,6 @@ describe('ExerciseImportComponent template', () => {
             expect(alertErrorStub).not.toHaveBeenCalled();
         });
     });
-    describe('highlightParts', () => {
-        it('should return the whole value unhighlighted without a search term', () => {
-            comp.searchTerm = '';
-
-            expect(comp.highlightParts('Sorting Algorithms')).toEqual([{ text: 'Sorting Algorithms', highlighted: false }]);
-            expect(comp.highlightParts(undefined)).toEqual([{ text: '', highlighted: false }]);
-        });
-
-        it('should split the value around every case-insensitive match of the search term', () => {
-            comp.searchTerm = 'so';
-
-            expect(comp.highlightParts('Sorting by SO')).toEqual([
-                { text: '', highlighted: false },
-                { text: 'So', highlighted: true },
-                { text: 'rting by ', highlighted: false },
-                { text: 'SO', highlighted: true },
-                { text: '', highlighted: false },
-            ]);
-        });
-    });
-
     it('should do nothing when importing a preview without an open preview', () => {
         comp.importPreviewed();
 

@@ -4,7 +4,7 @@ import { AlertService } from 'app/foundation/service/alert.service';
 import { LearningPathAverageProgressDTO, LearningPathInformationDTO } from 'app/atlas/shared/entities/learning-path.model';
 import { SearchResult, SearchTermPageableSearch, SortingOrder } from 'app/foundation/pagination/pageable-table';
 import { onError } from 'app/foundation/util/global.utils';
-import { NgbTypeaheadModule } from '@ng-bootstrap/ng-bootstrap';
+import { SearchHighlightComponent } from 'app/admin/shared/search-highlight.component';
 import { TumAetUiInputDirective, TumAetUiPaginatorComponent, TumAetUiTableDirective, TumAetUiTableLayoutComponent } from '@tumaet/ui-angular';
 import { DialogService } from 'primeng/dynamicdialog';
 import { CompetencyGraphModalComponent } from 'app/atlas/manage/competency-graph-modal/competency-graph-modal.component';
@@ -28,7 +28,7 @@ enum TableColumn {
         TumAetUiTableDirective,
         TumAetUiTableLayoutComponent,
         TumAetUiInputDirective,
-        NgbTypeaheadModule,
+        SearchHighlightComponent,
         FormsModule,
         ArtemisTranslatePipe,
         TranslateDirective,

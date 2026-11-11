@@ -43,7 +43,7 @@
                             <td>{{ course.id }}</td>
                             @for (column of columns; track column) {
                                 <td class="break-words">
-                                    <ngb-highlight [result]="column.getProperty(course)" [term]="searchTerm" />
+                                    <jhi-search-highlight [result]="column.getProperty(course)" [term]="searchTerm" />
                                 </td>
                             }
                             <td>

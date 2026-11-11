@@ -16,7 +16,7 @@ import { ScienceService } from 'app/foundation/science/science.service';
 import { DialogService } from 'primeng/dynamicdialog';
 import { MockComponent, MockProvider } from 'ng-mocks';
 import { FaIconComponent, FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { NgbHighlight, NgbTypeaheadModule } from '@ng-bootstrap/ng-bootstrap';
+import { SearchHighlightComponent } from 'app/admin/shared/search-highlight.component';
 
 describe('LearningPathsTableComponent', () => {
     let component: LearningPathsTableComponent;
@@ -56,8 +56,8 @@ describe('LearningPathsTableComponent', () => {
             ],
         })
             .overrideComponent(LearningPathsTableComponent, {
-                remove: { imports: [NgbTypeaheadModule, FontAwesomeModule] },
-                add: { imports: [MockComponent(NgbHighlight), MockComponent(FaIconComponent)] },
+                remove: { imports: [SearchHighlightComponent, FontAwesomeModule] },
+                add: { imports: [MockComponent(SearchHighlightComponent), MockComponent(FaIconComponent)] },
             })
             .compileComponents();
 

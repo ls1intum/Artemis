@@ -6,7 +6,7 @@ import { lastValueFrom } from 'rxjs';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { onError } from 'app/foundation/util/global.utils';
 import { BaseApiHttpService } from 'app/foundation/service/base-api-http.service';
-import { NgbTypeaheadModule } from '@ng-bootstrap/ng-bootstrap';
+import { SearchHighlightComponent } from 'app/admin/shared/search-highlight.component';
 import {
     TumAetUiButtonDirective,
     TumAetUiInputDirective,
@@ -43,7 +43,7 @@ export type Column<T extends BaseEntity> = {
         ArtemisTranslatePipe,
         TranslateDirective,
         FormsModule,
-        NgbTypeaheadModule,
+        SearchHighlightComponent,
     ],
     templateUrl: './import-table.component.html',
 })

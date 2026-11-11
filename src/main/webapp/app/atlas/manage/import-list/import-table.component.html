@@ -31,7 +31,7 @@
                     <td>{{ entity.id }}</td>
                     @for (column of columns(); track column) {
                         <td class="break-words">
-                            <ngb-highlight [result]="column.getProperty(entity)" [term]="searchTerm()" />
+                            <jhi-search-highlight [result]="column.getProperty(entity)" [term]="searchTerm()" />
                         </td>
                     }
                     <td>
