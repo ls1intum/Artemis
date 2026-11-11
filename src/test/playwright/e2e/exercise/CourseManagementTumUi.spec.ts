@@ -368,22 +368,21 @@ test.describe('Course management TUM UI tables', { tag: '@slow' }, () => {
 
             await page.goto(`/course-management/${course.id}/assessment-dashboard`);
             await captureLayouts('course-assessment-graph', expectTutorGraphLayout);
-            await test.step('keeps the trailing graph step reachable by user scrolling', async () => {
+            await test.step('keeps the trailing course graph step reachable by scrolling the exercise table', async () => {
                 const viewport = page.viewportSize()!;
                 const graph = page.getByTestId('tutor-participation-graph');
                 try {
                     await page.setViewportSize({ width: 320, height: 800 });
-                    await expect(graph).toHaveCSS('overflow-x', 'auto');
-                    await expect.poll(() => graph.evaluate((element) => element.scrollWidth - element.clientWidth)).toBeGreaterThan(0);
-                    await expect
-                        .poll(async () => {
-                            await graph.hover();
-                            await page.mouse.wheel(1000, 0);
-                            return graph.evaluate((element) => element.scrollWidth - element.clientWidth - element.scrollLeft);
-                        })
-                        .toBeLessThanOrEqual(1);
-                    await expect.poll(() => graph.evaluate((element) => element.scrollLeft)).toBeGreaterThan(0);
-                    await expectInside(graph.getByTestId('tutor-progress-track').last(), graph, ['left', 'right'], { name: 'trailing tutor progress track' });
+                    const tableViewport = page.getByTestId('assessment-exercise-table-viewport');
+                    const trailingTrack = graph.getByTestId('tutor-progress-track').last();
+                    await expect(tableViewport).toHaveCSS('overflow-x', 'auto');
+                    await expect.poll(() => tableViewport.evaluate((element) => element.scrollWidth - element.clientWidth)).toBeGreaterThan(0);
+                    await tableViewport.hover();
+                    const viewportBounds = await measure(tableViewport);
+                    const trackBounds = await measure(trailingTrack);
+                    await page.mouse.wheel(trackBounds.left + trackBounds.width / 2 - viewportBounds.left - viewportBounds.width / 2, 0);
+                    await expect.poll(() => tableViewport.evaluate((element) => element.scrollLeft)).toBeGreaterThan(0);
+                    await expectInside(trailingTrack, tableViewport, ['left', 'right'], { name: 'trailing tutor progress track in course table' });
                     await page.emulateMedia({ reducedMotion: 'reduce' });
                     for (const label of await graph.getByTestId('tutor-progress-filled-label').all()) {
                         await expect(label).toHaveCSS('transition-property', 'none');
