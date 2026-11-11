@@ -46,7 +46,7 @@ class QuizLifecycleButtonsStubComponent {
 class ExerciseActionBarStubComponent {
     items = input.required<ActionItem[]>();
     hasReservedContent = input(false);
-    inlineIds = input<string[]>([]);
+    keepPriorityIds = input<string[]>([]);
     columnMinWidthChange = output<number>();
 }
 

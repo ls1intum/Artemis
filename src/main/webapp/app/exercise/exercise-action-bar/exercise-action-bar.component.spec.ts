@@ -31,21 +31,15 @@ describe('ExerciseActionBarComponent', () => {
     afterEach(() => vi.restoreAllMocks());
 
     describe('hiddenIds / hasOverflow', () => {
-        it('collapses no inline action before the row width is measured', () => {
-            fixture.componentRef.setInput('items', buildActions(['participations', 'edit', 'delete']));
-            expect(component.hiddenIds().size).toBe(0);
-            expect(component.hasOverflow()).toBe(false);
-            expect(component.hiddenActions()).toEqual([]);
-        });
-
-        it('always puts actions outside inlineIds into the menu, in display order', () => {
+        it('shows every action inline, without the ellipsis, before the row width is measured', () => {
             fixture.componentRef.setInput('items', buildActions(['teams', 'participations', 'statistics', 'edit', 'delete']));
             fixture.detectChanges();
 
-            expect(component.hasOverflow()).toBe(true);
-            expect(component.hiddenActions().map((a) => a.id)).toEqual(['teams', 'statistics']);
+            expect(component.hiddenIds().size).toBe(0);
+            expect(component.hasOverflow()).toBe(false);
+            expect(component.hiddenActions()).toEqual([]);
             const inlineIds = [...fixture.nativeElement.querySelectorAll('.inline-item [data-testid]')].map((el: HTMLElement) => el.dataset.testid);
-            expect(inlineIds).toEqual(['exercise-action-participations', 'exercise-action-edit', 'exercise-action-delete']);
+            expect(inlineIds).toEqual(['exercise-action-teams', 'exercise-action-participations', 'exercise-action-statistics', 'exercise-action-edit', 'exercise-action-delete']);
         });
 
         /** Seeds every current action's cached natural width to the same value, so only the row width drives collapsing. */
@@ -57,21 +51,32 @@ describe('ExerciseActionBarComponent', () => {
             component['buttonWidths'].set(widths);
         };
 
-        it('collapses inline actions in inlineIds order when the row is too narrow', () => {
-            fixture.componentRef.setInput('items', buildActions(['a', 'b', 'c', 'extra']));
-            fixture.componentRef.setInput('inlineIds', ['c', 'a', 'b']);
+        it('keeps the default-priority ids inline and collapses the other actions first', () => {
+            fixture.componentRef.setInput('items', buildActions(['teams', 'participations', 'statistics', 'preview', 'edit-in-editor', 'edit', 'delete']));
+            // Each button 100px wide. With a 460px row (available 452 after the safety margin, budget 414 after the
+            // ellipsis + gap) exactly four 100px buttons plus their gaps fit.
+            seedEqualWidths(100);
+            component['reservedWidth'].set(0);
+            component['rowWidth'].set(460);
+
+            expect(component.hasOverflow()).toBe(true);
+            expect(component.hiddenActions().map((a) => a.id)).toEqual(['teams', 'statistics', 'preview']);
+        });
+
+        it('respects a custom keepPriorityIds ordering', () => {
+            fixture.componentRef.setInput('items', buildActions(['a', 'b', 'c']));
+            fixture.componentRef.setInput('keepPriorityIds', ['c']);
             seedEqualWidths(100);
             component['reservedWidth'].set(0);
             // 3 buttons (308px incl. gaps) don't fit a 200px row (available 192 after the safety margin, budget 154
-            // after the ellipsis and its gap), so exactly one 100px button can stay inline — it must be 'c', the first
-            // entry in inlineIds, even though it is last in display order.
+            // after the ellipsis and its gap), so exactly one 100px button can stay inline — it must be 'c', the sole
+            // entry in keepPriorityIds, even though it is last in display order.
             component['rowWidth'].set(200);
 
-            expect(component.hiddenActions().map((a) => a.id)).toEqual(['a', 'b', 'extra']);
+            expect(component.hiddenActions().map((a) => a.id)).toEqual(['a', 'b']);
         });
 
         it('hides nothing when every button fits', () => {
-            fixture.componentRef.setInput('inlineIds', ['a', 'b']);
             fixture.componentRef.setInput('items', buildActions(['a', 'b']));
             seedEqualWidths(50);
             component['reservedWidth'].set(0);
@@ -134,7 +139,6 @@ describe('ExerciseActionBarComponent', () => {
     it('disables the native action button while pending and restores its callback when enabled', () => {
         const onClick = vi.fn();
         const action: ActionItem = { id: 'variant', labelKey: 'label.variant', icon: faTable, severity: 'warn', kind: 'button', onClick };
-        fixture.componentRef.setInput('inlineIds', ['variant']);
         fixture.componentRef.setInput('items', [{ ...action, disabled: true }]);
         fixture.detectChanges();
         const button: HTMLButtonElement = fixture.nativeElement.querySelector('[data-testid="exercise-action-variant"]');

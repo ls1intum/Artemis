@@ -3,7 +3,7 @@ import { Observable } from 'rxjs';
 import { EntitySummaryCategory } from 'app/shared-ui/delete-dialog/delete-dialog.model';
 
 /** The kit button severities the action buttons use (a subset of `TumAetUiButtonSeverity`). */
-export type ActionSeverity = 'primary' | 'info' | 'success' | 'warn' | 'danger';
+export type ActionSeverity = 'primary' | 'secondary' | 'warn' | 'danger';
 
 /** Everything a `[jhiDeleteButton]` action needs, gathered here so the bar can render it from data alone. */
 export interface DeleteActionConfig {

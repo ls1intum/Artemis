@@ -159,7 +159,7 @@ export class ExerciseActionsComponent {
                 id: 'teams',
                 labelKey: 'artemisApp.exercise.teams',
                 icon: faUsers,
-                severity: 'primary',
+                severity: 'secondary',
                 kind: 'link',
                 link: ['/course-management', cid, 'exercises', ex.id!, 'teams'],
             });
@@ -178,7 +178,7 @@ export class ExerciseActionsComponent {
                 id: 'statistics',
                 labelKey: 'artemisApp.quizExercise.statistics',
                 icon: faChartBar,
-                severity: 'info',
+                severity: 'secondary',
                 kind: 'link',
                 link: ['/course-management', cid, seg, ex.id!, 'quiz-point-statistic'],
             });
@@ -186,7 +186,7 @@ export class ExerciseActionsComponent {
                 id: 'preview',
                 labelKey: 'artemisApp.quizExercise.preview',
                 icon: faEye,
-                severity: 'success',
+                severity: 'secondary',
                 kind: 'link',
                 link: ['/course-management', cid, seg, ex.id!, 'preview'],
             });
@@ -194,7 +194,7 @@ export class ExerciseActionsComponent {
                 id: 'solution',
                 labelKey: 'artemisApp.quizExercise.solution',
                 icon: faLightbulb,
-                severity: 'success',
+                severity: 'secondary',
                 kind: 'link',
                 link: ['/course-management', cid, seg, ex.id!, 'solution'],
             });
@@ -203,7 +203,7 @@ export class ExerciseActionsComponent {
                     id: 're-evaluate',
                     labelKey: 'entity.action.re-evaluate',
                     icon: faRedo,
-                    severity: 'warn',
+                    severity: 'secondary',
                     kind: 'link',
                     link: ['/course-management', cid, seg, ex.id!, 're-evaluate'],
                 });
@@ -215,7 +215,7 @@ export class ExerciseActionsComponent {
                 id: 'examples',
                 labelKey: 'entity.action.exampleSubmissions',
                 icon: faClipboardList,
-                severity: 'success',
+                severity: 'secondary',
                 kind: 'link',
                 link: ['/course-management', cid, seg, ex.id!, 'example-submissions'],
             });
@@ -226,7 +226,7 @@ export class ExerciseActionsComponent {
                 id: 'create-variant-ai',
                 labelKey: 'artemisApp.exerciseManagement.action.createVariantWithAi',
                 icon: faRobot,
-                severity: 'warn',
+                severity: 'secondary',
                 kind: 'button',
                 disabled: this.variantPreflightPending() || undefined,
                 onClick: () => this.openAiVariantWizard(),
@@ -240,7 +240,7 @@ export class ExerciseActionsComponent {
                 id: 'edit-in-editor',
                 labelKey: 'entity.action.editInEditor',
                 icon: faCode,
-                severity: 'warn',
+                severity: 'secondary',
                 kind: 'link',
                 link: ['/course-management', cid, 'programming-exercises', ex.id!, 'code-editor', RepositoryType.TEMPLATE, -1],
                 disabled: programmingDisabled || undefined,
