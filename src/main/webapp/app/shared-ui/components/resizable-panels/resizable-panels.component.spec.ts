@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CdkScrollable, ScrollDispatcher } from '@angular/cdk/scrolling';
 import { DOCUMENT } from '@angular/common';
@@ -31,7 +31,7 @@ class ResizeObserverMock {
         <jhi-resizable-panels [useViewportWidthForCollapse]="useViewportWidthForCollapse" [storageKey]="storageKey" [flushLeftPanel]="flushLeftPanel">
             <ng-template jhiPanel [label]="'left'" [icon]="faAlignLeft"><div id="left-marker">Left Content</div></ng-template>
             <ng-template jhiPanel [label]="'right'">Right Content<input aria-label="Draft" value="Right Content" /></ng-template>
-            <ng-template jhiPanel [label]="'iris'" [icon]="faComment" [startsCollapsed]="irisStartsCollapsed">Iris Content</ng-template>
+            <ng-template jhiPanel [label]="'iris'" [icon]="faComment" [startsCollapsed]="irisStartsCollapsed()">Iris Content</ng-template>
         </jhi-resizable-panels>
     `,
     imports: [ResizablePanelsComponent, PanelDirective],
@@ -39,7 +39,7 @@ class ResizeObserverMock {
 class ResizablePanelsTestComponent {
     protected readonly faAlignLeft = faAlignLeft;
     protected readonly faComment = faComment;
-    irisStartsCollapsed = false;
+    readonly irisStartsCollapsed = signal(false);
     useViewportWidthForCollapse = false;
     flushLeftPanel = false;
     storageKey: string | undefined = undefined;
@@ -64,7 +64,7 @@ describe('ResizablePanelsComponent', () => {
 
     const createFixture = (irisStartsCollapsed = false, useViewportWidthForCollapse = false) => {
         fixture = TestBed.createComponent(ResizablePanelsTestComponent);
-        fixture.componentInstance.irisStartsCollapsed = irisStartsCollapsed;
+        fixture.componentInstance.irisStartsCollapsed.set(irisStartsCollapsed);
         fixture.componentInstance.useViewportWidthForCollapse = useViewportWidthForCollapse;
         fixture.detectChanges();
         return fixture.debugElement.query(By.directive(ResizablePanelsComponent)).componentInstance as ResizablePanelsComponent;
@@ -300,6 +300,35 @@ describe('ResizablePanelsComponent', () => {
         expect(component.activeRightIndex()).toBe(0);
         expect(fixture.nativeElement.querySelector('.collapsed-right-panel')).not.toBeNull();
         expect(fixture.nativeElement.querySelector('.panel-surface[hidden]').hasAttribute('inert')).toBe(true);
+    });
+
+    it('applies a changed panel start state before the user chooses a collapsed state', () => {
+        const component = createFixture();
+
+        fixture.componentInstance.irisStartsCollapsed.set(true);
+        fixture.detectChanges();
+        expect(component.isRightPanelCollapsed()).toBe(true);
+
+        fixture.componentInstance.irisStartsCollapsed.set(false);
+        fixture.detectChanges();
+        expect(component.isRightPanelCollapsed()).toBe(false);
+    });
+
+    it.each([false, true])('preserves the user-selected collapsed state %s when the panel start state changes', (isCollapsed) => {
+        const component = createFixture();
+        if (isCollapsed) {
+            component.collapseRightPanel();
+        } else {
+            component.expandRightPanel();
+        }
+
+        fixture.componentInstance.irisStartsCollapsed.set(true);
+        fixture.detectChanges();
+        expect(component.isRightPanelCollapsed()).toBe(isCollapsed);
+
+        fixture.componentInstance.irisStartsCollapsed.set(false);
+        fixture.detectChanges();
+        expect(component.isRightPanelCollapsed()).toBe(isCollapsed);
     });
 
     it('should expand the selected collapsed right panel on click', () => {

@@ -154,7 +154,7 @@ export class ResizablePanelsComponent implements AfterViewInit, OnDestroy {
         // Restore a saved preference when its key changes. When there is no saved preference, use the
         // projected panel's requested start state unless the user has already changed it in this instance.
         effect(() => {
-            const rightPanels = this.rightPanels();
+            const startsCollapsed = this.rightPanels().some((panel) => panel.startsCollapsed());
             const storageKey = this.collapsedStateStorageKey();
             if (!this.hasRestoredCollapseStateStorageKey || this.restoredCollapseStateStorageKey !== storageKey) {
                 untracked(() => {
@@ -169,7 +169,7 @@ export class ResizablePanelsComponent implements AfterViewInit, OnDestroy {
                 if (this.rightPanelCollapseChangedByUser) {
                     return;
                 }
-                this._isRightPanelCollapsed.set(storedCollapsedState ?? rightPanels.some((panel) => panel.startsCollapsed()));
+                this._isRightPanelCollapsed.set(storedCollapsedState ?? startsCollapsed);
             });
         });
     }
