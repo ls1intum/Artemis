@@ -7,8 +7,13 @@ import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.Optional;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.sshd.common.util.threads.CloseableExecutorService;
+import org.apache.sshd.common.util.threads.SshThreadPoolExecutor;
+import org.apache.sshd.common.util.threads.SshdThreadFactory;
 import org.apache.sshd.common.util.threads.ThreadUtils;
 import org.apache.sshd.core.CoreModuleProperties;
 import org.apache.sshd.server.SshServer;
@@ -40,6 +45,9 @@ public class SshConfiguration {
 
     /** The git commands (clone, fetch, push) that run at the same time. Further commands wait for a free thread. */
     private static final int MAX_CONCURRENT_GIT_COMMANDS = 32;
+
+    /** The commands that may wait for a free thread. Further commands are rejected. */
+    private static final int MAX_QUEUED_GIT_COMMANDS = 64;
 
     private static final int AUTHENTICATION_TIMEOUT_SECONDS = 30;
 
@@ -93,10 +101,13 @@ public class SshConfiguration {
 
             sshd.setKeyPairProvider(new SimpleGeneratorHostKeyProvider(Path.of("local", "tmp", "hostkey.ser")));
         }
-        // One bounded pool serves all git commands. The pool is shared, so a command must not close it.
-        CloseableExecutorService gitCommandExecutor = ThreadUtils.newFixedThreadPool("git-ssh", MAX_CONCURRENT_GIT_COMMANDS);
-        sshd.setCommandFactory(
-                sshGitCommandFactoryService.withGitLocationResolver(sshGitLocationResolverService).withExecutorServiceProvider(() -> ThreadUtils.noClose(gitCommandExecutor)));
+        // One bounded pool serves all git commands: a fixed number of threads and a finite queue. A command that finds the queue full is rejected instead of waiting
+        // without limit. The pool is shared, so a command must not shut it down, which the non-closing wrapper ensures. The pool is shut down together with the server.
+        SshThreadPoolExecutor gitCommandPool = new SshThreadPoolExecutor(MAX_CONCURRENT_GIT_COMMANDS, MAX_CONCURRENT_GIT_COMMANDS, 0L, TimeUnit.MILLISECONDS,
+                new ArrayBlockingQueue<>(MAX_QUEUED_GIT_COMMANDS), new SshdThreadFactory("git-ssh"), new ThreadPoolExecutor.AbortPolicy());
+        CloseableExecutorService gitCommandExecutor = ThreadUtils.noClose(gitCommandPool);
+        sshd.addCloseFutureListener(_ -> gitCommandPool.shutdown());
+        sshd.setCommandFactory(sshGitCommandFactoryService.withGitLocationResolver(sshGitLocationResolverService).withExecutorServiceProvider(() -> gitCommandExecutor));
         // Clients that do not authenticate quickly, or keep many channels open, are dropped instead of holding resources of the server.
         CoreModuleProperties.AUTH_TIMEOUT.set(sshd, Duration.ofSeconds(AUTHENTICATION_TIMEOUT_SECONDS));
         CoreModuleProperties.MAX_AUTH_REQUESTS.set(sshd, MAX_AUTHENTICATION_ATTEMPTS);

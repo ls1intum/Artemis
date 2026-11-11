@@ -31,6 +31,7 @@ import org.eclipse.jgit.revwalk.RevSort;
 import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.jgit.treewalk.TreeWalk;
 import org.eclipse.jgit.treewalk.filter.PathFilterGroup;
+import org.eclipse.jgit.treewalk.filter.TreeFilter;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
@@ -175,10 +176,11 @@ public class RepositoryService {
                 return Map.of();
             }
             if (selectedFilePaths == null) {
-                return getFileContentFromBareRepositoryForCommitId(repository, commitObjectId, null, BinaryFileFilter.EXTENSION, MAX_FILE_CONTENT_BYTES, MAX_TOTAL_CONTENT_BYTES);
+                return getFileContentFromBareRepositoryForCommitId(repository, commitObjectId, null, BinaryFileFilter.EXTENSION, MAX_FILE_CONTENT_BYTES, MAX_TOTAL_CONTENT_BYTES,
+                        true);
             }
             return getFileContentFromBareRepositoryForCommitId(repository, commitObjectId, selectedFilePaths, BinaryFileFilter.CONTENT, MAX_SELECTED_FILE_SIZE_BYTES,
-                    MAX_SELECTED_FILES_TOTAL_SIZE_BYTES);
+                    MAX_SELECTED_FILES_TOTAL_SIZE_BYTES, false);
         }
     }
 
@@ -341,7 +343,7 @@ public class RepositoryService {
         if (commitId == null) {
             return Map.of();
         }
-        return getFileContentFromBareRepositoryForCommitId(repository, commitId, null, BinaryFileFilter.EXTENSION, MAX_FILE_CONTENT_BYTES, MAX_TOTAL_CONTENT_BYTES);
+        return getFileContentFromBareRepositoryForCommitId(repository, commitId, null, BinaryFileFilter.EXTENSION, MAX_FILE_CONTENT_BYTES, MAX_TOTAL_CONTENT_BYTES, true);
     }
 
     /**
@@ -363,7 +365,7 @@ public class RepositoryService {
             return Optional.empty();
         }
         return Optional.ofNullable(
-                getFileContentFromBareRepositoryForCommitId(repository, commitId, Set.of(filePath), BinaryFileFilter.NONE, MAX_FILE_CONTENT_BYTES, MAX_TOTAL_CONTENT_BYTES)
+                getFileContentFromBareRepositoryForCommitId(repository, commitId, Set.of(filePath), BinaryFileFilter.NONE, MAX_FILE_CONTENT_BYTES, MAX_TOTAL_CONTENT_BYTES, true)
                         .get(filePath));
     }
 
@@ -382,7 +384,7 @@ public class RepositoryService {
             return Map.of();
         }
 
-        return getFileContentFromBareRepositoryForCommitId(repository, headCommitId, null, BinaryFileFilter.EXTENSION, MAX_FILE_CONTENT_BYTES, MAX_TOTAL_CONTENT_BYTES);
+        return getFileContentFromBareRepositoryForCommitId(repository, headCommitId, null, BinaryFileFilter.EXTENSION, MAX_FILE_CONTENT_BYTES, MAX_TOTAL_CONTENT_BYTES, true);
     }
 
     /**
@@ -435,7 +437,7 @@ public class RepositoryService {
             for (RevCommit commit : walk) {
                 if (((long) commit.getCommitTime()) <= epochSeconds) {
                     return getFileContentFromBareRepositoryForCommitId(repository, commit.getId(), null, BinaryFileFilter.EXTENSION, MAX_FILE_CONTENT_BYTES,
-                            MAX_TOTAL_CONTENT_BYTES);
+                            MAX_TOTAL_CONTENT_BYTES, true);
                 }
             }
         }
@@ -472,11 +474,13 @@ public class RepositoryService {
      * @param binaryFileFilter  The strategy used to exclude binary files.
      * @param maxFileSizeBytes  The maximum size of an individual returned file.
      * @param maxTotalSizeBytes The maximum aggregate size of all returned files.
+     * @param failOnLimit       Whether a file or total size above its maximum is an error. Otherwise the file is left out.
      * @return A map of repository-relative file paths to UTF-8 content.
-     * @throws IOException If the commit or file content cannot be read.
+     * @throws IOException If the commit or file content cannot be read, if the tree has more entries than {@link #MAX_TREE_ENTRIES}, or if a size limit is exceeded and
+     *                         {@code failOnLimit} is set.
      */
     private Map<String, String> getFileContentFromBareRepositoryForCommitId(org.eclipse.jgit.lib.Repository repository, @NonNull ObjectId commitId,
-            @Nullable Set<String> selectedFilePaths, BinaryFileFilter binaryFileFilter, long maxFileSizeBytes, long maxTotalSizeBytes) throws IOException {
+            @Nullable Set<String> selectedFilePaths, BinaryFileFilter binaryFileFilter, long maxFileSizeBytes, long maxTotalSizeBytes, boolean failOnLimit) throws IOException {
         Map<String, String> filesWithContent = new HashMap<>();
         long totalSize = 0;
 
@@ -484,19 +488,13 @@ public class RepositoryService {
             RevCommit commit = revWalk.parseCommit(commitId);
             treeWalk.addTree(commit.getTree());
             treeWalk.setRecursive(true);
-            if (selectedFilePaths != null) {
-                if (selectedFilePaths.isEmpty()) {
-                    return Map.of();
-                }
-                treeWalk.setFilter(PathFilterGroup.createFromStrings(selectedFilePaths));
+            if (selectedFilePaths != null && selectedFilePaths.isEmpty()) {
+                return Map.of();
             }
+            // Every entry the walk looks at is counted, also the ones that a path filter rejects. A tree that is bigger than the limit is an error, not a smaller result.
+            treeWalk.setFilter(new EntryLimitTreeFilter(selectedFilePaths != null ? PathFilterGroup.createFromStrings(selectedFilePaths) : TreeFilter.ALL, MAX_TREE_ENTRIES));
 
-            long visitedEntries = 0;
             while (treeWalk.next()) {
-                if (++visitedEntries > MAX_TREE_ENTRIES) {
-                    log.warn("Stopped reading the files of the commit {} after {} entries", commitId.name(), MAX_TREE_ENTRIES);
-                    break;
-                }
                 String path = treeWalk.getPathString();
                 if (selectedFilePaths != null && !selectedFilePaths.contains(path)) {
                     continue;
@@ -510,7 +508,17 @@ public class RepositoryService {
                 try {
                     var blobLoader = repository.open(objectId);
                     long blobSize = blobLoader.getSize();
-                    if (blobSize > maxFileSizeBytes || blobSize > maxTotalSizeBytes - totalSize) {
+                    if (blobSize > maxFileSizeBytes) {
+                        if (failOnLimit) {
+                            throw new IOException("The file " + path + " is larger than " + maxFileSizeBytes + " bytes.");
+                        }
+                        continue;
+                    }
+                    if (blobSize > maxTotalSizeBytes - totalSize) {
+                        if (failOnLimit) {
+                            // A partial snapshot would look like a repository without the remaining files
+                            throw new IOException("The files of the commit add up to more than " + maxTotalSizeBytes + " bytes.");
+                        }
                         continue;
                     }
                     byte[] bytes;

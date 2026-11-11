@@ -350,4 +350,25 @@ class LocalVCPrePushHookTest {
         assertThat(command.getResult()).isEqualTo(ReceiveCommand.Result.REJECTED_OTHER_REASON);
         assertThat(command.getMessage()).contains("metadata directory");
     }
+
+    @Test
+    void onPreReceive_treeThatReferencesEmptySubtreesRepeatedly_isRejected() throws Exception {
+        // The same repeated structure as above, but every leaf is an empty directory, so the walk never returns a file.
+        try (ObjectInserter inserter = repository.newObjectInserter()) {
+            ObjectId level = inserter.insert(new TreeFormatter());
+            for (int depth = 0; depth < 3; depth++) {
+                TreeFormatter formatter = new TreeFormatter();
+                for (int index = 0; index < 100; index++) {
+                    formatter.append("e%03d".formatted(index), FileMode.TREE, level);
+                }
+                level = inserter.insert(formatter);
+            }
+            ReceiveCommand command = receive(commitWithTree(inserter, level), DEFAULT_REF);
+
+            run(command);
+
+            assertThat(command.getResult()).isEqualTo(ReceiveCommand.Result.REJECTED_OTHER_REASON);
+            assertThat(command.getMessage()).contains("limits for the number of files");
+        }
+    }
 }

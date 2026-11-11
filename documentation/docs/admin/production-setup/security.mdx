@@ -541,6 +541,7 @@ The limit for Git over HTTP counts the address of the client as the reverse prox
 
 The other limits in this section, the check of internal endpoints and the address that is stored in an exam session use the same address: the one that Tomcat resolved for the request. Artemis does not read address headers itself, so what a client
 sends in `X-Forwarded-For` or a similar header only counts when it comes through one of your proxies. Make sure that the reverse proxy appends the address of the connection it accepted, as the nginx configuration of the repository does.
+By default, Tomcat believes forwarding headers from every private address. Restrict `server.tomcat.remoteip.internal-proxies` to your own proxies, and keep other hosts of the private network from reaching Artemis directly, so that only the proxies can name an address for a request.
 
 ### Internal Endpoints
 

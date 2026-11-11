@@ -52,6 +52,8 @@ public record LocalVCPrePushHook(LocalVCServletService localVCServletService, Us
     /** The time that the examination of the tree may take. */
     static final long MAX_TREE_NANOS = TimeUnit.SECONDS.toNanos(20);
 
+    private static final String METADATA_NAME_MESSAGE = "The path '%s' is not allowed: a name that denotes the metadata directory of a repository cannot be part of the content.";
+
     private static final String TREE_LIMIT_MESSAGE = "The repository exceeds the limits for the number of files, the depth of the directories or the total size.";
 
     /**
@@ -148,7 +150,8 @@ public record LocalVCPrePushHook(LocalVCServletService localVCServletService, Us
         try (ObjectReader reader = repository.newObjectReader(); RevWalk revWalk = new RevWalk(reader); TreeWalk treeWalk = new TreeWalk(reader)) {
             RevCommit newCommit = revWalk.parseCommit(command.getNewId());
             treeWalk.addTree(newCommit.getTree());
-            treeWalk.setRecursive(true);
+            // The walk is not recursive, so that every directory is counted and checked before it is entered. A recursive walk enters subtrees inside next(), where a tree that
+            // references the same empty subtrees many times could keep it busy without a single entry being returned.
             final long startNanos = System.nanoTime();
             long entries = 0;
             long totalBytes = 0;
@@ -158,10 +161,16 @@ public record LocalVCPrePushHook(LocalVCServletService localVCServletService, Us
                     break;
                 }
                 FileMode mode = treeWalk.getFileMode(0);
+                if (treeWalk.isSubtree()) {
+                    if (GitPathNames.isGitMetadataName(treeWalk.getNameString())) {
+                        command.setResult(ReceiveCommand.Result.REJECTED_OTHER_REASON, METADATA_NAME_MESSAGE.formatted(treeWalk.getPathString()));
+                        break;
+                    }
+                    treeWalk.enterSubtree();
+                    continue;
+                }
                 if (GitPathNames.containsGitMetadataName(treeWalk.getPathString())) {
-                    command.setResult(ReceiveCommand.Result.REJECTED_OTHER_REASON,
-                            "The path '%s' is not allowed: a name that denotes the metadata directory of a repository cannot be part of the content."
-                                    .formatted(treeWalk.getPathString()));
+                    command.setResult(ReceiveCommand.Result.REJECTED_OTHER_REASON, METADATA_NAME_MESSAGE.formatted(treeWalk.getPathString()));
                     break;
                 }
                 if (FileMode.SYMLINK.equals(mode)) {
