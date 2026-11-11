@@ -36,7 +36,8 @@ if [ ! -d "${OUTPUT_DIRECTORY}" ]; then
 fi
 OUTPUT_DIRECTORY="$(cd "${OUTPUT_DIRECTORY}" && pwd)"
 if [ "${OUTPUT_DIRECTORY_CREATED}" -eq 1 ]; then
-    chmod a+rwx "${OUTPUT_DIRECTORY}"
+    # Writable for the scanner users. The sticky bit keeps one of them from deleting or replacing the reports of another, and the owner of the directory can still remove them.
+    chmod 1777 "${OUTPUT_DIRECTORY}"
 fi
 
 # A local server may listen on the loopback interface only, as the development server of the client does. On Linux the scanners then share the network of the host and use the
@@ -97,6 +98,11 @@ echo "Schemathesis exit code ${SCHEMATHESIS_STATUS}, ZAP exit code ${ZAP_STATUS}
 EXECUTION_ERROR=0
 if [ "${SCHEMATHESIS_STATUS}" -ge 125 ] || ! ls "${OUTPUT_DIRECTORY}"/junit-*.xml >/dev/null 2>&1; then
     echo "Schemathesis did not complete: there is no report." >&2
+    EXECUTION_ERROR=1
+fi
+# Schemathesis writes a request that did not get an answer as an error of the report, and a check that failed as a failure. Errors mean that the scan did not complete.
+if grep -qs '<error' "${OUTPUT_DIRECTORY}"/junit-*.xml; then
+    echo "Schemathesis reported errors of its own, such as a request that got no answer." >&2
     EXECUTION_ERROR=1
 fi
 if [ "${ZAP_STATUS}" -ge 3 ] || [ ! -s "${OUTPUT_DIRECTORY}/zap-baseline.json" ]; then

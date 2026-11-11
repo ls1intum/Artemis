@@ -7,9 +7,12 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
+import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -20,6 +23,7 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 
+import com.tngtech.archunit.core.domain.JavaAnnotation;
 import com.tngtech.archunit.core.domain.JavaClass;
 import com.tngtech.archunit.core.domain.JavaMethod;
 import com.tngtech.archunit.core.domain.JavaParameter;
@@ -63,8 +67,8 @@ class SecurityInventoryArchitectureTest extends AbstractArchitectureTest {
     @Test
     void internalEndpointsAreReviewed() throws IOException {
         Set<String> actual = productionClasses.stream().flatMap(javaClass -> javaClass.getMethods().stream()).filter(SecurityInventoryArchitectureTest::isEndpoint)
-                .filter(method -> method.isAnnotatedWith(Internal.class) || method.getOwner().isAnnotatedWith(Internal.class)).map(SecurityInventoryArchitectureTest::describe)
-                .collect(Collectors.toCollection(TreeSet::new));
+                .filter(method -> method.isAnnotatedWith(Internal.class) || method.getOwner().isAnnotatedWith(Internal.class))
+                .map(method -> describe(method) + " " + mappings(method)).collect(Collectors.toCollection(TreeSet::new));
         assertThat(actual).as("the internal endpoints").isNotEmpty();
         assertMatchesInventory(INTERNAL_ENDPOINTS, actual, "internal endpoints (annotated with @Internal)");
     }
@@ -90,6 +94,20 @@ class SecurityInventoryArchitectureTest extends AbstractArchitectureTest {
 
     private static boolean isRequestBody(JavaParameter parameter) {
         return parameter.isAnnotatedWith(RequestBody.class);
+    }
+
+    /** The HTTP method and the paths of the mapping of the handler, so that a new route of an existing handler changes the inventory as well. */
+    private static String mappings(JavaMethod method) {
+        String classPaths = method.getOwner().tryGetAnnotationOfType(RequestMapping.class.getName()).map(annotation -> paths(annotation)).orElse("");
+        return MAPPING_ANNOTATIONS.stream().map(annotation -> method.tryGetAnnotationOfType(annotation.getName())).flatMap(Optional::stream)
+                .map(annotation -> annotation.getRawType().getSimpleName().replace("Mapping", "").toUpperCase(Locale.ROOT) + " " + classPaths + paths(annotation))
+                .collect(Collectors.joining(", ", "[", "]"));
+    }
+
+    private static String paths(JavaAnnotation<?> annotation) {
+        // The path can be given as value or as path, and the other one is empty
+        return Stream.of("value", "path").map(name -> annotation.getProperties().get(name)).filter(value -> value instanceof Object[] values && values.length > 0)
+                .map(value -> Arrays.stream((Object[]) value).map(String::valueOf).collect(Collectors.joining("|", "{", "}"))).findFirst().orElse("{}");
     }
 
     private static String describe(JavaMethod method) {
