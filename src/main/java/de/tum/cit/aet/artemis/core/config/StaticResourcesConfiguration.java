@@ -72,12 +72,8 @@ public class StaticResourcesConfiguration implements WebMvcConfigurer {
 
         registry.addResourceHandler("/drag-and-drop/**").addResourceLocations("file:" + fileUploadPath + "/images/drag-and-drop/").setCacheControl(defaultCacheControl);
 
-        registry.addResourceHandler("/markdown/**").addResourceLocations("file:" + fileUploadPath + "/markdown/").setCacheControl(defaultCacheControl);
-
-        registry.addResourceHandler("/exam-user/signatures/**").addResourceLocations("file:" + fileUploadPath + "/images/exam-user/signatures/")
-                .setCacheControl(defaultCacheControl);
-
-        registry.addResourceHandler("/exam-user/**").addResourceLocations("file:" + fileUploadPath + "/images/exam-user/").setCacheControl(defaultCacheControl);
+        // Markdown uploads and the images and signatures of exam users are not served from here. They are served by the endpoints under /api/core/files,
+        // which check who may read them.
     }
 
     /**
