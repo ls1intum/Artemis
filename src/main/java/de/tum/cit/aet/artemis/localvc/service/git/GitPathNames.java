@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.localvc.service.git;
 
 import java.util.Locale;
+import java.util.regex.Pattern;
 
 /**
  * Recognizes the names that a file system treats as the metadata directory of a git repository, so that a tree of a repository cannot carry one.
@@ -9,6 +10,10 @@ import java.util.Locale;
  * {@code git~1} resolve to the metadata directory on some file systems. A tree that holds such an entry becomes configuration and hooks of a repository once it is extracted.
  */
 public final class GitPathNames {
+
+    private static final Pattern SHORT_NAME = Pattern.compile("git~\\d");
+
+    private static final Pattern SEPARATOR = Pattern.compile("[/\\\\]");
 
     private GitPathNames() {
         // utility class
@@ -34,7 +39,7 @@ public final class GitPathNames {
             end--;
         }
         String name = normalized.substring(0, end).toLowerCase(Locale.ROOT);
-        return name.equals(".git") || name.matches("git~\\d");
+        return name.equals(".git") || SHORT_NAME.matcher(name).matches();
     }
 
     /**
@@ -44,7 +49,7 @@ public final class GitPathNames {
      * @return true if the path has to be refused
      */
     public static boolean containsGitMetadataName(String path) {
-        for (String segment : path.split("[/\\\\]")) {
+        for (String segment : SEPARATOR.split(path)) {
             if (isGitMetadataName(segment)) {
                 return true;
             }
