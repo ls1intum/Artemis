@@ -334,11 +334,11 @@ test.describe('Competency Management Table — Filter and Sort', { tag: '@fast' 
         await expect(page.getByRole('link', { name: competencyTitles.gamma })).toBeVisible();
     });
 
-    test('No-results row appears when filter matches nothing', async ({ page }) => {
+    test('No-results state appears when filter matches nothing', async ({ page }) => {
         const searchInput = page.getByTestId('competency-search-input').first();
         await searchInput.fill('ZZZNOMATCH_' + filterSortUid);
 
-        await expect(page.locator('jhi-competency-management-table').first().locator('td[colspan]')).toBeVisible({ timeout: 5000 });
+        await expect(page.locator('jhi-competency-management-table').first().getByTestId('table-empty')).toBeVisible({ timeout: 5000 });
         await expect(page.getByRole('link', { name: competencyTitles.alpha })).not.toBeVisible();
     });
 
