@@ -29,6 +29,8 @@ ZAP_IMAGE="ghcr.io/zaproxy/zaproxy@sha256:9624669db72f54d86c4b46a7064518bd9bf79d
 REPOSITORY_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 mkdir -p "${OUTPUT_DIRECTORY}"
 OUTPUT_DIRECTORY="$(cd "${OUTPUT_DIRECTORY}" && pwd)"
+# The scanner containers run as another user than the one who runs this script and write their reports here
+chmod a+rwx "${OUTPUT_DIRECTORY}"
 
 # A local server may listen on the loopback interface only, as the development server of the client does. On Linux the scanners then share the network of the host and use the
 # address as it is. Docker Desktop does not offer that, there a container reaches the host through host.docker.internal.

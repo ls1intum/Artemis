@@ -9,3 +9,8 @@ useDefault = true
 description = "Placeholder tokens in curl examples of the documentation"
 targetRules = ["curl-auth-header"]
 paths = ['''documentation/docs/.*\.mdx?$''']
+
+# Test code holds fixtures that look like credentials: tokens of mocked services, keys of test installations and example requests of the E2E suites.
+[[allowlists]]
+description = "Fixtures in test code"
+paths = ['''src/test/.*''', '''src/main/webapp/.*\.spec\.ts$''', '''supporting_scripts/.*/tests?/.*''']

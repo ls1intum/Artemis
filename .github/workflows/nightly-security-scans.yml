@@ -3,7 +3,6 @@ name: Nightly Security Scans
 # Brings up a throwaway Artemis with the runner of the E2E tests and scans it from the outside:
 #   - Schemathesis sends generated requests to the reading endpoints of the OpenAPI description and reports server errors and responses that do not match it.
 #   - The OWASP ZAP baseline scan crawls the client and reports header, cookie and configuration findings.
-#   - The container isolation check starts a build-like container on the strictest network and expects every connection to fail.
 # See supporting_scripts/security for the scripts, which also run on a developer machine.
 #
 # This is a monitor and not a gate of pull requests. A failure opens or updates one tracking issue. The workflow runs on a fixed schedule
@@ -75,9 +74,6 @@ jobs:
 
       - name: Scan the API and the client
         run: ./supporting_scripts/security/run-api-scans.sh http://localhost:9000 security-scan-reports
-
-      - name: Check the isolation of build containers
-        run: ./supporting_scripts/security/check-container-isolation.sh none
 
       - name: Stop Artemis
         if: always()

@@ -1,0 +1,17 @@
+# Endpoints that are reachable only from the address ranges of artemis.security.internal.allowed-cidrs (annotated with @Internal), one per line.
+# A new entry needs a reviewer to agree: it is reachable without a user.
+athena.web.internal.AthenaInternalResource#getRepository(long,long,String)
+athena.web.internal.AthenaInternalResource#getSolutionRepository(long,String)
+athena.web.internal.AthenaInternalResource#getTemplateRepository(long,String)
+athena.web.internal.AthenaInternalResource#getTestRepository(long,String)
+iris.web.internal.PyrisInternalIngestionWorkerResource#claimJobs(PyrisWorkerClaimRequestDTO,HttpServletRequest)
+iris.web.internal.PyrisInternalIngestionWorkerResource#heartbeat(PyrisWorkerHeartbeatRequestDTO,HttpServletRequest)
+iris.web.internal.PyrisInternalStatusUpdateResource#executeChatCommand(String,PyrisCommandDTO,HttpServletRequest)
+iris.web.internal.PyrisInternalStatusUpdateResource#setAutonomousTutorJobStatus(String,PyrisAutonomousTutorPipelineStatusUpdateDTO,HttpServletRequest)
+iris.web.internal.PyrisInternalStatusUpdateResource#setCompetencyExtractionJobStatus(String,PyrisCompetencyStatusUpdateDTO,HttpServletRequest)
+iris.web.internal.PyrisInternalStatusUpdateResource#setStatusOfChatJob(String,PyrisChatStatusUpdateDTO,HttpServletRequest)
+iris.web.internal.PyrisInternalStatusUpdateResource#setStatusOfFaqIngestionJob(String,PyrisFaqIngestionStatusUpdateDTO,HttpServletRequest)
+iris.web.internal.PyrisInternalStatusUpdateResource#setStatusOfGlobalSearchAnswerJob(String,PyrisGlobalSearchAnswerStatusUpdateDTO,HttpServletRequest)
+iris.web.internal.PyrisInternalStatusUpdateResource#setStatusOfIngestionJob(String,PyrisLectureIngestionStatusUpdateDTO,HttpServletRequest)
+iris.web.internal.PyrisInternalStatusUpdateResource#setStruggleInterventionJobStatus(String,PyrisStruggleInterventionStatusUpdateDTO,HttpServletRequest)
+iris.web.internal.PyrisInternalStatusUpdateResource#setTutorSuggestionJobStatus(String,TutorSuggestionStatusUpdateDTO,HttpServletRequest)

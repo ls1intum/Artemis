@@ -22,7 +22,7 @@ This guideline is the checklist for every server change that adds or modifies a 
 ### Authorization
 
 - [ ] The method carries the minimum `@EnforceRoleIn...` annotation, or `@EnforceAtLeastStudent` with `@ManualConfig` and an explicit check where the role depends on a participation, submission or exam.
-- [ ] Every entity that the request loads by id is checked against the course of the path. A mismatch between the course id and the entity is answered like a missing entity or with `403`, before anything else happens.
+- [ ] Every entity that the request loads by id is checked against the course of the path. A mismatch between the course id and the entity is refused before anything else happens, with the status that the [REST API guideline](/developer/guidelines/rest-api) names for it (`400`, `403` or `409`, depending on the operation).
 - [ ] A caller that holds a role in _another_ course is refused. Course roles never carry over.
 - [ ] Time and state rules are checked on the server: release dates, due dates, exam phases, conversation membership, and whether a resource is visible to students yet.
 - [ ] Users that the request names (members, owners, recipients) belong to the course, and have the role that the operation needs.

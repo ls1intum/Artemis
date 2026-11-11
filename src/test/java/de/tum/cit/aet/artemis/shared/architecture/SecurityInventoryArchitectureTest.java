@@ -26,6 +26,7 @@ import com.tngtech.archunit.core.domain.JavaParameter;
 
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceNothing;
+import de.tum.cit.aet.artemis.core.security.annotations.Internal;
 
 /**
  * Inventories that make a change of the attack surface visible in a pull request.
@@ -37,6 +38,8 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceNothing;
 class SecurityInventoryArchitectureTest extends AbstractArchitectureTest {
 
     private static final String PUBLIC_ENDPOINTS = "security/public-endpoints.txt";
+
+    private static final String INTERNAL_ENDPOINTS = "security/internal-endpoints.txt";
 
     private static final String ENTITY_REQUEST_BODIES = "security/entity-request-bodies.txt";
 
@@ -51,6 +54,19 @@ class SecurityInventoryArchitectureTest extends AbstractArchitectureTest {
         Set<String> actual = productionClasses.stream().flatMap(javaClass -> javaClass.getMethods().stream()).filter(method -> method.isAnnotatedWith(EnforceNothing.class))
                 .map(SecurityInventoryArchitectureTest::describe).collect(Collectors.toCollection(TreeSet::new));
         assertMatchesInventory(PUBLIC_ENDPOINTS, actual, "public endpoints (annotated with @EnforceNothing)");
+    }
+
+    /**
+     * Every endpoint that is limited by the address of the caller instead of by a user is listed. The annotation {@code @Internal} permits every signed-in or anonymous
+     * request that comes from an allowed address, so a new one needs a reviewer to agree as well.
+     */
+    @Test
+    void internalEndpointsAreReviewed() throws IOException {
+        Set<String> actual = productionClasses.stream().flatMap(javaClass -> javaClass.getMethods().stream()).filter(SecurityInventoryArchitectureTest::isEndpoint)
+                .filter(method -> method.isAnnotatedWith(Internal.class) || method.getOwner().isAnnotatedWith(Internal.class)).map(SecurityInventoryArchitectureTest::describe)
+                .collect(Collectors.toCollection(TreeSet::new));
+        assertThat(actual).as("the internal endpoints").isNotEmpty();
+        assertMatchesInventory(INTERNAL_ENDPOINTS, actual, "internal endpoints (annotated with @Internal)");
     }
 
     /**

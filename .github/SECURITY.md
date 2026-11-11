@@ -233,11 +233,11 @@ Open development and transparency are considered an important security-strengthe
 #### Audit History
 
 Beyond the review of every pull request, Artemis is audited as a whole. The audits are listed here so
-that operators can see what was examined, when, and which releases contain the resulting changes.
+that operators can see what was examined and when.
 
 | Date            | Scope                                                         | Outcome                                                                                                                                                                                                   |
 | --------------- | ------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 9 November 2026 | The server REST interfaces and the build agent infrastructure | The findings were triaged and fixed, and each fix received tests that cover a refused request. The fixes are part of release 10.7. They are also on the 9.9.x branch, and the release notes of the first 9.9.x patch release that contains them say so. Operators should update to these releases. |
+| 9 November 2026 | The server REST interfaces and the build agent infrastructure | The findings were triaged and are being fixed, each with tests that cover a refused request. The changes are released with the regular releases, and the release notes of a release list its security-relevant changes. Operators should keep their installation up to date. |
 
 An audit combines the review of maintainers, automated analysis ([CodeQL](https://codeql.github.com/)
 and static analysis in the continuous integration), the architecture tests of the repository, and
@@ -308,7 +308,7 @@ Artemis handles disclosure through
 3. The advisory is **published** once operators have had a reasonable opportunity to upgrade. It names
    the affected versions, the fixed version, the impact, and any workaround, and it carries a CVE where
    one is warranted.
-4. Reporters are credited in the advisory unless they ask not to be.
+4. Reporters who want to be named are credited in the advisory.
 
 Publishing advisories rather than fixing silently is deliberate: an operator needs to know whether the
 release they skipped mattered, and a project's advisory history is the only way to judge that from the

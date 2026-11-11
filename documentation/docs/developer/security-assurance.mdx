@@ -117,11 +117,11 @@ The assurance case is checked from two directions. Audits examine the whole syst
 continuous checks keep what an audit established from eroding. The audits themselves are listed in the
 [security policy](https://github.com/ls1intum/Artemis/blob/develop/.github/SECURITY.md#audit-history).
 The most recent audit took place on 9 November 2026 and covered the server REST interfaces and the build
-agent infrastructure. Its findings were fixed with tests that cover refused requests, and the behavior
+agent infrastructure. Its findings are being fixed with tests that cover refused requests, and the behavior
 that operators and maintainers rely on is documented in the [access rights](/admin/access-rights) and in
 [security configuration](/admin/production-setup/security).
 
-The checks below keep what an audit established from eroding. The first group runs on every change, the second on a schedule against a running installation.
+The checks below keep what an audit established from eroding. The first group runs on every change, the second on a schedule against a running installation. Findings of the scheduled scans and of the dependency and configuration scans are reports that maintainers triage, and not gates of a change.
 
 **On every change**
 
@@ -129,10 +129,10 @@ The checks below keep what an audit established from eroding. The first group ru
 | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------- |
 | [CodeQL](https://github.com/ls1intum/Artemis/blob/develop/.github/workflows/ci-codeql.yml) and the static analysis of the continuous integration                                                       | Common vulnerability patterns in Java and TypeScript                                                                                              |
 | Architecture tests such as `EnforceRoleInResourceArchitectureTest`, `SecurityContextArchitectureTest` and `WebsocketTopicArchitectureTest`                                                              | An endpoint declares the role it requires, security context access stays in the allowed places, and every websocket destination is declared       |
-| `SecurityInventoryArchitectureTest` with the lists in `src/test/resources/security`                                                                                                                    | A new endpoint that is reachable without signing in needs a reviewer to agree, and an entity is not bound from a request body                     |
+| `SecurityInventoryArchitectureTest` with the lists in `src/test/resources/security`                                                                                                                    | A new endpoint that is reachable without signing in, or only by the address of the caller, needs a reviewer to agree, and an entity is not bound from a request body                     |
 | `AuthorizationOutsiderEndpointTest`                                                                                                                                                                    | Every reading endpoint that requires a role in a course refuses a signed-in user who is not a member of that course                               |
 | Integration tests of the REST interfaces                                                                                                                                                               | An allowed, a refused and a malformed request for the operations that change or disclose data                                                     |
-| [Security scans](https://github.com/ls1intum/Artemis/blob/develop/.github/workflows/security-scans.yml): Semgrep rules of the repository, secret scan, known vulnerabilities of the locked dependencies, configuration scan of the Dockerfiles, the Helm chart and the Kubernetes manifests | Patterns that the [security guideline](/developer/guidelines/security) asks reviewers to look for, committed credentials, vulnerable dependencies and weak deployment configuration |
+| [Security scans](https://github.com/ls1intum/Artemis/blob/develop/.github/workflows/security-scans.yml): Semgrep rules of the repository, secret scan, known vulnerabilities of the locked dependencies, configuration scan of the Dockerfiles and the Kubernetes manifests | Patterns that the [security guideline](/developer/guidelines/security) asks reviewers to look for, committed credentials, vulnerable dependencies and weak deployment configuration |
 | `SecurityHeaders.spec.ts` in the E2E tests                                                                                                                                                             | The headers that restrict the browser and the flags of the session cookie reach the client                                                        |
 | [OpenSSF Scorecard](https://github.com/ls1intum/Artemis/blob/develop/.github/workflows/scorecard.yml) and the dependency submission                                                                    | Repository hygiene and the vulnerabilities of third-party dependencies                                                                            |
 
@@ -140,10 +140,9 @@ The checks below keep what an audit established from eroding. The first group ru
 
 | Check                                                                                                                                       | What it supports                                                                                                                  |
 | ------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
-| [Nightly security scans](https://github.com/ls1intum/Artemis/blob/develop/.github/workflows/nightly-security-scans.yml): API fuzzing with Schemathesis and a ZAP baseline scan | Server errors and responses that do not match the OpenAPI description of the reading endpoints, header, cookie and configuration findings |
-| `supporting_scripts/security/check-container-isolation.sh`, part of the nightly scans                                                       | A build container on the strictest network reaches neither the host, nor another container, nor the internet                      |
+| [Scheduled security scans](https://github.com/ls1intum/Artemis/blob/develop/.github/workflows/nightly-security-scans.yml), once a week: API fuzzing with Schemathesis and a ZAP baseline scan | Server errors and responses that do not match the OpenAPI description of the reading endpoints, header, cookie and configuration findings |
 
-The scripts in `supporting_scripts/security` also run on a developer machine, and the isolation check accepts the network of your own installation.
+The scripts in `supporting_scripts/security` also run on a developer machine. Operators run `check-container-isolation.sh` and `check-network-exposure.sh` against their own installation, see the [hardening checklist](/admin/production-setup/hardening-checklist).
 
 A change of an authorization rule is reviewed together with the test of the refused request. A finding of
 an audit is only closed once such a test exists, so the same weakness does not return unnoticed.

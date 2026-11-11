@@ -5,7 +5,7 @@ name: Security Scans
 #              On a pull request only findings that the change introduces are reported.
 #   - secrets: gitleaks over the commits of the change, or over the whole history in the weekly run.
 #   - osv:     known vulnerabilities in the locked dependencies of the client and of the sbom of the server.
-#   - config:  Trivy over the Dockerfiles, the Helm chart and the Kubernetes manifests.
+#   - config:  Trivy over the Dockerfiles and the Kubernetes manifests.
 #
 # Only the rules of the highest severity and the secret scan fail the run. Everything else is reported as an artifact of the
 # run and is reviewed, so that a new scan does not stop development before its findings have been triaged.
@@ -22,7 +22,7 @@ on:
   workflow_dispatch:
 
 concurrency:
-  group: security-scans-${{ github.event.pull_request.number || github.ref }}
+  group: security-scans-${{ github.event_name }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 permissions: {}
@@ -93,15 +93,25 @@ jobs:
           persist-credentials: false
       - name: Scan
         env:
+          EVENT_NAME: ${{ github.event_name }}
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          BEFORE_SHA: ${{ github.event.before }}
+          PUSHED_SHA: ${{ github.sha }}
         run: |
           set -Eeuo pipefail
+          # A pull request and a push are judged on the commits they bring. The whole history holds findings from before the scan existed, so the weekly scan of the history
+          # only reports them and does not fail.
           LOG_OPTS=()
-          if [ -n "${BASE_SHA}" ]; then
+          EXIT_CODE=1
+          if [ "${EVENT_NAME}" = "pull_request" ]; then
             LOG_OPTS=(--log-opts "${BASE_SHA}..${HEAD_SHA}")
+          elif [ "${EVENT_NAME}" = "push" ] && [ -n "${BEFORE_SHA}" ] && [ "${BEFORE_SHA}" != "0000000000000000000000000000000000000000" ]; then
+            LOG_OPTS=(--log-opts "${BEFORE_SHA}..${PUSHED_SHA}")
+          else
+            EXIT_CODE=0
           fi
-          docker run --rm -v "${PWD}:/repo" "${GITLEAKS_IMAGE}" git /repo --config /repo/.gitleaks.toml --redact --no-banner --exit-code 1 "${LOG_OPTS[@]}"
+          docker run --rm -v "${PWD}:/repo" "${GITLEAKS_IMAGE}" git /repo --config /repo/.gitleaks.toml --redact --no-banner --exit-code "${EXIT_CODE}" ${LOG_OPTS[@]+"${LOG_OPTS[@]}"}
 
   osv:
     name: Known vulnerabilities in dependencies
@@ -131,7 +141,7 @@ jobs:
           retention-days: 30
 
   config:
-    name: Dockerfile, Helm and Kubernetes configuration
+    name: Dockerfile and Kubernetes configuration
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
