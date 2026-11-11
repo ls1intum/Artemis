@@ -2,7 +2,7 @@
     @switch (exercise().type) {
         <!-- QUIZ EXERCISE ACTIONS START -->
         @case (ExerciseType.QUIZ) {
-            <div class="flex flex-wrap gap-1">
+            <div class="flex flex-wrap gap-2">
                 @if (isStartPracticeAvailable()) {
                     <ng-container
                         [ngTemplateOutlet]="quizActionButton"
