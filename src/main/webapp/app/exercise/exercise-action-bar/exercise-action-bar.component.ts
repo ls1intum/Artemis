@@ -47,6 +47,23 @@ function widthOf(element: HTMLElement): number {
 }
 
 /**
+ * Room the visible `data-compactable-label` labels inside `container` take up. A hidden label measures 0. Its margin and
+ * the flex gap before it in its button only take up room while it shows, so they count as part of it; otherwise the width
+ * without labels would come out differently with the labels shown and hidden.
+ */
+export function visibleLabelsWidth(container: HTMLElement | undefined): number {
+    return [...(container?.querySelectorAll<HTMLElement>('[data-compactable-label]') ?? [])].reduce((sum, label) => {
+        const width = widthOf(label);
+        if (width === 0) {
+            return sum;
+        }
+        const margin = parseFloat(getComputedStyle(label).marginInlineStart) || 0;
+        const gap = label.parentElement ? parseFloat(getComputedStyle(label.parentElement).columnGap) || 0 : 0;
+        return sum + width + margin + gap;
+    }, 0);
+}
+
+/**
  * Owned, data-driven action row: renders the {@link inlineIds} actions as icon buttons, at most {@link maxInline} of
  * them, and every other {@link ActionItem} in a trailing ellipsis menu. Once the menu shows, Delete goes into it
  * ({@link collapseFirstIds}); buttons that don't fit the row's available width fold into it too, Edit/Participations/Edit
@@ -346,17 +363,7 @@ export class ExerciseActionBarComponent {
                     this.rowWidth.set(widthOf(rowEl));
                 }
                 this.reservedWidth.set(reservedEl ? widthOf(reservedEl) : 0);
-                // A hidden label measures 0. Its margin and the flex gap before it in its button only take up room while it
-                // shows, so they count as part of it; otherwise the width without labels would differ with the labels shown.
-                const labels = [...(reservedEl?.querySelectorAll<HTMLElement>('[data-compactable-label]') ?? [])].reduce((sum, label) => {
-                    const width = widthOf(label);
-                    if (width === 0) {
-                        return sum;
-                    }
-                    const margin = parseFloat(getComputedStyle(label).marginInlineStart) || 0;
-                    const gap = label.parentElement ? parseFloat(getComputedStyle(label.parentElement).columnGap) || 0 : 0;
-                    return sum + width + margin + gap;
-                }, 0);
+                const labels = visibleLabelsWidth(reservedEl);
                 this.reservedLabelsWidth.set(labels);
                 if (labels > 0) {
                     this.lastReservedLabelsWidth.set(labels);

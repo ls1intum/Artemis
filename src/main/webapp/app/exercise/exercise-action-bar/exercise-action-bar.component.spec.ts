@@ -3,7 +3,7 @@ import { provideRouter } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { afterEach, vi } from 'vitest';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { ExerciseActionBarComponent } from 'app/exercise/exercise-action-bar/exercise-action-bar.component';
+import { ExerciseActionBarComponent, visibleLabelsWidth } from 'app/exercise/exercise-action-bar/exercise-action-bar.component';
 import { ActionItem } from 'app/exercise/exercise-action-bar/exercise-action-bar.model';
 import { faTable, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { of } from 'rxjs';
@@ -185,6 +185,30 @@ describe('ExerciseActionBarComponent', () => {
             expect(compact.at(-1)).toBe(true);
         });
 
+        it('keeps the same decision with the labels shown and hidden at the same row width', () => {
+            const compact: boolean[] = [];
+            component.reservedCompactChange.subscribe((value) => compact.push(value));
+            fixture.componentRef.setInput('items', buildActions(['participations', 'edit', 'delete']));
+            fixture.detectChanges();
+            seedEqualWidths(30);
+            component['lastReservedLabelsWidth'].set(77);
+            // Just narrower than buttons (98px), reserved content with labels (133px), its gap and the safety margin.
+            component['rowWidth'].set(240);
+
+            // Labels shown: 133px reserved, 77px of it labels (with their margin and gap).
+            component['reservedWidth'].set(133);
+            component['reservedLabelsWidth'].set(77);
+            fixture.detectChanges();
+            expect(compact.at(-1)).toBe(true);
+
+            // Labels hidden: 56px reserved. The width with labels is still 133px, so the decision holds.
+            component['reservedWidth'].set(56);
+            component['reservedLabelsWidth'].set(0);
+            fixture.detectChanges();
+            expect(component['fullReservedWidth']()).toBe(133);
+            expect(compact.at(-1)).toBe(true);
+        });
+
         it('reports the width that shows every action once all buttons are measured', () => {
             const reported: number[] = [];
             component.naturalWidthChange.subscribe((width) => reported.push(width));
@@ -198,6 +222,21 @@ describe('ExerciseActionBarComponent', () => {
             fixture.detectChanges();
             // 3 buttons and 2 gaps, then the reserved content and its gap, then the safety margin.
             expect(reported.at(-1)).toBe(3 * 30 + 2 * 4 + 50 + 4 + 8);
+        });
+    });
+
+    describe('visibleLabelsWidth', () => {
+        it('counts each visible label with its margin and the gap before it, and hidden labels as nothing', () => {
+            const container = document.createElement('div');
+            container.innerHTML =
+                '<button style="column-gap: 8px"><i></i><span data-compactable-label style="margin-inline-start: 4px">Start</span></button>' +
+                '<button style="column-gap: 8px"><i></i><span data-compactable-label style="margin-inline-start: 4px">End</span></button>';
+            const [start, end] = [...container.querySelectorAll<HTMLElement>('[data-compactable-label]')];
+            vi.spyOn(start, 'getBoundingClientRect').mockReturnValue({ width: 60 } as DOMRect);
+            vi.spyOn(end, 'getBoundingClientRect').mockReturnValue({ width: 0 } as DOMRect);
+
+            expect(visibleLabelsWidth(container)).toBe(60 + 4 + 8);
+            expect(visibleLabelsWidth(undefined)).toBe(0);
         });
     });
 
