@@ -2,7 +2,7 @@
 id: security
 title: Security
 sidebar_label: Security
-last_reviewed: 2026-11-10
+last_reviewed: 2026-11-11
 ---
 
 import Callout from "../../../src/components/Callout/Callout";
@@ -538,3 +538,20 @@ We plan to add the rate-limit to more endpoints (like Oauth2) in the future.
 ### Client Address of Git Requests
 
 The limit for Git over HTTP counts the address of the client as the reverse proxies of your installation report it. Tomcat resolves `X-Forwarded-For` for the proxies in `server.tomcat.remoteip.internal-proxies`, which are the private networks by default, and the proxies listed in `artemis.continuous-integration.build-agent-network.trusted-proxies` are believed in addition (see [Build Agent Authentication](#build-agent-authentication)). A header sent by any other peer is ignored. If your reverse proxy has a public address and is in neither list, all clients share the address of the proxy and therefore one budget, so list it in `trusted-proxies`.
+
+The other limits in this section, the check of internal endpoints and the address that is stored in an exam session use the same address: the one that Tomcat resolved for the request. Artemis does not read address headers itself, so what a client
+sends in `X-Forwarded-For` or a similar header only counts when it comes through one of your proxies. Make sure that the reverse proxy appends the address of the connection it accepted, as the nginx configuration of the repository does.
+
+### Internal Endpoints
+
+Some endpoints are meant to be called by other components of the installation, such as the AI services. They accept requests only from the address ranges in `artemis.security.internal.allowed-cidrs`, in addition to the secret that each of them checks.
+The shipped default allows every address, so that a first installation works. Restrict it to the addresses of the components that call Artemis:
+
+```yaml
+artemis:
+  security:
+    internal:
+      allowed-cidrs:
+        - 10.0.0.0/24
+```
+
