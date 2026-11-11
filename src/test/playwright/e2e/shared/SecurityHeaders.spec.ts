@@ -7,7 +7,9 @@ import { studentOne } from '../../support/users';
  */
 test.describe('Security headers and session cookie', { tag: '@fast' }, () => {
     test('The client is served with the headers that restrict the browser', async ({ baseURL }) => {
-        const context = await request.newContext({ baseURL });
+        // The local fast runner serves the client with the Angular development server, which answers this document without the headers of Artemis.
+        test.skip(new URL(baseURL ?? 'http://localhost').port === '9000', 'the client is served by the Angular development server');
+        const context = await request.newContext({ baseURL, ignoreHTTPSErrors: true });
         try {
             const response = await context.get('/');
             expect(response.ok()).toBe(true);
@@ -23,7 +25,7 @@ test.describe('Security headers and session cookie', { tag: '@fast' }, () => {
     });
 
     test('A sign-in sets an HTTP-only cookie with a same-site restriction', async ({ baseURL }) => {
-        const context = await request.newContext({ baseURL });
+        const context = await request.newContext({ baseURL, ignoreHTTPSErrors: true });
         try {
             const response = await context.post('/api/core/public/authenticate', {
                 data: { username: studentOne.username, password: studentOne.password, rememberMe: false },
@@ -41,7 +43,7 @@ test.describe('Security headers and session cookie', { tag: '@fast' }, () => {
     });
 
     test('Responses with account data are not cached', async ({ baseURL }) => {
-        const context = await request.newContext({ baseURL });
+        const context = await request.newContext({ baseURL, ignoreHTTPSErrors: true });
         try {
             const signIn = await context.post('/api/core/public/authenticate', {
                 data: { username: studentOne.username, password: studentOne.password, rememberMe: false },
@@ -57,7 +59,7 @@ test.describe('Security headers and session cookie', { tag: '@fast' }, () => {
     });
 
     test('A request without a session is refused by a protected endpoint', async ({ baseURL }) => {
-        const context = await request.newContext({ baseURL });
+        const context = await request.newContext({ baseURL, ignoreHTTPSErrors: true });
         try {
             const response = await context.get('/api/core/courses/for-dashboard');
             expect([401, 403]).toContain(response.status());

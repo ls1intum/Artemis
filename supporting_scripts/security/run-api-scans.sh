@@ -30,9 +30,21 @@ REPOSITORY_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 mkdir -p "${OUTPUT_DIRECTORY}"
 OUTPUT_DIRECTORY="$(cd "${OUTPUT_DIRECTORY}" && pwd)"
 
-# A container reaches the host through this name, on macOS as well as on Linux.
-CONTAINER_URL="$(printf '%s' "${BASE_URL}" | sed -E 's#^(https?://)(localhost|127\.0\.0\.1)([:/]|$)#\1host.docker.internal\3#')"
-DOCKER_HOST_ARGS=(--add-host=host.docker.internal:host-gateway)
+# A local server may listen on the loopback interface only, as the development server of the client does. On Linux the scanners then share the network of the host and use the
+# address as it is. Docker Desktop does not offer that, there a container reaches the host through host.docker.internal.
+LOCAL_TARGET=0
+if printf '%s' "${BASE_URL}" | grep -Eq '^https?://(localhost|127\.0\.0\.1)([:/]|$)'; then
+    LOCAL_TARGET=1
+fi
+if [ "${LOCAL_TARGET}" -eq 1 ] && [ "$(uname -s)" = "Linux" ]; then
+    CONTAINER_URL="${BASE_URL}"
+    DOCKER_HOST_ARGS=(--network host)
+else
+    CONTAINER_URL="$(printf '%s' "${BASE_URL}" | sed -E 's#^(https?://)(localhost|127\.0\.0\.1)([:/]|$)#\1host.docker.internal\3#')"
+    DOCKER_HOST_ARGS=(--add-host=host.docker.internal:host-gateway)
+fi
+# The reports of an earlier run must not make this run look complete.
+rm -f "${OUTPUT_DIRECTORY}"/junit-*.xml "${OUTPUT_DIRECTORY}"/zap-baseline.json "${OUTPUT_DIRECTORY}"/zap-baseline.html
 
 # The E2E stack uses a self-signed certificate, so verification is only skipped for a local address. Set CURL_CA_BUNDLE for other installations.
 CURL_TLS_ARGS=()
@@ -70,6 +82,21 @@ docker run --rm "${DOCKER_HOST_ARGS[@]}" --volume "${OUTPUT_DIRECTORY}:/zap/wrk:
 
 echo "Reports are in ${OUTPUT_DIRECTORY}"
 echo "Schemathesis exit code ${SCHEMATHESIS_STATUS}, ZAP exit code ${ZAP_STATUS}"
+
+# A scan that could not run is an error, whatever the setting for findings: Docker reports 125 to 127 when it could not start the container, ZAP exits with 3 on an
+# operational error, and a scan that completed has written its report.
+EXECUTION_ERROR=0
+if [ "${SCHEMATHESIS_STATUS}" -ge 125 ] || ! ls "${OUTPUT_DIRECTORY}"/junit-*.xml >/dev/null 2>&1; then
+    echo "Schemathesis did not complete: there is no report." >&2
+    EXECUTION_ERROR=1
+fi
+if [ "${ZAP_STATUS}" -ge 3 ] || [ ! -s "${OUTPUT_DIRECTORY}/zap-baseline.json" ]; then
+    echo "The ZAP baseline scan did not complete: there is no report or it reported an error." >&2
+    EXECUTION_ERROR=1
+fi
+if [ "${EXECUTION_ERROR}" -ne 0 ]; then
+    exit 2
+fi
 # ZAP exits with 1 for failures and 2 for warnings. Warnings are the normal result of a first scan and are triaged from the report.
 if [ "${ZAP_STATUS}" -eq 1 ]; then
     exit 1

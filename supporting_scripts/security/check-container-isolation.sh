@@ -75,7 +75,16 @@ expect_unreachable() {
 
 expect_unreachable "a service on the host (host.docker.internal:${LISTENER_PORT})" "wget -q -T 3 -O /dev/null http://host.docker.internal:${LISTENER_PORT}/"
 expect_unreachable "a sibling container (${SIBLING_IP}:8080)" "nc -w 3 -z ${SIBLING_IP} 8080"
+# The same over IPv6, where the network has it. A container without an IPv6 address cannot connect, which is the result that is wanted.
+SIBLING_IPV6="$(docker inspect --format '{{range .NetworkSettings.Networks}}{{.GlobalIPv6Address}}{{end}}' "${SIBLING_NAME}")"
+# Docker prints the text "invalid IP" for an address that is not set
+if [ -n "${SIBLING_IPV6}" ] && [ "${SIBLING_IPV6}" != "invalid IP" ]; then
+    expect_unreachable "a sibling container over IPv6 (${SIBLING_IPV6}:8080)" "nc -w 3 -z ${SIBLING_IPV6} 8080"
+else
+    echo "info  the network has no IPv6 address for a sibling container, so no sibling is checked over IPv6"
+fi
 expect_unreachable "the internet (1.1.1.1:443)" "nc -w 3 -z 1.1.1.1 443"
+expect_unreachable "the internet over IPv6 ([2606:4700:4700::1111]:443)" "nc -w 3 -z 2606:4700:4700::1111 443"
 expect_unreachable "a name server (example.com)" "nslookup -timeout=3 example.com"
 
 if [ "${FAILURES}" -ne 0 ]; then
