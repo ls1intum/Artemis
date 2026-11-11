@@ -206,6 +206,14 @@ class SubmissionServiceTest extends AbstractSpringIntegrationIndependentBatchTes
         request.get("/api/exercise/exercises/" + examTextExercise.getId() + "/assessment-queue-teams", HttpStatus.FORBIDDEN, String.class);
     }
 
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void shouldRejectTeamQueueWhenExerciseBelongsToExam() throws Exception {
+        examTextExercise.setMode(ExerciseMode.TEAM);
+        exerciseRepository.save(examTextExercise);
+        request.get("/api/exercise/exercises/" + examTextExercise.getId() + "/assessment-queue-teams", HttpStatus.BAD_REQUEST, String.class);
+    }
+
     @ParameterizedTest
     @EnumSource(value = AssessmentType.class, names = { "MANUAL", "SEMI_AUTOMATIC" })
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")

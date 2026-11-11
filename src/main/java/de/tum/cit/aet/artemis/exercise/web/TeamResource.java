@@ -385,8 +385,8 @@ public class TeamResource {
     public ResponseEntity<List<AssessmentQueueTeamDTO>> getAssessmentQueueTeams(@PathVariable long exerciseId,
             @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound) {
         var exercise = exerciseRepository.findByIdElseThrow(exerciseId);
-        if (!exercise.isTeamMode()) {
-            throw new BadRequestAlertException("The exercise is not a team exercise", "exercise", "notTeamExercise");
+        if (!exercise.isTeamMode() || exercise.isExamExercise()) {
+            throw new BadRequestAlertException("The exercise is not a course team exercise", "exercise", "notTeamExercise");
         }
         submissionService.checkCorrectionRoundIsValidElseThrow(exercise, correctionRound);
         submissionService.checkThatAssessmentIsPossibleElseThrow(exercise, null);
@@ -403,8 +403,7 @@ public class TeamResource {
             canStartAssessment = false;
         }
         if (canStartAssessment && (!(exercise instanceof ProgrammingExercise programmingExercise) || programmingExercise.areManualResultsAllowed())) {
-            var candidates = exercise.isExamExercise() ? studentParticipationRepository.findExamTeamQueueCandidates(exerciseId, correctionRound, teamOwnerId, user.getId())
-                    : studentParticipationRepository.findCourseTeamQueueCandidates(exerciseId, ZonedDateTime.now(ZoneOffset.UTC), teamOwnerId);
+            var candidates = studentParticipationRepository.findCourseTeamQueueCandidates(exerciseId, ZonedDateTime.now(ZoneOffset.UTC), teamOwnerId);
             candidates.forEach(submission -> submissions.put(submission.participationId(), submission));
         }
         var existingIds = participations.stream().map(entry -> entry.submissionId()).filter(Objects::nonNull).toList();

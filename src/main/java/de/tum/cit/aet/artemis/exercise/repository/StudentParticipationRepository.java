@@ -2392,66 +2392,6 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
             @Param("correctionRound") int correctionRound);
 
     /**
-     * Selects eligible exam team submissions without answer bodies.
-     *
-     * @param exerciseId      the exercise id
-     * @param correctionRound the requested correction round
-     * @param teamOwnerId     the tutor id, or null for all teams
-     * @param assessorId      the assessor excluded from the previous round
-     * @return eligible submission metadata
-     */
-    @Query("""
-            SELECT DISTINCT new de.tum.cit.aet.artemis.exercise.dto.AssessmentQueueSubmissionDTO(s.id, s.submitted, s.type, s.exampleSubmission, s.submissionDate,
-                TYPE(s), p.id, p.initializationState, p.initializationDate, p.individualDueDate, team.name,
-                programming.buildFailed, programming.commitHash, text.language)
-            FROM StudentParticipation p
-                LEFT JOIN p.team team
-                LEFT JOIN p.submissions s
-                LEFT JOIN ProgrammingSubmission programming ON programming.id = s.id
-                LEFT JOIN TextSubmission text ON text.id = s.id
-                LEFT JOIN s.results result
-                LEFT JOIN result.assessor
-            WHERE p.exercise.id = :exerciseId
-                AND (:teamOwnerId IS NULL OR team.owner.id = :teamOwnerId)
-                AND p.testRun = FALSE
-                AND 0L = (
-                    SELECT COUNT(r2)
-                    FROM Result r2
-                    WHERE r2.assessor IS NOT NULL
-                        AND (r2.rated IS NULL OR r2.rated = FALSE)
-                        AND r2.submission = s
-                )
-                AND :correctionRound = (
-                    SELECT COUNT(r)
-                    FROM Result r
-                    WHERE r.assessor IS NOT NULL
-                        AND r.rated = TRUE
-                        AND r.submission = s
-                        AND r.completionDate IS NOT NULL
-                        AND r.assessmentType IN (
-                            de.tum.cit.aet.artemis.assessment.domain.AssessmentType.MANUAL,
-                            de.tum.cit.aet.artemis.assessment.domain.AssessmentType.SEMI_AUTOMATIC
-                        )
-                        AND (p.exercise.dueDate IS NULL OR r.submission.submissionDate <= p.exercise.dueDate)
-                )
-                AND :correctionRound = (
-                    SELECT COUNT(prs)
-                    FROM Submission s2 JOIN s2.results prs
-                    WHERE s2.participation = p
-                      AND prs.assessmentType IN (
-                            de.tum.cit.aet.artemis.assessment.domain.AssessmentType.MANUAL,
-                            de.tum.cit.aet.artemis.assessment.domain.AssessmentType.SEMI_AUTOMATIC
-                        )
-                )
-                AND (:correctionRound = 0 OR NOT EXISTS (SELECT previous.id FROM Result previous WHERE previous.submission.id = s.id
-                    AND previous.correctionRound = :correctionRound - 1 AND previous.assessor.id = :assessorId))
-                AND s.submitted = TRUE
-                AND s.id = (SELECT MAX(s3.id) FROM p.submissions s3)
-            """)
-    List<AssessmentQueueSubmissionDTO> findExamTeamQueueCandidates(@Param("exerciseId") long exerciseId, @Param("correctionRound") long correctionRound,
-            @Param("teamOwnerId") Long teamOwnerId, @Param("assessorId") Long assessorId);
-
-    /**
      * Selects eligible course team submissions without answer bodies.
      *
      * @param exerciseId  the exercise id
