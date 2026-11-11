@@ -356,6 +356,16 @@ describe('CalendarService - authentication state changes', () => {
         ).toEqual(['Current course lecture']);
     });
 
+    it('should reload the events of the most recently requested course while its request is still in flight', () => {
+        const pending = new Subject<Record<string, unknown[]>>();
+        calendarApiService.getCalendarEventsOverlappingMonths.mockReturnValueOnce(pending).mockReturnValueOnce(of({}));
+
+        scoped.loadEventsForCurrentMonth(2, date).subscribe();
+        scoped.reloadEvents();
+
+        expect(calendarApiService.getCalendarEventsOverlappingMonths).toHaveBeenLastCalledWith(2, expect.any(Array), expect.any(String), expect.any(String));
+    });
+
     it('should neither alert nor fail when an outdated request errors after switching courses', async () => {
         const alertSpy = vi.spyOn(TestBed.inject(AlertService), 'addErrorAlert');
         const slowResponse = new Subject<Record<string, unknown[]>>();

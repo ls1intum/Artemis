@@ -103,13 +103,15 @@ export class CalendarService implements OnDestroy {
 
         const generation = this.stateGeneration;
         const requestId = ++this.latestEventsRequest;
+        // Recorded when the request starts, so that reloadEvents() always targets the course and month the user navigated to,
+        // also while that request is still in flight or when it fails. A stale response is dropped by the guards below.
+        this.currentCourseId = courseId;
+        this.firstDayOfCurrentMonth = firstDayOfCurrentMonth;
         return this.apiService.getCalendarEventsOverlappingMonths(courseId, monthKeys, timeZone, language).pipe(
             map((res: { [key: string]: CalendarEvent[] }) => {
                 if (this.stateGeneration !== generation || this.latestEventsRequest !== requestId) return;
                 const parsed = this.createCalendarEventMap(res);
                 this.currentEventMap.set(parsed);
-                this.currentCourseId = courseId;
-                this.firstDayOfCurrentMonth = firstDayOfCurrentMonth;
             }),
             catchError((error) => {
                 if (this.stateGeneration !== generation || this.latestEventsRequest !== requestId) return EMPTY;
