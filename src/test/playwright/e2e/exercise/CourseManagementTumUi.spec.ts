@@ -145,7 +145,7 @@ test.describe('Course management TUM UI tables', { tag: '@slow' }, () => {
             await page.emulateMedia({ colorScheme: 'light' });
             await page.setViewportSize({ width: 1280, height: 800 });
             await page.goto(`/course-management/${course.id}/members/students`);
-            const viewport = page.getByTestId('table-viewport');
+            const viewport = page.getByTestId('table-scroll-body');
             const table = viewport.getByRole('table');
             const rows = table.getByRole('rowgroup').last().getByRole('row');
             await expect(table).toBeVisible();
@@ -373,7 +373,7 @@ test.describe('Course management TUM UI tables', { tag: '@slow' }, () => {
                 const graph = page.getByTestId('tutor-participation-graph');
                 try {
                     await page.setViewportSize({ width: 320, height: 800 });
-                    const tableViewport = page.getByTestId('assessment-exercise-table-viewport');
+                    const tableViewport = page.getByTestId('assessment-exercise-table-viewport').getByTestId('table-scroll-body');
                     const trailingTrack = graph.getByTestId('tutor-progress-track').last();
                     await expect(tableViewport).toHaveCSS('overflow-x', 'auto');
                     await expect.poll(() => tableViewport.evaluate((element) => element.scrollWidth - element.clientWidth)).toBeGreaterThan(0);

@@ -1,6 +1,15 @@
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { AssessmentProgressComponent } from '../assessment-progress.component';
-import { TumAetUiButtonDirective, TumAetUiMessageComponent, TumAetUiPanelComponent, TumAetUiTableDirective, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import {
+    TumAetUiButtonDirective,
+    TumAetUiMessageComponent,
+    TumAetUiPanelComponent,
+    TumAetUiTableDirective,
+    TumAetUiTableLayoutComponent,
+    TumAetUiTableSortEvent,
+    TumAetUiTableSortableColumnComponent,
+    TumAetUiTooltipDirective,
+} from '@tumaet/ui-angular';
 import { Component, DestroyRef, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { SafeHtml } from '@angular/platform-browser';
@@ -52,15 +61,13 @@ import { roundValueSpecifiedByCourseSettings } from 'app/foundation/util/utils';
 import { getLinkToSubmissionAssessment } from 'app/foundation/util/navigation.utils';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import dayjs from 'dayjs/esm';
-import { faCheckCircle, faCircleInfo, faExclamationTriangle, faFlag, faFolderOpen, faListAlt, faQuestionCircle, faSort, faSpinner } from '@fortawesome/free-solid-svg-icons';
+import { faCheckCircle, faCircleInfo, faExclamationTriangle, faFlag, faFolderOpen, faListAlt, faQuestionCircle, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { isManualResult } from 'app/exercise/result/result.utils';
 import { SecondCorrectionEnableButtonComponent } from './second-correction-button/second-correction-enable-button.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { CodeButtonComponent } from 'app/shared-ui/components/buttons/code-button/code-button.component';
 import { StructuredGradingInstructionsAssessmentLayoutComponent } from 'app/assessment/manage/structured-grading-instructions-assessment-layout/structured-grading-instructions-assessment-layout.component';
-import { SortDirective } from 'app/foundation/sort/directive/sort.directive';
-import { SortByDirective } from 'app/foundation/sort/directive/sort-by.directive';
 import { LanguageTableCellComponent } from './language-table-cell/language-table-cell.component';
 import { AssessmentWarningComponent } from 'app/assessment/manage/assessment-warning/assessment-warning.component';
 import { CollapsableAssessmentInstructionsComponent } from 'app/assessment/manage/assessment-instructions/collapsable-assessment-instructions/collapsable-assessment-instructions.component';
@@ -104,8 +111,6 @@ export interface ExampleSubmissionQueryParams {
         StructuredGradingInstructionsAssessmentLayoutComponent,
         TumAetUiTooltipDirective,
         TumAetUiMessageComponent,
-        SortDirective,
-        SortByDirective,
         LanguageTableCellComponent,
         ResultComponent,
         AssessmentWarningComponent,
@@ -115,6 +120,8 @@ export interface ExampleSubmissionQueryParams {
         ArtemisTranslatePipe,
         ArtemisDurationFromSecondsPipe,
         TumAetUiTableDirective,
+        TumAetUiTableLayoutComponent,
+        TumAetUiTableSortableColumnComponent,
     ],
 })
 export class ExerciseAssessmentDashboardComponent implements OnInit, OnDestroy {
@@ -330,7 +337,6 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, OnDestroy {
     faQuestionCircle = faQuestionCircle;
     faCheckCircle = faCheckCircle;
     faFolderOpen = faFolderOpen;
-    faSort = faSort;
     faExclamationTriangle = faExclamationTriangle;
     faListAlt = faListAlt;
     faFlag = faFlag;
@@ -922,6 +928,24 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, OnDestroy {
                 this.firstRoundAssessments.set(this.notYetAssessed[i] - this.lockedSubmissionsByOtherTutor[i]);
             }
         }
+    }
+
+    protected onSubmissionSort(correctionRound: number, event: TumAetUiTableSortEvent): void {
+        this.sortPredicates[0] = event.field;
+        this.reverseOrders[0] = event.order === 1;
+        this.sortSubmissionRows(correctionRound);
+    }
+
+    protected onComplaintSort(event: TumAetUiTableSortEvent): void {
+        this.sortPredicates[1] = event.field;
+        this.reverseOrders[1] = event.order === 1;
+        this.sortComplaintRows();
+    }
+
+    protected onMoreFeedbackSort(event: TumAetUiTableSortEvent): void {
+        this.sortPredicates[2] = event.field;
+        this.reverseOrders[2] = event.order === 1;
+        this.sortMoreFeedbackRows();
     }
 
     sortSubmissionRows(correctionRound: number) {
