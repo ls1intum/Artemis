@@ -1,6 +1,6 @@
 # Programming exercise trailers
 
-`render_trailer.py` renders two 60-second trailers (1920×1080, 30 fps, with a generated soundtrack) of
+`render_trailer.py` renders two 60-second trailers (1920×1080, 30 fps, without sound) of
 the programming exercise module:
 
 - **student**: coding in the online editor, automatic feedback on every push, AI feedback, Iris, working

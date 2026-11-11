@@ -17,7 +17,6 @@ import math
 import shutil
 import subprocess
 import sys
-import wave
 from pathlib import Path
 
 import numpy as np
@@ -1127,76 +1126,6 @@ def instructor():
     ]
 
 
-# ---------------------------------------------------------------- audio
-def make_audio(path, cuts, bpm, sr=48000):
-    n = int(DUR * sr)
-    tt = np.arange(n) / sr
-    out = np.zeros(n, np.float64)
-
-    def hz(m):
-        return 440.0 * 2 ** ((m - 69) / 12)
-
-    prog = [[57, 60, 64], [53, 57, 60], [48, 55, 60], [55, 59, 62]]
-    bass = [45, 41, 48, 43]
-    bar = 60 / bpm * 4
-    seg = bar * 2
-    k = 0
-    while k * seg < DUR:
-        s0, s1 = k * seg, (k + 1) * seg + 1.0
-        i0, i1 = int(s0 * sr), min(n, int(s1 * sr))
-        lt = tt[i0:i1] - s0
-        env = np.minimum(1, lt / 0.8) * np.clip((s1 - s0 - lt) / 1.2, 0, 1)
-        ch = prog[k % 4]
-        sig = np.zeros_like(lt)
-        for m in ch + [ch[0] + 12]:
-            for det in (-0.12, 0.12):
-                f = hz(m + det)
-                sig += np.sin(2 * np.pi * f * lt) + 0.25 * np.sin(4 * np.pi * f * lt)
-        sig += 1.5 * np.sin(2 * np.pi * hz(bass[k % 4]) * lt)
-        out[i0:i1] += 0.035 * sig * env
-        k += 1
-    step = 60 / bpm / 2
-    t0, j = 2.0, 0
-    while t0 < DUR - 2.5:
-        ch = prog[int(t0 / seg) % 4]
-        notes = ch + [ch[0] + 12, ch[1] + 12, ch[2]]
-        m = notes[j % len(notes)] + 12
-        i0 = int(t0 * sr)
-        lt = np.arange(min(int(0.6 * sr), n - i0)) / sr
-        f = hz(m)
-        pl = (np.sin(2 * np.pi * f * lt) + 0.3 * np.sin(6 * np.pi * f * lt)) * np.exp(-lt * 7)
-        out[i0 : i0 + len(lt)] += (0.045 + 0.04 * min(1, t0 / 50)) * pl
-        t0 += step
-        j += 1
-    # soft hi-hat on off-beats after the intro for more drive
-    rng = np.random.default_rng(3)
-    t0 = 4.0 + step
-    while t0 < DUR - 4:
-        i0 = int(t0 * sr)
-        length = int(0.05 * sr)
-        hh = np.diff(rng.standard_normal(length + 1)) * np.exp(-np.arange(length) / sr * 80)
-        out[i0 : i0 + length] += 0.012 * hh
-        t0 += step * 2
-    for s in cuts:
-        i0 = int(s * sr)
-        lt = np.arange(int(0.5 * sr)) / sr
-        f = 50 + 90 * np.exp(-lt * 30)
-        out[i0 : i0 + len(lt)] += 0.35 * np.sin(2 * np.pi * np.cumsum(f) / sr) * np.exp(-lt * 9)
-        # whoosh just before the cut
-        length = int(0.45 * sr)
-        a0 = max(0, i0 - length)
-        noise = np.convolve(rng.standard_normal(i0 - a0), np.ones(12) / 12, "same")
-        out[a0:i0] += 0.06 * noise * np.linspace(0, 1, i0 - a0) ** 2
-    out *= np.clip(tt / 1.0, 0, 1) * np.clip((DUR - tt) / 2.5, 0, 1)
-    st = np.stack([out, np.roll(out, int(0.012 * sr))], 1)
-    st = st / max(1e-9, np.abs(st).max()) * 0.85
-    with wave.open(path, "wb") as w:
-        w.setnchannels(2)
-        w.setsampwidth(2)
-        w.setframerate(sr)
-        w.writeframes((st * 32767).astype(np.int16).tobytes())
-
-
 def render(cut, out, preview):
     scenes = student() if cut == "student" else instructor()
     if preview:
@@ -1209,14 +1138,12 @@ def render(cut, out, preview):
         return
     mp4 = out / f"artemis-programming-exercises-{cut}.mp4" if out else VIDEO_PATHS[cut]
     mp4.parent.mkdir(parents=True, exist_ok=True)
-    wav = mp4.with_suffix(".wav")
-    make_audio(str(wav), [sc["start"] for sc in scenes[1:]], 104 if cut == "student" else 96)
     # CRF 30 with the animation tuning keeps the screenshot text sharp at about 5 MB per trailer.
     # The flat backgrounds and slow camera moves compress well, so a higher quality barely shows.
-    encoder = "-c:v libx264 -preset veryslow -tune animation -crf 30 -pix_fmt yuv420p -c:a aac -b:a 96k"
+    encoder = "-c:v libx264 -preset veryslow -tune animation -crf 30 -pix_fmt yuv420p -an"
     ff = subprocess.Popen(
         ["ffmpeg", "-y", "-loglevel", "error", "-f", "rawvideo", "-pix_fmt", "rgb24", "-s", f"{W}x{H}"]
-        + ["-r", str(FPS), "-i", "-", "-i", str(wav), *encoder.split(), "-shortest", "-movflags", "+faststart"]
+        + ["-r", str(FPS), "-i", "-", *encoder.split(), "-movflags", "+faststart"]
         + [str(mp4)],
         stdin=subprocess.PIPE,
     )
@@ -1228,7 +1155,6 @@ def render(cut, out, preview):
     ff.stdin.close()
     if ff.wait() != 0:
         sys.exit(f"ffmpeg failed for the {cut} trailer")
-    wav.unlink()
     print(f"{cut}: {mp4} ({mp4.stat().st_size // 1000} kB)")
 
 
