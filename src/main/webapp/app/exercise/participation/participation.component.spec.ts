@@ -594,12 +594,12 @@ describe('ParticipationComponent', () => {
             expect(filters()).toContain(FilterProp.GRADED);
         });
 
-        it('uses multiple result choices while retaining exclusive non-programming submission and assessment choices', () => {
+        it('uses exclusive result and assessment choices while retaining programming build combinations', () => {
             component.exercise.set({ ...exercise, type: ExerciseType.TEXT });
             component.newManualResultAllowed.set(true);
             expect(component.filterGroups().filter((group) => group.items.includes(FilterProp.NO_SUBMISSIONS) || group.items.includes(FilterProp.MANUAL))).toHaveLength(2);
             expect(component.filterGroups().find((group) => group.items.includes(FilterProp.NO_SUBMISSIONS))?.single).toBe(true);
-            expect(component.filterGroups().find((group) => group.items.includes(FilterProp.SUCCESSFUL))?.single).toBeUndefined();
+            expect(component.filterGroups().find((group) => group.items.includes(FilterProp.SUCCESSFUL))?.single).toBe(true);
             component.exercise.set({ ...exercise, type: ExerciseType.PROGRAMMING });
             expect(filters()).toContain(FilterProp.SEMI_AUTOMATIC);
             expect(component.filterGroups().find((group) => group.items.includes(FilterProp.NO_SUBMISSIONS))?.single).toBe(false);

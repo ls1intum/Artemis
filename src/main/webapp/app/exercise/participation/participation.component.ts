@@ -230,7 +230,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
                 single: !isProgramming,
                 items: [...(isProgramming ? [FilterProp.FAILED, FilterProp.BUILD_FAILED] : []), FilterProp.NO_SUBMISSIONS, FilterProp.VALID_SUBMISSIONS],
             },
-            { labelKey: 'artemisApp.participation.filterGroup.results', items: [FilterProp.SUCCESSFUL, FilterProp.UNSUCCESSFUL] },
+            { labelKey: 'artemisApp.participation.filterGroup.results', items: [FilterProp.SUCCESSFUL, FilterProp.UNSUCCESSFUL], single: true },
             ...(assessmentTypeFilterable
                 ? [
                       {
