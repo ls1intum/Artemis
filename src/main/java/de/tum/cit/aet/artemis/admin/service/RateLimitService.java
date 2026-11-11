@@ -161,13 +161,8 @@ public class RateLimitService {
      * Resolves the client identifier from the current HTTP request.
      *
      * <p>
-     * IP Resolution Strategy:
+     * The address is the one the servlet container resolved for the request, see {@link de.tum.cit.aet.artemis.core.util.HttpRequestUtils#getIpStringFromRequest}.
      * </p>
-     * <ol>
-     * <li>Checks headers (for requests through proxies)</li>
-     * <li>Falls back to direct remote address</li>
-     * <li>Cleans up IP by removing ports and normalizing format</li>
-     * </ol>
      *
      * @return the cleaned client IP address
      */
@@ -179,7 +174,8 @@ public class RateLimitService {
         }
 
         final String ipString = getIpStringFromRequest(request);
-        IPAddress address = new IPAddressString(ipString).getAddress();
+        // The parser reads an empty string as the loopback address, which must not become a shared budget
+        IPAddress address = ipString.isBlank() ? null : new IPAddressString(ipString).getAddress();
 
         if (address == null) {
             log.warn("Failed to parse IP address '{}' for rate limiting", ipString);

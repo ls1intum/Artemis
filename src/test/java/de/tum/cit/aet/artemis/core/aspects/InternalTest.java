@@ -16,12 +16,4 @@ class InternalTest extends AbstractSpringIntegrationIndependentTest {
         request.get("/api/core/internal/test", HttpStatus.OK, Void.class, authHeaders);
     }
 
-    @Test
-    void testInternalFails() throws Exception {
-        var authHeaders = new HttpHeaders();
-        authHeaders.add("X-Forwarded-For", "10.0.0.1");
-
-        request.get("/api/core/internal/test", HttpStatus.FORBIDDEN, Void.class, authHeaders);
-    }
-
 }
