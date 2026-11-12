@@ -8,6 +8,35 @@ import { setInputs } from '../internal/set-inputs';
 
 let nextTooltipId = 0;
 
+type InputModality = 'keyboard' | 'pointer';
+
+/**
+ * The last kind of input per document, the heuristic browsers use for `:focus-visible` (which jsdom does not evaluate).
+ * Focus moved by code, such as a popover handing focus back to its trigger on close, follows it: after a click it is
+ * pointer focus, after Tab or Escape keyboard focus.
+ */
+const lastModality = new WeakMap<Document, InputModality>();
+
+function trackInputModality(document: Document): void {
+    if (lastModality.has(document)) {
+        return;
+    }
+    lastModality.set(document, 'keyboard');
+    document.addEventListener(
+        'keydown',
+        (event) => {
+            // Modifier shortcuts do not move focus, so they do not make it keyboard focus.
+            if (!event.metaKey && !event.ctrlKey && !event.altKey) {
+                lastModality.set(document, 'keyboard');
+            }
+        },
+        true,
+    );
+    const onPointer = () => lastModality.set(document, 'pointer');
+    document.addEventListener('pointerdown', onPointer, true);
+    document.addEventListener('mousedown', onPointer, true);
+}
+
 /**
  * How close the arrow may get to a corner of the bubble. The arrow is 8px square and rotated, so it needs about six
  * pixels of clearance, and the bubble's own rounding needs a little more.
@@ -65,6 +94,7 @@ export class TumAetUiTooltipDirective implements OnDestroy {
     private pointerFocus = false;
 
     constructor() {
+        trackInputModality(this.elementRef.nativeElement.ownerDocument);
         effect(() => {
             // Read content unconditionally so changes remain tracked while the tooltip is hidden.
             const [text, items, template, isEmpty] = [this.text(), this.items(), this.template(), this.isEmpty()];
@@ -93,8 +123,9 @@ export class TumAetUiTooltipDirective implements OnDestroy {
     }
 
     protected onFocusStart(): void {
-        if (this.pointerFocus) {
-            // Pointer-driven focus: hover alone decides visibility, so the tooltip still hides on mouseleave.
+        if (this.pointerFocus || lastModality.get(this.elementRef.nativeElement.ownerDocument) === 'pointer') {
+            // Pointer-driven focus, including focus handed back by code after a click: hover alone decides visibility,
+            // so the tooltip still hides on mouseleave.
             return;
         }
         this.focused = true;
