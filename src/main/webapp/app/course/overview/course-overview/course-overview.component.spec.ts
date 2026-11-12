@@ -54,8 +54,6 @@ import { CourseSidebarItemService } from 'app/course/shared/services/sidebar-ite
 import { CourseTitleBarService } from 'app/course/shared/services/course-title-bar.service';
 import { CourseConversationsService } from 'app/communication/service/course-conversations.service';
 import { MockHasAnyAuthorityDirective } from 'test/helpers/mocks/directive/mock-has-any-authority.directive';
-import { SortDirective } from 'app/foundation/sort/directive/sort.directive';
-import { SortByDirective } from 'app/foundation/sort/directive/sort-by.directive';
 import { CourseExerciseRowComponent } from 'app/course/overview/course-exercises/course-exercise-row/course-exercise-row.component';
 import { CompetencyService } from 'app/atlas/manage/services/competency.service';
 import { ArtemisServerDateService } from 'app/foundation/service/server-date.service';
@@ -192,8 +190,6 @@ describe('CourseOverviewComponent', () => {
                 MockDirective(MockHasAnyAuthorityDirective),
                 MockDirective(TranslateDirective),
                 MockPipe(ArtemisTranslatePipe),
-                MockDirective(SortDirective),
-                MockDirective(SortByDirective),
                 MockDirective(FeatureToggleHideDirective),
                 MockPipe(ArtemisDatePipe),
                 MockComponent(CourseExerciseRowComponent),

@@ -124,6 +124,21 @@ class BuildLogEntryFileStorageTest {
     }
 
     @Test
+    void saveBuildLogsToFile_forABuildJobIdWithPathElements_writesNothing() throws IOException {
+        List<BuildLogDTO> buildLogs = List.of(new BuildLogDTO(ZonedDateTime.parse("2200-01-10T12:00:00Z"), "compiling\n"));
+
+        for (String invalidBuildJobId : List.of("../../other", "..", "sub/build-job", "sub\\build-job", "C:other", "build:job")) {
+            buildLogEntryService.saveBuildLogsToFile(buildLogs, invalidBuildJobId, exercise());
+        }
+        // a missing id is treated like one that is not a file name
+        buildLogEntryService.saveBuildLogsToFile(buildLogs, null, exercise());
+
+        try (var files = Files.walk(buildLogsPath)) {
+            assertThat(files.filter(Files::isRegularFile)).as("no file is written for an id that is not a plain file name").isEmpty();
+        }
+    }
+
+    @Test
     void saveBuildLogsToFile_forTheFirstBuildOfAnExercise_createsTheDirectoryItNeeds() {
         assertThat(exerciseLogsPath()).as("nothing exists for this exercise yet").doesNotExist();
 
@@ -170,6 +185,16 @@ class BuildLogEntryFileStorageTest {
             assertThatExceptionOfType(IllegalArgumentException.class).as("build job id '%s' must be rejected", maliciousBuildJobId)
                     .isThrownBy(() -> buildLogEntryService.retrieveBuildLogsFromFileForBuildJob(maliciousBuildJobId)).withMessageContaining("Invalid build job ID");
         }
+    }
+
+    @Test
+    void retrieveBuildLogsFromFileForBuildJob_forABuildJobIdThatIsNotAFileName_isRejected() {
+        for (String invalidBuildJobId : List.of("C:build-job", "build:job")) {
+            assertThatExceptionOfType(IllegalArgumentException.class).as("build job id '%s' must be rejected", invalidBuildJobId)
+                    .isThrownBy(() -> buildLogEntryService.retrieveBuildLogsFromFileForBuildJob(invalidBuildJobId)).withMessageContaining("Invalid build job ID");
+        }
+        assertThatExceptionOfType(IllegalArgumentException.class).as("a missing build job id must be rejected without a NullPointerException")
+                .isThrownBy(() -> buildLogEntryService.retrieveBuildLogsFromFileForBuildJob(null)).withMessageContaining("Invalid build job ID");
     }
 
     @Test

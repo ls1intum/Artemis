@@ -1,0 +1,73 @@
+:host {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+
+    // Never below a usable minimum (toolbar, header, a few rows and the footer), so a short viewport scrolls the page
+    // instead of squeezing the rows to nothing.
+    max-height: max(14rem, calc(100dvh - var(--table-layout-offset, 12rem)));
+    overflow: hidden;
+    border: 1px solid var(--tumaet-ui-border-color);
+    border-radius: 0.5rem;
+    background-color: var(--tumaet-ui-content-background);
+}
+
+// A 0% basis is the content size while the parent's height is not definite (an auto-height dialog), so the frame never
+// collapses; under a flex parent with a real height it takes exactly the free space, and under a plain block parent with
+// a real height `height: 100%` bounds it, so the body scrolls instead of the frame overflowing.
+:host(.tumaet-ui-table-layout-fill) {
+    flex: 1 1 0%;
+    height: 100%;
+    max-height: none;
+}
+
+// Never wraps and never grows: labels collapse to icons in the consumer, and a toolbar that is still too wide scrolls
+// sideways instead of breaking onto a second line.
+.tumaet-ui-table-layout-toolbar {
+    display: flex;
+    flex: none;
+    align-items: center;
+    gap: 0.5rem;
+    height: 2.5rem;
+    padding: 0 0.5rem;
+    border-bottom: 1px solid var(--tumaet-ui-border-color);
+    white-space: nowrap;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: none;
+
+    // No slot content, or only hidden content (a consumer that cannot use @if around a projected node sets `hidden`).
+    &:not(:has(> :not([hidden]))) {
+        display: none;
+    }
+}
+
+.tumaet-ui-table-layout-body {
+    position: relative;
+    flex: 1 1 auto;
+
+    // An empty table keeps room for its message: header, footer and a few rows of space, never header glued to footer.
+    min-height: 7rem;
+    overflow: auto;
+}
+
+// Centered in the visible part of the body, also when a wide table scrolls sideways.
+.tumaet-ui-table-layout-empty {
+    position: sticky;
+    left: 0;
+    display: flex;
+    box-sizing: border-box;
+    width: 100%;
+    justify-content: center;
+    padding: 1.5rem 1rem;
+}
+
+.tumaet-ui-table-layout-loading {
+    position: absolute;
+    inset: 0;
+    z-index: 20;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: color-mix(in srgb, var(--tumaet-ui-content-background) 60%, transparent);
+}
