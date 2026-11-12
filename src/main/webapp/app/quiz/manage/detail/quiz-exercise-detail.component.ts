@@ -19,7 +19,6 @@ import { QuizExerciseManageButtonsComponent } from '../manage-buttons/quiz-exerc
 import { QuizExerciseLifecycleButtonsComponent } from '../lifecyle-buttons/quiz-exercise-lifecycle-buttons.component';
 import { DetailOverviewListComponent } from 'app/shared-ui/detail-overview-list/detail-overview-list.component';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
-import { AccountService } from 'app/core/auth/account.service';
 import { AtlasOrchestrationTriggerComponent } from 'app/atlas/manage/orchestration-trigger/atlas-orchestration-trigger.component';
 
 @Component({
@@ -39,7 +38,6 @@ export class QuizExerciseDetailComponent implements OnInit {
     private quizExerciseService = inject(QuizExerciseService);
     private statisticsService = inject(StatisticsService);
     private translateService = inject(TranslateService);
-    private accountService = inject(AccountService);
 
     readonly documentationType: DocumentationType = 'Quiz';
     readonly dayjs = dayjs;
@@ -71,12 +69,6 @@ export class QuizExerciseDetailComponent implements OnInit {
 
     load() {
         (this.isExamMode() ? this.quizExerciseService.findForExam(this.quizId) : this.quizExerciseService.find(this.quizId)).subscribe(async (quizExercise) => {
-            // The detail endpoint sends neither access flags nor the course groups, but the lifecycle and manage buttons
-            // (start quiz, delete, ...) are gated on them, so derive them from the account's roles in the course.
-            const courseId = quizExercise.course?.id ?? this.courseId;
-            quizExercise.isAtLeastTutor = this.accountService.isAtLeastTutorInCourseWithId(courseId);
-            quizExercise.isAtLeastEditor = this.accountService.isAtLeastEditorInCourseWithId(courseId);
-            quizExercise.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourseWithId(courseId);
             this.quizExercise.set(quizExercise);
             this.quizExercise().quizBatches = this.quizExercise().quizBatches?.sort((a, b) => (a.id ?? 0) - (b.id ?? 0));
             this.quizExercise().isEditable = (this.quizExercise().isEditable ?? true) && isQuizEditable(this.quizExercise());

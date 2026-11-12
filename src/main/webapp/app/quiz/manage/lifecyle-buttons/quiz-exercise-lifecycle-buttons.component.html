@@ -13,7 +13,19 @@
 >
     <fa-icon [icon]="faEye" /><span class="ms-1" jhiTranslate="artemisApp.quizExercise.showNow"></span>
 </button>
-<button id="instructor-quiz-start-{{ quizExercise().id }}" tumAetUiButton type="submit" severity="success" size="small" (click)="startQuiz()" [hidden]="!showStartButton()">
+<button
+    id="instructor-quiz-start-{{ quizExercise().id }}"
+    tumAetUiButton
+    type="submit"
+    severity="success"
+    size="small"
+    (click)="startQuiz()"
+    [disabled]="isInVariantGroup()"
+    [style.pointer-events]="isInVariantGroup() ? 'auto' : undefined"
+    [tumAetUiTooltip]="isInVariantGroup() ? ('artemisApp.quizExercise.actionDisabledInGroup' | artemisTranslate) : ''"
+    tumAetUiTooltipPlacement="top"
+    [hidden]="!showStartButton()"
+>
     <fa-icon [icon]="faPlayCircle" /><span class="ms-1" jhiTranslate="artemisApp.quizExercise.startQuiz"></span>
 </button>
 <button

@@ -21,7 +21,6 @@ import { ExerciseManagementStatisticsDto } from 'app/exercise/statistics/exercis
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { CompetencyExerciseLink, CourseCompetency } from 'app/atlas/shared/entities/competency.model';
 import { DetailType } from 'app/shared-ui/detail-overview-list/detail-overview-list.component';
-import { AccountService } from 'app/core/auth/account.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 
@@ -62,11 +61,6 @@ describe('QuizExercise Details Component', () => {
         comp = fixture.componentInstance;
         quizExerciseService = TestBed.inject(QuizExerciseService);
         statisticsService = TestBed.inject(StatisticsService);
-        // Editor-level account by default; the detail endpoint sends no access flags, the component derives them from the account.
-        const accountService = TestBed.inject(AccountService);
-        vi.spyOn(accountService, 'isAtLeastTutorInCourseWithId').mockReturnValue(true);
-        vi.spyOn(accountService, 'isAtLeastEditorInCourseWithId').mockReturnValue(true);
-        vi.spyOn(accountService, 'isAtLeastInstructorInCourseWithId').mockReturnValue(false);
     });
 
     afterEach(() => {
@@ -93,36 +87,6 @@ describe('QuizExercise Details Component', () => {
         expect(courseFind).toHaveBeenCalledExactlyOnceWith(quizExercise.id);
         expect(examFind).not.toHaveBeenCalled();
         expect(comp.quizExercise()).toEqual(quizExercise);
-    });
-
-    it.each([
-        { role: 'instructor', tutor: true, editor: true, instructor: true },
-        { role: 'editor', tutor: true, editor: true, instructor: false },
-        { role: 'tutor', tutor: true, editor: false, instructor: false },
-    ])('derives the access flags of the loaded quiz from the account roles in the course ($role)', async ({ tutor, editor, instructor }) => {
-        // The detail endpoint sends no access flags, yet the start quiz button is gated on isAtLeastEditor.
-        const loaded = new QuizExercise(course, undefined);
-        loaded.id = quizExercise.id;
-        loaded.quizQuestions = [];
-        loaded.dueDate = dayjs() as Dayjs;
-        const accountService = TestBed.inject(AccountService);
-        vi.spyOn(accountService, 'isAtLeastTutorInCourseWithId').mockReturnValue(tutor);
-        vi.spyOn(accountService, 'isAtLeastEditorInCourseWithId').mockReturnValue(editor);
-        vi.spyOn(accountService, 'isAtLeastInstructorInCourseWithId').mockReturnValue(instructor);
-        vi.spyOn(quizExerciseService, 'find').mockReturnValue(of(loaded));
-        vi.spyOn(quizExerciseService, 'getStatus').mockReturnValue(QuizStatus.VISIBLE);
-        vi.spyOn(statisticsService, 'getExerciseStatistics').mockReturnValue(of({} as ExerciseManagementStatisticsDto));
-        vi.spyOn(route.snapshot.paramMap, 'get').mockImplementation(
-            (name) => ({ courseId: String(course.id), exerciseId: String(quizExercise.id) })[name as 'courseId' | 'exerciseId'] ?? null,
-        );
-
-        comp.ngOnInit();
-        await Promise.resolve();
-
-        expect(accountService.isAtLeastEditorInCourseWithId).toHaveBeenCalledWith(course.id);
-        expect(comp.quizExercise().isAtLeastTutor).toBe(tutor);
-        expect(comp.quizExercise().isAtLeastEditor).toBe(editor);
-        expect(comp.quizExercise().isAtLeastInstructor).toBe(instructor);
     });
 
     it.each([false, true])('should retain named course links without blank links for sparse quiz context (exam: %s)', (isExam) => {
