@@ -1,34 +1,32 @@
-<div data-testid="cardFiles" class="card file-browser" [style.height]="collapsed() ? '250px' : '100%'">
-    <div
-        class="card-header code-editor-panel-header d-flex justify-content-center"
-        [class.d-none]="!showHeader()"
-        (click)="toggleEditorCollapse($event)"
-        [attr.aria-expanded]="!collapsed()"
-        #keyboardAction2
-        role="button"
-        tabindex="0"
-        (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction2.click() : undefined"
-        (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
-        (keyup.space)="$event.target === $event.currentTarget ? keyboardAction2.click() : undefined"
-    >
-        <h3 class="card-title justify-content-center">
-            @if (!collapsed()) {
+<div data-testid="cardFiles" class="card file-browser" style="height: 100%">
+    @if (collapsed()) {
+        <jhi-collapsed-panel-rail
+            [icon]="faFolderOpen"
+            labelKey="artemisApp.editor.fileBrowser.fileBrowser"
+            testId="collapsed-file-browser"
+            (expand)="toggleEditorCollapse($event)"
+        />
+    } @else if (displayOnly() && showHeader()) {
+        <div
+            class="card-header code-editor-panel-header d-flex justify-content-center"
+            (click)="toggleEditorCollapse($event)"
+            [attr.aria-expanded]="!collapsed()"
+            #keyboardAction2
+            role="button"
+            tabindex="0"
+            (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction2.click() : undefined"
+            (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+            (keyup.space)="$event.target === $event.currentTarget ? keyboardAction2.click() : undefined"
+        >
+            <h3 class="card-title justify-content-center">
                 <span>
                     <fa-icon [icon]="faFolderOpen" />
                     <span class="ms-2" jhiTranslate="artemisApp.editor.fileBrowser.fileBrowser"></span>
                 </span>
-            }
-            @if (collapsed()) {
-                <span class="collapsed-file-browser">
-                    <fa-icon class="top-icon" [icon]="faChevronRight" />
-                    <span class="header" jhiTranslate="artemisApp.editor.fileBrowser.fileBrowser"></span>
-                    <fa-icon [icon]="faFolderOpen" class="fa-rotate-270" id="panel-symbol" />
-                    <fa-icon class="bottom-icon" [icon]="faChevronRight" />
-                </span>
-            }
-        </h3>
-        <fa-icon class="ms-auto clickable" [icon]="faChevronLeft" />
-    </div>
+            </h3>
+            <fa-icon class="ms-auto clickable" [icon]="faChevronLeft" />
+        </div>
+    }
     <!-- Root actions -->
     @if (!displayOnly()) {
         <div class="card-second-header">
@@ -47,7 +45,7 @@
                 type="button"
                 id="create_folder_root"
                 [disabled]="disableActions() || isLoadingFiles() || commitState() === CommitState.CONFLICT"
-                class="btn ms-2"
+                class="btn"
                 (click)="setCreatingFileInRoot(FileType.FOLDER)"
                 title="{{ 'artemisApp.editor.fileBrowser.createFolderRoot' | artemisTranslate }}"
             >
@@ -62,7 +60,19 @@
                 (click)="toggleTreeCompress()"
                 title="{{ 'artemisApp.editor.fileBrowser.compressTree' | artemisTranslate }}"
             >
-                <fa-icon [icon]="compressFolders() ? faAngleDoubleUp : faAngleDoubleDown" />
+                <fa-icon [icon]="compressFolders() ? faAngleDoubleDown : faAngleDoubleUp" />
+            </button>
+            <!-- The panel is collapsed from its toolbar, so its title is not repeated above it. A collapsed panel is only its rail, which opens it again. -->
+            <button
+                type="button"
+                id="collapse_file_browser"
+                class="btn collapse-panel-button"
+                data-testid="collapse-file-browser"
+                (click)="toggleEditorCollapse($event)"
+                title="{{ 'artemisApp.editor.fileBrowser.collapse' | artemisTranslate }}"
+                [attr.aria-label]="'artemisApp.editor.fileBrowser.collapse' | artemisTranslate"
+            >
+                <fa-icon [icon]="faChevronLeft" />
             </button>
         </div>
     }

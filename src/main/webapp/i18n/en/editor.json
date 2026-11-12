@@ -83,7 +83,8 @@
                 "fileBadgeTooltips": {
                     "feedbackSuggestions": "Number of feedback in this file/folder",
                     "reviewComments": "Number of review comment threads in this file/folder"
-                }
+                },
+                "collapse": "Collapse the file browser"
             },
             "errors": {
                 "participationNotFound": "Your participation could not be found.",
@@ -134,6 +135,9 @@
             },
             "repo": "Repo",
             "switchEditors": "Switch code editor",
+            "buildOutputAndFeedback": "Build output and general feedback",
+            "toggleBuildOutput": "Show or hide the build output",
+            "toggleBuildOutputAndFeedback": "Show or hide the build output and general feedback",
             "buildOutputTab": "Build Output",
             "collapseBottomPanel": "Collapse bottom panel",
             "expandBottomPanel": "Expand bottom panel",

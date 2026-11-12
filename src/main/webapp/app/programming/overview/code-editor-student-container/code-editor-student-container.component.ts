@@ -1,9 +1,10 @@
-import { Component, OnDestroy, OnInit, inject, input, signal, viewChild } from '@angular/core';
+import { Component, OnDestroy, OnInit, computed, inject, input, signal, viewChild } from '@angular/core';
 import { ExerciseSubmission } from 'app/exercise/shared/exercise-submission.interface';
 import { IncludedInScoreBadgeComponent } from 'app/exercise/exercise-headers/included-in-score-badge/included-in-score-badge.component';
 import { UpdatingResultComponent } from 'app/exercise/result/updating-result/updating-result.component';
-import { Observable, Subscription } from 'rxjs';
-import { map, tap } from 'rxjs/operators';
+import { ResultService } from 'app/exercise/result/result.service';
+import { Observable, Subscription, of } from 'rxjs';
+import { map, switchMap, tap } from 'rxjs/operators';
 import { ProgrammingExerciseParticipationService } from 'app/programming/manage/services/programming-exercise-participation.service';
 import { ButtonSize } from 'app/shared-ui/components/buttons/button/button.component';
 import { ExerciseType, IncludedInOverallScore, getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -13,6 +14,8 @@ import { ProgrammingExercise } from 'app/programming/shared/entities/programming
 import { ActivatedRoute } from '@angular/router';
 import { CodeEditorContainerComponent } from 'app/programming/manage/code-editor/container/code-editor-container.component';
 import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
+import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 import { isPracticeMode } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { getManualUnreferencedFeedback } from 'app/exercise/result/result.utils';
 import { getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/submission/submission.model';
@@ -25,7 +28,7 @@ import { isManualResult as isManualResultFunction } from 'app/exercise/result/re
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ProgrammingExerciseInstructionComponent } from '../../shared/instructions-render/programming-exercise-instruction.component';
-import { AdditionalFeedbackComponent } from 'app/exercise/additional-feedback/additional-feedback.component';
+import { GeneralFeedbackComponent } from 'app/exercise/general-feedback/general-feedback.component';
 import { CodeEditorRepositoryIsLockedComponent } from 'app/programming/shared/code-editor/layout/code-editor-repository-is-locked.component';
 import { ProgrammingExerciseStudentTriggerBuildButtonComponent } from 'app/programming/shared/actions/trigger-build-button/student/programming-exercise-student-trigger-build-button.component';
 import { DomainService } from 'app/programming/shared/code-editor/services/code-editor-domain.service';
@@ -34,6 +37,8 @@ import { DomainType } from 'app/programming/shared/code-editor/model/code-editor
 @Component({
     selector: 'jhi-code-editor-student',
     templateUrl: './code-editor-student-container.component.html',
+    // Fills the panel of the exercise page, so the editor below can take its full height
+    host: { class: 'block h-full' },
     imports: [
         FaIconComponent,
         TranslateDirective,
@@ -43,12 +48,13 @@ import { DomainType } from 'app/programming/shared/code-editor/model/code-editor
         UpdatingResultComponent,
         ProgrammingExerciseStudentTriggerBuildButtonComponent,
         ProgrammingExerciseInstructionComponent,
-        AdditionalFeedbackComponent,
+        GeneralFeedbackComponent,
     ],
 })
 export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy, ExerciseSubmission {
     private domainService = inject(DomainService);
     private programmingExerciseParticipationService = inject(ProgrammingExerciseParticipationService);
+    private resultService = inject(ResultService);
     private submissionPolicyService = inject(SubmissionPolicyService);
     private route = inject(ActivatedRoute);
 
@@ -76,6 +82,12 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy, E
     // Written only in a template event handler, which schedules change detection itself — may stay plain.
     showEditorInstructions = true;
     readonly latestResult = signal<Result | undefined>(undefined);
+    /** The result picked in the result history, when the editor shows an earlier submission instead of the working copy. */
+    readonly viewedResultId = signal<number | undefined>(undefined);
+    /** The commit of the picked result's submission, which the editor shows read-only. */
+    readonly viewedCommitHash = signal<string | undefined>(undefined);
+    /** An earlier result is read-only, so the shell stops offering a Submit that would resubmit unchanged work. */
+    readonly canSubmitExercise = computed(() => this.viewedResultId() === undefined);
     readonly hasTutorAssessment = signal(false);
     readonly numberOfSubmissionsForSubmissionPolicy = signal<number | undefined>(undefined);
 
@@ -92,8 +104,12 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy, E
             this.loadingParticipation.set(true);
             this.participationCouldNotBeFetched.set(false);
             const participationId = this.participationId() ?? Number(params['participationId']);
+            const resultId = params['resultId'] ? Number(params['resultId']) : undefined;
+            this.viewedResultId.set(undefined);
+            this.viewedCommitHash.set(undefined);
             this.loadParticipationWithLatestResult(participationId)
                 .pipe(
+                    switchMap((participation) => (resultId === undefined ? of(participation) : this.withPickedResult(participation, resultId))),
                     tap((participationWithResults) => {
                         this.domainService.setDomain([DomainType.PARTICIPATION, participationWithResults]);
                         this.participation.set(participationWithResults);
@@ -151,6 +167,33 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy, E
         return this.programmingExerciseParticipationService.getStudentParticipationWithLatestResult(participationId).pipe(
             map((participation: ProgrammingExerciseStudentParticipation) => {
                 return participation;
+            }),
+        );
+    }
+
+    /**
+     * The participation as it was at the picked result: its submission with just that result and its feedback, so the
+     * editor, the file badges and the feedback panel all show that result. When the result is not found (e.g. an AI result
+     * that was removed), the participation stays as it is, with the latest result.
+     */
+    private withPickedResult(participation: ProgrammingExerciseStudentParticipation, resultId: number): Observable<ProgrammingExerciseStudentParticipation> {
+        return this.programmingExerciseParticipationService.getStudentParticipationWithAllResults(participation.id!).pipe(
+            switchMap((withAllResults) => {
+                const submission = withAllResults.submissions?.find((candidate) => candidate.results?.some((result) => result.id === resultId));
+                const result = submission?.results?.find((candidate) => candidate.id === resultId);
+                if (!submission || !result) {
+                    return of(participation);
+                }
+                // The results of this endpoint come without their feedback, so it is loaded here: the editor, the file badges and
+                // the feedback panel read it from the result as soon as they are created.
+                return this.resultService.getFeedbackDetailsForResult(participation.id, result).pipe(
+                    map((response) => {
+                        this.viewedResultId.set(resultId);
+                        this.viewedCommitHash.set((submission as ProgrammingSubmission).commitHash);
+                        const pickedResult = cloneWith(result, { feedbacks: response.body ?? [] });
+                        return cloneWith(participation, { submissions: [cloneWith(submission, { results: [pickedResult] })] });
+                    }),
+                );
             }),
         );
     }

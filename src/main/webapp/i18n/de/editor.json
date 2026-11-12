@@ -83,7 +83,8 @@
                 "fileBadgeTooltips": {
                     "feedbackSuggestions": "Anzahl von Feedback in dieser Datei / diesem Ordner",
                     "reviewComments": "Anzahl von Review-Comment-Threads in dieser Datei / diesem Ordner"
-                }
+                },
+                "collapse": "Dateibrowser einklappen"
             },
             "errors": {
                 "participationNotFound": "Deine Teilnahme konnte nicht gefunden werden.",
@@ -134,6 +135,9 @@
             },
             "repo": "Repo",
             "switchEditors": "Code-Editor wechseln",
+            "buildOutputAndFeedback": "Build-Ergebnisse und allgemeines Feedback",
+            "toggleBuildOutput": "Build-Ergebnisse ein- oder ausblenden",
+            "toggleBuildOutputAndFeedback": "Build-Ergebnisse und allgemeines Feedback ein- oder ausblenden",
             "buildOutputTab": "Build Ergebnisse",
             "collapseBottomPanel": "Unteres Panel einklappen",
             "expandBottomPanel": "Unteres Panel ausklappen",

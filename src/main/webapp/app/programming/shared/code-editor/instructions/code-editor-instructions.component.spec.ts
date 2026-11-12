@@ -25,6 +25,16 @@ describe('CodeEditorInstructionsComponent keyboard controls', () => {
         header.dispatchEvent(new KeyboardEvent('keyup', { key: ' ', bubbles: true }));
         fixture.detectChanges();
         expect(toggle).toHaveBeenCalledTimes(disabled ? 0 : 1);
-        expect(header.getAttribute('aria-expanded')).toBe(String(disabled));
+        if (disabled) {
+            expect(header.getAttribute('aria-expanded')).toBe('true');
+        } else {
+            // Collapsed, the header gives way to the rail, which opens the instructions again
+            const rail = fixture.nativeElement.querySelector('[data-testid="collapsed-instructions"]') as HTMLElement;
+            expect(rail.getAttribute('aria-expanded')).toBe('false');
+            rail.click();
+            fixture.detectChanges();
+            expect(toggle).toHaveBeenCalledTimes(2);
+            expect(fixture.nativeElement.querySelector('[data-testid="collapsed-instructions"]')).toBeNull();
+        }
     });
 });

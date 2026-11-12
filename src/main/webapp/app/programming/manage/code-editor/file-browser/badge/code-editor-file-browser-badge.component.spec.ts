@@ -32,8 +32,10 @@ describe('CodeEditorFileBrowserBadgeComponent', () => {
         expect(component.tooltip).toBe('Mocked Tooltip');
     });
 
-    it('should return faLightbulb icon for a FEEDBACK_SUGGESTION badge', () => {
-        expect(component.icon!.iconName).toBe('lightbulb');
+    it('should show the count without an icon, like the general feedback count', () => {
+        const pill: HTMLElement = fixture.nativeElement.querySelector('.file-browser-badge');
+        expect(pill.textContent?.trim()).toBe('3');
+        expect(pill.querySelector('fa-icon')).toBeNull();
     });
 
     it('should correctly display the tooltip for a REVIEW_COMMENT badge', () => {
@@ -43,16 +45,13 @@ describe('CodeEditorFileBrowserBadgeComponent', () => {
         expect(component.tooltip).toBe('Mocked Review Tooltip');
     });
 
-    it('should return faComments icon for a REVIEW_COMMENT badge', () => {
+    it('should keep an icon on a REVIEW_COMMENT badge to tell it apart from the feedback count', () => {
         fixture.componentRef.setInput('badge', new FileBadge(FileBadgeType.REVIEW_COMMENT, 2));
-
-        expect(component.icon!.iconName).toBe('comments');
-    });
-
-    it('should not have an icon for an unknown badge type', () => {
-        fixture.componentRef.setInput('badge', new FileBadge('unknown' as FileBadgeType, 3));
         fixture.detectChanges();
-        expect(component.icon).toBeUndefined();
+
+        const pill: HTMLElement = fixture.nativeElement.querySelector('.file-browser-badge');
+        expect(pill.textContent?.trim()).toBe('2');
+        expect(pill.querySelector('fa-icon')).not.toBeNull();
     });
 
     it('should not have a tooltip for an unknown badge type', () => {

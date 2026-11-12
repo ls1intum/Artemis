@@ -12,4 +12,14 @@ export const programmingExerciseParticipationRoute: Routes = [
         },
         canActivate: [UserRouteAccessService],
     },
+    {
+        // A result picked in the result history: the editor shows the submission of that result, read-only, with its feedback
+        path: 'code-editor/:participationId/submission/:submissionId/result/:resultId',
+        loadComponent: () => import('./code-editor-student-container/code-editor-student-container.component').then((m) => m.CodeEditorStudentContainerComponent),
+        data: {
+            authorities: IS_AT_LEAST_STUDENT,
+            pageTitle: 'overview.exercises',
+        },
+        canActivate: [UserRouteAccessService],
+    },
 ];
