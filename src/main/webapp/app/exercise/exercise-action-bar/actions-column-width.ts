@@ -33,9 +33,19 @@ export class ActionsColumnWidth {
         }
     }
 
-    /** Tracks the width of the element the table fills; returns the function that stops tracking. */
+    /**
+     * Tracks the width of the element the table fills; returns the function that stops tracking. The new width is also
+     * written to `--actions-width` right away: waiting for change detection would leave the column at its old share of
+     * the resized table for a frame, folding buttons that unfold again on the next frame.
+     */
     observe(element: HTMLElement): () => void {
-        const observer = new ResizeObserver(() => this.visibleWidth.set(element.clientWidth));
+        const observer = new ResizeObserver(() => {
+            this.visibleWidth.set(element.clientWidth);
+            const width = this.cssWidth();
+            if (width) {
+                element.style.setProperty('--actions-width', width);
+            }
+        });
         observer.observe(element);
         this.visibleWidth.set(element.clientWidth);
         return () => observer.disconnect();
