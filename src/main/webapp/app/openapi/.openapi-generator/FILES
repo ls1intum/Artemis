@@ -1,3 +1,4 @@
+api/account-api.ts
 api/admin-ai-worker-api.ts
 api/admin-hyperion-generation-api.ts
 api/admin-hyperion-generation-monitoring-api.ts
@@ -30,6 +31,7 @@ api/tutorial-group-api.ts
 api/tutorial-group-free-period-api.ts
 api/tutorial-group-session-api.ts
 api/tutorial-groups-configuration-api.ts
+api/user-api.ts
 model/active-generation.ts
 model/answer-counter.ts
 model/answer-option-create.ts
@@ -59,6 +61,7 @@ model/consistency-check-response.ts
 model/consistency-issue.ts
 model/conversation-user.ts
 model/costs.ts
+model/course-access-rights.ts
 model/course-browser-data.ts
 model/course-competency.ts
 model/course-for-quiz-exercise.ts
@@ -147,6 +150,7 @@ model/multiple-choice-submitted-answer-after-evaluation.ts
 model/multiple-choice-submitted-answer-before-evaluation.ts
 model/multiple-choice-submitted-answer-from-live-client.ts
 model/multiple-choice-submitted-answer-from-student.ts
+model/organization.ts
 model/point-counter.ts
 model/problem-statement-generation-request.ts
 model/problem-statement-generation-response.ts
@@ -218,7 +222,9 @@ model/result-after-evaluation-with-submission.ts
 model/result-after-evaluation.ts
 model/rewrite-faq-request.ts
 model/rewrite-faq-response.ts
+model/save-account400response.ts
 model/search-result-page-dto-quiz-exercise-for-search.ts
+model/selected-llm-usage.ts
 model/short-answer-mapping-create.ts
 model/short-answer-mapping-from-editor.ts
 model/short-answer-mapping-re-evaluate.ts
@@ -275,6 +281,7 @@ model/tutorial-group-summary-schedule.ts
 model/tutorial-group-summary-session.ts
 model/tutorial-group-summary.ts
 model/update-quiz-exercise.ts
+model/user.ts
 model/variant-generation-request.ts
 model/variant-job-detail.ts
 model/variant-job-start.ts
