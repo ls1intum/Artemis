@@ -154,7 +154,6 @@ export class AdminFeatureToggleComponent implements OnInit {
         [FeatureToggle.Science]: 'https://docs.artemis.tum.de/admin/science-data-collection',
         [FeatureToggle.StandardizedCompetencies]: 'https://docs.artemis.tum.de/admin/adaptive-learning',
         [FeatureToggle.TutorSuggestions]: 'https://docs.artemis.tum.de/instructor/communication-support/communication#tutor-suggestions',
-        [FeatureToggle.AtlasML]: 'https://docs.artemis.tum.de/admin/artemis-intelligence#atlasml-suggestions',
         [FeatureToggle.AtlasAgent]: 'https://docs.artemis.tum.de/admin/artemis-intelligence#enable-the-atlas-agent',
         [FeatureToggle.RateLimit]: 'https://docs.artemis.tum.de/admin/production-setup/security/#rate-limiting',
         [FeatureToggle.Deimos]: 'https://docs.artemis.tum.de/admin/artemis-intelligence',

@@ -349,7 +349,7 @@ public class CourseAccessResource {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Query param 'name' must be three characters or longer.");
         }
 
-        return ResponseEntity.ok(courseSearchService.searchOtherUsersNameInCourse(course, nameOfUser).stream().map(CourseMemberDTO::of).toList());
+        return ResponseEntity.ok(courseSearchService.searchOtherUsersNameInCourse(course, nameOfUser).stream().map(CourseMemberDTO::ofNameAndLogin).toList());
     }
 
     /**

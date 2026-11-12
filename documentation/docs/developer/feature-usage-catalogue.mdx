@@ -22,7 +22,7 @@ system, and neither of the last two counts as use. The interaction follows from 
 `@UsageInteraction` overrides it; every override is listed at the end. See
 [Feature Usage Analysis](/developer/feature-usage) for how the tracking works.
 
-Currently 20 product areas, 153 features, 1173 REST endpoints in 29 modules, and 65 interaction overrides.
+Currently 20 product areas, 153 features, 1180 REST endpoints in 29 modules, and 70 interaction overrides.
 
 ## Courses
 
@@ -752,6 +752,7 @@ Also recorded outside REST by `LocalVCUsageTrackingService`.
 |--------|----------|--------:|------:|----------:|-------:|
 | lecture | `AttachmentVideoUnitPlaylistResource` | 0 | 1 | 0 | 0 |
 | lecture | `LectureTranscriptionResource` | 0 | 1 | 0 | 0 |
+| lecture | `TumLiveUploadResource` | 2 | 0 | 2 | 0 |
 
 ### Create and manage lectures
 
@@ -1125,7 +1126,7 @@ Also recorded outside REST by `AthenaFeedbackSuggestionsService`.
 | Module | Resource | Actions | Views | Automatic | System |
 |--------|----------|--------:|------:|----------:|-------:|
 | hyperion | `HyperionQuizQuestionGenerationResource` | 3 | 0 | 0 | 0 |
-| hyperion | `HyperionQuizQuestionPoolResource` | 2 | 3 | 0 | 0 |
+| hyperion | `HyperionQuizQuestionPoolResource` | 6 | 0 | 4 | 0 |
 
 ### AI grading criteria
 
@@ -1186,7 +1187,7 @@ Also recorded outside REST by `AthenaFeedbackSuggestionsService`.
 
 | Module | Resource | Actions | Views | Automatic | System |
 |--------|----------|--------:|------:|----------:|-------:|
-| atlas | `CompetencyResource` | 3 | 0 | 0 | 0 |
+| atlas | `CompetencyResource` | 1 | 0 | 0 | 0 |
 | atlas | `CourseCompetencyResource` | 1 | 0 | 0 | 0 |
 | iris | `PyrisInternalStatusUpdateResource` | 0 | 0 | 0 | 1 |
 
@@ -1499,7 +1500,6 @@ The endpoints whose calls do not count the way their HTTP verb suggests, grouped
 ### Counted as actions
 
 * `GET api/admin/sbom/vulnerabilities/refresh` (`DEPENDENCIES`)
-* `GET api/atlas/courses/{courseId}/competencies/relations/suggest` (`AI_COMPETENCY_GENERATION`)
 * `GET api/exam/courses/{courseId}/exams/{examId}/student-exams/{studentExamId}/conduction` (`EXAM_TAKE`)
 * `GET api/exam/courses/{courseId}/exams/{examId}/student-exams/{studentExamId}/conduction/for-instructor` (`EXAM_TAKE`)
 * `GET api/exam/courses/{courseId}/exams/{examId}/test-runs/{testRunId}/conduction` (`EXAM_CONDUCTION_MANAGEMENT`)
@@ -1538,12 +1538,18 @@ The endpoints whose calls do not count the way their HTTP verb suggests, grouped
 * `GET api/course/courses/{courseId}/title` (`COURSE_OVERVIEW`)
 * `GET api/exam/exams/{examId}/title` (`EXAM_AUTHORING`)
 * `GET api/exercise/exercises/{exerciseId}/title` (`EXERCISE_DETAILS`)
+* `GET api/hyperion/courses/{courseId}/quiz-question-pool/plan` (`HYPERION_QUIZ_GENERATION`)
+* `GET api/hyperion/courses/{courseId}/quiz-question-pool/progress` (`HYPERION_QUIZ_GENERATION`)
+* `GET api/hyperion/courses/{courseId}/quiz-question-pool/questions` (`HYPERION_QUIZ_GENERATION`)
+* `GET api/hyperion/courses/{courseId}/quiz-question-pool/settings` (`HYPERION_QUIZ_GENERATION`)
 * `GET api/hyperion/programming-exercises/{exerciseId}/code-generation/active-job` (`HYPERION_CODE_GENERATION`)
 * `GET api/hyperion/variant-jobs` (`HYPERION_VARIANT_GENERATION`)
 * `GET api/hyperion/variant-jobs/{jobId}` (`HYPERION_VARIANT_GENERATION`)
 * `GET api/iris/chat/courses/{courseId}/sessions/overview` (`IRIS_CHAT`)
 * `GET api/iris/courses/{courseId}/iris-settings` (`IRIS_SETTINGS`)
 * `GET api/iris/courses/{courseId}/status` (`IRIS_CHAT`)
+* `GET api/lecture/courses/{courseId}/tumlive-uploads` (`LECTURE_VIDEO`)
+* `GET api/lecture/lecture-units/{lectureUnitId}/tumlive-upload` (`LECTURE_VIDEO`)
 * `GET api/lecture/lectures/{lectureId}/title` (`LECTURE_PAGES`)
 * `GET api/localci/queued-jobs/queue-duration-estimation` (`PROGRAMMING_RESULTS`)
 * `GET api/modeling/apollon-diagrams/{diagramId}/title` (`QUIZ_AUTHORING`)
