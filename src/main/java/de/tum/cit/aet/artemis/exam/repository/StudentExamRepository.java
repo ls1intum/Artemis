@@ -36,7 +36,6 @@ import de.tum.cit.aet.artemis.exam.dto.ExamStudentDTO;
 import de.tum.cit.aet.artemis.exam.dto.StudentExamExerciseStartDTO;
 import de.tum.cit.aet.artemis.exam.dto.StudentExamSubmissionGateDTO;
 import de.tum.cit.aet.artemis.exam.dto.StudentExamWorkingPeriodDTO;
-import de.tum.cit.aet.artemis.exam.dto.StudentExamWorkingTimeDTO;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 
@@ -241,6 +240,21 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
             """)
     long countTestRunsByExamId(@Param("examId") Long examId);
 
+    /**
+     * Counts the student exams of real exams (no test runs) that contain at least one of the given exercises.
+     *
+     * @param exerciseIds the ids of the exercises
+     * @return the number of student exams
+     */
+    @Query("""
+            SELECT COUNT(DISTINCT se)
+            FROM StudentExam se
+                JOIN se.exercises ex
+            WHERE ex.id IN :exerciseIds
+                AND (se.testRun IS NULL OR se.testRun = FALSE)
+            """)
+    long countRealStudentExamsContainingExercises(@Param("exerciseIds") Collection<Long> exerciseIds);
+
     @Query("""
             SELECT COUNT(se)
             FROM StudentExam se
@@ -306,24 +320,6 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
     Optional<StudentExam> findByExamIdAndUserId(@Param("examId") long examId, @Param("userId") long userId);
 
     /**
-     * Reads only the two values needed to compute a student's individual exam end date, rather than loading the whole
-     * student exam. Pair with {@link de.tum.cit.aet.artemis.exam.domain.StudentExam#individualEndDate} and the exam the
-     * caller already holds.
-     *
-     * @param examId the id of the exam
-     * @param userId the id of the student
-     * @return the working time and started date of the student exam, if one exists
-     */
-    @Query("""
-            SELECT new de.tum.cit.aet.artemis.exam.dto.StudentExamWorkingTimeDTO(se.workingTime, se.startedDate)
-            FROM StudentExam se
-            WHERE se.testRun = FALSE
-                AND se.exam.id = :examId
-                AND se.user.id = :userId
-            """)
-    Optional<StudentExamWorkingTimeDTO> findWorkingTimeByExamIdAndUserId(@Param("examId") long examId, @Param("userId") long userId);
-
-    /**
      * Reads everything the exam preparation needs to set up the participations of an exam: one row per
      * (student exam, exercise) pair, carrying only identifiers and the student's login.
      * <p>
@@ -348,27 +344,6 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
             ORDER BY studentExam.id, exercise.id
             """)
     List<StudentExamExerciseStartDTO> findExerciseStartDataByExamId(@Param("examId") long examId);
-
-    /**
-     * The same rows as {@link #findExerciseStartDataByExamId}, restricted to the given student exams. Ids that do not
-     * belong to the exam, and ids of test runs, simply do not match, so callers cannot prepare exercises across exams
-     * or interfere with a test run.
-     *
-     * @param examId         the id of the exam
-     * @param studentExamIds the ids of the student exams to read
-     * @return one row per exercise of every requested student exam that belongs to the exam
-     */
-    @Query("""
-            SELECT new de.tum.cit.aet.artemis.exam.dto.StudentExamExerciseStartDTO(studentExam.id, student.id, student.login, exercise.id)
-            FROM StudentExam studentExam
-                JOIN studentExam.user student
-                JOIN studentExam.exercises exercise
-            WHERE studentExam.exam.id = :examId
-                AND studentExam.id IN :studentExamIds
-                AND (studentExam.testRun IS NULL OR studentExam.testRun = FALSE)
-            ORDER BY studentExam.id, exercise.id
-            """)
-    List<StudentExamExerciseStartDTO> findExerciseStartDataByExamIdAndStudentExamIds(@Param("examId") long examId, @Param("studentExamIds") Collection<Long> studentExamIds);
 
     Optional<StudentExam> findFirstByExamIdAndUserIdOrderByCreatedDateDesc(long examId, long userId);
 

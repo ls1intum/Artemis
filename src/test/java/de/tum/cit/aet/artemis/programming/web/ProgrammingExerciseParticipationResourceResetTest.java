@@ -22,6 +22,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.assessment.service.ResultService;
 import de.tum.cit.aet.artemis.assessment.test_repository.ResultTestRepository;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
@@ -45,9 +47,11 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildCon
 import de.tum.cit.aet.artemis.programming.repository.VcsAccessLogRepository;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseParticipationService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingSubmissionService;
+import de.tum.cit.aet.artemis.programming.service.RepositoryAccessService;
 import de.tum.cit.aet.artemis.programming.service.RepositoryService;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseStudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
+import de.tum.cit.aet.artemis.programming.web.repository.RepositoryActionType;
 
 /**
  * Unit tests for resetting a student's repository and for reading its commit history.
@@ -107,7 +111,15 @@ class ProgrammingExerciseParticipationResourceResetTest {
     private ContinuousIntegrationTriggerService continuousIntegrationTriggerService;
 
     @Mock
+    private RepositoryAccessService repositoryAccessService;
+
+    @Mock
+    private UserTestRepository userRepository;
+
+    @Mock
     private ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
+
+    private User user;
 
     private ProgrammingExerciseParticipationResource resource;
 
@@ -120,7 +132,10 @@ class ProgrammingExerciseParticipationResourceResetTest {
         resource = new ProgrammingExerciseParticipationResource(programmingExerciseParticipationService, resultRepository, participationRepository,
                 programmingExerciseStudentParticipationRepository, submissionService, programmingExerciseRepository, authCheckService, resultService, participationAuthCheckService,
                 repositoryService, Optional.of(vcsAccessLogRepository), auxiliaryRepositoryRepository, Optional.of(sharedQueueManagementService),
-                Optional.of(continuousIntegrationTriggerService), programmingExerciseBuildConfigRepository);
+                Optional.of(continuousIntegrationTriggerService), repositoryAccessService, userRepository, programmingExerciseBuildConfigRepository);
+        user = new User();
+        user.setLogin("student1");
+        lenient().when(userRepository.getUserWithAuthorities()).thenReturn(user);
         exercise = new ProgrammingExercise();
         exercise.setId(EXERCISE_ID);
         exercise.setTemplateParticipation(new TemplateProgrammingExerciseParticipation());
@@ -136,7 +151,6 @@ class ProgrammingExerciseParticipationResourceResetTest {
     private void withAResettableParticipation() {
         lenient().when(programmingExerciseStudentParticipationRepository.findByIdElseThrow(PARTICIPATION_ID)).thenReturn(participation);
         lenient().when(programmingExerciseRepository.findByStudentParticipationIdWithTemplateParticipation(PARTICIPATION_ID)).thenReturn(Optional.of(exercise));
-        lenient().when(participationAuthCheckService.isLocked(participation, exercise)).thenReturn(false);
     }
 
     @Test
@@ -175,7 +189,7 @@ class ProgrammingExerciseParticipationResourceResetTest {
     @Test
     void resettingAParticipationOfSomebodyElseIsRefused() throws Exception {
         withAResettableParticipation();
-        doThrow(new AccessForbiddenException("not yours")).when(participationAuthCheckService).checkCanAccessParticipationElseThrow(participation);
+        doThrow(new AccessForbiddenException("not yours")).when(repositoryAccessService).checkAccessRepositoryElseThrow(participation, user, exercise, RepositoryActionType.RESET);
 
         assertThatExceptionOfType(AccessForbiddenException.class).isThrownBy(() -> resource.resetRepository(PARTICIPATION_ID, null));
 
@@ -186,7 +200,7 @@ class ProgrammingExerciseParticipationResourceResetTest {
     void resettingALockedParticipationIsRefused() throws Exception {
         // The repository is locked once the deadline has passed, and a reset would let the student start over afterwards.
         withAResettableParticipation();
-        when(participationAuthCheckService.isLocked(participation, exercise)).thenReturn(true);
+        doThrow(new AccessForbiddenException("locked")).when(repositoryAccessService).checkAccessRepositoryElseThrow(participation, user, exercise, RepositoryActionType.RESET);
 
         assertThatExceptionOfType(AccessForbiddenException.class).isThrownBy(() -> resource.resetRepository(PARTICIPATION_ID, null));
 
@@ -215,6 +229,7 @@ class ProgrammingExerciseParticipationResourceResetTest {
         gradedParticipation.setId(20L);
         gradedParticipation.setRepositoryUri("https://artemis.example.com/git/ABC/abc-graded.git");
         when(programmingExerciseStudentParticipationRepository.findByIdElseThrow(20L)).thenReturn(gradedParticipation);
+        when(programmingExerciseRepository.getProgrammingExerciseFromParticipationElseThrow(gradedParticipation)).thenReturn(exercise);
 
         org.assertj.core.api.Assertions.assertThatCode(() -> resource.resetRepository(PARTICIPATION_ID, 20L)).doesNotThrowAnyException();
 
@@ -229,11 +244,31 @@ class ProgrammingExerciseParticipationResourceResetTest {
         otherStudentsParticipation.setId(20L);
         otherStudentsParticipation.setRepositoryUri("https://artemis.example.com/git/ABC/abc-other.git");
         when(programmingExerciseStudentParticipationRepository.findByIdElseThrow(20L)).thenReturn(otherStudentsParticipation);
-        // The student's own participation is checked first and passes, so this stub must not make that call a strict mismatch.
-        org.mockito.Mockito.lenient().doThrow(new AccessForbiddenException("not yours")).when(participationAuthCheckService)
-                .checkCanAccessParticipationElseThrow(otherStudentsParticipation);
+        // The student's own participation is checked first and passes, only the read of the other participation is refused. The stub matches exact arguments,
+        // so it must not make the first call a strict mismatch.
+        lenient().doThrow(new AccessForbiddenException("not yours")).when(repositoryAccessService).checkAccessRepositoryElseThrow(otherStudentsParticipation, user, exercise,
+                RepositoryActionType.READ);
 
         assertThatExceptionOfType(AccessForbiddenException.class).isThrownBy(() -> resource.resetRepository(PARTICIPATION_ID, 20L));
+
+        // the refusal comes before the exercise of that participation is looked at, so it is the same wherever the participation belongs to
+        verify(programmingExerciseRepository, never()).getProgrammingExerciseFromParticipationElseThrow(otherStudentsParticipation);
+        verify(programmingExerciseParticipationService, never()).resetRepository(any(), any());
+    }
+
+    @Test
+    void resettingFromAReadableParticipationOfAnotherExerciseIsRefused() throws Exception {
+        withAResettableParticipation();
+        var participationOfAnotherExercise = new ProgrammingExerciseStudentParticipation();
+        participationOfAnotherExercise.setId(20L);
+        participationOfAnotherExercise.setRepositoryUri("https://artemis.example.com/git/XYZ/xyz-student.git");
+        var anotherExercise = new ProgrammingExercise();
+        anotherExercise.setId(EXERCISE_ID + 1);
+        when(programmingExerciseStudentParticipationRepository.findByIdElseThrow(20L)).thenReturn(participationOfAnotherExercise);
+        when(programmingExerciseRepository.getProgrammingExerciseFromParticipationElseThrow(participationOfAnotherExercise)).thenReturn(anotherExercise);
+
+        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> resource.resetRepository(PARTICIPATION_ID, 20L))
+                .satisfies(exception -> assertThat(exception.getErrorKey()).isEqualTo("gradedParticipationMismatch"));
 
         verify(programmingExerciseParticipationService, never()).resetRepository(any(), any());
     }
@@ -244,7 +279,7 @@ class ProgrammingExerciseParticipationResourceResetTest {
         var resourceWithoutCi = new ProgrammingExerciseParticipationResource(programmingExerciseParticipationService, resultRepository, participationRepository,
                 programmingExerciseStudentParticipationRepository, submissionService, programmingExerciseRepository, authCheckService, resultService, participationAuthCheckService,
                 repositoryService, Optional.of(vcsAccessLogRepository), auxiliaryRepositoryRepository, Optional.of(sharedQueueManagementService), Optional.empty(),
-                programmingExerciseBuildConfigRepository);
+                repositoryAccessService, userRepository, programmingExerciseBuildConfigRepository);
         withAResettableParticipation();
 
         assertThatExceptionOfType(UnsupportedOperationException.class).isThrownBy(() -> resourceWithoutCi.resetRepository(PARTICIPATION_ID, null));
@@ -308,12 +343,14 @@ class ProgrammingExerciseParticipationResourceResetTest {
         var resourceWithoutLog = new ProgrammingExerciseParticipationResource(programmingExerciseParticipationService, resultRepository, participationRepository,
                 programmingExerciseStudentParticipationRepository, submissionService, programmingExerciseRepository, authCheckService, resultService, participationAuthCheckService,
                 repositoryService, Optional.empty(), auxiliaryRepositoryRepository, Optional.of(sharedQueueManagementService), Optional.of(continuousIntegrationTriggerService),
-                programmingExerciseBuildConfigRepository);
+                repositoryAccessService, userRepository, programmingExerciseBuildConfigRepository);
+
         assertThat(resourceWithoutLog.getVcsAccessLogForParticipationRepo(PARTICIPATION_ID).getStatusCode().is4xxClientError()).isTrue();
     }
 
     @Test
     void checkIfParticipationHasResult_reportsWhetherAnyResultExists() throws Exception {
+        when(participationRepository.findByIdElseThrow(PARTICIPATION_ID)).thenReturn(participation);
         when(resultRepository.existsBySubmissionParticipationId(PARTICIPATION_ID)).thenReturn(true);
 
         assertThat(resource.checkIfParticipationHashResult(PARTICIPATION_ID).getBody()).isTrue();
@@ -321,8 +358,20 @@ class ProgrammingExerciseParticipationResourceResetTest {
 
     @Test
     void checkIfParticipationHasResult_reportsFalseForAParticipationThatWasNeverBuilt() throws Exception {
+        when(participationRepository.findByIdElseThrow(PARTICIPATION_ID)).thenReturn(participation);
         when(resultRepository.existsBySubmissionParticipationId(PARTICIPATION_ID)).thenReturn(false);
 
         assertThat(resource.checkIfParticipationHashResult(PARTICIPATION_ID).getBody()).isFalse();
+    }
+
+    @Test
+    void checkIfParticipationHasResult_ofSomebodyElseIsRefusedWithoutReadingResults() throws Exception {
+        // The endpoint must apply the same access check as its siblings and must not even read whether a result exists for a participation the student may not access.
+        when(participationRepository.findByIdElseThrow(PARTICIPATION_ID)).thenReturn(participation);
+        doThrow(new AccessForbiddenException("not yours")).when(participationAuthCheckService).checkCanAccessParticipationElseThrow(participation);
+
+        assertThatExceptionOfType(AccessForbiddenException.class).isThrownBy(() -> resource.checkIfParticipationHashResult(PARTICIPATION_ID));
+
+        verify(resultRepository, never()).existsBySubmissionParticipationId(PARTICIPATION_ID);
     }
 }

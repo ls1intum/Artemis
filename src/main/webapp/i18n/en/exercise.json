@@ -27,12 +27,29 @@
                 "testCourse": "test course",
                 "realCourse": "real course",
                 "summary": {
-                    "title": "Exercise Summary",
-                    "numberOfStudentParticipations": "Number of Student Participations",
-                    "numberOfAssessments": "Number of Assessments",
-                    "numberOfCommunicationPosts": "Number of Communication Posts",
-                    "numberOfAnswerPosts": "Number of Answer Posts",
-                    "numberOfBuilds": "Number of Builds"
+                    "title": "What will be deleted",
+                    "category": {
+                        "studentWork": "Student work",
+                        "assessment": "Assessment",
+                        "plagiarism": "Plagiarism checks",
+                        "communication": "Communication",
+                        "content": "Exercise content and links",
+                        "infrastructure": "Infrastructure"
+                    },
+                    "numberOfStudentParticipations": "Student participations",
+                    "numberOfTeams": "Teams",
+                    "numberOfSubmissions": "Submissions",
+                    "numberOfStudentExams": "Student exams containing this exercise",
+                    "numberOfResults": "Results",
+                    "numberOfAssessments": "Manual assessments",
+                    "numberOfComplaints": "Complaints and feedback requests",
+                    "numberOfPlagiarismComparisons": "Plagiarism comparisons",
+                    "numberOfCommunicationPosts": "Posts in the exercise channel",
+                    "numberOfAnswerPosts": "Replies in the exercise channel",
+                    "numberOfExampleSubmissions": "Example submissions",
+                    "numberOfCompetencyLinks": "Linked competencies",
+                    "numberOfLectureUnitLinks": "Linked lecture units",
+                    "numberOfBuilds": "Build jobs"
                 }
             },
             "reset": {

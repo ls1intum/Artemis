@@ -43,6 +43,12 @@ public class SshGitLocationResolverService implements GitLocationResolver {
 
     private final LocalVCServletService localVCServletService;
 
+    private final LocalVCRepositoryResolverService repositoryResolver;
+
+    private final LocalVCAccessLogRecorderService accessLogRecorder;
+
+    private final LocalVCBuildAgentAuthenticationService buildAgentAuthenticationService;
+
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
     // Optional: a node running LocalVC with Jenkins has no local CI and therefore no build jobs
@@ -50,9 +56,14 @@ public class SshGitLocationResolverService implements GitLocationResolver {
 
     private final Optional<BuildJobCloneTokenService> buildJobCloneTokenService;
 
-    public SshGitLocationResolverService(LocalVCServletService localVCServletService, ProgrammingExerciseRepository programmingExerciseRepository,
-            Optional<DistributedDataAccessService> distributedDataAccessService, Optional<BuildJobCloneTokenService> buildJobCloneTokenService) {
+    public SshGitLocationResolverService(LocalVCServletService localVCServletService, LocalVCRepositoryResolverService repositoryResolver,
+            LocalVCAccessLogRecorderService accessLogRecorder, LocalVCBuildAgentAuthenticationService buildAgentAuthenticationService,
+            ProgrammingExerciseRepository programmingExerciseRepository, Optional<DistributedDataAccessService> distributedDataAccessService,
+            Optional<BuildJobCloneTokenService> buildJobCloneTokenService) {
         this.localVCServletService = localVCServletService;
+        this.repositoryResolver = repositoryResolver;
+        this.accessLogRecorder = accessLogRecorder;
+        this.buildAgentAuthenticationService = buildAgentAuthenticationService;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.distributedDataAccessService = distributedDataAccessService;
         this.buildJobCloneTokenService = buildJobCloneTokenService;
@@ -100,13 +111,13 @@ public class SshGitLocationResolverService implements GitLocationResolver {
             // Audited like the https path, and for the same reason: an agent reads student code, so the read has to be
             // attributable. This branch returns before the user authorization below, which is what writes the log for
             // everyone else, and a build agent session carries no user to attribute an entry to anyway.
-            localVCServletService.saveBuildAgentVcsAccessLog(localVCRepositoryUri, agentName, buildJob.get().id(), AuthenticationContext.hostAddressOf(session.getClientAddress()),
-                    AuthenticationMechanism.SSH);
+            buildAgentAuthenticationService.saveBuildAgentVcsAccessLog(localVCRepositoryUri, agentName, buildJob.get().id(),
+                    AuthenticationContext.hostAddressOf(session.getClientAddress()), AuthenticationMechanism.SSH);
         }
         else {
             try {
                 var participation = localVCServletService.authorizeUser(repositoryTypeOrUserName, user, exercise, repositoryAction, localVCRepositoryUri, true);
-                localVCServletService.cacheAttributesInSshSession(user, participation, repositoryAction, AuthenticationMechanism.SSH,
+                accessLogRecorder.cacheAttributesInSshSession(user, participation, repositoryAction, AuthenticationMechanism.SSH,
                         AuthenticationContext.hostAddressOf(session.getClientAddress()), localVCRepositoryUri, session);
             }
             catch (LocalVCForbiddenException e) {
@@ -119,7 +130,7 @@ public class SshGitLocationResolverService implements GitLocationResolver {
 
         // we cannot trust unvalidated user input
         final var localRepositoryPath = localVCRepositoryUri.getRelativeRepositoryPath().toString();
-        try (Repository repo = localVCServletService.resolveRepository(localRepositoryPath)) {
+        try (Repository repo = repositoryResolver.resolveRepository(localRepositoryPath)) {
             return repo.getDirectory().toPath();
         }
     }

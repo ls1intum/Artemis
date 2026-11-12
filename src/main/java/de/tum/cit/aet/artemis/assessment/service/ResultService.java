@@ -308,6 +308,19 @@ public class ResultService {
     }
 
     /**
+     * Deletes a result from an already loaded participation graph using Hibernate's cascade lifecycle. Participant
+     * scores are removed by the caller. Bulk SQL deletion would leave managed children in the parent's orphan-removal
+     * collection and cause another deletion when the submission is removed in the same transaction.
+     *
+     * @param result the result belonging to the participation being deleted
+     */
+    public void deleteResultWithCascade(Result result) {
+        deleteNonCascadedResultReferences(result.getId(), false);
+        result.getSubmission().getResults().remove(result);
+        resultRepository.deleteById(result.getId());
+    }
+
+    /**
      * Deletes references to a result that are NOT cascade-deleted by Hibernate.
      * Complaints, complaint responses, ratings, and participant scores have no cascade
      * relationship from Result and must be explicitly deleted.
@@ -500,9 +513,12 @@ public class ResultService {
 
     private void filterSensitiveFeedbacksInExamExercise(Participation participation, Collection<Result> results, Exercise exercise) {
         boolean shouldResultsBePublished = areExamResultsPublished(participation, exercise);
+        // Feedback of the assessment is shown together with the published results only. A test run is the exception: its summary shows what a student sees after publication.
+        boolean holdBackAssessment = !shouldResultsBePublished && !(participation instanceof StudentParticipation studentParticipation && studentParticipation.isTestRun());
         for (Result result : results) {
             if (Hibernate.isInitialized(result.getFeedbacks())) {
                 result.filterSensitiveFeedbacks(!shouldResultsBePublished);
+                result.getFeedbacks().removeIf(feedback -> holdBackAssessment && feedback.getType() != null && feedback.getType() != FeedbackType.AUTOMATIC);
             }
         }
     }

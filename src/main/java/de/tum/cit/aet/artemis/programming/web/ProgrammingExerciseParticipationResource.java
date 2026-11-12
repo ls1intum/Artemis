@@ -35,6 +35,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.assessment.service.ResultService;
@@ -85,7 +87,9 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseStudentP
 import de.tum.cit.aet.artemis.programming.repository.VcsAccessLogRepository;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseParticipationService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingSubmissionService;
+import de.tum.cit.aet.artemis.programming.service.RepositoryAccessService;
 import de.tum.cit.aet.artemis.programming.service.RepositoryService;
+import de.tum.cit.aet.artemis.programming.web.repository.RepositoryActionType;
 
 @Profile(PROFILE_CORE)
 @Lazy
@@ -117,6 +121,10 @@ public class ProgrammingExerciseParticipationResource {
 
     private final AuthorizationCheckService authCheckService;
 
+    private final RepositoryAccessService repositoryAccessService;
+
+    private final UserRepository userRepository;
+
     private final ParticipationAuthorizationCheckService participationAuthCheckService;
 
     private final ResultService resultService;
@@ -139,7 +147,7 @@ public class ProgrammingExerciseParticipationResource {
             ResultService resultService, ParticipationAuthorizationCheckService participationAuthCheckService, RepositoryService repositoryService,
             Optional<VcsAccessLogRepository> vcsAccessLogRepository, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository,
             Optional<SharedQueueManagementService> sharedQueueManagementService, Optional<ContinuousIntegrationTriggerService> continuousIntegrationTriggerService,
-            ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository) {
+            RepositoryAccessService repositoryAccessService, UserRepository userRepository, ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository) {
         this.programmingExerciseBuildConfigRepository = programmingExerciseBuildConfigRepository;
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.participationRepository = participationRepository;
@@ -155,6 +163,8 @@ public class ProgrammingExerciseParticipationResource {
         this.vcsAccessLogRepository = vcsAccessLogRepository;
         this.sharedQueueManagementService = sharedQueueManagementService;
         this.continuousIntegrationTriggerService = continuousIntegrationTriggerService;
+        this.repositoryAccessService = repositoryAccessService;
+        this.userRepository = userRepository;
     }
 
     /**
@@ -315,12 +325,15 @@ public class ProgrammingExerciseParticipationResource {
      * Check if the participation has a result yet.
      *
      * @param participationId of the participation to check.
-     * @return the ResponseEntity with status 200 (OK) with true if there is a result, otherwise false.
+     * @return the ResponseEntity with status 200 (OK) with true if there is a result, otherwise false, 404 if the participation can't be found or 403 if the user is not allowed to
+     *         access the participation.
      */
     @FeatureUsage(UserFeature.PROGRAMMING_RESULTS)
     @GetMapping("programming-exercise-participations/{participationId}/has-result")
     @EnforceAtLeastStudent
     public ResponseEntity<Boolean> checkIfParticipationHashResult(@PathVariable Long participationId) {
+        var participation = participationRepository.findByIdElseThrow(participationId);
+        participationAuthCheckService.checkCanAccessParticipationElseThrow(participation);
         boolean hasResult = resultRepository.existsBySubmissionParticipationId(participationId);
         return ResponseEntity.ok(hasResult);
     }
@@ -406,10 +419,8 @@ public class ProgrammingExerciseParticipationResource {
                 .orElseThrow(() -> new EntityNotFoundException("Programming Exercise for Participation", participationId));
         participation.setProgrammingExercise(exercise);
 
-        participationAuthCheckService.checkCanAccessParticipationElseThrow(participation);
-        if (participationAuthCheckService.isLocked(participation, exercise)) {
-            throw new AccessForbiddenException("participation", participationId);
-        }
+        User user = userRepository.getUserWithAuthorities();
+        repositoryAccessService.checkAccessRepositoryElseThrow(participation, user, exercise, RepositoryActionType.RESET);
         if (exercise.isExamExercise()) {
             throw new BadRequestAlertException("Cannot reset repository in an exam", ENTITY_NAME, "noRepoResetInExam");
         }
@@ -417,7 +428,12 @@ public class ProgrammingExerciseParticipationResource {
         LocalVCRepositoryUri sourceUri;
         if (gradedParticipationId != null) {
             ProgrammingExerciseStudentParticipation gradedParticipation = programmingExerciseStudentParticipationRepository.findByIdElseThrow(gradedParticipationId);
-            participationAuthCheckService.checkCanAccessParticipationElseThrow(gradedParticipation);
+            // the access check comes first, so that a caller who may not read the participation gets the same answer wherever it belongs to
+            repositoryAccessService.checkAccessRepositoryElseThrow(gradedParticipation, user, exercise, RepositoryActionType.READ);
+            ProgrammingExercise gradedExercise = programmingExerciseRepository.getProgrammingExerciseFromParticipationElseThrow(gradedParticipation);
+            if (!gradedExercise.getId().equals(exercise.getId())) {
+                throw new BadRequestAlertException("The graded participation does not belong to the exercise of the participation", ENTITY_NAME, "gradedParticipationMismatch");
+            }
 
             sourceUri = gradedParticipation.getVcsRepositoryUri();
         }
