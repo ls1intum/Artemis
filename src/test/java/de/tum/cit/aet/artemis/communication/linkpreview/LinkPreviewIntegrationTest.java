@@ -94,6 +94,47 @@ class LinkPreviewIntegrationTest extends AbstractSpringIntegrationIndependentTes
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testLinkPreviewReturnsRequestedUrlWhenOgUrlDiffers() throws Exception {
+        String requestedUrl = "https://readme.md/";
+        Document document = Jsoup.parse("""
+                <html><head>
+                <meta property="og:title" content="AI Tools Directory" />
+                <meta property="og:description" content="A directory" />
+                <meta property="og:image" content="https://example.com/image.png" />
+                <meta property="og:url" content="https://other.example.com/page" />
+                </head><body></body></html>
+                """);
+
+        try (MockedStatic<LinkPreviewDocumentFetcher> documentFetcherMock = Mockito.mockStatic(LinkPreviewDocumentFetcher.class)) {
+            documentFetcherMock.when(() -> LinkPreviewDocumentFetcher.fetch(requestedUrl)).thenReturn(document);
+
+            String requestUrl = "/api/communication/link-preview?url=" + URLEncoder.encode(requestedUrl, StandardCharsets.UTF_8);
+            LinkPreviewDTO linkPreviewData = request.get(requestUrl, HttpStatus.OK, LinkPreviewDTO.class);
+
+            // The client removes a preview by locating this url in the message text, so it must be the posted link and not og:url.
+            assertThat(linkPreviewData.url()).isEqualTo(requestedUrl);
+            assertThat(linkPreviewData.title()).isEqualTo("AI Tools Directory");
+        }
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testLinkPreviewCachedWithOgUrlIsReturnedWithRequestedUrl() throws Exception {
+        String requestedUrl = "https://readme.md/";
+        var cache = cacheManager.getCache("linkPreview");
+        assertThat(cache).isNotNull();
+        // An entry cached before the service started returning the requested url
+        cache.put(requestedUrl, new LinkPreviewDTO("AI Tools Directory", "A directory", "https://example.com/image.png", "https://other.example.com/page"));
+
+        String requestUrl = "/api/communication/link-preview?url=" + URLEncoder.encode(requestedUrl, StandardCharsets.UTF_8);
+        LinkPreviewDTO linkPreviewData = request.get(requestUrl, HttpStatus.OK, LinkPreviewDTO.class);
+
+        assertThat(linkPreviewData.url()).isEqualTo(requestedUrl);
+        assertThat(linkPreviewData.title()).isEqualTo("AI Tools Directory");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testLinkPreviewDataExtractionWithInvalidUrls() throws Exception {
         // Construct the URL with an encoded query parameter
         String requestUrl = "/api/communication/link-preview?url=" + URLEncoder.encode("https://localhost", StandardCharsets.UTF_8);

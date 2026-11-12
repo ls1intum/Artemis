@@ -15,109 +15,101 @@
     </div>
     @if (exercise(); as exercise) {
         <div class="p-4">
-            <div class="flex flex-col gap-1 mb-3 flex-wrap items-center gap-2">
-                <label class="font-medium" jhiTranslate="artemisApp.exampleSubmission.searchSubmission" for="searchParticipant"></label>
-                <input
-                    tumAetUiInput
-                    class="ms-2"
-                    type="text"
-                    name="searchParticipant"
-                    id="searchParticipant"
-                    [(ngModel)]="searchTerm"
-                    placeholder="{{ 'artemisApp.exercise.name' | artemisTranslate }}"
-                />
-                @if (loading()) {
-                    <span class="ms-3" jhiTranslate="artemisApp.exercise.import.loading"></span>
-                }
-            </div>
-            @if (content().resultsOnPage && content().resultsOnPage.length > 0) {
-                <div class="overflow-x-auto">
-                    <table striped tumAetUiTable>
-                        <thead class="bg-surface-sunken">
-                            <tr jhiSort [(predicate)]="sortedColumn" [(ascending)]="listSorting" (sortChange)="sortRows()">
-                                <th>
-                                    <span>#</span>
-                                </th>
-                                <th jhiSortBy="STUDENT_NAME">
-                                    <span jhiTranslate="artemisApp.exercise.name"></span>
-                                    <fa-icon [icon]="faSort" />
-                                </th>
-                                <th>
-                                    <span jhiTranslate="artemisApp.assessment.dashboard.columns.submissionDate"></span>
-                                </th>
-                                <th>
-                                    <span jhiTranslate="artemisApp.assessment.dashboard.columns.result"></span>
-                                </th>
-                                <th style="display: table-caption">
-                                    <span jhiTranslate="artemisApp.exampleSubmission.submissionSize"></span>
-                                    @if (exercise.type === ExerciseType.TEXT) {
-                                        <fa-icon
-                                            [icon]="faQuestionCircle"
-                                            class="text-text-secondary ps-1"
-                                            [tumAetUiTooltip]="'artemisApp.exampleSubmission.textSubmissionSizeHint' | artemisTranslate"
-                                        />
-                                    }
-                                    @if (exercise.type === ExerciseType.MODELING) {
-                                        <fa-icon
-                                            [icon]="faQuestionCircle"
-                                            class="text-text-secondary ps-1"
-                                            [tumAetUiTooltip]="'artemisApp.exampleSubmission.modelingSubmissionSizeHint' | artemisTranslate"
-                                        />
-                                    }
-                                </th>
-                                <th></th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @for (submission of content().resultsOnPage; track submission; let i = $index) {
-                                <tr>
-                                    <td>{{ i + 1 }}</td>
-                                    <td>{{ submission.participation?.participantName }}</td>
-                                    <td>{{ submission.submissionDate | artemisDate }}</td>
-                                    <td>
-                                        <jhi-result
-                                            [exercise]="exercise"
-                                            [participation]="submission.participation!"
-                                            [result]="getLatestResult(submission)"
-                                            [isOwnParticipation]="false"
-                                        />
-                                    </td>
-                                    <td>
-                                        {{ submission.submissionSize }}
-                                    </td>
-                                    <td>
-                                        <button
-                                            tumAetUiButton
-                                            type="button"
-                                            severity="secondary"
-                                            (click)="selectImport(submission)"
-                                            jhiTranslate="artemisApp.exercise.import.table.doImport"
-                                        ></button>
-                                    </td>
-                                </tr>
-                            }
-                        </tbody>
-                    </table>
+            <tumaet-ui-table-layout
+                [loading]="loading()"
+                [empty]="content().resultsOnPage.length === 0 && !loading()"
+                [emptyTitle]="searchTermEntered ? 'artemisApp.assessment.dashboard.empty' : 'artemisApp.assessment.dashboard.emptySearch'"
+                class="[--table-layout-offset:20rem] max-md:[--table-layout-offset:28rem]"
+            >
+                <div tumAetUiTableToolbar class="flex min-w-0 flex-1 items-center gap-2">
+                    <input
+                        tumAetUiInput
+                        tumAetUiInputSize="small"
+                        type="search"
+                        name="searchParticipant"
+                        id="searchParticipant"
+                        class="max-w-lg min-w-24 flex-1"
+                        [(ngModel)]="searchTerm"
+                        [placeholder]="'artemisApp.exampleSubmission.searchSubmission' | artemisTranslate"
+                        [attr.aria-label]="'artemisApp.exampleSubmission.searchSubmission' | artemisTranslate"
+                    />
                 </div>
-            } @else {
-                @if (searchTermEntered) {
-                    <p jhiTranslate="artemisApp.assessment.dashboard.empty"></p>
-                }
-                @if (!searchTermEntered) {
-                    <p jhiTranslate="artemisApp.assessment.dashboard.emptySearch"></p>
-                }
-            }
-            <div class="flex justify-between p-2">
-                <!-- The search API supplies page counts, not an exact number of records. -->
+                <table striped tumAetUiTable size="small" [sortField]="sortedColumn" [sortOrder]="listSorting ? 1 : -1" (sortChange)="onTableSort($event)">
+                    <thead>
+                        <tr>
+                            <th>
+                                <span>#</span>
+                            </th>
+                            <th [tumAetUiSortableColumn]="'STUDENT_NAME'">
+                                <span jhiTranslate="artemisApp.exercise.name"></span>
+                            </th>
+                            <th>
+                                <span jhiTranslate="artemisApp.assessment.dashboard.columns.submissionDate"></span>
+                            </th>
+                            <th>
+                                <span jhiTranslate="artemisApp.assessment.dashboard.columns.result"></span>
+                            </th>
+                            <th>
+                                <span jhiTranslate="artemisApp.exampleSubmission.submissionSize"></span>
+                                @if (exercise.type === ExerciseType.TEXT) {
+                                    <fa-icon
+                                        [icon]="faQuestionCircle"
+                                        class="text-text-secondary ps-1"
+                                        [tumAetUiTooltip]="'artemisApp.exampleSubmission.textSubmissionSizeHint' | artemisTranslate"
+                                    />
+                                }
+                                @if (exercise.type === ExerciseType.MODELING) {
+                                    <fa-icon
+                                        [icon]="faQuestionCircle"
+                                        class="text-text-secondary ps-1"
+                                        [tumAetUiTooltip]="'artemisApp.exampleSubmission.modelingSubmissionSizeHint' | artemisTranslate"
+                                    />
+                                }
+                            </th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @for (submission of content().resultsOnPage; track submission; let i = $index) {
+                            <tr>
+                                <td>{{ i + 1 }}</td>
+                                <td>{{ submission.participation?.participantName }}</td>
+                                <td>{{ submission.submissionDate | artemisDate }}</td>
+                                <td>
+                                    <jhi-result
+                                        [exercise]="exercise"
+                                        [participation]="submission.participation!"
+                                        [result]="getLatestResult(submission)"
+                                        [isOwnParticipation]="false"
+                                    />
+                                </td>
+                                <td>
+                                    {{ submission.submissionSize }}
+                                </td>
+                                <td>
+                                    <button
+                                        tumAetUiButton
+                                        type="button"
+                                        severity="secondary"
+                                        (click)="selectImport(submission)"
+                                        jhiTranslate="artemisApp.exercise.import.table.doImport"
+                                    ></button>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+                <!-- The search API supplies page counts, not an exact number of records, so the count is not shown. -->
                 <tumaet-ui-paginator
+                    tumAetUiTableFooter
                     [page]="state.page - 1"
                     [pageSize]="state.pageSize"
                     [totalRecords]="total()"
                     [showRowsPerPage]="false"
                     [showCurrentPageReport]="false"
-                    (pageChange)="onPaginatorPageChange({ page: $event })"
+                    (pageChange)="onPageChange($event + 1)"
                 />
-            </div>
+            </tumaet-ui-table-layout>
         </div>
     }
 </form>

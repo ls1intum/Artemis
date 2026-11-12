@@ -57,6 +57,7 @@ import { FeedbackSuggestionsBannerComponent } from 'app/assessment/manage/feedba
 import { AssessmentNotPossibleYetComponent } from 'app/assessment/shared/assessment-not-possible-yet/assessment-not-possible-yet.component';
 import { AssessmentNotPossibleYetState } from 'app/assessment/shared/util/assessment-availability.util';
 import { TextAssessmentRouteData } from 'app/text/manage/assess/service/text-submission-assessment-resolve.service';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 const NO_SCORE: AssessmentScore = { awarded: 0, deducted: 0, total: 0 };
 
@@ -434,6 +435,10 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
         // Update the text on all text block refs
         for (const blockRef of newTextBlockRefs) {
             blockRef.block!.text = this.submission!.text!.substring(blockRef.block!.startIndex!, blockRef.block!.endIndex);
+            // Updating the text recomputes the block ID after any range changes.
+            if (blockRef.feedback) {
+                blockRef.feedback.reference = blockRef.block!.id;
+            }
         }
 
         this.textBlockRefs = newTextBlockRefs;
@@ -628,7 +633,17 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
             return;
         }
         const feedbacks = this.result()?.feedbacks || [];
-        this.unreferencedFeedback.set(feedbacks.filter((feedbackElement) => feedbackElement.reference == undefined && feedbackElement.type === FeedbackType.MANUAL_UNREFERENCED));
+        const blocks = this.submission?.blocks || [];
+        const blockIds = new Set(blocks.map(({ id }) => id));
+        this.unreferencedFeedback.set(
+            feedbacks.flatMap((feedback) => {
+                // Keep feedback with missing blocks visible without rewriting the original result used for complaints.
+                if (feedback.reference != undefined && !blockIds.has(feedback.reference)) {
+                    return [cloneWith(feedback, { reference: undefined, type: FeedbackType.MANUAL_UNREFERENCED })];
+                }
+                return feedback.reference == undefined && feedback.type === FeedbackType.MANUAL_UNREFERENCED ? [feedback] : [];
+            }),
+        );
 
         // Accepted/adapted suggestions persist as manual feedback with a suggestion-state text marker, so a plain
         // AUTOMATIC type check alone misses them here: loadFeedbackSuggestions() only sees a fresh Athena response
@@ -639,7 +654,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
             ),
         );
 
-        const matchBlocksWithFeedbacks = TextAssessmentService.matchBlocksWithFeedbacks(this.submission?.blocks || [], feedbacks);
+        const matchBlocksWithFeedbacks = TextAssessmentService.matchBlocksWithFeedbacks(blocks, feedbacks);
         this.sortAndSetTextBlockRefs(matchBlocksWithFeedbacks, this.textBlockRefs, this.unusedTextBlockRefs, this.submission);
     }
 
