@@ -56,6 +56,7 @@ import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.repository.ResultGradeRepository;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.exception.LtiAccountNotAcceptedException;
 import de.tum.cit.aet.artemis.core.exception.LtiEmailAlreadyInUseException;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
@@ -338,6 +339,23 @@ class Lti13ServiceTest {
         assertThatExceptionOfType(LtiEmailAlreadyInUseException.class).isThrownBy(() -> lti13Service.performLaunch(oidcIdToken, clientRegistrationId));
 
         verify(launchRepository).save(any());
+    }
+
+    @Test
+    void performLaunch_accountThatIsNotAcceptedFromALaunch_leavesNoLaunchAssociationBehind() {
+        MockExercise result = getMockExercise(true);
+        when(oidcIdToken.getClaim("sub")).thenReturn("1");
+        when(oidcIdToken.getClaim("iss")).thenReturn("https://otherDomain.com");
+        when(oidcIdToken.getClaim(Claims.LTI_DEPLOYMENT_ID)).thenReturn("1");
+        ObjectNode jsonObject = JsonObjectMapper.get().createObjectNode();
+        jsonObject.put("id", "resourceLinkUrl");
+        when(oidcIdToken.getClaim(Claims.RESOURCE_LINK)).thenReturn(jsonObject);
+        prepareForPerformExerciseLaunch(result.courseId(), result.exerciseId(), true);
+        doThrow(new LtiAccountNotAcceptedException()).when(ltiService).authenticateLtiUser(any(), any(), any(), any(), anyBoolean());
+
+        assertThatExceptionOfType(LtiAccountNotAcceptedException.class).isThrownBy(() -> lti13Service.performLaunch(oidcIdToken, clientRegistrationId));
+
+        verify(launchRepository, never()).save(any());
     }
 
     @Test

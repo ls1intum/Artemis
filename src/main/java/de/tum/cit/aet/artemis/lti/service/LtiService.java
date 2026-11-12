@@ -32,6 +32,7 @@ import de.tum.cit.aet.artemis.account.service.user.UserCreationService;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.domain.UserCourseRole;
+import de.tum.cit.aet.artemis.core.exception.LtiAccountNotAcceptedException;
 import de.tum.cit.aet.artemis.core.exception.LtiEmailAlreadyInUseException;
 import de.tum.cit.aet.artemis.core.repository.UserCourseRoleRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
@@ -127,7 +128,7 @@ public class LtiService {
                     log.warn(
                             "Not authenticating the account with email {} from a launch: only active accounts without administrator authority are accepted from trusted LTI systems",
                             email);
-                    throw new LtiEmailAlreadyInUseException();
+                    throw new LtiAccountNotAcceptedException();
                 }
                 SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken(user.getLogin(), user.getPassword(), user.getGrantedAuthorities()));
                 return;

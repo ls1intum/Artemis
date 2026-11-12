@@ -43,6 +43,7 @@ import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.repository.ResultGradeRepository;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.exception.LtiAccountNotAcceptedException;
 import de.tum.cit.aet.artemis.core.exception.LtiEmailAlreadyInUseException;
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -552,6 +553,10 @@ public class Lti13Service {
         try {
             ltiService.authenticateLtiUser(ltiIdToken.getEmail(), createUsernameFromLaunchRequest(ltiIdToken, onlineCourseConfiguration), ltiIdToken.getGivenName(),
                     ltiIdToken.getFamilyName(), onlineCourseConfiguration.isRequireExistingUser());
+        }
+        catch (LtiAccountNotAcceptedException e) {
+            // An account that is not accepted from a launch leaves no association behind
+            throw e;
         }
         catch (LtiEmailAlreadyInUseException e) {
             // The person has an account and signs in by hand. The launch is not repeated after the sign-in, so its association is kept as it always was.
