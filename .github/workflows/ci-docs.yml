@@ -69,3 +69,5 @@ jobs:
         uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
         with:
           path: documentation/build
+          # The build holds hidden files that have to be published, such as .well-known/security.txt
+          include-hidden-files: true
