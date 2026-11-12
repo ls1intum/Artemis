@@ -17,7 +17,7 @@ import {
 } from 'app/shared-ui/export/export-constants';
 import { CourseGradeInformationDTO, CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { Course } from 'app/course/shared/entities/course.model';
-import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { Exercise, ExerciseType, IncludedInOverallScore, exerciseTypes } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
@@ -32,8 +32,6 @@ import { GradeType, GradingScale } from 'app/assessment/shared/entities/grading-
 import { GradingService } from 'app/assessment/manage/grading/grading-service';
 import { GradeStep } from 'app/assessment/shared/entities/grade-step.model';
 import { MockTranslateValuesDirective } from 'test/helpers/mocks/directive/mock-translate-values.directive';
-import { SortByDirective } from 'app/foundation/sort/directive/sort-by.directive';
-import { SortDirective } from 'app/foundation/sort/directive/sort.directive';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ParticipantScoresDistributionComponent } from 'app/course/participant-scores/participant-scores-distribution/participant-scores-distribution.component';
 import { CsvDecimalSeparator, CsvExportOptions, CsvFieldSeparator, CsvQuoteStrings } from 'app/shared-ui/export/modal/export-modal.component';
@@ -303,8 +301,6 @@ describe('CourseScoresComponent', () => {
                         MockComponent(ExportButtonComponent),
                         MockPipe(ArtemisTranslatePipe),
                         MockPipe(ArtemisDatePipe),
-                        MockDirective(SortByDirective),
-                        MockDirective(SortDirective),
                         MockDirective(DeleteButtonDirective),
                         MockDirective(TranslateDirective),
                         MockTranslateValuesDirective,
@@ -355,6 +351,50 @@ describe('CourseScoresComponent', () => {
         fixture.detectChanges();
         expect(quizIncludedWith10Points0BonusPoints.title).toBe(`exercise (id=2)`);
         expect(textIncludedWith10Points10BonusPoints.title).toBe(`exercise (id=1)`);
+    });
+
+    it('should re-sort the student statistics when a column header sort is applied', () => {
+        setupMocks();
+
+        component.onSort({ field: 'overallPoints', order: 1 });
+
+        expect(component.predicate()).toBe('overallPoints');
+        expect(component.reverse()).toBe(true);
+        expect(component.studentStatistics().map((statistic) => statistic.overallPoints)).toEqual([15, 50]);
+
+        component.onSort({ field: 'overallPoints', order: -1 });
+
+        expect(component.reverse()).toBe(false);
+        expect(component.studentStatistics().map((statistic) => statistic.overallPoints)).toEqual([50, 15]);
+    });
+
+    it('should sort by the student name and login of the rows', () => {
+        setupMocks();
+        const names = () => component.studentStatistics().map((statistic) => statistic.student.name);
+        const ascending = [...names()].sort((a, b) => (a ?? '').localeCompare(b ?? ''));
+
+        component.onSort({ field: 'student.name', order: 1 });
+        expect(names()).toEqual(ascending);
+
+        component.onSort({ field: 'student.name', order: -1 });
+        expect(names()).toEqual([...ascending].reverse());
+
+        component.onSort({ field: 'student.login', order: 1 });
+        const logins = component.studentStatistics().map((statistic) => statistic.student.login);
+        expect(logins).toEqual([...logins].sort((a, b) => (a ?? '').localeCompare(b ?? '')));
+    });
+
+    it('should sort by the points per exercise type, which are stored in a map', () => {
+        setupMocks();
+        const type = exerciseTypes[0];
+        component.studentStatistics()[0].sumPointsPerExerciseType.set(type, 3);
+        component.studentStatistics()[1].sumPointsPerExerciseType.set(type, 8);
+
+        component.onSort({ field: `sumPointsPerExerciseType.${type}`, order: 1 });
+        expect(component.studentStatistics().map((statistic) => statistic.sumPointsPerExerciseType.get(type))).toEqual([3, 8]);
+
+        component.onSort({ field: `sumPointsPerExerciseType.${type}`, order: -1 });
+        expect(component.studentStatistics().map((statistic) => statistic.sumPointsPerExerciseType.get(type))).toEqual([8, 3]);
     });
 
     it('should group exercises and calculate exercise max score', () => {
