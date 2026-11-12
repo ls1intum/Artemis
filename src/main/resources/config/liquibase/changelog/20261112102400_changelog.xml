@@ -59,7 +59,7 @@
     parsed on the way out and no query has to work around a type that cannot be compared or made distinct.
     -->
 
-    <changeSet id="20261103163312-01-create-metis-exercise-config" author="eduardfrankford">
+    <changeSet id="20261112102400-01-create-metis-exercise-config" author="eduardfrankford">
         <comment>Create the per-exercise Metis configuration, keyed by the exercise it configures.</comment>
         <createTable tableName="metis_exercise_config">
             <column name="exercise_id" type="bigint">
@@ -115,7 +115,7 @@
                                  referencedColumnNames="id" referencedTableName="exercise" onDelete="CASCADE" onUpdate="RESTRICT"/>
     </changeSet>
 
-    <changeSet id="20261103163312-02-create-metis-group-window" author="eduardfrankford">
+    <changeSet id="20261112102400-02-create-metis-group-window" author="eduardfrankford">
         <comment>Create the per-tutorial-group answering window that overrides the default of the configuration.</comment>
         <createTable tableName="metis_group_window">
             <column name="id" type="bigint" autoIncrement="true">
@@ -147,7 +147,7 @@
                                  referencedColumnNames="id" referencedTableName="tutorial_group" onDelete="CASCADE" onUpdate="RESTRICT"/>
     </changeSet>
 
-    <changeSet id="20261103163312-03-create-metis-check" author="eduardfrankford">
+    <changeSet id="20261112102400-03-create-metis-check" author="eduardfrankford">
         <comment>Create the per-participation check that records the state of one student's questions.</comment>
         <createTable tableName="metis_check">
             <column name="id" type="bigint" autoIncrement="true">
@@ -182,7 +182,7 @@
                                  referencedColumnNames="id" referencedTableName="participation" onDelete="CASCADE" onUpdate="RESTRICT"/>
     </changeSet>
 
-    <changeSet id="20261103163312-04-create-metis-question" author="eduardfrankford">
+    <changeSet id="20261112102400-04-create-metis-question" author="eduardfrankford">
         <comment>Create the question table, which holds main questions and follow-ups together with their answers and ratings.</comment>
         <createTable tableName="metis_question">
             <column name="id" type="bigint" autoIncrement="true">
@@ -293,7 +293,7 @@
         the same values, so a test on any of them finds an overflow.
     -->
 
-    <changeSet id="20261103163312-05-check-metis-exercise-config-main-question-count" author="eduardfrankford">
+    <changeSet id="20261112102400-05-check-metis-exercise-config-main-question-count" author="eduardfrankford">
         <comment>One to five main questions.</comment>
         <sql>ALTER TABLE metis_exercise_config ADD CONSTRAINT ck_metis_exercise_config_main_question_count CHECK (main_question_count BETWEEN 1 AND 5);</sql>
         <rollback>
@@ -302,7 +302,7 @@
         </rollback>
     </changeSet>
 
-    <changeSet id="20261103163312-06-check-metis-exercise-config-max-follow-ups-per-question" author="eduardfrankford">
+    <changeSet id="20261112102400-06-check-metis-exercise-config-max-follow-ups-per-question" author="eduardfrankford">
         <comment>At most three follow-ups per main question; none switches them off.</comment>
         <sql>ALTER TABLE metis_exercise_config ADD CONSTRAINT ck_metis_exercise_config_max_follow_ups_per_question CHECK (max_follow_ups_per_question BETWEEN 0 AND 3);</sql>
         <rollback>
@@ -311,7 +311,7 @@
         </rollback>
     </changeSet>
 
-    <changeSet id="20261103163312-07-check-metis-exercise-config-seconds-per-question" author="eduardfrankford">
+    <changeSet id="20261112102400-07-check-metis-exercise-config-seconds-per-question" author="eduardfrankford">
         <comment>A time limit range between 30 seconds and an hour that is not empty.</comment>
         <sql><![CDATA[ALTER TABLE metis_exercise_config ADD CONSTRAINT ck_metis_exercise_config_seconds_per_question CHECK (min_seconds_per_question >= 30 AND max_seconds_per_question <= 3600 AND min_seconds_per_question <= max_seconds_per_question);]]></sql>
         <rollback>
@@ -320,7 +320,7 @@
         </rollback>
     </changeSet>
 
-    <changeSet id="20261103163312-08-check-metis-exercise-config-answer-length" author="eduardfrankford">
+    <changeSet id="20261112102400-08-check-metis-exercise-config-answer-length" author="eduardfrankford">
         <comment>The five-step answer length scale.</comment>
         <sql>ALTER TABLE metis_exercise_config ADD CONSTRAINT ck_metis_exercise_config_answer_length CHECK (answer_length BETWEEN 1 AND 5);</sql>
         <rollback>
@@ -329,7 +329,7 @@
         </rollback>
     </changeSet>
 
-    <changeSet id="20261103163312-09-check-metis-exercise-config-complexity" author="eduardfrankford">
+    <changeSet id="20261112102400-09-check-metis-exercise-config-complexity" author="eduardfrankford">
         <comment>The five-step complexity scale.</comment>
         <sql>ALTER TABLE metis_exercise_config ADD CONSTRAINT ck_metis_exercise_config_complexity CHECK (complexity BETWEEN 1 AND 5);</sql>
         <rollback>
@@ -338,7 +338,7 @@
         </rollback>
     </changeSet>
 
-    <changeSet id="20261103163312-10-check-metis-exercise-config-likert-scale-points" author="eduardfrankford">
+    <changeSet id="20261112102400-10-check-metis-exercise-config-likert-scale-points" author="eduardfrankford">
         <comment>A Likert scale has five or seven points; refuse any other number, six included.</comment>
         <sql>ALTER TABLE metis_exercise_config ADD CONSTRAINT ck_metis_exercise_config_likert_scale_points CHECK (likert_scale_points IN (5, 7));</sql>
         <rollback>
@@ -347,7 +347,7 @@
         </rollback>
     </changeSet>
 
-    <changeSet id="20261103163312-11-check-metis-exercise-config-follow-up-threshold" author="eduardfrankford">
+    <changeSet id="20261112102400-11-check-metis-exercise-config-follow-up-threshold" author="eduardfrankford">
         <comment>A follow-up threshold below the top of the scale, so that the best answer never gets a follow-up.</comment>
         <sql><![CDATA[ALTER TABLE metis_exercise_config ADD CONSTRAINT ck_metis_exercise_config_follow_up_threshold CHECK (follow_up_threshold >= 1 AND follow_up_threshold < likert_scale_points);]]></sql>
         <rollback>
@@ -356,7 +356,7 @@
         </rollback>
     </changeSet>
 
-    <changeSet id="20261103163312-12-check-metis-question-question-order" author="eduardfrankford">
+    <changeSet id="20261112102400-12-check-metis-question-question-order" author="eduardfrankford">
         <comment>Positions start at 1 and stay inside the tinyint range on every engine.</comment>
         <sql>ALTER TABLE metis_question ADD CONSTRAINT ck_metis_question_question_order CHECK (question_order BETWEEN 1 AND 127);</sql>
         <rollback>
@@ -365,7 +365,7 @@
         </rollback>
     </changeSet>
 
-    <changeSet id="20261103163312-13-check-metis-question-regeneration-count" author="eduardfrankford">
+    <changeSet id="20261112102400-13-check-metis-question-regeneration-count" author="eduardfrankford">
         <comment>A regeneration count that is not negative and stays inside the tinyint range on every engine.</comment>
         <sql>ALTER TABLE metis_question ADD CONSTRAINT ck_metis_question_regeneration_count CHECK (regeneration_count BETWEEN 0 AND 127);</sql>
         <rollback>
@@ -374,7 +374,7 @@
         </rollback>
     </changeSet>
 
-    <changeSet id="20261103163312-14-check-metis-question-time-limit-seconds" author="eduardfrankford">
+    <changeSet id="20261112102400-14-check-metis-question-time-limit-seconds" author="eduardfrankford">
         <comment>A time limit inside the range any configuration allows.</comment>
         <sql>ALTER TABLE metis_question ADD CONSTRAINT ck_metis_question_time_limit_seconds CHECK (time_limit_seconds BETWEEN 30 AND 3600);</sql>
         <rollback>
@@ -383,7 +383,7 @@
         </rollback>
     </changeSet>
 
-    <changeSet id="20261103163312-15-check-metis-question-llm-score" author="eduardfrankford">
+    <changeSet id="20261112102400-15-check-metis-question-llm-score" author="eduardfrankford">
         <comment>A score on the larger of the two scales, or null until the answer is rated.</comment>
         <sql>ALTER TABLE metis_question ADD CONSTRAINT ck_metis_question_llm_score CHECK (llm_score BETWEEN 1 AND 7);</sql>
         <rollback>
@@ -392,7 +392,7 @@
         </rollback>
     </changeSet>
 
-    <changeSet id="20261103163312-16-check-metis-question-focus-file-changed-lines" author="eduardfrankford">
+    <changeSet id="20261112102400-16-check-metis-question-focus-file-changed-lines" author="eduardfrankford">
         <comment>A changed-line count that is not negative, or null for a follow-up.</comment>
         <sql>ALTER TABLE metis_question ADD CONSTRAINT ck_metis_question_focus_file_changed_lines CHECK (focus_file_changed_lines >= 0);</sql>
         <rollback>
@@ -401,7 +401,7 @@
         </rollback>
     </changeSet>
 
-    <changeSet id="20261103163312-17-backfill-metis-exercise-config" author="eduardfrankford">
+    <changeSet id="20261112102400-17-backfill-metis-exercise-config" author="eduardfrankford">
         <comment>Give every programming exercise that already exists its permanent Metis configuration, switched off and with the defaults.</comment>
         <!--
             New programming exercises get their row when they are stored (ExerciseConfigurationService.initialize); this

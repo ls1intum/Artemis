@@ -107,9 +107,9 @@ class MetisDataModelIntegrationTest extends AbstractProgrammingIntegrationIndepe
     private static final long MISSING_ID = Long.MAX_VALUE / 2;
 
     /** The changelog that creates the Metis tables, and its changeSet that gives the programming exercises stored before it their configuration. */
-    private static final String CHANGELOG = "config/liquibase/changelog/20261103163312_changelog.xml";
+    private static final String CHANGELOG = "config/liquibase/changelog/20261112102400_changelog.xml";
 
-    private static final String BACKFILL_CHANGE_SET = "20261103163312-17-backfill-metis-exercise-config";
+    private static final String BACKFILL_CHANGE_SET = "20261112102400-17-backfill-metis-exercise-config";
 
     /** A repository path of exactly 1024 characters, the longest the column holds: 58 nested directories and a long file name. */
     private static final String LONGEST_FOCUS_FILE_PATH = "src/" + "nested_directory/".repeat(58) + "A".repeat(29) + ".java";
