@@ -206,7 +206,7 @@ share one budget of the login rate limits, and appear with one address in their 
 ### 10.8: Build Results in the Distributed Data
 
 With Redis or Valkey, this release changes the stored layout of build results (schema version `2`). **Finished build results that were still waiting in the result queues when you stop the old nodes are discarded**, and their submissions need a new build. Queued and running builds are kept.
-Wait until the result queues are empty before you upgrade. Hazelcast keeps nothing across a restart and is not affected. See
+Pause all build agents and wait until the running builds have finished and the result queues are empty before you upgrade. Hazelcast keeps nothing across a restart and is not affected. See
 [Distributed Data with Redis or Valkey](/admin/production-setup/distributed-data#schema-1-to-2).
 
 ### 10.7: Rate Limit of Git Operations

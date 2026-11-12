@@ -86,8 +86,10 @@ closed during the transition. Neither the retained result queues nor the distrib
 Schema `2` stores the class of every test in the build result. Both result queues hold build results in the old layout, which
 the new release cannot read, so the migration **discards** them: `buildResultQueue` and `deferredBuildResultQueue`.
 A finished build whose result had not yet been written to the database at the moment of the upgrade loses its feedback,
-and the student needs a new build (a new push, or a retrigger by the instructor). To avoid this, wait until both queues are empty before you stop
-the old nodes; the build agent overview shows them. The structures whose types did not change move over unchanged:
+and the student needs a new build (a new push, or a retrigger by the instructor). To avoid this, first stop new builds from starting
+(**Pause All Agents** in the build agent administration), then wait until the running builds (`processingJobs`) have finished and both result queues are empty,
+and only then stop the old nodes. A build that is still running can add a result to a queue after you checked it. Builds that are queued stay queued
+and run after the upgrade. The structures whose types did not change move over unchanged:
 
 | Structure | Why it is preserved |
 |---|---|
