@@ -39,6 +39,8 @@ public record LocalVCPrePushHook(LocalVCServletService localVCServletService, Us
 
     private static final long MAX_BLOB_SIZE_BYTES = 10L * 1024 * 1024; // 10MB
 
+    private static final String REPOSITORY_SIZE_DOCUMENTATION_URL = "https://docs.artemis.tum.de/instructor/exercises/programming-exercise/write-code-and-tests#keep-repositories-small";
+
     /**
      * Called by JGit before a push is received (i.e. before the pushed files are written to disk but after the authorization check was successful).
      *
@@ -122,18 +124,20 @@ public record LocalVCPrePushHook(LocalVCServletService localVCServletService, Us
                 }
             }
 
-            rejectFilesLargerThan10MbOrSymlinksOrSubModules(repository, command);
+            rejectFilesLargerThan10MbOrSymlinksOrSubModulesOrOversizedRepository(repository, command, localVCServletService.getMaxRepositorySizeBytes(repository));
         }
         catch (IOException e) {
             command.setResult(ReceiveCommand.Result.REJECTED_OTHER_REASON, "An error occurred while checking the branch.");
         }
     }
 
-    private static void rejectFilesLargerThan10MbOrSymlinksOrSubModules(Repository repository, ReceiveCommand command) throws IOException {
+    private static void rejectFilesLargerThan10MbOrSymlinksOrSubModulesOrOversizedRepository(Repository repository, ReceiveCommand command, long maxRepositorySizeBytes)
+            throws IOException {
         try (ObjectReader reader = repository.newObjectReader(); RevWalk revWalk = new RevWalk(reader); TreeWalk treeWalk = new TreeWalk(reader)) {
             RevCommit newCommit = revWalk.parseCommit(command.getNewId());
             treeWalk.addTree(newCommit.getTree());
             treeWalk.setRecursive(true);
+            long totalSize = 0;
             while (treeWalk.next()) {
                 FileMode mode = treeWalk.getFileMode(0);
                 if (FileMode.SYMLINK.equals(mode)) {
@@ -149,7 +153,7 @@ public record LocalVCPrePushHook(LocalVCServletService localVCServletService, Us
 
                             After removing the symlink, replace it with the correct file or folder, add it with 'git add', and commit the changes."""
                             .formatted(treeWalk.getPathString()));
-                    break;
+                    return;
                 }
                 if (FileMode.GITLINK.equals(mode)) {
                     command.setResult(ReceiveCommand.Result.REJECTED_OTHER_REASON, """
@@ -160,7 +164,7 @@ public record LocalVCPrePushHook(LocalVCServletService localVCServletService, Us
                             3. Edit the '.gitmodules' file and remove the corresponding section.
                             4. Optionally, clean up '.git/config' if it contains a [submodule "%1$s"] section.
                             5. Commit all changes.""".formatted(treeWalk.getPathString()));
-                    break;
+                    return;
                 }
 
                 ObjectId objectId = treeWalk.getObjectId(0);
@@ -168,9 +172,49 @@ public record LocalVCPrePushHook(LocalVCServletService localVCServletService, Us
                 if (loader.getType() == Constants.OBJ_BLOB && loader.getSize() > MAX_BLOB_SIZE_BYTES) {
                     command.setResult(ReceiveCommand.Result.REJECTED_OTHER_REASON,
                             "File '%s' exceeds 10MB size limit (%.2f MB)".formatted(treeWalk.getPathString(), loader.getSize() / (1024.0 * 1024.0)));
-                    break;
+                    return;
+                }
+                if (loader.getType() == Constants.OBJ_BLOB) {
+                    totalSize += loader.getSize();
+                }
+            }
+            rejectOversizedRepository(reader, revWalk, command, totalSize, maxRepositorySizeBytes);
+        }
+    }
+
+    /**
+     * Rejects a push that makes the files of the repository larger than the limit. A push that does not make the repository larger is accepted even if the repository is over
+     * the limit already (e.g. because it was created from a large template before the limit existed), so that students can still push, and can bring the repository below the
+     * limit.
+     */
+    private static void rejectOversizedRepository(ObjectReader reader, RevWalk revWalk, ReceiveCommand command, long totalSize, long maxRepositorySizeBytes) throws IOException {
+        if (totalSize <= maxRepositorySizeBytes) {
+            return;
+        }
+        long previousSize = ObjectId.zeroId().equals(command.getOldId()) ? 0 : sizeOfFiles(reader, revWalk.parseCommit(command.getOldId()));
+        if (totalSize <= previousSize) {
+            return;
+        }
+        command.setResult(ReceiveCommand.Result.REJECTED_OTHER_REASON, """
+                The repository would be %.1f MB large, but the limit is %d MB.
+                Large files that never change (data sets, models, libraries, ...) must not be stored in git. Download them during the build instead.
+                See %s
+                To fix this, remove the large files from the repository, commit the changes and push again.""".formatted(totalSize / (1024.0 * 1024.0),
+                maxRepositorySizeBytes / (1024 * 1024), REPOSITORY_SIZE_DOCUMENTATION_URL));
+    }
+
+    private static long sizeOfFiles(ObjectReader reader, RevCommit commit) throws IOException {
+        long size = 0;
+        try (TreeWalk treeWalk = new TreeWalk(reader)) {
+            treeWalk.addTree(commit.getTree());
+            treeWalk.setRecursive(true);
+            while (treeWalk.next()) {
+                ObjectLoader loader = reader.open(treeWalk.getObjectId(0));
+                if (loader.getType() == Constants.OBJ_BLOB) {
+                    size += loader.getSize();
                 }
             }
         }
+        return size;
     }
 }
