@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.core.config.BinaryFileExtensionConfiguratio
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.FileSystems;
@@ -670,7 +671,7 @@ public class GitService extends AbstractGitService {
      * Get branch that origin/HEAD points to, useful to handle default branches that are not main
      *
      * @param repo Local Repository Object.
-     * @return name of the origin/HEAD branch, e.g. 'main' or null if there is no HEAD
+     * @return name of the origin/HEAD branch, e.g. 'main' or 'course/main', or null if there is no HEAD
      */
     private String getOriginHead(Repository repo) throws GitAPIException {
         Ref originHeadRef;
@@ -683,8 +684,9 @@ public class GitService extends AbstractGitService {
             return null;
         }
 
+        // Only the prefix is removed: a configured default branch can contain a slash, e.g. 'course/main'
         String fullName = originHeadRef.getTarget().getName();
-        return StringUtils.substringAfterLast(fullName, "/");
+        return fullName.startsWith(Constants.R_HEADS) ? fullName.substring(Constants.R_HEADS.length()) : fullName;
     }
 
     /**
@@ -733,6 +735,44 @@ public class GitService extends AbstractGitService {
             resetToOriginHeadOrThrow(repository);
             return repository;
         });
+    }
+
+    /**
+     * Replaces the content of the working copy of a repository like {@link #getOrCheckoutRepositoryDiscardingLocalChanges(LocalVCRepositoryUri, boolean)}, but keeps the lock
+     * of the working copy until the replacement is done. Two replacements of the same repository therefore cannot interleave, e.g. one of them hard resetting the files that
+     * the other one has just staged.
+     *
+     * @param repoUri     the remote repository
+     * @param replacement the change of the working copy, which is run with the repository equal to the head of the remote repository
+     * @throws GitAPIException if the repository could not be checked out or reset, or if the replacement fails with it
+     * @throws IOException     if the replacement fails with it
+     */
+    public void replaceWorkingCopyContent(LocalVCRepositoryUri repoUri, WorkingCopyReplacement replacement) throws GitAPIException, IOException {
+        Path localPath = getLocalPathOfRepo(repoClonePath, repoUri);
+        try {
+            workingCopyLocks.withLock(localPath, () -> {
+                // the lock is reentrant for the same thread
+                try {
+                    replacement.replace(getOrCheckoutRepositoryDiscardingLocalChanges(repoUri, true));
+                }
+                catch (IOException exception) {
+                    throw new UncheckedIOException(exception);
+                }
+                return null;
+            });
+        }
+        catch (UncheckedIOException exception) {
+            throw exception.getCause();
+        }
+    }
+
+    /**
+     * A change of a working copy that runs while its lock is held.
+     */
+    @FunctionalInterface
+    public interface WorkingCopyReplacement {
+
+        void replace(Repository targetRepository) throws GitAPIException, IOException;
     }
 
     /**

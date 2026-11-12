@@ -16,6 +16,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import org.apache.commons.io.FileUtils;
@@ -389,6 +390,20 @@ public class RepositoryService {
      * @throws IOException if an error occurs while accessing the repository.
      */
     public Map<String, String> getFilesContentFromBareRepositoryForLastCommit(LocalVCRepositoryUri repositoryUri) throws IOException {
+        return getFilesContentFromBareRepositoryForLastCommit(repositoryUri, null);
+    }
+
+    /**
+     * Like {@link #getFilesContentFromBareRepositoryForLastCommit(LocalVCRepositoryUri)}, but only files whose path is accepted by the given filter are read, and only they count
+     * towards the limit of the total size. A file that the caller would discard afterwards (e.g. a data set next to the source files) therefore cannot use up the limit and
+     * leave out files that the caller needs.
+     *
+     * @param repositoryUri the {@link LocalVCRepositoryUri} identifying the repository location.
+     * @param pathFilter    accepts the repository-relative paths of the files to read, or null to read all text files
+     * @return a {@link Map} where keys are file paths and values are file contents as UTF-8 strings.
+     * @throws IOException if an error occurs while accessing the repository.
+     */
+    public Map<String, String> getFilesContentFromBareRepositoryForLastCommit(LocalVCRepositoryUri repositoryUri, @Nullable Predicate<String> pathFilter) throws IOException {
 
         try (Repository bareRepository = bareGitRepositoryService.getBareRepository(repositoryUri, false)) {
             ObjectId headCommitId = bareRepository.resolve("HEAD");
@@ -397,7 +412,7 @@ public class RepositoryService {
                 return Map.of();
             }
             return getFileContentFromBareRepositoryForCommitId(bareRepository, headCommitId, null, BinaryFileFilter.EXTENSION, MAX_SELECTED_FILE_SIZE_BYTES,
-                    MAX_SELECTED_FILES_TOTAL_SIZE_BYTES);
+                    MAX_SELECTED_FILES_TOTAL_SIZE_BYTES, pathFilter);
         }
         catch (GitException exception) {
             log.debug("Bare repository for {} is unavailable, falling back to checked out repository", repositoryUri, exception);
@@ -476,6 +491,15 @@ public class RepositoryService {
      */
     private Map<String, String> getFileContentFromBareRepositoryForCommitId(org.eclipse.jgit.lib.Repository repository, @NonNull ObjectId commitId,
             @Nullable Set<String> selectedFilePaths, BinaryFileFilter binaryFileFilter, long maxFileSizeBytes, long maxTotalSizeBytes) throws IOException {
+        return getFileContentFromBareRepositoryForCommitId(repository, commitId, selectedFilePaths, binaryFileFilter, maxFileSizeBytes, maxTotalSizeBytes, null);
+    }
+
+    /**
+     * Like the method above, with a filter for the paths that are read. A path that the filter rejects is skipped before its size is counted.
+     */
+    private Map<String, String> getFileContentFromBareRepositoryForCommitId(org.eclipse.jgit.lib.Repository repository, @NonNull ObjectId commitId,
+            @Nullable Set<String> selectedFilePaths, BinaryFileFilter binaryFileFilter, long maxFileSizeBytes, long maxTotalSizeBytes, @Nullable Predicate<String> pathFilter)
+            throws IOException {
         Map<String, String> filesWithContent = new HashMap<>();
         long totalSize = 0;
 
@@ -496,7 +520,7 @@ public class RepositoryService {
                     continue;
                 }
                 if (treeWalk.getFileMode(0) == FileMode.SYMLINK || treeWalk.getFileMode(0).getObjectType() != Constants.OBJ_BLOB
-                        || binaryFileFilter == BinaryFileFilter.EXTENSION && isBinaryFile(path)) {
+                        || binaryFileFilter == BinaryFileFilter.EXTENSION && isBinaryFile(path) || pathFilter != null && !pathFilter.test(path)) {
                     continue;
                 }
 

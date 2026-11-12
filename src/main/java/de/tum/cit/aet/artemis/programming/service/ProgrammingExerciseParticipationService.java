@@ -208,38 +208,39 @@ public class ProgrammingExerciseParticipationService {
      * @param sourceUri the repository that should be used as source for all files
      */
     public void resetRepository(LocalVCRepositoryUri targetUri, LocalVCRepositoryUri sourceUri) throws GitAPIException, IOException {
-        // Everything in the target is replaced, so its working copy on the server must not block the reset because of a local modification that conflicts with the remote
-        Repository targetRepo = gitService.getOrCheckoutRepositoryDiscardingLocalChanges(targetUri, true);
         Repository sourceRepo = gitService.getOrCheckoutRepository(sourceUri, true, true);
-
-        // Replace everything but the files corresponding to git (such as the .git folder or the .gitignore file)
-        FilenameFilter filter = (dir, name) -> !dir.isDirectory() || !name.contains(".git");
-        final var targetRepoFiles = Optional.ofNullable(targetRepo.getLocalPath().toFile().listFiles(filter)).orElseGet(() -> new File[0]);
-        for (java.io.File file : targetRepoFiles) {
-            FileSystemUtils.deleteRecursively(file);
-        }
-        final var sourceRepoFiles = Optional.ofNullable(sourceRepo.getLocalPath().toFile().listFiles(filter)).orElseGet(() -> new File[0]);
-        for (java.io.File file : sourceRepoFiles) {
-            if (file.isDirectory()) {
-                FileUtils.copyDirectory(file, targetRepo.getLocalPath().resolve(file.toPath().getFileName()).toFile());
+        // Everything in the target is replaced, so its working copy on the server must not block the reset because of a local modification that conflicts with the remote.
+        // The lock of the target is held until the reset is committed, so that two resets of the same repository cannot interleave.
+        gitService.replaceWorkingCopyContent(targetUri, targetRepo -> {
+            // Replace everything but the files corresponding to git (such as the .git folder or the .gitignore file)
+            FilenameFilter filter = (dir, name) -> !dir.isDirectory() || !name.contains(".git");
+            final var targetRepoFiles = Optional.ofNullable(targetRepo.getLocalPath().toFile().listFiles(filter)).orElseGet(() -> new File[0]);
+            for (java.io.File file : targetRepoFiles) {
+                FileSystemUtils.deleteRecursively(file);
             }
-            else {
-                FileUtils.copyFile(file, targetRepo.getLocalPath().resolve(file.toPath().getFileName()).toFile());
+            final var sourceRepoFiles = Optional.ofNullable(sourceRepo.getLocalPath().toFile().listFiles(filter)).orElseGet(() -> new File[0]);
+            for (java.io.File file : sourceRepoFiles) {
+                if (file.isDirectory()) {
+                    FileUtils.copyDirectory(file, targetRepo.getLocalPath().resolve(file.toPath().getFileName()).toFile());
+                }
+                else {
+                    FileUtils.copyFile(file, targetRepo.getLocalPath().resolve(file.toPath().getFileName()).toFile());
+                }
             }
-        }
-        String login = SecurityUtils.getCurrentUserLogin().orElse(null);
-        User coAuthor = login != null ? userRepository.findOneByLogin(login).orElse(null) : null;
-        String commitMessage = "Reset Exercise";
+            String login = SecurityUtils.getCurrentUserLogin().orElse(null);
+            User coAuthor = login != null ? userRepository.findOneByLogin(login).orElse(null) : null;
+            String commitMessage = "Reset Exercise";
 
-        if (coAuthor != null && coAuthor.getEmail() != null) {
-            String name = coAuthor.getName() != null ? coAuthor.getName() : login;
-            commitMessage += "\n\nCo-authored-by: %s <%s>".formatted(name, coAuthor.getEmail());
-        }
+            if (coAuthor != null && coAuthor.getEmail() != null) {
+                String name = coAuthor.getName() != null ? coAuthor.getName() : login;
+                commitMessage += "\n\nCo-authored-by: %s <%s>".formatted(name, coAuthor.getEmail());
+            }
 
-        gitService.stageAllChanges(targetRepo);
-        gitService.commitAndPush(targetRepo, commitMessage, true, null);
+            gitService.stageAllChanges(targetRepo);
+            gitService.commitAndPush(targetRepo, commitMessage, true, null);
+        });
 
-        log.info("Reset repo by {}", login != null ? login : "unknown");
+        log.info("Reset repo by {}", SecurityUtils.getCurrentUserLogin().orElse("unknown"));
     }
 
     /**

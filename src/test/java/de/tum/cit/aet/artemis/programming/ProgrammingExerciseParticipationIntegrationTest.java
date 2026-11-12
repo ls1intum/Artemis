@@ -2026,7 +2026,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
         commitAndPush(studentRepository, "regression.py", "first version");
         Repository serverWorkingCopy = gitService.getOrCheckoutRepository(participationUri, false, true);
         commitAndPush(studentRepository, "regression.py", "pushed from the IDE of the student");
-        Files.writeString(serverWorkingCopy.getLocalPath().resolve("regression.py"), "unsaved edit of the online editor");
+        FileUtils.writeStringToFile(serverWorkingCopy.getLocalPath().resolve("regression.py").toFile(), "unsaved edit of the online editor", StandardCharsets.UTF_8);
         assertThatThrownBy(() -> gitService.getOrCheckoutRepository(participationUri, true, true)).isInstanceOf(CheckoutConflictException.class);
 
         request.put("/api/programming/programming-exercise-participations/" + participation.getId() + "/reset-repository", null, HttpStatus.OK);
@@ -2036,8 +2036,51 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
         verify(localCITriggerService).triggerBuild(any(ProgrammingExerciseParticipation.class), eq(true));
     }
 
+    /**
+     * Two replacements of the same repository must not interleave: the second one waits until the first one has committed.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void replaceWorkingCopyContent_twoReplacementsOfTheSameRepositoryDoNotOverlap() throws Exception {
+        startProgrammingExerciseWithRepositories();
+        var participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
+        RepositoryExportTestUtil.seedStudentRepositoryForParticipation(localVCLocalCITestService, participation);
+        LocalVCRepositoryUri participationUri = studentParticipationRepository.save(participation).getVcsRepositoryUri();
+        var running = new java.util.concurrent.atomic.AtomicInteger();
+        var maxRunning = new java.util.concurrent.atomic.AtomicInteger();
+        GitService.WorkingCopyReplacement replacement = targetRepository -> {
+            maxRunning.accumulateAndGet(running.incrementAndGet(), Math::max);
+            try {
+                Thread.sleep(300);
+            }
+            catch (InterruptedException exception) {
+                Thread.currentThread().interrupt();
+            }
+            running.decrementAndGet();
+        };
+
+        var executor = java.util.concurrent.Executors.newFixedThreadPool(2);
+        try {
+            var first = executor.submit(() -> {
+                gitService.replaceWorkingCopyContent(participationUri, replacement);
+                return null;
+            });
+            var second = executor.submit(() -> {
+                gitService.replaceWorkingCopyContent(participationUri, replacement);
+                return null;
+            });
+            first.get();
+            second.get();
+        }
+        finally {
+            executor.shutdownNow();
+        }
+
+        assertThat(maxRunning.get()).isEqualTo(1);
+    }
+
     private void commitAndPush(LocalVCTestRepository repository, String fileName, String content) throws Exception {
-        Files.writeString(repository.workingCopyPath().resolve(fileName), content);
+        FileUtils.writeStringToFile(repository.workingCopyPath().resolve(fileName).toFile(), content, StandardCharsets.UTF_8);
         repository.workingCopy().add().addFilepattern(".").call();
         GitService.commit(repository.workingCopy()).setMessage("Update " + fileName).call();
         repository.workingCopy().push().call();

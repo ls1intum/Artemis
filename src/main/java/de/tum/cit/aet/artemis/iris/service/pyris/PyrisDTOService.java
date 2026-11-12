@@ -325,7 +325,8 @@ public class PyrisDTOService {
 
     // Only files of the exercise language are sent, like for every other repository: data sets and resources in a repository are no use as context
     private RepositoryContents getFilteredRepositoryContents(LocalVCRepositoryUri repositoryUri, ProgrammingLanguage language) {
-        var repositoryContents = getRepositoryContents(repositoryUri);
+        // The filter is applied while the repository is read, so that files of other languages do not use up the size limit of the content
+        var repositoryContents = getRepositoryContents(repositoryUri, language);
         if (repositoryContents == null) {
             return RepositoryContents.UNREADABLE;
         }
@@ -337,12 +338,12 @@ public class PyrisDTOService {
     // repository contents: it returns null if repositoryUri is null or if the repository could not be fetched. This is useful, as the
     // Pyris call should not fail if the repository is not available. null rather than an empty map so callers can tell an unreadable
     // repository apart from an empty one.
-    private @Nullable Map<String, String> getRepositoryContents(LocalVCRepositoryUri repositoryUri) {
+    private @Nullable Map<String, String> getRepositoryContents(LocalVCRepositoryUri repositoryUri, @Nullable ProgrammingLanguage language) {
         if (repositoryUri == null) {
             return null;
         }
         try {
-            return repositoryService.getFilesContentFromBareRepositoryForLastCommit(repositoryUri);
+            return repositoryService.getFilesContentFromBareRepositoryForLastCommit(repositoryUri, language == null ? null : language::matchesFileExtension);
         }
         catch (IOException e) {
             log.error("Could not get repository content", e);

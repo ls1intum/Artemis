@@ -91,7 +91,7 @@ class PyrisSubmittedRepositoryTest {
         // the committed contents instead, every file would look changed. Only the repository fetch is mocked, so the
         // merge and the diff below it are the production ones.
         var repositoryService = mock(RepositoryService.class);
-        when(repositoryService.getFilesContentFromBareRepositoryForLastCommit(any(LocalVCRepositoryUri.class))).thenReturn(Map.of("src/Main.java", "COMMITTED"));
+        when(repositoryService.getFilesContentFromBareRepositoryForLastCommit(any(LocalVCRepositoryUri.class), any())).thenReturn(Map.of("src/Main.java", "COMMITTED"));
         var service = new PyrisDTOService(repositoryService, mock(ProgrammingFeedbackSynthesizerService.class), mock(BuildLogEntryService.class),
                 mock(IrisProactiveProperties.class));
 
@@ -114,7 +114,7 @@ class PyrisSubmittedRepositoryTest {
     void testsRepository_isFilteredByLanguageLikeTheOtherRepositories() throws IOException {
         // A tests repository can hold large data sets next to the tests. Only the files of the exercise language are context for Iris.
         var repositoryService = mock(RepositoryService.class);
-        when(repositoryService.getFilesContentFromBareRepositoryForLastCommit(any(LocalVCRepositoryUri.class)))
+        when(repositoryService.getFilesContentFromBareRepositoryForLastCommit(any(LocalVCRepositoryUri.class), any()))
                 .thenReturn(Map.of("src/test/MainTest.java", "TEST", "data/scenario.xml", "HUGE"));
         var service = new PyrisDTOService(repositoryService, mock(ProgrammingFeedbackSynthesizerService.class), mock(BuildLogEntryService.class),
                 mock(IrisProactiveProperties.class));

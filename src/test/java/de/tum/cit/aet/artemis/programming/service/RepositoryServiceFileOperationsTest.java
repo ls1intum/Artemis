@@ -314,6 +314,25 @@ class RepositoryServiceFileOperationsTest {
     }
 
     @Test
+    void repositoryContentWithPathFilterDoesNotCountFilesThatTheFilterRejects() throws Exception {
+        // The files of another language come first in the traversal and would use up the total limit, if they were counted before they are filtered.
+        for (int i = 0; i < 8; i++) {
+            FileUtils.writeStringToFile(workingTree.resolve("a-data" + i + ".txt").toFile(), "y".repeat(900_000), StandardCharsets.UTF_8);
+        }
+        FileUtils.writeStringToFile(workingTree.resolve("z-Main.java").toFile(), "//".repeat(400_000), StandardCharsets.UTF_8);
+        var git = org.eclipse.jgit.api.Git.wrap(repository);
+        git.add().addFilepattern(".").call();
+        GitService.commit(git).setMessage("Commit data and source").setAuthor("Fixture", "fixture@example.com").call();
+        var uri = new LocalVCRepositoryUri(URI.create("https://artemis.example.com"), "ABC", "abc-exercise");
+        var bare = org.mockito.Mockito.mock(BareGitRepositoryService.class);
+        org.mockito.Mockito.when(bare.getBareRepository(uri, false)).thenAnswer(invocation -> new Repository(workingTree.resolve(".git").toString(), uri));
+        var limited = new RepositoryService(org.mockito.Mockito.mock(GitService.class), bare, Optional.empty());
+
+        assertThat(limited.getFilesContentFromBareRepositoryForLastCommit(uri)).doesNotContainKey("z-Main.java");
+        assertThat(limited.getFilesContentFromBareRepositoryForLastCommit(uri, path -> path.endsWith(".java"))).containsOnlyKeys("z-Main.java");
+    }
+
+    @Test
     void unavailableBareRepositoryFallsBackToCheckoutAndReportsCheckoutFailure() throws Exception {
         FileUtils.writeStringToFile((workingTree.resolve("cached.txt")).toFile(), "cached committed contents", StandardCharsets.UTF_8);
         var git = org.eclipse.jgit.api.Git.wrap(repository);
