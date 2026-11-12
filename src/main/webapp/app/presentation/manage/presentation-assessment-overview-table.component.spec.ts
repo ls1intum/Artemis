@@ -56,12 +56,12 @@ describe('PresentationAssessmentOverviewTableComponent', () => {
         component = fixture.componentInstance;
     });
 
-    it('should render one row per student and presentation and a message when there are none', () => {
+    it('should render one row per student and presentation and no rows when there are none', () => {
         render([createRow(), exerciseRow()]);
         expect(bodyRows()).toHaveLength(2);
 
         render([]);
-        expect(query('tbody td[colspan="7"]')?.getAttribute('jhiTranslate')).toBe('artemisApp.presentationAssessment.noMatchingStudents');
+        expect(bodyRows()).toHaveLength(0);
     });
 
     it('should show the result points against the maximum of the row presentation', () => {

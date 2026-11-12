@@ -1,3 +1,4 @@
+import { By } from '@angular/platform-browser';
 import { Component, input, output } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
@@ -362,6 +363,16 @@ describe('ExerciseActionsComponent', () => {
 
             expect(component.mainActions().find((a) => a.id === 'delete')?.disabled).toBeUndefined();
             expect(component.mainActions().find((a) => a.id === 'edit')?.disabled).toBeUndefined();
+        });
+    });
+
+    describe('inline actions', () => {
+        it('keeps edit in editor visible and leaves delete to the overflow menu', () => {
+            fixture.detectChanges();
+            const bar = fixture.debugElement.query(By.directive(ExerciseActionBarStubComponent)).componentInstance as ExerciseActionBarStubComponent;
+
+            expect(bar.inlineIds()).toEqual(['edit-in-editor', 'edit', 'participations']);
+            expect(bar.inlineIds()).not.toContain('delete');
         });
     });
 

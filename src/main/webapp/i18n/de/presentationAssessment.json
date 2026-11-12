@@ -89,7 +89,6 @@
             "type": "Typ",
             "typeStandalone": "Eigenständig",
             "typeExercise": "Aufgabe",
-            "rows": "Zeilen",
             "statistics": {
                 "total": "Gesamt"
             },
@@ -194,7 +193,9 @@
                     "weightRange": "Bitte gib eine ganze Zahl von 1 bis {{ max }} ein.",
                     "levelDescriptionTooLong": "Eine Stufenbeschreibung ist länger als {{ max }} Zeichen. Öffne die Skala, um sie zu kürzen."
                 }
-            }
+            },
+            "noPresenters": "Noch keine Präsentierenden vorhanden",
+            "noPresentersDescription": "Suche oben nach Studierenden, um die ersten Präsentierenden hinzuzufügen."
         }
     }
 }

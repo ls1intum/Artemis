@@ -89,7 +89,6 @@
             "type": "Type",
             "typeStandalone": "Standalone",
             "typeExercise": "Exercise",
-            "rows": "rows",
             "statistics": {
                 "total": "Total"
             },
@@ -194,7 +193,9 @@
                     "weightRange": "Please enter a whole number from 1 to {{ max }}.",
                     "levelDescriptionTooLong": "A level description exceeds {{ max }} characters. Open the scale to shorten it."
                 }
-            }
+            },
+            "noPresenters": "No presenters yet",
+            "noPresentersDescription": "Search for a student above to add the first presenter."
         }
     }
 }
