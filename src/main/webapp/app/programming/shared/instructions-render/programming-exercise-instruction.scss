@@ -16,7 +16,7 @@ Instructions wrapper styles
 
         &__markdown {
             width: 100%;
-            max-width: 75ch;
+            max-width: 90ch; // keep in sync with .stepwizard-container
             min-width: 0;
             margin-inline: auto;
             height: inherit;

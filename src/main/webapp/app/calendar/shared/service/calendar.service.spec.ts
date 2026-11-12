@@ -335,6 +335,41 @@ describe('CalendarService - authentication state changes', () => {
         expect(scoped.subscriptionToken()).toBe(testToken);
     });
 
+    it('should ignore a slow response of a previously requested course after switching courses', async () => {
+        const slowResponse = new Subject<Record<string, unknown[]>>();
+        const fastResponse = of({ '2025-10-01': [{ type: 'LECTURE', title: 'Current course lecture', startDate: '2025-10-01T08:00:00Z' }] });
+        calendarApiService.getCalendarEventsOverlappingMonths.mockReturnValueOnce(slowResponse).mockReturnValueOnce(fastResponse);
+
+        const previousCourseLoad = firstValueFrom(scoped.loadEventsForCurrentMonth(1, date));
+        await firstValueFrom(scoped.loadEventsForCurrentMonth(2, date));
+        expect(scoped.eventMap().get('2025-10-01')?.[0].title).toBe('Current course lecture');
+
+        slowResponse.next({ '2025-10-01': [{ type: 'LECTURE', title: 'Previous course lecture', startDate: '2025-10-01T08:00:00Z' }] });
+        slowResponse.complete();
+        await previousCourseLoad;
+
+        expect(
+            scoped
+                .eventMap()
+                .get('2025-10-01')
+                ?.map((event) => event.title),
+        ).toEqual(['Current course lecture']);
+    });
+
+    it('should neither alert nor fail when an outdated request errors after switching courses', async () => {
+        const alertSpy = vi.spyOn(TestBed.inject(AlertService), 'addErrorAlert');
+        const slowResponse = new Subject<Record<string, unknown[]>>();
+        calendarApiService.getCalendarEventsOverlappingMonths.mockReturnValueOnce(slowResponse).mockReturnValueOnce(of({}));
+
+        const errors: unknown[] = [];
+        scoped.loadEventsForCurrentMonth(1, date).subscribe({ error: (error) => errors.push(error) });
+        await firstValueFrom(scoped.loadEventsForCurrentMonth(2, date));
+        slowResponse.error(new Error('previous course failed'));
+
+        expect(alertSpy).not.toHaveBeenCalled();
+        expect(errors).toEqual([]);
+    });
+
     it('should ignore in-flight HTTP responses after reset', async () => {
         const response = new Subject<Record<string, never[]>>();
         calendarApiService.getCalendarEventsOverlappingMonths.mockReturnValue(response);
