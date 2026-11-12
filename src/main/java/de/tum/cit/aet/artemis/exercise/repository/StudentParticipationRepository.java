@@ -419,17 +419,17 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                 JOIN p.student u
                 JOIN p.exercise ex
                 JOIN p.submissions s
-                LEFT JOIN s.results r
+                LEFT JOIN s.results r ON (r.assessmentType IS NULL OR r.assessmentType <> de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC_ATHENA
+                    OR (TYPE(ex) <> ProgrammingExercise AND r.successful = TRUE))
             WHERE ex.exerciseGroup.exam.id = :examId
                 AND p.testRun = TRUE
                 AND p.student.id = :studentId
-                AND (r.assessmentType IS NULL OR r.assessmentType <> de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC_ATHENA OR (TYPE(r.submission.participation.exercise) <> ProgrammingExercise AND r.successful = TRUE))
                 AND s.submissionDate IS NOT NULL
                 AND s.submissionDate = (SELECT MAX(s2.submissionDate) FROM Submission s2 WHERE s2.participation = p)
                 AND NOT EXISTS (
                     SELECT 1 FROM Result newer
                     WHERE newer.submission = s
-                        AND (newer.assessmentType IS NULL OR newer.assessmentType <> de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC_ATHENA OR (TYPE(newer.submission.participation.exercise) <> ProgrammingExercise AND newer.successful = TRUE))
+                        AND (newer.assessmentType IS NULL OR newer.assessmentType <> de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC_ATHENA OR (TYPE(ex) <> ProgrammingExercise AND newer.successful = TRUE))
                         AND (
                             (r.completionDate IS NULL AND newer.completionDate IS NOT NULL)
                             OR newer.completionDate > r.completionDate
@@ -1257,12 +1257,16 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
             FROM StudentParticipation p
                 LEFT JOIN FETCH p.submissions s
                 LEFT JOIN FETCH s.results r
-                LEFT JOIN FETCH p.exercise
+                LEFT JOIN FETCH p.exercise ex
             WHERE p.student.id = :studentId
                 AND p.exercise IN :exercises
                 AND (p.testRun = FALSE OR :includeTestRuns = TRUE)
                 AND (s.submissionDate IS NULL OR s.submissionDate = (SELECT MAX(s2.submissionDate) FROM Submission s2 WHERE s2.participation = p))
-                AND (r.completionDate IS NULL OR r.completionDate = (SELECT MAX(r2.completionDate) FROM Result r2 WHERE r2.submission = s))
+                AND (r.completionDate IS NULL OR r.completionDate = COALESCE((
+                    SELECT MAX(r2.completionDate) FROM Result r2 WHERE r2.submission = s
+                        AND (r2.assessmentType IS NULL OR r2.assessmentType <> de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC_ATHENA
+                            OR (TYPE(ex) <> ProgrammingExercise AND r2.successful = TRUE))
+                ), r.completionDate))
             """)
     Set<StudentParticipation> findByStudentIdAndIndividualExercisesWithLatestSubmissionLatestResult(@Param("studentId") long studentId,
             @Param("exercises") Collection<Exercise> exercises, @Param("includeTestRuns") boolean includeTestRuns);
@@ -1483,13 +1487,17 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
             FROM StudentParticipation p
                 LEFT JOIN FETCH p.submissions s
                 LEFT JOIN FETCH s.results r
-                LEFT JOIN FETCH p.exercise
+                LEFT JOIN FETCH p.exercise ex
                 LEFT JOIN FETCH p.team t
                 LEFT JOIN FETCH t.students teamStudent
             WHERE teamStudent.id = :studentId
                 AND p.exercise IN :exercises
                 AND (s.submissionDate IS NULL OR s.submissionDate = (SELECT MAX(s2.submissionDate) FROM Submission s2 WHERE s2.participation = p))
-                AND (r.completionDate IS NULL OR r.completionDate = (SELECT MAX(r2.completionDate) FROM Result r2 WHERE r2.submission = s))
+                AND (r.completionDate IS NULL OR r.completionDate = COALESCE((
+                    SELECT MAX(r2.completionDate) FROM Result r2 WHERE r2.submission = s
+                        AND (r2.assessmentType IS NULL OR r2.assessmentType <> de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC_ATHENA
+                            OR (TYPE(ex) <> ProgrammingExercise AND r2.successful = TRUE))
+                ), r.completionDate))
             """)
     Set<StudentParticipation> findByStudentIdAndTeamExercisesWithLatestSubmissionsLatestResult(@Param("studentId") long studentId,
             @Param("exercises") Collection<Exercise> exercises);
