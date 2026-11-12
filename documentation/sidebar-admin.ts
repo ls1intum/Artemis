@@ -19,6 +19,7 @@ const sidebars: SidebarsConfig = {
             items: [
                 'production-setup/security',
                 'production-setup/network-model',
+                'production-setup/hardening-checklist',
                 'production-setup/integrated-code-lifecycle-setup',
                 'production-setup/build-runners',
                 'production-setup/localci-build-environment',
@@ -37,6 +38,7 @@ const sidebars: SidebarsConfig = {
         'adaptive-learning',
         'user-registration',
         'user-deletion',
+        'science-data-collection',
         'user-email-uniqueness',
         'email-delivery',
         'jenkins-localvc',
