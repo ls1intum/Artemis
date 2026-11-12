@@ -379,6 +379,10 @@ public class RepositoryService {
      * Retrieves the contents of text-based files from the latest commit in a bare repository identified by its URI.
      * If the bare repository is unavailable, falls back to retrieving files from the checked-out repository.
      * Binary files, as defined by {@link BinaryFileExtensionConfiguration}, are excluded.
+     * <p>
+     * The result is meant as context for language models, so a file larger than {@link #MAX_SELECTED_FILE_SIZE_BYTES} is skipped and the files together
+     * stay within {@link #MAX_SELECTED_FILES_TOTAL_SIZE_BYTES}. Without these limits a repository that holds a huge text file (a data set or a log, for example) produces
+     * a request of hundreds of megabytes that Pyris rejects.
      *
      * @param repositoryUri the {@link LocalVCRepositoryUri} identifying the repository location.
      * @return a {@link Map} where keys are file paths and values are file contents as UTF-8 strings.
@@ -387,7 +391,13 @@ public class RepositoryService {
     public Map<String, String> getFilesContentFromBareRepositoryForLastCommit(LocalVCRepositoryUri repositoryUri) throws IOException {
 
         try (Repository bareRepository = bareGitRepositoryService.getBareRepository(repositoryUri, false)) {
-            return getFilesContentFromBareRepositoryForLastCommit(bareRepository);
+            ObjectId headCommitId = bareRepository.resolve("HEAD");
+            if (headCommitId == null) {
+                log.warn("Cannot resolve HEAD. The repository might be empty.");
+                return Map.of();
+            }
+            return getFileContentFromBareRepositoryForCommitId(bareRepository, headCommitId, null, BinaryFileFilter.EXTENSION, MAX_SELECTED_FILE_SIZE_BYTES,
+                    MAX_SELECTED_FILES_TOTAL_SIZE_BYTES);
         }
         catch (GitException exception) {
             log.debug("Bare repository for {} is unavailable, falling back to checked out repository", repositoryUri, exception);

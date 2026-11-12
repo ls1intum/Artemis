@@ -292,6 +292,28 @@ class RepositoryServiceFileOperationsTest {
     }
 
     @Test
+    void repositoryContentForLanguageModelsSkipsHugeFilesAndStaysWithinTheTotalLimit() throws Exception {
+        FileUtils.writeStringToFile(workingTree.resolve("small.txt").toFile(), "small", StandardCharsets.UTF_8);
+        FileUtils.writeStringToFile(workingTree.resolve("huge.txt").toFile(), "x".repeat((int) RepositoryService.MAX_SELECTED_FILE_SIZE_BYTES + 1), StandardCharsets.UTF_8);
+        for (int i = 0; i < 8; i++) {
+            FileUtils.writeStringToFile(workingTree.resolve("medium" + i + ".txt").toFile(), "y".repeat(900_000), StandardCharsets.UTF_8);
+        }
+        var git = org.eclipse.jgit.api.Git.wrap(repository);
+        git.add().addFilepattern(".").call();
+        GitService.commit(git).setMessage("Commit large files").setAuthor("Fixture", "fixture@example.com").call();
+        var uri = new LocalVCRepositoryUri(URI.create("https://artemis.example.com"), "ABC", "abc-exercise");
+        var bare = org.mockito.Mockito.mock(BareGitRepositoryService.class);
+        org.mockito.Mockito.when(bare.getBareRepository(uri, false)).thenAnswer(invocation -> new Repository(workingTree.resolve(".git").toString(), uri));
+        var limited = new RepositoryService(org.mockito.Mockito.mock(GitService.class), bare, Optional.empty());
+
+        var contents = limited.getFilesContentFromBareRepositoryForLastCommit(uri);
+
+        assertThat(contents).doesNotContainKey("huge.txt");
+        assertThat(contents.values().stream().mapToLong(String::length).sum()).isLessThanOrEqualTo(RepositoryService.MAX_SELECTED_FILES_TOTAL_SIZE_BYTES);
+        assertThat(contents).containsKey("small.txt").hasSizeLessThan(9);
+    }
+
+    @Test
     void unavailableBareRepositoryFallsBackToCheckoutAndReportsCheckoutFailure() throws Exception {
         FileUtils.writeStringToFile((workingTree.resolve("cached.txt")).toFile(), "cached committed contents", StandardCharsets.UTF_8);
         var git = org.eclipse.jgit.api.Git.wrap(repository);
