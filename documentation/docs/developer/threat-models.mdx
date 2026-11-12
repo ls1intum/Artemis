@@ -1,0 +1,59 @@
+---
+id: threat-models
+title: Threat Models per Module
+sidebar_label: Threat Models
+last_reviewed: 2026-11-10
+---
+
+The [security assurance case](/developer/security-assurance) states the threat model of the whole system. This page narrows it down to the modules where the stakes are highest: communication,
+programming exercises, and exams with assessment. For each module it names the assets, the entry points, the main threats and the controls that answer them. Use it when you design a change or review
+one, together with the [security guideline](/developer/guidelines/security).
+
+All three share the same assumptions. A caller can send any HTTP or websocket message, can guess identifiers and can hold a role in a different course. The institution controls the host, the reverse proxy,
+the database and the build infrastructure.
+
+## Communication
+
+**Assets.** Messages, direct and group conversations, channel membership, reactions, saved posts, notifications and the unread state of every user.
+
+| Entry point                            | Main threats                                                                                     | Controls                                                                                                           |
+| -------------------------------------- | ------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------ |
+| REST endpoints for posts and chats     | Reading or changing a conversation of another course; adding a person who is not in the course | Course role annotations, membership checks of the conversation, members must belong to the course of the request |
+| Websocket topics for live updates      | Subscribing to the topic of another user or course                                               | Declared topics with access rules, checks of the sender in message handlers                                       |
+| Saved posts, reactions, forwarding     | Reaching a posting through its id without access to its conversation                             | The posting is resolved through the conversation and checked against the course of the request                    |
+| Plagiarism case discussions            | Answers by roles that are not part of the case                                                   | Only Instructors and the affected student may answer, and the case must belong to the course in the path          |
+
+**Evidence.** Integration tests of the channel, group chat, one-to-one chat, reaction, saved post and plagiarism answer endpoints each include a refused request. `WebsocketTopicAuthorizationTest` covers the topics.
+
+## Programming exercises
+
+**Assets.** Template, solution, test and student repositories, access tokens, build jobs and their logs, the build agents and the network they run in.
+
+| Entry point                              | Main threats                                                                                        | Controls                                                                                                                         |
+| ---------------------------------------- | --------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| Git over HTTP and SSH                    | Guessing passwords or tokens; reading or writing a repository without the right to do so            | Rate limiting per client address, account state checked before any credential, repository access checks that refuse when unsure |
+| Repository editor and reset endpoints    | Changing the test or auxiliary repositories as a student; resetting a repository without the right | The central repository access check decides, with the action as input, and fails closed                                         |
+| Build job queue                          | An item with manipulated ids or paths                                                               | The ids and paths of queue items are validated before a job runs                                                                 |
+| Student code in the build container      | Reaching the host, other containers or internal services                                            | Containers on a network without the namespace of the host or another container, the operator's firewall and runtime settings    |
+| Exercise sharing and import              | Importing material into a course that the caller does not teach                                     | The target course and the role are checked on the server                                                                         |
+
+**Evidence.** `LocalVCIntegrationTest` and the access service tests cover allowed and refused requests, `DockerRunConfigTest` and the container defaults tests cover the network settings, and the build agent
+tests cover the queue item validation. The [hardening checklist](/admin/production-setup/hardening-checklist) lists what the operator must provide.
+
+## Exams, quizzes and assessment
+
+**Assets.** Exam questions and solutions, submissions, results and grades, the time of an exam and the release state of feedback.
+
+| Entry point                          | Main threats                                                                                  | Controls                                                                                                       |
+| ------------------------------------ | --------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| Start of an exam or participation    | Starting outside the allowed time or without being registered                                 | The server checks the registration and the time window before it creates a participation                       |
+| Quiz questions and submissions       | Reading solutions before they are released; submitting through an endpoint of another mode    | Questions are sent without solutions where the mode requires it, and each submission path checks its own mode |
+| Assessment and feedback release      | Seeing results or long feedback before they are released; holding back an assessment wrongly  | Release rules are checked on the server for every read, and the assessment endpoints require the staff role   |
+| Teams                                | Adding people from another course to a team                                                    | Members and owners must belong to the course of the exercise                                                   |
+
+**Evidence.** Integration tests of the participation, quiz submission, long feedback, result and team endpoints include refused requests.
+
+## Keeping this page current
+
+When a change adds an entry point, a role or a data flow to one of these modules, update the matching table in the same pull request. When an audit finds a gap, the fix adds the missing control here
+and the test that proves it.
