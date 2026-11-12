@@ -933,6 +933,32 @@ class ExerciseIntegrityGateTest {
         assertThat(ExerciseIntegrityGate.sourceReadingTestReasons(map("test/ParserTest.java", aliasRead))).isEmpty();
     }
 
+    @ParameterizedTest
+    @ValueSource(strings = { "String input = \"Parser.java\";", "var input = \"Parser.java\";", "String text = \"Parser.java\"; var input = text;",
+            "String input = java.nio.file.Path.of(\"Parser.java\").toString();", "var input = java.nio.file.Path.of(\"Parser.java\") + \"\";",
+            "var path = java.nio.file.Path.of(\"Parser.java\"); var input = path.toString();", "var input = new java.io.File(\"Parser.java\").getName();",
+            "var file = new java.io.File(\"Parser.java\"); var input = file.getName();" })
+    void sourceReadingTestsAcceptSourceLookingTextInScanners(String setup) {
+        String source = "class T { @Test void scans() { " + setup + " assertEquals(\"Parser.java\", new java.util.Scanner(input).next()); } }";
+        assertThat(ExerciseIntegrityGate.sourceReadingTestReasons(map("test/T.java", source))).isEmpty();
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "var input = java.nio.file.Path.of(\"Parser.java\");", "var input = new java.io.File(\"Parser.java\");",
+            "var path = java.nio.file.Path.of(\"Parser.java\"); var input = path;", "var input = java.nio.file.Path.of(\"Parser.java\").toFile();" })
+    void sourceReadingTestsStillRejectScannersOverFilesAndPaths(String setup) {
+        String source = "class T { @Test void scans() throws Exception { " + setup + " new java.util.Scanner(input); } }";
+        assertThat(ExerciseIntegrityGate.sourceReadingTestReasons(map("test/T.java", source))).singleElement().asString().contains("Parser.java");
+    }
+
+    @Test
+    @Timeout(value = 10, threadMode = Timeout.ThreadMode.SEPARATE_THREAD)
+    void sourceReadingTestsHandleLongArrayParametersWithoutStackOverflow() {
+        String source = "class T { String fileName = \"Parser.java\"; void check(String" + "[]".repeat(10_000)
+                + " fileName) throws Exception { Files.readString(Path.of(fileName[0])); } }";
+        assertThat(ExerciseIntegrityGate.sourceReadingTestReasons(map("test/T.java", source))).isEmpty();
+    }
+
     @Test
     void sourceReadingTests_traceAPathVariablePassedToAScanner() {
         String sourceRead = """

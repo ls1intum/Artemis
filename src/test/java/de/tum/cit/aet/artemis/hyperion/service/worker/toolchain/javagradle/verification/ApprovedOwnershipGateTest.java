@@ -352,6 +352,18 @@ class ApprovedOwnershipGateTest {
     }
 
     @Test
+    @Timeout(value = 10, threadMode = Timeout.ThreadMode.SEPARATE_THREAD)
+    void givenDependenciesHandleLongArrayAndGenericTypesWithoutStackOverflow() {
+        var rows = StageChecks.designTableRows("## Design\n| Type | Role | Template status |\n|---|---|---|\n| Demo | supplied | given |\n");
+        String arrays = "class Demo { Player" + "[] ".repeat(10_000) + " values; }";
+        String generic = "class Demo { static <Other extends Comparable<" + "Other ".repeat(10_000) + ">> Player value() { return null; } }";
+        for (String source : List.of(arrays, generic)) {
+            assertThat(ApprovedOwnershipGate.givenTypeStudentCreatedDependencies(rows, List.of("Player"), Map.of(),
+                    map("src/Demo.java", source, "src/Player.java", "class Player {}"))).containsExactly("Demo->Player");
+        }
+    }
+
+    @Test
     void givenDependencies_ignoreATypeParameterThatShadowsTheStudentType() {
         String spec = "## Design\n| Type | Role | Template status |\n|---|---|---|\n| Demo | entry point | given |\n| Player | context | student-creates |\n";
         List<StageChecks.DesignRow> rows = StageChecks.designTableRows(spec);

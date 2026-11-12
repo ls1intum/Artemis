@@ -337,7 +337,7 @@ public final class ApprovedOwnershipGate {
         while (name.find()) {
             String before = source.substring(0, name.start()).stripTrailing();
             String after = source.substring(name.end());
-            if (TYPE_USE_PREFIX.matcher(before).find() || TYPE_USE_SUFFIX.matcher(after).find() || TYPE_ARGUMENT_PREFIX.matcher(before).find()
+            if (TYPE_USE_PREFIX.matcher(before).find() || hasTypeUseSuffix(after) || TYPE_ARGUMENT_PREFIX.matcher(before).find()
                     || before.endsWith("(") && CAST_SUFFIX.matcher(after).find()) {
                 return true;
             }
@@ -347,18 +347,35 @@ public final class ApprovedOwnershipGate {
 
     private static final Pattern TYPE_USE_PREFIX = Pattern.compile("(?:\\b(?:new|instanceof|extends|implements|throws|import)|@)\\s*$");
 
-    private static final Pattern TYPE_USE_SUFFIX = Pattern.compile("^(?:\\s*(?:\\[\\s*]\\s*)*\\s+[A-Za-z_$][\\w$]*\\s*(?:[=;,(){}\\[]|$)|\\s*\\.\\s*class\\b|\\s*::\\s*new\\b)");
+    private static final Pattern ARRAY_DIMENSION = Pattern.compile("^\\[\\s*+\\]\\s*+");
+
+    private static final Pattern VARIABLE_AFTER_TYPE = Pattern.compile("^[A-Za-z_$][\\w$]*+\\s*+(?:[=;,(){}\\[]|$)");
+
+    private static final Pattern TYPE_LITERAL_SUFFIX = Pattern.compile("^(?:\\.\\s*+class\\b|::\\s*+new\\b)");
+
+    private static boolean hasTypeUseSuffix(String after) {
+        String suffix = after.stripLeading();
+        boolean separated = suffix.length() < after.length();
+        Matcher dimension = ARRAY_DIMENSION.matcher(suffix);
+        int offset = 0;
+        while (dimension.region(offset, suffix.length()).lookingAt()) {
+            separated = true;
+            offset = dimension.end();
+        }
+        String remainder = suffix.substring(offset);
+        return separated && VARIABLE_AFTER_TYPE.matcher(remainder).find() || TYPE_LITERAL_SUFFIX.matcher(remainder).find();
+    }
 
     private static final Pattern TYPE_ARGUMENT_PREFIX = Pattern.compile("[A-Za-z_$][\\w$.]*\\s*<(?:[^;{}()=<>]*,)?\\s*$");
 
-    private static final Pattern CAST_SUFFIX = Pattern.compile("^\\s*\\)\\s*(?:[A-Za-z_$]|\\()");
+    private static final Pattern CAST_SUFFIX = Pattern.compile("^\\s*\\)\\s*[A-Za-z_$(]");
 
     /**
      * A type-parameter list: after a member modifier, a separator or an annotation for a generic method or constructor, or after the name of a generic type. A type-argument
      * list such as {@code List<Player>} follows a type name without {@code class}, so it does not match.
      */
     private static final Pattern TYPE_PARAMETER_LIST = Pattern.compile("(?:\\b(?:public|protected|private|static|final|abstract|synchronized|native|default|strictfp)|[;{}]|"
-            + "\\b(?:class|interface|record)\\s+[A-Za-z_$][\\w$]*)\\s*<((?:[^<>]|<[^<>]*>)*)>");
+            + "\\b(?:class|interface|record)\\s+[A-Za-z_$][\\w$]*)\\s*<((?:[^<>]++|<[^<>]*+>)*+)>");
 
     /** The source with every scope in which {@code simpleName} names a type parameter blanked, so a generic {@code <Player> Player identity(Player p)} is not a reference. */
     private static String withoutTypeParameterScopes(String maskedSource, String simpleName) {
@@ -370,8 +387,12 @@ public final class ApprovedOwnershipGate {
             }
             int open = maskedSource.indexOf('{', list.end());
             int terminator = maskedSource.indexOf(';', list.end());
-            int end = open >= 0 && (terminator < 0 || open < terminator) ? matchingBrace(maskedSource, open) : terminator;
-            for (int index = list.start(); index < (end < 0 ? maskedSource.length() : end + 1); index++) {
+            int end = terminator;
+            if (open >= 0 && (terminator < 0 || open < terminator)) {
+                end = matchingBrace(maskedSource, open);
+            }
+            int scopeEnd = end < 0 ? maskedSource.length() : end + 1;
+            for (int index = list.start(); index < scopeEnd; index++) {
                 visible.setCharAt(index, ' ');
             }
         }
