@@ -131,24 +131,24 @@ export interface ExampleSubmissionQueryParams {
     ],
 })
 export class ExerciseAssessmentDashboardComponent implements OnInit, OnDestroy {
-    complaintService = inject(ComplaintService);
-    private exerciseService = inject(ExerciseService);
-    private alertService = inject(AlertService);
-    private translateService = inject(TranslateService);
-    private accountService = inject(AccountService);
-    private route = inject(ActivatedRoute);
-    private tutorParticipationService = inject(TutorParticipationService);
-    private submissionService = inject(SubmissionService);
-    private textSubmissionService = inject(TextSubmissionService);
-    private modelingSubmissionService = inject(ModelingSubmissionService);
-    private fileUploadSubmissionService = inject(FileUploadSubmissionService);
-    private artemisMarkdown = inject(ArtemisMarkdownService);
-    private router = inject(Router);
-    private programmingSubmissionService = inject(ProgrammingSubmissionService);
-    private sortService = inject(SortService);
-    private datePipe = inject(ArtemisDatePipe);
-    private destroyRef = inject(DestroyRef);
-    private teamService = inject(TeamService);
+    readonly complaintService = inject(ComplaintService);
+    private readonly exerciseService = inject(ExerciseService);
+    private readonly alertService = inject(AlertService);
+    private readonly translateService = inject(TranslateService);
+    private readonly accountService = inject(AccountService);
+    private readonly route = inject(ActivatedRoute);
+    private readonly tutorParticipationService = inject(TutorParticipationService);
+    private readonly submissionService = inject(SubmissionService);
+    private readonly textSubmissionService = inject(TextSubmissionService);
+    private readonly modelingSubmissionService = inject(ModelingSubmissionService);
+    private readonly fileUploadSubmissionService = inject(FileUploadSubmissionService);
+    private readonly artemisMarkdown = inject(ArtemisMarkdownService);
+    private readonly router = inject(Router);
+    private readonly programmingSubmissionService = inject(ProgrammingSubmissionService);
+    private readonly sortService = inject(SortService);
+    private readonly datePipe = inject(ArtemisDatePipe);
+    private readonly destroyRef = inject(DestroyRef);
+    private readonly teamService = inject(TeamService);
 
     readonly roundScoreSpecifiedByCourseSettings = roundValueSpecifiedByCourseSettings;
     readonly getCourseFromExercise = getCourseFromExercise;

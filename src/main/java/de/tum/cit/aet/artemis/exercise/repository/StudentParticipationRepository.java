@@ -2426,9 +2426,9 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                 AND s.submitted = TRUE
                 AND s.id = (
                     SELECT MAX(s3.id) FROM p.submissions s3
-                    WHERE programming.id IS NULL
-                        OR EXISTS (SELECT undated.id FROM p.submissions undated WHERE undated.submissionDate IS NULL)
-                        OR s3.submissionDate = (SELECT MAX(dated.submissionDate) FROM p.submissions dated)
+                    WHERE s3.submitted = TRUE AND (programming.id IS NULL
+                        OR EXISTS (SELECT undated.id FROM p.submissions undated WHERE undated.submitted = TRUE AND undated.submissionDate IS NULL)
+                        OR s3.submissionDate = (SELECT MAX(dated.submissionDate) FROM p.submissions dated WHERE dated.submitted = TRUE))
                 )
             """)
     List<AssessmentQueueSubmissionDTO> findCourseTeamQueueCandidates(@Param("exerciseId") long exerciseId, @Param("now") ZonedDateTime now, @Param("teamOwnerId") Long teamOwnerId);

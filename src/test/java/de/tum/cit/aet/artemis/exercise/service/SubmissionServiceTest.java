@@ -660,6 +660,33 @@ class SubmissionServiceTest extends AbstractSpringIntegrationIndependentBatchTes
         assertThat(resaved.getAssessor()).isEqualTo(transfer ? tutor2 : tutor1);
     }
 
+    /** Unsubmitted versions cannot hide or change the selected submitted version. */
+    @ParameterizedTest
+    @EnumSource(value = ExerciseType.class, names = { "TEXT", "MODELING", "FILE_UPLOAD", "PROGRAMMING" })
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void teamQueueIgnoresNewerUnsubmittedVersions(ExerciseType type) throws Exception {
+        var exercise = teamExercise(type);
+        var submitted = teamSubmission(exercise, tutor1, "own");
+        Submission draft = switch (type) {
+            case TEXT -> new TextSubmission();
+            case MODELING -> new ModelingSubmission();
+            case FILE_UPLOAD -> new FileUploadSubmission();
+            case PROGRAMMING -> new ProgrammingSubmission();
+            default -> throw new IllegalArgumentException();
+        };
+        draft = participationUtilService.addSubmission((StudentParticipation) submitted.getParticipation(), draft);
+        draft.setSubmitted(false);
+        var url = "/api/exercise/exercises/" + exercise.getId() + "/assessment-queue-teams";
+        for (var date : List.of(submitted.getSubmissionDate().plusHours(1), submitted.getSubmissionDate().minusHours(1))) {
+            draft.setSubmissionDate(date);
+            submissionRepository.save(draft);
+            assertThat(request.getList(url, HttpStatus.OK, AssessmentQueueTeamDTO.class)).extracting(entry -> entry.submission().id()).containsExactly(submitted.getId());
+        }
+        draft.setSubmissionDate(null);
+        submissionRepository.save(draft);
+        assertThat(request.getList(url, HttpStatus.OK, AssessmentQueueTeamDTO.class)).extracting(entry -> entry.submission().id()).containsExactly(submitted.getId());
+    }
+
     /** Programming queue candidates use dates, except that legacy null dates retain ID ordering. */
     @ParameterizedTest
     @org.junit.jupiter.params.provider.CsvSource({ "false,false", "true,false", "false,true" })

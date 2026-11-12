@@ -428,7 +428,7 @@ public class ProgrammingSubmissionResource {
 
         authCheckService.checkTeamAssessmentAccessElseThrow(programmingSubmission);
 
-        programmingSubmission = lockSubmissionIfNeeded(programmingSubmission, participation, programmingExercise, submissionId, correctionRound, numberOfEnabledCorrectionRounds);
+        programmingSubmission = lockSubmissionIfNeeded(programmingSubmission, participation, programmingExercise, correctionRound, numberOfEnabledCorrectionRounds);
 
         // prepare programming submission for response (double-blind assessment: removes the participant for tutors)
         programmingSubmissionService.hideDetails(programmingSubmission, user);
@@ -452,19 +452,14 @@ public class ProgrammingSubmissionResource {
     }
 
     private ProgrammingSubmission lockSubmissionIfNeeded(ProgrammingSubmission programmingSubmission, Participation participation, ProgrammingExercise programmingExercise,
-            Long submissionId, int correctionRound, int numberOfEnabledCorrectionRounds) {
+            int correctionRound, int numberOfEnabledCorrectionRounds) {
         long numberOfManualResults = programmingSubmission.getResults().stream().filter(Result::isManual).count();
 
         // this makes sure that new results are only created if it is really necessary.
         // At max 1 for course exercises and at max 2 results in exams with 2 correction rounds enabled.
         // The second (or third) result for complaint responses is not created here.
         if (numberOfManualResults < correctionRound + 1 && numberOfManualResults < numberOfEnabledCorrectionRounds) {
-            if (programmingExercise.isTeamMode() && participation instanceof StudentParticipation studentParticipation && !studentParticipation.isTestRun()) {
-                programmingSubmissionService.checkIfExerciseDueDateIsReached(programmingExercise);
-                if (ExerciseDateService.getDueDate(participation).isPresent() && exerciseDateService.isBeforeDueDate(participation)) {
-                    throw new AccessForbiddenException("The team's submission deadline has not passed yet.");
-                }
-            }
+            checkTeamSubmissionDeadline(programmingExercise, participation);
             if (!programmingExercise.isTeamMode()) {
                 programmingSubmissionService.checkSubmissionLockLimit(programmingExercise.getCourseViaExerciseGroupOrCourseMember().getId());
             }
@@ -483,6 +478,16 @@ public class ProgrammingSubmissionResource {
             programmingSubmission = programmingSubmissionService.lockAndGetProgrammingSubmission(programmingSubmission.getId(), correctionRound);
         }
         return programmingSubmission;
+    }
+
+    /** Checks exercise and participation deadlines before starting a team assessment. */
+    private void checkTeamSubmissionDeadline(ProgrammingExercise exercise, Participation participation) {
+        if (exercise.isTeamMode() && participation instanceof StudentParticipation studentParticipation && !studentParticipation.isTestRun()) {
+            programmingSubmissionService.checkIfExerciseDueDateIsReached(exercise);
+            if (ExerciseDateService.getDueDate(participation).isPresent() && exerciseDateService.isBeforeDueDate(participation)) {
+                throw new AccessForbiddenException("The team's submission deadline has not passed yet.");
+            }
+        }
     }
 
     /**
