@@ -443,6 +443,31 @@ describe('ExerciseActionsComponent', () => {
             expect(started.quizStarted).toBe(true);
         });
 
+        it('disables the quiz lifecycle actions while one of their requests runs', () => {
+            const quiz = {
+                id: 2,
+                type: ExerciseType.QUIZ,
+                status: QuizStatus.INVISIBLE,
+                quizMode: QuizMode.SYNCHRONIZED,
+                isAtLeastEditor: true,
+                visibleToStudents: false,
+                quizStarted: false,
+            } as QuizExercise;
+            const response = new Subject<QuizExercise>();
+            vi.spyOn(TestBed.inject(QuizExerciseLifecycleService), 'setVisible').mockReturnValue(response);
+            vi.spyOn(component.exerciseUpdated, 'emit');
+            fixture.componentRef.setInput('exercise', quiz);
+            const disabledOf = (id: string) => component.mainActions().find((action) => action.id === id)?.disabled;
+
+            component.mainActions().find((action) => action.id === 'set-visible')!.onClick!();
+            expect(disabledOf('start-quiz')).toBe(true);
+            expect(disabledOf('set-visible')).toBe(true);
+
+            response.next({ ...quiz, visibleToStudents: true } as QuizExercise);
+            response.complete();
+            expect(disabledOf('start-quiz')).toBeUndefined();
+        });
+
         it('is false when none of the button conditions apply', () => {
             const quiz = { id: 2, type: ExerciseType.QUIZ, status: QuizStatus.OPEN_FOR_PRACTICE } as QuizExercise;
             fixture.componentRef.setInput('exercise', quiz);

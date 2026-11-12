@@ -106,6 +106,8 @@ export class ExerciseActionsComponent {
         );
     });
     private readonly variantPreflightPending = signal(false);
+    /** Set while a start, show now or end request runs: its response is built from the quiz at click time, so a second one would race it. */
+    private readonly lifecyclePending = signal(false);
     /**
      * Whether programming exercises are enabled server-side; defaults to active until the toggle resolves. Actions
      * are data, not markup, so this folds into `ActionItem.disabled` instead of a `jhiFeatureToggle` directive.
@@ -360,8 +362,16 @@ export class ExerciseActionsComponent {
     private quizLifecycleActions(quiz: QuizExercise): ActionItem[] {
         const inVariantGroup = !!quiz.exerciseVariantGroup;
         const disabledTooltip = inVariantGroup ? 'artemisApp.quizExercise.actionDisabledInGroup' : undefined;
+        const pending = this.lifecyclePending();
+        const track = (action: Observable<QuizExercise>) => {
+            this.lifecyclePending.set(true);
+            return action.pipe(
+                finalize(() => this.lifecyclePending.set(false)),
+                takeUntilDestroyed(this.destroyRef),
+            );
+        };
         const run = (action: Observable<QuizExercise>) =>
-            action.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+            track(action).subscribe({
                 next: (updated) => this.onQuizLifecycleUpdate(updated),
                 error: (error: HttpErrorResponse) => {
                     this.alertService.error(error.headers.get('X-artemisApp-error')!);
@@ -376,6 +386,7 @@ export class ExerciseActionsComponent {
                 icon: faPlayCircle,
                 severity: 'success',
                 kind: 'button',
+                disabled: pending || undefined,
                 onClick: () => run(this.quizExerciseLifecycleService.startQuiz(this.quizExercise()!)),
             });
         }
@@ -386,7 +397,7 @@ export class ExerciseActionsComponent {
                 icon: faEye,
                 severity: 'warn',
                 kind: 'button',
-                disabled: inVariantGroup || undefined,
+                disabled: inVariantGroup || pending || undefined,
                 disabledTooltip,
                 onClick: () => run(this.quizExerciseLifecycleService.setVisible(this.quizExercise()!)),
             });
@@ -398,7 +409,7 @@ export class ExerciseActionsComponent {
                 icon: faStopCircle,
                 severity: 'danger',
                 kind: 'delete',
-                disabled: inVariantGroup || undefined,
+                disabled: inVariantGroup || pending || undefined,
                 disabledTooltip,
                 delete: {
                     actionType: ActionType.EndNow,
@@ -407,16 +418,13 @@ export class ExerciseActionsComponent {
                     deleteConfirmationText: 'artemisApp.exercise.delete.typeNameToConfirm',
                     dialogError: this.dialogError$,
                     onDelete: () =>
-                        this.quizExerciseLifecycleService
-                            .endQuiz(this.quizExercise()!)
-                            .pipe(takeUntilDestroyed(this.destroyRef))
-                            .subscribe({
-                                next: (updated) => {
-                                    this.onQuizLifecycleUpdate(updated);
-                                    this.dialogErrorSource.next('');
-                                },
-                                error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
-                            }),
+                        track(this.quizExerciseLifecycleService.endQuiz(this.quizExercise()!)).subscribe({
+                            next: (updated) => {
+                                this.onQuizLifecycleUpdate(updated);
+                                this.dialogErrorSource.next('');
+                            },
+                            error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
+                        }),
                 },
             });
         }
