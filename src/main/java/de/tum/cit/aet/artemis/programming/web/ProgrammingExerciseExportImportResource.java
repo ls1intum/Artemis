@@ -296,7 +296,8 @@ public class ProgrammingExerciseExportImportResource {
 
         try {
             ProgrammingExercise importedProgrammingExercise = programmingExerciseImportService.importProgrammingExercise(originalProgrammingExercise, sourceBuildConfig,
-                    newExercise, newBuildConfig, recreateBuildPlans, setTestCaseVisibilityToAfterDueDate, securityFrameworkChoice, user);
+                    newExercise, newBuildConfig, recreateBuildPlans, setTestCaseVisibilityToAfterDueDate,
+                    ProgrammingExerciseImportService.SecurityFrameworkChoiceByUser.of(securityFrameworkChoice, user));
 
             // The response record carries neither test cases nor static code analysis categories nor tasks, so the
             // response stays small without nulling those slots on the managed entity.

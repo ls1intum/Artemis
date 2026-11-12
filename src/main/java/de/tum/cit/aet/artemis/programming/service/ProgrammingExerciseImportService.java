@@ -197,7 +197,7 @@ public class ProgrammingExerciseImportService {
      */
     public ProgrammingExercise importProgrammingExercise(ProgrammingExercise sourceExercise, @NonNull ProgrammingExercise newExercise, boolean recreateBuildPlans,
             boolean setTestCaseVisibilityToAfterDueDate) {
-        return importGuarded(sourceExercise, null, newExercise, null, recreateBuildPlans, setTestCaseVisibilityToAfterDueDate, null, null);
+        return importGuarded(sourceExercise, null, newExercise, null, recreateBuildPlans, setTestCaseVisibilityToAfterDueDate, null);
     }
 
     /**
@@ -215,7 +215,7 @@ public class ProgrammingExerciseImportService {
     public ProgrammingExercise importProgrammingExercise(ProgrammingExercise sourceExercise, ProgrammingExerciseBuildConfig sourceBuildConfig,
             @NonNull ProgrammingExercise newExercise, @Nullable ProgrammingExerciseBuildConfig newBuildConfig, boolean recreateBuildPlans,
             boolean setTestCaseVisibilityToAfterDueDate) {
-        return importGuarded(sourceExercise, sourceBuildConfig, newExercise, newBuildConfig, recreateBuildPlans, setTestCaseVisibilityToAfterDueDate, null, null);
+        return importGuarded(sourceExercise, sourceBuildConfig, newExercise, newBuildConfig, recreateBuildPlans, setTestCaseVisibilityToAfterDueDate, null);
     }
 
     /**
@@ -228,20 +228,18 @@ public class ProgrammingExerciseImportService {
      * @param newBuildConfig                      the build configuration the request carries, or {@code null} to copy the source's
      * @param recreateBuildPlans                  if the build plans should be recreated
      * @param setTestCaseVisibilityToAfterDueDate if the test case visibility should be set to {@link Visibility#AFTER_DUE_DATE}
-     * @param securityFrameworkChoice             the validated Security Framework setting; null to keep the copied one
-     * @param user                                the acting user, who authors the commit that applies the choice
+     * @param securityFrameworkChoice             the validated Security Framework setting and the user who applies it; null to keep the copied setting
      * @return the imported programming exercise
      */
     public ProgrammingExercise importProgrammingExercise(ProgrammingExercise sourceExercise, ProgrammingExerciseBuildConfig sourceBuildConfig,
             @NonNull ProgrammingExercise newExercise, @Nullable ProgrammingExerciseBuildConfig newBuildConfig, boolean recreateBuildPlans,
-            boolean setTestCaseVisibilityToAfterDueDate, @Nullable SecurityFrameworkChoiceDTO securityFrameworkChoice, @Nullable User user) {
-        return importGuarded(sourceExercise, sourceBuildConfig, newExercise, newBuildConfig, recreateBuildPlans, setTestCaseVisibilityToAfterDueDate, securityFrameworkChoice,
-                user);
+            boolean setTestCaseVisibilityToAfterDueDate, @Nullable SecurityFrameworkChoiceByUser securityFrameworkChoice) {
+        return importGuarded(sourceExercise, sourceBuildConfig, newExercise, newBuildConfig, recreateBuildPlans, setTestCaseVisibilityToAfterDueDate, securityFrameworkChoice);
     }
 
     private ProgrammingExercise importGuarded(ProgrammingExercise sourceExercise, @Nullable ProgrammingExerciseBuildConfig sourceBuildConfig, ProgrammingExercise newExercise,
             @Nullable ProgrammingExerciseBuildConfig newBuildConfig, boolean recreateBuildPlans, boolean setTestCaseVisibilityToAfterDueDate,
-            @Nullable SecurityFrameworkChoiceDTO securityFrameworkChoice, @Nullable User user) {
+            @Nullable SecurityFrameworkChoiceByUser securityFrameworkChoice) {
         long sourceId = sourceExercise.getId();
         var coordination = sourceExercise.isExamExercise() ? Optional.<HyperionExerciseMutationApi>empty() : mutationApi.filter(HyperionExerciseMutationApi::isCoordinationEnabled);
         try (var reservation = coordination.map(api -> api.reserveParticipation(sourceId)).orElseGet(() -> new ParticipationReservation(() -> {
@@ -260,15 +258,18 @@ public class ProgrammingExerciseImportService {
                 sourceBuildConfig = programmingExerciseBuildConfigRepository.getProgrammingExerciseBuildConfigElseThrow(sourceExercise.getId());
             }
             return importCoordinated(sourceExercise, sourceBuildConfig, newExercise, newBuildConfig, recreateBuildPlans, setTestCaseVisibilityToAfterDueDate,
-                    securityFrameworkChoice, user);
+                    securityFrameworkChoice);
         }
     }
 
     private ProgrammingExercise importCoordinated(ProgrammingExercise sourceExercise, ProgrammingExerciseBuildConfig sourceBuildConfig, ProgrammingExercise newExercise,
             @Nullable ProgrammingExerciseBuildConfig newBuildConfig, boolean recreateBuildPlans, boolean setTestCaseVisibilityToAfterDueDate,
-            @Nullable SecurityFrameworkChoiceDTO securityFrameworkChoice, @Nullable User user) {
+            @Nullable SecurityFrameworkChoiceByUser securityFrameworkChoice) {
         ProgrammingExercise prepared = prepareImport(sourceExercise, sourceBuildConfig, newExercise, newBuildConfig);
-        return completeImport(sourceExercise, prepared, recreateBuildPlans, setTestCaseVisibilityToAfterDueDate, securityFrameworkChoice, user);
+        if (securityFrameworkChoice == null) {
+            return completeImport(sourceExercise, prepared, recreateBuildPlans, setTestCaseVisibilityToAfterDueDate, null, null);
+        }
+        return completeImport(sourceExercise, prepared, recreateBuildPlans, setTestCaseVisibilityToAfterDueDate, securityFrameworkChoice.choice(), securityFrameworkChoice.user());
     }
 
     /**
@@ -371,6 +372,24 @@ public class ProgrammingExerciseImportService {
         }
         catch (BadRequestAlertException e) {
             log.warn("The Security Framework choice was not applied to the imported exercise {}: {}", newExercise.getId(), e.getMessage());
+        }
+    }
+
+    /**
+     * A Security Framework choice for an imported exercise, together with the user who authors the commit that applies it.
+     *
+     * @param choice the validated Security Framework setting
+     * @param user   the acting user
+     */
+    public record SecurityFrameworkChoiceByUser(SecurityFrameworkChoiceDTO choice, User user) {
+
+        /**
+         * @param choice the validated Security Framework setting; null to keep the copied one
+         * @param user   the acting user
+         * @return the choice and the user; null if there is no choice or no user, so the copied setting is kept
+         */
+        public static @Nullable SecurityFrameworkChoiceByUser of(@Nullable SecurityFrameworkChoiceDTO choice, @Nullable User user) {
+            return choice != null && user != null ? new SecurityFrameworkChoiceByUser(choice, user) : null;
         }
     }
 }
