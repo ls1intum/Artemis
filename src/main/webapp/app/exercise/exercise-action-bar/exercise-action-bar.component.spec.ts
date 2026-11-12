@@ -9,6 +9,8 @@ import { faTable, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { of } from 'rxjs';
 import { By } from '@angular/platform-browser';
 import { TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { DeleteDialogService } from 'app/shared-ui/delete-dialog/service/delete-dialog.service';
+import { ActionType } from 'app/shared-ui/delete-dialog/delete-dialog.model';
 
 describe('ExerciseActionBarComponent', () => {
     let fixture: ComponentFixture<ExerciseActionBarComponent>;
@@ -264,6 +266,27 @@ describe('ExerciseActionBarComponent', () => {
     });
 
     describe('onDelete', () => {
+        it('opens the confirmation with empty translate values when the action sets none, e.g. end quiz', () => {
+            const openDeleteDialog = vi.spyOn(TestBed.inject(DeleteDialogService), 'openDeleteDialog').mockImplementation(() => {});
+            fixture.componentRef.setInput('items', [
+                {
+                    id: 'end-quiz',
+                    labelKey: 'label.end',
+                    icon: faTrash,
+                    severity: 'danger',
+                    kind: 'delete',
+                    delete: { actionType: ActionType.EndNow, entityTitle: 'Quiz', deleteQuestion: 'q', deleteConfirmationText: 'c', dialogError: of(''), onDelete: vi.fn() },
+                },
+            ]);
+            fixture.detectChanges();
+
+            fixture.nativeElement.querySelector('[data-testid="exercise-action-end-quiz"]').click();
+
+            expect(openDeleteDialog).toHaveBeenCalledOnce();
+            const [data] = openDeleteDialog.mock.calls[0];
+            expect(data.actionType).toBe(ActionType.EndNow);
+            expect(data.translateValues).toEqual({});
+        });
         it('delegates to the action delete config', () => {
             const onDelete = vi.fn();
             const action: ActionItem = {

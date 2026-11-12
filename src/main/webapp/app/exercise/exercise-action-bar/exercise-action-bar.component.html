@@ -70,7 +70,7 @@
                     [fetchCategorizedEntitySummary]="action.delete!.fetchCategorizedEntitySummary"
                     [deleteQuestion]="action.delete!.deleteQuestion"
                     [deleteConfirmationText]="action.delete!.deleteConfirmationText"
-                    [translateValues]="action.delete!.translateValues"
+                    [translateValues]="action.delete!.translateValues ?? {}"
                     [additionalChecks]="action.delete!.additionalChecks"
                     (delete)="onDelete(action, $event)"
                     [dialogError]="action.delete!.dialogError"
