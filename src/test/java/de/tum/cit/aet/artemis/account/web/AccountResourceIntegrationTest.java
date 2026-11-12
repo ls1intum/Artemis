@@ -5,11 +5,18 @@ import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.verify;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.HashSet;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Optional;
 import java.util.regex.Pattern;
 
@@ -17,12 +24,16 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.function.Executable;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.actuate.audit.AuditEventRepository;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithAnonymousUser;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -52,6 +63,7 @@ import de.tum.cit.aet.artemis.core.dto.SelectedLLMUsageDTO;
 import de.tum.cit.aet.artemis.core.dto.UserDTO;
 import de.tum.cit.aet.artemis.core.dto.vm.KeyAndPasswordVM;
 import de.tum.cit.aet.artemis.core.dto.vm.ManagedUserVM;
+import de.tum.cit.aet.artemis.core.exception.ErrorConstants;
 import de.tum.cit.aet.artemis.core.util.ConfigUtil;
 import de.tum.cit.aet.artemis.core.web.open.PublicAccountResource;
 import de.tum.cit.aet.artemis.notification.dto.MailRecipientDTO;
@@ -68,6 +80,9 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
     private static final String TEST_PREFIX = "loginoptions";
 
     private static final String EXTERNAL_IDP_NAME = "Test University Login";
+
+    @Autowired
+    private AuditEventRepository auditEventRepository;
 
     @Autowired
     private PublicAccountResource publicAccountResource;
@@ -495,16 +510,19 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
     @Test
     @WithMockUser(username = AUTHENTICATEDUSER)
     void saveAccount() throws Exception {
-        String updatedFirstName = "UpdatedFirstName";
         User user = userUtilService.createAndSaveUser(AUTHENTICATEDUSER);
-        user.setFirstName(updatedFirstName);
+        var update = Map.of("login", user.getLogin(), "name", user.getName(), "firstName", "UpdatedFirstName", "lastName", "UpdatedLastName", "email", "updated@example.com",
+                "langKey", "de");
 
-        request.put("/api/account/basic-information", new UserDTO(user), HttpStatus.OK);
+        request.performMvcRequest(put("/api/account/basic-information").contentType(MediaType.APPLICATION_JSON).content(request.getObjectMapper().writeValueAsBytes(update)))
+                .andExpect(status().isOk()).andExpect(content().string(""));
+        request.restoreSecurityContext();
 
-        // check if update successful
-        Optional<User> updatedUser = userTestRepository.findOneByLogin(AUTHENTICATEDUSER);
-        assertThat(updatedUser).isPresent();
-        assertThat(updatedUser.get().getFirstName()).isEqualTo(updatedFirstName);
+        User updatedUser = userTestRepository.findOneByLogin(AUTHENTICATEDUSER).orElseThrow();
+        assertThat(updatedUser.getFirstName()).isEqualTo("UpdatedFirstName");
+        assertThat(updatedUser.getLastName()).isEqualTo("UpdatedLastName");
+        assertThat(updatedUser.getEmail()).isEqualTo("updated@example.com");
+        assertThat(updatedUser.getLangKey()).isEqualTo("de");
     }
 
     @Test
@@ -563,7 +581,10 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
         // update Email to one already used
         user.setEmail(userSameEmail.getEmail());
 
-        request.put("/api/account/basic-information", new UserDTO(user), HttpStatus.BAD_REQUEST);
+        request.performMvcRequest(
+                put("/api/account/basic-information").contentType(MediaType.APPLICATION_JSON).content(request.getObjectMapper().writeValueAsBytes(new UserDTO(user))))
+                .andExpect(status().isBadRequest()).andExpect(jsonPath("$.type").value(ErrorConstants.EMAIL_ALREADY_USED_TYPE.toString()))
+                .andExpect(header().string("X-artemisApp-error", "error.emailExists")).andExpect(header().string("X-artemisApp-params", "userManagement"));
     }
 
     /**
@@ -887,32 +908,39 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
         assertThat(userRecoveryKeyService.findResetKeyHash(createdUser.getId())).isNull();
     }
 
-    @Test
+    @ParameterizedTest
+    @EnumSource(AiSelectionDecision.class)
     @WithMockUser(username = AUTHENTICATEDUSER)
-    void acceptExternalLLMUsageSuccessful() throws Exception {
+    void savesAiUsageDecision(AiSelectionDecision decision) throws Exception {
         User user = userUtilService.createAndSaveUser(AUTHENTICATEDUSER);
         userUtilService.clearAiSelectionDecision(user);
 
-        SelectedLLMUsageDTO selectedLLMUsageDTO = new SelectedLLMUsageDTO(AiSelectionDecision.CLOUD_AI);
-        request.put("/api/account/users/select-llm-usage", selectedLLMUsageDTO, HttpStatus.OK);
+        request.performMvcRequest(put("/api/account/users/select-llm-usage").contentType(MediaType.APPLICATION_JSON)
+                .content(request.getObjectMapper().writeValueAsBytes(new SelectedLLMUsageDTO(decision)))).andExpect(status().isOk()).andExpect(content().string(""))
+                .andExpect(header().string(HttpHeaders.CACHE_CONTROL, "no-cache, no-store, max-age=0, must-revalidate"));
+        request.restoreSecurityContext();
 
-        Optional<User> updatedUser = userTestRepository.findOneByLogin(AUTHENTICATEDUSER);
-        assertThat(updatedUser).isPresent();
-        assertThat(userAiPreferenceService.findDecisionDate(updatedUser.get().getId())).isNotNull();
+        assertThat(userAiPreferenceService.findDecision(user.getId())).isEqualTo(decision);
+        assertThat(userAiPreferenceService.findDecisionDate(user.getId())).isNotNull();
     }
 
-    @Test
+    @ParameterizedTest
+    @CsvSource(value = { "{}|500", "{\"selection\":null}|500", "{\"selection\":\"INVALID\"}|400" }, delimiter = '|')
     @WithMockUser(username = AUTHENTICATEDUSER)
-    void selectNoAIUsageSuccessful() throws Exception {
+    void invalidAiUsageDecisionPreservesPreferencesAndAudit(String body, int expectedStatus) throws Exception {
         User user = userUtilService.createAndSaveUser(AUTHENTICATEDUSER);
-        userUtilService.clearAiSelectionDecision(user);
+        ZonedDateTime originalTimestamp = ZonedDateTime.now().truncatedTo(ChronoUnit.MILLIS);
+        userAiPreferenceService.recordDecision(user.getId(), AiSelectionDecision.CLOUD_AI, originalTimestamp);
+        var auditEvents = auditEventRepository.find(user.getLogin(), Instant.EPOCH, Constants.AI_SELECTION_DECISION);
 
-        SelectedLLMUsageDTO selectedLLMUsageDTO = new SelectedLLMUsageDTO(AiSelectionDecision.NO_AI);
-        request.put("/api/account/users/select-llm-usage", selectedLLMUsageDTO, HttpStatus.OK);
+        request.performMvcRequest(put("/api/account/users/select-llm-usage").contentType(MediaType.APPLICATION_JSON).content(body)).andExpect(status().is(expectedStatus));
+        request.restoreSecurityContext();
 
-        Optional<User> updatedUser = userTestRepository.findOneByLogin(AUTHENTICATEDUSER);
-        assertThat(updatedUser).isPresent();
-        assertThat(userAiPreferenceService.findDecisionDate(updatedUser.get().getId())).isNotNull();
+        assertThat(userAiPreferenceService.findDecision(user.getId())).isEqualTo(AiSelectionDecision.CLOUD_AI);
+        ZonedDateTime actualTimestamp = userAiPreferenceService.findDecisionDate(user.getId());
+        assertThat(actualTimestamp).isNotNull();
+        assertThat(actualTimestamp.toInstant()).isEqualTo(originalTimestamp.toInstant());
+        assertThat(auditEventRepository.find(user.getLogin(), Instant.EPOCH, Constants.AI_SELECTION_DECISION)).usingRecursiveComparison().isEqualTo(auditEvents);
     }
 
     @Test
