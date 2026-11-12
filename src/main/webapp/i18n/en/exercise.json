@@ -16,7 +16,6 @@
             "addCriterion": "Add a Grading Criterion",
             "resultsPerPage": "{{number}} results per page",
             "showAllResults": "Show all results",
-            "searchForStudents": "Search for students by login or name (comma separated)",
             "searchForTeams": "Search for teams by (short) name or for students by login/name (comma separated)",
             "created": "Created new Exercise with identifier {{ param }}",
             "updated": "Updated Exercise with identifier {{ param }}",

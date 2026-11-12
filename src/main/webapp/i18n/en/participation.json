@@ -1,7 +1,6 @@
 {
     "artemisApp": {
         "participation": {
-            "triggerOptions": "Trigger builds",
             "resetDisabled": "No filters selected",
             "searchStudents": "Search: Smith, Jones",
             "searchTeams": "Search: Team 1, Team 2",
@@ -13,10 +12,7 @@
             "filterGroup": {
                 "submissions": "Submissions",
                 "results": "Results",
-                "assessmentType": "Assessment type",
-                "mode": "Participation mode",
-                "gradingStatus": "Grading status",
-                "assessmentStatus": "Assessment status"
+                "assessmentType": "Assessment type"
             },
             "created": "Created new participation with identifier {{ param }}",
             "updated": "Updated participation with identifier {{ param }}",
