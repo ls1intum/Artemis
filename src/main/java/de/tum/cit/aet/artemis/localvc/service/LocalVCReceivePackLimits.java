@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.localvc.service;
 
 import org.eclipse.jgit.transport.ReceivePack;
+import org.eclipse.jgit.transport.UploadPack;
 
 /**
  * Bounds of a push to a repository of LocalVC. A push is read from a client, so the size of what it announces and the time it may take are limited before the content is
@@ -39,5 +40,17 @@ public final class LocalVCReceivePackLimits {
         receivePack.setMaxCommandBytes(MAX_COMMAND_BYTES);
         receivePack.setTimeout(TIMEOUT_SECONDS);
         return receivePack;
+    }
+
+    /**
+     * Applies the time limit to a fetch. The time counts without any data in either direction, so a slow transfer that makes progress is not cut off, while a client that stalls
+     * after the start does not keep a worker busy.
+     *
+     * @param uploadPack the process that handles a fetch
+     * @return the same upload pack
+     */
+    public static UploadPack apply(UploadPack uploadPack) {
+        uploadPack.setTimeout(TIMEOUT_SECONDS);
+        return uploadPack;
     }
 }

@@ -333,6 +333,9 @@ public class RepositoryService {
      * It is primarily designed to read text files, converting the binary content to a UTF-8 string.
      * Usage of this method with binary files may lead to data corruption or misrepresentation as
      * binary data does not convert cleanly into UTF-8 strings.
+     * The result is a complete snapshot, which callers may compare with another one. A text file above {@link #MAX_FILE_CONTENT_BYTES}, files above
+     * {@link #MAX_TOTAL_CONTENT_BYTES} in total or a tree with more than {@link #MAX_TREE_ENTRIES} entries is therefore an error and never a smaller result.
+     * Consumers that only need context use the methods for the last commit, which leave out what does not fit.
      *
      * @param repository The repository from which file contents are to be retrieved. Must be a bare repository.
      * @param commitHash The commit identifier from which to extract file contents.
@@ -346,7 +349,7 @@ public class RepositoryService {
         if (commitId == null) {
             return Map.of();
         }
-        return getFileContentFromBareRepositoryForCommitId(repository, commitId, null, BinaryFileFilter.EXTENSION, MAX_FILE_CONTENT_BYTES, MAX_TOTAL_CONTENT_BYTES, false, false);
+        return getFileContentFromBareRepositoryForCommitId(repository, commitId, null, BinaryFileFilter.EXTENSION, MAX_FILE_CONTENT_BYTES, MAX_TOTAL_CONTENT_BYTES, true, true);
     }
 
     /**

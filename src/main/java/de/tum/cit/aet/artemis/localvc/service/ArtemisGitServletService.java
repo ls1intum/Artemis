@@ -129,7 +129,7 @@ public class ArtemisGitServletService extends GitServlet {
         });
 
         this.setUploadPackFactory((request, repository) -> {
-            UploadPack uploadPack = new UploadPack(repository);
+            UploadPack uploadPack = LocalVCReceivePackLimits.apply(new UploadPack(repository));
             // we only need to set the LocalVCFetchPreUploadHook for authorized POST requests, as only these trigger onBeginNegotiateRound
             if (isAuthorizedPostRequest(request)) {
                 // Add the custom pre-upload hook, to distinguish between clone and pull operations

@@ -327,6 +327,19 @@ class RepositoryServiceFileOperationsTest {
     }
 
     @Test
+    void aCompleteSnapshotOfACommitFailsInsteadOfOmittingAFileAboveTheSizeLimit() throws Exception {
+        FileUtils.writeStringToFile(workingTree.resolve("small.txt").toFile(), "small", StandardCharsets.UTF_8);
+        FileUtils.writeByteArrayToFile(workingTree.resolve("large.txt").toFile(), new byte[(int) (RepositoryService.MAX_FILE_CONTENT_BYTES + 1)]);
+        try (Git git = Git.open(workingTree.toFile())) {
+            git.add().addFilepattern(".").call();
+            GitService.commit(git).setMessage("files").setAuthor("a", "a@example.com").call();
+        }
+
+        // A caller that compares two snapshots would read a missing file as a deletion
+        assertThatIOException().isThrownBy(() -> repositoryService.getFilesContentFromBareRepository(repository, "HEAD")).withMessageContaining("large.txt");
+    }
+
+    @Test
     void readingAllFilesWithinTheLimitsReturnsThem() throws Exception {
         FileUtils.writeStringToFile(workingTree.resolve("small.txt").toFile(), "small", StandardCharsets.UTF_8);
         try (Git git = Git.open(workingTree.toFile())) {

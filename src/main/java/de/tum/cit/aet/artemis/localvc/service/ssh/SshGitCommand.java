@@ -151,7 +151,7 @@ public class SshGitCommand extends GitPackCommand {
                 switch (subCommand) {
                     case RemoteConfig.DEFAULT_UPLOAD_PACK -> {
                         // Prepare UploadPack handler
-                        UploadPack uploadPack = new UploadPack(repository);
+                        UploadPack uploadPack = LocalVCReceivePackLimits.apply(new UploadPack(repository));
 
                         // Extract protocol version from environment variables (if present)
                         Environment environment = getEnvironment();
