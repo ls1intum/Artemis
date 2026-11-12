@@ -42,6 +42,24 @@ describe('TumAetUiTableSortableColumnComponent', () => {
         return th(label).querySelector('button')!;
     }
 
+    it('sorts when the empty part of the header cell is clicked, once per click', () => {
+        th('Email').click();
+
+        expect(host.events).toEqual([{ field: 'email', order: 1 }]);
+
+        host.events.length = 0;
+        button('Email').click();
+
+        // A click on the button bubbles to the cell but must not sort twice.
+        expect(host.events).toHaveLength(1);
+    });
+
+    it('does not sort from a click on a disabled header cell', () => {
+        th('Frozen').click();
+
+        expect(host.events).toHaveLength(0);
+    });
+
     it('renders a sort icon after the projected header text', () => {
         const login = th('Login');
         expect(login.textContent).toContain('Login');
