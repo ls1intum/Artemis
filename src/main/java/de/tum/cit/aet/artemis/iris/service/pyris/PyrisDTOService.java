@@ -77,7 +77,7 @@ public class PyrisDTOService {
         var templateRepositoryContents = getFilteredRepositoryContents(exercise.getTemplateParticipation()).files();
         var solutionRepositoryContents = getFilteredRepositoryContents(exercise.getSolutionParticipation()).files();
 
-        Map<String, String> testsRepositoryContents = Objects.requireNonNullElse(getRepositoryContents(exercise.getVcsTestRepositoryUri()), Map.of());
+        Map<String, String> testsRepositoryContents = getFilteredRepositoryContents(exercise.getVcsTestRepositoryUri(), exercise.getProgrammingLanguage()).files();
 
         return new PyrisProgrammingExerciseDTO(exercise.getId(), exercise.getTitle(), exercise.getProgrammingLanguage(), templateRepositoryContents, solutionRepositoryContents,
                 testsRepositoryContents, exercise.getProblemStatement(), toInstant(exercise.getReleaseDate()), toInstant(exercise.getDueDate()));
@@ -320,9 +320,12 @@ public class PyrisDTOService {
         if (exercise == null) {
             return RepositoryContents.UNREADABLE;
         }
-        var language = exercise.getProgrammingLanguage();
+        return getFilteredRepositoryContents(participation.getVcsRepositoryUri(), exercise.getProgrammingLanguage());
+    }
 
-        var repositoryContents = getRepositoryContents(participation.getVcsRepositoryUri());
+    // Only files of the exercise language are sent, like for every other repository: data sets and resources in a repository are no use as context
+    private RepositoryContents getFilteredRepositoryContents(LocalVCRepositoryUri repositoryUri, ProgrammingLanguage language) {
+        var repositoryContents = getRepositoryContents(repositoryUri);
         if (repositoryContents == null) {
             return RepositoryContents.UNREADABLE;
         }

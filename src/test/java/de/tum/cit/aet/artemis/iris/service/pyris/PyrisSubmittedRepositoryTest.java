@@ -109,4 +109,20 @@ class PyrisSubmittedRepositoryTest {
         // The committed side really was read, so the empty diff means "nothing changed", not "nothing fetched".
         assertThat(service.toPyrisSubmissionDTO(submission).repository()).containsExactly(entry("src/Main.java", "COMMITTED"));
     }
+
+    @Test
+    void testsRepository_isFilteredByLanguageLikeTheOtherRepositories() throws IOException {
+        // A tests repository can hold large data sets next to the tests. Only the files of the exercise language are context for Iris.
+        var repositoryService = mock(RepositoryService.class);
+        when(repositoryService.getFilesContentFromBareRepositoryForLastCommit(any(LocalVCRepositoryUri.class)))
+                .thenReturn(Map.of("src/test/MainTest.java", "TEST", "data/scenario.xml", "HUGE"));
+        var service = new PyrisDTOService(repositoryService, mock(ProgrammingFeedbackSynthesizerService.class), mock(BuildLogEntryService.class),
+                mock(IrisProactiveProperties.class));
+        var exercise = new ProgrammingExercise();
+        exercise.setProgrammingLanguage(JAVA);
+        exercise.setId(1L);
+        exercise.setTestRepositoryUri("http://localhost:8080/git/ABC/abc-tests.git");
+
+        assertThat(service.toPyrisProgrammingExerciseDTO(exercise).testRepository()).containsExactly(entry("src/test/MainTest.java", "TEST"));
+    }
 }
