@@ -208,41 +208,49 @@ public class DefaultDeimosLlmClient implements DeimosLlmClient {
      */
     private static @Nullable List<String> balancedJsonObjects(String text) {
         List<String> objects = new ArrayList<>();
-        int depth = 0;
-        int start = -1;
-        int recoveries = 0;
-
-        int i = 0;
-        while (true) {
-            while (i < text.length()) {
-                char currentChar = text.charAt(i);
-                if (currentChar == '"' && depth > 0) {
-                    i = endOfString(text, i);
-                }
-                else if (currentChar == '{') {
-                    if (depth == 0) {
-                        start = i;
-                    }
-                    depth++;
-                }
-                else if (currentChar == '}' && depth > 0) {
-                    depth--;
-                    if (depth == 0) {
-                        objects.add(text.substring(start, i + 1));
-                    }
-                }
-                i++;
-            }
-            if (depth == 0) {
+        int from = 0;
+        for (int recoveries = 0; recoveries <= MAX_UNMATCHED_BRACE_RECOVERIES; recoveries++) {
+            int unmatchedBrace = collectBalancedJsonObjects(text, from, objects);
+            if (unmatchedBrace < 0) {
                 return objects;
             }
-            if (recoveries == MAX_UNMATCHED_BRACE_RECOVERIES) {
-                return null;
-            }
-            recoveries++;
-            depth = 0;
-            i = start + 1;
+            from = unmatchedBrace + 1;
         }
+        return null;
+    }
+
+    /**
+     * Scans the text from the given index once, adding every balanced top-level object to {@code objects}.
+     *
+     * @param text    the text to scan
+     * @param from    the index to start at
+     * @param objects receives the balanced objects, in order of appearance
+     * @return the index of the opening brace of an object that is never closed, or {@code -1} if there is none
+     */
+    private static int collectBalancedJsonObjects(String text, int from, List<String> objects) {
+        int depth = 0;
+        int start = -1;
+        int i = from;
+        while (i < text.length()) {
+            char currentChar = text.charAt(i);
+            if (currentChar == '"' && depth > 0) {
+                i = endOfString(text, i);
+            }
+            else if (currentChar == '{') {
+                if (depth == 0) {
+                    start = i;
+                }
+                depth++;
+            }
+            else if (currentChar == '}' && depth > 0) {
+                depth--;
+                if (depth == 0) {
+                    objects.add(text.substring(start, i + 1));
+                }
+            }
+            i++;
+        }
+        return depth > 0 ? start : -1;
     }
 
     /**
