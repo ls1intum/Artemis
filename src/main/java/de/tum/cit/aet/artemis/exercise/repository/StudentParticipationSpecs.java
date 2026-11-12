@@ -4,6 +4,7 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaQuery;
@@ -29,6 +30,7 @@ import de.tum.cit.aet.artemis.core.domain.DomainObject_;
 import de.tum.cit.aet.artemis.core.dto.SortingOrder;
 import de.tum.cit.aet.artemis.core.util.StringUtil;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
+import de.tum.cit.aet.artemis.exercise.domain.ParticipationFilter;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.Submission_;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
@@ -262,26 +264,6 @@ public class StudentParticipationSpecs {
     // --------------------------------------------------
 
     /**
-     * Matches participations whose latest result is successful.
-     *
-     * @return specification matching participations with a successful latest result
-     */
-    @NonNull
-    public static Specification<StudentParticipation> isSuccessful() {
-        return (root, query, cb) -> existsLatestResultMatching(root, query, cb, (r, c) -> c.equal(r.get(Result_.SUCCESSFUL), true));
-    }
-
-    /**
-     * Matches participations whose latest result is NOT successful.
-     *
-     * @return specification matching participations without a successful latest result
-     */
-    @NonNull
-    public static Specification<StudentParticipation> isUnsuccessful() {
-        return (root, query, cb) -> existsLatestResultMatching(root, query, cb, (r, c) -> c.equal(r.get(Result_.SUCCESSFUL), true)).not();
-    }
-
-    /**
      * Matches participations whose latest submission is a ProgrammingSubmission with buildFailed = true.
      *
      * @return specification matching participations with a failed build
@@ -297,56 +279,6 @@ public class StudentParticipationSpecs {
                     cb.equal(subRoot.get(ProgrammingSubmission_.BUILD_FAILED), true));
             return cb.exists(existsSub);
         };
-    }
-
-    /**
-     * Matches participations whose latest result has a manual assessment type.
-     *
-     * @return specification matching participations with a manual latest result
-     */
-    @NonNull
-    public static Specification<StudentParticipation> hasManualAssessment() {
-        return (root, query, cb) -> existsLatestResultMatching(root, query, cb, (r, c) -> c.equal(r.get(Result_.ASSESSMENT_TYPE), AssessmentType.MANUAL));
-    }
-
-    /**
-     * Matches participations whose latest result has an automatic assessment type.
-     *
-     * @return specification matching participations with an automatic latest result
-     */
-    @NonNull
-    public static Specification<StudentParticipation> hasAutomaticAssessment() {
-        return (root, query, cb) -> existsLatestResultMatching(root, query, cb, (r, c) -> c.equal(r.get(Result_.ASSESSMENT_TYPE), AssessmentType.AUTOMATIC));
-    }
-
-    /**
-     * Matches participations whose latest result has no completion date (i.e. is locked).
-     *
-     * @return specification matching participations with a locked latest result
-     */
-    @NonNull
-    public static Specification<StudentParticipation> isLocked() {
-        return (root, query, cb) -> existsLatestResultMatching(root, query, cb, (r, c) -> c.isNull(r.get(Result_.COMPLETION_DATE)));
-    }
-
-    /**
-     * Matches participations whose latest result score is in the given range.
-     * Lower bound is inclusive, upper bound is exclusive unless it equals 100 (then inclusive).
-     *
-     * @param scoreRangeLower inclusive lower bound (nullable to skip)
-     * @param scoreRangeUpper upper bound (nullable to skip)
-     * @return specification, or null if both bounds are null
-     */
-    @NonNull
-    public static Specification<StudentParticipation> scoreInRange(@Nullable Integer scoreRangeLower, @Nullable Integer scoreRangeUpper) {
-        if (scoreRangeLower == null || scoreRangeUpper == null) {
-            return noOp();
-        }
-        return (root, query, cb) -> existsLatestResultMatching(root, query, cb, (r, c) -> {
-            Predicate lowerBound = c.ge(r.get(Result_.SCORE), scoreRangeLower);
-            Predicate upperBound = scoreRangeUpper == 100 ? c.le(r.get(Result_.SCORE), 100) : c.lt(r.get(Result_.SCORE), scoreRangeUpper);
-            return c.and(lowerBound, upperBound);
-        });
     }
 
     // --------------------------------------------------
@@ -393,7 +325,8 @@ public class StudentParticipationSpecs {
             Subquery<Long> sub = query.subquery(Long.class);
             Root<Submission> subRoot = sub.from(Submission.class);
             sub.select(cb.literal(1L));
-            sub.where(cb.equal(subRoot.get(Submission_.PARTICIPATION), root));
+            sub.where(cb.equal(subRoot.get(Submission_.PARTICIPATION), root),
+                    cb.or(cb.equal(root.get(Participation_.EXERCISE).type(), ProgrammingExercise.class), cb.isTrue(subRoot.get(Submission_.SUBMITTED))));
             return cb.exists(sub).not();
         };
     }
@@ -408,55 +341,65 @@ public class StudentParticipationSpecs {
         return (root, query, cb) -> cb.or(cb.isNull(root.get(Participation_.TEST_RUN)), cb.equal(root.get(Participation_.TEST_RUN), false));
     }
 
-    /**
-     * Combines comma-separated selections as alternatives within each category and intersections across categories.
-     * Unknown selections are ignored, as with the single-filter management view.
-     *
-     * @param filterProp       selected filter names, or null for all participations
-     * @param stuckBuildCutoff cutoff timestamp for the Failed filter
-     * @return combined management filter
-     */
+    /** Combines category alternatives and shares one latest-result lookup across result conditions and score bounds. */
     @NonNull
-    public static Specification<StudentParticipation> managementFilters(@Nullable String filterProp, @Nullable ZonedDateTime stuckBuildCutoff) {
-        if (filterProp == null || filterProp.isBlank()) {
-            return noOp();
-        }
-        var selected = Arrays.asList(filterProp.split(","));
-        var groups = List.of(List.of("Failed", "BuildFailed", "NoSubmissions", "ValidSubmissions"), List.of("Successful", "Unsuccessful"),
-                List.of("Manual", "SemiAutomatic", "Automatic"), List.of("NoPracticeMode"), List.of("Graded"), List.of("Locked"));
-        return Specification.allOf(groups.stream()
-                .map(group -> Specification.anyOf(group.stream().filter(selected::contains).map(filter -> managementFilter(filter, stuckBuildCutoff)).toList())).toList());
-    }
-
-    /**
-     * Returns the filter specification for the management view based on filter name.
-     *
-     * @param filterProp       filter name (Failed, NoSubmissions, ValidSubmissions, NoPracticeMode, Graded, Successful, Unsuccessful, BuildFailed, Manual, SemiAutomatic,
-     *                             Automatic, Locked)
-     * @param stuckBuildCutoff cutoff timestamp for the Failed filter
-     * @return specification, or null for unrecognized filterProp
-     */
-    @NonNull
-    private static Specification<StudentParticipation> managementFilter(@Nullable String filterProp, @Nullable ZonedDateTime stuckBuildCutoff) {
-        if (filterProp == null) {
-            return noOp();
-        }
-        return switch (filterProp) {
-            case "Failed" -> hasFailedBuild(stuckBuildCutoff);
-            case "NoSubmissions" -> hasNoSubmissions();
-            case "ValidSubmissions" -> Specification.not(hasNoSubmissions()).and(Specification.not(isBuildFailed())).and((root, query, cb) -> cb
-                    .or(cb.notEqual(root.get(Participation_.EXERCISE).type(), ProgrammingExercise.class), existsLatestResultMatching(root, query, cb, null)));
-            case "NoPracticeMode" -> isNotPracticeMode();
-            case "Graded" -> (root, query, cb) -> existsLatestResultMatching(root, query, cb, (r, c) -> c.isTrue(r.get(Result_.RATED)));
-            case "Successful" -> isSuccessful();
-            case "Unsuccessful" -> isUnsuccessful();
-            case "BuildFailed" -> isBuildFailed();
-            case "Manual" -> hasManualAssessment();
-            case "SemiAutomatic" ->
-                (root, query, cb) -> existsLatestResultMatching(root, query, cb, (r, c) -> c.equal(r.get(Result_.ASSESSMENT_TYPE), AssessmentType.SEMI_AUTOMATIC));
-            case "Automatic" -> hasAutomaticAssessment();
-            case "Locked" -> isLocked();
-            default -> noOp();
+    public static Specification<StudentParticipation> managementFilters(Set<ParticipationFilter> filters, @Nullable ZonedDateTime stuckBuildCutoff,
+            @Nullable Integer scoreRangeLower, @Nullable Integer scoreRangeUpper) {
+        return (root, query, cb) -> {
+            List<Predicate> conditions = new ArrayList<>();
+            boolean requiresResult = (filters.contains(ParticipationFilter.Successful) && !filters.contains(ParticipationFilter.Unsuccessful))
+                    || filters.stream().anyMatch(filter -> filter.group == ParticipationFilter.Group.ASSESSMENT) || filters.contains(ParticipationFilter.Graded)
+                    || filters.contains(ParticipationFilter.Locked) || (scoreRangeLower != null && scoreRangeUpper != null);
+            var submissionFilters = filters.stream().filter(filter -> filter.group == ParticipationFilter.Group.SUBMISSION).toList();
+            List<Predicate> submissions = new ArrayList<>();
+            for (var filter : submissionFilters) {
+                submissions.add(switch (filter) {
+                    case Failed -> hasFailedBuild(stuckBuildCutoff).toPredicate(root, query, cb);
+                    case BuildFailed -> isBuildFailed().toPredicate(root, query, cb);
+                    case NoSubmissions -> hasNoSubmissions().toPredicate(root, query, cb);
+                    case ValidSubmissions -> cb.and(cb.not(hasNoSubmissions().toPredicate(root, query, cb)), cb.not(isBuildFailed().toPredicate(root, query, cb)),
+                            cb.or(cb.notEqual(root.get(Participation_.EXERCISE).type(), ProgrammingExercise.class),
+                                    requiresResult ? cb.conjunction() : existsLatestResultMatching(root, query, cb, null)));
+                    default -> throw new IllegalStateException("Unexpected submission filter: " + filter);
+                });
+            }
+            if (!submissions.isEmpty()) {
+                conditions.add(cb.or(submissions.toArray(Predicate[]::new)));
+            }
+            if (filters.contains(ParticipationFilter.NoPracticeMode)) {
+                conditions.add(isNotPracticeMode().toPredicate(root, query, cb));
+            }
+            boolean successful = filters.contains(ParticipationFilter.Successful);
+            boolean unsuccessful = filters.contains(ParticipationFilter.Unsuccessful);
+            if (unsuccessful && !successful) {
+                conditions.add(cb.not(existsLatestResultMatching(root, query, cb, (r, c) -> c.isTrue(r.get(Result_.SUCCESSFUL)))));
+            }
+            var assessmentTypes = filters.stream().filter(filter -> filter.group == ParticipationFilter.Group.ASSESSMENT).map(filter -> switch (filter) {
+                case Manual -> AssessmentType.MANUAL;
+                case SemiAutomatic -> AssessmentType.SEMI_AUTOMATIC;
+                case Automatic -> AssessmentType.AUTOMATIC;
+                default -> throw new IllegalStateException("Unexpected assessment filter: " + filter);
+            }).toList();
+            boolean scoreRange = scoreRangeLower != null && scoreRangeUpper != null;
+            if (requiresResult) {
+                conditions.add(existsLatestResultMatching(root, query, cb, (r, c) -> {
+                    List<Predicate> results = new ArrayList<>();
+                    if (successful && !unsuccessful)
+                        results.add(c.isTrue(r.get(Result_.SUCCESSFUL)));
+                    if (!assessmentTypes.isEmpty())
+                        results.add(r.get(Result_.ASSESSMENT_TYPE).in(assessmentTypes));
+                    if (filters.contains(ParticipationFilter.Graded))
+                        results.add(c.isTrue(r.get(Result_.RATED)));
+                    if (filters.contains(ParticipationFilter.Locked))
+                        results.add(c.isNull(r.get(Result_.COMPLETION_DATE)));
+                    if (scoreRange) {
+                        results.add(c.ge(r.get(Result_.SCORE), scoreRangeLower));
+                        results.add(scoreRangeUpper == 100 ? c.le(r.get(Result_.SCORE), 100) : c.lt(r.get(Result_.SCORE), scoreRangeUpper));
+                    }
+                    return c.and(results.toArray(Predicate[]::new));
+                }));
+            }
+            return cb.and(conditions.toArray(Predicate[]::new));
         };
     }
 

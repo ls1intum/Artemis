@@ -43,6 +43,7 @@ import de.tum.cit.aet.artemis.exam.dto.ExamSubmissionGateDTO;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
+import de.tum.cit.aet.artemis.exercise.domain.ParticipationFilter;
 import de.tum.cit.aet.artemis.exercise.domain.participation.IdToPresentationScoreSum;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.dto.AssessmentPublicationRecipientDTO;
@@ -2296,7 +2297,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
      * @param exerciseId       the exercise to query
      * @param teamMode         whether the exercise uses teams
      * @param searchTerm       free-text search (matched against student login/name or team name/shortName)
-     * @param filterProp       comma-separated filter selections (alternatives within a category, intersections across categories)
+     * @param filters          comma-separated filter selections (alternatives within a category, intersections across categories)
      * @param stuckBuildCutoff for the Failed filter: participations whose latest submission has no result and was submitted before this timestamp are considered stuck (nullable)
      * @param scoreRangeLower  inclusive lower bound of score range filter (nullable)
      * @param scoreRangeUpper  upper bound of score range filter; exclusive unless equal to 100 (nullable)
@@ -2305,11 +2306,11 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
      * @param sortedColumn     the column to sort by
      * @return a page of participation IDs
      */
-    default Page<Long> findParticipationIdsForManagement(long exerciseId, boolean teamMode, String searchTerm, String filterProp, ZonedDateTime stuckBuildCutoff,
+    default Page<Long> findParticipationIdsForManagement(long exerciseId, boolean teamMode, String searchTerm, Set<ParticipationFilter> filters, ZonedDateTime stuckBuildCutoff,
             Integer scoreRangeLower, Integer scoreRangeUpper, Pageable pageable, SortingOrder sortOrder, String sortedColumn) {
         Specification<StudentParticipation> spec = Specification.where(StudentParticipationSpecs.forExercise(exerciseId)).and(StudentParticipationSpecs.forManagementMode(teamMode))
-                .and(StudentParticipationSpecs.searchForManagement(searchTerm, teamMode)).and(StudentParticipationSpecs.managementFilters(filterProp, stuckBuildCutoff))
-                .and(StudentParticipationSpecs.scoreInRange(scoreRangeLower, scoreRangeUpper))
+                .and(StudentParticipationSpecs.searchForManagement(searchTerm, teamMode))
+                .and(StudentParticipationSpecs.managementFilters(filters, stuckBuildCutoff, scoreRangeLower, scoreRangeUpper))
                 .and(StudentParticipationSpecs.orderedForManagement(sortedColumn, sortOrder != null ? sortOrder : SortingOrder.ASCENDING, teamMode));
 
         Pageable unsortedPageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.unsorted());

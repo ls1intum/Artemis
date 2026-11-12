@@ -5,7 +5,6 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
@@ -41,6 +40,7 @@ import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.exam.dto.ExamSubmissionGateDTO;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
+import de.tum.cit.aet.artemis.exercise.domain.ParticipationFilter;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
@@ -1215,20 +1215,21 @@ public class ParticipationService {
      *
      * @param exercise the exercise to query
      * @param search   search parameters including pagination, sorting, search term, filter, and score range
+     * @param filters  validated filter selections
      * @return a page of ParticipationManagementDTO
      */
-    public Page<ParticipationManagementDTO> findParticipationsForExercise(Exercise exercise, ParticipationSearchDTO search) {
+    public Page<ParticipationManagementDTO> findParticipationsForExercise(Exercise exercise, ParticipationSearchDTO search, Set<ParticipationFilter> filters) {
         SortingOrder sortOrder = search.sortingOrder() != null ? search.sortingOrder() : SortingOrder.ASCENDING;
         Pageable pageable = PageRequest.of(search.page(), search.pageSize());
         boolean teamMode = exercise.isTeamMode();
 
         ZonedDateTime stuckBuildCutoff = null;
-        if (search.filterProp() != null && Arrays.asList(search.filterProp().split(",")).contains("Failed") && exercise instanceof ProgrammingExercise) {
+        if (filters.contains(ParticipationFilter.Failed) && exercise instanceof ProgrammingExercise) {
             int timeoutSeconds = programmingExerciseRepository.findBuildTimeoutSecondsByExerciseId(exercise.getId()).filter(t -> t > 0).orElse(120);
             stuckBuildCutoff = ZonedDateTime.now().minusSeconds(timeoutSeconds);
         }
 
-        Page<Long> idPage = studentParticipationRepository.findParticipationIdsForManagement(exercise.getId(), teamMode, search.searchTerm(), search.filterProp(), stuckBuildCutoff,
+        Page<Long> idPage = studentParticipationRepository.findParticipationIdsForManagement(exercise.getId(), teamMode, search.searchTerm(), filters, stuckBuildCutoff,
                 search.scoreRangeLower(), search.scoreRangeUpper(), pageable, sortOrder, search.sortedColumn());
 
         List<Long> ids = idPage.getContent();
