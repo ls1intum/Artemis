@@ -32,6 +32,11 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.lti.api.LtiApi;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.headers.Header;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 
 /**
  * REST controller for managing users.
@@ -117,8 +122,13 @@ public class UserResource {
      *
      * @param selectedLLMUsageDTO the DTO containing the user's choice regarding LLM usage
      * @return the ResponseEntity with status 200 (OK) on success,
-     *         or with status 400 (Bad Request) if the selection is invalid
+     *         status 400 (Bad Request) for a missing body or unreadable selection value,
+     *         or status 500 (Internal Server Error) if the selection property is missing or null
      */
+    @Operation(summary = "Record the current user's AI usage decision")
+    @ApiResponse(responseCode = "200", description = "AI usage decision recorded", content = @Content, headers = @Header(name = "Cache-Control", description = "Cache directives for the authenticated response", schema = @Schema(type = "string")))
+    @ApiResponse(responseCode = "400", description = "Missing request body or unreadable selection value", content = @Content)
+    @ApiResponse(responseCode = "500", description = "The selection property is missing or null", content = @Content)
     @PutMapping("users/select-llm-usage")
     @EnforceAtLeastStudent
     public ResponseEntity<Void> setSelectedLLMUsageToTimestampAndEnum(@RequestBody @NotNull SelectedLLMUsageDTO selectedLLMUsageDTO) {
