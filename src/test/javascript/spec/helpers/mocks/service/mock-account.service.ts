@@ -44,7 +44,7 @@ export class MockAccountService implements IAccountService {
     isOwnerOfParticipation = () => true;
     readonly isAdmin = signal(true);
     readonly isSuperAdmin = signal(true);
-    save = (account: any) => ({}) as any;
+    save = (_account: User) => of(undefined);
     getVcsAccessToken = (participationId: number) => of();
     createVcsAccessToken = (participationId: number) => of();
     getToolToken = () => of();

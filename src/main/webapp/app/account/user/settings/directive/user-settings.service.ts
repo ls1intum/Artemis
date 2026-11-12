@@ -2,7 +2,8 @@ import { Service, inject } from '@angular/core';
 import { Observable, Subject } from 'rxjs';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { UserSettingsCategory } from 'app/foundation/constants/user-settings.constants';
-import { User } from 'app/account/user/user.model';
+import { User as ApiUser } from 'app/openapi/model/user';
+import { AccountApi } from 'app/openapi/api/account-api';
 import { Setting, SettingGroup, UserSettingsStructure } from 'app/account/user/settings/user-settings.model';
 import { ScienceSetting, scienceSettingsStructure } from 'app/account/user/settings/profile/science-settings/science-settings-structure';
 import { hydrate } from 'app/foundation/util/deep-clone.util';
@@ -10,9 +11,9 @@ import { hydrate } from 'app/foundation/util/deep-clone.util';
 @Service()
 export class UserSettingsService {
     private http = inject(HttpClient);
+    private readonly accountApi = inject(AccountApi);
 
     public scienceSettingsResourceUrl = 'api/atlas/science-settings';
-    public profilePictureResourceUrl = 'api/account/profile-picture';
     private applyNewChangesSource = new Subject<string>();
     userSettingsChangeEvent = this.applyNewChangesSource.asObservable();
 
@@ -147,14 +148,11 @@ export class UserSettingsService {
         this.applyNewChangesSource.next(message);
     }
 
-    public updateProfilePicture(file: Blob) {
-        const formData = new FormData();
-        formData.append('file', file, 'placeholderName.jpeg');
-
-        return this.http.put<User>(`${this.profilePictureResourceUrl}`, formData, { observe: 'response' });
+    public updateProfilePicture(file: Blob): Observable<ApiUser> {
+        return this.accountApi.updateProfilePicture(new File([file], 'placeholderName.jpeg', { type: file.type }));
     }
 
-    public removeProfilePicture() {
-        return this.http.delete<User>(`${this.profilePictureResourceUrl}`, { observe: 'response' });
+    public removeProfilePicture(): Observable<void> {
+        return this.accountApi.removeProfilePicture();
     }
 }

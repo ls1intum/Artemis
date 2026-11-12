@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
+import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { BehaviorSubject, of, throwError } from 'rxjs';
 import dayjs from 'dayjs/esm';
 
@@ -68,7 +68,7 @@ describe('ExamRequestAiFeedbackButtonComponent', () => {
                 { provide: ExamParticipationService, useClass: MockExamParticipationService },
                 { provide: ProfileService, useClass: MockProfileService },
                 { provide: AccountService, useClass: MockAccountService },
-                { provide: UserService, useValue: { updateLLMSelectionDecision: vi.fn().mockReturnValue(of(undefined)) } },
+                { provide: UserService, useValue: { updateLLMSelectionDecision: vi.fn().mockReturnValue(of(new HttpResponse<void>({ status: 200 }))) } },
                 { provide: ParticipationWebsocketService, useClass: MockParticipationWebsocketService },
                 { provide: TranslateService, useClass: MockTranslateService },
                 provideHttpClient(),
@@ -385,7 +385,7 @@ describe('ExamRequestAiFeedbackButtonComponent', () => {
         it('should trigger the feedback request when the user picks LOCAL_AI in the modal', async () => {
             const { llmModalService, userService, requestSpy } = setupForModal();
             vi.spyOn(llmModalService, 'open').mockResolvedValue(LLMSelectionDecision.LOCAL_AI);
-            const updateSpy = vi.spyOn(userService, 'updateLLMSelectionDecision').mockReturnValue(of(undefined) as any);
+            const updateSpy = vi.spyOn(userService, 'updateLLMSelectionDecision').mockReturnValue(of(new HttpResponse<void>({ status: 200 })));
 
             await component.requestAIFeedback();
 
@@ -397,7 +397,7 @@ describe('ExamRequestAiFeedbackButtonComponent', () => {
         it('should trigger the feedback request when the user picks CLOUD_AI in the modal', async () => {
             const { llmModalService, userService, requestSpy } = setupForModal();
             vi.spyOn(llmModalService, 'open').mockResolvedValue(LLMSelectionDecision.CLOUD_AI);
-            const updateSpy = vi.spyOn(userService, 'updateLLMSelectionDecision').mockReturnValue(of(undefined) as any);
+            const updateSpy = vi.spyOn(userService, 'updateLLMSelectionDecision').mockReturnValue(of(new HttpResponse<void>({ status: 200 })));
 
             await component.requestAIFeedback();
 
@@ -409,7 +409,7 @@ describe('ExamRequestAiFeedbackButtonComponent', () => {
         it('should not trigger the feedback request when the user picks NO_AI', async () => {
             const { llmModalService, userService, requestSpy } = setupForModal();
             vi.spyOn(llmModalService, 'open').mockResolvedValue(LLMSelectionDecision.NO_AI);
-            const updateSpy = vi.spyOn(userService, 'updateLLMSelectionDecision').mockReturnValue(of(undefined) as any);
+            const updateSpy = vi.spyOn(userService, 'updateLLMSelectionDecision').mockReturnValue(of(new HttpResponse<void>({ status: 200 })));
 
             await component.requestAIFeedback();
 

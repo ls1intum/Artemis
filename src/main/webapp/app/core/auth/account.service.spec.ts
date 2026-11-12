@@ -21,7 +21,7 @@ import { Course } from 'app/course/shared/entities/course.model';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
 import { Team } from 'app/exercise/shared/entities/team/team.model';
-import { provideHttpClient } from '@angular/common/http';
+import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
 import { UserSshPublicKey } from 'app/programming/shared/entities/user-ssh-public-key.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { LLMSelectionDecision } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
@@ -1040,16 +1040,68 @@ describe('AccountService', () => {
         });
     });
 
-    describe('test save', () => {
-        it('should save user data', () => {
-            const userToSave = { id: 1, login: 'testuser' } as User;
+    describe('save', () => {
+        const url = '/api/account/basic-information';
 
-            accountService.save(userToSave).subscribe((response) => {
-                expect(response.body).toEqual(userToSave);
+        it('sends only the editable profile fields and emits on an empty 200', () => {
+            const userToSave: User = {
+                id: 1,
+                internal: true,
+                login: 'testuser',
+                name: 'Previous Display Name',
+                firstName: 'New',
+                lastName: '',
+                email: 'test@example.com',
+                langKey: 'de',
+                imageUrl: 'profile.jpeg',
+                authorities: [Authority.STUDENT],
+                vcsAccessToken: 'token',
+            };
+            const next = vi.fn();
+            accountService.save(userToSave).subscribe({ next });
+
+            const req = httpMock.expectOne({ method: 'PUT', url });
+            expect(req.request.body).toStrictEqual({
+                login: 'testuser',
+                name: 'Previous Display Name',
+                firstName: 'New',
+                lastName: '',
+                email: 'test@example.com',
+                langKey: 'de',
+                imageUrl: 'profile.jpeg',
+            });
+            req.flush(null, { status: 200, statusText: 'OK' });
+
+            expect(next).toHaveBeenCalledExactlyOnceWith(null);
+        });
+
+        it('propagates the email-in-use problem and failure headers', () => {
+            const error = vi.fn();
+            accountService.save({ login: 'testuser', internal: true }).subscribe({ error });
+
+            const req = httpMock.expectOne({ method: 'PUT', url });
+            expect(req.request.serializeBody()).toBe('{"login":"testuser"}');
+            const problem = { type: 'https://www.jhipster.tech/problem/email-already-used', title: 'Email is already in use!', status: 400 };
+            req.flush(problem, {
+                status: 400,
+                statusText: 'Bad Request',
+                headers: { 'X-artemisApp-error': 'error.emailExists', 'X-artemisApp-params': 'userManagement' },
             });
 
-            const req = httpMock.expectOne({ method: 'PUT', url: 'api/account/basic-information' });
-            req.flush(userToSave);
+            expect(error).toHaveBeenCalledExactlyOnceWith(expect.any(HttpErrorResponse));
+            const response: HttpErrorResponse = error.mock.calls[0][0];
+            expect(response.status).toBe(400);
+            expect(response.error).toEqual(problem);
+            expect(response.headers.get('X-artemisApp-error')).toBe('error.emailExists');
+            expect(response.headers.get('X-artemisApp-params')).toBe('userManagement');
+        });
+
+        it('rejects a missing login before sending a request', () => {
+            const error = vi.fn();
+            accountService.save({ internal: true }).subscribe({ error });
+
+            expect(error).toHaveBeenCalledExactlyOnceWith(new Error('Cannot save account information without a login'));
+            httpMock.expectNone(url);
         });
     });
 
