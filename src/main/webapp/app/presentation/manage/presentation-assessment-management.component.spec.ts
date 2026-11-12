@@ -1361,13 +1361,13 @@ describe('PresentationAssessmentManagementComponent', () => {
         fixture.detectChanges();
         presentationAssessmentService.findStudentRows.mockClear();
 
-        const header = query('[data-testid="presentation-instances-table"] th[tumAetUiSortableColumn="resultPoints"]')!;
+        const header = query('[data-testid="presentation-instances-table"] th[tumAetUiSortableColumn="presentationDate"]')!;
         ((header.querySelector('button') ?? header) as HTMLElement).click();
         fixture.detectChanges();
 
         expect(presentationAssessmentService.findStudentRows).toHaveBeenLastCalledWith(
             courseId,
-            expect.objectContaining({ sortField: 'resultPoints', page: 0, assessmentId: presentationAssessment.id }),
+            expect.objectContaining({ sortField: 'presentationDate', page: 0, assessmentId: presentationAssessment.id }),
         );
 
         (query('button[aria-label="global.paginator.next"]') as HTMLButtonElement).click();
@@ -1375,7 +1375,7 @@ describe('PresentationAssessmentManagementComponent', () => {
 
         expect(presentationAssessmentService.findStudentRows).toHaveBeenLastCalledWith(
             courseId,
-            expect.objectContaining({ sortField: 'resultPoints', page: 1, size: 25, assessmentId: presentationAssessment.id }),
+            expect.objectContaining({ sortField: 'presentationDate', page: 1, size: 25, assessmentId: presentationAssessment.id }),
         );
     });
 

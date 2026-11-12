@@ -135,18 +135,19 @@ describe('PresentationAssessmentInstancesTableComponent', () => {
             const rows = [createRow({ studentLogin: 'b', rowKey: '1:b', displayName: 'bob' }), createRow({ studentLogin: 'a', rowKey: '2:a', displayName: 'Alice' })];
             render(rows);
 
-            const header = query('th[tumAetUiSortableColumn="resultPoints"]')!;
+            const header = query('th[tumAetUiSortableColumn="presentationDate"]')!;
             ((header.querySelector('button') ?? header) as HTMLElement).click();
 
-            expect(sortSpy).toHaveBeenCalledWith(expect.objectContaining({ field: 'resultPoints' }));
+            expect(sortSpy).toHaveBeenCalledWith(expect.objectContaining({ field: 'presentationDate' }));
             const names = Array.from(element().querySelectorAll<HTMLElement>('[data-testid="toggle-row-details"]')).map((el) => el.textContent!.trim());
             expect(names[0]).toContain('bob');
         });
 
-        it('should not offer sorting by the status because the server cannot sort by it', () => {
+        it('should not offer sorting by the status or the assessment because the server cannot sort by them', () => {
             render([createRow()]);
             expect(query('th[tumAetUiSortableColumn="assessed"]')).toBeNull();
-            expect(element().querySelectorAll('th[tumAetUiSortableColumn]')).toHaveLength(3);
+            expect(query('th[tumAetUiSortableColumn="resultPoints"]')).toBeNull();
+            expect(element().querySelectorAll('th[tumAetUiSortableColumn]')).toHaveLength(2);
         });
     });
 });
