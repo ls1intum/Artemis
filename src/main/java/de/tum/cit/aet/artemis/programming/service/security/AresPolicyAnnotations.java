@@ -41,7 +41,11 @@ final class AresPolicyAnnotations {
 
     private static final String VALUE_ARGUMENT = "value";
 
-    private static final Set<String> BOOLEAN_LITERALS = Set.of("true", "false");
+    private static final String FALSE_LITERAL = "false";
+
+    private static final String TEXT_BLOCK_DELIMITER = "\"\"\"";
+
+    private static final Set<String> BOOLEAN_LITERALS = Set.of("true", FALSE_LITERAL);
 
     /**
      * One argument of an annotation.
@@ -88,7 +92,7 @@ final class AresPolicyAnnotations {
          */
         boolean isActivated() {
             Argument activated = arguments.get(ACTIVATED_ARGUMENT);
-            return activated == null || !"false".equals(withoutOuterParentheses(activated.expression()));
+            return activated == null || !FALSE_LITERAL.equals(withoutOuterParentheses(activated.expression()));
         }
 
         /**
@@ -101,17 +105,17 @@ final class AresPolicyAnnotations {
             Argument value = arguments.get(VALUE_ARGUMENT);
             return value == null ? Optional.empty() : plainStringContent(value).map(AresPolicyAnnotations::normalizePath);
         }
-    }
 
-    /**
-     * @return the content of the argument if it is a plain string literal, i.e. one without escape sequences and not a text block, optionally in
-     *         parentheses; empty for any other expression
-     */
-    private static Optional<String> plainStringContent(Argument argument) {
-        String literal = withoutOuterParentheses(argument.expression());
-        boolean plainString = literal.length() >= 2 && literal.startsWith("\"") && literal.endsWith("\"") && !literal.startsWith("\"\"\"") && literal.indexOf('\\') < 0
-                && literal.indexOf('"', 1) == literal.length() - 1;
-        return plainString ? Optional.of(literal.substring(1, literal.length() - 1)) : Optional.empty();
+        /**
+         * @return the content of the argument if it is a plain string literal, i.e. one without escape sequences and not a text block, optionally in
+         *         parentheses; empty for any other expression
+         */
+        private static Optional<String> plainStringContent(Argument argument) {
+            String literal = withoutOuterParentheses(argument.expression());
+            boolean plainString = literal.length() >= 2 && literal.startsWith("\"") && literal.endsWith("\"") && !literal.startsWith(TEXT_BLOCK_DELIMITER)
+                    && literal.indexOf('\\') < 0 && literal.indexOf('"', 1) == literal.length() - 1;
+            return plainString ? Optional.of(literal.substring(1, literal.length() - 1)) : Optional.empty();
+        }
     }
 
     /**
@@ -170,7 +174,7 @@ final class AresPolicyAnnotations {
             arguments.remove(ACTIVATED_ARGUMENT);
         }
         else {
-            arguments.put(ACTIVATED_ARGUMENT, new Argument(true, ACTIVATED_ARGUMENT + " = false", "false"));
+            arguments.put(ACTIVATED_ARGUMENT, new Argument(true, ACTIVATED_ARGUMENT + " = " + FALSE_LITERAL, FALSE_LITERAL));
         }
         if (arguments.isEmpty()) {
             return annotation.name();
@@ -362,9 +366,9 @@ final class AresPolicyAnnotations {
                 int close = source.indexOf("*/", index + 2);
                 index = maskUntil(source, masked, index, close < 0 ? -1 : close + 2, 0);
             }
-            else if (source.startsWith("\"\"\"", index)) {
-                masked.append("\"\"\"");
-                index = maskLiteral(source, masked, index + 3, "\"\"\"", maskLiterals);
+            else if (source.startsWith(TEXT_BLOCK_DELIMITER, index)) {
+                masked.append(TEXT_BLOCK_DELIMITER);
+                index = maskLiteral(source, masked, index + 3, TEXT_BLOCK_DELIMITER, maskLiterals);
             }
             else if (character == '"' || character == '\'') {
                 masked.append(character);

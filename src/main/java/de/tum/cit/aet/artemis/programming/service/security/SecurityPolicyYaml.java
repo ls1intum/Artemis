@@ -219,10 +219,10 @@ final class SecurityPolicyYaml {
      */
     private static boolean readsBackAs(String original, String rewritten, List<String> expectedTestClasses) {
         try {
-            Map<String, Object> before = copyWithTestClasses(newYaml().load(original), expectedTestClasses);
-            Map<String, Object> after = copyWithTestClasses(newYaml().load(rewritten), expectedTestClasses);
+            Optional<Map<String, Object>> before = copyWithTestClasses(newYaml().load(original), expectedTestClasses);
+            Optional<Map<String, Object>> after = copyWithTestClasses(newYaml().load(rewritten), expectedTestClasses);
             ReadPolicy reread = read(rewritten);
-            return before != null && before.equals(after) && reread.testClasses().filter(expectedTestClasses::equals).isPresent();
+            return before.isPresent() && before.equals(after) && reread.testClasses().filter(expectedTestClasses::equals).isPresent();
         }
         catch (YAMLException | ClassCastException _) {
             return false;
@@ -230,19 +230,19 @@ final class SecurityPolicyYaml {
     }
 
     /**
-     * @return a copy of the document whose list of test classes is replaced, so two documents can be compared apart from that list; null if it is no
+     * @return a copy of the document whose list of test classes is replaced, so two documents can be compared apart from that list; empty if it is no
      *         policy mapping
      */
     @SuppressWarnings("unchecked")
-    private static Map<String, Object> copyWithTestClasses(Object document, List<String> testClasses) {
+    private static Optional<Map<String, Object>> copyWithTestClasses(Object document, List<String> testClasses) {
         if (!(document instanceof Map<?, ?> root) || !(root.get(SUPERVISED_CODE_KEY) instanceof Map<?, ?> supervisedCode)) {
-            return null;
+            return Optional.empty();
         }
         Map<String, Object> rootCopy = new LinkedHashMap<>((Map<String, Object>) root);
         Map<String, Object> supervisedCodeCopy = new LinkedHashMap<>((Map<String, Object>) supervisedCode);
         supervisedCodeCopy.put(TEST_CLASSES_KEY, testClasses);
         rootCopy.put(SUPERVISED_CODE_KEY, supervisedCodeCopy);
-        return rootCopy;
+        return Optional.of(rootCopy);
     }
 
     static Yaml newYaml() {

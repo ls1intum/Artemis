@@ -70,12 +70,15 @@ final class AresTestSources {
     private static final Pattern ARES_2_REFERENCE = Pattern
             .compile("(?<![\\w$.])" + Pattern.quote(ARES_2_PACKAGE) + "((?:\\s*\\.\\s*[a-z_][\\w$]*)*\\s*\\.\\s*(?:[A-Z][\\w$]*|\\*))");
 
+    /** The JUnit 5 subpackage of Ares, relative to {@link #ARES_2_PACKAGE}, as a prefix of the API names in {@link #SANDBOX_APIS}. */
+    private static final String JUPITER = "jupiter.";
+
     /**
      * The parts of Ares the Security Framework itself switches on and off: the policy annotation and the markers and extension that register the sandbox,
      * relative to {@link #ARES_2_PACKAGE}. Tests that use only these keep working without the Ares library once the sandbox is off.
      */
-    private static final Set<String> SANDBOX_APIS = Stream.concat(Stream.of("Policy", "jupiter.*", "jupiter." + SECURITY_EXTENSION, "jupiter." + UNSUPPORTED_ARES_MARKER),
-            Stream.concat(ARES_CLASS_MARKERS.stream(), ARES_METHOD_MARKERS.stream()).map(marker -> "jupiter." + marker)).collect(Collectors.toUnmodifiableSet());
+    private static final Set<String> SANDBOX_APIS = Stream.concat(Stream.of("Policy", JUPITER + "*", JUPITER + SECURITY_EXTENSION, JUPITER + UNSUPPORTED_ARES_MARKER),
+            Stream.concat(ARES_CLASS_MARKERS.stream(), ARES_METHOD_MARKERS.stream()).map(marker -> JUPITER + marker)).collect(Collectors.toUnmodifiableSet());
 
     /** The uses of each Ares marker, with or without its package, compiled once. */
     private static final Map<String, Pattern> MARKER_USES = Stream.of(ARES_CLASS_MARKERS.stream(), ARES_METHOD_MARKERS.stream(), Stream.of(UNSUPPORTED_ARES_MARKER))

@@ -22,8 +22,8 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.function.Consumer;
-import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.function.UnaryOperator;
 
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.Git;
@@ -100,6 +100,14 @@ public class SecurityFrameworkService {
 
     public static final String ENTITY_NAME = "programmingExercise.securityFramework";
 
+    private static final String TEMPLATES_DIRECTORY = "templates";
+
+    private static final String PROJECT_TEMPLATE_DIRECTORY = "projectTemplate";
+
+    private static final String GRADLE_BUILD_FILE = "build.gradle";
+
+    private static final String MAVEN_BUILD_FILE = "pom.xml";
+
     /** The oldest Ares version the Security Framework supports: the Java templates, the agent setup and the reserved packages script require it. */
     public static final String MINIMUM_FRAMEWORK_VERSION = "2.2.1";
 
@@ -112,8 +120,8 @@ public class SecurityFrameworkService {
 
     /** The policy of the tests repository template for each build tool, whose permissions a generated policy takes over. */
     private static final Map<BuildTool, Path> TEMPLATE_POLICY_FILES = Map.of(BuildTool.GRADLE,
-            Path.of("templates", "java", "test", "gradle", "projectTemplate", SecurityPolicyRepositoryFiles.POLICY_FILE_NAME), BuildTool.MAVEN,
-            Path.of("templates", "java", "test", "maven", "projectTemplate", SecurityPolicyRepositoryFiles.POLICY_FILE_NAME));
+            Path.of(TEMPLATES_DIRECTORY, "java", "test", "gradle", PROJECT_TEMPLATE_DIRECTORY, SecurityPolicyRepositoryFiles.POLICY_FILE_NAME), BuildTool.MAVEN,
+            Path.of(TEMPLATES_DIRECTORY, "java", "test", "maven", PROJECT_TEMPLATE_DIRECTORY, SecurityPolicyRepositoryFiles.POLICY_FILE_NAME));
 
     /** Which policy fields each Ares release accepts, see {@link AresCompatibilityManifest}. */
     private static final Path COMPATIBILITY_MANIFEST = Path.of("security-framework", "ares-compatibility.yml");
@@ -220,11 +228,11 @@ public class SecurityFrameworkService {
 
     private static Map<ProjectType, Path> templateBuildFiles() {
         Map<ProjectType, Path> buildFiles = new EnumMap<>(ProjectType.class);
-        Path gradleBuildFile = Path.of("templates", "java", "test", "gradle", "projectTemplate", "build.gradle");
+        Path gradleBuildFile = Path.of(TEMPLATES_DIRECTORY, "java", "test", "gradle", PROJECT_TEMPLATE_DIRECTORY, GRADLE_BUILD_FILE);
         buildFiles.put(ProjectType.PLAIN_GRADLE, gradleBuildFile);
         buildFiles.put(ProjectType.GRADLE_GRADLE, gradleBuildFile);
-        buildFiles.put(ProjectType.PLAIN_MAVEN, Path.of("templates", "java", "test", "maven", "projectTemplate", "pom.xml"));
-        buildFiles.put(ProjectType.MAVEN_MAVEN, Path.of("templates", "java", "maven_maven", "test", "projectTemplate", "pom.xml"));
+        buildFiles.put(ProjectType.PLAIN_MAVEN, Path.of(TEMPLATES_DIRECTORY, "java", "test", "maven", PROJECT_TEMPLATE_DIRECTORY, MAVEN_BUILD_FILE));
+        buildFiles.put(ProjectType.MAVEN_MAVEN, Path.of(TEMPLATES_DIRECTORY, "java", "maven_maven", "test", PROJECT_TEMPLATE_DIRECTORY, MAVEN_BUILD_FILE));
         return Collections.unmodifiableMap(buildFiles);
     }
 
@@ -242,7 +250,7 @@ public class SecurityFrameworkService {
         Map<ProjectType, String> templateVersions = templateVersions();
         Set<String> selectableVersions = new LinkedHashSet<>(configuredFrameworkVersions);
         templateVersions.values().stream().filter(SecurityFrameworkService::isAtLeastMinimumVersion).forEach(selectableVersions::add);
-        List<String> sortedVersions = selectableVersions.stream().sorted(Comparator.comparing((String version) -> ModuleDescriptor.Version.parse(version)).reversed()).toList();
+        List<String> sortedVersions = selectableVersions.stream().sorted(Comparator.comparing(ModuleDescriptor.Version::parse).reversed()).toList();
         return new SecurityFrameworkVersionsDTO(sortedVersions, templateVersions);
     }
 
@@ -284,7 +292,7 @@ public class SecurityFrameworkService {
             }
             RevTree tree = revWalk.parseCommit(head).getTree();
             String frameworkVersion = SecurityPolicyRepositoryFiles
-                    .parseAresVersion(readFile(repository, tree, "build.gradle").orElse(null), readFile(repository, tree, "pom.xml").orElse(null)).orElse(null);
+                    .parseAresVersion(readFile(repository, tree, GRADLE_BUILD_FILE).orElse(null), readFile(repository, tree, MAVEN_BUILD_FILE).orElse(null)).orElse(null);
             SecurityFrameworkState state = evaluate(repository, tree);
             return SecurityFrameworkConfigDTO.of(state, frameworkVersion, versionCompatibilities(state, path -> readPolicyFile(repository, tree, path).content()));
         }
@@ -848,7 +856,7 @@ public class SecurityFrameworkService {
      * @param contentByPath reads a policy file by its validated path; null if it cannot be read
      * @return one entry per selectable version, newest first; empty if the state has no policy file to check
      */
-    private List<SecurityFrameworkConfigDTO.VersionCompatibilityDTO> versionCompatibilities(SecurityFrameworkState state, Function<String, @Nullable String> contentByPath) {
+    private List<SecurityFrameworkConfigDTO.VersionCompatibilityDTO> versionCompatibilities(SecurityFrameworkState state, UnaryOperator<@Nullable String> contentByPath) {
         Map<String, String> contents = new LinkedHashMap<>();
         for (SecurityFrameworkState.PolicyFile policyFile : state.policyFiles()) {
             SecurityPolicyRepositoryFiles.validatePolicyPath(policyFile.policyPath()).ifPresent(path -> {
@@ -870,8 +878,16 @@ public class SecurityFrameworkService {
                 unverified |= check.verdict() == AresCompatibilityManifest.Verdict.UNVERIFIED;
                 describeIncompatibility(file.getKey(), check).ifPresent(incompatibilities::add);
             }
-            AresCompatibilityManifest.Verdict verdict = !incompatibilities.isEmpty() ? AresCompatibilityManifest.Verdict.INCOMPATIBLE
-                    : unverified ? AresCompatibilityManifest.Verdict.UNVERIFIED : AresCompatibilityManifest.Verdict.COMPATIBLE;
+            AresCompatibilityManifest.Verdict verdict;
+            if (!incompatibilities.isEmpty()) {
+                verdict = AresCompatibilityManifest.Verdict.INCOMPATIBLE;
+            }
+            else if (unverified) {
+                verdict = AresCompatibilityManifest.Verdict.UNVERIFIED;
+            }
+            else {
+                verdict = AresCompatibilityManifest.Verdict.COMPATIBLE;
+            }
             compatibilities.add(new SecurityFrameworkConfigDTO.VersionCompatibilityDTO(version, verdict.name(), incompatibilities));
         }
         return compatibilities;
@@ -896,8 +912,8 @@ public class SecurityFrameworkService {
      * {@link SecurityPolicyRepositoryFiles#isJavaSourcePath}, so build output is skipped in the same way.
      */
     private static SecurityFrameworkState evaluate(Repository repository, RevTree tree) throws IOException {
-        SecurityPolicyRepositoryFiles.BuildFiles buildFiles = new SecurityPolicyRepositoryFiles.BuildFiles(readFile(repository, tree, "build.gradle").orElse(null),
-                readFile(repository, tree, "pom.xml").orElse(null));
+        SecurityPolicyRepositoryFiles.BuildFiles buildFiles = new SecurityPolicyRepositoryFiles.BuildFiles(readFile(repository, tree, GRADLE_BUILD_FILE).orElse(null),
+                readFile(repository, tree, MAVEN_BUILD_FILE).orElse(null));
         return SecurityPolicyRepositoryFiles.evaluate(javaSources(repository, tree), path -> readPolicyFile(repository, tree, path), buildFiles);
     }
 

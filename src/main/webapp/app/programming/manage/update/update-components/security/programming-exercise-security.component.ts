@@ -657,17 +657,7 @@ export class ProgrammingExerciseSecurityComponent {
                 this.settle(next);
             },
             error: (error: unknown) => {
-                const errorDetail =
-                    error instanceof HttpErrorResponse
-                        ? (this.translatedServerError(error) ??
-                          error.headers.get('X-artemisApp-message') ??
-                          error.error?.title ??
-                          error.error?.detail ??
-                          error.error?.message ??
-                          error.message)
-                        : error instanceof Error
-                          ? error.message
-                          : String(error);
+                const errorDetail = this.errorDetailOf(error);
                 if (statusOnFailure === SecurityActivationStatus.MISCONFIGURED) {
                     this.patchConfig({ status: statusOnFailure, errorDetail, frameworkVersion: versionBefore });
                 } else {
@@ -675,6 +665,19 @@ export class ProgrammingExerciseSecurityComponent {
                 }
             },
         });
+    }
+
+    /** The message shown for a failed operation: the server's translated error if it sent one, otherwise the most specific text the error carries. */
+    private errorDetailOf(error: unknown): string {
+        if (error instanceof HttpErrorResponse) {
+            return (
+                this.translatedServerError(error) ?? error.headers.get('X-artemisApp-message') ?? error.error?.title ?? error.error?.detail ?? error.error?.message ?? error.message
+            );
+        }
+        if (error instanceof Error) {
+            return error.message;
+        }
+        return String(error);
     }
 
     private isIncompatibleVersion(version: string): boolean {

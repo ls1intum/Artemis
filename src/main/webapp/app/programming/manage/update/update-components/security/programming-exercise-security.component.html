@@ -1,6 +1,6 @@
 @if (isAvailable()) {
     <div class="mb-3">
-        <h4 class="mb-1 text-lg font-semibold" jhiTranslate="artemisApp.programmingExercise.security.title"></h4>
+        <h4 class="mb-1 text-lg font-semibold">{{ 'artemisApp.programmingExercise.security.title' | artemisTranslate }}</h4>
         <p class="mb-3 text-sm text-muted-color" jhiTranslate="artemisApp.programmingExercise.security.description"></p>
 
         @if (loadFailed()) {
