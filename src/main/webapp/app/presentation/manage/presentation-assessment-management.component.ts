@@ -18,6 +18,7 @@ import {
     TumAetUiMessageComponent,
     TumAetUiPaginatorComponent,
     TumAetUiSelectComponent,
+    TumAetUiTableLayoutComponent,
     TumAetUiTableSortEvent,
 } from '@tumaet/ui-angular';
 
@@ -116,6 +117,7 @@ function positiveRouteId(value: string | null): number | undefined {
         TumAetUiInputDirective,
         TumAetUiMessageComponent,
         TumAetUiPaginatorComponent,
+        TumAetUiTableLayoutComponent,
         TumAetUiSelectComponent,
         SidebarComponent,
     ],

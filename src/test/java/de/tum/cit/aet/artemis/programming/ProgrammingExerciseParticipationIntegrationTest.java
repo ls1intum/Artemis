@@ -1716,6 +1716,26 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void checkIfParticipationHasResult_foreignParticipation_returnsForbidden() throws Exception {
+        // A foreign participation must not leak whether it has a result, even when one exists.
+        participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student2");
+        var submission = ParticipationFactory.generateProgrammingSubmission(true);
+        Result foreignResult = programmingExerciseUtilService.addProgrammingSubmissionWithResult(programmingExercise, submission, TEST_PREFIX + "student2");
+        long foreignParticipationId = foreignResult.getSubmission().getParticipation().getId();
+
+        request.get("/api/programming/programming-exercise-participations/" + foreignParticipationId + "/has-result", HttpStatus.FORBIDDEN, Boolean.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void checkIfParticipationHasResult_nonExistentParticipation_returnsNotFound() throws Exception {
+        long nonExistentParticipationId = Long.MAX_VALUE;
+
+        request.get("/api/programming/programming-exercise-participations/" + nonExistentParticipationId + "/has-result", HttpStatus.NOT_FOUND, Boolean.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetProgrammingExerciseStudentParticipationByRepoName() throws Exception {
         programmingExercise.setReleaseDate(ZonedDateTime.now());
         programmingExercise = programmingExerciseRepository.save(programmingExercise);

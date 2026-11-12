@@ -87,6 +87,13 @@ describe('ContextSelectionComponent', () => {
             expect(component.exercises()).toHaveLength(3);
         });
 
+        it('should preload the options when the pointer reaches the trigger, so the panel opens at its final height', () => {
+            fixture.nativeElement.querySelector('.iris-context-trigger-wrapper').dispatchEvent(new Event('pointerenter'));
+
+            expect(lectureServiceMock.findAllByCourseIdForOverview).toHaveBeenCalledExactlyOnceWith(courseId);
+            expect(exerciseServiceMock.getTitlesForAccessibleCourse).toHaveBeenCalledExactlyOnceWith(courseId);
+        });
+
         it('should load the options only once per course', () => {
             component.loadContextOptions();
             component.loadContextOptions();

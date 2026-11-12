@@ -9,6 +9,12 @@
         &:hover {
             background: var(--hover-slightly-darker-body-bg);
         }
+
+        // The whole header already changes colour on hover; the toggle button must not draw a second, smaller grey bar on top of it.
+        .lecture-unit-toggle-button {
+            --tumaet-ui-button-hover-overlay: transparent;
+            --tumaet-ui-button-active-overlay: transparent;
+        }
     }
 
     .lecture-unit-body {
