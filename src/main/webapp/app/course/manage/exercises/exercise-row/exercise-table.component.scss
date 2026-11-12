@@ -20,7 +20,7 @@ tbody td {
 // those tables; the categories take the leftover width and the actions column sits at the right edge.
 .col-title {
     width: 18rem;
-    min-width: 14rem;
+    min-width: 13rem;
 }
 
 // Each date stays on one line.
@@ -38,7 +38,7 @@ tbody td {
 }
 
 .col-group {
-    width: 12rem;
+    width: 9rem;
 }
 
 // As wide as the widest row's buttons (--actions-width, measured by the rows; the leftover width until then), so the
@@ -54,7 +54,7 @@ td.col-actions {
 }
 
 .col-group-select {
-    width: 10rem;
+    width: 8rem;
 }
 
 .drag-handle {
