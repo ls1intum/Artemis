@@ -31,6 +31,12 @@ buildscript {
             // only, not shipped. Keep equal to the project-level jsoup version below and to the minimum in
             // gradle/dependency-families.gradle (verifyBuildscriptClasspathPins).
             force "org.jsoup:jsoup:1.24.1"
+            // Force the patched org.json onto the build-script / plugin classpath as well. org.owasp.dependencycheck
+            // (dependency-check-core 13.0.0) resolves 20260522, which is affected by an unbounded numeric string
+            // resource exhaustion in JSONTokener (fixed in 20260719) and reported by the GitHub dependency graph via
+            // settings.gradle. Build-time only, not shipped; the test classpath pins its own version below. Keep equal
+            // to the minimum in gradle/dependency-families.gradle (verifyBuildscriptClasspathPins).
+            force "org.json:json:20260814"
         }
     }
     // The custom OpenAPI generator (generatorName "angular22", https://github.com/ls1intum/openapi-generator-angular22)
@@ -117,7 +123,7 @@ envProperties.each { key, value ->
 }
 
 group = "de.tum.cit.aet.artemis"
-version = "10.7"
+version = "10.8"
 description = "Interactive Learning with Individual Feedback"
 
 java {

@@ -7,6 +7,7 @@
             "no": "Nein",
             "you": "Du",
             "emptyList": "Keine Elemente verfügbar",
+            "noEntriesYet": "Noch keine Einträge vorhanden",
             "serverNotReachable": "Server ist nicht erreichbar",
             "filterOptions": "Optionen filtern",
             "noMatchingOptions": "Keine passenden Optionen",
@@ -422,8 +423,8 @@
             "dev": "Development",
             "test": "Testserver"
         },
-        "item-count": "Zeige {{first}} bis {{second}} von {{total}} Einträgen",
         "paginator": {
+            "compactReport": "{{first}}–{{second}} von {{total}}",
             "ariaLabel": "Seitennavigation",
             "first": "Erste Seite",
             "previous": "Vorherige Seite",

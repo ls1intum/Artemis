@@ -151,6 +151,39 @@ class RateLimitServiceTest {
     }
 
     @Test
+    void testRefundPerMinute_AddsOneTokenToTheBucketOfTheClient() throws AddressStringException {
+        when(configurationService.isRateLimitingEnabled()).thenReturn(true);
+        when(featureToggleService.isFeatureEnabled(any())).thenReturn(true);
+        when(configurationService.getEffectiveRpm(RateLimitType.AUTHENTICATION)).thenReturn(30);
+        when(proxyManager.getProxy(anyString(), any())).thenReturn(bucketProxy);
+
+        rateLimitService.refundPerMinute(new IPAddressString("192.168.1.1").toAddress(), RateLimitType.AUTHENTICATION);
+
+        verify(bucketProxy).addTokens(1);
+    }
+
+    @Test
+    void testRefundPerMinute_WhenRateLimitingDisabled_ShouldDoNothing() throws AddressStringException {
+        when(configurationService.isRateLimitingEnabled()).thenReturn(false);
+
+        rateLimitService.refundPerMinute(new IPAddressString("192.168.1.1").toAddress(), RateLimitType.AUTHENTICATION);
+
+        verify(proxyManager, never()).getProxy(anyString(), any());
+    }
+
+    @Test
+    void testRefundPerMinute_ForAnExemptAddress_ShouldDoNothing() throws AddressStringException {
+        IPAddress clientId = new IPAddressString("192.168.1.1").toAddress();
+        when(configurationService.isRateLimitingEnabled()).thenReturn(true);
+        when(featureToggleService.isFeatureEnabled(any())).thenReturn(true);
+        when(configurationService.isExempt(clientId)).thenReturn(true);
+
+        rateLimitService.refundPerMinute(clientId, RateLimitType.AUTHENTICATION);
+
+        verify(proxyManager, never()).getProxy(anyString(), any());
+    }
+
+    @Test
     void testEnforcePerMinute_TwoTypesWithSameRpm_ShouldUseSeparateBuckets() throws AddressStringException {
         when(configurationService.isRateLimitingEnabled()).thenReturn(true);
         when(featureToggleService.isFeatureEnabled(any())).thenReturn(true);
