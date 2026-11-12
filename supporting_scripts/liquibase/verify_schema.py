@@ -91,7 +91,9 @@ CHANGESET_TAG = f"{NAMESPACE}changeSet"
 # historical identity so that dropping a grandfathered column and re-adding it under the same name in a
 # NEW changeset is not waved through by the name alone.
 
-UNBOUNDED_TEXT_TYPES = frozenset({"text", "mediumtext", "longtext", "clob"})
+# ntext and nclob are the national-charset siblings of text/clob; Liquibase materialises them as unbounded
+# text as well, so they count here (reported: a grandfathered column re-added as ntext slipped through).
+UNBOUNDED_TEXT_TYPES = frozenset({"text", "mediumtext", "longtext", "clob", "ntext", "nclob"})
 
 # The (table, column) pairs that were already unbounded text when this guard was introduced. They are
 # grandfathered so the guard is green on day one; a new unbounded-text column must not be added (give it a
@@ -191,13 +193,18 @@ COLUMN_TAG = f"{NAMESPACE}column"
 MODIFY_DATA_TYPE_TAG = f"{NAMESPACE}modifyDataType"
 ROLLBACK_TAG = f"{NAMESPACE}rollback"
 SQL_TAG = f"{NAMESPACE}sql"
+MODIFY_SQL_TAG = f"{NAMESPACE}modifySql"
+COMMENT_TAG = f"{NAMESPACE}comment"
 # <sqlFile> (an external file) and a custom change class cannot be read at all, so they are always
-# flagged for review. A raw <sql> block, by contrast, is read: it is only flagged when its text mentions
-# an unbounded-text type, so the many raw-SQL data migrations (FK backfills, constraints) pass untouched
-# while a raw-SQL text-column introduction still needs a conscious decision. check_column_types backstops
-# everything by inspecting the final materialised schema regardless of how a column was created.
+# flagged for review. A raw <sql> block, by contrast, is read in full (including the text that follows a
+# nested child such as <comment>, which element.text alone would miss): it is only flagged when that text
+# mentions an unbounded-text type, so the many raw-SQL data migrations (FK backfills, constraints) pass
+# untouched while a raw-SQL text-column introduction still needs a conscious decision. A <modifySql> block,
+# which rewrites the generated SQL, is likewise flagged when it introduces a text type (e.g. a <replace
+# with="TEXT"/>). check_column_types backstops everything by inspecting the final materialised schema
+# regardless of how a column was created.
 HARD_OPAQUE_TAGS = frozenset({f"{NAMESPACE}sqlFile", f"{NAMESPACE}customChange"})
-TEXT_TYPE_TOKEN = re.compile(r"\b(?:text|longtext|mediumtext|clob)\b", re.IGNORECASE)
+TEXT_TYPE_TOKEN = re.compile(r"\b(?:text|longtext|mediumtext|clob|ntext|nclob)\b", re.IGNORECASE)
 
 
 def normalize_identifier(name: str | None) -> str:
@@ -213,7 +220,7 @@ def normalize_identifier(name: str | None) -> str:
 
 
 def is_unbounded_text(sql_type: str | None) -> bool:
-    """True for text/mediumtext/longtext/clob, ignoring any length argument and case."""
+    """True for text/mediumtext/longtext/clob/ntext/nclob, ignoring any length argument and case."""
     if not sql_type:
         return False
     base = sql_type.strip().lower().split("(", 1)[0].strip()
@@ -759,17 +766,59 @@ def unbounded_text_introductions(changeset) -> set[tuple[str, str]]:
     return found
 
 
+def raw_sql_text(element) -> str:
+    """
+    The full SQL text of a <sql> element, including text that follows a nested child element.
+
+    ElementTree puts the text before the first child in ``element.text`` and the text after a child in that
+    child's ``.tail``; a bare ``element.text`` therefore misses the SQL written after a nested <comment>
+    (reported: ``<sql><comment>..</comment>CREATE TABLE .. TEXT</sql>`` slipped through). A <comment> child's
+    own text is excluded, so prose in a comment does not trip the token scan.
+    """
+    parts = [element.text or ""]
+    for child in element:
+        if child.tag != COMMENT_TAG:
+            parts.append("".join(child.itertext()))
+        parts.append(child.tail or "")
+    return "".join(parts)
+
+
+def modify_sql_introduces_text(element) -> bool:
+    """
+    True when a <modifySql> rewrites the generated SQL to mention an unbounded-text type, or carries an
+    unresolved ${property} that could.
+
+    <modifySql> post-processes the SQL Liquibase generates (e.g. ``<replace replace="VARCHAR(255)"
+    with="TEXT"/>``), so a column declared as a bounded type can still end up unbounded in the database
+    (reported). The replacement text lives in attributes (``with=``/``value=``) as well as element text, so
+    both are inspected across the whole subtree. The scanner cannot map the result to a (table, column) pair,
+    so the changeset is sent to manual attestation rather than reported as a precise introduction.
+    """
+    for node in element.iter():
+        for value in node.attrib.values():
+            if TEXT_TYPE_TOKEN.search(value) or "${" in value:
+                return True
+        for text in (node.text, node.tail):
+            if text and (TEXT_TYPE_TOKEN.search(text) or "${" in text):
+                return True
+    return False
+
+
 def needs_manual_review(changeset) -> bool:
     """
     True when a changeset (outside its <rollback>) carries something the scanner cannot read for certain: a
     <sqlFile> or custom change class, a raw <sql> block mentioning a text type or an unresolved ${property}
-    expression (which could substitute a text type), or a column whose type is an unresolved ${property}.
-    Such a changeset must be attested in UNVERIFIABLE_CHANGESETS.
+    expression (which could substitute a text type), a <modifySql> that rewrites the SQL to a text type, or a
+    column whose type is an unresolved ${property}. Such a changeset must be attested in UNVERIFIABLE_CHANGESETS.
     """
     for element in iter_forward_elements(changeset):
         if element.tag in HARD_OPAQUE_TAGS or element.get("class"):
             return True
-        if element.tag == SQL_TAG and element.text and (TEXT_TYPE_TOKEN.search(element.text) or "${" in element.text):
+        if element.tag == SQL_TAG:
+            sql_text = raw_sql_text(element)
+            if TEXT_TYPE_TOKEN.search(sql_text) or "${" in sql_text:
+                return True
+        if element.tag == MODIFY_SQL_TAG and modify_sql_introduces_text(element):
             return True
         if element.tag == COLUMN_TAG and "${" in (element.get("type") or ""):
             return True
@@ -806,9 +855,9 @@ def scan_text_introductions(files: list[tuple[str, Path]], allowed_introductions
                 entry = unverifiable_changesets.get(key)
                 if entry is None:
                     failures.append(
-                        f"{relative}: changeset {identifier} ({author}) carries a raw <sql>/<sqlFile>/custom change or an "
-                        f"unresolved ${{property}} (in a column type or raw SQL) the guard cannot read and that may introduce "
-                        f'unbounded text. Review it, then add ("{relative}", "{identifier}", "{author}"): ("<reason>", '
+                        f"{relative}: changeset {identifier} ({author}) carries a raw <sql>/<sqlFile>/<modifySql>/custom change "
+                        f"or an unresolved ${{property}} (in a column type or raw SQL) the guard cannot read and that may "
+                        f'introduce unbounded text. Review it, then add ("{relative}", "{identifier}", "{author}"): ("<reason>", '
                         f"(<(table, column) pairs it introduces, or empty>)) to UNVERIFIABLE_CHANGESETS."
                     )
                 else:

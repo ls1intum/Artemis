@@ -47,7 +47,7 @@ class NormalizeTest(unittest.TestCase):
         self.assertEqual(normalize_identifier(None), "")
 
     def test_is_unbounded_text(self):
-        for yes in ("text", "TEXT", "longtext", "mediumtext", "clob", " text ", "text()"):
+        for yes in ("text", "TEXT", "longtext", "mediumtext", "clob", " text ", "text()", "ntext", "NTEXT", "nclob"):
             self.assertTrue(is_unbounded_text(yes), yes)
         for no in ("varchar(255)", "character varying", "tinytext", "bigint", "", None, "integer"):
             self.assertFalse(is_unbounded_text(no), no)
@@ -166,6 +166,52 @@ class ScanTextIntroductionsTest(unittest.TestCase):
         self.assertIn("UNVERIFIABLE_CHANGESETS", failures[0])
         exempt = {(FILE, "cs1", "x"): ("reviewed", ())}
         self.assertEqual(self.run_scan(body, unverifiable=exempt), [])
+
+    def test_ntext_add_column_is_flagged(self):
+        # Reported gap: a grandfathered column dropped and re-added as ntext slipped through. ntext is an
+        # unbounded national-charset text type, so re-adding it must be caught at the source like text.
+        body = '<changeSet id="cs1" author="x"><addColumn tableName="course"><column name="description" type="ntext"/></addColumn></changeSet>'
+        failures = self.run_scan(body)
+        self.assertEqual(len(failures), 1)
+        self.assertIn("course.description", failures[0])
+
+    def test_nclob_create_table_is_flagged(self):
+        body = '<changeSet id="cs1" author="x"><createTable tableName="foo"><column name="bar" type="nclob"/></createTable></changeSet>'
+        failures = self.run_scan(body)
+        self.assertEqual(len(failures), 1)
+        self.assertIn("foo.bar", failures[0])
+
+    def test_modify_sql_replacing_bounded_type_with_text_needs_review(self):
+        # Reported gap: a column declared varchar(255) but rewritten to TEXT via <modifySql> must not pass.
+        body = (
+            '<changeSet id="cs1" author="x">'
+            '<createTable tableName="foo"><column name="bar" type="varchar(255)"/></createTable>'
+            '<modifySql dbms="postgresql,mysql"><replace replace="VARCHAR(255)" with="TEXT"/></modifySql>'
+            "</changeSet>"
+        )
+        failures = self.run_scan(body)
+        self.assertEqual(len(failures), 1)
+        self.assertIn("UNVERIFIABLE_CHANGESETS", failures[0])
+        exempt = {(FILE, "cs1", "x"): ("reviewed: modifySql keeps a bounded type", ())}
+        self.assertEqual(self.run_scan(body, unverifiable=exempt), [])
+
+    def test_sql_after_nested_comment_is_inspected(self):
+        # Reported gap: SQL written after a nested <comment> lives in the comment's tail, which element.text
+        # misses. The CREATE TABLE ... TEXT must still be seen.
+        body = (
+            '<changeSet id="cs1" author="x">'
+            "<sql><comment>Manual schema test</comment>CREATE TABLE zz (payload TEXT)</sql>"
+            "</changeSet>"
+        )
+        failures = self.run_scan(body)
+        self.assertEqual(len(failures), 1)
+        self.assertIn("UNVERIFIABLE_CHANGESETS", failures[0])
+
+    def test_sql_comment_prose_alone_does_not_trip(self):
+        # A <comment>'s own text is excluded, so the word "text" in prose does not force review when the SQL
+        # itself introduces nothing.
+        body = '<changeSet id="cs1" author="x"><sql><comment>free text migration</comment>UPDATE foo SET bar = 1</sql></changeSet>'
+        self.assertEqual(self.run_scan(body), [])
 
     def test_stale_allowed_entry_is_reported(self):
         body = '<changeSet id="cs1" author="x"><addColumn tableName="foo"><column name="bar" type="varchar(10)"/></addColumn></changeSet>'
