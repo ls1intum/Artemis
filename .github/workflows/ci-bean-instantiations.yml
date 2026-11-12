@@ -30,9 +30,12 @@ jobs:
       # TitleCacheConfiguration at startup.
       # 160 rather than 159 since the reliable mail delivery: the mail sending service reaches the
       # mail retry queue and the test account e-mail service at startup.
-      # 161 rather than 160 since the credential change check: the passkey WebAuthn configurer reaches
+      # 165 rather than 160 since the split of LocalVCServletService: the servlet service injects five new startup beans (the repository
+      # resolver, the access log recorder, the build agent authentication, the push processing and the password authentication notice).
+      # Measured with the command below: 158 edges before the split and 163 after it.
+      # 166 rather than 165 since the credential change check: the passkey WebAuthn configurer reaches
       # the session freshness service at startup, because it hands it to the passkey registration filters.
-      MAX_INSTANTIATED_BEANS: 161
+      MAX_INSTANTIATED_BEANS: 166
       MIN_DEFERRED_CHAIN_LENGTH: 1
 
     steps:

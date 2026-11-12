@@ -1,4 +1,4 @@
-import { Component, ElementRef, OnDestroy, computed, effect, inject, signal, viewChild } from '@angular/core';
+import { Component, DestroyRef, ElementRef, OnDestroy, computed, effect, inject, signal, viewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { NgTemplateOutlet } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -65,6 +65,7 @@ import { UserRegistrationModalComponent } from 'app/shared-ui/user-registration-
 import { UserForRegistration, UserSearchResult } from 'app/shared-ui/user-registration-modal/user-for-registration.model';
 import { ExamUserDTO } from 'app/exam/shared/entities/exam-user-dto.model';
 import { onError } from 'app/foundation/util/global.utils';
+import { ArtemisServerDateService } from 'app/foundation/service/server-date.service';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { StudentExamStatusComponent } from 'app/exam/manage/student-exams/student-exam-status/student-exam-status.component';
@@ -132,6 +133,8 @@ export class ExamStudentsComponent implements OnDestroy {
     private artemisTranslatePipe = inject(ArtemisTranslatePipe);
     private websocketService = inject(WebsocketService);
     private examChecklistService = inject(ExamChecklistService);
+    private serverDateService = inject(ArtemisServerDateService);
+    private destroyRef = inject(DestroyRef);
 
     protected readonly ActionType = ActionType;
     protected readonly missingImage = '/content/images/missing_image.png';
@@ -170,6 +173,9 @@ export class ExamStudentsComponent implements OnDestroy {
     readonly totalExamStudents = signal(0);
     /** Number of generated student exams from the exam checklist. */
     readonly studentExamCount = signal(0);
+    readonly statisticsReady = signal(false);
+    readonly statisticsLoadingFailed = signal(false);
+    readonly registrationUnavailable = computed(() => this.hasExamEnded() || !this.statisticsReady());
 
     readonly hasRegisteredUsers = computed(() => this.totalExamStudents() > 0);
     readonly isMissingIndividualExams = computed(() => {
@@ -216,6 +222,7 @@ export class ExamStudentsComponent implements OnDestroy {
                 }
             }),
             map(() => undefined),
+            takeUntilDestroyed(this.destroyRef),
         );
     };
 
@@ -231,6 +238,7 @@ export class ExamStudentsComponent implements OnDestroy {
     });
     private searchTerm = '';
     private searchTimer?: ReturnType<typeof setTimeout>;
+    private registrationDeadlineTimer?: ReturnType<typeof setTimeout>;
     private requestId = 0;
     private lastLoadEvent: TumAetUiTableQueryEvent | undefined;
     // True while a lazy load was recorded but skipped because the exam id was not yet available. It lets the
@@ -277,7 +285,6 @@ export class ExamStudentsComponent implements OnDestroy {
                 field: 'visibleRegistrationNumber',
                 headerKey: 'artemisApp.examManagement.examStudents.table.matriculationNumber',
                 sort: true,
-                wrapHeader: true,
                 width: '6rem',
                 templateRef: this.plainTemplate(),
             },
@@ -300,7 +307,6 @@ export class ExamStudentsComponent implements OnDestroy {
                 field: 'workingTime',
                 headerKey: this.isTestExam() ? 'artemisApp.studentExams.usedWorkingTime' : 'artemisApp.studentExams.workingTime',
                 sort: true,
-                wrapHeader: true,
                 width: '4rem',
                 templateRef: this.workingTimeTemplate(),
             },
@@ -318,11 +324,26 @@ export class ExamStudentsComponent implements OnDestroy {
         return cols;
     });
 
-    readonly manageStudentsMenuActions = signal<ExamStudentsMenuItem[]>([
-        { label: 'artemisApp.examManagement.examStudents.menu.addStudents', icon: faUserPlus, command: () => this.openAddStudentsDialog() },
-        { label: 'artemisApp.examManagement.examStudents.menu.importUsers', icon: faFileImport, command: () => this.openImportUsersDialog() },
+    readonly manageStudentsMenuActions = computed<ExamStudentsMenuItem[]>(() => [
+        {
+            label: 'artemisApp.examManagement.examStudents.menu.addStudents',
+            icon: faUserPlus,
+            disabled: this.registrationUnavailable(),
+            command: () => this.openAddStudentsDialog(),
+        },
+        {
+            label: 'artemisApp.examManagement.examStudents.menu.importUsers',
+            icon: faFileImport,
+            disabled: this.registrationUnavailable(),
+            command: () => this.openImportUsersDialog(),
+        },
         { label: 'artemisApp.examManagement.examStudents.menu.exportUsers', icon: faFileExport, command: () => this.openExportUsersDialog() },
-        { label: 'artemisApp.examManagement.examStudents.menu.registerCourseStudents', icon: faUserPlus, command: () => this.registerAllStudentsFromCourse() },
+        {
+            label: 'artemisApp.examManagement.examStudents.menu.registerCourseStudents',
+            icon: faUserPlus,
+            disabled: this.registrationUnavailable(),
+            command: () => this.registerAllStudentsFromCourse(),
+        },
         {
             label: 'artemisApp.examManagement.examStudents.menu.removeAllStudents',
             icon: faUserMinus,
@@ -388,9 +409,11 @@ export class ExamStudentsComponent implements OnDestroy {
             .pipe(
                 takeUntilDestroyed(),
                 tap((exam: Exam) => {
+                    this.statisticsReady.set(false);
+                    this.statisticsLoadingFailed.set(false);
                     this.exam.set(exam);
                     this.hasExamStarted.set(exam.startDate?.isBefore(dayjs()) || false);
-                    this.hasExamEnded.set(exam.endDate?.isBefore(dayjs()) || false);
+                    this.scheduleRegistrationDeadline();
                     // The paginated table fires its initial lazy load before the exam id is available, so
                     // loadExamStudents early-returns (leaving isLoading=true and totalExamStudents=0). Replay that one
                     // skipped load now that the exam has resolved, otherwise the "Generate student exams" button stays
@@ -408,6 +431,7 @@ export class ExamStudentsComponent implements OnDestroy {
 
                     const examStats$ = this.examChecklistService.getExamStatistics(exam).pipe(
                         catchError((err: HttpErrorResponse) => {
+                            this.statisticsLoadingFailed.set(true);
                             onError(this.alertService, err);
                             return of(undefined);
                         }),
@@ -427,6 +451,7 @@ export class ExamStudentsComponent implements OnDestroy {
             .subscribe(({ examStats, exercisePreparationStatus }) => {
                 this.isAllExercisesPrepared.set(!!examStats?.allExamExercisesAllStudentsPrepared);
                 this.studentExamCount.set(examStats?.numberOfGeneratedStudentExams ?? 0);
+                this.statisticsReady.set(examStats !== undefined);
                 this.setExercisePreparationStatus(exercisePreparationStatus);
             });
 
@@ -466,6 +491,7 @@ export class ExamStudentsComponent implements OnDestroy {
 
     ngOnDestroy() {
         clearTimeout(this.searchTimer);
+        clearTimeout(this.registrationDeadlineTimer);
         this.dialogErrorSource.unsubscribe();
     }
 
@@ -535,11 +561,11 @@ export class ExamStudentsComponent implements OnDestroy {
     }
 
     openImportUsersDialog() {
-        this.usersImportDialog()?.open();
+        this.confirmRegistration(() => this.usersImportDialog()?.open());
     }
 
     openAddStudentsDialog() {
-        this.addStudentsModal()?.open();
+        this.confirmRegistration(() => this.addStudentsModal()?.open());
     }
 
     openExportUsersDialog() {
@@ -621,14 +647,58 @@ export class ExamStudentsComponent implements OnDestroy {
      * Registers all students who are enrolled in the course for the exam
      */
     registerAllStudentsFromCourse() {
-        const exam = this.exam();
-        if (exam?.id) {
-            this.examManagementService.addAllStudentsOfCourseToExam(this.courseId(), exam.id).subscribe({
-                next: () => {
-                    this.reloadStudentsView();
-                },
-                error: (error: HttpErrorResponse) => onError(this.alertService, error),
+        this.confirmRegistration(() => {
+            const exam = this.exam();
+            if (exam?.id) {
+                const courseId = this.courseId();
+                const examId = exam.id;
+                this.examManagementService
+                    .addAllStudentsOfCourseToExam(courseId, examId)
+                    .pipe(takeUntilDestroyed(this.destroyRef))
+                    .subscribe({
+                        next: () => {
+                            if (this.exam().id !== examId) return;
+                            this.reloadStudentsView();
+                        },
+                        error: (error: HttpErrorResponse) => onError(this.alertService, error),
+                    });
+            }
+        });
+    }
+
+    private scheduleRegistrationDeadline() {
+        clearTimeout(this.registrationDeadlineTimer);
+        const remaining = this.exam().endDate?.diff(this.serverDateService.now());
+        this.hasExamEnded.set(remaining !== undefined && remaining <= 0);
+        if (remaining !== undefined && remaining > 0) {
+            this.registrationDeadlineTimer = setTimeout(() => this.scheduleRegistrationDeadline(), Math.min(remaining, 2_147_483_647));
+        }
+    }
+
+    /** Reloads the statistics required to decide whether registration needs confirmation. */
+    retryExamStatistics() {
+        this.fetchExamData();
+    }
+
+    private confirmRegistration(action: () => void) {
+        if (this.exam().endDate && !this.serverDateService.now().isBefore(this.exam().endDate)) {
+            this.hasExamEnded.set(true);
+            this.alertService.error('artemisApp.examManagement.examStudents.registrationClosed');
+            return;
+        }
+        if (!this.statisticsReady()) {
+            return;
+        }
+        if (this.studentExamCount() > 0) {
+            this.confirmationService.confirm({
+                header: this.artemisTranslatePipe.transform('artemisApp.examManagement.examStudents.addDialog.title'),
+                message: this.artemisTranslatePipe.transform('artemisApp.examManagement.examStudents.registrationAfterGeneration'),
+                acceptLabel: this.artemisTranslatePipe.transform('global.form.confirm'),
+                rejectLabel: this.artemisTranslatePipe.transform('global.form.cancel'),
+                accept: action,
             });
+        } else {
+            action();
         }
     }
 
@@ -718,27 +788,21 @@ export class ExamStudentsComponent implements OnDestroy {
     }
 
     attendanceCheckFailed(examUser: ExamStudentDTO | undefined) {
-        return (
-            examUser?.didExamUserAttendExam &&
-            this.hasExamEnded() &&
-            (!examUser.didCheckLogin || !examUser.didCheckImage || !examUser.didCheckName || !examUser.didCheckRegistrationNumber || !examUser.signingImagePath)
-        );
+        const checks = this.attendanceChecks(examUser);
+        return this.hasExamEnded() && !!examUser?.started && checks.some(Boolean) && !checks.every(Boolean);
     }
 
     attendanceCheckPassed(examUser: ExamStudentDTO | undefined) {
-        return (
-            examUser?.didExamUserAttendExam &&
-            examUser.didCheckLogin &&
-            examUser.didCheckImage &&
-            examUser.didCheckName &&
-            examUser.didCheckRegistrationNumber &&
-            examUser.signingImagePath &&
-            this.hasExamEnded()
-        );
+        // Instructors can confirm all identity checks after the exam without collecting a signature.
+        return this.hasExamEnded() && this.attendanceChecks(examUser).every(Boolean);
     }
 
     didNotAttendExam(examUser: ExamStudentDTO | undefined) {
-        return examUser?.didExamUserAttendExam === false && this.hasExamEnded();
+        return this.hasExamEnded() && this.attendanceChecks(examUser).every((checked) => checked === false);
+    }
+
+    private attendanceChecks(examUser: ExamStudentDTO | undefined) {
+        return [examUser?.didCheckImage, examUser?.didCheckName, examUser?.didCheckLogin, examUser?.didCheckRegistrationNumber];
     }
 
     /** Builds a minimal StudentExam from the DTO so working-time sub-components can compute % extension. */
@@ -782,16 +846,22 @@ export class ExamStudentsComponent implements OnDestroy {
         }
 
         this.isLoading.set(true);
-        this.examManagementService.generateStudentExams(this.courseId(), examId).subscribe({
-            next: (res) => {
-                this.alertService.success('artemisApp.studentExams.studentExamGenerationSuccess', { number: res?.body?.length ?? 0 });
-                this.reloadStudentsView();
-            },
-            error: (err: HttpErrorResponse) => {
-                this.handleError('artemisApp.studentExams.studentExamGenerationError', err);
-                this.isLoading.set(false);
-            },
-        });
+        this.examManagementService
+            .generateStudentExams(this.courseId(), examId)
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe({
+                next: (res) => {
+                    if (this.exam().id !== examId) return;
+                    this.studentExamCount.set(res?.body?.length ?? 0);
+                    this.isLoading.set(false);
+                    this.alertService.success('artemisApp.studentExams.studentExamGenerationSuccess', { number: res?.body?.length ?? 0 });
+                    this.reloadStudentsView();
+                },
+                error: (err: HttpErrorResponse) => {
+                    this.handleError('artemisApp.studentExams.studentExamGenerationError', err);
+                    this.isLoading.set(false);
+                },
+            });
     }
 
     private setExercisePreparationStatus(newStatus?: ExamExerciseStartPreparationStatus) {

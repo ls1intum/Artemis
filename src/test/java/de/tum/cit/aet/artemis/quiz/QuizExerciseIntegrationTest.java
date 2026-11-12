@@ -10,6 +10,7 @@ import static org.mockito.Mockito.clearInvocations;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
+import static org.springframework.http.HttpStatus.ACCEPTED;
 import static org.springframework.http.HttpStatus.BAD_REQUEST;
 import static org.springframework.http.HttpStatus.FORBIDDEN;
 import static org.springframework.http.HttpStatus.OK;
@@ -78,6 +79,7 @@ import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDeletionService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
 import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
+import de.tum.cit.aet.artemis.exercise.util.AsyncDeletionTestUtilService;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseIntegrationTestService;
 import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.ExerciseSearchableEntityDTO;
 import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityWeaviateService;
@@ -117,6 +119,9 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
     protected String getTestPrefix() {
         return TEST_PREFIX;
     }
+
+    @Autowired
+    private AsyncDeletionTestUtilService asyncDeletionTestUtilService;
 
     @Autowired
     private StudentParticipationTestRepository studentParticipationRepository;
@@ -712,7 +717,8 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
         QuizExercise quizExercise = quizExerciseUtilService.createAndSaveEnrolledQuiz(TEST_PREFIX, ZonedDateTime.now().plusHours(5), null, quizMode);
 
         assertThat(quizExerciseTestRepository.findOneWithQuestionsAndCategoriesAndBatches(quizExercise.getId())).as("Exercise is created correctly").isNotNull();
-        request.delete("/api/quiz/quiz-exercises/" + quizExercise.getId(), OK);
+        request.delete("/api/quiz/quiz-exercises/" + quizExercise.getId(), ACCEPTED);
+        asyncDeletionTestUtilService.awaitExerciseDeletion(quizExercise.getId());
         assertThat(quizExerciseTestRepository.findOneWithQuestionsAndCategoriesAndBatches(quizExercise.getId())).as("Exercise is deleted correctly").isNull();
         assertExerciseNotInWeaviate(weaviateService, quizExercise.getId());
     }
@@ -724,7 +730,8 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
         QuizExercise quizExercise = (QuizExercise) course.getExercises().stream().findFirst().orElseThrow();
         Channel exerciseChannel = conversationUtilService.addChannelToExercise(quizExercise);
 
-        request.delete("/api/quiz/quiz-exercises/" + quizExercise.getId(), OK);
+        request.delete("/api/quiz/quiz-exercises/" + quizExercise.getId(), ACCEPTED);
+        asyncDeletionTestUtilService.awaitExerciseDeletion(quizExercise.getId());
 
         Optional<Channel> exerciseChannelAfterDelete = channelRepository.findById(exerciseChannel.getId());
         assertThat(exerciseChannelAfterDelete).isEmpty();
@@ -745,7 +752,8 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
         // Quiz submissions are now in database
         assertThat(quizSubmissionTestRepository.findByParticipation_Exercise_Id(quizExercise.getId())).hasSize(1);
 
-        request.delete("/api/quiz/quiz-exercises/" + quizExercise.getId(), OK);
+        request.delete("/api/quiz/quiz-exercises/" + quizExercise.getId(), ACCEPTED);
+        asyncDeletionTestUtilService.awaitExerciseDeletion(quizExercise.getId());
         assertThat(quizExerciseTestRepository.findOneWithQuestionsAndCategoriesAndBatches(quizExercise.getId())).as("Exercise is deleted correctly").isNull();
     }
 

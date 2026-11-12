@@ -261,6 +261,27 @@ describe('ResultComponent', () => {
             expect(comp.resultIconClass()).toBe(faCheckCircle);
         });
 
+        describe('exercises that carry no course', () => {
+            const resultWithManyDecimals: Result = { id: 8, score: 42.4567, rated: true, completionDate: dayjs().subtract(1, 'hour'), submission: { id: 22 } };
+            const exerciseWithoutCourse = { id: 4, type: ExerciseType.TEXT, maxPoints: 10 } as Exercise;
+
+            beforeEach(() => {
+                fixture.componentRef.setInput('exercise', exerciseWithoutCourse);
+                fixture.componentRef.setInput('result', resultWithManyDecimals);
+                fixture.componentRef.setInput('short', true);
+            });
+
+            it('rounds the score to the accuracy of the passed course', () => {
+                const instantSpy = vi.spyOn(TestBed.inject(TranslateService), 'instant');
+                fixture.componentRef.setInput('course', { accuracyOfScores: 3 });
+                fixture.detectChanges();
+
+                comp.resultString();
+
+                expect(instantSpy).toHaveBeenCalledWith('artemisApp.result.resultString.short', { relativeScore: 42.457 });
+            });
+        });
+
         describe('results that belong to no participation', () => {
             const exampleSubmissionResult: Result = {
                 id: 7,

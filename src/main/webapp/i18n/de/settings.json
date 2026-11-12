@@ -1,13 +1,11 @@
 {
     "settings": {
-        "title": "Einstellungen für Nutzer:in <b>{{username}}</b>",
         "form": {
             "firstname": "Vorname",
             "firstname.placeholder": "Vorname",
             "lastname": "Nachname",
             "lastname.placeholder": "Nachname",
-            "language": "Sprache",
-            "button": "Speichern"
+            "language": "Sprache"
         },
         "saml2SyncedInfo": "Dein Name und deine E-Mail-Adresse werden von deiner Institution über SAML2 verwaltet und können hier nicht geändert werden.",
         "pendingEmailChange": {
@@ -30,7 +28,6 @@
                 "emailChangeRequestedTooRecently": "<strong>Bitte warte einen Moment.</strong> Du hast vor weniger als einer Minute eine Änderung der E-Mail-Adresse angefordert. Versuche es in einer Minute erneut.",
                 "noPendingEmailChange": "<strong>Es gibt keine offene Änderung der E-Mail-Adresse.</strong> Sie ist möglicherweise abgelaufen oder wurde bereits abgebrochen."
             },
-            "success": "<strong>Einstellungen wurden gespeichert!</strong>",
             "successEmailChangeRequested": "<strong>Einstellungen wurden gespeichert!</strong> Wir haben eine Bestätigungs-E-Mail an deine aktuelle Adresse und eine an deine neue Adresse geschickt. Deine E-Mail-Adresse ändert sich, sobald du beide bestätigt hast. Bis dahin gilt weiterhin deine aktuelle Adresse.",
             "confirmationMailsResent": "<strong>Bestätigungs-E-Mails erneut gesendet.</strong> Wir haben neue Links an deine aktuelle und deine neue Adresse geschickt. Frühere Links funktionieren nicht mehr.",
             "emailChangeCancelled": "<strong>Änderung der E-Mail-Adresse abgebrochen.</strong> Deine E-Mail-Adresse bleibt unverändert.",
@@ -45,6 +42,9 @@
                     "required": "Dein Nachname wird benötigt.",
                     "minlength": "Dein Nachname muss mindestens 2 Zeichen lang sein.",
                     "maxlength": "Dein Nachname darf nicht länger als 50 Zeichen sein"
+                },
+                "email": {
+                    "pattern": "Domain muss eine der folgenden sein: {{ pattern }}."
                 }
             }
         }

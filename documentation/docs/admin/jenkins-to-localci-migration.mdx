@@ -3,7 +3,7 @@ id: jenkins-to-localci-migration
 title: Migrating from Jenkins to LocalCI
 sidebar_label: Jenkins to LocalCI Migration
 description: How to move an Artemis installation that builds with Jenkins to LocalCI before Jenkins support is removed in Artemis 11.
-last_reviewed: 2026-11-03
+last_reviewed: 2026-11-09
 ---
 
 import Callout from "../../src/components/Callout/Callout";
@@ -52,7 +52,8 @@ and no Jenkins user to maintain.
    - Instructors who edited the pipeline script of an exercise in the script-based build plan editor. LocalCI ignores a stored Jenkinsfile
      and runs the build phases of the exercise. Such an exercise needs its script rebuilt as build phases, see [Step 4](#4-check-every-exercise).
    - Overridden Jenkins templates under `src/main/resources/templates/jenkins`, and changes to the pipeline for network access.
-     LocalCI uses the [build phases templates](/admin/production-setup/programming-exercise-adjustments) and the Docker flags of the exercise instead.
+     LocalCI uses the [build phases templates](/admin/production-setup/programming-exercise-adjustments) and the Docker flags of the exercise instead,
+     see [LocalCI Build Environment](/admin/production-setup/localci-build-environment).
    - Custom Docker images used by Jenkins agents. LocalCI runs the Docker image configured for the exercise on the build agents. Such an image must be
      available to the build agents in a registry or loaded on each Docker build agent, built for the architecture of the build agents (`artemis.continuous-integration.image-architecture`,
      `amd64` by default), and contain all build dependencies. A Docker build agent that runs in a container needs registry credentials that the container can read, because a login on the host does not reach the container by default. The Kubernetes runner needs an
@@ -122,6 +123,12 @@ On staging, trigger the builds of one large exercise ([bulk builds](/admin/produ
 watch the build queue, the build agent utilization and the failure rate. Adjust the number of build agents and the concurrent builds
 per agent until the queue drains at an acceptable speed.
 
+The failure rate here is the share of builds that did not deliver a result because of the infrastructure: builds that end as **Timeout**, **Missing**,
+**Cancelled** or **Error** in the finished builds list of the build queue administration. Builds whose tests fail are not part of it. Compare the rate of the loaded run with a run
+of the same exercise at low load. If it rises with the load, reduce the concurrent builds per agent, because timeouts under load usually mean that the agent host runs out of CPU or memory.
+Also push repeatedly from a few test accounts during the run, because that is what students do before a deadline, see
+[When many students push at once](/admin/scaling#when-many-students-push-at-once).
+
 ### 6. Cut over production
 
 1. Announce a maintenance window to instructors.
@@ -160,6 +167,62 @@ Until you upgrade to Artemis 11 you can go back, because Artemis 10 still suppor
 - Builds run in Docker containers on build agents, so a test that needs a package or a tool needs a Docker image that contains it.
 - Builds of exams run with the highest priority in the build queue.
 
+## Frequently asked questions
+
+Each answer links to the page that explains the topic in full.
+
+LocalCI can be extended to support further use cases. Where an answer says that something is not available, it describes the current state and not a fixed limit.
+To request a setting or a behavior that is missing, open an issue in the [Artemis repository](https://github.com/ls1intum/Artemis/issues) and describe the use case.
+
+**Can a script detect that it runs in CI?** `INITIAL_WORKING_DIRECTORY` is set in every build. There is no `CI` variable by default, but administrators can set it, or any other variable, for all exercises
+with `container-defaults.env`, and instructors can add variables per exercise. See [Detecting that a script runs in LocalCI](/admin/production-setup/localci-build-environment#detecting-that-a-script-runs-in-localci)
+and [Container defaults](/admin/production-setup/localci-build-environment#container-defaults).
+
+**Can builds use a custom Docker registry with credentials?** Yes. Log the Docker user of every build agent in to the registry, with the login stored in `config.json` rather than in a credential helper.
+See [Images from a private registry](/admin/production-setup/localci-build-environment#images-from-a-private-registry).
+
+**What is the pull policy for images?** A build agent pulls an image only when it does not have it. A changed tag is not noticed, so use versioned tags.
+See [Pull policy](/admin/production-setup/localci-build-environment#pull-policy).
+
+**How well can nodes be added, and does it scale automatically?** A build agent joins a running cluster within seconds. There is no built-in autoscaler, but the Helm chart of the experimental
+[Kubernetes runner](/admin/production-setup/build-runners) can scale the build agents with the queue. See [Operating build agents](/admin/production-setup/multiple-artemis-instances#operating-build-agents).
+
+**What happens to the queue when students spam pushes?** Every push is a build, and the queue is ordered by priority and arrival. Instructors can cap the submissions per student with a
+Lock Repository [submission policy](/instructor/exercises/programming-exercise/grade-and-verify#submission-policy-configuration). See [When many students push at once](/admin/scaling#when-many-students-push-at-once).
+
+**Is there a sleep period between a submission and the build, to buffer requests?** No. Without a submission policy, students can submit as often as they like, and every submission is built.
+The same section describes what protects the installation instead.
+
+**Do all steps run in the container, with and without network?** The build script runs in the container, the clone of the repositories does not. A container has one network
+setting for all of its phases, and an exercise without a selection gets Docker's default network, or the one that the administrator sets for all exercises with `container-defaults.network`.
+See [Network access](/admin/production-setup/localci-build-environment#network-access).
+
+**Can I inject a Maven configuration for credentials, or a global offline configuration?** There is no installation-wide Maven setting. Put it in the Docker image or in the default
+phases. See [Dependencies and Maven configuration](/admin/production-setup/localci-build-environment#dependencies-and-maven-configuration).
+
+**How far can the default pipeline be adapted?** Instructors change the phases of each exercise, and administrators change the templates for new exercises.
+See [How far the default build can be adapted](/admin/production-setup/localci-build-environment#how-far-the-default-build-can-be-adapted).
+
+**Which user runs the Docker container?** The default user of the image, and `root` for a few housekeeping steps.
+See [Which user runs the build](/admin/production-setup/localci-build-environment#which-user-runs-the-build).
+
+**Which template is used for a new exercise?** The one for its language and project type, with `_static` and `_sequential` for those options, and plain Maven for Java without a project type.
+See [Which template a new exercise gets](/admin/production-setup/localci-build-environment#which-template-a-new-exercise-gets).
+
+**How do updates work in a multi-node setup?** The whole cluster is stopped and started in a defined order, with the build agents last.
+See [Operating build agents](/admin/production-setup/multiple-artemis-instances#operating-build-agents) and [Deploying a New Version](/admin/production-setup/multiple-artemis-instances#deploying-a-new-version).
+
+**What goes into which configuration file, and how many databases are there?** See [Which setting goes on which node](/admin/production-setup/multiple-artemis-instances#which-setting-goes-on-which-node).
+There is one database, shared by the core nodes, and the build agents do not use it.
+
+**Is there a log size limit?** Yes, 10,000 lines per build and 1,024 characters per line by default. See [Build logs](/admin/production-setup/localci-build-environment#build-logs).
+
+**What happens when a node fails during a build?** The build is put back into the queue and another agent runs it, up to five times.
+See [Operating build agents](/admin/production-setup/multiple-artemis-instances#operating-build-agents).
+
+**How much build configuration does an instructor need when creating an exercise?** None beyond the language and the project type. A new exercise starts with a working build, and the build plan editor is optional,
+see [Configure the Build](/instructor/exercises/programming-exercise/configure-the-build).
+
 ## Open points for the maintainers
 
 These need a decision or a check before this guide is final.
@@ -169,3 +232,17 @@ These need a decision or a check before this guide is final.
   The guide currently makes this manual.
 - Decide what happens to old Jenkins build logs and build plan links on results created before the migration.
 - Add an administration view or a query that lists the exercises with a stored Jenkinsfile, so that operators do not have to find them by hand.
+
+Gaps in comparison with Jenkins. The documentation states each one as it is today. LocalCI can be extended to cover them, and a decision would change the answers above:
+
+- **No debounce for builds, and no installation-wide limit.** Instructors can cap submissions per exercise with a Lock Repository policy, which takes effect when a result is processed.
+  A waiting period that merges quick successive pushes, or a limit on the queued builds of one participation, would protect the queue at a deadline,
+  see [When many students push at once](/admin/scaling#when-many-students-push-at-once).
+- **No installation-wide Maven configuration.** Environment variables (such as `CI=true`) and a default network apply to the builds of all exercises with `container-defaults`, but there is no
+  setting for a Maven or Gradle configuration. Administrators use the image or the default phases instead.
+- **No configurable pull policy.** The Docker runner pulls an image only when it is missing, and reads registry credentials from the Docker configuration of the agent host without credential helpers.
+  An explicit registry credential setting and a policy to always check for a newer image are not available.
+- **No built-in autoscaling.** Artemis exposes the queue and the agents, but starting and stopping agents is left to the environment. The Helm chart of the experimental
+  [Kubernetes runner](/admin/production-setup/build-runners) can scale the build agents with the queue through KEDA and Prometheus, see
+  [Operating LocalCI on Kubernetes](/admin/production-setup/localci-on-kubernetes#automatically). Scaling down can interrupt a running build. The build can be requeued up to five times, and it is marked failed after that.
+- **Choices at exercise creation.** The Java project type (Maven or Gradle) is chosen per exercise. An installation-wide default would shorten the creation form for institutions that use one build tool.

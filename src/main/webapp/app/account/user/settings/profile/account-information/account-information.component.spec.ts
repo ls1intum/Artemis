@@ -13,14 +13,26 @@ import { signal } from '@angular/core';
 import { provideRouter } from '@angular/router';
 import { By } from '@angular/platform-browser';
 import { MockComponent } from 'ng-mocks';
-import { TumAetUiDialogComponent } from '@tumaet/ui-angular';
+import { TumAetUiConfirmationService, TumAetUiDialogComponent } from '@tumaet/ui-angular';
 import { ImageCropperModalComponent } from 'app/course/manage/image-cropper-modal/image-cropper-modal.component';
+import { AccountSettingsDialogComponent } from 'app/account/settings/account-settings-dialog.component';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { PendingEmailChangeDTO } from 'app/account/user/shared/dto/pending-email-change.dto';
 
 describe('AccountInformationComponent', () => {
     let fixture: ComponentFixture<AccountInformationComponent>;
     let comp: AccountInformationComponent;
+    let confirmationService: TumAetUiConfirmationService;
 
-    let accountServiceMock: { userIdentity: ReturnType<typeof signal<User | undefined>>; setImageUrl: ReturnType<typeof vi.fn> };
+    let accountServiceMock: {
+        userIdentity: ReturnType<typeof signal<User | undefined>>;
+        setImageUrl: ReturnType<typeof vi.fn>;
+        identity: ReturnType<typeof vi.fn>;
+        getPendingEmailChange: ReturnType<typeof vi.fn>;
+        resendPendingEmailChange: ReturnType<typeof vi.fn>;
+        cancelPendingEmailChange: ReturnType<typeof vi.fn>;
+    };
+    let profileServiceMock: { getProfileInfo: ReturnType<typeof vi.fn>; isModuleFeatureActive: ReturnType<typeof vi.fn> };
     let userSettingsServiceMock: { updateProfilePicture: ReturnType<typeof vi.fn>; removeProfilePicture: ReturnType<typeof vi.fn> };
     let alertServiceMock: { addAlert: ReturnType<typeof vi.fn> };
 
@@ -28,7 +40,12 @@ describe('AccountInformationComponent', () => {
         accountServiceMock = {
             userIdentity: signal<User | undefined>({ id: 99, internal: true } as User),
             setImageUrl: vi.fn(),
+            identity: vi.fn().mockResolvedValue({ id: 99, internal: true }),
+            getPendingEmailChange: vi.fn().mockReturnValue(of(undefined)),
+            resendPendingEmailChange: vi.fn(),
+            cancelPendingEmailChange: vi.fn(),
         };
+        profileServiceMock = { getProfileInfo: vi.fn().mockReturnValue({ mailConfigured: true }), isModuleFeatureActive: vi.fn().mockReturnValue(false) };
         userSettingsServiceMock = {
             updateProfilePicture: vi.fn(),
             removeProfilePicture: vi.fn(),
@@ -42,14 +59,19 @@ describe('AccountInformationComponent', () => {
                 { provide: AccountService, useValue: accountServiceMock },
                 { provide: UserSettingsService, useValue: userSettingsServiceMock },
                 { provide: AlertService, useValue: alertServiceMock },
+                { provide: ProfileService, useValue: profileServiceMock },
                 { provide: TranslateService, useClass: MockTranslateService },
                 provideRouter([]),
             ],
         })
-            .overrideComponent(AccountInformationComponent, { remove: { imports: [ImageCropperModalComponent] }, add: { imports: [MockComponent(ImageCropperModalComponent)] } })
+            .overrideComponent(AccountInformationComponent, {
+                remove: { imports: [ImageCropperModalComponent, AccountSettingsDialogComponent] },
+                add: { imports: [MockComponent(ImageCropperModalComponent), MockComponent(AccountSettingsDialogComponent)] },
+            })
             .compileComponents();
         fixture = TestBed.createComponent(AccountInformationComponent);
         comp = fixture.componentInstance;
+        confirmationService = fixture.debugElement.injector.get(TumAetUiConfirmationService);
     });
 
     afterEach(() => {
@@ -73,6 +95,15 @@ describe('AccountInformationComponent', () => {
         }
     });
 
+    it('should open the account settings dialog from the edit button', () => {
+        fixture.detectChanges();
+
+        const editButton: HTMLButtonElement = fixture.nativeElement.querySelector('[data-testid="account-settings-edit-button"] button');
+        editButton.click();
+
+        expect(comp.accountSettingsDialogVisible()).toBe(true);
+    });
+
     it('should show the image cropper when setting user image', () => {
         const file = new File([''], 'test.jpg', { type: 'image/jpeg' });
         const event = { currentTarget: { files: [file], value: '' } } as unknown as Event;
@@ -90,10 +121,16 @@ describe('AccountInformationComponent', () => {
         expect(dialog.size()).toBe('small');
     });
 
-    it('should call removeProfilePicture and setImageUrl when deleting user image', () => {
+    it('should only remove the profile picture after deletion is confirmed', () => {
         userSettingsServiceMock.removeProfilePicture.mockReturnValue(of(new HttpResponse({ status: 200 })));
 
-        comp.deleteUserImage();
+        comp.confirmDeleteUserImage();
+
+        expect(userSettingsServiceMock.removeProfilePicture).not.toHaveBeenCalled();
+
+        const confirmationRequest = confirmationService.request('deleteProfilePictureConfirmation');
+        expect(confirmationRequest).toBeDefined();
+        confirmationRequest!.accept();
 
         expect(userSettingsServiceMock.removeProfilePicture).toHaveBeenCalled();
         expect(accountServiceMock.setImageUrl).toHaveBeenCalledWith(undefined);
@@ -139,7 +176,8 @@ describe('AccountInformationComponent', () => {
         const errorResponse = new HttpErrorResponse({ error: { title: 'Removal failed' }, status: 400 });
         userSettingsServiceMock.removeProfilePicture.mockReturnValue(throwError(() => errorResponse));
 
-        comp.deleteUserImage();
+        comp.confirmDeleteUserImage();
+        confirmationService.request('deleteProfilePictureConfirmation')!.accept();
 
         expect(alertServiceMock.addAlert).toHaveBeenCalledWith(
             expect.objectContaining({
@@ -148,5 +186,127 @@ describe('AccountInformationComponent', () => {
                 disableTranslation: true,
             }),
         );
+    });
+
+    describe('pending email change', () => {
+        const pending: PendingEmailChangeDTO = {
+            newEmail: 'new.email@mail.com',
+            requestedAt: '2026-10-13T10:00:00Z',
+            expiresAt: '2026-10-14T10:00:00Z',
+            currentAddressConfirmed: true,
+            newAddressConfirmed: false,
+        };
+
+        async function render(): Promise<void> {
+            fixture.detectChanges();
+            await fixture.whenStable();
+            fixture.detectChanges();
+        }
+
+        function byTestId(testId: string) {
+            return fixture.debugElement.query(By.css(`[data-testid="${testId}"]`));
+        }
+
+        beforeEach(() => {
+            accountServiceMock.userIdentity.set({ id: 99, internal: true, email: 'john.doe@mail.com' } as User);
+        });
+
+        it('shows the pending request with the confirmation state of both addresses', async () => {
+            accountServiceMock.getPendingEmailChange.mockReturnValue(of(pending));
+            await render();
+
+            expect(byTestId('pending-email-change-new-email').nativeElement.textContent).toBe('new.email@mail.com');
+            expect(byTestId('pending-email-change-current').nativeElement.textContent).toContain('john.doe@mail.com');
+            expect(byTestId('pending-email-change-current').nativeElement.textContent).toContain('settings.pendingEmailChange.confirmed');
+            expect(byTestId('pending-email-change-new').nativeElement.textContent).toContain('settings.pendingEmailChange.notConfirmed');
+            expect(byTestId('pending-email-change-expires').nativeElement.textContent).not.toBe('');
+        });
+
+        it('shows no notice when no email change is pending', async () => {
+            await render();
+
+            expect(byTestId('pending-email-change')).toBeNull();
+        });
+
+        it.each([
+            { name: 'an account that is not internal', identity: { id: 99, internal: false }, saml2: false },
+            { name: 'an account that is synchronized through SAML2', identity: { id: 99, internal: true }, saml2: true },
+        ])('does not load a pending request for $name', async ({ identity, saml2 }) => {
+            accountServiceMock.identity.mockResolvedValue(identity);
+            profileServiceMock.isModuleFeatureActive.mockReturnValue(saml2);
+            await render();
+
+            expect(accountServiceMock.getPendingEmailChange).not.toHaveBeenCalled();
+        });
+
+        it('announces the confirmation mails of a request created by the settings dialog', async () => {
+            await render();
+
+            comp.onEmailChangeRequested(pending);
+            fixture.detectChanges();
+
+            expect(byTestId('pending-email-change')).not.toBeNull();
+            expect(byTestId('settings-success-message')).not.toBeNull();
+        });
+
+        it('resends the confirmation mails and shows the restarted request', async () => {
+            const restarted = { ...pending, currentAddressConfirmed: false };
+            accountServiceMock.getPendingEmailChange.mockReturnValue(of(pending));
+            accountServiceMock.resendPendingEmailChange.mockReturnValue(of(restarted));
+            await render();
+
+            byTestId('resend-email-change-button').query(By.css('button')).nativeElement.click();
+            fixture.detectChanges();
+
+            expect(accountServiceMock.resendPendingEmailChange).toHaveBeenCalledOnce();
+            expect(comp.pendingEmailChange()).toEqual(restarted);
+            expect(byTestId('settings-resent-message')).not.toBeNull();
+        });
+
+        it('shows the message of a known error when resending too soon', async () => {
+            accountServiceMock.getPendingEmailChange.mockReturnValue(of(pending));
+            accountServiceMock.resendPendingEmailChange.mockReturnValue(throwError(() => ({ status: 400, error: { errorKey: 'emailChangeRequestedTooRecently' } })));
+            await render();
+
+            comp.resendConfirmationMails();
+
+            expect(comp.errorMessageKey()).toBe('settings.messages.error.emailChangeRequestedTooRecently');
+            expect(comp.pendingChangeRequestRunning()).toBe(false);
+            expect(comp.pendingEmailChange()).toEqual(pending);
+        });
+
+        it('cancels the pending request', async () => {
+            accountServiceMock.getPendingEmailChange.mockReturnValue(of(pending));
+            accountServiceMock.cancelPendingEmailChange.mockReturnValue(of(undefined));
+            await render();
+
+            byTestId('cancel-email-change-button').query(By.css('button')).nativeElement.click();
+            fixture.detectChanges();
+
+            expect(accountServiceMock.cancelPendingEmailChange).toHaveBeenCalledOnce();
+            expect(byTestId('pending-email-change')).toBeNull();
+            expect(byTestId('settings-cancelled-message')).not.toBeNull();
+        });
+
+        it('keeps the pending request and shows a generic message when cancelling fails', async () => {
+            accountServiceMock.getPendingEmailChange.mockReturnValue(of(pending));
+            accountServiceMock.cancelPendingEmailChange.mockReturnValue(throwError(() => ({ status: 500 })));
+            await render();
+
+            comp.cancelEmailChange();
+
+            expect(comp.pendingEmailChange()).toEqual(pending);
+            expect(comp.errorMessageKey()).toBe('settings.messages.error.fail');
+        });
+
+        it('disables resending when the server cannot send mails', async () => {
+            profileServiceMock.getProfileInfo.mockReturnValue({ mailConfigured: false });
+            accountServiceMock.getPendingEmailChange.mockReturnValue(of(pending));
+            fixture = TestBed.createComponent(AccountInformationComponent);
+            comp = fixture.componentInstance;
+            await render();
+
+            expect(byTestId('resend-email-change-button').query(By.css('button')).nativeElement.disabled).toBe(true);
+        });
     });
 });

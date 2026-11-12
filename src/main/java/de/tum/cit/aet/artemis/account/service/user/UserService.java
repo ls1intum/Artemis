@@ -462,15 +462,24 @@ public class UserService {
             throw new UsernameAlreadyUsedException();
         }
 
-        // The user has the same login and email, but the account is not activated.
+        // Only an internal account that is still waiting for its activation may be registered again. Any other account
+        // with this login is not the subject of a registration request.
+        if (!existingUser.isInternal() || userRecoveryKeyService.findActivationKey(existingUser.getId()) == null) {
+            throw new UsernameAlreadyUsedException();
+        }
+
+        // The user has the same login and email, and the account still awaits its activation.
         // Return the existing non-activated user so that Artemis can re-send the
         // activation link.
         // Null-safe since canonicalEmail turns a blank address into null: an account registered without one must
         // still get its activation link resent rather than a NullPointerException.
         if (Objects.equals(User.canonicalEmail(existingUser.getEmail()), newUser.getEmail())) {
-            // Update the existing user and VCS
-            newUser.setId(existingUser.getId());
-            User updatedExistingUser = userRepository.save(newUser);
+            // Only the data supplied in the registration request is applied to the stored account
+            existingUser.setPassword(newUser.getPassword());
+            existingUser.setFirstName(newUser.getFirstName());
+            existingUser.setLastName(newUser.getLastName());
+            existingUser.setLangKey(newUser.getLangKey());
+            User updatedExistingUser = userRepository.save(existingUser);
 
             // Post-pone the cleaning up of the account
             instanceMessageSendService.sendRemoveNonActivatedUserSchedule(updatedExistingUser.getId());
@@ -479,7 +488,8 @@ public class UserService {
 
         // The email is different which means that the user wants to re-register the same
         // account with a different email. Block this.
-        throw new AccountRegistrationBlockedException(existingUser.getEmail());
+        // The message names the address of the request, not the one of the stored account.
+        throw new AccountRegistrationBlockedException(newUser.getEmail());
     }
 
     /**

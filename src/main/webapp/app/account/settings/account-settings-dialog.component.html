@@ -1,0 +1,107 @@
+<tumaet-ui-dialog [(visible)]="visible" [header]="'artemisApp.userSettings.accountInformationPage.editTitle' | artemisTranslate" size="small" (shown)="initializeForm()">
+    @if (isSaml2Active()) {
+        <tumaet-ui-message severity="info" class="mb-3 min-w-0 text-sm!">
+            <span jhiTranslate="settings.saml2SyncedInfo"></span>
+        </tumaet-ui-message>
+    }
+    @if (!isSaml2Active() && !mailConfigured) {
+        <tumaet-ui-message severity="info" class="mb-3 min-w-0 text-sm!" data-testid="settings-mail-not-configured-hint">
+            <span jhiTranslate="settings.messages.emailChangeUnavailableHint"></span>
+        </tumaet-ui-message>
+    }
+    @if (errorEmailExists()) {
+        <tumaet-ui-message severity="error" class="mb-3 min-w-0 text-sm!" data-testid="settings-email-exists-message">
+            <span jhiTranslate="settings.messages.error.emailExists"></span>
+        </tumaet-ui-message>
+    }
+    @if (errorMessageKey(); as messageKey) {
+        <tumaet-ui-message severity="error" class="mb-3 min-w-0 text-sm!" data-testid="settings-error-message">
+            <span [jhiTranslate]="messageKey"></span>
+        </tumaet-ui-message>
+    }
+    <form id="account-settings-form" class="flex flex-col gap-3" (submit)="onSubmit($event)" novalidate>
+        <tumaet-ui-form-field
+            controlId="firstName"
+            required
+            [invalid]="settingsForm.firstName().invalid() && (settingsForm.firstName().dirty() || settingsForm.firstName().touched())"
+        >
+            <span id="firstName-label" tumAetUiFormFieldLabel jhiTranslate="settings.form.firstname"></span>
+            <input
+                aria-labelledby="firstName-label"
+                type="text"
+                tumAetUiInput
+                class="w-full"
+                id="firstName"
+                placeholder="{{ 'settings.form.firstname.placeholder' | artemisTranslate }}"
+                [formField]="settingsForm.firstName"
+            />
+            <ng-container tumAetUiFormFieldError>
+                @if (settingsForm.firstName().getError('required')) {
+                    <small jhiTranslate="settings.messages.validate.firstname.required"></small>
+                } @else if (settingsForm.firstName().getError('minLength')) {
+                    <small jhiTranslate="settings.messages.validate.firstname.minlength"></small>
+                } @else if (settingsForm.firstName().getError('maxLength')) {
+                    <small jhiTranslate="settings.messages.validate.firstname.maxlength"></small>
+                }
+            </ng-container>
+        </tumaet-ui-form-field>
+
+        <tumaet-ui-form-field controlId="lastName" required [invalid]="settingsForm.lastName().invalid() && (settingsForm.lastName().dirty() || settingsForm.lastName().touched())">
+            <span id="lastName-label" tumAetUiFormFieldLabel jhiTranslate="settings.form.lastname"></span>
+            <input
+                aria-labelledby="lastName-label"
+                type="text"
+                tumAetUiInput
+                class="w-full"
+                id="lastName"
+                placeholder="{{ 'settings.form.lastname.placeholder' | artemisTranslate }}"
+                [formField]="settingsForm.lastName"
+            />
+            <ng-container tumAetUiFormFieldError>
+                @if (settingsForm.lastName().getError('required')) {
+                    <small jhiTranslate="settings.messages.validate.lastname.required"></small>
+                } @else if (settingsForm.lastName().getError('minLength')) {
+                    <small jhiTranslate="settings.messages.validate.lastname.minlength"></small>
+                } @else if (settingsForm.lastName().getError('maxLength')) {
+                    <small jhiTranslate="settings.messages.validate.lastname.maxlength"></small>
+                }
+            </ng-container>
+        </tumaet-ui-form-field>
+
+        <tumaet-ui-form-field controlId="email" required [invalid]="settingsForm.email().invalid() && (settingsForm.email().dirty() || settingsForm.email().touched())">
+            <span id="email-label" tumAetUiFormFieldLabel jhiTranslate="global.form.email"></span>
+            <input
+                aria-labelledby="email-label"
+                type="email"
+                tumAetUiInput
+                class="w-full"
+                id="email"
+                data-testid="email-input"
+                placeholder="{{ 'global.form.email.placeholder' | artemisTranslate }}"
+                [formField]="settingsForm.email"
+            />
+            <ng-container tumAetUiFormFieldError>
+                @if (settingsForm.email().getError('required')) {
+                    <small jhiTranslate="global.messages.validate.email.required"></small>
+                } @else if (settingsForm.email().getError('email')) {
+                    <small jhiTranslate="global.messages.validate.email.invalid"></small>
+                } @else if (settingsForm.email().getError('minLength')) {
+                    <small jhiTranslate="global.messages.validate.email.minlength"></small>
+                } @else if (settingsForm.email().getError('maxLength')) {
+                    <small jhiTranslate="global.messages.validate.email.maxlength"></small>
+                } @else if (settingsForm.email().getError('pattern')) {
+                    <small jhiTranslate="settings.messages.validate.email.pattern" [translateValues]="{ pattern: allowedEmailPatternReadable }"></small>
+                }
+            </ng-container>
+        </tumaet-ui-form-field>
+    </form>
+
+    <ng-template #footer>
+        <button tumAetUiButton type="button" severity="secondary" variant="outlined" (click)="visible.set(false)">
+            <span jhiTranslate="entity.action.cancel"></span>
+        </button>
+        <button tumAetUiButton data-testid="account-settings-save-button" type="submit" form="account-settings-form" [disabled]="settingsForm().invalid() || !settingsChanged()">
+            <span jhiTranslate="entity.action.save"></span>
+        </button>
+    </ng-template>
+</tumaet-ui-dialog>

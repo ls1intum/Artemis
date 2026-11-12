@@ -71,6 +71,7 @@ export class ExamExerciseTableComponent {
 
     readonly groupChange = output<ExamTableGroupChange>();
     readonly exerciseDeleted = output<Exercise>();
+    readonly exerciseDeletionOutcomeUnknown = output<void>();
 
     protected readonly exerciseType = ExerciseType;
     protected readonly faBars = faBars;

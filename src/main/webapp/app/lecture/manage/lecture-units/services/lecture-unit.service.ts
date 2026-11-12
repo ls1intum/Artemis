@@ -33,8 +33,9 @@ export class LectureUnitService {
             .pipe(map((res: EntityArrayResponseType) => this.convertLectureUnitResponseArrayDatesFromServer(res)));
     }
 
-    delete(lectureUnitId: number, lectureId: number) {
-        return this.httpClient.delete(`${this.resourceURL}/lectures/${lectureId}/lecture-units/${lectureUnitId}`, { observe: 'response' });
+    delete(lectureUnitId: number, lectureId: number, deleteTumLiveRecordings = false) {
+        const params = deleteTumLiveRecordings ? new HttpParams().set('deleteTumLiveRecordings', 'true') : undefined;
+        return this.httpClient.delete(`${this.resourceURL}/lectures/${lectureId}/lecture-units/${lectureUnitId}`, { params, observe: 'response' });
     }
 
     completeLectureUnit(lecture: Lecture, event: LectureUnitCompletionEvent, onSuccess?: () => void): void {

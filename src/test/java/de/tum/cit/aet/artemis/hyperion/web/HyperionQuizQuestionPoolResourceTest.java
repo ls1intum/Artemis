@@ -3,15 +3,21 @@ package de.tum.cit.aet.artemis.hyperion.web;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.time.Duration;
 import java.time.ZonedDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Matcher;
@@ -20,6 +26,8 @@ import java.util.regex.Pattern;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
+import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.messages.SystemMessage;
@@ -31,6 +39,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.cit.aet.artemis.atlas.competency.util.CompetencyUtilService;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
@@ -41,11 +50,17 @@ import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.hyperion.domain.QuizQuestionDifficulty;
 import de.tum.cit.aet.artemis.hyperion.domain.QuizQuestionPoolItem;
 import de.tum.cit.aet.artemis.hyperion.domain.QuizQuestionPoolItemState;
+import de.tum.cit.aet.artemis.hyperion.domain.QuizQuestionReviewState;
 import de.tum.cit.aet.artemis.hyperion.dto.HyperionCourseSettingsDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionFilterVerdictDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionGenerationLanguage;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionGenerationType;
+import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolDeletionDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolItemDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolPageDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolPlanDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolProgressDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolReviewDTO;
 import de.tum.cit.aet.artemis.hyperion.repository.QuizQuestionPoolItemRepository;
 import de.tum.cit.aet.artemis.hyperion.service.HyperionQuizQuestionPoolService;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
@@ -57,15 +72,19 @@ import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalV
 
 class HyperionQuizQuestionPoolResourceTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 
+    private static final String GENERATOR_MODEL = "local-generator";
+
+    private static final String JUDGE_MODEL = "local-judge";
+
     private static final String TEST_PREFIX = "hyperionquizpool";
 
     /**
-     * The first competency has a text unit and a slide-deck unit, the second a text unit: three lecture units, each with two question types
-     * and three difficulties, give eighteen cells; twelve questions per lecture unit give two items per cell.
+     * The first competency has a text unit and a slide-deck unit, the second a text unit: three lecture units, each with the default
+     * twelve single-choice questions split 20/50/30 over the difficulties, give nine cells holding two, six and four items.
      */
     private static final int EXPECTED_ITEMS = 36;
 
-    private static final int EXPECTED_CELLS = 18;
+    private static final int EXPECTED_CELLS = 9;
 
     private static final int EXPECTED_ITEMS_OF_FIRST_COMPETENCY = 24;
 
@@ -75,6 +94,8 @@ class HyperionQuizQuestionPoolResourceTest extends AbstractSpringIntegrationLoca
     private static final Pattern NUMBER_OF_QUESTIONS = Pattern.compile("Number of Questions: (\\d+)");
 
     private static final Pattern QUESTION_TYPE = Pattern.compile("Question Type: ([a-z-]+)");
+
+    private static final Pattern CORRECT_OPTIONS = Pattern.compile("question (\\d+): exactly (\\d+)");
 
     @Autowired
     private CourseTestRepository courseRepository;
@@ -104,6 +125,8 @@ class HyperionQuizQuestionPoolResourceTest extends AbstractSpringIntegrationLoca
 
     private final AtomicBoolean generationFails = new AtomicBoolean(false);
 
+    private final AtomicInteger generationDelayMillis = new AtomicInteger();
+
     private final AtomicBoolean slideDeckReachedThePrompt = new AtomicBoolean(false);
 
     @BeforeEach
@@ -117,13 +140,12 @@ class HyperionQuizQuestionPoolResourceTest extends AbstractSpringIntegrationLoca
         firstCompetency = competencyUtilService.createCompetency(course, "1");
         Competency secondCompetency = competencyUtilService.createCompetency(course, "2");
         Lecture lecture = lectureUtilService.createLecture(course);
-        LectureUnit textUnit = lectureUtilService.createTextUnit(lecture);
-        firstTextUnit = textUnit;
+        firstTextUnit = lectureUtilService.createTextUnit(lecture);
         AttachmentVideoUnit slideDeck = lectureUtilService.createAttachmentVideoUnitWithSlidesAndFile(lecture, 1, true);
         slideDeck.setName("Control structures slides");
         slideDeck = attachmentVideoUnitRepository.save(slideDeck);
         LectureUnit secondTextUnit = lectureUtilService.createTextUnit(lecture);
-        competencyUtilService.linkLectureUnitToCompetency(firstCompetency, textUnit);
+        competencyUtilService.linkLectureUnitToCompetency(firstCompetency, firstTextUnit);
         competencyUtilService.linkLectureUnitToCompetency(firstCompetency, slideDeck);
         competencyUtilService.linkLectureUnitToCompetency(secondCompetency, secondTextUnit);
 
@@ -134,8 +156,13 @@ class HyperionQuizQuestionPoolResourceTest extends AbstractSpringIntegrationLoca
 
         questionCounter.set(0);
         generationFails.set(false);
+        generationDelayMillis.set(0);
         slideDeckReachedThePrompt.set(false);
         mockModel();
+        when(quizQuestionPoolModelService.isConfigured()).thenReturn(true);
+        when(quizQuestionPoolModelService.chatClient()).thenReturn(ChatClient.create(azureOpenAiChatModel));
+        when(quizQuestionPoolModelService.generatorModel()).thenReturn(GENERATOR_MODEL);
+        when(quizQuestionPoolModelService.judgeModel()).thenReturn(JUDGE_MODEL);
     }
 
     @AfterEach
@@ -153,10 +180,13 @@ class HyperionQuizQuestionPoolResourceTest extends AbstractSpringIntegrationLoca
             String system = text(prompt, SystemMessage.class);
             String user = text(prompt, UserMessage.class);
             if (system.startsWith("You are a strict reviewer")) {
-                return response(verdict(user.contains("Title: Reject") ? 1.0 : 0.0));
+                return response(verdict(user.contains("Title: Reject") ? 1.0 : user.contains("Title: Flag") ? 0.2 : 0.0));
             }
             if (generationFails.get()) {
                 throw new RuntimeException("model unavailable");
+            }
+            if (generationDelayMillis.get() > 0) {
+                Thread.sleep(generationDelayMillis.get());
             }
             if (user.contains(SLIDE_DECK_PHRASE)) {
                 slideDeckReachedThePrompt.set(true);
@@ -166,16 +196,36 @@ class HyperionQuizQuestionPoolResourceTest extends AbstractSpringIntegrationLoca
             assertThat(count.find()).isTrue();
             assertThat(type.find()).isTrue();
             int number = Integer.parseInt(count.group(1));
+            Map<Integer, Integer> correctCounts = new HashMap<>();
+            Matcher correct = CORRECT_OPTIONS.matcher(user);
+            while (correct.find()) {
+                correctCounts.put(Integer.parseInt(correct.group(1)) - 1, Integer.parseInt(correct.group(2)));
+            }
             StringBuilder questions = new StringBuilder();
             for (int index = 0; index < number; index++) {
                 if (index > 0) {
                     questions.append(",");
                 }
                 int id = questionCounter.incrementAndGet();
-                questions.append(question(type.group(1), (index == number - 1 ? "Reject " : "") + "Q" + id, type.group(1).equals("multiple-choice")));
+                String prefix = index == number - 1 ? "Reject " : index == 0 ? "Flag " : "";
+                questions.append(question(type.group(1), prefix + "Q" + id, correctCounts.getOrDefault(index, 1)));
             }
             return response("{ \"questions\": [" + questions + "] }");
         }).when(azureOpenAiChatModel).call(any(Prompt.class));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void shouldRefuseToBuildWithoutAConfiguredModel() throws Exception {
+        userUtilService.changeUser(TEST_PREFIX + "instructor1");
+        when(quizQuestionPoolModelService.isConfigured()).thenReturn(false);
+
+        request.performMvcRequest(post("/api/hyperion/courses/{courseId}/quiz-question-pool/build", courseId)).andExpect(status().isServiceUnavailable());
+
+        QuizQuestionPoolProgressDTO progress = request.get("/api/hyperion/courses/" + courseId + "/quiz-question-pool/progress", HttpStatus.OK, QuizQuestionPoolProgressDTO.class);
+        assertThat(progress.modelConfigured()).isFalse();
+        assertThat(progress.total()).isZero();
+        verify(azureOpenAiChatModel, never()).call(any(Prompt.class));
     }
 
     @Test
@@ -188,15 +238,23 @@ class HyperionQuizQuestionPoolResourceTest extends AbstractSpringIntegrationLoca
         awaitBuild();
 
         QuizQuestionPoolProgressDTO progress = request.get("/api/hyperion/courses/" + courseId + "/quiz-question-pool/progress", HttpStatus.OK, QuizQuestionPoolProgressDTO.class);
+        assertThat(progress.modelConfigured()).isTrue();
         assertThat(progress.total()).isEqualTo(EXPECTED_ITEMS);
         assertThat(progress.judged()).isEqualTo(EXPECTED_ITEMS);
+        ArgumentCaptor<Prompt> prompts = ArgumentCaptor.forClass(Prompt.class);
+        verify(azureOpenAiChatModel, atLeastOnce()).call(prompts.capture());
+        assertThat(prompts.getAllValues()).extracting(prompt -> prompt.getOptions().getModel()).containsOnly(GENERATOR_MODEL, JUDGE_MODEL);
         assertThat(progress.accepted()).isEqualTo(EXPECTED_ITEMS - EXPECTED_CELLS);
         assertThat(progress.rejected()).isEqualTo(EXPECTED_CELLS);
         assertThat(progress.toGenerate()).isZero();
         assertThat(progress.toJudge()).isZero();
         assertThat(progress.failed()).isZero();
+        assertThat(questionCounter.get()).as("the rejected question of every cell is generated three times before it is kept").isEqualTo(EXPECTED_ITEMS + 2 * EXPECTED_CELLS);
 
-        List<QuizQuestionPoolItemDTO> items = request.getList("/api/hyperion/courses/" + courseId + "/quiz-question-pool/questions", HttpStatus.OK, QuizQuestionPoolItemDTO.class);
+        QuizQuestionPoolPageDTO firstPage = request.get("/api/hyperion/courses/" + courseId + "/quiz-question-pool/questions", HttpStatus.OK, QuizQuestionPoolPageDTO.class);
+        assertThat(firstPage.totalCount()).isEqualTo(EXPECTED_ITEMS);
+        assertThat(firstPage.competencies()).hasSize(2);
+        List<QuizQuestionPoolItemDTO> items = firstPage.items();
         assertThat(items).hasSize(EXPECTED_ITEMS);
         assertThat(items).allSatisfy(item -> {
             assertThat(item.state()).isEqualTo(QuizQuestionPoolItemState.FILTERED);
@@ -213,15 +271,77 @@ class HyperionQuizQuestionPoolResourceTest extends AbstractSpringIntegrationLoca
         assertThat(items.stream().map(QuizQuestionPoolItemDTO::lectureUnitId).distinct()).hasSize(3);
         assertThat(slideDeckReachedThePrompt).isTrue();
 
-        List<QuizQuestionPoolItemDTO> ofFirstCompetency = request.getList(
-                "/api/hyperion/courses/" + courseId + "/quiz-question-pool/questions?competencyId=" + firstCompetency.getId(), HttpStatus.OK, QuizQuestionPoolItemDTO.class);
+        List<QuizQuestionPoolItemDTO> ofFirstCompetency = request
+                .get("/api/hyperion/courses/" + courseId + "/quiz-question-pool/questions?competencyId=" + firstCompetency.getId(), HttpStatus.OK, QuizQuestionPoolPageDTO.class)
+                .items();
         assertThat(ofFirstCompetency).hasSize(EXPECTED_ITEMS_OF_FIRST_COMPETENCY);
         assertThat(ofFirstCompetency).allMatch(item -> item.competencyId().equals(firstCompetency.getId()));
         assertThat(ofFirstCompetency.stream().map(QuizQuestionPoolItemDTO::lectureUnitId).distinct()).hasSize(2);
 
+        QuizQuestionPoolPageDTO secondPage = request.get("/api/hyperion/courses/" + courseId + "/quiz-question-pool/questions?page=1&size=10", HttpStatus.OK,
+                QuizQuestionPoolPageDTO.class);
+        assertThat(secondPage.totalCount()).isEqualTo(EXPECTED_ITEMS);
+        assertThat(secondPage.items()).hasSize(10);
+        assertThat(secondPage.items()).containsExactlyElementsOf(items.subList(10, 20));
+
+        QuizQuestionPoolPageDTO flagged = request.get("/api/hyperion/courses/" + courseId + "/quiz-question-pool/questions?flagged=true", HttpStatus.OK,
+                QuizQuestionPoolPageDTO.class);
+        assertThat(flagged.totalCount()).as("the first question of every cell has a factual-error severity of 0.2, which flags but passes the gate").isEqualTo(EXPECTED_CELLS);
+        assertThat(flagged.items()).allSatisfy(item -> {
+            assertThat(item.flagged()).isTrue();
+            assertThat(item.decision().accepted()).isTrue();
+            assertThat(item.decision().verdicts()).filteredOn(QuizQuestionFilterVerdictDTO::flagged).hasSize(1);
+        });
+        assertThat(items).filteredOn(item -> Boolean.TRUE.equals(item.flagged())).hasSize(EXPECTED_CELLS);
+
         request.performMvcRequest(post("/api/hyperion/courses/{courseId}/quiz-question-pool/build", courseId)).andExpect(status().isAccepted())
                 .andExpect(jsonPath("$.started").value(true)).andExpect(jsonPath("$.enqueued").value(0));
         awaitBuild();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void shouldServeThePendingFlaggedQuestionsFirstAndStoreMissingFlags() throws Exception {
+        userUtilService.changeUser(TEST_PREFIX + "instructor1");
+        request.performMvcRequest(post("/api/hyperion/courses/{courseId}/quiz-question-pool/build", courseId)).andExpect(status().isAccepted());
+        awaitBuild();
+        List<QuizQuestionPoolItemDTO> flagged = request
+                .get("/api/hyperion/courses/" + courseId + "/quiz-question-pool/questions?flagged=true", HttpStatus.OK, QuizQuestionPoolPageDTO.class).items();
+        assertThat(flagged).hasSize(EXPECTED_CELLS);
+        for (QuizQuestionPoolItemDTO item : flagged.subList(0, EXPECTED_CELLS - 2)) {
+            request.putWithResponseBody("/api/hyperion/courses/" + courseId + "/quiz-question-pool/questions/" + item.id() + "/review",
+                    new QuizQuestionPoolReviewDTO(QuizQuestionReviewState.APPROVED), QuizQuestionPoolItemDTO.class, HttpStatus.OK);
+        }
+        QuizQuestionPoolItem unflagged = itemRepository.findByIdElseThrow(flagged.getLast().id());
+        unflagged.setFlagged(null);
+        itemRepository.save(unflagged);
+
+        QuizQuestionPoolPageDTO firstPage = request.get("/api/hyperion/courses/" + courseId + "/quiz-question-pool/questions?flagged=true&size=2", HttpStatus.OK,
+                QuizQuestionPoolPageDTO.class);
+
+        assertThat(firstPage.totalCount()).as("the item without a stored flag is flagged again on access").isEqualTo(EXPECTED_CELLS);
+        assertThat(firstPage.pendingCount()).isEqualTo(2);
+        assertThat(firstPage.items()).extracting(QuizQuestionPoolItemDTO::reviewState).containsOnly(QuizQuestionReviewState.PENDING);
+        assertThat(itemRepository.findByIdElseThrow(unflagged.getId()).getFlagged()).isTrue();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void shouldRefillTheDeletedPlaceOfACellWithANewIndex() throws Exception {
+        userUtilService.changeUser(TEST_PREFIX + "instructor1");
+        request.performMvcRequest(post("/api/hyperion/courses/{courseId}/quiz-question-pool/build", courseId)).andExpect(status().isAccepted());
+        awaitBuild();
+        QuizQuestionPoolItem first = itemRepository.findAll().stream().filter(item -> item.getCourse().getId() == courseId && item.getItemIndex() == 0).findFirst().orElseThrow();
+
+        request.delete("/api/hyperion/courses/" + courseId + "/quiz-question-pool/questions/" + first.getId(), HttpStatus.NO_CONTENT);
+        request.performMvcRequest(post("/api/hyperion/courses/{courseId}/quiz-question-pool/build", courseId)).andExpect(status().isAccepted())
+                .andExpect(jsonPath("$.enqueued").value(1));
+        awaitBuild();
+
+        assertThat(poolService.getProgress(courseId).total()).isEqualTo(EXPECTED_ITEMS);
+        assertThat(itemRepository.findAll()).filteredOn(item -> item.getCourse().getId() == courseId && item.getCompetencyId().equals(first.getCompetencyId())
+                && item.getLectureUnitId().equals(first.getLectureUnitId()) && item.getQuestionType() == first.getQuestionType() && item.getDifficulty() == first.getDifficulty())
+                .extracting(QuizQuestionPoolItem::getItemIndex).doesNotHaveDuplicates().doesNotContain(0);
     }
 
     @Test
@@ -294,6 +414,22 @@ class HyperionQuizQuestionPoolResourceTest extends AbstractSpringIntegrationLoca
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void shouldPlanThePoolWithoutCreatingItemsAndCountWhatTheNextBuildAdds() throws Exception {
+        userUtilService.changeUser(TEST_PREFIX + "instructor1");
+
+        QuizQuestionPoolPlanDTO before = request.get("/api/hyperion/courses/" + courseId + "/quiz-question-pool/plan", HttpStatus.OK, QuizQuestionPoolPlanDTO.class);
+        assertThat(before).isEqualTo(new QuizQuestionPoolPlanDTO(EXPECTED_ITEMS, EXPECTED_ITEMS));
+        assertThat(poolService.getProgress(courseId).total()).isZero();
+
+        request.performMvcRequest(post("/api/hyperion/courses/{courseId}/quiz-question-pool/build", courseId)).andExpect(status().isAccepted());
+        awaitBuild();
+
+        QuizQuestionPoolPlanDTO after = request.get("/api/hyperion/courses/" + courseId + "/quiz-question-pool/plan", HttpStatus.OK, QuizQuestionPoolPlanDTO.class);
+        assertThat(after).isEqualTo(new QuizQuestionPoolPlanDTO(EXPECTED_ITEMS, 0));
+    }
+
+    @Test
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void shouldReturnProgressAndQuestionsForEditor() throws Exception {
         userUtilService.changeUser(TEST_PREFIX + "editor1");
@@ -301,16 +437,16 @@ class HyperionQuizQuestionPoolResourceTest extends AbstractSpringIntegrationLoca
         QuizQuestionPoolProgressDTO progress = request.get("/api/hyperion/courses/" + courseId + "/quiz-question-pool/progress", HttpStatus.OK, QuizQuestionPoolProgressDTO.class);
         assertThat(progress.total()).isZero();
         assertThat(progress.running()).isFalse();
-        assertThat(request.getList("/api/hyperion/courses/" + courseId + "/quiz-question-pool/questions", HttpStatus.OK, QuizQuestionPoolItemDTO.class)).isEmpty();
+        assertThat(request.get("/api/hyperion/courses/" + courseId + "/quiz-question-pool/questions", HttpStatus.OK, QuizQuestionPoolPageDTO.class).items()).isNullOrEmpty();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = { "USER", "STUDENT" })
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldReturnForbiddenForStudentOnProgress() throws Exception {
         userUtilService.changeUser(TEST_PREFIX + "student1");
 
         request.get("/api/hyperion/courses/" + courseId + "/quiz-question-pool/progress", HttpStatus.FORBIDDEN, QuizQuestionPoolProgressDTO.class);
-        request.getList("/api/hyperion/courses/" + courseId + "/quiz-question-pool/questions", HttpStatus.FORBIDDEN, QuizQuestionPoolItemDTO.class);
+        request.get("/api/hyperion/courses/" + courseId + "/quiz-question-pool/questions", HttpStatus.FORBIDDEN, QuizQuestionPoolPageDTO.class);
     }
 
     @Test
@@ -335,14 +471,14 @@ class HyperionQuizQuestionPoolResourceTest extends AbstractSpringIntegrationLoca
         userUtilService.changeUser(TEST_PREFIX + "instructor1");
 
         HyperionCourseSettingsDTO defaults = request.get("/api/hyperion/courses/" + courseId + "/quiz-question-pool/settings", HttpStatus.OK, HyperionCourseSettingsDTO.class);
-        assertThat(defaults).isEqualTo(new HyperionCourseSettingsDTO(false, 12));
+        assertThat(defaults).isEqualTo(new HyperionCourseSettingsDTO(false, 12, false, 12, 1, 4, 20, 50, 30));
 
         HyperionCourseSettingsDTO updated = request.putWithResponseBody("/api/hyperion/courses/" + courseId + "/quiz-question-pool/settings",
-                new HyperionCourseSettingsDTO(true, 30), HyperionCourseSettingsDTO.class, HttpStatus.OK);
-        assertThat(updated).isEqualTo(new HyperionCourseSettingsDTO(true, 30));
+                new HyperionCourseSettingsDTO(true, 30, true, 10, 1, 4, 25, 50, 25), HyperionCourseSettingsDTO.class, HttpStatus.OK);
+        assertThat(updated).isEqualTo(new HyperionCourseSettingsDTO(true, 30, true, 10, 1, 4, 25, 50, 25));
 
         HyperionCourseSettingsDTO reloaded = request.get("/api/hyperion/courses/" + courseId + "/quiz-question-pool/settings", HttpStatus.OK, HyperionCourseSettingsDTO.class);
-        assertThat(reloaded).isEqualTo(new HyperionCourseSettingsDTO(true, 30));
+        assertThat(reloaded).isEqualTo(new HyperionCourseSettingsDTO(true, 30, true, 10, 1, 4, 25, 50, 25));
     }
 
     @Test
@@ -351,7 +487,54 @@ class HyperionQuizQuestionPoolResourceTest extends AbstractSpringIntegrationLoca
         userUtilService.changeUser(TEST_PREFIX + "instructor1");
 
         request.performMvcRequest(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put("/api/hyperion/courses/{courseId}/quiz-question-pool/settings", courseId)
-                .contentType(MediaType.APPLICATION_JSON).content("{ \"poolGenerationEnabled\": true, \"questionsPerLectureUnit\": 0 }")).andExpect(status().isBadRequest());
+                .contentType(MediaType.APPLICATION_JSON).content(
+                        "{ \"poolGenerationEnabled\": true, \"singleChoiceQuestionsPerLectureUnit\": 0, \"multipleChoiceEnabled\": false, \"multipleChoiceQuestionsPerLectureUnit\": 12, "
+                                + "\"multipleChoiceMinCorrectOptions\": 1, \"multipleChoiceMaxCorrectOptions\": 4, "
+                                + "\"easyPercent\": 20, \"mediumPercent\": 50, \"hardPercent\": 30 }"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void shouldRejectACorrectOptionRangeThatIsOutOfOrder() throws Exception {
+        userUtilService.changeUser(TEST_PREFIX + "instructor1");
+
+        request.put("/api/hyperion/courses/" + courseId + "/quiz-question-pool/settings", new HyperionCourseSettingsDTO(true, 12, true, 12, 3, 2, 20, 50, 30),
+                HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void shouldCancelARunningBuildAndDropThePendingItems() throws Exception {
+        userUtilService.changeUser(TEST_PREFIX + "instructor1");
+        generationDelayMillis.set(1500);
+
+        request.performMvcRequest(post("/api/hyperion/courses/{courseId}/quiz-question-pool/build", courseId)).andExpect(status().isAccepted());
+        request.performMvcRequest(post("/api/hyperion/courses/{courseId}/quiz-question-pool/build/cancel", courseId)).andExpect(status().isAccepted());
+        awaitBuild();
+
+        QuizQuestionPoolProgressDTO progress = poolService.getProgress(courseId);
+        assertThat(progress.running()).isFalse();
+        assertThat(progress.toGenerate()).isZero();
+        assertThat(progress.total()).isLessThan(EXPECTED_ITEMS);
+        request.performMvcRequest(post("/api/hyperion/courses/{courseId}/quiz-question-pool/build/cancel", courseId)).andExpect(status().isConflict());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void shouldReturnForbiddenForTutorOnCancel() throws Exception {
+        userUtilService.changeUser(TEST_PREFIX + "tutor1");
+
+        request.performMvcRequest(post("/api/hyperion/courses/{courseId}/quiz-question-pool/build/cancel", courseId)).andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void shouldRejectADifficultyMixThatDoesNotAddUpToOneHundredPercent() throws Exception {
+        userUtilService.changeUser(TEST_PREFIX + "instructor1");
+
+        request.put("/api/hyperion/courses/" + courseId + "/quiz-question-pool/settings", new HyperionCourseSettingsDTO(true, 12, false, 12, 1, 4, 30, 50, 30),
+                HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -362,15 +545,136 @@ class HyperionQuizQuestionPoolResourceTest extends AbstractSpringIntegrationLoca
         request.get("/api/hyperion/courses/" + courseId + "/quiz-question-pool/settings", HttpStatus.FORBIDDEN, HyperionCourseSettingsDTO.class);
     }
 
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
+    void shouldRecordReviewDecisionsForEditor() throws Exception {
+        userUtilService.changeUser(TEST_PREFIX + "editor1");
+        QuizQuestionPoolItem item = saveJudgedItem(courseId);
+
+        QuizQuestionPoolItemDTO approved = request.putWithResponseBody("/api/hyperion/courses/" + courseId + "/quiz-question-pool/questions/" + item.getId() + "/review",
+                new QuizQuestionPoolReviewDTO(QuizQuestionReviewState.APPROVED), QuizQuestionPoolItemDTO.class, HttpStatus.OK);
+        assertThat(approved.reviewState()).isEqualTo(QuizQuestionReviewState.APPROVED);
+        assertThat(approved.competencyTitle()).isNotBlank();
+
+        QuizQuestionPoolItemDTO excluded = request.putWithResponseBody("/api/hyperion/courses/" + courseId + "/quiz-question-pool/questions/" + item.getId() + "/review",
+                new QuizQuestionPoolReviewDTO(QuizQuestionReviewState.EXCLUDED), QuizQuestionPoolItemDTO.class, HttpStatus.OK);
+        assertThat(excluded.reviewState()).isEqualTo(QuizQuestionReviewState.EXCLUDED);
+        assertThat(itemRepository.findByIdElseThrow(item.getId()).getReviewState()).isEqualTo(QuizQuestionReviewState.EXCLUDED);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
+    void shouldNotReviewAQuestionOfAnotherCourse() throws Exception {
+        userUtilService.changeUser(TEST_PREFIX + "editor1");
+        QuizQuestionPoolItem item = saveJudgedItem(courseId);
+        Course other = CourseFactory.generateMinimalCourse();
+        other.setTitle("Hyperion Pool Other Course");
+        other = courseRepository.save(other);
+        userUtilService.enrollUserInCourse(userUtilService.getUserByLogin(TEST_PREFIX + "editor1"), other, CourseRole.EDITOR);
+
+        request.putWithResponseBody("/api/hyperion/courses/" + other.getId() + "/quiz-question-pool/questions/" + item.getId() + "/review",
+                new QuizQuestionPoolReviewDTO(QuizQuestionReviewState.APPROVED), QuizQuestionPoolItemDTO.class, HttpStatus.NOT_FOUND);
+        assertThat(itemRepository.findByIdElseThrow(item.getId()).getReviewState()).isEqualTo(QuizQuestionReviewState.PENDING);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
+    void shouldRejectAReviewOfAQuestionThatIsNotJudgedYet() throws Exception {
+        userUtilService.changeUser(TEST_PREFIX + "editor1");
+        QuizQuestionPoolItem item = savePendingItem(courseId);
+
+        request.putWithResponseBody("/api/hyperion/courses/" + courseId + "/quiz-question-pool/questions/" + item.getId() + "/review",
+                new QuizQuestionPoolReviewDTO(QuizQuestionReviewState.APPROVED), QuizQuestionPoolItemDTO.class, HttpStatus.BAD_REQUEST);
+        assertThat(itemRepository.findByIdElseThrow(item.getId()).getReviewState()).isEqualTo(QuizQuestionReviewState.PENDING);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void shouldDeleteASingleQuestionForInstructor() throws Exception {
+        userUtilService.changeUser(TEST_PREFIX + "instructor1");
+        QuizQuestionPoolItem item = saveJudgedItem(courseId);
+
+        request.delete("/api/hyperion/courses/" + courseId + "/quiz-question-pool/questions/" + item.getId(), HttpStatus.NO_CONTENT);
+
+        assertThat(itemRepository.findById(item.getId())).isEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void shouldNotDeleteAQuestionOfAnotherCourse() throws Exception {
+        userUtilService.changeUser(TEST_PREFIX + "instructor1");
+        QuizQuestionPoolItem item = saveJudgedItem(courseId);
+        Course other = CourseFactory.generateMinimalCourse();
+        other.setTitle("Hyperion Pool Other Course");
+        other = courseRepository.save(other);
+        userUtilService.enrollUserInCourse(userUtilService.getUserByLogin(TEST_PREFIX + "instructor1"), other, CourseRole.INSTRUCTOR);
+
+        request.delete("/api/hyperion/courses/" + other.getId() + "/quiz-question-pool/questions/" + item.getId(), HttpStatus.NOT_FOUND);
+
+        assertThat(itemRepository.findById(item.getId())).isPresent();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void shouldDeleteTheQuestionsOfOneCompetencyAndThenTheWholePool() throws Exception {
+        userUtilService.changeUser(TEST_PREFIX + "instructor1");
+        saveJudgedItem(courseId);
+        savePendingItem(courseId, firstCompetency.getId(), 1);
+        QuizQuestionPoolItem ofOtherCompetency = savePendingItem(courseId, firstCompetency.getId() + 1, 0);
+
+        LinkedMultiValueMap<String, String> ofFirst = new LinkedMultiValueMap<>();
+        ofFirst.add("competencyId", String.valueOf(firstCompetency.getId()));
+        QuizQuestionPoolDeletionDTO deleted = request.delete("/api/hyperion/courses/" + courseId + "/quiz-question-pool/questions", ofFirst, null,
+                QuizQuestionPoolDeletionDTO.class, HttpStatus.OK);
+        assertThat(deleted.deleted()).isEqualTo(2);
+        assertThat(itemRepository.findById(ofOtherCompetency.getId())).isPresent();
+
+        QuizQuestionPoolDeletionDTO rest = request.delete("/api/hyperion/courses/" + courseId + "/quiz-question-pool/questions", new LinkedMultiValueMap<>(), null,
+                QuizQuestionPoolDeletionDTO.class, HttpStatus.OK);
+        assertThat(rest.deleted()).isEqualTo(1);
+        assertThat(request.get("/api/hyperion/courses/" + courseId + "/quiz-question-pool/questions", HttpStatus.OK, QuizQuestionPoolPageDTO.class).totalCount()).isZero();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
+    void shouldReturnForbiddenForEditorOnDelete() throws Exception {
+        userUtilService.changeUser(TEST_PREFIX + "editor1");
+        QuizQuestionPoolItem item = saveJudgedItem(courseId);
+
+        request.delete("/api/hyperion/courses/" + courseId + "/quiz-question-pool/questions/" + item.getId(), HttpStatus.FORBIDDEN);
+        request.delete("/api/hyperion/courses/" + courseId + "/quiz-question-pool/questions", HttpStatus.FORBIDDEN);
+        assertThat(itemRepository.findById(item.getId())).isPresent();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void shouldReturnForbiddenForTutorOnReview() throws Exception {
+        userUtilService.changeUser(TEST_PREFIX + "tutor1");
+        QuizQuestionPoolItem item = saveJudgedItem(courseId);
+
+        request.putWithResponseBody("/api/hyperion/courses/" + courseId + "/quiz-question-pool/questions/" + item.getId() + "/review",
+                new QuizQuestionPoolReviewDTO(QuizQuestionReviewState.APPROVED), QuizQuestionPoolItemDTO.class, HttpStatus.FORBIDDEN);
+    }
+
+    private QuizQuestionPoolItem saveJudgedItem(long ownerCourseId) {
+        QuizQuestionPoolItem item = savePendingItem(ownerCourseId);
+        item.setState(QuizQuestionPoolItemState.FILTERED);
+        return itemRepository.save(item);
+    }
+
     private QuizQuestionPoolItem savePendingItem(long ownerCourseId) {
+        return savePendingItem(ownerCourseId, firstCompetency.getId(), 0);
+    }
+
+    private QuizQuestionPoolItem savePendingItem(long ownerCourseId, long competencyId, int itemIndex) {
         QuizQuestionPoolItem item = new QuizQuestionPoolItem();
         item.setCourse(courseRepository.findByIdElseThrow(ownerCourseId));
-        item.setCompetencyId(firstCompetency.getId());
+        item.setCompetencyId(competencyId);
         item.setLectureUnitId(firstTextUnit.getId());
         item.setLanguage(QuizQuestionGenerationLanguage.EN);
         item.setQuestionType(QuizQuestionGenerationType.SINGLE_CHOICE);
         item.setDifficulty(QuizQuestionDifficulty.MEDIUM);
-        item.setItemIndex(0);
+        item.setItemIndex(itemIndex);
         return itemRepository.save(item);
     }
 
@@ -386,13 +690,14 @@ class HyperionQuizQuestionPoolResourceTest extends AbstractSpringIntegrationLoca
         return new ChatResponse(List.of(new Generation(new AssistantMessage(content))));
     }
 
-    private static String question(String type, String title, boolean twoCorrect) {
+    /** A question whose first {@code correctCount} options are correct. */
+    private static String question(String type, String title, int correctCount) {
         return """
                 { "type": "%s", "title": "%s", "questionText": "Which statement about %s holds?",
-                  "options": [ { "text": "First claim", "correct": true }, { "text": "Second claim", "correct": %s },
-                               { "text": "Third claim", "correct": false }, { "text": "Fourth claim", "correct": false } ],
-                  "explanation": "Because the first claim follows from the material." }
-                """.formatted(type, title, title, twoCorrect);
+                  "options": [ { "text": "First claim", "correct": %s }, { "text": "Second claim", "correct": %s },
+                               { "text": "Third claim", "correct": %s }, { "text": "Fourth claim", "correct": %s } ],
+                  "explanation": "Because the marked claims follow from the material." }
+                """.formatted(type, title, title, correctCount >= 1, correctCount >= 2, correctCount >= 3, correctCount >= 4);
     }
 
     private static String verdict(double factualError) {
@@ -401,7 +706,7 @@ class HyperionQuizQuestionPoolResourceTest extends AbstractSpringIntegrationLoca
                   { "mode": "FACTUAL_ERROR", "severity": %s, "triggered": false, "justification": "a" },
                   { "mode": "AMBIGUOUS_CORRECT_ANSWER", "severity": 0.0, "triggered": false, "justification": "b" },
                   { "mode": "OFF_TOPIC", "severity": 0.0, "triggered": false, "justification": "c" },
-                  { "mode": "NEAR_DUPLICATE", "severity": 0.0, "triggered": false, "justification": "d" },
+                  { "mode": "NEAR_DUPLICATE", "severity": 0.9, "triggered": false, "justification": "d" },
                   { "mode": "ILL_FORMED_DISTRACTORS", "severity": 0.0, "triggered": false, "justification": "e" } ] }
                 """.formatted(factualError);
     }

@@ -48,6 +48,7 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseVersionRepository;
 import de.tum.cit.aet.artemis.exercise.repository.PlagiarismDetectionConfigRepository;
 import de.tum.cit.aet.artemis.exercise.repository.TeamAssignmentConfigRepository;
+import de.tum.cit.aet.artemis.exercise.util.AsyncDeletionTestUtilService;
 import de.tum.cit.aet.artemis.fileupload.api.FileUploadDemoApi;
 import de.tum.cit.aet.artemis.modeling.api.ModelingDemoApi;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
@@ -69,6 +70,9 @@ class DemoExamSeedingIntegrationTest extends AbstractSpringIntegrationIndependen
 
     // The title identifies the demo exam on every startup, so it is spelled out here: renaming it would create the exam a second time on existing demo instances.
     private static final String DEMO_EXAM_TITLE = "Practice Exam: Software Engineering Fundamentals";
+
+    @Autowired
+    private AsyncDeletionTestUtilService asyncDeletionTestUtilService;
 
     @Autowired
     private DemoDataSeedingService demoDataSeedingService;
@@ -273,7 +277,8 @@ class DemoExamSeedingIntegrationTest extends AbstractSpringIntegrationIndependen
         seed();
         Exam exam = demoExamWithExercises();
         userUtilService.changeUser(UserDemoService.DEMO_INSTRUCTOR_LOGIN);
-        request.delete("/api/exam/courses/" + exam.getCourse().getId() + "/exams/" + exam.getId(), HttpStatus.OK);
+        request.delete("/api/exam/courses/" + exam.getCourse().getId() + "/exams/" + exam.getId(), HttpStatus.ACCEPTED);
+        asyncDeletionTestUtilService.awaitExamDeletion(exam.getId());
 
         DemoDataSeedingService withoutExamModule = new DemoDataSeedingService(userApi, courseApi, new DemoExerciseSeedingService(Optional.of(textDemoApi),
                 Optional.of(modelingDemoApi), Optional.of(fileUploadDemoApi), quizDemoApi, programmingDemoApi, assessmentDemoApi, Optional.empty()),
@@ -293,7 +298,8 @@ class DemoExamSeedingIntegrationTest extends AbstractSpringIntegrationIndependen
         seed();
         Exam exam = demoExamWithExercises();
         userUtilService.changeUser(UserDemoService.DEMO_INSTRUCTOR_LOGIN);
-        request.delete("/api/exam/courses/" + exam.getCourse().getId() + "/exams/" + exam.getId(), HttpStatus.OK);
+        request.delete("/api/exam/courses/" + exam.getCourse().getId() + "/exams/" + exam.getId(), HttpStatus.ACCEPTED);
+        asyncDeletionTestUtilService.awaitExamDeletion(exam.getId());
         SequencedMap<String, Function<ExerciseGroup, ? extends Exercise>> exerciseCreators = new LinkedHashMap<>();
         exerciseCreators.put("Software Architecture", textDemoApi::createDemoExamExercise);
         exerciseCreators.put("Object-Oriented Modeling", exerciseGroup -> {
@@ -315,7 +321,8 @@ class DemoExamSeedingIntegrationTest extends AbstractSpringIntegrationIndependen
             // The other tests share the demo course, so the complete exam is seeded again.
             Optional<Exam> partialExam = demoExam();
             if (partialExam.isPresent()) {
-                request.delete("/api/exam/courses/" + exam.getCourse().getId() + "/exams/" + partialExam.get().getId(), HttpStatus.OK);
+                request.delete("/api/exam/courses/" + exam.getCourse().getId() + "/exams/" + partialExam.get().getId(), HttpStatus.ACCEPTED);
+                asyncDeletionTestUtilService.awaitExamDeletion(partialExam.get().getId());
             }
             seed();
         }

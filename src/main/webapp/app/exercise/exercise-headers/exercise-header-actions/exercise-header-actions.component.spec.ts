@@ -36,7 +36,9 @@ import { LLMSelectionDecision } from 'app/account/user/shared/dto/updateLLMSelec
 import { ParticipationMode } from 'app/exercise/exercise-headers/participation-mode-toggle/participation-mode-toggle.component';
 import dayjs from 'dayjs/esm';
 import { Subject, of, throwError } from 'rxjs';
-import { HttpErrorResponse } from '@angular/common/http';
+import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { ParticipationWebsocketService } from 'app/course/shared/services/participation-websocket.service';
 import { Router } from '@angular/router';
 import { InitializationState } from 'app/exercise/shared/entities/participation/participation.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
@@ -69,8 +71,11 @@ describe('ExerciseHeaderActionsComponent', () => {
         return exercise;
     }
 
-    function createComponent(exercise: Exercise, options: { athenaEnabled?: boolean; examMode?: boolean; llmAccepted?: boolean; quizStatus?: QuizStatus } = {}) {
-        const { athenaEnabled = true, examMode = false, llmAccepted = true, quizStatus } = options;
+    function createComponent(
+        exercise: Exercise,
+        options: { athenaEnabled?: boolean; examMode?: boolean; llmAccepted?: boolean; quizStatus?: QuizStatus; realCourseExercise?: boolean } = {},
+    ) {
+        const { athenaEnabled = true, examMode = false, llmAccepted = true, quizStatus, realCourseExercise = false } = options;
 
         const accountService = new MockAccountService();
         if (llmAccepted) {
@@ -85,7 +90,10 @@ describe('ExerciseHeaderActionsComponent', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 MockProvider(QuizExerciseService, { getStatus: () => quizStatus as QuizStatus }),
                 MockProvider(AlertService),
-                MockProvider(CourseExerciseService),
+                realCourseExercise ? CourseExerciseService : MockProvider(CourseExerciseService),
+                provideHttpClient(),
+                provideHttpClientTesting(),
+                MockProvider(ParticipationWebsocketService),
                 MockProvider(ParticipationService, {
                     getSpecificStudentParticipation: (participations: StudentParticipation[], testRun: boolean) =>
                         participations.find((participation) => !!participation.testRun === testRun),
@@ -793,12 +801,150 @@ describe('ExerciseHeaderActionsComponent', () => {
             expect(fixture.componentInstance.isLoading()).toBe(false);
         });
 
+        it.each([
+            ['start', 'exercise change'],
+            ['start', 'destroy'],
+            ['resume', 'exercise change'],
+            ['resume', 'destroy'],
+        ])('cancels %s when its action surface leaves on %s', (operation, cancellation) => {
+            const exercise = programming(true);
+            exercise.studentParticipations = [{ id: 10, testRun: false, initializationState: InitializationState.INACTIVE }];
+            createComponent(exercise);
+            const pending = new Subject<StudentParticipation>();
+            const service = TestBed.inject(CourseExerciseService);
+            vi.spyOn(service, 'startExercise').mockReturnValue(pending);
+            vi.spyOn(service, 'resumeProgrammingExercise').mockReturnValue(pending);
+            const output = vi.spyOn(fixture.componentInstance.newParticipation, 'emit');
+            if (operation === 'resume') {
+                fixture.componentInstance.resumeProgrammingExercise(false);
+            } else {
+                fixture.componentInstance.startExercise();
+            }
+            expect(pending.observed).toBe(true);
+            if (cancellation === 'destroy') {
+                fixture.destroy();
+            } else {
+                const replacement = programming(true);
+                replacement.id = 8;
+                fixture.componentRef.setInput('exercise', replacement);
+                fixture.detectChanges();
+            }
+            expect(pending.observed).toBe(false);
+            expect(fixture.componentInstance.isLoading()).toBe(false);
+            pending.next({ id: 42 });
+            expect(output).not.toHaveBeenCalled();
+        });
+
+        it.each(['start', 'resume'])('keeps an in-flight %s when the same exercise is refreshed', (operation) => {
+            const exercise = programming(true);
+            exercise.studentParticipations = [{ id: 10, testRun: false, initializationState: InitializationState.INACTIVE }];
+            createComponent(exercise);
+            const pending = new Subject<StudentParticipation>();
+            const service = TestBed.inject(CourseExerciseService);
+            vi.spyOn(service, 'startExercise').mockReturnValue(pending);
+            vi.spyOn(service, 'resumeProgrammingExercise').mockReturnValue(pending);
+            const output = vi.spyOn(fixture.componentInstance.newParticipation, 'emit');
+            if (operation === 'resume') {
+                fixture.componentInstance.resumeProgrammingExercise(false);
+            } else {
+                fixture.componentInstance.startExercise();
+            }
+            fixture.componentRef.setInput('exercise', programming(true));
+            fixture.detectChanges();
+            expect(pending.observed).toBe(true);
+            expect(fixture.componentInstance.isLoading()).toBe(true);
+            pending.next({ id: 42, initializationState: InitializationState.INITIALIZED });
+            pending.complete();
+            expect(output).toHaveBeenCalledOnce();
+            expect(fixture.componentInstance.isLoading()).toBe(false);
+        });
+
+        it('reports an ordinary resume failure immediately and lets the student retry', () => {
+            const exercise = programming(true);
+            exercise.studentParticipations = [{ id: 10, testRun: false, initializationState: InitializationState.INACTIVE }];
+            createComponent(exercise, { realCourseExercise: true });
+            const http = TestBed.inject(HttpTestingController);
+            const error = vi.spyOn(TestBed.inject(AlertService), 'error');
+            fixture.componentInstance.resumeProgrammingExercise(false);
+            http.expectOne('api/exercise/exercises/7/participations/10/resume-programming-participation').flush(
+                { entityName: 'programmingExercise', errorKey: 'unavailable' },
+                { status: 500, statusText: 'Failure' },
+            );
+            fixture.detectChanges();
+            expect(error).toHaveBeenCalledExactlyOnceWith('artemisApp.programmingExercise.errors.unavailable');
+            expect(fixture.componentInstance.isLoading()).toBe(false);
+            const button = fixture.nativeElement.querySelector('#resume-exercise-7') as HTMLButtonElement;
+            expect(button).not.toBeNull();
+            expect(button.disabled).toBe(false);
+            button.click();
+            const retry = http.expectOne('api/exercise/exercises/7/participations/10/resume-programming-participation');
+            fixture.destroy();
+            expect(retry.cancelled).toBe(true);
+            http.verify();
+        });
+
+        it('ignores a second resume click before rendering so the first request remains tracked', () => {
+            const exercise = programming(true);
+            exercise.studentParticipations = [{ id: 10, testRun: false, initializationState: InitializationState.INACTIVE }];
+            createComponent(exercise);
+            const pending = new Subject<StudentParticipation>();
+            const resume = vi.spyOn(TestBed.inject(CourseExerciseService), 'resumeProgrammingExercise').mockReturnValue(pending);
+            fixture.componentInstance.resumeProgrammingExercise(false);
+            fixture.componentInstance.resumeProgrammingExercise(false);
+            expect(resume).toHaveBeenCalledOnce();
+            fixture.destroy();
+            expect(pending.observed).toBe(false);
+        });
+
+        it.each([
+            { label: 'null body', body: null },
+            { label: 'missing body', body: undefined },
+            { label: 'text body', body: 'Service unavailable' },
+            { label: 'empty body', body: {} },
+            { label: 'array body', body: [] },
+            { label: 'missing error key', body: { entityName: 'participation' } },
+            { label: 'non-string entity', body: { entityName: 42, errorKey: 'resumeFailed' } },
+            { label: 'non-string error key', body: { entityName: 'participation', errorKey: false } },
+            { label: 'blank entity', body: { entityName: ' ', errorKey: 'resumeFailed' } },
+            { label: 'blank error key', body: { entityName: 'participation', errorKey: '' } },
+        ])('reports a generic resume failure for $label without changing participation', ({ body }) => {
+            const exercise = programming(true);
+            const participation = { id: 10, testRun: false, initializationState: InitializationState.INACTIVE } as StudentParticipation;
+            exercise.studentParticipations = [participation];
+            createComponent(exercise);
+            vi.spyOn(TestBed.inject(CourseExerciseService), 'resumeProgrammingExercise').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500, error: body })));
+            const errorSpy = vi.spyOn(TestBed.inject(AlertService), 'error');
+            const output = vi.spyOn(fixture.componentInstance.newParticipation, 'emit');
+
+            fixture.componentInstance.resumeProgrammingExercise(false);
+
+            expect(errorSpy).toHaveBeenCalledExactlyOnceWith('artemisApp.exercise.startError');
+            expect(fixture.componentInstance.isLoading()).toBe(false);
+            expect(output).not.toHaveBeenCalled();
+            expect(exercise.studentParticipations[0]).toBe(participation);
+        });
+
+        it('reports a generic resume failure for an actual network error', () => {
+            const exercise = programming(true);
+            exercise.studentParticipations = [{ id: 10, testRun: false, initializationState: InitializationState.INACTIVE }];
+            createComponent(exercise, { realCourseExercise: true });
+            const http = TestBed.inject(HttpTestingController);
+            const errorSpy = vi.spyOn(TestBed.inject(AlertService), 'error');
+
+            fixture.componentInstance.resumeProgrammingExercise(false);
+            http.expectOne('api/exercise/exercises/7/participations/10/resume-programming-participation').error(new ProgressEvent('error'));
+
+            expect(errorSpy).toHaveBeenCalledExactlyOnceWith('artemisApp.exercise.startError');
+            expect(fixture.componentInstance.isLoading()).toBe(false);
+            http.verify();
+        });
+
         it('should alert the error key of the server when resuming fails', () => {
             const exercise = programming(true);
             exercise.studentParticipations = [{ id: 10, testRun: false } as StudentParticipation];
             createComponent(exercise);
             vi.spyOn(TestBed.inject(CourseExerciseService), 'resumeProgrammingExercise').mockReturnValue(
-                throwError(() => ({ error: { entityName: 'participation', errorKey: 'resumeFailed' } })),
+                throwError(() => new HttpErrorResponse({ status: 400, error: { entityName: 'participation', errorKey: 'resumeFailed' } })),
             );
             const errorSpy = vi.spyOn(TestBed.inject(AlertService), 'error');
 

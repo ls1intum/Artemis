@@ -18,8 +18,11 @@ const sidebars: SidebarsConfig = {
             },
             items: [
                 'production-setup/security',
+                'production-setup/network-model',
                 'production-setup/integrated-code-lifecycle-setup',
                 'production-setup/build-runners',
+                'production-setup/localci-build-environment',
+                'production-setup/localci-on-kubernetes',
                 'production-setup/customization',
                 'production-setup/legal-documents',
                 'production-setup/additional-tips',
