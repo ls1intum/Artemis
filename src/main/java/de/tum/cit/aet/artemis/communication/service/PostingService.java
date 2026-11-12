@@ -446,8 +446,7 @@ public abstract class PostingService {
 
         mentionedUsers.forEach(user -> {
             if (!user.getName().equals(matches.get(user.getLogin()))) {
-                throw new BadRequestAlertException("The name provided for user " + user.getLogin() + " does not match the user's full name " + user.getName(), POST_ENTITY_NAME,
-                        "invalidUserMention");
+                throw new BadRequestAlertException("The name provided for user " + user.getLogin() + " does not match the user's name", POST_ENTITY_NAME, "invalidUserMention");
             }
 
             if (!authorizationCheckService.isAtLeastStudentInCourse(course, user)) {

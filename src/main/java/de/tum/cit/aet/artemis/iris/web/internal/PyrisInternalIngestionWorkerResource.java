@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.iris.web.internal;
 
-import java.nio.charset.StandardCharsets;
+import static de.tum.cit.aet.artemis.localvc.service.ssh.HashUtils.hashSha256;
+
 import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.List;
@@ -21,6 +22,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import de.tum.cit.aet.artemis.admin.service.RateLimitService;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.security.annotations.Internal;
@@ -69,8 +71,11 @@ public class PyrisInternalIngestionWorkerResource {
     @Value("${artemis.iris.secret-token}")
     private String pyrisSecretToken;
 
+    private final RateLimitService rateLimitService;
+
     public PyrisInternalIngestionWorkerResource(PyrisWebhookService pyrisWebhookService, Optional<ProcessingStateCallbackApi> processingStateCallbackApi,
-            Optional<LectureUnitRepositoryApi> lectureUnitRepositoryApi) {
+            Optional<LectureUnitRepositoryApi> lectureUnitRepositoryApi, RateLimitService rateLimitService) {
+        this.rateLimitService = rateLimitService;
         this.pyrisWebhookService = pyrisWebhookService;
         this.processingStateCallbackApi = processingStateCallbackApi;
         this.lectureUnitRepositoryApi = lectureUnitRepositoryApi;
@@ -197,9 +202,14 @@ public class PyrisInternalIngestionWorkerResource {
         }
     }
 
+    /**
+     * Checks the shared secret in constant time, whatever the length of the presented value. Failed checks are limited per calling address.
+     */
     private void authenticate(HttpServletRequest request) {
+        rateLimitService.requireServiceCredentialBudget();
         String header = request.getHeader(HttpHeaders.AUTHORIZATION);
-        if (header == null || pyrisSecretToken == null || !MessageDigest.isEqual(header.getBytes(StandardCharsets.UTF_8), pyrisSecretToken.getBytes(StandardCharsets.UTF_8))) {
+        if (header == null || pyrisSecretToken == null || !MessageDigest.isEqual(hashSha256(header), hashSha256(pyrisSecretToken))) {
+            rateLimitService.recordServiceCredentialFailure();
             throw new AccessForbiddenException("Invalid worker authentication token");
         }
     }

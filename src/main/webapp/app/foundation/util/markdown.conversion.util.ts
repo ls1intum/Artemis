@@ -148,6 +148,28 @@ function getOrCreateMarkdownIt(extensions: MarkdownItPlugin[], lineBreaks: boole
 }
 
 /**
+ * Elements that rendered markdown never needs: embedded style sheets, form controls and document level elements.
+ * Authors keep all formatting, tables, code, formulas and images.
+ */
+const MARKDOWN_FORBIDDEN_TAGS = ['style', 'form', 'input', 'button', 'select', 'option', 'optgroup', 'textarea', 'fieldset', 'legend', 'link', 'meta', 'base', 'object', 'embed'];
+
+/** Attributes that only make sense on form controls or that retarget a request. */
+const MARKDOWN_FORBIDDEN_ATTRIBUTES = ['form', 'formaction', 'action', 'formmethod', 'formtarget'];
+
+/**
+ * Restricts attributes of the sanitized tree. Inline `style` is kept only inside formulas, because KaTeX positions its
+ * glyphs with it, or where the caller lists `style` as an allowed attribute. Images are requested without a referrer, so the address of the page does not reach the image host.
+ */
+function restrictRenderedAttributes(node: Element, keepStyle = false): void {
+    if (!keepStyle && node.hasAttribute?.('style') && !node.closest?.('[class*="katex"]')) {
+        node.removeAttribute('style');
+    }
+    if (node.tagName === 'IMG') {
+        node.setAttribute('referrerpolicy', 'no-referrer');
+    }
+}
+
+/**
  * Converts markdown into html (string) and sanitizes it. Does NOT declare it as safe to bypass further security
  * Note: If possible, please use safeHtmlForMarkdown
  *
@@ -184,13 +206,22 @@ export function htmlForMarkdown(
     const purifyParameters: Config = {};
     // Prevents sanitizer from deleting <testid>id</testid>
     purifyParameters['ADD_TAGS'] = ['testid'];
+    purifyParameters['FORBID_TAGS'] = MARKDOWN_FORBIDDEN_TAGS;
+    purifyParameters['FORBID_ATTR'] = MARKDOWN_FORBIDDEN_ATTRIBUTES;
     if (allowedHtmlTags) {
         purifyParameters['ALLOWED_TAGS'] = allowedHtmlTags;
     }
     if (allowedHtmlAttributes) {
         purifyParameters['ALLOWED_ATTR'] = allowedHtmlAttributes;
     }
-    return DOMPurify.sanitize(markdownRender, purifyParameters);
+    const keepStyle = !!allowedHtmlAttributes?.includes('style');
+    const hook = (node: Element) => restrictRenderedAttributes(node, keepStyle);
+    DOMPurify.addHook('afterSanitizeAttributes', hook);
+    try {
+        return DOMPurify.sanitize(markdownRender, purifyParameters);
+    } finally {
+        DOMPurify.removeHook('afterSanitizeAttributes', hook);
+    }
 }
 
 export function markdownForHtml(htmlText: string): string {

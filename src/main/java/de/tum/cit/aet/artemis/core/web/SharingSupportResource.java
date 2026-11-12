@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import de.tum.cit.aet.artemis.admin.service.RateLimitService;
 import de.tum.cit.aet.artemis.core.domain.FeatureInteraction;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.service.featureusage.UsageInteraction;
@@ -53,8 +54,11 @@ public class SharingSupportResource {
 
     private final SharingConnectorService sharingConnectorService;
 
-    public SharingSupportResource(SharingConnectorService sharingConnectorService) {
+    private final RateLimitService rateLimitService;
+
+    public SharingSupportResource(SharingConnectorService sharingConnectorService, RateLimitService rateLimitService) {
         this.sharingConnectorService = sharingConnectorService;
+        this.rateLimitService = rateLimitService;
     }
 
     /**
@@ -80,6 +84,7 @@ public class SharingSupportResource {
      * <li><b>400 Bad Request</b>: malformed or disallowed {@code apiBaseUrl}
      * (missing host, unsupported scheme, or invalid URL).</li>
      * <li><b>401 Unauthorized</b>: missing or invalid API key.</li>
+     * <li><b>429 Too Many Requests</b>: the calling address presented too many invalid keys.</li>
      * </ul>
      *
      * @param sharingApiKey    the {@code Authorization} header value; either {@code Bearer <token>} or the raw token
@@ -93,6 +98,7 @@ public class SharingSupportResource {
     @GetMapping(SHARINGCONFIG_RESOURCE_PATH)
     public ResponseEntity<SharingPluginConfig> getConfig(@SuppressWarnings("OptionalUsedAsFieldOrParameterType") @RequestHeader("Authorization") Optional<String> sharingApiKey,
             @RequestParam String apiBaseUrl, @SuppressWarnings("OptionalUsedAsFieldOrParameterType") @RequestParam Optional<String> installationName) {
+        rateLimitService.requireServiceCredentialBudget();
         final String BEARER_PREFIX = "Bearer ";
         final Optional<String> token = sharingApiKey.map(key -> key.startsWith(BEARER_PREFIX) ? key.substring(BEARER_PREFIX.length()) : key);
         if (token.isPresent() && sharingConnectorService.validateApiKey(token.get())) {
@@ -116,6 +122,7 @@ public class SharingSupportResource {
             }
             return ResponseEntity.ok(sharingConnectorService.getPluginConfig(parsedApiBaseUrl, installationName));
         }
+        rateLimitService.recordServiceCredentialFailure();
         log.warn("Received wrong or missing api key");
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
     }

@@ -113,8 +113,8 @@ class PrerequisiteIntegrationTest extends AbstractCompetencyPrerequisiteIntegrat
 
     @Test
     @WithMockUser(username = OTHER_PREFIX + "student42", roles = "USER")
-    void shouldReturnCompetenciesForStudentNotInCourse() throws Exception {
-        super.shouldReturnCompetenciesForCourse(new Prerequisite());
+    void shouldRefuseListingForStudentNotInCourse() throws Exception {
+        getAllCall(course.getId(), HttpStatus.FORBIDDEN);
     }
 
     void deleteCall(long courseId, long competencyId, HttpStatus expectedStatus) throws Exception {

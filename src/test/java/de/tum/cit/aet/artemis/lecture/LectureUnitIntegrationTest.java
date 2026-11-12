@@ -452,6 +452,25 @@ class LectureUnitIntegrationTest extends AbstractSpringIntegrationIndependentBat
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetLectureUnitForLearningPathNodeDetailsAndMaterialVersionsOfUnreleasedUnitAsStudent_forbidden() throws Exception {
+        textUnit.setReleaseDate(ZonedDateTime.now().plusDays(1));
+        textUnitRepository.save(textUnit);
+
+        request.get("/api/lecture/lecture-units/" + textUnit.getId() + "/for-learning-path-node-details", HttpStatus.FORBIDDEN, LectureUnitForLearningPathNodeDetailsDTO.class);
+        request.get("/api/lecture/lecture-units/" + textUnit.getId() + "/material-versions", HttpStatus.FORBIDDEN, LectureUnitMaterialVersionsDTO.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void testGetLectureUnitForLearningPathNodeDetailsOfUnreleasedUnitAsTutor() throws Exception {
+        textUnit.setReleaseDate(ZonedDateTime.now().plusDays(1));
+        textUnitRepository.save(textUnit);
+
+        request.get("/api/lecture/lecture-units/" + textUnit.getId() + "/for-learning-path-node-details", HttpStatus.OK, LectureUnitForLearningPathNodeDetailsDTO.class);
+    }
+
+    @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void testGetLectureUnitForLearningPathNodeDetailsForNonExistingLectureUnit() throws Exception {
         // Administrators pass the access check without the lecture unit, so the lecture unit itself is looked up.

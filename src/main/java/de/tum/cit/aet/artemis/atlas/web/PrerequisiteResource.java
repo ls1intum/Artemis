@@ -41,7 +41,6 @@ import de.tum.cit.aet.artemis.atlas.service.competency.CourseCompetencyService;
 import de.tum.cit.aet.artemis.atlas.service.competency.PrerequisiteService;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.security.Role;
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastEditorInCourse;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastStudentInCourse;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
@@ -102,7 +101,7 @@ public class PrerequisiteResource {
      */
     @FeatureUsage(UserFeature.COMPETENCY_PROGRESS)
     @GetMapping("courses/{courseId}/prerequisites")
-    @EnforceAtLeastStudent
+    @EnforceAtLeastStudentInCourse
     public ResponseEntity<List<CourseCompetencyResponseDTO>> getPrerequisitesWithProgress(@PathVariable long courseId) {
         log.debug("REST request to get prerequisites for course with id: {}", courseId);
         User user = userRepository.getUserWithAuthorities();

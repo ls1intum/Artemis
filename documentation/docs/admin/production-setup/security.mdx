@@ -2,7 +2,7 @@
 id: security
 title: Security
 sidebar_label: Security
-last_reviewed: 2026-11-11
+last_reviewed: 2026-11-12
 ---
 
 import Callout from "../../../src/components/Callout/Callout";
@@ -486,6 +486,30 @@ address, whose forwarded headers Artemis uses. Otherwise, add these origins to `
 `jhipster.cors.allowed-origin-patterns`. This allows them to call the REST API as well. The server logs every refused
 connection request with its origin.
 
+## Embedding in Other Pages and API Documentation
+
+Artemis tells browsers not to show its pages inside a frame of another site. It sends `X-Frame-Options: DENY` and the
+`frame-ancestors 'none'` directive of the Content Security Policy. The policy also restricts the document base to
+Artemis itself (`base-uri 'self'`).
+
+The [LTI module](/instructor/integrations/lti-configuration) is the exception. Learning management systems launch Artemis in a frame, so
+the LTI configuration removes `X-Frame-Options` while the module is enabled, and no `frame-ancestors` directive is sent.
+If you want to restrict which sites may embed Artemis in that case, or without LTI, list their origins:
+
+```yaml
+artemis:
+  security:
+    # Comma separated origins, scheme://host[:port], with an optional leading `*.` wildcard
+    frame-ancestors: https://lms.example.org
+```
+
+With origins configured, Artemis sends `frame-ancestors 'self' <origins>` and no `X-Frame-Options`. An entry that is not of
+that form stops the server at startup.
+
+The OpenAPI specification (`/api-docs`) and the Swagger UI (`/swagger-ui`) are switched off by default
+(`springdoc.api-docs.enabled` and `springdoc.swagger-ui.enabled`). Only where you switch them on, the paths are reachable
+without a login. On a server where they are off, a request to these paths needs a signed-in user like any other path.
+
 ## Rate Limiting
 
 Artemis provides **cluster-wide rate limiting** powered by [Bucket4j](https://bucket4j.com) (token buckets). The bucket state lives in the configured distributed data provider (Hazelcast, Redis or Valkey), or in the process itself with the `Local` provider.
@@ -512,7 +536,9 @@ artemis:
     authentication-requests-per-minute: 30
     git-authentication-requests-per-minute: 30
     login-options-requests-per-minute: 30
+    failed-login-requests-per-minute: 10
     client-error-report-requests-per-minute: 60
+    service-credential-failure-requests-per-minute: 30
 ```
 
 ### Where It Is Enforced
@@ -523,6 +549,10 @@ artemis:
 - Login options lookup (the identifier step of the login form, in its own bucket so that consuming it does not
   reduce the number of logins a shared address can perform)
 - Username/password login
+- Failed username/password logins of one account. Every wrong password, and every login name that does not exist, spends a token of the login name that was tried,
+  independent of the client address, and a login name whose budget is empty is answered with **429** before its password is checked. The budget is `failed-login-requests-per-minute`
+  (10 by default) and it refills continuously, so this is a throttle and not a lock: the owner of an account that someone else tries to guess waits a few seconds, and
+  guessing is held to that rate however many addresses it comes from. Successful logins spend nothing. Because the check does not depend on the address, addresses in `exempt-addresses` are subject to it as well
 - WebAuthn authentication
 - Git over SSH and HTTP operations, in a bucket of their own, `git-authentication-requests-per-minute`. What consumes it:
     - **HTTP:** the `/info/refs` request that starts a clone, fetch or push, when it carries credentials. The requests that follow it, `git-upload-pack` and `git-receive-pack`, are authenticated too. A password is charged one token before it is checked and receives it back when it is correct, for the `/info/refs` request as well as for the requests that follow it. A regular clone or push with the correct password is therefore not charged, and it completes even where the limit is a single request. Wrong passwords keep their token.
@@ -534,6 +564,7 @@ artemis:
   With a login limit of your own, the git limit is a separate 30 on top of it.
   Review the git setting on every installation, whether you raised, lowered or never set the login limit, see [10.7 in the Upgrade Guide](/admin/upgrade-guide#107-rate-limit-of-git-operations).
 - [Client error reports](/admin/client-error-reports) of clients that are not signed in
+- Failed checks of the shared secrets that Athena, Pyris and the sharing platform present to Artemis, in a bucket of their own, `service-credential-failure-requests-per-minute`. Only a failed check spends a token, so a service with the right secret is never limited. Once an address has used up its tokens, Artemis refuses its further requests with 429 without comparing the secret.
 
 We plan to add the rate-limit to more endpoints (like Oauth2) in the future.
 

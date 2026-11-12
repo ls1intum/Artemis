@@ -589,6 +589,22 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor4", roles = "USER")
+    void testMarkMessageAsResolved_asTutorOutsideTheConversation_forbidden() throws Exception {
+        Post post = existingConversationPostsWithAnswers.stream()
+                .filter(conversationPost -> !(conversationPost.getConversation() instanceof Channel channel && channel.getIsCourseWide())).findFirst().orElseThrow();
+        AnswerPost answer = post.getAnswers().iterator().next();
+        Conversation conversation = post.getConversation();
+        assertThat(conversationParticipantRepository.findConversationParticipantByConversationIdAndUserId(conversation.getId(),
+                userUtilService.getUserByLogin(TEST_PREFIX + "tutor4").getId())).as("the tutor takes no part in the conversation").isEmpty();
+
+        request.putWithResponseBody("/api/communication/courses/" + courseId + "/answer-messages/" + answer.getId(),
+                new UpdatePostingDTO(answer.getId(), answer.getContent(), null, true), AnswerPostResponseDTO.class, HttpStatus.FORBIDDEN);
+
+        assertThat(answerPostRepository.findByIdElseThrow(answer.getId()).doesResolvePost()).isFalse();
+    }
+
+    @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testMarkMessageAsResolved_asAuthor() throws Exception {
         // conversation post of student1 must be resolvable by them

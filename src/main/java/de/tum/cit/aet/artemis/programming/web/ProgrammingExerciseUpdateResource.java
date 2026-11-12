@@ -150,6 +150,89 @@ public class ProgrammingExerciseUpdateResource {
     }
 
     /**
+     * The settings of a programming exercise that cannot be changed by an update, as they were before the update was applied.
+     *
+     * @param shortName              the short name
+     * @param staticCodeAnalysis     whether static code analysis was enabled
+     * @param assignmentCheckoutPath the checkout path of the assignment repository
+     * @param solutionCheckoutPath   the checkout path of the solution repository
+     * @param testCheckoutPath       the checkout path of the test repository
+     * @param courseId               the id of the course of the exercise
+     */
+    private record OriginalSettings(String shortName, Boolean staticCodeAnalysis, String assignmentCheckoutPath, String solutionCheckoutPath, String testCheckoutPath,
+            Long courseId) {
+    }
+
+    /**
+     * Validates an exercise after the update was applied to it and before it is saved. Shared by the update and the re-evaluation, so that both refuse invalid exercises and
+     * changes of the settings that cannot be changed.
+     *
+     * @param updateDTO                  the update that was applied
+     * @param updatedProgrammingExercise the exercise with the update applied
+     * @param buildConfig                the build configuration with the update applied
+     * @param original                   the settings that cannot be changed, as they were before the update
+     */
+    private void validateUpdatedExercise(UpdateProgrammingExerciseDTO updateDTO, ProgrammingExercise updatedProgrammingExercise, ProgrammingExerciseBuildConfig buildConfig,
+            OriginalSettings original) {
+        // Validate the updated exercise
+        programmingExerciseValidationService.validateBuildConfigSize(buildConfig);
+        updatedProgrammingExercise.validateGeneralSettings();
+        updatedProgrammingExercise.checkCourseAndExerciseGroupExclusivity(ENTITY_NAME);
+        programmingExerciseValidationService.validateStaticCodeAnalysisSettings(updatedProgrammingExercise, buildConfig);
+
+        // Initialize the course of the entity reloaded under the mutation lease.
+        courseService.retrieveCourseOfLoadedExercise(updatedProgrammingExercise);
+
+        programmingExerciseValidationService.checkProgrammingExerciseForError(updatedProgrammingExercise, buildConfig);
+        // Validate plagiarism detection config
+        PlagiarismDetectionConfigHelper.validatePlagiarismDetectionConfigOrThrow(updatedProgrammingExercise, ENTITY_NAME);
+
+        // Validate immutable fields haven't changed
+        if (!Objects.equals(original.shortName(), updateDTO.shortName())) {
+            throw new BadRequestAlertException("The programming exercise short name cannot be changed", ENTITY_NAME, "shortNameCannotChange");
+        }
+        if (!Objects.equals(original.staticCodeAnalysis(), updateDTO.staticCodeAnalysisEnabled())) {
+            throw new BadRequestAlertException("Static code analysis enabled flag must not be changed", ENTITY_NAME, "staticCodeAnalysisCannotChange");
+        }
+        // Check if Theia is enabled
+        if (moduleFeatureService.isTheiaEnabled()) {
+            // Require 1 / 3 participation modes to be enabled
+            if (!Boolean.TRUE.equals(updateDTO.allowOnlineEditor()) && !Boolean.TRUE.equals(updateDTO.allowOfflineIde()) && !updateDTO.allowOnlineIde()) {
+                throw new BadRequestAlertException("You need to allow at least one participation mode, the online editor, the offline IDE, or the online IDE", ENTITY_NAME,
+                        "noParticipationModeAllowed");
+            }
+        }
+        else {
+            // Require 1 / 2 participation modes to be enabled
+            if (!Boolean.TRUE.equals(updateDTO.allowOnlineEditor()) && !Boolean.TRUE.equals(updateDTO.allowOfflineIde())) {
+                throw new BadRequestAlertException("You need to allow at least one participation mode, the online editor or the offline IDE", ENTITY_NAME,
+                        "noParticipationModeAllowed");
+            }
+        }
+
+        // Verify that the checkout directories have not been changed
+        var updatedBuildConfig = buildConfig;
+        if (!Objects.equals(original.assignmentCheckoutPath(), updatedBuildConfig != null ? updatedBuildConfig.getAssignmentCheckoutPath() : null)
+                || !Objects.equals(original.solutionCheckoutPath(), updatedBuildConfig != null ? updatedBuildConfig.getSolutionCheckoutPath() : null)
+                || !Objects.equals(original.testCheckoutPath(), updatedBuildConfig != null ? updatedBuildConfig.getTestCheckoutPath() : null)) {
+            throw new BadRequestAlertException("The custom checkout paths cannot be changed!", ENTITY_NAME, "checkoutDirectoriesChanged");
+        }
+
+        // Verify that the programming language supports the selected network access option
+        programmingExerciseValidationService.validateDockerFlags(buildConfig);
+
+        // Verify that a theia image is provided when the online IDE is enabled
+        if (updatedProgrammingExercise.isAllowOnlineIde() && buildConfig.getTheiaImage() == null) {
+            throw new BadRequestAlertException("You need to provide a Theia image when the online IDE is enabled", ENTITY_NAME, "noTheiaImageProvided");
+        }
+
+        // Forbid changing the course the exercise belongs to
+        if (!Objects.equals(original.courseId(), updatedProgrammingExercise.getCourseViaExerciseGroupOrCourseMember().getId())) {
+            throw new ConflictException("Exercise course id does not match the stored course id", ENTITY_NAME, "cannotChangeCourseId");
+        }
+    }
+
+    /**
      * PUT /programming-exercises : Updates an existing programming exercise.
      *
      * @param updateDTO             the DTO containing the updated programming exercise data
@@ -211,6 +294,8 @@ public class ProgrammingExerciseUpdateResource {
             final String originalSolutionCheckoutPath = buildConfig.getSolutionCheckoutPath();
             final String originalTestCheckoutPath = buildConfig.getTestCheckoutPath();
             final String originalBranch = buildConfig.getBranch();
+            final var originalSettings = new OriginalSettings(originalShortName, originalStaticCodeAnalysisEnabled, originalAssignmentCheckoutPath, originalSolutionCheckoutPath,
+                    originalTestCheckoutPath, originalCourseId);
             final ZonedDateTime originalDueDate = programmingExerciseBeforeUpdate.getDueDate();
             final ZonedDateTime originalReleaseDate = programmingExerciseBeforeUpdate.getReleaseDate();
             final ZonedDateTime originalAssessmentDueDate = programmingExerciseBeforeUpdate.getAssessmentDueDate();
@@ -233,61 +318,7 @@ public class ProgrammingExerciseUpdateResource {
                     hyperionCompetencyIds == null ? Set.of() : hyperionCompetencyIds);
 
             // Validate the updated exercise
-            programmingExerciseValidationService.validateBuildConfigSize(buildConfig);
-            updatedProgrammingExercise.validateGeneralSettings();
-            updatedProgrammingExercise.checkCourseAndExerciseGroupExclusivity(ENTITY_NAME);
-            programmingExerciseValidationService.validateStaticCodeAnalysisSettings(updatedProgrammingExercise, buildConfig);
-
-            // Fetch the course from the entity reloaded under the mutation lease.
-            Course course = courseService.retrieveCourseOfLoadedExercise(updatedProgrammingExercise);
-
-            programmingExerciseValidationService.checkProgrammingExerciseForError(updatedProgrammingExercise, buildConfig);
-            // Validate plagiarism detection config
-            PlagiarismDetectionConfigHelper.validatePlagiarismDetectionConfigOrThrow(updatedProgrammingExercise, ENTITY_NAME);
-
-            // Validate immutable fields haven't changed
-            if (!Objects.equals(originalShortName, updateDTO.shortName())) {
-                throw new BadRequestAlertException("The programming exercise short name cannot be changed", ENTITY_NAME, "shortNameCannotChange");
-            }
-            if (!Objects.equals(originalStaticCodeAnalysisEnabled, updateDTO.staticCodeAnalysisEnabled())) {
-                throw new BadRequestAlertException("Static code analysis enabled flag must not be changed", ENTITY_NAME, "staticCodeAnalysisCannotChange");
-            }
-            // Check if Theia is enabled
-            if (moduleFeatureService.isTheiaEnabled()) {
-                // Require 1 / 3 participation modes to be enabled
-                if (!Boolean.TRUE.equals(updateDTO.allowOnlineEditor()) && !Boolean.TRUE.equals(updateDTO.allowOfflineIde()) && !updateDTO.allowOnlineIde()) {
-                    throw new BadRequestAlertException("You need to allow at least one participation mode, the online editor, the offline IDE, or the online IDE", ENTITY_NAME,
-                            "noParticipationModeAllowed");
-                }
-            }
-            else {
-                // Require 1 / 2 participation modes to be enabled
-                if (!Boolean.TRUE.equals(updateDTO.allowOnlineEditor()) && !Boolean.TRUE.equals(updateDTO.allowOfflineIde())) {
-                    throw new BadRequestAlertException("You need to allow at least one participation mode, the online editor or the offline IDE", ENTITY_NAME,
-                            "noParticipationModeAllowed");
-                }
-            }
-
-            // Verify that the checkout directories have not been changed
-            var updatedBuildConfig = buildConfig;
-            if (!Objects.equals(originalAssignmentCheckoutPath, updatedBuildConfig != null ? updatedBuildConfig.getAssignmentCheckoutPath() : null)
-                    || !Objects.equals(originalSolutionCheckoutPath, updatedBuildConfig != null ? updatedBuildConfig.getSolutionCheckoutPath() : null)
-                    || !Objects.equals(originalTestCheckoutPath, updatedBuildConfig != null ? updatedBuildConfig.getTestCheckoutPath() : null)) {
-                throw new BadRequestAlertException("The custom checkout paths cannot be changed!", ENTITY_NAME, "checkoutDirectoriesChanged");
-            }
-
-            // Verify that the programming language supports the selected network access option
-            programmingExerciseValidationService.validateDockerFlags(buildConfig);
-
-            // Verify that a theia image is provided when the online IDE is enabled
-            if (updatedProgrammingExercise.isAllowOnlineIde() && buildConfig.getTheiaImage() == null) {
-                throw new BadRequestAlertException("You need to provide a Theia image when the online IDE is enabled", ENTITY_NAME, "noTheiaImageProvided");
-            }
-
-            // Forbid changing the course the exercise belongs to
-            if (!Objects.equals(originalCourseId, updatedProgrammingExercise.getCourseViaExerciseGroupOrCourseMember().getId())) {
-                throw new ConflictException("Exercise course id does not match the stored course id", ENTITY_NAME, "cannotChangeCourseId");
-            }
+            validateUpdatedExercise(updateDTO, updatedProgrammingExercise, buildConfig, originalSettings);
 
             // Note: conversion between exam/course exercise is already rejected by updateProgrammingExercise, which compares the DTO's courseId and exerciseGroupId before the
             // entity is mutated.
@@ -525,6 +556,7 @@ public class ProgrammingExerciseUpdateResource {
         var user = userRepository.getUserWithAuthorities();
         // The exercise was loaded without its exercise group, which this initializes for an exam exercise so that its course can be read further down
         courseService.retrieveCourseOfLoadedExercise(authorizationExercise);
+        validateCourseAndExerciseGroupUnchanged(updateDTO, authorizationExercise);
 
         try (var lease = programmingExerciseMutationGuard.claimExternalMutation(exerciseId)) {
             // Reload after claiming so a request that waited for another mutation cannot apply a stale managed entity.
@@ -542,11 +574,17 @@ public class ProgrammingExerciseUpdateResource {
             final String originalBuildPlanConfiguration = buildConfig.getBuildPlanConfiguration();
             final Set<Long> originalCompetencyIds = programmingExercise.getCompetencyLinks().stream().map(link -> link.getCompetency().getId()).collect(Collectors.toSet());
             final Duration originalBuildAndTestOffset = automaticAfterDueDateService.map(service -> service.getOriginalBuildAndTestOffset(programmingExercise)).orElse(null);
+            final String originalBranch = buildConfig.getBranch();
+            final var originalSettings = new OriginalSettings(programmingExercise.getShortName(), programmingExercise.isStaticCodeAnalysisEnabled(),
+                    buildConfig.getAssignmentCheckoutPath(), buildConfig.getSolutionCheckoutPath(), buildConfig.getTestCheckoutPath(),
+                    programmingExercise.getCourseViaExerciseGroupOrCourseMember() != null ? programmingExercise.getCourseViaExerciseGroupOrCourseMember().getId() : null);
 
             // Apply DTO changes BEFORE re-evaluation so that updated grading criteria take effect.
             update(updateDTO, programmingExercise, buildConfig, hyperionCompetencyIds == null ? Set.of() : hyperionCompetencyIds);
-            PlagiarismDetectionConfigHelper.validatePlagiarismDetectionConfigOrThrow(programmingExercise, ENTITY_NAME);
-            programmingExerciseValidationService.validateBuildConfigSize(buildConfig);
+            // The re-evaluation refuses what the update refuses
+            validateUpdatedExercise(updateDTO, programmingExercise, buildConfig, originalSettings);
+            // the default branch cannot be changed
+            buildConfig.setBranch(originalBranch);
 
             programmingExerciseCreationUpdateService.prepareAndValidateTimelineForUpdate(programmingExercise, buildConfig, originalBuildAndTestOffset);
 

@@ -1,14 +1,17 @@
 package de.tum.cit.aet.artemis.iris.web.internal;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
@@ -22,6 +25,9 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import de.tum.cit.aet.artemis.admin.service.RateLimitService;
+import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
+import de.tum.cit.aet.artemis.core.exception.RateLimitExceededException;
 import de.tum.cit.aet.artemis.iris.exception.IrisVideoSourceUnavailableException;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisWebhookService;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.PyrisLectureUnitWebhookDTO;
@@ -43,6 +49,8 @@ class PyrisInternalIngestionWorkerResourceTest {
 
     private static final String SECRET = "test-secret";
 
+    private RateLimitService rateLimitService;
+
     private PyrisWebhookService pyrisWebhookService;
 
     private ProcessingStateCallbackApi processingStateCallbackApi;
@@ -55,15 +63,42 @@ class PyrisInternalIngestionWorkerResourceTest {
 
     @BeforeEach
     void setUp() {
+        rateLimitService = mock(RateLimitService.class);
         pyrisWebhookService = mock(PyrisWebhookService.class);
         processingStateCallbackApi = mock(ProcessingStateCallbackApi.class);
         lectureUnitRepositoryApi = mock(LectureUnitRepositoryApi.class);
 
-        resource = new PyrisInternalIngestionWorkerResource(pyrisWebhookService, Optional.of(processingStateCallbackApi), Optional.of(lectureUnitRepositoryApi));
+        resource = new PyrisInternalIngestionWorkerResource(pyrisWebhookService, Optional.of(processingStateCallbackApi), Optional.of(lectureUnitRepositoryApi), rateLimitService);
         ReflectionTestUtils.setField(resource, "pyrisSecretToken", SECRET);
 
         servletRequest = mock(HttpServletRequest.class);
         when(servletRequest.getHeader(HttpHeaders.AUTHORIZATION)).thenReturn(SECRET);
+    }
+
+    @Test
+    void shouldRefuseAndCountAWrongSecret() {
+        when(servletRequest.getHeader(HttpHeaders.AUTHORIZATION)).thenReturn(SECRET + "x");
+
+        assertThatThrownBy(() -> resource.claimJobs(new PyrisWorkerClaimRequestDTO("worker-1", 1), servletRequest)).isInstanceOf(AccessForbiddenException.class);
+
+        verify(rateLimitService).recordServiceCredentialFailure();
+        verifyNoInteractions(pyrisWebhookService);
+    }
+
+    @Test
+    void shouldNotCountACorrectSecret() {
+        resource.claimJobs(new PyrisWorkerClaimRequestDTO("worker-1", 1), servletRequest);
+
+        verify(rateLimitService, never()).recordServiceCredentialFailure();
+    }
+
+    @Test
+    void shouldRefuseWithoutComparingWhenTheFailureBudgetIsUsedUp() {
+        doThrow(new RateLimitExceededException(60)).when(rateLimitService).requireServiceCredentialBudget();
+
+        assertThatThrownBy(() -> resource.claimJobs(new PyrisWorkerClaimRequestDTO("worker-1", 1), servletRequest)).isInstanceOf(RateLimitExceededException.class);
+
+        verify(rateLimitService, never()).recordServiceCredentialFailure();
     }
 
     private static ClaimedIngestionUnitDTO claim(long lectureUnitId, String claimToken) {
