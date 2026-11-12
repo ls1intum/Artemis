@@ -1,11 +1,11 @@
 <!-- The list stays in the DOM while a quiz is previewed, so that the search, the page and the focus target of the row survive. -->
 <div data-testid="exercise-import-list" class="p-4! pt-2!" [hidden]="preview() !== undefined">
     <div class="mb-4! flex flex-wrap items-center gap-2">
-        <span jhiTranslate="artemisApp.exercise.import.search"></span>:
         <input
             tumAetUiInput
             [attr.aria-label]="'artemisApp.exercise.import.search' | artemisTranslate"
-            class="w-full mx-2"
+            [attr.placeholder]="'artemisApp.exercise.import.search' | artemisTranslate"
+            class="min-w-48 flex-1"
             type="text"
             name="searchExcercise"
             [(ngModel)]="searchTerm"
