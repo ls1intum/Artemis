@@ -67,11 +67,14 @@ export class QuizExerciseLifecycleButtonsComponent {
         return quiz.quizMode === QuizMode.BATCHED && (quiz.status === QuizStatus.VISIBLE || quiz.status === QuizStatus.ACTIVE);
     });
 
+    /**
+     * A synchronized quiz can be started as long as its batch has not started, whether students can already see it (waiting room open)
+     * or not. The status says exactly that: VISIBLE and INVISIBLE are the states before the batch starts. The server's `quizStarted`
+     * flag is not usable here, it only means "visible to students".
+     */
     protected readonly showStartButton = computed<boolean>(() => {
         const quiz = this.quizExercise();
-        return (
-            (quiz.status === QuizStatus.VISIBLE || quiz.status === QuizStatus.INVISIBLE) && quiz.quizMode === QuizMode.SYNCHRONIZED && !!quiz.isAtLeastEditor && !quiz.quizStarted
-        );
+        return (quiz.status === QuizStatus.VISIBLE || quiz.status === QuizStatus.INVISIBLE) && quiz.quizMode === QuizMode.SYNCHRONIZED && !!quiz.isAtLeastEditor;
     });
 
     protected readonly showEndButton = computed<boolean>(() => {

@@ -1,3 +1,18 @@
+<button
+    id="quiz-set-visible-{{ quizExercise().id }}"
+    tumAetUiButton
+    type="submit"
+    severity="warn"
+    size="small"
+    (click)="showQuiz()"
+    [disabled]="isInVariantGroup()"
+    [style.pointer-events]="isInVariantGroup() ? 'auto' : undefined"
+    [tumAetUiTooltip]="isInVariantGroup() ? ('artemisApp.quizExercise.actionDisabledInGroup' | artemisTranslate) : ''"
+    tumAetUiTooltipPlacement="top"
+    [hidden]="!showSetVisibleButton()"
+>
+    <fa-icon [icon]="faEye" /><span class="ms-1" jhiTranslate="artemisApp.quizExercise.showNow"></span>
+</button>
 <button id="instructor-quiz-start-{{ quizExercise().id }}" tumAetUiButton type="submit" severity="success" size="small" (click)="startQuiz()" [hidden]="!showStartButton()">
     <fa-icon [icon]="faPlayCircle" /><span class="ms-1" jhiTranslate="artemisApp.quizExercise.startQuiz"></span>
 </button>
@@ -78,19 +93,4 @@
     [hidden]="!showEndButton()"
 >
     <fa-icon [icon]="faStopCircle" /><span class="ms-1" jhiTranslate="artemisApp.quizExercise.endQuiz"></span>
-</button>
-<button
-    id="quiz-set-visible-{{ quizExercise().id }}"
-    tumAetUiButton
-    type="submit"
-    severity="warn"
-    size="small"
-    (click)="showQuiz()"
-    [disabled]="isInVariantGroup()"
-    [style.pointer-events]="isInVariantGroup() ? 'auto' : undefined"
-    [tumAetUiTooltip]="isInVariantGroup() ? ('artemisApp.quizExercise.actionDisabledInGroup' | artemisTranslate) : ''"
-    tumAetUiTooltipPlacement="top"
-    [hidden]="!showSetVisibleButton()"
->
-    <fa-icon [icon]="faEye" /><span class="ms-1" jhiTranslate="artemisApp.quizExercise.showNow"></span>
 </button>
