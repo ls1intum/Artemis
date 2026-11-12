@@ -180,15 +180,16 @@ public interface TeamRepository extends ArtemisJpaRepository<Team, Long> {
      *
      * @param exercise the team's exercise
      * @param team     the updated team
+     * @param assessor the eligible new assessor, or null to unassign drafts
      * @return the saved team
      */
     @Transactional
-    default Team saveWithTutorChange(Exercise exercise, Team team) {
+    default Team saveWithTutorChange(Exercise exercise, Team team, User assessor) {
         Team saved = save(exercise, team);
         var instances = findAllByExerciseCourseIdAndShortName(exercise.getCourseViaExerciseGroupOrCourseMemberElseThrow().getId(), saved.getShortName());
         instances.forEach(instance -> instance.setOwner(saved.getOwner()));
         saveAll(instances);
-        reassignDraftAssessors(instances.stream().map(Team::getId).toList(), saved.getOwner());
+        reassignDraftAssessors(instances.stream().map(Team::getId).toList(), assessor);
         return saved;
     }
 

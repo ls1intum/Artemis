@@ -346,7 +346,7 @@ class SubmissionServiceTest extends AbstractSpringIntegrationIndependentBatchTes
         var transferredResultId = submissionRepository.findOneWithEagerResultAndFeedbackAndAssessmentNote(transferred.getId()).getLatestResult().getId();
         var team = teamRepository.findWithStudentsByIdElseThrow(((StudentParticipation) transferred.getParticipation()).getTeam().orElseThrow().getId());
         team.setOwner(tutor1);
-        teamRepository.saveWithTutorChange(exercise, team);
+        teamRepository.saveWithTutorChange(exercise, team, team.getOwner());
         if (unassigned) {
             var draft = resultRepository.findByIdWithEagerFeedbacksAndAssessor(transferredResultId).orElseThrow();
             draft.setAssessor(null);
@@ -405,6 +405,43 @@ class SubmissionServiceTest extends AbstractSpringIntegrationIndependentBatchTes
         request.post(cancelUrl, null, HttpStatus.FORBIDDEN);
         request.post(cancelUrl + "?resultId=" + completed.getId(), null, HttpStatus.FORBIDDEN);
         assertThat(resultRepository.findByIdWithEagerFeedbacksAndAssessor(completed.getId())).isPresent();
+    }
+
+    /** Student owners keep team ownership without becoming assessment tutors. */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void studentTeamOwnerUnassignsDraft() throws Exception {
+        var exercise = teamExercise(ExerciseType.TEXT);
+        var submission = teamSubmission(exercise, tutor1, "own");
+        request.get(assessmentStartUrl(ExerciseType.TEXT, submission.getId()), HttpStatus.OK, String.class);
+        var resultId = submissionRepository.findOneWithEagerResultAndFeedbackAndAssessmentNote(submission.getId()).getLatestResult().getId();
+        var team = teamRepository.findWithStudentsByIdElseThrow(((StudentParticipation) submission.getParticipation()).getTeam().orElseThrow().getId());
+        team.setOwner(student1);
+        userUtilService.changeUser(TEST_PREFIX + "instructor1");
+        request.put("/api/exercise/exercises/" + exercise.getId() + "/teams/" + team.getId(), de.tum.cit.aet.artemis.exercise.dto.TeamInputDTO.of(team), HttpStatus.OK);
+        assertThat(teamRepository.findWithStudentsByIdElseThrow(team.getId()).getOwner()).isEqualTo(student1);
+        assertThat(resultRepository.findByIdWithEagerFeedbacksAndAssessor(resultId).orElseThrow().getAssessor()).isNull();
+    }
+
+    /** New assessments require a submitted team snapshot; existing drafts remain reopenable. */
+    @ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(booleans = { false, true })
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void unsubmittedProgrammingTeamSubmissionOnlyReopensExistingAssessment(boolean existingDraft) throws Exception {
+        var exercise = teamExercise(ExerciseType.PROGRAMMING);
+        var submission = teamSubmission(exercise, tutor1, "own");
+        var url = assessmentStartUrl(ExerciseType.PROGRAMMING, submission.getId());
+        if (existingDraft) {
+            request.get(url, HttpStatus.OK, String.class);
+        }
+        submission = submissionRepository.findOneWithEagerResultAndFeedbackAndAssessmentNote(submission.getId());
+        var before = submission.getManualResults();
+        var resultIds = before.stream().map(Result::getId).toList();
+        submission.setSubmitted(false);
+        submissionRepository.save(submission);
+        request.get(url, existingDraft ? HttpStatus.OK : HttpStatus.FORBIDDEN, String.class);
+        assertThat(submissionRepository.findOneWithEagerResultAndFeedbackAndAssessmentNote(submission.getId()).getManualResults()).extracting(Result::getId)
+                .containsExactlyInAnyOrderElementsOf(resultIds);
     }
 
     @ParameterizedTest
@@ -644,7 +681,7 @@ class SubmissionServiceTest extends AbstractSpringIntegrationIndependentBatchTes
         if (transfer) {
             var team = teamRepository.findWithStudentsByIdElseThrow(((StudentParticipation) submission.getParticipation()).getTeam().orElseThrow().getId());
             team.setOwner(tutor2);
-            teamRepository.saveWithTutorChange(exercise, team);
+            teamRepository.saveWithTutorChange(exercise, team, team.getOwner());
             userUtilService.changeUser(TEST_PREFIX + "tutor2");
         }
         assertThat(opened.id()).isEqualTo(submission.getId());
@@ -715,7 +752,7 @@ class SubmissionServiceTest extends AbstractSpringIntegrationIndependentBatchTes
         if (nullDate) {
             var team = teamRepository.findWithStudentsByIdElseThrow(((StudentParticipation) first.getParticipation()).getTeam().orElseThrow().getId());
             team.setOwner(tutor2);
-            teamRepository.saveWithTutorChange(exercise, team);
+            teamRepository.saveWithTutorChange(exercise, team, team.getOwner());
             userUtilService.changeUser(TEST_PREFIX + "tutor2");
             queue = request.getList(queueUrl, HttpStatus.OK, AssessmentQueueTeamDTO.class);
             assertThat(queue).extracting(entry -> entry.submission().id()).containsExactly(selectedId);

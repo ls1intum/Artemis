@@ -34,6 +34,7 @@ import de.tum.cit.aet.artemis.assessment.repository.ScaFeedbackRepository;
 import de.tum.cit.aet.artemis.assessment.repository.TestCaseFeedbackRepository;
 import de.tum.cit.aet.artemis.assessment.service.FeedbackService;
 import de.tum.cit.aet.artemis.athena.api.AthenaApi;
+import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
@@ -521,6 +522,10 @@ public class ProgrammingSubmissionService extends SubmissionService {
         var assignedResult = reuseTeamAssessmentResult(submission, correctionRound);
         if (assignedResult.isPresent()) {
             return assignedResult.get();
+        }
+        if (submission.getParticipation().getExercise().isTeamMode() && submission.getParticipation() instanceof StudentParticipation participation
+                && participation.getTeam().isPresent() && !participation.isTestRun() && !Boolean.TRUE.equals(submission.isSubmitted())) {
+            throw new AccessForbiddenException("The team's submission has not been submitted.");
         }
         Optional<Result> optionalExistingResult;
         if (correctionRound == 0 && submission.getLatestResult() != null && AssessmentType.AUTOMATIC == submission.getLatestResult().getAssessmentType()) {

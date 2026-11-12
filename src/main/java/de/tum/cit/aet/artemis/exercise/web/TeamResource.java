@@ -321,7 +321,8 @@ public class TeamResource {
         existingTeam.setOwner(newOwner);
 
         // Save the existing managed team (includes check for conflicts that no student is assigned to multiple teams for an exercise)
-        Team savedTeam = ownerWasChanged ? teamRepository.saveWithTutorChange(exercise, existingTeam) : teamRepository.save(exercise, existingTeam);
+        User draftAssessor = newOwner != null && authCheckService.isAtLeastTeachingAssistantForExercise(exercise, newOwner) ? newOwner : null;
+        Team savedTeam = ownerWasChanged ? teamRepository.saveWithTutorChange(exercise, existingTeam, draftAssessor) : teamRepository.save(exercise, existingTeam);
 
         savedTeam.filterSensitiveInformation();
         savedTeam.getStudents().forEach(student -> student.setVisibleRegistrationNumber(student.getRegistrationNumber()));
