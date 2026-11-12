@@ -15,7 +15,6 @@ import de.tum.cit.aet.artemis.atlas.repository.CompetencyRepository;
 import de.tum.cit.aet.artemis.atlas.repository.CourseCompetencyRepository;
 import de.tum.cit.aet.artemis.atlas.repository.CourseLearnerProfileRepository;
 import de.tum.cit.aet.artemis.atlas.repository.KnowledgeAreaRepository;
-import de.tum.cit.aet.artemis.atlas.repository.ScienceSettingRepository;
 import de.tum.cit.aet.artemis.atlas.repository.SourceRepository;
 import de.tum.cit.aet.artemis.atlas.repository.StandardizedCompetencyRepository;
 import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyProgressService;
@@ -70,9 +69,6 @@ public abstract class AbstractAtlasIntegrationTest extends AbstractSpringIntegra
 
     @Autowired
     protected LearningPathTestRepository learningPathRepository;
-
-    @Autowired
-    protected ScienceSettingRepository scienceSettingRepository;
 
     @Autowired
     protected ScienceEventTestRepository scienceEventRepository;
