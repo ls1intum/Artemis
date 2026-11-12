@@ -55,6 +55,14 @@ class DistributedDataTypeFilterTest {
                 "[[Ljava.lang.Long;", "de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem")).allMatch(filter::isAllowed);
     }
 
+    @Test
+    void testExceptionsOfAFailedBuildJobAreAllowed() {
+        assertThat(List.of("java.lang.Throwable", "java.util.concurrent.CompletionException", "java.util.concurrent.ExecutionException", "java.util.concurrent.TimeoutException",
+                "java.util.concurrent.CancellationException", "java.io.IOException", "java.io.UncheckedIOException", "java.lang.InterruptedException",
+                "com.github.dockerjava.api.exception.DockerException", "com.github.dockerjava.api.exception.NotFoundException",
+                "de.tum.cit.aet.artemis.buildagent.dto.BuildJobFailedException")).allMatch(filter::isAllowed);
+    }
+
     @ParameterizedTest
     @ValueSource(strings = { "java.net.URL", "java.net.URI", "java.net.InetSocketAddress", "java.lang.Runtime", "java.io.File", "[Ljava.net.URL;",
             "org.hibernate.collection.spi.PersistentBag", "de.tum.cit.aet.artemisfake.Type", "java.utility.Fake", "[", "[L;", "" })

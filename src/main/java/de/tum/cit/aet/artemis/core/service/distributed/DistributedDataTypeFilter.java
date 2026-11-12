@@ -44,7 +44,9 @@ public final class DistributedDataTypeFilter {
     private static final Set<String> DEFAULT_CLASSES = Set.of("java.io.Serializable", "java.lang.Object", "java.lang.String", "java.lang.Boolean", "java.lang.Byte",
             "java.lang.Short", "java.lang.Integer", "java.lang.Long", "java.lang.Float", "java.lang.Double", "java.lang.Character", "java.lang.Number", "java.lang.Enum",
             "java.lang.Record", "java.lang.Throwable", "java.lang.Exception", "java.lang.RuntimeException", "java.lang.Error", "java.lang.IllegalArgumentException",
-            "java.lang.IllegalStateException", "java.lang.StackTraceElement", "java.lang.invoke.SerializedLambda", "org.springframework.cache.support.NullValue",
+            "java.lang.IllegalStateException", "java.lang.InterruptedException", "java.lang.NullPointerException", "java.lang.UnsupportedOperationException",
+            "java.lang.IndexOutOfBoundsException", "java.lang.ClassCastException", "java.lang.ArithmeticException", "java.io.IOException", "java.io.UncheckedIOException",
+            "java.io.FileNotFoundException", "java.lang.StackTraceElement", "java.lang.invoke.SerializedLambda", "org.springframework.cache.support.NullValue",
             "org.springframework.cache.interceptor.SimpleKey");
 
     /**
@@ -52,7 +54,7 @@ public final class DistributedDataTypeFilter {
      * value types a passkey registration option refers to.
      */
     private static final List<String> DEFAULT_PREFIXES = List.of("de.tum.cit.aet.artemis.", "java.util.", "java.time.", "java.math.",
-            "org.springframework.security.web.webauthn.api.");
+            "org.springframework.security.web.webauthn.api.", "com.github.dockerjava.api.exception.");
 
     private final Set<String> classes;
 
