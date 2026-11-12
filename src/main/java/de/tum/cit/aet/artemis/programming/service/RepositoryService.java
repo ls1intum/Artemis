@@ -179,8 +179,9 @@ public class RepositoryService {
                 return Map.of();
             }
             if (selectedFilePaths == null) {
+                // The result is compared with another snapshot (commit details, exam timeline), where a file that is left out would show up as deleted: fail instead.
                 return getFileContentFromBareRepositoryForCommitId(repository, commitObjectId, null, BinaryFileFilter.EXTENSION, MAX_FILE_CONTENT_BYTES, MAX_TOTAL_CONTENT_BYTES,
-                        false, false);
+                        true, true);
             }
             return getFileContentFromBareRepositoryForCommitId(repository, commitObjectId, selectedFilePaths, BinaryFileFilter.CONTENT, MAX_SELECTED_FILE_SIZE_BYTES,
                     MAX_SELECTED_FILES_TOTAL_SIZE_BYTES, false, false);
