@@ -146,6 +146,35 @@ describe('AdminScienceComponent', () => {
         expect(adminScienceService.getCourses).toHaveBeenCalledTimes(2);
     });
 
+    it('re-enables an inactive course directly from its history row', () => {
+        vi.mocked(adminScienceService.getCourses).mockReturnValue(of([{ ...enabledCourse, active: false }]));
+        vi.spyOn(adminScienceService, 'enableCourse').mockReturnValue(of(enabledCourse));
+        fixture.detectChanges();
+
+        fixture.nativeElement.querySelector('[data-testid="science-reenable-course-button"]').click();
+
+        expect(adminScienceService.enableCourse).toHaveBeenCalledWith(enabledCourse.courseId);
+        expect(adminScienceService.getCourses).toHaveBeenCalledTimes(2);
+    });
+
+    it('shows the stored export filters in the audit history', () => {
+        vi.mocked(adminScienceService.getExportAudits).mockReturnValue(
+            of([
+                {
+                    id: 1,
+                    filter: { courseIds: [42, 43], dateFrom: '2026-01-01T00:00:00Z', dateTo: '2026-02-01T00:00:00Z', eventTypes: [ScienceEventType.IRIS__ENTRYPOINT_IMPRESSION] },
+                },
+            ]),
+        );
+        fixture.detectChanges();
+
+        const cells = fixture.nativeElement.querySelectorAll('[data-testid="science-export-audit-table"] tbody td');
+        expect(cells[2].textContent).toContain('42, 43');
+        expect(cells[3].textContent.trim()).not.toBe('');
+        expect(cells[4].textContent.trim()).not.toBe('');
+        expect(cells[5].textContent).toContain('IRIS__ENTRYPOINT_IMPRESSION');
+    });
+
     it('should narrow the export filter when an event type checkbox is clicked', async () => {
         // Deliberately driven through the DOM rather than by calling toggleEventType: the binding was wired to an
         // output the component does not have, so the box moved while the filter did not - and a filter the form does

@@ -20,6 +20,7 @@ import { CourseTitleBarComponent } from 'app/course/shared/course-title-bar/cour
 import { CourseTitleBarService } from 'app/course/shared/services/course-title-bar.service';
 import { ScienceSettingsService } from 'app/account/user/settings/profile/science-settings/science-settings.service';
 import { ScienceService } from 'app/foundation/science/science.service';
+import { LLMSelectionModalService } from 'app/logos/llm-selection-popup.service';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TumAetUiButtonDirective, TumAetUiDialogComponent } from '@tumaet/ui-angular';
 import { SidebarView, isPageTitleView, isSidebarView } from 'app/course/shared/sidebar-view.interface';
@@ -58,6 +59,7 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
     private courseTabRefreshService = inject(CourseTabRefreshService);
     private scienceSettingsService = inject(ScienceSettingsService);
     private scienceService = inject(ScienceService);
+    private llmSelectionModalService = inject(LLMSelectionModalService);
 
     /**
      * Every page that does not bring its own sidebar gets the shell title bar, so the student overview matches course
@@ -111,7 +113,7 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
      */
     readonly showScienceConsentModal = computed(() => {
         const consent = this.scienceConsentCourse();
-        if (!consent || this.onExamPage() || this.scienceConsentDismissedFor().has(consent.courseId)) {
+        if (!consent || this.onExamPage() || this.llmSelectionModalService.isOpen() || this.scienceConsentDismissedFor().has(consent.courseId)) {
             return false;
         }
         return consent.scienceEnabled && (consent.active === undefined || consent.active === null);

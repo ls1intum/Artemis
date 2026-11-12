@@ -32,6 +32,7 @@
                     "created": "Created",
                     "admin": "Admin",
                     "courses": "Courses",
+                    "eventTypes": "Event types",
                     "purpose": "Purpose",
                     "checksum": "Checksum",
                     "empty": "No research exports have been created."

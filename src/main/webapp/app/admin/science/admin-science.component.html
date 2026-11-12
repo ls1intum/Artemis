@@ -67,6 +67,19 @@
                                             <fa-icon [icon]="faToggleOff" />
                                             <span jhiTranslate="artemisApp.admin.science.disable"></span>
                                         </button>
+                                    } @else {
+                                        <button
+                                            type="button"
+                                            tumAetUiButton
+                                            severity="success"
+                                            size="small"
+                                            variant="outlined"
+                                            data-testid="science-reenable-course-button"
+                                            (click)="enableCourse(course.courseId)"
+                                        >
+                                            <fa-icon [icon]="faPlus" />
+                                            <span jhiTranslate="artemisApp.admin.science.enable"></span>
+                                        </button>
                                     }
                                 </td>
                             </tr>
@@ -172,6 +185,9 @@
                         <th scope="col" jhiTranslate="artemisApp.admin.science.audit.created"></th>
                         <th scope="col" jhiTranslate="artemisApp.admin.science.audit.admin"></th>
                         <th scope="col" jhiTranslate="artemisApp.admin.science.audit.courses"></th>
+                        <th scope="col" jhiTranslate="artemisApp.admin.science.export.from"></th>
+                        <th scope="col" jhiTranslate="artemisApp.admin.science.export.to"></th>
+                        <th scope="col" jhiTranslate="artemisApp.admin.science.audit.eventTypes"></th>
                         <th scope="col" jhiTranslate="artemisApp.admin.science.audit.purpose"></th>
                         <th scope="col" jhiTranslate="artemisApp.admin.science.audit.checksum"></th>
                     </tr>
@@ -182,12 +198,15 @@
                             <td>{{ audit.createdDate | artemisDate }}</td>
                             <td>{{ audit.createdBy }}</td>
                             <td>{{ audit.filter?.courseIds?.join(', ') }}</td>
+                            <td>{{ audit.filter?.dateFrom | artemisDate }}</td>
+                            <td>{{ audit.filter?.dateTo | artemisDate }}</td>
+                            <td>{{ audit.filter?.eventTypes?.join(', ') }}</td>
                             <td>{{ audit.purpose }}</td>
                             <td class="admin-science-checksum">{{ audit.fileChecksum }}</td>
                         </tr>
                     } @empty {
                         <tr>
-                            <td colspan="5" jhiTranslate="artemisApp.admin.science.audit.empty"></td>
+                            <td colspan="8" jhiTranslate="artemisApp.admin.science.audit.empty"></td>
                         </tr>
                     }
                 </tbody>

@@ -146,8 +146,7 @@ export class AdminScienceComponent implements OnInit {
         });
     }
 
-    enableCourse(): void {
-        const courseId = this.courseIdToEnable();
+    enableCourse(courseId = this.courseIdToEnable()): void {
         if (!courseId) {
             return;
         }

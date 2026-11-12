@@ -71,6 +71,8 @@ import { SessionStorageService } from 'app/foundation/service/session-storage.se
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { ScienceCourseConsent, ScienceSettingsService } from 'app/account/user/settings/profile/science-settings/science-settings.service';
 import { ScienceService } from 'app/foundation/science/science.service';
+import { LLMSelectionModalService } from 'app/logos/llm-selection-popup.service';
+import { LLM_MODAL_DISMISSED } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
 import { FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
 
 const endDate1 = dayjs().add(1, 'days');
@@ -889,6 +891,16 @@ describe('CourseOverviewComponent', () => {
 
             expect(component.scienceConsentCourse()).toEqual(undecidedConsent);
             expect(component.showScienceConsentModal()).toBeTruthy();
+        });
+
+        it('waits until the AI selection dialog closes before showing consent', () => {
+            const modal = TestBed.inject(LLMSelectionModalService);
+            void modal.open();
+            enterCourse(undecidedConsent);
+            expect(component.showScienceConsentModal()).toBe(false);
+
+            modal.emitChoice(LLM_MODAL_DISMISSED);
+            expect(component.showScienceConsentModal()).toBe(true);
         });
 
         it.each([
