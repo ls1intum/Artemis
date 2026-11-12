@@ -12,6 +12,7 @@ import {
     faFileExport,
     faFileSignature,
     faFlask,
+    faGraduationCap,
     faHistory,
     faListAlt,
     faMagnifyingGlass,
@@ -24,7 +25,7 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import { TumAetUiButtonDirective, TumAetUiMenuComponent, TumAetUiMenuItemDirective, TumAetUiMenuTriggerDirective, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 import { TranslateService } from '@ngx-translate/core';
-import { MODULE_FEATURE_DEIMOS, MODULE_FEATURE_PLAGIARISM, MODULE_FEATURE_SHARING, PROFILE_JENKINS, PROFILE_LOCALCI } from 'app/app.constants';
+import { MODULE_FEATURE_DEIMOS, MODULE_FEATURE_METIS, MODULE_FEATURE_PLAGIARISM, MODULE_FEATURE_SHARING, PROFILE_JENKINS, PROFILE_LOCALCI } from 'app/app.constants';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
@@ -58,6 +59,9 @@ import { FeatureToggle, FeatureToggleService } from 'app/foundation/feature-togg
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { CreateVariantWithAiButtonComponent } from 'app/hyperion/variants/create-variant-with-ai-button.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
+import { MetisExerciseConfigDTO } from 'app/metis/shared/entities/metis.model';
+import { MetisService } from 'app/metis/shared/services/metis.service';
 import { AlertService, AlertType } from 'app/foundation/service/alert.service';
 import { EventManager } from 'app/foundation/service/event-manager.service';
 import { ArtemisMarkdownService } from 'app/foundation/service/markdown.service';
@@ -128,9 +132,12 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     private sharingService = inject(ProgrammingExerciseSharingService);
     private featureToggleService = inject(FeatureToggleService);
     private destroyRef = inject(DestroyRef);
+    private metisService = inject(MetisService);
+    private artemisDatePipe = inject(ArtemisDatePipe);
     private readonly isAlive = trackAlive(this.destroyRef);
 
     protected readonly deimosModuleEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_DEIMOS);
+    protected readonly metisModuleEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_METIS);
 
     protected deimosDateRangeModal = viewChild.required<DeimosDateRangeModalComponent>('deimosDateRangeModal');
     protected deimosSubmitting = signal(false);
@@ -152,6 +159,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     protected readonly faFileSignature = faFileSignature;
     protected readonly faListAlt = faListAlt;
     protected readonly faChartBar = faChartBar;
+    protected readonly faGraduationCap = faGraduationCap;
     protected readonly faUsers = faUsers;
     protected readonly faHistory = faHistory;
     protected readonly faUserCheck = faUserCheck;
@@ -204,6 +212,9 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
 
     readonly plagiarismCheckSupported = signal(false); // default value
 
+    /** The comprehension-check configuration of the exercise, for its line in the general section of the detail list. */
+    readonly metisConfig = signal<MetisExerciseConfigDTO | undefined>(undefined);
+
     /**
      * Determines if the current user can access participations and scores for this exercise.
      *
@@ -219,6 +230,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     private exerciseStatisticsSubscription?: Subscription;
     private sharingEnabledSubscription?: Subscription;
     private diffFetchSubscription?: Subscription;
+    private metisConfigSubscription?: Subscription;
 
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
@@ -273,6 +285,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
         this.exerciseStatisticsSubscription?.unsubscribe();
         this.sharingEnabledSubscription?.unsubscribe();
         this.diffFetchSubscription?.unsubscribe();
+        this.metisConfigSubscription?.unsubscribe();
     }
 
     /**
@@ -304,6 +317,10 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                 `/course-management/${this.courseId}/exams/${this.programmingExercise().exerciseGroup?.exam?.id}` +
                     `/exercise-groups/${this.programmingExercise().exerciseGroup?.id}/exercises/${exerciseId}/`,
             );
+        }
+
+        if (this.metisModuleEnabled && !this.isExamExercise()) {
+            this.loadMetisConfig(exerciseId);
         }
 
         this.templateAndSolutionParticipationSubscription = this.programmingExerciseService
@@ -363,6 +380,20 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
 
         this.exerciseStatisticsSubscription = this.statisticsService.getExerciseStatistics(exerciseId).subscribe((statistics: ExerciseManagementStatisticsDto) => {
             this.doughnutStats.set(statistics);
+        });
+    }
+
+    /**
+     * Reads the comprehension-check configuration for the detail list. The list is built once the participations
+     * arrive, so a configuration that lands later has to add its line to the already built sections.
+     */
+    private loadMetisConfig(exerciseId: number): void {
+        this.metisConfigSubscription?.unsubscribe();
+        this.metisConfigSubscription = this.metisService.config(exerciseId).subscribe((config) => {
+            this.metisConfig.set(config);
+            if (this.exerciseDetailSections().length > 0) {
+                this.exerciseDetailSections.set(this.getExerciseDetails());
+            }
         });
     }
 
@@ -466,6 +497,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     }
 
     getExerciseDetailsGeneralSection(exercise: ProgrammingExercise): DetailOverviewSection {
+        const metisConfig = this.metisModuleEnabled && !exercise.exerciseGroup ? this.metisConfig() : undefined;
         return {
             headline: 'artemisApp.programmingExercise.wizardMode.detailedSteps.generalInfoStepTitle',
             details: [
@@ -495,8 +527,34 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                     title: 'artemisApp.exercise.categories',
                     data: { categories: exercise.categories },
                 },
+                metisConfig && {
+                    type: DetailType.Text,
+                    title: 'artemisApp.metis.detail.title',
+                    data: { text: this.metisDetailText(metisConfig) },
+                },
             ],
         };
+    }
+
+    /** One line for the detail list: enabled state, answer window, question count and whether a review gate is set. */
+    private metisDetailText(config: MetisExerciseConfigDTO): string {
+        if (!config.enabled) {
+            return this.translateService.instant('artemisApp.metis.detail.disabled');
+        }
+        const parts = [this.translateService.instant('artemisApp.metis.detail.enabled')];
+        if (config.windowStart || config.windowEnd) {
+            parts.push(
+                this.translateService.instant('artemisApp.metis.detail.window', {
+                    start: this.artemisDatePipe.transform(config.windowStart, 'short'),
+                    end: this.artemisDatePipe.transform(config.windowEnd, 'short'),
+                }),
+            );
+        }
+        parts.push(this.translateService.instant('artemisApp.metis.detail.questions', { count: config.mainQuestionCount }));
+        if (config.reviewRequired) {
+            parts.push(this.translateService.instant('artemisApp.metis.detail.reviewRequired'));
+        }
+        return parts.join(' · ');
     }
 
     getExerciseDetailsModeSection(exercise: ProgrammingExercise): DetailOverviewSection {

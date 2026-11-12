@@ -40,6 +40,20 @@
                         <fa-icon [icon]="faChartBar" /><span jhiTranslate="statistics.statistics-title"></span>
                     </a>
                 }
+                @if (metisModuleEnabled && canAccessParticipationsAndScores() && exercise.course && !isExamExercise()) {
+                    <a
+                        tumAetUiButton
+                        size="small"
+                        severity="info"
+                        data-button-intent="analytics"
+                        [routerLink]="[baseResource(), 'comprehension-check']"
+                        [attr.aria-label]="'artemisApp.metis.dashboard.button' | artemisTranslate"
+                        [tumAetUiTooltip]="'artemisApp.metis.dashboard.button' | artemisTranslate"
+                        data-testid="comprehension-check-button"
+                    >
+                        <fa-icon [icon]="faGraduationCap" /><span jhiTranslate="artemisApp.metis.dashboard.button"></span>
+                    </a>
+                }
                 @if (exercise.assessmentType === AssessmentType.SEMI_AUTOMATIC || exercise.allowComplaintsForAutomaticAssessments) {
                     <a
                         tumAetUiButton

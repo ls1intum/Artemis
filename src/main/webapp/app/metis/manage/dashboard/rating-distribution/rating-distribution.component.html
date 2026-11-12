@@ -1,0 +1,37 @@
+<section class="flex flex-col gap-3" data-testid="rating-distribution">
+    <div class="flex flex-wrap items-start justify-between gap-3">
+        <div class="flex flex-col gap-1">
+            <h3 id="metis-rating-distribution-title" class="m-0 text-lg font-semibold" jhiTranslate="artemisApp.metis.dashboard.distribution.title"></h3>
+            <p
+                class="m-0 text-sm text-muted-color"
+                data-testid="rating-distribution-subtitle"
+                jhiTranslate="artemisApp.metis.dashboard.distribution.subtitle"
+                [translateValues]="{ count: completedCount() }"
+            ></p>
+        </div>
+        <tumaet-ui-select-button
+            data-testid="rating-distribution-mode"
+            [attr.aria-label]="'artemisApp.metis.dashboard.distribution.title' | artemisTranslate"
+            [options]="modeOptions()"
+            [ngModel]="mode()"
+            (ngModelChange)="onModeChange($event)"
+            [allowEmpty]="false"
+            optionLabel="label"
+            optionValue="value"
+            size="small"
+        />
+    </div>
+    <p class="m-0 text-sm text-muted-color" jhiTranslate="artemisApp.metis.dashboard.distribution.note"></p>
+    @if (completedCount() > 0) {
+        <div data-testid="rating-distribution-chart" [style.height.px]="chartHeight()">
+            <tumaet-ui-bar-chart
+                [labels]="chartData().labels"
+                [series]="chartData().series"
+                [config]="chartConfig()"
+                [ariaLabel]="'artemisApp.metis.dashboard.distribution.ariaLabel' | artemisTranslate"
+            />
+        </div>
+    } @else {
+        <p class="m-0 text-sm text-muted-color" data-testid="rating-distribution-empty" jhiTranslate="artemisApp.metis.dashboard.distribution.empty"></p>
+    }
+</section>
