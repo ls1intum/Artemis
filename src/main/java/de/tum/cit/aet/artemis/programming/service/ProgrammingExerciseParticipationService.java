@@ -6,6 +6,7 @@ import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.time.ZonedDateTime;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -22,7 +23,6 @@ import org.springframework.util.FileSystemUtils;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
-import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
@@ -398,7 +398,7 @@ public class ProgrammingExerciseParticipationService {
 
     /**
      * Retrieves the {@link ProgrammingExerciseStudentParticipation} for the given ID, including
-     * its latest {@link Submission} and the most recent {@link Result} with feedback (if available).
+     * its latest {@link Submission} and the latest visible official and Athena results with feedback (if available).
      *
      * <p>
      * If no submission exists for the participation, the returned participation will contain
@@ -407,7 +407,7 @@ public class ProgrammingExerciseParticipationService {
      * </p>
      *
      * @param participationId the ID of the student participation to retrieve
-     * @return the participation enriched with its latest submission and corresponding result (if available)
+     * @return the participation enriched with its latest submission and corresponding results (if available)
      * @throws EntityNotFoundException if no participation exists with the given ID
      */
     public ProgrammingExerciseStudentParticipation findStudentParticipationWithLatestSubmissionResultAndFeedbacksElseThrow(long participationId) throws EntityNotFoundException {
@@ -418,8 +418,9 @@ public class ProgrammingExerciseParticipationService {
             return participation;
         }
         Submission latestSubmission = latestSubmissionOptional.get();
-        Optional<Result> latestResultOptional = resultRepository.findLatestResultWithFeedbacksBySubmissionId(latestSubmission.getId(), ZonedDateTime.now());
-        latestResultOptional.ifPresentOrElse(latestResult -> latestSubmission.setResults(Set.of(latestResult)), () -> latestSubmission.setResults(Set.of()));
+        // The editor reads inline feedback from the first result, so preserve the official result first.
+        var results = resultRepository.findLatestOfficialAndAthenaResultsWithFeedbacksBySubmissionId(latestSubmission.getId(), ZonedDateTime.now());
+        latestSubmission.setResults(new LinkedHashSet<>(results));
         participation.setSubmissions(Set.of(latestSubmission));
         return participation;
     }

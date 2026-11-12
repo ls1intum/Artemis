@@ -608,7 +608,8 @@ class CourseOverviewLoadProfileTest extends AbstractSpringIntegrationIndependent
 
     @ParameterizedTest
     @CsvSource({ "false, false, none", "false, true, none", "true, false, none", "true, true, none", "false, false, pending", "false, true, pending", "true, false, pending",
-            "true, true, pending", "false, false, failed", "false, true, failed", "true, false, failed", "true, true, failed" })
+            "true, true, pending", "false, false, failed", "false, true, failed", "true, false, failed", "true, true, failed", "false, false, completed",
+            "true, false, completed" })
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldRetainTheAutomaticResultUntilTheNewManualSubmissionIsReleased(boolean teamMode, boolean draft, String requestState) throws Exception {
         User student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
@@ -662,8 +663,8 @@ class CourseOverviewLoadProfileTest extends AbstractSpringIntegrationIndependent
             athenaRequest.setExerciseId(exercise.getId());
             athenaRequest.setAssessmentType(AssessmentType.AUTOMATIC_ATHENA);
             athenaRequest.setRated(true);
-            athenaRequest.setScore(0.0);
-            athenaRequest.setSuccessful(requestState.equals("pending") ? null : false);
+            athenaRequest.setScore(requestState.equals("completed") ? 60.0 : 0.0);
+            athenaRequest.setSuccessful(requestState.equals("pending") ? null : Boolean.valueOf(requestState.equals("completed")));
             athenaRequest.setCompletionDate(requestState.equals("pending") ? ZonedDateTime.now().plusMinutes(5) : ZonedDateTime.now().minusMinutes(5));
             resultTestRepository.saveAndFlush(athenaRequest);
         }
