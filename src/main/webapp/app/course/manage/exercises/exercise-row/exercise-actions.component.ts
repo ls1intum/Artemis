@@ -145,6 +145,12 @@ export class ExerciseActionsComponent {
     });
 
     /**
+     * Actions shown as icon buttons, in the order they stay visible when the row gets narrow. Edit in editor is the
+     * most used action of programming exercises, so it stays inline; the rarely used and destructive delete lives in the menu.
+     */
+    protected readonly inlineActionIds = ['edit-in-editor', 'edit', 'participations'];
+
+    /**
      * Regular actions in original display order: Teams → Participations → type-specific → Create Variant
      * with AI → Edit → Delete.
      */
