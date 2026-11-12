@@ -165,8 +165,16 @@ describe('AdminFeatureToggleComponentTest', () => {
             comp.ngOnInit();
             const toggles = comp.featureToggles();
 
-            const science = toggles.find((t) => t.feature === FeatureToggle.Science);
-            expect(science?.documentationLink).toBeUndefined();
+            const autonomousTutor = toggles.find((t) => t.feature === FeatureToggle.AutonomousTutor);
+            expect(autonomousTutor).toBeDefined();
+            expect(autonomousTutor?.documentationLink).toBeUndefined();
+        });
+
+        it('should link the science toggle to its administration documentation', () => {
+            comp.ngOnInit();
+
+            const science = comp.featureToggles().find((t) => t.feature === FeatureToggle.Science);
+            expect(science?.documentationLink).toBe('https://docs.artemis.tum.de/admin/science-data-collection');
         });
     });
 
