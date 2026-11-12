@@ -1,7 +1,7 @@
 import { TumAetUiDialogRef, TumAetUiDialogService } from '@tumaet/ui-angular';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
-import { HttpResponse, provideHttpClient } from '@angular/common/http';
+import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { TranslateService } from '@ngx-translate/core';
 
@@ -140,5 +140,72 @@ describe('Example Submission Component', () => {
         component.ngOnDestroy();
 
         expect(dialogRef.close).toHaveBeenCalledOnce();
+    });
+    it('should report an error when importing the selected submission fails', () => {
+        component.exercise.set(exercise);
+        const importStub = vi.spyOn(exampleSubmissionService, 'import').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 404 })));
+        const errorSpy = vi.spyOn(alertService, 'error');
+
+        component.openImportModal();
+        dialogCloseSubject.next({ id: 42 } as Submission);
+
+        expect(importStub).toHaveBeenCalledWith(42, exercise.id);
+        expect(errorSpy).toHaveBeenCalledWith('error.http.404');
+    });
+});
+
+describe('Example Submission Component toolbar', () => {
+    let fixture: ComponentFixture<ExampleSubmissionsComponent>;
+    let dialogService: TumAetUiDialogService;
+
+    function setup(isAtLeastEditor: boolean) {
+        const exercise = {
+            id: 1,
+            type: ExerciseType.TEXT,
+            course: { id: 5, isAtLeastEditor },
+            exampleSubmissions: [],
+        } as unknown as Exercise;
+        const route = { data: of({ exercise }), children: [] } as any as ActivatedRoute;
+        const dialogRef = { close: vi.fn(), onClose: new Subject<Submission | undefined>().asObservable() } as unknown as TumAetUiDialogRef;
+        TestBed.configureTestingModule({
+            providers: [
+                { provide: ActivatedRoute, useValue: route },
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: AccountService, useClass: MockAccountService },
+                { provide: TumAetUiDialogService, useValue: { open: vi.fn().mockReturnValue(dialogRef) } },
+                MockProvider(AlertService),
+                provideHttpClient(),
+                provideHttpClientTesting(),
+            ],
+        });
+        fixture = TestBed.createComponent(ExampleSubmissionsComponent);
+        dialogService = TestBed.inject(TumAetUiDialogService);
+        fixture.componentInstance.ngOnInit();
+        fixture.detectChanges();
+    }
+
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
+    it('should label the icon-only toolbar actions and open the import dialog for editors', () => {
+        setup(true);
+        const toolbar = fixture.nativeElement.querySelector('[tumAetUiTableToolbar]') as HTMLElement;
+
+        expect(toolbar.querySelector('a[aria-label="artemisApp.modelingExercise.createExampleSubmission"]')).not.toBeNull();
+        const importButton = toolbar.querySelector('[data-testid="import-example-submission"]') as HTMLButtonElement;
+        expect(importButton.getAttribute('aria-label')).toBe('artemisApp.exampleSubmission.useAsExampleSubmission');
+
+        importButton.click();
+
+        expect(dialogService.open).toHaveBeenCalledOnce();
+    });
+
+    it('should not offer creating or importing example submissions to non-editors', () => {
+        setup(false);
+
+        expect(fixture.nativeElement.querySelector('[data-testid="import-example-submission"]')).toBeNull();
+        expect(fixture.nativeElement.querySelector('a[tumAetUiButton]')).toBeNull();
+        expect(fixture.nativeElement.querySelector('table')).not.toBeNull();
     });
 });

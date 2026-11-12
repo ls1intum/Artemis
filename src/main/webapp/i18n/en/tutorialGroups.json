@@ -263,6 +263,8 @@
                 "location": "Location:",
                 "title": "Tutorial Group Detail",
                 "sessionsListTitle": "Sessions",
+                "sessionsEmptyTitle": "No sessions to show",
+                "sessionsEmptyDescription": "Create the first session of this tutorial group.",
                 "sessionListOptionLabel": {
                     "allSessions": "All",
                     "futureSessions": "Future"

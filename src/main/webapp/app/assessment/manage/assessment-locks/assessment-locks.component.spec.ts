@@ -16,7 +16,9 @@ import { TextAssessmentService } from 'app/text/manage/assess/service/text-asses
 import { ProgrammingAssessmentManualResultService } from 'app/programming/manage/assess/manual-result/programming-assessment-manual-result.service';
 import { FileUploadAssessmentService } from 'app/fileupload/manage/assess/file-upload-assessment.service';
 import { Submission, SubmissionExerciseType } from 'app/exercise/shared/entities/submission/submission.model';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
+import dayjs from 'dayjs/esm';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
 import { ActivatedRoute, provideRouter } from '@angular/router';
@@ -142,5 +144,51 @@ describe('AssessmentLocksComponent', () => {
         component.cancelAssessment(fileUploadSubmission);
         expect(windowConfirmStub).toHaveBeenCalledTimes(1);
         expect(cancelAssessmentStub).toHaveBeenCalledTimes(1);
+    });
+    it('should load the locked submissions of an exam and show all of them', () => {
+        const examService = TestBed.inject(ExamManagementService);
+        const examStub = vi
+            .spyOn(examService, 'findAllLockedSubmissionsOfExam')
+            .mockReturnValue(of(new HttpResponse<Submission[]>({ body: [modelingSubmission, fileUploadSubmission] })));
+        component.courseId.set(9437);
+        component.examId = 42;
+
+        component.getAllLockedSubmissions();
+
+        expect(examStub).toHaveBeenCalledWith(9437, 42);
+        expect(component.showAll()).toBe(true);
+        expect(component.submissions()).toEqual([modelingSubmission, fileUploadSubmission]);
+    });
+
+    it('should report a failed loading of the course locks via the alert service', () => {
+        const alertService = TestBed.inject(AlertService);
+        const errorSpy = vi.spyOn(alertService, 'error');
+        vi.spyOn(courseService, 'findAllLockedSubmissionsOfCourse').mockReturnValue(throwError(() => 'loading failed'));
+
+        component.getAllLockedSubmissions();
+
+        expect(errorSpy).toHaveBeenCalledWith('loading failed');
+    });
+
+    it('should render the locked submissions inside the table layout and cancel only unfinished assessments', () => {
+        component.submissions.set([
+            {
+                id: 1,
+                participation: { id: 2, exercise: { id: 3, type: ExerciseType.TEXT, title: 'Open lock' } },
+                latestResult: { correctionRound: 0 },
+            } as Submission,
+            {
+                id: 4,
+                participation: { id: 5, exercise: { id: 6, type: ExerciseType.TEXT, title: 'Finished' } },
+                latestResult: { correctionRound: 0, completionDate: dayjs() },
+            } as Submission,
+        ]);
+        fixture.detectChanges();
+
+        const layout = fixture.nativeElement.querySelector('tumaet-ui-table-layout') as HTMLElement;
+        const rows = layout.querySelectorAll('tbody tr');
+        expect(rows).toHaveLength(2);
+        expect(rows[0].querySelectorAll('button')).toHaveLength(1);
+        expect(rows[1].querySelectorAll('button')).toHaveLength(0);
     });
 });

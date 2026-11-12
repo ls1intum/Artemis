@@ -2,7 +2,7 @@
 id: security
 title: Security
 sidebar_label: Security
-last_reviewed: 2026-11-10
+last_reviewed: 2026-11-11
 ---
 
 import Callout from "../../../src/components/Callout/Callout";
@@ -75,6 +75,8 @@ ARTEMIS_VERSIONCONTROL_BUILDAGENTGITPASSWORD="<a unique password, kept in sync w
 Artemis also pins the restrictive rendering profile of the diagram renderer at startup, in every profile. If `PLANTUML_SECURITY_PROFILE` is set explicitly, it has to name either `SANDBOX` or `ALLOWLIST`; any other value is rejected. Artemis passes its diagram theme as inline content, so no Artemis feature depends on the other profiles.
 
 ### Build Agent Authentication
+
+Which components may connect to each other, and how to check that your network follows this, is described in the [network model](/admin/production-setup/network-model).
 
 Build agents clone repositories from the core nodes. A clone is only served when the caller is a known agent, is calling from an address that agent is connected from, and is asking for a repository it currently has a build job for.
 

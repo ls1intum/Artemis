@@ -319,12 +319,15 @@ public class ProgrammingExerciseParticipationResource {
      * Check if the participation has a result yet.
      *
      * @param participationId of the participation to check.
-     * @return the ResponseEntity with status 200 (OK) with true if there is a result, otherwise false.
+     * @return the ResponseEntity with status 200 (OK) with true if there is a result, otherwise false, 404 if the participation can't be found or 403 if the user is not allowed to
+     *         access the participation.
      */
     @FeatureUsage(UserFeature.PROGRAMMING_RESULTS)
     @GetMapping("programming-exercise-participations/{participationId}/has-result")
     @EnforceAtLeastStudent
     public ResponseEntity<Boolean> checkIfParticipationHashResult(@PathVariable Long participationId) {
+        var participation = participationRepository.findByIdElseThrow(participationId);
+        participationAuthCheckService.checkCanAccessParticipationElseThrow(participation);
         boolean hasResult = resultRepository.existsBySubmissionParticipationId(participationId);
         return ResponseEntity.ok(hasResult);
     }
