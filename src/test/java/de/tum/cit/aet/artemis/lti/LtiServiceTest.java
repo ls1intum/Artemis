@@ -14,6 +14,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.Optional;
+import java.util.Set;
 
 import jakarta.servlet.http.HttpServletResponse;
 
@@ -23,6 +24,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.ResponseCookie;
 import org.springframework.security.authentication.InternalAuthenticationServiceException;
 import org.springframework.security.core.Authentication;
@@ -30,13 +32,17 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.util.UriComponents;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import de.tum.cit.aet.artemis.account.domain.Authority;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.security.ArtemisAuthenticationProvider;
 import de.tum.cit.aet.artemis.account.service.UserRecoveryKeyService;
 import de.tum.cit.aet.artemis.account.service.user.UserCreationService;
 import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
+import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.domain.UserCourseRole;
+import de.tum.cit.aet.artemis.core.exception.LtiEmailAlreadyInUseException;
+import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.security.jwt.JWTCookieService;
 import de.tum.cit.aet.artemis.core.test_repository.UserCourseRoleTestRepository;
@@ -283,6 +289,7 @@ class LtiServiceTest {
         String emailInDb = "John.Doe@test.com";
         String emailFromLti = "john.doe@test.com";
         user.setEmail(emailInDb);
+        user.setActivated(true);
 
         when(userRepository.findOneByEmailIgnoreCase(emailFromLti)).thenReturn(Optional.of(user));
         when(userRepository.findOneWithAuthoritiesByEmailIgnoreCase(emailFromLti)).thenReturn(Optional.of(user));
@@ -291,6 +298,146 @@ class LtiServiceTest {
 
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         assertThat(auth.getPrincipal()).isEqualTo(user.getLogin());
+    }
+
+    @Test
+    void authenticateLtiUser_trustedPlatformCannotSignInAnAdministrator() throws Exception {
+        SecurityContextHolder.getContext().setAuthentication(null);
+        trustExternalSystems();
+        user.setEmail("admin@test.com");
+        user.setActivated(true);
+        Authority adminAuthority = new Authority();
+        adminAuthority.setName(Role.ADMIN.getAuthority());
+        user.setAuthorities(Set.of(adminAuthority));
+        when(userRepository.findOneByEmailIgnoreCase("admin@test.com")).thenReturn(Optional.of(user));
+        when(userRepository.findOneWithAuthoritiesByEmailIgnoreCase("admin@test.com")).thenReturn(Optional.of(user));
+
+        assertThatExceptionOfType(LtiEmailAlreadyInUseException.class).isThrownBy(() -> ltiService.authenticateLtiUser("admin@test.com", "username", "first", "last", false));
+
+        assertThat(SecurityContextHolder.getContext().getAuthentication()).isNull();
+    }
+
+    @Test
+    void authenticateLtiUser_trustedPlatformCannotSignInAnAccountThatIsNotActive() throws Exception {
+        SecurityContextHolder.getContext().setAuthentication(null);
+        trustExternalSystems();
+        user.setEmail("inactive@test.com");
+        user.setActivated(false);
+        when(userRepository.findOneByEmailIgnoreCase("inactive@test.com")).thenReturn(Optional.of(user));
+        when(userRepository.findOneWithAuthoritiesByEmailIgnoreCase("inactive@test.com")).thenReturn(Optional.of(user));
+
+        assertThatExceptionOfType(LtiEmailAlreadyInUseException.class).isThrownBy(() -> ltiService.authenticateLtiUser("inactive@test.com", "username", "first", "last", false));
+
+        assertThat(SecurityContextHolder.getContext().getAuthentication()).isNull();
+    }
+
+    @Test
+    void authenticateLtiUser_trustedPlatformCannotSignInAnAccountThatAnEarlierLaunchCreatedAndNobodyInitialisedYet() throws Exception {
+        SecurityContextHolder.getContext().setAuthentication(null);
+        trustExternalSystems();
+        user.setEmail("student@test.com");
+        user.setActivated(false);
+        when(userRepository.findOneByEmailIgnoreCase("student@test.com")).thenReturn(Optional.of(user));
+        when(userRepository.findOneWithAuthoritiesByEmailIgnoreCase("student@test.com")).thenReturn(Optional.of(user));
+
+        // Such an account cannot be told from one that an administrator deactivated
+        assertThatExceptionOfType(LtiEmailAlreadyInUseException.class).isThrownBy(() -> ltiService.authenticateLtiUser("student@test.com", "username", "first", "last", false));
+    }
+
+    @Test
+    void authenticateLtiUser_trustedPlatformCannotSignInASuperAdministrator() throws Exception {
+        SecurityContextHolder.getContext().setAuthentication(null);
+        trustExternalSystems();
+        user.setEmail("root@test.com");
+        user.setActivated(true);
+        Authority authority = new Authority();
+        authority.setName(Role.SUPER_ADMIN.getAuthority());
+        user.setAuthorities(Set.of(authority));
+        when(userRepository.findOneByEmailIgnoreCase("root@test.com")).thenReturn(Optional.of(user));
+        when(userRepository.findOneWithAuthoritiesByEmailIgnoreCase("root@test.com")).thenReturn(Optional.of(user));
+
+        assertThatExceptionOfType(LtiEmailAlreadyInUseException.class).isThrownBy(() -> ltiService.authenticateLtiUser("root@test.com", "username", "first", "last", false));
+    }
+
+    @Test
+    void authenticateLtiUser_doesNotSignInAsTheOwnerOfTheDerivedLogin() {
+        SecurityContextHolder.getContext().setAuthentication(null);
+        User owner = new User();
+        owner.setId(2L);
+        owner.setLogin("username");
+        owner.setEmail("owner@test.com");
+        when(userRepository.findOneByLogin("username")).thenReturn(Optional.of(owner));
+        when(userRepository.findOneByLogin("username2")).thenReturn(Optional.empty());
+        User created = new User();
+        created.setId(3L);
+        created.setLogin("username2");
+        created.setPassword("password");
+        when(userCreationService.createUser(any(), any(), any(), any(), any(), any(), any(), any(), anyBoolean())).thenReturn(created);
+
+        ltiService.authenticateLtiUser("someone.else@test.com", "username", "first", "last", false);
+
+        ArgumentCaptor<String> loginCaptor = ArgumentCaptor.forClass(String.class);
+        verify(userCreationService).createUser(loginCaptor.capture(), any(), any(), any(), eq("someone.else@test.com"), any(), any(), any(), anyBoolean());
+        assertThat(loginCaptor.getValue()).isEqualTo("username2");
+        assertThat(SecurityContextHolder.getContext().getAuthentication().getPrincipal()).isEqualTo("username2");
+    }
+
+    @Test
+    void authenticateLtiUser_longLoginKeepsTheSuffixWithinTheMaximumLength() {
+        SecurityContextHolder.getContext().setAuthentication(null);
+        String login = "l".repeat(Constants.USERNAME_MAX_LENGTH);
+        User owner = new User();
+        owner.setEmail("owner@test.com");
+        when(userRepository.findOneByLogin(login)).thenReturn(Optional.of(owner));
+        when(userRepository.findOneByLogin(login.substring(0, Constants.USERNAME_MAX_LENGTH - 1) + "2")).thenReturn(Optional.empty());
+        User created = new User();
+        created.setId(3L);
+        created.setLogin("created");
+        created.setPassword("password");
+        when(userCreationService.createUser(any(), any(), any(), any(), any(), any(), any(), any(), anyBoolean())).thenReturn(created);
+
+        ltiService.authenticateLtiUser("someone.else@test.com", login, "first", "last", false);
+
+        ArgumentCaptor<String> loginCaptor = ArgumentCaptor.forClass(String.class);
+        verify(userCreationService).createUser(loginCaptor.capture(), any(), any(), any(), any(), any(), any(), any(), anyBoolean());
+        assertThat(loginCaptor.getValue()).hasSize(Constants.USERNAME_MAX_LENGTH).endsWith("2");
+    }
+
+    @Test
+    void authenticateLtiUser_retriesWhenAnotherLaunchTookTheLoginInTheMeantime() {
+        SecurityContextHolder.getContext().setAuthentication(null);
+        User owner = new User();
+        owner.setEmail("owner@test.com");
+        // The login is free when it is looked up, but taken when the account is saved. The second lookup finds the other launch's account.
+        when(userRepository.findOneByLogin("username")).thenReturn(Optional.empty(), Optional.empty(), Optional.of(owner));
+        when(userRepository.findOneByLogin("username2")).thenReturn(Optional.empty());
+        User created = new User();
+        created.setId(3L);
+        created.setLogin("username2");
+        created.setPassword("password");
+        when(userCreationService.createUser(eq("username"), any(), any(), any(), any(), any(), any(), any(), anyBoolean()))
+                .thenThrow(new DataIntegrityViolationException("duplicate"));
+        when(userCreationService.createUser(eq("username2"), any(), any(), any(), any(), any(), any(), any(), anyBoolean())).thenReturn(created);
+
+        ltiService.authenticateLtiUser("someone.else@test.com", "username", "first", "last", false);
+
+        assertThat(SecurityContextHolder.getContext().getAuthentication().getPrincipal()).isEqualTo("username2");
+    }
+
+    @Test
+    void authenticateLtiUser_givesUpAfterRepeatedCollisions() {
+        SecurityContextHolder.getContext().setAuthentication(null);
+        when(userRepository.findOneByLogin(any())).thenReturn(Optional.empty());
+        when(userCreationService.createUser(any(), any(), any(), any(), any(), any(), any(), any(), anyBoolean())).thenThrow(new DataIntegrityViolationException("duplicate"));
+
+        assertThatExceptionOfType(DataIntegrityViolationException.class)
+                .isThrownBy(() -> ltiService.authenticateLtiUser("someone.else@test.com", "username", "first", "last", false));
+    }
+
+    private void trustExternalSystems() throws Exception {
+        var field = LtiService.class.getDeclaredField("trustExternalLTISystems");
+        field.setAccessible(true);
+        field.set(ltiService, true);
     }
 
     @Test

@@ -5,6 +5,7 @@ import java.net.URISyntaxException;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.regex.Pattern;
@@ -22,6 +23,8 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
+import org.springframework.security.authentication.InternalAuthenticationServiceException;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.client.registration.ClientRegistration;
 import org.springframework.security.oauth2.core.oidc.OidcIdToken;
@@ -40,6 +43,8 @@ import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.repository.ResultGradeRepository;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.exception.LtiAccountNotAcceptedException;
+import de.tum.cit.aet.artemis.core.exception.LtiEmailAlreadyInUseException;
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
@@ -92,6 +97,9 @@ public class Lti13Service {
 
     /** A carriage return or a line feed, removed so that a logged user name cannot forge a second log line. */
     private static final Pattern LINE_BREAK = Pattern.compile("[\r\n]");
+
+    /** One address: a local part and a domain, separated by exactly one at sign, without whitespace. */
+    private static final Pattern USABLE_EMAIL = Pattern.compile("[^@\\s]+@[^@\\s]+");
 
     private final UserRepository userRepository;
 
@@ -173,15 +181,31 @@ public class Lti13Service {
             throw new BadRequestAlertException("LTI is not configured for this course", "LTI", "ltiNotConfigured");
         }
 
+        requireTargetInCourse(targetExercise, targetLecture, course, targetLinkUrl);
+
+        // The email address identifies the person, so a launch without one is refused before an account is looked up or created
+        if (StringUtils.isBlank(ltiIdToken.getEmail()) || !USABLE_EMAIL.matcher(ltiIdToken.getEmail()).matches()) {
+            throw new InternalAuthenticationServiceException("No email address sent by launch request. Please make sure the user has an accessible email address.");
+        }
+
         Optional<String> optionalUsername = artemisAuthenticationProvider.getUsernameForEmail(ltiIdToken.getEmail())
                 .or(() -> userRepository.findOneByEmailIgnoreCase(ltiIdToken.getEmail()).map(User::getLogin));
 
-        if (!onlineCourseConfiguration.isRequireExistingUser() && optionalUsername.isEmpty()) {
-            SecurityContextHolder.getContext().setAuthentication(ltiService.createNewUserFromLaunchRequest(ltiIdToken.getEmail(),
-                    createUsernameFromLaunchRequest(ltiIdToken, onlineCourseConfiguration), ltiIdToken.getGivenName(), ltiIdToken.getFamilyName()));
+        // Without an account for the email address there is nobody to sign in, and the derived login does not identify a person
+        if (optionalUsername.isEmpty() && onlineCourseConfiguration.isRequireExistingUser()) {
+            throw new InternalAuthenticationServiceException("Could not find existing user or create new LTI user.");
         }
 
-        String username = optionalUsername.orElseGet(() -> createUsernameFromLaunchRequest(ltiIdToken, onlineCourseConfiguration));
+        // The login of a newly created account is not always the derived one, so the account is looked up under the login it actually got.
+        String createdLogin = null;
+        if (!onlineCourseConfiguration.isRequireExistingUser() && optionalUsername.isEmpty()) {
+            Authentication authentication = ltiService.createNewUserFromLaunchRequest(ltiIdToken.getEmail(), createUsernameFromLaunchRequest(ltiIdToken, onlineCourseConfiguration),
+                    ltiIdToken.getGivenName(), ltiIdToken.getFamilyName());
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+            createdLogin = authentication.getName();
+        }
+
+        String username = createdLogin != null ? createdLogin : optionalUsername.orElseGet(() -> createUsernameFromLaunchRequest(ltiIdToken, onlineCourseConfiguration));
         User user = userRepository.findOneWithAuthoritiesByLogin(username).orElseThrow();
         Lti13LaunchRequest launchRequest = launchRequestFrom(ltiIdToken, clientRegistrationId);
 
@@ -196,6 +220,27 @@ public class Lti13Service {
             log.error("No course content to launch at {}", targetLinkUrl);
             throw new BadRequestAlertException("Content not found", "LTI", "ltiContentNotFound");
         }
+    }
+
+    /**
+     * The target of a launch has to belong to the course whose configuration the launch refers to.
+     */
+    private static void requireTargetInCourse(Optional<Exercise> exercise, Optional<Lecture> lecture, Course course, String targetLinkUrl) {
+        boolean exerciseInCourse = exercise.map(target -> belongsToCourse(target, course)).orElse(true);
+        boolean lectureInCourse = lecture.map(target -> target.getCourse() != null && Objects.equals(target.getCourse().getId(), course.getId())).orElse(true);
+        if (!exerciseInCourse || !lectureInCourse) {
+            log.error("The target of the link {} does not belong to the launched course", targetLinkUrl);
+            throw new BadRequestAlertException("Content not found", "LTI", "ltiContentNotFound");
+        }
+    }
+
+    private static boolean belongsToCourse(Exercise exercise, Course course) {
+        // An exam exercise is not part of the course content that a platform links to, and is reached through the exam only.
+        if (exercise.isExamExercise()) {
+            return false;
+        }
+        Course exerciseCourse = exercise.getCourseViaExerciseGroupOrCourseMember();
+        return exerciseCourse != null && Objects.equals(exerciseCourse.getId(), course.getId());
     }
 
     /**
@@ -504,10 +549,22 @@ public class Lti13Service {
     }
 
     private void handleLaunchRequest(Lti13LaunchRequest launchRequest, User user, Exercise exercise, OidcIdToken ltiIdToken, OnlineCourseConfiguration onlineCourseConfiguration) {
-        createOrUpdateResourceLaunch(launchRequest, user, exercise);
+        // The account is checked first: a refused launch must not leave an association behind that later results are published through.
+        try {
+            ltiService.authenticateLtiUser(ltiIdToken.getEmail(), createUsernameFromLaunchRequest(ltiIdToken, onlineCourseConfiguration), ltiIdToken.getGivenName(),
+                    ltiIdToken.getFamilyName(), onlineCourseConfiguration.isRequireExistingUser());
+        }
+        catch (LtiAccountNotAcceptedException e) {
+            // An account that is not accepted from a launch leaves no association behind
+            throw e;
+        }
+        catch (LtiEmailAlreadyInUseException e) {
+            // The person has an account and signs in by hand. The launch is not repeated after the sign-in, so its association is kept as it always was.
+            createOrUpdateResourceLaunch(launchRequest, user, exercise);
+            throw e;
+        }
 
-        ltiService.authenticateLtiUser(ltiIdToken.getEmail(), createUsernameFromLaunchRequest(ltiIdToken, onlineCourseConfiguration), ltiIdToken.getGivenName(),
-                ltiIdToken.getFamilyName(), onlineCourseConfiguration.isRequireExistingUser());
+        createOrUpdateResourceLaunch(launchRequest, user, exercise);
 
         if (exercise != null) {
             ltiService.onSuccessfulLtiAuthentication(user, exercise);
