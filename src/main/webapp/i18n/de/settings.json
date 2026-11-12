@@ -1,13 +1,11 @@
 {
     "settings": {
-        "title": "Einstellungen für Nutzer:in <b>{{username}}</b>",
         "form": {
             "firstname": "Vorname",
             "firstname.placeholder": "Vorname",
             "lastname": "Nachname",
             "lastname.placeholder": "Nachname",
-            "language": "Sprache",
-            "button": "Speichern"
+            "language": "Sprache"
         },
         "saml2SyncedInfo": "Dein Name und deine E-Mail-Adresse werden von deiner Institution über SAML2 verwaltet und können hier nicht geändert werden.",
         "messages": {
@@ -15,7 +13,6 @@
                 "fail": "<strong>Es ist ein Fehler aufgetreten!</strong> Die Einstellungen konnten nicht gespeichert werden.",
                 "emailExists": "<strong>E-Mail ist bereits in Verwendung!</strong> Bitte wähle eine andere aus."
             },
-            "success": "<strong>Einstellungen wurden gespeichert!</strong>",
             "validate": {
                 "firstname": {
                     "required": "Dein Vorname wird benötigt.",
@@ -26,6 +23,9 @@
                     "required": "Dein Nachname wird benötigt.",
                     "minlength": "Dein Nachname muss mindestens 2 Zeichen lang sein.",
                     "maxlength": "Dein Nachname darf nicht länger als 50 Zeichen sein"
+                },
+                "email": {
+                    "pattern": "Domain muss eine der folgenden sein: {{ pattern }}."
                 }
             }
         }

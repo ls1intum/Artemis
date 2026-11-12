@@ -72,6 +72,9 @@ export class LearningPathNavOverviewComponent {
     }
 
     openCompetencyGraph(): void {
+        // Logged here rather than in the modal: PrimeNG creates the modal under the root injector, outside the course
+        // overview that provides the ScienceService.
+        this.scienceService.logEvent(ScienceEventType.LEARNING_PATH__OPEN_GRAPH, this.learningPathId());
         CompetencyGraphModalComponent.openCompetencyGraphModal(this.dialogService, this.learningPathId(), undefined);
     }
 }

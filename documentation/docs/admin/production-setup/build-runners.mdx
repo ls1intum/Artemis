@@ -2,7 +2,7 @@
 id: build-runners
 title: LocalCI Build Runners
 sidebar_label: LocalCI Build Runners
-last_reviewed: 2026-11-03
+last_reviewed: 2026-11-09
 ---
 
 import Callout from "../../../src/components/Callout/Callout";
@@ -113,7 +113,10 @@ neither a Docker socket nor a Kubernetes API token.
   such as `sudo` and `gosu`. This matches what the Docker runner allows; restricting it further would break exercises
   on Kubernetes that build fine on Docker.
 - Exercises configured with the Docker network mode `none` additionally get a short trusted init container that drops
-  all IPv4 and IPv6 traffic except loopback. Only that init container gets `NET_ADMIN`; the builder does not.
+  all IPv4 and IPv6 traffic except loopback. Only that init container gets `NET_ADMIN`; the builder does not. The builder
+  of such an exercise also loses `CAP_NET_RAW`, because a root process that keeps it can open a packet socket that sends
+  and receives frames without passing through those firewall rules. Raw sockets are of no use to a build without a network,
+  and every other capability of the default set stays.
 
 ### Configuration
 

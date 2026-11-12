@@ -9,7 +9,10 @@ import java.time.Duration;
 import java.util.Base64;
 import java.util.HexFormat;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.http.HttpStatus;
@@ -19,6 +22,7 @@ import de.tum.cit.aet.artemis.videosource.config.GocastConfiguration.GocastSetti
 import de.tum.cit.aet.artemis.videosource.config.GocastEnabled;
 import de.tum.cit.aet.artemis.videosource.domain.GocastBindingConnectionStatus;
 import de.tum.cit.aet.artemis.videosource.domain.GocastBindingStatus;
+import de.tum.cit.aet.artemis.videosource.domain.event.GocastGrantRevokingEvent;
 import de.tum.cit.aet.artemis.videosource.dto.GocastApprovalResultDTO;
 import de.tum.cit.aet.artemis.videosource.dto.GocastApprovalStartDTO;
 import de.tum.cit.aet.artemis.videosource.dto.GocastBindingDTO;
@@ -30,6 +34,8 @@ import de.tum.cit.aet.artemis.videosource.repository.GocastConnectionRepository.
 @Service
 @Conditional(GocastEnabled.class)
 public class GocastBindingService {
+
+    private static final Logger log = LoggerFactory.getLogger(GocastBindingService.class);
 
     private static final Duration APPROVAL_LIFETIME = Duration.ofMinutes(15);
 
@@ -43,12 +49,17 @@ public class GocastBindingService {
 
     private final SecureRandom secureRandom;
 
+    private final ApplicationEventPublisher eventPublisher;
+
     @Autowired
-    public GocastBindingService(GocastConnectionRepository connectionRepository, GocastConnectorService connectorService, GocastSettings settings) {
-        this(connectionRepository, connectorService, settings.callbackUri().toString(), Clock.systemUTC(), new SecureRandom());
+    public GocastBindingService(GocastConnectionRepository connectionRepository, GocastConnectorService connectorService, GocastSettings settings,
+            ApplicationEventPublisher eventPublisher) {
+        this(connectionRepository, connectorService, settings.callbackUri().toString(), Clock.systemUTC(), new SecureRandom(), eventPublisher);
     }
 
-    GocastBindingService(GocastConnectionRepository connectionRepository, GocastConnectorService connectorService, String callbackUrl, Clock clock, SecureRandom secureRandom) {
+    GocastBindingService(GocastConnectionRepository connectionRepository, GocastConnectorService connectorService, String callbackUrl, Clock clock, SecureRandom secureRandom,
+            ApplicationEventPublisher eventPublisher) {
+        this.eventPublisher = eventPublisher;
         this.connectionRepository = connectionRepository;
         this.connectorService = connectorService;
         this.callbackUrl = callbackUrl;
@@ -130,7 +141,8 @@ public class GocastBindingService {
     }
 
     /**
-     * Revokes the exact remote grant before removing the saved binding.
+     * Revokes the exact remote grant before removing the saved binding. Right before, listeners may still use the grant, for example to delete uploads that are
+     * not attached yet.
      *
      * @param courseId the Artemis course identifier
      */
@@ -140,6 +152,12 @@ public class GocastBindingService {
             return;
         }
         BindingSnapshot binding = saved.get();
+        try {
+            eventPublisher.publishEvent(new GocastGrantRevokingEvent(courseId, binding.integrationId(), binding.grantId()));
+        }
+        catch (RuntimeException exception) {
+            log.warn("Could not finish the work on the TUM.Live grant of course {} before revoking it", courseId, exception);
+        }
         connectorService.revokeGrant(binding.grantId());
         if (!connectionRepository.completeUnlink(binding)) {
             throw new GocastBindingConflictException("The TUM.Live connection changed while it was being disconnected");
