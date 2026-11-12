@@ -212,8 +212,8 @@ public final class SecurityPolicyRepositoryFiles {
      * @return why the Security Framework cannot manage the repository, in this order: Ares 1, no pinned Ares version, the problems of each source file, and the
      *         problems of the test classes; empty if it can manage it
      */
-    private static List<SecurityFrameworkState.UnsupportedReason> unsupportedReasons(List<AresTestSources.Summary> summaries,
-            List<AresTestSources.TypeDeclaration> testClasses, BuildFiles buildFiles) {
+    private static List<SecurityFrameworkState.UnsupportedReason> unsupportedReasons(List<AresTestSources.Summary> summaries, List<AresTestSources.TypeDeclaration> testClasses,
+            BuildFiles buildFiles) {
         List<SecurityFrameworkState.UnsupportedReason> reasons = new ArrayList<>();
         boolean usesAres1 = buildFiles.usesAres1() || summaries.stream().anyMatch(AresTestSources.Summary::usesAres1);
         if (usesAres1) {

@@ -162,8 +162,8 @@ final class AresTestSources {
      *
      * @return the annotations of each declaration, by its index
      */
-    private static List<List<AresPolicyAnnotations.Annotation>> policiesByType(List<AresPolicyAnnotations.Annotation> annotations, List<Declaration> declarations,
-            int[] depth, List<SecurityFrameworkState.UnsupportedReasonType> problems) {
+    private static List<List<AresPolicyAnnotations.Annotation>> policiesByType(List<AresPolicyAnnotations.Annotation> annotations, List<Declaration> declarations, int[] depth,
+            List<SecurityFrameworkState.UnsupportedReasonType> problems) {
         List<List<AresPolicyAnnotations.Annotation>> policiesByType = new ArrayList<>();
         declarations.forEach(_ -> policiesByType.add(new ArrayList<>()));
         for (AresPolicyAnnotations.Annotation annotation : annotations) {
@@ -217,8 +217,7 @@ final class AresTestSources {
     /**
      * Marks the declarations whose methods are JUnit tests.
      */
-    private static void markJUnitTests(String masked, List<Declaration> declarations, int[] depth, boolean[] tests,
-            List<SecurityFrameworkState.UnsupportedReasonType> problems) {
+    private static void markJUnitTests(String masked, List<Declaration> declarations, int[] depth, boolean[] tests, List<SecurityFrameworkState.UnsupportedReasonType> problems) {
         Matcher junitMarkers = JUNIT_TEST_MARKER.matcher(masked);
         while (junitMarkers.find()) {
             int owner = enclosingDeclaration(declarations, junitMarkers.start(), depth);
