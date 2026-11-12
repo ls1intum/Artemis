@@ -19,6 +19,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.testcontainers.weaviate.WeaviateContainer;
 
+import de.tum.cit.aet.artemis.atlas.api.ScienceEventApi;
 import de.tum.cit.aet.artemis.course.config.CourseHomeAiProperties;
 import de.tum.cit.aet.artemis.course.service.home.CourseHomeAiClient;
 import de.tum.cit.aet.artemis.shared.WeaviateTestConfiguration;
@@ -50,6 +51,10 @@ public abstract class AbstractSpringIntegrationIndependentTest extends AbstractS
         Mockito.reset(courseHomeAiClient, courseHomeAiProperties);
     }
 
+    // A spy so that a test can make the rename of science identities fail, which no real input can provoke.
+    @MockitoSpyBean
+    protected ScienceEventApi scienceEventApi;
+
     protected static final WeaviateContainer weaviateContainer;
 
     private static final String UNIQUE_COLLECTION_PREFIX = "IntegrationIndependent_";
@@ -61,5 +66,12 @@ public abstract class AbstractSpringIntegrationIndependentTest extends AbstractS
     @DynamicPropertySource
     static void registerWeaviateProperties(DynamicPropertyRegistry registry) {
         WeaviateTestConfiguration.registerWeaviateProperties(registry, weaviateContainer, UNIQUE_COLLECTION_PREFIX);
+    }
+
+    @AfterEach
+    @Override
+    protected void resetSpyBeans() {
+        Mockito.reset(scienceEventApi);
+        super.resetSpyBeans();
     }
 }

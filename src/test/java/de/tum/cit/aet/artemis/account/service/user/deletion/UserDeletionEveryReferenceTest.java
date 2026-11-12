@@ -237,6 +237,7 @@ class UserDeletionEveryReferenceTest extends AbstractSpringIntegrationIndependen
         seed(UserDeletionReferencePolicy.COURSE_HOME_VISIT, userId, values("course_id", courseId, "first_seen_at", now, "last_seen_at", now, "variant_cursor", 0));
         seed(UserDeletionReferencePolicy.LECTURE_PROGRESS, userId, values("lecture_unit_id", lectureUnitId));
         seed(UserDeletionReferencePolicy.LEARNING_PATH, userId, values("course_id", courseId, "progress", 0));
+        seed(UserDeletionReferencePolicy.SCIENCE_COURSE_CONSENT, userId, values("course_id", courseId, "active", true, "created_by", "test", "created_date", now));
         seed(UserDeletionReferencePolicy.LEARNER_PROFILE, userId, values("feedback_detail", 2, "feedback_formality", 2, "has_setup_feedback_preferences", false));
         // The per-course part of the profile points at it, so seeding one proves the deletion takes that down first.
         Long learnerProfileId = jdbcTemplate.queryForObject("SELECT id FROM learner_profile WHERE user_id = ?", Long.class, userId);
