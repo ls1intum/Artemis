@@ -1192,7 +1192,7 @@ describe('CourseExerciseDetailsComponent', () => {
             expect(successSpy).toHaveBeenCalledExactlyOnceWith('artemisApp.exercise.lateSubmissionResultReceived');
         });
 
-        it.each([ExerciseType.TEXT, ExerciseType.FILE_UPLOAD, ExerciseType.PROGRAMMING])(
+        it.each([ExerciseType.MODELING, ExerciseType.TEXT, ExerciseType.FILE_UPLOAD, ExerciseType.PROGRAMMING])(
             'should offer the rated result of a %s assessment that arrives while the page is open',
             (type) => {
                 startWith([{ id: 1, testRun: false, submissions: [{ id: 5, results: [] }] } as unknown as StudentParticipation], type);
@@ -1471,7 +1471,7 @@ describe('CourseExerciseDetailsComponent', () => {
             expect(comp.complaint()).toBeUndefined();
         });
 
-        it.each([ExerciseType.TEXT, ExerciseType.FILE_UPLOAD])('should offer the latest rated result of a %s exercise to the details panel', (type) => {
+        it.each([ExerciseType.MODELING, ExerciseType.TEXT, ExerciseType.FILE_UPLOAD])('should offer the latest rated result of a %s exercise to the details panel', (type) => {
             comp.exercise = { ...exercise, type } as unknown as Exercise;
 
             expect(comp.latestRatedResult()?.id).toBe(2);

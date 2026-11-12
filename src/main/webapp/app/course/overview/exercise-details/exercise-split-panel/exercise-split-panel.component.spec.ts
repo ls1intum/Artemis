@@ -252,7 +252,7 @@ describe('ExerciseSplitPanelComponent', () => {
         expect(fixture.nativeElement.textContent).toContain('Problem Statement');
     });
 
-    it.each([ExerciseType.PROGRAMMING, ExerciseType.TEXT, ExerciseType.FILE_UPLOAD])(
+    it.each([ExerciseType.PROGRAMMING, ExerciseType.MODELING, ExerciseType.TEXT, ExerciseType.FILE_UPLOAD])(
         'should offer the rating and the complaint below the %s exercise details for a tutor assessment',
         (type) => {
             fixture.componentRef.setInput('exercise', { id: 1, type } as Exercise);
@@ -263,15 +263,6 @@ describe('ExerciseSplitPanelComponent', () => {
             expect(component.showComplaintView()).toBe(true);
         },
     );
-
-    it('should leave the rating and the complaint of a modeling exercise to its editor', () => {
-        fixture.componentRef.setInput('exercise', { id: 1, type: ExerciseType.MODELING } as Exercise);
-        fixture.componentRef.setInput('gradedStudentParticipation', { id: 5 } as StudentParticipation);
-        fixture.componentRef.setInput('latestRatedResult', { id: 3, assessmentType: AssessmentType.MANUAL } as Result);
-
-        expect(component.showRating()).toBe(false);
-        expect(component.showComplaintView()).toBe(false);
-    });
 
     it('should not offer the rating or the complaint for an automatic result unless complaints about it are allowed', () => {
         fixture.componentRef.setInput('exercise', { id: 1, type: ExerciseType.TEXT } as Exercise);

@@ -256,3 +256,6 @@ allowBuilds:
   lmdb: true
   msgpackr-extract: true
   unrs-resolver: true
+
+minimumReleaseAgeExclude:
+  - '@tumaet/apollon@5.5.0'
