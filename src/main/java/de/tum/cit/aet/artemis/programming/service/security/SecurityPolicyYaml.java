@@ -31,7 +31,7 @@ final class SecurityPolicyYaml {
     private static final String TEST_CLASSES_KEY = "theFollowingClassesAreTestClasses";
 
     /** The section header, optionally followed by a comment, which in YAML needs whitespace before its {@code #}. */
-    private static final Pattern SUPERVISED_CODE_LINE = Pattern.compile("^" + SUPERVISED_CODE_KEY + ":(?:[ \\t]+#[^\\r\\n]*)?[ \\t]*\\r?$", Pattern.MULTILINE);
+    private static final Pattern SUPERVISED_CODE_LINE = Pattern.compile("^" + SUPERVISED_CODE_KEY + ":(?:[ \\t]++#[^\\r\\n]*|[ \\t]*+)\\r?$", Pattern.MULTILINE);
 
     private static final Pattern TEST_CLASSES_LINE = Pattern.compile("^([ \\t]+)" + TEST_CLASSES_KEY + ":(.*)$", Pattern.MULTILINE);
 
@@ -40,8 +40,11 @@ final class SecurityPolicyYaml {
     /** A line without content: blank or only a comment. Such lines may appear between the items of a block list. */
     private static final Pattern BLANK_OR_COMMENT_LINE = Pattern.compile("^[ \\t]*(#.*)?$");
 
-    /** A comment at the end of a line, which in YAML starts with a {@code #} after whitespace. */
-    private static final Pattern TRAILING_COMMENT = Pattern.compile("[ \\t]+#.*$");
+    /**
+     * A comment at the end of a line, which in YAML starts with a {@code #} after whitespace. The match starts where the whitespace starts, so a long run of
+     * whitespace is scanned only once.
+     */
+    private static final Pattern TRAILING_COMMENT = Pattern.compile("(?<![ \\t])[ \\t]++#.*$");
 
     private static final Pattern EMPTY_FLOW_LIST = Pattern.compile("^\\s*\\[\\s*]\\s*$");
 

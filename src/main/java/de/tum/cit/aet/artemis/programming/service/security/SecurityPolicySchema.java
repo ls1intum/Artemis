@@ -61,7 +61,7 @@ final class SecurityPolicySchema {
     private static final String IPV6_ADDRESS = "(?:" + "(?:" + IPV6_COMPONENT + ":){7}" + IPV6_COMPONENT + "|(?:" + IPV6_COMPONENT + ":){1,7}:" + "|(?:" + IPV6_COMPONENT
             + ":){1,6}:" + IPV6_COMPONENT + "|(?:" + IPV6_COMPONENT + ":){1,5}(?::" + IPV6_COMPONENT + "){1,2}" + "|(?:" + IPV6_COMPONENT + ":){1,4}(?::" + IPV6_COMPONENT
             + "){1,3}" + "|(?:" + IPV6_COMPONENT + ":){1,3}(?::" + IPV6_COMPONENT + "){1,4}" + "|(?:" + IPV6_COMPONENT + ":){1,2}(?::" + IPV6_COMPONENT + "){1,5}" + "|"
-            + IPV6_COMPONENT + ":(?:(?::" + IPV6_COMPONENT + "){1,6})" + "|:(?:(?::" + IPV6_COMPONENT + "){1,7}|:)" + "|(?:" + IPV6_COMPONENT + ":){6}" + IPV4_ADDRESS
+            + IPV6_COMPONENT + ":(?::" + IPV6_COMPONENT + "){1,6}" + "|:(?:(?::" + IPV6_COMPONENT + "){1,7}|:)" + "|(?:" + IPV6_COMPONENT + ":){6}" + IPV4_ADDRESS
             + "|::(?:ffff(?::0{1,4})?:)?" + IPV4_ADDRESS + "|(?:" + IPV6_COMPONENT + ":){1,4}:" + IPV4_ADDRESS + ")";
 
     private static final String DNS_LABEL = "[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?";
@@ -79,7 +79,7 @@ final class SecurityPolicySchema {
     private static final Pattern JAVA_CLASS = Pattern.compile("^" + JAVA_CLASS_PATH + "$");
 
     private static final Pattern FILE_PATH = Pattern
-            .compile("^(?:\\*|(?=.+$)(?=.*\\S)(?!(?:.*[\\\\/])?\\.\\.(?:[\\\\/]|$))(?:(?:" + RECOGNISED_PLACEHOLDER + ")|(?!\\$\\{)[^*\\x00])++)$", Pattern.DOTALL);
+            .compile("^(?:\\*|(?=.+$)(?=.*\\S)(?!(?:.*[\\\\/])?\\.\\.(?:[\\\\/]|$))(?:" + RECOGNISED_PLACEHOLDER + "|(?!\\$\\{)[^*\\x00])++)$", Pattern.DOTALL);
 
     private static final Pattern HOST = Pattern.compile("^(?:\\*|localhost|" + IPV4_ADDRESS + "|" + IPV6_ADDRESS + "|" + DNS_NAME + ")$");
 

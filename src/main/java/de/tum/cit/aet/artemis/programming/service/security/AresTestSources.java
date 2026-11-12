@@ -37,7 +37,7 @@ final class AresTestSources {
     /** A type declaration; the keyword must not follow a dot, so {@code Foo.class} is no declaration. */
     private static final Pattern TYPE_DECLARATION = Pattern.compile("(@\\s*interface|(?<![\\w.$])(?:class|interface|enum|record))\\s+([A-Za-z_$][\\w$]*)");
 
-    private static final Pattern SUPERCLASS = Pattern.compile("^\\s*(?:<[^{]*?>)?\\s*extends\\s+([\\w.$]+)");
+    private static final Pattern SUPERCLASS = Pattern.compile("^\\s*+(?:<[^{]*?>\\s*+)?extends\\s+([\\w.$]+)");
 
     /** A JUnit annotation that makes a method a test, with or without its package. */
     private static final Pattern JUNIT_TEST_MARKER = Pattern
