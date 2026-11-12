@@ -50,8 +50,8 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationAuthorizationCheckService;
 import de.tum.cit.aet.artemis.localvc.service.GitService;
+import de.tum.cit.aet.artemis.localvc.service.LocalVCPushProcessingService;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
-import de.tum.cit.aet.artemis.localvc.service.LocalVCServletService;
 import de.tum.cit.aet.artemis.programming.domain.AbstractBaseProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.FileType;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -104,9 +104,10 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
             ParticipationAuthorizationCheckService participationAuthCheckService, GitService gitService, RepositoryService repositoryService,
             ProgrammingExerciseParticipationService participationService, ProgrammingExerciseRepository programmingExerciseRepository,
             ParticipationRepository participationRepository, BuildLogEntryService buildLogService, ProgrammingSubmissionRepository programmingSubmissionRepository,
-            SubmissionPolicyRepository submissionPolicyRepository, RepositoryAccessService repositoryAccessService, Optional<LocalVCServletService> localVCServletService,
-            RepositoryParticipationService repositoryParticipationService, ProgrammingExerciseMutationGuardService programmingExerciseMutationGuard) {
-        super(userRepository, authCheckService, gitService, repositoryService, programmingExerciseRepository, repositoryAccessService, localVCServletService,
+            SubmissionPolicyRepository submissionPolicyRepository, RepositoryAccessService repositoryAccessService,
+            Optional<LocalVCPushProcessingService> localVCPushProcessingService, RepositoryParticipationService repositoryParticipationService,
+            ProgrammingExerciseMutationGuardService programmingExerciseMutationGuard) {
+        super(userRepository, authCheckService, gitService, repositoryService, programmingExerciseRepository, repositoryAccessService, localVCPushProcessingService,
                 programmingExerciseMutationGuard);
         this.participationAuthCheckService = participationAuthCheckService;
         this.participationService = participationService;

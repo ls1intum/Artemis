@@ -1,6 +1,6 @@
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { Observable } from 'rxjs';
-import { EntitySummary } from 'app/shared-ui/delete-dialog/delete-dialog.model';
+import { EntitySummaryCategory } from 'app/shared-ui/delete-dialog/delete-dialog.model';
 
 /** The kit button severities the action buttons use (a subset of `TumAetUiButtonSeverity`). */
 export type ActionSeverity = 'primary' | 'info' | 'success' | 'warn' | 'danger';
@@ -11,7 +11,7 @@ export interface DeleteActionConfig {
     deleteQuestion: string;
     deleteConfirmationText: string;
     entitySummaryTitle?: string;
-    fetchEntitySummary?: Observable<EntitySummary>;
+    fetchCategorizedEntitySummary?: Observable<EntitySummaryCategory[]>;
     translateValues?: { [key: string]: unknown };
     additionalChecks?: { [key: string]: string };
     dialogError: Observable<string>;

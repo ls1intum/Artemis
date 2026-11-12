@@ -49,7 +49,7 @@ export class LectureUnitComponent implements OnDestroy {
 
     showViewIsolatedButton = input<boolean>(false);
     viewIsolatedButtonLabel = input<string>('artemisApp.textUnit.isolated');
-    viewIsolatedButtonSeverity = input<TumAetUiButtonSeverity>('success');
+    viewIsolatedButtonSeverity = input<TumAetUiButtonSeverity>('secondary');
     viewIsolatedButtonIcon = input<IconDefinition>(faExternalLinkAlt);
     isPresentationMode = input.required<boolean>();
     readonly deepLink = input<LectureDeepLink | undefined>(undefined);

@@ -149,7 +149,7 @@
                                 </span>
                             </td>
                         }
-                        <td>
+                        <td class="col-categories">
                             @if (row.quizStatusLabel) {
                                 <tumaet-ui-tag class="me-1" [severity]="row.quizStatusSeverity" [value]="row.quizStatusLabel | artemisTranslate" />
                             }
@@ -169,6 +169,7 @@
                                 [course]="course()"
                                 (exerciseUpdated)="exerciseUpdated.emit($event)"
                                 (exerciseDeleted)="exerciseDeleted.emit($event)"
+                                (exerciseDeletionOutcomeUnknown)="exerciseDeletionOutcomeUnknown.emit()"
                                 (quizActionsMinWidth)="onQuizActionsMinWidth($event)"
                             />
                         </td>

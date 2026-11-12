@@ -29,7 +29,7 @@ import { Router } from '@angular/router';
 import { IrisSessionDTO } from 'app/iris/shared/entities/iris-session-dto.model';
 import { IrisSession } from 'app/iris/shared/entities/iris-session.model';
 import { IrisChatWebsocketDTO, IrisChatWebsocketPayloadType } from 'app/iris/shared/entities/iris-chat-websocket-dto.model';
-import { IrisSender } from 'app/iris/shared/entities/iris-message.model';
+import { IrisMessage, IrisSender } from 'app/iris/shared/entities/iris-message.model';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { User } from 'app/account/user/user.model';
 import { LLMSelectionDecision } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
@@ -1212,6 +1212,62 @@ describe('IrisChatService', () => {
             expect(service.activities.getValue()).toEqual(activities);
             expect(service.messages.getValue().last()).toMatchObject({ id: 40, final: false });
             expect(service.numNewMessages.getValue()).toBe(0);
+        });
+
+        const interimFrame = (runId: string, id: number, text: string, activities?: IrisActivityItem[]): IrisChatWebsocketDTO =>
+            messageFrame(runId, {
+                final: false,
+                message: { ...mockWebsocketServerMessage.message!, id, final: false, content: [{ type: 'text', textContent: text }], activities },
+            });
+
+        it('live feed: drops the steps an interim message now shows, also from later snapshots', async () => {
+            const websocketSubject = new Subject<IrisChatWebsocketDTO>();
+            await startSessionWithWebsocket(websocketSubject);
+
+            websocketSubject.next(interimFrame('run-1', 40, 'Let me pull up the details.'));
+            websocketSubject.next(statusFrame('run-1', IrisRunState.RUNNING, { activities: [finishedActivity('act-1')], activitySeq: 1 }));
+            expect(service.activities.getValue()).toEqual([finishedActivity('act-1')]);
+
+            websocketSubject.next(interimFrame('run-1', 41, 'Let me switch over.', [finishedActivity('act-1')]));
+            expect(service.activities.getValue()).toEqual([]);
+
+            websocketSubject.next(statusFrame('run-1', IrisRunState.RUNNING, { activities: [finishedActivity('act-1'), runningActivity('act-2')], activitySeq: 2 }));
+            expect(service.activities.getValue()).toEqual([runningActivity('act-2')]);
+        });
+
+        it('live feed: after a reload mid-run, drops the steps the loaded interim messages show', async () => {
+            const websocketSubject = new Subject<IrisChatWebsocketDTO>();
+            await startSessionWithWebsocket(websocketSubject);
+            const earlierAnswer = { ...mockWebsocketServerMessage.message!, id: 30, activities: [finishedActivity('act-1')] } as IrisMessage;
+            const loadedInterim = { ...mockWebsocketServerMessage.message!, id: 41, final: false, activities: [finishedActivity('act-1')] } as IrisMessage;
+            service.messages.next([earlierAnswer, mockUserMessageWithContent('question') as IrisMessage, loadedInterim]);
+
+            websocketSubject.next(statusFrame('run-1', IrisRunState.RUNNING, { activities: [finishedActivity('act-1'), runningActivity('act-2')], activitySeq: 5 }));
+
+            expect(service.activities.getValue()).toEqual([runningActivity('act-2')]);
+        });
+
+        it('live feed: interim messages of a finished run do not hide steps of the next run', async () => {
+            const websocketSubject = new Subject<IrisChatWebsocketDTO>();
+            await startSessionWithWebsocket(websocketSubject);
+            const oldInterim = { ...mockWebsocketServerMessage.message!, id: 41, final: false, activities: [finishedActivity('act-1')] } as IrisMessage;
+            const oldAnswer = { ...mockWebsocketServerMessage.message!, id: 42 } as IrisMessage;
+            service.messages.next([mockUserMessageWithContent('question') as IrisMessage, oldInterim, oldAnswer]);
+
+            websocketSubject.next(statusFrame('run-2', IrisRunState.RUNNING, { activities: [runningActivity('act-1')], activitySeq: 1 }));
+
+            expect(service.activities.getValue()).toEqual([runningActivity('act-1')]);
+        });
+
+        it('live feed: a new run with reused step ids shows all its steps', async () => {
+            const websocketSubject = new Subject<IrisChatWebsocketDTO>();
+            await startSessionWithWebsocket(websocketSubject);
+
+            websocketSubject.next(interimFrame('run-1', 40, 'Let me check.', [finishedActivity('act-1')]));
+            websocketSubject.next(messageFrame('run-1', { message: { ...mockWebsocketServerMessage.message!, id: 41 } }));
+            websocketSubject.next(statusFrame('run-2', IrisRunState.RUNNING, { activities: [runningActivity('act-1')], activitySeq: 1 }));
+
+            expect(service.activities.getValue()).toEqual([runningActivity('act-1')]);
         });
 
         it('guard: awaitingAnswer clears on FAILED while keeping the last live activities', async () => {

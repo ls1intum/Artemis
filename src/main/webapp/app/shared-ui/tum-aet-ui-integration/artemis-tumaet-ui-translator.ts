@@ -39,7 +39,7 @@ const ARTEMIS_TRANSLATION_KEYS = {
     'tumAetUi.panel.collapse': 'global.generic.collapse',
     'tumAetUi.panel.expand': 'global.generic.expand',
     'tumAetUi.paginator.ariaLabel': 'global.paginator.ariaLabel',
-    'tumAetUi.paginator.currentPageReport': 'global.item-count',
+    'tumAetUi.paginator.compactReport': 'global.paginator.compactReport',
     'tumAetUi.paginator.first': 'global.paginator.first',
     'tumAetUi.paginator.last': 'global.paginator.last',
     'tumAetUi.paginator.next': 'global.paginator.next',
@@ -52,6 +52,7 @@ const ARTEMIS_TRANSLATION_KEYS = {
     'tumAetUi.select.filter': 'global.generic.filterOptions',
     'tumAetUi.select.noResults': 'global.generic.noMatchingOptions',
     'tumAetUi.table.actions': 'entity.actions',
+    'tumAetUi.table.empty': 'global.generic.noEntriesYet',
     'tumAetUi.table.noResults': 'global.search.noResultsFound',
     'tumAetUi.table.searchPlaceholder': 'global.search.searchPlaceholder',
 } as const satisfies Readonly<Record<TumAetUiTranslationKey, string>>;

@@ -15,12 +15,12 @@ import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTe
 
 class FeatureToggleServiceTest extends AbstractSpringIntegrationIndependentTest {
 
-    // science, TutorSuggestions, AtlasAgent, AtlasML, RateLimit, GlobalSearch, AutonomousTutor, Deimos,
+    // science, TutorSuggestions, AtlasAgent, RateLimit, GlobalSearch, AutonomousTutor, Deimos,
     // GlobalSearchReconcileOrphan disabled by default
-    private static final int FEATURES_DISABLED_DEFAULT = 9;
+    private static final int FEATURES_DISABLED_DEFAULT = 8;
 
-    // Memiris, which is never reported as enabled or disabled
-    private static final int FEATURES_RETIRED = 1;
+    // Retired features are never reported as enabled or disabled
+    private static final int FEATURES_RETIRED = 2;
 
     @Autowired
     private FeatureToggleService featureToggleService;
@@ -39,7 +39,6 @@ class FeatureToggleServiceTest extends AbstractSpringIntegrationIndependentTest 
         assertThat(featureToggleService.isFeatureEnabled(Feature.PresentationAssessments)).isTrue();
         assertThat(featureToggleService.isFeatureEnabled(Feature.Science)).isFalse();
         assertThat(featureToggleService.isFeatureEnabled(Feature.TutorSuggestions)).isFalse();
-        assertThat(featureToggleService.isFeatureEnabled(Feature.AtlasML)).isFalse();
         assertThat(featureToggleService.isFeatureEnabled(Feature.AtlasAgent)).isFalse();
         assertThat(featureToggleService.isFeatureEnabled(Feature.AutonomousTutor)).isFalse();
         assertThat(featureToggleService.isFeatureEnabled(Feature.RateLimit)).isFalse();
@@ -62,7 +61,6 @@ class FeatureToggleServiceTest extends AbstractSpringIntegrationIndependentTest 
         // Disable features that should be disabled by default
         featureToggleService.disableFeature(Feature.Science);
         featureToggleService.disableFeature(Feature.TutorSuggestions);
-        featureToggleService.disableFeature(Feature.AtlasML);
         featureToggleService.disableFeature(Feature.AtlasAgent);
         featureToggleService.disableFeature(Feature.AutonomousTutor);
         featureToggleService.disableFeature(Feature.RateLimit);

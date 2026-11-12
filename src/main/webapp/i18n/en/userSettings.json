@@ -80,8 +80,8 @@
             "notificationSettings": "Notifications",
             "notificationSettingsFilterInfo": "These settings also filter the notification sidebar",
             "scienceSettings": "Science",
-            "scienceSettingsFeatureDisabled": "The science feature is currently disabled. You can still edit your settings in case the feature gets enabled again.",
-            "scienceSettingsInfo": "Help Artemis to get better!",
+            "scienceSettingsFeatureDisabled": "The feature is currently disabled. Your preference will apply if it is enabled again.",
+            "scienceSettingsInfo": "Artemis can collect data to help researchers study learning behavior and improve the platform.",
             "idePreferencesPage": {
                 "description": "Choose the IDEs you want to use for opening programming exercises.",
                 "default": "Default",
@@ -220,6 +220,7 @@
                 }
             },
             "accountInformationPage": {
+                "editTitle": "Edit Account Information",
                 "registrationNumber": "Registration Number",
                 "fullName": "Full Name",
                 "login": "Login",
@@ -227,8 +228,10 @@
                 "joinedArtemis": "Joined Artemis on",
                 "profilePicture": "Profile Picture",
                 "addProfilePicture": "Add a profile picture",
-                "sshKey": "Public SSH Key",
-                "editAccountSettings": "Edit Account Settings"
+                "noImage": "no image",
+                "deleteProfilePictureTitle": "Delete profile picture?",
+                "deleteProfilePictureQuestion": "Are you sure you want to delete your profile picture?",
+                "sshKey": "Public SSH Key"
             },
             "categories": {
                 "LLMUsage": "AI Experience Settings",
@@ -278,8 +281,7 @@
                 "newConversationMessages": "New messages in conversations",
                 "newReplyMessage": "New replies in conversations",
                 "tutorialGroupUpdateDelete": "Update and Delete of Tutorial Groups",
-                "assignUnassignTutorialGroup": "Assign and Unassign of Tutorial Groups",
-                "activity": "Activity tracking"
+                "assignUnassignTutorialGroup": "Assign and Unassign of Tutorial Groups"
             },
             "settingDescriptions": {
                 "basicWeeklySummaryDescription": "Receive a basic weekly summary every Friday at 5pm (e.g. what new exercises have been released this week and are still open)",
@@ -306,7 +308,7 @@
                 "conversationNewReplyMessageDescription": "Get notified when you receive a new reply in a conversation",
                 "tutorialGroupUpdateDeleteDescription": "Get notified when a tutorial group for which you are registered or a tutor was updated or deleted",
                 "assignUnassignTutorialGroupDescription": "Get notified when you were assigned or unassigned to lead a tutorial group",
-                "activityDescription": "Share which features of Artemis you utilize and how you interact with them. The information is only accessible for administrators."
+                "activityDescription": "Allow Artemis to record which features you use and how you interact with them. This information is only accessible to administrators."
             },
             "globalNotificationSettings": {
                 "title": "Notifications",

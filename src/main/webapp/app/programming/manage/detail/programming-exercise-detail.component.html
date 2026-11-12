@@ -1,5 +1,5 @@
 @if (programmingExercise(); as exercise) {
-    <div class="mx-auto w-full max-w-7xl px-4! py-6!" data-testid="programming-exercise-detail">
+    <div class="mx-auto w-full max-w-7xl -mt-2 px-0!" data-testid="programming-exercise-detail">
         <jhi-exercise-detail-header [exercise]="exercise" [documentationType]="documentationType">
             <ng-container detailHeaderSecondary>
                 @if (exercise.isAtLeastEditor) {
@@ -100,7 +100,7 @@
                     >
                         <fa-icon [icon]="faFileSignature" /><span jhiTranslate="artemisApp.programmingExercise.configureGrading.shortTitle"></span>
                     </a>
-                    <jhi-create-variant-with-ai-button [exercise]="exercise" styleClass="min-w-0 flex-1 @7xl:flex-none [&>tumaet-ui-button]:w-full" />
+                    <jhi-create-variant-with-ai-button [exercise]="exercise" styleClass="min-w-0 flex-1 [&>tumaet-ui-button]:w-full" />
                 }
             </ng-container>
             <ng-container detailMoreActions>
@@ -196,7 +196,7 @@
                         jhiDeleteButton
                         [entityTitle]="exercise.title || ''"
                         entitySummaryTitle="artemisApp.exercise.delete.summary.title"
-                        [fetchEntitySummary]="fetchExerciseDeletionSummary()"
+                        [fetchCategorizedEntitySummary]="fetchExerciseDeletionSummary()"
                         deleteQuestion="artemisApp.programmingExercise.delete.questionLocalVC.single"
                         [translateValues]="{
                             courseTitle: exercise.course.title,

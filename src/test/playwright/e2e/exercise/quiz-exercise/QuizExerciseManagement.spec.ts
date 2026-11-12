@@ -180,7 +180,8 @@ test.describe('Quiz Exercise Management', { tag: '@fast' }, () => {
             await page.goto(`/course-management/${course.id}/quiz-exercises/${quiz.id}`);
             await expect(page.locator('html')).toHaveAttribute('lang', 'de');
             const editing = page.getByTestId('exercise-editing-actions');
-            const toolbar = editing.locator('..');
+            // The toolbar holds the navigation, editing and more actions, so it is looked up by its own test id
+            const toolbar = page.getByTestId('exercise-actions-toolbar');
             const controls = [
                 editing.getByRole('link', { name: 'Überarbeiten', exact: true }),
                 editing.getByTestId('quiz-evaluate-button').getByRole('button'),

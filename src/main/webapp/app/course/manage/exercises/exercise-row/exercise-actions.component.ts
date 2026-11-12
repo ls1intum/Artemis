@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, DestroyRef, computed, inject, input
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Observable, Subject, finalize, take } from 'rxjs';
-import { faChartBar, faClipboardList, faEye, faLightbulb, faListAlt, faPencilAlt, faRedo, faRobot, faTrash, faUsers, faWrench } from '@fortawesome/free-solid-svg-icons';
+import { faChartBar, faClipboardList, faCode, faEye, faLightbulb, faListAlt, faPencilAlt, faRedo, faRobot, faTrash, faUsers } from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
 import { Exercise, ExerciseMode, ExerciseType, getExerciseUrlSegment } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { QuizExercise, QuizMode, QuizStatus } from 'app/quiz/shared/entities/quiz-exercise.model';
@@ -10,7 +10,9 @@ import { QuizExerciseLifecycleButtonsComponent } from 'app/quiz/manage/lifecyle-
 import { isQuizEditable } from 'app/quiz/shared/service/quiz-manage-util.service';
 import { Course } from 'app/course/shared/entities/course.model';
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
-import { EntitySummary } from 'app/shared-ui/delete-dialog/delete-dialog.model';
+import { EntitySummaryCategory } from 'app/shared-ui/delete-dialog/delete-dialog.model';
+import { EntityDeletionService } from 'app/shared-ui/delete-dialog/service/entity-deletion.service';
+import { exerciseDeletionTarget, isDeletionCompleted, isDeletionOutcomeUnknown } from 'app/shared-ui/delete-dialog/entity-deletion-target.util';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { EventManager } from 'app/foundation/service/event-manager.service';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -52,6 +54,7 @@ export class ExerciseActionsComponent {
     private readonly programmingExerciseService = inject(ProgrammingExerciseService);
     private readonly modelingExerciseService = inject(ModelingExerciseService);
     private readonly exerciseService = inject(ExerciseService);
+    private readonly entityDeletionService = inject(EntityDeletionService);
     private readonly eventManager = inject(EventManager);
     private readonly translateService = inject(TranslateService);
     private readonly profileService = inject(ProfileService);
@@ -63,6 +66,8 @@ export class ExerciseActionsComponent {
 
     readonly exerciseUpdated = output<Exercise>();
     readonly exerciseDeleted = output<Exercise>();
+    /** Emitted when it is not known how a deletion ended; the parent reloads its exercises instead of removing the row. */
+    readonly exerciseDeletionOutcomeUnknown = output<void>();
     /**
      * Width (px) the actions column must reserve for this row's quiz buttons plus the ellipsis trigger; 0 for
      * non-quiz rows. The table floors the shared column at the max across its rows (see exercise-table).
@@ -114,7 +119,7 @@ export class ExerciseActionsComponent {
         return showVisible || showStart || showBatches || showEnd;
     });
 
-    readonly deletionSummary = computed<Observable<EntitySummary>>(() => this.exerciseService.getDeletionSummary(this.exercise()));
+    readonly deletionSummary = computed<Observable<EntitySummaryCategory[]>>(() => this.exerciseService.getDeletionSummary(this.exercise()));
 
     /**
      * Cleanup checkboxes for the delete dialog: on external CI, programming exercises offer an opt-out for deleting
@@ -138,6 +143,12 @@ export class ExerciseActionsComponent {
             courseType: this.translateService.instant(course?.testCourse ? 'artemisApp.exercise.delete.testCourse' : 'artemisApp.exercise.delete.realCourse'),
         };
     });
+
+    /**
+     * Actions shown as icon buttons, in the order they stay visible when the row gets narrow. Edit in editor is the
+     * most used action of programming exercises, so it stays inline; the rarely used and destructive delete lives in the menu.
+     */
+    protected readonly inlineActionIds = ['edit-in-editor', 'edit', 'participations'];
 
     /**
      * Regular actions in original display order: Teams → Participations → type-specific → Create Variant
@@ -234,7 +245,7 @@ export class ExerciseActionsComponent {
             items.push({
                 id: 'edit-in-editor',
                 labelKey: 'entity.action.editInEditor',
-                icon: faPencilAlt,
+                icon: faCode,
                 severity: 'warn',
                 kind: 'link',
                 link: ['/course-management', cid, 'programming-exercises', ex.id!, 'code-editor', RepositoryType.TEMPLATE, -1],
@@ -247,7 +258,7 @@ export class ExerciseActionsComponent {
                 items.push({
                     id: 'edit',
                     labelKey: 'entity.action.edit',
-                    icon: faWrench,
+                    icon: faPencilAlt,
                     severity: 'warn',
                     kind: 'link',
                     link: ['/course-management', cid, seg, ex.id!, 'edit'],
@@ -260,7 +271,7 @@ export class ExerciseActionsComponent {
                 items.push({
                     id: 'edit',
                     labelKey: 'entity.action.edit',
-                    icon: faWrench,
+                    icon: faPencilAlt,
                     severity: 'warn',
                     kind: 'link',
                     link: ['/course-management', cid, seg, ex.id!, 'edit'],
@@ -287,7 +298,7 @@ export class ExerciseActionsComponent {
                 delete: {
                     entityTitle: ex.title ?? '',
                     entitySummaryTitle: 'artemisApp.exercise.delete.summary.title',
-                    fetchEntitySummary: this.deletionSummary(),
+                    fetchCategorizedEntitySummary: this.deletionSummary(),
                     deleteQuestion: 'artemisApp.exercise.delete.question',
                     deleteConfirmationText: 'artemisApp.exercise.delete.typeNameToConfirm',
                     translateValues: this.deleteTranslateValues(),
@@ -369,12 +380,19 @@ export class ExerciseActionsComponent {
             return;
         }
         const finish = (obs: Observable<unknown>, evtName: string) =>
-            obs.subscribe({
-                next: () => {
-                    this.eventManager.broadcast({ name: evtName, content: 'Deleted an exercise' });
+            this.entityDeletionService.delete(exerciseDeletionTarget(exercise), obs).subscribe({
+                next: (progress) => {
+                    if (isDeletionCompleted(progress)) {
+                        this.eventManager.broadcast({ name: evtName, content: 'Deleted an exercise' });
+                        // Notify the parent so the deleted exercise is removed from the view without a page refresh.
+                        this.exerciseDeleted.emit(exercise);
+                    } else if (isDeletionOutcomeUnknown(progress)) {
+                        // Not known how it ended: only refresh the list, which shows the real state, instead of announcing a deletion.
+                        this.eventManager.broadcast({ name: evtName, content: 'Refresh after an unknown deletion outcome' });
+                        this.exerciseDeletionOutcomeUnknown.emit();
+                    }
+                    // A failed deletion is reported by the progress dialog; this only ends the confirmation dialog.
                     this.dialogErrorSource.next('');
-                    // Notify the parent so the deleted exercise is removed from the view without a page refresh.
-                    this.exerciseDeleted.emit(exercise);
                 },
                 error: (e: HttpErrorResponse) => this.dialogErrorSource.next(e.message),
             });

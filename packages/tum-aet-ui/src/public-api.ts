@@ -64,6 +64,7 @@ export { TumAetUiSelectButtonComponent, type TumAetUiSelectButtonOption, type Tu
 export { TumAetUiTableSortableColumnComponent } from './lib/table-directive/tumaet-ui-table-sortable-column.component';
 export { TumAetUiTableVirtualScrollComponent } from './lib/table-directive/tumaet-ui-table-virtual-scroll.component';
 export { TumAetUiTableDirective, type TumAetUiTableSize, type TumAetUiTableSortEvent } from './lib/table-directive/tumaet-ui-table.directive';
+export { TumAetUiTableLayoutComponent } from './lib/table-layout/tumaet-ui-table-layout.component';
 export { TumAetUiTableComponent } from './lib/table/tumaet-ui-table.component';
 export type { CellRendererParams, CellTemplateRef, ColumnDef, TumAetUiSortDirection, TumAetUiSortState, TumAetUiTableQueryEvent } from './lib/table/tumaet-ui-table.types';
 export { TumAetUiTabListComponent } from './lib/tabs/tumaet-ui-tab-list.component';

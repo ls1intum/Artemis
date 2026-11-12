@@ -72,29 +72,24 @@
                 <div class="m-1"><span jhiTranslate="artemisApp.examRooms.management.examRoomOverview.totalSeats"></span> {{ numberOfAvailable()!.examSeats }}</div>
             </strong>
             <h4 class="mt-6!"><span jhiTranslate="artemisApp.examRooms.management.examRoomOverview.examRoomsTitle"></span></h4>
-            <div class="overflow-x-auto">
-                <table tumAetUiTable [striped]="true">
+            <tumaet-ui-table-layout [empty]="!hasExamRoomData()" emptyTitle="artemisApp.examRooms.management.examRoomOverview.empty">
+                <table tumAetUiTable size="small" [striped]="true" [sortField]="sortAttribute()" [sortOrder]="ascending() ? 1 : -1" (sortChange)="onSortChange($event)">
                     <thead>
-                        <tr jhiSort [(predicate)]="sortAttribute" [(ascending)]="ascending" (sortChange)="sortRows()">
-                            <th jhiSortBy="roomNumber">
+                        <tr>
+                            <th tumAetUiSortableColumn="roomNumber">
                                 <span jhiTranslate="artemisApp.examRooms.management.examRoomOverview.roomNumber"></span>
-                                <fa-icon [icon]="faSort" />
                             </th>
-                            <th jhiSortBy="name">
+                            <th tumAetUiSortableColumn="name">
                                 <span jhiTranslate="artemisApp.examRooms.management.examRoomOverview.roomName"></span>
-                                <fa-icon [icon]="faSort" />
                             </th>
-                            <th jhiSortBy="building">
+                            <th tumAetUiSortableColumn="building">
                                 <span jhiTranslate="artemisApp.examRooms.management.examRoomOverview.building"></span>
-                                <fa-icon [icon]="faSort" />
                             </th>
-                            <th jhiSortBy="defaultCapacity">
+                            <th tumAetUiSortableColumn="defaultCapacity">
                                 <span jhiTranslate="artemisApp.examRooms.management.examRoomOverview.defaultCapacity"></span>
-                                <fa-icon [icon]="faSort" />
                             </th>
-                            <th jhiSortBy="maxCapacity">
+                            <th tumAetUiSortableColumn="maxCapacity">
                                 <span jhiTranslate="artemisApp.examRooms.management.examRoomOverview.maxCapacity"></span>
-                                <fa-icon [icon]="faSort" />
                             </th>
                         </tr>
                     </thead>
@@ -122,9 +117,9 @@
                         </tbody>
                     }
                 </table>
-            </div>
+            </tumaet-ui-table-layout>
         } @else {
-            <p jhiTranslate="artemisApp.examRooms.management.examRoomOverview.missing"></p>
+            <tumaet-ui-empty-state variant="plain" [title]="'artemisApp.examRooms.management.examRoomOverview.missing' | artemisTranslate" />
         }
     </div>
 </div>

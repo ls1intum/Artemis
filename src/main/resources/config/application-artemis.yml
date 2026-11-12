@@ -17,6 +17,8 @@ artemis:
     # api-base-url: https://live.example.edu/api/v2
     # web-base-url: https://live.example.edu
     # api-key: <deployment-secret>
+    # upload-max-age: PT6H              # a video uploaded to TUM.Live that is not converted after this time is given up and deleted there
+    # upload-check-interval: PT1M       # how often the scheduling node attaches converted uploads and deletes unused ones in TUM.Live
   course-archives-path: ./exports/courses         # a folder in which archived courses and exams are stored.
   legal-path: ./legal                             # a folder in which legal documents (imprint and privacy statements) are stored.
   repo-clone-path: ./repos                        # a folder in which git repos for the online code editor are stored. In a multi node setup, this folder should be in a shared file system area (e.g. based on NFS), so that user can access the same files over multiple nodes
@@ -99,6 +101,7 @@ artemis:
     # build-agent-use-ssh: true
     default-branch: main            # The branch that should be used as default branch for all newly created repositories. This does NOT have to be equal to the default branch of the VCS
     repository-authentication-mechanisms: token,ssh,password # the order of authentication mechanisms in the code button pop up. Removing parts removes them from the drop-down
+    # password-authentication-end-date: 2027-01-15  # ISO date on which you plan to stop accepting account passwords for Git. Only announced in the email and the push message sent to users who still use a password; Artemis does not reject passwords on that day
   # REMOVE_IN_ARTEMIS_11 (Jenkins): user, password, token, url, vcs-credentials, artemis-authentication-token-* and build-timeout are Jenkins-only keys
   continuous-integration:
     user: <username>                # e.g. ga12abc
@@ -171,12 +174,19 @@ artemis:
       shutdown-drain-timeout: PT11M
       test-case-sync-timeout: PT10M
     quiz-pool:
-      # Model (for Azure: deployment name) that generates pool questions; blank uses the default chat model configured below.
+      # The pool sends course material only to its own self-hosted, OpenAI-compatible endpoint (for example Logos or vLLM), never to the
+      # chat model configured under spring.ai. Leave base-url, generator-model and judge-model empty to keep the pool off; a partial
+      # configuration, a model missing from allowed-models or a cloud provider host also keeps it off and is logged as a warning at startup.
+      base-url: # including the /v1 prefix, e.g. https://logos.example.org/v1
+      api-key:
+      # HTTP timeout of one model call.
+      timeout: 5m
+      # Self-hosted models the pool may use; generator-model and judge-model must each be one of them.
+      allowed-models: openai/gpt-oss-120b,Qwen/Qwen3.8-27B
+      # Model that generates pool questions.
       generator-model:
-      # Model (for Azure: deployment name) that judges generated questions; blank uses the default chat model configured below.
+      # Model that judges generated questions.
       judge-model:
-      question-types: single-choice,multiple-choice
-      difficulties: easy,medium,hard
       # Questions requested per generation call; a cell larger than this is filled in several calls.
       generation-batch-size: 8
       # A generation or filter claim older than this is treated as abandoned by a dead node and released at the next build.
@@ -219,19 +229,12 @@ artemis:
       debounce-window-seconds: 1800
       max-daily-orchestrations: 10
       scheduler-rate-ms: 30000
-      # Per-run cap on AtlasML similarity-shortlist calls (one per changed exercise). Bounds the AtlasML
-      # fan-out feeding the execute prompt; exercises beyond the budget contribute no candidates.
-      max-atlasml-calls-per-run: 10
     atlasllm:
       # The LLM-backed part of Atlas: the chat agent, the autonomous competency orchestrator, and the tool surfaces
       # they call. Disabled by default. None of it works without spring.ai.model.chat and spring.ai.openai below, and
       # leaving it off keeps roughly thirty beans, a scheduler and an event listener out of the context entirely.
       # Competencies, learning paths and learner profiles are the Atlas module itself and stay available either way.
       enabled: false
-    atlasml:
-      enabled: false # If disabled, no artifacts of the AtlasML service are accessible. This might impact the experience for instructors, i.e. some of the AI recommendations are not available.
-      base-url: <your-atlasml-url> # Required address to you own AtlasML instance
-      auth-token: <your-secret> # The secret used to authenticate Artemis against AtlasML
   scheduling: # these values are cron expressions. To generate one, you can use e.g. https://www.freeformatter.com/cron-expression-generator-quartz.html
     programming-exercises-cleanup-time: 0 0 3 * * * # every day at 3am
     data-export-creation-time: 0 0 4 * * * # every day at 4am

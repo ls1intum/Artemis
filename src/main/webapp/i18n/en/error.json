@@ -1,5 +1,10 @@
 {
     "error": {
+        "quizQuestionPoolModelNotConfigured": "Smart Quizzes is not set up on this server. Ask your administrator to configure a local language model.",
+        "tumLiveUploadInProgress": "The pending upload is already being sent to TUM.Live. Discard it to start another one.",
+        "tumLiveNotConnected": "The course is not connected to TUM.Live.",
+        "registrationClosed": "Registration is closed because the exam has ended.",
+        "attendanceCorrectionNotAllowed": "Attendance can only be corrected after a real exam has ended.",
         "exerciseGenerationCancellationUnavailable": "The cancellation could not be confirmed. Check the current run status, then try again.",
         "title": "Error page!",
         "http": {
@@ -29,6 +34,7 @@
         "noCourseIdOrExerciseGroupId": "Either courseId or exerciseGroupId must be set for an import.",
         "concurrencyFailure": "Another user modified this data at the same time as you. Your changes were rejected.",
         "courseOperationInProgress": "Another reset, deletion, or archive is already in progress for this course. Wait for it to finish before starting another operation.",
+        "deletionInProgress": "Another deletion is already in progress for this exercise, exam or exercise group of the same exam. Wait for it to finish before starting another one.",
         "validation": "Validation error on the server.",
         "resultStringNull": "Error! Result Text is required.",
         "resultStringTooLong": "Error! Result Text is too long (max. 255 characters)",
@@ -76,7 +82,6 @@
         "incorrectPassword": "The current password is incorrect.",
         "invalidActivationKey": "The activation key is invalid. Please use the registration form to sign up.",
         "internalServerError": "Internal server error",
-        "server.not.reachable": "Server not reachable",
         "url.not.found": "Not found",
         "Email": "Field {{ fieldName }} must be a valid email address!",
         "NotBlank": "Field {{ fieldName }} cannot be blank!",
@@ -150,6 +155,8 @@
         "cpuCountInvalid": "The CPU count is invalid. Please make sure it is a positive integer.",
         "memorySwapLimitInvalid": "The memory swap limit is invalid. Please make sure it is larger or equal to 0.",
         "dockerFlagsParsingError": "Error while parsing the docker flags.",
+        "gradedParticipationMismatch": "The selected participation does not belong to this exercise.",
+        "sharingInfoInvalid": "The sharing information of the request could not be validated. Please start the import again from the Sharing Platform.",
         "dueDateOver": {
             "noParticipationPossible": "The exercise due date is already over, you can no longer participate in this exercise.",
             "participationInPracticeMode": "The exercise due date is already over, a regular participation in the exercise is no longer possible. You can use the Practice Mode to solve the exercise.",
@@ -222,7 +229,7 @@
             "submissionIdMissing": "The submission must be saved before it can be converted."
         },
         "exerciseVersionIdMismatch": "The requested exercise version does not belong to the provided exercise ID.",
-        "participationExerciseMismatch": "The feedback request could not be processed because the participation does not match the exercise.",
+        "participationExerciseMismatch": "The request could not be processed because the participation does not match the exercise.",
         "submissionExerciseMismatch": "The submission does not belong to the specified exercise.",
         "maxAthenaResultsReached": "Maximum number of AI feedback requests reached.",
         "otherTestRunNotSubmitted": "Submit your other test runs of this exam before requesting AI feedback.",

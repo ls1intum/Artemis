@@ -109,6 +109,7 @@ CLASS_ALLOWLIST: dict[str, str] = {
 # Names of settings that are not Artemis server properties although they start with the same word.
 # An entry that ends with a dot also covers the keys below it, because the keys below a map are chosen by the administrator.
 PROPERTY_ALLOWLIST: dict[str, str] = {
+    "artemis.atlas.orchestrator.max-atlasml-calls-per-run": "the AtlasML upgrade note explicitly tells administrators to remove this retired strict-binding setting",
     "artemis.llm.model-costs.": "the keys below model-costs are model names that the administrator chooses",
 }
 

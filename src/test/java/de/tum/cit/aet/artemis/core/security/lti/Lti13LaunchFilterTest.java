@@ -34,6 +34,7 @@ import org.mockito.MockitoAnnotations;
 import org.mockito.stubbing.Answer;
 import org.springframework.http.HttpStatus;
 import org.springframework.mock.web.MockHttpServletRequest;
+import org.springframework.security.authentication.InternalAuthenticationServiceException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -226,6 +227,17 @@ class Lti13LaunchFilterTest {
         launchFilter.doFilter(httpRequest, httpResponse, filterChain);
 
         verify(httpResponse).sendError(eq(HttpStatus.INTERNAL_SERVER_ERROR.value()), any());
+    }
+
+    @Test
+    void authenticatedLogin_launchRefusedBecauseNoAccountCanBeFound() throws Exception {
+        doReturn(false).when(authentication).isAuthenticated();
+        doThrow(new InternalAuthenticationServiceException("Could not find existing user or create new LTI user.")).when(lti13Service).performLaunch(any(), any());
+        doReturn(oidcToken).when(defaultFilter).attemptAuthentication(any(), any());
+
+        launchFilter.doFilter(httpRequest, httpResponse, filterChain);
+
+        verify(httpResponse).sendError(eq(HttpStatus.FORBIDDEN.value()), any());
     }
 
     @Test

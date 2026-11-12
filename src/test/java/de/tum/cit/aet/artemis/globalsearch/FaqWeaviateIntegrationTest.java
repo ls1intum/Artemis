@@ -18,6 +18,7 @@ import de.tum.cit.aet.artemis.communication.domain.Faq;
 import de.tum.cit.aet.artemis.communication.domain.FaqState;
 import de.tum.cit.aet.artemis.communication.test_repository.FaqTestRepository;
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.exercise.util.AsyncDeletionTestUtilService;
 import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.FaqSearchableEntityDTO;
 import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityWeaviateService;
 import de.tum.cit.aet.artemis.globalsearch.service.WeaviateService;
@@ -33,6 +34,9 @@ import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 class FaqWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalVCTest {
 
     private static final String TEST_PREFIX = "faqweaviateint";
+
+    @Autowired
+    private AsyncDeletionTestUtilService asyncDeletionTestUtilService;
 
     @Autowired
     private SearchableEntityWeaviateService searchableEntityWeaviateService;
@@ -80,7 +84,9 @@ class FaqWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocalCILo
             long faq1Id = faq1.getId();
             long faq2Id = faq2.getId();
 
-            request.delete("/api/admin/courses/" + course.getId(), HttpStatus.OK);
+            request.delete("/api/admin/courses/" + course.getId(), HttpStatus.ACCEPTED);
+
+            asyncDeletionTestUtilService.awaitCourseDeletion(course.getId());
 
             assertFaqNotInWeaviate(weaviateService, faq1Id);
             assertFaqNotInWeaviate(weaviateService, faq2Id);
