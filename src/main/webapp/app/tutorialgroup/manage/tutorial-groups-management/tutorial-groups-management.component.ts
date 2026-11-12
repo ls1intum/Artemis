@@ -186,8 +186,6 @@ export class TutorialGroupsManagementComponent {
             field: 'registrations',
             headerKey: 'artemisApp.entities.tutorialGroup.registrationsWithCapacity',
             sort: true,
-            // "Registrations / Capacity" is far wider than the "0 / 15" beneath it, so it wraps rather than setting the floor.
-            wrapHeader: true,
             templateRef: this.registrationsColumn(),
         },
         // Last to appear and the one most often empty, so it waits for the width that fits every other column comfortably.
