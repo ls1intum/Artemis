@@ -37,6 +37,7 @@ const sidebars: SidebarsConfig = {
         'adaptive-learning',
         'user-registration',
         'user-deletion',
+        'science-data-collection',
         'user-email-uniqueness',
         'email-delivery',
         'jenkins-localvc',
