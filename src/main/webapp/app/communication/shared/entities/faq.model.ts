@@ -64,7 +64,7 @@ export interface FaqImportCandidate {
     questionAnswer?: string;
     faqState: FaqState;
     courseId: number;
-    courseTitle: string;
+    courseTitle?: string;
     courseSemester?: string;
 }
 
