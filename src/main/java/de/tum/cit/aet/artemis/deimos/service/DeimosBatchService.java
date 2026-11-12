@@ -11,6 +11,7 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.Executor;
 import java.util.concurrent.RejectedExecutionException;
@@ -171,38 +172,50 @@ public class DeimosBatchService {
         }
     }
 
+    private record EmailScope(long courseId, String courseTitle, String scopeTitle) {
+    }
+
+    private Optional<EmailScope> resolveEmailScope(DeimosBatchScope scope, long scopeId) {
+        return switch (scope) {
+            case COURSE -> {
+                String courseTitle = courseRepository.getCourseTitle(scopeId);
+                if (courseTitle == null) {
+                    log.warn("Skipping Deimos completion email: could not resolve course title for course {}", scopeId);
+                    yield Optional.empty();
+                }
+                yield Optional.of(new EmailScope(scopeId, courseTitle, courseTitle));
+            }
+            case EXERCISE -> {
+                var exerciseScopeInfo = programmingExerciseRepository.findDeimosExerciseScopeInfoById(scopeId).orElse(null);
+                if (exerciseScopeInfo == null) {
+                    log.warn("Skipping Deimos completion email: could not resolve exercise {}", scopeId);
+                    yield Optional.empty();
+                }
+                if (exerciseScopeInfo.courseId() == null) {
+                    log.warn("Skipping Deimos completion email: could not resolve owning course for exercise {}", scopeId);
+                    yield Optional.empty();
+                }
+                yield Optional.of(new EmailScope(exerciseScopeInfo.courseId(), exerciseScopeInfo.courseTitle(), exerciseScopeInfo.exerciseTitle()));
+            }
+        };
+    }
+
+    private static DeimosManipulationAttemptLink manipulationAttemptLink(String participationUrl, DeimosBatchSummaryDTO.ParticipationAnalysis participationAnalysis,
+            String rationale) {
+        String failureTranslationKey = participationAnalysis.failureType() != null ? DeimosFailureBreakdownEntry.translationKey(participationAnalysis.failureType()) : null;
+        String llmRationale = participationAnalysis.rationale() != null ? rationale : null;
+        return new DeimosManipulationAttemptLink(participationUrl, participationAnalysis.participationId(), participationAnalysis.findings(), participationAnalysis.findingCount(),
+                participationAnalysis.findingCountCapped(), participationAnalysis.llmMalicious(), llmRationale, failureTranslationKey);
+    }
+
     private void sendManualRunFinishedNotification(DeimosBatchScope scope, long scopeId, DeimosBatchSummaryDTO summary, User triggerUser) {
-        long courseId;
-        String courseTitle;
-        String scopeTitle;
-
-        if (scope == DeimosBatchScope.COURSE) {
-            courseId = scopeId;
-            courseTitle = courseRepository.getCourseTitle(scopeId);
-            if (courseTitle == null) {
-                log.warn("Skipping Deimos completion email: could not resolve course title for course {}", scopeId);
-                return;
-            }
-            scopeTitle = courseTitle;
-        }
-        else if (scope == DeimosBatchScope.EXERCISE) {
-            var exerciseScopeInfo = programmingExerciseRepository.findDeimosExerciseScopeInfoById(scopeId).orElse(null);
-            if (exerciseScopeInfo == null) {
-                log.warn("Skipping Deimos completion email: could not resolve exercise {}", scopeId);
-                return;
-            }
-            if (exerciseScopeInfo.courseId() == null) {
-                log.warn("Skipping Deimos completion email: could not resolve owning course for exercise {}", scopeId);
-                return;
-            }
-
-            courseId = exerciseScopeInfo.courseId();
-            courseTitle = exerciseScopeInfo.courseTitle();
-            scopeTitle = exerciseScopeInfo.exerciseTitle();
-        }
-        else {
+        Optional<EmailScope> emailScope = resolveEmailScope(scope, scopeId);
+        if (emailScope.isEmpty()) {
             return;
         }
+        long courseId = emailScope.get().courseId();
+        String courseTitle = emailScope.get().courseTitle();
+        String scopeTitle = emailScope.get().scopeTitle();
 
         String base = artemisServerUrl.toString();
         if (base.endsWith("/")) {
@@ -222,14 +235,7 @@ public class DeimosBatchService {
                     + participationAnalysis.participationId() + "/submissions";
             String rationale = participationAnalysis.rationale() != null ? participationAnalysis.rationale().strip() : "";
             switch (participationAnalysis.verdict()) {
-                case MANIPULATION_ATTEMPT -> {
-                    String failureTranslationKey = participationAnalysis.failureType() != null ? DeimosFailureBreakdownEntry.translationKey(participationAnalysis.failureType())
-                            : null;
-                    String llmRationale = participationAnalysis.rationale() != null ? rationale : null;
-                    manipulationAttemptLinks.add(new DeimosManipulationAttemptLink(participationUrl, participationAnalysis.participationId(), participationAnalysis.findings(),
-                            participationAnalysis.findingCount(), participationAnalysis.findingCountCapped(), participationAnalysis.llmMalicious(), llmRationale,
-                            failureTranslationKey));
-                }
+                case MANIPULATION_ATTEMPT -> manipulationAttemptLinks.add(manipulationAttemptLink(participationUrl, participationAnalysis, rationale));
                 case MALICIOUS -> maliciousParticipationLinks.add(new DeimosMaliciousParticipationLink(participationUrl, participationAnalysis.participationId(), rationale));
                 case INCOMPLETELY_CHECKED -> incompletelyCheckedLinks.add(new DeimosIncompletelyCheckedLink(participationUrl, participationAnalysis.participationId(),
                         participationAnalysis.omissions(), participationAnalysis.omissionCount(), rationale));

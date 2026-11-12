@@ -1434,7 +1434,8 @@ class DeimosAnalysisServiceTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = { "no template participation", "no template repository URI", "no branch", "unresolved branch", "unreadable commit" })
+    @ValueSource(strings = { "no template participation", "no template repository URI", "no branch", "blank branch", "unresolved branch", "unreadable branch reference",
+            "unreadable commit" })
     void analyzeFailsWhenTheTemplateCannotBeRead(String cause) throws Exception {
         stubHistory(587L, Map.of(), new Snapshot("single01", Map.of("src/Main.java", "class Main {}\n")));
         switch (cause) {
@@ -1444,7 +1445,9 @@ class DeimosAnalysisServiceTest {
                 when(templateProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(42L)).thenReturn(Optional.of(templateParticipation));
             }
             case "no branch" -> when(programmingExerciseRepository.findBranchByExerciseId(42L)).thenReturn(null);
+            case "blank branch" -> when(programmingExerciseRepository.findBranchByExerciseId(42L)).thenReturn(" ");
             case "unresolved branch" -> when(templateRepository.resolve("refs/heads/" + EXERCISE_BRANCH + "^{commit}")).thenReturn(null);
+            case "unreadable branch reference" -> when(templateRepository.resolve("refs/heads/" + EXERCISE_BRANCH + "^{commit}")).thenThrow(new IOException("broken ref"));
             default -> when(deimosSnapshotReader.read(templateRepository, TEMPLATE_COMMIT_HASH)).thenThrow(new IOException("broken pack"));
         }
 
