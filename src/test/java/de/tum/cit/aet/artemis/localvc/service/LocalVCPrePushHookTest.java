@@ -315,6 +315,61 @@ class LocalVCPrePushHookTest {
     }
 
     @Test
+    void onPreReceive_creatingABranchAtACommitOfARepositoryAboveTheLimit_isAccepted() throws Exception {
+        // A new branch at an existing commit adds no files, so it is no growth even though its old id is the zero id.
+        when(localVCServletService.getMaxRepositorySizeBytes(any())).thenReturn(5L * 1024 * 1024);
+        ObjectId existing = commitWithFilesOfSize(6 * 1024 * 1024);
+        pointDefaultBranchAt(existing);
+        ReceiveCommand command = receive(existing, Constants.R_HEADS + "feature");
+
+        run(command);
+
+        assertThat(command.getResult()).isEqualTo(ReceiveCommand.Result.NOT_ATTEMPTED);
+    }
+
+    @Test
+    void onPreReceive_creatingABranchThatIsLargerThanEveryExistingBranch_isRejected() throws Exception {
+        when(localVCServletService.getMaxRepositorySizeBytes(any())).thenReturn(5L * 1024 * 1024);
+        pointDefaultBranchAt(commitWithFilesOfSize(6 * 1024 * 1024));
+        ReceiveCommand command = receive(commitWithFilesOfSize(6 * 1024 * 1024, 1024), Constants.R_HEADS + "feature");
+
+        run(command);
+
+        assertThat(command.getResult()).isEqualTo(ReceiveCommand.Result.REJECTED_OTHER_REASON);
+        assertThat(command.getMessage()).contains("limit is 5 MB");
+    }
+
+    @Test
+    void onPreReceive_aPushThatRemovesASubmoduleFromARepositoryAboveTheLimit_isAccepted() throws Exception {
+        // The object of a submodule is not stored in this repository, so measuring the previous commit must not try to open it.
+        when(localVCServletService.getMaxRepositorySizeBytes(any())).thenReturn(5L * 1024 * 1024);
+        ObjectId previous = commitWithFileAndSubmodule(7 * 1024 * 1024);
+        pointDefaultBranchAt(previous);
+        ReceiveCommand command = new ReceiveCommand(previous, commitWithFilesOfSize(6 * 1024 * 1024), DEFAULT_REF);
+
+        run(command);
+
+        assertThat(command.getResult()).isEqualTo(ReceiveCommand.Result.NOT_ATTEMPTED);
+    }
+
+    private ObjectId commitWithFileAndSubmodule(int fileSizeInBytes) throws IOException {
+        try (ObjectInserter inserter = repository.newObjectInserter()) {
+            TreeFormatter treeFormatter = new TreeFormatter();
+            treeFormatter.append("file0", FileMode.REGULAR_FILE, inserter.insert(Constants.OBJ_BLOB, new byte[fileSizeInBytes]));
+            treeFormatter.append("submodule", FileMode.GITLINK, ObjectId.fromString("0123456789012345678901234567890123456789"));
+            CommitBuilder commitBuilder = new CommitBuilder();
+            commitBuilder.setTreeId(inserter.insert(treeFormatter));
+            PersonIdent author = new PersonIdent("Ada Lovelace", "ada@example.com");
+            commitBuilder.setAuthor(author);
+            commitBuilder.setCommitter(author);
+            commitBuilder.setMessage("a commit with a submodule");
+            ObjectId commitId = inserter.insert(commitBuilder);
+            inserter.flush();
+            return commitId;
+        }
+    }
+
+    @Test
     void onPreReceive_aSymbolicLinkIsReportedEvenIfTheRepositoryIsAlsoTooLarge() throws Exception {
         // The first violation that is found is the one that is reported, and the size check must not replace it.
         when(localVCServletService.getMaxRepositorySizeBytes(any())).thenReturn(1L);

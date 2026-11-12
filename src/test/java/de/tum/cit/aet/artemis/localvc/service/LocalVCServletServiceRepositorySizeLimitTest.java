@@ -16,7 +16,6 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.springframework.mock.env.MockEnvironment;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.test.util.ReflectionTestUtils;
 
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.admin.service.RateLimitService;
@@ -46,14 +45,16 @@ class LocalVCServletServiceRepositorySizeLimitTest {
     @BeforeEach
     void setUp() {
         repositoryResolver = mock(LocalVCRepositoryResolverService.class);
-        service = new LocalVCServletService(mock(AuthenticationManager.class), mock(UserRepository.class), mock(ProgrammingExerciseRepository.class),
+        service = serviceWithLimits(20L, 50L);
+    }
+
+    private LocalVCServletService serviceWithLimits(long maxRepositorySizeMb, long maxTestsAndSolutionRepositorySizeMb) {
+        return new LocalVCServletService(mock(AuthenticationManager.class), mock(UserRepository.class), mock(ProgrammingExerciseRepository.class),
                 mock(ProgrammingExerciseBuildConfigRepository.class), mock(RepositoryAccessService.class), mock(ProgrammingExerciseParticipationService.class),
                 mock(AuxiliaryRepositoryService.class), Optional.empty(), mock(ParticipationVCSAccessTokenRepository.class), mock(RepositoryVCSAccessTokenRepository.class),
                 mock(AuthorizationCheckService.class), mock(RateLimitService.class), mock(UserVcsAccessTokenService.class), repositoryResolver,
                 mock(LocalVCAccessLogRecorderService.class), mock(LocalVCBuildAgentAuthenticationService.class), mock(PasswordAuthenticationNoticeService.class),
-                new BuildAgentNetworkPolicy(new BuildAgentNetworkConfiguration(), new MockEnvironment()));
-        ReflectionTestUtils.setField(service, "maxRepositorySizeMb", 20L);
-        ReflectionTestUtils.setField(service, "maxTestsAndSolutionRepositorySizeMb", 50L);
+                new BuildAgentNetworkPolicy(new BuildAgentNetworkConfiguration(), new MockEnvironment()), maxRepositorySizeMb, maxTestsAndSolutionRepositorySizeMb);
     }
 
     private Repository repositoryOfSlug(String slug) {
@@ -72,8 +73,7 @@ class LocalVCServletServiceRepositorySizeLimitTest {
 
     @Test
     void maxRepositorySize_isUnlimitedIfTheLimitIsZero() {
-        ReflectionTestUtils.setField(service, "maxRepositorySizeMb", 0L);
-        ReflectionTestUtils.setField(service, "maxTestsAndSolutionRepositorySizeMb", 0L);
+        service = serviceWithLimits(0L, 0L);
 
         assertThat(service.getMaxRepositorySizeBytes(repositoryOfSlug("abc-ge12abc"))).isEqualTo(Long.MAX_VALUE);
         assertThat(service.getMaxRepositorySizeBytes(repositoryOfSlug("abc-tests"))).isEqualTo(Long.MAX_VALUE);

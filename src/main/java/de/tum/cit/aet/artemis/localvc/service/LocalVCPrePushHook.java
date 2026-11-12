@@ -178,7 +178,7 @@ public record LocalVCPrePushHook(LocalVCServletService localVCServletService, Us
                     totalSize += loader.getSize();
                 }
             }
-            rejectOversizedRepository(reader, revWalk, command, totalSize, maxRepositorySizeBytes);
+            rejectOversizedRepository(repository, reader, revWalk, command, totalSize, maxRepositorySizeBytes);
         }
     }
 
@@ -187,11 +187,13 @@ public record LocalVCPrePushHook(LocalVCServletService localVCServletService, Us
      * the limit already (e.g. because it was created from a large template before the limit existed), so that students can still push, and can bring the repository below the
      * limit.
      */
-    private static void rejectOversizedRepository(ObjectReader reader, RevWalk revWalk, ReceiveCommand command, long totalSize, long maxRepositorySizeBytes) throws IOException {
+    private static void rejectOversizedRepository(Repository repository, ObjectReader reader, RevWalk revWalk, ReceiveCommand command, long totalSize, long maxRepositorySizeBytes)
+            throws IOException {
         if (totalSize <= maxRepositorySizeBytes) {
             return;
         }
-        long previousSize = ObjectId.zeroId().equals(command.getOldId()) ? 0 : sizeOfFiles(reader, revWalk.parseCommit(command.getOldId()));
+        long previousSize = ObjectId.zeroId().equals(command.getOldId()) ? largestExistingBranchSize(repository, reader, revWalk)
+                : sizeOfFiles(reader, revWalk.parseCommit(command.getOldId()));
         if (totalSize <= previousSize) {
             return;
         }
@@ -203,12 +205,30 @@ public record LocalVCPrePushHook(LocalVCServletService localVCServletService, Us
                 maxRepositorySizeBytes / (1024 * 1024), REPOSITORY_SIZE_DOCUMENTATION_URL));
     }
 
+    /**
+     * The baseline for a push that creates a branch: the largest branch that exists already, or 0 in a repository without branches. Creating a branch at an existing commit
+     * adds no files, so it must not be treated as growing the repository from nothing.
+     */
+    private static long largestExistingBranchSize(Repository repository, ObjectReader reader, RevWalk revWalk) throws IOException {
+        long largest = 0;
+        for (Ref ref : repository.getRefDatabase().getRefsByPrefix(Constants.R_HEADS)) {
+            if (ref.getObjectId() != null) {
+                largest = Math.max(largest, sizeOfFiles(reader, revWalk.parseCommit(ref.getObjectId())));
+            }
+        }
+        return largest;
+    }
+
     private static long sizeOfFiles(ObjectReader reader, RevCommit commit) throws IOException {
         long size = 0;
         try (TreeWalk treeWalk = new TreeWalk(reader)) {
             treeWalk.addTree(commit.getTree());
             treeWalk.setRecursive(true);
             while (treeWalk.next()) {
+                if (FileMode.GITLINK.equals(treeWalk.getFileMode(0))) {
+                    // the object of a submodule lives in another repository
+                    continue;
+                }
                 ObjectLoader loader = reader.open(treeWalk.getObjectId(0));
                 if (loader.getType() == Constants.OBJ_BLOB) {
                     size += loader.getSize();

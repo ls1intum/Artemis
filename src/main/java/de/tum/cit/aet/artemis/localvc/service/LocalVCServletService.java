@@ -119,11 +119,9 @@ public class LocalVCServletService {
 
     private final BuildAgentNetworkPolicy buildAgentNetworkPolicy;
 
-    @Value("${artemis.version-control.max-repository-size-mb:20}")
-    private long maxRepositorySizeMb;
+    private final long maxRepositorySizeMb;
 
-    @Value("${artemis.version-control.max-tests-and-solution-repository-size-mb:50}")
-    private long maxTestsAndSolutionRepositorySizeMb;
+    private final long maxTestsAndSolutionRepositorySizeMb;
 
     public LocalVCServletService(AuthenticationManager authenticationManager, UserRepository userRepository, ProgrammingExerciseRepository programmingExerciseRepository,
             ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository, RepositoryAccessService repositoryAccessService,
@@ -132,7 +130,8 @@ public class LocalVCServletService {
             RepositoryVCSAccessTokenRepository repositoryVCSAccessTokenRepository, AuthorizationCheckService authorizationCheckService, RateLimitService rateLimitService,
             UserVcsAccessTokenService userVcsAccessTokenService, LocalVCRepositoryResolverService repositoryResolver, LocalVCAccessLogRecorderService accessLogRecorder,
             LocalVCBuildAgentAuthenticationService buildAgentAuthenticationService, PasswordAuthenticationNoticeService passwordAuthenticationNoticeService,
-            BuildAgentNetworkPolicy buildAgentNetworkPolicy) {
+            BuildAgentNetworkPolicy buildAgentNetworkPolicy, @Value("${artemis.version-control.max-repository-size-mb:20}") long maxRepositorySizeMb,
+            @Value("${artemis.version-control.max-tests-and-solution-repository-size-mb:50}") long maxTestsAndSolutionRepositorySizeMb) {
         this.authenticationManager = authenticationManager;
         this.userRepository = userRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
@@ -151,6 +150,8 @@ public class LocalVCServletService {
         this.buildAgentAuthenticationService = buildAgentAuthenticationService;
         this.passwordAuthenticationNoticeService = passwordAuthenticationNoticeService;
         this.buildAgentNetworkPolicy = buildAgentNetworkPolicy;
+        this.maxRepositorySizeMb = maxRepositorySizeMb;
+        this.maxTestsAndSolutionRepositorySizeMb = maxTestsAndSolutionRepositorySizeMb;
     }
 
     /**
