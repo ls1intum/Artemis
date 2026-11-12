@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.programming;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
@@ -27,6 +28,7 @@ import java.util.stream.Stream;
 
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.api.errors.CheckoutConflictException;
 import org.eclipse.jgit.api.errors.NoHeadException;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.jspecify.annotations.NonNull;
@@ -80,7 +82,9 @@ import de.tum.cit.aet.artemis.exercise.test_repository.ParticipationTestReposito
 import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.exercise.test_repository.SubmissionTestRepository;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
+import de.tum.cit.aet.artemis.localvc.service.GitService;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
+import de.tum.cit.aet.artemis.localvc.util.LocalVCTestRepository;
 import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
@@ -88,6 +92,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParti
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCaseType;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
+import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.dto.CommitInfoDTO;
@@ -1982,6 +1987,40 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
         request.put("/api/programming/programming-exercise-participations/" + participation.getId() + "/reset-repository", null, HttpStatus.OK);
 
         verify(localCITriggerService).triggerBuild(any(ProgrammingExerciseParticipation.class), eq(true));
+    }
+
+    /**
+     * The server keeps a working copy of every student repository. When the student pushes from their own IDE while that working copy holds an unsaved edit of the same file,
+     * pulling it fails with a checkout conflict and stays failing. Resetting the exercise replaces the whole repository anyway, so it must not depend on that pull.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void checkResetRepository_serverWorkingCopyBehindAndModified_ok() throws Exception {
+        startProgrammingExerciseWithRepositories();
+        var participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
+        LocalVCTestRepository studentRepository = RepositoryExportTestUtil.seedStudentRepositoryForParticipation(localVCLocalCITestService, participation);
+        participation = studentParticipationRepository.save(participation);
+        LocalVCRepositoryUri participationUri = participation.getVcsRepositoryUri();
+        doNothing().when(localCITriggerService).triggerBuild(any(ProgrammingExerciseParticipation.class), eq(true));
+
+        commitAndPush(studentRepository, "regression.py", "first version");
+        Repository serverWorkingCopy = gitService.getOrCheckoutRepository(participationUri, false, true);
+        commitAndPush(studentRepository, "regression.py", "pushed from the IDE of the student");
+        Files.writeString(serverWorkingCopy.getLocalPath().resolve("regression.py"), "unsaved edit of the online editor");
+        assertThatThrownBy(() -> gitService.getOrCheckoutRepository(participationUri, true, true)).isInstanceOf(CheckoutConflictException.class);
+
+        request.put("/api/programming/programming-exercise-participations/" + participation.getId() + "/reset-repository", null, HttpStatus.OK);
+
+        assertThat(studentRepository.bareRepositoryCommits().getFirst().getShortMessage()).isEqualTo("Reset Exercise");
+        assertThat(serverWorkingCopy.getLocalPath().resolve("regression.py")).doesNotExist();
+        verify(localCITriggerService).triggerBuild(any(ProgrammingExerciseParticipation.class), eq(true));
+    }
+
+    private void commitAndPush(LocalVCTestRepository repository, String fileName, String content) throws Exception {
+        Files.writeString(repository.workingCopyPath().resolve(fileName), content);
+        repository.workingCopy().add().addFilepattern(".").call();
+        GitService.commit(repository.workingCopy()).setMessage("Update " + fileName).call();
+        repository.workingCopy().push().call();
     }
 
     @Test

@@ -694,19 +694,45 @@ public class GitService extends AbstractGitService {
      */
     public void resetToOriginHead(Repository repo) {
         try {
-            fetchAll(repo);
-            var originHead = getOriginHead(repo);
-
-            if (originHead == null) {
-                log.error("Cannot hard reset the repo {} to origin/HEAD because it is empty.", repo.getLocalPath());
-                return;
-            }
-
-            reset(repo, "origin/" + originHead);
+            resetToOriginHeadOrThrow(repo);
         }
         catch (GitAPIException | JGitInternalException ex) {
             log.error("Cannot fetch/hard reset the repo {} with url {} to origin/HEAD due to the following exception", repo.getLocalPath(), repo.getRemoteRepositoryUri(), ex);
         }
+    }
+
+    private void resetToOriginHeadOrThrow(Repository repo) throws GitAPIException {
+        fetchAll(repo);
+        var originHead = getOriginHead(repo);
+
+        if (originHead == null) {
+            log.error("Cannot hard reset the repo {} to origin/HEAD because it is empty.", repo.getLocalPath());
+            return;
+        }
+
+        reset(repo, "origin/" + originHead);
+    }
+
+    /**
+     * Get the local repository for a given remote repository URI like {@link #getOrCheckoutRepository(LocalVCRepositoryUri, boolean, boolean)} with a pull, but for a caller that
+     * is about to replace the content of the repository. Instead of merging the remote into the working copy, the working copy is hard reset to the remote.
+     * <p>
+     * The merge of a pull fails with a checkout conflict if the working copy holds a local modification of a file that the remote changed in the meantime. An example is an edit
+     * of the online editor that was saved but never committed, while the student pushed from their own IDE. The working copy stays in that state, so every later pull fails the
+     * same way, including the one that the caller needs to recover from it.
+     *
+     * @param repoUri     The remote repository.
+     * @param writeAccess Whether we want to write to the repository
+     * @return the repository, equal to the head of the remote repository.
+     * @throws GitAPIException if the repository could not be checked out or reset.
+     */
+    public Repository getOrCheckoutRepositoryDiscardingLocalChanges(LocalVCRepositoryUri repoUri, boolean writeAccess) throws GitAPIException {
+        Path localPath = getLocalPathOfRepo(repoClonePath, repoUri);
+        return workingCopyLocks.withLock(localPath, () -> {
+            Repository repository = checkoutRepositoryLocked(repoUri, repoUri, localPath, false, defaultBranch, writeAccess, false);
+            resetToOriginHeadOrThrow(repository);
+            return repository;
+        });
     }
 
     /**

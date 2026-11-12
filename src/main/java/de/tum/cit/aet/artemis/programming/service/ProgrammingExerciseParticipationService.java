@@ -208,7 +208,8 @@ public class ProgrammingExerciseParticipationService {
      * @param sourceUri the repository that should be used as source for all files
      */
     public void resetRepository(LocalVCRepositoryUri targetUri, LocalVCRepositoryUri sourceUri) throws GitAPIException, IOException {
-        Repository targetRepo = gitService.getOrCheckoutRepository(targetUri, true, true);
+        // Everything in the target is replaced, so its working copy on the server must not block the reset because of a local modification that conflicts with the remote
+        Repository targetRepo = gitService.getOrCheckoutRepositoryDiscardingLocalChanges(targetUri, true);
         Repository sourceRepo = gitService.getOrCheckoutRepository(sourceUri, true, true);
 
         // Replace everything but the files corresponding to git (such as the .git folder or the .gitignore file)
