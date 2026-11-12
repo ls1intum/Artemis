@@ -7,27 +7,32 @@
     </div>
     @if (tutorEfforts() && tutorEfforts().length > 0) {
         <div>
-            <table class="table">
-                <tr>
-                    <th><span jhiTranslate="artemisApp.textExercise.tutorEffortStatistics.numberOfSubmissionsAssessed"></span></th>
-                    <th><span jhiTranslate="artemisApp.textExercise.tutorEffortStatistics.totalTimeSpent"></span></th>
-                    <th><span jhiTranslate="artemisApp.textExercise.tutorEffortStatistics.averageTime"></span></th>
-                    <th class="d-flex flex-row align-items-center justify-content-center">
-                        @if (showMedianLegend()) {
-                            <div class="color-legend"></div>
-                        }
-                        <span jhiTranslate="artemisApp.textExercise.tutorEffortStatistics.effortMedian"></span>
-                    </th>
-                    <th><span jhiTranslate="artemisApp.textExercise.tutorEffortStatistics.numberOfTutorsInvolved"></span></th>
-                </tr>
-                <tr>
-                    <td>{{ numberOfSubmissions() ? numberOfSubmissions() : '0' }}</td>
-                    <td>{{ totalTimeSpent() ? totalTimeSpent() : '< 1 min' }}</td>
-                    <td>{{ averageTimeSpent() ? averageTimeSpent() : '0' }}</td>
-                    <td>{{ medianValue() ? medianValue() : '0.00' }}</td>
-                    <td>{{ numberOfTutorsInvolvedInCourse() ? numberOfTutorsInvolvedInCourse() : '0' }}</td>
-                </tr>
-                <tr></tr>
+            <table tumAetUiTable size="small" class="effort-summary">
+                <thead>
+                    <tr>
+                        <th><span jhiTranslate="artemisApp.textExercise.tutorEffortStatistics.numberOfSubmissionsAssessed"></span></th>
+                        <th><span jhiTranslate="artemisApp.textExercise.tutorEffortStatistics.totalTimeSpent"></span></th>
+                        <th><span jhiTranslate="artemisApp.textExercise.tutorEffortStatistics.averageTime"></span></th>
+                        <th>
+                            <div class="flex items-center justify-center">
+                                @if (showMedianLegend()) {
+                                    <div class="color-legend"></div>
+                                }
+                                <span jhiTranslate="artemisApp.textExercise.tutorEffortStatistics.effortMedian"></span>
+                            </div>
+                        </th>
+                        <th><span jhiTranslate="artemisApp.textExercise.tutorEffortStatistics.numberOfTutorsInvolved"></span></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>{{ numberOfSubmissions() ? numberOfSubmissions() : '0' }}</td>
+                        <td>{{ totalTimeSpent() ? totalTimeSpent() : '< 1 min' }}</td>
+                        <td>{{ averageTimeSpent() ? averageTimeSpent() : '0' }}</td>
+                        <td>{{ medianValue() ? medianValue() : '0.00' }}</td>
+                        <td>{{ numberOfTutorsInvolvedInCourse() ? numberOfTutorsInvolvedInCourse() : '0' }}</td>
+                    </tr>
+                </tbody>
             </table>
             <div class="row d-flex justify-content-center">
                 <div class="col-10">

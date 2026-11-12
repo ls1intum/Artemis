@@ -3,7 +3,7 @@ id: localci-build-environment
 title: LocalCI Build Environment
 sidebar_label: LocalCI Build Environment
 description: What a LocalCI build sees and what an administrator can change - environment variables, user, network, Docker images and registries, dependency caches, templates and build logs.
-last_reviewed: 2026-11-09
+last_reviewed: 2026-11-10
 ---
 
 import Callout from "../../../src/components/Callout/Callout";
@@ -31,7 +31,7 @@ The build agent clones the repositories itself and copies them into the containe
 
 ### Detecting that a script runs in LocalCI
 
-LocalCI does **not** set the `CI` variable or any other variable that a tool might use to detect a CI system. Some tools
+By default, LocalCI does **not** set the `CI` variable or any other variable that a tool might use to detect a CI system. Some tools
 change their behavior when `CI=true`, for example by disabling interactive prompts and progress bars.
 
 The following are always present in a LocalCI build, and are therefore safe to test for:
@@ -51,8 +51,8 @@ fi
 If your tests or tools need a `CI` variable, or any other value, instructors can set **environment variables** per exercise
 in the container configuration of the build plan editor (`KEY=value`, see
 [Edit Container Configuration](/instructor/exercises/programming-exercise/configure-the-build#edit-container-configuration-optional)).
-There is currently no setting that adds variables to the builds of all exercises of an installation. If you need one, give the Docker image
-a default instead, with an `ENV` line in its `Dockerfile`.
+To give the builds of **all** exercises of an installation a variable, such as `CI=true`, set `container-defaults.env` on the core nodes, see [Container defaults](#container-defaults).
+A default can also come from the Docker image, with an `ENV` line in its `Dockerfile`.
 
 ### Which user runs the build
 
@@ -76,16 +76,50 @@ therefore only affects what the **build script and the student code** can reach.
 - A container belongs to **one network for all of its phases**. There is no setting that allows the network for the compile phase and
   forbids it for the test phase. A build that needs a download first and isolation afterwards has to get its dependencies another way,
   see [Dependencies and Maven configuration](#dependencies-and-maven-configuration).
-- An exercise that selects no network uses the **default network of Docker**, which allows outbound connections. There is no setting for a different default
-  for all exercises of an installation. The exceptions are the builds that [Hyperion](/admin/hyperion) triggers to synchronize the test cases of an exercise. They always run with
+- An exercise that selects no network uses the **default network of Docker**, which allows outbound connections, unless the installation sets another default with
+  `container-defaults.network`, see [Container defaults](#container-defaults). The exceptions are the builds that [Hyperion](/admin/hyperion) triggers to synchronize the test cases of an exercise. They always run with
   the network `none` and without the environment variables of the exercise, so a dependency that is not in the image or in an offline cache cannot be downloaded there.
-- Do not rely on the network `none` as the only isolation boundary on Kubernetes. The Kubernetes runner enforces it with firewall rules in the Pod, and a build that runs as root keeps the default
-  capabilities of the container, among them `CAP_NET_RAW`, which allows packet sockets that do not pass through those rules. Where the network of student code must be restricted, enforce the egress
-  independently, for example with a network policy in the build namespace, see [Operating LocalCI on Kubernetes](/admin/production-setup/localci-on-kubernetes#what-is-left-to-the-cluster).
+- On Kubernetes, the network `none` is enforced with firewall rules in the Pod. A root process that keeps `CAP_NET_RAW` can open a packet socket that does not pass through those rules, so the builder of an
+  exercise with the network `none` does not get that capability. The rest of the default capability set stays, because exercise images install packages as root. Where the network of student code must be restricted
+  with certainty, also enforce the egress independently of the Pod, for example with a network policy in the build namespace, see
+  [Operating LocalCI on Kubernetes](/admin/production-setup/localci-on-kubernetes#what-is-left-to-the-cluster).
 - Instructors select a network per exercise, from the list in `artemis.continuous-integration.container-flags-limit.allowed-custom-networks`.
   `none` disables the network completely, and is the default entry of that list. Other entries must exist on every build agent host.
   See [Custom Docker Networks](/admin/production-setup/programming-exercise-adjustments#custom-docker-networks).
 - A common restriction for secret tests is a Docker network that only reaches your dependency mirror, combined with the mirror as the only source of dependencies.
+
+## Container defaults
+
+Two settings apply to the build container of **every** programming exercise of an installation, unless the exercise sets its own. Both are empty by default, so an installation that sets nothing behaves as before.
+Set them on the **core nodes**, in the configuration that you already use for them:
+
+```yaml
+artemis:
+    continuous-integration:
+        container-defaults:
+            env:
+                - CI=true
+            network: none
+```
+
+| Setting | Meaning |
+| --- | --- |
+| `container-defaults.env` | A list of variables as `KEY=value`. A name is letters, digits and underscores and does not start with a digit. A later entry with the same name wins over an earlier one. |
+| `container-defaults.network` | The network of the builds of exercises that select none: `none`, or one of `container-flags-limit.allowed-custom-networks`. A network that shares the network of the host (`host`) or of another container (`container:<name>`) is refused at startup, as it is for an exercise, because the build agents do not run such a container. Blank keeps the default network of the container runtime. |
+
+What to know before you set them:
+
+- **Order.** The variables of the installation come first, then those of the language (for example the license server of MATLAB), then those of the exercise, and a later one overrides an earlier one with the same name.
+  The network of an exercise replaces the default network. A build that is already queued keeps what it was queued with, and a change applies to builds queued afterwards.
+- **Checked at startup.** An entry that is not `KEY=value`, and a network that exercises may not select, stop the start. The message names the setting and the position of the entry and never repeats a value. The startup log lists the names of the variables that are set.
+- **Visible to the student code.** Everything in the container is readable by the code that runs in it, so do not put a credential in a default.
+- **`CI=true` changes tools.** Some tools turn off prompts and progress bars, or treat warnings as errors, when `CI` is set. Try it with the exercises of a language before you set it for all of them.
+- **A default network of `none` has to be opted out of.** The editor shows an exercise without a network selection as using the default, and with this setting that is `none`. On Docker, an exercise that needs the network selects one from
+  `allowed-custom-networks`, for example `bridge`, so list it there. The Kubernetes runner supports only `none`, so a default of `none` cannot be overridden by an exercise on Kubernetes. Set it there only for an installation whose exercises never need the network.
+- **A default network of `none` stops dependency downloads.** A build without a network cannot reach Maven Central, a Gradle plugin portal or any other repository, so it fails while it resolves dependencies, for example with
+  `Could not transfer artifact ... from central`. The setting only works for exercises whose images already contain every dependency or whose build uses an offline cache, see
+  [Dependencies and Maven configuration](#dependencies-and-maven-configuration). Check this with one exercise of each language before you set `none` for the installation.
+- **Not for restricted builds.** The builds that Hyperion triggers to synchronize test cases always run without a network and without the variables of the exercise, whatever the defaults say.
 
 ## Docker images
 
@@ -226,6 +260,8 @@ Set agent settings on the build agents and core settings on the core nodes, see 
 | Default CPU, memory, swap and process limit of a build | `build.default-docker-flags` (a list of `flag` and `value` pairs: `--cpus`, `--memory`, `--memory-swap`, `--pids-limit`) | 2 CPUs, 2g, 2g, 1000 | Build agent |
 | Upper limits an exercise may request | `container-flags-limit.max-cpu-count`, `max-memory`, `max-memory-swap` | see `application-buildagent.yml` | Core and build agent |
 | Networks an instructor may select | `container-flags-limit.allowed-custom-networks` | `none` | Core and build agent |
+| Variables of every build container | `container-defaults.env` (a list of `KEY=value`) | none | Core |
+| Network of the builds that select none | `container-defaults.network` | blank, the default network of the runtime | Core |
 | Default Docker image per language and project type | `build.images.<language>.default` and `build.images.<language>.<project type>` | Artemis images, see `application.yml` | Core |
 | Architecture of the images to pull | `image-architecture` | `amd64` | Build agent |
 | Build timeout | `build-timeout-seconds.min`, `default`, `max` | 10, 120, 240 | Core and build agent |

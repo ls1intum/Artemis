@@ -217,7 +217,7 @@ public class ChannelService {
             Channel channel) {
         Set<User> usersToRegister = new HashSet<>();
         usersToRegister.addAll(conversationService.findUsersInDatabase(course, addAllStudents, addAllTutors, addAllInstructors));
-        usersToRegister.addAll(conversationService.findUsersInDatabase(usersLoginsToRegister));
+        usersToRegister.addAll(conversationService.findCourseUsersInDatabase(course, usersLoginsToRegister));
         conversationService.registerUsersToConversation(course, usersToRegister, channel, Optional.empty());
         return usersToRegister;
     }

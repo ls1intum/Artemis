@@ -46,7 +46,9 @@ import org.springframework.test.util.ReflectionTestUtils;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.admin.service.RateLimitService;
+import de.tum.cit.aet.artemis.core.config.BuildAgentNetworkPolicy;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
+import de.tum.cit.aet.artemis.core.security.RateLimitType;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
@@ -120,6 +122,9 @@ class LocalVCServletServiceTest {
 
     @Mock
     private PasswordAuthenticationNoticeService passwordAuthenticationNoticeService;
+
+    @Mock
+    private BuildAgentNetworkPolicy buildAgentNetworkPolicy;
 
     @InjectMocks
     private LocalVCServletService localVCServletService;
@@ -249,6 +254,30 @@ class LocalVCServletServiceTest {
 
         // not accepted by the shortcuts, so the request goes on to look up the exercise of the repository, which does not exist here
         assertThatExceptionOfType(LocalVCInternalException.class).isThrownBy(() -> localVCServletService.authenticateAndAuthorizeGitRequest(request, RepositoryActionType.READ));
+    }
+
+    @Test
+    void authenticateAndAuthorizeGitRequest_atTheHandshake_spendsTheGitBudgetAndNotTheLoginBudget() {
+        HttpServletRequest request = gitFetchRequest(basicAuth("student", "a-token"));
+        when(request.getRequestURI()).thenReturn("/git/TEST/test-testuser.git/info/refs");
+        when(request.getRemoteAddr()).thenReturn("203.0.113.5");
+
+        // the request goes on to look up the exercise of the repository, which does not exist here
+        assertThatExceptionOfType(LocalVCInternalException.class).isThrownBy(() -> localVCServletService.authenticateAndAuthorizeGitRequest(request, RepositoryActionType.READ));
+
+        // Git has a bucket of its own. Sharing the login bucket meant that a lecture hall pushing at a deadline kept its students from logging in.
+        verify(rateLimitService).enforcePerMinute(any(), eq(RateLimitType.GIT_AUTHENTICATION));
+        verify(rateLimitService, never()).enforcePerMinute(any(), eq(RateLimitType.AUTHENTICATION));
+    }
+
+    @Test
+    void authenticateAndAuthorizeGitRequest_forTheDataTransfer_spendsNoBudget() {
+        // git-upload-pack reuses the credentials of the handshake that came before it, so only /info/refs counts
+        HttpServletRequest request = gitFetchRequest(basicAuth("student", "a-token"));
+
+        assertThatExceptionOfType(LocalVCInternalException.class).isThrownBy(() -> localVCServletService.authenticateAndAuthorizeGitRequest(request, RepositoryActionType.READ));
+
+        verifyNoInteractions(rateLimitService);
     }
 
     @Test

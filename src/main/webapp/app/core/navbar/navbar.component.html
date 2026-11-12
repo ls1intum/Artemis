@@ -134,14 +134,6 @@
                         </div>
                     }
                     <div class="dropdown-divider"></div>
-                    @if (isRegistrationEnabled) {
-                        <li>
-                            <a class="dropdown-item" routerLink="/account/settings" routerLinkActive="active" (click)="collapseNavbar()">
-                                <fa-icon [icon]="faWrench" [fixedWidth]="true" />
-                                <span jhiTranslate="global.menu.account.settings"></span>
-                            </a>
-                        </li>
-                    }
                     @if (passwordResetEnabled()) {
                         <li>
                             <a class="dropdown-item" routerLink="/account/password" routerLinkActive="active" (click)="collapseNavbar()">

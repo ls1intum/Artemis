@@ -1,13 +1,11 @@
 {
     "settings": {
-        "title": "User settings for <b>{{username}}</b>",
         "form": {
             "firstname": "First Name",
             "firstname.placeholder": "Your first name",
             "lastname": "Last Name",
             "lastname.placeholder": "Your last name",
-            "language": "Language",
-            "button": "Save"
+            "language": "Language"
         },
         "saml2SyncedInfo": "Your name and email address are managed by your institution via SAML2 and cannot be changed here.",
         "messages": {
@@ -15,7 +13,6 @@
                 "fail": "<strong>An error has occurred!</strong> Settings could not be saved.",
                 "emailExists": "<strong>Email is already in use!</strong> Please choose another one."
             },
-            "success": "<strong>Settings saved!</strong>",
             "validate": {
                 "firstname": {
                     "required": "Your first name is required.",
@@ -26,6 +23,9 @@
                     "required": "Your last name is required.",
                     "minlength": "Your last name is required to be at least 2 characters.",
                     "maxlength": "Your last name cannot be longer than 50 characters"
+                },
+                "email": {
+                    "pattern": "Domain must be one of: {{ pattern }}."
                 }
             }
         }
