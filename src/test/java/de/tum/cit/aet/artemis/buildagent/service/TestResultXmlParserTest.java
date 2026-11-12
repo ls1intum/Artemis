@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.buildagent.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.tuple;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -46,6 +47,55 @@ class TestResultXmlParserTest {
         assertThat(hyperionSuccesses).extracting(TestCaseResult::name).containsExactly("first.nested.passes");
         assertThat(failedTests).map(test -> new TestCaseResult(test.name(), test.testMessages())).containsExactlyElementsOf(hyperionFailures);
         assertThat(successfulTests).map(test -> new TestCaseResult(test.name(), test.testMessages())).containsExactlyElementsOf(hyperionSuccesses);
+    }
+
+    @Test
+    void keepsTheClassOfTestsAndOfClassLevelFailuresIncludingNestedClasses() throws IOException {
+        // Gradle and Surefire report an error in @BeforeAll as one failed test with a made-up name, whose classname is the failing class.
+        String report = """
+                <testsuites>
+                    <testsuite name="de.tum.Outer$Inner">
+                        <testcase name="innerPasses()" classname="de.tum.Outer$Inner"/>
+                    </testsuite>
+                    <testsuite name="de.tum.Broken">
+                        <testcase name="initializationError" classname="de.tum.Broken"><failure message="boom"/></testcase>
+                    </testsuite>
+                    <testsuite name="de.tum.Legacy">
+                        <testcase name="withoutClass()"/>
+                    </testsuite>
+                </testsuites>
+                """;
+
+        TestResultXmlParser.processTestResultFile(report, failedTests, successfulTests);
+
+        assertThat(failedTests).singleElement().satisfies(test -> {
+            assertThat(test.testClass()).isEqualTo("de.tum.Broken");
+            assertThat(test.testMessages()).containsExactly("boom");
+        });
+        assertThat(successfulTests).extracting(LocalCITestJobDTO::name, LocalCITestJobDTO::testClass)
+                .containsExactly(tuple("de.tum.Outer$Inner.innerPasses()", "de.tum.Outer$Inner"), tuple("de.tum.Legacy.withoutClass()", null));
+    }
+
+    @Test
+    void keepsTheClassOfAGradleClassLevelFailureWithoutPrefixingTheName() throws IOException {
+        // Gradle writes one file per class with the class as the only root suite; an error in @BeforeAll is its made-up "classMethod" test.
+        String report = """
+                <?xml version="1.0" encoding="UTF-8"?>
+                <testsuite name="de.tum.Outer$Inner" tests="1" skipped="0" failures="1" errors="0">
+                    <testcase name="classMethod" classname="de.tum.Outer$Inner" time="0.002">
+                        <failure message="java.lang.IllegalStateException: setup exploded" type="java.lang.IllegalStateException">stack trace</failure>
+                    </testcase>
+                </testsuite>
+                """;
+
+        TestResultXmlParser.processTestResultFile(report, failedTests, successfulTests);
+
+        assertThat(successfulTests).isEmpty();
+        assertThat(failedTests).singleElement().satisfies(test -> {
+            assertThat(test.name()).isEqualTo("classMethod");
+            assertThat(test.testClass()).isEqualTo("de.tum.Outer$Inner");
+            assertThat(test.testMessages()).containsExactly("java.lang.IllegalStateException: setup exploded");
+        });
     }
 
     @Test

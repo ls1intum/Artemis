@@ -2,7 +2,7 @@
 id: system-design
 title: System Design
 sidebar_label: System Design
-last_reviewed: 2026-11-03
+last_reviewed: 2026-11-12
 ---
 
 import Callout from "../../src/components/Callout/Callout";
@@ -321,7 +321,7 @@ with `artemis.distributed-data.provider`:
 
     The maintainers are considering to deprecate the Hazelcast provider. No decision has been made yet.
     Code outside the provider implementations must not depend on Hazelcast, so that the provider can be replaced.
-    The structures below use the Hazelcast type names; the Redis provider implements the same structures with versioned keys (`artemis:v1:*`).
+    The structures below use the Hazelcast type names; the Redis provider implements the same structures with versioned keys (`artemis:v2:*`).
 
 </Callout>
 

@@ -19,7 +19,7 @@ and follows the same procedure. Redis and Valkey persist queues, maps, sets, and
 restart. Hazelcast does not retain this data after its cluster stops and therefore needs no persistent-data migration.
 
 Artemis assigns a schema version to its Redis or Valkey data. Stored structures use versioned keys such as
-`artemis:v1:{buildJobQueue}`. The metadata keys are deliberately readable without an Artemis-specific codec:
+`artemis:v2:{buildJobQueue}`. The metadata keys are deliberately readable without an Artemis-specific codec:
 
 ```text
 artemis:distributed-data-schema
@@ -81,6 +81,24 @@ Do not mix this permit protocol with an earlier release that used one result-pro
 processes before starting replacements, including any core that can process results or delete exercises. Keep admission
 closed during the transition. Neither the retained result queues nor the distributed-data schema needs to be cleared.
 
+### Schema `1` to `2`
+
+Schema `2` stores the class of every test in the build result. Both result queues hold build results in the old layout, which
+the new release cannot read, so the migration **discards** them: `buildResultQueue` and `deferredBuildResultQueue`.
+A finished build whose result had not yet been written to the database at the moment of the upgrade loses its feedback,
+and the student needs a new build (a new push, or a retrigger by the instructor). To avoid this, wait until both queues are empty before you stop
+the old nodes; the build agent overview shows them. The structures whose types did not change move over unchanged:
+
+| Structure | Why it is preserved |
+|---|---|
+| `buildJobQueue` | Contains queued student builds. |
+| `processingJobs` | Tracks builds that are already assigned to an agent. |
+| `features` | Contains runtime feature-toggle changes made by an administrator. |
+| `pyris-job-map-v2` | Tracks in-flight Iris jobs and their remaining expiry time. |
+
+Everything else starts empty, as in the first migration. A store that has never been migrated goes through `0` and `1` and
+ends at `2` in the same startup.
+
 Other distributed structures start empty in the initial schema `0` to `1` migration. They contain reconstructible or transient state such as
 build-agent registrations, websocket presence, caches, and topic messages. A user whose short-lived operation was in
 progress, for example an LTI launch, may need to retry it after the maintenance window.
@@ -105,7 +123,7 @@ Read the metadata with `redis-cli` or the equivalent `valkey-cli` commands:
 ```bash
 redis-cli GET artemis:distributed-data-schema
 redis-cli GET artemis:distributed-data-schema:release
-redis-cli --scan --pattern 'artemis:v1:*'
+redis-cli --scan --pattern 'artemis:v2:*'
 ```
 
 The first command must report the schema expected by the release. The second reports the Artemis release that last
