@@ -134,7 +134,7 @@ final class AresPolicyAnnotations {
             String normalized = Path.of(path).normalize().toString().replace('\\', '/');
             return normalized.isEmpty() ? path : normalized;
         }
-        catch (InvalidPathException e) {
+        catch (InvalidPathException _) {
             return path;
         }
     }

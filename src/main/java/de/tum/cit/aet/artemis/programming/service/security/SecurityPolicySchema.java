@@ -205,7 +205,7 @@ final class SecurityPolicySchema {
             }
             return INVALID_POLICY;
         }
-        catch (YAMLException | NumberFormatException e) {
+        catch (YAMLException | NumberFormatException _) {
             return INVALID_POLICY;
         }
     }
@@ -223,7 +223,7 @@ final class SecurityPolicySchema {
         try {
             return Optional.ofNullable(readDocument(yaml));
         }
-        catch (YAMLException | NumberFormatException e) {
+        catch (YAMLException | NumberFormatException _) {
             return Optional.empty();
         }
     }

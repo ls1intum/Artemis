@@ -213,7 +213,7 @@ public class SecurityFrameworkService {
         try {
             return ModuleDescriptor.Version.parse(version).compareTo(ModuleDescriptor.Version.parse(MINIMUM_FRAMEWORK_VERSION)) >= 0;
         }
-        catch (IllegalArgumentException e) {
+        catch (IllegalArgumentException _) {
             return false;
         }
     }
@@ -942,7 +942,7 @@ public class SecurityFrameworkService {
             }
             return new SecurityPolicyRepositoryFiles.PolicyFileContent(null, new String(loader.getBytes(), StandardCharsets.UTF_8));
         }
-        catch (IOException e) {
+        catch (IOException _) {
             return new SecurityPolicyRepositoryFiles.PolicyFileContent(SecurityFrameworkState.PolicyFileProblem.UNPARSEABLE, null);
         }
     }

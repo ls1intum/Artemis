@@ -67,7 +67,7 @@ final class SecurityPolicyYaml {
         try {
             document = newYaml().load(yaml);
         }
-        catch (YAMLException | ClassCastException e) {
+        catch (YAMLException | ClassCastException _) {
             return new ReadPolicy(false, Optional.empty());
         }
         if (!(document instanceof Map<?, ?> root)) {
@@ -224,7 +224,7 @@ final class SecurityPolicyYaml {
             ReadPolicy reread = read(rewritten);
             return before != null && before.equals(after) && reread.testClasses().filter(expectedTestClasses::equals).isPresent();
         }
-        catch (YAMLException | ClassCastException e) {
+        catch (YAMLException | ClassCastException _) {
             return false;
         }
     }

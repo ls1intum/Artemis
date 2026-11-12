@@ -315,7 +315,7 @@ public final class SecurityPolicyRepositoryFiles {
         try {
             normalized = Path.of(path).normalize().toString().replace('\\', '/');
         }
-        catch (InvalidPathException e) {
+        catch (InvalidPathException _) {
             return Optional.empty();
         }
         if (normalized.isEmpty() || normalized.equals("..") || normalized.startsWith("../") || normalized.equals(".git") || normalized.startsWith(".git/")) {
@@ -348,7 +348,7 @@ public final class SecurityPolicyRepositoryFiles {
             }
             return PolicyFileContent.of(Files.readString(file, StandardCharsets.UTF_8));
         }
-        catch (IOException e) {
+        catch (IOException _) {
             return PolicyFileContent.failed(SecurityFrameworkState.PolicyFileProblem.UNPARSEABLE);
         }
     }
