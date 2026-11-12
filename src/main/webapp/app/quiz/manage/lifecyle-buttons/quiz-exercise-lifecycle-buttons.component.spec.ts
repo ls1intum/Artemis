@@ -84,12 +84,12 @@ describe('QuizExercise Lifecycle Buttons Component', () => {
     });
 
     it('should end quiz', () => {
-        vi.spyOn(quizExerciseApi, 'performActionForQuizExercise').mockReturnValue(of({}));
+        vi.spyOn(quizExerciseApi, 'endQuizExercise').mockReturnValue(of({}));
 
         fixture.componentRef.setInput('quizExercise', quizExercise);
         comp.endQuiz();
-        expect(quizExerciseApi.performActionForQuizExercise).toHaveBeenCalledWith(456, 'end-now');
-        expect(quizExerciseApi.performActionForQuizExercise).toHaveBeenCalledOnce();
+        expect(quizExerciseApi.endQuizExercise).toHaveBeenCalledWith(456);
+        expect(quizExerciseApi.endQuizExercise).toHaveBeenCalledOnce();
     });
 
     it('should add quiz batch', () => {
@@ -238,7 +238,7 @@ describe('QuizExercise Lifecycle Buttons Component', () => {
         });
 
         it('marks the quiz as ended and clears the dialog error on end', () => {
-            vi.spyOn(quizExerciseApi, 'performActionForQuizExercise').mockReturnValue(of({}));
+            vi.spyOn(quizExerciseApi, 'endQuizExercise').mockReturnValue(of({}));
             fixture.componentRef.setInput('quizExercise', buildQuiz({}));
             const emitted: QuizExercise[] = [];
             comp.handleNewQuizExercise.subscribe((quiz) => emitted.push(quiz));
@@ -252,7 +252,7 @@ describe('QuizExercise Lifecycle Buttons Component', () => {
         });
 
         it('routes an end failure into the dialog error stream', () => {
-            vi.spyOn(quizExerciseApi, 'performActionForQuizExercise').mockReturnValue(throwError(() => new HttpErrorResponse({ error: 'boom' })));
+            vi.spyOn(quizExerciseApi, 'endQuizExercise').mockReturnValue(throwError(() => new HttpErrorResponse({ error: 'boom' })));
             fixture.componentRef.setInput('quizExercise', buildQuiz({}));
             const errors: string[] = [];
             comp.dialogError$.subscribe((e) => errors.push(e));

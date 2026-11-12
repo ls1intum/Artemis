@@ -1,8 +1,18 @@
 import { Component, effect, inject, input, signal, untracked } from '@angular/core';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { FeedbackAnalysisResponse, FeedbackAnalysisService, FeedbackChannelRequestDTO, FeedbackDetail } from './service/feedback-analysis.service';
-import { NgbModal, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
-import { PaginatorModule, PaginatorState } from 'primeng/paginator';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import {
+    TumAetUiButtonDirective,
+    TumAetUiInputDirective,
+    TumAetUiPaginatorComponent,
+    TumAetUiTableDirective,
+    TumAetUiTableLayoutComponent,
+    TumAetUiTableSortEvent,
+    TumAetUiTableSortableColumnComponent,
+    TumAetUiToggleSwitchComponent,
+    TumAetUiTooltipDirective,
+} from '@tumaet/ui-angular';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { getErrorMessage } from 'app/foundation/util/global.utils';
 import { faCircleQuestion, faFilter, faMessage, faSort, faSpinner, faUsers } from '@fortawesome/free-solid-svg-icons';
@@ -10,7 +20,6 @@ import { SearchResult, SortingOrder } from 'app/foundation/pagination/pageable-t
 import { FeedbackModalComponent } from 'app/programming/manage/grading/feedback-analysis/modal/feedback/feedback-modal.component';
 import { FeedbackFilterModalComponent, FilterData } from 'app/programming/manage/grading/feedback-analysis/modal/feedback-filter/feedback-filter-modal.component';
 import { BaseApiHttpService } from 'app/foundation/service/base-api-http.service';
-import { SortIconComponent } from 'app/foundation/sort/icon/sort-icon.component';
 import { AffectedStudentsModalComponent } from 'app/programming/manage/grading/feedback-analysis/modal/feedback-affected-students/feedback-affected-students-modal.component';
 import { FeedbackDetailChannelModalComponent } from 'app/programming/manage/grading/feedback-analysis/modal/feedback-detail-channel/feedback-detail-channel-modal.component';
 import { ChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
@@ -35,7 +44,21 @@ export interface FeedbackAnalysisState {
     selector: 'jhi-feedback-analysis',
     templateUrl: './feedback-analysis.component.html',
     styleUrls: ['./feedback-analysis.component.scss'],
-    imports: [SortIconComponent, NgbTooltipModule, PaginatorModule, TranslateDirective, FontAwesomeModule, CommonModule, ArtemisTranslatePipe, FormsModule],
+    imports: [
+        TumAetUiButtonDirective,
+        TumAetUiInputDirective,
+        TumAetUiPaginatorComponent,
+        TumAetUiTableDirective,
+        TumAetUiTableLayoutComponent,
+        TumAetUiTableSortableColumnComponent,
+        TumAetUiToggleSwitchComponent,
+        TumAetUiTooltipDirective,
+        TranslateDirective,
+        FontAwesomeModule,
+        CommonModule,
+        ArtemisTranslatePipe,
+        FormsModule,
+    ],
     providers: [FeedbackAnalysisService],
 })
 export class FeedbackAnalysisComponent {
@@ -179,9 +202,14 @@ export class FeedbackAnalysisComponent {
         void this.loadData();
     }
 
-    /** PrimeNG paginator page change (0-indexed) converted to the 1-indexed page used here. */
-    onPageChange(event: PaginatorState): void {
-        this.setPage((event.page ?? 0) + 1);
+    /** Paginator page change (0-indexed) converted to the 1-indexed page used here. */
+    onPageChange(page: number): void {
+        this.setPage(page + 1);
+    }
+
+    onPageSizeChange(pageSize: number): void {
+        this.pageSize.set(pageSize);
+        this.setPage(1);
     }
 
     async search(searchTerm: string): Promise<void> {
@@ -195,21 +223,13 @@ export class FeedbackAnalysisComponent {
         modalRef.componentInstance.feedbackDetail = signal(feedbackDetail);
     }
 
-    setSortedColumn(column: string): void {
-        if (this.sortedColumn() === column) {
-            this.sortingOrder.set(this.sortingOrder() === SortingOrder.ASCENDING ? SortingOrder.DESCENDING : SortingOrder.ASCENDING);
-        } else {
-            this.sortedColumn.set(column);
-            this.sortingOrder.set(SortingOrder.ASCENDING);
+    onTableSort(event: TumAetUiTableSortEvent): void {
+        if (!event.field) {
+            return;
         }
+        this.sortedColumn.set(event.field);
+        this.sortingOrder.set(event.order === 1 ? SortingOrder.ASCENDING : SortingOrder.DESCENDING);
         void this.loadData();
-    }
-
-    getSortDirection(column: string): SortingOrder.ASCENDING | SortingOrder.DESCENDING | 'none' {
-        if (this.sortedColumn() === column) {
-            return this.sortingOrder() === SortingOrder.ASCENDING ? SortingOrder.ASCENDING : SortingOrder.DESCENDING;
-        }
-        return 'none';
     }
 
     async openFilterModal(): Promise<void> {

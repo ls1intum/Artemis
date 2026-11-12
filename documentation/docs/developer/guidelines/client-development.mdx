@@ -2,7 +2,7 @@
 id: client-development
 title: Client Development
 sidebar_label: Client Development
-last_reviewed: 2026-11-03
+last_reviewed: 2026-11-10
 ---
 
 import Callout from '../../../src/components/Callout/Callout';
@@ -867,6 +867,47 @@ one in percentages or with its own pixel value.
 - A PrimeNG `p-splitter` sets `[gutterSize]="6"` and draws the grip from two 2px bars with a 1px gap, as
   `resizable-panels.component.scss` does. Its default gutter is 4px.
 
+### Data tables
+
+Every table that is the main content of a page or of a large dialog uses the same frame, so tables look and behave
+alike and the controls never leave the screen. The [design template](/developer/guidelines/tum-aet-ui-kit#data-table-design-template)
+describes the anatomy, sizes and responsive behaviour; the Storybook story **Data Display / Table Layout** shows it live:
+
+```html
+<tumaet-ui-table-layout [loading]="isLoading()">
+    <div tumAetUiTableToolbar class="flex min-w-0 flex-1 items-center gap-2">
+        <input tumAetUiInput tumAetUiInputSize="small" type="search" class="max-w-72 min-w-16 flex-1" [placeholder]="'…' | artemisTranslate" />
+        <span class="flex-1"></span>
+        <button tumAetUiButton size="small"><fa-icon [icon]="faPlus" /><span class="hidden md:inline" jhiTranslate="…"></span></button>
+    </div>
+    <table tumAetUiTable size="small" [sortField]="predicate()" [sortOrder]="ascending() ? 1 : -1" (sortChange)="onSort($event)">
+        …
+    </table>
+    <tumaet-ui-paginator tumAetUiTableFooter [page]="page()" [pageSize]="size()" [totalRecords]="total()" (pageChange)="…" (pageSizeChange)="…" />
+</tumaet-ui-table-layout>
+```
+
+- The toolbar is at most 40px high and never wraps. It holds only the table's own controls: search, filter, bulk and
+  create actions. Hide button labels below `md` and keep an icon. Filter forms and explanations stay above the frame.
+- The column header is always 30px high and sticks to the top of the scrolling body. Keep header text on one line.
+- Only the body scrolls, in both directions. The footer is at most 40px high, shows the range ("1–50 of 1,284") and a
+  slim pager on one line, and adapts to the width of the table, so it also works inside dialogs. Skip it for lists that
+  are shown completely.
+- The frame is as tall as its rows, up to the space left below it in its scroll container. It measures its own position,
+  so content above the table needs no manual offset. Where that cannot work, for example several frames stacked on one
+  page, set `--table-layout-offset` (the height of everything around the table) to switch to a viewport based cap, or pass
+  `fill` inside a parent that provides a height.
+- Show an empty state, not a blank body: bind `[empty]` of the frame to "no rows and not loading" and set `emptyTitle`
+  (and optionally `emptyDescription` and an action with `[tumAetUiTableEmptyActions]`) to the wording of the page. Do not
+  write a "no results" row into the table.
+- Make columns sortable with `tumAetUiSortableColumn` wherever the sort is meaningful, server-side for paged data and in
+  memory for complete lists.
+- Do not wrap a slotted node (`tumAetUiTableToolbar`, `tumAetUiTableFooter`) directly in `@if`. The application keeps
+  whitespace, so Angular then no longer projects it (NG8011). Set `[hidden]` on the node, or put the `@if` inside it.
+- Small embedded tables (key/value tables, a few fixed rows) stay a plain `<table tumAetUiTable>` without the frame. They
+  still get the 30px header.
+- `jhi-table-view` and `tumaet-ui-table` already use the frame; do not wrap them again.
+
 ### Styling
 
 Use Tailwind for application layout and TUM AET UI for reusable component styling. Add component SCSS
@@ -890,24 +931,24 @@ When an application component needs owned class selectors, use [BEM](https://get
 
 **Bootstrap → TUM AET UI/Tailwind quick reference** (apply when migrating a module):
 
-| Bootstrap                                                       | Target                                                                                                                                                                |
-| --------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `btn btn-primary` / `btn-sm` / `btn-outline-*` / `btn-group`    | `tumaet-ui-button` or `[tumAetUiButton]` with `severity`, `size`, and `variant`; `tumaet-ui-button-group`                                                             |
-| `badge` / `bg-success` badge                                    | `tumaet-ui-tag` with a semantic `severity`                                                                                                                            |
-| `alert alert-*`                                                 | `tumaet-ui-message` with a semantic `severity`                                                                                                                        |
-| `card` / collapsible panel                                      | `tumaet-ui-card` / `tumaet-ui-panel`; a semantic element with Tailwind utilities for a presentation-only box                                                          |
-| `table table-striped table-responsive`                          | `tumaet-ui-table`, native `<table tumAetUiTable>`, or `tumaet-ui-table-virtual-scroll` when virtualization is justified                                               |
-| `form-control` / `form-group` / `form-check`                    | `[tumAetUiInput]`, `tumaet-ui-select` (`tumaet-ui-multi-select` for several values), `tumaet-ui-checkbox`, or `tumaet-ui-radio-button`, composed with Tailwind layout |
-| a filter or search input                                        | `tumaet-ui-search-field`, which brings its own magnifier and clear control; `jhi-search-filter` wraps it for Artemis                                                  |
-| tabs / pagination / progress / tooltip / date picker            | `tumaet-ui-tabs`, `tumaet-ui-paginator`, TUM AET UI progress components, `[tumAetUiTooltip]`, or `tumaet-ui-date-picker`                                              |
-| modal                                                           | `tumaet-ui-dialog`; keep feature state and result handling in the Artemis host                                                                                        |
-| `row` + `col-md-*`                                              | `grid grid-cols-1 md:grid-cols-12` + `md:col-span-*`, or flexbox                                                                                                      |
-| `d-flex` / `d-none`                                             | `flex` / `hidden`                                                                                                                                                     |
-| `justify-content-center` / `align-items-center` / `flex-column` | `justify-center` / `items-center` / `flex-col`                                                                                                                        |
-| `text-right` / `text-left`                                      | `text-end` / `text-start`                                                                                                                                             |
-| `text-muted`                                                    | an application style using the semantic `--text-body-secondary` property                                                                                              |
-| `text-danger` / `text-success` / `text-warning` / `text-info`   | `text-state-danger` / `text-state-success` / `text-state-warning` / `text-state-info`                                                                                 |
-| `me-*` / `ms-*` / `mb-*` / `p-*` / `gap-*`                      | Tailwind logical spacing; convert by target size and write the steps 3 to 5 with `!` (Bootstrap `mb-3` is `1rem`, so `mb-4!`; see _Ambiguous Spacing Utilities_)      |
+| Bootstrap                                                       | Target                                                                                                                                                                                    |
+| --------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `btn btn-primary` / `btn-sm` / `btn-outline-*` / `btn-group`    | `tumaet-ui-button` or `[tumAetUiButton]` with `severity`, `size`, and `variant`; `tumaet-ui-button-group`                                                                                 |
+| `badge` / `bg-success` badge                                    | `tumaet-ui-tag` with a semantic `severity`                                                                                                                                                |
+| `alert alert-*`                                                 | `tumaet-ui-message` with a semantic `severity`                                                                                                                                            |
+| `card` / collapsible panel                                      | `tumaet-ui-card` / `tumaet-ui-panel`; a semantic element with Tailwind utilities for a presentation-only box                                                                              |
+| `table table-striped table-responsive`                          | `tumaet-ui-table`, native `<table tumAetUiTable>` inside `tumaet-ui-table-layout` (see [Data tables](#data-tables)), or `tumaet-ui-table-virtual-scroll` when virtualization is justified |
+| `form-control` / `form-group` / `form-check`                    | `[tumAetUiInput]`, `tumaet-ui-select` (`tumaet-ui-multi-select` for several values), `tumaet-ui-checkbox`, or `tumaet-ui-radio-button`, composed with Tailwind layout                     |
+| a filter or search input                                        | `tumaet-ui-search-field`, which brings its own magnifier and clear control; `jhi-search-filter` wraps it for Artemis                                                                      |
+| tabs / pagination / progress / tooltip / date picker            | `tumaet-ui-tabs`, `tumaet-ui-paginator`, TUM AET UI progress components, `[tumAetUiTooltip]`, or `tumaet-ui-date-picker`                                                                  |
+| modal                                                           | `tumaet-ui-dialog`; keep feature state and result handling in the Artemis host                                                                                                            |
+| `row` + `col-md-*`                                              | `grid grid-cols-1 md:grid-cols-12` + `md:col-span-*`, or flexbox                                                                                                                          |
+| `d-flex` / `d-none`                                             | `flex` / `hidden`                                                                                                                                                                         |
+| `justify-content-center` / `align-items-center` / `flex-column` | `justify-center` / `items-center` / `flex-col`                                                                                                                                            |
+| `text-right` / `text-left`                                      | `text-end` / `text-start`                                                                                                                                                                 |
+| `text-muted`                                                    | an application style using the semantic `--text-body-secondary` property                                                                                                                  |
+| `text-danger` / `text-success` / `text-warning` / `text-info`   | `text-state-danger` / `text-state-success` / `text-state-warning` / `text-state-info`                                                                                                     |
+| `me-*` / `ms-*` / `mb-*` / `p-*` / `gap-*`                      | Tailwind logical spacing; convert by target size and write the steps 3 to 5 with `!` (Bootstrap `mb-3` is `1rem`, so `mb-4!`; see _Ambiguous Spacing Utilities_)                          |
 
 **Date and time fields use `tumaet-ui-date-picker`.** It is a signal-forms control: bind `[(value)]` to a `dayjs` signal or property, or `[formField]` on a signal form. `[min]` and `[max]` grey out the days outside a range in the calendar, but text typed into the field is not limited by them. The picker has no required flag and no message for an external error, so the consumer checks the range or the required state, marks the field with `[invalid]`, and explains the error next to it (`[ariaDescribedBy]` ties the text to the field). Typed text that is not a date leaves the last valid value in `value` and is reported through `(inputValidityChange)`, so a consumer must not submit while that is `false`. Use `[dateOnly]` for a date, `[timeOnly]` for a time and `[startAt]` for the month a calendar opens on while the field is empty. A reactive form that has not moved to signal forms adds `DatePickerControlDirective` (`app/shared-ui/date-picker-control`) to keep `formControlName`; it reports unparseable text as an `invalidDate` control error and goes away with the last such form. The field never gets narrower than its text needs: 15rem for a date and time, 11.5rem with `[dateOnly]` and 8rem with `[timeOnly]`; the `[inline]` variant has no minimum. A flex or grid parent therefore has to wrap or grow instead of squeezing it, so use `grid-cols-[repeat(auto-fit,minmax(15rem,1fr))]` (or the matching minimum) rather than a fixed column count. To keep at most two columns, use `grid-cols-[repeat(auto-fill,minmax(max(15rem,calc((100%_-_1rem)/2)),1fr))]` with `gap-4`. Do not stack indents in front of a picker on a phone, because a clipping parent hides its buttons. Give the picker its `labelName` and project a help icon next to it with the `tumAetUiDatePickerLabelAddon` attribute, so label, icon and time-zone indicator stay on one line; combine `[hideLabelName]` with an external label only together with `[shouldDisplayTimeZoneWarning]="false"`. For a range, use two pickers rather than a range component.
 

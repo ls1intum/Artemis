@@ -403,7 +403,7 @@ public class ChannelResource extends ConversationManagementResource {
             throw new BadRequestAlertException("The channel does not belong to the course", CHANNEL_ENTITY_NAME, "channel.course.mismatch");
         }
         channelAuthorizationService.isAllowedToGrantChannelModeratorRole(channel, userRepository.getUserWithAuthorities());
-        var usersToGrant = conversationService.findUsersInDatabase(userLogins);
+        var usersToGrant = conversationService.findCourseUsersInDatabase(channel.getCourse(), userLogins);
         channelService.grantChannelModeratorRole(channel, usersToGrant);
         return ResponseEntity.ok().build();
     }
@@ -513,13 +513,14 @@ public class ChannelResource extends ConversationManagementResource {
             throw new BadRequestAlertException("You are not allowed to deregister the creator of a channel", "conversation", "creatorDeregistration");
         }
 
-        conversationService.deregisterUsersFromAConversation(course, usersToDeRegister, channelFromDatabase);
+        // only the users that were participants and have been removed are notified, the other logins are ignored
+        var removedUsers = conversationService.deregisterUsersFromAConversation(course, usersToDeRegister, channelFromDatabase);
 
         var removedFromChannelNotification = new RemovedFromChannelNotification(courseId, course.getTitle(), course.getCourseIcon(), requestingUser.getName(),
                 channelFromDatabase.getName(), channelFromDatabase.getId());
 
         courseNotificationService.sendCourseNotification(removedFromChannelNotification,
-                usersToDeRegister.stream().filter(user -> conversationService.isConversationVisibleToUser(channelFromDatabase, user)).toList());
+                removedUsers.stream().filter(user -> conversationService.isConversationVisibleToUser(channelFromDatabase, user)).toList());
         return ResponseEntity.ok().build();
     }
 

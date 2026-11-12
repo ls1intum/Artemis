@@ -1,5 +1,8 @@
 {
     "error": {
+        "quizQuestionPoolModelNotConfigured": "Smart Quizzes ist auf diesem Server nicht eingerichtet. Bitte wende dich an deine Administration, damit ein lokales Sprachmodell konfiguriert wird.",
+        "tumLiveUploadInProgress": "Der offene Upload wird bereits an TUM.Live gesendet. Verwirf ihn, um einen neuen zu starten.",
+        "tumLiveNotConnected": "Der Kurs ist nicht mit TUM.Live verbunden.",
         "registrationClosed": "Die Anmeldung ist geschlossen, da die Prüfung beendet ist.",
         "attendanceCorrectionNotAllowed": "Die Anwesenheit kann erst nach dem Ende einer echten Prüfung korrigiert werden.",
         "exerciseGenerationCancellationUnavailable": "Der Abbruch konnte nicht bestätigt werden. Prüfe den aktuellen Status des Laufs und versuche es erneut.",
@@ -152,6 +155,8 @@
         "cpuCountInvalid": "Die CPU-Anzahl ist ungültig. Bitte stelle sicher, dass es sich um eine positive Ganzzahl handelt.",
         "memorySwapLimitInvalid": "Die maximale Swap-Speichergröße ist ungültig. Bitte stelle sicher, dass er größer oder gleich 0 ist.",
         "dockerFlagsParsingError": "Fehler beim Parsen der Docker-Flags.",
+        "gradedParticipationMismatch": "Die ausgewählte Teilnahme gehört nicht zu dieser Aufgabe.",
+        "sharingInfoInvalid": "Die Sharing-Informationen der Anfrage konnten nicht validiert werden. Bitte starte den Import erneut über die Sharing Platform.",
         "dueDateOver": {
             "noParticipationPossible": "Das Abgabedatum der Übung ist bereits abgelaufen, du kannst nicht mehr an dieser Übung teilnehmen.",
             "participationInPracticeMode": "Das Abgabedatum der Übung ist bereits abgelaufen, eine reguläre Teilnahme an der Übung ist nicht mehr möglich. Du kannst den Übungsmodus verwenden, um die Übung zu lösen.",
@@ -360,6 +365,10 @@
         "buildPlanConfigurationTooLarge": "Die Build-Plan-Konfiguration ist zu groß, um verarbeitet zu werden. Bitte reduziere die Größe deiner Build-Phasen.",
         "sharingInfoMissing": "Die Informationen der Sharing-Plattform fehlen.",
         "problemStatementTooLong": "Die Aufgabenstellung darf 100.000 Zeichen nicht überschreiten.",
+        "scienceExportInvalidDateRange": "Das Startdatum des Exports muss vor dem Enddatum liegen.",
+        "scienceExportFailed": "Der Export konnte nicht erstellt werden. Es wurde keine Datei behalten.",
+        "scienceCourseNotEnabled": "Für diesen Kurs werden keine Kursinteraktionsdaten erhoben.",
+        "scienceExportMissingEventTypes": "Wähle mindestens einen Ereignistyp für den Export aus.",
         "generationBriefRequired": "Gib eine Aufgabenbeschreibung ein, bevor du eine Aufgabe ohne Problemstellung generierst.",
         "generationCapacityUnavailable": "Artemis hat gerade keine freie Kapazität für die KI-Generierung. Es wurde nichts generiert — versuche es in ein paar Minuten erneut.",
         "exerciseGenerationRunning": "Die Aufgabe ist durch einen anderen Vorgang oder eine unvollständige Wiederherstellung gesperrt. Versuche es später erneut; wende dich bei einer erforderlichen Wiederherstellung an die Administration."

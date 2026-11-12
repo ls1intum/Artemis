@@ -10,6 +10,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -51,6 +52,7 @@ import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
+import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
@@ -349,6 +351,155 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
 
         request.getList("/api/assessment/participations/" + result.getSubmission().getParticipation().getId() + "/results/" + result.getId() + "/details", HttpStatus.FORBIDDEN,
                 FeedbackDTO.class);
+    }
+
+    private Result addManualExamResultOfStudent1(ZonedDateTime publishResultsDate) {
+        Exam exam = examRepository.findByIdElseThrow(examModelingExercise.getExerciseGroup().getExam().getId());
+        exam.setPublishResultsDate(publishResultsDate);
+        examRepository.save(exam);
+        StudentExam studentExam = examUtilService.addStudentExamWithUser(exam, TEST_PREFIX + "student1");
+        examUtilService.addExerciseToStudentExam(studentExam, examModelingExercise);
+        Submission submission = participationUtilService.addSubmission(examModelingExercise, new ModelingSubmission(), TEST_PREFIX + "student1");
+        Result result = participationUtilService.addResultToSubmission(AssessmentType.MANUAL, ZonedDateTime.now(), submission);
+        return participationUtilService.addSampleFeedbackToResults(result);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldNotReturnTheResultDetailsOfAnExamParticipationBeforeTheResultsArePublished() throws Exception {
+        Result result = addManualExamResultOfStudent1(ZonedDateTime.now().plusDays(1));
+
+        request.getList("/api/assessment/participations/" + result.getSubmission().getParticipation().getId() + "/results/" + result.getId() + "/details", HttpStatus.FORBIDDEN,
+                FeedbackDTO.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void shouldReturnTheResultDetailsOfAnExamParticipationToTutorsBeforeTheResultsArePublished() throws Exception {
+        Result result = addManualExamResultOfStudent1(ZonedDateTime.now().plusDays(1));
+
+        var feedbacks = request.getList("/api/assessment/participations/" + result.getSubmission().getParticipation().getId() + "/results/" + result.getId() + "/details",
+                HttpStatus.OK, FeedbackDTO.class);
+        assertThat(feedbacks).hasSize(2);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldReturnTheResultDetailsOfAnExamParticipationOnceTheResultsArePublished() throws Exception {
+        Result result = addManualExamResultOfStudent1(ZonedDateTime.now().minusMinutes(1));
+
+        var feedbacks = request.getList("/api/assessment/participations/" + result.getSubmission().getParticipation().getId() + "/results/" + result.getId() + "/details",
+                HttpStatus.OK, FeedbackDTO.class);
+        assertThat(feedbacks).hasSize(2);
+    }
+
+    private Result addAutomaticExamProgrammingResultOfStudent1(String shortName, ZonedDateTime examStartDate, ZonedDateTime examEndDate) {
+        ProgrammingExercise examProgrammingExercise = programmingExerciseUtilService.addCourseExamExerciseGroupWithOneProgrammingExercise("Exam programming", shortName, true);
+        Exam exam = examRepository.findByIdElseThrow(examProgrammingExercise.getExerciseGroup().getExam().getId());
+        exam.setStartDate(examStartDate);
+        exam.setEndDate(examEndDate);
+        examRepository.save(exam);
+        userUtilService.enrollPrefixedUsersInCourse(examProgrammingExercise.getExerciseGroup().getExam().getCourse(), TEST_PREFIX);
+        StudentExam studentExam = examUtilService.addStudentExamWithUser(exam, TEST_PREFIX + "student1");
+        examUtilService.addExerciseToStudentExam(studentExam, examProgrammingExercise);
+        var participation = participationUtilService.addStudentParticipationForProgrammingExercise(examProgrammingExercise, TEST_PREFIX + "student1");
+        Submission submission = participationUtilService.addSubmission(participation, new ProgrammingSubmission());
+        Result result = participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, ZonedDateTime.now(), submission);
+        return participationUtilService.addSampleFeedbackToResults(result);
+    }
+
+    /**
+     * During the exam the students see the automatic feedback of their programming exercises, so the result details they load for the instructions and the feedback have to be
+     * served as long as the exam is running.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldReturnTheResultDetailsOfAnExamProgrammingParticipationWhileTheExamIsRunning() throws Exception {
+        Result result = addAutomaticExamProgrammingResultOfStudent1("EXAMRESRUN", ZonedDateTime.now().minusMinutes(10), ZonedDateTime.now().plusMinutes(50));
+
+        var feedbacks = request.getList("/api/assessment/participations/" + result.getSubmission().getParticipation().getId() + "/results/" + result.getId() + "/details",
+                HttpStatus.OK, FeedbackDTO.class);
+        assertThat(feedbacks).hasSize(2);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldNotReturnTheResultDetailsOfAnExamProgrammingParticipationAfterTheExamEndedBeforeTheResultsArePublished() throws Exception {
+        Result result = addAutomaticExamProgrammingResultOfStudent1("EXAMRESEND", ZonedDateTime.now().minusHours(3), ZonedDateTime.now().minusHours(1));
+
+        request.getList("/api/assessment/participations/" + result.getSubmission().getParticipation().getId() + "/results/" + result.getId() + "/details", HttpStatus.FORBIDDEN,
+                FeedbackDTO.class);
+    }
+
+    private StudentParticipation examParticipationInMemory(User participant, boolean testRun) {
+        StudentParticipation participation = new StudentParticipation();
+        participation.setExercise(examModelingExercise);
+        participation.setParticipant(participant);
+        participation.setTestRun(testRun);
+        return participation;
+    }
+
+    private Result examResultWithFeedbackOfEveryType(StudentParticipation participation) {
+        Submission submission = new ModelingSubmission();
+        submission.setParticipation(participation);
+        Result result = new Result().submission(submission);
+        result.setAssessmentType(AssessmentType.MANUAL);
+        result.setFeedbacks(new ArrayList<>(
+                List.of(new Feedback().type(FeedbackType.MANUAL).detailText("manual"), new Feedback().type(FeedbackType.MANUAL_UNREFERENCED).detailText("manual unreferenced"),
+                        new Feedback().type(FeedbackType.AUTOMATIC).detailText("automatic"), new Feedback().detailText("untyped"))));
+        return result;
+    }
+
+    @Test
+    void examFeedbackOfTheAssessmentIsHeldBackFromTheStudentUntilTheResultsArePublished() {
+        examModelingExercise.getExerciseGroup().getExam().setPublishResultsDate(ZonedDateTime.now().plusDays(1));
+        User student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        StudentParticipation participation = examParticipationInMemory(student, false);
+        Result result = examResultWithFeedbackOfEveryType(participation);
+
+        resultService.filterSensitiveInformationIfNecessary(participation, List.of(result), Optional.of(student));
+
+        assertThat(result.getFeedbacks()).extracting(Feedback::getDetailText).containsExactlyInAnyOrder("automatic", "untyped");
+    }
+
+    @Test
+    void examFeedbackOfTheAssessmentIsKeptForTheStudentOnceTheResultsArePublished() {
+        examModelingExercise.getExerciseGroup().getExam().setPublishResultsDate(ZonedDateTime.now().minusMinutes(1));
+        User student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        StudentParticipation participation = examParticipationInMemory(student, false);
+        Result result = examResultWithFeedbackOfEveryType(participation);
+
+        resultService.filterSensitiveInformationIfNecessary(participation, List.of(result), Optional.of(student));
+
+        assertThat(result.getFeedbacks()).extracting(Feedback::getDetailText).containsExactlyInAnyOrder("manual", "manual unreferenced", "automatic", "untyped");
+    }
+
+    /**
+     * The summary of an instructor's own test run shows what a student sees after the results are published, including the feedback of the assessment.
+     */
+    @Test
+    void examFeedbackOfTheAssessmentIsKeptInTheOwnTestRunOfAnInstructor() {
+        examModelingExercise.getExerciseGroup().getExam().setPublishResultsDate(ZonedDateTime.now().plusDays(1));
+        User instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
+        StudentParticipation participation = examParticipationInMemory(instructor, true);
+        Result result = examResultWithFeedbackOfEveryType(participation);
+
+        resultService.filterSensitiveInformationIfNecessary(participation, List.of(result), Optional.of(instructor));
+
+        assertThat(result.getFeedbacks()).extracting(Feedback::getDetailText).containsExactlyInAnyOrder("manual", "manual unreferenced", "automatic", "untyped");
+    }
+
+    @Test
+    void examFeedbackOfTheAssessmentIsKeptForTutorsBeforeTheResultsArePublished() {
+        examModelingExercise.getExerciseGroup().getExam().setPublishResultsDate(ZonedDateTime.now().plusDays(1));
+        User student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        User tutor = userUtilService.getUserByLogin(TEST_PREFIX + "tutor1");
+        StudentParticipation participation = examParticipationInMemory(student, false);
+        Result result = examResultWithFeedbackOfEveryType(participation);
+
+        resultService.filterSensitiveInformationIfNecessary(participation, List.of(result), Optional.of(tutor));
+
+        assertThat(result.getFeedbacks()).extracting(Feedback::getDetailText).containsExactlyInAnyOrder("manual", "manual unreferenced", "automatic", "untyped");
     }
 
     @Test
