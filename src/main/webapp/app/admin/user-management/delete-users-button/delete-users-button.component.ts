@@ -2,8 +2,9 @@ import { ChangeDetectionStrategy, Component, inject, output, signal } from '@ang
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { faEraser } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TumAetUiButtonComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 import { AdminUserService } from 'app/account/user/shared/admin-user.service';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -16,7 +17,7 @@ import { onError } from 'app/foundation/util/global.utils';
     selector: 'jhi-delete-users-button',
     templateUrl: './delete-users-button.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [TumAetUiButtonComponent, FaIconComponent, TranslateDirective],
+    imports: [TumAetUiButtonComponent, TumAetUiTooltipDirective, FaIconComponent, TranslateDirective, ArtemisTranslatePipe],
 })
 export class DeleteUsersButtonComponent {
     private readonly adminUserService = inject(AdminUserService);

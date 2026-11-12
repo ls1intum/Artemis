@@ -363,7 +363,13 @@
                             }
                         </td>
                         <td>
-                            <a tumAetUiButton class="whitespace-nowrap" severity="info" [routerLink]="getExamRoutesByIdentifier()('students')">
+                            <a
+                                [attr.aria-label]="'artemisApp.examManagement.students' | artemisTranslate"
+                                tumAetUiButton
+                                class="whitespace-nowrap"
+                                severity="info"
+                                [routerLink]="getExamRoutesByIdentifier()('students')"
+                            >
                                 <fa-icon [icon]="faUser" />
                                 <span class="hidden md:inline" jhiTranslate="artemisApp.examManagement.students"></span>
                             </a>

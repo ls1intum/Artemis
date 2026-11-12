@@ -17,10 +17,6 @@
             line-height: 1;
             margin: 0;
         }
-
-        .spacer {
-            flex: 1;
-        }
     }
 
     hr {
@@ -190,37 +186,6 @@
             font-weight: 500;
             margin: 0;
         }
-
-        .spacer {
-            flex: 1;
-        }
-    }
-
-    .session-table-scroll {
-        overflow-x: auto;
-
-        table {
-            width: 100%;
-            min-width: 40rem;
-        }
-    }
-
-    th {
-        width: 20%;
-        padding-top: 0;
-        padding-bottom: 1rem;
-        border-bottom: 1px solid var(--tumaet-ui-border-color);
-        white-space: normal;
-        overflow-wrap: break-word;
-    }
-
-    td {
-        width: 20%;
-        padding-top: 1rem;
-        padding-bottom: 1rem;
-        border-bottom: 1px solid var(--tumaet-ui-border-color);
-        white-space: normal;
-        overflow-wrap: break-word;
     }
 
     .changeable-session-property {

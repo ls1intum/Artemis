@@ -349,3 +349,30 @@ describe('LLMSelectionModalComponent', () => {
         });
     });
 });
+
+describe('LLM selection dismissal', () => {
+    it('clears the shared open state and resolves the choice when Escape closes the popup', async () => {
+        const modalService = new LLMSelectionModalService();
+        await TestBed.configureTestingModule({
+            imports: [LLMSelectionModalComponent],
+            providers: [
+                { provide: LLMSelectionModalService, useValue: modalService },
+                { provide: ThemeService, useValue: { currentTheme: signal(Theme.LIGHT) } },
+                { provide: ProfileService, useValue: { isLLMDeploymentEnabled: () => false } },
+                { provide: Router, useValue: { navigate: vi.fn() } },
+                { provide: TranslateService, useClass: MockTranslateService },
+            ],
+        }).compileComponents();
+        const popup = TestBed.createComponent(LLMSelectionModalComponent);
+        popup.detectChanges();
+        const result = modalService.open();
+        popup.detectChanges();
+        expect(modalService.isOpen()).toBe(true);
+
+        popup.nativeElement.querySelector('[data-testid="llm-selection-modal"]').dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+
+        expect(await result).toBe(LLM_MODAL_DISMISSED);
+        expect(modalService.isOpen()).toBe(false);
+        expect(popup.componentInstance.isVisible()).toBe(false);
+    });
+});
