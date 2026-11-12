@@ -58,6 +58,7 @@ import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.dto.CourseForRoleAssignmentDTO;
+import de.tum.cit.aet.artemis.exercise.util.AsyncDeletionTestUtilService;
 
 class ScienceIntegrationTest extends AbstractAtlasIntegrationTest {
 
@@ -76,6 +77,9 @@ class ScienceIntegrationTest extends AbstractAtlasIntegrationTest {
 
     @Autowired
     private ScienceEnabledCourseRepository scienceEnabledCourseRepository;
+
+    @Autowired
+    private AsyncDeletionTestUtilService asyncDeletionTestUtilService;
 
     @BeforeEach
     void enableFeatureToggle() {
@@ -633,7 +637,8 @@ class ScienceIntegrationTest extends AbstractAtlasIntegrationTest {
         scienceEvent.setCourseId(course.getId());
         scienceEvent = scienceEventRepository.save(scienceEvent);
 
-        request.delete("/api/admin/courses/" + course.getId(), HttpStatus.OK);
+        request.delete("/api/admin/courses/" + course.getId(), HttpStatus.ACCEPTED);
+        asyncDeletionTestUtilService.awaitCourseDeletion(course.getId());
 
         assertThat(scienceEventRepository.existsById(scienceEvent.getId())).isFalse();
     }
@@ -651,7 +656,8 @@ class ScienceIntegrationTest extends AbstractAtlasIntegrationTest {
                 .findFirst().orElseThrow();
         assertThat(consentsOfStudent()).hasSize(1);
 
-        request.delete("/api/admin/courses/" + course.getId(), HttpStatus.OK);
+        request.delete("/api/admin/courses/" + course.getId(), HttpStatus.ACCEPTED);
+        asyncDeletionTestUtilService.awaitCourseDeletion(course.getId());
 
         assertThat(scienceEnabledCourseRepository.findByCourseId(course.getId())).isEmpty();
         assertThat(consentsOfStudent()).isEmpty();
