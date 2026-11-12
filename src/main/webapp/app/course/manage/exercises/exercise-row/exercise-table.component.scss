@@ -50,13 +50,15 @@ tbody td {
     min-width: 16rem;
 }
 
-// Takes the leftover width; buttons fold into the ellipsis as it shrinks. Rows with quiz buttons (which never fold)
-// raise --actions-min-width so the table scrolls rather than clipping them.
+// Takes the leftover width; buttons fold into the ellipsis as it shrinks. The floor keeps room for one inline button
+// (Edit in editor) next to the overflow trigger, including gaps, the safety margin and the cell padding, so the table
+// scrolls sideways before the most used action disappears into the menu. Rows with quiz buttons (which never fold)
+// raise --actions-min-width further so the table scrolls rather than clipping them.
 th.col-actions,
 td.col-actions {
     width: 100%;
     max-width: 60rem;
-    min-width: var(--actions-min-width, 4rem);
+    min-width: var(--actions-min-width, 7rem);
     position: relative;
     overflow: hidden;
 }
