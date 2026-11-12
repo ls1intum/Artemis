@@ -151,15 +151,30 @@ class DeimosBatchServiceTest {
         when(programmingExerciseRepository.findDeimosExerciseScopeInfoById(12L))
                 .thenReturn(java.util.Optional.of(new DeimosExerciseScopeInfoDTO(12L, "Exercise 12", 7L, "Course 7", null)));
         when(deimosAnalysisService.analyze(any(), eq(DeimosTriggerType.MANUAL), eq(DeimosBatchScope.EXERCISE), eq(from), eq(to), eq(List.of(201L, 202L))))
-                .thenReturn(new DeimosBatchSummaryDTO("run-3", "MANUAL", "EXERCISE", from, to, 2, 2, 0, 1, 0, 1, 0, List.of(), List.of()));
+                .thenReturn(new DeimosBatchSummaryDTO("run-3", "MANUAL", "EXERCISE", from, to, 2, 2, 0, 1, 0, 1, 0,
+                        List.of(new DeimosBatchSummaryDTO.ParticipationAnalysis(201L, 12L, DeimosVerdict.MALICIOUS, true, "bad", null, List.of(), 0, false, List.of(), 0),
+                                new DeimosBatchSummaryDTO.ParticipationAnalysis(202L, 12L, DeimosVerdict.BENIGN, false, "ok", null, List.of(), 0, false, List.of(), 0)),
+                        List.of()));
 
         var triggerUser = createTriggerUser();
         var response = deimosBatchService.triggerExerciseBatch(12L, new DeimosBatchRequestDTO(from, to), triggerUser);
 
         assertThat(response.status()).isEqualTo("ACCEPTED");
         var recipientCaptor = ArgumentCaptor.forClass(MailRecipientDTO.class);
-        verify(mailSendingService).buildAndSendAsync(recipientCaptor.capture(), eq("email.deimos.analysisComplete.title"), eq("mail/deimos/deimosAnalysisCompleteEmail"), any());
+        @SuppressWarnings("unchecked")
+        ArgumentCaptor<java.util.Map<String, Object>> contextCaptor = ArgumentCaptor.forClass((Class<java.util.Map<String, Object>>) (Class<?>) java.util.Map.class);
+        verify(mailSendingService).buildAndSendAsync(recipientCaptor.capture(), eq("email.deimos.analysisComplete.title"), eq("mail/deimos/deimosAnalysisCompleteEmail"),
+                contextCaptor.capture());
         assertThat(recipientCaptor.getValue()).isEqualTo(MailRecipientDTO.from(triggerUser));
+        var emailData = (DeimosAnalysisCompleteEmailDTO) contextCaptor.getValue().get("analysis");
+        assertThat(emailData.courseId()).isEqualTo(7L);
+        assertThat(emailData.courseTitle()).isEqualTo("Course 7");
+        assertThat(emailData.scopeTitle()).isEqualTo("Exercise 12");
+        assertThat(emailData.maliciousParticipationLinks()).singleElement().satisfies(link -> {
+            assertThat(link.participationId()).isEqualTo(201L);
+            assertThat(link.url()).isEqualTo("http://localhost:8080/course-management/7/programming-exercises/12/participations/201/submissions");
+            assertThat(link.rationale()).isEqualTo("bad");
+        });
     }
 
     @Test

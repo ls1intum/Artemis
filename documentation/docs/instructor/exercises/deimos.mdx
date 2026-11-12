@@ -115,7 +115,7 @@ administrator can change these bounds; the defaults are:
 | Bound | Default | Effect |
 | --- | --- | --- |
 | Input size per file | 256 KiB | Files above this are not diffed at all. |
-| Diff size per file | 32 KiB | Larger per-file diffs are truncated at a line boundary. If the first changed line alone is too long, as in a minified file, the beginning of the removed and of the added line is shown instead. |
+| Diff size per file | 32 KiB | Larger per-file diffs are truncated at a line boundary. If that would leave none of the added code of the first changed section, for example because the first changed line alone is too long, as in a minified file, the beginning of the removed and of the added line is shown instead. |
 | Total payload | 128 KiB | A hard bound on the submission history the model receives for one participation, including diff headers and omission notices. The fixed instructions around it come on top. Files and snapshots beyond it are dropped. |
 | Reserved for the final state | 32 KiB | Part of the total held back so there is always room for the cumulative diff against the template. A cumulative diff larger than the remaining budget is itself truncated. |
 

@@ -272,8 +272,9 @@ final class DeimosDiffBuilder {
      * <p>
      * Cutting at line boundaries keeps whole lines only. When the first changed line alone exceeds the budget, as in a
      * minified source or one-line JSON, that would leave nothing but the hunk header, and the model would see that the
-     * file changed but not how. The beginning of the first removed and the first added line is shown instead, each cut
-     * at a character boundary and sharing the budget, so the model sees both what was there and what the student wrote.
+     * file changed but not how. The same holds when the cut keeps only removed lines, since the model then sees none of
+     * what the student wrote. The beginning of the first removed and the first added line is shown instead, each cut at a
+     * character boundary and sharing the budget, so the model sees both what was there and what the student wrote.
      *
      * @param unifiedDiff the diff hunks, without file headers
      * @param maxBytes    the byte budget
@@ -281,15 +282,22 @@ final class DeimosDiffBuilder {
      */
     static String truncateDiff(String unifiedDiff, int maxBytes) {
         String byLines = truncateAtLineBoundary(unifiedDiff, maxBytes);
-        if (containsChangedLine(byLines)) {
+        if (containsAddedLine(byLines)) {
             return byLines;
         }
         String sample = sampleFirstChange(unifiedDiff, maxBytes);
-        return sample.isEmpty() ? byLines : sample;
+        if (containsAddedLine(sample) || (!containsChangedLine(byLines) && !sample.isEmpty())) {
+            return sample;
+        }
+        return byLines;
     }
 
     private static boolean containsChangedLine(String diff) {
         return diffLines(diff).stream().anyMatch(line -> line.startsWith("-") || line.startsWith("+"));
+    }
+
+    private static boolean containsAddedLine(String diff) {
+        return diffLines(diff).stream().anyMatch(line -> line.startsWith("+"));
     }
 
     /**

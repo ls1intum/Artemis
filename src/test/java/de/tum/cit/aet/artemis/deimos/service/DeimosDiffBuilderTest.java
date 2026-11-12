@@ -285,10 +285,25 @@ class DeimosDiffBuilderTest {
     }
 
     @Test
-    void keepsTheLineCutWhenItAlreadyShowsAChange() {
+    void keepsTheLineCutWhenItAlreadyShowsAnAddition() {
+        String diff = "@@ -1,2 +1,2 @@\n-short\n+x\n+" + "b".repeat(300) + "\n";
+
+        assertThat(DeimosDiffBuilder.truncateDiff(diff, 100)).isEqualTo("@@ -1,2 +1,2 @@\n-short\n+x\n");
+    }
+
+    @Test
+    void samplesTheAddedLineWhenTheLineCutKeepsOnlyARemoval() {
         String diff = "@@ -1,2 +1,2 @@\n-short\n+" + "b".repeat(300) + "\n";
 
-        assertThat(DeimosDiffBuilder.truncateDiff(diff, 100)).isEqualTo("@@ -1,2 +1,2 @@\n-short\n");
+        // 16 bytes of header and 7 for the whole removed line leave 77 for the added one: its marker, 75 characters and the line break.
+        assertThat(DeimosDiffBuilder.truncateDiff(diff, 100)).isEqualTo("@@ -1,2 +1,2 @@\n-short\n+" + "b".repeat(75) + "\n");
+    }
+
+    @Test
+    void keepsTheLineCutOfARemovalWhenTheSampledHunkAddsNothing() {
+        String diff = "@@ -1 +0,0 @@\n-x\n@@ -5,0 +5 @@\n+" + "b".repeat(300) + "\n";
+
+        assertThat(DeimosDiffBuilder.truncateDiff(diff, 60)).isEqualTo("@@ -1 +0,0 @@\n-x\n@@ -5,0 +5 @@\n");
     }
 
     @ParameterizedTest
