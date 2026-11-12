@@ -17,6 +17,7 @@ import jakarta.validation.constraints.Min;
 import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
@@ -66,6 +67,12 @@ import de.tum.cit.aet.artemis.course.dto.CourseMemberDTO;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.course.service.CourseAccessService;
 import de.tum.cit.aet.artemis.course.service.CourseSearchService;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.enums.Explode;
+import io.swagger.v3.oas.annotations.enums.ParameterStyle;
+import io.swagger.v3.oas.annotations.headers.Header;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 
 /**
  * REST controller for managing access to courses and searching members in courses.
@@ -78,6 +85,10 @@ import de.tum.cit.aet.artemis.course.service.CourseSearchService;
 public class CourseAccessResource {
 
     private static final Logger log = LoggerFactory.getLogger(CourseAccessResource.class);
+
+    private static final String AUTHENTICATED_CACHE_CONTROL = "Default cache policy for authenticated responses";
+
+    private static final String COURSE_ROLE_SLUG = "Course role: students, tutors, editors or instructors (case insensitive)";
 
     private final UserRepository userRepository;
 
@@ -110,6 +121,7 @@ public class CourseAccessResource {
      */
     @FeatureUsage(UserFeature.COURSE_ENROLLMENT)
     @PostMapping("courses/{courseId}/enroll")
+    @ApiResponse(responseCode = "200", headers = @Header(name = HttpHeaders.CACHE_CONTROL, description = AUTHENTICATED_CACHE_CONTROL, schema = @Schema(type = "string")))
     @EnforceAtLeastStudent
     public ResponseEntity<Void> enrollInCourse(@PathVariable Long courseId) {
         User user = userRepository.getUserWithAuthoritiesAndOrganizations();
@@ -128,6 +140,7 @@ public class CourseAccessResource {
      */
     @FeatureUsage(UserFeature.COURSE_ENROLLMENT)
     @PostMapping("courses/{courseId}/unenroll")
+    @ApiResponse(responseCode = "200", headers = @Header(name = HttpHeaders.CACHE_CONTROL, description = AUTHENTICATED_CACHE_CONTROL, schema = @Schema(type = "string")))
     @EnforceAtLeastStudent
     public ResponseEntity<Void> unenrollFromCourse(@PathVariable Long courseId) {
         Course course = courseRepository.findWithEagerOrganizationsElseThrow(courseId);
@@ -145,6 +158,7 @@ public class CourseAccessResource {
      */
     @FeatureUsage(UserFeature.COURSE_ENROLLMENT)
     @GetMapping("courses/{courseId}/for-enrollment")
+    @ApiResponse(responseCode = "200", headers = @Header(name = HttpHeaders.CACHE_CONTROL, description = AUTHENTICATED_CACHE_CONTROL, schema = @Schema(type = "string")))
     @EnforceAtLeastStudent
     public ResponseEntity<CourseForEnrollmentDTO> getCourseForEnrollment(@PathVariable long courseId) {
         log.debug("REST request to get a currently active course for enrollment");
@@ -186,6 +200,7 @@ public class CourseAccessResource {
      */
     @FeatureUsage(UserFeature.COURSE_ENROLLMENT)
     @GetMapping("courses/for-enrollment")
+    @ApiResponse(responseCode = "200", headers = @Header(name = HttpHeaders.CACHE_CONTROL, description = AUTHENTICATED_CACHE_CONTROL, schema = @Schema(type = "string")))
     @EnforceAtLeastStudent
     public ResponseEntity<List<CourseForEnrollmentDTO>> getCoursesForEnrollment() {
         log.debug("REST request to get all currently active courses that are not online courses");
@@ -202,6 +217,7 @@ public class CourseAccessResource {
      * @return list of users with status 200 (OK)
      */
     @GetMapping("courses/{courseId}/students")
+    @ApiResponse(responseCode = "200", headers = @Header(name = HttpHeaders.CACHE_CONTROL, description = AUTHENTICATED_CACHE_CONTROL, schema = @Schema(type = "string")))
     @EnforceAtLeastInstructorInCourse
     public ResponseEntity<Set<CourseMemberDTO>> getStudentsInCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all students in course : {}", courseId);
@@ -219,9 +235,13 @@ public class CourseAccessResource {
      * @return the ResponseEntity with status 200 (OK) and with a page of matching users
      */
     @GetMapping("courses/{courseId}/students/search")
+    @ApiResponse(responseCode = "200", headers = {
+            @Header(name = "X-Total-Count", description = "Total number of matching users", schema = @Schema(type = "integer", format = "int64")),
+            @Header(name = HttpHeaders.LINK, description = "Pagination links", schema = @Schema(type = "string")) })
     @EnforceAtLeastTutorInCourse
-    public ResponseEntity<List<UserDTO>> searchStudentsInCourse(@PathVariable Long courseId, @RequestParam("loginOrName") String loginOrName,
-            @RequestParam(defaultValue = "0") @Min(0) int page, @RequestParam(defaultValue = "25") @Min(1) @Max(100) int size) {
+    public ResponseEntity<List<UserDTO>> searchStudentsInCourse(@PathVariable Long courseId,
+            @Parameter(schema = @Schema(minLength = 3)) @RequestParam("loginOrName") String loginOrName, @RequestParam(defaultValue = "0") @Min(0) int page,
+            @RequestParam(defaultValue = "25") @Min(1) @Max(100) int size) {
         log.debug("REST request to search for students in course : {} with login or name : {}", courseId, loginOrName);
         // restrict result size by only allowing reasonable searches
         if (loginOrName.length() < 3) {
@@ -237,15 +257,19 @@ public class CourseAccessResource {
      * GET /courses/:courseId/users/search : Search all users by login or name that belong to the specified groups of the course
      *
      * @param courseId    the id of the course
-     * @param loginOrName the login or name by which to search users
+     * @param loginOrName the login or name by which to search users (at least three characters when searching for students)
      * @param roles       the roles which should be searched in
      * @return the ResponseEntity with status 200 (OK) and with body all users
      */
     @FeatureUsage(UserFeature.DIRECT_MESSAGES)
     @GetMapping("courses/{courseId}/users/search")
+    @ApiResponse(responseCode = "200", headers = {
+            @Header(name = "X-Total-Count", description = "Total number of matching users", schema = @Schema(type = "integer", format = "int64")),
+            @Header(name = HttpHeaders.LINK, description = "Pagination links", schema = @Schema(type = "string")) })
     @EnforceAtLeastStudent
-    public ResponseEntity<List<UserPublicInfoDTO>> searchUsersInCourse(@PathVariable Long courseId, @RequestParam("loginOrName") String loginOrName,
-            @RequestParam("roles") List<String> roles) {
+    public ResponseEntity<List<UserPublicInfoDTO>> searchUsersInCourse(@PathVariable Long courseId,
+            @Parameter(description = "Login or name, at least three characters when searching for students") @RequestParam("loginOrName") String loginOrName,
+            @Parameter(style = ParameterStyle.FORM, explode = Explode.TRUE) @RequestParam("roles") List<String> roles) {
         log.debug("REST request to search users in course : {} with login or name : {}", courseId, loginOrName);
         Course course = courseRepository.findByIdElseThrow(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
@@ -295,6 +319,7 @@ public class CourseAccessResource {
      * @return list of users with status 200 (OK)
      */
     @GetMapping("courses/{courseId}/tutors")
+    @ApiResponse(responseCode = "200", headers = @Header(name = HttpHeaders.CACHE_CONTROL, description = AUTHENTICATED_CACHE_CONTROL, schema = @Schema(type = "string")))
     @EnforceAtLeastEditorInCourse
     public ResponseEntity<Set<CourseMemberDTO>> getTutorsInCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all tutors in course : {}", courseId);
@@ -309,6 +334,7 @@ public class CourseAccessResource {
      * @return list of users with status 200 (OK)
      */
     @GetMapping("courses/{courseId}/editors")
+    @ApiResponse(responseCode = "200", headers = @Header(name = HttpHeaders.CACHE_CONTROL, description = AUTHENTICATED_CACHE_CONTROL, schema = @Schema(type = "string")))
     @EnforceAtLeastInstructorInCourse
     public ResponseEntity<Set<CourseMemberDTO>> getEditorsInCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all editors in course : {}", courseId);
@@ -323,6 +349,7 @@ public class CourseAccessResource {
      * @return list of users with status 200 (OK)
      */
     @GetMapping("courses/{courseId}/instructors")
+    @ApiResponse(responseCode = "200", headers = @Header(name = HttpHeaders.CACHE_CONTROL, description = AUTHENTICATED_CACHE_CONTROL, schema = @Schema(type = "string")))
     @EnforceAtLeastInstructorInCourse
     public ResponseEntity<Set<CourseMemberDTO>> getInstructorsInCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all instructors in course : {}", courseId);
@@ -339,8 +366,10 @@ public class CourseAccessResource {
      */
     @FeatureUsage(UserFeature.DIRECT_MESSAGES)
     @GetMapping("courses/{courseId}/search-other-users")
+    @ApiResponse(responseCode = "200", headers = @Header(name = HttpHeaders.CACHE_CONTROL, description = AUTHENTICATED_CACHE_CONTROL, schema = @Schema(type = "string")))
     @EnforceAtLeastStudent
-    public ResponseEntity<List<CourseMemberDTO>> searchOtherUsersInCourse(@PathVariable long courseId, @RequestParam("nameOfUser") String nameOfUser) {
+    public ResponseEntity<List<CourseMemberDTO>> searchOtherUsersInCourse(@PathVariable long courseId,
+            @Parameter(schema = @Schema(minLength = 3)) @RequestParam("nameOfUser") String nameOfUser) {
         Course course = courseRepository.findByIdElseThrow(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
 
@@ -361,6 +390,7 @@ public class CourseAccessResource {
      */
     @FeatureUsage(UserFeature.MESSAGING)
     @GetMapping("courses/{courseId}/members/search")
+    @ApiResponse(responseCode = "200", headers = @Header(name = HttpHeaders.CACHE_CONTROL, description = AUTHENTICATED_CACHE_CONTROL, schema = @Schema(type = "string")))
     @EnforceAtLeastStudent
     public ResponseEntity<List<UserNameAndLoginDTO>> searchMembersOfCourse(@PathVariable Long courseId, @RequestParam("loginOrName") String loginOrName) {
         log.debug("REST request to get members with login or name : {} in course: {}", loginOrName, courseId);
@@ -376,63 +406,63 @@ public class CourseAccessResource {
     }
 
     /**
-     * Post /courses/:courseId/students/:studentLogin : Add the given user to the students of the course so that the student can access the course
+     * Post /courses/:courseId/students/:login : Add the given user to the students of the course so that the student can access the course
      *
-     * @param courseId     the id of the course
-     * @param studentLogin the login of the user who should get student access
+     * @param courseId the id of the course
+     * @param login    the login of the user who should get student access
      * @return empty ResponseEntity with status 200 (OK) or with status 404 (Not Found)
      */
-    @PostMapping("courses/{courseId}/students/{studentLogin:" + Constants.LOGIN_REGEX + "}")
+    @PostMapping("courses/{courseId}/students/{login:" + Constants.LOGIN_REGEX + "}")
     @EnforceAtLeastInstructorInCourse
-    public ResponseEntity<Void> addStudentToCourse(@PathVariable Long courseId, @PathVariable String studentLogin) {
-        log.debug("REST request to add {} as student to course : {}", studentLogin, courseId);
+    public ResponseEntity<Void> addStudentToCourse(@PathVariable Long courseId, @Parameter(schema = @Schema(pattern = Constants.LOGIN_REGEX)) @PathVariable String login) {
+        log.debug("REST request to add {} as student to course : {}", login, courseId);
         var course = courseRepository.findByIdElseThrow(courseId);
-        return addUserToCourseWithRole(studentLogin, course, CourseRole.STUDENT);
+        return addUserToCourseWithRole(login, course, CourseRole.STUDENT);
     }
 
     /**
-     * Post /courses/:courseId/tutors/:tutorLogin : Add the given user to the tutors of the course so that the student can access the course administration
+     * Post /courses/:courseId/tutors/:login : Add the given user to the tutors of the course so that the student can access the course administration
      *
-     * @param courseId   the id of the course
-     * @param tutorLogin the login of the user who should get tutor access
+     * @param courseId the id of the course
+     * @param login    the login of the user who should get tutor access
      * @return empty ResponseEntity with status 200 (OK) or with status 404 (Not Found)
      */
-    @PostMapping("courses/{courseId}/tutors/{tutorLogin:" + Constants.LOGIN_REGEX + "}")
+    @PostMapping("courses/{courseId}/tutors/{login:" + Constants.LOGIN_REGEX + "}")
     @EnforceAtLeastInstructorInCourse
-    public ResponseEntity<Void> addTutorToCourse(@PathVariable Long courseId, @PathVariable String tutorLogin) {
-        log.debug("REST request to add {} as tutors to course : {}", tutorLogin, courseId);
+    public ResponseEntity<Void> addTutorToCourse(@PathVariable Long courseId, @Parameter(schema = @Schema(pattern = Constants.LOGIN_REGEX)) @PathVariable String login) {
+        log.debug("REST request to add {} as tutors to course : {}", login, courseId);
         var course = courseRepository.findByIdElseThrow(courseId);
-        return addUserToCourseWithRole(tutorLogin, course, CourseRole.TEACHING_ASSISTANT);
+        return addUserToCourseWithRole(login, course, CourseRole.TEACHING_ASSISTANT);
     }
 
     /**
-     * Post /courses/:courseId/editors/:editorLogin : Add the given user to the editors of the course so that the student can access the course administration
+     * Post /courses/:courseId/editors/:login : Add the given user to the editors of the course so that the student can access the course administration
      *
-     * @param courseId    the id of the course
-     * @param editorLogin the login of the user who should get editor access
+     * @param courseId the id of the course
+     * @param login    the login of the user who should get editor access
      * @return empty ResponseEntity with status 200 (OK) or with status 404 (Not Found)
      */
-    @PostMapping("courses/{courseId}/editors/{editorLogin:" + Constants.LOGIN_REGEX + "}")
+    @PostMapping("courses/{courseId}/editors/{login:" + Constants.LOGIN_REGEX + "}")
     @EnforceAtLeastInstructorInCourse
-    public ResponseEntity<Void> addEditorToCourse(@PathVariable Long courseId, @PathVariable String editorLogin) {
-        log.debug("REST request to add {} as editors to course : {}", editorLogin, courseId);
+    public ResponseEntity<Void> addEditorToCourse(@PathVariable Long courseId, @Parameter(schema = @Schema(pattern = Constants.LOGIN_REGEX)) @PathVariable String login) {
+        log.debug("REST request to add {} as editors to course : {}", login, courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
-        return addUserToCourseWithRole(editorLogin, course, CourseRole.EDITOR);
+        return addUserToCourseWithRole(login, course, CourseRole.EDITOR);
     }
 
     /**
-     * Post /courses/:courseId/instructors/:instructorLogin : Add the given user to the instructors of the course so that the student can access the course administration
+     * Post /courses/:courseId/instructors/:login : Add the given user to the instructors of the course so that the student can access the course administration
      *
-     * @param courseId        the id of the course
-     * @param instructorLogin the login of the user who should get instructors access
+     * @param courseId the id of the course
+     * @param login    the login of the user who should get instructors access
      * @return empty ResponseEntity with status 200 (OK) or with status 404 (Not Found)
      */
-    @PostMapping("courses/{courseId}/instructors/{instructorLogin:" + Constants.LOGIN_REGEX + "}")
+    @PostMapping("courses/{courseId}/instructors/{login:" + Constants.LOGIN_REGEX + "}")
     @EnforceAtLeastInstructorInCourse
-    public ResponseEntity<Void> addInstructorToCourse(@PathVariable Long courseId, @PathVariable String instructorLogin) {
-        log.debug("REST request to add {} as instructors to course : {}", instructorLogin, courseId);
+    public ResponseEntity<Void> addInstructorToCourse(@PathVariable Long courseId, @Parameter(schema = @Schema(pattern = Constants.LOGIN_REGEX)) @PathVariable String login) {
+        log.debug("REST request to add {} as instructors to course : {}", login, courseId);
         var course = courseRepository.findByIdElseThrow(courseId);
-        return addUserToCourseWithRole(instructorLogin, course, CourseRole.INSTRUCTOR);
+        return addUserToCourseWithRole(login, course, CourseRole.INSTRUCTOR);
     }
 
     /**
@@ -457,64 +487,68 @@ public class CourseAccessResource {
     }
 
     /**
-     * DELETE /courses/:courseId/students/:studentLogin : Remove the given user from the students of the course so that the student cannot access the course anymore
+     * DELETE /courses/:courseId/students/:login : Remove the given user from the students of the course so that the student cannot access the course anymore
      *
-     * @param courseId     the id of the course
-     * @param studentLogin the login of the user who should lose student access
+     * @param courseId the id of the course
+     * @param login    the login of the user who should lose student access
      * @return empty ResponseEntity with status 200 (OK) or with status 404 (Not Found)
      */
-    @DeleteMapping("courses/{courseId}/students/{studentLogin:" + Constants.LOGIN_REGEX + "}")
+    @DeleteMapping("courses/{courseId}/students/{login:" + Constants.LOGIN_REGEX + "}")
+    @ApiResponse(responseCode = "200", headers = @Header(name = HttpHeaders.CACHE_CONTROL, description = AUTHENTICATED_CACHE_CONTROL, schema = @Schema(type = "string")))
     @EnforceAtLeastInstructorInCourse
-    public ResponseEntity<Void> removeStudentFromCourse(@PathVariable Long courseId, @PathVariable String studentLogin) {
-        log.debug("REST request to remove {} as student from course : {}", studentLogin, courseId);
+    public ResponseEntity<Void> removeStudentFromCourse(@PathVariable Long courseId, @Parameter(schema = @Schema(pattern = Constants.LOGIN_REGEX)) @PathVariable String login) {
+        log.debug("REST request to remove {} as student from course : {}", login, courseId);
         var course = courseRepository.findByIdElseThrow(courseId);
-        return removeUserFromCourseWithRole(studentLogin, course, CourseRole.STUDENT);
+        return removeUserFromCourseWithRole(login, course, CourseRole.STUDENT);
     }
 
     /**
-     * DELETE /courses/:courseId/tutors/:tutorsLogin : Remove the given user from the tutors of the course so that the tutors cannot access the course administration anymore
+     * DELETE /courses/:courseId/tutors/:login : Remove the given user from the tutors of the course so that the tutors cannot access the course administration anymore
      *
-     * @param courseId   the id of the course
-     * @param tutorLogin the login of the user who should lose student access
+     * @param courseId the id of the course
+     * @param login    the login of the user who should lose student access
      * @return empty ResponseEntity with status 200 (OK) or with status 404 (Not Found)
      */
-    @DeleteMapping("courses/{courseId}/tutors/{tutorLogin:" + Constants.LOGIN_REGEX + "}")
+    @DeleteMapping("courses/{courseId}/tutors/{login:" + Constants.LOGIN_REGEX + "}")
+    @ApiResponse(responseCode = "200", headers = @Header(name = HttpHeaders.CACHE_CONTROL, description = AUTHENTICATED_CACHE_CONTROL, schema = @Schema(type = "string")))
     @EnforceAtLeastInstructorInCourse
-    public ResponseEntity<Void> removeTutorFromCourse(@PathVariable Long courseId, @PathVariable String tutorLogin) {
-        log.debug("REST request to remove {} as tutor from course : {}", tutorLogin, courseId);
+    public ResponseEntity<Void> removeTutorFromCourse(@PathVariable Long courseId, @Parameter(schema = @Schema(pattern = Constants.LOGIN_REGEX)) @PathVariable String login) {
+        log.debug("REST request to remove {} as tutor from course : {}", login, courseId);
         var course = courseRepository.findByIdElseThrow(courseId);
-        return removeUserFromCourseWithRole(tutorLogin, course, CourseRole.TEACHING_ASSISTANT);
+        return removeUserFromCourseWithRole(login, course, CourseRole.TEACHING_ASSISTANT);
     }
 
     /**
-     * DELETE /courses/:courseId/editors/:editorsLogin : Remove the given user from the editors of the course so that the editors cannot access the course administration anymore
+     * DELETE /courses/:courseId/editors/:login : Remove the given user from the editors of the course so that the editors cannot access the course administration anymore
      *
-     * @param courseId    the id of the course
-     * @param editorLogin the login of the user who should lose student access
+     * @param courseId the id of the course
+     * @param login    the login of the user who should lose student access
      * @return empty ResponseEntity with status 200 (OK) or with status 404 (Not Found)
      */
-    @DeleteMapping("courses/{courseId}/editors/{editorLogin:" + Constants.LOGIN_REGEX + "}")
+    @DeleteMapping("courses/{courseId}/editors/{login:" + Constants.LOGIN_REGEX + "}")
+    @ApiResponse(responseCode = "200", headers = @Header(name = HttpHeaders.CACHE_CONTROL, description = AUTHENTICATED_CACHE_CONTROL, schema = @Schema(type = "string")))
     @EnforceAtLeastInstructorInCourse
-    public ResponseEntity<Void> removeEditorFromCourse(@PathVariable Long courseId, @PathVariable String editorLogin) {
-        log.debug("REST request to remove {} as editor from course : {}", editorLogin, courseId);
+    public ResponseEntity<Void> removeEditorFromCourse(@PathVariable Long courseId, @Parameter(schema = @Schema(pattern = Constants.LOGIN_REGEX)) @PathVariable String login) {
+        log.debug("REST request to remove {} as editor from course : {}", login, courseId);
         var course = courseRepository.findByIdElseThrow(courseId);
-        return removeUserFromCourseWithRole(editorLogin, course, CourseRole.EDITOR);
+        return removeUserFromCourseWithRole(login, course, CourseRole.EDITOR);
     }
 
     /**
-     * DELETE /courses/:courseId/instructors/:instructorLogin : Remove the given user from the instructors of the course so that the instructor cannot access the course
+     * DELETE /courses/:courseId/instructors/:login : Remove the given user from the instructors of the course so that the instructor cannot access the course
      * administration anymore
      *
-     * @param courseId        the id of the course
-     * @param instructorLogin the login of the user who should lose student access
+     * @param courseId the id of the course
+     * @param login    the login of the user who should lose student access
      * @return empty ResponseEntity with status 200 (OK) or with status 404 (Not Found)
      */
-    @DeleteMapping("courses/{courseId}/instructors/{instructorLogin:" + Constants.LOGIN_REGEX + "}")
+    @DeleteMapping("courses/{courseId}/instructors/{login:" + Constants.LOGIN_REGEX + "}")
+    @ApiResponse(responseCode = "200", headers = @Header(name = HttpHeaders.CACHE_CONTROL, description = AUTHENTICATED_CACHE_CONTROL, schema = @Schema(type = "string")))
     @EnforceAtLeastInstructorInCourse
-    public ResponseEntity<Void> removeInstructorFromCourse(@PathVariable Long courseId, @PathVariable String instructorLogin) {
-        log.debug("REST request to remove {} as instructor from course : {}", instructorLogin, courseId);
+    public ResponseEntity<Void> removeInstructorFromCourse(@PathVariable Long courseId, @Parameter(schema = @Schema(pattern = Constants.LOGIN_REGEX)) @PathVariable String login) {
+        log.debug("REST request to remove {} as instructor from course : {}", login, courseId);
         var course = courseRepository.findByIdElseThrow(courseId);
-        return removeUserFromCourseWithRole(instructorLogin, course, CourseRole.INSTRUCTOR);
+        return removeUserFromCourseWithRole(login, course, CourseRole.INSTRUCTOR);
     }
 
     /**
@@ -546,9 +580,12 @@ public class CourseAccessResource {
      * @return page of users with status 200 (OK) and pagination headers
      */
     @GetMapping("courses/{courseId}/{courseRoleSlug}/paged")
+    @ApiResponse(responseCode = "200", headers = {
+            @Header(name = "X-Total-Count", description = "Total number of matching users", schema = @Schema(type = "integer", format = "int64")),
+            @Header(name = HttpHeaders.LINK, description = "Pagination links", schema = @Schema(type = "string")) })
     @EnforceAtLeastInstructorInCourse
-    public ResponseEntity<List<CourseRoleMemberDTO>> getPagedUsersInCourseRole(@PathVariable Long courseId, @PathVariable String courseRoleSlug,
-            @Valid CourseRoleMembersSearchDTO search) {
+    public ResponseEntity<List<CourseRoleMemberDTO>> getPagedUsersInCourseRole(@PathVariable Long courseId,
+            @Parameter(description = COURSE_ROLE_SLUG) @PathVariable String courseRoleSlug, @ParameterObject @Valid CourseRoleMembersSearchDTO search) {
         log.debug("REST request to get paged users in course role for course: {}, role: {}", courseId, courseRoleSlug);
         courseRepository.findByIdElseThrow(courseId);
         CourseRole role = resolveCourseRole(courseRoleSlug);
@@ -558,7 +595,7 @@ public class CourseAccessResource {
     }
 
     /**
-     * GET /courses/{courseId}/{courseRoleSlug}/search : Search for Artemis users that can be registered for the given course role.
+     * GET /courses/{courseId}/{courseRoleSlug}/users/search : Search for Artemis users that can be registered for the given course role.
      * Already registered users are flagged with {@code isRegistered = true}.
      *
      * @param courseId       the id of the course
@@ -569,8 +606,12 @@ public class CourseAccessResource {
      * @return a page of {@link UserForRegistrationDTO} with {@code X-Total-Count} pagination header
      */
     @GetMapping("courses/{courseId}/{courseRoleSlug}/users/search")
+    @ApiResponse(responseCode = "200", headers = {
+            @Header(name = "X-Total-Count", description = "Total number of matching users", schema = @Schema(type = "integer", format = "int64")),
+            @Header(name = HttpHeaders.LINK, description = "Pagination links", schema = @Schema(type = "string")) })
     @EnforceAtLeastInstructorInCourse
-    public ResponseEntity<List<UserForRegistrationDTO>> searchUsersForCourseRole(@PathVariable Long courseId, @PathVariable String courseRoleSlug, @RequestParam String searchTerm,
+    public ResponseEntity<List<UserForRegistrationDTO>> searchUsersForCourseRole(@PathVariable Long courseId,
+            @Parameter(description = COURSE_ROLE_SLUG) @PathVariable String courseRoleSlug, @RequestParam String searchTerm,
             @RequestParam(defaultValue = "0") @Min(0) @Max(100_000) int page, @RequestParam(defaultValue = "10") @Min(1) @Max(200) int size) {
         log.debug("REST request to search users for course {} role {} with term: {}", courseId, courseRoleSlug, searchTerm);
         courseRepository.findByIdElseThrow(courseId);
@@ -597,7 +638,7 @@ public class CourseAccessResource {
 
     /**
      * POST /courses/:courseId/:courseRoleSlug : Add multiple users to the course with the given role.
-     * The passed list of UserDTOs must include at least one unique user identifier (i.e. registration number OR email OR login).
+     * The passed list of StudentDTOs must include at least one unique user identifier (i.e. registration number OR email OR login).
      * The courseRoleSlug path variable is the role string as used in the REST URL ('students', 'tutors', 'editors', 'instructors')
      * and is converted to a {@link de.tum.cit.aet.artemis.core.domain.CourseRole}; an unknown slug is rejected with 400 (Bad Request).
      *
@@ -607,8 +648,10 @@ public class CourseAccessResource {
      * @return the list of users who could not be registered because they were not found in the Artemis database
      */
     @PostMapping("courses/{courseId}/{courseRoleSlug}")
+    @ApiResponse(responseCode = "200", headers = @Header(name = HttpHeaders.CACHE_CONTROL, description = AUTHENTICATED_CACHE_CONTROL, schema = @Schema(type = "string")))
     @EnforceAtLeastInstructorInCourse
-    public ResponseEntity<List<StudentDTO>> addUsersToCourseRole(@PathVariable Long courseId, @PathVariable String courseRoleSlug, @RequestBody List<StudentDTO> studentDtos) {
+    public ResponseEntity<List<StudentDTO>> addUsersToCourseRole(@PathVariable Long courseId, @Parameter(description = COURSE_ROLE_SLUG) @PathVariable String courseRoleSlug,
+            @RequestBody List<StudentDTO> studentDtos) {
         log.debug("REST request to add {} as {} to course {}", studentDtos, courseRoleSlug, courseId);
         CourseRole role = resolveCourseRole(courseRoleSlug);
         List<StudentDTO> notFoundStudentsDtos = courseAccessService.registerUsersForCourse(courseId, studentDtos, role);

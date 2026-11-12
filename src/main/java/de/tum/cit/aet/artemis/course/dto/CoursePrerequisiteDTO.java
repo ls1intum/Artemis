@@ -8,6 +8,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyTaxonomy;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Prerequisite;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
  * A prerequisite summary exposed with a course that is available for self-enrollment.
@@ -22,8 +23,9 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.Prerequisite;
  * @param type             the prerequisite discriminator
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record CoursePrerequisiteDTO(long id, String title, @Nullable String description, @Nullable CompetencyTaxonomy taxonomy, @Nullable ZonedDateTime softDueDate,
-        int masteryThreshold, boolean optional, String type) {
+public record CoursePrerequisiteDTO(@Schema(requiredMode = Schema.RequiredMode.REQUIRED) long id, String title, @Nullable String description, @Nullable CompetencyTaxonomy taxonomy,
+        @Nullable ZonedDateTime softDueDate, @Schema(requiredMode = Schema.RequiredMode.REQUIRED) int masteryThreshold,
+        @Schema(requiredMode = Schema.RequiredMode.REQUIRED) boolean optional, @Schema(requiredMode = Schema.RequiredMode.REQUIRED, allowableValues = "prerequisite") String type) {
 
     /**
      * Maps a prerequisite without exposing its course, progress, or learning-object associations.

@@ -5,6 +5,7 @@ import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.account.domain.User;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
  * A privacy-safe course member response.
@@ -21,8 +22,9 @@ import de.tum.cit.aet.artemis.account.domain.User;
  * @param internal                  whether the account is managed internally
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record CourseMemberDTO(long id, @Nullable String login, @Nullable String name, @Nullable String firstName, @Nullable String lastName, @Nullable String email,
-        @Nullable String visibleRegistrationNumber, @Nullable String imageUrl, boolean activated, boolean internal) {
+public record CourseMemberDTO(@Schema(requiredMode = Schema.RequiredMode.REQUIRED) long id, @Nullable String login, @Nullable String name, @Nullable String firstName,
+        @Nullable String lastName, @Nullable String email, @Nullable String visibleRegistrationNumber, @Nullable String imageUrl,
+        @Schema(requiredMode = Schema.RequiredMode.REQUIRED) boolean activated, @Schema(requiredMode = Schema.RequiredMode.REQUIRED) boolean internal) {
 
     /**
      * Maps a user to the reduced response for member search: identity and display data only, without e-mail address and registration number.

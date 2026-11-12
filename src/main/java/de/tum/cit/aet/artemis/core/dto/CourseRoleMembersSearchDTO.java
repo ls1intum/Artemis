@@ -5,6 +5,8 @@ import jakarta.validation.constraints.Min;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
 /**
  * Pagination, search term, and sort info for the paged course-role membership endpoint.
  * <p>
@@ -22,5 +24,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * @param searchTerm   the text to filter members by (login, full name, email or registration number)
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record CourseRoleMembersSearchDTO(@Min(0) @Max(100_000) int page, @Min(1) @Max(200) int pageSize, SortingOrder sortingOrder, String sortedColumn, String searchTerm) {
+public record CourseRoleMembersSearchDTO(@Schema(requiredMode = Schema.RequiredMode.REQUIRED) @Min(0) @Max(100_000) int page,
+        @Schema(requiredMode = Schema.RequiredMode.REQUIRED) @Min(1) @Max(200) int pageSize, SortingOrder sortingOrder, String sortedColumn, String searchTerm) {
 }

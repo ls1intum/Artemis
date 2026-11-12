@@ -11,12 +11,17 @@ import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.argThat;
 import static org.mockito.Mockito.mockStatic;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -50,6 +55,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.actuate.audit.AuditEvent;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -119,6 +125,7 @@ import de.tum.cit.aet.artemis.core.dto.UserDTO;
 import de.tum.cit.aet.artemis.core.dto.UserForRegistrationDTO;
 import de.tum.cit.aet.artemis.core.dto.UserPublicInfoDTO;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
+import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
 import de.tum.cit.aet.artemis.core.test_repository.LLMTokenUsageRequestTestRepository;
@@ -2201,7 +2208,8 @@ public class CourseTestService {
         course2 = courseRepo.save(course2);
 
         // enroll endpoint now returns Void; verify enrollment via UCR
-        request.postWithoutLocation("/api/course/courses/" + course1.getId() + "/enroll", null, HttpStatus.OK, null);
+        request.performMvcRequest(post("/api/course/courses/{courseId}/enroll", course1.getId())).andExpect(status().isOk()).andExpect(content().string(""))
+                .andExpect(header().exists(HttpHeaders.CACHE_CONTROL));
         User enrolledUser = userRepo.findOneByLogin("ab12cde").orElseThrow();
         assertThat(userCourseRoleTestRepository.existsByUser_IdAndCourse_IdAndRole(enrolledUser.getId(), course1.getId(), CourseRole.STUDENT))
                 .as("User is enrolled in course as STUDENT").isTrue();
@@ -2245,7 +2253,8 @@ public class CourseTestService {
 
     private void testUnenrollFromCourseSuccessfull(Course course) throws Exception {
         // unenrollFromCourse returns 200 with no body (ResponseEntity<Void>)
-        request.postWithoutLocation("/api/course/courses/" + course.getId() + "/unenroll", null, HttpStatus.OK, null);
+        request.performMvcRequest(post("/api/course/courses/{courseId}/unenroll", course.getId())).andExpect(status().isOk()).andExpect(content().string(""))
+                .andExpect(header().exists(HttpHeaders.CACHE_CONTROL));
         // Verify student is no longer enrolled in the course via UCR
         User student = userUtilService.getUserByLogin(userPrefix + "student1");
         assertThat(userCourseRoleTestRepository.existsByUser_IdAndCourse_IdAndRole(student.getId(), course.getId(), CourseRole.STUDENT)).as("User is not enrolled in course")
@@ -2415,6 +2424,18 @@ public class CourseTestService {
         Course course = courseUtilService.createEnrolledCourse(userPrefix);
         testRemoveStudentOrTutorOrEditorOrInstructorFromCourse_forbidden(course, HttpStatus.OK);
         // TODO check that the roles have changed accordingly
+    }
+
+    public void testAddAndRemoveMemberWithEncodedLogin() throws Exception {
+        var course = courseUtilService.createEnrolledCourse(userPrefix);
+        var user = userUtilService.createAndSaveUserWithEmail(userPrefix + "ada.o'neil@example.edu", userPrefix + "encoded-login@example.edu");
+        var uri = URI.create("/api/course/courses/" + course.getId() + "/students/" + userPrefix + "ada.o'neil%40example.edu");
+
+        request.performMvcRequest(post(uri)).andExpect(status().isOk()).andExpect(content().string(""));
+        assertThat(userCourseRoleTestRepository.existsByUser_IdAndCourse_IdAndRole(user.getId(), course.getId(), CourseRole.STUDENT)).isTrue();
+
+        request.performMvcRequest(delete(uri)).andExpect(status().isOk()).andExpect(content().string("")).andExpect(header().exists(HttpHeaders.CACHE_CONTROL));
+        assertThat(userCourseRoleTestRepository.existsByUser_IdAndCourse_IdAndRole(user.getId(), course.getId(), CourseRole.STUDENT)).isFalse();
     }
 
     // Test
@@ -2624,12 +2645,20 @@ public class CourseTestService {
 
         MultiValueMap<String, String> params1 = new LinkedMultiValueMap<>();
         params1.add("loginOrName", userPrefix + "student");
-        List<UserDTO> students = request.getList("/api/course/courses/" + course.getId() + "/students/search", HttpStatus.OK, UserDTO.class, params1);
-        assertThat(students).size().isEqualTo(8);
+        String path = "/api/course/courses/" + course.getId() + "/students/search";
+        var defaultPage = request.performMvcRequest(get(path).params(params1)).andExpect(status().isOk()).andExpect(jsonPath("$.length()").value(NUMBER_OF_STUDENTS))
+                .andExpect(header().string("X-Total-Count", String.valueOf(NUMBER_OF_STUDENTS))).andExpect(jsonPath("$[0].internal").isBoolean())
+                .andExpect(jsonPath("$[0].isTestUser").isBoolean()).andReturn().getResponse();
+        assertThat(defaultPage.getHeader(HttpHeaders.LINK)).contains("page=0", "size=25");
 
-        params1.add("page", "1");
-        params1.add("size", "3");
-        List<UserDTO> secondPage = request.getList("/api/course/courses/" + course.getId() + "/students/search", HttpStatus.OK, UserDTO.class, params1);
+        params1.add("page", "0");
+        params1.add("size", "25");
+        var explicitPage = request.performMvcRequest(get(path).params(params1)).andExpect(status().isOk()).andReturn().getResponse();
+        assertThat(explicitPage.getContentAsString()).isEqualTo(defaultPage.getContentAsString());
+
+        params1.set("page", "1");
+        params1.set("size", "3");
+        List<UserDTO> secondPage = request.getList(path, HttpStatus.OK, UserDTO.class, params1);
         assertThat(secondPage).hasSize(3);
 
         MultiValueMap<String, String> params2 = new LinkedMultiValueMap<>();
@@ -2699,6 +2728,19 @@ public class CourseTestService {
         assertThat(result.stream().filter(UserPublicInfoDTO::getIsEditor)).hasSize(NUMBER_OF_EDITORS);
         assertThat(result.stream().filter(UserPublicInfoDTO::getIsTeachingAssistant)).hasSize(NUMBER_OF_TUTORS);
         assertThat(result.stream().filter(UserPublicInfoDTO::getIsInstructor)).hasSize(NUMBER_OF_INSTRUCTORS);
+    }
+
+    public void searchUsersInCourse_bindsRepeatedAndEmptyRoles() throws Exception {
+        var course = createCourseForUserSearchTest();
+        String path = "/api/course/courses/" + course.getId() + "/users/search";
+        var repeated = request.performMvcRequest(get(path).param("loginOrName", "").param("roles", "tutors", "instructors")).andExpect(status().isOk())
+                .andExpect(header().exists("X-Total-Count")).andExpect(header().exists(HttpHeaders.LINK)).andReturn().getResponse();
+        var legacy = request.performMvcRequest(get(path).param("loginOrName", "").param("roles", "tutors,instructors")).andExpect(status().isOk()).andReturn().getResponse();
+        assertThat(repeated.getContentAsString()).isEqualTo(legacy.getContentAsString());
+
+        request.performMvcRequest(get(path).param("loginOrName", "").param("roles", "")).andExpect(status().isOk()).andExpect(jsonPath("$.length()").value(0))
+                .andExpect(header().string("X-Total-Count", "0"));
+        request.performMvcRequest(get(path).param("loginOrName", "")).andExpect(status().isBadRequest());
     }
 
     /**
@@ -3303,9 +3345,18 @@ public class CourseTestService {
         StudentDTO dto2 = new StudentDTO("newstudent2", null, null, registrationNumber2, null);
         StudentDTO dto3 = new StudentDTO(null, null, null, null, email);
 
-        var newStudents = request.postListWithResponseBody("/api/course/courses/" + course.getId() + "/" + group, List.of(dto1, dto2, dto3), StudentDTO.class, HttpStatus.OK);
+        var existing = userUtilService.createAndSaveUser(userPrefix + "bulk-match");
+        var matched = new StudentDTO(existing.getLogin(), "", "", "", "");
+        var newStudents = request.postListWithResponseBody("/api/course/courses/" + course.getId() + "/" + group, List.of(dto1, dto2, dto3, matched), StudentDTO.class,
+                HttpStatus.OK);
         assertThat(newStudents).hasSize(3);
         assertThat(newStudents).contains(dto1, dto2, dto3);
+        assertThat(newStudents).noneMatch(row -> existing.getLogin().equals(row.login()));
+        assertThat(newStudents).anySatisfy(row -> {
+            assertThat(row.email()).isEqualTo(email);
+            assertThat(row.login()).isNull();
+        });
+        assertThat(userCourseRoleTestRepository.existsByUser_IdAndCourse_IdAndRole(existing.getId(), course.getId(), CourseRole.fromRole(Role.fromString(group)))).isTrue();
     }
 
     // Test
@@ -3765,9 +3816,14 @@ public class CourseTestService {
         var course = courseUtilService.createEnrolledCourse(userPrefix);
         MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("searchTerm", userPrefix + "student");
-        List<UserForRegistrationDTO> result = request.getList("/api/course/courses/" + course.getId() + "/students/users/search", HttpStatus.OK, UserForRegistrationDTO.class,
-                params);
-        assertThat(result).hasSize(NUMBER_OF_STUDENTS);
+        String path = "/api/course/courses/" + course.getId() + "/students/users/search";
+        var defaultPage = request.performMvcRequest(get(path).params(params)).andExpect(status().isOk()).andExpect(jsonPath("$.length()").value(NUMBER_OF_STUDENTS))
+                .andExpect(header().string("X-Total-Count", String.valueOf(NUMBER_OF_STUDENTS))).andExpect(jsonPath("$[0].isRegistered").value(true)).andReturn().getResponse();
+        assertThat(defaultPage.getHeader(HttpHeaders.LINK)).contains("page=0", "size=10");
+        var explicitPage = request.performMvcRequest(get(path).params(params).param("page", "0").param("size", "10")).andExpect(status().isOk()).andReturn().getResponse();
+        assertThat(explicitPage.getContentAsString()).isEqualTo(defaultPage.getContentAsString());
+        List<UserForRegistrationDTO> result = objectMapper.readValue(defaultPage.getContentAsString(), new TypeReference<>() {
+        });
         assertThat(result).allMatch(u -> u.login().startsWith(userPrefix + "student"));
     }
 
@@ -4018,6 +4074,14 @@ public class CourseTestService {
         MvcResult result = request.performMvcRequest(get("/api/course/courses/" + course.getId() + "/students/paged").params(pagedMembersParams("0", "3")))
                 .andExpect(status().isOk()).andReturn();
         assertThat(result.getResponse().getHeader("X-Total-Count")).isEqualTo(String.valueOf(NUMBER_OF_STUDENTS));
+        assertThat(result.getResponse().getHeader(HttpHeaders.LINK)).contains("page=1", "size=3", "rel=\"next\"");
+    }
+
+    public void getPagedUsersInCourseRole_requiresPageAndPageSize() throws Exception {
+        var course = courseUtilService.createEnrolledCourse(userPrefix);
+        String path = "/api/course/courses/" + course.getId() + "/students/paged";
+        request.performMvcRequest(get(path).param("pageSize", "5")).andExpect(status().isBadRequest());
+        request.performMvcRequest(get(path).param("page", "0")).andExpect(status().isBadRequest());
     }
 
     /**

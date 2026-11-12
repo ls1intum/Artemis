@@ -9,6 +9,7 @@ import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.course.domain.Course;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
  * The limited course information shown before a user enrolls.
@@ -21,8 +22,8 @@ import de.tum.cit.aet.artemis.course.domain.Course;
  * @param prerequisites                 the prerequisites that are initialized for the enrollment response
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record CourseForEnrollmentDTO(long id, String title, @Nullable String description, @Nullable String semester, @Nullable String enrollmentConfirmationMessage,
-        Set<CoursePrerequisiteDTO> prerequisites) {
+public record CourseForEnrollmentDTO(@Schema(requiredMode = Schema.RequiredMode.REQUIRED) long id, String title, @Nullable String description, @Nullable String semester,
+        @Nullable String enrollmentConfirmationMessage, Set<CoursePrerequisiteDTO> prerequisites) {
 
     /**
      * Maps a course and its already initialized prerequisites for enrollment.
