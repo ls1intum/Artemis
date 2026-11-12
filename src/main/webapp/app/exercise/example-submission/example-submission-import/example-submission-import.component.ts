@@ -1,4 +1,12 @@
-import { TumAetUiButtonDirective, TumAetUiInputDirective, TumAetUiPaginatorComponent, TumAetUiTableDirective, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import {
+    TumAetUiButtonDirective,
+    TumAetUiInputDirective,
+    TumAetUiPaginatorComponent,
+    TumAetUiTableDirective,
+    TumAetUiTableLayoutComponent,
+    TumAetUiTableSortableColumnComponent,
+    TumAetUiTooltipDirective,
+} from '@tumaet/ui-angular';
 
 import { Component, inject, input } from '@angular/core';
 import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
@@ -10,8 +18,6 @@ import { ExampleSubmissionService } from 'app/assessment/shared/services/example
 import { ImportComponent } from 'app/shared-ui/import/import.component';
 import { FormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { SortDirective } from 'app/foundation/sort/directive/sort.directive';
-import { SortByDirective } from 'app/foundation/sort/directive/sort-by.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 import { ResultComponent } from '../../result/result.component';
@@ -30,8 +36,8 @@ import { ExampleSubmissionImportPagingService } from 'app/exercise/example-submi
         TumAetUiTableDirective,
         FormsModule,
         TranslateDirective,
-        SortDirective,
-        SortByDirective,
+        TumAetUiTableLayoutComponent,
+        TumAetUiTableSortableColumnComponent,
         FaIconComponent,
         ResultComponent,
         ArtemisDatePipe,

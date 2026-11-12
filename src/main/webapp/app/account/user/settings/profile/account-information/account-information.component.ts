@@ -9,46 +9,57 @@ import { base64StringToBlob } from 'app/foundation/util/blob-util';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService, AlertType } from 'app/foundation/service/alert.service';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { addPublicFilePrefix } from 'app/app.constants';
 import { UserSettingsService } from 'app/account/user/settings/directive/user-settings.service';
-import { RouterLink } from '@angular/router';
-import { TumAetUiButtonComponent, TumAetUiButtonDirective, TumAetUiDialogComponent, TumAetUiListComponent, TumAetUiListItemDirective } from '@tumaet/ui-angular';
+import {
+    TumAetUiButtonComponent,
+    TumAetUiConfirmDialogComponent,
+    TumAetUiConfirmationService,
+    TumAetUiDialogComponent,
+    TumAetUiListComponent,
+    TumAetUiListItemDirective,
+} from '@tumaet/ui-angular';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { AccountSettingsDialogComponent } from 'app/account/settings/account-settings-dialog.component';
+import { TranslateService } from '@ngx-translate/core';
 
 @Component({
     selector: 'jhi-account-information',
     templateUrl: './account-information.component.html',
     styleUrls: ['../../user-settings.scss'],
+    providers: [TumAetUiConfirmationService],
     imports: [
         TranslateDirective,
         ImageComponent,
-        FaIconComponent,
         ArtemisDatePipe,
-        RouterLink,
         TumAetUiButtonComponent,
-        TumAetUiButtonDirective,
+        TumAetUiConfirmDialogComponent,
         TumAetUiListComponent,
         TumAetUiListItemDirective,
         TumAetUiDialogComponent,
         ImageCropperModalComponent,
         ArtemisTranslatePipe,
+        AccountSettingsDialogComponent,
     ],
 })
 export class AccountInformationComponent {
     private readonly accountService = inject(AccountService);
     private readonly userSettingsService = inject(UserSettingsService);
     private readonly alertService = inject(AlertService);
+    private readonly confirmationService = inject(TumAetUiConfirmationService);
+    private readonly translateService = inject(TranslateService);
     private readonly destroyRef = inject(DestroyRef);
 
     protected readonly faPen = faPencil;
     protected readonly faTrash = faTrash;
     protected readonly faPlus = faPlus;
     protected readonly addPublicFilePrefix = addPublicFilePrefix;
+    protected readonly deleteProfilePictureConfirmationKey = 'deleteProfilePictureConfirmation';
 
     readonly currentUser: Signal<User | undefined> = this.accountService.userIdentity;
     readonly imageLoadFailed = signal(false);
+    readonly accountSettingsDialogVisible = signal(false);
 
     private readonly fileInput = viewChild.required<ElementRef<HTMLInputElement>>('fileInput');
 
@@ -76,7 +87,19 @@ export class AccountInformationComponent {
         this.updateProfilePicture(base64StringToBlob(base64Data, mimeType));
     }
 
-    deleteUserImage(): void {
+    confirmDeleteUserImage(): void {
+        this.confirmationService.confirm({
+            key: this.deleteProfilePictureConfirmationKey,
+            header: this.translateService.instant('artemisApp.userSettings.accountInformationPage.deleteProfilePictureTitle'),
+            message: this.translateService.instant('artemisApp.userSettings.accountInformationPage.deleteProfilePictureQuestion'),
+            acceptLabel: this.translateService.instant('entity.action.delete'),
+            rejectLabel: this.translateService.instant('entity.action.cancel'),
+            acceptSeverity: 'danger',
+            accept: () => this.deleteUserImage(),
+        });
+    }
+
+    private deleteUserImage(): void {
         this.userSettingsService
             .removeProfilePicture()
             .pipe(takeUntilDestroyed(this.destroyRef))

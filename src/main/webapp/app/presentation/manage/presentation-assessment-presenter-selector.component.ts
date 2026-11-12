@@ -3,7 +3,14 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { Observable, Subject, of } from 'rxjs';
 import { catchError, debounceTime, distinctUntilChanged, map, switchMap } from 'rxjs/operators';
 import { faUserMinus } from '@fortawesome/free-solid-svg-icons';
-import { TumAetUiAutoCompleteComponent, TumAetUiButtonComponent, TumAetUiTableDirective, TumAetUiTableSortEvent, TumAetUiTableSortableColumnComponent } from '@tumaet/ui-angular';
+import {
+    TumAetUiAutoCompleteComponent,
+    TumAetUiButtonComponent,
+    TumAetUiTableDirective,
+    TumAetUiTableLayoutComponent,
+    TumAetUiTableSortEvent,
+    TumAetUiTableSortableColumnComponent,
+} from '@tumaet/ui-angular';
 
 import { User } from 'app/account/user/user.model';
 import { addPublicFilePrefix } from 'app/app.constants';
@@ -26,6 +33,7 @@ import { ProfilePictureComponent } from 'app/shared-ui/profile-picture/profile-p
         TumAetUiButtonComponent,
         TumAetUiAutoCompleteComponent,
         TumAetUiTableDirective,
+        TumAetUiTableLayoutComponent,
         TumAetUiTableSortableColumnComponent,
     ],
 })

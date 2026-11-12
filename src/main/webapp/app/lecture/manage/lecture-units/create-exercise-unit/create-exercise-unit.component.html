@@ -3,7 +3,12 @@
         <h2 class="m-0 text-xl font-semibold" jhiTranslate="artemisApp.exerciseUnit.createExerciseUnit.headline"></h2>
     }
     <p class="create-exercise-unit-hint m-0 text-sm" jhiTranslate="artemisApp.exerciseUnit.createExerciseUnit.description"></p>
-    <div class="overflow-x-auto">
+    <tumaet-ui-table-layout
+        class="[--table-layout-offset:20rem] max-md:[--table-layout-offset:28rem]"
+        [loading]="isLoading()"
+        [empty]="exercisesAvailableForUnitCreation().length === 0 && !isLoading()"
+        [emptyTitle]="hasCourseExercises() ? 'artemisApp.exerciseUnit.createExerciseUnit.noExercises' : 'artemisApp.exerciseUnit.createExerciseUnit.noCourseExercises'"
+    >
         <table tumAetUiTable size="small" rowHover [sortField]="predicate()" [sortOrder]="ascending() ? 1 : -1" (sortChange)="onSortChange($event)">
             <thead>
                 <tr>
@@ -43,20 +48,10 @@
                         <td>{{ exercise.dueDate | artemisDate }}</td>
                         <td>{{ exercise.assessmentDueDate | artemisDate }}</td>
                     </tr>
-                } @empty {
-                    <tr>
-                        <td
-                            colspan="7"
-                            class="create-exercise-unit-hint"
-                            [jhiTranslate]="
-                                hasCourseExercises() ? 'artemisApp.exerciseUnit.createExerciseUnit.noExercises' : 'artemisApp.exerciseUnit.createExerciseUnit.noCourseExercises'
-                            "
-                        ></td>
-                    </tr>
                 }
             </tbody>
         </table>
-    </div>
+    </tumaet-ui-table-layout>
     <div class="flex flex-wrap gap-2">
         <button tumAetUiButton id="createButton" type="button" [disabled]="exercisesToCreateUnitFor().length === 0" (click)="createExerciseUnits()">
             <span jhiTranslate="entity.action.submit"></span>
