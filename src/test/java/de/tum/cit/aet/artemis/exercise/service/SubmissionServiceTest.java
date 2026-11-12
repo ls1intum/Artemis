@@ -520,6 +520,25 @@ class SubmissionServiceTest extends AbstractSpringIntegrationIndependentBatchTes
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void teamQueueUsesEachTeamsEffectiveDeadline() throws Exception {
+        var exercise = teamExercise(ExerciseType.TEXT);
+        exercise.setDueDate(ZonedDateTime.now().plusDays(1));
+        exerciseRepository.save(exercise);
+        var early = teamSubmission(exercise, tutor1, "own");
+        var regular = teamSubmission(exercise, tutor1, "anotherown");
+        var participation = (StudentParticipation) early.getParticipation();
+        participation.setIndividualDueDate(ZonedDateTime.now().minusDays(1));
+        studentParticipationRepository.save(participation);
+        var url = "/api/exercise/exercises/" + exercise.getId() + "/assessment-queue-teams";
+        assertThat(request.getList(url, HttpStatus.OK, AssessmentQueueTeamDTO.class)).extracting(entry -> entry.submission().id()).containsExactly(early.getId());
+        exercise.setDueDate(null);
+        exerciseRepository.save(exercise);
+        assertThat(request.getList(url, HttpStatus.OK, AssessmentQueueTeamDTO.class)).extracting(entry -> entry.submission().id()).containsExactlyInAnyOrder(early.getId(),
+                regular.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void automaticProgrammingTeamQueueHasNoNewCandidates() throws Exception {
         var exercise = (ProgrammingExercise) teamExercise(ExerciseType.PROGRAMMING);
         teamSubmission(exercise, tutor1, "own");

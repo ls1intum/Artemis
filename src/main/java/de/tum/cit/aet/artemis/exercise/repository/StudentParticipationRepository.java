@@ -2411,7 +2411,8 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                 LEFT JOIN s.results r
             WHERE p.exercise.id = :exerciseId
                 AND (:teamOwnerId IS NULL OR team.owner.id = :teamOwnerId)
-                AND (p.individualDueDate IS NULL OR p.individualDueDate <= :now)
+                AND ((p.individualDueDate IS NULL AND (p.exercise.dueDate IS NULL OR p.exercise.dueDate <= :now))
+                    OR p.individualDueDate <= :now)
                 AND p.testRun = FALSE
                 AND NOT EXISTS (
                     SELECT prs
