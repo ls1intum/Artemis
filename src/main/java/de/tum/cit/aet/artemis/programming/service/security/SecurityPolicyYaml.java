@@ -177,30 +177,13 @@ final class SecurityPolicyYaml {
         if (lineStart < 0) {
             return Optional.empty();
         }
-        lineStart++;
-        int insertAt = -1;
-        String itemIndent = null;
-        while (lineStart < yaml.length()) {
-            int lineEnd = yaml.indexOf('\n', lineStart);
-            String line = yaml.substring(lineStart, lineEnd < 0 ? yaml.length() : lineEnd).replace("\r", "");
-            if (BLANK_OR_COMMENT_LINE.matcher(line).matches()) {
-                // Blank and comment lines may separate the items; the classes are still appended after the last item.
-                lineStart = lineEnd < 0 ? yaml.length() : lineEnd + 1;
-                continue;
-            }
-            Matcher item = BLOCK_ITEM.matcher(line);
-            if (!item.matches() || item.group(1).length() < keyIndent.length() || (itemIndent != null && !item.group(1).equals(itemIndent))) {
-                break;
-            }
-            itemIndent = item.group(1);
-            insertAt = lineEnd < 0 ? yaml.length() : lineEnd;
-            lineStart = lineEnd < 0 ? yaml.length() : lineEnd + 1;
-        }
-        if (insertAt < 0) {
+        Optional<LastBlockItem> lastItem = lastBlockItem(yaml, lineStart + 1, keyIndent);
+        if (lastItem.isEmpty()) {
             return Optional.empty();
         }
+        int insertAt = lastItem.get().end();
         StringBuilder addition = new StringBuilder();
-        String prefix = itemIndent;
+        String prefix = lastItem.get().indent();
         missing.forEach(testClass -> addition.append(newline).append(prefix).append("- ").append(quote(testClass)));
         String before = yaml.substring(0, insertAt);
         if (before.endsWith("\r")) {
@@ -208,6 +191,42 @@ final class SecurityPolicyYaml {
             return Optional.of(before + addition + "\r" + yaml.substring(insertAt));
         }
         return Optional.of(before + addition + yaml.substring(insertAt));
+    }
+
+    /**
+     * @param end    the offset after the last item of a block list, before its line break
+     * @param indent the indentation of the items
+     */
+    private record LastBlockItem(int end, String indent) {
+    }
+
+    /**
+     * Finds the last item of the block list that starts at a line. Blank and comment lines may separate the items; the list ends at the first other line
+     * that is no item with the indentation of the first one.
+     *
+     * @param lineStart the offset of the line after the key of the list
+     * @param keyIndent the indentation of the key
+     * @return the last item; empty if the line does not start a block list
+     */
+    private static Optional<LastBlockItem> lastBlockItem(String yaml, int lineStart, String keyIndent) {
+        int insertAt = -1;
+        String itemIndent = null;
+        int nextLine = lineStart;
+        boolean inList = true;
+        while (inList && nextLine < yaml.length()) {
+            int lineEnd = yaml.indexOf('\n', nextLine);
+            String line = yaml.substring(nextLine, lineEnd < 0 ? yaml.length() : lineEnd).replace("\r", "");
+            if (!BLANK_OR_COMMENT_LINE.matcher(line).matches()) {
+                Matcher item = BLOCK_ITEM.matcher(line);
+                inList = item.matches() && item.group(1).length() >= keyIndent.length() && (itemIndent == null || item.group(1).equals(itemIndent));
+                if (inList) {
+                    itemIndent = item.group(1);
+                    insertAt = lineEnd < 0 ? yaml.length() : lineEnd;
+                }
+            }
+            nextLine = lineEnd < 0 ? yaml.length() : lineEnd + 1;
+        }
+        return insertAt < 0 ? Optional.empty() : Optional.of(new LastBlockItem(insertAt, itemIndent));
     }
 
     private static String quote(String testClass) {

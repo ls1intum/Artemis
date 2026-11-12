@@ -174,22 +174,8 @@ public final class SecurityPolicyRepositoryFiles {
         List<SecurityFrameworkState.AresApiUse> aresApiUses = summaries.stream()
                 .flatMap(summary -> summary.aresApis().stream().map(api -> new SecurityFrameworkState.AresApiUse(summary.path(), api)))
                 .sorted(Comparator.comparing(SecurityFrameworkState.AresApiUse::location).thenComparing(SecurityFrameworkState.AresApiUse::api)).toList();
-        List<SecurityFrameworkState.UnsupportedReason> reasons = new ArrayList<>();
-        boolean usesAres1 = buildFiles.usesAres1() || summaries.stream().anyMatch(AresTestSources.Summary::usesAres1);
-        if (usesAres1) {
-            reasons.add(new SecurityFrameworkState.UnsupportedReason(buildFiles.gradleBuild() != null ? GRADLE_BUILD_FILE : MAVEN_BUILD_FILE,
-                    SecurityFrameworkState.UnsupportedReasonType.ARES_1));
-        }
-        if (detectBuildTool(buildFiles.gradleBuild(), buildFiles.mavenPom()).isEmpty()) {
-            reasons.add(new SecurityFrameworkState.UnsupportedReason(buildFiles.mavenPom() != null ? MAVEN_BUILD_FILE : GRADLE_BUILD_FILE,
-                    SecurityFrameworkState.UnsupportedReasonType.NO_ARES_VERSION_PINNED));
-        }
-        summaries.forEach(summary -> summary.problems().forEach(problem -> reasons.add(new SecurityFrameworkState.UnsupportedReason(summary.path(), problem))));
-
         List<AresTestSources.TypeDeclaration> testClasses = testClasses(summaries);
-        if (!usesAres1) {
-            reasons.addAll(testClassReasons(testClasses));
-        }
+        List<SecurityFrameworkState.UnsupportedReason> reasons = unsupportedReasons(summaries, testClasses, buildFiles);
         if (!reasons.isEmpty()) {
             return new SecurityFrameworkState(SecurityActivationStatus.UNSUPPORTED, List.of(), List.of(), List.copyOf(reasons), aresApiUses);
         }
@@ -220,6 +206,29 @@ public final class SecurityPolicyRepositoryFiles {
         }
         disabledTestClasses.sort(String::compareTo);
         return new SecurityFrameworkState(status, List.copyOf(disabledTestClasses), List.copyOf(policyFiles), List.of(), aresApiUses);
+    }
+
+    /**
+     * @return why the Security Framework cannot manage the repository, in this order: Ares 1, no pinned Ares version, the problems of each source file, and the
+     *         problems of the test classes; empty if it can manage it
+     */
+    private static List<SecurityFrameworkState.UnsupportedReason> unsupportedReasons(List<AresTestSources.Summary> summaries,
+            List<AresTestSources.TypeDeclaration> testClasses, BuildFiles buildFiles) {
+        List<SecurityFrameworkState.UnsupportedReason> reasons = new ArrayList<>();
+        boolean usesAres1 = buildFiles.usesAres1() || summaries.stream().anyMatch(AresTestSources.Summary::usesAres1);
+        if (usesAres1) {
+            reasons.add(new SecurityFrameworkState.UnsupportedReason(buildFiles.gradleBuild() != null ? GRADLE_BUILD_FILE : MAVEN_BUILD_FILE,
+                    SecurityFrameworkState.UnsupportedReasonType.ARES_1));
+        }
+        if (detectBuildTool(buildFiles.gradleBuild(), buildFiles.mavenPom()).isEmpty()) {
+            reasons.add(new SecurityFrameworkState.UnsupportedReason(buildFiles.mavenPom() != null ? MAVEN_BUILD_FILE : GRADLE_BUILD_FILE,
+                    SecurityFrameworkState.UnsupportedReasonType.NO_ARES_VERSION_PINNED));
+        }
+        summaries.forEach(summary -> summary.problems().forEach(problem -> reasons.add(new SecurityFrameworkState.UnsupportedReason(summary.path(), problem))));
+        if (!usesAres1) {
+            reasons.addAll(testClassReasons(testClasses));
+        }
+        return reasons;
     }
 
     /**

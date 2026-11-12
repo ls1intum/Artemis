@@ -140,20 +140,37 @@ final class AresTestSources {
         List<SecurityFrameworkState.UnsupportedReasonType> problems = new ArrayList<>();
         List<AresPolicyAnnotations.Annotation> annotations = AresPolicyAnnotations.find(source);
 
-        List<List<AresPolicyAnnotations.Annotation>> policiesByType = new ArrayList<>();
+        List<List<AresPolicyAnnotations.Annotation>> policiesByType = policiesByType(annotations, declarations, depth, problems);
         boolean[] registers = new boolean[declarations.size()];
         boolean[] tests = new boolean[declarations.size()];
-        declarations.forEach(_ -> policiesByType.add(new ArrayList<>()));
+        markAresMarkers(masked, declarations, depth, registers, tests, problems);
+        if (!aresMarkerOffsets(masked, UNSUPPORTED_ARES_MARKER).isEmpty() || registersSecurityExtensionDirectly(masked)) {
+            // Ares also registers its sandbox through these, but the Security Framework only manages tests that use @Public, @Hidden, @PublicTest or @HiddenTest.
+            addOnce(problems, SecurityFrameworkState.UnsupportedReasonType.TEST_CLASS_WITHOUT_ARES);
+        }
+        markJUnitTests(masked, declarations, depth, tests, problems);
 
+        List<TypeDeclaration> types = typeDeclarations(masked, packageName, declarations, policiesByType, registers, tests);
+        if (types.stream().filter(TypeDeclaration::isRelevant).count() > 1) {
+            addOnce(problems, SecurityFrameworkState.UnsupportedReasonType.MULTIPLE_TOP_LEVEL_TYPES);
+        }
+        return new Summary(path, List.copyOf(types), List.copyOf(problems), masked.contains(ARES_1_PACKAGE), aresApis(masked));
+    }
+
+    /**
+     * Assigns every {@code @Policy} annotation to the top-level type it annotates and records the annotations that annotate no such type.
+     *
+     * @return the annotations of each declaration, by its index
+     */
+    private static List<List<AresPolicyAnnotations.Annotation>> policiesByType(List<AresPolicyAnnotations.Annotation> annotations, List<Declaration> declarations,
+            int[] depth, List<SecurityFrameworkState.UnsupportedReasonType> problems) {
+        List<List<AresPolicyAnnotations.Annotation>> policiesByType = new ArrayList<>();
+        declarations.forEach(_ -> policiesByType.add(new ArrayList<>()));
         for (AresPolicyAnnotations.Annotation annotation : annotations) {
             if (!annotation.isEvaluable()) {
                 addOnce(problems, SecurityFrameworkState.UnsupportedReasonType.UNEVALUABLE_ARGUMENTS);
             }
-            if (depth[annotation.start()] != 0) {
-                addOnce(problems, SecurityFrameworkState.UnsupportedReasonType.POLICY_NOT_ON_TOP_LEVEL_TYPE);
-                continue;
-            }
-            int owner = followingDeclaration(declarations, annotation.start());
+            int owner = depth[annotation.start()] == 0 ? followingDeclaration(declarations, annotation.start()) : -1;
             if (owner < 0) {
                 addOnce(problems, SecurityFrameworkState.UnsupportedReasonType.POLICY_NOT_ON_TOP_LEVEL_TYPE);
             }
@@ -164,7 +181,14 @@ final class AresTestSources {
                 policiesByType.get(owner).add(annotation);
             }
         }
+        return policiesByType;
+    }
 
+    /**
+     * Marks the declarations that register the sandbox through an Ares class or method marker, and those whose methods are Ares tests.
+     */
+    private static void markAresMarkers(String masked, List<Declaration> declarations, int[] depth, boolean[] registers, boolean[] tests,
+            List<SecurityFrameworkState.UnsupportedReasonType> problems) {
         for (String marker : ARES_CLASS_MARKERS) {
             for (int offset : aresMarkerOffsets(masked, marker)) {
                 int owner = depth[offset] == 0 ? followingDeclaration(declarations, offset) : -1;
@@ -188,10 +212,13 @@ final class AresTestSources {
                 }
             }
         }
-        if (!aresMarkerOffsets(masked, UNSUPPORTED_ARES_MARKER).isEmpty() || registersSecurityExtensionDirectly(masked)) {
-            // Ares also registers its sandbox through these, but the Security Framework only manages tests that use @Public, @Hidden, @PublicTest or @HiddenTest.
-            addOnce(problems, SecurityFrameworkState.UnsupportedReasonType.TEST_CLASS_WITHOUT_ARES);
-        }
+    }
+
+    /**
+     * Marks the declarations whose methods are JUnit tests.
+     */
+    private static void markJUnitTests(String masked, List<Declaration> declarations, int[] depth, boolean[] tests,
+            List<SecurityFrameworkState.UnsupportedReasonType> problems) {
         Matcher junitMarkers = JUNIT_TEST_MARKER.matcher(masked);
         while (junitMarkers.find()) {
             int owner = enclosingDeclaration(declarations, junitMarkers.start(), depth);
@@ -202,7 +229,13 @@ final class AresTestSources {
                 addOnce(problems, SecurityFrameworkState.UnsupportedReasonType.TESTS_IN_NESTED_TYPE);
             }
         }
+    }
 
+    /**
+     * @return the top-level types of the file, in the order of their declarations
+     */
+    private static List<TypeDeclaration> typeDeclarations(String masked, @Nullable String packageName, List<Declaration> declarations,
+            List<List<AresPolicyAnnotations.Annotation>> policiesByType, boolean[] registers, boolean[] tests) {
         List<TypeDeclaration> types = new ArrayList<>();
         for (int index = 0; index < declarations.size(); index++) {
             Declaration declaration = declarations.get(index);
@@ -210,10 +243,7 @@ final class AresTestSources {
             List<String> superclass = declaration.superclass() == null ? List.of() : resolveTypeName(masked, packageName, declaration.superclass());
             types.add(new TypeDeclaration(declaration.simpleName(), qualifiedName, superclass, List.copyOf(policiesByType.get(index)), registers[index], tests[index]));
         }
-        if (types.stream().filter(TypeDeclaration::isRelevant).count() > 1) {
-            addOnce(problems, SecurityFrameworkState.UnsupportedReasonType.MULTIPLE_TOP_LEVEL_TYPES);
-        }
-        return new Summary(path, List.copyOf(types), List.copyOf(problems), masked.contains(ARES_1_PACKAGE), aresApis(masked));
+        return types;
     }
 
     /**
@@ -266,21 +296,24 @@ final class AresTestSources {
         List<Declaration> declarations = new ArrayList<>();
         Matcher matcher = TYPE_DECLARATION.matcher(masked);
         while (matcher.find()) {
-            if (depth[matcher.start()] != 0) {
-                continue;
+            int bodyStart = depth[matcher.start()] == 0 ? masked.indexOf('{', matcher.end()) : -1;
+            if (bodyStart >= 0) {
+                declarations.add(declaration(masked, matcher, bodyStart));
             }
-            int bodyStart = masked.indexOf('{', matcher.end());
-            if (bodyStart < 0) {
-                continue;
-            }
-            int bodyEnd = closingBrace(masked, bodyStart);
-            String header = masked.substring(matcher.end(), bodyStart);
-            Matcher superclass = SUPERCLASS.matcher(header);
-            String superclassName = superclass.find() ? superclass.group(1) : null;
-            declarations
-                    .add(new Declaration(matcher.start(), bodyStart, bodyEnd < 0 ? masked.length() : bodyEnd, matcher.group(1).startsWith("@"), matcher.group(2), superclassName));
         }
         return declarations;
+    }
+
+    /**
+     * @param matcher   a match of {@link #TYPE_DECLARATION}
+     * @param bodyStart the offset of the brace that opens the body of the matched type
+     */
+    private static Declaration declaration(String masked, Matcher matcher, int bodyStart) {
+        int bodyEnd = closingBrace(masked, bodyStart);
+        String header = masked.substring(matcher.end(), bodyStart);
+        Matcher superclass = SUPERCLASS.matcher(header);
+        String superclassName = superclass.find() ? superclass.group(1) : null;
+        return new Declaration(matcher.start(), bodyStart, bodyEnd < 0 ? masked.length() : bodyEnd, matcher.group(1).startsWith("@"), matcher.group(2), superclassName);
     }
 
     private static int closingBrace(String masked, int open) {

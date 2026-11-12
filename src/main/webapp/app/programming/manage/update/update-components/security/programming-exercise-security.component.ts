@@ -300,6 +300,11 @@ export class ProgrammingExerciseSecurityComponent {
         if (!baseline || baseline.status === SecurityActivationStatus.UNSUPPORTED) {
             return undefined;
         }
+        return this.choiceAgainst(baseline);
+    });
+
+    /** The choice that turns the baseline (the template when creating, the source exercise when importing) into the configuration of the card. */
+    private choiceAgainst(baseline: SecurityFrameworkConfig): SecurityFrameworkChoice | undefined {
         const config = this.config();
         const version = config.frameworkVersion;
         const versionChanged = version !== undefined && version !== baseline.frameworkVersion;
@@ -320,7 +325,7 @@ export class ProgrammingExerciseSecurityComponent {
             return choice;
         }
         return undefined;
-    });
+    }
 
     /** Create and import mode ask for no confirmation; a staged deactivation only shows a short hint under the switch. */
     readonly showStagedDeactivationHint = computed(() => this.choiceToSend()?.action === SecurityFrameworkAction.DEACTIVATE);

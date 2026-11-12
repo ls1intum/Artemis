@@ -192,28 +192,37 @@ final class AresPolicyAnnotations {
         String masked = mask(source);
         String withoutComments = maskComments(source);
         boolean simpleNameIsAres = simpleNameRefersToAres(masked);
+        Sources sources = new Sources(source, withoutComments, masked);
         List<Annotation> annotations = new ArrayList<>();
         Matcher names = POLICY_ANNOTATION_NAME.matcher(masked);
         while (names.find()) {
             boolean qualified = names.group(1) != null;
-            if (!qualified && (!simpleNameIsAres || isPartOfQualifiedName(masked, names.start()))) {
-                continue;
+            if (qualified || (simpleNameIsAres && !isPartOfQualifiedName(masked, names.start()))) {
+                annotation(sources, names.start(), names.end()).ifPresent(annotations::add);
             }
-            int end = names.end();
-            int open = skipWhitespace(masked, end);
-            Map<String, Argument> arguments = new LinkedHashMap<>();
-            if (open < masked.length() && masked.charAt(open) == '(') {
-                int close = matchingParenthesis(masked, open);
-                if (close < 0) {
-                    // An incomplete annotation, e.g. in a file that does not compile: leave it alone.
-                    continue;
-                }
-                arguments = parseArguments(new Sources(source, withoutComments, masked), open + 1, close);
-                end = close + 1;
-            }
-            annotations.add(new Annotation(names.start(), end, source.substring(names.start(), names.end()), arguments));
         }
         return annotations;
+    }
+
+    /**
+     * @param nameStart the offset of the {@code @} of an Ares {@code @Policy} annotation
+     * @param nameEnd   the offset after its name
+     * @return the annotation with its arguments; empty if it is incomplete, e.g. in a file that does not compile, so that it is left alone
+     */
+    private static Optional<Annotation> annotation(Sources sources, int nameStart, int nameEnd) {
+        String masked = sources.masked();
+        int end = nameEnd;
+        int open = skipWhitespace(masked, end);
+        Map<String, Argument> arguments = new LinkedHashMap<>();
+        if (open < masked.length() && masked.charAt(open) == '(') {
+            int close = matchingParenthesis(masked, open);
+            if (close < 0) {
+                return Optional.empty();
+            }
+            arguments = parseArguments(sources, open + 1, close);
+            end = close + 1;
+        }
+        return Optional.of(new Annotation(nameStart, end, sources.original().substring(nameStart, nameEnd), arguments));
     }
 
     /**

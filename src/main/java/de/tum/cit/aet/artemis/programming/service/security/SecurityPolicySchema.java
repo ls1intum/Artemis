@@ -175,6 +175,9 @@ final class SecurityPolicySchema {
     /** The longest integer Jackson 2 reads by default. */
     private static final int MAX_INTEGER_LENGTH = 1000;
 
+    /** What {@link #radixOf(String)} returns for a text that is no integer. */
+    private static final int NO_INTEGER = 0;
+
     /**
      * The longest value checked against a pattern. The patterns of Ares recurse once per repetition, so on a fresh JVM they overflow the stack of the test run at
      * a value of about 2000 characters. The exact length depends on the JVM, so this limit lies safely below it. No usable value comes close to it.
@@ -323,32 +326,19 @@ final class SecurityPolicySchema {
      */
     private static Object resolveInteger(String value) {
         boolean negative = value.startsWith("-");
-        String digits = negative || value.startsWith("+") ? value.substring(1) : value;
-        int radix = 10;
-        if (digits.equals("0")) {
+        String signless = negative || value.startsWith("+") ? value.substring(1) : value;
+        if (signless.equals("0")) {
             return BigInteger.ZERO;
         }
-        if (digits.startsWith("0")) {
-            char marker = digits.charAt(1);
-            if (marker == 'b' || marker == 'B') {
-                radix = 2;
-                digits = digits.substring(2);
-            }
-            else if (marker == 'x' || marker == 'X') {
-                radix = 16;
-                digits = digits.substring(2);
-            }
-            else if ((marker >= '0' && marker <= '9') || marker == '_') {
-                radix = 8;
-                digits = digits.substring(1);
-            }
-            else {
-                return value;
-            }
-        }
-        else if (!digits.chars().allMatch(digit -> (digit >= '0' && digit <= '9') || digit == '_')) {
+        int radix = radixOf(signless);
+        if (radix == NO_INTEGER) {
             return value;
         }
+        String digits = switch (radix) {
+            case 2, 16 -> signless.substring(2);
+            case 8 -> signless.substring(1);
+            default -> signless;
+        };
         String cleanedDigits = digits.replace("_", "");
         // Jackson 2 counts the minus sign of a decimal number, but no sign in front of a prefixed one.
         int countedLength = cleanedDigits.length() + (negative && radix == 10 ? 1 : 0);
@@ -357,6 +347,23 @@ final class SecurityPolicySchema {
         }
         BigInteger integer = new BigInteger(cleanedDigits, radix);
         return negative ? integer.negate() : integer;
+    }
+
+    /**
+     * @param signless an integer in a notation of YAML 1.1 without its sign, but not {@code 0} itself
+     * @return the radix its prefix stands for: 2 for {@code 0b}, 16 for {@code 0x}, 8 for a leading {@code 0}, otherwise 10; {@link #NO_INTEGER} if the
+     *         text is no integer
+     */
+    private static int radixOf(String signless) {
+        if (!signless.startsWith("0")) {
+            return signless.chars().allMatch(digit -> (digit >= '0' && digit <= '9') || digit == '_') ? 10 : NO_INTEGER;
+        }
+        char marker = signless.charAt(1);
+        return switch (marker) {
+            case 'b', 'B' -> 2;
+            case 'x', 'X' -> 16;
+            default -> (marker >= '0' && marker <= '9') || marker == '_' ? 8 : NO_INTEGER;
+        };
     }
 
     private static boolean isRoot(Map<?, ?> root) {
