@@ -18,7 +18,6 @@ import { of, throwError } from 'rxjs';
 import { TumLiveUploadService } from 'app/lecture/manage/lecture-units/services/tum-live-upload.service';
 import { MockRouterLinkDirective } from 'test/helpers/mocks/directive/mock-router-link.directive';
 import { DocumentationButtonComponent } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
-import { SortDirective } from 'app/foundation/sort/directive/sort.directive';
 import { Course } from 'app/course/shared/entities/course.model';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { AttachmentVideoUnit } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
@@ -114,7 +113,6 @@ describe('Lecture', () => {
                 MockComponent(DocumentationButtonComponent),
                 MockDirective(TranslateDirective),
                 MockRouterLinkDirective,
-                MockDirective(SortDirective),
             ],
             providers: [
                 { provide: TranslateService, useClass: MockTranslateService },

@@ -80,13 +80,13 @@ describe('TumAetUiPaginatorComponent', () => {
         const navigation = host.querySelector('nav');
         const report = host.querySelector('[aria-live="polite"]');
         expect(navigation?.getAttribute('aria-label')).toBe('Pagination');
-        expect(report?.textContent).toContain('Showing 1 to 50 of 130');
+        expect(report?.textContent).toContain('1–50 of 130');
     });
 
-    it('renders windowed page-number buttons (max 5) and marks the current page', () => {
+    it('renders windowed page-number buttons (max 3) and marks the current page', () => {
         setInputs(500, 4, 50);
         const pages = pageButtons();
-        expect(pages.length).toBe(5);
+        expect(pages.length).toBe(3);
         const current = pages.find((button) => button.getAttribute('aria-current') === 'page');
         expect(current?.textContent?.trim()).toBe('5');
     });
@@ -95,7 +95,7 @@ describe('TumAetUiPaginatorComponent', () => {
         const spy = vi.spyOn(component.pageChange, 'emit');
         setInputs(500, 4, 50);
         pageButtons()[0].click();
-        expect(spy).toHaveBeenCalledWith(2);
+        expect(spy).toHaveBeenCalledWith(3);
     });
 
     it('clamps the display when the page input exceeds the last valid page', () => {
@@ -105,5 +105,19 @@ describe('TumAetUiPaginatorComponent', () => {
         const pages = pageButtons();
         expect(pages.length).toBe(1);
         expect(pages[0].getAttribute('aria-current')).toBe('page');
+    });
+    it('shows a compact "page / pages" indicator and the plain total for narrow containers', () => {
+        setInputs(500, 4, 50);
+        const host = fixture.nativeElement as HTMLElement;
+        expect(host.querySelector('[data-testid="paginator-page-of"]')?.textContent?.trim()).toBe('5 / 10');
+        expect(host.querySelector('[data-testid="paginator-report"]')?.textContent).toContain('500');
+    });
+
+    it('is a single 40px line that never wraps', () => {
+        setInputs(500, 4, 50);
+        const line = (fixture.nativeElement as HTMLElement).querySelector('nav > div') as HTMLElement;
+        expect(line.className).toContain('tumaet:h-10');
+        expect(line.className).toContain('tumaet:whitespace-nowrap');
+        expect(line.className).not.toContain('flex-wrap');
     });
 });

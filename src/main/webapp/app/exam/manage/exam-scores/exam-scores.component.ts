@@ -70,6 +70,7 @@ import {
     TumAetUiMessageComponent,
     TumAetUiProgressSpinnerComponent,
     TumAetUiTableDirective,
+    TumAetUiTableLayoutComponent,
     TumAetUiTableSortEvent,
     TumAetUiTableSortableColumnComponent,
 } from '@tumaet/ui-angular';
@@ -109,6 +110,7 @@ export enum MedianType {
         CommonModule,
         CourseTitleBarTitleDirective,
         CourseTitleBarActionsDirective,
+        TumAetUiTableLayoutComponent,
     ],
 })
 export class ExamScoresComponent implements OnInit {

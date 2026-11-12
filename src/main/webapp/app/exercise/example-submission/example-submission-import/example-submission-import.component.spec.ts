@@ -1,4 +1,4 @@
-import { TumAetUiDialogRef, TumAetUiDialogService } from '@tumaet/ui-angular';
+import { TumAetUiDialogRef, TumAetUiDialogService, TumAetUiTableSortableColumnComponent } from '@tumaet/ui-angular';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { provideHttpClient } from '@angular/common/http';
@@ -20,7 +20,6 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { ParticipationType } from 'app/exercise/shared/entities/participation/participation.model';
-import { SortByDirective } from 'app/foundation/sort/directive/sort-by.directive';
 import { ResultComponent } from 'app/exercise/result/result.component';
 import dayjs from 'dayjs/esm';
 
@@ -127,9 +126,21 @@ describe('ExampleSubmissionImportComponent', () => {
         component.content.set({ numberOfPages: 1, resultsOnPage: [submission] });
         fixture.detectChanges();
 
-        const sortableHeaders = fixture.debugElement.queryAll(By.directive(SortByDirective));
+        const sortableHeaders = fixture.debugElement.queryAll(By.directive(TumAetUiTableSortableColumnComponent));
         expect(sortableHeaders).toHaveLength(1);
-        expect(sortableHeaders[0].injector.get(SortByDirective).jhiSortBy()).toBe('STUDENT_NAME');
+        expect(sortableHeaders[0].nativeElement.querySelector('button')).not.toBeNull();
+    });
+
+    it('searches with the student name column when its sortable header is clicked', async () => {
+        component.content.set({ numberOfPages: 1, resultsOnPage: [submission] });
+        fixture.detectChanges();
+        searchSpy.mockClear();
+
+        const sortButton = fixture.debugElement.query(By.directive(TumAetUiTableSortableColumnComponent)).nativeElement.querySelector('button') as HTMLButtonElement;
+        sortButton.click();
+
+        await vi.waitFor(() => expect(searchSpy).toHaveBeenCalledWith(expect.objectContaining({ sortedColumn: 'STUDENT_NAME' }), { exerciseId: 3 }));
+        expect(component.sortedColumn).toBe('STUDENT_NAME');
     });
 
     // The import table renders <jhi-result [result]="getLatestResult(submission)" ...>. This component is the only
