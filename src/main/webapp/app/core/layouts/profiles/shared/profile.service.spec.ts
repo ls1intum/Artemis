@@ -176,22 +176,24 @@ describe('ProfileService', () => {
             });
         });
     });
-    it('offers AI preferences and local consent for a standalone local Home provider', async () => {
+    it.each([
+        { name: 'a configured local Home provider', localLLMDeploymentEnabled: false, courseHomeAiAvailable: true, courseHomeAiLocation: 'LOCAL', expected: false },
+        { name: 'a configured cloud Home provider', localLLMDeploymentEnabled: false, courseHomeAiAvailable: true, courseHomeAiLocation: 'CLOUD', expected: false },
+        { name: 'no Home provider', localLLMDeploymentEnabled: false, courseHomeAiAvailable: false, courseHomeAiLocation: undefined, expected: false },
+        { name: 'the global flag and a cloud Home provider', localLLMDeploymentEnabled: true, courseHomeAiAvailable: true, courseHomeAiLocation: 'CLOUD', expected: true },
+        { name: 'the global flag without a Home provider', localLLMDeploymentEnabled: true, courseHomeAiAvailable: false, courseHomeAiLocation: undefined, expected: true },
+    ])('offers the shared local option only by the global flag with $name', async ({ localLLMDeploymentEnabled, courseHomeAiAvailable, courseHomeAiLocation, expected }) => {
+        const loading = service.loadProfileInfo();
+        httpMock.expectOne('management/info').flush({ ...expectedProfileInfo, activeModuleFeatures: [], localLLMDeploymentEnabled, courseHomeAiAvailable, courseHomeAiLocation });
+        await loading;
+        expect(service.isLLMDeploymentEnabled()).toBe(expected);
+    });
+    it('still opens the AI preferences page for a standalone Home provider', async () => {
         const loading = service.loadProfileInfo();
         httpMock
             .expectOne('management/info')
             .flush({ ...expectedProfileInfo, activeModuleFeatures: [], localLLMDeploymentEnabled: false, courseHomeAiAvailable: true, courseHomeAiLocation: 'LOCAL' });
         await loading;
         expect(TestBed.inject(DataGuard).canActivate()).toBe(true);
-        expect(service.isLLMDeploymentEnabled()).toBe(true);
-    });
-    it('keeps a cloud-only Home provider from offering unavailable local inference', async () => {
-        const loading = service.loadProfileInfo();
-        httpMock
-            .expectOne('management/info')
-            .flush({ ...expectedProfileInfo, activeModuleFeatures: [], localLLMDeploymentEnabled: false, courseHomeAiAvailable: true, courseHomeAiLocation: 'CLOUD' });
-        await loading;
-        expect(TestBed.inject(DataGuard).canActivate()).toBe(true);
-        expect(service.isLLMDeploymentEnabled()).toBe(false);
     });
 });

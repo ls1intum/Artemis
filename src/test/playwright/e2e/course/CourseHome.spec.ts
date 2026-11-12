@@ -136,10 +136,12 @@ test.describe('Student course Home', { tag: '@fast' }, () => {
         await expect(page.getByText('AI-generated encouragement', { exact: true })).toHaveCount(0);
     });
     test('uses the existing AI preferences for a standalone local Home provider', async ({ page, login }) => {
-        test.skip(process.env.COURSE_HOME_PROVIDER_SMOKE !== 'true', 'Requires an explicitly configured local test provider.');
+        test.skip(process.env.COURSE_HOME_PROVIDER_SMOKE !== 'true', 'Requires a configured local test provider and the global local AI flag.');
         const info = await (await page.request.get('management/info')).json();
         expect(info.courseHomeAiAvailable).toBe(true);
         expect(info.courseHomeAiLocation).toBe('LOCAL');
+        // The shared local option follows the global flag, which a Home provider does not replace.
+        expect(info.localLLMDeploymentEnabled).toBe(true);
         expect(info.activeModuleFeatures).not.toContain('iris');
         await login(studentOne, '/user-settings/ai-experience');
         await expect(page).toHaveURL(/user-settings\/ai-experience$/);

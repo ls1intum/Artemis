@@ -2,7 +2,7 @@
 id: course-home-ai
 title: AI Welcomes on Course Home
 sidebar_label: Course Home AI
-last_reviewed: 2026-11-05
+last_reviewed: 2026-11-12
 ---
 
 Course **Home** gives students a contextual next step, recent course updates, their questions, and their recent Iris conversations when those features are available. Its welcome works without AI: Artemis selects from 15 situations with three English and German variants each.
@@ -24,7 +24,7 @@ artemis:
 
 Set `location` to `LOCAL` only when inference takes place within the installation's approved local environment. Use `CLOUD` for an external provider. Students who selected local AI can receive welcomes only from a `LOCAL` provider. Students who selected cloud AI can use either location. Students who declined AI, have not selected a preference, or need to renew their consent receive deterministic welcomes.
 
-When the Home provider is configured, students can open **Account settings → AI experience**, even if no other AI module is enabled. A local provider also makes the local AI option available in the existing selection dialog. Iris interaction counts and deletion controls appear only when Iris is enabled.
+When the Home provider is configured, students can open **Account settings → AI experience**, even if no other AI module is enabled. The local AI option in the selection dialog stays governed by `info.localLLMDeploymentEnabled`, which you set only when the connected services support local inference. A Home provider, even a local one, does not make that option available. Students can then receive Home welcomes through a local provider only after you enable that setting. Iris interaction counts and deletion controls appear only when Iris is enabled.
 
 The base URL must be an HTTP or HTTPS URL without embedded credentials, query parameters or fragments. Keep API keys in deployment secrets. An incomplete configuration leaves the provider unavailable and deterministic welcomes continue to work.
 
