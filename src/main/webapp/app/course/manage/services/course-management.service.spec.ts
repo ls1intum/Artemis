@@ -55,11 +55,17 @@ import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise
 import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
 import { QuizExercise, QuizMode } from 'app/quiz/shared/entities/quiz-exercise.model';
 import type { UMLDiagramType } from '@tumaet/apollon';
-import { CourseForEnrollmentDTO, CourseManagementDTO, courseFromEnrollmentDTO, courseFromManagementDTO } from 'app/course/shared/entities/course-management-response.dto';
+import { CourseManagementDTO, courseFromEnrollmentDTO, courseFromManagementDTO } from 'app/course/shared/entities/course-management-response.dto';
 import type { LockedCourseSubmissionDTO } from 'app/course/shared/entities/locked-course-submission.dto';
 import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
-import { CourseCompetencyType } from 'app/atlas/shared/entities/competency.model';
+import { CompetencyTaxonomy, CourseCompetencyType } from 'app/atlas/shared/entities/competency.model';
+import { Prerequisite } from 'app/atlas/shared/entities/prerequisite.model';
+import { SortingOrder } from 'app/foundation/pagination/pageable-table';
+import { CourseAccessApi } from 'app/openapi/api/course-access-api';
+import type { CourseForEnrollment } from 'app/openapi/model/course-for-enrollment';
+import type { User as UserDTO } from 'app/openapi/model/user';
 
+const parseRequestUrl = (url: string) => new URL(url, 'http://localhost');
 const courseDateFields = ['startDate', 'endDate', 'enrollmentStartDate', 'enrollmentEndDate', 'unenrollmentEndDate'] as const satisfies readonly (keyof Course)[];
 type CourseDateField = (typeof courseDateFields)[number];
 
@@ -214,34 +220,53 @@ describe('Course Management Service', () => {
         req.flush(mockResponse);
     });
 
-    it('should search the users of a course by login or name within the given roles', () => {
-        courseManagementService.searchUsers(1, 'ada', ['tutors', 'students']).subscribe();
+    it('sends repeated roles and preserves the public search response', async () => {
+        const result = firstValueFrom(courseManagementService.searchUsers(1, 'ada + l', ['tutors', 'students']));
+        const req = httpMock.expectOne((request) => request.method === 'GET' && parseRequestUrl(request.urlWithParams).pathname === `/${resourceUrl}/1/users/search`);
+        const { searchParams } = parseRequestUrl(req.request.urlWithParams);
+        expect(searchParams.get('loginOrName')).toBe('ada + l');
+        expect(searchParams.getAll('roles')).toEqual(['tutors', 'students']);
 
-        const req = httpMock.expectOne((request) => request.url === `${resourceUrl}/1/users/search`);
-        expect(req.request.method).toBe('GET');
-        expect(req.request.params.get('loginOrName')).toBe('ada');
-        expect(req.request.params.get('roles')).toBe('tutors,students');
-        req.flush([]);
+        const body = [{ id: 1, login: 'ada', isTeachingAssistant: true, isStudent: false }];
+        req.flush(body, { headers: { 'X-Total-Count': '42', Link: '</next>; rel="next"' } });
+        const response = await result;
+        expect(response.body).toEqual(body);
+        expect(response.headers.get('X-Total-Count')).toBe('42');
+        expect(response.headers.get('Link')).toBe('</next>; rel="next"');
     });
 
-    it('should search the members of a course for a mention by login or name', () => {
-        courseManagementService.searchMembersForUserMentions(1, 'ada').subscribe();
-
-        const req = httpMock.expectOne((request) => request.url === `${resourceUrl}/1/members/search`);
-        expect(req.request.method).toBe('GET');
-        expect(req.request.params.get('loginOrName')).toBe('ada');
+    it('sends an explicit empty roles parameter', async () => {
+        const result = firstValueFrom(courseManagementService.searchUsers(1, '', []));
+        const req = httpMock.expectOne((request) => parseRequestUrl(request.urlWithParams).pathname === `/${resourceUrl}/1/users/search`);
+        const { searchParams } = parseRequestUrl(req.request.urlWithParams);
+        expect(searchParams.get('loginOrName')).toBe('');
+        expect(searchParams.getAll('roles')).toEqual(['']);
         req.flush([]);
+        expect((await result).body).toEqual([]);
     });
 
-    it('should search the students of a course by login or name', () => {
-        courseManagementService.searchStudents(1, 'ada', 0, 25).subscribe();
+    it('sends the empty course mention term and preserves the reduced response', async () => {
+        const result = firstValueFrom(courseManagementService.searchMembersForUserMentions(1, ''));
+        const req = httpMock.expectOne({ method: 'GET', url: `/${resourceUrl}/1/members/search?loginOrName=` });
+        const body = [{ name: 'Ada Lovelace', login: 'ada' }];
+        req.flush(body, { headers: { 'Cache-Control': 'no-store' } });
+        const response = await result;
+        expect(response.body).toEqual(body);
+        expect(response.headers.get('Cache-Control')).toBe('no-store');
+    });
 
-        const req = httpMock.expectOne((request) => request.url === `${resourceUrl}/1/students/search`);
-        expect(req.request.method).toBe('GET');
-        expect(req.request.params.get('loginOrName')).toBe('ada');
-        expect(req.request.params.get('page')).toBe('0');
-        expect(req.request.params.get('size')).toBe('25');
+    it('omits optional student search pagination so the server applies its defaults', async () => {
+        const result = firstValueFrom(TestBed.inject(CourseAccessApi).searchStudentsInCourse(1, 'ada'));
+        const req = httpMock.expectOne({ method: 'GET', url: `/${resourceUrl}/1/students/search?loginOrName=ada` });
         req.flush([]);
+        expect((await result).body).toEqual([]);
+    });
+
+    it('omits optional registration candidate pagination at the generated boundary', async () => {
+        const result = firstValueFrom(TestBed.inject(CourseAccessApi).searchUsersForCourseRole(1, 'tutors', 'ada'));
+        const req = httpMock.expectOne({ method: 'GET', url: `/${resourceUrl}/1/tutors/users/search?searchTerm=ada` });
+        req.flush([]);
+        expect((await result).body).toEqual([]);
     });
 
     it('should fetch the time zones a course may use from the server', () => {
@@ -447,7 +472,7 @@ describe('Course Management Service', () => {
             .findAllForRegistration()
             .pipe(take(1))
             .subscribe((res) => expect(res.body?.[0].id).toBe(course.id));
-        const req = httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/for-enrollment` });
+        const req = httpMock.expectOne({ method: 'GET', url: `/${resourceUrl}/for-enrollment` });
         req.flush(returnedFromService);
     });
 
@@ -482,14 +507,23 @@ describe('Course Management Service', () => {
         req.flush(statsData);
     });
 
-    it('should register for the course', () => {
-        courseManagementService.registerForCourse(course.id!).pipe(take(1)).subscribe();
-        httpMock.expectOne({ method: 'POST', url: `${resourceUrl}/${course.id}/enroll` }).flush(null);
+    it.each(['enroll', 'unenroll'])('preserves the empty 200 response from %s', async (action) => {
+        const courseId = course.id!;
+        const result = firstValueFrom(action === 'enroll' ? courseManagementService.registerForCourse(courseId) : courseManagementService.unenrollFromCourse(courseId));
+        const req = httpMock.expectOne({ method: 'POST', url: `/${resourceUrl}/${courseId}/${action}` });
+        expect(req.request.body).toBeNull();
+        req.flush(null, { status: 200, statusText: 'OK', headers: { 'Cache-Control': 'no-store' } });
+        const response = await result;
+        expect(response.status).toBe(200);
+        expect(response.body).toBeNull();
+        expect(response.url).toBe(req.request.urlWithParams);
+        expect(response.headers.get('Cache-Control')).toBe('no-store');
     });
 
-    it('should unenroll from the course', () => {
-        courseManagementService.unenrollFromCourse(course.id!).pipe(take(1)).subscribe();
-        httpMock.expectOne({ method: 'POST', url: `${resourceUrl}/${course.id}/unenroll` }).flush(null);
+    it.each([true, false])('returns the server access state %s', async (hasAccess) => {
+        const result = firstValueFrom(courseManagementService.hasAccessToCourse(course.id!));
+        httpMock.expectOne({ method: 'GET', url: `/${resourceUrl}/${course.id}/access-state` }).flush({ hasAccess });
+        expect(await result).toBe(hasAccess);
     });
 
     it('should get all courses with quiz exercises', () => {
@@ -524,16 +558,15 @@ describe('Course Management Service', () => {
         req.flush(returnedFromService);
     });
 
-    it('should find all users of course group', () => {
-        const users = [new User(1, 'user1'), new User(2, 'user2')];
-        returnedFromService = [...users];
-        const courseRoleSlug = CourseRoleSlug.STUDENTS;
-        courseManagementService
-            .getAllUsersInCourseRole(course.id!, courseRoleSlug)
-            .pipe(take(1))
-            .subscribe((res) => expect(res.body).toEqual(users));
-        const req = httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/${course.id}/${courseRoleSlug}` });
-        req.flush(returnedFromService);
+    it.each([CourseRoleSlug.STUDENTS, CourseRoleSlug.TUTORS, CourseRoleSlug.EDITORS, CourseRoleSlug.INSTRUCTORS])('hydrates users from the %s role list', async (role) => {
+        const result = firstValueFrom(courseManagementService.getAllUsersInCourseRole(course.id!, role));
+        const req = httpMock.expectOne({ method: 'GET', url: `/${resourceUrl}/${course.id}/${role}` });
+        const member = { id: 1, login: 'user1', activated: true, internal: false };
+        req.flush([member], { headers: { 'Cache-Control': 'no-store' } });
+        const response = await result;
+        expect(response.body?.[0]).toBeInstanceOf(User);
+        expect(response.body?.[0]).toMatchObject(member);
+        expect(response.headers.get('Cache-Control')).toBe('no-store');
     });
 
     it('should download course archive', () => {
@@ -584,16 +617,21 @@ describe('Course Management Service', () => {
         ]);
     });
 
-    it('should remove user from course group', () => {
-        const user = new User(1, 'name');
-        const courseRoleSlug = CourseRoleSlug.STUDENTS;
-        courseManagementService
-            .removeUserFromCourseRole(course.id!, courseRoleSlug, user.login!)
-            .pipe(take(1))
-            .subscribe((res) => expect(res.body).toEqual({}));
-        const req = httpMock.expectOne({ method: 'DELETE', url: `${resourceUrl}/${course.id}/${courseRoleSlug}/${user.login}` });
-        req.flush({});
-    });
+    it.each([CourseRoleSlug.STUDENTS, CourseRoleSlug.TUTORS, CourseRoleSlug.EDITORS, CourseRoleSlug.INSTRUCTORS])(
+        'removes a %s member using a single login encoding',
+        async (role) => {
+            const login = "ada.o'neil@example.edu";
+            const result = firstValueFrom(courseManagementService.removeUserFromCourseRole(course.id!, role, login));
+            const req = httpMock.expectOne({ method: 'DELETE', url: `/${resourceUrl}/${course.id}/${role}/ada.o'neil%40example.edu` });
+            expect(decodeURIComponent(req.request.url.split('/').at(-1)!)).toBe(login);
+            expect(req.request.body).toBeNull();
+            req.flush(null, { status: 200, statusText: 'OK', headers: { 'Cache-Control': 'no-store' } });
+            const response = await result;
+            expect(response.status).toBe(200);
+            expect(response.body).toBeNull();
+            expect(response.headers.get('Cache-Control')).toBe('no-store');
+        },
+    );
 
     it('should return lifetime overview data', () => {
         const stats = [34, 23, 45, 67, 89, 201, 67, 890, 1359];
@@ -605,50 +643,105 @@ describe('Course Management Service', () => {
         req.flush(stats);
     });
 
-    it('should search other users within course', () => {
-        const users = [new User(1, 'user1')];
-        returnedFromService = [...users];
-        courseManagementService
-            .searchOtherUsersInCourse(course.id!, 'user1')
-            .pipe(take(1))
-            .subscribe((res) => expect(res.body).toEqual(users));
-        const req = httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/${course.id}/search-other-users?nameOfUser=user1` });
-        req.flush(returnedFromService);
+    it('hydrates a reduced course search result without contact or registration data', async () => {
+        const result = firstValueFrom(courseManagementService.searchOtherUsersInCourse(course.id!, 'user1'));
+        const req = httpMock.expectOne({ method: 'GET', url: `/${resourceUrl}/${course.id}/search-other-users?nameOfUser=user1` });
+        const member = { id: 1, login: 'user1', name: 'User One', activated: false, internal: false };
+        req.flush([member]);
+        const [user] = (await result).body!;
+        expect(user).toBeInstanceOf(User);
+        expect(user).toMatchObject(member);
+        expect(user.email).toBeUndefined();
+        expect(user.visibleRegistrationNumber).toBeUndefined();
     });
 
-    it('should search users for course role and return content with total count', () => {
-        const courseRoleSlug = CourseRoleSlug.STUDENTS;
-        const mockUsers: UserForRegistration[] = [
+    it('sends flat paging fields and reads the role total from the response header', async () => {
+        const result = firstValueFrom(
+            courseManagementService.getPagedUsersInCourseRole(course.id!, CourseRoleSlug.TUTORS, {
+                page: 0,
+                pageSize: 5,
+                sortingOrder: SortingOrder.DESCENDING,
+                sortedColumn: 'login',
+                searchTerm: '',
+            }),
+        );
+        const path = `/${resourceUrl}/${course.id}/tutors/paged`;
+        const req = httpMock.expectOne((request) => request.method === 'GET' && parseRequestUrl(request.urlWithParams).pathname === path);
+        expect(Object.fromEntries(parseRequestUrl(req.request.urlWithParams).searchParams)).toEqual({
+            page: '0',
+            pageSize: '5',
+            sortingOrder: 'DESCENDING',
+            sortedColumn: 'login',
+            searchTerm: '',
+        });
+        expect(req.request.body).toBeNull();
+        const content = [{ id: 5, login: 'tutor1', name: 'Tutor One' }];
+        req.flush(content, { headers: { 'X-Total-Count': '17', Link: '</next>; rel="next"' } });
+        expect(await result).toEqual({ content, totalElements: 17 });
+    });
+
+    it('preserves registration flags and uses the total count from the server', async () => {
+        const result = firstValueFrom(courseManagementService.searchUsersForCourseRole(course.id!, CourseRoleSlug.STUDENTS, 'student', 0, 10));
+        const path = `/${resourceUrl}/${course.id}/students/users/search`;
+        const req = httpMock.expectOne((request) => request.method === 'GET' && parseRequestUrl(request.urlWithParams).pathname === path);
+        expect(Object.fromEntries(parseRequestUrl(req.request.urlWithParams).searchParams)).toEqual({ searchTerm: 'student', page: '0', size: '10' });
+        const content: UserForRegistration[] = [
             { id: 1, login: 'student1', name: 'Student One', isRegistered: true },
             { id: 2, login: 'student2', name: 'Student Two', isRegistered: false },
         ];
-        let result: { content: UserForRegistration[]; totalElements: number } | undefined;
-        courseManagementService
-            .searchUsersForCourseRole(course.id!, courseRoleSlug, 'student', 0, 10)
-            .pipe(take(1))
-            .subscribe((res) => (result = res));
-        const req = httpMock.expectOne((r) => r.method === 'GET' && r.url === `${resourceUrl}/${course.id}/${courseRoleSlug}/users/search`);
-        req.flush(mockUsers, { headers: { 'X-Total-Count': '2' } });
-        expect(result).toEqual({ content: mockUsers, totalElements: 2 });
+        req.flush(content, { headers: { 'X-Total-Count': '22', Link: '</next>; rel="next"' } });
+        expect(await result).toEqual({ content, totalElements: 22 });
     });
 
-    it('should search students using the requested page and size', () => {
-        const users = [new User(1, 'student1')];
+    it('hydrates a student search hit and preserves pagination response metadata', async () => {
+        const result = firstValueFrom(courseManagementService.searchStudents(course.id!, 'student', 0, 10));
+        const path = `/${resourceUrl}/${course.id}/students/search`;
+        const req = httpMock.expectOne((request) => request.method === 'GET' && parseRequestUrl(request.urlWithParams).pathname === path);
+        expect(Object.fromEntries(parseRequestUrl(req.request.urlWithParams).searchParams)).toEqual({ loginOrName: 'student', page: '0', size: '10' });
 
-        courseManagementService
-            .searchStudents(course.id!, 'student', 2, 10)
-            .pipe(take(1))
-            .subscribe((res) => expect(res.body).toEqual(users));
+        const wireStudent: UserDTO = {
+            id: 1,
+            login: 'student1',
+            name: 'Student One',
+            internal: false,
+            isTestUser: false,
+            visibleRegistrationNumber: '12345',
+            createdDate: '2026-01-01T00:00:00Z',
+            lastModifiedDate: '2026-01-02T12:30:00Z',
+            courseRoles: [{ courseId: course.id!, roles: ['STUDENT'] }],
+        };
+        req.flush([wireStudent], { headers: { 'X-Total-Count': '22', Link: '</next>; rel="next"' } });
+        const response = await result;
+        expect(response.body?.[0]).toBeInstanceOf(User);
+        expect(response.body?.[0]).toMatchObject({
+            id: 1,
+            login: 'student1',
+            name: 'Student One',
+            internal: false,
+            isTestUser: false,
+            visibleRegistrationNumber: '12345',
+            createdDate: new Date(wireStudent.createdDate!),
+            lastModifiedDate: new Date(wireStudent.lastModifiedDate!),
+            courseRoles: wireStudent.courseRoles,
+        });
+        expect(response.headers.get('X-Total-Count')).toBe('22');
+        expect(response.headers.get('Link')).toBe('</next>; rel="next"');
+        expect(response.url).toBe(req.request.urlWithParams);
+    });
 
-        const req = httpMock.expectOne(
-            (request) =>
-                request.method === 'GET' &&
-                request.url === `${resourceUrl}/${course.id}/students/search` &&
-                request.params.get('loginOrName') === 'student' &&
-                request.params.get('page') === '2' &&
-                request.params.get('size') === '10',
-        );
-        req.flush(users);
+    it('sends bulk registration rows intact and returns only sparse unmatched rows', async () => {
+        const matched = { login: 'student1', firstName: '', lastName: '', registrationNumber: '', email: '' };
+        const unmatched = { email: 'unknown@example.edu', isTestUser: false };
+        const unmatchedWithoutFlag = { login: 'another-user' };
+        const students = [matched, unmatched, unmatchedWithoutFlag];
+        const result = firstValueFrom(courseManagementService.addUsersToCourseRole(course.id!, students, 'students'));
+        const req = httpMock.expectOne({ method: 'POST', url: `/${resourceUrl}/${course.id}/students` });
+        expect(req.request.body).toEqual(students);
+        req.flush([unmatched, unmatchedWithoutFlag], { headers: { 'Cache-Control': 'no-store' } });
+        const response = await result;
+        expect(response.body).toEqual([unmatched, unmatchedWithoutFlag]);
+        expect(response.body?.map(Object.keys)).toEqual([['email', 'isTestUser'], ['login']]);
+        expect(response.headers.get('Cache-Control')).toBe('no-store');
     });
 
     it('getNumberOfAllowedComplaintsInCourse', () => {
@@ -693,10 +786,24 @@ describe('Course Management Service', () => {
         httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/for-dropdown` }).flush([course]);
     });
 
-    it('should fetch the limited course representation used by registration fallback', () => {
-        courseManagementService.findOneForRegistration(course.id!).subscribe((response) => expect(response.body?.id).toBe(course.id));
-        const req = httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/${course.id}/for-enrollment` });
-        req.flush({ ...returnedFromService, prerequisites: [] });
+    it('hydrates enrollment detail and preserves response metadata for the registration fallback', async () => {
+        const titleSpy = vi.spyOn(entityTitleService, 'setTitle');
+        const result = firstValueFrom(courseManagementService.findOneForRegistration(course.id!));
+        const req = httpMock.expectOne({ method: 'GET', url: `/${resourceUrl}/${course.id}/for-enrollment` });
+        req.flush({ id: course.id, title: course.title }, { headers: { 'Cache-Control': 'no-store' } });
+        const response = await result;
+        expect(response.body).toBeInstanceOf(Course);
+        expect(response.body?.id).toBe(course.id);
+        expect(response.body?.prerequisites).toEqual([]);
+        expect(response.headers.get('Cache-Control')).toBe('no-store');
+        expect(titleSpy).toHaveBeenCalled();
+    });
+
+    it('propagates forbidden enrollment detail to the fallback caller', async () => {
+        const result = firstValueFrom(courseManagementService.findOneForRegistration(course.id!));
+        const rejected = expect(result).rejects.toMatchObject({ status: 403 });
+        httpMock.expectOne({ method: 'GET', url: `/${resourceUrl}/${course.id}/for-enrollment` }).flush(null, { status: 403, statusText: 'Forbidden' });
+        await rejected;
     });
 
     it('should fetch the course archive summaries without requesting full courses', () => {
@@ -1089,13 +1196,13 @@ describe('Course DTO adapter boundary', () => {
     });
 
     it('hydrates title, semester, description and prerequisites from the enrollment DTO', () => {
-        const dto: CourseForEnrollmentDTO = {
+        const dto: CourseForEnrollment = {
             id: 3,
             title: 'Interactive Learning',
             description: 'Enroll to learn interactively',
             semester: 'WS26',
             enrollmentConfirmationMessage: 'Welcome!',
-            prerequisites: [{ id: 9, title: 'Basics', masteryThreshold: 80, optional: false, type: CourseCompetencyType.COMPETENCY, softDueDate: '2026-01-01T00:00:00Z' }],
+            prerequisites: [{ id: 9, title: 'Basics', masteryThreshold: 80, optional: false, type: 'prerequisite', taxonomy: 'APPLY', softDueDate: '2026-01-01T00:00:00+02:00' }],
         };
 
         const course = courseFromEnrollmentDTO(dto);
@@ -1104,7 +1211,9 @@ describe('Course DTO adapter boundary', () => {
         expect(course.semester).toBe('WS26');
         expect(course.description).toBe('Enroll to learn interactively');
         expect(course.prerequisites).toHaveLength(1);
-        expect(course.prerequisites?.[0]).toMatchObject({ id: 9, title: 'Basics' });
+        expect(course.prerequisites?.[0]).toBeInstanceOf(Prerequisite);
+        expect(course.prerequisites?.[0]).toMatchObject({ id: 9, title: 'Basics', taxonomy: CompetencyTaxonomy.APPLY, type: CourseCompetencyType.PREREQUISITE, optional: false });
+        expect(course.prerequisites?.[0]?.softDueDate?.toISOString()).toBe('2025-12-31T22:00:00.000Z');
         expect(dayjs.isDayjs(course.prerequisites?.[0]?.softDueDate)).toBe(true);
     });
 });

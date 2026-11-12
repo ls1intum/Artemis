@@ -5,6 +5,8 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { Course } from 'app/course/shared/entities/course.model';
+import { CourseManagementService } from 'app/course/manage/services/course-management.service';
+import { StudentDTO } from 'app/core/shared/entities/student-dto.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ExamManagementService, ExamRegistrationResultDTO } from 'app/exam/manage/services/exam-management.service';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
@@ -47,6 +49,7 @@ describe('UsersImportDialogComponent', () => {
             providers: [
                 MockProvider(AlertService),
                 MockProvider(ExamManagementService),
+                MockProvider(CourseManagementService),
                 MockProvider(TutorialGroupApi),
                 MockProvider(AdminUserService),
                 MockProvider(HttpClient),
@@ -182,6 +185,24 @@ describe('UsersImportDialogComponent', () => {
         expect(component.isImporting()).toBe(false);
         expect(component.hasImported()).toBe(true);
         expect(component.notFoundUsers).toHaveLength(studentsNotFound.length);
+    });
+
+    it('marks only the unmatched email-only row after a course import', () => {
+        fixture.componentRef.setInput('courseId', course.id);
+        fixture.componentRef.setInput('courseRoleSlug', 'students');
+        const found = { login: 'known-student', email: '' };
+        const missing = { login: '', email: 'missing@example.edu' };
+        const rows = [found, missing];
+        const unmatched = { email: missing.email, isTestUser: false };
+        const addUsers = vi.spyOn(TestBed.inject(CourseManagementService), 'addUsersToCourseRole').mockReturnValue(of(new HttpResponse<StudentDTO[]>({ body: [unmatched] })));
+        component.usersToImport.set(rows);
+
+        component.importUsers();
+
+        expect(addUsers).toHaveBeenCalledWith(course.id, rows, 'students');
+        expect(component.notFoundUsers).toEqual([unmatched]);
+        expect(component.wasImported(found)).toBe(true);
+        expect(component.wasNotFound(missing)).toBe(true);
     });
 
     describe('should read students from csv files', () => {
