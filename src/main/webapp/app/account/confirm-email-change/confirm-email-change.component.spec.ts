@@ -88,6 +88,8 @@ describe('ConfirmEmailChangeComponent', () => {
             expect(byTestId('confirm-email-change-button')).toBeNull();
             // a signed-in user gets the new email address
             expect(identitySpy).toHaveBeenCalledWith(true);
+            // the account settings are on the profile page of the user settings
+            expect(byTestId('confirm-email-change-settings-link').nativeElement.getAttribute('href')).toBe('/user-settings/profile');
         });
 
         it('should not reload the identity of a visitor who is not signed in', () => {
