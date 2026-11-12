@@ -49,6 +49,7 @@ api/quiz-exercise-batch-resources.ts
 api/quiz-assessment-resources.ts
 api/tutorial-group-resources.ts
 api/hyperion-code-generation-resources.ts
+api/prerequisite-resources.ts
 api/quiz-participation-resources.ts
 api/hyperion-assessment-criteria-generation-resources.ts
 api/admin-ai-worker-resources.ts
@@ -60,4 +61,5 @@ api/hyperion-quiz-question-pool-resources.ts
 api/quiz-exercise-resources.ts
 api/hyperion-faq-resources.ts
 api/calendar-resources.ts
+api/competency-resources.ts
 api/quiz-exercise-creation-update-resources.ts
