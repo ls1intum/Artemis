@@ -6,6 +6,7 @@ import {
     TumAetUiButtonDirective,
     TumAetUiSelectComponent,
     TumAetUiTableDirective,
+    TumAetUiTableLayoutComponent,
     TumAetUiTableSortEvent,
     TumAetUiTableSortableColumnComponent,
     TumAetUiTagComponent,
@@ -46,6 +47,7 @@ const INTERACTION_SEVERITY: Record<FeatureInteraction, TumAetUiTagSeverity> = {
     templateUrl: './feature-usage-endpoints.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
+        TumAetUiTableLayoutComponent,
         FormsModule,
         FaIconComponent,
         TranslateDirective,
