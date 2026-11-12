@@ -6,57 +6,47 @@
         </div>
     }
     <div class="modal-body d-flex flex-column flex-grow-1 overflow-hidden">
-        <div class="form-group form-inline mb-3">
-            <span jhiTranslate="artemisApp.competency.importAll.search"></span>
-            <input
-                [attr.aria-label]="'artemisApp.competency.importAll.search' | artemisTranslate"
-                [(ngModel)]="searchTerm"
-                class="form-control ms-2"
-                name="searchCourse"
-                type="text"
-            />
-            <span class="ms-3" jhiTranslate="artemisApp.competency.import.importRelations"></span>
-            <input
-                [attr.aria-label]="'artemisApp.competency.import.importRelations' | artemisTranslate"
-                type="checkbox"
-                class="ms-2"
-                [(ngModel)]="importRelations"
-                name="importRelations"
-            />
-            @if (loading()) {
-                <span class="ms-3" jhiTranslate="loading"></span>
-            }
-        </div>
-        <div class="flex-grow-1 overflow-auto">
-            <table class="table table-striped align-middle">
-                <thead class="thead-dark">
+        <tumaet-ui-table-layout fill [loading]="loading()" [empty]="content().resultsOnPage.length === 0 && !loading()">
+            <div tumAetUiTableToolbar class="flex min-w-0 flex-1 items-center gap-2">
+                <input
+                    tumAetUiInput
+                    tumAetUiInputSize="small"
+                    type="search"
+                    name="searchCourse"
+                    class="max-w-lg min-w-24 flex-1"
+                    [placeholder]="'artemisApp.competency.importAll.search' | artemisTranslate"
+                    [attr.aria-label]="'artemisApp.competency.importAll.search' | artemisTranslate"
+                    [(ngModel)]="searchTerm"
+                />
+                <span class="flex-1"></span>
+                <label class="flex items-center gap-1 text-sm whitespace-nowrap">
+                    <input type="checkbox" [(ngModel)]="importRelations" name="importRelations" />
+                    <span jhiTranslate="artemisApp.competency.import.importRelations"></span>
+                </label>
+            </div>
+            <table tumAetUiTable size="small" striped [sortField]="sortedColumn" [sortOrder]="listSorting ? 1 : -1" (sortChange)="onTableSort($event)">
+                <thead>
                     <!-- ID column, always present -->
-                    <tr (sortChange)="sortRows()" [(ascending)]="listSorting" [(predicate)]="sortedColumn" class="flex-row" jhiSort>
-                        <th class="col-1" jhiSortBy="ID">
-                            <span>#</span>
-                            <fa-icon [icon]="faSort" />
-                        </th>
+                    <tr>
+                        <th class="w-16" tumAetUiSortableColumn="ID"><span>#</span></th>
                         @for (column of columns; track column) {
-                            <th class="col-4" [jhiSortBy]="column.name">
+                            <th [tumAetUiSortableColumn]="column.name">
                                 <span>{{ 'artemisApp.competency.importAll.table.' + column.name | artemisTranslate }}</span>
-                                <fa-icon [icon]="faSort" />
                             </th>
                         }
-                        <th class="col-1"></th>
+                        <th class="w-24"></th>
                     </tr>
                 </thead>
                 <tbody>
                     @for (course of content().resultsOnPage; track trackId($index, course)) {
-                        <tr class="flex-row">
-                            <td class="col-1">
-                                <span>{{ course.id }}</span>
-                            </td>
+                        <tr>
+                            <td>{{ course.id }}</td>
                             @for (column of columns; track column) {
-                                <td class="text-break col-4">
+                                <td class="break-words">
                                     <jhi-search-highlight [result]="column.getProperty(course)" [term]="searchTerm" />
                                 </td>
                             }
-                            <td class="col-1">
+                            <td>
                                 <jhi-button
                                     [btnType]="ButtonType.SECONDARY"
                                     (onClick)="selectImport(course)"
@@ -68,9 +58,15 @@
                     }
                 </tbody>
             </table>
-        </div>
-        <div class="d-flex justify-content-between p-2 mt-auto">
-            <p-paginator [first]="(state.page - 1) * state.pageSize" [rows]="state.pageSize" [totalRecords]="total()" (onPageChange)="onPaginatorPageChange($event)" />
-        </div>
+            <tumaet-ui-paginator
+                tumAetUiTableFooter
+                [page]="state.page - 1"
+                [pageSize]="state.pageSize"
+                [totalRecords]="total()"
+                [showRowsPerPage]="false"
+                [showCurrentPageReport]="false"
+                (pageChange)="onPageChange($event + 1)"
+            />
+        </tumaet-ui-table-layout>
     </div>
 </form>

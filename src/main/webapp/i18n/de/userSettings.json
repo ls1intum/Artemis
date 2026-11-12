@@ -80,8 +80,19 @@
             "notificationSettings": "Benachrichtigungen",
             "notificationSettingsFilterInfo": "Diese Einstellungen filtern auch die Seitenleiste für Mitteilungen",
             "scienceSettings": "Forschung",
-            "scienceSettingsFeatureDisabled": "Die Funktion ist derzeit deaktiviert. Deine Einstellung wird angewendet, sobald sie wieder aktiviert wird.",
-            "scienceSettingsInfo": "Artemis kann Daten erfassen, um Forschenden dabei zu helfen, Lernverhalten zu untersuchen und die Plattform zu verbessern.",
+            "scienceSettingsPage": {
+                "title": "Kursinteraktionsdaten für die Forschung",
+                "description": "Die Erhebung von Kursinteraktionsdaten ist freiwillig und wird pro Kurs konfiguriert. Du kannst deine Entscheidung jederzeit ändern oder Kursinteraktionsdaten für einen Kurs löschen.",
+                "disabled": " | Erhebung von Kursinteraktionsdaten derzeit deaktiviert",
+                "contribute": "Beitragen",
+                "deleteData": "Kursinteraktionsdaten für {{ courseTitle }} löschen",
+                "deleteDataQuestion": "Möchtest du deine Kursinteraktionsdaten für {{ courseTitle }} löschen? Zustimmungs-Audit-Ereignisse bleiben erhalten.",
+                "deleteDataSuccess": "Deine Kursinteraktionsdaten für {{ courseTitle }} wurden gelöscht.",
+                "thisCourse": "diesen Kurs",
+                "loadFailed": "Deine Entscheidungen zur Erhebung von Kursinteraktionsdaten konnten nicht geladen werden. Versuche es erneut, um den aktuellen Stand zu sehen.",
+                "empty": "Es sind keine Kurse für die Erhebung von Kursinteraktionsdaten konfiguriert.",
+                "featureDisabled": "Die Erhebung von Kursinteraktionsdaten ist derzeit plattformweit deaktiviert. Deine bisherigen Entscheidungen bleiben erhalten und gelten wieder, sobald sie reaktiviert wird."
+            },
             "idePreferencesPage": {
                 "description": "Wähle die IDEs, die du für das Öffnen von Programmieraufgaben verwenden möchtest.",
                 "default": "Standard",
@@ -236,7 +247,6 @@
             "categories": {
                 "LLMUsage": "KI-Erfahrungseinstellungen",
                 "NOTIFICATION_SETTINGS": "Benachrichtigungseinstellungen",
-                "SCIENCE_SETTINGS": "Forschungseinstellungen",
                 "SSH_SETTINGS": "SSH Einstellungen",
                 "VCS_TOKEN_SETTINGS": "VCS Tokeneinstellungen",
                 "PASSKEYS": "Passkey-Einstellungen",

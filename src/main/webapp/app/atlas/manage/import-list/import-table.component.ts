@@ -5,15 +5,20 @@ import { SearchResult, SortingOrder } from 'app/foundation/pagination/pageable-t
 import { lastValueFrom } from 'rxjs';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { onError } from 'app/foundation/util/global.utils';
-import { faSort, faSortDown, faSortUp, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { BaseApiHttpService } from 'app/foundation/service/base-api-http.service';
 import { SearchHighlightComponent } from 'app/admin/shared/search-highlight.component';
-import { PaginatorModule, PaginatorState } from 'primeng/paginator';
+import {
+    TumAetUiButtonDirective,
+    TumAetUiInputDirective,
+    TumAetUiPaginatorComponent,
+    TumAetUiTableDirective,
+    TumAetUiTableLayoutComponent,
+    TumAetUiTableSortEvent,
+    TumAetUiTableSortableColumnComponent,
+} from '@tumaet/ui-angular';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { FormsModule } from '@angular/forms';
-import { CommonModule } from '@angular/common';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 /**
@@ -28,9 +33,19 @@ export type Column<T extends BaseEntity> = {
 
 @Component({
     selector: 'jhi-import-table',
-    imports: [PaginatorModule, ArtemisTranslatePipe, TranslateDirective, FontAwesomeModule, FormsModule, SearchHighlightComponent, CommonModule],
+    imports: [
+        TumAetUiPaginatorComponent,
+        TumAetUiTableDirective,
+        TumAetUiTableLayoutComponent,
+        TumAetUiTableSortableColumnComponent,
+        TumAetUiButtonDirective,
+        TumAetUiInputDirective,
+        ArtemisTranslatePipe,
+        TranslateDirective,
+        FormsModule,
+        SearchHighlightComponent,
+    ],
     templateUrl: './import-table.component.html',
-    styleUrl: './import-table.component.scss',
 })
 export class ImportTableComponent<T extends BaseEntity> {
     private readonly alertService = inject(AlertService);
@@ -38,15 +53,9 @@ export class ImportTableComponent<T extends BaseEntity> {
 
     protected readonly SortingOrder = SortingOrder;
 
-    protected readonly faSort = faSort;
-    protected readonly faSortUp = faSortUp;
-    protected readonly faSortDown = faSortDown;
-    protected readonly faSpinner = faSpinner;
-
     columns = input.required<Column<T>[]>();
     readonly columnBaseTranslationKey = input.required<string>();
     disabledIds = input<number[]>([]);
-    readonly numberOfColumns = computed(() => this.columns().length + 2);
 
     readonly onRowSelection = output<T>();
 
@@ -119,21 +128,17 @@ export class ImportTableComponent<T extends BaseEntity> {
         return cloneWith(searchResults, { resultsOnPage: searchResults.resultsOnPage?.filter((entity) => !this.disabledIds().includes(entity.id!)) });
     }
 
-    protected async setSortedColumn(sortedColumn: string): Promise<void> {
-        const sortingOrder = this.sortingOrder() === SortingOrder.ASCENDING ? SortingOrder.DESCENDING : SortingOrder.ASCENDING;
-        this.sortingOrder.set(this.sortedColumn() === sortedColumn ? sortingOrder : this.DEFAULT_SORTING_ORDER);
-        this.sortedColumn.set(sortedColumn);
+    protected async onSortChange(event: TumAetUiTableSortEvent): Promise<void> {
+        // Derive the order from the component state rather than the event: the table input lags behind until the next change detection.
+        const toggled = this.sortingOrder() === SortingOrder.ASCENDING ? SortingOrder.DESCENDING : SortingOrder.ASCENDING;
+        this.sortingOrder.set(this.sortedColumn() === event.field ? toggled : this.DEFAULT_SORTING_ORDER);
+        this.sortedColumn.set(event.field);
         await this.loadData();
     }
 
     protected async setPage(page: number): Promise<void> {
         this.page.set(page);
         await this.loadData();
-    }
-
-    /** PrimeNG paginator page change (0-indexed) converted to the 1-indexed page used here. */
-    protected onPageChange(event: PaginatorState): void {
-        void this.setPage((event.page ?? 0) + 1);
     }
 
     protected search(): void {
