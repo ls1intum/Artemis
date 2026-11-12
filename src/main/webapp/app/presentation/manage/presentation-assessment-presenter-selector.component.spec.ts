@@ -129,6 +129,16 @@ describe('PresentationAssessmentPresenterSelectorComponent', () => {
         expect(component.presenters()).toEqual([bob, assignedPresenter]);
     });
 
+    it('should show the empty state only while there are no presenters', () => {
+        fixture.componentRef.setInput('presenters', []);
+        fixture.detectChanges();
+        expect(fixture.debugElement.query(By.css('[data-testid="table-empty"]'))).not.toBeNull();
+
+        fixture.componentRef.setInput('presenters', [assignedPresenter]);
+        fixture.detectChanges();
+        expect(fixture.debugElement.query(By.css('[data-testid="table-empty"]'))).toBeNull();
+    });
+
     it('should toggle login sorting when the column header is clicked', () => {
         const bob = Object.assign(new User(), { id: 2, login: 'bob', name: 'Aaron' });
         fixture.componentRef.setInput('presenters', [assignedPresenter, bob]);

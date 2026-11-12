@@ -1,11 +1,11 @@
 <!-- The list stays in the DOM while a quiz is previewed, so that the search, the page and the focus target of the row survive. -->
 <div data-testid="exercise-import-list" class="p-4! pt-2!" [hidden]="preview() !== undefined">
     <div class="mb-4! flex flex-wrap items-center gap-2">
-        <span jhiTranslate="artemisApp.exercise.import.search"></span>:
         <input
             tumAetUiInput
             [attr.aria-label]="'artemisApp.exercise.import.search' | artemisTranslate"
-            class="w-full mx-2"
+            [attr.placeholder]="'artemisApp.exercise.import.search' | artemisTranslate"
+            class="min-w-48 flex-1"
             type="text"
             name="searchExcercise"
             [(ngModel)]="searchTerm"
@@ -22,31 +22,29 @@
             <span class="ms-3!" jhiTranslate="artemisApp.exercise.import.loading"></span>
         }
     </div>
-    <div class="overflow-x-auto">
-        <table tumAetUiTable striped class="w-full border-collapse text-sm [&_tbody_tr:nth-child(odd)]:bg-surface-raised">
-            <thead class="bg-surface-raised">
-                <tr jhiSort [(predicate)]="sortedColumn" [(ascending)]="listSorting" (sortChange)="sortRows()">
-                    <th jhiSortBy="ID" class="w-1/12">
+    <tumaet-ui-table-layout
+        [loading]="loading()"
+        [empty]="content().resultsOnPage.length === 0 && !loading()"
+        class="[--table-layout-offset:22rem] max-md:[--table-layout-offset:30rem]"
+    >
+        <table tumAetUiTable size="small" striped [sortField]="sortedColumn" [sortOrder]="listSorting ? 1 : -1" (sortChange)="onTableSort($event)">
+            <thead>
+                <tr>
+                    <th [tumAetUiSortableColumn]="'ID'" class="w-1/12">
                         <span>#</span>
-                        <fa-icon [icon]="faSort" />
                     </th>
-                    <th jhiSortBy="TITLE" class="w-1/3">
+                    <th [tumAetUiSortableColumn]="'TITLE'" class="w-1/3">
                         <span jhiTranslate="artemisApp.exercise.import.table.title"></span>
-                        <fa-icon [icon]="faSort" />
                     </th>
                     @if (selectedExerciseType() === ExerciseType.PROGRAMMING) {
-                        <th jhiSortBy="PROGRAMMING_LANGUAGE" class="w-1/6">
+                        <th [tumAetUiSortableColumn]="'PROGRAMMING_LANGUAGE'" class="w-1/6">
                             <span jhiTranslate="artemisApp.exercise.import.table.language"></span>
-                            <fa-icon [icon]="faSort" />
                         </th>
                     }
-                    <th jhiSortBy="COURSE_TITLE" class="w-1/3">
+                    <th [tumAetUiSortableColumn]="'COURSE_TITLE'" [disabled]="isCourseFilter() && isExamFilter()" class="w-1/3">
                         <span [hidden]="!isCourseFilter()" jhiTranslate="artemisApp.exercise.import.table.course"></span>
                         <span [hidden]="!(isCourseFilter() && isExamFilter())"> | </span>
                         <span [hidden]="!isExamFilter()" jhiTranslate="artemisApp.exercise.import.table.exam"></span>
-                        @if (!(isCourseFilter() && isExamFilter())) {
-                            <fa-icon [icon]="faSort" />
-                        }
                     </th>
                     <th class="w-1/6" [hidden]="!(isCourseFilter() && isExamFilter())">
                         <span jhiTranslate="artemisApp.exercise.import.table.examQuestion"></span>
@@ -104,10 +102,9 @@
                 }
             </tbody>
         </table>
-    </div>
-    <div class="flex justify-between p-2">
-        <!-- The search API supplies page counts, not an exact number of records. -->
+        <!-- The search API supplies page counts, not an exact number of records, so the count is not shown. -->
         <tumaet-ui-paginator
+            tumAetUiTableFooter
             [page]="state.page - 1"
             [pageSize]="state.pageSize"
             [totalRecords]="total()"
@@ -115,7 +112,7 @@
             [showCurrentPageReport]="false"
             (pageChange)="onPageChange($event + 1)"
         />
-    </div>
+    </tumaet-ui-table-layout>
 </div>
 @if (preview(); as current) {
     <!-- The preview replaces the list inside the dialog that hosts this component. A dialog of its own would have to stack above that
