@@ -48,7 +48,7 @@ public interface ResultGradeRepository extends ArtemisJpaRepository<Result, Long
             WHERE r.submission.participation.id = :participationId
                 AND r.score IS NOT NULL
                 AND r.completionDate IS NOT NULL
-                AND (r.assessmentType IS NULL OR r.assessmentType <> de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC_ATHENA OR r.successful = TRUE)
+                AND (r.assessmentType IS NULL OR r.assessmentType <> de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC_ATHENA OR (TYPE(r.submission.participation.exercise) <> ProgrammingExercise AND r.successful = TRUE))
             ORDER BY r.completionDate DESC, r.id DESC
             """)
     List<Long> findGradeRelevantResultIdsByParticipationId(@Param("participationId") long participationId, Pageable pageable);

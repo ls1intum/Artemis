@@ -555,6 +555,7 @@ class Lti13ServiceTest {
     @Test
     void onNewResultNoResultForUser() {
         Course course = createOnlineCourse();
+        course.setOnlineCourse(true);
         User user = new User();
         user.setId(1L);
         Exercise exercise = new ProgrammingExercise();
@@ -574,6 +575,8 @@ class Lti13ServiceTest {
 
         lti13Service.onNewResult(participation);
 
+        verify(resultGradeRepository).findLatestGradeRelevantResultWithCompletionDate(participation.getId());
+        verifyNoInteractions(tokenRetriever);
         verifyNoInteractions(restTemplate);
     }
 
@@ -588,6 +591,7 @@ class Lti13ServiceTest {
         result.addFeedback(feedback);
 
         Course course = createOnlineCourse();
+        course.setOnlineCourse(true);
         User user = new User();
         user.setId(1L);
         Exercise exercise = new ProgrammingExercise();
@@ -607,6 +611,8 @@ class Lti13ServiceTest {
 
         lti13Service.onNewResult(participation);
 
+        verify(resultGradeRepository).findLatestGradeRelevantResultWithCompletionDate(participation.getId());
+        verifyNoInteractions(tokenRetriever);
         verifyNoInteractions(restTemplate);
     }
 
@@ -626,6 +632,7 @@ class Lti13ServiceTest {
         Exercise exercise = state.exercise();
         StudentParticipation participation = state.participation();
         Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
+        course.setOnlineCourse(true);
         ClientRegistration clientRegistration = state.clientRegistration();
 
         doReturn(course).when(courseRepository).findByIdElseThrow(course.getId());
@@ -637,6 +644,8 @@ class Lti13ServiceTest {
 
         lti13Service.onNewResult(participation);
 
+        verify(resultGradeRepository).findLatestGradeRelevantResultWithCompletionDate(participation.getId());
+        verify(tokenRetriever).getToken(clientRegistration, Scopes.AGS_SCORE);
         verifyNoInteractions(restTemplate);
     }
 

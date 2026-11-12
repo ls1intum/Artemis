@@ -717,6 +717,28 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
         assertThat(results).extracting(Result::getId).contains(athenaResult.getId());
     }
 
+    @ParameterizedTest
+    @ValueSource(booleans = { false, true })
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetParticipationWithLatestResult_keepsBuildFeedbackFirstWhenAthenaIsNewer(boolean athenaCompleted) throws Exception {
+        startExercise();
+        var build = addStudentParticipationWithResult(AssessmentType.AUTOMATIC, ZonedDateTime.now().minusHours(1));
+        var participation = studentParticipationRepository.findWithEagerResultsAndFeedbackById(build.getSubmission().getParticipation().getId()).orElseThrow();
+        Result athena = participationUtilService.addResultToSubmission(participation, participation.getSubmissions().iterator().next());
+        athena.rated(true).score(60.0).assessmentType(AssessmentType.AUTOMATIC_ATHENA).completionDate(ZonedDateTime.now().plusMinutes(athenaCompleted ? -5 : 5));
+        athena.setSuccessful(athenaCompleted ? Boolean.TRUE : null);
+        athena = participationUtilService.addVariousVisibilityFeedbackToResult(athena);
+
+        var response = getJson(participationsBaseUrl + participation.getId() + "/student-participation-with-latest-result-and-feedbacks");
+        var results = response.path("submissions").get(0).path("results");
+
+        assertThat(results).hasSize(2);
+        assertThat(results.get(0).path("id").asLong()).isEqualTo(build.getId());
+        assertThat(results.get(0).path("score").asDouble()).isEqualTo(100.0);
+        assertThat(results.get(0).path("feedbacks")).isNotEmpty();
+        assertThat(results.get(1).path("id").asLong()).isEqualTo(athena.getId());
+    }
+
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetParticipationWithAllResults_showsAthenaBeforeAssessmentDueDate() throws Exception {

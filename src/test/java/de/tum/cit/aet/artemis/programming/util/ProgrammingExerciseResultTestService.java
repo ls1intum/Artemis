@@ -61,7 +61,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.StaticCodeAnalysisTool;
 import de.tum.cit.aet.artemis.programming.dto.BuildResultNotification;
-import de.tum.cit.aet.artemis.programming.dto.ResultDTO;
+import de.tum.cit.aet.artemis.programming.dto.ResultResponseDTO;
 import de.tum.cit.aet.artemis.programming.repository.ParticipationVCSAccessTokenRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.programming.repository.SolutionProgrammingExerciseParticipationRepository;
@@ -444,7 +444,7 @@ public class ProgrammingExerciseResultTestService {
 
         // ensure that hidden feedback got filtered out (test2 is not active, test3 is hidden -> only 1 feedback visible)
         verify(websocketMessagingService, timeout(2000)).sendMessageToUser(eq(userPrefix + "student1"), userTopic("/topic/newResults"), argThat(arg -> {
-            if (!(arg instanceof ResultDTO resultDTO)) {
+            if (!(arg instanceof ResultResponseDTO resultDTO)) {
                 return false;
             }
             if (resultDTO.feedbacks().size() != 1) {
@@ -484,7 +484,7 @@ public class ProgrammingExerciseResultTestService {
 
         // ensure that the test case is set but the name does not get send to the student
         verify(websocketMessagingService, timeout(2000)).sendMessageToUser(eq(userPrefix + "student1"), userTopic("/topic/newResults"),
-                argThat(arg -> arg instanceof ResultDTO resultDTO && resultDTO.feedbacks().size() == 1 && resultDTO.feedbacks().getFirst().testCase().testName() == null));
+                argThat(arg -> arg instanceof ResultResponseDTO resultDTO && resultDTO.feedbacks().size() == 1 && resultDTO.feedbacks().getFirst().testCase().testName() == null));
     }
 
     // Test

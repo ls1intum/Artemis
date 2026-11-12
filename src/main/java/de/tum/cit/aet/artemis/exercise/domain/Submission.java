@@ -151,7 +151,7 @@ public abstract class Submission extends DomainObject implements Comparable<Subm
     }
 
     /**
-     * Returns the highest-id result eligible for grading selection, excluding pending and failed Athena requests.
+     * Returns the highest-id result eligible for grading selection, excluding programming Athena feedback and pending or failed Athena requests.
      * Ordinary failed automatic results and manual drafts keep their existing ordering and publication checks in callers.
      * The complete result history remains available through {@link #getResults()} and {@link #getLatestResult()}.
      *
@@ -160,8 +160,8 @@ public abstract class Submission extends DomainObject implements Comparable<Subm
     @Nullable
     @JsonIgnore
     public Result getLatestGradingResult() {
-        Result latestResult = results.stream().filter(Objects::nonNull).filter(result -> !result.isAthenaBased() || Boolean.TRUE.equals(result.isSuccessful())).max(BY_ID)
-                .orElse(null);
+        Result latestResult = results.stream().filter(Objects::nonNull)
+                .filter(result -> !result.isAthenaBased() || (!(this instanceof ProgrammingSubmission) && Boolean.TRUE.equals(result.isSuccessful()))).max(BY_ID).orElse(null);
         if (latestResult != null) {
             latestResult.setSubmission(this);
         }
@@ -169,7 +169,7 @@ public abstract class Submission extends DomainObject implements Comparable<Subm
     }
 
     /**
-     * Returns the most recent completed assessment or successfully generated Athena feedback.
+     * Returns the most recent completed official assessment, excluding programming Athena feedback.
      * This ignores draft results that might exist when an assessment lock was created but not
      * finished. Pending Athena requests use a future completion date as their lease, and failed requests have a
      * terminal timestamp too; neither is an assessed score.
@@ -180,8 +180,8 @@ public abstract class Submission extends DomainObject implements Comparable<Subm
     @JsonIgnore
     public Result getLatestCompletedResult() {
         Result latestResult = results.stream().filter(result -> result != null && result.getCompletionDate() != null)
-                .filter(result -> !result.isAthenaBased() || Boolean.TRUE.equals(result.isSuccessful())).max(Comparator.comparing(Result::getCompletionDate).thenComparing(BY_ID))
-                .orElse(null);
+                .filter(result -> !result.isAthenaBased() || (!(this instanceof ProgrammingSubmission) && Boolean.TRUE.equals(result.isSuccessful())))
+                .max(Comparator.comparing(Result::getCompletionDate).thenComparing(BY_ID)).orElse(null);
 
         if (latestResult != null) {
             latestResult.setSubmission(this);

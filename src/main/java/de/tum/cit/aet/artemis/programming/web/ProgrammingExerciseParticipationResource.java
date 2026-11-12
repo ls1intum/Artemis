@@ -78,7 +78,7 @@ import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseStudentParticip
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingParticipationLatestResultDTO;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingSubmissionWithResultsDTO;
 import de.tum.cit.aet.artemis.programming.dto.RepoNameProgrammingStudentParticipationDTO;
-import de.tum.cit.aet.artemis.programming.dto.ResultDTO;
+import de.tum.cit.aet.artemis.programming.dto.ResultResponseDTO;
 import de.tum.cit.aet.artemis.programming.dto.VcsAccessLogDTO;
 import de.tum.cit.aet.artemis.programming.repository.AuxiliaryRepositoryRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
@@ -191,8 +191,8 @@ public class ProgrammingExerciseParticipationResource {
         return ResponseEntity.ok(canSeeParticipantInformation(participation) ? response : response.withoutParticipantInformation());
     }
 
-    private static List<ResultDTO> mapResults(Collection<Result> results) {
-        return results.stream().filter(Objects::nonNull).map(ResultDTO::ofNested).toList();
+    private static List<ResultResponseDTO> mapResults(Collection<Result> results) {
+        return results.stream().filter(Objects::nonNull).map(ResultResponseDTO::ofNested).toList();
     }
 
     /**

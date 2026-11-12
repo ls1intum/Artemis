@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Test;
 
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 
 /**
@@ -37,7 +38,7 @@ class SubmissionResultAccessorTest {
     }
 
     @Test
-    void latestCompletedResultIgnoresFailedAthenaFeedbackButKeepsSuccessfulFeedback() {
+    void latestCompletedResultIgnoresFailedAndSuccessfulAthenaFeedback() {
         Result assessed = result(1L, AssessmentType.MANUAL);
         assessed.setCompletionDate(ZonedDateTime.now().minusHours(1));
         Result athena = result(2L, AssessmentType.AUTOMATIC_ATHENA);
@@ -47,11 +48,11 @@ class SubmissionResultAccessorTest {
 
         assertThat(submission.getLatestCompletedResult()).isEqualTo(assessed);
         athena.setSuccessful(true);
-        assertThat(submission.getLatestCompletedResult()).isEqualTo(athena);
+        assertThat(submission.getLatestCompletedResult()).isEqualTo(assessed);
     }
 
     @Test
-    void latestGradingResultIgnoresUnfinishedAthenaWithoutChangingHistory() {
+    void latestGradingResultIgnoresAthenaWithoutChangingHistory() {
         Result assessed = result(1L, AssessmentType.MANUAL);
         Result athena = result(2L, AssessmentType.AUTOMATIC_ATHENA);
         athena.setCompletionDate(ZonedDateTime.now().plusMinutes(5));
@@ -61,7 +62,7 @@ class SubmissionResultAccessorTest {
         athena.setSuccessful(false);
         assertThat(submission.getLatestGradingResult()).isSameAs(assessed);
         athena.setSuccessful(true);
-        assertThat(submission.getLatestGradingResult()).isSameAs(athena);
+        assertThat(submission.getLatestGradingResult()).isSameAs(assessed);
         assertThat(submission.getLatestResult()).isSameAs(athena);
         assertThat(submission.getResults()).containsExactlyInAnyOrder(assessed, athena, null);
     }
@@ -82,13 +83,31 @@ class SubmissionResultAccessorTest {
     }
 
     @Test
-    void latestGradingResultReturnsNullWhenOnlyUnfinishedAthenaRequestsExist() {
+    void latestGradingResultReturnsNullWhenOnlyAthenaRequestsExist() {
         Result pending = result(1L, AssessmentType.AUTOMATIC_ATHENA);
         Submission submission = submissionWith(pending);
 
         assertThat(submission.getLatestGradingResult()).isNull();
         pending.setSuccessful(false);
         assertThat(submission.getLatestGradingResult()).isNull();
+        pending.setSuccessful(true);
+        assertThat(submission.getLatestGradingResult()).isNull();
+    }
+
+    @Test
+    void successfulTextAthenaAssessmentRemainsGradeRelevant() {
+        Result athena = result(1L, AssessmentType.AUTOMATIC_ATHENA);
+        athena.setCompletionDate(ZonedDateTime.now());
+        Submission submission = new TextSubmission();
+        submission.addResult(athena);
+        assertThat(submission.getLatestGradingResult()).isNull();
+        assertThat(submission.getLatestCompletedResult()).isNull();
+        athena.setSuccessful(false);
+        assertThat(submission.getLatestGradingResult()).isNull();
+        assertThat(submission.getLatestCompletedResult()).isNull();
+        athena.setSuccessful(true);
+        assertThat(submission.getLatestGradingResult()).isSameAs(athena);
+        assertThat(submission.getLatestCompletedResult()).isSameAs(athena);
     }
 
     private static Result result(long id, AssessmentType assessmentType) {
@@ -99,7 +118,7 @@ class SubmissionResultAccessorTest {
     }
 
     private static Submission submissionWith(Result... results) {
-        Submission submission = new TextSubmission();
+        Submission submission = new ProgrammingSubmission();
         submission.setResults(new HashSet<>(Arrays.asList(results)));
         return submission;
     }
@@ -195,7 +214,7 @@ class SubmissionResultAccessorTest {
     @Test
     void manualResultAccessorsToleratePlaceholdersLeftByDeletedResults() {
         Result manual = result(2L, AssessmentType.MANUAL);
-        Submission submission = new TextSubmission();
+        Submission submission = new ProgrammingSubmission();
         // The results are defensively null tolerant, so a null among them must not break the accessors.
         submission.setResults(new HashSet<>());
         submission.getResults().add(null);

@@ -528,3 +528,8 @@ export function breakCircularResultBackReferences(result: Result) {
         result.feedbacks.forEach((feedback) => (feedback.result = undefined));
     }
 }
+
+/** Programming AI feedback is preliminary; successful Athena assessments of other exercise types remain grade relevant. */
+export function isGradeRelevantResult(result: Result, exerciseType: ExerciseType | undefined): boolean {
+    return !isAthenaAIResult(result) || (exerciseType !== ExerciseType.PROGRAMMING && result.successful === true);
+}

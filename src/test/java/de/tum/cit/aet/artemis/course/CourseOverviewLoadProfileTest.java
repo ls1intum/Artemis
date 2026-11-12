@@ -40,6 +40,7 @@ import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.dto.CourseAvailableTabsDTO;
 import de.tum.cit.aet.artemis.course.dto.CourseExercisesForOverviewDTO;
 import de.tum.cit.aet.artemis.course.dto.CourseForOverviewDTO;
+import de.tum.cit.aet.artemis.course.dto.CoursesForDashboardDTO;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.dto.ExamForOverviewDTO;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
@@ -608,7 +609,8 @@ class CourseOverviewLoadProfileTest extends AbstractSpringIntegrationIndependent
 
     @ParameterizedTest
     @CsvSource({ "false, false, none", "false, true, none", "true, false, none", "true, true, none", "false, false, pending", "false, true, pending", "true, false, pending",
-            "true, true, pending", "false, false, failed", "false, true, failed", "true, false, failed", "true, true, failed" })
+            "true, true, pending", "false, false, failed", "false, true, failed", "true, false, failed", "true, true, failed", "false, false, completed",
+            "true, false, completed" })
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldRetainTheAutomaticResultUntilTheNewManualSubmissionIsReleased(boolean teamMode, boolean draft, String requestState) throws Exception {
         User student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
@@ -662,10 +664,22 @@ class CourseOverviewLoadProfileTest extends AbstractSpringIntegrationIndependent
             athenaRequest.setExerciseId(exercise.getId());
             athenaRequest.setAssessmentType(AssessmentType.AUTOMATIC_ATHENA);
             athenaRequest.setRated(true);
-            athenaRequest.setScore(0.0);
-            athenaRequest.setSuccessful(requestState.equals("pending") ? null : false);
+            athenaRequest.setScore(requestState.equals("completed") ? 60.0 : 0.0);
+            athenaRequest.setSuccessful(requestState.equals("pending") ? null : Boolean.valueOf(requestState.equals("completed")));
             athenaRequest.setCompletionDate(requestState.equals("pending") ? ZonedDateTime.now().plusMinutes(5) : ZonedDateTime.now().minusMinutes(5));
             resultTestRepository.saveAndFlush(athenaRequest);
+        }
+        if (requestState.equals("completed")) {
+            long exerciseId = exercise.getId();
+            long buildResultId = automaticResult.getId();
+            var dashboard = request.get("/api/course/courses/for-dashboard", HttpStatus.OK, CoursesForDashboardDTO.class);
+            var dashboardCourse = dashboard.courses().stream().filter(entry -> entry.course().id() == course.getId()).findFirst().orElseThrow();
+            var dashboardExercise = dashboardCourse.course().exercises().stream().filter(entry -> entry.id().equals(exerciseId)).findFirst().orElseThrow();
+            assertThat(dashboardExercise.overview().studentParticipations()).singleElement().satisfies(
+                    entry -> assertThat(entry.submissions()).singleElement().satisfies(submission -> assertThat(submission.results()).singleElement().satisfies(result -> {
+                        assertThat(result.id()).isEqualTo(buildResultId);
+                        assertThat(result.score()).isEqualTo(80.0);
+                    })));
         }
         var manualResult = new Result();
         manualResult.setSubmission(manualSubmission);

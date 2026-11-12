@@ -257,6 +257,9 @@ public class CourseOverviewExerciseService {
 
     private Optional<SubmissionOverviewDTO> visibleSubmission(ParticipationOverviewRowDTO submissionRow, List<ParticipationOverviewRowDTO> submissionRows,
             ExerciseForCourseOverviewDTO exercise, ZonedDateTime calculationTime) {
+        if (exercise.type() == ExerciseType.PROGRAMMING) {
+            submissionRows = submissionRows.stream().filter(row -> row.resultAssessmentType() != AssessmentType.AUTOMATIC_ATHENA).toList();
+        }
         ParticipationOverviewRowDTO latestResultRow = submissionRows.stream().filter(row -> row.resultId() != null)
                 .max(Comparator.comparingLong(ParticipationOverviewRowDTO::resultId)).orElse(null);
         if (latestResultRow != null && latestResultRow.resultAssessmentType() == AssessmentType.AUTOMATIC_ATHENA && !isGradeRelevant(latestResultRow)) {

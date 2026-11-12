@@ -32,7 +32,7 @@ import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestR
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
-import de.tum.cit.aet.artemis.programming.dto.ResultDTO;
+import de.tum.cit.aet.artemis.programming.dto.ResultResponseDTO;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingFeedbackSynthesizerService;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalVCTest;
@@ -146,7 +146,7 @@ class ExamTestRunFeedbackVisibilityTest extends AbstractSpringIntegrationLocalCI
 
         ArgumentCaptor<Object> payload = ArgumentCaptor.forClass(Object.class);
         verify(websocketMessagingService).sendMessageToUser(eq(instructor.getLogin()), any(WebsocketUserDestination.class), payload.capture());
-        ResultDTO pushedResult = (ResultDTO) payload.getValue();
+        ResultResponseDTO pushedResult = (ResultResponseDTO) payload.getValue();
         assertThat(pushedResult.feedbacks()).hasSize(1);
         assertThat(pushedResult.feedbacks().getFirst().testCase().id()).isEqualTo(alwaysVisibleTestCase.getId());
     }

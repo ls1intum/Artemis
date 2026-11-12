@@ -164,7 +164,7 @@ function calculateMinAndMaxForPointsAndScore(sidebarData: SidebarData) {
             maxAchievablePoints = updatedMaxValue;
 
             if (sidebarElement.studentParticipation) {
-                const currentExerciseAchievedScore = getLatestResultOfStudentParticipation(sidebarElement.studentParticipation, true)?.score;
+                const currentExerciseAchievedScore = getLatestResultOfStudentParticipation(sidebarElement.studentParticipation, true, sidebarElement.exercise.type)?.score;
 
                 if (currentExerciseAchievedScore !== undefined) {
                     const { updatedMinValue, updatedMaxValue } = getUpdatedMinAndMaxValues(minAchievedScore, maxAchievedScore, currentExerciseAchievedScore);

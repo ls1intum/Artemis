@@ -104,6 +104,7 @@ export class AthenaService {
                 return suggestions.map((suggestion) => {
                     const feedback = new Feedback();
                     feedback.credits = suggestion.credits;
+                    feedback.severity = suggestion.severity;
                     // Programming feedback suggestions are automatically accepted, so we can set the text directly:
                     feedback.text = FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER + suggestion.title;
                     feedback.detailText = suggestion.description;

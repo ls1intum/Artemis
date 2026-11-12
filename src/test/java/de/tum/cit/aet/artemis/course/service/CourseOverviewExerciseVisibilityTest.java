@@ -116,7 +116,7 @@ class CourseOverviewExerciseVisibilityTest {
                 Arguments.of(ExerciseType.PROGRAMMING, PAST, FUTURE, null, true, PAST, 20L, true, PAST, AssessmentType.MANUAL, false, false),
                 Arguments.of(ExerciseType.PROGRAMMING, PAST, null, null, true, PAST, 20L, true, null, AssessmentType.SEMI_AUTOMATIC, false, false),
                 Arguments.of(ExerciseType.PROGRAMMING, PAST, PAST, null, true, PAST, 20L, true, PAST, AssessmentType.MANUAL, true, true),
-                Arguments.of(ExerciseType.PROGRAMMING, PAST, FUTURE, null, true, PAST, 20L, true, null, AssessmentType.AUTOMATIC_ATHENA, true, true),
+                Arguments.of(ExerciseType.PROGRAMMING, PAST, FUTURE, null, true, PAST, 20L, true, null, AssessmentType.AUTOMATIC_ATHENA, true, false),
                 Arguments.of(ExerciseType.TEXT, PAST, FUTURE, null, true, PAST, 20L, true, PAST, AssessmentType.MANUAL, false, false),
                 Arguments.of(ExerciseType.TEXT, PAST, null, null, true, PAST, 20L, null, PAST, AssessmentType.MANUAL, false, false),
                 Arguments.of(ExerciseType.TEXT, PAST, null, null, true, PAST, 20L, true, PAST, AssessmentType.MANUAL, true, true));
@@ -131,8 +131,8 @@ class CourseOverviewExerciseVisibilityTest {
 
         var submission = response.exercises().iterator().next().studentParticipations().iterator().next().submissions().iterator().next();
         assertThat(submission.results()).singleElement().satisfies(result -> {
-            assertThat(result.id()).isEqualTo(20L);
-            assertThat(result.assessmentType()).isEqualTo(AssessmentType.AUTOMATIC_ATHENA);
+            assertThat(result.id()).isEqualTo(19L);
+            assertThat(result.assessmentType()).isEqualTo(AssessmentType.AUTOMATIC);
         });
     }
 
