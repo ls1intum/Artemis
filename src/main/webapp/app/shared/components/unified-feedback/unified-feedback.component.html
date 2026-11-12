@@ -1,3 +1,4 @@
+@let compact = assessmentLayout() && !editable();
 <div class="unified-feedback" [ngClass]="inferredAlertClass()" [class.unified-feedback--assessment]="assessmentLayout()">
     <div class="unified-feedback-content">
         @if (inferredReference() && showReference()) {
@@ -7,8 +8,8 @@
         }
 
         <div class="unified-feedback-main">
-            <div class="unified-feedback-header">
-                <div class="unified-feedback-header-left">
+            <div class="unified-feedback-header" [class]="compact ? 'flex-row! items-center! mb-2!' : ''">
+                <div class="unified-feedback-header-left" [class]="compact ? 'flex-row! items-center!' : ''">
                     <span class="unified-feedback-icon-badge">
                         <fa-icon [icon]="inferredIcon()" class="unified-feedback-icon" />
                     </span>
@@ -32,10 +33,12 @@
                             ></textarea>
                         </label>
                     } @else if (showTitle() && inferredTitle() && (!assessmentLayout() || !feedback()?.gradingInstruction || title())) {
-                        <span class="unified-feedback-title" [tumAetUiTooltip]="inferredTitle()!">{{ inferredTitle() }}</span>
+                        <span class="unified-feedback-title" [class]="compact ? 'whitespace-normal! [overflow-wrap:anywhere]' : ''" [tumAetUiTooltip]="inferredTitle()!">{{
+                            inferredTitle()
+                        }}</span>
                     }
                 </div>
-                <div class="unified-feedback-header-right">
+                <div class="unified-feedback-header-right" [class]="compact ? 'contents!' : ''">
                     @if (editable()) {
                         @if (assessmentLayout() && feedback()?.gradingInstruction) {
                             <div class="unified-feedback-points" data-testid="unified-feedback-points" [ngClass]="'unified-feedback-points--' + pointsSeverity()">
@@ -63,7 +66,12 @@
                             </div>
                         }
                     } @else if (showPoints()) {
-                        <div class="unified-feedback-points" data-testid="unified-feedback-points" [ngClass]="'unified-feedback-points--' + pointsSeverity()">
+                        <div
+                            class="unified-feedback-points"
+                            [class]="compact ? '-order-1' : ''"
+                            data-testid="unified-feedback-points"
+                            [ngClass]="'unified-feedback-points--' + pointsSeverity()"
+                        >
                             {{ pointsLabel() }}
                         </div>
                         @if (isSubsequentFeedback()) {
@@ -72,7 +80,7 @@
                     }
                     @if (editable() || (assessmentLayout() && !readOnly())) {
                         <!-- eslint-disable-next-line @angular-eslint/template/interactive-supports-focus -- This toolbar only isolates its nested controls from the feedback row. -->
-                        <div class="unified-feedback-toolbar" (click)="$event.stopPropagation()" (keydown.enter)="stopToolbarEnterPropagation($event)">
+                        <div class="unified-feedback-toolbar" [class.ms-auto]="compact" (click)="$event.stopPropagation()" (keydown.enter)="stopToolbarEnterPropagation($event)">
                             <ng-content select="[unifiedFeedbackViewControls]" />
                             @if (editable() && !readOnly() && feedback()?.gradingInstruction) {
                                 <jhi-grading-instruction-link-icon [feedback]="feedback()!" (linkRemoved)="instructionUnlinked.emit()" />
@@ -168,9 +176,6 @@
                     <jhi-assessment-correction-round-badge [feedback]="fb" [highlightDifferences]="highlightDifferences()" />
                 }
             } @else if (feedbackContent()) {
-                @if (assessmentLayout()) {
-                    <span class="unified-feedback-section-label">{{ 'artemisApp.assessment.detail.feedback' | artemisTranslate }}</span>
-                }
                 <div class="unified-feedback-text" data-testid="unified-feedback-text" [innerHTML]="feedbackContent()"></div>
             }
             @if (editable() && feedback() && Feedback.isFeedbackSuggestion(feedback()!)) {

@@ -34,16 +34,16 @@
             </button>
         }
     </ng-container>
-    <div unifiedFeedbackFooter class="inline-feedback-actions">
-        @if (!readOnly()) {
-            @if (!viewOnly()) {
+    <ng-container ngProjectAs="[unifiedFeedbackFooter]">
+        @if (!readOnly() && !viewOnly()) {
+            <div class="inline-feedback-actions">
                 <button tumAetUiButton size="small" variant="outlined" severity="secondary" type="button" data-testid="feedback-cancel" (click)="cancelFeedback()">
                     <fa-icon [icon]="faBan" /><span jhiTranslate="entity.action.cancel"></span>
                 </button>
                 <button tumAetUiButton size="small" type="button" data-testid="feedback-save" [disabled]="!saveEnabled()" (click)="updateFeedback()">
                     <fa-icon [icon]="faSave" /><span jhiTranslate="entity.action.save"></span>
                 </button>
-            }
+            </div>
         }
-    </div>
+    </ng-container>
 </jhi-unified-feedback>
