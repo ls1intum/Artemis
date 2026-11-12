@@ -14,10 +14,10 @@ public class BinaryFileExtensionConfiguration {
      */
     private static final Set<String> binaryFileExtensions = Set.of(
             // Images
-            ".png", ".jpg", ".jpeg", ".heic", ".gif", ".tiff", ".psd", ".bmp", ".svg",
+            ".png", ".jpg", ".jpeg", ".heic", ".gif", ".tiff", ".psd", ".bmp",
 
             // Documents
-            ".pdf", ".doc", ".docx", ".xls", ".xlsx", ".ppt", ".pptx", ".pages", ".numbers", ".key", ".odt", ".ipynb",
+            ".pdf", ".doc", ".docx", ".xls", ".xlsx", ".ppt", ".pptx", ".pages", ".numbers", ".key", ".odt",
 
             // Compressed files
             ".zip", ".rar", ".7z", ".tar", ".gz", ".bz2", ".xz", ".lzma", ".lz4", ".zst", ".tgz",
