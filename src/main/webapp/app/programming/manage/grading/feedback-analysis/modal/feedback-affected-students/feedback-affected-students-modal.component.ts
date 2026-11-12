@@ -1,3 +1,4 @@
+import { TumAetUiTableDirective, TumAetUiTableLayoutComponent } from '@tumaet/ui-angular';
 import { Component, effect, inject, input, signal, untracked } from '@angular/core';
 
 import { FeedbackAffectedStudentDTO, FeedbackAnalysisService, FeedbackDetail } from 'app/programming/manage/grading/feedback-analysis/service/feedback-analysis.service';
@@ -11,7 +12,7 @@ import { RepositoryType } from 'app/programming/shared/code-editor/model/code-ed
 @Component({
     selector: 'jhi-affected-students-modal',
     templateUrl: './feedback-affected-students-modal.component.html',
-    imports: [CodeButtonComponent, TranslateDirective],
+    imports: [CodeButtonComponent, TranslateDirective, TumAetUiTableDirective, TumAetUiTableLayoutComponent],
     providers: [FeedbackAnalysisService],
 })
 export class AffectedStudentsModalComponent {

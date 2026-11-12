@@ -76,6 +76,8 @@ Artemis also pins the restrictive rendering profile of the diagram renderer at s
 
 ### Build Agent Authentication
 
+Which components may connect to each other, and how to check that your network follows this, is described in the [network model](/admin/production-setup/network-model).
+
 Build agents clone repositories from the core nodes. A clone is only served when the caller is a known agent, is calling from an address that agent is connected from, and is asking for a repository it currently has a build job for.
 
 **Choose in this order.** The first two need no secret from you at all — the agents establish their own credentials at startup and per build job — and both are scoped to the build job being run. The third is a shared secret that opens everything, and Artemis refuses to start with it wherever one of the first two can do the work.

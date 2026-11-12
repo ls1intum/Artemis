@@ -18,6 +18,7 @@ const sidebars: SidebarsConfig = {
             },
             items: [
                 'production-setup/security',
+                'production-setup/network-model',
                 'production-setup/hardening-checklist',
                 'production-setup/integrated-code-lifecycle-setup',
                 'production-setup/build-runners',
