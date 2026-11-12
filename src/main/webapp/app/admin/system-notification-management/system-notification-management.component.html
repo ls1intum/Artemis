@@ -7,108 +7,121 @@
         </a>
     </div>
     @if (notifications(); as notificationList) {
-        <table
-            tumAetUiTable
-            [sortField]="predicate()"
-            [sortOrder]="reverse() ? 1 : -1"
-            (sortChange)="onTableSort($event)"
-            size="small"
-            class="mt-3"
-            aria-describedby="system-notification-management-page-heading"
-            data-testid="system-notification-table"
-        >
-            <thead>
-                <tr>
-                    <th scope="col" [tumAetUiSortableColumn]="'id'">
-                        <span jhiTranslate="global.field.id"></span>
-                    </th>
-                    <th scope="col" [tumAetUiSortableColumn]="'title'">
-                        <span jhiTranslate="artemisApp.systemNotification.title"></span>
-                    </th>
-                    <th scope="col" [tumAetUiSortableColumn]="'text'">
-                        <span jhiTranslate="artemisApp.systemNotification.text"></span>
-                    </th>
-                    <th scope="col" [tumAetUiSortableColumn]="'type'">
-                        <span jhiTranslate="artemisApp.systemNotification.type"></span>
-                    </th>
-                    <th scope="col"></th>
-                    <th scope="col" [tumAetUiSortableColumn]="'notificationDate'">
-                        <span jhiTranslate="artemisApp.systemNotification.notificationDate"></span>
-                    </th>
-                    <th scope="col" [tumAetUiSortableColumn]="'expireDate'">
-                        <span jhiTranslate="artemisApp.systemNotification.expireDate"></span>
-                    </th>
-                    <th scope="col"></th>
-                </tr>
-            </thead>
-            <tbody>
-                @for (notification of notificationList; track notification.id) {
-                    <tr data-testid="notification-row">
-                        <td>{{ notification.id }}</td>
-                        <td>{{ notification.title }}</td>
-                        <td>{{ notification.text }}</td>
-                        <td>{{ notification.type }}</td>
-                        <td>
-                            @switch (getNotificationState(notification)) {
-                                @case (ACTIVE) {
-                                    <tumaet-ui-tag severity="success" [value]="'artemisApp.systemNotification.active' | artemisTranslate" />
-                                }
-                                @case (EXPIRED) {
-                                    <tumaet-ui-tag severity="danger" [value]="'artemisApp.systemNotification.expired' | artemisTranslate" />
-                                }
-                                @case (SCHEDULED) {
-                                    <tumaet-ui-tag severity="info" [value]="'artemisApp.systemNotification.scheduled' | artemisTranslate" />
-                                }
-                                @default {}
-                            }
-                        </td>
-                        <td>{{ notification.notificationDate | artemisDate }}</td>
-                        <td>{{ notification.expireDate | artemisDate }}</td>
-                        <td class="text-end">
-                            <div class="flex items-center justify-end gap-2">
-                                <a id="viewButton" [routerLink]="['./', notification.id]" tumAetUiButton size="small" severity="info">
-                                    <fa-icon [icon]="faEye" />
-                                    <span class="hidden md:inline" jhiTranslate="entity.action.view"></span>
-                                </a>
-                                <a id="editButton" [routerLink]="['./', notification.id, 'edit']" queryParamsHandling="merge" tumAetUiButton size="small" severity="warn">
-                                    <fa-icon [icon]="faPencil" />
-                                    <span class="hidden md:inline" jhiTranslate="entity.action.edit"></span>
-                                </a>
-                                <button
-                                    type="button"
-                                    tumAetUiButton
-                                    severity="danger"
-                                    size="small"
-                                    [renderButtonStyle]="false"
-                                    jhiDeleteButton
-                                    [entityTitle]="!!notification.title ? notification.title : ''"
-                                    deleteQuestion="artemisApp.systemNotification.delete.question"
-                                    (delete)="deleteNotification(notification.id!)"
-                                    [dialogError]="dialogError$"
-                                >
-                                    <fa-icon [icon]="faTrash" />
-                                </button>
-                            </div>
-                        </td>
+        <tumaet-ui-table-layout [empty]="notificationList.length === 0">
+            <a tumAetUiButton tumAetUiTableEmptyActions size="small" [routerLink]="['./new']" data-testid="create-notification-empty-button">
+                <fa-icon [icon]="faPlus" />
+                <span jhiTranslate="artemisApp.systemNotification.createLabel"></span>
+            </a>
+            <table
+                tumAetUiTable
+                [sortField]="predicate()"
+                [sortOrder]="reverse() ? 1 : -1"
+                (sortChange)="onTableSort($event)"
+                size="small"
+                aria-describedby="system-notification-management-page-heading"
+                data-testid="system-notification-table"
+            >
+                <thead>
+                    <tr>
+                        <th scope="col" [tumAetUiSortableColumn]="'id'">
+                            <span jhiTranslate="global.field.id"></span>
+                        </th>
+                        <th scope="col" [tumAetUiSortableColumn]="'title'">
+                            <span jhiTranslate="artemisApp.systemNotification.title"></span>
+                        </th>
+                        <th scope="col" [tumAetUiSortableColumn]="'text'">
+                            <span jhiTranslate="artemisApp.systemNotification.text"></span>
+                        </th>
+                        <th scope="col" [tumAetUiSortableColumn]="'type'">
+                            <span jhiTranslate="artemisApp.systemNotification.type"></span>
+                        </th>
+                        <th scope="col"></th>
+                        <th scope="col" [tumAetUiSortableColumn]="'notificationDate'">
+                            <span jhiTranslate="artemisApp.systemNotification.notificationDate"></span>
+                        </th>
+                        <th scope="col" [tumAetUiSortableColumn]="'expireDate'">
+                            <span jhiTranslate="artemisApp.systemNotification.expireDate"></span>
+                        </th>
+                        <th scope="col"></th>
                     </tr>
-                }
-            </tbody>
-        </table>
-        <div class="mt-3">
-            <div class="flex justify-center">
-                <jhi-item-count [params]="{ page: page(), totalItems: totalItems(), itemsPerPage: itemsPerPage }" />
-            </div>
-            <div class="flex justify-center">
-                <tumaet-ui-paginator
-                    id="pagination"
-                    [page]="page() - 1"
-                    [pageSize]="itemsPerPage"
-                    [totalRecords]="totalItems()"
-                    [showCurrentPageReport]="false"
-                    [showRowsPerPage]="false"
-                    (pageChange)="onPageChange($event)"
-                />
-            </div>
-        </div>
+                </thead>
+                <tbody>
+                    @for (notification of notificationList; track notification.id) {
+                        <tr data-testid="notification-row">
+                            <td>{{ notification.id }}</td>
+                            <td>{{ notification.title }}</td>
+                            <td>{{ notification.text }}</td>
+                            <td>{{ notification.type }}</td>
+                            <td>
+                                @switch (getNotificationState(notification)) {
+                                    @case (ACTIVE) {
+                                        <tumaet-ui-tag severity="success" [value]="'artemisApp.systemNotification.active' | artemisTranslate" />
+                                    }
+                                    @case (EXPIRED) {
+                                        <tumaet-ui-tag severity="danger" [value]="'artemisApp.systemNotification.expired' | artemisTranslate" />
+                                    }
+                                    @case (SCHEDULED) {
+                                        <tumaet-ui-tag severity="info" [value]="'artemisApp.systemNotification.scheduled' | artemisTranslate" />
+                                    }
+                                    @default {}
+                                }
+                            </td>
+                            <td>{{ notification.notificationDate | artemisDate }}</td>
+                            <td>{{ notification.expireDate | artemisDate }}</td>
+                            <td class="text-end">
+                                <div class="flex items-center justify-end gap-2">
+                                    <a
+                                        [attr.aria-label]="'entity.action.view' | artemisTranslate"
+                                        id="viewButton"
+                                        [routerLink]="['./', notification.id]"
+                                        tumAetUiButton
+                                        size="small"
+                                        severity="info"
+                                    >
+                                        <fa-icon [icon]="faEye" />
+                                        <span class="hidden md:inline" jhiTranslate="entity.action.view"></span>
+                                    </a>
+                                    <a
+                                        [attr.aria-label]="'entity.action.edit' | artemisTranslate"
+                                        id="editButton"
+                                        [routerLink]="['./', notification.id, 'edit']"
+                                        queryParamsHandling="merge"
+                                        tumAetUiButton
+                                        size="small"
+                                        severity="warn"
+                                    >
+                                        <fa-icon [icon]="faPencil" />
+                                        <span class="hidden md:inline" jhiTranslate="entity.action.edit"></span>
+                                    </a>
+                                    <button
+                                        type="button"
+                                        tumAetUiButton
+                                        severity="danger"
+                                        size="small"
+                                        [renderButtonStyle]="false"
+                                        jhiDeleteButton
+                                        [entityTitle]="!!notification.title ? notification.title : ''"
+                                        deleteQuestion="artemisApp.systemNotification.delete.question"
+                                        (delete)="deleteNotification(notification.id!)"
+                                        [dialogError]="dialogError$"
+                                    >
+                                        <fa-icon [icon]="faTrash" />
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+            <tumaet-ui-paginator
+                tumAetUiTableFooter
+                id="pagination"
+                [page]="page() - 1"
+                [pageSize]="itemsPerPage"
+                [totalRecords]="totalItems()"
+                [showRowsPerPage]="false"
+                (pageChange)="onPageChange($event)"
+            />
+        </tumaet-ui-table-layout>
     }
 </div>
