@@ -50,6 +50,9 @@ import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
+import io.swagger.v3.oas.annotations.headers.Header;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 
 /**
  * REST controller for managing {@link Prerequisite Prerequisite} entities.
@@ -143,6 +146,7 @@ public class PrerequisiteResource {
      */
     @PostMapping("courses/{courseId}/prerequisites")
     @EnforceAtLeastEditorInCourse
+    @ApiResponse(responseCode = "201", description = "The prerequisite was created.", headers = @Header(name = "Location", description = "URI of the created prerequisite.", schema = @Schema(type = "string", format = "uri-reference")))
     public ResponseEntity<CourseCompetencyResponseDTO> createPrerequisite(@PathVariable long courseId, @Valid @RequestBody CourseCompetencyRequestDTO prerequisiteRequest)
             throws URISyntaxException {
         log.debug("REST request to create Prerequisite : {}", prerequisiteRequest);
@@ -167,7 +171,8 @@ public class PrerequisiteResource {
      */
     @PostMapping("courses/{courseId}/prerequisites/bulk")
     @EnforceAtLeastEditorInCourse
-    public ResponseEntity<List<CourseCompetencyResponseDTO>> createPrerequisite(@PathVariable Long courseId, @Valid @RequestBody List<CourseCompetencyRequestDTO> prerequisites)
+    @ApiResponse(responseCode = "201", description = "The prerequisites were created.", headers = @Header(name = "Location", description = "URI of the course prerequisites collection.", schema = @Schema(type = "string", format = "uri-reference")))
+    public ResponseEntity<List<CourseCompetencyResponseDTO>> createPrerequisites(@PathVariable Long courseId, @Valid @RequestBody List<CourseCompetencyRequestDTO> prerequisites)
             throws URISyntaxException {
         log.debug("REST request to create Prerequisites : {}", prerequisites);
         var prerequisiteEntities = prerequisites.stream().map(request -> CourseCompetencyRequestDTO.toEntity(request, Prerequisite::new)).toList();
@@ -192,6 +197,7 @@ public class PrerequisiteResource {
      */
     @PostMapping("courses/{courseId}/prerequisites/import")
     @EnforceAtLeastEditorInCourse
+    @ApiResponse(responseCode = "201", description = "The prerequisite was imported.", headers = @Header(name = "Location", description = "URI of the imported prerequisite.", schema = @Schema(type = "string", format = "uri-reference")))
     public ResponseEntity<CourseCompetencyResponseDTO> importPrerequisite(@PathVariable long courseId, @RequestBody CompetencyImportOptionsDTO importOptions)
             throws URISyntaxException {
         log.info("REST request to import a prerequisite: {}", importOptions.competencyIds());
@@ -226,6 +232,7 @@ public class PrerequisiteResource {
      */
     @PostMapping("courses/{courseId}/prerequisites/import/bulk")
     @EnforceAtLeastEditorInCourse
+    @ApiResponse(responseCode = "201", description = "The prerequisites were imported.", headers = @Header(name = "Location", description = "URI of the course prerequisites collection.", schema = @Schema(type = "string", format = "uri-reference")))
     public ResponseEntity<Set<CompetencyWithTailRelationDTO>> importPrerequisites(@PathVariable long courseId, @RequestBody CompetencyImportOptionsDTO importOptions)
             throws URISyntaxException {
         log.info("REST request to import prerequisites: {}", importOptions.competencyIds());
@@ -264,6 +271,7 @@ public class PrerequisiteResource {
      */
     @PostMapping("courses/{courseId}/prerequisites/import-all")
     @EnforceAtLeastEditorInCourse
+    @ApiResponse(responseCode = "201", description = "The prerequisites were imported.", headers = @Header(name = "Location", description = "URI of the course prerequisites collection.", schema = @Schema(type = "string", format = "uri-reference")))
     public ResponseEntity<Set<CompetencyWithTailRelationDTO>> importAllPrerequisitesFromCourse(@PathVariable long courseId, @RequestBody CompetencyImportOptionsDTO importOptions)
             throws URISyntaxException {
         log.info("REST request to all prerequisites from course {} into course {}", importOptions.sourceCourseId(), courseId);
@@ -296,6 +304,7 @@ public class PrerequisiteResource {
     @FeatureUsage(UserFeature.STANDARDIZED_COMPETENCIES)
     @PostMapping("courses/{courseId}/prerequisites/import-standardized")
     @EnforceAtLeastEditorInCourse
+    @ApiResponse(responseCode = "201", description = "The prerequisites were imported.", headers = @Header(name = "Location", description = "URI of the course prerequisites collection.", schema = @Schema(type = "string", format = "uri-reference")))
     public ResponseEntity<List<CompetencyImportResponseDTO>> importStandardizedPrerequisites(@PathVariable long courseId, @RequestBody List<Long> prerequisiteIdsToImport)
             throws URISyntaxException {
         log.info("REST request to import standardized prerequisites with ids: {}", prerequisiteIdsToImport);
@@ -339,6 +348,9 @@ public class PrerequisiteResource {
      */
     @DeleteMapping("courses/{courseId}/prerequisites/{prerequisiteId}")
     @EnforceAtLeastEditorInCourse
+    @ApiResponse(responseCode = "200", description = "The prerequisite was deleted.", headers = {
+            @Header(name = "X-artemisApp-alert", description = "Translation key for the deletion alert.", schema = @Schema(type = "string")),
+            @Header(name = "X-artemisApp-params", description = "Title of the deleted prerequisite.", schema = @Schema(type = "string")) })
     public ResponseEntity<Void> deletePrerequisite(@PathVariable long prerequisiteId, @PathVariable long courseId) {
         log.info("REST request to delete a Prerequisite : {}", prerequisiteId);
 

@@ -53,7 +53,7 @@
                 // picked by an annotation instead, so it has to scan everything: the global setting applies to its group too.
                 "-Dspringdoc.packages-to-scan=" + (openApiGroup
                     ? "de.tum.cit.aet.artemis"
-                    : "de.tum.cit.aet.artemis.aiworker.web,de.tum.cit.aet.artemis.tutorialgroup.web,de.tum.cit.aet.artemis.hyperion.web,de.tum.cit.aet.artemis.calendar.web,de.tum.cit.aet.artemis.globalsearch.web,de.tum.cit.aet.artemis.quiz.web"),
+                    : "de.tum.cit.aet.artemis.aiworker.web,de.tum.cit.aet.artemis.tutorialgroup.web,de.tum.cit.aet.artemis.hyperion.web,de.tum.cit.aet.artemis.calendar.web,de.tum.cit.aet.artemis.globalsearch.web,de.tum.cit.aet.artemis.quiz.web,de.tum.cit.aet.artemis.atlas.web"),
                 // Legacy URL aliases stay mapped in Java for old clients (canonical path first, legacy second), but are kept out
                 // of the specification: in the generated client each alias would become a name/name_ method pair.
                 "-Dspringdoc.paths-to-exclude=/api/quiz/quiz-exercises/*/start-batch,/api/tutorialgroup/courses/*/tutorial-groups-configuration,/api/tutorialgroup/courses/*/tutorial-groups-configuration/**",
@@ -76,6 +76,35 @@
                 "-Dspring.jpa.hibernate.ddl-auto=create",
                 "-Dspring.main.banner-mode=off"
             ]
+
+            if (!openApiGroup) {
+                // Limit Atlas application generation to competency and prerequisite management. The agent group uses scopes.
+                jvmArgs.add("-Dspringdoc.paths-to-match=" + [
+                    "/api/aiworker/**",
+                    "/api/calendar/**",
+                    "/api/global-search/**",
+                    "/api/search/**",
+                    "/api/hyperion/**",
+                    "/api/quiz/**",
+                    "/api/tutorialgroup/**",
+                    "/api/atlas/courses/{courseId}/competencies",
+                    "/api/atlas/courses/{courseId}/competencies/{competencyId}",
+                    "/api/atlas/courses/{courseId}/competencies/bulk",
+                    "/api/atlas/courses/{courseId}/competencies/import",
+                    "/api/atlas/courses/{courseId}/competencies/import/bulk",
+                    "/api/atlas/courses/{courseId}/competencies/import-all",
+                    "/api/atlas/courses/{courseId}/competencies/import-standardized",
+                    "/api/atlas/courses/{courseId}/competencies/generated-from-hyperion-checklist",
+                    "/api/atlas/courses/{courseId}/competencies/bulk/generated-from-description",
+                    "/api/atlas/courses/{courseId}/prerequisites",
+                    "/api/atlas/courses/{courseId}/prerequisites/{prerequisiteId}",
+                    "/api/atlas/courses/{courseId}/prerequisites/bulk",
+                    "/api/atlas/courses/{courseId}/prerequisites/import",
+                    "/api/atlas/courses/{courseId}/prerequisites/import/bulk",
+                    "/api/atlas/courses/{courseId}/prerequisites/import-all",
+                    "/api/atlas/courses/{courseId}/prerequisites/import-standardized"
+                ].join(","))
+            }
 
             // TODO add package later add ${System.getProperty("springdoc.packages-to-scan")} package via cli property
             args.set([

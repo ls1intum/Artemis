@@ -54,6 +54,8 @@ import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.headers.Header;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 
 @Conditional(AtlasEnabled.class)
@@ -159,7 +161,7 @@ public class CompetencyResource {
             Creates a competency in the course. The title (at most 255 characters) and the mastery threshold are \
             required. To link the competency to lecture units or exercises, set competencyLinks on those objects; \
             this endpoint does not link anything.""")
-    @ApiResponse(responseCode = "201", description = "The competency was created.")
+    @ApiResponse(responseCode = "201", description = "The competency was created.", headers = @Header(name = "Location", description = "URI of the created competency.", schema = @Schema(type = "string", format = "uri-reference")))
     public ResponseEntity<CourseCompetencyResponseDTO> createCompetency(@PathVariable long courseId, @Valid @RequestBody CourseCompetencyRequestDTO competencyRequest)
             throws URISyntaxException {
         return createCompetency(courseId, competencyRequest, false);
@@ -177,6 +179,7 @@ public class CompetencyResource {
     @FeatureUsage(UserFeature.HYPERION_CHECKLIST)
     @PostMapping("courses/{courseId}/competencies/generated-from-hyperion-checklist")
     @EnforceAtLeastEditorInCourse
+    @ApiResponse(responseCode = "201", description = "The competency was created.", headers = @Header(name = "Location", description = "URI of the created competency.", schema = @Schema(type = "string", format = "uri-reference")))
     public ResponseEntity<CourseCompetencyResponseDTO> createCompetencyGeneratedFromHyperionChecklist(@PathVariable long courseId,
             @Valid @RequestBody CourseCompetencyRequestDTO competencyRequest) throws URISyntaxException {
         return createCompetency(courseId, competencyRequest, true);
@@ -209,7 +212,7 @@ public class CompetencyResource {
     @EnforceAtLeastEditorInCourse
     @AllowedScopes(AgentScope.COMPETENCIES_WRITE)
     @Operation(summary = "Create several competencies", description = "Creates all given competencies in one request. The request is rejected as a whole if one of them is invalid.")
-    @ApiResponse(responseCode = "201", description = "The competencies were created.")
+    @ApiResponse(responseCode = "201", description = "The competencies were created.", headers = @Header(name = "Location", description = "URI of the course competencies collection.", schema = @Schema(type = "string", format = "uri-reference")))
     public ResponseEntity<List<CourseCompetencyResponseDTO>> createCompetencies(@PathVariable Long courseId,
             @Valid @RequestBody List<@NotNull @Valid CourseCompetencyRequestDTO> competencies) throws URISyntaxException {
         return createCompetencies(courseId, competencies, false);
@@ -226,6 +229,7 @@ public class CompetencyResource {
     @FeatureUsage(UserFeature.AI_COMPETENCY_GENERATION)
     @PostMapping("courses/{courseId}/competencies/bulk/generated-from-description")
     @EnforceAtLeastEditorInCourse
+    @ApiResponse(responseCode = "201", description = "The competencies were created.", headers = @Header(name = "Location", description = "URI of the course competencies collection.", schema = @Schema(type = "string", format = "uri-reference")))
     public ResponseEntity<List<CourseCompetencyResponseDTO>> createCompetenciesGeneratedFromDescription(@PathVariable Long courseId,
             @Valid @RequestBody List<@NotNull @Valid CourseCompetencyRequestDTO> competencies) throws URISyntaxException {
         return createCompetencies(courseId, competencies, true);
@@ -267,6 +271,7 @@ public class CompetencyResource {
      */
     @PostMapping("courses/{courseId}/competencies/import")
     @EnforceAtLeastEditorInCourse
+    @ApiResponse(responseCode = "201", description = "The competency was imported.", headers = @Header(name = "Location", description = "URI of the imported competency.", schema = @Schema(type = "string", format = "uri-reference")))
     public ResponseEntity<CourseCompetencyResponseDTO> importCompetency(@PathVariable long courseId, @RequestBody CompetencyImportOptionsDTO importOptions)
             throws URISyntaxException {
         log.info("REST request to import a competency: {}", importOptions.competencyIds());
@@ -301,6 +306,7 @@ public class CompetencyResource {
      */
     @PostMapping("courses/{courseId}/competencies/import/bulk")
     @EnforceAtLeastEditorInCourse
+    @ApiResponse(responseCode = "201", description = "The competencies were imported.", headers = @Header(name = "Location", description = "URI of the course competencies collection.", schema = @Schema(type = "string", format = "uri-reference")))
     public ResponseEntity<Set<CompetencyWithTailRelationDTO>> importCompetencies(@PathVariable long courseId, @RequestBody CompetencyImportOptionsDTO importOptions)
             throws URISyntaxException {
         log.info("REST request to import competencies: {}", importOptions.competencyIds());
@@ -339,6 +345,7 @@ public class CompetencyResource {
      */
     @PostMapping("courses/{courseId}/competencies/import-all")
     @EnforceAtLeastEditorInCourse
+    @ApiResponse(responseCode = "201", description = "The competencies were imported.", headers = @Header(name = "Location", description = "URI of the course competencies collection.", schema = @Schema(type = "string", format = "uri-reference")))
     public ResponseEntity<Set<CompetencyWithTailRelationDTO>> importAllCompetenciesFromCourse(@PathVariable long courseId, @RequestBody CompetencyImportOptionsDTO importOptions)
             throws URISyntaxException {
         log.info("REST request to all competencies from course {} into course {}", importOptions.sourceCourseId(), courseId);
@@ -368,7 +375,7 @@ public class CompetencyResource {
     @EnforceAtLeastEditorInCourse
     @AllowedScopes(AgentScope.COMPETENCIES_WRITE)
     @Operation(summary = "Import standardized competencies", description = "Adds competencies from the catalogue of standardized competencies to the course. The body is a list of catalogue ids.")
-    @ApiResponse(responseCode = "201", description = "The competencies were imported.")
+    @ApiResponse(responseCode = "201", description = "The competencies were imported.", headers = @Header(name = "Location", description = "URI of the course competencies collection.", schema = @Schema(type = "string", format = "uri-reference")))
     public ResponseEntity<List<CompetencyImportResponseDTO>> importStandardizedCompetencies(@PathVariable long courseId, @RequestBody List<Long> competencyIdsToImport)
             throws URISyntaxException {
         log.info("REST request to import standardized competencies with ids: {}", competencyIdsToImport);
@@ -416,6 +423,9 @@ public class CompetencyResource {
      */
     @DeleteMapping("courses/{courseId}/competencies/{competencyId}")
     @EnforceAtLeastEditorInCourse
+    @ApiResponse(responseCode = "200", description = "The competency was deleted.", headers = {
+            @Header(name = "X-artemisApp-alert", description = "Translation key for the deletion alert.", schema = @Schema(type = "string")),
+            @Header(name = "X-artemisApp-params", description = "Title of the deleted competency.", schema = @Schema(type = "string")) })
     public ResponseEntity<Void> deleteCompetency(@PathVariable long competencyId, @PathVariable long courseId) {
         log.info("REST request to delete a Competency : {}", competencyId);
 

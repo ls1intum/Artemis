@@ -1,12 +1,14 @@
 package de.tum.cit.aet.artemis.atlas.competency;
 
 import java.util.List;
+import java.util.Map;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
@@ -187,7 +189,7 @@ class PrerequisiteIntegrationTest extends AbstractCompetencyPrerequisiteIntegrat
     @Test
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void shouldCreateValidCompetency() throws Exception {
-        super.shouldCreateValidCompetency(new Prerequisite());
+        super.shouldCreateValidCompetency("/api/atlas/courses/" + course.getId() + "/prerequisites", "prerequisite");
     }
 
     @Test
@@ -237,7 +239,8 @@ class PrerequisiteIntegrationTest extends AbstractCompetencyPrerequisiteIntegrat
     }
 
     List<? extends CourseCompetency> createBulkCall(long courseId, List<? extends CourseCompetency> competencies, HttpStatus expectedStatus) throws Exception {
-        return request.postListWithResponseBody("/api/atlas/courses/" + courseId + "/prerequisites/bulk", competencies, Prerequisite.class, expectedStatus);
+        return request.postListWithResponseBody("/api/atlas/courses/" + courseId + "/prerequisites/bulk", competencies, Prerequisite.class, expectedStatus, null,
+                Map.of(HttpHeaders.LOCATION, "/api/atlas/courses/" + courseId + "/prerequisites/"));
     }
 
     @Test
@@ -271,7 +274,8 @@ class PrerequisiteIntegrationTest extends AbstractCompetencyPrerequisiteIntegrat
     }
 
     List<CompetencyWithTailRelationDTO> importAllCall(long courseId, CompetencyImportOptionsDTO importOptions, HttpStatus expectedStatus) throws Exception {
-        return request.postListWithResponseBody("/api/atlas/courses/" + courseId + "/prerequisites/import-all", importOptions, CompetencyWithTailRelationDTO.class, expectedStatus);
+        return request.postListWithResponseBody("/api/atlas/courses/" + courseId + "/prerequisites/import-all", importOptions, CompetencyWithTailRelationDTO.class, expectedStatus,
+                null, Map.of(HttpHeaders.LOCATION, "/api/atlas/courses/" + courseId + "/prerequisites/"));
     }
 
     @Test
@@ -311,7 +315,8 @@ class PrerequisiteIntegrationTest extends AbstractCompetencyPrerequisiteIntegrat
     }
 
     List<CompetencyImportResponseDTO> importStandardizedCall(long courseId, List<Long> idList, HttpStatus expectedStatus) throws Exception {
-        return request.postListWithResponseBody("/api/atlas/courses/" + courseId + "/prerequisites/import-standardized", idList, CompetencyImportResponseDTO.class, expectedStatus);
+        return request.postListWithResponseBody("/api/atlas/courses/" + courseId + "/prerequisites/import-standardized", idList, CompetencyImportResponseDTO.class, expectedStatus,
+                null, Map.of(HttpHeaders.LOCATION, "/api/atlas/courses/" + courseId + "/prerequisites/"));
     }
 
     @Test
@@ -327,8 +332,8 @@ class PrerequisiteIntegrationTest extends AbstractCompetencyPrerequisiteIntegrat
     }
 
     List<CompetencyWithTailRelationDTO> importBulkCall(long courseId, CompetencyImportOptionsDTO importOptions, HttpStatus expectedStatus) throws Exception {
-        return request.postListWithResponseBody("/api/atlas/courses/" + courseId + "/prerequisites/import/bulk", importOptions, CompetencyWithTailRelationDTO.class,
-                expectedStatus);
+        return request.postListWithResponseBody("/api/atlas/courses/" + courseId + "/prerequisites/import/bulk", importOptions, CompetencyWithTailRelationDTO.class, expectedStatus,
+                null, Map.of(HttpHeaders.LOCATION, "/api/atlas/courses/" + courseId + "/prerequisites/"));
     }
 
     @Test
