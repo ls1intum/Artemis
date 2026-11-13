@@ -12,6 +12,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
 
 /**
  * The exercises of a course a given team takes part in, together with that team's participation per exercise.
@@ -48,7 +49,7 @@ public record CourseWithTeamExercisesDTO(Long id, Set<TeamExerciseDTO> exercises
      * @param studentParticipations the team's participation in this exercise, as a single-element list
      */
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    public record TeamExerciseDTO(Long id, String title, String type, ZonedDateTime releaseDate, ZonedDateTime dueDate, List<TeamDTO> teams,
+    public record TeamExerciseDTO(Long id, String title, ExerciseType type, ZonedDateTime releaseDate, ZonedDateTime dueDate, List<TeamDTO> teams,
             List<TeamParticipationDTO> studentParticipations) implements Serializable {
 
         /**
@@ -64,7 +65,7 @@ public record CourseWithTeamExercisesDTO(Long id, Set<TeamExerciseDTO> exercises
             List<TeamParticipationDTO> participations = Hibernate.isInitialized(exercise.getStudentParticipations())
                     ? exercise.getStudentParticipations().stream().map(TeamParticipationDTO::of).toList()
                     : List.of();
-            return new TeamExerciseDTO(exercise.getId(), exercise.getTitle(), exercise.getType(), exercise.getReleaseDate(), exercise.getDueDate(), teams, participations);
+            return new TeamExerciseDTO(exercise.getId(), exercise.getTitle(), exercise.getExerciseType(), exercise.getReleaseDate(), exercise.getDueDate(), teams, participations);
         }
     }
 }

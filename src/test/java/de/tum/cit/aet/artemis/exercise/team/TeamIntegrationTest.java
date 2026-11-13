@@ -561,6 +561,8 @@ class TeamIntegrationTest extends AbstractSpringIntegrationIndependentBatchTest 
         boolean existsOldTeam = request.get(queryUrl, HttpStatus.OK, boolean.class);
         assertThat(existsOldTeam).as("Team with existing short name was correctly found").isTrue();
 
+        request.performMvcRequest(get(queryUrl)).andExpect(status().isOk()).andExpect(jsonPath("$").isBoolean()).andExpect(jsonPath("$").value(true));
+
         boolean existsNewTeam = request.get(queryUrl + "new", HttpStatus.OK, boolean.class);
         assertThat(existsNewTeam).as("Team with new short name was correctly not found").isFalse();
     }
@@ -792,6 +794,9 @@ class TeamIntegrationTest extends AbstractSpringIntegrationIndependentBatchTest 
         CourseWithTeamExercisesDTO response = assertThatDb(
                 () -> request.get(resourceUrlCourseWithExercisesAndParticipationsForTeam(course, team) + "/for-staff", HttpStatus.OK, CourseWithTeamExercisesDTO.class))
                 .hasBeenCalledAtMostTimes(14);
+
+        request.performMvcRequest(get(resourceUrlCourseWithExercisesAndParticipationsForTeam(course, team) + "/for-staff")).andExpect(status().isOk())
+                .andExpect(jsonPath("$.exercises[0].type").value("programming"));
 
         CourseWithTeamExercisesDTO.TeamExerciseDTO teamExercise = response.exercises().iterator().next();
         TeamParticipationDTO participation = participationsOf(teamExercise).getFirst();

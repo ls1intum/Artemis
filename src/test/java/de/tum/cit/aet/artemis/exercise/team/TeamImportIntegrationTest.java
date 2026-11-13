@@ -1,7 +1,10 @@
 package de.tum.cit.aet.artemis.exercise.team;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
@@ -19,6 +22,9 @@ import org.springframework.data.util.Pair;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.json.JsonMapper;
+
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -33,6 +39,9 @@ import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentBatchTest;
 
 class TeamImportIntegrationTest extends AbstractSpringIntegrationIndependentBatchTest {
+
+    @Autowired
+    private JsonMapper objectMapper;
 
     @Autowired
     private TeamRepository teamRepo;
@@ -129,7 +138,10 @@ class TeamImportIntegrationTest extends AbstractSpringIntegrationIndependentBatc
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testImportTeamsFromExerciseIntoEmptyExercise(TeamImportStrategyType importStrategyType) throws Exception {
         List<Team> sourceTeams = teamUtilService.addTeamsForExercise(sourceExercise, 3, tutor);
-        testImportTeamsIntoExercise(ImportType.FROM_EXERCISE, importStrategyType, null, sourceTeams);
+        var response = request.performMvcRequest(put(new URI(importFromSourceExerciseUrl(importStrategyType)))).andExpect(status().isOk()).andReturn().getResponse();
+        List<TeamResponseDTO> imported = objectMapper.readValue(response.getContentAsString(), new TypeReference<>() {
+        });
+        assertCorrectnessOfImport(sourceTeams, imported);
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")

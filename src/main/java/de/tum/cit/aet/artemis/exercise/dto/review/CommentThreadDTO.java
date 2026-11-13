@@ -24,7 +24,7 @@ public record CommentThreadDTO(@Schema(description = "Thread identifier.") @NotN
         @Schema(description = "Current line number for repository-based threads.") @Min(1) Integer lineNumber,
         @Schema(description = "Initial line number captured at thread creation.") @NotNull @Min(1) Integer initialLineNumber,
         @Schema(description = "Whether the thread is outdated.") @NotNull Boolean outdated, @Schema(description = "Whether the thread is resolved.") @NotNull Boolean resolved,
-        @Schema(description = "Comments belonging to the thread.") @NotNull List<@NotNull CommentDTO> comments) {
+        @Schema(description = "Comments belonging to the thread.", requiredMode = Schema.RequiredMode.NOT_REQUIRED) @NotNull List<@NotNull CommentDTO> comments) {
 
     /**
      * Maps a CommentThread entity to a DTO.
