@@ -8,9 +8,16 @@ import org.junit.jupiter.api.Test;
 class ParticipationFilterTest {
 
     @Test
+    void preservesEveryPublicFilterValue() {
+        assertThat(ParticipationFilter
+                .parse("Failed,BuildFailed,NoSubmissions,ValidSubmissions,Successful,Unsuccessful," + "Manual,SemiAutomatic,Automatic,NoPracticeMode,Graded,Locked"))
+                .containsExactlyInAnyOrder(ParticipationFilter.values());
+    }
+
+    @Test
     void trimsAndDeduplicatesSelections() {
-        assertThat(ParticipationFilter.parse("Successful, Manual,Manual,Automatic")).containsExactlyInAnyOrder(ParticipationFilter.Successful, ParticipationFilter.Manual,
-                ParticipationFilter.Automatic);
+        assertThat(ParticipationFilter.parse("Successful, Manual,Manual,Automatic")).containsExactlyInAnyOrder(ParticipationFilter.SUCCESSFUL, ParticipationFilter.MANUAL,
+                ParticipationFilter.AUTOMATIC);
     }
 
     @Test

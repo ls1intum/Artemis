@@ -353,66 +353,70 @@ public class StudentParticipationSpecs {
     @NonNull
     public static Specification<StudentParticipation> managementFilters(Set<ParticipationFilter> filters, @Nullable ZonedDateTime stuckBuildCutoff,
             @Nullable Integer scoreRangeLower, @Nullable Integer scoreRangeUpper) {
-        return (root, query, cb) -> {
-            List<Predicate> conditions = new ArrayList<>();
-            boolean requiresResult = (filters.contains(ParticipationFilter.Successful) && !filters.contains(ParticipationFilter.Unsuccessful))
-                    || filters.stream().anyMatch(filter -> filter.group == ParticipationFilter.Group.ASSESSMENT) || filters.contains(ParticipationFilter.Graded)
-                    || filters.contains(ParticipationFilter.Locked) || (scoreRangeLower != null && scoreRangeUpper != null);
-            var submissionFilters = filters.stream().filter(filter -> filter.group == ParticipationFilter.Group.SUBMISSION).toList();
-            List<Predicate> submissions = new ArrayList<>();
-            for (var filter : submissionFilters) {
-                submissions.add(switch (filter) {
-                    case Failed -> hasFailedBuild(stuckBuildCutoff).toPredicate(root, query, cb);
-                    case BuildFailed -> isBuildFailed().toPredicate(root, query, cb);
-                    case NoSubmissions -> hasNoSubmissions().toPredicate(root, query, cb);
-                    case ValidSubmissions -> cb.and(cb.not(hasNoSubmissions().toPredicate(root, query, cb)), cb.not(isBuildFailed().toPredicate(root, query, cb)),
-                            cb.or(cb.notEqual(root.get(Participation_.EXERCISE).type(), ProgrammingExercise.class),
-                                    requiresResult ? cb.conjunction() : existsLatestResultMatching(root, query, cb, null)));
-                    default -> throw new IllegalStateException("Unexpected submission filter: " + filter);
-                });
-            }
-            if (!submissions.isEmpty()) {
-                conditions.add(cb.or(submissions.toArray(Predicate[]::new)));
-            }
-            if (filters.contains(ParticipationFilter.NoPracticeMode)) {
-                conditions.add(isNotPracticeMode().toPredicate(root, query, cb));
-            }
-            boolean successful = filters.contains(ParticipationFilter.Successful);
-            boolean unsuccessful = filters.contains(ParticipationFilter.Unsuccessful);
-            if (unsuccessful && !successful) {
-                conditions.add(cb.not(existsLatestResultMatching(root, query, cb, (r, c) -> c.isTrue(r.get(Result_.SUCCESSFUL)))));
-            }
-            var assessmentTypes = filters.stream().filter(filter -> filter.group == ParticipationFilter.Group.ASSESSMENT).map(filter -> switch (filter) {
-                case Manual -> AssessmentType.MANUAL;
-                case SemiAutomatic -> AssessmentType.SEMI_AUTOMATIC;
-                case Automatic -> AssessmentType.AUTOMATIC;
-                default -> throw new IllegalStateException("Unexpected assessment filter: " + filter);
-            }).toList();
-            boolean scoreRange = scoreRangeLower != null && scoreRangeUpper != null;
-            if (requiresResult) {
-                conditions.add(existsLatestResultMatching(root, query, cb, (r, c) -> {
-                    List<Predicate> results = new ArrayList<>();
-                    if (successful && !unsuccessful) {
-                        results.add(c.isTrue(r.get(Result_.SUCCESSFUL)));
-                    }
-                    if (!assessmentTypes.isEmpty()) {
-                        results.add(r.get(Result_.ASSESSMENT_TYPE).in(assessmentTypes));
-                    }
-                    if (filters.contains(ParticipationFilter.Graded)) {
-                        results.add(c.isTrue(r.get(Result_.RATED)));
-                    }
-                    if (filters.contains(ParticipationFilter.Locked)) {
-                        results.add(c.isNull(r.get(Result_.COMPLETION_DATE)));
-                    }
-                    if (scoreRange) {
-                        results.add(c.ge(r.get(Result_.SCORE), scoreRangeLower));
-                        results.add(scoreRangeUpper == 100 ? c.le(r.get(Result_.SCORE), 100) : c.lt(r.get(Result_.SCORE), scoreRangeUpper));
-                    }
-                    return c.and(results.toArray(Predicate[]::new));
-                }));
-            }
-            return cb.and(conditions.toArray(Predicate[]::new));
+        boolean requiresResult = requiresLatestResult(filters, scoreRangeLower, scoreRangeUpper);
+        return submissionFilters(filters, stuckBuildCutoff, requiresResult).and(filters.contains(ParticipationFilter.NO_PRACTICE_MODE) ? isNotPracticeMode() : noOp())
+                .and(unsuccessfulOnly(filters) ? (root, query, cb) -> cb.not(existsLatestResultMatching(root, query, cb, (r, c) -> c.isTrue(r.get(Result_.SUCCESSFUL)))) : noOp())
+                .and(requiresResult ? (root, query, cb) -> existsLatestResultMatching(root, query, cb,
+                        (result, builder) -> managementResultConditions(filters, scoreRangeLower, scoreRangeUpper, result, builder)) : noOp());
+    }
+
+    private static boolean unsuccessfulOnly(Set<ParticipationFilter> filters) {
+        return filters.contains(ParticipationFilter.UNSUCCESSFUL) && !filters.contains(ParticipationFilter.SUCCESSFUL);
+    }
+
+    private static boolean successfulOnly(Set<ParticipationFilter> filters) {
+        return filters.contains(ParticipationFilter.SUCCESSFUL) && !filters.contains(ParticipationFilter.UNSUCCESSFUL);
+    }
+
+    private static boolean requiresLatestResult(Set<ParticipationFilter> filters, @Nullable Integer lower, @Nullable Integer upper) {
+        return successfulOnly(filters) || filters.stream().anyMatch(filter -> filter.group == ParticipationFilter.Group.ASSESSMENT) || filters.contains(ParticipationFilter.GRADED)
+                || filters.contains(ParticipationFilter.LOCKED) || (lower != null && upper != null);
+    }
+
+    private static Specification<StudentParticipation> submissionFilters(Set<ParticipationFilter> filters, @Nullable ZonedDateTime cutoff, boolean requiresResult) {
+        var submissions = filters.stream().filter(filter -> filter.group == ParticipationFilter.Group.SUBMISSION).map(filter -> submissionFilter(filter, cutoff, requiresResult))
+                .toList();
+        return submissions.isEmpty() ? noOp() : Specification.anyOf(submissions);
+    }
+
+    private static Specification<StudentParticipation> submissionFilter(ParticipationFilter filter, @Nullable ZonedDateTime cutoff, boolean requiresResult) {
+        return switch (filter) {
+            case FAILED -> hasFailedBuild(cutoff);
+            case BUILD_FAILED -> isBuildFailed();
+            case NO_SUBMISSIONS -> hasNoSubmissions();
+            case VALID_SUBMISSIONS -> (root, query, cb) -> cb.and(cb.not(hasNoSubmissions().toPredicate(root, query, cb)), cb.not(isBuildFailed().toPredicate(root, query, cb)),
+                    requiresResult ? cb.conjunction()
+                            : cb.or(cb.notEqual(root.get(Participation_.EXERCISE).type(), ProgrammingExercise.class), existsLatestResultMatching(root, query, cb, null)));
+            default -> throw new IllegalArgumentException("Not a submission filter: " + filter);
         };
+    }
+
+    private static Predicate managementResultConditions(Set<ParticipationFilter> filters, @Nullable Integer lower, @Nullable Integer upper, Join<Submission, Result> result,
+            CriteriaBuilder cb) {
+        List<Predicate> conditions = new ArrayList<>();
+        if (successfulOnly(filters)) {
+            conditions.add(cb.isTrue(result.get(Result_.SUCCESSFUL)));
+        }
+        var assessmentTypes = filters.stream().filter(filter -> filter.group == ParticipationFilter.Group.ASSESSMENT).map(filter -> switch (filter) {
+            case MANUAL -> AssessmentType.MANUAL;
+            case SEMI_AUTOMATIC -> AssessmentType.SEMI_AUTOMATIC;
+            case AUTOMATIC -> AssessmentType.AUTOMATIC;
+            default -> throw new IllegalArgumentException("Not an assessment filter: " + filter);
+        }).toList();
+        if (!assessmentTypes.isEmpty()) {
+            conditions.add(result.get(Result_.ASSESSMENT_TYPE).in(assessmentTypes));
+        }
+        if (filters.contains(ParticipationFilter.GRADED)) {
+            conditions.add(cb.isTrue(result.get(Result_.RATED)));
+        }
+        if (filters.contains(ParticipationFilter.LOCKED)) {
+            conditions.add(cb.isNull(result.get(Result_.COMPLETION_DATE)));
+        }
+        if (lower != null && upper != null) {
+            conditions.add(cb.ge(result.get(Result_.SCORE), lower));
+            conditions.add(upper == 100 ? cb.le(result.get(Result_.SCORE), 100) : cb.lt(result.get(Result_.SCORE), upper));
+        }
+        return cb.and(conditions.toArray(Predicate[]::new));
     }
 
     // --------------------------------------------------

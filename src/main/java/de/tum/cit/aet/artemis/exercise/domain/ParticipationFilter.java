@@ -1,22 +1,27 @@
 package de.tum.cit.aet.artemis.exercise.domain;
 
+import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.Set;
 
 /** Validated selections for participation management. Names are the public query parameter values. */
 public enum ParticipationFilter {
 
-    Failed(Group.SUBMISSION), BuildFailed(Group.SUBMISSION), NoSubmissions(Group.SUBMISSION), ValidSubmissions(Group.SUBMISSION), Successful(Group.RESULT),
-    Unsuccessful(Group.RESULT), Manual(Group.ASSESSMENT), SemiAutomatic(Group.ASSESSMENT), Automatic(Group.ASSESSMENT), NoPracticeMode(Group.MODE), Graded(Group.GRADING),
-    Locked(Group.LOCK);
+    FAILED("Failed", Group.SUBMISSION), BUILD_FAILED("BuildFailed", Group.SUBMISSION), NO_SUBMISSIONS("NoSubmissions", Group.SUBMISSION),
+    VALID_SUBMISSIONS("ValidSubmissions", Group.SUBMISSION), SUCCESSFUL("Successful", Group.RESULT), UNSUCCESSFUL("Unsuccessful", Group.RESULT), MANUAL("Manual", Group.ASSESSMENT),
+    SEMI_AUTOMATIC("SemiAutomatic", Group.ASSESSMENT), AUTOMATIC("Automatic", Group.ASSESSMENT), NO_PRACTICE_MODE("NoPracticeMode", Group.MODE), GRADED("Graded", Group.GRADING),
+    LOCKED("Locked", Group.LOCK);
 
     public enum Group {
         SUBMISSION, RESULT, ASSESSMENT, MODE, GRADING, LOCK
     }
 
+    private final String apiValue;
+
     public final Group group;
 
-    ParticipationFilter(Group group) {
+    ParticipationFilter(String apiValue, Group group) {
+        this.apiValue = apiValue;
         this.group = group;
     }
 
@@ -32,12 +37,9 @@ public enum ParticipationFilter {
             return filters;
         }
         for (String name : value.split(",", -1)) {
-            try {
-                filters.add(valueOf(name.trim()));
-            }
-            catch (IllegalArgumentException exception) {
-                throw new IllegalArgumentException("Unknown participation filter: " + name.trim(), exception);
-            }
+            String selection = name.trim();
+            filters.add(Arrays.stream(values()).filter(filter -> filter.apiValue.equals(selection)).findFirst()
+                    .orElseThrow(() -> new IllegalArgumentException("Unknown participation filter: " + selection)));
         }
         return filters;
     }

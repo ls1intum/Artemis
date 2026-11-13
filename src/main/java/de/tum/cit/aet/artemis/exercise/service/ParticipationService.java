@@ -35,7 +35,6 @@ import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.dto.UserNameAndLoginDTO;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
-import de.tum.cit.aet.artemis.core.dto.SortingOrder;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.exam.dto.ExamSubmissionGateDTO;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
@@ -1219,18 +1218,16 @@ public class ParticipationService {
      * @return a page of ParticipationManagementDTO
      */
     public Page<ParticipationManagementDTO> findParticipationsForExercise(Exercise exercise, ParticipationSearchDTO search, Set<ParticipationFilter> filters) {
-        SortingOrder sortOrder = search.sortingOrder() != null ? search.sortingOrder() : SortingOrder.ASCENDING;
         Pageable pageable = PageRequest.of(search.page(), search.pageSize());
         boolean teamMode = exercise.isTeamMode();
 
         ZonedDateTime stuckBuildCutoff = null;
-        if (filters.contains(ParticipationFilter.Failed) && exercise instanceof ProgrammingExercise) {
+        if (filters.contains(ParticipationFilter.FAILED) && exercise instanceof ProgrammingExercise) {
             int timeoutSeconds = programmingExerciseRepository.findBuildTimeoutSecondsByExerciseId(exercise.getId()).filter(t -> t > 0).orElse(120);
             stuckBuildCutoff = ZonedDateTime.now().minusSeconds(timeoutSeconds);
         }
 
-        Page<Long> idPage = studentParticipationRepository.findParticipationIdsForManagement(exercise.getId(), teamMode, search.searchTerm(), filters, stuckBuildCutoff,
-                search.scoreRangeLower(), search.scoreRangeUpper(), pageable, sortOrder, search.sortedColumn());
+        Page<Long> idPage = studentParticipationRepository.findParticipationIdsForManagement(exercise.getId(), teamMode, search, filters, stuckBuildCutoff, pageable);
 
         List<Long> ids = idPage.getContent();
         if (ids.isEmpty()) {
