@@ -540,3 +540,22 @@ We plan to add the rate-limit to more endpoints (like Oauth2) in the future.
 ### Client Address of Git Requests
 
 The limit for Git over HTTP counts the address of the client as the reverse proxies of your installation report it. Tomcat resolves `X-Forwarded-For` for the proxies in `server.tomcat.remoteip.internal-proxies`, which are the private networks by default, and the proxies listed in `artemis.continuous-integration.build-agent-network.trusted-proxies` are believed in addition (see [Build Agent Authentication](#build-agent-authentication)). A header sent by any other peer is ignored. If your reverse proxy has a public address and is in neither list, all clients share the address of the proxy and therefore one budget, so list it in `trusted-proxies`.
+
+The other limits in this section, the check of internal endpoints and the address that is stored in an exam session use the same address: the one that Tomcat resolved for the request. Artemis does not read address headers itself, so what a client
+sends in `X-Forwarded-For` or a similar header only counts when it comes through one of your proxies. Make sure that the first reverse proxy in front of Artemis replaces the header with the address of the connection it accepted (`proxy_set_header X-Forwarded-For $remote_addr;` in nginx), as the nginx configuration of the repository does, and does not append to what the client sent. Tomcat believes an entry that a client wrote into the header when the client itself is in a private network.
+By default, Tomcat believes forwarding headers from every private address. Restrict `server.tomcat.remoteip.internal-proxies` to your own proxies, and keep other hosts of the private network from reaching Artemis directly, so that only the proxies can name an address for a request.
+If your reverse proxy reaches Artemis from a public address, or from an IPv6 address that is not in the private range, name it in `server.tomcat.remoteip.internal-proxies` as well. The property takes a regular expression and replaces the default list, so include the ranges that you still need. A proxy that is in front of your own proxy, such as a CDN or a central load balancer, belongs in `server.tomcat.remoteip.trusted-proxies`. The setting `artemis.continuous-integration.build-agent-network.trusted-proxies` applies to Git over HTTP only. If a proxy is not named, every client has the address of the proxy, and all clients share one budget of the rate limits and one address in their exam sessions.
+
+### Internal Endpoints
+
+Some endpoints are meant to be called by other components of the installation, such as the AI services. They accept requests only from the address ranges in `artemis.security.internal.allowed-cidrs`, in addition to the secret that each of them checks.
+The shipped default allows every address, so that a first installation works. Restrict it to the addresses of the components that call Artemis:
+
+```yaml
+artemis:
+  security:
+    internal:
+      allowed-cidrs:
+        - 10.0.0.0/24
+```
+

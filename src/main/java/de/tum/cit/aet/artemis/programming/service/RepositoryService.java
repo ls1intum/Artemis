@@ -31,6 +31,7 @@ import org.eclipse.jgit.revwalk.RevSort;
 import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.jgit.treewalk.TreeWalk;
 import org.eclipse.jgit.treewalk.filter.PathFilterGroup;
+import org.eclipse.jgit.treewalk.filter.TreeFilter;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
@@ -81,6 +82,18 @@ public class RepositoryService {
     private static final Logger log = LoggerFactory.getLogger(RepositoryService.class);
 
     static final long MAX_SELECTED_FILE_SIZE_BYTES = 1024L * 1024;
+
+    /**
+     * The largest file whose content is read into memory when the files of a repository are read. A larger file is left out of a read of all files, and is an error for a read of
+     * one file.
+     */
+    static final long MAX_FILE_CONTENT_BYTES = 10L * 1024 * 1024;
+
+    /** The most that the files of one repository add up to when all of them are read into memory. A repository with more is an error, and not a smaller result. */
+    static final long MAX_TOTAL_CONTENT_BYTES = 100L * 1024 * 1024;
+
+    /** The most entries of a tree that are visited when all files of a repository are read. */
+    static final int MAX_TREE_ENTRIES = 100_000;
 
     static final long MAX_SELECTED_FILES_TOTAL_SIZE_BYTES = 5L * 1024 * 1024;
 
@@ -166,10 +179,12 @@ public class RepositoryService {
                 return Map.of();
             }
             if (selectedFilePaths == null) {
-                return getFileContentFromBareRepositoryForCommitId(repository, commitObjectId, null, BinaryFileFilter.EXTENSION, Long.MAX_VALUE, Long.MAX_VALUE);
+                // The result is compared with another snapshot (commit details, exam timeline), where a file that is left out would show up as deleted: fail instead.
+                return getFileContentFromBareRepositoryForCommitId(repository, commitObjectId, null, BinaryFileFilter.EXTENSION, MAX_FILE_CONTENT_BYTES, MAX_TOTAL_CONTENT_BYTES,
+                        true, true);
             }
             return getFileContentFromBareRepositoryForCommitId(repository, commitObjectId, selectedFilePaths, BinaryFileFilter.CONTENT, MAX_SELECTED_FILE_SIZE_BYTES,
-                    MAX_SELECTED_FILES_TOTAL_SIZE_BYTES);
+                    MAX_SELECTED_FILES_TOTAL_SIZE_BYTES, false, false);
         }
     }
 
@@ -319,6 +334,9 @@ public class RepositoryService {
      * It is primarily designed to read text files, converting the binary content to a UTF-8 string.
      * Usage of this method with binary files may lead to data corruption or misrepresentation as
      * binary data does not convert cleanly into UTF-8 strings.
+     * The result is a complete snapshot, which callers may compare with another one. A text file above {@link #MAX_FILE_CONTENT_BYTES}, files above
+     * {@link #MAX_TOTAL_CONTENT_BYTES} in total or a tree with more than {@link #MAX_TREE_ENTRIES} entries is therefore an error and never a smaller result.
+     * Consumers that only need context use the methods for the last commit, which leave out what does not fit.
      *
      * @param repository The repository from which file contents are to be retrieved. Must be a bare repository.
      * @param commitHash The commit identifier from which to extract file contents.
@@ -332,7 +350,7 @@ public class RepositoryService {
         if (commitId == null) {
             return Map.of();
         }
-        return getFileContentFromBareRepositoryForCommitId(repository, commitId, null, BinaryFileFilter.EXTENSION, Long.MAX_VALUE, Long.MAX_VALUE);
+        return getFileContentFromBareRepositoryForCommitId(repository, commitId, null, BinaryFileFilter.EXTENSION, MAX_FILE_CONTENT_BYTES, MAX_TOTAL_CONTENT_BYTES, true, true);
     }
 
     /**
@@ -353,8 +371,8 @@ public class RepositoryService {
         if (commitId == null) {
             return Optional.empty();
         }
-        return Optional.ofNullable(
-                getFileContentFromBareRepositoryForCommitId(repository, commitId, Set.of(filePath), BinaryFileFilter.NONE, Long.MAX_VALUE, Long.MAX_VALUE).get(filePath));
+        return Optional.ofNullable(getFileContentFromBareRepositoryForCommitId(repository, commitId, Set.of(filePath), BinaryFileFilter.NONE, MAX_FILE_CONTENT_BYTES,
+                MAX_TOTAL_CONTENT_BYTES, true, true).get(filePath));
     }
 
     /**
@@ -372,7 +390,8 @@ public class RepositoryService {
             return Map.of();
         }
 
-        return getFileContentFromBareRepositoryForCommitId(repository, headCommitId, null, BinaryFileFilter.EXTENSION, Long.MAX_VALUE, Long.MAX_VALUE);
+        return getFileContentFromBareRepositoryForCommitId(repository, headCommitId, null, BinaryFileFilter.EXTENSION, MAX_FILE_CONTENT_BYTES, MAX_TOTAL_CONTENT_BYTES, false,
+                false);
     }
 
     /**
@@ -424,7 +443,8 @@ public class RepositoryService {
 
             for (RevCommit commit : walk) {
                 if (((long) commit.getCommitTime()) <= epochSeconds) {
-                    return getFileContentFromBareRepositoryForCommitId(repository, commit.getId(), null, BinaryFileFilter.EXTENSION, Long.MAX_VALUE, Long.MAX_VALUE);
+                    return getFileContentFromBareRepositoryForCommitId(repository, commit.getId(), null, BinaryFileFilter.EXTENSION, MAX_FILE_CONTENT_BYTES,
+                            MAX_TOTAL_CONTENT_BYTES, false, false);
                 }
             }
         }
@@ -455,17 +475,21 @@ public class RepositoryService {
     /**
      * Reads file content through one shared JGit traversal for full-repository exports, selected files, and single-file lookups.
      *
-     * @param repository        The repository from which file contents are retrieved.
-     * @param commitId          The commit from which file contents are retrieved.
-     * @param selectedFilePaths The paths to retrieve, or null to traverse all files.
-     * @param binaryFileFilter  The strategy used to exclude binary files.
-     * @param maxFileSizeBytes  The maximum size of an individual returned file.
-     * @param maxTotalSizeBytes The maximum aggregate size of all returned files.
+     * @param repository          The repository from which file contents are retrieved.
+     * @param commitId            The commit from which file contents are retrieved.
+     * @param selectedFilePaths   The paths to retrieve, or null to traverse all files.
+     * @param binaryFileFilter    The strategy used to exclude binary files.
+     * @param maxFileSizeBytes    The maximum size of an individual returned file.
+     * @param maxTotalSizeBytes   The maximum aggregate size of all returned files.
+     * @param failOnLimit         Whether a total size above its maximum is an error. Otherwise the files that no longer fit are left out.
+     * @param failOnOversizedFile Whether a file above its maximum is an error. Otherwise the file is left out.
      * @return A map of repository-relative file paths to UTF-8 content.
-     * @throws IOException If the commit or file content cannot be read.
+     * @throws IOException If the commit or file content cannot be read, if the tree has more entries than {@link #MAX_TREE_ENTRIES}, or if a size limit is exceeded and
+     *                         {@code failOnLimit} or {@code failOnOversizedFile} is set.
      */
     private Map<String, String> getFileContentFromBareRepositoryForCommitId(org.eclipse.jgit.lib.Repository repository, @NonNull ObjectId commitId,
-            @Nullable Set<String> selectedFilePaths, BinaryFileFilter binaryFileFilter, long maxFileSizeBytes, long maxTotalSizeBytes) throws IOException {
+            @Nullable Set<String> selectedFilePaths, BinaryFileFilter binaryFileFilter, long maxFileSizeBytes, long maxTotalSizeBytes, boolean failOnLimit,
+            boolean failOnOversizedFile) throws IOException {
         Map<String, String> filesWithContent = new HashMap<>();
         long totalSize = 0;
 
@@ -473,12 +497,11 @@ public class RepositoryService {
             RevCommit commit = revWalk.parseCommit(commitId);
             treeWalk.addTree(commit.getTree());
             treeWalk.setRecursive(true);
-            if (selectedFilePaths != null) {
-                if (selectedFilePaths.isEmpty()) {
-                    return Map.of();
-                }
-                treeWalk.setFilter(PathFilterGroup.createFromStrings(selectedFilePaths));
+            if (selectedFilePaths != null && selectedFilePaths.isEmpty()) {
+                return Map.of();
             }
+            // Every entry the walk looks at is counted, also the ones that a path filter rejects. A tree that is bigger than the limit is an error, not a smaller result.
+            treeWalk.setFilter(new EntryLimitTreeFilter(selectedFilePaths != null ? PathFilterGroup.createFromStrings(selectedFilePaths) : TreeFilter.ALL, MAX_TREE_ENTRIES));
 
             while (treeWalk.next()) {
                 String path = treeWalk.getPathString();
@@ -494,7 +517,20 @@ public class RepositoryService {
                 try {
                     var blobLoader = repository.open(objectId);
                     long blobSize = blobLoader.getSize();
-                    if (blobSize > maxFileSizeBytes || blobSize > maxTotalSizeBytes - totalSize) {
+                    if (blobSize > maxFileSizeBytes) {
+                        if (failOnOversizedFile) {
+                            throw new IOException("The file " + path + " is larger than " + maxFileSizeBytes + " bytes.");
+                        }
+                        // The selected files of a read with limits of its own are left out, like a binary file
+                        log.debug("Leaving out the file {} of the commit {}: it is larger than {} bytes", path, commitId.name(), maxFileSizeBytes);
+                        continue;
+                    }
+                    if (blobSize > maxTotalSizeBytes - totalSize) {
+                        if (failOnLimit) {
+                            throw new IOException("The files of the commit add up to more than " + maxTotalSizeBytes + " bytes.");
+                        }
+                        // Files that fit stay available. Failing would hide all files of a repository that only has a few large ones, e.g. in a dependency folder.
+                        log.debug("Leaving out the file {} of the commit {}: the files read so far use up the budget of {} bytes", path, commitId.name(), maxTotalSizeBytes);
                         continue;
                     }
                     byte[] bytes;
