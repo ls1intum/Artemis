@@ -389,4 +389,168 @@ describe('MonacoEditorActionIntegration', () => {
         expect(comp.getText()).toBe(textWithDelimiters);
         expect(runSpy).toHaveBeenCalledTimes(3);
     }
+
+    describe('pasting a URL over a selection', () => {
+        const url = 'https://docs.artemis.tum.de';
+
+        /**
+         * Focuses the editor text and dispatches a paste event on Monaco's own input element, where the browser delivers a real paste.
+         * @return whether the event reached that element, i.e. whether Monaco's own paste handling ran.
+         */
+        function dispatchPaste(editor: monaco.editor.IStandaloneCodeEditor, text: string): boolean {
+            const domNode = editor.getDomNode()!;
+            const target = domNode.querySelector('textarea') ?? domNode;
+            // A browser only delivers a paste to the element that has focus.
+            editor.focus();
+            let reachedEditorInput = false;
+            const inputListener = () => (reachedEditorInput = true);
+            target.addEventListener('paste', inputListener);
+            const event = new Event('paste', { bubbles: true, cancelable: true });
+            Object.defineProperty(event, 'clipboardData', { value: { getData: (type: string) => (type === 'text/plain' ? text : '') } });
+            target.dispatchEvent(event);
+            target.removeEventListener('paste', inputListener);
+            return reachedEditorInput;
+        }
+
+        function selectDocs(): void {
+            comp.setText('see the docs here');
+            comp.setSelection({ startLineNumber: 1, startColumn: 9, endLineNumber: 1, endColumn: 13 });
+        }
+
+        it('should replace the selection with a link before the editor pastes the URL', () => {
+            const textChangedSpy = vi.fn();
+            comp.textChanged.subscribe(textChangedSpy);
+            comp.registerAction(new UrlAction());
+            selectDocs();
+
+            const reachedEditorInput = dispatchPaste(comp.getActiveEditor(), url);
+
+            const expectedText = `see the [docs](${url}) here`;
+            expect(reachedEditorInput).toBe(false);
+            expect(comp.getText()).toBe(expectedText);
+            expect(comp.getPosition()).toEqual({ lineNumber: 1, column: 9 + `[docs](${url})`.length });
+            expect(textChangedSpy).toHaveBeenLastCalledWith({ text: expectedText, fileName: expect.any(String) });
+        });
+
+        it('should undo the link in one step without undoing the text typed before', () => {
+            comp.registerAction(new UrlAction());
+            comp.setText('see the docs');
+            comp.setPosition({ lineNumber: 1, column: 13 });
+            comp.triggerKeySequence(' here');
+            comp.setSelection({ startLineNumber: 1, startColumn: 9, endLineNumber: 1, endColumn: 13 });
+
+            dispatchPaste(comp.getActiveEditor(), url);
+            expect(comp.getText()).toBe(`see the [docs](${url}) here`);
+            comp.getActiveEditor().trigger('keyboard', 'undo', null);
+
+            expect(comp.getText()).toBe('see the docs here');
+        });
+
+        it('should paste the URL into the placeholder the link button selects', () => {
+            const action = new UrlAction();
+            comp.registerAction(action);
+            selectDocs();
+            action.executeInCurrentEditor();
+            expect(comp.getText()).toBe('see the [docs](https://) here');
+
+            expect(dispatchPaste(comp.getActiveEditor(), url)).toBe(true);
+
+            expect(comp.getText()).toBe(`see the [docs](${url}) here`);
+        });
+
+        it('should leave a paste of plain text to the editor', () => {
+            comp.registerAction(new UrlAction());
+            selectDocs();
+
+            expect(dispatchPaste(comp.getActiveEditor(), 'hello')).toBe(true);
+
+            expect(comp.getText()).toBe('see the hello here');
+        });
+
+        it('should not change a read-only editor', () => {
+            fixture.componentRef.setInput('readOnly', true);
+            fixture.detectChanges();
+            comp.registerAction(new UrlAction());
+            selectDocs();
+
+            expect(dispatchPaste(comp.getActiveEditor(), url)).toBe(true);
+
+            expect(comp.getText()).toBe('see the docs here');
+        });
+
+        it('should leave a paste with several selections to the editor', () => {
+            comp.registerAction(new UrlAction());
+            comp.setText('see the docs here');
+            comp.getActiveEditor().setSelections([new monaco.Selection(1, 1, 1, 4), new monaco.Selection(1, 9, 1, 13)]);
+
+            expect(dispatchPaste(comp.getActiveEditor(), url)).toBe(true);
+
+            expect(comp.getText()).toBe(`${url} the ${url} here`);
+        });
+
+        it('should leave the paste to the editor if no link action is registered', () => {
+            comp.registerAction(new BoldAction());
+            selectDocs();
+
+            expect(dispatchPaste(comp.getActiveEditor(), url)).toBe(true);
+
+            expect(comp.getText()).toBe(`see the ${url} here`);
+        });
+
+        it('should stop intercepting pastes once the link action is disposed', () => {
+            const action = new UrlAction();
+            comp.registerAction(action);
+            action.dispose();
+            selectDocs();
+
+            expect(dispatchPaste(comp.getActiveEditor(), url)).toBe(true);
+
+            expect(comp.getText()).toBe(`see the ${url} here`);
+        });
+
+        it('should leave a paste into an overlay widget such as the find input to the widget', () => {
+            comp.registerAction(new UrlAction());
+            selectDocs();
+            // Monaco's find widget is an overlay widget with its own input inside the editor DOM node.
+            const widgetInput = document.createElement('input');
+            const widget: monaco.editor.IOverlayWidget = { getId: () => 'test.find-like-widget', getDomNode: () => widgetInput, getPosition: () => null };
+            comp.getActiveEditor().addOverlayWidget(widget);
+            widgetInput.focus();
+            let reachedWidgetInput = false;
+            widgetInput.addEventListener('paste', () => (reachedWidgetInput = true), { once: true });
+            const event = new Event('paste', { bubbles: true, cancelable: true });
+            Object.defineProperty(event, 'clipboardData', { value: { getData: (type: string) => (type === 'text/plain' ? url : '') } });
+
+            widgetInput.dispatchEvent(event);
+
+            expect(comp.getActiveEditor().getDomNode()!.contains(widgetInput)).toBe(true);
+            expect(reachedWidgetInput).toBe(true);
+            expect(event.defaultPrevented).toBe(false);
+            expect(comp.getText()).toBe('see the docs here');
+            comp.getActiveEditor().removeOverlayWidget(widget);
+        });
+
+        it('should move the interception to the modified editor in diff mode', () => {
+            comp.registerAction(new UrlAction());
+            const standardEditor = comp.getActiveEditor();
+
+            fixture.componentRef.setInput('mode', 'diff');
+            fixture.detectChanges();
+            const modifiedEditor = comp.getActiveEditor();
+            expect(modifiedEditor).not.toBe(standardEditor);
+            selectDocs();
+
+            expect(dispatchPaste(modifiedEditor, url)).toBe(false);
+            expect(comp.getText()).toBe(`see the [docs](${url}) here`);
+
+            // The standard editor shares the model, but its paste must no longer be turned into a link.
+            standardEditor.setSelection(new monaco.Selection(1, 1, 1, 4));
+            expect(dispatchPaste(standardEditor, url)).toBe(true);
+            expect(standardEditor.getValue()).toBe(`${url} the [docs](${url}) here`);
+
+            // Leave diff mode before the fixture is destroyed, as the diff editor still holds the shared model.
+            fixture.componentRef.setInput('mode', 'normal');
+            fixture.detectChanges();
+        });
+    });
 });

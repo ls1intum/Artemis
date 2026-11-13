@@ -1,0 +1,17 @@
+# Endpoints that are reachable only from the address ranges of artemis.security.internal.allowed-cidrs (annotated with @Internal), one per line.
+# A new entry needs a reviewer to agree: it is reachable without a user.
+athena.web.internal.AthenaInternalResource#getRepository(long,long,String) [GET {api/athena/internal/}{programming-exercises/{exerciseId}/submissions/{submissionId}/repository}]
+athena.web.internal.AthenaInternalResource#getSolutionRepository(long,String) [GET {api/athena/internal/}{programming-exercises/{exerciseId}/repository/solution}]
+athena.web.internal.AthenaInternalResource#getTemplateRepository(long,String) [GET {api/athena/internal/}{programming-exercises/{exerciseId}/repository/template}]
+athena.web.internal.AthenaInternalResource#getTestRepository(long,String) [GET {api/athena/internal/}{programming-exercises/{exerciseId}/repository/tests}]
+iris.web.internal.PyrisInternalIngestionWorkerResource#claimJobs(PyrisWorkerClaimRequestDTO,HttpServletRequest) [POST {api/iris/internal/ingestion/worker/}{claim}]
+iris.web.internal.PyrisInternalIngestionWorkerResource#heartbeat(PyrisWorkerHeartbeatRequestDTO,HttpServletRequest) [POST {api/iris/internal/ingestion/worker/}{heartbeat}]
+iris.web.internal.PyrisInternalStatusUpdateResource#executeChatCommand(String,PyrisCommandDTO,HttpServletRequest) [POST {api/iris/internal/}{pipelines/chat/runs/{runId}/command}]
+iris.web.internal.PyrisInternalStatusUpdateResource#setAutonomousTutorJobStatus(String,PyrisAutonomousTutorPipelineStatusUpdateDTO,HttpServletRequest) [POST {api/iris/internal/}{pipelines/autonomous-tutor/runs/{runId}/status}]
+iris.web.internal.PyrisInternalStatusUpdateResource#setCompetencyExtractionJobStatus(String,PyrisCompetencyStatusUpdateDTO,HttpServletRequest) [POST {api/iris/internal/}{pipelines/competency-extraction/runs/{runId}/status}]
+iris.web.internal.PyrisInternalStatusUpdateResource#setStatusOfChatJob(String,PyrisChatStatusUpdateDTO,HttpServletRequest) [POST {api/iris/internal/}{pipelines/chat/runs/{runId}/status}]
+iris.web.internal.PyrisInternalStatusUpdateResource#setStatusOfFaqIngestionJob(String,PyrisFaqIngestionStatusUpdateDTO,HttpServletRequest) [POST {api/iris/internal/}{webhooks/ingestion/faqs/runs/{runId}/status}]
+iris.web.internal.PyrisInternalStatusUpdateResource#setStatusOfGlobalSearchAnswerJob(String,PyrisGlobalSearchAnswerStatusUpdateDTO,HttpServletRequest) [POST {api/iris/internal/}{pipelines/global-search/runs/{runId}/status}]
+iris.web.internal.PyrisInternalStatusUpdateResource#setStatusOfIngestionJob(String,PyrisLectureIngestionStatusUpdateDTO,HttpServletRequest) [POST {api/iris/internal/}{webhooks/ingestion/runs/{runId}/status}]
+iris.web.internal.PyrisInternalStatusUpdateResource#setStruggleInterventionJobStatus(String,PyrisStruggleInterventionStatusUpdateDTO,HttpServletRequest) [POST {api/iris/internal/}{pipelines/struggle-intervention/runs/{runId}/status}]
+iris.web.internal.PyrisInternalStatusUpdateResource#setTutorSuggestionJobStatus(String,TutorSuggestionStatusUpdateDTO,HttpServletRequest) [POST {api/iris/internal/}{pipelines/tutor-suggestion/runs/{runId}/status}]
