@@ -425,6 +425,43 @@ paths:
           content:
             application/json:
               schema: {$ref: '#/components/schemas/QuizQuestionPoolItem'}
+  /api/atlas/courses/{courseId}/learning-paths/generate-missing:
+    put:
+      tags: [learning-path]
+      summary: Generate missing learning paths
+      description: Generates a learning path for every student of the course who has
+        none yet. Requires at least the instructor role in the course. Requires the
+        Atlas module and the LearningPaths feature toggle.
+      operationId: generateMissingLearningPathsForCourse
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200': {description: The missing learning paths were generated. The response
+            has no body.}
+        '400': {description: Learning paths are not enabled for the course.}
+        '403': {description: 'The caller lacks the required role or access to the
+            learning path, or the LearningPaths feature toggle is disabled.'}
+  /api/atlas/courses/{courseId}/learning-paths/enable:
+    put:
+      tags: [learning-path]
+      summary: Enable learning paths for a course
+      description: Enables learning paths and generates one for every student of the
+        course. Requires at least the instructor role in the course. Requires the
+        Atlas module and the LearningPaths feature toggle.
+      operationId: enableLearningPathsForCourse
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200': {description: Learning paths were enabled. The response has no body.}
+        '400': {description: Learning paths are already enabled for the course.}
+        '403': {description: 'The caller lacks the required role or access to the
+            learning path, or the LearningPaths feature toggle is disabled.'}
   /api/tutorialgroup/courses/{courseId}/tutorial-groups:
     get:
       tags: [tutorial-group]
@@ -1333,6 +1370,34 @@ paths:
                 type: array
                 items: {type: string, maxLength: 128}
                 maxItems: 500
+  /api/atlas/courses/{courseId}/learning-path:
+    post:
+      tags: [learning-path]
+      summary: Generate your learning path in a course
+      description: Requires at least the student role in the course and learning paths
+        enabled in the course. Applies to the current user only. Requires the Atlas
+        module and the LearningPaths feature toggle.
+      operationId: generateLearningPathForCurrentUser
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '201':
+          description: The learning path was generated.
+          headers:
+            Location:
+              description: The path of the new learning path, /api/atlas/learning-paths/{learningPathId}
+              style: simple
+              schema: {type: string}
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/LearningPath'}
+        '400': {description: Learning paths are not enabled for the course.}
+        '403': {description: 'The caller lacks the required role or access to the
+            learning path, or the LearningPaths feature toggle is disabled.'}
+        '409': {description: The current user already has a learning path in the course.}
   /api/tutorialgroup/courses/{courseId}/tutorial-groups/{tutorialGroupId}/sessions/{sessionId}/cancel:
     patch:
       tags: [tutorial-group-session]
@@ -1375,6 +1440,23 @@ paths:
         schema: {type: integer, format: int64}
       responses:
         '200': {description: OK}
+  /api/atlas/learning-paths/{learningPathId}/start:
+    patch:
+      tags: [learning-path]
+      summary: Start your learning path
+      description: Only the student who owns the learning path may call this operation.
+        Requires the Atlas module and the LearningPaths feature toggle.
+      operationId: startLearningPathForCurrentUser
+      parameters:
+      - name: learningPathId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '204': {description: The learning path was started. The response has no body.}
+        '403': {description: 'The caller lacks the required role or access to the
+            learning path, or the LearningPaths feature toggle is disabled.'}
+        '409': {description: The learning path was already started.}
   /api/tutorialgroup/tutorial-groups/{tutorialGroupId}/title:
     get:
       tags: [tutorial-group]
@@ -2339,6 +2421,343 @@ paths:
           content:
             text/calendar:
               schema: {type: string}
+  /api/atlas/learning-paths/{learningPathId}:
+    get:
+      tags: [learning-path]
+      summary: Get a learning path
+      description: Only the student who owns the learning path may call this operation.
+        Requires the Atlas module and the LearningPaths feature toggle.
+      operationId: getLearningPath
+      parameters:
+      - name: learningPathId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: The learning path
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/LearningPathInformation'}
+        '403': {description: 'The caller lacks the required role or access to the
+            learning path, or the LearningPaths feature toggle is disabled.'}
+        '404': {description: The learning path does not exist.}
+  /api/atlas/learning-paths/{learningPathId}/relative-navigation:
+    get:
+      tags: [learning-path]
+      summary: Get the navigation of a learning path relative to a learning object
+      description: Only the student who owns the learning path may call this operation.
+        Requires the Atlas module and the LearningPaths feature toggle.
+      operationId: getRelativeLearningPathNavigation
+      parameters:
+      - name: learningPathId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: learningObjectId
+        in: query
+        required: true
+        schema: {type: integer, format: int64}
+      - name: learningObjectType
+        in: query
+        required: true
+        schema:
+          type: string
+          enum: [LECTURE, EXERCISE]
+      - name: competencyId
+        in: query
+        required: true
+        schema: {type: integer, format: int64}
+      - name: repeatedTest
+        in: query
+        required: false
+        schema: {type: boolean, default: false}
+      responses:
+        '200':
+          description: The navigation. A missing predecessor, current or successor
+            learning object is omitted.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/LearningPathNavigation'}
+        '403': {description: 'The caller lacks the required role or access to the
+            learning path, or the LearningPaths feature toggle is disabled.'}
+  /api/atlas/learning-paths/{learningPathId}/navigation:
+    get:
+      tags: [learning-path]
+      summary: Get the navigation of a learning path
+      description: The current learning object is the next uncompleted one, or the
+        last completed one if all are completed. Only the student who owns the learning
+        path may call this operation. Requires the Atlas module and the LearningPaths
+        feature toggle.
+      operationId: getLearningPathNavigation
+      parameters:
+      - name: learningPathId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: The navigation. A missing predecessor, current or successor
+            learning object is omitted.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/LearningPathNavigation'}
+        '403': {description: 'The caller lacks the required role or access to the
+            learning path, or the LearningPaths feature toggle is disabled.'}
+  /api/atlas/learning-paths/{learningPathId}/navigation-overview:
+    get:
+      tags: [learning-path]
+      summary: Get the navigation overview of a learning path
+      description: Only the student who owns the learning path may call this operation.
+        Requires the Atlas module and the LearningPaths feature toggle.
+      operationId: getLearningPathNavigationOverview
+      parameters:
+      - name: learningPathId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: The learning objects in recommended order. An empty list is
+            omitted.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/LearningPathNavigationOverview'}
+        '403': {description: 'The caller lacks the required role or access to the
+            learning path, or the LearningPaths feature toggle is disabled.'}
+  /api/atlas/learning-paths/{learningPathId}/competency-progress:
+    get:
+      tags: [learning-path]
+      summary: Get the competency progress of a learning path
+      description: Recomputes and stores the progress of the owner in every competency
+        of the learning path. The student who owns the learning path or an instructor
+        of its course may call this operation. Requires the Atlas module and the LearningPaths
+        feature toggle.
+      operationId: getCompetencyProgressForLearningPath
+      parameters:
+      - name: learningPathId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: The progress in each competency, in no particular order
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/CompetencyProgressForLearningPath'}
+                uniqueItems: true
+        '403': {description: 'The caller lacks the required role or access to the
+            learning path, or the LearningPaths feature toggle is disabled.'}
+  /api/atlas/learning-paths/{learningPathId}/competency-graph:
+    get:
+      tags: [learning-path]
+      summary: Get the competency graph of a learning path
+      description: Node values are the mastery progress of the owner (MASTERY_PROGRESS).
+        The student who owns the learning path or an instructor of its course may
+        call this operation. Requires the Atlas module and the LearningPaths feature
+        toggle.
+      operationId: getLearningPathCompetencyGraph
+      parameters:
+      - name: learningPathId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: The competency graph. Empty node or edge lists are omitted.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/LearningPathCompetencyGraph'}
+        '403': {description: 'The caller lacks the required role or access to the
+            learning path, or the LearningPaths feature toggle is disabled.'}
+  /api/atlas/learning-paths/{learningPathId}/competencies:
+    get:
+      tags: [learning-path]
+      summary: Get the competencies of a learning path in recommended order
+      description: The student who owns the learning path or an instructor of its
+        course may call this operation. Requires the Atlas module and the LearningPaths
+        feature toggle.
+      operationId: getCompetencyOrderForLearningPath
+      parameters:
+      - name: learningPathId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: The competencies in recommended order
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/CompetencyName'}
+        '403': {description: 'The caller lacks the required role or access to the
+            learning path, or the LearningPaths feature toggle is disabled.'}
+  /api/atlas/learning-paths/{learningPathId}/competencies/{competencyId}/learning-objects:
+    get:
+      tags: [learning-path]
+      summary: Get the learning objects of a competency in recommended order
+      description: Completed learning objects come first, followed by the pending
+        ones needed to master the competency. The student who owns the learning path
+        or an instructor of its course may call this operation. Requires the Atlas
+        module and the LearningPaths feature toggle.
+      operationId: getLearningObjectsForCompetency
+      parameters:
+      - name: learningPathId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: competencyId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: The learning objects in recommended order
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/LearningPathNavigationObject'}
+        '403': {description: 'The caller lacks the required role or access to the
+            learning path, or the LearningPaths feature toggle is disabled.'}
+  /api/atlas/courses/{courseId}/learning-paths:
+    get:
+      tags: [learning-path]
+      summary: Search the learning paths of a course
+      description: Returns one page of the learning paths of the course whose student
+        login or name matches the search term. Requires at least the instructor role
+        in the course. Requires the Atlas module and the LearningPaths feature toggle.
+      operationId: getLearningPathsOnPage
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: page
+        in: query
+        description: The one-based page number
+        required: true
+        schema: {type: integer, format: int32}
+      - name: pageSize
+        in: query
+        description: The positive number of learning paths per page
+        required: true
+        schema: {type: integer, format: int32}
+      - name: sortedColumn
+        in: query
+        description: 'The column to sort by: ID, USER_LOGIN, USER_NAME or PROGRESS'
+        required: true
+        schema: {type: string}
+      - name: sortingOrder
+        in: query
+        description: The sort direction. Any value other than ASCENDING, including
+          none, sorts descending
+        schema:
+          type: string
+          enum: [ASCENDING, DESCENDING]
+      - name: searchTerm
+        in: query
+        description: The login or name fragment to match. Empty or absent matches
+          every learning path
+        schema: {type: string}
+      responses:
+        '200':
+          description: The requested page. resultsOnPage is omitted when the page
+            is empty.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/SearchResultPageDTOLearningPathInformation'}
+        '400': {description: Learning paths are not enabled for the course.}
+        '403': {description: 'The caller lacks the required role or access to the
+            learning path, or the LearningPaths feature toggle is disabled.'}
+  /api/atlas/courses/{courseId}/learning-path/me:
+    get:
+      tags: [learning-path]
+      summary: Get your learning path in a course
+      description: Requires at least the student role in the course and learning paths
+        enabled in the course. Applies to the current user only. Requires the Atlas
+        module and the LearningPaths feature toggle.
+      operationId: getLearningPathForCurrentUser
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: The learning path of the current user
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/LearningPath'}
+        '400': {description: Learning paths are not enabled for the course.}
+        '403': {description: 'The caller lacks the required role or access to the
+            learning path, or the LearningPaths feature toggle is disabled.'}
+        '404': {description: The current user has no learning path in the course yet.}
+  /api/atlas/courses/{courseId}/learning-path/competency-instructor-graph:
+    get:
+      tags: [learning-path]
+      summary: Get the competency graph of a course
+      description: Node values are the average mastery progress of the students (AVERAGE_MASTERY_PROGRESS).
+        Requires at least the instructor role in the course. Requires the Atlas module
+        and the LearningPaths feature toggle.
+      operationId: getLearningPathCompetencyInstructorGraph
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: The competency graph. Empty node or edge lists are omitted.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/LearningPathCompetencyGraph'}
+        '403': {description: 'The caller lacks the required role or access to the
+            learning path, or the LearningPaths feature toggle is disabled.'}
+  /api/atlas/courses/{courseId}/learning-path/average-progress:
+    get:
+      tags: [learning-path]
+      summary: Get the average learning path progress of a course
+      description: Requires at least the instructor role in the course. Requires the
+        Atlas module and the LearningPaths feature toggle.
+      operationId: getAverageProgressForCourse
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: The average progress of the students of the course
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/LearningPathAverageProgress'}
+        '403': {description: 'The caller lacks the required role or access to the
+            learning path, or the LearningPaths feature toggle is disabled.'}
+  /api/atlas/courses/{courseId}/learning-path-health:
+    get:
+      tags: [learning-path]
+      summary: Get the health of the learning paths of a course
+      description: Requires at least the instructor role in the course. Requires the
+        Atlas module and the LearningPaths feature toggle.
+      operationId: getHealthStatusForCourse
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: The health status. A healthy course has an empty status, which
+            is omitted from the response.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/LearningPathHealth'}
+        '403': {description: 'The caller lacks the required role or access to the
+            learning path, or the LearningPaths feature toggle is disabled.'}
   /api/aiworker/admin/workers:
     get:
       tags: [admin-ai-worker]
@@ -2504,6 +2923,16 @@ components:
         totalTokensUsed: {type: integer, format: int64}
         startedAt: {type: string, format: date-time}
         finishedAt: {type: string, format: date-time}
+    LearningPathHealth:
+      type: object
+      properties:
+        status:
+          type: array
+          items:
+            type: string
+            enum: [MISSING, NO_COMPETENCIES, NO_RELATIONS]
+          uniqueItems: true
+        missingLearningPaths: {type: integer, format: int64}
     QuizBatchWithPassword:
       type: object
       properties:
@@ -2649,6 +3078,11 @@ components:
         dropLocationId: {type: integer, format: int64}
         ratedCounter: {type: integer, format: int32}
         unRatedCounter: {type: integer, format: int32}
+    UserNameAndLogin:
+      type: object
+      properties:
+        name: {type: string}
+        login: {type: string}
     SubmittedAnswerFromLiveClient:
       discriminator:
         propertyName: type
@@ -2925,6 +3359,14 @@ components:
           type: string
           default: drag-and-drop
           enum: [drag-and-drop]
+    LearningPathNavigation:
+      type: object
+      properties:
+        predecessorLearningObject: {$ref: '#/components/schemas/LearningPathNavigationObject'}
+        currentLearningObject: {$ref: '#/components/schemas/LearningPathNavigationObject'}
+        successorLearningObject: {$ref: '#/components/schemas/LearningPathNavigationObject'}
+        progress: {type: integer, format: int32}
+      required: [progress]
     DragAndDropMappingReEvaluate:
       type: object
       properties:
@@ -3335,6 +3777,14 @@ components:
         end: {type: string}
         reason: {type: string}
       required: [end, start]
+    CompetencyProgressForLearningPath:
+      type: object
+      properties:
+        competencyId: {type: integer, format: int64}
+        masteryThreshold: {type: number, format: double}
+        progress: {type: number, format: double}
+        confidence: {type: number, format: double}
+      required: [competencyId, confidence, masteryThreshold, progress]
     QuizQuestionTraining:
       type: object
       properties:
@@ -3602,6 +4052,12 @@ components:
           items: {$ref: '#/components/schemas/GeneratedAssessmentCriterion'}
           minItems: 1
       required: [criteria]
+    LearningPathNavigationOverview:
+      type: object
+      properties:
+        learningObjects:
+          type: array
+          items: {$ref: '#/components/schemas/LearningPathNavigationObject'}
     AnswerOptionWithoutSolution:
       type: object
       properties:
@@ -3992,6 +4448,17 @@ components:
         busy: {type: boolean}
         capacityAvailable: {type: boolean}
         restriction: {type: string}
+    LearningPathCompetencyGraph:
+      type: object
+      properties:
+        nodes:
+          type: array
+          items: {$ref: '#/components/schemas/CompetencyGraphNode'}
+          uniqueItems: true
+        edges:
+          type: array
+          items: {$ref: '#/components/schemas/CompetencyGraphEdge'}
+          uniqueItems: true
     QuizQuestionPoolPlan:
       type: object
       description: The pool a build would plan with the course's stored settings
@@ -4450,6 +4917,16 @@ components:
           description: Related locations across artifacts
           items: {$ref: '#/components/schemas/ArtifactLocation'}
       required: [category, description, relatedLocations, severity, suggestedFix]
+    CompetencyGraphEdge:
+      type: object
+      properties:
+        id: {type: string, minLength: 1}
+        source: {type: string}
+        target: {type: string}
+        relationType:
+          type: string
+          enum: [ASSUMES, EXTENDS, MATCHES]
+      required: [id]
     IndexedContentPresence:
       type: object
       properties:
@@ -4516,6 +4993,13 @@ components:
         improved: {type: boolean, description: Whether the text was actually improved,
           example: true}
       required: [improved, rewrittenText]
+    CompetencyName:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        title: {type: string}
+        masteryProgress: {type: number, format: double}
+      required: [id, masteryProgress]
     QuizSubmissionAfterEvaluation:
       type: object
       properties:
@@ -4657,6 +5141,19 @@ components:
         id: {type: integer, format: int64}
         dragItemTempId: {type: integer, format: int64}
         dropLocationTempId: {type: integer, format: int64}
+    LearningPathNavigationObject:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        completed: {type: boolean}
+        name: {type: string}
+        competencyId: {type: integer, format: int64}
+        type:
+          type: string
+          enum: [LECTURE, EXERCISE]
+        repeatedTest: {type: boolean}
+        unreleased: {type: boolean}
+      required: [competencyId, completed, id, repeatedTest, type, unreleased]
     AnswerOptionCreate:
       type: object
       properties:
@@ -4791,6 +5288,17 @@ components:
         quizQuestions:
           type: array
           items: {$ref: '#/components/schemas/QuizQuestionWithoutSolution'}
+    CompetencyGraphNode:
+      type: object
+      properties:
+        id: {type: string, minLength: 1}
+        label: {type: string}
+        softDueDate: {type: string, format: date-time}
+        value: {type: number, format: double}
+        valueType:
+          type: string
+          enum: [MASTERY_PROGRESS, AVERAGE_MASTERY_PROGRESS]
+      required: [id]
     TutorialGroupConfiguration:
       type: object
       properties:
@@ -5203,6 +5711,13 @@ components:
           items: {$ref: '#/components/schemas/ShortAnswerSolution'}
         similarityValue: {type: integer, format: int32}
         matchLetterCase: {type: boolean}
+    LearningPath:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        startedByStudent: {type: boolean}
+        progress: {type: integer, format: int32}
+      required: [id, progress, startedByStudent]
     VariantGenerationRequest:
       type: object
       properties:
@@ -5307,6 +5822,13 @@ components:
         explanation: {type: string, description: Optional explanation for the overall
             question, maxLength: 2000, minLength: 0}
       required: [options, questionText, title, type]
+    LearningPathInformation:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        user: {$ref: '#/components/schemas/UserNameAndLogin'}
+        progress: {type: integer, format: int32}
+      required: [id, progress, user]
     ShortAnswerSolutionReEvaluate:
       type: object
       properties:
@@ -5623,6 +6145,13 @@ components:
           type: string
           default: multiple-choice
           enum: [multiple-choice]
+    LearningPathAverageProgress:
+      type: object
+      properties:
+        courseId: {type: integer, format: int64}
+        averageProgress: {type: number, format: double}
+        totalStudents: {type: integer, format: int64}
+      required: [averageProgress, courseId, totalStudents]
     IndexedEntity:
       type: object
       properties:
@@ -5785,6 +6314,13 @@ components:
             for every response counted so far}
       required: [billableTokens, cachedInputTokens, estimatedCostComplete, inputTokens,
         modelCalls, outputTokens, tokenBudget]
+    SearchResultPageDTOLearningPathInformation:
+      type: object
+      properties:
+        resultsOnPage:
+          type: array
+          items: {$ref: '#/components/schemas/LearningPathInformation'}
+        numberOfPages: {type: integer, format: int32}
     ShortAnswerSubmittedTextFromStudent:
       type: object
       properties:
