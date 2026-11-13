@@ -62,6 +62,7 @@ class LocalVCPrePushHookTest {
         repository = Git.init().setDirectory(repositoryPath.toFile()).setBare(true).setInitialBranch(DEFAULT_BRANCH).call().getRepository();
         // Most tests reject a push before the branching check is reached, so this stub stays lenient.
         lenient().when(localVCServletService.isBranchNameAllowedForRepository(any(), anyString())).thenReturn(LocalVCServletService.BranchingStatus.BRANCH_ALLOWED);
+        lenient().when(localVCServletService.getMaxRepositorySizeBytes(any())).thenReturn(Long.MAX_VALUE);
         User user = new User();
         user.setId(1L);
         user.setLogin("ge12abc");
@@ -83,6 +84,25 @@ class LocalVCPrePushHookTest {
 
             CommitBuilder commitBuilder = new CommitBuilder();
             commitBuilder.setTreeId(treeId);
+            PersonIdent author = new PersonIdent("Ada Lovelace", "ada@example.com");
+            commitBuilder.setAuthor(author);
+            commitBuilder.setCommitter(author);
+            commitBuilder.setMessage("a commit");
+            ObjectId commitId = inserter.insert(commitBuilder);
+            inserter.flush();
+            return commitId;
+        }
+    }
+
+    /** Builds a commit with one file of the given size per entry, named file0, file1, ... (kept below ten files so that the names are in the order Git expects). */
+    private ObjectId commitWithFilesOfSize(int... sizesInBytes) throws IOException {
+        try (ObjectInserter inserter = repository.newObjectInserter()) {
+            TreeFormatter treeFormatter = new TreeFormatter();
+            for (int i = 0; i < sizesInBytes.length; i++) {
+                treeFormatter.append("file" + i, FileMode.REGULAR_FILE, inserter.insert(Constants.OBJ_BLOB, new byte[sizesInBytes[i]]));
+            }
+            CommitBuilder commitBuilder = new CommitBuilder();
+            commitBuilder.setTreeId(inserter.insert(treeFormatter));
             PersonIdent author = new PersonIdent("Ada Lovelace", "ada@example.com");
             commitBuilder.setAuthor(author);
             commitBuilder.setCommitter(author);
@@ -240,6 +260,124 @@ class LocalVCPrePushHookTest {
 
         assertThat(command.getResult()).isEqualTo(ReceiveCommand.Result.REJECTED_OTHER_REASON);
         assertThat(command.getMessage()).as("the student is told which file is too large and by how much").isEqualTo("File 'recording.mp4' exceeds 10MB size limit (11.00 MB)");
+    }
+
+    @Test
+    void onPreReceive_aRepositoryLargerThanTheLimit_isRejectedAndPointsToTheDocumentation() throws Exception {
+        // Many files that are each below the file limit still add up to a repository that every build agent and every student has to copy.
+        when(localVCServletService.getMaxRepositorySizeBytes(any())).thenReturn(5L * 1024 * 1024);
+        ReceiveCommand command = receive(commitWithFilesOfSize(3 * 1024 * 1024, 3 * 1024 * 1024), DEFAULT_REF);
+
+        run(command);
+
+        assertThat(command.getResult()).isEqualTo(ReceiveCommand.Result.REJECTED_OTHER_REASON);
+        assertThat(command.getMessage()).contains("The repository would be 6.0 MB large, but the limit is 5 MB.").contains("Download them during the build instead")
+                .contains("https://docs.artemis.tum.de/instructor/exercises/programming-exercise/write-code-and-tests#keep-repositories-small");
+    }
+
+    @Test
+    void onPreReceive_aRepositoryExactlyAtTheSizeLimit_isAccepted() throws Exception {
+        when(localVCServletService.getMaxRepositorySizeBytes(any())).thenReturn(6L * 1024 * 1024);
+        ReceiveCommand command = receive(commitWithFilesOfSize(3 * 1024 * 1024, 3 * 1024 * 1024), DEFAULT_REF);
+
+        run(command);
+
+        assertThat(command.getResult()).isEqualTo(ReceiveCommand.Result.NOT_ATTEMPTED);
+    }
+
+    @Test
+    void onPreReceive_aPushThatMakesARepositoryAboveTheLimitLarger_isRejected() throws Exception {
+        when(localVCServletService.getMaxRepositorySizeBytes(any())).thenReturn(5L * 1024 * 1024);
+        ObjectId previous = commitWithFilesOfSize(6 * 1024 * 1024);
+        pointDefaultBranchAt(previous);
+        ReceiveCommand command = new ReceiveCommand(previous, commitWithFilesOfSize(6 * 1024 * 1024, 1024), DEFAULT_REF);
+
+        run(command);
+
+        assertThat(command.getResult()).isEqualTo(ReceiveCommand.Result.REJECTED_OTHER_REASON);
+        assertThat(command.getMessage()).contains("limit is 5 MB");
+    }
+
+    @Test
+    void onPreReceive_aPushThatDoesNotMakeARepositoryAboveTheLimitLarger_isAccepted() throws Exception {
+        // Repositories created from a large template before the limit existed must stay usable: students can still push, and can shrink the repository step by step.
+        when(localVCServletService.getMaxRepositorySizeBytes(any())).thenReturn(5L * 1024 * 1024);
+        ObjectId previous = commitWithFilesOfSize(6 * 1024 * 1024, 1024);
+        pointDefaultBranchAt(previous);
+        ReceiveCommand sameSize = new ReceiveCommand(previous, commitWithFilesOfSize(6 * 1024 * 1024, 1024), DEFAULT_REF);
+        ReceiveCommand smaller = new ReceiveCommand(previous, commitWithFilesOfSize(6 * 1024 * 1024), DEFAULT_REF);
+
+        run(sameSize);
+        run(smaller);
+
+        assertThat(sameSize.getResult()).isEqualTo(ReceiveCommand.Result.NOT_ATTEMPTED);
+        assertThat(smaller.getResult()).isEqualTo(ReceiveCommand.Result.NOT_ATTEMPTED);
+    }
+
+    @Test
+    void onPreReceive_creatingABranchAtACommitOfARepositoryAboveTheLimit_isAccepted() throws Exception {
+        // A new branch at an existing commit adds no files, so it is no growth even though its old id is the zero id.
+        when(localVCServletService.getMaxRepositorySizeBytes(any())).thenReturn(5L * 1024 * 1024);
+        ObjectId existing = commitWithFilesOfSize(6 * 1024 * 1024);
+        pointDefaultBranchAt(existing);
+        ReceiveCommand command = receive(existing, Constants.R_HEADS + "feature");
+
+        run(command);
+
+        assertThat(command.getResult()).isEqualTo(ReceiveCommand.Result.NOT_ATTEMPTED);
+    }
+
+    @Test
+    void onPreReceive_creatingABranchThatIsLargerThanEveryExistingBranch_isRejected() throws Exception {
+        when(localVCServletService.getMaxRepositorySizeBytes(any())).thenReturn(5L * 1024 * 1024);
+        pointDefaultBranchAt(commitWithFilesOfSize(6 * 1024 * 1024));
+        ReceiveCommand command = receive(commitWithFilesOfSize(6 * 1024 * 1024, 1024), Constants.R_HEADS + "feature");
+
+        run(command);
+
+        assertThat(command.getResult()).isEqualTo(ReceiveCommand.Result.REJECTED_OTHER_REASON);
+        assertThat(command.getMessage()).contains("limit is 5 MB");
+    }
+
+    @Test
+    void onPreReceive_aPushThatRemovesASubmoduleFromARepositoryAboveTheLimit_isAccepted() throws Exception {
+        // The object of a submodule is not stored in this repository, so measuring the previous commit must not try to open it.
+        when(localVCServletService.getMaxRepositorySizeBytes(any())).thenReturn(5L * 1024 * 1024);
+        ObjectId previous = commitWithFileAndSubmodule(7 * 1024 * 1024);
+        pointDefaultBranchAt(previous);
+        ReceiveCommand command = new ReceiveCommand(previous, commitWithFilesOfSize(6 * 1024 * 1024), DEFAULT_REF);
+
+        run(command);
+
+        assertThat(command.getResult()).isEqualTo(ReceiveCommand.Result.NOT_ATTEMPTED);
+    }
+
+    private ObjectId commitWithFileAndSubmodule(int fileSizeInBytes) throws IOException {
+        try (ObjectInserter inserter = repository.newObjectInserter()) {
+            TreeFormatter treeFormatter = new TreeFormatter();
+            treeFormatter.append("file0", FileMode.REGULAR_FILE, inserter.insert(Constants.OBJ_BLOB, new byte[fileSizeInBytes]));
+            treeFormatter.append("submodule", FileMode.GITLINK, ObjectId.fromString("0123456789012345678901234567890123456789"));
+            CommitBuilder commitBuilder = new CommitBuilder();
+            commitBuilder.setTreeId(inserter.insert(treeFormatter));
+            PersonIdent author = new PersonIdent("Ada Lovelace", "ada@example.com");
+            commitBuilder.setAuthor(author);
+            commitBuilder.setCommitter(author);
+            commitBuilder.setMessage("a commit with a submodule");
+            ObjectId commitId = inserter.insert(commitBuilder);
+            inserter.flush();
+            return commitId;
+        }
+    }
+
+    @Test
+    void onPreReceive_aSymbolicLinkIsReportedEvenIfTheRepositoryIsAlsoTooLarge() throws Exception {
+        // The first violation that is found is the one that is reported, and the size check must not replace it.
+        when(localVCServletService.getMaxRepositorySizeBytes(any())).thenReturn(1L);
+        ReceiveCommand command = receive(commitWith("link-to-secrets", FileMode.SYMLINK, "/etc/passwd".getBytes(StandardCharsets.UTF_8)), DEFAULT_REF);
+
+        run(command);
+
+        assertThat(command.getMessage()).contains("Symbolic links are not allowed");
     }
 
     @Test

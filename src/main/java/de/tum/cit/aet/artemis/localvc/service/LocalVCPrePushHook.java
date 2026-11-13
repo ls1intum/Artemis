@@ -40,6 +40,8 @@ public record LocalVCPrePushHook(LocalVCServletService localVCServletService, Us
 
     private static final long MAX_BLOB_SIZE_BYTES = 10L * 1024 * 1024; // 10MB
 
+    private static final String REPOSITORY_SIZE_DOCUMENTATION_URL = "https://docs.artemis.tum.de/instructor/exercises/programming-exercise/write-code-and-tests#keep-repositories-small";
+
     /** The most entries of the tree of the pushed commit that are examined. A tree can reference the same subtree many times, so its paths are far more than its objects. */
     static final int MAX_TREE_ENTRIES = 100_000;
 
@@ -141,14 +143,15 @@ public record LocalVCPrePushHook(LocalVCServletService localVCServletService, Us
                 }
             }
 
-            rejectFilesLargerThan10MbOrSymlinksOrSubModules(repository, command);
+            rejectFilesLargerThan10MbOrSymlinksOrSubModulesOrOversizedRepository(repository, command, localVCServletService.getMaxRepositorySizeBytes(repository));
         }
         catch (IOException e) {
             command.setResult(ReceiveCommand.Result.REJECTED_OTHER_REASON, "An error occurred while checking the branch.");
         }
     }
 
-    private static void rejectFilesLargerThan10MbOrSymlinksOrSubModules(Repository repository, ReceiveCommand command) throws IOException {
+    private static void rejectFilesLargerThan10MbOrSymlinksOrSubModulesOrOversizedRepository(Repository repository, ReceiveCommand command, long maxRepositorySizeBytes)
+            throws IOException {
         try (ObjectReader reader = repository.newObjectReader(); RevWalk revWalk = new RevWalk(reader); TreeWalk treeWalk = new TreeWalk(reader)) {
             RevCommit newCommit = revWalk.parseCommit(command.getNewId());
             treeWalk.addTree(newCommit.getTree());
@@ -191,7 +194,7 @@ public record LocalVCPrePushHook(LocalVCServletService localVCServletService, Us
 
                             After removing the symlink, replace it with the correct file or folder, add it with 'git add', and commit the changes."""
                             .formatted(treeWalk.getPathString()));
-                    break;
+                    return;
                 }
                 if (FileMode.GITLINK.equals(mode)) {
                     command.setResult(ReceiveCommand.Result.REJECTED_OTHER_REASON, """
@@ -202,7 +205,7 @@ public record LocalVCPrePushHook(LocalVCServletService localVCServletService, Us
                             3. Edit the '.gitmodules' file and remove the corresponding section.
                             4. Optionally, clean up '.git/config' if it contains a [submodule "%1$s"] section.
                             5. Commit all changes.""".formatted(treeWalk.getPathString()));
-                    break;
+                    return;
                 }
 
                 ObjectId objectId = treeWalk.getObjectId(0);
@@ -211,15 +214,74 @@ public record LocalVCPrePushHook(LocalVCServletService localVCServletService, Us
                 if (size > MAX_BLOB_SIZE_BYTES) {
                     command.setResult(ReceiveCommand.Result.REJECTED_OTHER_REASON,
                             "File '%s' exceeds 10MB size limit (%.2f MB)".formatted(treeWalk.getPathString(), size / (1024.0 * 1024.0)));
-                    break;
+                    return;
                 }
                 totalBytes += size;
                 if (totalBytes > MAX_TREE_BYTES) {
                     log.warn("Rejected a push to {}: the files add up to more than {} bytes", repository.getDirectory(), MAX_TREE_BYTES);
                     command.setResult(ReceiveCommand.Result.REJECTED_OTHER_REASON, TREE_LIMIT_MESSAGE);
-                    break;
+                    return;
+                }
+            }
+            if (command.getResult() == ReceiveCommand.Result.NOT_ATTEMPTED) {
+                rejectOversizedRepository(repository, reader, revWalk, command, totalBytes, maxRepositorySizeBytes);
+            }
+        }
+    }
+
+    /**
+     * Rejects a push that makes the files of the repository larger than the limit. A push that does not make the repository larger is accepted even if the repository is over
+     * the limit already (e.g. because it was created from a large template before the limit existed), so that students can still push, and can bring the repository below the
+     * limit.
+     */
+    private static void rejectOversizedRepository(Repository repository, ObjectReader reader, RevWalk revWalk, ReceiveCommand command, long totalSize, long maxRepositorySizeBytes)
+            throws IOException {
+        if (totalSize <= maxRepositorySizeBytes) {
+            return;
+        }
+        long previousSize = ObjectId.zeroId().equals(command.getOldId()) ? largestExistingBranchSize(repository, reader, revWalk)
+                : sizeOfFiles(reader, revWalk.parseCommit(command.getOldId()));
+        if (totalSize <= previousSize) {
+            return;
+        }
+        command.setResult(ReceiveCommand.Result.REJECTED_OTHER_REASON, """
+                The repository would be %.1f MB large, but the limit is %d MB.
+                Large files that never change (data sets, models, libraries, ...) must not be stored in git. Download them during the build instead.
+                See %s
+                To fix this, remove the large files from the repository, commit the changes and push again.""".formatted(totalSize / (1024.0 * 1024.0),
+                maxRepositorySizeBytes / (1024 * 1024), REPOSITORY_SIZE_DOCUMENTATION_URL));
+    }
+
+    /**
+     * The baseline for a push that creates a branch: the largest branch that exists already, or 0 in a repository without branches. Creating a branch at an existing commit
+     * adds no files, so it must not be treated as growing the repository from nothing.
+     */
+    private static long largestExistingBranchSize(Repository repository, ObjectReader reader, RevWalk revWalk) throws IOException {
+        long largest = 0;
+        for (Ref ref : repository.getRefDatabase().getRefsByPrefix(Constants.R_HEADS)) {
+            if (ref.getObjectId() != null) {
+                largest = Math.max(largest, sizeOfFiles(reader, revWalk.parseCommit(ref.getObjectId())));
+            }
+        }
+        return largest;
+    }
+
+    private static long sizeOfFiles(ObjectReader reader, RevCommit commit) throws IOException {
+        long size = 0;
+        try (TreeWalk treeWalk = new TreeWalk(reader)) {
+            treeWalk.addTree(commit.getTree());
+            treeWalk.setRecursive(true);
+            while (treeWalk.next()) {
+                if (FileMode.GITLINK.equals(treeWalk.getFileMode(0))) {
+                    // the object of a submodule lives in another repository
+                    continue;
+                }
+                if (!FileMode.TREE.equals(treeWalk.getFileMode(0))) {
+                    // only the size is read, not the content
+                    size += reader.getObjectSize(treeWalk.getObjectId(0), Constants.OBJ_BLOB);
                 }
             }
         }
+        return size;
     }
 }
