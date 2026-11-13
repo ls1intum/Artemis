@@ -4,8 +4,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.entry;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -63,7 +65,7 @@ import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolPlanDTO;
 import de.tum.cit.aet.artemis.hyperion.repository.QuizQuestionPoolBuildRepository;
 import de.tum.cit.aet.artemis.hyperion.repository.QuizQuestionPoolItemRepository;
 import de.tum.cit.aet.artemis.hyperion.repository.QuizQuestionPoolLectureUnitRepository;
-import de.tum.cit.aet.artemis.hyperion.service.HyperionQuizQuestionPoolBuildService.Cell;
+import de.tum.cit.aet.artemis.hyperion.service.HyperionQuizQuestionPoolPlanService.Cell;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 import de.tum.cit.aet.artemis.lecture.domain.TextUnit;
 
@@ -134,7 +136,7 @@ class HyperionQuizQuestionPoolBuildServiceTest {
     void planCells_splitsEachTypeOverTheDifficultiesInAFixedOrder() {
         HyperionCourseSettings settings = new HyperionCourseSettings(false, 21, true, 5, 1, 4, 20, 50, 30);
 
-        Map<Cell, Integer> targets = HyperionQuizQuestionPoolBuildService.planCells(Map.of(7L, List.of(2L, 1L), 3L, List.of(5L)), QuizQuestionGenerationLanguage.DE, settings);
+        Map<Cell, Integer> targets = HyperionQuizQuestionPoolPlanService.planCells(Map.of(7L, List.of(2L, 1L), 3L, List.of(5L)), QuizQuestionGenerationLanguage.DE, settings);
 
         List<Cell> cells = List.copyOf(targets.keySet());
         assertThat(cells).hasSize(18);
@@ -150,14 +152,14 @@ class HyperionQuizQuestionPoolBuildServiceTest {
     void planCells_leavesOutDisabledMultipleChoiceAndDifficultiesWithoutAQuestion() {
         HyperionCourseSettings settings = new HyperionCourseSettings(false, 1, false, 12, 1, 4, 20, 50, 30);
 
-        Map<Cell, Integer> targets = HyperionQuizQuestionPoolBuildService.planCells(Map.of(7L, List.of(1L)), QuizQuestionGenerationLanguage.EN, settings);
+        Map<Cell, Integer> targets = HyperionQuizQuestionPoolPlanService.planCells(Map.of(7L, List.of(1L)), QuizQuestionGenerationLanguage.EN, settings);
 
         assertThat(targets).containsExactly(entry(new Cell(7L, 1L, QuizQuestionGenerationLanguage.EN, QuizQuestionGenerationType.SINGLE_CHOICE, QuizQuestionDifficulty.MEDIUM), 1));
     }
 
     @Test
     void planCells_isEmptyWithoutLectureUnits() {
-        assertThat(HyperionQuizQuestionPoolBuildService.planCells(Map.of(), QuizQuestionGenerationLanguage.EN, HyperionCourseSettings.defaultSettings())).isEmpty();
+        assertThat(HyperionQuizQuestionPoolPlanService.planCells(Map.of(), QuizQuestionGenerationLanguage.EN, HyperionCourseSettings.defaultSettings())).isEmpty();
     }
 
     @Test
@@ -170,11 +172,11 @@ class HyperionQuizQuestionPoolBuildServiceTest {
 
     @Test
     void splitByPercent_givesTheRemainderToTheLargestFractionsEarlierOnesFirst() {
-        assertThat(HyperionQuizQuestionPoolBuildService.splitByPercent(21, new int[] { 20, 50, 30 })).containsExactly(4, 11, 6);
-        assertThat(HyperionQuizQuestionPoolBuildService.splitByPercent(25, new int[] { 20, 50, 30 })).containsExactly(5, 13, 7);
-        assertThat(HyperionQuizQuestionPoolBuildService.splitByPercent(12, new int[] { 20, 50, 30 })).containsExactly(2, 6, 4);
-        assertThat(HyperionQuizQuestionPoolBuildService.splitByPercent(1, new int[] { 20, 50, 30 })).containsExactly(0, 1, 0);
-        assertThat(HyperionQuizQuestionPoolBuildService.splitByPercent(7, new int[] { 0, 100, 0 })).containsExactly(0, 7, 0);
+        assertThat(HyperionQuizQuestionPoolPlanService.splitByPercent(21, new int[] { 20, 50, 30 })).containsExactly(4, 11, 6);
+        assertThat(HyperionQuizQuestionPoolPlanService.splitByPercent(25, new int[] { 20, 50, 30 })).containsExactly(5, 13, 7);
+        assertThat(HyperionQuizQuestionPoolPlanService.splitByPercent(12, new int[] { 20, 50, 30 })).containsExactly(2, 6, 4);
+        assertThat(HyperionQuizQuestionPoolPlanService.splitByPercent(1, new int[] { 20, 50, 30 })).containsExactly(0, 1, 0);
+        assertThat(HyperionQuizQuestionPoolPlanService.splitByPercent(7, new int[] { 0, 100, 0 })).containsExactly(0, 7, 0);
     }
 
     @Test
@@ -486,9 +488,9 @@ class HyperionQuizQuestionPoolBuildServiceTest {
 
     @Test
     void constructor_rejectsAnEmptyLease() {
-        assertThatThrownBy(() -> new HyperionQuizQuestionPoolBuildService(mock(HyperionQuizQuestionPoolModelService.class), new HyperionPromptTemplateService(), materialService,
-                Optional.of(courseCompetencyApi), filterService, llmTokenUsageService, itemRepository, settingsService, courseRepository, lectureUnitRepository, buildRepository,
-                distributedDataProvider, 8, 30, 0)).isInstanceOf(IllegalArgumentException.class).hasMessageContaining("build-lease-minutes");
+        assertThatThrownBy(() -> new HyperionQuizQuestionPoolBuildService(mock(HyperionQuizQuestionPoolModelService.class), planService(), new HyperionPromptTemplateService(),
+                materialService, Optional.of(courseCompetencyApi), filterService, llmTokenUsageService, itemRepository, settingsService, courseRepository, lectureUnitRepository,
+                buildRepository, distributedDataProvider, 8, 30, 0)).isInstanceOf(IllegalArgumentException.class).hasMessageContaining("build-lease-minutes");
     }
 
     @Test
@@ -631,7 +633,53 @@ class HyperionQuizQuestionPoolBuildServiceTest {
 
         verify(itemRepository).deleteAllByLectureUnitExceptReviewState(5L, 4L, QuizQuestionReviewState.APPROVED);
         verify(itemRepository).markMaterialChangedByLectureUnit(eq(5L), eq(4L), any(ZonedDateTime.class));
-        assertThat(record.getFingerprint()).isEqualTo("fp-2");
+        verify(lectureUnitRepository).updateBuildState(eq(5L), eq(4L), eq("fp-2"), any(ZonedDateTime.class));
+    }
+
+    @Test
+    void enqueue_replacesUnreviewedAndFlagsApprovedItemsOfAUnitThatLostItsMaterial() {
+        HyperionQuizQuestionPoolBuildService service = service();
+        Competency competency = new Competency();
+        competency.setId(9L);
+        when(courseCompetencyApi.findAllForCourse(5L)).thenReturn(Set.of(competency));
+        when(materialService.findGroundableUnits(List.of(9L))).thenReturn(Map.of());
+        when(settingsService.getSettings(5L)).thenReturn(HyperionCourseSettings.defaultSettings());
+        when(lectureUnitRepository.findAllByCourseId(5L)).thenReturn(List.of(record(4L, "fp-1", false), record(6L, "fp-1", true), record(7L, null, false)));
+
+        int created = service.enqueue(course);
+
+        assertThat(created).isZero();
+        verify(itemRepository).deleteAllByLectureUnitExceptReviewState(5L, 4L, QuizQuestionReviewState.APPROVED);
+        verify(itemRepository).markMaterialChangedByLectureUnit(eq(5L), eq(4L), any(ZonedDateTime.class));
+        verify(lectureUnitRepository).updateBuildState(eq(5L), eq(4L), isNull(), any(ZonedDateTime.class));
+        verify(itemRepository, never()).deleteAllByLectureUnitExceptReviewState(5L, 6L, QuizQuestionReviewState.APPROVED);
+        verify(itemRepository, never()).deleteAllByLectureUnitExceptReviewState(5L, 7L, QuizQuestionReviewState.APPROVED);
+    }
+
+    @Test
+    void enqueue_neverWritesTheExclusionOfAnExistingUnit() {
+        HyperionQuizQuestionPoolBuildService service = service();
+        TextUnit excludedUnit = textUnit(4L);
+        TextUnit includedUnit = textUnit(6L);
+        Competency competency = new Competency();
+        competency.setId(9L);
+        when(courseCompetencyApi.findAllForCourse(5L)).thenReturn(Set.of(competency));
+        when(materialService.findGroundableUnits(List.of(9L))).thenReturn(Map.of(9L, List.of(excludedUnit, includedUnit)));
+        when(materialService.fingerprintOf(includedUnit)).thenReturn("fp-1");
+        when(settingsService.getSettings(5L)).thenReturn(new HyperionCourseSettings(false, 12, false, 12, 1, 4, 0, 100, 0));
+        QuizQuestionPoolLectureUnit excluded = record(4L, "fp-1", true);
+        QuizQuestionPoolLectureUnit included = record(6L, "fp-1", false);
+        when(lectureUnitRepository.findAllByCourseId(5L)).thenReturn(List.of(excluded, included));
+
+        service.enqueue(course);
+
+        ArgumentCaptor<Collection<QuizQuestionPoolLectureUnit>> inserted = ArgumentCaptor.captor();
+        verify(lectureUnitRepository).saveAll(inserted.capture());
+        assertThat(inserted.getValue()).isEmpty();
+        verify(lectureUnitRepository, never()).save(any(QuizQuestionPoolLectureUnit.class));
+        verify(lectureUnitRepository, never()).updateExcluded(anyLong(), anyLong(), anyBoolean(), any());
+        verify(lectureUnitRepository, never()).updateBuildState(eq(5L), eq(4L), any(), any());
+        verify(lectureUnitRepository).updateBuildState(eq(5L), eq(6L), eq("fp-1"), any(ZonedDateTime.class));
     }
 
     @Test
@@ -683,12 +731,12 @@ class HyperionQuizQuestionPoolBuildServiceTest {
 
     @Test
     void toQuestion_fallsBackToTheRequestedTypeWhenTheModelOmitsIt() {
-        HyperionQuizQuestionPoolBuildService.PoolQuestionOutput generated = new HyperionQuizQuestionPoolBuildService.PoolQuestionOutput(null, "Loop count",
-                "How often does the body run?", 1,
-                List.of(new HyperionQuizQuestionPoolBuildService.PoolOptionOutput("5 times", true), new HyperionQuizQuestionPoolBuildService.PoolOptionOutput("4 times", false)),
+        HyperionQuizQuestionPoolQuestionMapper.PoolQuestionOutput generated = new HyperionQuizQuestionPoolQuestionMapper.PoolQuestionOutput(null, "Loop count",
+                "How often does the body run?", 1, List.of(new HyperionQuizQuestionPoolQuestionMapper.PoolOptionOutput("5 times", true),
+                        new HyperionQuizQuestionPoolQuestionMapper.PoolOptionOutput("4 times", false)),
                 "The condition is checked before every iteration.");
 
-        Optional<GeneratedQuizQuestionDTO> question = HyperionQuizQuestionPoolBuildService.toQuestion(generated, QuizQuestionGenerationType.SINGLE_CHOICE);
+        Optional<GeneratedQuizQuestionDTO> question = HyperionQuizQuestionPoolQuestionMapper.toQuestion(generated, QuizQuestionGenerationType.SINGLE_CHOICE);
 
         assertThat(question).hasValueSatisfying(mapped -> {
             assertThat(mapped.type()).isEqualTo(QuizQuestionGenerationType.SINGLE_CHOICE);
@@ -699,27 +747,28 @@ class HyperionQuizQuestionPoolBuildServiceTest {
 
     @Test
     void toQuestion_matchesTypeNamesIgnoringCaseAndSeparators() {
-        List<HyperionQuizQuestionPoolBuildService.PoolOptionOutput> options = List.of(new HyperionQuizQuestionPoolBuildService.PoolOptionOutput("A", true));
+        List<HyperionQuizQuestionPoolQuestionMapper.PoolOptionOutput> options = List.of(new HyperionQuizQuestionPoolQuestionMapper.PoolOptionOutput("A", true));
 
-        assertThat(HyperionQuizQuestionPoolBuildService.toQuestion(new HyperionQuizQuestionPoolBuildService.PoolQuestionOutput("single_choice", "T", "Q", null, options, null),
+        assertThat(HyperionQuizQuestionPoolQuestionMapper.toQuestion(new HyperionQuizQuestionPoolQuestionMapper.PoolQuestionOutput("single_choice", "T", "Q", null, options, null),
                 QuizQuestionGenerationType.SINGLE_CHOICE)).hasValueSatisfying(mapped -> assertThat(mapped.type()).isEqualTo(QuizQuestionGenerationType.SINGLE_CHOICE));
-        assertThat(HyperionQuizQuestionPoolBuildService.toQuestion(new HyperionQuizQuestionPoolBuildService.PoolQuestionOutput("Multiple Choice", "T", "Q", null, options, null),
-                QuizQuestionGenerationType.SINGLE_CHOICE)).hasValueSatisfying(mapped -> assertThat(mapped.type()).isEqualTo(QuizQuestionGenerationType.MULTIPLE_CHOICE));
-        assertThat(HyperionQuizQuestionPoolBuildService.toQuestion(new HyperionQuizQuestionPoolBuildService.PoolQuestionOutput("essay", "T", "Q", null, options, null),
+        assertThat(HyperionQuizQuestionPoolQuestionMapper.toQuestion(
+                new HyperionQuizQuestionPoolQuestionMapper.PoolQuestionOutput("Multiple Choice", "T", "Q", null, options, null), QuizQuestionGenerationType.SINGLE_CHOICE))
+                .hasValueSatisfying(mapped -> assertThat(mapped.type()).isEqualTo(QuizQuestionGenerationType.MULTIPLE_CHOICE));
+        assertThat(HyperionQuizQuestionPoolQuestionMapper.toQuestion(new HyperionQuizQuestionPoolQuestionMapper.PoolQuestionOutput("essay", "T", "Q", null, options, null),
                 QuizQuestionGenerationType.SINGLE_CHOICE)).isEmpty();
-        assertThat(HyperionQuizQuestionPoolBuildService.toQuestion(new HyperionQuizQuestionPoolBuildService.PoolQuestionOutput(null, "T", "Q", null, null, null),
+        assertThat(HyperionQuizQuestionPoolQuestionMapper.toQuestion(new HyperionQuizQuestionPoolQuestionMapper.PoolQuestionOutput(null, "T", "Q", null, null, null),
                 QuizQuestionGenerationType.SINGLE_CHOICE)).isEmpty();
     }
 
     @Test
     void toQuestion_rewritesParenthesisAndBracketMathAsDollarMath() {
-        HyperionQuizQuestionPoolBuildService.PoolQuestionOutput generated = new HyperionQuizQuestionPoolBuildService.PoolQuestionOutput(null, "Dual",
+        HyperionQuizQuestionPoolQuestionMapper.PoolQuestionOutput generated = new HyperionQuizQuestionPoolQuestionMapper.PoolQuestionOutput(null, "Dual",
                 "Consider \\(\\max 5x_1\\) subject to\n\\[x_1 \\leq 4\\]\nand the code `f(\\(x\\))`.", 1,
-                List.of(new HyperionQuizQuestionPoolBuildService.PoolOptionOutput("\\(y_1 \\geq 5\\)", true),
-                        new HyperionQuizQuestionPoolBuildService.PoolOptionOutput("$y_1 \\leq 5$", false)),
+                List.of(new HyperionQuizQuestionPoolQuestionMapper.PoolOptionOutput("\\(y_1 \\geq 5\\)", true),
+                        new HyperionQuizQuestionPoolQuestionMapper.PoolOptionOutput("$y_1 \\leq 5$", false)),
                 "Because \\(y_1 \\geq 5\\).");
 
-        Optional<GeneratedQuizQuestionDTO> question = HyperionQuizQuestionPoolBuildService.toQuestion(generated, QuizQuestionGenerationType.SINGLE_CHOICE);
+        Optional<GeneratedQuizQuestionDTO> question = HyperionQuizQuestionPoolQuestionMapper.toQuestion(generated, QuizQuestionGenerationType.SINGLE_CHOICE);
 
         assertThat(question).hasValueSatisfying(mapped -> {
             assertThat(mapped.questionText()).isEqualTo("Consider $\\max 5x_1$ subject to\n$$x_1 \\leq 4$$\nand the code `f(\\(x\\))`.");
@@ -730,10 +779,10 @@ class HyperionQuizQuestionPoolBuildServiceTest {
 
     @Test
     void plainTitle_removesMarkdownButKeepsIdentifiers() {
-        assertThat(HyperionQuizQuestionPoolBuildService.plainTitle("Behavior of `continue` in a `while` loop")).isEqualTo("Behavior of continue in a while loop");
-        assertThat(HyperionQuizQuestionPoolBuildService.plainTitle("**Bounds** of $n!$ and *my_var*")).isEqualTo("Bounds of n! and my_var");
-        assertThat(HyperionQuizQuestionPoolBuildService.plainTitle("Calling `__init__` twice")).isEqualTo("Calling __init__ twice");
-        assertThat(HyperionQuizQuestionPoolBuildService.plainTitle(null)).isEmpty();
+        assertThat(HyperionQuizQuestionPoolQuestionMapper.plainTitle("Behavior of `continue` in a `while` loop")).isEqualTo("Behavior of continue in a while loop");
+        assertThat(HyperionQuizQuestionPoolQuestionMapper.plainTitle("**Bounds** of $n!$ and *my_var*")).isEqualTo("Bounds of n! and my_var");
+        assertThat(HyperionQuizQuestionPoolQuestionMapper.plainTitle("Calling `__init__` twice")).isEqualTo("Calling __init__ twice");
+        assertThat(HyperionQuizQuestionPoolQuestionMapper.plainTitle(null)).isEmpty();
     }
 
     @Test
@@ -790,6 +839,10 @@ class HyperionQuizQuestionPoolBuildServiceTest {
         verify(buildRepository).save(build);
     }
 
+    private HyperionQuizQuestionPoolPlanService planService() {
+        return new HyperionQuizQuestionPoolPlanService(materialService, Optional.of(courseCompetencyApi), itemRepository, settingsService, lectureUnitRepository);
+    }
+
     private void stubCompetencyWithUnit(long competencyId, TextUnit unit, String fingerprint) {
         Competency competency = new Competency();
         competency.setId(competencyId);
@@ -808,6 +861,7 @@ class HyperionQuizQuestionPoolBuildServiceTest {
 
     private QuizQuestionPoolLectureUnit record(long lectureUnitId, String fingerprint, boolean excluded) {
         QuizQuestionPoolLectureUnit record = new QuizQuestionPoolLectureUnit();
+        record.setId(lectureUnitId * 100);
         record.setCourse(course);
         record.setLectureUnitId(lectureUnitId);
         record.setFingerprint(fingerprint);
@@ -850,8 +904,8 @@ class HyperionQuizQuestionPoolBuildServiceTest {
     private HyperionQuizQuestionPoolBuildService service() {
         HyperionQuizQuestionPoolModelService models = mock(HyperionQuizQuestionPoolModelService.class);
         lenient().when(models.chatClient()).thenThrow(HyperionQuizQuestionPoolModelService.notConfigured());
-        return new HyperionQuizQuestionPoolBuildService(models, new HyperionPromptTemplateService(), materialService, Optional.of(courseCompetencyApi), filterService,
-                llmTokenUsageService, itemRepository, settingsService, courseRepository, lectureUnitRepository, buildRepository, distributedDataProvider, 8, 30, 10);
+        return new HyperionQuizQuestionPoolBuildService(models, planService(), new HyperionPromptTemplateService(), materialService, Optional.of(courseCompetencyApi),
+                filterService, llmTokenUsageService, itemRepository, settingsService, courseRepository, lectureUnitRepository, buildRepository, distributedDataProvider, 8, 30, 10);
     }
 
     private HyperionQuizQuestionPoolBuildService serviceWithChatClient() {
@@ -859,7 +913,7 @@ class HyperionQuizQuestionPoolBuildServiceTest {
         lenient().when(models.isConfigured()).thenReturn(true);
         lenient().when(models.chatClient()).thenReturn(ChatClient.create(chatModel));
         lenient().when(models.generatorModel()).thenReturn("generator-x");
-        return new HyperionQuizQuestionPoolBuildService(models, new HyperionPromptTemplateService(), materialService, Optional.of(courseCompetencyApi), filterService,
-                llmTokenUsageService, itemRepository, settingsService, courseRepository, lectureUnitRepository, buildRepository, distributedDataProvider, 8, 30, 10);
+        return new HyperionQuizQuestionPoolBuildService(models, planService(), new HyperionPromptTemplateService(), materialService, Optional.of(courseCompetencyApi),
+                filterService, llmTokenUsageService, itemRepository, settingsService, courseRepository, lectureUnitRepository, buildRepository, distributedDataProvider, 8, 30, 10);
     }
 }

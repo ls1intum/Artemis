@@ -272,17 +272,21 @@ public class HyperionQuizQuestionPoolService {
         log.info("Quiz question pool of course [{}]: {} {} lecture unit [{}]", courseId, currentUser(), excluded ? "excluded" : "included", lectureUnitId);
     }
 
-    /** Stores whether the lecture unit is excluded and, when it is, deletes its questions that are not approved. */
+    /**
+     * Stores whether the lecture unit is excluded and, when it is, deletes its questions that are not approved. An existing record is
+     * updated in its exclusion only, so a build reconciling the unit at the same time keeps what it records. A unit without a record
+     * counts as included, so including it creates none.
+     */
     private void storeRelevance(long courseId, long lectureUnitId, boolean excluded) {
-        QuizQuestionPoolLectureUnit record = lectureUnitRepository.findByCourseIdAndLectureUnitId(courseId, lectureUnitId).orElseGet(() -> {
+        ZonedDateTime now = ZonedDateTime.now();
+        if (lectureUnitRepository.updateExcluded(courseId, lectureUnitId, excluded, now) == 0 && excluded) {
             QuizQuestionPoolLectureUnit created = new QuizQuestionPoolLectureUnit();
             created.setCourse(courseRepository.findByIdElseThrow(courseId));
             created.setLectureUnitId(lectureUnitId);
-            return created;
-        });
-        record.setExcluded(excluded);
-        record.setUpdatedAt(ZonedDateTime.now());
-        lectureUnitRepository.save(record);
+            created.setExcluded(true);
+            created.setUpdatedAt(now);
+            lectureUnitRepository.save(created);
+        }
         if (excluded) {
             itemRepository.deleteAllByLectureUnitExceptReviewState(courseId, lectureUnitId, QuizQuestionReviewState.APPROVED);
         }

@@ -4,15 +4,11 @@ import static de.tum.cit.aet.artemis.hyperion.service.HyperionUtils.getSanitized
 import static de.tum.cit.aet.artemis.hyperion.service.HyperionUtils.getSanitizedCourseTitle;
 import static de.tum.cit.aet.artemis.hyperion.service.HyperionUtils.sanitizeInput;
 import static de.tum.cit.aet.artemis.hyperion.service.HyperionUtils.sanitizeInputPreserveLines;
-import static de.tum.cit.aet.artemis.hyperion.service.QuizQuestionCodeFormatting.formatCode;
 
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
-import java.util.EnumMap;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -21,8 +17,6 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.UUID;
 import java.util.function.Function;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import org.jspecify.annotations.Nullable;
@@ -37,33 +31,23 @@ import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
-import com.fasterxml.jackson.annotation.JsonPropertyDescription;
-
 import de.tum.cit.aet.artemis.admin.domain.LLMServiceType;
 import de.tum.cit.aet.artemis.admin.service.LLMTokenUsageService;
 import de.tum.cit.aet.artemis.atlas.api.CourseCompetencyApi;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
-import de.tum.cit.aet.artemis.core.domain.Language;
-import de.tum.cit.aet.artemis.core.exception.ApiConditionNotPresentException;
 import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
 import de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
 import de.tum.cit.aet.artemis.hyperion.domain.HyperionCourseSettings;
-import de.tum.cit.aet.artemis.hyperion.domain.QuizQuestionDifficulty;
 import de.tum.cit.aet.artemis.hyperion.domain.QuizQuestionPoolBuild;
 import de.tum.cit.aet.artemis.hyperion.domain.QuizQuestionPoolBuildTrigger;
 import de.tum.cit.aet.artemis.hyperion.domain.QuizQuestionPoolItem;
 import de.tum.cit.aet.artemis.hyperion.domain.QuizQuestionPoolItemState;
-import de.tum.cit.aet.artemis.hyperion.domain.QuizQuestionPoolLectureUnit;
-import de.tum.cit.aet.artemis.hyperion.domain.QuizQuestionReviewState;
-import de.tum.cit.aet.artemis.hyperion.dto.GeneratedQuizAnswerOptionDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.GeneratedQuizQuestionDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionFilterDecisionDTO;
-import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionGenerationLanguage;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionGenerationType;
-import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolCellCountDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolPlanDTO;
 import de.tum.cit.aet.artemis.hyperion.repository.QuizQuestionPoolBuildRepository;
 import de.tum.cit.aet.artemis.hyperion.repository.QuizQuestionPoolItemRepository;
@@ -141,18 +125,6 @@ public class HyperionQuizQuestionPoolBuildService {
     /** How long a cancel request is kept for a build that never released its lease to clear it. */
     private static final Duration CANCEL_REQUEST_LIFETIME = Duration.ofDays(1);
 
-    /** Markdown in a title: backticks, asterisk bold and italic markers, and dollar-sign math delimiters. Underscores are kept, since identifiers contain them. */
-    private static final Pattern TITLE_MARKDOWN = Pattern.compile("`|\\*|\\$");
-
-    private static final Pattern WHITESPACE = Pattern.compile("\\s+");
-
-    /** Fenced code blocks and code spans, inside which math delimiters are left as they are. */
-    private static final Pattern MARKDOWN_CODE = Pattern.compile("```.*?```|`[^`]*`", Pattern.DOTALL);
-
-    private static final Pattern INLINE_MATH_PARENTHESES = Pattern.compile("\\\\\\((.+?)\\\\\\)", Pattern.DOTALL);
-
-    private static final Pattern DISPLAY_MATH_BRACKETS = Pattern.compile("\\\\\\[(.+?)\\\\]", Pattern.DOTALL);
-
     static final String STOPPED_AT_DEADLINE = "The overnight window ended; the next scheduled build continues";
 
     /** The failure a build records when an instructor cancelled it. */
@@ -168,6 +140,8 @@ public class HyperionQuizQuestionPoolBuildService {
     static final String DISPATCH_FAILED = "The build could not be started; the server log has the details";
 
     private final HyperionQuizQuestionPoolModelService modelService;
+
+    private final HyperionQuizQuestionPoolPlanService planService;
 
     private final HyperionPromptTemplateService templateService;
 
@@ -203,14 +177,16 @@ public class HyperionQuizQuestionPoolBuildService {
 
     private final Duration staleClaimAge;
 
-    public HyperionQuizQuestionPoolBuildService(HyperionQuizQuestionPoolModelService modelService, HyperionPromptTemplateService templateService,
-            HyperionQuizQuestionPoolMaterialService materialService, Optional<CourseCompetencyApi> courseCompetencyApi, HyperionQuizQuestionFilterService filterService,
-            LLMTokenUsageService llmTokenUsageService, QuizQuestionPoolItemRepository itemRepository, HyperionCourseSettingsService settingsService,
-            CourseRepository courseRepository, QuizQuestionPoolLectureUnitRepository lectureUnitRepository, QuizQuestionPoolBuildRepository buildRepository,
-            DistributedDataProvider distributedDataProvider, @Value("${artemis.hyperion.quiz-pool.generation-batch-size:8}") int generationBatchSize,
+    public HyperionQuizQuestionPoolBuildService(HyperionQuizQuestionPoolModelService modelService, HyperionQuizQuestionPoolPlanService planService,
+            HyperionPromptTemplateService templateService, HyperionQuizQuestionPoolMaterialService materialService, Optional<CourseCompetencyApi> courseCompetencyApi,
+            HyperionQuizQuestionFilterService filterService, LLMTokenUsageService llmTokenUsageService, QuizQuestionPoolItemRepository itemRepository,
+            HyperionCourseSettingsService settingsService, CourseRepository courseRepository, QuizQuestionPoolLectureUnitRepository lectureUnitRepository,
+            QuizQuestionPoolBuildRepository buildRepository, DistributedDataProvider distributedDataProvider,
+            @Value("${artemis.hyperion.quiz-pool.generation-batch-size:8}") int generationBatchSize,
             @Value("${artemis.hyperion.quiz-pool.stale-claim-minutes:30}") int staleClaimMinutes,
             @Value("${artemis.hyperion.quiz-pool.build-lease-minutes:10}") int buildLeaseMinutes) {
         this.modelService = modelService;
+        this.planService = planService;
         this.templateService = templateService;
         this.materialService = materialService;
         this.courseCompetencyApi = courseCompetencyApi;
@@ -326,86 +302,6 @@ public class HyperionQuizQuestionPoolBuildService {
             return "generated " + generated + ", accepted " + accepted + ", rejected " + rejected + ", rejected and regenerated " + regenerated + ", failed " + failedCount()
                     + (failures.isEmpty() ? "" : " " + failures);
         }
-    }
-
-    /**
-     * One cell of the pool grid.
-     */
-    public record Cell(long competencyId, long lectureUnitId, QuizQuestionGenerationLanguage language, QuizQuestionGenerationType questionType, QuizQuestionDifficulty difficulty) {
-    }
-
-    /**
-     * Plans the target size of every cell of the grid, in a fixed order: for each competency and lecture unit, the single-choice count
-     * and, while multiple-choice questions are enabled, the multiple-choice count are split over the difficulties by the course's
-     * shares. A difficulty whose share comes to no question gets no cell.
-     *
-     * @param unitIdsByCompetency the groundable lecture units linked to each competency
-     * @param language            the language to generate in
-     * @param settings            the course's settings
-     * @return the target per cell, ordered by competency, lecture unit, question type, then difficulty
-     */
-    static Map<Cell, Integer> planCells(Map<Long, ? extends List<Long>> unitIdsByCompetency, QuizQuestionGenerationLanguage language, HyperionCourseSettings settings) {
-        Map<QuizQuestionGenerationType, Integer> countsByType = new EnumMap<>(QuizQuestionGenerationType.class);
-        countsByType.put(QuizQuestionGenerationType.SINGLE_CHOICE, settings.singleChoiceQuestionsPerLectureUnit());
-        if (settings.multipleChoiceEnabled()) {
-            countsByType.put(QuizQuestionGenerationType.MULTIPLE_CHOICE, settings.multipleChoiceQuestionsPerLectureUnit());
-        }
-        QuizQuestionDifficulty[] difficulties = QuizQuestionDifficulty.values();
-        int[] percents = new int[difficulties.length];
-        for (int index = 0; index < difficulties.length; index++) {
-            percents[index] = settings.percentOf(difficulties[index]);
-        }
-        Map<Cell, Integer> targets = new LinkedHashMap<>();
-        for (Map.Entry<Long, ? extends List<Long>> entry : new TreeMap<>(unitIdsByCompetency).entrySet()) {
-            for (Long lectureUnitId : entry.getValue().stream().sorted().toList()) {
-                for (Map.Entry<QuizQuestionGenerationType, Integer> typeCount : countsByType.entrySet()) {
-                    putDifficultyCells(targets, new Cell(entry.getKey(), lectureUnitId, language, typeCount.getKey(), difficulties[0]), typeCount.getValue(), percents);
-                }
-            }
-        }
-        return targets;
-    }
-
-    /** Puts one cell per difficulty that receives at least one of the type's questions, varying only the difficulty of the given cell. */
-    private static void putDifficultyCells(Map<Cell, Integer> targets, Cell cell, int count, int[] percents) {
-        QuizQuestionDifficulty[] difficulties = QuizQuestionDifficulty.values();
-        int[] perDifficulty = splitByPercent(count, percents);
-        for (int index = 0; index < difficulties.length; index++) {
-            if (perDifficulty[index] > 0) {
-                targets.put(new Cell(cell.competencyId(), cell.lectureUnitId(), cell.language(), cell.questionType(), difficulties[index]), perDifficulty[index]);
-            }
-        }
-    }
-
-    /**
-     * Splits a count over shares given in percent so that the parts add up to the count: every part receives the whole number of its
-     * share, and the remainder goes one by one to the parts with the largest fractions, earlier parts first on a tie.
-     *
-     * @param count    the count to split
-     * @param percents the shares in percent, adding up to 100
-     * @return one part per share, in the order of the shares
-     */
-    static int[] splitByPercent(int count, int[] percents) {
-        int[] parts = new int[percents.length];
-        int[] fractions = new int[percents.length];
-        int assigned = 0;
-        for (int index = 0; index < percents.length; index++) {
-            int scaled = count * percents[index];
-            parts[index] = scaled / 100;
-            fractions[index] = scaled % 100;
-            assigned += parts[index];
-        }
-        for (int remainder = count - assigned; remainder > 0; remainder--) {
-            int largest = 0;
-            for (int index = 1; index < percents.length; index++) {
-                if (fractions[index] > fractions[largest]) {
-                    largest = index;
-                }
-            }
-            parts[largest]++;
-            fractions[largest] = -1;
-        }
-        return parts;
     }
 
     /**
@@ -564,12 +460,8 @@ public class HyperionQuizQuestionPoolBuildService {
     }
 
     /**
-     * Reconciles the course's lecture units with the material they were last built from and tops every cell of the pool up to its
-     * target, creating the missing items in state {@link QuizQuestionPoolItemState#PENDING}. Cells exist for every competency and each
-     * lecture unit linked to it that carries readable material and is not excluded. A unit whose material changed loses its
-     * unreviewed items and keeps its approved ones flagged; an excluded unit loses its unreviewed items and gets no cells.
-     * New items take the indices above the highest index of their cell, so a cell whose items were partly deleted gets no duplicate index.
-     * The settings the cells were planned with are kept while the build runs.
+     * Reconciles the course's lecture units and tops every cell of its pool up to its target with the course's stored settings, which are
+     * kept while the build runs; see {@link HyperionQuizQuestionPoolPlanService#enqueue}.
      *
      * @param course the course
      * @return the number of items created
@@ -577,135 +469,18 @@ public class HyperionQuizQuestionPoolBuildService {
     public int enqueue(Course course) {
         HyperionCourseSettings settings = settingsService.getSettings(course.getId());
         buildSettings.put(course.getId(), settings);
-        CourseCompetencyApi api = courseCompetencyApi.orElseThrow(() -> new ApiConditionNotPresentException(CourseCompetencyApi.class, "artemis.atlas.enabled"));
-        List<Long> competencyIds = api.findAllForCourse(course.getId()).stream().map(CourseCompetency::getId).sorted().toList();
-        Map<Long, QuizQuestionPoolLectureUnit> records = lectureUnitRepository.findAllByCourseId(course.getId()).stream()
-                .collect(Collectors.toMap(QuizQuestionPoolLectureUnit::getLectureUnitId, Function.identity(), (first, second) -> first));
-        ZonedDateTime now = ZonedDateTime.now();
-        Map<Long, List<Long>> unitIdsByCompetency = new LinkedHashMap<>();
-        Set<Long> reconciled = new HashSet<>();
-        Map<Reconciliation, Integer> reconciliations = new EnumMap<>(Reconciliation.class);
-        for (Map.Entry<Long, List<LectureUnit>> entry : materialService.findGroundableUnits(competencyIds).entrySet()) {
-            List<Long> unitIds = new ArrayList<>();
-            for (LectureUnit unit : entry.getValue()) {
-                if (reconciled.add(unit.getId())) {
-                    reconciliations.merge(reconcile(course, unit, records, now), 1, Integer::sum);
-                }
-                if (!records.get(unit.getId()).isExcluded()) {
-                    unitIds.add(unit.getId());
-                }
-            }
-            if (!unitIds.isEmpty()) {
-                unitIdsByCompetency.put(entry.getKey(), unitIds);
-            }
-        }
-        lectureUnitRepository.saveAll(records.values());
-        Map<Cell, Integer> targets = planCells(unitIdsByCompetency, languageOf(course), settings);
-        Map<Cell, QuizQuestionPoolCellCountDTO> existingByCell = countsByCell(course.getId());
-        List<QuizQuestionPoolItem> created = new ArrayList<>();
-        for (Map.Entry<Cell, Integer> target : targets.entrySet()) {
-            Cell cell = target.getKey();
-            QuizQuestionPoolCellCountDTO counts = existingByCell.get(cell);
-            int existing = counts == null ? 0 : (int) counts.count();
-            int nextIndex = counts == null ? 0 : Math.max(existing, counts.highestIndex() + 1);
-            for (int index = nextIndex; index < nextIndex + target.getValue() - existing; index++) {
-                QuizQuestionPoolItem item = new QuizQuestionPoolItem();
-                item.setCourse(course);
-                item.setCompetencyId(cell.competencyId());
-                item.setLectureUnitId(cell.lectureUnitId());
-                item.setLanguage(cell.language());
-                item.setQuestionType(cell.questionType());
-                item.setDifficulty(cell.difficulty());
-                item.setItemIndex(index);
-                created.add(item);
-            }
-        }
-        itemRepository.saveAll(created);
-        log.info("Quiz question pool of course [{}]: {} of {} competencies have lecture material, {} cells, {} new items, units {}", course.getId(), unitIdsByCompetency.size(),
-                competencyIds.size(), targets.size(), created.size(), reconciliations);
-        return created.size();
-    }
-
-    private enum Reconciliation {
-        NEW, UNCHANGED, CHANGED, EXCLUDED
+        return planService.enqueue(course, settings);
     }
 
     /**
-     * Computes the pool a build would plan with the course's stored settings, without creating or changing anything. Excluded lecture
-     * units get no cells; a change of a unit's material is only detected when a build reconciles the unit.
+     * Computes the pool a build would plan with the course's stored settings, without creating or changing anything; see
+     * {@link HyperionQuizQuestionPoolPlanService#plan}.
      *
      * @param course the course
      * @return how many questions the pool holds once such a build is complete, and how many that build would add
      */
     public QuizQuestionPoolPlanDTO plan(Course course) {
-        Map<Cell, Integer> targets = targetsOf(course, settingsService.getSettings(course.getId()));
-        Map<Cell, QuizQuestionPoolCellCountDTO> existingByCell = countsByCell(course.getId());
-        int planned = 0;
-        int missing = 0;
-        for (Map.Entry<Cell, Integer> target : targets.entrySet()) {
-            QuizQuestionPoolCellCountDTO counts = existingByCell.get(target.getKey());
-            planned += target.getValue();
-            missing += Math.max(0, target.getValue() - (counts == null ? 0 : (int) counts.count()));
-        }
-        return new QuizQuestionPoolPlanDTO(planned, missing);
-    }
-
-    /** The target of every cell under the given settings, over the competencies and their groundable lecture units that are not excluded. */
-    private Map<Cell, Integer> targetsOf(Course course, HyperionCourseSettings settings) {
-        CourseCompetencyApi api = courseCompetencyApi.orElseThrow(() -> new ApiConditionNotPresentException(CourseCompetencyApi.class, "artemis.atlas.enabled"));
-        List<Long> competencyIds = api.findAllForCourse(course.getId()).stream().map(CourseCompetency::getId).sorted().toList();
-        Set<Long> excluded = lectureUnitRepository.findAllByCourseId(course.getId()).stream().filter(QuizQuestionPoolLectureUnit::isExcluded)
-                .map(QuizQuestionPoolLectureUnit::getLectureUnitId).collect(Collectors.toSet());
-        Map<Long, List<Long>> unitIdsByCompetency = new LinkedHashMap<>();
-        materialService.findGroundableUnits(competencyIds).forEach((competencyId, units) -> {
-            List<Long> unitIds = units.stream().map(LectureUnit::getId).filter(unitId -> !excluded.contains(unitId)).toList();
-            if (!unitIds.isEmpty()) {
-                unitIdsByCompetency.put(competencyId, unitIds);
-            }
-        });
-        return planCells(unitIdsByCompetency, languageOf(course), settings);
-    }
-
-    /** The items of every cell whose material is unchanged, and the highest item index of the cell. */
-    private Map<Cell, QuizQuestionPoolCellCountDTO> countsByCell(long courseId) {
-        return itemRepository.countByCellForCourse(courseId).stream().collect(
-                Collectors.toMap(count -> new Cell(count.competencyId(), count.lectureUnitId(), count.language(), count.questionType(), count.difficulty()), Function.identity()));
-    }
-
-    /**
-     * Compares one lecture unit with the record of its last build and applies the consequences to the pool. The record is created or
-     * updated in {@code records} and saved by the caller.
-     */
-    private Reconciliation reconcile(Course course, LectureUnit unit, Map<Long, QuizQuestionPoolLectureUnit> records, ZonedDateTime now) {
-        long unitId = unit.getId();
-        QuizQuestionPoolLectureUnit record = records.get(unitId);
-        if (record == null) {
-            record = new QuizQuestionPoolLectureUnit();
-            record.setCourse(course);
-            record.setLectureUnitId(unitId);
-            records.put(unitId, record);
-        }
-        record.setUpdatedAt(now);
-        if (record.isExcluded()) {
-            itemRepository.deleteAllByLectureUnitExceptReviewState(course.getId(), unitId, QuizQuestionReviewState.APPROVED);
-            return Reconciliation.EXCLUDED;
-        }
-        String fingerprint = materialService.fingerprintOf(unit);
-        if (record.getFingerprint() == null) {
-            record.setFingerprint(fingerprint);
-            record.setLastBuiltAt(now);
-            return Reconciliation.NEW;
-        }
-        if (!Objects.equals(fingerprint, record.getFingerprint())) {
-            int deleted = itemRepository.deleteAllByLectureUnitExceptReviewState(course.getId(), unitId, QuizQuestionReviewState.APPROVED);
-            int flagged = itemRepository.markMaterialChangedByLectureUnit(course.getId(), unitId, now);
-            log.info("Lecture unit [{}] of course [{}] changed: {} unreviewed items deleted, {} approved items flagged", unitId, course.getId(), deleted, flagged);
-            record.setFingerprint(fingerprint);
-            record.setLastBuiltAt(now);
-            return Reconciliation.CHANGED;
-        }
-        record.setLastBuiltAt(now);
-        return Reconciliation.UNCHANGED;
+        return planService.plan(course);
     }
 
     /**
@@ -891,7 +666,6 @@ public class HyperionQuizQuestionPoolBuildService {
             return;
         }
 
-        var outputConverter = HyperionStructuredOutputs.converterFor(PoolQuestionsOutput.class);
         String systemPrompt = templateService.render(PROMPT_GENERATE_POOL_SYSTEM, Map.of());
         String userPrompt = templateService.renderObject(PROMPT_GENERATE_POOL_USER,
                 Map.ofEntries(Map.entry("courseTitle", getSanitizedCourseTitle(course)), Map.entry("courseDescription", getSanitizedCourseDescription(course)),
@@ -899,7 +673,7 @@ public class HyperionQuizQuestionPoolBuildService {
                         Map.entry("language", first.getLanguage().getValue()), Map.entry("questionType", first.getQuestionType().getValue()),
                         Map.entry("numberOfQuestions", batch.size()), Map.entry("optionCount", HyperionQuizQuestionChecks.optionCountFor(first.getQuestionType())),
                         Map.entry("correctOptionCounts", correctOptionCounts(batch, settings)), Map.entry("difficulty", first.getDifficulty().getPromptValue()),
-                        Map.entry("format", outputConverter.getFormat())));
+                        Map.entry("format", HyperionQuizQuestionPoolQuestionMapper.outputFormat())));
 
         ChatResponse chatResponse;
         try {
@@ -915,7 +689,7 @@ public class HyperionQuizQuestionPoolBuildService {
         llmTokenUsageService.trackChatResponseTokenUsage(chatResponse, LLMServiceType.HYPERION, GENERATION_PIPELINE_ID,
                 builder -> builder.withCourse(course.getId()).withUser(userId));
 
-        List<@Nullable GeneratedQuizQuestionDTO> questions = parseQuestions(chatResponse, first.getQuestionType(), course.getId(),
+        List<@Nullable GeneratedQuizQuestionDTO> questions = HyperionQuizQuestionPoolQuestionMapper.parseQuestions(chatResponse, first.getQuestionType(), course.getId(),
                 batch.stream().map(item -> correctOptionCountFor(item, settings)).toList(), settings.multipleChoiceMaxCorrectOptions());
         int usable = 0;
         for (int index = 0; index < batch.size(); index++) {
@@ -971,65 +745,6 @@ public class HyperionQuizQuestionPoolBuildService {
             lines.add("- question " + (index + 1) + ": exactly " + correct + " of its " + optionCount + " options correct, " + (optionCount - correct) + " wrong");
         }
         return String.join("\n", lines);
-    }
-
-    /**
-     * Maps the model's answer to one question per position, {@code null} where the question at that position is unusable, so that the
-     * question written for an item reaches that item. A question whose correct options do not number what its position asked for is
-     * unusable.
-     *
-     * @param chatResponse        the model's answer
-     * @param requestedType       the question type the call asked for
-     * @param courseId            the course, for logging
-     * @param correctOptionCounts the number of correct options asked for at each position
-     * @param maxCorrectOptions   the most options a multiple-choice question may mark correct
-     * @return the questions by position; shorter than the batch when the model returned fewer questions
-     */
-    private List<@Nullable GeneratedQuizQuestionDTO> parseQuestions(ChatResponse chatResponse, QuizQuestionGenerationType requestedType, long courseId,
-            List<Integer> correctOptionCounts, int maxCorrectOptions) {
-        String responseText = LLMTokenUsageService.extractResponseText(chatResponse);
-        if (responseText == null || responseText.isBlank()) {
-            log.warn("The model answered the generation of pool questions for course [{}] with no text", courseId);
-            return List.of();
-        }
-        PoolQuestionsOutput output;
-        try {
-            output = HyperionStructuredOutputs.converterFor(PoolQuestionsOutput.class).convert(responseText);
-        }
-        catch (Exception e) {
-            log.warn("Failed to parse generated pool questions for course [{}]: {}", courseId, e.getMessage());
-            return List.of();
-        }
-        if (output == null || output.questions() == null || output.questions().isEmpty()) {
-            log.warn("The model's answer to the generation of pool questions for course [{}] contains no questions", courseId);
-            return List.of();
-        }
-        List<@Nullable GeneratedQuizQuestionDTO> questions = new ArrayList<>();
-        Map<HyperionQuizQuestionChecks.Defect, Integer> defects = new EnumMap<>(HyperionQuizQuestionChecks.Defect.class);
-        for (int index = 0; index < output.questions().size(); index++) {
-            Optional<GeneratedQuizQuestionDTO> question = toQuestion(output.questions().get(index), requestedType);
-            Optional<HyperionQuizQuestionChecks.Defect> defect = question.isPresent()
-                    ? HyperionQuizQuestionChecks.defectOf(question.orElseThrow(), Set.of(requestedType), maxCorrectOptions)
-                    : Optional.of(HyperionQuizQuestionChecks.Defect.UNMAPPABLE);
-            if (defect.isEmpty() && index < correctOptionCounts.size() && correctOptionCount(question.orElseThrow()) != correctOptionCounts.get(index)) {
-                defect = Optional.of(HyperionQuizQuestionChecks.Defect.CORRECT_COUNT);
-            }
-            if (defect.isPresent()) {
-                defects.merge(defect.orElseThrow(), 1, Integer::sum);
-                questions.add(null);
-                continue;
-            }
-            questions.add(question.orElseThrow());
-        }
-        if (!defects.isEmpty()) {
-            log.info("Discarded {} of {} generated pool questions for course [{}]: {}", defects.values().stream().mapToInt(Integer::intValue).sum(), output.questions().size(),
-                    courseId, defects);
-        }
-        return questions;
-    }
-
-    private static int correctOptionCount(GeneratedQuizQuestionDTO question) {
-        return (int) question.options().stream().filter(GeneratedQuizAnswerOptionDTO::correct).count();
     }
 
     /**
@@ -1201,89 +916,4 @@ public class HyperionQuizQuestionPoolBuildService {
         return MATERIAL_BLOCK_HEADER + header + sanitizeInputPreserveLines(text) + MATERIAL_BLOCK_FOOTER;
     }
 
-    private static QuizQuestionGenerationLanguage languageOf(Course course) {
-        return course.getLanguage() == Language.GERMAN ? QuizQuestionGenerationLanguage.DE : QuizQuestionGenerationLanguage.EN;
-    }
-
-    /**
-     * Maps a generated question to the DTO the checks and the pool use. A missing type counts as the requested one, because the model
-     * was asked for exactly that type; a named type is matched ignoring case and separator characters, and an unknown name makes the
-     * question unmappable. Source code the question text, an option or the explanation carries as plain text is set in Markdown code.
-     *
-     * @param generated     the model's question, or {@code null}
-     * @param requestedType the type the generation call asked for
-     * @return the question, or empty when it cannot be mapped
-     */
-    static Optional<GeneratedQuizQuestionDTO> toQuestion(@Nullable PoolQuestionOutput generated, QuizQuestionGenerationType requestedType) {
-        if (generated == null || generated.options() == null || generated.options().stream().anyMatch(option -> option == null)) {
-            return Optional.empty();
-        }
-        QuizQuestionGenerationType questionType = requestedType;
-        if (generated.type() != null && !generated.type().isBlank()) {
-            try {
-                questionType = QuizQuestionGenerationType.fromValue(generated.type().trim().replace('_', '-').replace(' ', '-'));
-            }
-            catch (IllegalArgumentException e) {
-                return Optional.empty();
-            }
-        }
-        List<GeneratedQuizAnswerOptionDTO> options = generated.options().stream()
-                .map(option -> new GeneratedQuizAnswerOptionDTO(format(option.text()), Boolean.TRUE.equals(option.correct()), null, null)).toList();
-        String explanation = format(generated.explanation());
-        return Optional.of(new GeneratedQuizQuestionDTO(questionType, plainTitle(generated.title()), format(generated.questionText()), options, null,
-                explanation.isBlank() ? null : explanation));
-    }
-
-    /**
-     * Removes the Markdown a model sets in a title, which is shown as plain text: backticks, asterisk bold and italic markers and dollar-sign
-     * math delimiters. Underscores stay, since they belong to identifiers such as {@code __init__}.
-     *
-     * @param title the model's title, or {@code null}
-     * @return the title without Markdown
-     */
-    static String plainTitle(@Nullable String title) {
-        return WHITESPACE.matcher(TITLE_MARKDOWN.matcher(sanitizeInput(title)).replaceAll("")).replaceAll(" ").strip();
-    }
-
-    private static String format(@Nullable String text) {
-        return formatCode(normaliseMathDelimiters(sanitizeInput(text)));
-    }
-
-    /**
-     * Rewrites math delimited by {@code \(…\)} as {@code $…$} and math delimited by {@code \[…\]} as {@code $$…$$}, outside Markdown code,
-     * since the Markdown renderer only recognises dollar signs.
-     *
-     * @param text a text of a generated question
-     * @return the text with dollar-sign math delimiters
-     */
-    static String normaliseMathDelimiters(String text) {
-        if (!text.contains("\\(") && !text.contains("\\[")) {
-            return text;
-        }
-        StringBuilder result = new StringBuilder();
-        Matcher code = MARKDOWN_CODE.matcher(text);
-        int start = 0;
-        while (code.find()) {
-            result.append(replaceMathDelimiters(text.substring(start, code.start()))).append(code.group());
-            start = code.end();
-        }
-        return result.append(replaceMathDelimiters(text.substring(start))).toString();
-    }
-
-    private static String replaceMathDelimiters(String text) {
-        String inline = INLINE_MATH_PARENTHESES.matcher(text).replaceAll(match -> Matcher.quoteReplacement("$" + match.group(1) + "$"));
-        return DISPLAY_MATH_BRACKETS.matcher(inline).replaceAll(match -> Matcher.quoteReplacement("$$" + match.group(1) + "$$"));
-    }
-
-    private record PoolQuestionsOutput(List<PoolQuestionOutput> questions) {
-    }
-
-    record PoolQuestionOutput(@JsonPropertyDescription("the requested question type, exactly as given") String type, String title, String questionText,
-            @JsonPropertyDescription("how many options the task requires this question to mark correct; decide it before writing the options") Integer correctOptionCount,
-            List<PoolOptionOutput> options,
-            @JsonPropertyDescription("why the correct option is correct, why the distractors are wrong, and what work the reader must do to reach the answer") String explanation) {
-    }
-
-    record PoolOptionOutput(String text, Boolean correct) {
-    }
 }

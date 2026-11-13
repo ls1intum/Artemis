@@ -289,7 +289,6 @@ class HyperionQuizQuestionPoolServiceTest {
     void updateLectureUnitRelevance_excludesTheUnitAndDropsItsUnreviewedItems() {
         TextUnit unit = unitOfCourse(4L, "Arrays in Java", 5L);
         when(materialService.findUnits(List.of(4L))).thenReturn(Map.of(4L, unit));
-        when(lectureUnitRepository.findByCourseIdAndLectureUnitId(5L, 4L)).thenReturn(Optional.empty());
         when(courseRepository.findByIdElseThrow(5L)).thenReturn(course);
         when(buildService.tryStart(5L)).thenReturn("lease");
 
@@ -305,7 +304,6 @@ class HyperionQuizQuestionPoolServiceTest {
         TextUnit unit = unitOfCourse(4L, "Arrays in Java", 5L);
         when(materialService.findUnits(List.of(4L))).thenReturn(Map.of(4L, unit));
         when(buildService.tryStart(5L)).thenReturn(null);
-        when(lectureUnitRepository.findByCourseIdAndLectureUnitId(5L, 4L)).thenReturn(Optional.empty());
         when(courseRepository.findByIdElseThrow(5L)).thenReturn(course);
 
         assertThatThrownBy(() -> service.updateLectureUnitRelevance(5L, 4L, true)).isInstanceOf(ConflictException.class);
@@ -313,7 +311,21 @@ class HyperionQuizQuestionPoolServiceTest {
         verify(lectureUnitRepository, never()).save(any(QuizQuestionPoolLectureUnit.class));
 
         service.updateLectureUnitRelevance(5L, 4L, false);
-        verify(lectureUnitRepository).save(any(QuizQuestionPoolLectureUnit.class));
+        verify(lectureUnitRepository).updateExcluded(eq(5L), eq(4L), eq(false), any(ZonedDateTime.class));
+        verify(lectureUnitRepository, never()).save(any(QuizQuestionPoolLectureUnit.class));
+    }
+
+    @Test
+    void updateLectureUnitRelevance_changesOnlyTheExclusionOfAnExistingRecord() {
+        TextUnit unit = unitOfCourse(4L, "Arrays in Java", 5L);
+        when(materialService.findUnits(List.of(4L))).thenReturn(Map.of(4L, unit));
+        when(buildService.tryStart(5L)).thenReturn("lease");
+        when(lectureUnitRepository.updateExcluded(eq(5L), eq(4L), eq(true), any(ZonedDateTime.class))).thenReturn(1);
+
+        service.updateLectureUnitRelevance(5L, 4L, true);
+
+        verify(lectureUnitRepository, never()).save(any(QuizQuestionPoolLectureUnit.class));
+        verify(itemRepository).deleteAllByLectureUnitExceptReviewState(5L, 4L, QuizQuestionReviewState.APPROVED);
     }
 
     @Test

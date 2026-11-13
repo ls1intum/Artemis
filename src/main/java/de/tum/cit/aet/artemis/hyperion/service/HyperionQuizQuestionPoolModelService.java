@@ -9,6 +9,7 @@ import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 import org.jspecify.annotations.Nullable;
@@ -63,6 +64,8 @@ public class HyperionQuizQuestionPoolModelService {
     private static final Duration MODEL_LIST_CONNECT_TIMEOUT = Duration.ofSeconds(5);
 
     private static final Duration MODEL_LIST_READ_TIMEOUT = Duration.ofSeconds(10);
+
+    private static final Pattern TRAILING_SLASHES = Pattern.compile("/+$");
 
     /** Sent when the endpoint needs no key, so the client never falls back to a key from the environment. */
     private static final String NO_API_KEY = "none";
@@ -146,7 +149,7 @@ public class HyperionQuizQuestionPoolModelService {
         requestFactory.setConnectTimeout(MODEL_LIST_CONNECT_TIMEOUT);
         requestFactory.setReadTimeout(MODEL_LIST_READ_TIMEOUT);
         RestClient restClient = restClientBuilder.clone().requestFactory(requestFactory).build();
-        URI modelsUri = URI.create(baseUrl.replaceAll("/+$", "") + "/models");
+        URI modelsUri = URI.create(TRAILING_SLASHES.matcher(baseUrl).replaceAll("") + "/models");
         try {
             RestClient.RequestHeadersSpec<?> request = restClient.get().uri(modelsUri);
             if (!apiKey.isEmpty()) {
