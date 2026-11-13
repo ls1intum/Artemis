@@ -107,7 +107,7 @@ SOURCE_UNBOUNDED_TEXT_TYPES = UNBOUNDED_TEXT_TYPES | {"tinytext"}
 # Character-varying types are unbounded only when NO length limit is given: a PostgreSQL 'character varying' /
 # 'varchar' with no (n) stores up to ~1 GB. Handled separately (is_unbounded_varchar) because it depends on the
 # length, not the type name alone.
-VARYING_TYPES = frozenset({"varchar", "character varying", "nvarchar", "national character varying"})
+VARYING_TYPES = frozenset({"varchar", "character varying", "char varying", "nvarchar", "national character varying"})
 
 # Type namespaces whose final segment names the real type: JDBC (java.sql.Types.*) and PostgreSQL's system
 # catalog (pg_catalog.*). Only these exact prefixes are unwrapped, so a schema-qualified/custom type such as
@@ -216,20 +216,22 @@ ROLLBACK_TAG = f"{NAMESPACE}rollback"
 SQL_TAG = f"{NAMESPACE}sql"
 MODIFY_SQL_TAG = f"{NAMESPACE}modifySql"
 COMMENT_TAG = f"{NAMESPACE}comment"
-# <sqlFile> (an external file) and a custom change class cannot be read at all, so they are always
-# flagged for review. A raw <sql> block, by contrast, is read in full (including the text that follows a
-# nested child such as <comment>, which element.text alone would miss): it is only flagged when that text
-# mentions an unbounded-text type, so the many raw-SQL data migrations (FK backfills, constraints) pass
-# untouched while a raw-SQL text-column introduction still needs a conscious decision. A <modifySql> block,
-# which rewrites the generated SQL, is likewise flagged when it introduces a text type (e.g. a <replace
-# with="TEXT"/>). check_column_types backstops everything by inspecting the final materialised schema
-# regardless of how a column was created.
-HARD_OPAQUE_TAGS = frozenset({f"{NAMESPACE}sqlFile", f"{NAMESPACE}customChange"})
+# Opaque changes that cannot be statically resolved to a definite set of column types, so they are always
+# flagged for review: <sqlFile> (an external file) and a custom change class cannot be read at all, and
+# <modifySql> rewrites the generated SQL in arbitrary ways whose RESULT cannot be established (e.g. a
+# <replace replace="(255)" with=""/> that silently drops a length and turns a bounded VARCHAR into an
+# unbounded one). A raw <sql> block, by contrast, is read in full (including the text that follows a nested
+# child such as <comment>, which element.text alone would miss): it is only flagged when that text mentions an
+# unbounded type (a text/CLOB type or a no-length varchar), so the many raw-SQL data migrations (FK backfills,
+# constraints) pass untouched while a raw-SQL unbounded-column introduction still needs a conscious decision.
+# check_column_types backstops everything by inspecting the final materialised schema regardless of how a
+# column was created.
+HARD_OPAQUE_TAGS = frozenset({f"{NAMESPACE}sqlFile", f"{NAMESPACE}customChange", MODIFY_SQL_TAG})
 TEXT_TYPE_TOKEN = re.compile(r"\b(?:text|longtext|mediumtext|clob|ntext|nclob|longvarchar|longnvarchar|long\s+varchar|long\s+nvarchar)\b", re.IGNORECASE)
-# A character-varying type with no length is unbounded. In raw SQL / modifySql we cannot read a length argument
-# reliably, so we flag a varchar/character varying/nvarchar token that is NOT immediately followed by a "(...)"
-# length -- "varchar(255)" is bounded and does not match, a bare "varchar" does and is sent to attestation.
-VARYING_SQL_TOKEN = re.compile(r"\b(?:varchar|character\s+varying|nvarchar|national\s+character\s+varying)\b(?!\s*\()", re.IGNORECASE)
+# A character-varying type with no length is unbounded. In raw SQL we cannot read a length argument reliably, so
+# we flag a varchar / character varying / char varying / nvarchar token that is NOT immediately followed by a
+# "(...)" length -- "varchar(255)" is bounded and does not match, a bare "varchar" does and is sent to attestation.
+VARYING_SQL_TOKEN = re.compile(r"\b(?:varchar|character\s+varying|char\s+varying|nvarchar|national\s+character\s+varying)\b(?!\s*\()", re.IGNORECASE)
 
 
 def normalize_identifier(name: str | None) -> str:
@@ -888,30 +890,12 @@ def _mentions_unbounded(blob: str) -> bool:
     return bool(TEXT_TYPE_TOKEN.search(blob) or VARYING_SQL_TOKEN.search(blob)) or "${" in blob
 
 
-def modify_sql_introduces_text(element) -> bool:
-    """
-    True when a <modifySql> rewrites the generated SQL to an unbounded type, or carries an unresolved ${property}
-    that could.
-
-    <modifySql> post-processes the SQL Liquibase generates (e.g. ``<replace replace="VARCHAR(255)" with="TEXT"/>``
-    or ``with="VARCHAR"`` dropping the length), so a column declared as a bounded type can still end up unbounded
-    in the database (reported). The replacement text lives in attributes (``with=``/``value=``) as well as element
-    text, so both are inspected across the whole subtree. The scanner cannot map the result to a (table, column)
-    pair, so the changeset is sent to manual attestation rather than reported as a precise introduction.
-    """
-    for node in element.iter():
-        if any(_mentions_unbounded(value) for value in node.attrib.values()):
-            return True
-        if any(text and _mentions_unbounded(text) for text in (node.text, node.tail)):
-            return True
-    return False
-
-
 def needs_manual_review(changeset) -> bool:
     """
-    True when a changeset (outside its <rollback>) carries something the scanner cannot read for certain: a
-    <sqlFile> or custom change class, a raw <sql> block mentioning an unbounded type (a text/CLOB type, a
-    no-length varchar, or an unresolved ${property}), a <modifySql> that rewrites the SQL to such a type, or a
+    True when a changeset (outside its <rollback>) carries something the scanner cannot statically resolve to a
+    definite set of column types: a <sqlFile>, custom change class or <modifySql> (all in HARD_OPAQUE_TAGS,
+    since a modifySql rewrite's result -- e.g. dropping a length -- cannot be established), a raw <sql> block
+    mentioning an unbounded type (a text/CLOB type, a no-length varchar, or an unresolved ${property}), or a
     column/modifyDataType/renameColumn/mergeColumns whose type is an unresolved ${property}. Such a changeset
     must be attested in UNVERIFIABLE_CHANGESETS.
     """
@@ -919,8 +903,6 @@ def needs_manual_review(changeset) -> bool:
         if element.tag in HARD_OPAQUE_TAGS or element.get("class"):
             return True
         if element.tag == SQL_TAG and _mentions_unbounded(raw_sql_text(element)):
-            return True
-        if element.tag == MODIFY_SQL_TAG and modify_sql_introduces_text(element):
             return True
         if element.tag == COLUMN_TAG and "${" in (element.get("type") or ""):
             return True

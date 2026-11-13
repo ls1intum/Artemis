@@ -72,14 +72,14 @@ class NormalizeTest(unittest.TestCase):
 
     def test_is_unbounded_varchar(self):
         yes = (
-            "varchar", "VARCHAR", "character varying", "nvarchar", "national character varying",
+            "varchar", "VARCHAR", "character varying", "char varying", "nvarchar", "national character varying",
             "pg_catalog.varchar", "java.sql.Types.VARCHAR",  # qualified no-length varchar is still unbounded
         )
         for value in yes:
             self.assertTrue(is_unbounded_varchar(value), value)  # no length -> unbounded
         self.assertTrue(is_unbounded_varchar("character varying", ""))
         self.assertTrue(is_unbounded_varchar("character varying", "0"))
-        no = ("varchar(255)", "character varying(255)", "pg_catalog.varchar(255)", "text", "bigint", "", None, "my_schema.varchar")
+        no = ("varchar(255)", "character varying(255)", "char varying(255)", "pg_catalog.varchar(255)", "text", "bigint", "", None, "my_schema.varchar")
         for value in no:
             self.assertFalse(is_unbounded_varchar(value), value)
         self.assertFalse(is_unbounded_varchar("character varying", "255"))
@@ -349,6 +349,39 @@ class ScanTextIntroductionsTest(unittest.TestCase):
     def test_pg_catalog_varchar_with_length_passes(self):
         body = '<changeSet id="cs1" author="x"><addColumn tableName="foo"><column name="bar" type="pg_catalog.varchar(255)"/></addColumn></changeSet>'
         self.assertEqual(self.run_scan(body), [])
+
+    def test_char_varying_source_declaration_is_flagged(self):
+        # PostgreSQL 'char varying' is an alias for 'character varying'; a no-length one is unbounded.
+        body = '<changeSet id="cs1" author="x"><addColumn tableName="course"><column name="description" type="char varying"/></addColumn></changeSet>'
+        failures = self.run_scan(body)
+        self.assertEqual(len(failures), 1)
+        self.assertIn("course.description", failures[0])
+
+    def test_char_varying_with_length_passes(self):
+        body = '<changeSet id="cs1" author="x"><addColumn tableName="foo"><column name="bar" type="char varying(255)"/></addColumn></changeSet>'
+        self.assertEqual(self.run_scan(body), [])
+
+    def test_raw_sql_char_varying_reintroduction_needs_review(self):
+        body = ('<changeSet id="cs1" author="x"><sql>ALTER TABLE course DROP COLUMN description; '
+                "ALTER TABLE course ADD COLUMN description char varying;</sql></changeSet>")
+        failures = self.run_scan(body)
+        self.assertEqual(len(failures), 1)
+        self.assertIn("UNVERIFIABLE_CHANGESETS", failures[0])
+
+    def test_modify_sql_removing_only_the_length_needs_review(self):
+        # <modifySql> is opaque: a <replace replace="(255)" with=""/> silently drops the length (unbounded), with
+        # no type token at all, so any modifySql requires attestation.
+        body = (
+            '<changeSet id="cs1" author="x">'
+            '<createTable tableName="foo"><column name="bar" type="varchar(255)"/></createTable>'
+            '<modifySql dbms="postgresql"><replace replace="(255)" with=""/></modifySql>'
+            "</changeSet>"
+        )
+        failures = self.run_scan(body)
+        self.assertEqual(len(failures), 1)
+        self.assertIn("UNVERIFIABLE_CHANGESETS", failures[0])
+        exempt = {(FILE, "cs1", "x"): ("reviewed: keeps a bounded type", ())}
+        self.assertEqual(self.run_scan(body, unverifiable=exempt), [])
 
     def test_stale_allowed_entry_is_reported(self):
         body = '<changeSet id="cs1" author="x"><addColumn tableName="foo"><column name="bar" type="varchar(10)"/></addColumn></changeSet>'
