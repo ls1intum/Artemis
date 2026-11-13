@@ -2,11 +2,24 @@ package de.tum.cit.aet.artemis.hyperion.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.withSettings;
 
+import java.net.URI;
 import java.time.Duration;
 import java.util.List;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.Answers;
+import org.springframework.http.HttpHeaders;
+import org.springframework.web.client.ResourceAccessException;
+import org.springframework.web.client.RestClient;
 
 import de.tum.cit.aet.artemis.core.exception.ServiceUnavailableAlertException;
 
@@ -19,6 +32,73 @@ class HyperionQuizQuestionPoolModelServiceTest {
     private static final String OTHER_MODEL = "openai/gpt-oss-120b";
 
     private static final List<String> ALLOWED = List.of(MODEL, OTHER_MODEL);
+
+    private RestClient.Builder restClientBuilder;
+
+    private RestClient.RequestHeadersUriSpec<?> uriSpec;
+
+    private RestClient.RequestHeadersSpec<?> headersSpec;
+
+    private RestClient.ResponseSpec responseSpec;
+
+    @BeforeEach
+    void setUp() {
+        restClientBuilder = mock(RestClient.Builder.class, withSettings().defaultAnswer(Answers.RETURNS_SELF));
+        RestClient restClient = mock(RestClient.class);
+        uriSpec = mock(RestClient.RequestHeadersUriSpec.class);
+        headersSpec = mock(RestClient.RequestHeadersSpec.class);
+        responseSpec = mock(RestClient.ResponseSpec.class);
+        when(restClientBuilder.clone()).thenReturn(restClientBuilder);
+        when(restClientBuilder.build()).thenReturn(restClient);
+        doReturn(uriSpec).when(restClient).get();
+        doReturn(headersSpec).when(uriSpec).uri(any(URI.class));
+        when(headersSpec.retrieve()).thenReturn(responseSpec);
+        endpointServes(MODEL, OTHER_MODEL);
+    }
+
+    @Test
+    void constructor_leavesThePoolOffWhenTheEndpointDoesNotServeAModel() {
+        endpointServes(OTHER_MODEL, "Qwen/Qwen3-8B");
+
+        assertThat(service(LOCAL_ENDPOINT, MODEL, MODEL, "", false).isConfigured()).isFalse();
+        assertThat(service(LOCAL_ENDPOINT, OTHER_MODEL, OTHER_MODEL, "", false).isConfigured()).isTrue();
+    }
+
+    @Test
+    void constructor_keepsThePoolOnWhenTheModelsCannotBeListed() {
+        when(responseSpec.body(HyperionQuizQuestionPoolModelService.ModelList.class)).thenThrow(new ResourceAccessException("Connection refused"));
+
+        assertThat(service(LOCAL_ENDPOINT, MODEL, MODEL, "", false).isConfigured()).isTrue();
+    }
+
+    @Test
+    void constructor_keepsThePoolOnWhenTheEndpointReturnsNoModelList() {
+        when(responseSpec.body(HyperionQuizQuestionPoolModelService.ModelList.class)).thenReturn(new HyperionQuizQuestionPoolModelService.ModelList(null));
+
+        assertThat(service(LOCAL_ENDPOINT, MODEL, MODEL, "", false).isConfigured()).isTrue();
+    }
+
+    @Test
+    void servedModels_asksTheModelsOfTheEndpointWithItsKey() {
+        assertThat(HyperionQuizQuestionPoolModelService.servedModels(restClientBuilder, LOCAL_ENDPOINT + "/", "secret")).contains(List.of(MODEL, OTHER_MODEL));
+
+        verify(uriSpec).uri(URI.create(LOCAL_ENDPOINT + "/models"));
+        verify(headersSpec).header(HttpHeaders.AUTHORIZATION, "Bearer secret");
+    }
+
+    @Test
+    void servedModels_sendsNoKeyWhenTheEndpointNeedsNone() {
+        HyperionQuizQuestionPoolModelService.servedModels(restClientBuilder, LOCAL_ENDPOINT, "");
+
+        verify(headersSpec, never()).header(any(), any());
+    }
+
+    @Test
+    void constructor_asksNoModelsWhenThePoolIsOff() {
+        service("", MODEL, MODEL, "https://my-resource.openai.azure.com", false);
+
+        verify(restClientBuilder, never()).build();
+    }
 
     @Test
     void constructor_leavesThePoolOffWithoutModels() {
@@ -118,7 +198,13 @@ class HyperionQuizQuestionPoolModelServiceTest {
         HyperionQuizQuestionPoolModelService.validate(baseUrl, "artemis.hyperion.quiz-pool.base-url", generatorModel, judgeModel, allowedModels);
     }
 
-    private static HyperionQuizQuestionPoolModelService service(String baseUrl, String generatorModel, String judgeModel, String chatBaseUrl, boolean chatMicrosoftFoundry) {
-        return new HyperionQuizQuestionPoolModelService(baseUrl, "", Duration.ofMinutes(5), generatorModel, judgeModel, ALLOWED, "openai", chatBaseUrl, "", chatMicrosoftFoundry);
+    private void endpointServes(String... models) {
+        when(responseSpec.body(HyperionQuizQuestionPoolModelService.ModelList.class))
+                .thenReturn(new HyperionQuizQuestionPoolModelService.ModelList(List.of(models).stream().map(HyperionQuizQuestionPoolModelService.Model::new).toList()));
+    }
+
+    private HyperionQuizQuestionPoolModelService service(String baseUrl, String generatorModel, String judgeModel, String chatBaseUrl, boolean chatMicrosoftFoundry) {
+        return new HyperionQuizQuestionPoolModelService(restClientBuilder, baseUrl, "", Duration.ofMinutes(5), generatorModel, judgeModel, ALLOWED, "openai", chatBaseUrl, "",
+                chatMicrosoftFoundry);
     }
 }
