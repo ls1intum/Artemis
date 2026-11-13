@@ -1,6 +1,7 @@
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { AssessmentProgressComponent } from '../assessment-progress.component';
 import {
+    TumAetUiButtonComponent,
     TumAetUiButtonDirective,
     TumAetUiMessageComponent,
     TumAetUiPanelComponent,
@@ -61,7 +62,7 @@ import { roundValueSpecifiedByCourseSettings } from 'app/foundation/util/utils';
 import { getLinkToSubmissionAssessment } from 'app/foundation/util/navigation.utils';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import dayjs from 'dayjs/esm';
-import { faCheckCircle, faCircleInfo, faExclamationTriangle, faFlag, faFolderOpen, faListAlt, faQuestionCircle, faSpinner } from '@fortawesome/free-solid-svg-icons';
+import { faCheckCircle, faCircleInfo, faExclamationTriangle, faFileImport, faFolderOpen, faListAlt, faQuestionCircle, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { isManualResult } from 'app/exercise/result/result.utils';
 import { SecondCorrectionEnableButtonComponent } from './second-correction-button/second-correction-enable-button.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -81,6 +82,8 @@ import { ResultComponent } from 'app/exercise/result/result.component';
 import { TutorParticipationService } from 'app/assessment/shared/assessment-dashboard/exercise-dashboard/tutor-participation.service';
 import { ComplaintDTO } from 'app/assessment/shared/entities/complaint-dto.model';
 import { alertIfAssessmentNotPossibleYet, getAssessmentNotPossibleYetReason } from 'app/assessment/shared/util/assessment-availability.util';
+import { areManualResultsAllowed } from 'app/exercise/util/exercise.utils';
+import { AssessmentUploadDialogComponent } from 'app/assessment/manage/assessment-upload/assessment-upload-dialog.component';
 
 /** Largest delay `setTimeout` accepts before its signed 32-bit delay overflows and the timer fires immediately. */
 const MAX_TIMEOUT_DELAY = 2_147_483_647;
@@ -100,7 +103,9 @@ export interface ExampleSubmissionQueryParams {
         HeaderExercisePageWithDetailsComponent,
         SecondCorrectionEnableButtonComponent,
         TumAetUiPanelComponent,
+        TumAetUiButtonComponent,
         TumAetUiButtonDirective,
+        AssessmentUploadDialogComponent,
         TranslateDirective,
         RouterLink,
         FaIconComponent,
@@ -173,7 +178,6 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, OnDestroy {
     readonly numberOfLockedAssessmentByOtherTutorsOfCorrectionRound = signal<DueDateStat[]>([new DueDateStat()]);
     readonly complaintsEnabled = signal(false);
     readonly feedbackRequestEnabled = signal(false);
-    readonly tutorAssessmentPercentage = signal(0);
     readonly tutorParticipationStatus = signal<TutorParticipationStatus>(undefined!);
     readonly assessmentInstructionsCollapsed = signal(true);
     // Indexed by correction round (0, 1) — readonly so any in-place mutation is a compile error and updates go through .update() with a new array.
@@ -210,6 +214,8 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, OnDestroy {
 
     readonly ExerciseType = ExerciseType;
     protected readonly RepositoryType = RepositoryType;
+    protected readonly faFileImport = faFileImport;
+    protected readonly uploadDialogVisible = signal(false);
 
     // Mutated in place only within the getForTutors subscribe (alongside exercise.set()), so it renders on that signal's CD tick.
     stats = {
@@ -304,6 +310,32 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, OnDestroy {
     /** Bumped on every language change so that translations built outside the template are rebuilt as well. */
     private readonly currentLanguage = signal<string | undefined>(undefined);
 
+    /** Whether the manual assessment upload belongs on this dashboard at all: it imports programming assessments, and only an instructor may do that. */
+    readonly canOfferManualAssessmentUpload = computed(() => this.exercise().type === ExerciseType.PROGRAMMING && !!this.exercise().isAtLeastInstructor && !this.isTestRun());
+
+    /**
+     * Whether an upload would be accepted. The upload creates and overwrites manual assessments, so it is allowed under the same condition the assessment editor is: manual
+     * assessment configured and the relevant due date passed. The server enforces the same gate; this only decides whether the instructor is invited to try.
+     */
+    readonly canUploadManualAssessments = computed(() => this.canOfferManualAssessmentUpload() && areManualResultsAllowed(this.exercise()));
+
+    /** Why the upload is offered but disabled, or undefined while it is possible. The two reasons need different things from the instructor, so they are told apart. */
+    readonly manualAssessmentUploadDisabledReason = computed(() => {
+        if (!this.canOfferManualAssessmentUpload() || this.canUploadManualAssessments()) {
+            return undefined;
+        }
+        return this.exercise().assessmentType === AssessmentType.AUTOMATIC
+            ? 'artemisApp.assessmentUpload.notPossible.automaticAssessment'
+            : 'artemisApp.assessmentUpload.notPossible.beforeDueDate';
+    });
+
+    /** Tooltip for the disabled upload button, empty while the upload is possible so that no tooltip is shown. */
+    readonly manualAssessmentUploadDisabledTooltip = computed(() => {
+        this.currentLanguage();
+        const reason = this.manualAssessmentUploadDisabledReason();
+        return reason ? this.translateService.instant(reason) : '';
+    });
+
     /**
      * For exam exercises: why assessment is not possible yet, or undefined once it is (also for course exercises and for
      * test runs, which happen before the exam starts and stay assessable). The dates come from the server, so all
@@ -339,8 +371,28 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, OnDestroy {
     faFolderOpen = faFolderOpen;
     faExclamationTriangle = faExclamationTriangle;
     faListAlt = faListAlt;
-    faFlag = faFlag;
     faCircleInfo = faCircleInfo;
+
+    /**
+     * Opens the dialog that lets an instructor upload manual assessments for the participants of this programming exercise at once.
+     * Precondition: the current exercise is a programming exercise and the user is at least instructor (the launch button is only shown then).
+     * Postcondition: opens the upload dialog for the current exercise id; it does not itself change any persistent state.
+     */
+    openAssessmentUpload(): void {
+        // Guarded as well as disabled: the button is the only way in, but re-enabling it in the browser must not open a dialog the server would reject anyway.
+        if (!this.canUploadManualAssessments()) {
+            return;
+        }
+        this.uploadDialogVisible.set(true);
+    }
+
+    /**
+     * Refreshes the dashboard after an instructor uploaded manual assessments, so the assessment counts, chart and assessable-submission state reflect the newly stored results.
+     * Postcondition: reloads the exercise data for tutors; it does not itself change any persistent state.
+     */
+    onAssessmentsUploaded(): void {
+        this.loadAll();
+    }
 
     /**
      * Extracts the course and exercise ids from the route params and fetches the exercise from the server
@@ -529,11 +581,6 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, OnDestroy {
                         this.ratingsDashboardInfo.set(new AssessmentDashboardInformationEntry(this.statsForDashboard().numberOfRatings, 0));
                     }
 
-                    if (this.numberOfSubmissions().total > 0) {
-                        this.tutorAssessmentPercentage.set(Math.floor((this.numberOfTutorAssessments() / this.numberOfSubmissions().total) * 100));
-                    } else {
-                        this.tutorAssessmentPercentage.set(100);
-                    }
                     this.complaintsEnabled.set(this.statsForDashboard().complaintsEnabled);
                     this.feedbackRequestEnabled.set(this.statsForDashboard().feedbackRequestEnabled);
                     this.calculateAssessmentProgressInformation();

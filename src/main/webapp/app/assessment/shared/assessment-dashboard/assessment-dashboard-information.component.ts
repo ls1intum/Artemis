@@ -12,21 +12,6 @@ export class AssessmentDashboardInformationEntry {
         public tutor: number,
         public done?: number,
     ) {}
-
-    /**
-     * Computes the percentage of done/total ratio and returns it as a string
-     */
-    get doneToTotalPercentage(): string {
-        if (this.done == undefined) {
-            return '';
-        }
-
-        if (this.total === 0) {
-            return '100%';
-        }
-
-        return `${((100 * this.done) / this.total).toFixed().toString()}%`;
-    }
 }
 
 @Component({

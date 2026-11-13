@@ -135,18 +135,4 @@ describe('AssessmentDashboardInformationComponent', () => {
         expect(cells[0].querySelector('a')?.getAttribute('href') ?? null).toBe(totalHref);
         expect(cells[1].querySelector('a')?.getAttribute('href') ?? null).toBe(ownHref);
     });
-
-    it('should compute the right total/missing ratio', () => {
-        const complaints = new AssessmentDashboardInformationEntry(0, 10, undefined);
-
-        expect(complaints.doneToTotalPercentage).toBe('');
-
-        complaints.done = 2;
-
-        expect(complaints.doneToTotalPercentage).toBe('100%');
-
-        complaints.total = 3;
-
-        expect(complaints.doneToTotalPercentage).toBe('67%');
-    });
 });

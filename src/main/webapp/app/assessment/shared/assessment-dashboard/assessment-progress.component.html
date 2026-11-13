@@ -1,6 +1,6 @@
 <div class="mb-4! flex flex-wrap items-baseline gap-2">
-    <span class="text-4xl font-bold leading-none text-color">{{ completed() }} / {{ total() }}</span>
-    <span class="text-base text-muted-color">
+    <span class="text-4xl font-bold leading-none text-text">{{ completed() }} / {{ total() }}</span>
+    <span class="text-base text-text-secondary">
         <span jhiTranslate="artemisApp.assessmentDashboard.assessmentsCompleted"></span>
         ({{ assessedPercentage() }}%)
     </span>
@@ -21,13 +21,13 @@
 >
     {{ assessedPercentage() }}%
 </progress>
-<div class="relative my-1 h-[calc(var(--tumaet-ui-spacing)*5)] overflow-hidden rounded-md bg-(--artemis-control-disabled-background)" aria-hidden="true">
-    <span class="absolute inset-y-0 left-0 bg-state-success text-(--tumaet-ui-state-success-contrast)" [style.width.%]="assessedPercentage()" aria-hidden="true"></span>
+<div class="relative my-1 h-5! overflow-hidden rounded-md bg-(--artemis-control-disabled-background)" aria-hidden="true">
+    <span class="absolute inset-y-0 left-0 bg-state-success" [style.width.%]="assessedPercentage()" aria-hidden="true"></span>
     <span class="pointer-events-none absolute inset-y-0 bg-state-warning" [style.left.%]="assessedPercentage()" [style.width.%]="inProgressPercentage()" aria-hidden="true"></span>
 </div>
-<div class="flex flex-wrap gap-x-6! gap-y-4! text-sm text-muted-color">
+<div class="flex flex-wrap gap-x-6! gap-y-4! text-sm text-text-secondary">
     <span class="inline-flex items-center gap-1.5">
-        <span class="h-3 w-3 rounded-sm bg-state-success text-(--tumaet-ui-state-success-contrast)"></span>
+        <span class="h-3 w-3 rounded-sm bg-state-success"></span>
         <span jhiTranslate="artemisApp.assessmentDashboard.assessed"></span>
         {{ completed() }}
     </span>
