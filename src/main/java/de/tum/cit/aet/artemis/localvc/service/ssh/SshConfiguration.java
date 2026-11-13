@@ -53,6 +53,9 @@ public class SshConfiguration {
     /** A git command uses one channel, so the limit is generous. */
     private static final int MAX_CHANNELS_PER_SESSION = 64;
 
+    /** The sessions that one client address keeps open. It is generous because many users of one institution can share an address. */
+    private static final int MAX_SESSIONS_PER_ADDRESS = 128;
+
     @Value("${artemis.version-control.ssh-port:7921}")
     private int sshPort;
 
@@ -115,6 +118,7 @@ public class SshConfiguration {
         // Clients that do not authenticate quickly are dropped, and the channels of a session are bounded, instead of holding resources of the server.
         CoreModuleProperties.AUTH_TIMEOUT.set(sshd, Duration.ofSeconds(AUTHENTICATION_TIMEOUT_SECONDS));
         CoreModuleProperties.MAX_CONCURRENT_CHANNELS.set(sshd, MAX_CHANNELS_PER_SESSION);
+        sshd.addSessionListener(new SshSessionLimiter(MAX_SESSIONS_PER_ADDRESS));
         sshd.setPublickeyAuthenticator(gitPublickeyAuthenticatorService);
         // Recovers the real client address when a load balancer forwards this port at the TCP level. Installed
         // unconditionally: without configured proxy protocol sources it only removes headers, so that a proxy with
