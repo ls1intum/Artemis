@@ -1,8 +1,12 @@
 import { BaseEntity } from 'app/foundation/model/base-entity';
 import { Course } from 'app/course/shared/entities/course.model';
-import { User, UserNameAndLoginDTO } from 'app/account/user/user.model';
+import { User } from 'app/account/user/user.model';
 import { CompetencyRelationType, CourseCompetency } from 'app/atlas/shared/entities/competency.model';
 import { GraphNodeDimension } from 'app/atlas/shared/dag-graph/dag-graph.model';
+import { CompetencyName } from 'app/openapi/model/competency-name';
+import { LearningPath as GeneratedLearningPath } from 'app/openapi/model/learning-path';
+import { LearningPathAverageProgress } from 'app/openapi/model/learning-path-average-progress';
+import { LearningPathInformation } from 'app/openapi/model/learning-path-information';
 
 export interface LearningPath extends BaseEntity {
     id?: number;
@@ -12,33 +16,15 @@ export interface LearningPath extends BaseEntity {
     competencies?: CourseCompetency[];
 }
 
-export interface LearningPathInformationDTO {
-    id: number;
-    user: UserNameAndLoginDTO;
-    progress: number;
-}
+// The wire types of the learning path endpoints are generated from the server. The names below are kept for their callers.
+export type LearningPathInformationDTO = LearningPathInformation;
+export type LearningPathCompetencyDTO = CompetencyName;
+export type LearningPathDTO = GeneratedLearningPath;
+export type LearningPathAverageProgressDTO = LearningPathAverageProgress;
 
 export enum LearningObjectType {
     LECTURE = 'LECTURE',
     EXERCISE = 'EXERCISE',
-}
-
-export interface LearningPathCompetencyDTO {
-    id: number;
-    title: string;
-    masteryProgress: number;
-}
-
-export interface LearningPathDTO {
-    id: number;
-    progress: number;
-    startedByStudent: boolean;
-}
-
-export interface LearningPathAverageProgressDTO {
-    courseId: number;
-    averageProgress: number;
-    totalStudents: number;
 }
 
 export interface LearningPathNavigationObjectDTO {
@@ -62,10 +48,6 @@ export interface LearningPathNavigationOverviewDTO {
     learningObjects: LearningPathNavigationObjectDTO[];
 }
 
-export interface LearningPathsConfigurationDTO {
-    includeAllGradedExercises: boolean;
-}
-
 export enum CompetencyGraphNodeValueType {
     MASTERY_PROGRESS = 'MASTERY_PROGRESS',
     AVERAGE_MASTERY_PROGRESS = 'AVERAGE_MASTERY_PROGRESS',
@@ -73,8 +55,8 @@ export enum CompetencyGraphNodeValueType {
 
 export interface CompetencyGraphNodeDTO {
     id: string;
-    label: string;
-    softDueDate: Date;
+    label?: string;
+    softDueDate?: Date;
     value: number;
     valueType: CompetencyGraphNodeValueType;
     dimension?: GraphNodeDimension;
@@ -90,13 +72,4 @@ export interface CompetencyGraphEdgeDTO {
 export interface CompetencyGraphDTO {
     nodes: CompetencyGraphNodeDTO[];
     edges?: CompetencyGraphEdgeDTO[];
-}
-
-export enum NodeType {
-    COMPETENCY_START = 'COMPETENCY_START',
-    COMPETENCY_END = 'COMPETENCY_END',
-    MATCH_START = 'MATCH_START',
-    MATCH_END = 'MATCH_END',
-    EXERCISE = 'EXERCISE',
-    LECTURE_UNIT = 'LECTURE_UNIT',
 }
