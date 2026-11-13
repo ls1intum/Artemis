@@ -1,4 +1,4 @@
-import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, DestroyRef, computed, effect, inject, input, model, signal, untracked } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CleanupOperation } from 'app/admin/cleanup-service/cleanup-operation.model';
@@ -6,7 +6,7 @@ import { CLEANUP_ACTION_PRESENTATION } from 'app/admin/cleanup-service/cleanup-a
 import { CleanupCount, DataCleanupService } from 'app/admin/cleanup-service/data-cleanup.service';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 
-import { Observable, Subscription, finalize } from 'rxjs';
+import { Observable, Subscription, finalize, throwError } from 'rxjs';
 import { faCheckCircle, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -113,25 +113,18 @@ export class CleanupOperationModalComponent {
             },
         };
 
-        // Range operations are only reachable once validateDates has confirmed both dates are set.
-        const deleteFrom = operation.deleteFrom!;
-        const deleteTo = operation.deleteTo!;
+        const { deleteFrom, deleteTo } = operation;
         let executionRequest: Observable<unknown>;
         switch (operation.name) {
             case 'deleteOrphans':
                 executionRequest = this.dataCleanupService.deleteOrphans();
                 break;
             case 'deletePlagiarismComparisons':
-                executionRequest = this.dataCleanupService.deletePlagiarismComparisons(deleteFrom, deleteTo);
-                break;
             case 'deleteNonRatedResults':
-                executionRequest = this.dataCleanupService.deleteNonRatedResults(deleteFrom, deleteTo);
-                break;
             case 'deleteOldRatedResults':
-                executionRequest = this.dataCleanupService.deleteOldRatedResults(deleteFrom, deleteTo);
-                break;
             case 'deleteOldSubmissionVersions':
-                executionRequest = this.dataCleanupService.deleteOldSubmissionVersions(deleteFrom, deleteTo);
+                executionRequest =
+                    deleteFrom && deleteTo ? this.dataCleanupService[operation.name](deleteFrom, deleteTo) : throwError(() => new Error('The cleanup date range is missing.'));
                 break;
             case 'warnOldCoursesReset':
                 executionRequest = this.dataCleanupService.warnOldCoursesReset();
@@ -171,22 +164,27 @@ export class CleanupOperationModalComponent {
     /**
      * Fetch counts for the operation.
      */
-    private fetchCounts(): Observable<HttpResponse<CleanupCount>> {
+    private fetchCounts(): Observable<CleanupCount> {
         const operation = this.operation();
-        // Range operations are only reachable once validateDates has confirmed both dates are set.
-        const deleteFrom = operation.deleteFrom!;
-        const deleteTo = operation.deleteTo!;
+        const { deleteFrom, deleteTo } = operation;
         switch (operation.name) {
             case 'deleteOrphans':
                 return this.dataCleanupService.countOrphans();
             case 'deletePlagiarismComparisons':
-                return this.dataCleanupService.countPlagiarismComparisons(deleteFrom, deleteTo);
             case 'deleteNonRatedResults':
-                return this.dataCleanupService.countNonRatedResults(deleteFrom, deleteTo);
             case 'deleteOldRatedResults':
-                return this.dataCleanupService.countOldRatedResults(deleteFrom, deleteTo);
-            case 'deleteOldSubmissionVersions':
-                return this.dataCleanupService.countOldSubmissionVersions(deleteFrom, deleteTo);
+            case 'deleteOldSubmissionVersions': {
+                if (!deleteFrom || !deleteTo) {
+                    return throwError(() => new Error('The cleanup date range is missing.'));
+                }
+                const countMethods = {
+                    deletePlagiarismComparisons: 'countPlagiarismComparisons',
+                    deleteNonRatedResults: 'countNonRatedResults',
+                    deleteOldRatedResults: 'countOldRatedResults',
+                    deleteOldSubmissionVersions: 'countOldSubmissionVersions',
+                } satisfies Record<typeof operation.name, keyof DataCleanupService>;
+                return this.dataCleanupService[countMethods[operation.name]](deleteFrom, deleteTo);
+            }
             case 'warnOldCoursesReset':
                 return this.dataCleanupService.countOldCoursesResetWarning();
             case 'resetOldCourses':
@@ -214,8 +212,8 @@ export class CleanupOperationModalComponent {
         // counts of the operation currently shown.
         this.countSubscription?.unsubscribe();
         this.countSubscription = this.fetchCounts().subscribe({
-            next: (response: HttpResponse<CleanupCount>) => {
-                this.counts.set(response.body!);
+            next: (counts) => {
+                this.counts.set(counts);
             },
             error: () => {
                 this.dialogError.set('An error occurred while fetching updated counts.');
