@@ -1209,6 +1209,7 @@
         "e2e/shared/AuthenticatedApiContext.spec.ts": ["assessment", "communication", "core", "exercise", "programming", "shared"],
         "e2e/shared/DateTimePicker.spec.ts": ["atlas", "course", "shared"],
         "e2e/shared/LayoutHelpers.spec.ts": ["shared"],
+        "e2e/shared/SecurityHeaders.spec.ts": ["core", "course", "shared"],
         "e2e/tutorialgroup/TutorialGroupDetailLayout.spec.ts": ["communication", "course", "exam", "lecture", "tutorialgroup"],
         "e2e/tutorialgroup/TutorialGroupEditing.spec.ts": ["communication", "course", "lecture", "tutorialgroup"],
         "e2e/tutorialgroup/TutorialGroupSidebarAttendance.spec.ts": ["communication", "course", "exam", "lecture", "tutorialgroup"],

@@ -1,4 +1,13 @@
-<button id="instructor-quiz-start-{{ quizExercise().id }}" tumAetUiButton type="submit" severity="success" size="small" (click)="startQuiz()" [hidden]="!showStartButton()">
+<button
+    id="instructor-quiz-start-{{ quizExercise().id }}"
+    tumAetUiButton
+    type="submit"
+    severity="success"
+    [variant]="variant()"
+    size="small"
+    (click)="startQuiz()"
+    [hidden]="!showStartButton()"
+>
     <fa-icon [icon]="faPlayCircle" /><span class="ms-1" jhiTranslate="artemisApp.quizExercise.startQuiz"></span>
 </button>
 <button
@@ -6,6 +15,7 @@
     tumAetUiButton
     type="button"
     severity="primary"
+    [variant]="variant()"
     size="small"
     [tumAetUiPopoverTrigger]="batchMenu"
     [hidden]="!showBatchMenu()"
@@ -61,6 +71,7 @@
     id="quiz-set-end-{{ quizExercise().id }}"
     tumAetUiButton
     severity="danger"
+    [variant]="variant()"
     size="small"
     jhiDeleteButton
     [renderButtonStyle]="false"
@@ -84,6 +95,7 @@
     tumAetUiButton
     type="submit"
     severity="warn"
+    [variant]="variant()"
     size="small"
     (click)="showQuiz()"
     [disabled]="isInVariantGroup()"
