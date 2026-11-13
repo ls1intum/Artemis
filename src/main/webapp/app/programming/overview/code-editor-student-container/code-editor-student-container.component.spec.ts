@@ -9,10 +9,17 @@ import { ProgrammingExerciseParticipationService } from 'app/programming/manage/
 import { MockProgrammingExerciseParticipationService } from 'test/helpers/mocks/service/mock-programming-exercise-participation.service';
 import { SubmissionPolicyService } from 'app/programming/manage/services/submission-policy.service';
 import { AlertService } from 'app/foundation/service/alert.service';
-import { of } from 'rxjs';
+import { BehaviorSubject, Subject, of } from 'rxjs';
 import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Params } from '@angular/router';
 import { SubmissionPolicy } from 'app/exercise/shared/entities/submission/submission-policy.model';
+import { HttpResponse } from '@angular/common/http';
+import { Feedback, FeedbackType, NON_GRADED_FEEDBACK_SUGGESTION_IDENTIFIER } from 'app/assessment/shared/entities/feedback.model';
+import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
+import { ParticipationWebsocketService } from 'app/course/shared/services/participation-websocket.service';
+import { MockParticipationWebsocketService } from 'test/helpers/mocks/service/mock-participation-websocket.service';
+import { Result } from 'app/exercise/shared/entities/result/result.model';
+import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 
 describe('CodeEditorStudentContainerComponent', () => {
     let comp: CodeEditorStudentContainerComponent;
@@ -31,6 +38,7 @@ describe('CodeEditorStudentContainerComponent', () => {
             providers: [
                 { provide: ResultService, useClass: MockResultService },
                 { provide: ProgrammingExerciseParticipationService, useClass: MockProgrammingExerciseParticipationService },
+                { provide: ParticipationWebsocketService, useClass: MockParticipationWebsocketService },
                 {
                     provide: ActivatedRoute,
                     useValue: { params: of({ participationId: studentParticipation.id }) },
@@ -73,4 +81,145 @@ describe('CodeEditorStudentContainerComponent', () => {
             expect(getParticipationSubmissionCountSpy).not.toHaveBeenCalled();
         },
     );
+
+    it('should show the result of a newer push instead of the AI feedback of the earlier submission', () => {
+        const aiFeedback: Feedback = { id: 1, reference: 'file:BubbleSort.java_line:3', text: 'Use a for loop' };
+        const earlierSubmission = {
+            id: 7,
+            results: [{ id: 71, assessmentType: AssessmentType.AUTOMATIC_ATHENA, successful: true, feedbacks: [aiFeedback] }],
+        } as ProgrammingSubmission;
+        vi.spyOn(programmingExerciseParticipationService, 'getStudentParticipationWithLatestResult').mockReturnValue(
+            of({ ...studentParticipation, submissions: [earlierSubmission] } as ProgrammingExerciseStudentParticipation),
+        );
+        vi.spyOn(submissionPolicyService, 'getSubmissionPolicyOfProgrammingExercise').mockReturnValue(of(undefined));
+        const newResults = new BehaviorSubject<Result | undefined>(undefined);
+        const subscribeSpy = vi.spyOn(TestBed.inject(ParticipationWebsocketService), 'subscribeForLatestResultOfParticipation').mockReturnValue(newResults);
+
+        comp.ngOnInit();
+        // the AI feedback of the newer push is still being generated, so the editor keeps what it shows
+        newResults.next({ id: 82, assessmentType: AssessmentType.AUTOMATIC_ATHENA, submission: { id: 8 } });
+        expect(comp.participation().submissions![0].id).toBe(7);
+
+        newResults.next({ id: 81, assessmentType: AssessmentType.AUTOMATIC, feedbacks: [], submission: { id: 8 } });
+
+        expect(subscribeSpy).toHaveBeenCalledWith(studentParticipation.id, true, studentParticipation.exercise!.id);
+        expect(comp.participation().submissions).toEqual([expect.objectContaining({ id: 8, results: [expect.objectContaining({ id: 81, feedbacks: [] })] })]);
+        expect(comp.latestResult()?.id).toBe(81);
+    });
+
+    it('should keep the result of a newer push when the AI feedback of an earlier submission arrives later', () => {
+        vi.spyOn(programmingExerciseParticipationService, 'getStudentParticipationWithLatestResult').mockReturnValue(
+            of({
+                ...studentParticipation,
+                submissions: [{ id: 7, results: [{ id: 71, assessmentType: AssessmentType.AUTOMATIC, feedbacks: [] }] }],
+            } as ProgrammingExerciseStudentParticipation),
+        );
+        vi.spyOn(submissionPolicyService, 'getSubmissionPolicyOfProgrammingExercise').mockReturnValue(of(undefined));
+        const newResults = new BehaviorSubject<Result | undefined>(undefined);
+        vi.spyOn(TestBed.inject(ParticipationWebsocketService), 'subscribeForLatestResultOfParticipation').mockReturnValue(newResults);
+
+        comp.ngOnInit();
+        newResults.next({ id: 81, assessmentType: AssessmentType.AUTOMATIC, feedbacks: [], submission: { id: 8 } });
+        newResults.next({ id: 72, assessmentType: AssessmentType.AUTOMATIC_ATHENA, successful: true, feedbacks: [], submission: { id: 7 } });
+
+        expect(comp.participation().submissions).toEqual([expect.objectContaining({ id: 8 })]);
+        expect(comp.latestResult()?.id).toBe(81);
+
+        // the AI feedback of the shown submission still replaces its test result
+        newResults.next({ id: 82, assessmentType: AssessmentType.AUTOMATIC_ATHENA, successful: true, feedbacks: [], submission: { id: 8 } });
+        expect(comp.latestResult()?.id).toBe(82);
+    });
+    describe('an earlier submission from the result history', () => {
+        const commitHash = 'a'.repeat(40);
+        let resultService: ResultService;
+
+        const participationWithAllResults = (): ProgrammingExerciseStudentParticipation =>
+            ({
+                ...studentParticipation,
+                submissions: [
+                    { id: 8, commitHash: 'b'.repeat(40), results: [{ id: 81 }] } as ProgrammingSubmission,
+                    { id: 7, commitHash, results: [{ id: 71 }, { id: 72 }] } as ProgrammingSubmission,
+                ],
+            }) as ProgrammingExerciseStudentParticipation;
+
+        beforeEach(() => {
+            resultService = TestBed.inject(ResultService);
+            TestBed.inject(ActivatedRoute).params = of({ participationId: studentParticipation.id, submissionId: '7', resultId: '72' });
+            vi.spyOn(submissionPolicyService, 'getSubmissionPolicyOfProgrammingExercise').mockReturnValue(of(undefined));
+        });
+
+        it('should load only the routed submission and result, with the feedback of that result', () => {
+            const latestSpy = vi.spyOn(programmingExerciseParticipationService, 'getStudentParticipationWithLatestResult');
+            vi.spyOn(programmingExerciseParticipationService, 'getStudentParticipationWithAllResults').mockReturnValue(of(participationWithAllResults()));
+            const feedbacks: Feedback[] = [{ id: 5, detailText: 'Check the loop' }];
+            const detailsSpy = vi.spyOn(resultService, 'getFeedbackDetailsForResult').mockReturnValue(of(new HttpResponse({ body: feedbacks })));
+
+            comp.ngOnInit();
+
+            expect(latestSpy).not.toHaveBeenCalled();
+            expect(detailsSpy).toHaveBeenCalledExactlyOnceWith(studentParticipation.id, expect.objectContaining({ id: 72 }));
+            expect(comp.viewedSubmission()?.commitHash).toBe(commitHash);
+            expect(comp.participation().submissions).toHaveLength(1);
+            expect(comp.participation().submissions![0].results).toEqual([expect.objectContaining({ id: 72, feedbacks })]);
+            expect(comp.latestResult()?.id).toBe(72);
+            // the problem statement beside the editor shows the tasks of this result
+            expect(comp.earlierSubmissionParticipation()).toBe(comp.participation());
+            expect(comp.loadingParticipation()).toBe(false);
+            expect(comp.participationCouldNotBeFetched()).toBe(false);
+        });
+
+        it('should still load the next navigation after a submission could not be found', () => {
+            const params = new Subject<Params>();
+            TestBed.inject(ActivatedRoute).params = params;
+            vi.spyOn(programmingExerciseParticipationService, 'getStudentParticipationWithAllResults').mockImplementation(() => of(participationWithAllResults()));
+            vi.spyOn(resultService, 'getFeedbackDetailsForResult').mockReturnValue(of(new HttpResponse({ body: [] })));
+
+            comp.ngOnInit();
+            params.next({ participationId: studentParticipation.id, submissionId: '9', resultId: '72' });
+            expect(comp.participationCouldNotBeFetched()).toBe(true);
+
+            params.next({ participationId: studentParticipation.id, submissionId: '7', resultId: '72' });
+            expect(comp.participationCouldNotBeFetched()).toBe(false);
+            expect(comp.loadingParticipation()).toBe(false);
+            expect(comp.viewedSubmission()?.id).toBe(7);
+        });
+
+        it('should list the AI feedback about a whole file of an earlier result, but not its feedback on a line or of the tests', () => {
+            vi.spyOn(programmingExerciseParticipationService, 'getStudentParticipationWithAllResults').mockReturnValue(of(participationWithAllResults()));
+            const fileWide: Feedback = { id: 1, type: FeedbackType.AUTOMATIC, text: `${NON_GRADED_FEEDBACK_SUGGESTION_IDENTIFIER}File Main.java`, detailText: 'Split the class' };
+            const onLine: Feedback = {
+                id: 2,
+                type: FeedbackType.AUTOMATIC,
+                text: `${NON_GRADED_FEEDBACK_SUGGESTION_IDENTIFIER}Rename the loop variable`,
+                reference: 'file:Main.java_line:3',
+            };
+            const testFeedback: Feedback = { id: 3, type: FeedbackType.AUTOMATIC, text: 'testAdd', positive: false };
+            vi.spyOn(resultService, 'getFeedbackDetailsForResult').mockReturnValue(of(new HttpResponse({ body: [fileWide, onLine, testFeedback] })));
+
+            comp.ngOnInit();
+
+            expect(comp.unreferencedFeedback).toEqual([fileWide]);
+        });
+
+        it('should not list AI feedback about a whole file for the latest result, whose result control opens it', () => {
+            const fileWide: Feedback = { id: 1, type: FeedbackType.AUTOMATIC, text: `${NON_GRADED_FEEDBACK_SUGGESTION_IDENTIFIER}File Main.java` };
+            comp.latestResult.set({ id: 1, feedbacks: [fileWide] });
+
+            expect(comp.unreferencedFeedback).toEqual([]);
+        });
+
+        it.each([
+            { submissionId: '9', resultId: '72' },
+            { submissionId: '7', resultId: '81' },
+        ])('should report a submission or result the participation does not have as not found: $submissionId/$resultId', ({ submissionId, resultId }) => {
+            TestBed.inject(ActivatedRoute).params = of({ participationId: studentParticipation.id, submissionId, resultId });
+            vi.spyOn(programmingExerciseParticipationService, 'getStudentParticipationWithAllResults').mockReturnValue(of(participationWithAllResults()));
+
+            comp.ngOnInit();
+
+            expect(comp.participationCouldNotBeFetched()).toBe(true);
+            expect(comp.viewedSubmission()).toBeUndefined();
+            expect(comp.earlierSubmissionParticipation()).toBeUndefined();
+        });
+    });
 });
