@@ -10,6 +10,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.jspecify.annotations.NonNull;
@@ -126,13 +127,38 @@ public class PyrisDTOService {
         // getFilteredRepositoryContents tolerates a null participation, so every dereference below has to as well,
         // or a submission without one aborts the whole conversion instead of degrading to "nothing readable".
         var programmingLanguage = participation != null ? participation.getProgrammingExercise().getProgrammingLanguage() : null;
-        var submittedRepository = buildSubmittedRepository(committedFiles, uncommittedFiles, programmingLanguage, committed.readable());
+        var baseline = withBaselinesOfOmittedFiles(participation, committed, uncommittedFiles, programmingLanguage);
+        var submittedRepository = buildSubmittedRepository(baseline.files(), uncommittedFiles, programmingLanguage, baseline.readable());
         // Lets Pyris tell "no code changed since the submission" apart from "the submitted code could not be read",
         // which would otherwise both be an empty map. Taken from the fetch rather than the file count, because a
         // repository holding no file of the exercise language is readable and empty.
-        boolean submittedRepositoryAvailable = committed.readable();
+        boolean submittedRepositoryAvailable = baseline.readable();
         return new PyrisSubmissionDTO(submission.getId(), toInstant(submission.getSubmissionDate()), mergedRepository, submittedRepository, submittedRepositoryAvailable,
                 submission.getParticipation() != null && submission.getParticipation().isPracticeMode(), submission.isBuildFailed(), buildLogEntries, getLatestResult(submission));
+    }
+
+    // The committed contents are bounded in size, so a file the client changed locally can be missing from them because it was left out, not because it is new.
+    // The committed content of such a path is read separately, so that an existing file is never sent as an all-added diff. If that read fails, the baseline counts as
+    // unreadable and no diff is fabricated.
+    private RepositoryContents withBaselinesOfOmittedFiles(@Nullable ProgrammingExerciseParticipation participation, RepositoryContents committed,
+            Map<String, String> uncommittedFiles, @Nullable ProgrammingLanguage language) {
+        if (!committed.readable() || participation == null || participation.getVcsRepositoryUri() == null) {
+            return committed;
+        }
+        Set<String> absentPaths = uncommittedFiles.keySet().stream().filter(path -> !committed.files().containsKey(path))
+                .filter(path -> language == null || language.matchesFileExtension(path)).collect(Collectors.toSet());
+        if (absentPaths.isEmpty()) {
+            return committed;
+        }
+        try {
+            Map<String, String> baseline = new HashMap<>(committed.files());
+            baseline.putAll(repositoryService.getCommittedContentOfPaths(participation.getVcsRepositoryUri(), absentPaths));
+            return new RepositoryContents(true, baseline);
+        }
+        catch (IOException e) {
+            log.error("Could not get the committed content of the changed files", e);
+            return RepositoryContents.UNREADABLE;
+        }
     }
 
     // The committed version of only the code files the client changed locally, so Pyris can diff live against submitted. A changed
@@ -343,7 +369,7 @@ public class PyrisDTOService {
             return null;
         }
         try {
-            return repositoryService.getFilesContentFromBareRepositoryForLastCommit(repositoryUri, language == null ? null : language::matchesFileExtension);
+            return repositoryService.getContextFilesContentFromBareRepositoryForLastCommit(repositoryUri, language == null ? null : language::matchesFileExtension);
         }
         catch (IOException e) {
             log.error("Could not get repository content", e);

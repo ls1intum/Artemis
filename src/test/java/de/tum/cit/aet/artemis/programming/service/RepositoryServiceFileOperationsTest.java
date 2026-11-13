@@ -306,8 +306,11 @@ class RepositoryServiceFileOperationsTest {
         org.mockito.Mockito.when(bare.getBareRepository(uri, false)).thenAnswer(invocation -> new Repository(workingTree.resolve(".git").toString(), uri));
         var limited = new RepositoryService(org.mockito.Mockito.mock(GitService.class), bare, Optional.empty());
 
-        var contents = limited.getFilesContentFromBareRepositoryForLastCommit(uri);
+        var contents = limited.getContextFilesContentFromBareRepositoryForLastCommit(uri, null);
 
+        // Only the context of language models is bounded: comparisons and exports keep every file, and the committed content of a path can be read on its own.
+        assertThat(limited.getFilesContentFromBareRepositoryForLastCommit(uri)).containsKey("huge.txt");
+        assertThat(limited.getCommittedContentOfPaths(uri, java.util.Set.of("huge.txt", "missing.txt"))).containsOnlyKeys("huge.txt");
         assertThat(contents).doesNotContainKey("huge.txt");
         assertThat(contents.values().stream().mapToLong(String::length).sum()).isLessThanOrEqualTo(RepositoryService.MAX_SELECTED_FILES_TOTAL_SIZE_BYTES);
         assertThat(contents).containsKey("small.txt").hasSizeLessThan(9);
@@ -328,8 +331,8 @@ class RepositoryServiceFileOperationsTest {
         org.mockito.Mockito.when(bare.getBareRepository(uri, false)).thenAnswer(invocation -> new Repository(workingTree.resolve(".git").toString(), uri));
         var limited = new RepositoryService(org.mockito.Mockito.mock(GitService.class), bare, Optional.empty());
 
-        assertThat(limited.getFilesContentFromBareRepositoryForLastCommit(uri)).doesNotContainKey("z-Main.java");
-        assertThat(limited.getFilesContentFromBareRepositoryForLastCommit(uri, path -> path.endsWith(".java"))).containsOnlyKeys("z-Main.java");
+        assertThat(limited.getContextFilesContentFromBareRepositoryForLastCommit(uri, null)).doesNotContainKey("z-Main.java");
+        assertThat(limited.getContextFilesContentFromBareRepositoryForLastCommit(uri, path -> path.endsWith(".java"))).containsOnlyKeys("z-Main.java");
     }
 
     @Test

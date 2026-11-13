@@ -108,7 +108,7 @@ class HyperionConsistencyCheckServiceTest {
         final var exercise = getProgrammingExercise();
 
         when(programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(42L)).thenReturn(exercise);
-        when(repositoryService.getFilesContentFromBareRepositoryForLastCommit(any(LocalVCRepositoryUri.class)))
+        when(repositoryService.getContextFilesContentFromBareRepositoryForLastCommit(any(LocalVCRepositoryUri.class), any()))
                 .thenReturn(Map.of("src/main/java/App.java", "class App { int sum(int a,int b){return a+b;} }"));
 
         String json = "{\n  \"issues\": [\n    {\n      \"severity\": \"HIGH\",\n      \"category\": \"METHOD_PARAMETER_MISMATCH\",\n      \"description\": \"Parameters differ\",\n      \"suggestedFix\": \"Align parameter names\",\n      \"relatedLocations\": [{\"type\": \"TEMPLATE_REPOSITORY\", \"filePath\": \"src/main/java/App.java\", \"startLine\": 1, \"endLine\": 1, \"suggestedInlineFix\": \"int sum(int first, int second) {\"}]\n    }\n  ]\n}";
@@ -132,7 +132,8 @@ class HyperionConsistencyCheckServiceTest {
         final var exercise = getProgrammingExercise();
 
         when(programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(42L)).thenReturn(exercise);
-        when(repositoryService.getFilesContentFromBareRepositoryForLastCommit(any(LocalVCRepositoryUri.class))).thenReturn(Map.of("src/main/java/App.java", "class App {}"));
+        when(repositoryService.getContextFilesContentFromBareRepositoryForLastCommit(any(LocalVCRepositoryUri.class), any()))
+                .thenReturn(Map.of("src/main/java/App.java", "class App {}"));
 
         String checkerJson = "{ \"issues\": [] }";
         String verifierJson = """
@@ -186,7 +187,7 @@ class HyperionConsistencyCheckServiceTest {
         final var exercise = getProgrammingExercise();
 
         when(programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(42L)).thenReturn(exercise);
-        when(repositoryService.getFilesContentFromBareRepositoryForLastCommit(any(LocalVCRepositoryUri.class)))
+        when(repositoryService.getContextFilesContentFromBareRepositoryForLastCommit(any(LocalVCRepositoryUri.class), any()))
                 .thenReturn(Map.of("src/main/java/App.java", "class App { int sum(int a,int b){return a+b;} }"));
 
         String json = "{ \"issues\": [] }";
@@ -221,7 +222,7 @@ class HyperionConsistencyCheckServiceTest {
         final var exercise = getProgrammingExercise();
 
         when(programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(42L)).thenReturn(exercise);
-        when(repositoryService.getFilesContentFromBareRepositoryForLastCommit(any(LocalVCRepositoryUri.class)))
+        when(repositoryService.getContextFilesContentFromBareRepositoryForLastCommit(any(LocalVCRepositoryUri.class), any()))
                 .thenReturn(Map.of("src/main/java/App.java", "class App { int sum(int a,int b){return a+b;} }"));
 
         // Structural/semantic checkers return 2 issues
@@ -283,7 +284,7 @@ class HyperionConsistencyCheckServiceTest {
         final var exercise = getProgrammingExercise();
 
         when(programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(42L)).thenReturn(exercise);
-        when(repositoryService.getFilesContentFromBareRepositoryForLastCommit(any(LocalVCRepositoryUri.class)))
+        when(repositoryService.getContextFilesContentFromBareRepositoryForLastCommit(any(LocalVCRepositoryUri.class), any()))
                 .thenReturn(Map.of("src/main/java/App.java", "class App { int sum(int a,int b){return a+b;} }"));
 
         String checkerJson = """
@@ -324,7 +325,7 @@ class HyperionConsistencyCheckServiceTest {
     void checkConsistency_includesExistingConsistencyCheckThreadsInPrompt() throws Exception {
         final var exercise = getProgrammingExercise();
         when(programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(42L)).thenReturn(exercise);
-        when(repositoryService.getFilesContentFromBareRepositoryForLastCommit(any(LocalVCRepositoryUri.class)))
+        when(repositoryService.getContextFilesContentFromBareRepositoryForLastCommit(any(LocalVCRepositoryUri.class), any()))
                 .thenReturn(Map.of("src/main/java/App.java", "class App { int sum(int a,int b){return a+b;} }"));
 
         CommentThread existingThread = new CommentThread();
@@ -375,7 +376,7 @@ class HyperionConsistencyCheckServiceTest {
     void checkConsistency_skipThreadContext_doesNotInvokeRendererAndPassesEmptyThreads() throws Exception {
         final var exercise = getProgrammingExercise();
         when(programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(42L)).thenReturn(exercise);
-        when(repositoryService.getFilesContentFromBareRepositoryForLastCommit(any(LocalVCRepositoryUri.class)))
+        when(repositoryService.getContextFilesContentFromBareRepositoryForLastCommit(any(LocalVCRepositoryUri.class), any()))
                 .thenReturn(Map.of("src/main/java/App.java", "class App { int sum(int a,int b){return a+b;} }"));
 
         when(chatModel.call(any(Prompt.class))).thenAnswer(_ -> new ChatResponse(List.of(new Generation(new AssistantMessage("{\"issues\": []}")))));
@@ -396,7 +397,7 @@ class HyperionConsistencyCheckServiceTest {
     void checkConsistency_handlesMissingConsistencyMetadataInRenderedThreadContext() throws Exception {
         final var exercise = getProgrammingExercise();
         when(programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(42L)).thenReturn(exercise);
-        when(repositoryService.getFilesContentFromBareRepositoryForLastCommit(any(LocalVCRepositoryUri.class)))
+        when(repositoryService.getContextFilesContentFromBareRepositoryForLastCommit(any(LocalVCRepositoryUri.class), any()))
                 .thenReturn(Map.of("src/main/java/App.java", "class App { int sum(int a,int b){return a+b;} }"));
 
         CommentThread existingThread = new CommentThread();

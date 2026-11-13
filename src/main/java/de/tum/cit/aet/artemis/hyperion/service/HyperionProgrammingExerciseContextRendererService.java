@@ -175,7 +175,7 @@ public class HyperionProgrammingExerciseContextRendererService {
             return Map.of();
         }
         try {
-            return repositoryService.getFilesContentFromBareRepositoryForLastCommit(localVCRepositoryUri);
+            return repositoryService.getContextFilesContentFromBareRepositoryForLastCommit(localVCRepositoryUri, null);
         }
         catch (IOException ex) {
             log.warn("Could not fetch {} repository contents for exercise {}", label, exerciseId, ex);

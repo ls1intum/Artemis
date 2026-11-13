@@ -381,29 +381,42 @@ public class RepositoryService {
      * If the bare repository is unavailable, falls back to retrieving files from the checked-out repository.
      * Binary files, as defined by {@link BinaryFileExtensionConfiguration}, are excluded.
      * <p>
-     * The result is meant as context for language models, so a file larger than {@link #MAX_SELECTED_FILE_SIZE_BYTES} is skipped and the files together
-     * stay within {@link #MAX_SELECTED_FILES_TOTAL_SIZE_BYTES}. Without these limits a repository that holds a huge text file (a data set or a log, for example) produces
-     * a request of hundreds of megabytes that Pyris rejects.
+     * The result is complete. Use {@link #getContextFilesContentFromBareRepositoryForLastCommit(LocalVCRepositoryUri, Predicate)} for context of a language model, which is
+     * bounded.
      *
      * @param repositoryUri the {@link LocalVCRepositoryUri} identifying the repository location.
      * @return a {@link Map} where keys are file paths and values are file contents as UTF-8 strings.
      * @throws IOException if an error occurs while accessing the repository.
      */
     public Map<String, String> getFilesContentFromBareRepositoryForLastCommit(LocalVCRepositoryUri repositoryUri) throws IOException {
-        return getFilesContentFromBareRepositoryForLastCommit(repositoryUri, null);
+
+        try (Repository bareRepository = bareGitRepositoryService.getBareRepository(repositoryUri, false)) {
+            return getFilesContentFromBareRepositoryForLastCommit(bareRepository);
+        }
+        catch (GitException exception) {
+            log.debug("Bare repository for {} is unavailable, falling back to checked out repository", repositoryUri, exception);
+            return getFilesContentFromCheckedOutRepository(repositoryUri, null);
+        }
     }
 
     /**
-     * Like {@link #getFilesContentFromBareRepositoryForLastCommit(LocalVCRepositoryUri)}, but only files whose path is accepted by the given filter are read, and only they count
-     * towards the limit of the total size. A file that the caller would discard afterwards (e.g. a data set next to the source files) therefore cannot use up the limit and
-     * leave out files that the caller needs.
+     * Retrieves the contents of text-based files from the latest commit as context for a language model, with bounded size.
+     * A file larger than {@link #MAX_SELECTED_FILE_SIZE_BYTES} is skipped and the files together stay within {@link #MAX_SELECTED_FILES_TOTAL_SIZE_BYTES}. Without these limits
+     * a repository that holds a huge text file (a data set or a log, for example) produces a request of hundreds of megabytes that Pyris rejects.
+     * <p>
+     * Only files whose path is accepted by the given filter are read, and only they count towards the limit of the total size. A file that the caller would discard afterwards
+     * (e.g. a data set next to the source files) therefore cannot use up the limit and leave out files that the caller needs.
+     * <p>
+     * Because the result can leave out files that exist, an absent path does not prove that the file is new. Use
+     * {@link #getCommittedContentOfPaths(LocalVCRepositoryUri, Set)} for the committed content of given paths.
      *
      * @param repositoryUri the {@link LocalVCRepositoryUri} identifying the repository location.
      * @param pathFilter    accepts the repository-relative paths of the files to read, or null to read all text files
      * @return a {@link Map} where keys are file paths and values are file contents as UTF-8 strings.
      * @throws IOException if an error occurs while accessing the repository.
      */
-    public Map<String, String> getFilesContentFromBareRepositoryForLastCommit(LocalVCRepositoryUri repositoryUri, @Nullable Predicate<String> pathFilter) throws IOException {
+    public Map<String, String> getContextFilesContentFromBareRepositoryForLastCommit(LocalVCRepositoryUri repositoryUri, @Nullable Predicate<String> pathFilter)
+            throws IOException {
 
         try (Repository bareRepository = bareGitRepositoryService.getBareRepository(repositoryUri, false)) {
             ObjectId headCommitId = bareRepository.resolve("HEAD");
@@ -417,6 +430,29 @@ public class RepositoryService {
         catch (GitException exception) {
             log.debug("Bare repository for {} is unavailable, falling back to checked out repository", repositoryUri, exception);
             return getFilesContentFromCheckedOutRepository(repositoryUri, null);
+        }
+    }
+
+    /**
+     * Retrieves the content of the given paths from the latest commit, without any size limit. A path that does not exist in the commit is absent from the result.
+     * It tells a file that the bounded context read left out apart from a file that is new.
+     *
+     * @param repositoryUri the {@link LocalVCRepositoryUri} identifying the repository location.
+     * @param paths         the repository-relative paths to read
+     * @return a {@link Map} of the existing paths to their file contents as UTF-8 strings, empty if the bare repository is unavailable.
+     * @throws IOException if an error occurs while accessing the repository.
+     */
+    public Map<String, String> getCommittedContentOfPaths(LocalVCRepositoryUri repositoryUri, Set<String> paths) throws IOException {
+        try (Repository bareRepository = bareGitRepositoryService.getBareRepository(repositoryUri, false)) {
+            ObjectId headCommitId = bareRepository.resolve("HEAD");
+            if (headCommitId == null) {
+                return Map.of();
+            }
+            return getFileContentFromBareRepositoryForCommitId(bareRepository, headCommitId, paths, BinaryFileFilter.NONE, Long.MAX_VALUE, Long.MAX_VALUE);
+        }
+        catch (GitException exception) {
+            log.debug("Bare repository for {} is unavailable", repositoryUri, exception);
+            return Map.of();
         }
     }
 
