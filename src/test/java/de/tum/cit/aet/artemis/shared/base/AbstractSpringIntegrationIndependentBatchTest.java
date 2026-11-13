@@ -16,6 +16,7 @@ import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 
 import de.tum.cit.aet.artemis.atlas.service.CompetencyOrchestrationService;
+import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 
 /**
  * Second independent integration-test bucket. It uses the same Spring profiles as {@link AbstractSpringIntegrationIndependentTest}, but separate filesystem paths so it can
@@ -48,8 +49,11 @@ public abstract class AbstractSpringIntegrationIndependentBatchTest extends Abst
     @MockitoSpyBean
     protected CompetencyOrchestrationService orchestrationService;
 
+    @MockitoSpyBean
+    protected AuthorizationCheckService authCheckService;
+
     @AfterEach
-    void resetOrchestrationService() {
-        Mockito.reset(orchestrationService);
+    void resetBatchSpies() {
+        Mockito.reset(orchestrationService, authCheckService);
     }
 }
