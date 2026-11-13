@@ -9,6 +9,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 
 import org.junit.jupiter.api.AfterEach;
@@ -193,7 +194,7 @@ public abstract class AbstractIrisIntegrationTest extends AbstractSpringIntegrat
         enableIrisFor(exercise.getCourseViaExerciseGroupOrCourseMember());
         // Students can only chat about a released exercise, and the fixtures create unreleased ones
         if (exercise.getExerciseGroup() == null && exercise.getReleaseDate() != null && exercise.getReleaseDate().isAfter(ZonedDateTime.now())) {
-            exercise.setReleaseDate(ZonedDateTime.now().minusDays(1));
+            exercise.setReleaseDate(ZonedDateTime.now().minusDays(1).truncatedTo(ChronoUnit.MILLIS));
             irisExerciseRepository.save(exercise);
         }
     }
