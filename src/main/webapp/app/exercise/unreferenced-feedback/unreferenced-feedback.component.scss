@@ -87,7 +87,7 @@
 
     &__cards {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(min(22rem, 100%), 1fr));
+        grid-template-columns: repeat(auto-fill, min(22rem, 100%));
         gap: 0.5rem;
         align-items: start;
     }
