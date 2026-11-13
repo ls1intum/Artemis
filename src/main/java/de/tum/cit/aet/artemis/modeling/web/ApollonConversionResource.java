@@ -3,6 +3,8 @@ package de.tum.cit.aet.artemis.modeling.web;
 import java.io.IOException;
 import java.io.InputStream;
 
+import jakarta.validation.Valid;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
@@ -45,13 +47,13 @@ public class ApollonConversionResource {
     /**
      * Converts given model to pdf
      *
-     * @param request the model for conversion
+     * @param request the model for conversion, which must not be blank and is limited in size
      * @return input stream for conversion
      */
     @UsageInteraction(FeatureInteraction.VIEW)
     @PostMapping("apollon/convert-to-pdf")
     @EnforceAtLeastStudent
-    public ResponseEntity<InputStreamResource> convertApollonModel(@RequestBody ApollonModelDTO request) throws IOException {
+    public ResponseEntity<InputStreamResource> convertApollonModel(@Valid @RequestBody ApollonModelDTO request) throws IOException {
         log.debug("REST call to convert apollon model to pdf");
 
         InputStream inputStream = apollonConversionService.convertModel(request.model());

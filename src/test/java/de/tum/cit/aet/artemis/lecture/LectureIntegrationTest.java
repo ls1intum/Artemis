@@ -629,7 +629,7 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentBatchTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "user1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetLectureTitleAsUser() throws Exception {
         // Only user and role matter, so we can re-use the logic
         testGetLectureTitle();
@@ -654,7 +654,19 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentBatchTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "user1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "outsider", roles = "USER")
+    void testGetLectureTitleAsUserOutsideTheCourse_forbidden() throws Exception {
+        userUtilService.createAndSaveUser(TEST_PREFIX + "outsider");
+        Lecture lecture = new Lecture();
+        lecture.setTitle("Test Lecture");
+        lecture.setCourse(course1);
+        lectureRepository.save(lecture);
+
+        request.get("/api/lecture/lectures/" + lecture.getId() + "/title", HttpStatus.FORBIDDEN, String.class);
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
     void testGetLectureTitleForNonExistingLecture() throws Exception {
         request.get("/api/lecture/lectures/123124123123/title", HttpStatus.NOT_FOUND, String.class);
     }

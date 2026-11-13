@@ -221,15 +221,15 @@ class RateLimitServiceTest {
     }
 
     @Test
-    void testResolveClientId_WithXForwardedFor_ShouldUseFirstIp() throws AddressStringException {
+    void testResolveClientId_IgnoresXForwardedFor() throws AddressStringException {
         try (MockedStatic<RequestContextHolder> mockedRequestContextHolder = Mockito.mockStatic(RequestContextHolder.class)) {
             mockedRequestContextHolder.when(RequestContextHolder::getRequestAttributes).thenReturn(requestAttributes);
             when(requestAttributes.resolveReference(RequestAttributes.REFERENCE_REQUEST)).thenReturn(httpServletRequest);
-            when(httpServletRequest.getHeader("X-Forwarded-For")).thenReturn("192.168.1.1, 10.0.0.1");
+            when(httpServletRequest.getRemoteAddr()).thenReturn("203.0.113.7");
 
             IPAddress clientId = rateLimitService.resolveClientId();
 
-            assertThat(clientId).isEqualTo(new IPAddressString("192.168.1.1").toAddress());
+            assertThat(clientId).isEqualTo(new IPAddressString("203.0.113.7").toAddress());
         }
     }
 
@@ -277,7 +277,7 @@ class RateLimitServiceTest {
         try (MockedStatic<RequestContextHolder> mockedRequestContextHolder = Mockito.mockStatic(RequestContextHolder.class)) {
             mockedRequestContextHolder.when(RequestContextHolder::getRequestAttributes).thenReturn(requestAttributes);
             when(requestAttributes.resolveReference(RequestAttributes.REFERENCE_REQUEST)).thenReturn(httpServletRequest);
-            when(httpServletRequest.getHeader("X-Forwarded-For")).thenReturn("::1");
+            when(httpServletRequest.getRemoteAddr()).thenReturn("::1");
 
             IPAddress clientId = rateLimitService.resolveClientId();
 
@@ -290,7 +290,7 @@ class RateLimitServiceTest {
         try (MockedStatic<RequestContextHolder> mockedRequestContextHolder = Mockito.mockStatic(RequestContextHolder.class)) {
             mockedRequestContextHolder.when(RequestContextHolder::getRequestAttributes).thenReturn(requestAttributes);
             when(requestAttributes.resolveReference(RequestAttributes.REFERENCE_REQUEST)).thenReturn(httpServletRequest);
-            when(httpServletRequest.getHeader("X-Forwarded-For")).thenReturn("  invalid-ip-format  ");
+            when(httpServletRequest.getRemoteAddr()).thenReturn("  invalid-ip-format  ");
 
             IPAddress clientId = rateLimitService.resolveClientId();
 
@@ -299,16 +299,15 @@ class RateLimitServiceTest {
     }
 
     @Test
-    void testIpCleanup_EmptyStringHeader_ShouldReturnNull() {
+    void testResolveClientId_WithoutAddress_ShouldReturnNull() {
         try (MockedStatic<RequestContextHolder> mockedRequestContextHolder = Mockito.mockStatic(RequestContextHolder.class)) {
             mockedRequestContextHolder.when(RequestContextHolder::getRequestAttributes).thenReturn(requestAttributes);
             when(requestAttributes.resolveReference(RequestAttributes.REFERENCE_REQUEST)).thenReturn(httpServletRequest);
-            when(httpServletRequest.getHeader("X-Forwarded-For")).thenReturn("unknown");
             when(httpServletRequest.getRemoteAddr()).thenReturn(null);
 
             IPAddress clientId = rateLimitService.resolveClientId();
 
-            assertThat(clientId).matches(IPAddress::isLoopback);
+            assertThat(clientId).isNull();
         }
     }
 }
