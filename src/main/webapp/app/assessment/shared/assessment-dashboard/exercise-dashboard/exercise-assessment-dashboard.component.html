@@ -432,15 +432,14 @@
                                 <div class="mb-4! flex w-full items-center justify-between gap-2" data-testid="correction-round-header">
                                     <div class="flex items-center gap-1">
                                         @if (exercise().teamMode && !isTestRun()) {
-                                            <h4
-                                                class="m-0"
-                                                [jhiTranslate]="
-                                                    exercise().isAtLeastInstructor
+                                            <h4 class="m-0" data-testid="assessment-queue-title">
+                                                {{
+                                                    (exercise().isAtLeastInstructor
                                                         ? 'artemisApp.exerciseAssessmentDashboard.allTeams'
                                                         : 'artemisApp.exerciseAssessmentDashboard.yourTeams'
-                                                "
-                                                data-testid="assessment-queue-title"
-                                            ></h4>
+                                                    ) | artemisTranslate
+                                                }}
+                                            </h4>
                                         } @else if (!isExamMode()) {
                                             <h4 class="m-0" jhiTranslate="artemisApp.exerciseAssessmentDashboard.studentsSubmissions"></h4>
                                         } @else {

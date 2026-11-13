@@ -703,22 +703,21 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, OnDestroy {
             submissionsObservable = this.submissionService.getTestRunSubmissionsForExercise(this.exerciseId());
         } else {
             // TODO: This could be one generic endpoint.
-            switch (this.exercise().type) {
+            const exerciseType = this.exercise().type;
+            switch (exerciseType) {
                 case ExerciseType.TEXT:
-                    submissionsObservable = this.accountService.isAtLeastInstructorForExercise(this.exercise())
-                        ? this.textSubmissionService.getSubmissions(this.exerciseId(), { assessedByMe: true }, correctionRound)
-                        : this.textSubmissionService.getMyAssessedSubmissions(this.exerciseId(), correctionRound);
-                    break;
                 case ExerciseType.MODELING:
+                case ExerciseType.FILE_UPLOAD: {
+                    const service = {
+                        [ExerciseType.TEXT]: this.textSubmissionService,
+                        [ExerciseType.MODELING]: this.modelingSubmissionService,
+                        [ExerciseType.FILE_UPLOAD]: this.fileUploadSubmissionService,
+                    }[exerciseType];
                     submissionsObservable = this.accountService.isAtLeastInstructorForExercise(this.exercise())
-                        ? this.modelingSubmissionService.getSubmissions(this.exerciseId(), { assessedByMe: true }, correctionRound)
-                        : this.modelingSubmissionService.getMyAssessedSubmissions(this.exerciseId(), correctionRound);
+                        ? service.getSubmissions(this.exerciseId(), { assessedByMe: true }, correctionRound)
+                        : service.getMyAssessedSubmissions(this.exerciseId(), correctionRound);
                     break;
-                case ExerciseType.FILE_UPLOAD:
-                    submissionsObservable = this.accountService.isAtLeastInstructorForExercise(this.exercise())
-                        ? this.fileUploadSubmissionService.getSubmissions(this.exerciseId(), { assessedByMe: true }, correctionRound)
-                        : this.fileUploadSubmissionService.getMyAssessedSubmissions(this.exerciseId(), correctionRound);
-                    break;
+                }
                 case ExerciseType.PROGRAMMING:
                     submissionsObservable = this.programmingSubmissionService.getSubmissions(this.exerciseId(), { assessedByTutor: true }, correctionRound);
                     break;

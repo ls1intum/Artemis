@@ -1,5 +1,4 @@
 import { MockInstance, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { By } from '@angular/platform-browser';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
@@ -74,7 +73,6 @@ import dayjs from 'dayjs/esm';
 import { ASSESSMENT_NOT_POSSIBLE_EXAM_RUNNING } from 'app/assessment/shared/util/assessment-availability.util';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
 import { TeamService } from 'app/exercise/team/team.service';
-import { TranslateDirective } from 'app/foundation/language/translate.directive';
 
 describe('ExerciseAssessmentDashboardComponent', () => {
     let comp: ExerciseAssessmentDashboardComponent;
@@ -240,7 +238,7 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         MockTranslateValuesDirective,
         MockComponent(AssessmentWarningComponent),
         MockPipe(ArtemisDatePipe),
-        MockPipe(ArtemisTranslatePipe),
+        MockPipe(ArtemisTranslatePipe, (key) => key ?? ''),
     ];
 
     const providers = [
@@ -378,8 +376,7 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         comp.numberOfAssessmentsOfCorrectionRounds.update((rounds) => rounds.slice(0, 1));
         fixture.detectChanges();
 
-        const titleDirective = fixture.debugElement.query(By.css('[data-testid="assessment-queue-title"]')).injector.get(TranslateDirective);
-        expect(titleDirective.jhiTranslate()).toBe(title);
+        expect(fixture.nativeElement.querySelector('[data-testid="assessment-queue-title"]').textContent.trim()).toBe(title);
         const teamLink = fixture.nativeElement.querySelector('[data-testid="assessment-queue-team"]') as HTMLAnchorElement;
         expect(teamLink.textContent.trim()).toBe('team-a');
         expect(teamLink.getAttribute('href')).toBe('/course-management/1/exercises/17/teams/32');

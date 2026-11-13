@@ -315,6 +315,40 @@ class SubmissionServiceTest extends AbstractSpringIntegrationIndependentBatchTes
     }
 
     @ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(booleans = { false, true })
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void inaccessibleTeamDraftsDoNotConsumeTutorLockAllowance(boolean instructor) throws Exception {
+        var exercise = teamExercise(ExerciseType.TEXT);
+        var first = teamSubmission(exercise, tutor1, "own");
+        var participation = (StudentParticipation) first.getParticipation();
+        var assessor = instructor ? userUtilService.getUserByLogin(TEST_PREFIX + "instructor1") : tutor1;
+        for (int i = 0; i < MAX_NUMBER_OF_LOCKED_SUBMISSIONS_PER_TUTOR; i++) {
+            var submission = i == 0 ? first : participationUtilService.addSubmission(participation, new TextSubmission().text("Draft"));
+            var result = new Result();
+            result.setSubmission(submission);
+            result.setExerciseId(exercise.getId());
+            result.setAssessmentType(AssessmentType.MANUAL);
+            result.setCorrectionRound(0);
+            result.setAssessor(assessor);
+            resultRepository.save(result);
+        }
+        userUtilService.changeUser(assessor.getLogin());
+        var courseId = exercise.getCourseViaExerciseGroupOrCourseMemberElseThrow().getId();
+        assertThat(submissionService.getLockedSubmissions(courseId)).hasSize(Math.toIntExact(MAX_NUMBER_OF_LOCKED_SUBMISSIONS_PER_TUTOR));
+        userUtilService.changeUser(TEST_PREFIX + "instructor1");
+        var team = teamRepository.findWithStudentsByIdElseThrow(participation.getTeam().orElseThrow().getId());
+        team.setOwner(tutor2);
+        request.put("/api/exercise/exercises/" + exercise.getId() + "/teams/" + team.getId(), de.tum.cit.aet.artemis.exercise.dto.TeamInputDTO.of(team), HttpStatus.OK);
+        userUtilService.changeUser(assessor.getLogin());
+        int expected = instructor ? Math.toIntExact(MAX_NUMBER_OF_LOCKED_SUBMISSIONS_PER_TUTOR) : 0;
+        assertThat(submissionService.getLockedSubmissions(courseId)).hasSize(expected);
+        assertThat(submissionRepository.countLockedSubmissionsByUserIdAndCourseId(assessor.getId(), courseId, instructor)).isEqualTo(expected);
+        assertThat(submissionRepository.findOneWithEagerResultAndFeedbackAndAssessmentNote(first.getId()).getLatestResult().getAssessor()).isEqualTo(assessor);
+        var own = teamSubmission(exercise, tutor1, "anotherown");
+        request.get(assessmentStartUrl(ExerciseType.TEXT, own.getId()), instructor ? HttpStatus.BAD_REQUEST : HttpStatus.OK, String.class);
+    }
+
+    @ParameterizedTest
     @EnumSource(value = ExerciseType.class, names = { "TEXT", "MODELING", "FILE_UPLOAD", "PROGRAMMING" })
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void teamQueueAndDirectStartsRespectOwnership(ExerciseType type) throws Exception {
@@ -455,7 +489,7 @@ class SubmissionServiceTest extends AbstractSpringIntegrationIndependentBatchTes
         draft = resultRepository.save(draft);
         var courseId = exercise.getCourseViaExerciseGroupOrCourseMemberElseThrow().getId();
         assertThat(submissionService.getLockedSubmissions(courseId)).extracting(Submission::getId).contains(submission.getId());
-        assertThat(submissionRepository.countLockedSubmissionsByUserIdAndCourseId(tutor1.getId(), courseId)).isEqualTo(1);
+        assertThat(submissionRepository.countLockedSubmissionsByUserIdAndCourseId(tutor1.getId(), courseId, false)).isEqualTo(1);
         var url = assessmentStartUrl(ExerciseType.TEXT, submission.getId());
         request.get(url, HttpStatus.OK, String.class);
         assertThat(resultRepository.findByIdWithEagerFeedbacksAndAssessor(draft.getId()).orElseThrow().getAssessor()).isEqualTo(tutor1);
