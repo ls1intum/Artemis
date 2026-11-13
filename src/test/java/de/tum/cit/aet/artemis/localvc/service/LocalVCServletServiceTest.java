@@ -46,6 +46,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.admin.service.RateLimitService;
+import de.tum.cit.aet.artemis.core.config.BuildAgentNetworkPolicy;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.security.RateLimitType;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
@@ -121,6 +122,9 @@ class LocalVCServletServiceTest {
 
     @Mock
     private PasswordAuthenticationNoticeService passwordAuthenticationNoticeService;
+
+    @Mock
+    private BuildAgentNetworkPolicy buildAgentNetworkPolicy;
 
     @InjectMocks
     private LocalVCServletService localVCServletService;

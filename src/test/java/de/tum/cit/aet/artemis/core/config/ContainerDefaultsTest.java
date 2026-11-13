@@ -71,6 +71,13 @@ class ContainerDefaultsTest {
     }
 
     @ParameterizedTest
+    @ValueSource(strings = { "host", "HOST", "container:database" })
+    void shouldRefuseANetworkThatSharesTheNamespaceOfTheHostOrOfAContainerEvenIfItIsListedAsAllowed(String network) {
+        assertThatExceptionOfType(IllegalStateException.class).isThrownBy(() -> defaultsWith(List.of(), network, List.of("none", network)))
+                .withMessageContaining("container-defaults.network").withMessageContaining("shares the network");
+    }
+
+    @ParameterizedTest
     @ValueSource(strings = { "NO_SEPARATOR", "=value", " =value", "1STARTS_WITH_A_DIGIT=x", "HAS-A-DASH=x", "HAS SPACE=x", "A.B=x" })
     void shouldRefuseAnEntryThatIsNotAVariableAssignment(String entry) {
         assertThatExceptionOfType(IllegalStateException.class).isThrownBy(() -> defaultsWith(List.of("CI=true", entry), null, ONLY_NONE))

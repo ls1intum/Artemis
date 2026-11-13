@@ -191,6 +191,12 @@ public class ResultResource {
 
         participationAuthCheckService.checkCanAccessParticipationElseThrow(participation);
 
+        // results of an exam exercise are only served to the student once they may see them
+        if (participation instanceof StudentParticipation studentParticipation && !authCheckService.isAtLeastTeachingAssistantForExercise(studentParticipation.getExercise())
+                && participationAuthCheckService.shouldHideExamExerciseResults(studentParticipation)) {
+            throw new AccessForbiddenException("The results of this exam exercise are not available yet.");
+        }
+
         // attach the automatic test-case and SCA feedback (stored in compact typed tables) as legacy views
         programmingFeedbackSynthesizerService.attachSynthesizedFeedback(result);
 
