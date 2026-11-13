@@ -140,8 +140,9 @@ export class LectureService {
             );
     }
 
-    delete(lectureId: number): Observable<HttpResponse<void>> {
-        return this.http.delete<void>(`${this.resourceUrl}/${lectureId}`, { observe: 'response' });
+    delete(lectureId: number, deleteTumLiveRecordings = false): Observable<HttpResponse<void>> {
+        const params = deleteTumLiveRecordings ? new HttpParams().set('deleteTumLiveRecordings', 'true') : undefined;
+        return this.http.delete<void>(`${this.resourceUrl}/${lectureId}`, { params, observe: 'response' });
     }
 
     protected convertLectureResponseDatesFromServer(res: EntityResponseType): EntityResponseType {

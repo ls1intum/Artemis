@@ -25,6 +25,9 @@ function escapeRegExp(value: string): string {
     }`,
     styles: ['.search-highlight { font-weight: 700; }'],
     changeDetection: ChangeDetectionStrategy.OnPush,
+    // The project preserves whitespace globally; here the newlines between the spans would render as visible spaces
+    // inside the highlighted text ("Sort ing").
+    preserveWhitespaces: false,
 })
 export class SearchHighlightComponent {
     /** The full text to display. */

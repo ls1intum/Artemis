@@ -48,8 +48,7 @@
                     "SEMESTER": "Semester",
                     "doImport": "Import"
                 },
-                "search": "Search for lecture:",
-                "loading": "Loading...",
+                "search": "Search for lecture",
                 "label": "Import Lecture"
             },
             "sections": {
@@ -161,6 +160,7 @@
                 "retry": "Retry",
                 "discard": "Discard change and close",
                 "failedAfterLeaving": "A change of lecture content could not be saved. Open the lecture again to check its content.",
+                "videoSourceChangedMeanwhile": "The video URL was changed meanwhile, so yours was not saved. Check it and save it again if you still want it.",
                 "unconfirmedContent": "Save or discard the new video URL first.",
                 "done": "Done"
             },

@@ -5,23 +5,6 @@
         </h5>
     </div>
 
-    <div class="flex items-center gap-2">
-        <tumaet-ui-search-field class="grow" data-testid="exam-students-search" placeholder="artemisApp.studentExams.searchForStudents" (valueChange)="onSearchInput($event)" />
-        <tumaet-ui-select
-            class="w-72 max-w-full shrink-0"
-            size="small"
-            data-testid="exam-students-filter"
-            [options]="examStudentFilterOptions()"
-            optionLabel="label"
-            optionValue="value"
-            showClear
-            [ngModel]="selectedFilter()"
-            [placeholder]="'artemisApp.exercise.filter' | artemisTranslate"
-            [ariaLabel]="'artemisApp.exercise.filter' | artemisTranslate"
-            (selectionChange)="onFilterSelected($event)"
-        />
-    </div>
-
     @if (statisticsLoadingFailed()) {
         <div class="flex items-center gap-2" role="alert">
             <span class="text-state-danger" jhiTranslate="artemisApp.examManagement.examStudents.statisticsFailed"></span>
@@ -38,11 +21,32 @@
             [rowActions]="rowActionsRef"
             [showSearch]="false"
             [pageSize]="10"
-            [scrollable]="true"
-            scrollHeight="flex"
+            fill
             emptyMessage="artemisApp.dataTable.search.noResults"
             (dataRequest)="loadExamStudents($event)"
-        />
+        >
+            <tumaet-ui-search-field
+                tumAetUiTableToolbar
+                class="min-w-24 max-w-lg grow"
+                data-testid="exam-students-search"
+                placeholder="artemisApp.studentExams.searchForStudents"
+                (valueChange)="onSearchInput($event)"
+            />
+            <tumaet-ui-select
+                tumAetUiTableToolbar
+                class="w-48 max-w-full shrink-0"
+                size="small"
+                data-testid="exam-students-filter"
+                [options]="examStudentFilterOptions()"
+                optionLabel="label"
+                optionValue="value"
+                showClear
+                [ngModel]="selectedFilter()"
+                [placeholder]="'artemisApp.exercise.filter' | artemisTranslate"
+                [ariaLabel]="'artemisApp.exercise.filter' | artemisTranslate"
+                (selectionChange)="onFilterSelected($event)"
+            />
+        </tumaet-ui-table>
     </div>
 </div>
 

@@ -1,5 +1,8 @@
 {
     "error": {
+        "quizQuestionPoolModelNotConfigured": "Smart Quizzes is not set up on this server. Ask your administrator to configure a local language model.",
+        "tumLiveUploadInProgress": "The pending upload is already being sent to TUM.Live. Discard it to start another one.",
+        "tumLiveNotConnected": "The course is not connected to TUM.Live.",
         "registrationClosed": "Registration is closed because the exam has ended.",
         "attendanceCorrectionNotAllowed": "Attendance can only be corrected after a real exam has ended.",
         "exerciseGenerationCancellationUnavailable": "The cancellation could not be confirmed. Check the current run status, then try again.",
@@ -130,6 +133,7 @@
         "exerciseNotDefined": "The exercise is not defined.",
         "exerciseIdMismatch": "The exercise IDs do not match.",
         "feedbackIdMismatch": "The assessment contains feedback of another result.",
+        "feedbackCreditsOutOfBounds": "The points of a feedback must be between -100 and 100.",
         "resultParticipationMismatch": "The result is not a manual result of this participation.",
         "textBlockSubmissionMismatch": "The assessment contains a text block of another submission.",
         "solutionEntryError": "An error occurred while retrieving the extracted tasks from the problem statement.",
@@ -152,6 +156,8 @@
         "cpuCountInvalid": "The CPU count is invalid. Please make sure it is a positive integer.",
         "memorySwapLimitInvalid": "The memory swap limit is invalid. Please make sure it is larger or equal to 0.",
         "dockerFlagsParsingError": "Error while parsing the docker flags.",
+        "gradedParticipationMismatch": "The selected participation does not belong to this exercise.",
+        "sharingInfoInvalid": "The sharing information of the request could not be validated. Please start the import again from the Sharing Platform.",
         "dueDateOver": {
             "noParticipationPossible": "The exercise due date is already over, you can no longer participate in this exercise.",
             "participationInPracticeMode": "The exercise due date is already over, a regular participation in the exercise is no longer possible. You can use the Practice Mode to solve the exercise.",
@@ -360,6 +366,10 @@
         "buildPlanConfigurationTooLarge": "The build plan configuration is too large to be processed. Please reduce the size of your build phases.",
         "sharingInfoMissing": "The sharing platform information is missing.",
         "problemStatementTooLong": "The problem statement must not exceed 100,000 characters.",
+        "scienceExportInvalidDateRange": "The export start date must be before the end date.",
+        "scienceExportFailed": "The export could not be created. No file was kept.",
+        "scienceCourseNotEnabled": "This course does not collect science data.",
+        "scienceExportMissingEventTypes": "Select at least one event type for the export.",
         "generationBriefRequired": "Enter a brief before generating an exercise without a problem statement.",
         "generationCapacityUnavailable": "Artemis has no free capacity for AI generation right now. Nothing has been generated — try again in a few minutes.",
         "exerciseGenerationRunning": "Another operation or an unfinished recovery is protecting this exercise. Try again later; contact an administrator if recovery is required."
