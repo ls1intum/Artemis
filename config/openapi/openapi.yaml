@@ -1333,6 +1333,26 @@ paths:
                 type: array
                 items: {type: string, maxLength: 128}
                 maxItems: 500
+  /api/admin/cleanup/old-courses/warn:
+    post:
+      tags: [admin-cleanup]
+      operationId: warnOldCoursesReset
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/CleanupServiceExecutionRecord'}
+  /api/admin/cleanup/not-enrolled-users/warn:
+    post:
+      tags: [admin-cleanup]
+      operationId: warnNotEnrolledUsers
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/CleanupServiceExecutionRecord'}
   /api/tutorialgroup/courses/{courseId}/tutorial-groups/{tutorialGroupId}/sessions/{sessionId}/cancel:
     patch:
       tags: [tutorial-group-session]
@@ -2351,6 +2371,184 @@ paths:
               schema:
                 type: array
                 items: {$ref: '#/components/schemas/WorkerStatus'}
+  /api/admin/cleanup/plagiarism-comparisons/count:
+    get:
+      tags: [admin-cleanup]
+      operationId: countPlagiarismComparisons
+      parameters:
+      - name: deleteFrom
+        in: query
+        required: true
+        schema: {type: string, format: date-time}
+      - name: deleteTo
+        in: query
+        required: true
+        schema: {type: string, format: date-time}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/PlagiarismComparisonCleanupCount'}
+  /api/admin/cleanup/plagiarism-cases/count:
+    get:
+      tags: [admin-cleanup]
+      operationId: countPlagiarismCases
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/PlagiarismCasesCleanupCount'}
+  /api/admin/cleanup/orphans/count:
+    get:
+      tags: [admin-cleanup]
+      operationId: countOrphans
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/OrphanCleanupCount'}
+  /api/admin/cleanup/old-submission-versions/count:
+    get:
+      tags: [admin-cleanup]
+      operationId: countOldSubmissionVersions
+      parameters:
+      - name: deleteFrom
+        in: query
+        required: true
+        schema: {type: string, format: date-time}
+      - name: deleteTo
+        in: query
+        required: true
+        schema: {type: string, format: date-time}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/SubmissionVersionsCleanupCount'}
+  /api/admin/cleanup/old-rated-results/count:
+    get:
+      tags: [admin-cleanup]
+      operationId: countOldRatedResults
+      parameters:
+      - name: deleteFrom
+        in: query
+        required: true
+        schema: {type: string, format: date-time}
+      - name: deleteTo
+        in: query
+        required: true
+        schema: {type: string, format: date-time}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/NonLatestRatedResultsCleanupCount'}
+  /api/admin/cleanup/old-feedback/count:
+    get:
+      tags: [admin-cleanup]
+      operationId: countOldFeedback
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/OldFeedbackCleanupCount'}
+  /api/admin/cleanup/old-courses/warn/count:
+    get:
+      tags: [admin-cleanup]
+      operationId: countOldCoursesResetWarning
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/OldCoursesCleanupCount'}
+  /api/admin/cleanup/old-courses/reset/count:
+    get:
+      tags: [admin-cleanup]
+      operationId: countOldCoursesReset
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/OldCoursesCleanupCount'}
+  /api/admin/cleanup/old-course-submission-versions/count:
+    get:
+      tags: [admin-cleanup]
+      operationId: countOldCourseSubmissionVersions
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/SubmissionVersionsCleanupCount'}
+  /api/admin/cleanup/not-enrolled-users/warn/count:
+    get:
+      tags: [admin-cleanup]
+      operationId: countNotEnrolledUsersWarning
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/NotEnrolledUsersCleanupCount'}
+  /api/admin/cleanup/not-enrolled-users/count:
+    get:
+      tags: [admin-cleanup]
+      operationId: countNotEnrolledUsers
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/NotEnrolledUsersCleanupCount'}
+  /api/admin/cleanup/non-rated-results/count:
+    get:
+      tags: [admin-cleanup]
+      operationId: countNonRatedResults
+      parameters:
+      - name: deleteFrom
+        in: query
+        required: true
+        schema: {type: string, format: date-time}
+      - name: deleteTo
+        in: query
+        required: true
+        schema: {type: string, format: date-time}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/NonLatestNonRatedResultsCleanupCount'}
+  /api/admin/cleanup/last-executions:
+    get:
+      tags: [admin-cleanup]
+      operationId: getLastExecutions
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/CleanupServiceExecutionRecord'}
+  /api/admin/cleanup/configuration:
+    get:
+      tags: [admin-cleanup]
+      operationId: getCleanupConfiguration
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/CleanupConfiguration'}
   /api/tutorialgroup/courses/{courseId}/tutorial-groups/{tutorialGroupId}/deregister/{studentLogin}:
     delete:
       tags: [tutorial-group]
@@ -2457,6 +2655,142 @@ paths:
         schema: {type: string}
       responses:
         '200': {description: OK}
+  /api/admin/cleanup/plagiarism-comparisons:
+    delete:
+      tags: [admin-cleanup]
+      operationId: deletePlagiarismComparisons
+      parameters:
+      - name: deleteFrom
+        in: query
+        required: true
+        schema: {type: string, format: date-time}
+      - name: deleteTo
+        in: query
+        required: true
+        schema: {type: string, format: date-time}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/CleanupServiceExecutionRecord'}
+  /api/admin/cleanup/plagiarism-cases:
+    delete:
+      tags: [admin-cleanup]
+      operationId: deletePlagiarismCases
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/CleanupServiceExecutionRecord'}
+  /api/admin/cleanup/orphans:
+    delete:
+      tags: [admin-cleanup]
+      operationId: deleteOrphans
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/CleanupServiceExecutionRecord'}
+  /api/admin/cleanup/old-submission-versions:
+    delete:
+      tags: [admin-cleanup]
+      operationId: deleteOldSubmissionVersions
+      parameters:
+      - name: deleteFrom
+        in: query
+        required: true
+        schema: {type: string, format: date-time}
+      - name: deleteTo
+        in: query
+        required: true
+        schema: {type: string, format: date-time}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/CleanupServiceExecutionRecord'}
+  /api/admin/cleanup/old-rated-results:
+    delete:
+      tags: [admin-cleanup]
+      operationId: deleteOldRatedResults
+      parameters:
+      - name: deleteFrom
+        in: query
+        required: true
+        schema: {type: string, format: date-time}
+      - name: deleteTo
+        in: query
+        required: true
+        schema: {type: string, format: date-time}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/CleanupServiceExecutionRecord'}
+  /api/admin/cleanup/old-feedback:
+    delete:
+      tags: [admin-cleanup]
+      operationId: deleteOldFeedback
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/CleanupServiceExecutionRecord'}
+  /api/admin/cleanup/old-courses/reset:
+    delete:
+      tags: [admin-cleanup]
+      operationId: resetOldCourses
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/CleanupServiceExecutionRecord'}
+  /api/admin/cleanup/old-course-submission-versions:
+    delete:
+      tags: [admin-cleanup]
+      operationId: deleteOldCourseSubmissionVersions
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/CleanupServiceExecutionRecord'}
+  /api/admin/cleanup/not-enrolled-users:
+    delete:
+      tags: [admin-cleanup]
+      operationId: deleteNotEnrolledUsers
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/CleanupServiceExecutionRecord'}
+  /api/admin/cleanup/non-rated-results:
+    delete:
+      tags: [admin-cleanup]
+      operationId: deleteNonRatedResults
+      parameters:
+      - name: deleteFrom
+        in: query
+        required: true
+        schema: {type: string, format: date-time}
+      - name: deleteTo
+        in: query
+        required: true
+        schema: {type: string, format: date-time}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/CleanupServiceExecutionRecord'}
 components:
   schemas:
     CourseCompetency:
@@ -2504,6 +2838,13 @@ components:
         totalTokensUsed: {type: integer, format: int64}
         startedAt: {type: string, format: date-time}
         finishedAt: {type: string, format: date-time}
+    NonLatestNonRatedResultsCleanupCount:
+      type: object
+      properties:
+        longFeedbackText: {type: integer, format: int32}
+        textBlock: {type: integer, format: int32}
+        feedback: {type: integer, format: int32}
+      required: [feedback, longFeedbackText, textBlock]
     QuizBatchWithPassword:
       type: object
       properties:
@@ -2788,6 +3129,11 @@ components:
           type: string
           default: drag-and-drop
           enum: [drag-and-drop]
+    OldCoursesCleanupCount:
+      type: object
+      properties:
+        courses: {type: integer, format: int32}
+      required: [courses]
     UpdateQuizExercise:
       type: object
       properties:
@@ -2822,12 +3168,40 @@ components:
         quizQuestions:
           type: array
           items: {$ref: '#/components/schemas/QuizQuestionFromEditor'}
+    CleanupConfiguration:
+      type: object
+      properties:
+        gradeRelevantRetentionYears: {type: integer, format: int32}
+        gradeRelevantCoursesEndedBefore: {type: string, format: date-time}
+        nonGradeRelevantRetentionYears: {type: integer, format: int32}
+        nonGradeRelevantCoursesEndedBefore: {type: string, format: date-time}
+        resetWarningGracePeriodDays: {type: integer, format: int32}
+        coursesWarnedBefore: {type: string, format: date-time}
+        oldFeedbackCutoffWeeks: {type: integer, format: int32}
+        oldFeedbackCoursesEndedBefore: {type: string, format: date-time}
+        oldSubmissionVersionsCutoffWeeks: {type: integer, format: int32}
+        oldSubmissionVersionsCoursesEndedBefore: {type: string, format: date-time}
+        notEnrolledUsersInactivityMonths: {type: integer, format: int32}
+        usersInactiveBefore: {type: string, format: date-time}
+        notEnrolledUsersWarningGracePeriodDays: {type: integer, format: int32}
+        usersWarnedBefore: {type: string, format: date-time}
+      required: [coursesWarnedBefore, gradeRelevantCoursesEndedBefore, gradeRelevantRetentionYears,
+        nonGradeRelevantCoursesEndedBefore, nonGradeRelevantRetentionYears, notEnrolledUsersInactivityMonths,
+        notEnrolledUsersWarningGracePeriodDays, oldFeedbackCoursesEndedBefore, oldFeedbackCutoffWeeks,
+        oldSubmissionVersionsCoursesEndedBefore, oldSubmissionVersionsCutoffWeeks,
+        resetWarningGracePeriodDays, usersInactiveBefore, usersWarnedBefore]
     ChannelSubTypeReferenceDates:
       type: object
       properties:
         channelId: {type: integer, format: int64}
         startDate: {type: string, format: date-time}
         endDate: {type: string, format: date-time}
+    NotEnrolledUsersCleanupCount:
+      type: object
+      properties:
+        users: {type: integer, format: int32}
+        blockedUsers: {type: integer, format: int32}
+      required: [blockedUsers, users]
     ExerciseGenerationEvent:
       type: object
       description: A progress event streamed to the instructor while an agentic whole-exercise
@@ -3655,6 +4029,13 @@ components:
           type: string
           default: drag-and-drop
           enum: [drag-and-drop]
+    OldFeedbackCleanupCount:
+      type: object
+      properties:
+        longFeedbackText: {type: integer, format: int32}
+        textBlock: {type: integer, format: int32}
+        feedback: {type: integer, format: int32}
+      required: [feedback, longFeedbackText, textBlock]
     QuizQuestionStatistic:
       discriminator:
         propertyName: type
@@ -3739,6 +4120,13 @@ components:
         executionId: {type: string, format: uuid}
         jobId: {type: string}
         resourceId: {type: string}
+    NonLatestRatedResultsCleanupCount:
+      type: object
+      properties:
+        longFeedbackText: {type: integer, format: int32}
+        textBlock: {type: integer, format: int32}
+        feedback: {type: integer, format: int32}
+      required: [feedback, longFeedbackText, textBlock]
     QuizExerciseReEvaluate:
       type: object
       properties:
@@ -3976,12 +4364,25 @@ components:
       properties:
         type: {type: string}
       required: [type]
+    PlagiarismComparisonCleanupCount:
+      type: object
+      properties:
+        plagiarismComparison: {type: integer, format: int32}
+        plagiarismElements: {type: integer, format: int32}
+        plagiarismSubmissions: {type: integer, format: int32}
+        plagiarismMatches: {type: integer, format: int32}
+      required: [plagiarismComparison, plagiarismElements, plagiarismMatches, plagiarismSubmissions]
     PointCounter:
       type: object
       properties:
         points: {type: number, format: double}
         ratedCounter: {type: integer, format: int32}
         unRatedCounter: {type: integer, format: int32}
+    PlagiarismCasesCleanupCount:
+      type: object
+      properties:
+        plagiarismCases: {type: integer, format: int32}
+      required: [plagiarismCases]
     ExerciseGenerationCapabilities:
       type: object
       properties:
@@ -4014,6 +4415,11 @@ components:
         location: {type: string}
         facilitator: {type: string}
       required: [startDate, title, type]
+    SubmissionVersionsCleanupCount:
+      type: object
+      properties:
+        submissionVersions: {type: integer, format: int32}
+      required: [submissionVersions]
     QuizSearchExerciseGroup:
       type: object
       properties:
@@ -4534,6 +4940,12 @@ components:
         results:
           type: array
           items: {$ref: '#/components/schemas/ResultAfterEvaluation'}
+    CleanupServiceExecutionRecord:
+      type: object
+      properties:
+        executionDate: {type: string, format: date-time}
+        jobType: {type: string}
+      required: [jobType]
     GradingCriterion:
       type: object
       properties:
@@ -4750,6 +5162,20 @@ components:
           enum: [LOWER, MATCH, HIGHER, UNKNOWN]
         taskCount: {type: integer, format: int32}
         testCount: {type: integer, format: int32}
+    OrphanCleanupCount:
+      type: object
+      properties:
+        orphanStudentScore: {type: integer, format: int32}
+        orphanTeamScore: {type: integer, format: int32}
+        orphanFeedbackForOrphanResults: {type: integer, format: int32}
+        orphanLongFeedbackTextForOrphanResults: {type: integer, format: int32}
+        orphanTextBlockForOrphanResults: {type: integer, format: int32}
+        orphanRating: {type: integer, format: int32}
+        orphanResultsWithoutParticipation: {type: integer, format: int32}
+        orphanFeedbackMessage: {type: integer, format: int32}
+      required: [orphanFeedbackForOrphanResults, orphanFeedbackMessage, orphanLongFeedbackTextForOrphanResults,
+        orphanRating, orphanResultsWithoutParticipation, orphanStudentScore, orphanTeamScore,
+        orphanTextBlockForOrphanResults]
     QuizExerciseWithQuestions:
       type: object
       properties:
