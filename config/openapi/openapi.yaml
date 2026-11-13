@@ -367,6 +367,151 @@ paths:
           content:
             application/json:
               schema: {$ref: '#/components/schemas/QuizSubmissionBeforeEvaluation'}
+  /api/iris/sessions/{sessionId}/messages/{messageId}/proactive-outcome:
+    put:
+      tags: [iris-message]
+      operationId: setProactiveOutcome
+      parameters:
+      - name: sessionId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: messageId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: string
+              enum: [DISMISSED, RECOVERED, ABANDONED, INTERRUPTED]
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/IrisMessageResponse'}
+  /api/iris/sessions/{sessionId}/messages/{messageId}/mcq-response:
+    put:
+      tags: [iris-message]
+      operationId: saveMcqResponse
+      parameters:
+      - name: sessionId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: messageId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/IrisMcqResponse'}
+        required: true
+      responses:
+        '200':
+          description: Multiple-choice response saved
+          headers:
+            X-Frame-Options:
+              description: DENY, set by Artemis security to prevent framing
+              style: simple
+              schema: {type: string}
+  /api/iris/sessions/{sessionId}/messages/{messageId}/helpful:
+    put:
+      tags: [iris-message]
+      operationId: rateMessage
+      parameters:
+      - name: sessionId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: messageId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      requestBody:
+        content:
+          application/json:
+            schema: {type: boolean}
+      responses:
+        '200':
+          description: Message rating updated
+          headers:
+            X-Frame-Options:
+              description: DENY, set by Artemis security to prevent framing
+              style: simple
+              schema: {type: string}
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/IrisMessageResponse'}
+  /api/iris/courses/{courseId}/iris-settings:
+    get:
+      tags: [iris-settings]
+      operationId: getCourseSettings
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/IrisCourseSettingsWithRateLimit'}
+    put:
+      tags: [iris-settings]
+      operationId: updateCourseSettings
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/IrisCourseSettings'}
+        required: true
+      responses:
+        '200':
+          description: Course Iris settings updated
+          headers:
+            X-Frame-Options:
+              description: DENY, set by Artemis security to prevent framing
+              style: simple
+              schema: {type: string}
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/IrisCourseSettingsWithRateLimit'}
+  /api/iris/chat/exercises/{exerciseId}/episodes/{episodeId}/proactive-outcome:
+    put:
+      tags: [iris-struggle-intervention]
+      operationId: setEpisodeOutcome
+      parameters:
+      - name: exerciseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: episodeId
+        in: path
+        required: true
+        schema: {type: string}
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: string
+              enum: [DISMISSED, RECOVERED, ABANDONED, INTERRUPTED]
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/EpisodeOutcomeApplied'}
   /api/hyperion/courses/{courseId}/quiz-question-pool/settings:
     get:
       tags: [hyperion-quiz-question-pool]
@@ -901,6 +1046,307 @@ paths:
         required: true
       responses:
         '200': {description: OK}
+  /api/iris/tutor-suggestion/posts/{postId}/sessions:
+    post:
+      tags: [iris-tutor-suggestion-session]
+      operationId: createSessionForPost
+      parameters:
+      - name: postId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '201':
+          description: Tutor suggestion session created
+          headers:
+            Location:
+              description: URI identifying the Iris session
+              style: simple
+              schema: {type: string}
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/IrisChatSessionResponse'}
+  /api/iris/tutor-suggestion/posts/{postId}/sessions/current:
+    post:
+      tags: [iris-tutor-suggestion-session]
+      operationId: getCurrentSessionOrCreateIfNotExists
+      parameters:
+      - name: postId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: Existing tutor suggestion session
+          headers:
+            X-Frame-Options:
+              description: DENY, set by Artemis security to prevent framing
+              style: simple
+              schema: {type: string}
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/IrisChatSessionResponse'}
+        '201':
+          description: Tutor suggestion session created
+          headers:
+            Location:
+              description: URI identifying the Iris session
+              style: simple
+              schema: {type: string}
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/IrisChatSessionResponse'}
+  /api/iris/sessions/{sessionId}/tutor-suggestion:
+    post:
+      tags: [iris-message]
+      operationId: sendTutorSuggestionMessage
+      parameters:
+      - name: sessionId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '201':
+          description: Tutor suggestion requested
+          headers:
+            Location:
+              description: URI identifying the tutor suggestion request
+              style: simple
+              schema: {type: string}
+  /api/iris/sessions/{sessionId}/messages:
+    get:
+      tags: [iris-message]
+      operationId: getMessages
+      parameters:
+      - name: sessionId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/IrisMessageResponse'}
+    post:
+      tags: [iris-message]
+      operationId: createMessage
+      parameters:
+      - name: sessionId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/IrisMessageRequest'}
+        required: true
+      responses:
+        '201':
+          description: Message created
+          headers:
+            Location:
+              description: URI identifying the created message
+              style: simple
+              schema: {type: string}
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/IrisMessageResponse'}
+  /api/iris/sessions/{sessionId}/messages/{messageId}/resend:
+    post:
+      tags: [iris-message]
+      operationId: resendMessage
+      parameters:
+      - name: sessionId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: messageId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: clientId
+        in: query
+        required: false
+        schema: {type: string, maxLength: 64, minLength: 0}
+      responses:
+        '200':
+          description: Message resent
+          headers:
+            X-Frame-Options:
+              description: DENY, set by Artemis security to prevent framing
+              style: simple
+              schema: {type: string}
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/IrisMessageResponse'}
+  /api/iris/search-answer:
+    post:
+      tags: [iris-global-search]
+      operationId: ask
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/GlobalSearchAskRequest'}
+        required: true
+      responses:
+        '202': {description: Search answer requested}
+  /api/iris/lecture-search:
+    post:
+      tags: [iris-global-search]
+      operationId: search
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/GlobalSearchLectureRequest'}
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/PyrisLectureSearchResult'}
+  /api/iris/chat/sessions:
+    post:
+      tags: [iris-chat-session]
+      operationId: createCourseSession
+      parameters:
+      - name: courseId
+        in: query
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '201':
+          description: New or reused empty course chat session
+          headers:
+            Location:
+              description: URI identifying the Iris session
+              style: simple
+              schema: {type: string}
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/IrisChatSessionResponse'}
+    delete:
+      tags: [iris-chat-session]
+      operationId: deleteAllSessionsForCurrentUser
+      responses:
+        '204':
+          description: Chat sessions deleted
+          headers:
+            X-Frame-Options:
+              description: DENY, set by Artemis security to prevent framing
+              style: simple
+              schema: {type: string}
+  /api/iris/chat/sessions/global-search-handoff:
+    post:
+      tags: [iris-chat-session]
+      operationId: createSessionFromGlobalSearch
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/IrisGlobalSearchHandoff'}
+        required: true
+      responses:
+        '201':
+          description: Chat session for the global search handoff
+          headers:
+            Location:
+              description: URI identifying the Iris session
+              style: simple
+              schema: {type: string}
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/IrisChatSessionResponse'}
+  /api/iris/chat/sessions/current:
+    post:
+      tags: [iris-chat-session]
+      operationId: getCurrentSessionOrCreateIfNotExists_1
+      parameters:
+      - name: mode
+        in: query
+        required: true
+        schema:
+          type: string
+          enum: [PROGRAMMING_EXERCISE_CHAT, TEXT_EXERCISE_CHAT, COURSE_CHAT, LECTURE_CHAT]
+      - name: entityId
+        in: query
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: Current chat session
+          headers:
+            X-Frame-Options:
+              description: DENY, set by Artemis security to prevent framing
+              style: simple
+              schema: {type: string}
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/IrisChatSessionResponse'}
+  /api/iris/chat/exercises/{exerciseId}/struggle-intervention:
+    post:
+      tags: [iris-struggle-intervention]
+      operationId: triggerStruggleIntervention
+      parameters:
+      - name: exerciseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/IrisStruggleInterventionRequest'}
+        required: true
+      responses:
+        '202':
+          description: Struggle intervention request accepted for processing
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/StruggleInterventionAccepted'}
+  /api/iris/chat/exercises/{exerciseId}/struggle-intervention/cancel:
+    post:
+      tags: [iris-struggle-intervention]
+      operationId: cancelStruggleJob
+      parameters:
+      - name: exerciseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/CancelStruggleJobRequest'}
+        required: true
+      responses:
+        '204': {description: Struggle intervention cancellation processed}
+  /api/iris/chat/exercises/{exerciseId}/episodes/{episodeId}/reveal:
+    post:
+      tags: [iris-struggle-intervention]
+      operationId: revealAmbient
+      parameters:
+      - name: exerciseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: episodeId
+        in: path
+        required: true
+        schema: {type: string}
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/RevealAmbientRequest'}
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/IrisMessageResponse'}
   /api/hyperion/programming-exercises/{exerciseId}/generation/variants:
     post:
       tags: [hyperion-programming-variant]
@@ -1933,6 +2379,92 @@ paths:
           content:
             application/json:
               schema: {$ref: '#/components/schemas/LeaderboardWithCurrentUserEntry'}
+  /api/iris/courses/{courseId}/status:
+    get:
+      tags: [iris]
+      operationId: getCourseStatus
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/IrisStatus'}
+  /api/iris/courses/{courseId}/faqs/{faqId}/ingestion-state:
+    get:
+      tags: [iris]
+      operationId: getStatusOfFaqIngestion
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: faqId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: Ingestion state keyed by the requested FAQ ID
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties:
+                  type: string
+                  enum: [NOT_STARTED, IN_PROGRESS, PARTIALLY_INGESTED, DONE, ERROR]
+        '503': {description: Ingestion state unavailable from Pyris}
+  /api/iris/chat/sessions/count:
+    get:
+      tags: [iris-chat-session]
+      operationId: getSessionAndMessageCount
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/IrisChatSessionCount'}
+  /api/iris/chat/courses/{courseId}/sessions/{sessionId}:
+    get:
+      tags: [iris-chat-session]
+      operationId: getSessionById
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: sessionId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/IrisChatSessionResponse'}
+  /api/iris/chat/courses/{courseId}/sessions/overview:
+    get:
+      tags: [iris-chat-session]
+      operationId: getAllSessionsForCourse
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: Chat session overview, or an empty list if the user has not
+            opted into AI usage
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/IrisChatSession'}
   /api/hyperion/variant-jobs:
     get:
       tags: [hyperion-exercise-variant]
@@ -2389,6 +2921,38 @@ paths:
         schema: {type: integer, format: int64}
       responses:
         '200': {description: OK}
+  /api/iris/chat/sessions/{sessionId}:
+    delete:
+      tags: [iris-chat-session]
+      operationId: deleteSession_1
+      parameters:
+      - name: sessionId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '204':
+          description: Chat session deleted
+          headers:
+            X-Frame-Options:
+              description: DENY, set by Artemis security to prevent framing
+              style: simple
+              schema: {type: string}
+  /api/iris/chat/exercises/{exerciseId}/messages/{messageId}/proactive:
+    delete:
+      tags: [iris-struggle-intervention]
+      operationId: deleteProactiveMessage
+      parameters:
+      - name: exerciseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: messageId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '204': {description: Proactive message deletion completed}
   /api/hyperion/programming-exercises/{exerciseId}/generate-exercise/jobs/{jobId}:
     delete:
       tags: [hyperion-exercise-generation]
@@ -2730,6 +3294,31 @@ components:
         indexed: {type: integer, format: int64}
         missing: {type: integer, format: int64}
         orphaned: {type: integer, format: int64}
+    IrisMessageResponse:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        sentAt: {type: string, format: date-time}
+        helpful: {type: boolean}
+        sender:
+          type: string
+          enum: [USER, LLM, ARTIFACT, CTXSWAP, COMMAND, SUMMARY]
+        origin:
+          type: string
+          enum: [PROACTIVE_STRUGGLE]
+        proactiveOutcome:
+          type: string
+          enum: [DISMISSED, RECOVERED, ABANDONED, INTERRUPTED]
+        proactiveEpisodeId: {type: string}
+        content:
+          type: array
+          items: {$ref: '#/components/schemas/IrisMessageContentResponse'}
+        activities:
+          type: array
+          items: {$ref: '#/components/schemas/PyrisActivity'}
+        messageDifferentiator: {type: integer, format: int32}
+        final: {type: boolean}
+      required: [sender]
     MultipleChoiceQuestionFromEditor:
       required: [answerOptions, points, scoringType, singleChoice, title, type]
       type: object
@@ -2822,6 +3411,15 @@ components:
         quizQuestions:
           type: array
           items: {$ref: '#/components/schemas/QuizQuestionFromEditor'}
+    CancelStruggleJobRequest:
+      type: object
+      properties:
+        requestToken: {type: string}
+    IrisRateLimitConfiguration:
+      type: object
+      properties:
+        requests: {type: integer, format: int32, minimum: 0}
+        timeframeHours: {type: integer, format: int32, minimum: 1}
     ChannelSubTypeReferenceDates:
       type: object
       properties:
@@ -2886,6 +3484,10 @@ components:
       properties:
         dragItem: {$ref: '#/components/schemas/EntityIdRef'}
         dropLocation: {$ref: '#/components/schemas/EntityIdRef'}
+    EpisodeOutcomeApplied:
+      type: object
+      properties:
+        applied: {type: boolean}
     AnswerCounter:
       type: object
       properties:
@@ -2912,6 +3514,12 @@ components:
           type: array
           items: {$ref: '#/components/schemas/TutorialGroupSession'}
       required: [id, isOnline, language, sessions, title, tutorId, tutorLogin, tutorName]
+    IrisMessageContent:
+      type: object
+      properties:
+        type: {type: string}
+        textContent: {type: string}
+        jsonContent: {type: string}
     DragAndDropSubmittedAnswerFromLiveClient:
       required: [type]
       type: object
@@ -3014,6 +3622,18 @@ components:
         startTime: {type: string, format: date-time}
         started: {type: boolean}
         ended: {type: boolean}
+    LectureSearchLectureUnit:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        name: {type: string}
+        link: {type: string}
+        pageNumber: {type: integer, format: int32}
+        sourceType: {type: string}
+        queryParams:
+          type: object
+          additionalProperties: {}
+        displayMeta: {type: string}
     QuizQuestionWithoutSolution:
       discriminator:
         propertyName: type
@@ -3129,6 +3749,14 @@ components:
         currentUserEntry: {$ref: '#/components/schemas/LeaderboardEntry'}
         currentTime: {type: string, format: date-time}
       required: [currentTime, currentUserEntry, leaderboardEntries]
+    PyrisStruggleSignal:
+      type: object
+      properties:
+        alert: {$ref: '#/components/schemas/StruggleAlert'}
+        trajectory:
+          type: array
+          items: {$ref: '#/components/schemas/StruggleTick'}
+        sessionSeconds: {type: number, format: double}
     QuizExerciseForCourse:
       type: object
       properties:
@@ -3250,6 +3878,32 @@ components:
         typeCounts:
           type: array
           items: {$ref: '#/components/schemas/IngestionTypeCount'}
+    GlobalSearchAskRequest:
+      type: object
+      properties:
+        query: {type: string, minLength: 1}
+        limit: {type: integer, format: int32, maximum: 5, minimum: 1}
+        runId: {type: string, format: uuid}
+        courseIds:
+          type: array
+          items: {type: integer, format: int64}
+          maxItems: 100
+          minItems: 0
+        excludeCourseIds:
+          type: array
+          items: {type: integer, format: int64}
+          maxItems: 100
+          minItems: 0
+      required: [query, runId]
+    IrisVideoContext:
+      required: [type]
+      type: object
+      properties:
+        type:
+          type: string
+          enum: [video]
+        lectureUnitId: {type: integer, format: int64, exclusiveMinimum: 0}
+        timestamp: {type: number, format: double, minimum: 0}
     QuizQuestionBulkRefinementRequest:
       type: object
       description: Request to refine multiple quiz questions at once using a single
@@ -3291,6 +3945,12 @@ components:
         lectureUnitId: {type: integer, format: int64}
         title: {type: string}
         kind: {type: string}
+    IrisStatus:
+      type: object
+      properties:
+        active: {type: boolean}
+        rateLimitInfo: {$ref: '#/components/schemas/IrisRateLimitInformation'}
+      required: [active, rateLimitInfo]
     QuizQuestionGenerationResponse:
       type: object
       description: Response containing generated quiz questions
@@ -3335,6 +3995,11 @@ components:
         end: {type: string}
         reason: {type: string}
       required: [end, start]
+    StruggleTick:
+      type: object
+      properties:
+        t: {type: number, format: double}
+        s: {type: number, format: double}
     QuizQuestionTraining:
       type: object
       properties:
@@ -3387,6 +4052,14 @@ components:
           type: string
           default: multiple-choice
           enum: [multiple-choice]
+    IrisPendingContext:
+      type: object
+      properties:
+        mode:
+          type: string
+          enum: [PROGRAMMING_EXERCISE_CHAT, TEXT_EXERCISE_CHAT, COURSE_CHAT, LECTURE_CHAT]
+        entityId: {type: integer, format: int64}
+      required: [mode]
     DragAndDropQuestionFromEditor:
       required: [correctMappings, dragItems, dropLocations, points, scoringType, title,
         type]
@@ -3602,6 +4275,29 @@ components:
           items: {$ref: '#/components/schemas/GeneratedAssessmentCriterion'}
           minItems: 1
       required: [criteria]
+    IrisCourseSettings:
+      type: object
+      properties:
+        enabled: {type: boolean}
+        customInstructions: {type: string, maxLength: 2048, minLength: 0}
+        variant:
+          type: string
+          enum: [default, advanced]
+        supportLevel:
+          type: string
+          enum: [low, moderate, high]
+        rateLimit: {$ref: '#/components/schemas/IrisRateLimitConfiguration'}
+        proactiveStruggleEnabled: {type: boolean}
+        legacyBuildTriggersEnabled:
+          type: [boolean, 'null']
+      required: [enabled, variant]
+    StruggleInterventionAccepted:
+      type: object
+      properties:
+        accepted: {type: boolean}
+        courseDisabled: {type: boolean}
+        exerciseId: {type: integer, format: int64}
+        jobId: {type: string}
     AnswerOptionWithoutSolution:
       type: object
       properties:
@@ -3781,6 +4477,18 @@ components:
           type: string
           default: short-answer
           enum: [short-answer]
+    StruggleAlert:
+      type: object
+      properties:
+        tSessionS: {type: number, format: double}
+        primaryBoundary: {type: string}
+        boundaryTypes:
+          type: array
+          items: {type: string}
+        severity: {type: number, format: double}
+        path: {type: string}
+        inWarmup: {type: boolean}
+        inGrace: {type: boolean}
     CourseWithId:
       type: object
       properties:
@@ -3811,10 +4519,27 @@ components:
           items: {$ref: '#/components/schemas/AuthoringRun'}
         nextBeforeId: {type: integer, format: int64}
       required: [runs]
+    StruggleEpisode:
+      type: object
+      properties:
+        episodeId: {type: string, maxLength: 64, minLength: 0, pattern: .*\S.*}
+        isNew: {type: boolean}
+        hints:
+          type: array
+          items: {$ref: '#/components/schemas/StruggleEpisodeHint'}
     QuizSearchCourse:
       type: object
       properties:
         title: {type: string}
+    IrisMessageContentResponse:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        type: {type: string}
+        textContent: {type: string}
+        attributes: {type: object, additionalProperties: true, description: Raw JSON
+            attributes of this message content.}
+      required: [type]
     QuizQuestionFilterVerdict:
       type: object
       description: The filter's judgement of one generated quiz question on one failure
@@ -3976,6 +4701,12 @@ components:
       properties:
         type: {type: string}
       required: [type]
+    IrisChatSessionCount:
+      type: object
+      properties:
+        sessions: {type: integer, format: int64}
+        messages: {type: integer, format: int64}
+      required: [messages, sessions]
     PointCounter:
       type: object
       properties:
@@ -4014,6 +4745,15 @@ components:
         location: {type: string}
         facilitator: {type: string}
       required: [startDate, title, type]
+    IrisCitationMeta:
+      type: object
+      properties:
+        entityId: {type: integer, format: int64}
+        lectureTitle: {type: string}
+        lectureUnitTitle: {type: string}
+        lectureId: {type: integer, format: int64}
+        courseId: {type: integer, format: int64}
+      required: [courseId, entityId, lectureId, lectureTitle, lectureUnitTitle]
     QuizSearchExerciseGroup:
       type: object
       properties:
@@ -4138,6 +4878,15 @@ components:
           type: string
           enum: [failure]
           example: failure
+    IrisSlidesContext:
+      required: [type]
+      type: object
+      properties:
+        type:
+          type: string
+          enum: [slides]
+        lectureUnitId: {type: integer, format: int64, exclusiveMinimum: 0}
+        page: {type: integer, format: int32, minimum: 1}
     QuizPointStatistics:
       type: object
       properties:
@@ -4201,6 +4950,14 @@ components:
         afterVersionId: {type: integer, format: int64}
         revertedAt: {type: string, format: date-time}
       required: [courseId, exerciseId, jobId, kind, running, startedAt, status]
+    IrisCourseSettingsWithRateLimit:
+      type: object
+      properties:
+        courseId: {type: integer, format: int64}
+        settings: {$ref: '#/components/schemas/IrisCourseSettings'}
+        effectiveRateLimit: {$ref: '#/components/schemas/IrisRateLimitConfiguration'}
+        applicationRateLimitDefaults: {$ref: '#/components/schemas/IrisRateLimitConfiguration'}
+      required: [applicationRateLimitDefaults, courseId, effectiveRateLimit, settings]
     ProblemStatementGlobalRefinementRequest:
       type: object
       description: Request to refine a problem statement globally using a user prompt
@@ -4278,6 +5035,31 @@ components:
           type: string
           default: short-answer
           enum: [short-answer]
+    IrisMessageContext:
+      discriminator:
+        propertyName: type
+        mapping: {video: '#/components/schemas/IrisVideoContext', slides: '#/components/schemas/IrisSlidesContext',
+          combinedView: '#/components/schemas/IrisCombinedViewContext'}
+      oneOf:
+      - {$ref: '#/components/schemas/IrisVideoContext'}
+      - {$ref: '#/components/schemas/IrisSlidesContext'}
+      - {$ref: '#/components/schemas/IrisCombinedViewContext'}
+      properties:
+        type: {type: string}
+      required: [type]
+    IrisStruggleInterventionRequest:
+      type: object
+      properties:
+        struggleSignal: {$ref: '#/components/schemas/PyrisStruggleSignal'}
+        uncommittedFiles:
+          type: object
+          additionalProperties: {type: string}
+        intent: {type: string}
+        episode: {$ref: '#/components/schemas/StruggleEpisode'}
+        confirmReason: {type: string}
+        requestToken: {type: string}
+        proactivityMode: {type: string}
+      required: [struggleSignal]
     QuizQuestionPoolItem:
       type: object
       description: One item of a course's quiz question pool
@@ -4366,6 +5148,33 @@ components:
           type: string
           default: drag-and-drop
           enum: [drag-and-drop]
+    IrisRateLimitInformation:
+      type: object
+      properties:
+        currentMessageCount: {type: integer, format: int32}
+        rateLimit: {type: integer, format: int32}
+        rateLimitTimeframeHours: {type: integer, format: int32}
+        rateLimitExceeded: {type: boolean}
+      required: [currentMessageCount, rateLimit, rateLimitExceeded, rateLimitTimeframeHours]
+    IrisChatSessionResponse:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        mode:
+          type: string
+          enum: [PROGRAMMING_EXERCISE_CHAT, TEXT_EXERCISE_CHAT, COURSE_CHAT, LECTURE_CHAT]
+        entityId: {type: integer, format: int64}
+        userId: {type: integer, format: int64}
+        title: {type: string}
+        creationDate: {type: string, format: date-time}
+        messages:
+          type: array
+          items: {$ref: '#/components/schemas/IrisMessageResponse'}
+        latestSuggestions: {type: string}
+        citationInfo:
+          type: array
+          items: {$ref: '#/components/schemas/IrisCitationMeta'}
+      required: [creationDate, id, userId]
     ResultAfterEvaluation:
       type: object
       properties:
@@ -4450,6 +5259,12 @@ components:
           description: Related locations across artifacts
           items: {$ref: '#/components/schemas/ArtifactLocation'}
       required: [category, description, relatedLocations, severity, suggestedFix]
+    IrisMcqResponse:
+      type: object
+      properties:
+        selectedIndex: {type: integer, format: int32}
+        submitted: {type: boolean}
+        questionIndex: {type: integer, format: int32}
     IndexedContentPresence:
       type: object
       properties:
@@ -4516,6 +5331,12 @@ components:
         improved: {type: boolean, description: Whether the text was actually improved,
           example: true}
       required: [improved, rewrittenText]
+    RevealAmbientRequest:
+      type: object
+      properties:
+        hintText: {type: string}
+        level: {type: string}
+        clientMessageId: {type: string}
     QuizSubmissionAfterEvaluation:
       type: object
       properties:
@@ -4657,6 +5478,13 @@ components:
         id: {type: integer, format: int64}
         dragItemTempId: {type: integer, format: int64}
         dropLocationTempId: {type: integer, format: int64}
+    PyrisLectureSearchResult:
+      type: object
+      properties:
+        course: {$ref: '#/components/schemas/LectureSearchCourse'}
+        lecture: {$ref: '#/components/schemas/LectureSearchLecture'}
+        lectureUnit: {$ref: '#/components/schemas/LectureSearchLectureUnit'}
+        snippet: {type: string}
     AnswerOptionCreate:
       type: object
       properties:
@@ -4672,6 +5500,11 @@ components:
         endDate: {type: string, format: date-time}
         reason: {type: string}
       required: [endDate, startDate]
+    LectureSearchLecture:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        name: {type: string}
     Timing:
       type: object
       description: Response containing consistency check timing
@@ -4736,6 +5569,15 @@ components:
           enum: [MAVEN_MAVEN, PLAIN_MAVEN, PLAIN, XCODE, FACT, GCC, PLAIN_GRADLE,
             GRADLE_GRADLE, MAVEN_BLACKBOX]
       required: [prompt]
+    IrisGlobalSearchHandoff:
+      type: object
+      properties:
+        courseId: {type: integer, format: int64}
+        context: {$ref: '#/components/schemas/IrisPendingContext'}
+        question: {type: string, maxLength: 2000, minLength: 0}
+        answer: {type: string, maxLength: 20000, minLength: 0}
+        runId: {type: string, maxLength: 64, minLength: 0}
+      required: [answer, question]
     DifficultyAssessment:
       type: object
       properties:
@@ -4791,6 +5633,21 @@ components:
         quizQuestions:
           type: array
           items: {$ref: '#/components/schemas/QuizQuestionWithoutSolution'}
+    PyrisActivity:
+      type: object
+      properties:
+        id: {type: string}
+        kind:
+          type: string
+          enum: [TOOL, COMMAND]
+        name: {type: string}
+        state:
+          type: string
+          enum: [RUNNING, FINISHED, FAILED]
+        detail: {type: string}
+        result: {type: string}
+        durationMillis: {type: integer, format: int64}
+      required: [id, kind, name, state]
     TutorialGroupConfiguration:
       type: object
       properties:
@@ -5082,6 +5939,11 @@ components:
           uniqueItems: true
         participantsRated: {type: integer, format: int32}
         participantsUnrated: {type: integer, format: int32}
+    LectureSearchCourse:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        name: {type: string}
     TutorialGroupSchedule:
       type: object
       properties:
@@ -5494,6 +6356,22 @@ components:
         correctMappings:
           type: array
           items: {$ref: '#/components/schemas/ShortAnswerMapping'}
+    GlobalSearchLectureRequest:
+      type: object
+      properties:
+        query: {type: string, minLength: 1}
+        limit: {type: integer, format: int32, maximum: 20, minimum: 1}
+        courseIds:
+          type: array
+          items: {type: integer, format: int64}
+          maxItems: 100
+          minItems: 0
+        excludeCourseIds:
+          type: array
+          items: {type: integer, format: int64}
+          maxItems: 100
+          minItems: 0
+      required: [query]
     ExamSeat:
       type: object
       properties:
@@ -5527,6 +6405,12 @@ components:
       properties:
         quizQuestionsType: {type: string}
       required: [quizQuestionsType]
+    StruggleEpisodeHint:
+      type: object
+      properties:
+        level: {type: string}
+        text: {type: string}
+        atSessionS: {type: number, format: double}
     DropLocationFromEditor:
       type: object
       properties:
@@ -5610,6 +6494,15 @@ components:
             in EUR, example: 0.016513}
         totalEur: {type: number, format: double, description: Total costs in EUR,
           example: 0.027738}
+    IrisCombinedViewContext:
+      required: [type]
+      type: object
+      properties:
+        type:
+          type: string
+          enum: [combinedView]
+        slides: {$ref: '#/components/schemas/IrisSlidesContext'}
+        video: {$ref: '#/components/schemas/IrisVideoContext'}
     MultipleChoiceSubmittedAnswerFromLiveClient:
       required: [type]
       type: object
@@ -5705,6 +6598,21 @@ components:
           type: string
           default: live-quiz
           enum: [live-quiz]
+    IrisMessageRequest:
+      type: object
+      properties:
+        content:
+          type: array
+          items: {$ref: '#/components/schemas/IrisMessageContent'}
+        messageDifferentiator: {type: integer, format: int32}
+        uncommittedFiles:
+          type: object
+          additionalProperties: {type: string}
+        pendingContext: {$ref: '#/components/schemas/IrisPendingContext'}
+        context:
+          type: array
+          items: {$ref: '#/components/schemas/IrisMessageContext'}
+        clientId: {type: string, maxLength: 64, minLength: 0}
     StepOutput:
       type: object
       properties:
@@ -6007,6 +6915,19 @@ components:
         fresh: {type: integer, format: int32, description: How many of this round's
             findings are new since the previous round}
       required: [advisory, attempt, blocking, carriedOver, drained, fresh, round]
+    IrisChatSession:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        entityId: {type: integer, format: int64}
+        entityName: {type: string}
+        title: {type: string}
+        creationDate: {type: string, format: date-time}
+        lastActivityDate: {type: string, format: date-time}
+        mode:
+          type: string
+          enum: [PROGRAMMING_EXERCISE_CHAT, TEXT_EXERCISE_CHAT, COURSE_CHAT, LECTURE_CHAT]
+      required: [creationDate, entityId, id, mode]
     ConversationUser:
       type: object
       properties:
