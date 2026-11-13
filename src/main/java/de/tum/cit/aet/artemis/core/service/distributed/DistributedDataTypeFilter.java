@@ -16,7 +16,7 @@ import org.slf4j.LoggerFactory;
  * found in the stored bytes. Without a filter, whatever a store contains decides which classes are instantiated on the
  * reading node. This filter limits that to the types Artemis stores: its own classes, the {@code java.util},
  * {@code java.time} and {@code java.math} types its records are made of, a few {@code java.lang} value types, and the
- * Spring Security WebAuthn value types referenced by the passkey options. Every other class name is rejected before the
+ * Spring Security WebAuthn value types referenced by the passkey options and the OAuth2 value types of a pending sign-in request. Every other class name is rejected before the
  * class is loaded and a message is logged.
  *
  * <p>
@@ -50,11 +50,11 @@ public final class DistributedDataTypeFilter {
             "org.springframework.cache.interceptor.SimpleKey");
 
     /**
-     * Prefixes that are allowed as a whole: Artemis itself, the JDK collection, time and math types, and the WebAuthn
-     * value types a passkey registration option refers to.
+     * Prefixes that are allowed as a whole: Artemis itself, the JDK collection, time and math types, the WebAuthn
+     * value types a passkey registration option refers to, the OAuth2 value types of a pending sign-in request, and the signing keys of the LTI key set.
      */
     private static final List<String> DEFAULT_PREFIXES = List.of("de.tum.cit.aet.artemis.", "java.util.", "java.time.", "java.math.",
-            "org.springframework.security.web.webauthn.api.", "com.github.dockerjava.api.exception.");
+            "org.springframework.security.web.webauthn.api.", "org.springframework.security.oauth2.core.", "com.nimbusds.jose.", "com.github.dockerjava.api.exception.");
 
     private final Set<String> classes;
 

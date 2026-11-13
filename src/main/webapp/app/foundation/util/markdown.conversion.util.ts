@@ -156,27 +156,38 @@ const MARKDOWN_FORBIDDEN_TAGS = ['style', 'form', 'input', 'button', 'select', '
 /** Attributes that only make sense on form controls or that retarget a request. */
 const MARKDOWN_FORBIDDEN_ATTRIBUTES = ['form', 'formaction', 'action', 'formmethod', 'formtarget'];
 
-/** The style properties KaTeX uses to place its glyphs, with the length values it writes. */
-const FORMULA_STYLE_PROPERTIES = new Set([
-    'height',
-    'width',
-    'min-width',
-    'top',
-    'vertical-align',
-    'margin-left',
-    'margin-right',
-    'padding-left',
-    'border-bottom-width',
-    'border-top-width',
-]);
+/** The style properties KaTeX uses to place and decorate its glyphs, each with the values it writes. */
 const FORMULA_STYLE_LENGTH = /^-?\d*\.?\d+(em|ex|px|%)?$/;
+const FORMULA_STYLE_COLOR = /^(#[0-9a-f]{3,8}|[a-z]+|rgba?\([\d\s.,%]+\))$/i;
+const FORMULA_STYLE_VALUES = new Map<string, RegExp>([
+    ...[
+        'height',
+        'width',
+        'min-width',
+        'top',
+        'bottom',
+        'left',
+        'vertical-align',
+        'margin-left',
+        'margin-right',
+        'padding-left',
+        'border-width',
+        'border-bottom-width',
+        'border-top-width',
+        'border-right-width',
+    ].map((property): [string, RegExp] => [property, FORMULA_STYLE_LENGTH]),
+    ['color', FORMULA_STYLE_COLOR],
+    ['background-color', FORMULA_STYLE_COLOR],
+    ['border-style', /^solid$/],
+    ['position', /^relative$/],
+]);
 
 /** The declarations of a style attribute that a formula needs, so that the class of an element is not trusted to carry arbitrary styles. */
 function formulaStyle(style: string): string {
     return style
         .split(';')
         .map((declaration) => declaration.split(':').map((part) => part.trim()))
-        .filter(([property, value]) => FORMULA_STYLE_PROPERTIES.has(property.toLowerCase()) && FORMULA_STYLE_LENGTH.test(value ?? ''))
+        .filter(([property, value]) => FORMULA_STYLE_VALUES.get(property.toLowerCase())?.test(value ?? '') === true)
         .map(([property, value]) => `${property}:${value}`)
         .join(';');
 }

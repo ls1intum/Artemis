@@ -171,9 +171,11 @@ public class ProgrammingExerciseUpdateResource {
      * @param updatedProgrammingExercise the exercise with the update applied
      * @param buildConfig                the build configuration with the update applied
      * @param original                   the settings that cannot be changed, as they were before the update
+     * @param checkReferences            whether the references to the template and solution repositories and build plans are checked as well, which the re-evaluation does not
+     *                                       touch
      */
     private void validateUpdatedExercise(UpdateProgrammingExerciseDTO updateDTO, ProgrammingExercise updatedProgrammingExercise, ProgrammingExerciseBuildConfig buildConfig,
-            OriginalSettings original) {
+            OriginalSettings original, boolean checkReferences) {
         // Validate the updated exercise
         programmingExerciseValidationService.validateBuildConfigSize(buildConfig);
         updatedProgrammingExercise.validateGeneralSettings();
@@ -183,7 +185,9 @@ public class ProgrammingExerciseUpdateResource {
         // Initialize the course of the entity reloaded under the mutation lease.
         courseService.retrieveCourseOfLoadedExercise(updatedProgrammingExercise);
 
-        programmingExerciseValidationService.checkProgrammingExerciseForError(updatedProgrammingExercise, buildConfig);
+        if (checkReferences) {
+            programmingExerciseValidationService.checkProgrammingExerciseForError(updatedProgrammingExercise, buildConfig);
+        }
         // Validate plagiarism detection config
         PlagiarismDetectionConfigHelper.validatePlagiarismDetectionConfigOrThrow(updatedProgrammingExercise, ENTITY_NAME);
 
@@ -318,7 +322,7 @@ public class ProgrammingExerciseUpdateResource {
                     hyperionCompetencyIds == null ? Set.of() : hyperionCompetencyIds);
 
             // Validate the updated exercise
-            validateUpdatedExercise(updateDTO, updatedProgrammingExercise, buildConfig, originalSettings);
+            validateUpdatedExercise(updateDTO, updatedProgrammingExercise, buildConfig, originalSettings, true);
 
             // Note: conversion between exam/course exercise is already rejected by updateProgrammingExercise, which compares the DTO's courseId and exerciseGroupId before the
             // entity is mutated.
@@ -582,7 +586,7 @@ public class ProgrammingExerciseUpdateResource {
             // Apply DTO changes BEFORE re-evaluation so that updated grading criteria take effect.
             update(updateDTO, programmingExercise, buildConfig, hyperionCompetencyIds == null ? Set.of() : hyperionCompetencyIds);
             // The re-evaluation refuses what the update refuses
-            validateUpdatedExercise(updateDTO, programmingExercise, buildConfig, originalSettings);
+            validateUpdatedExercise(updateDTO, programmingExercise, buildConfig, originalSettings, false);
             // the default branch cannot be changed
             buildConfig.setBranch(originalBranch);
 

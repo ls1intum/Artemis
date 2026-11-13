@@ -249,9 +249,11 @@ public class ProgrammingExerciseValidationService {
      * @param buildConfig         its build configuration, which is stored separately and read by the caller
      */
     public void validateStaticCodeAnalysisSettings(ProgrammingExercise programmingExercise, ProgrammingExerciseBuildConfig buildConfig) {
-        ProgrammingLanguageFeature programmingLanguageFeature = programmingLanguageFeatureService.orElseThrow()
-                .getProgrammingLanguageFeatures(programmingExercise.getProgrammingLanguage());
-        programmingExercise.validateStaticCodeAnalysisSettings(programmingLanguageFeature, buildConfig);
+        // The features are known whenever the exercise can be built, which is the only case in which static code analysis can be configured
+        programmingLanguageFeatureService.ifPresent(featureService -> {
+            ProgrammingLanguageFeature programmingLanguageFeature = featureService.getProgrammingLanguageFeatures(programmingExercise.getProgrammingLanguage());
+            programmingExercise.validateStaticCodeAnalysisSettings(programmingLanguageFeature, buildConfig);
+        });
     }
 
     /**

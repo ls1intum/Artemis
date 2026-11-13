@@ -119,10 +119,12 @@ public class PublicUserJwtResource {
         String failedLoginKey = username.trim().toLowerCase(Locale.ROOT);
         rateLimitService.enforceBudget(failedLoginKey, RateLimitType.FAILED_LOGIN);
 
+        boolean reservationHeld = true;
         try {
             authenticationToken.setDetails(Pair.of("userAgent", userAgent));
             Authentication authentication = authenticationManager.authenticate(authenticationToken);
             rateLimitService.refundBudget(failedLoginKey, RateLimitType.FAILED_LOGIN);
+            reservationHeld = false;
             SecurityContextHolder.getContext().setAuthentication(authentication);
             boolean rememberMe = loginVM.isRememberMe() != null && loginVM.isRememberMe();
 
@@ -161,8 +163,11 @@ public class PublicUserJwtResource {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
         catch (RuntimeException ex) {
-            // The login failed for a reason that is not about the credentials, so it does not count against the budget
-            rateLimitService.refundBudget(failedLoginKey, RateLimitType.FAILED_LOGIN);
+            // The login failed for a reason that is not about the credentials, so it does not count against the budget. A reservation that the successful
+            // authentication gave back already is not given back a second time, which would restore a token that another request used.
+            if (reservationHeld) {
+                rateLimitService.refundBudget(failedLoginKey, RateLimitType.FAILED_LOGIN);
+            }
             throw ex;
         }
     }

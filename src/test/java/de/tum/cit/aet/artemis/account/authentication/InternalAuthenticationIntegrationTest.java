@@ -4,6 +4,8 @@ import static de.tum.cit.aet.artemis.account.domain.User.IRIS_BOT_LOGIN;
 import static de.tum.cit.aet.artemis.account.util.UserFactory.USER_PASSWORD;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -41,6 +43,7 @@ import de.tum.cit.aet.artemis.account.domain.Authority;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.AuthorityRepository;
 import de.tum.cit.aet.artemis.account.security.ArtemisInternalAuthenticationProvider;
+import de.tum.cit.aet.artemis.account.service.ArtemisSuccessfulLoginService;
 import de.tum.cit.aet.artemis.account.service.user.PasswordService;
 import de.tum.cit.aet.artemis.account.service.user.UserService;
 import de.tum.cit.aet.artemis.account.util.UserFactory;
@@ -176,6 +179,41 @@ class InternalAuthenticationIntegrationTest extends AbstractSpringIntegrationJen
         }
         finally {
             ReflectionTestUtils.setField(resource, "rateLimitService", originalLimiter);
+        }
+    }
+
+    /**
+     * A login that fails after the credentials were accepted gives the reserved token back once. Giving it back twice would restore a token that an earlier wrong password used.
+     */
+    @Test
+    @WithAnonymousUser
+    void testAFailureAfterTheCredentialsWereAcceptedGivesTheReservedTokenBackOnlyOnce() throws Exception {
+        var properties = new RateLimitingProperties();
+        properties.setEnabled(true);
+        properties.setFailedLoginRequestsPerMinute(2);
+        var features = mock(FeatureToggleService.class);
+        when(features.isFeatureEnabled(Feature.RateLimit)).thenReturn(true);
+        var limiter = new RateLimitService(new RateLimitConfig().localRateLimitProxyManager(), new RateLimitConfigurationService(properties), features);
+        var failingLoginService = mock(ArtemisSuccessfulLoginService.class);
+        doThrow(new IllegalStateException("mail failed")).when(failingLoginService).sendLoginEmail(any(), any(), any());
+        Object resource = AopTestUtils.getUltimateTargetObject(applicationContext.getBean("publicUserJwtResource"));
+        Object originalLimiter = ReflectionTestUtils.getField(resource, "rateLimitService");
+        Object originalLoginService = ReflectionTestUtils.getField(resource, "artemisSuccessfulLoginService");
+        try {
+            ReflectionTestUtils.setField(resource, "rateLimitService", limiter);
+
+            request.postWithoutResponseBody("/api/core/public/authenticate", loginVM(USERNAME, "wrong-password-1"), HttpStatus.UNAUTHORIZED, browserHeaders());
+            ReflectionTestUtils.setField(resource, "artemisSuccessfulLoginService", failingLoginService);
+            request.postWithoutResponseBody("/api/core/public/authenticate", loginVM(USERNAME, USER_PASSWORD), HttpStatus.INTERNAL_SERVER_ERROR, browserHeaders());
+            ReflectionTestUtils.setField(resource, "artemisSuccessfulLoginService", originalLoginService);
+
+            // One wrong password was counted, so exactly one more is allowed
+            request.postWithoutResponseBody("/api/core/public/authenticate", loginVM(USERNAME, "wrong-password-2"), HttpStatus.UNAUTHORIZED, browserHeaders());
+            request.postWithoutResponseBody("/api/core/public/authenticate", loginVM(USERNAME, "wrong-password-3"), HttpStatus.TOO_MANY_REQUESTS, browserHeaders());
+        }
+        finally {
+            ReflectionTestUtils.setField(resource, "rateLimitService", originalLimiter);
+            ReflectionTestUtils.setField(resource, "artemisSuccessfulLoginService", originalLoginService);
         }
     }
 

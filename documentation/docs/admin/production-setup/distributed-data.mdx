@@ -145,10 +145,13 @@ The default list contains:
 | `java.util.`, `java.time.`, `java.math.`                                                 | Collections, dates and numbers inside those records          |
 | A fixed set of `java.lang` classes, for example `String`, the number types and `Throwable` | Values and exceptions held by stored records                 |
 | `org.springframework.security.web.webauthn.api.`                                         | Passkey registration options                                 |
+| `org.springframework.security.oauth2.core.`                                              | Pending OpenID Connect sign-in requests                      |
+| `com.nimbusds.jose.`                                                                     | Signing keys of the LTI key set                              |
+| `com.github.dockerjava.api.exception.`                                                   | Exceptions of failed build jobs                              |
 | Two Spring cache markers, `NullValue` and `SimpleKey`                                    | A cached `null` and a composite cache key                    |
 | `com.hazelcast.`, `io.github.bucket4j.` (Hazelcast only)                                 | Classes that Hazelcast and the rate limiter store themselves |
 
-Types outside the default list, such as those in `java.net` or `java.io`, are refused. Most
+Types outside the default list, such as those in `java.net` or most of `java.io`, are refused. Most
 installations need no change. If a plugin or a locally patched Artemis stores additional types, add them with the
 property `artemis.distributed-data.additional-allowed-types`. It takes a comma separated list. An entry that ends with
 a dot allows every type below that prefix, any other entry allows exactly one class:
