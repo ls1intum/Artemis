@@ -100,23 +100,29 @@ describe('Participation filter toolbar', () => {
         expect(changed).toHaveBeenLastCalledWith(['Manual', 'Successful', 'Unsuccessful']);
         expect(trigger.getAttribute('aria-expanded')).toBe('true');
         expect(document.querySelectorAll('[role="option"][aria-selected="true"]')).toHaveLength(2);
-        expect(fixture.nativeElement.querySelectorAll('tumaet-ui-chip')).toHaveLength(3);
+        expect(trigger.textContent).toContain('2');
+        expect(trigger.textContent).toContain('artemisApp.participation.filters.selected');
         toggleOption(0);
         expect(changed).toHaveBeenLastCalledWith(['Manual', 'Unsuccessful']);
     });
 
-    it('removes a chip without opening its dropdown and can reset all filters', async () => {
-        fixture.componentRef.setInput('activeFilters', ['Successful', 'Manual']);
+    it('summarizes selections and resets all categories', async () => {
+        const trigger = fixture.nativeElement.querySelector('[role="combobox"]') as HTMLElement;
+        expect(trigger.textContent).toContain('artemisApp.exercise.showAll');
+        fixture.componentRef.setInput('activeFilters', ['BuildFailed']);
         fixture.detectChanges();
         await fixture.whenStable();
-        (fixture.nativeElement.querySelector('tumaet-ui-chip button') as HTMLButtonElement).click();
+        expect(trigger.textContent).toContain('artemisApp.exercise.showBuildFailed');
+        fixture.componentRef.setInput('activeFilters', ['BuildFailed', 'NoSubmissions', 'Manual']);
         fixture.detectChanges();
-        expect(changed).toHaveBeenLastCalledWith(['Manual']);
-        expect(fixture.nativeElement.querySelector('[aria-expanded="true"]')).toBeNull();
+        await fixture.whenStable();
+        expect(trigger.textContent).toContain('2');
+        expect(trigger.textContent).not.toContain('artemisApp.exercise.showBuildFailed');
 
         (fixture.nativeElement.querySelector('button[tumAetUiButton]') as HTMLButtonElement).click();
         fixture.detectChanges();
         expect(changed).toHaveBeenLastCalledWith([]);
+        expect(trigger.textContent).toContain('artemisApp.exercise.showAll');
         expect(fixture.nativeElement.querySelector('button[tumAetUiButton]').getAttribute('aria-disabled')).toBe('true');
     });
 

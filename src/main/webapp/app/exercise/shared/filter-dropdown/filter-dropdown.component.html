@@ -1,78 +1,70 @@
 <fieldset class="m-0 flex min-w-0 flex-wrap items-center gap-2 border-0 p-0" [attr.aria-label]="'artemisApp.exercise.filter' | artemisTranslate">
     <ng-content />
-    @for (group of groups(); track group.labelKey; let index = $index) {
-        @if (group.items.length === 1 && (index === 0 || groups()[index - 1].items.length > 1)) {
-            <span class="order-1 basis-full" aria-hidden="true"></span>
-        }
-        @if (group.items.length === 1) {
-            <div class="order-2 inline-flex shrink-0 items-center gap-2 text-sm text-text">
-                <tumaet-ui-checkbox
-                    [inputId]="checkboxIdPrefix + group.items[0]"
-                    [checked]="group.selected.length > 0"
-                    (changed)="updateGroup(group, $event.checked ? group.items : [])"
-                />
-                <label [for]="checkboxIdPrefix + group.items[0]">{{ 'artemisApp.exercise.show' + group.items[0] | artemisTranslate }}</label>
-            </div>
-        } @else if (group.segmented) {
-            <span class="text-sm">{{ group.labelKey | artemisTranslate }}:</span>
-            <tumaet-ui-button-group [attr.aria-label]="group.labelKey | artemisTranslate">
-                @for (option of singleOptions(group); track option.value) {
-                    <tumaet-ui-button
-                        size="small"
-                        variant="text"
-                        [severity]="(group.selected[0] ?? allValue) === option.value ? 'primary' : 'secondary'"
-                        [ariaPressed]="(group.selected[0] ?? allValue) === option.value"
-                        (clicked)="updateGroup(group, [option.value])"
-                        >{{ option.label }}</tumaet-ui-button
-                    >
-                }
-            </tumaet-ui-button-group>
-        } @else if (group.single) {
-            <tumaet-ui-select
-                [matchTriggerWidth]="false"
-                [options]="singleOptions(group)"
-                optionLabel="label"
-                optionValue="value"
-                [ngModel]="group.selected.length === 1 ? group.selected[0] : allValue"
-                (ngModelChange)="updateGroup(group, [$event])"
-                [ariaLabel]="group.labelKey | artemisTranslate"
-                size="small"
-            />
-        } @else {
-            <tumaet-ui-multi-select
-                [options]="group.items"
-                [ngModel]="group.selected"
-                (ngModelChange)="updateGroup(group, $event)"
-                [ariaLabel]="group.labelKey | artemisTranslate"
-                size="small"
-            >
-                <ng-template #option let-filter>
-                    <span class="whitespace-normal">{{ 'artemisApp.exercise.show' + filter | artemisTranslate }}</span>
-                </ng-template>
-                <ng-template #selectedItems>
-                    @if (group.selected.length) {
-                        <div class="flex min-w-0 max-w-full flex-wrap items-center gap-1">
-                            <span class="font-normal">{{ group.labelKey | artemisTranslate }}:</span>
-                            @for (filter of group.selected; track filter) {
-                                <tumaet-ui-chip
-                                    class="min-w-0 max-w-full"
-                                    size="small"
-                                    [removable]="true"
-                                    [removeAriaLabel]="
-                                        'artemisApp.participation.filters.remove' | artemisTranslate: { filter: ('artemisApp.exercise.show' + filter | artemisTranslate) }
-                                    "
-                                    (removed)="removeFilter(filter, $event)"
-                                >
-                                    <span class="block min-w-0 whitespace-normal break-words">{{ 'artemisApp.exercise.show' + filter | artemisTranslate }}</span>
-                                </tumaet-ui-chip>
-                            }
-                        </div>
-                    } @else {
-                        <span class="text-text">{{ group.labelKey | artemisTranslate }}</span>
+    @for (group of groups(); track group.labelKey) {
+        @if (group.items.length > 1) {
+            @if (group.segmented) {
+                <span class="text-sm">{{ group.labelKey | artemisTranslate }}:</span>
+                <tumaet-ui-button-group [attr.aria-label]="group.labelKey | artemisTranslate">
+                    @for (option of singleOptions(group); track option.value) {
+                        <tumaet-ui-button
+                            size="small"
+                            variant="text"
+                            [severity]="(group.selected[0] ?? allValue) === option.value ? 'primary' : 'secondary'"
+                            [ariaPressed]="(group.selected[0] ?? allValue) === option.value"
+                            (clicked)="updateGroup(group, [option.value])"
+                            >{{ option.label }}</tumaet-ui-button
+                        >
                     }
-                </ng-template>
-            </tumaet-ui-multi-select>
+                </tumaet-ui-button-group>
+            } @else if (group.single) {
+                <tumaet-ui-select
+                    class="w-56 max-w-full shrink-0"
+                    [matchTriggerWidth]="false"
+                    [options]="singleOptions(group)"
+                    optionLabel="label"
+                    optionValue="value"
+                    [ngModel]="group.selected.length === 1 ? group.selected[0] : allValue"
+                    (ngModelChange)="updateGroup(group, [$event])"
+                    [ariaLabel]="group.labelKey | artemisTranslate"
+                    size="small"
+                />
+            } @else {
+                <tumaet-ui-multi-select
+                    class="w-56 max-w-full shrink-0"
+                    [options]="group.items"
+                    [ngModel]="group.selected"
+                    (ngModelChange)="updateGroup(group, $event)"
+                    [ariaLabel]="group.labelKey | artemisTranslate"
+                    size="small"
+                >
+                    <ng-template #option let-filter>
+                        <span class="whitespace-normal">{{ 'artemisApp.exercise.show' + filter | artemisTranslate }}</span>
+                    </ng-template>
+                    <ng-template #selectedItems>
+                        <span class="block min-w-0 truncate">
+                            {{ group.labelKey | artemisTranslate }}:
+                            @if (group.selected.length === 0) {
+                                {{ 'artemisApp.exercise.showAll' | artemisTranslate }}
+                            } @else if (group.selected.length === 1) {
+                                {{ 'artemisApp.exercise.show' + group.selected[0] | artemisTranslate }}
+                            } @else {
+                                {{ group.selected.length }} {{ 'artemisApp.participation.filters.selected' | artemisTranslate }}
+                            }
+                        </span>
+                    </ng-template>
+                </tumaet-ui-multi-select>
+            }
         }
+    }
+    @for (group of checkboxGroups(); track group.labelKey) {
+        <div class="inline-flex shrink-0 items-center gap-2 text-sm text-text">
+            <tumaet-ui-checkbox
+                [inputId]="checkboxIdPrefix + group.items[0]"
+                [checked]="group.selected.length > 0"
+                (changed)="updateGroup(group, $event.checked ? group.items : [])"
+            />
+            <label [for]="checkboxIdPrefix + group.items[0]">{{ 'artemisApp.exercise.show' + group.items[0] | artemisTranslate }}</label>
+        </div>
     }
     <button
         type="button"

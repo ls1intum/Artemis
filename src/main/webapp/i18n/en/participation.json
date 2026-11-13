@@ -87,7 +87,7 @@
                 "noDueDate": "You can see student names and use Code to view or clone repositories to help students. Tutor access is read-only. Manual assessment is enabled, but no exercise due date is set. Names and direct repository access will be hidden once a due date is set and has passed."
             },
             "filters": {
-                "remove": "Remove filter: {{ filter }}"
+                "selected": "selected"
             }
         }
     }

@@ -278,6 +278,8 @@ export class ParticipationComponent implements OnInit, OnDestroy {
     }));
 
     // Template refs
+    readonly table = viewChild(TableViewComponent<ParticipationManagementDTO>);
+
     readonly repositoryCellTemplate = viewChild<CellTemplateRef<ParticipationManagementDTO>>('repositoryCellTemplate');
     readonly initStateCellTemplate = viewChild<CellTemplateRef<ParticipationManagementDTO>>('initStateCellTemplate');
     readonly initDateCellTemplate = viewChild<CellTemplateRef<ParticipationManagementDTO>>('initDateCellTemplate');
@@ -487,7 +489,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
     }
 
     onSearchChange(searchTerm: string) {
-        this.onLazyLoad(cloneWith(this.lastLazyEvent ?? {}, { first: 0, globalFilter: searchTerm }));
+        this.table()?.onGlobalSearch(searchTerm);
     }
 
     onLazyLoad(event: TableViewLazyLoadEvent) {

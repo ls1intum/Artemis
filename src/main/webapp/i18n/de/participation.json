@@ -87,7 +87,7 @@
                 "noDueDate": "Du kannst die Namen der Studierenden sehen und über Code ihre Repositorys öffnen oder klonen, um Fragen zu beantworten. Tutor:innen haben nur Lesezugriff. Die manuelle Bewertung ist aktiviert, aber für die Aufgabe ist keine Einreichungsfrist festgelegt. Sobald eine Frist festgelegt wird und abläuft, werden Namen und der direkte Repositoryzugriff ausgeblendet."
             },
             "filters": {
-                "remove": "Filter entfernen: {{ filter }}"
+                "selected": "ausgewählt"
             }
         }
     }

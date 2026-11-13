@@ -1,4 +1,5 @@
-import { TumAetUiDatePickerComponent, TumAetUiDialogService } from '@tumaet/ui-angular';
+import { SearchFilterComponent } from 'app/shared-ui/search-filter/search-filter.component';
+import { TumAetUiDatePickerComponent, TumAetUiDialogService, TumAetUiPaginatorComponent } from '@tumaet/ui-angular';
 import { signal } from '@angular/core';
 import { ParticipationPrivacyService } from './participation-privacy.service';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -449,6 +450,41 @@ describe('ParticipationComponent', () => {
 
             return componentFixture.nativeElement.querySelector('jhi-table-view');
         }
+
+        it('keeps the relocated search synchronized through sorting and pagination and resets the page for a new search', async () => {
+            const table = await renderRows(false, [sampleDto]);
+            const searchSpy = vi.mocked(participationService.searchParticipations);
+            searchSpy.mockReturnValue(of({ content: [sampleDto], totalElements: 200 }));
+            const paginator = componentFixture.debugElement.query(By.directive(TumAetUiPaginatorComponent)).componentInstance as TumAetUiPaginatorComponent;
+            const search = componentFixture.debugElement.query(By.directive(SearchFilterComponent)).componentInstance as SearchFilterComponent;
+            vi.useFakeTimers();
+            try {
+                paginator.pageChange.emit(2);
+                componentFixture.detectChanges();
+                search.newSearchEvent.emit(' Alice ');
+                await vi.advanceTimersByTimeAsync(300);
+                componentFixture.detectChanges();
+                expect(searchSpy).toHaveBeenLastCalledWith(exercise.id, expect.objectContaining({ searchTerm: 'alice', page: 0 }), 'course');
+                expect(paginator.page()).toBe(0);
+
+                (table.querySelector('thead th button') as HTMLButtonElement).click();
+                componentFixture.detectChanges();
+                expect(searchSpy).toHaveBeenLastCalledWith(exercise.id, expect.objectContaining({ searchTerm: 'alice', page: 0, sortedColumn: 'participantName' }), 'course');
+
+                paginator.pageChange.emit(1);
+                componentFixture.detectChanges();
+                expect(searchSpy).toHaveBeenLastCalledWith(exercise.id, expect.objectContaining({ searchTerm: 'alice', page: 1, sortedColumn: 'participantName' }), 'course');
+                expect(paginator.page()).toBe(1);
+
+                search.newSearchEvent.emit('Bob');
+                await vi.advanceTimersByTimeAsync(300);
+                componentFixture.detectChanges();
+                expect(searchSpy).toHaveBeenLastCalledWith(exercise.id, expect.objectContaining({ searchTerm: 'bob', page: 0, sortedColumn: 'participantName' }), 'course');
+                expect(paginator.page()).toBe(0);
+            } finally {
+                vi.useRealTimers();
+            }
+        });
 
         function bodyRows(table: HTMLElement): HTMLTableRowElement[] {
             return Array.from(table.querySelectorAll<HTMLTableRowElement>('tbody tr'));

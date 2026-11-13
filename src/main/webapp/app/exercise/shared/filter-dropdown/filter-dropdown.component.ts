@@ -6,7 +6,6 @@ import {
     TumAetUiButtonDirective,
     TumAetUiButtonGroupComponent,
     TumAetUiCheckboxComponent,
-    TumAetUiChipComponent,
     TumAetUiMultiSelectComponent,
     TumAetUiSelectComponent,
     TumAetUiTooltipDirective,
@@ -30,7 +29,6 @@ export interface FilterGroup {
         ArtemisTranslatePipe,
         TumAetUiButtonDirective,
         TumAetUiCheckboxComponent,
-        TumAetUiChipComponent,
         TumAetUiMultiSelectComponent,
         TumAetUiButtonComponent,
         TumAetUiButtonGroupComponent,
@@ -61,6 +59,8 @@ export class FilterDropdownComponent {
             .sort((a, b) => Number(a.items.length === 1) - Number(b.items.length === 1)),
     );
 
+    protected readonly checkboxGroups = computed(() => this.groups().filter((group) => group.items.length === 1));
+
     protected singleOptions(group: FilterGroup): { value: string; label: string }[] {
         return [
             {
@@ -73,10 +73,5 @@ export class FilterDropdownComponent {
 
     protected updateGroup(group: FilterGroup, values: unknown[]): void {
         this.filterChange.emit([...this.activeFilters().filter((value) => !group.items.includes(value)), ...group.items.filter((value) => values.includes(value))]);
-    }
-
-    protected removeFilter(value: string, event: Event): void {
-        event.stopPropagation();
-        this.filterChange.emit(this.activeFilters().filter((filter) => filter !== value));
     }
 }
