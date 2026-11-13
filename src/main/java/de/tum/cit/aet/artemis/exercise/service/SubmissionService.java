@@ -10,6 +10,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
@@ -299,10 +300,7 @@ public class SubmissionService {
     }
 
     /**
-     * Given an exercise, find a random submission for that exercise which still doesn't have any manual result.
-     * No manual result means that no user has started an assessment for the corresponding submission yet.
-     * For exam exercises we should also remove the test run participations as these should not be graded by the tutors.
-     * If {@code correctionRound} is bigger than 0, only submissions are shown for which the user has not assessed the first result.
+     * Selects an unclaimed submission, excluding exam test runs and the tutor's own previous-round assessments.
      *
      * @param exercise        the exercise for which we want to retrieve a submission without manual result
      * @param correctionRound the correction round we want our submission to have results for
@@ -315,7 +313,7 @@ public class SubmissionService {
     }
 
     /**
-     * Given a list of submissions, find a random one.
+     * Selects a random submission, if any.
      *
      * @param assessableSubmissions the list of submissions to choose from
      * @return a random submission or an empty Optional if no submission was passed
@@ -325,8 +323,7 @@ public class SubmissionService {
     }
 
     /**
-     * Get all currently locked submissions across the given exercises (used for an exam).
-     * These are all submissions for which users started, but did not yet finish the assessment.
+     * Gets unfinished assessments across the given exercises (used for an exam).
      *
      * @param exerciseIds - the ids of the exam's exercises
      * @param user        - the user trying to access the locked submissions
@@ -465,9 +462,7 @@ public class SubmissionService {
     }
 
     /**
-     * This method is used to create a copy of a result, used in the exam mode with correctionRound > 1,
-     * because an assessment with current correctionRound > 1 contains all previous work,
-     * which the tutor can then edit. Assigns the newly created Result to the submission
+     * Copies the previous correction round, retaining its work for editing in the new round.
      *
      * @param submission submission to which the new Result is assigned
      * @param oldResult  result to copy from
@@ -541,8 +536,7 @@ public class SubmissionService {
     }
 
     /**
-     * used to assign and save results to submissions
-     * Make sure submission.results is loaded
+     * Saves and associates a result; the submission's results must be loaded.
      *
      * @param submission the parent submission of the result
      * @param result     the result which we want to save and order
@@ -682,7 +676,13 @@ public class SubmissionService {
         if (submission.getParticipation().getExercise().isTeamMode() && submission.getParticipation() instanceof StudentParticipation participation && !participation.isTestRun()
                 && participation.getTeam().isPresent()) {
             return teamRepository.withAssessmentLock(participation.getTeam().get(), () -> {
-                resultRepository.findTeamAssessmentResultsForRound(submission.getId(), correctionRound).forEach(submission::addResult);
+                var results = resultRepository.findTeamAssessmentResultsForRound(participation.getId(), correctionRound);
+                // Replace detached snapshots, including results deleted while this request waited for the lock.
+                submission.getResults().removeIf(result -> Objects.equals(result.getCorrectionRound(), correctionRound) && !result.isAutomatic() && !result.isAthenaBased());
+                results.stream().filter(result -> result.getSubmission().getId().equals(submission.getId())).forEach(submission::addResult);
+                if (!results.isEmpty() && submission.getResultForCorrectionRound(correctionRound) == null) {
+                    throw new AccessForbiddenException("Another submission of this team already has an assessment for this correction round.");
+                }
                 return assessment.get();
             });
         }

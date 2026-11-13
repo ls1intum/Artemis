@@ -23,6 +23,7 @@ import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
+import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
 import de.tum.cit.aet.artemis.quiz.service.QuizStatisticsService;
 
 /**
@@ -41,8 +42,9 @@ public class QuizAssessmentResource extends AssessmentResource {
 
     public QuizAssessmentResource(AuthorizationCheckService authCheckService, UserRepository userRepository, ExerciseRepository exerciseRepository,
             AssessmentService assessmentService, ResultRepository resultRepository, ExampleSubmissionRepository exampleSubmissionRepository,
-            SubmissionRepository submissionRepository, QuizStatisticsService quizStatisticsService) {
-        super(ENTITY_NAME, authCheckService, userRepository, exerciseRepository, assessmentService, resultRepository, exampleSubmissionRepository, submissionRepository);
+            SubmissionRepository submissionRepository, QuizStatisticsService quizStatisticsService, TeamRepository teamRepository) {
+        super(ENTITY_NAME, authCheckService, userRepository, exerciseRepository, assessmentService, resultRepository, exampleSubmissionRepository, submissionRepository,
+                teamRepository);
         this.quizStatisticsService = quizStatisticsService;
     }
 

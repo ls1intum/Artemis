@@ -28,6 +28,7 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
+import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
 
 public abstract class AssessmentResource {
 
@@ -49,9 +50,12 @@ public abstract class AssessmentResource {
 
     protected final SubmissionRepository submissionRepository;
 
+    private final TeamRepository teamRepository;
+
     public AssessmentResource(String entityName, AuthorizationCheckService authCheckService, UserRepository userRepository, ExerciseRepository exerciseRepository,
             AssessmentService assessmentService, ResultRepository resultRepository, ExampleSubmissionRepository exampleSubmissionRepository,
-            SubmissionRepository submissionRepository) {
+            SubmissionRepository submissionRepository, TeamRepository teamRepository) {
+        this.teamRepository = teamRepository;
         this.entityName = entityName;
         this.authCheckService = authCheckService;
         this.userRepository = userRepository;
@@ -237,6 +241,14 @@ public abstract class AssessmentResource {
         long exerciseId = studentParticipation.getExercise().getId();
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         checkAuthorization(exercise, user);
+        if (exercise.isTeamMode() && !studentParticipation.isTestRun() && studentParticipation.getTeam().isPresent()) {
+            return teamRepository.withAssessmentLock(studentParticipation.getTeam().get(),
+                    () -> cancelAssessment(submissionRepository.findByIdWithResultsElseThrow(submissionId), resultId, exercise, user));
+        }
+        return cancelAssessment(submission, resultId, exercise, user);
+    }
+
+    private ResponseEntity<Void> cancelAssessment(Submission submission, @Nullable Long resultId, Exercise exercise, User user) {
         authCheckService.checkTeamAssessmentAccessElseThrow(submission);
         // Release the result the caller named. A submission can hold one result per correction round, and the caller is
         // the only one that knows which round its button belongs to: resolving it here always released the newest round,
