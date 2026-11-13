@@ -70,8 +70,8 @@ buildscript {
         // shipped WAR only ever contains the patched versions. enforcedPlatform applies each jackson-bom's
         // authoritative per-module versions, so no version is invented. Build-time only, not shipped. Keep
         // both versions in sync with the project-level jackson-bom imports below.
-        classpath enforcedPlatform("tools.jackson:jackson-bom:3.3.0")
-        classpath enforcedPlatform("com.fasterxml.jackson:jackson-bom:2.23.0")
+        classpath enforcedPlatform("tools.jackson:jackson-bom:3.2.4")
+        classpath enforcedPlatform("com.fasterxml.jackson:jackson-bom:2.22.4")
         classpath "com.diffplug.spotless:spotless-plugin-gradle:${spotless_plugin_version}"
         // This is required so that the latest version of the liquibase gradle plugin works
         classpath("org.liquibase:liquibase-core:${liquibase_version}") {
@@ -276,8 +276,8 @@ ext["logback.version"] = logback_version
 dependencyManagement {
     imports {
         mavenBom "io.opentelemetry:opentelemetry-bom:${opentelemetry_version}"
-        mavenBom "tools.jackson:jackson-bom:3.3.0"
-        mavenBom "com.fasterxml.jackson:jackson-bom:2.23.0"
+        mavenBom "tools.jackson:jackson-bom:3.2.4"
+        mavenBom "com.fasterxml.jackson:jackson-bom:2.22.4"
     }
 }
 
