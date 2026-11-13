@@ -3,16 +3,18 @@
 @import '../../../../../../../node_modules/bootstrap/scss/mixins';
 @import '../../../../content/scss/artemis-variables';
 
+// minmax(0, 1fr) rather than 1fr: a plain fr track never shrinks below its content's min-content width, so a long
+// single-line feedback title would keep the column wide and push the submission under the panel next to it.
 .text-editor-grid {
     display: grid;
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
     grid-template-areas:
         'problem-statement'
         'team-info'
         'main';
 
     @media (min-width: map-get($grid-breakpoints, 'md')) {
-        grid-template-columns: 1fr min-content;
+        grid-template-columns: minmax(0, 1fr) min-content;
         grid-template-areas:
             'problem-statement team-info'
             'main              team-info';
@@ -31,15 +33,19 @@
     }
 }
 
+// A text box inside the submission panel: it spans the panel with a margin around it, and the text starts at its left edge
 .text-editor-textarea {
-    width: 100%;
-    max-width: 750px;
-    height: 50vh;
+    width: calc(100% - 1.5rem);
+    min-height: 12rem;
+    margin: 0.75rem;
+    flex: 1 1 auto;
+    resize: none;
     padding: 10px 12px;
     border: 1px solid var(--text-editor-border-color);
     border-radius: 2px;
     background-color: var(--text-editor-background);
     color: var(--text-editor-color);
+    text-align: left;
 
     &:focus {
         outline: none;
@@ -47,6 +53,12 @@
         background-color: var(--text-editor-focus-background);
         box-shadow: 0 0 20px rgba(0, 0, 200, 0.04);
     }
+}
+
+// The locked submission: the text as it was written, line breaks kept
+.text-editor-locked-text {
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
 }
 
 div {
@@ -69,4 +81,43 @@ div {
         color: var(--textblock-assessment-text-feedback-neutral-color);
         background-color: lightblue;
     }
+}
+
+// The assessed submission panel fills the panel of the exercise page, like the modeling editor: every element down to it
+// takes the full height, and only the panel's content scrolls
+:host(.text-editor--fill) {
+    height: 100%;
+
+    jhi-resizeable-container {
+        display: block;
+        height: 100%;
+    }
+}
+
+.text-editor-grid--fill {
+    display: flex;
+    height: 100%;
+    min-height: 0;
+    flex-direction: column;
+
+    .grid-area-main {
+        display: flex;
+        min-height: 0;
+        flex: 1 1 auto;
+        flex-direction: column;
+    }
+}
+
+// The submission above and the general feedback panel below it share the page's height; a splitter divides them. Without a
+// panel the splitter component only passes the height on.
+.text-editor-grid--fill > .text-editor-split {
+    flex: 1 1 auto;
+    min-height: 0;
+}
+
+.text-editor-split__top {
+    display: flex;
+    min-height: 0;
+    flex: 1 1 auto;
+    flex-direction: column;
 }

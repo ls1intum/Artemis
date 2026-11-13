@@ -1,0 +1,25 @@
+// Fills the space the page gives it, so the splitter has a height to divide.
+:host {
+    display: block;
+    width: 100%;
+    height: 100%;
+    min-width: 0;
+    min-height: 0;
+}
+
+// The content above and the panel below are columns of the full panel size, so a page's own flex layout works inside them.
+.feedback-split__top,
+.feedback-split__bottom {
+    display: flex;
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+    min-width: 0;
+    flex: 1 1 auto;
+    flex-direction: column;
+}
+
+// Collapsed, the line between the content and the panel is hidden, so the panel keeps a gap of its own above its header.
+.feedback-split--collapsed .feedback-split__bottom {
+    margin-top: 0.5rem;
+}

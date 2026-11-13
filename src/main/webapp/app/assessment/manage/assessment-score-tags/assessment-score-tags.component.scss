@@ -1,0 +1,9 @@
+// The tags take part in the layout of the row they are placed in, so its gap spaces them
+:host {
+    display: contents;
+}
+
+// A tag's value stays bold, its label does not
+.assessment-score-tags__label {
+    font-weight: 500;
+}
