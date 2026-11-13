@@ -592,7 +592,8 @@ public class ProgrammingSubmissionService extends SubmissionService {
 
             newResult.copyProgrammingExerciseCounters(existingResult);
         }
-        newResult.setFeedbacks(automaticFeedbacks);
+        // Preserve Hibernate's collection wrapper while the team claim transaction is active.
+        newResult.getFeedbacks().addAll(automaticFeedbacks);
 
         // Deliberately keep (and return) the original object instead of the merge result: the merge would
         // replace the assessor and the eagerly fetched test-case/message associations of the typed copies

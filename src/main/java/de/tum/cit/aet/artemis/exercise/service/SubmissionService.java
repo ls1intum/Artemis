@@ -431,19 +431,19 @@ public class SubmissionService {
         if (oldResult == null || oldResult.getId() == null) {
             return;
         }
-        // fetch the shared message rows eagerly: the copies keep the message reference, and the new result
-        // may be synthesized for serialization right away (e.g. exam test-run drafts) - a lazy proxy would
-        // fail there with a LazyInitializationException
+        // Fetch messages eagerly so copied feedback can be synthesized without lazy-loading failures.
         testCaseFeedbackRepository.findWithTestCaseAndMessageByResultIds(List.of(oldResult.getId())).stream().map(feedbackService::copyTestCaseFeedback)
                 .forEach(newResult::addTestCaseFeedback);
         scaFeedbackRepository.findWithMessageByResultIds(List.of(oldResult.getId())).stream().map(feedbackService::copyScaFeedback).forEach(newResult::addScaFeedback);
 
-        // Insert the copies right away when the target result already exists: a synthesized legacy view is addressed by the id of the row it comes from, so every caller that
-        // serializes the new result afterwards needs those ids. The rows are new, so this persists them in place - the ids land on these very instances and the eagerly
-        // fetched test cases and messages above survive, both of which a merge copy would lose. A result that is not persisted yet gets its rows through the caller's save.
+        // Persist copies now for their synthesized IDs; retain the managed collection wrappers.
         if (newResult.getId() != null) {
-            newResult.setTestCaseFeedbacks(testCaseFeedbackRepository.saveAll(newResult.getTestCaseFeedbacks()));
-            newResult.setScaFeedbacks(scaFeedbackRepository.saveAll(newResult.getScaFeedbacks()));
+            var savedTestCases = testCaseFeedbackRepository.saveAll(newResult.getTestCaseFeedbacks());
+            newResult.getTestCaseFeedbacks().clear();
+            newResult.getTestCaseFeedbacks().addAll(savedTestCases);
+            var savedSca = scaFeedbackRepository.saveAll(newResult.getScaFeedbacks());
+            newResult.getScaFeedbacks().clear();
+            newResult.getScaFeedbacks().addAll(savedSca);
         }
     }
 

@@ -201,13 +201,27 @@ public interface TeamRepository extends ArtemisJpaRepository<Team, Long> {
         return saved;
     }
 
-    /** Locks matching teams in a stable order before transferring their drafts. */
+    /**
+     * Locks matching teams in a stable order before transferring their drafts.
+     *
+     * @param courseId  the course containing the matching teams
+     * @param shortName the shared team short name
+     * @param teamId    the edited team, also included if renamed
+     * @return the matching teams in ID order
+     */
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @QueryHints(@QueryHint(name = "org.hibernate.flushMode", value = "COMMIT"))
     @Query("SELECT t FROM Team t WHERE (t.exercise.course.id = :courseId AND t.shortName = :shortName) OR t.id = :teamId ORDER BY t.id")
     List<Team> lockCourseTeamsForAssessment(@Param("courseId") long courseId, @Param("shortName") String shortName, @Param("teamId") long teamId);
 
-    /** Holds the team lock until assessment creation has committed. */
+    /**
+     * Holds the team lock until assessment creation has committed.
+     *
+     * @param <T>        the assessment operation result type
+     * @param team       the previously loaded team
+     * @param assessment the operation to perform under the team lock
+     * @return the assessment operation result
+     */
     @Transactional
     default <T> T withAssessmentLock(Team team, Supplier<T> assessment) {
         lockTeamForAssessment(team.getId());
@@ -218,13 +232,23 @@ public interface TeamRepository extends ArtemisJpaRepository<Team, Long> {
         return assessment.get();
     }
 
-    /** Locks a team against reassignment while its assessment is claimed. */
+    /**
+     * Locks a team against reassignment while its assessment is claimed.
+     *
+     * @param teamId the team to lock
+     * @return the locked team
+     */
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @QueryHints(@QueryHint(name = "org.hibernate.flushMode", value = "COMMIT"))
     @Query("SELECT t FROM Team t WHERE t.id = :teamId")
     Team lockTeamForAssessment(@Param("teamId") long teamId);
 
-    /** Reads the persisted owner rather than a previously loaded team association. */
+    /**
+     * Reads the persisted owner rather than a previously loaded team association.
+     *
+     * @param teamId the team whose owner is read
+     * @return the current owner, or null if unassigned
+     */
     @QueryHints(@QueryHint(name = "org.hibernate.flushMode", value = "COMMIT"))
     @Query("SELECT owner FROM Team t LEFT JOIN t.owner owner WHERE t.id = :teamId")
     User findAssessmentOwner(@Param("teamId") long teamId);

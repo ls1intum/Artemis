@@ -943,7 +943,8 @@ class SubmissionServiceTest extends AbstractSpringIntegrationIndependentBatchTes
             exercise.setDueDate(ZonedDateTime.now().plusDays(1));
             exerciseRepository.save(exercise);
         }
-        assertThatExceptionOfType(AccessForbiddenException.class).isThrownBy(() -> programmingSubmissionService.lockSubmission(submission, 0));
+        var refreshed = submissionRepository.findOneWithEagerResultAndFeedbackAndAssessmentNote(submission.getId());
+        assertThatExceptionOfType(AccessForbiddenException.class).isThrownBy(() -> programmingSubmissionService.lockSubmission(refreshed, 0));
         assertThat(submissionRepository.findOneWithEagerResultAndFeedbackAndAssessmentNote(submission.getId()).getManualResults()).isEmpty();
     }
 
