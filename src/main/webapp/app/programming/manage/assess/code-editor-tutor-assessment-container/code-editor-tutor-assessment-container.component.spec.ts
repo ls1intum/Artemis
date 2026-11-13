@@ -826,6 +826,36 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         }
     });
 
+    it('should refuse to update points outside the bounds after a complaint and name the bounds', async () => {
+        comp.ngOnInit();
+        await flushMicrotasks();
+        const tooManyPoints: Feedback = { detailText: 'too many points', credits: -100.5, type: FeedbackType.MANUAL_UNREFERENCED };
+        comp.unreferencedFeedback.set([tooManyPoints]);
+        vi.spyOn(comp, 'validateFeedback').mockImplementation(() => comp.assessmentsAreValid.set(true));
+        const errorSpy = vi.spyOn(TestBed.inject(AlertService), 'error');
+        let onErrorCalled = false;
+
+        comp.onUpdateAssessmentAfterComplaint({ complaintResponse: new ComplaintResponse(), onSuccess: () => {}, onError: () => (onErrorCalled = true) });
+
+        expect(updateAfterComplaintStub).not.toHaveBeenCalled();
+        expect(onErrorCalled).toBe(true);
+        expect(errorSpy).toHaveBeenCalledExactlyOnceWith('error.feedbackCreditsOutOfBounds');
+    });
+
+    it('should name the bounds when the server refuses the points after a complaint', async () => {
+        comp.ngOnInit();
+        await flushMicrotasks();
+        updateAfterComplaintStub.mockReturnValue(
+            throwError(() => new HttpErrorResponse({ status: 400, error: { errorKey: 'feedbackCreditsOutOfBounds', entityName: 'Feedback' } })),
+        );
+        vi.spyOn(comp, 'validateFeedback').mockImplementation(() => comp.assessmentsAreValid.set(true));
+        const errorSpy = vi.spyOn(TestBed.inject(AlertService), 'error');
+
+        comp.onUpdateAssessmentAfterComplaint({ complaintResponse: new ComplaintResponse(), onSuccess: () => {}, onError: () => {} });
+
+        expect(errorSpy).toHaveBeenCalledExactlyOnceWith('error.feedbackCreditsOutOfBounds');
+    });
+
     it('should send the reassembled feedbacks (not a stale snapshot) when resolving a complaint', async () => {
         comp.ngOnInit();
         await flushMicrotasks();
