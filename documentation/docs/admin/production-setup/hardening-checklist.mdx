@@ -1,0 +1,68 @@
+---
+id: hardening-checklist
+title: Hardening Checklist
+sidebar_label: Hardening Checklist
+last_reviewed: 2026-11-10
+---
+
+This page collects what an operator has to check before an Artemis installation goes into production and when it is upgraded. Every item links to the page that explains it. The list does not replace
+the institution's own security process, and it does not make an installation certified.
+
+Artemis checks some of these settings itself. [Startup validation](/admin/production-setup/security#startup-validation) refuses published default credentials and undersized JWT keys in production.
+The remaining items depend on how and where you run Artemis, so only you can verify them.
+
+## Network and reverse proxy
+
+- [ ] Only the reverse proxy is reachable from the internet. The database, the broker, the distributed data provider and the build agents are on a private network.
+- [ ] HTTPS terminates at the reverse proxy with a valid certificate and current TLS settings.
+- [ ] The reverse proxy sets `X-Forwarded-For`, and both `server.tomcat.remoteip.internal-proxies` and `artemis.continuous-integration.build-agent-network.trusted-proxies` list only your own proxies, so the rate limit counts the real client address. See
+      [Client Address of Git Requests](/admin/production-setup/security#client-address-of-git-requests).
+- [ ] The internet-facing proxy replaces address headers that clients send and builds `X-Forwarded-For` from the address of the connection it accepted. Internal proxies accept requests only from trusted upstream proxies and forward the sanitized client address.
+- [ ] The websocket endpoint is reached through the same origin as the application. See [Websocket Connections](/admin/production-setup/security#websocket-connections).
+- [ ] Rate limiting is on (it is by default) and the limits fit your installation, in particular where many students share one address. See [Rate Limiting](/admin/production-setup/security#rate-limiting).
+
+## Accounts and authentication
+
+- [ ] The internal administrator account is a dedicated local account with a strong password, not a person's login.
+- [ ] Passkeys are enabled and required for administrator features (`artemis.user-management.passkey.require-for-administrator-features`). See
+      [Passkey Authentication](/admin/production-setup/security#passkey-authentication).
+- [ ] Administrator accounts are separate from the accounts people use for teaching and studying.
+- [ ] External authentication (LDAP, SAML2 or OpenID Connect) uses encrypted connections, and the service account has only the read access that the lookup needs.
+- [ ] Self-registration is off, or limited to the domains you accept.
+
+## Secrets and configuration
+
+- [ ] Secrets (database, JWT key, broker, LDAP, integration tokens) are supplied through the environment or a secret store and are not in version control.
+- [ ] The configuration files are readable only by the account that runs Artemis.
+- [ ] The JWT key is long and random, and token lifetimes are set deliberately.
+
+## Build agents and student code
+
+- [ ] Submissions run on build agents, in containers or Kubernetes jobs, not on the application host. See [Build Runners](/admin/production-setup/build-runners).
+- [ ] Access to the container runtime socket is restricted to the build agent account.
+- [ ] Build containers cannot join the network of the host or of another container, and the container network is not the one of your internal services. Artemis refuses a network that shares the namespace of the host or of another
+      container when it starts.
+- [ ] Firewall rules keep the container subnets away from internal services and from the metadata endpoint of your cloud provider.
+- [ ] `supporting_scripts/security/check-container-isolation.sh <network>` passes for the network of your build containers, or its failures are closed by firewall rules. It starts a small container on that network and tries to reach the host, a neighboring container and the internal services that you name in `CHECK_TARGETS` (for example the database, the broker and the metadata endpoint of your cloud provider). Start the services of `CHECK_TARGETS` first: a service that is not listening cannot be reached either, so the check would pass for it. Whether builds may reach the internet is reported and fails the check only with `CHECK_INTERNET=1`.
+- [ ] Build agents authenticate with SSH keys (`artemis.version-control.build-agent-use-ssh`) where possible, and the allowed address ranges are set where your network permits it. See
+      [Build Agent Authentication](/admin/production-setup/security#build-agent-authentication).
+
+## Data
+
+- [ ] The upload, export and repository directories have restricted permissions and are included in the backup.
+- [ ] The database is backed up and a restore has been tried.
+- [ ] Logs are collected, and failed sign-ins and rate limit responses are watched.
+
+## Updates
+
+- [ ] You subscribe to the [releases](https://github.com/ls1intum/Artemis/releases) and the [security advisories](https://github.com/ls1intum/Artemis/security/advisories) of the project.
+- [ ] You update to new releases promptly. Artemis publishes a release every two weeks, and the [upgrade guide](/admin/upgrade-guide) lists the changes that need your attention, such as new settings.
+- [ ] You verify the checksums, SBOMs and build provenance of the release you deploy. See
+      [Verifying a Release](https://github.com/ls1intum/Artemis/blob/develop/.github/SECURITY.md#verifying-a-release).
+- [ ] You know where to report a suspected vulnerability. See the [security policy](https://github.com/ls1intum/Artemis/blob/develop/.github/SECURITY.md#reporting-a-vulnerability).
+
+## Related pages
+
+- [Security configuration](/admin/production-setup/security)
+- [Access rights](/admin/access-rights)
+- [Trust and transparency](/about/trust)
