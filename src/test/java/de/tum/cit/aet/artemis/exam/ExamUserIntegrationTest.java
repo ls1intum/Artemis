@@ -444,7 +444,6 @@ class ExamUserIntegrationTest extends AbstractProgrammingIntegrationLocalCILocal
         final HttpHeaders headers = new HttpHeaders();
         headers.set("User-Agent", "foo");
         headers.set("X-Artemis-Client-Fingerprint", "bar");
-        headers.set("X-Forwarded-For", "10.0.28.1");
 
         for (var studentExam : studentExams) {
             var user = studentExam.getUser();

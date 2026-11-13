@@ -132,7 +132,7 @@
         }
         @if (exercise()!.type === ExerciseType.PROGRAMMING && canAccessLiveRepository()) {
             <a
-                [routerLink]="['/courses', course()!.id, 'exercises', 'programming-exercises', exercise()!.id, 'code-editor', dto.participationId]"
+                [routerLink]="onlineEditorLink(dto.participationId)"
                 tumAetUiButton
                 severity="warn"
                 size="small"

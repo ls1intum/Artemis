@@ -70,6 +70,7 @@ import { CourseTitleBarActionsDirective } from 'app/course/shared/directives/cou
 import { ParticipationPrivacyService } from 'app/exercise/participation/participation-privacy.service';
 import { ParticipationAccessNoticeComponent } from 'app/exercise/participation/participation-access-notice.component';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
+import { getOnlineEditorLink } from 'app/foundation/util/navigation.utils';
 import { Course } from 'app/course/shared/entities/course.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
@@ -670,6 +671,17 @@ export class ParticipationComponent implements OnInit, OnDestroy {
 
     getParticipationLink(participationId: number): string[] {
         return this.isExamExercise() ? [participationId.toString()] : [participationId.toString(), 'submissions'];
+    }
+
+    /**
+     * The link that opens the code of the given participation in the online editor. It leads to the code editor of the course management
+     * and not to the exercise page of the student, which always shows the participation of the viewer.
+     *
+     * @param participationId the id of the participation whose code is opened
+     */
+    onlineEditorLink(participationId: number): string[] {
+        const exercise = this.exercise()!;
+        return getOnlineEditorLink(this.course()!.id!, exercise.id!, participationId, exercise.exerciseGroup?.id, exercise.exerciseGroup?.exam?.id);
     }
 
     toProgrammingParticipation(dto: ParticipationManagementDTO): ProgrammingExerciseStudentParticipation {
