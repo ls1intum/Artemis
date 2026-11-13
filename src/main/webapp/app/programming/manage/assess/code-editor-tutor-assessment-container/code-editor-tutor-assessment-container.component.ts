@@ -26,6 +26,7 @@ import { ComplaintService } from 'app/assessment/shared/services/complaint.servi
 import { CodeEditorContainerComponent } from 'app/programming/manage/code-editor/container/code-editor-container.component';
 import { assessmentNavigateBack } from 'app/foundation/util/navigate-back.util';
 import { Feedback, FeedbackSuggestionType, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
+import { FEEDBACK_CREDITS_OUT_OF_BOUNDS, alertUpdateAfterComplaintFailure } from 'app/assessment/shared/util/feedback-credits-bounds.util';
 import { StructuredGradingCriterionService } from 'app/exercise/structured-grading-criterion/structured-grading-criterion.service';
 import { catchError, filter, switchMap, tap } from 'rxjs/operators';
 import { CodeEditorRepositoryFileService } from 'app/programming/shared/code-editor/services/code-editor-repository.service';
@@ -669,6 +670,11 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
             assessmentAfterComplaint.onError();
             return;
         }
+        if (!Feedback.haveCreditsInBounds([...this.referencedFeedback(), ...this.unreferencedFeedback()])) {
+            this.alertService.error(FEEDBACK_CREDITS_OUT_OF_BOUNDS);
+            assessmentAfterComplaint.onError();
+            return;
+        }
         if (!this.checkFeedbackChangeForAcceptedComplaint(assessmentAfterComplaint)) {
             assessmentAfterComplaint.onError();
             return;
@@ -690,13 +696,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
             },
             error: (httpErrorResponse: HttpErrorResponse) => {
                 assessmentAfterComplaint.onError();
-                this.alertService.closeAll();
-                const error = httpErrorResponse.error;
-                if (error && error.errorKey && error.errorKey === 'complaintLock') {
-                    this.alertService.error(error.message, error.params);
-                } else {
-                    this.onError('artemisApp.assessment.messages.updateAfterComplaintFailed');
-                }
+                alertUpdateAfterComplaintFailure(this.alertService, httpErrorResponse, 'artemisApp.assessment.messages.updateAfterComplaintFailed');
             },
         });
     }

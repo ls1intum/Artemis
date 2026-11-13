@@ -46,6 +46,11 @@ public class Feedback extends DomainObject {
 
     public static final int MAX_REFERENCE_LENGTH = 2000;
 
+    /**
+     * Upper bound for the absolute credits of a single manual feedback that is not linked to a grading instruction, matching the points input of the assessment editor.
+     */
+    public static final int MAX_MANUAL_CREDITS = 100;
+
     public static final String STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER = "SCAFeedbackIdentifier:";
 
     public static final String SUBMISSION_POLICY_FEEDBACK_IDENTIFIER = "SubPolFeedbackIdentifier:";
