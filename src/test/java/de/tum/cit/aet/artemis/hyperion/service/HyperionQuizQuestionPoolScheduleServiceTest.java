@@ -6,6 +6,7 @@ import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -101,6 +102,27 @@ class HyperionQuizQuestionPoolScheduleServiceTest {
         verify(buildService, never()).tryStart(2L);
         verify(buildService, never()).tryStart(3L);
         verify(courseRepository, never()).findById(2L);
+    }
+
+    @Test
+    void buildEnabledPools_continuesWithTheNextCourseWhenABuildFails() {
+        Course first = course(1L, null);
+        Course second = course(2L, null);
+        when(settingsRepository.findAll()).thenReturn(List.of(settings(1L, true), settings(2L, true)));
+        when(courseRepository.findById(1L)).thenReturn(Optional.of(first));
+        when(courseRepository.findById(2L)).thenReturn(Optional.of(second));
+        when(buildService.tryStart(anyLong())).thenReturn("lease");
+        when(buildService.recordStart(any(), any(), anyInt())).thenAnswer(invocation -> {
+            QuizQuestionPoolBuild build = new QuizQuestionPoolBuild();
+            build.setId(((Course) invocation.getArgument(0)).getId());
+            return build;
+        });
+        doThrow(new IllegalStateException("database unavailable")).when(buildService).buildAndRelease(1L, null, 1L, "lease", openDeadline);
+
+        int built = scheduler.buildEnabledPools(now, openDeadline);
+
+        assertThat(built).isEqualTo(1);
+        verify(buildService).buildAndRelease(2L, null, 2L, "lease", openDeadline);
     }
 
     @Test

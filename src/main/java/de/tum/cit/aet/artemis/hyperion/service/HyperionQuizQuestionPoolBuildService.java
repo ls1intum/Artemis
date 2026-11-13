@@ -141,8 +141,8 @@ public class HyperionQuizQuestionPoolBuildService {
     /** How long a cancel request is kept for a build that never released its lease to clear it. */
     private static final Duration CANCEL_REQUEST_LIFETIME = Duration.ofDays(1);
 
-    /** Markdown in a title: backticks, bold and italic markers, and dollar-sign math delimiters. */
-    private static final Pattern TITLE_MARKDOWN = Pattern.compile("`|\\*\\*|__|(?<!\\w)[*_]|[*_](?!\\w)|\\$");
+    /** Markdown in a title: backticks, asterisk bold and italic markers, and dollar-sign math delimiters. Underscores are kept, since identifiers contain them. */
+    private static final Pattern TITLE_MARKDOWN = Pattern.compile("`|\\*|\\$");
 
     private static final Pattern WHITESPACE = Pattern.compile("\\s+");
 
@@ -153,9 +153,19 @@ public class HyperionQuizQuestionPoolBuildService {
 
     private static final Pattern DISPLAY_MATH_BRACKETS = Pattern.compile("\\\\\\[(.+?)\\\\]", Pattern.DOTALL);
 
-    private static final int MAX_FAILURE_LENGTH = 500;
-
     static final String STOPPED_AT_DEADLINE = "The overnight window ended; the next scheduled build continues";
+
+    /** The failure a build records when an instructor cancelled it. */
+    static final String STOPPED_BY_CANCEL = "Cancelled; the next build plans the questions that were not generated anew";
+
+    /** The failure a build records when its lease expired and another build took over the course. */
+    static final String STOPPED_LEASE_LOST = "Stopped: another build took over the course";
+
+    /** The failure a build records when it failed; the exception itself is only logged, since the record is shown to course staff. */
+    static final String BUILD_FAILED = "The build failed; the server log has the details";
+
+    /** The failure a build records when it could not be handed to the executor. */
+    static final String DISPATCH_FAILED = "The build could not be started; the server log has the details";
 
     private final HyperionQuizQuestionPoolModelService modelService;
 
@@ -223,9 +233,6 @@ public class HyperionQuizQuestionPoolBuildService {
         }
         this.generationBatchSize = generationBatchSize;
         this.staleClaimAge = Duration.ofMinutes(staleClaimMinutes);
-        if (buildLeaseMinutes < 1) {
-            throw new IllegalArgumentException("artemis.hyperion.quiz-pool.build-lease-minutes must be at least 1, got " + buildLeaseMinutes);
-        }
         this.leaseDuration = Duration.ofMinutes(buildLeaseMinutes);
         this.buildLeases = distributedDataProvider.getMap(BUILD_LEASES);
         this.buildSettings = distributedDataProvider.getMap(BUILD_SETTINGS);
@@ -235,17 +242,52 @@ public class HyperionQuizQuestionPoolBuildService {
     /**
      * What one build did, counted over its own work.
      *
-     * @param generated         items that received a question
-     * @param judged            items that received a verdict
-     * @param accepted          judged items the filter accepted
-     * @param rejected          judged items the filter rejected
-     * @param failed            items that ended in a failed state
-     * @param stoppedAtDeadline whether the build stopped at its deadline with work left
+     * @param generated  items that received a question
+     * @param judged     items that received a verdict
+     * @param accepted   judged items the filter accepted
+     * @param rejected   judged items the filter rejected
+     * @param failed     items that ended in a failed state
+     * @param stopReason why the build stopped
      */
-    public record BuildOutcome(int generated, int judged, int accepted, int rejected, int failed, boolean stoppedAtDeadline) {
+    public record BuildOutcome(int generated, int judged, int accepted, int rejected, int failed, StopReason stopReason) {
 
         static BuildOutcome none() {
-            return new BuildOutcome(0, 0, 0, 0, 0, false);
+            return new BuildOutcome(0, 0, 0, 0, 0, StopReason.COMPLETED);
+        }
+
+        /**
+         * Returns whether the build stopped at its deadline with work left.
+         *
+         * @return whether the deadline stopped the build
+         */
+        public boolean stoppedAtDeadline() {
+            return stopReason == StopReason.DEADLINE;
+        }
+    }
+
+    /**
+     * Why a build stopped.
+     */
+    public enum StopReason {
+
+        /** Nothing was left to generate or judge. */
+        COMPLETED,
+        /** The build reached its deadline with work left. */
+        DEADLINE,
+        /** An instructor cancelled the build. */
+        CANCELLED,
+        /** The build's lease expired and another build took over the course. */
+        LEASE_LOST;
+
+        /** The failure the build record shows for this reason, {@code null} for a completed build. */
+        @Nullable
+        String failure() {
+            return switch (this) {
+                case COMPLETED -> null;
+                case DEADLINE -> STOPPED_AT_DEADLINE;
+                case CANCELLED -> STOPPED_BY_CANCEL;
+                case LEASE_LOST -> STOPPED_LEASE_LOST;
+            };
         }
     }
 
@@ -275,8 +317,8 @@ public class HyperionQuizQuestionPoolBuildService {
             return failures.values().stream().mapToInt(Integer::intValue).sum();
         }
 
-        private BuildOutcome toOutcome(boolean stoppedAtDeadline) {
-            return new BuildOutcome(generated, judged, accepted, rejected, failedCount(), stoppedAtDeadline);
+        private BuildOutcome toOutcome(StopReason stopReason) {
+            return new BuildOutcome(generated, judged, accepted, rejected, failedCount(), stopReason);
         }
 
         @Override
@@ -503,14 +545,9 @@ public class HyperionQuizQuestionPoolBuildService {
      * Closes a build record whose build never ran because the dispatch to the executor failed.
      *
      * @param buildId the build record
-     * @param cause   the dispatch failure
      */
-    public void recordDispatchFailure(long buildId, Exception cause) {
-        recordFinish(buildId, BuildOutcome.none(), truncateFailure(cause.toString()));
-    }
-
-    private static String truncateFailure(String message) {
-        return message.length() > MAX_FAILURE_LENGTH ? message.substring(0, MAX_FAILURE_LENGTH) : message;
+    public void recordDispatchFailure(long buildId) {
+        recordFinish(buildId, BuildOutcome.none(), DISPATCH_FAILED);
     }
 
     private void recordFinish(long buildId, BuildOutcome outcome, @Nullable String failure) {
@@ -705,13 +742,11 @@ public class HyperionQuizQuestionPoolBuildService {
         String failure = null;
         try {
             outcome = build(courseId, userId, leaseToken, deadline);
-            if (outcome.stoppedAtDeadline()) {
-                failure = STOPPED_AT_DEADLINE;
-            }
+            failure = outcome.stopReason().failure();
         }
         catch (Exception e) {
             log.error("Quiz question pool build of course [{}] failed", courseId, e);
-            failure = truncateFailure(e.toString());
+            failure = BUILD_FAILED;
         }
         try {
             recordFinish(buildId, outcome, failure);
@@ -801,7 +836,8 @@ public class HyperionQuizQuestionPoolBuildService {
         else {
             log.info("Quiz question pool build of course [{}] finished after {} s; {}", courseId, seconds, counters);
         }
-        return counters.toOutcome(deadlineReached);
+        StopReason stopReason = cancelled ? StopReason.CANCELLED : deadlineReached ? StopReason.DEADLINE : leaseHeld ? StopReason.COMPLETED : StopReason.LEASE_LOST;
+        return counters.toOutcome(stopReason);
     }
 
     private Optional<QuizQuestionPoolItem> claimNext(long courseId, QuizQuestionPoolItemState from, QuizQuestionPoolItemState to) {
@@ -1199,8 +1235,8 @@ public class HyperionQuizQuestionPoolBuildService {
     }
 
     /**
-     * Removes the Markdown a model sets in a title, which is shown as plain text: backticks, bold and italic markers and dollar-sign math
-     * delimiters.
+     * Removes the Markdown a model sets in a title, which is shown as plain text: backticks, asterisk bold and italic markers and dollar-sign
+     * math delimiters. Underscores stay, since they belong to identifiers such as {@code __init__}.
      *
      * @param title the model's title, or {@code null}
      * @return the title without Markdown

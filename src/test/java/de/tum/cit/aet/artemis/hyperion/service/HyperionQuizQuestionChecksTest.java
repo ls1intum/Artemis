@@ -149,8 +149,12 @@ class HyperionQuizQuestionChecksTest {
     @Test
     void defectOf_rejectsAQuestionTextThatEnumeratesTheOptions() {
         assertThat(defectOf(question("Which method is idempotent?\n\nA) PUT\nB) POST\nC) PATCH\nD) GET", "PUT", "POST", "PATCH", "GET"))).contains(Defect.OPTIONS_IN_QUESTION_TEXT);
-        assertThat(defectOf(question("Which method is idempotent?\n- **a:** the first\n- **b:** the second", "PUT", "POST", "PATCH", "GET")))
-                .contains(Defect.OPTIONS_IN_QUESTION_TEXT);
+        assertThat(defectOf(question("Which method is idempotent?\n- **a:** PUT\n- **b:** POST", "PUT", "POST", "PATCH", "GET"))).contains(Defect.OPTIONS_IN_QUESTION_TEXT);
+    }
+
+    @Test
+    void defectOf_acceptsLabelledInputData() {
+        assertThat(defectOf(question("Two vectors are given:\nA: $(1,0)$\nB: $(0,1)$\nWhat is their dot product?", "$0$", "$1$", "$2$", "$3$"))).isEmpty();
     }
 
     @Test

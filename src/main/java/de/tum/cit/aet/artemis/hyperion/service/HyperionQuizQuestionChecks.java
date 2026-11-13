@@ -64,10 +64,10 @@ final class HyperionQuizQuestionChecks {
                             + "(tableau|table|figure|diagram|network|matrix|linear program|program|lp|code|tabelle|abbildung|graph\\w*|netzwerk|programm)\\b",
                     Pattern.CASE_INSENSITIVE);
 
-    /** A line of the question text that opens like an enumerated answer option: "A) …", "(b) …", "- C. …", "**D:** …". */
-    private static final Pattern ENUMERATED_OPTION_LINE = Pattern.compile("^\\s*(?:[-*+]\\s+)?(?:\\*\\*)?\\(?[A-Da-d][).:](?:\\*\\*)?\\s+\\S", Pattern.MULTILINE);
+    /** A line of the question text that opens like an enumerated answer option, "A) …", "(b) …", "- C. …", "**D:** …"; group 1 holds the rest of the line. */
+    private static final Pattern ENUMERATED_OPTION_LINE = Pattern.compile("^\\s*(?:[-*+]\\s+)?(?:\\*\\*)?\\(?[A-Da-d][).:](?:\\*\\*)?\\s+(\\S.*)$", Pattern.MULTILINE);
 
-    /** Enumerated option lines from which on the question text counts as listing its options. */
+    /** Enumerated lines that carry an answer option from which on the question text counts as listing its options. */
     private static final int MIN_ENUMERATED_OPTION_LINES = 2;
 
     /** Option length from which on an option found in the question text counts as repeated there. */
@@ -176,13 +176,16 @@ final class HyperionQuizQuestionChecks {
     }
 
     /**
-     * Detects a question text that lists the answer options: two or more lines that open like enumerated options, two or more options that
+     * Detects a question text that lists the answer options: two or more lines that open like enumerated options and carry an option, two or more options that
      * refer to statements of the text by number or name, or all but at most one of the options repeated in it as whole phrases. True-false questions are only checked for
      * enumerated lines, since their options
      * "True" and "False" commonly occur in the text.
      */
     private static boolean listsOptionsInQuestionText(GeneratedQuizQuestionDTO question) {
-        if (ENUMERATED_OPTION_LINE.matcher(question.questionText()).results().count() >= MIN_ENUMERATED_OPTION_LINES) {
+        List<String> options = question.options().stream().map(option -> comparable(option.text())).filter(option -> !option.isEmpty()).toList();
+        long enumeratedOptions = ENUMERATED_OPTION_LINE.matcher(question.questionText()).results().map(line -> comparable(line.group(1)))
+                .filter(line -> options.stream().anyMatch(option -> line.equals(option) || containsAsWholePhrase(line, option))).count();
+        if (enumeratedOptions >= MIN_ENUMERATED_OPTION_LINES) {
             return true;
         }
         if (question.options().stream().filter(option -> STATEMENT_REFERENCE.matcher(option.text()).find()).count() >= MIN_STATEMENT_REFERENCES) {

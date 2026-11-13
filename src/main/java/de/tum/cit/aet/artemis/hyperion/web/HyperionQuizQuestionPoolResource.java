@@ -253,6 +253,7 @@ public class HyperionQuizQuestionPoolResource {
      * @return the units
      */
     @EnforceAtLeastEditorInCourse
+    @UsageInteraction(FeatureInteraction.AUTOMATIC)
     @GetMapping("courses/{courseId}/quiz-question-pool/lecture-units")
     public ResponseEntity<List<QuizQuestionPoolLectureUnitDTO>> getQuizQuestionPoolLectureUnits(@PathVariable long courseId) {
         log.debug("REST request to get the lecture units of the Hyperion quiz question pool of course [{}]", courseId);

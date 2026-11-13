@@ -301,7 +301,8 @@ class HyperionQuizQuestionPoolBuildServiceTest {
         String leaseToken = service.tryStart(5L);
         assertThat(service.requestCancel(5L)).isTrue();
 
-        assertThat(service.build(5L, 7L, leaseToken)).isEqualTo(HyperionQuizQuestionPoolBuildService.BuildOutcome.none());
+        assertThat(service.build(5L, 7L, leaseToken))
+                .isEqualTo(new HyperionQuizQuestionPoolBuildService.BuildOutcome(0, 0, 0, 0, 0, HyperionQuizQuestionPoolBuildService.StopReason.CANCELLED));
 
         verify(itemRepository).deleteAllByCourseIdAndState(5L, QuizQuestionPoolItemState.PENDING);
         verify(itemRepository, never()).findAllByCourseIdAndState(anyLong(), any(), any());
@@ -343,6 +344,33 @@ class HyperionQuizQuestionPoolBuildServiceTest {
 
         assertThat(build.getFailure()).isEqualTo(HyperionQuizQuestionPoolBuildService.STOPPED_AT_DEADLINE);
         assertThat(service.isRunning(5L)).isFalse();
+    }
+
+    @Test
+    void buildAndRelease_recordsThatTheBuildWasCancelled() {
+        HyperionQuizQuestionPoolBuildService service = serviceWithChatClient();
+        Course course = new Course();
+        course.setId(5L);
+        when(courseRepository.findByIdElseThrow(5L)).thenReturn(course);
+        when(settingsService.getSettings(5L)).thenReturn(HyperionCourseSettings.defaultSettings());
+        QuizQuestionPoolBuild build = new QuizQuestionPoolBuild();
+        build.setId(3L);
+        when(buildRepository.findById(3L)).thenReturn(Optional.of(build));
+        String leaseToken = service.tryStart(5L);
+        service.requestCancel(5L);
+
+        service.buildAndRelease(5L, 7L, 3L, leaseToken);
+
+        assertThat(build.getFailure()).isEqualTo(HyperionQuizQuestionPoolBuildService.STOPPED_BY_CANCEL);
+        assertThat(service.isRunning(5L)).isFalse();
+    }
+
+    @Test
+    void stopReason_namesWhyAnUnfinishedBuildStopped() {
+        assertThat(HyperionQuizQuestionPoolBuildService.StopReason.COMPLETED.failure()).isNull();
+        assertThat(HyperionQuizQuestionPoolBuildService.StopReason.DEADLINE.failure()).isEqualTo(HyperionQuizQuestionPoolBuildService.STOPPED_AT_DEADLINE);
+        assertThat(HyperionQuizQuestionPoolBuildService.StopReason.CANCELLED.failure()).isEqualTo(HyperionQuizQuestionPoolBuildService.STOPPED_BY_CANCEL);
+        assertThat(HyperionQuizQuestionPoolBuildService.StopReason.LEASE_LOST.failure()).isEqualTo(HyperionQuizQuestionPoolBuildService.STOPPED_LEASE_LOST);
     }
 
     @Test
@@ -704,6 +732,7 @@ class HyperionQuizQuestionPoolBuildServiceTest {
     void plainTitle_removesMarkdownButKeepsIdentifiers() {
         assertThat(HyperionQuizQuestionPoolBuildService.plainTitle("Behavior of `continue` in a `while` loop")).isEqualTo("Behavior of continue in a while loop");
         assertThat(HyperionQuizQuestionPoolBuildService.plainTitle("**Bounds** of $n!$ and *my_var*")).isEqualTo("Bounds of n! and my_var");
+        assertThat(HyperionQuizQuestionPoolBuildService.plainTitle("Calling `__init__` twice")).isEqualTo("Calling __init__ twice");
         assertThat(HyperionQuizQuestionPoolBuildService.plainTitle(null)).isEmpty();
     }
 
@@ -757,7 +786,7 @@ class HyperionQuizQuestionPoolBuildServiceTest {
 
         assertThat(service.isRunning(5L)).isFalse();
         assertThat(build.getFinishedAt()).isNotNull();
-        assertThat(build.getFailure()).contains("no local model configured");
+        assertThat(build.getFailure()).isEqualTo(HyperionQuizQuestionPoolBuildService.BUILD_FAILED);
         verify(buildRepository).save(build);
     }
 

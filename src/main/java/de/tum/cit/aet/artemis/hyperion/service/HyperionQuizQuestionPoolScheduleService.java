@@ -133,8 +133,13 @@ public class HyperionQuizQuestionPoolScheduleService {
                 buildService.release(courseId, leaseToken);
                 continue;
             }
-            buildService.buildAndRelease(courseId, null, buildId, leaseToken, deadline);
-            built++;
+            try {
+                buildService.buildAndRelease(courseId, null, buildId, leaseToken, deadline);
+                built++;
+            }
+            catch (RuntimeException e) {
+                log.error("Scheduled quiz question pool build of course [{}] failed; the run continues with the next course", courseId, e);
+            }
         }
         log.info("Scheduled quiz question pool build finished: {} courses built", built);
         return built;

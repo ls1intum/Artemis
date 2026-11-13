@@ -139,8 +139,15 @@ public class HyperionQuizQuestionPoolService {
             taskService.runBuildAsync(courseId, userId, buildId, leaseToken);
         }
         catch (RuntimeException e) {
-            buildService.recordDispatchFailure(buildId, e);
-            buildService.release(courseId, leaseToken);
+            try {
+                buildService.recordDispatchFailure(buildId);
+            }
+            catch (RuntimeException recordFailure) {
+                e.addSuppressed(recordFailure);
+            }
+            finally {
+                buildService.release(courseId, leaseToken);
+            }
             throw e;
         }
         HyperionCourseSettings settings = buildService.settingsOfRunningBuild(courseId);

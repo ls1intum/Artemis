@@ -170,7 +170,24 @@ class HyperionQuizQuestionPoolServiceTest {
 
         assertThatThrownBy(() -> service.startBuild(course, 7L)).isSameAs(rejected);
 
-        verify(buildService).recordDispatchFailure(3L, rejected);
+        verify(buildService).recordDispatchFailure(3L);
+        verify(buildService).release(5L, "lease");
+    }
+
+    @Test
+    void startBuild_freesTheSlotAndKeepsTheDispatchFailureWhenRecordingItFails() {
+        when(buildService.tryStart(5L)).thenReturn("lease");
+        when(buildService.enqueue(course)).thenReturn(12);
+        QuizQuestionPoolBuild build = new QuizQuestionPoolBuild();
+        build.setId(3L);
+        when(buildService.recordStart(course, QuizQuestionPoolBuildTrigger.MANUAL, 12)).thenReturn(build);
+        TaskRejectedException rejected = new TaskRejectedException("executor queue full");
+        doThrow(rejected).when(taskService).runBuildAsync(5L, 7L, 3L, "lease");
+        IllegalStateException recordFailure = new IllegalStateException("database unavailable");
+        doThrow(recordFailure).when(buildService).recordDispatchFailure(3L);
+
+        assertThatThrownBy(() -> service.startBuild(course, 7L)).isSameAs(rejected).hasSuppressedException(recordFailure);
+
         verify(buildService).release(5L, "lease");
     }
 
