@@ -53,7 +53,7 @@
                 // picked by an annotation instead, so it has to scan everything: the global setting applies to its group too.
                 "-Dspringdoc.packages-to-scan=" + (openApiGroup
                     ? "de.tum.cit.aet.artemis"
-                    : "de.tum.cit.aet.artemis.aiworker.web,de.tum.cit.aet.artemis.tutorialgroup.web,de.tum.cit.aet.artemis.hyperion.web,de.tum.cit.aet.artemis.calendar.web,de.tum.cit.aet.artemis.globalsearch.web,de.tum.cit.aet.artemis.quiz.web"),
+                    : "de.tum.cit.aet.artemis.aiworker.web,de.tum.cit.aet.artemis.tutorialgroup.web,de.tum.cit.aet.artemis.hyperion.web,de.tum.cit.aet.artemis.calendar.web,de.tum.cit.aet.artemis.globalsearch.web,de.tum.cit.aet.artemis.quiz.web,de.tum.cit.aet.artemis.communication.web"),
                 // Legacy URL aliases stay mapped in Java for old clients (canonical path first, legacy second), but are kept out
                 // of the specification: in the generated client each alias would become a name/name_ method pair.
                 "-Dspringdoc.paths-to-exclude=/api/quiz/quiz-exercises/*/start-batch,/api/tutorialgroup/courses/*/tutorial-groups-configuration,/api/tutorialgroup/courses/*/tutorial-groups-configuration/**",
@@ -76,6 +76,40 @@
                 "-Dspring.jpa.hibernate.ddl-auto=create",
                 "-Dspring.main.banner-mode=off"
             ]
+
+            if (!openApiGroup) {
+                // Limit the communication package to the migrated channel and group chat operations.
+                jvmArgs.add("-Dspringdoc.paths-to-match=" + [
+                    "/api/aiworker/**",
+                    "/api/calendar/**",
+                    "/api/global-search/**",
+                    "/api/search/**",
+                    "/api/hyperion/**",
+                    "/api/quiz/**",
+                    "/api/tutorialgroup/**",
+                    "/api/communication/courses/{courseId}/channels/overview",
+                    "/api/communication/courses/{courseId}/channels/overview/for-staff",
+                    "/api/communication/courses/{courseId}/channels/overview/for-instructor",
+                    "/api/communication/courses/{courseId}/channels/public-overview",
+                    "/api/communication/courses/{courseId}/exercises/{exerciseId}/channel",
+                    "/api/communication/courses/{courseId}/lectures/{lectureId}/channel",
+                    "/api/communication/courses/{courseId}/channels",
+                    "/api/communication/courses/{courseId}/channels/{channelId}",
+                    "/api/communication/courses/{courseId}/channels/{channelId}/archive",
+                    "/api/communication/courses/{courseId}/channels/{channelId}/unarchive",
+                    "/api/communication/courses/{courseId}/channels/{channelId}/grant-channel-moderator",
+                    "/api/communication/courses/{courseId}/channels/{channelId}/revoke-channel-moderator",
+                    "/api/communication/courses/{courseId}/channels/{channelId}/register",
+                    "/api/communication/courses/{courseId}/channels/{channelId}/deregister",
+                    "/api/communication/courses/{courseId}/channels/{channelId}/toggle-privacy",
+                    "/api/communication/courses/{courseId}/exercises/{exerciseId}/feedback-channel",
+                    "/api/communication/courses/{courseId}/channels/mark-as-read",
+                    "/api/communication/courses/{courseId}/group-chats",
+                    "/api/communication/courses/{courseId}/group-chats/{groupChatId}",
+                    "/api/communication/courses/{courseId}/group-chats/{groupChatId}/register",
+                    "/api/communication/courses/{courseId}/group-chats/{groupChatId}/deregister"
+                ].join(","))
+            }
 
             // TODO add package later add ${System.getProperty("springdoc.packages-to-scan")} package via cli property
             args.set([

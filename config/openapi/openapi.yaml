@@ -425,6 +425,84 @@ paths:
           content:
             application/json:
               schema: {$ref: '#/components/schemas/QuizQuestionPoolItem'}
+  /api/communication/courses/{courseId}/group-chats/{groupChatId}:
+    put:
+      tags: [group-chat]
+      operationId: updateGroupChat
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: groupChatId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/GroupChat'}
+        required: true
+      responses:
+        '200':
+          description: OK
+          headers:
+            X-Frame-Options:
+              description: Always DENY, set by the security configuration
+              style: simple
+              schema: {type: string}
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/GroupChat'}
+  /api/communication/courses/{courseId}/channels/{channelId}:
+    put:
+      tags: [channel]
+      operationId: updateChannel
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: channelId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/Channel'}
+        required: true
+      responses:
+        '200':
+          description: OK
+          headers:
+            X-Frame-Options:
+              description: Always DENY, set by the security configuration
+              style: simple
+              schema: {type: string}
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Channel'}
+    delete:
+      tags: [channel]
+      operationId: deleteChannel
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: channelId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          headers:
+            X-Frame-Options:
+              description: Always DENY, set by the security configuration
+              style: simple
+              schema: {type: string}
   /api/tutorialgroup/courses/{courseId}/tutorial-groups:
     get:
       tags: [tutorial-group]
@@ -1333,6 +1411,341 @@ paths:
                 type: array
                 items: {type: string, maxLength: 128}
                 maxItems: 500
+  /api/communication/courses/{courseId}/group-chats:
+    post:
+      tags: [group-chat]
+      operationId: startGroupChat
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/GroupChatCreation'}
+        required: true
+      responses:
+        '201':
+          description: The created group chat
+          headers:
+            Location:
+              description: Legacy location of the created group chat, /api/group-chats/{id}
+              style: simple
+              schema: {type: string}
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/GroupChat'}
+  /api/communication/courses/{courseId}/group-chats/{groupChatId}/register:
+    post:
+      tags: [group-chat]
+      operationId: registerUsersToGroupChat
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: groupChatId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: array
+              items: {type: string}
+        required: true
+      responses:
+        '200':
+          description: OK
+          headers:
+            X-Frame-Options:
+              description: Always DENY, set by the security configuration
+              style: simple
+              schema: {type: string}
+  /api/communication/courses/{courseId}/group-chats/{groupChatId}/deregister:
+    post:
+      tags: [group-chat]
+      operationId: deregisterUsersFromGroupChat
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: groupChatId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: array
+              items: {type: string}
+        required: true
+      responses:
+        '200':
+          description: OK
+          headers:
+            X-Frame-Options:
+              description: Always DENY, set by the security configuration
+              style: simple
+              schema: {type: string}
+  /api/communication/courses/{courseId}/exercises/{exerciseId}/feedback-channel:
+    post:
+      tags: [channel]
+      operationId: createFeedbackChannel
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: exerciseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/FeedbackChannelRequest'}
+        required: true
+      responses:
+        '201':
+          description: The created channel
+          headers:
+            Location:
+              description: Legacy location of the created channel, /api/channels/{id}
+              style: simple
+              schema: {type: string}
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Channel'}
+  /api/communication/courses/{courseId}/channels:
+    post:
+      tags: [channel]
+      operationId: createChannel
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/Channel'}
+        required: true
+      responses:
+        '201':
+          description: The created channel
+          headers:
+            Location:
+              description: Legacy location of the created channel, /api/channels/{id}
+              style: simple
+              schema: {type: string}
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Channel'}
+  /api/communication/courses/{courseId}/channels/{channelId}/unarchive:
+    post:
+      tags: [channel]
+      operationId: unArchiveChannel
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: channelId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          headers:
+            X-Frame-Options:
+              description: Always DENY, set by the security configuration
+              style: simple
+              schema: {type: string}
+  /api/communication/courses/{courseId}/channels/{channelId}/toggle-privacy:
+    post:
+      tags: [channel]
+      operationId: toggleChannelPrivacy
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: channelId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          headers:
+            X-Frame-Options:
+              description: Always DENY, set by the security configuration
+              style: simple
+              schema: {type: string}
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Channel'}
+  /api/communication/courses/{courseId}/channels/{channelId}/revoke-channel-moderator:
+    post:
+      tags: [channel]
+      operationId: revokeChannelModeratorRole
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: channelId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: array
+              items: {type: string}
+        required: true
+      responses:
+        '200':
+          description: OK
+          headers:
+            X-Frame-Options:
+              description: Always DENY, set by the security configuration
+              style: simple
+              schema: {type: string}
+  /api/communication/courses/{courseId}/channels/{channelId}/register:
+    post:
+      tags: [channel]
+      operationId: registerUsersToChannel
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: channelId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: addAllStudents
+        in: query
+        required: false
+        schema: {type: boolean, default: false}
+      - name: addAllTutors
+        in: query
+        required: false
+        schema: {type: boolean, default: false}
+      - name: addAllInstructors
+        in: query
+        required: false
+        schema: {type: boolean, default: false}
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: array
+              items: {type: string}
+      responses:
+        '200':
+          description: OK
+          headers:
+            X-Frame-Options:
+              description: Always DENY, set by the security configuration
+              style: simple
+              schema: {type: string}
+  /api/communication/courses/{courseId}/channels/{channelId}/grant-channel-moderator:
+    post:
+      tags: [channel]
+      operationId: grantChannelModeratorRole
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: channelId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: array
+              items: {type: string}
+        required: true
+      responses:
+        '200':
+          description: OK
+          headers:
+            X-Frame-Options:
+              description: Always DENY, set by the security configuration
+              style: simple
+              schema: {type: string}
+  /api/communication/courses/{courseId}/channels/{channelId}/deregister:
+    post:
+      tags: [channel]
+      operationId: deregisterUsers
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: channelId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: array
+              items: {type: string}
+        required: true
+      responses:
+        '200':
+          description: OK
+          headers:
+            X-Frame-Options:
+              description: Always DENY, set by the security configuration
+              style: simple
+              schema: {type: string}
+  /api/communication/courses/{courseId}/channels/{channelId}/archive:
+    post:
+      tags: [channel]
+      operationId: archiveChannel
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: channelId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          headers:
+            X-Frame-Options:
+              description: Always DENY, set by the security configuration
+              style: simple
+              schema: {type: string}
+  /api/communication/courses/{courseId}/channels/mark-as-read:
+    post:
+      tags: [channel]
+      operationId: markAllChannelsOfCourseAsRead
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200': {description: OK}
   /api/tutorialgroup/courses/{courseId}/tutorial-groups/{tutorialGroupId}/sessions/{sessionId}/cancel:
     patch:
       tags: [tutorial-group-session]
@@ -2259,6 +2672,144 @@ paths:
           content:
             application/json:
               schema: {$ref: '#/components/schemas/CourseBrowserData'}
+  /api/communication/courses/{courseId}/lectures/{lectureId}/channel:
+    get:
+      tags: [channel]
+      operationId: getLectureChannel
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: lectureId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: The lecture channel. The response body is empty if the lecture
+            has no channel.
+          headers:
+            X-Frame-Options:
+              description: Always DENY, set by the security configuration
+              style: simple
+              schema: {type: string}
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Channel'}
+  /api/communication/courses/{courseId}/exercises/{exerciseId}/channel:
+    get:
+      tags: [channel]
+      operationId: getExerciseChannel
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: exerciseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: The exercise channel. The response body is empty if the exercise
+            has no channel.
+          headers:
+            X-Frame-Options:
+              description: Always DENY, set by the security configuration
+              style: simple
+              schema: {type: string}
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Channel'}
+  /api/communication/courses/{courseId}/channels/public-overview:
+    get:
+      tags: [channel]
+      operationId: getCoursePublicChannelsOverview
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          headers:
+            X-Frame-Options:
+              description: Always DENY, set by the security configuration
+              style: simple
+              schema: {type: string}
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/ChannelIdAndName'}
+  /api/communication/courses/{courseId}/channels/overview:
+    get:
+      tags: [channel]
+      operationId: getCourseChannelsOverview
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          headers:
+            X-Frame-Options:
+              description: Always DENY, set by the security configuration
+              style: simple
+              schema: {type: string}
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/Channel'}
+  /api/communication/courses/{courseId}/channels/overview/for-staff:
+    get:
+      tags: [channel]
+      operationId: getCourseChannelsOverviewForStaff
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          headers:
+            X-Frame-Options:
+              description: Always DENY, set by the security configuration
+              style: simple
+              schema: {type: string}
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/Channel'}
+  /api/communication/courses/{courseId}/channels/overview/for-instructor:
+    get:
+      tags: [channel]
+      operationId: getCourseChannelsOverviewForInstructor
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          headers:
+            X-Frame-Options:
+              description: Always DENY, set by the security configuration
+              style: simple
+              schema: {type: string}
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/Channel'}
   /api/calendar/subscription-token:
     get:
       tags: [calendar]
@@ -2822,12 +3373,6 @@ components:
         quizQuestions:
           type: array
           items: {$ref: '#/components/schemas/QuizQuestionFromEditor'}
-    ChannelSubTypeReferenceDates:
-      type: object
-      properties:
-        channelId: {type: integer, format: int64}
-        startDate: {type: string, format: date-time}
-        endDate: {type: string, format: date-time}
     ExerciseGenerationEvent:
       type: object
       description: A progress event streamed to the instructor while an agentic whole-exercise
@@ -3537,6 +4082,15 @@ components:
           type: string
           default: live-quiz
           enum: [live-quiz]
+    FeedbackChannelRequest:
+      type: object
+      properties:
+        channel: {$ref: '#/components/schemas/Channel'}
+        feedbackDetailTexts:
+          type: array
+          items: {type: string}
+        testCaseName: {type: string}
+      required: [channel, feedbackDetailTexts]
     QuizQuestionReEvaluate:
       discriminator:
         propertyName: type
@@ -4567,6 +5121,14 @@ components:
         dragItems:
           type: array
           items: {$ref: '#/components/schemas/DragItem'}
+    GroupChatCreation:
+      type: object
+      properties:
+        memberLogins:
+          type: array
+          description: Logins of the starting members, excluding the requesting user
+          items: {type: string}
+      required: [memberLogins]
     MultipleChoiceQuestionReEvaluate:
       required: [answerOptions, id, invalid, randomizeOrder, scoringType, title, type]
       type: object
@@ -4852,6 +5414,32 @@ components:
         difficulty: {type: integer, format: int32, description: Difficulty as a value
             from 0 to 100, maximum: 100, minimum: 0}
       required: [difficulty, language, numberOfQuestions, questionTypes]
+    GroupChat:
+      type: object
+      properties:
+        type: {type: string, description: Conversation subtype. Send channel in channel
+            requests and groupChat in group chat updates.}
+        id: {type: integer, format: int64}
+        creationDate: {type: string, format: date-time}
+        lastMessageDate: {type: string, format: date-time, description: 'Time of the
+            last message, if one exists'}
+        creator: {$ref: '#/components/schemas/ConversationUser', description: 'User
+            who created the conversation, if it has a creator'}
+        lastReadDate: {type: string, format: date-time, description: 'Last read time,
+            when set for the requesting participant'}
+        unreadMessagesCount: {type: integer, format: int64, description: 'Unread message
+            count for the requesting participant, when available'}
+        isFavorite: {type: boolean}
+        isHidden: {type: boolean}
+        isMuted: {type: boolean}
+        isCreator: {type: boolean}
+        isMember: {type: boolean}
+        numberOfMembers: {type: integer, format: int32}
+        name: {type: string}
+        members:
+          type: array
+          items: {$ref: '#/components/schemas/ConversationUser'}
+          uniqueItems: true
     TutorialGroupSummarySession:
       type: object
       properties:
@@ -5431,13 +6019,18 @@ components:
     Channel:
       type: object
       properties:
-        type: {type: string}
+        type: {type: string, description: Conversation subtype. Send channel in channel
+            requests and groupChat in group chat updates.}
         id: {type: integer, format: int64}
         creationDate: {type: string, format: date-time}
-        lastMessageDate: {type: string, format: date-time}
-        creator: {$ref: '#/components/schemas/ConversationUser'}
-        lastReadDate: {type: string, format: date-time}
-        unreadMessagesCount: {type: integer, format: int64}
+        lastMessageDate: {type: string, format: date-time, description: 'Time of the
+            last message, if one exists'}
+        creator: {$ref: '#/components/schemas/ConversationUser', description: 'User
+            who created the conversation, if it has a creator'}
+        lastReadDate: {type: string, format: date-time, description: 'Last read time,
+            when set for the requesting participant'}
+        unreadMessagesCount: {type: integer, format: int64, description: 'Unread message
+            count for the requesting participant, when available'}
         isFavorite: {type: boolean}
         isHidden: {type: boolean}
         isMuted: {type: boolean}
@@ -5453,17 +6046,21 @@ components:
         isCourseWide: {type: boolean}
         hasChannelModerationRights: {type: boolean}
         isChannelModerator: {type: boolean}
-        tutorialGroupId: {type: integer, format: int64}
-        tutorialGroupTitle: {type: string}
+        tutorialGroupId: {type: integer, format: int64, description: 'ID of the associated
+            tutorial group, if any'}
+        tutorialGroupTitle: {type: string, description: 'Title of the associated tutorial
+            group, if any'}
         subType:
           type: string
           enum: [general, exercise, lecture, exam, feedbackDiscussion]
-        subTypeReferenceId: {type: integer, format: int64}
-        subTypeReferenceStartDate: {type: string, format: date-time}
-        subTypeReferenceEndDate: {type: string, format: date-time}
-        subTypeWithReferenceFromChannel: {$ref: '#/components/schemas/Channel', writeOnly: true}
-        subTypeReferenceDates: {$ref: '#/components/schemas/ChannelSubTypeReferenceDates',
-          writeOnly: true}
+        subTypeReferenceId: {type: integer, format: int64, description: 'ID of the
+            referenced exercise, lecture or exam, if any'}
+        subTypeReferenceStartDate: {type: string, format: date-time, description: 'Exercise
+            release, lecture start or exam start. Present in channel overviews when
+            the referenced date exists.'}
+        subTypeReferenceEndDate: {type: string, format: date-time, description: 'Exercise
+            due, lecture end or exam end. Present in channel overviews when the referenced
+            date exists.'}
     ShortAnswerQuizQuestionWithSolution:
       required: [type]
       type: object
@@ -5494,16 +6091,6 @@ components:
         correctMappings:
           type: array
           items: {$ref: '#/components/schemas/ShortAnswerMapping'}
-    ExamSeat:
-      type: object
-      properties:
-        name: {type: string}
-        condition:
-          type: string
-          enum: [USABLE, NO_TABLE, DEFECT, WHEELCHAIR]
-        x: {type: number, format: double, minimum: 0}
-        y: {type: number, format: double, minimum: 0}
-      required: [condition, name]
     TutorialGroupStudent:
       type: object
       properties:
@@ -5587,6 +6174,12 @@ components:
         comments:
           type: array
           items: {type: string}
+    ChannelIdAndName:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        name: {type: string}
+      required: [id, name]
     SubmittedAnswerFromStudent:
       discriminator:
         propertyName: type
