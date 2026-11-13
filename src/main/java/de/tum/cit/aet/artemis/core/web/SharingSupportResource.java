@@ -102,6 +102,7 @@ public class SharingSupportResource {
         final String BEARER_PREFIX = "Bearer ";
         final Optional<String> token = sharingApiKey.map(key -> key.startsWith(BEARER_PREFIX) ? key.substring(BEARER_PREFIX.length()) : key);
         if (token.isPresent() && sharingConnectorService.validateApiKey(token.get())) {
+            rateLimitService.refundServiceCredentialBudget();
             log.info("Delivered Sharing Config");
             URL parsedApiBaseUrl;
             try {
@@ -122,7 +123,6 @@ public class SharingSupportResource {
             }
             return ResponseEntity.ok(sharingConnectorService.getPluginConfig(parsedApiBaseUrl, installationName));
         }
-        rateLimitService.recordServiceCredentialFailure();
         log.warn("Received wrong or missing api key");
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
     }

@@ -27,7 +27,6 @@ import inet.ipaddr.IPAddressString;
 import io.github.bucket4j.Bucket;
 import io.github.bucket4j.BucketConfiguration;
 import io.github.bucket4j.ConsumptionProbe;
-import io.github.bucket4j.EstimationProbe;
 import io.github.bucket4j.distributed.proxy.ProxyManager;
 
 @Profile(PROFILE_CORE)
@@ -146,11 +145,11 @@ public class RateLimitService {
     }
 
     /**
-     * Refuses a request for a key that has used up its budget, without spending any of it.
+     * Reserves one token of the budget of a key before the work starts, and refuses the request when none is left.
      * <p>
-     * For a limit that is not about the client address but about what is being tried, such as the failed password logins of one account. It pairs with
-     * {@link #recordFailure}: the caller checks here before it does the work, and records a failure afterwards. Exempt client addresses are not consulted, as the key
-     * is not an address.
+     * For a limit that is not about the client address but about what is being tried, such as the failed password logins of one account. The token is taken
+     * before the credentials are verified, so that concurrent requests cannot all pass a check that has not spent anything yet. The caller gives the token
+     * back with {@link #refundBudget} when the verification does not count as a failure. Exempt client addresses are not consulted, as the key is not an address.
      *
      * @param key     what is limited, for example the lower-cased login name
      * @param rpmType the rate limit type to determine the RPM configuration
@@ -160,8 +159,8 @@ public class RateLimitService {
         if (isSwitchedOff(rpmType)) {
             return;
         }
-        EstimationProbe probe = getOrCreatePerMinuteBucket(key, rpmType, configurationService.getEffectiveRpm(rpmType)).estimateAbilityToConsume(1);
-        if (!probe.canBeConsumed()) {
+        ConsumptionProbe probe = getOrCreatePerMinuteBucket(key, rpmType, configurationService.getEffectiveRpm(rpmType)).tryConsumeAndReturnRemaining(1);
+        if (!probe.isConsumed()) {
             long seconds = Math.max(1, probe.getNanosToWaitForRefill() / 1_000_000_000L);
             log.warn("Rate limit exceeded for a key at {}, retry after {} seconds", rpmType.name(), seconds);
             throw new RateLimitExceededException(seconds);
@@ -169,38 +168,36 @@ public class RateLimitService {
     }
 
     /**
-     * Refuses a check of a shared secret of an external service when the calling address has used up its budget of failed checks.
-     * <p>
-     * Call this before comparing the secret and {@link #recordServiceCredentialFailure()} when the comparison fails. A caller that
-     * presents the right secret spends nothing. The address is the TCP peer, which a sender cannot choose.
-     *
-     * @throws RateLimitExceededException if the address has used up its budget of failed checks
-     */
-    public void requireServiceCredentialBudget() {
-        if (!hasRemainingBudget(resolvePeerId(), RateLimitType.SERVICE_CREDENTIAL_FAILURE)) {
-            log.warn("Too many failed service credential checks, refusing the check");
-            throw new RateLimitExceededException(60);
-        }
-    }
-
-    /**
-     * Spends one token of the budget of a key, without throwing when it is already empty. The counterpart of {@link #enforceBudget}.
+     * Gives back the token that {@link #enforceBudget} reserved, because the verification succeeded or failed for a reason that does not count.
      *
      * @param key     what is limited, for example the lower-cased login name
      * @param rpmType the rate limit type to determine the RPM configuration
      */
-    public void recordFailure(String key, RateLimitType rpmType) {
+    public void refundBudget(String key, RateLimitType rpmType) {
         if (isSwitchedOff(rpmType)) {
             return;
         }
-        getOrCreatePerMinuteBucket(key, rpmType, configurationService.getEffectiveRpm(rpmType)).tryConsume(1);
+        getOrCreatePerMinuteBucket(key, rpmType, configurationService.getEffectiveRpm(rpmType)).addTokens(1);
     }
 
     /**
-     * Spends one token of the budget of failed checks of the calling address, see {@link #requireServiceCredentialBudget()}.
+     * Reserves one token of the budget of failed checks of a shared secret of an external service for the calling address, and refuses the check when the
+     * address has used up its budget.
+     * <p>
+     * Call this before comparing the secret and {@link #refundServiceCredentialBudget()} when the comparison succeeds, so that a caller that presents the right
+     * secret spends nothing. The address is the TCP peer, which a sender cannot choose.
+     *
+     * @throws RateLimitExceededException if the address has used up its budget of failed checks
      */
-    public void recordServiceCredentialFailure() {
-        consumePerMinute(resolvePeerId(), RateLimitType.SERVICE_CREDENTIAL_FAILURE);
+    public void requireServiceCredentialBudget() {
+        enforcePerMinute(resolvePeerId(), RateLimitType.SERVICE_CREDENTIAL_FAILURE);
+    }
+
+    /**
+     * Gives back the token reserved by {@link #requireServiceCredentialBudget()}, because the secret was right.
+     */
+    public void refundServiceCredentialBudget() {
+        refundPerMinute(resolvePeerId(), RateLimitType.SERVICE_CREDENTIAL_FAILURE);
     }
 
     /**

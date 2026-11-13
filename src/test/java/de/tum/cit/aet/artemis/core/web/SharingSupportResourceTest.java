@@ -37,21 +37,21 @@ class SharingSupportResourceTest {
     }
 
     @Test
-    void testWrongKeyIsCounted() {
+    void testWrongKeyKeepsTheReservedToken() {
         when(connectorService.validateApiKey("wrong")).thenReturn(false);
 
         var response = resource.getConfig(Optional.of("Bearer wrong"), "https://sharing.example.org", Optional.empty());
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
-        verify(rateLimitService).recordServiceCredentialFailure();
+        verify(rateLimitService, never()).refundServiceCredentialBudget();
     }
 
     @Test
-    void testMissingKeyIsCounted() {
+    void testMissingKeyKeepsTheReservedToken() {
         var response = resource.getConfig(Optional.empty(), "https://sharing.example.org", Optional.empty());
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
-        verify(rateLimitService).recordServiceCredentialFailure();
+        verify(rateLimitService, never()).refundServiceCredentialBudget();
     }
 
     @Test

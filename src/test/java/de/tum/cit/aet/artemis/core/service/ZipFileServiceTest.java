@@ -216,8 +216,8 @@ class ZipFileServiceTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     /**
-     * An entry name with a NUL character is not a valid path. It has to be reported as the declared {@link IOException}, like the other rejected names, and not as an unchecked
-     * exception.
+     * An entry name with a NUL character is not a valid path. It has to be reported as a client error, like the other limits of the archive, and not as an I/O failure of the
+     * server.
      */
     @Test
     void testExtractZipFileRecursively_rejectsEntryNameWithNulCharacter() throws IOException {
@@ -229,7 +229,7 @@ class ZipFileServiceTest extends AbstractSpringIntegrationIndependentTest {
             zipOutputStream.closeEntry();
         }
 
-        assertThatExceptionOfType(IOException.class).isThrownBy(() -> zipFileService.extractZipFileRecursively(zip)).withMessageContaining("invalid name");
+        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> zipFileService.extractZipFileRecursively(zip)).withMessageContaining("invalid name");
     }
 
     @Test

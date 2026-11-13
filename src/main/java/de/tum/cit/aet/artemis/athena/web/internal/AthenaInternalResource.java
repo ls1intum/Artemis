@@ -64,10 +64,10 @@ public class AthenaInternalResource {
     private void checkAthenaSecret(String incomingSecret) {
         rateLimitService.requireServiceCredentialBudget();
         if (!athenaSecretConfigured || !StringUtils.hasText(incomingSecret) || !MessageDigest.isEqual(athenaSecretHash, hashSha256(incomingSecret))) {
-            rateLimitService.recordServiceCredentialFailure();
             log.error("Athena secret does not match");
             throw new AccessForbiddenException("Athena secret does not match");
         }
+        rateLimitService.refundServiceCredentialBudget();
     }
 
     /**

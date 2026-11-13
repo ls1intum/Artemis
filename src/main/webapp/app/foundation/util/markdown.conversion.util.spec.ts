@@ -361,6 +361,17 @@ describe('markdown.conversion.util', () => {
                 expect(result).not.toContain('onerror');
             });
 
+            it('should keep only the placement of a formula and no other style, also on elements that claim a formula class', () => {
+                const formula = htmlForMarkdown('$x^2$');
+                expect(formula).toContain('style="');
+
+                const forged = htmlForMarkdown('<span class="katex" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: red">x</span>');
+                expect(forged).not.toContain('position');
+                expect(forged).not.toContain('background');
+                expect(forged).not.toContain('100vw');
+                expect(forged).not.toContain('100vh');
+            });
+
             it('should sanitize style tags', () => {
                 const result = htmlForMarkdown('<style>body { display: none; }</style>');
                 expect(result).not.toContain('<style>');

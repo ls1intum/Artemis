@@ -1190,6 +1190,21 @@ class ChannelIntegrationTest extends AbstractConversationTest {
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
+    void createFeedbackChannel_asEditor_announcementChannelShouldReturnForbidden() throws Exception {
+        ChannelDTO channelDTO = new ChannelDTO();
+        channelDTO.setName("feedback-announcements");
+        channelDTO.setDescription("Announcements about feedback");
+        channelDTO.setIsPublic(true);
+        channelDTO.setIsAnnouncementChannel(true);
+        channelDTO.setIsCourseWide(false);
+
+        FeedbackChannelRequestDTO feedbackChannelRequest = new FeedbackChannelRequestDTO(channelDTO, List.of("Sample feedback text"), "Sample testName");
+
+        request.postWithoutResponseBody("/api/communication/courses/" + exampleCourseId + "/exercises/1/feedback-channel", feedbackChannelRequest, HttpStatus.FORBIDDEN);
+    }
+
+    @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void shouldMarkAllChannelsAsReadWhenCallingResource() throws Exception {
         // ensure there exist at least two channel with unread messages in the course

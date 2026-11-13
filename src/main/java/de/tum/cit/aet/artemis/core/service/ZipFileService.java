@@ -268,7 +268,8 @@ public class ZipFileService {
      * @param zipPath   the zip file to extract
      * @param targetDir the directory to extract into (must already exist)
      * @param budget    the limits that the extraction has left
-     * @throws IOException if an entry escapes the target directory, has a name that is not a valid path, or extraction fails
+     * @throws IOException              if an entry escapes the target directory or extraction fails
+     * @throws BadRequestAlertException if an entry has a name that is not a valid path or the archive exceeds the limits
      */
     private static void extractZipFile(Path zipPath, Path targetDir, ExtractionBudget budget) throws IOException {
         Path normalizedTarget = targetDir.toAbsolutePath().normalize();
@@ -283,7 +284,7 @@ public class ZipFileService {
                     resolved = normalizedTarget.resolve(entry.getName()).normalize();
                 }
                 catch (InvalidPathException e) {
-                    throw new IOException("Blocked zip entry with an invalid name: " + entry.getName().replace('\0', '?'), e);
+                    throw new BadRequestAlertException("The zip file contains an entry with an invalid name", "zipFile", "zipInvalidEntryName");
                 }
                 if (!resolved.startsWith(normalizedTarget)) {
                     throw new IOException("Blocked zip entry outside the target directory (zip slip): " + entry.getName());

@@ -156,13 +156,44 @@ const MARKDOWN_FORBIDDEN_TAGS = ['style', 'form', 'input', 'button', 'select', '
 /** Attributes that only make sense on form controls or that retarget a request. */
 const MARKDOWN_FORBIDDEN_ATTRIBUTES = ['form', 'formaction', 'action', 'formmethod', 'formtarget'];
 
+/** The style properties KaTeX uses to place its glyphs, with the length values it writes. */
+const FORMULA_STYLE_PROPERTIES = new Set([
+    'height',
+    'width',
+    'min-width',
+    'top',
+    'vertical-align',
+    'margin-left',
+    'margin-right',
+    'padding-left',
+    'border-bottom-width',
+    'border-top-width',
+]);
+const FORMULA_STYLE_LENGTH = /^-?\d*\.?\d+(em|ex|px|%)?$/;
+
+/** The declarations of a style attribute that a formula needs, so that the class of an element is not trusted to carry arbitrary styles. */
+function formulaStyle(style: string): string {
+    return style
+        .split(';')
+        .map((declaration) => declaration.split(':').map((part) => part.trim()))
+        .filter(([property, value]) => FORMULA_STYLE_PROPERTIES.has(property.toLowerCase()) && FORMULA_STYLE_LENGTH.test(value ?? ''))
+        .map(([property, value]) => `${property}:${value}`)
+        .join(';');
+}
+
 /**
- * Restricts attributes of the sanitized tree. Inline `style` is kept only inside formulas, because KaTeX positions its
- * glyphs with it, or where the caller lists `style` as an allowed attribute. Images are requested without a referrer, so the address of the page does not reach the image host.
+ * Restricts attributes of the sanitized tree. Inline `style` is kept only inside formulas, because KaTeX positions its glyphs with it, and even there only the
+ * placement properties with plain lengths. It is also kept where the caller lists `style` as an allowed attribute. Images are requested without a referrer, so
+ * the address of the page does not reach the image host.
  */
 function restrictRenderedAttributes(node: Element, keepStyle = false): void {
-    if (!keepStyle && node.hasAttribute?.('style') && !node.closest?.('[class*="katex"]')) {
-        node.removeAttribute('style');
+    if (!keepStyle && node.hasAttribute?.('style')) {
+        const allowedStyle = node.closest?.('[class*="katex"]') ? formulaStyle(node.getAttribute('style') ?? '') : '';
+        if (allowedStyle) {
+            node.setAttribute('style', allowedStyle);
+        } else {
+            node.removeAttribute('style');
+        }
     }
     if (node.tagName === 'IMG') {
         node.setAttribute('referrerpolicy', 'no-referrer');

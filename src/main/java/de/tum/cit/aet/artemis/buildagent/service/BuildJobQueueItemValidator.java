@@ -44,6 +44,11 @@ final class BuildJobQueueItemValidator {
             }
         }
         String[] checkoutDirectories = repositoryInfo.auxiliaryRepositoryCheckoutDirectories();
+        int auxiliaryRepositoryCount = auxiliaryRepositoryUris == null ? 0 : auxiliaryRepositoryUris.length;
+        int checkoutDirectoryCount = checkoutDirectories == null ? 0 : checkoutDirectories.length;
+        if (auxiliaryRepositoryCount != checkoutDirectoryCount) {
+            throw new LocalCIException("The build job does not contain one checkout directory for each auxiliary repository");
+        }
         if (checkoutDirectories != null) {
             for (String checkoutDirectory : checkoutDirectories) {
                 validateCheckoutPath(checkoutDirectory);

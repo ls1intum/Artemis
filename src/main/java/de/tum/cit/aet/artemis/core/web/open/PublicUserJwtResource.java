@@ -122,6 +122,7 @@ public class PublicUserJwtResource {
         try {
             authenticationToken.setDetails(Pair.of("userAgent", userAgent));
             Authentication authentication = authenticationManager.authenticate(authenticationToken);
+            rateLimitService.refundBudget(failedLoginKey, RateLimitType.FAILED_LOGIN);
             SecurityContextHolder.getContext().setAuthentication(authentication);
             boolean rememberMe = loginVM.isRememberMe() != null && loginVM.isRememberMe();
 
@@ -137,7 +138,6 @@ public class PublicUserJwtResource {
             // refused with it too, and on an LDAP instance so is a login the directory does not know - and without the
             // message those cases are indistinguishable in the log.
             log.warn("Wrong credentials during login for user {}: {}", loginVM.getUsername(), ex.getMessage());
-            rateLimitService.recordFailure(failedLoginKey, RateLimitType.FAILED_LOGIN);
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
         catch (UserNotActivatedException | ProviderNotFoundException | AccountStatusException ex) {
@@ -154,11 +154,16 @@ public class PublicUserJwtResource {
             // be processed - a directory that is unreachable, a repository that failed - and answering that with 401 would
             // hide an outage behind "wrong credentials". It stays a 500, which is what it is.
             log.warn("Login for user {} was refused ({}): {}", loginVM.getUsername(), ex.getClass().getSimpleName(), ex.getMessage());
-            // An unknown login ends here as ProviderNotFoundException, so that trying names is throttled like trying passwords
-            if (ex instanceof ProviderNotFoundException) {
-                rateLimitService.recordFailure(failedLoginKey, RateLimitType.FAILED_LOGIN);
+            // An unknown login ends here as ProviderNotFoundException and keeps the reserved token, so that trying names is throttled like trying passwords
+            if (!(ex instanceof ProviderNotFoundException)) {
+                rateLimitService.refundBudget(failedLoginKey, RateLimitType.FAILED_LOGIN);
             }
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        catch (RuntimeException ex) {
+            // The login failed for a reason that is not about the credentials, so it does not count against the budget
+            rateLimitService.refundBudget(failedLoginKey, RateLimitType.FAILED_LOGIN);
+            throw ex;
         }
     }
 

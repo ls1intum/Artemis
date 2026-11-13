@@ -209,8 +209,8 @@ public class PyrisInternalIngestionWorkerResource {
         rateLimitService.requireServiceCredentialBudget();
         String header = request.getHeader(HttpHeaders.AUTHORIZATION);
         if (header == null || pyrisSecretToken == null || !MessageDigest.isEqual(hashSha256(header), hashSha256(pyrisSecretToken))) {
-            rateLimitService.recordServiceCredentialFailure();
             throw new AccessForbiddenException("Invalid worker authentication token");
         }
+        rateLimitService.refundServiceCredentialBudget();
     }
 }

@@ -551,6 +551,7 @@ public class ChannelResource extends ConversationManagementResource {
         User requestingUser = userRepository.getUserWithAuthorities();
         Course course = courseRepository.findByIdElseThrow(courseId);
         checkCommunicationEnabledElseThrow(course);
+        channelAuthorizationService.isAllowedToCreateChannel(course, requestingUser, Boolean.TRUE.equals(channelDTO.getIsAnnouncementChannel()));
         Channel createdChannel = channelService.createFeedbackChannel(course, exerciseId, channelDTO, feedbackDetailTexts, testCaseName, requestingUser);
         return ResponseEntity.created(new URI("/api/channels/" + createdChannel.getId())).body(conversationDTOService.convertChannelToDTO(requestingUser, createdChannel));
     }

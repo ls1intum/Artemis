@@ -76,20 +76,20 @@ class PyrisInternalIngestionWorkerResourceTest {
     }
 
     @Test
-    void shouldRefuseAndCountAWrongSecret() {
+    void shouldRefuseAWrongSecretAndKeepTheReservedToken() {
         when(servletRequest.getHeader(HttpHeaders.AUTHORIZATION)).thenReturn(SECRET + "x");
 
         assertThatThrownBy(() -> resource.claimJobs(new PyrisWorkerClaimRequestDTO("worker-1", 1), servletRequest)).isInstanceOf(AccessForbiddenException.class);
 
-        verify(rateLimitService).recordServiceCredentialFailure();
+        verify(rateLimitService, never()).refundServiceCredentialBudget();
         verifyNoInteractions(pyrisWebhookService);
     }
 
     @Test
-    void shouldNotCountACorrectSecret() {
+    void shouldRefundTheReservedTokenForACorrectSecret() {
         resource.claimJobs(new PyrisWorkerClaimRequestDTO("worker-1", 1), servletRequest);
 
-        verify(rateLimitService, never()).recordServiceCredentialFailure();
+        verify(rateLimitService).refundServiceCredentialBudget();
     }
 
     @Test
@@ -98,7 +98,7 @@ class PyrisInternalIngestionWorkerResourceTest {
 
         assertThatThrownBy(() -> resource.claimJobs(new PyrisWorkerClaimRequestDTO("worker-1", 1), servletRequest)).isInstanceOf(RateLimitExceededException.class);
 
-        verify(rateLimitService, never()).recordServiceCredentialFailure();
+        verify(rateLimitService, never()).refundServiceCredentialBudget();
     }
 
     private static ClaimedIngestionUnitDTO claim(long lectureUnitId, String claimToken) {

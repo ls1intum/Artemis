@@ -93,6 +93,17 @@ class BuildJobQueueItemValidatorTest {
     }
 
     @Test
+    void testAuxiliaryRepositoriesNeedOneCheckoutDirectoryEach() {
+        var missingDirectories = job(uri("PROJ", "proj-student1"), uri("PROJ", "proj-tests"), null, new String[] { uri("PROJ", "proj-aux") }, new String[0], null, null, null);
+        var withoutDirectories = job(uri("PROJ", "proj-student1"), uri("PROJ", "proj-tests"), null, new String[] { uri("PROJ", "proj-aux") }, null, null, null, null);
+        var surplusDirectories = job(uri("PROJ", "proj-student1"), uri("PROJ", "proj-tests"), null, null, new String[] { "aux" }, null, null, null);
+
+        assertThatThrownBy(() -> BuildJobQueueItemValidator.validate(missingDirectories)).isInstanceOf(LocalCIException.class);
+        assertThatThrownBy(() -> BuildJobQueueItemValidator.validate(withoutDirectories)).isInstanceOf(LocalCIException.class);
+        assertThatThrownBy(() -> BuildJobQueueItemValidator.validate(surplusDirectories)).isInstanceOf(LocalCIException.class);
+    }
+
+    @Test
     void testOtherRepositoriesAreCheckedToo() {
         var badSolution = job(uri("PROJ", "proj-student1"), uri("PROJ", "proj-tests"), uri("..", "..x"), new String[0], new String[0], null, null, null);
         var badAuxiliary = job(uri("PROJ", "proj-student1"), uri("PROJ", "proj-tests"), null, new String[] { uri("..", "..x") }, new String[] { "aux" }, null, null, null);
