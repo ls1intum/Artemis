@@ -6,6 +6,9 @@ import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -20,7 +23,9 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.account.util.UserFactory;
@@ -143,10 +148,15 @@ class GroupChatIntegrationTest extends AbstractConversationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void startGroupChat_legacyLoginArray_shouldCreateGroupChat() throws Exception {
-        var chat = request.postWithResponseBody("/api/communication/courses/" + exampleCourseId + "/group-chats", List.of(testPrefix + "student2", testPrefix + "student3"),
-                GroupChatDTO.class, HttpStatus.CREATED);
+        var response = request
+                .performMvcRequest(post("/api/communication/courses/{courseId}/group-chats", exampleCourseId).contentType(MediaType.APPLICATION_JSON)
+                        .content(request.getObjectMapper().writeValueAsString(List.of(testPrefix + "student2", testPrefix + "student3"))))
+                .andExpect(status().isCreated()).andReturn().getResponse();
+        request.restoreSecurityContext();
+        var chat = request.getObjectMapper().readValue(response.getContentAsString(), GroupChatDTO.class);
 
         assertThat(chat).isNotNull();
+        assertThat(response.getHeader(HttpHeaders.LOCATION)).isEqualTo("/api/group-chats/" + chat.getId());
         assertParticipants(chat.getId(), 3, "student1", "student2", "student3");
         verifyMultipleParticipantTopicWebsocketSent(CommunicationCrudAction.CREATE, chat.getId(), "student2", "student3");
         verifyNoParticipantTopicWebsocketSentExceptAction(CommunicationCrudAction.CREATE);
@@ -225,6 +235,18 @@ class GroupChatIntegrationTest extends AbstractConversationTest {
         // cleanup
         var conversation = groupChatRepository.findById(chat.getId()).orElseThrow();
         conversationRepository.delete(conversation);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void updateGroupChat_withoutTypeReturnsBadRequest() throws Exception {
+        var chat = createGroupChatWithStudent1To3();
+        request.performMvcRequest(
+                put("/api/communication/courses/{courseId}/group-chats/{groupChatId}", exampleCourseId, chat.getId()).contentType(MediaType.APPLICATION_JSON).content("""
+                        {"name":"missing-type"}
+                        """)).andExpect(status().isBadRequest());
+        request.restoreSecurityContext();
+        conversationRepository.deleteById(chat.getId());
     }
 
     @ParameterizedTest

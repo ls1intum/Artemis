@@ -9,6 +9,11 @@ import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 
 public class ConversationManagementResource {
 
+    // Document the security header on operations whose client adapters return the full HTTP response.
+    static final String FRAME_OPTIONS_HEADER = "X-Frame-Options";
+
+    static final String FRAME_OPTIONS_DESCRIPTION = "Always DENY, set by the security configuration";
+
     final CourseRepository courseRepository;
 
     public ConversationManagementResource(CourseRepository courseRepository) {

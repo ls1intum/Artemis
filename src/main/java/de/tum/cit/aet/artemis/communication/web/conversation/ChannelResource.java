@@ -19,6 +19,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -65,6 +66,9 @@ import de.tum.cit.aet.artemis.notification.domain.course_notifications.ChannelDe
 import de.tum.cit.aet.artemis.notification.domain.course_notifications.RemovedFromChannelNotification;
 import de.tum.cit.aet.artemis.notification.service.CourseNotificationService;
 import de.tum.cit.aet.artemis.tutorialgroup.api.TutorialGroupChannelManagementApi;
+import io.swagger.v3.oas.annotations.headers.Header;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 
 @Profile(PROFILE_CORE)
 @Lazy
@@ -122,6 +126,7 @@ public class ChannelResource extends ConversationManagementResource {
      * @param courseId the id of the course
      * @return ResponseEntity with status 200 (OK) and with body containing the list of channels the user is authorized to see
      */
+    @ApiResponse(responseCode = "200", headers = @Header(name = FRAME_OPTIONS_HEADER, description = FRAME_OPTIONS_DESCRIPTION, schema = @Schema(type = "string")))
     @GetMapping("{courseId}/channels/overview")
     @EnforceAtLeastStudentInCourse
     public ResponseEntity<List<ChannelDTO>> getCourseChannelsOverview(@PathVariable Long courseId) {
@@ -134,6 +139,7 @@ public class ChannelResource extends ConversationManagementResource {
      * @param courseId the course to inspect
      * @return the sorted staff overview
      */
+    @ApiResponse(responseCode = "200", headers = @Header(name = FRAME_OPTIONS_HEADER, description = FRAME_OPTIONS_DESCRIPTION, schema = @Schema(type = "string")))
     @GetMapping("{courseId}/channels/overview/for-staff")
     @EnforceAtLeastTutorInCourse
     public ResponseEntity<List<ChannelDTO>> getCourseChannelsOverviewForStaff(@PathVariable Long courseId) {
@@ -146,6 +152,7 @@ public class ChannelResource extends ConversationManagementResource {
      * @param courseId the course to inspect
      * @return the sorted instructor overview
      */
+    @ApiResponse(responseCode = "200", headers = @Header(name = FRAME_OPTIONS_HEADER, description = FRAME_OPTIONS_DESCRIPTION, schema = @Schema(type = "string")))
     @GetMapping("{courseId}/channels/overview/for-instructor")
     @EnforceAtLeastInstructorInCourse
     public ResponseEntity<List<ChannelDTO>> getCourseChannelsOverviewForInstructor(@PathVariable Long courseId) {
@@ -172,6 +179,7 @@ public class ChannelResource extends ConversationManagementResource {
      * @param courseId the id of the course
      * @return ResponseEntity with status 200 (OK) and with body containing the list of channels visible to all course members
      */
+    @ApiResponse(responseCode = "200", headers = @Header(name = FRAME_OPTIONS_HEADER, description = FRAME_OPTIONS_DESCRIPTION, schema = @Schema(type = "string")))
     @GetMapping("{courseId}/channels/public-overview")
     @EnforceAtLeastStudent
     public ResponseEntity<List<ChannelIdAndNameDTO>> getCoursePublicChannelsOverview(@PathVariable Long courseId) {
@@ -197,6 +205,7 @@ public class ChannelResource extends ConversationManagementResource {
      * @param exerciseId the id of the channel
      * @return ResponseEntity with status 200 (OK) and with body containing the channel
      */
+    @ApiResponse(responseCode = "200", description = "The exercise channel. The response body is empty if the exercise has no channel.", headers = @Header(name = FRAME_OPTIONS_HEADER, description = FRAME_OPTIONS_DESCRIPTION, schema = @Schema(type = "string")))
     @GetMapping("{courseId}/exercises/{exerciseId}/channel")
     @EnforceAtLeastStudent
     public ResponseEntity<ChannelDTO> getExerciseChannel(@PathVariable Long courseId, @PathVariable Long exerciseId) {
@@ -222,6 +231,7 @@ public class ChannelResource extends ConversationManagementResource {
      * @param lectureId the id of the channel
      * @return ResponseEntity with status 200 (OK) and with body containing the channel
      */
+    @ApiResponse(responseCode = "200", description = "The lecture channel. The response body is empty if the lecture has no channel.", headers = @Header(name = FRAME_OPTIONS_HEADER, description = FRAME_OPTIONS_DESCRIPTION, schema = @Schema(type = "string")))
     @GetMapping("{courseId}/lectures/{lectureId}/channel")
     @EnforceAtLeastStudent
     public ResponseEntity<ChannelDTO> getLectureChannel(@PathVariable Long courseId, @PathVariable Long lectureId) {
@@ -248,6 +258,7 @@ public class ChannelResource extends ConversationManagementResource {
      * @param channelDTO the dto containing the properties of the channel to be created
      * @return ResponseEntity with status 201 (Created) and with body containing the created channel
      */
+    @ApiResponse(responseCode = "201", description = "The created channel", headers = @Header(name = HttpHeaders.LOCATION, description = "Legacy location of the created channel, /api/channels/{id}", schema = @Schema(type = "string")))
     @PostMapping("{courseId}/channels")
     @EnforceAtLeastStudent
     public ResponseEntity<ChannelDTO> createChannel(@PathVariable Long courseId, @RequestBody ChannelDTO channelDTO) throws URISyntaxException {
@@ -291,6 +302,7 @@ public class ChannelResource extends ConversationManagementResource {
      * @param channelDTO the dto containing the properties of the channel to be updated
      * @return ResponseEntity with status 200 (Ok) and with body containing the updated channel
      */
+    @ApiResponse(responseCode = "200", headers = @Header(name = FRAME_OPTIONS_HEADER, description = FRAME_OPTIONS_DESCRIPTION, schema = @Schema(type = "string")))
     @PutMapping("{courseId}/channels/{channelId}")
     @EnforceAtLeastStudent
     public ResponseEntity<ChannelDTO> updateChannel(@PathVariable Long courseId, @PathVariable Long channelId, @RequestBody ChannelDTO channelDTO) {
@@ -319,6 +331,7 @@ public class ChannelResource extends ConversationManagementResource {
      * @param channelId the id of the channel to be deleted
      * @return ResponseEntity with status 200 (Ok)
      */
+    @ApiResponse(responseCode = "200", headers = @Header(name = FRAME_OPTIONS_HEADER, description = FRAME_OPTIONS_DESCRIPTION, schema = @Schema(type = "string")))
     @DeleteMapping("{courseId}/channels/{channelId}")
     @EnforceAtLeastStudent
     public ResponseEntity<Void> deleteChannel(@PathVariable Long courseId, @PathVariable Long channelId) {
@@ -354,6 +367,7 @@ public class ChannelResource extends ConversationManagementResource {
      * @param channelId the id of the channel to be archived
      * @return ResponseEntity with status 200 (Ok)
      */
+    @ApiResponse(responseCode = "200", headers = @Header(name = FRAME_OPTIONS_HEADER, description = FRAME_OPTIONS_DESCRIPTION, schema = @Schema(type = "string")))
     @PostMapping("{courseId}/channels/{channelId}/archive")
     @EnforceAtLeastStudent
     public ResponseEntity<Void> archiveChannel(@PathVariable Long courseId, @PathVariable Long channelId) {
@@ -373,6 +387,7 @@ public class ChannelResource extends ConversationManagementResource {
      * @param channelId the id of the archived channel to be unarchived
      * @return ResponseEntity with status 200 (Ok)
      */
+    @ApiResponse(responseCode = "200", headers = @Header(name = FRAME_OPTIONS_HEADER, description = FRAME_OPTIONS_DESCRIPTION, schema = @Schema(type = "string")))
     @PostMapping("{courseId}/channels/{channelId}/unarchive")
     @EnforceAtLeastStudent
     public ResponseEntity<Void> unArchiveChannel(@PathVariable Long courseId, @PathVariable Long channelId) {
@@ -393,6 +408,7 @@ public class ChannelResource extends ConversationManagementResource {
      * @param userLogins the logins of the channel members to be granted the channel moderator role
      * @return ResponseEntity with status 200 (Ok)
      */
+    @ApiResponse(responseCode = "200", headers = @Header(name = FRAME_OPTIONS_HEADER, description = FRAME_OPTIONS_DESCRIPTION, schema = @Schema(type = "string")))
     @PostMapping("{courseId}/channels/{channelId}/grant-channel-moderator")
     @EnforceAtLeastStudent
     public ResponseEntity<Void> grantChannelModeratorRole(@PathVariable Long courseId, @PathVariable Long channelId, @RequestBody List<String> userLogins) {
@@ -416,6 +432,7 @@ public class ChannelResource extends ConversationManagementResource {
      * @param userLogins the logins of the channel members to be revoked the channel moderator role
      * @return ResponseEntity with status 200 (Ok)
      */
+    @ApiResponse(responseCode = "200", headers = @Header(name = FRAME_OPTIONS_HEADER, description = FRAME_OPTIONS_DESCRIPTION, schema = @Schema(type = "string")))
     @PostMapping("{courseId}/channels/{channelId}/revoke-channel-moderator")
     @EnforceAtLeastStudent
     public ResponseEntity<Void> revokeChannelModeratorRole(@PathVariable Long courseId, @PathVariable Long channelId, @RequestBody List<String> userLogins) {
@@ -446,6 +463,7 @@ public class ChannelResource extends ConversationManagementResource {
      * @param addAllInstructors true if all course instructors should be added
      * @return ResponseEntity with status 200 (Ok)
      */
+    @ApiResponse(responseCode = "200", headers = @Header(name = FRAME_OPTIONS_HEADER, description = FRAME_OPTIONS_DESCRIPTION, schema = @Schema(type = "string")))
     @PostMapping("{courseId}/channels/{channelId}/register")
     @EnforceAtLeastStudent
     public ResponseEntity<Void> registerUsersToChannel(@PathVariable Long courseId, @PathVariable Long channelId, @RequestBody(required = false) List<String> userLogins,
@@ -489,6 +507,7 @@ public class ChannelResource extends ConversationManagementResource {
      * @param userLogins the logins of the course users to be deregistered from a channel
      * @return ResponseEntity with status 200 (Ok)
      */
+    @ApiResponse(responseCode = "200", headers = @Header(name = FRAME_OPTIONS_HEADER, description = FRAME_OPTIONS_DESCRIPTION, schema = @Schema(type = "string")))
     @PostMapping("{courseId}/channels/{channelId}/deregister")
     @EnforceAtLeastStudent
     public ResponseEntity<Void> deregisterUsers(@PathVariable Long courseId, @PathVariable Long channelId, @RequestBody List<String> userLogins) {
@@ -536,6 +555,7 @@ public class ChannelResource extends ConversationManagementResource {
      * @throws BadRequestAlertException if the channel name starts with an invalid prefix (e.g., "$").
      */
     @FeatureUsage(UserFeature.RESULTS_AND_FEEDBACK_ANALYSIS)
+    @ApiResponse(responseCode = "201", description = "The created channel", headers = @Header(name = HttpHeaders.LOCATION, description = "Legacy location of the created channel, /api/channels/{id}", schema = @Schema(type = "string")))
     @PostMapping("{courseId}/exercises/{exerciseId}/feedback-channel")
     @EnforceAtLeastEditorInCourse
     public ResponseEntity<ChannelDTO> createFeedbackChannel(@PathVariable Long courseId, @PathVariable Long exerciseId,
@@ -562,7 +582,7 @@ public class ChannelResource extends ConversationManagementResource {
     @FeatureUsage(UserFeature.CONVERSATION_ORGANIZATION)
     @PostMapping("{courseId}/channels/mark-as-read")
     @EnforceAtLeastStudent
-    public ResponseEntity<ChannelDTO> markAllChannelsOfCourseAsRead(@PathVariable Long courseId) {
+    public ResponseEntity<Void> markAllChannelsOfCourseAsRead(@PathVariable Long courseId) {
         log.debug("REST request to mark all channels of course {} as read", courseId);
         var requestingUser = userRepository.getUserWithAuthorities();
         var course = courseRepository.findByIdElseThrow(courseId);
@@ -582,6 +602,7 @@ public class ChannelResource extends ConversationManagementResource {
      * @param channelId The ID of the channel whose privacy status will be changed
      * @return The updated channel's DTO
      */
+    @ApiResponse(responseCode = "200", headers = @Header(name = FRAME_OPTIONS_HEADER, description = FRAME_OPTIONS_DESCRIPTION, schema = @Schema(type = "string")))
     @PostMapping("{courseId}/channels/{channelId}/toggle-privacy")
     @EnforceAtLeastTutorInCourse
     public ResponseEntity<ChannelDTO> toggleChannelPrivacy(@PathVariable Long courseId, @PathVariable Long channelId) {
