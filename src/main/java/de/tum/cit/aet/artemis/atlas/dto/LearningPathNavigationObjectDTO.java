@@ -6,6 +6,7 @@ import de.tum.cit.aet.artemis.atlas.domain.LearningObject;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
  * DTO for a learning navigation object.
@@ -16,7 +17,9 @@ import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
  * @param type      the type of the learning object
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record LearningPathNavigationObjectDTO(long id, boolean completed, String name, long competencyId, LearningObjectType type, boolean repeatedTest, boolean unreleased) {
+public record LearningPathNavigationObjectDTO(@Schema(requiredMode = Schema.RequiredMode.REQUIRED) long id, @Schema(requiredMode = Schema.RequiredMode.REQUIRED) boolean completed,
+        String name, @Schema(requiredMode = Schema.RequiredMode.REQUIRED) long competencyId, @Schema(requiredMode = Schema.RequiredMode.REQUIRED) LearningObjectType type,
+        @Schema(requiredMode = Schema.RequiredMode.REQUIRED) boolean repeatedTest, @Schema(requiredMode = Schema.RequiredMode.REQUIRED) boolean unreleased) {
 
     /**
      * Create a navigation object DTO from a learning object.

@@ -49,14 +49,45 @@
             jvmArgs = [
                 "-Dspring.profiles.active=test,artemis,core,atlas,scheduling,athena,apollon,theia,dev,localci,localvc",
                 "-Dartemis.lti.enabled=true",
-                // The application specification covers only the packages that are fully DTO-based. The agent specification is
-                // picked by an annotation instead, so it has to scan everything: the global setting applies to its group too.
+                // The application specification covers only DTO-based endpoints: whole packages, or the paths listed in
+                // springdoc.paths-to-match below. The agent specification is picked by an annotation instead, so it has to scan
+                // everything: the global setting applies to its group too.
                 "-Dspringdoc.packages-to-scan=" + (openApiGroup
                     ? "de.tum.cit.aet.artemis"
-                    : "de.tum.cit.aet.artemis.aiworker.web,de.tum.cit.aet.artemis.tutorialgroup.web,de.tum.cit.aet.artemis.hyperion.web,de.tum.cit.aet.artemis.calendar.web,de.tum.cit.aet.artemis.globalsearch.web,de.tum.cit.aet.artemis.quiz.web"),
+                    : "de.tum.cit.aet.artemis.aiworker.web,de.tum.cit.aet.artemis.tutorialgroup.web,de.tum.cit.aet.artemis.hyperion.web,de.tum.cit.aet.artemis.calendar.web,de.tum.cit.aet.artemis.globalsearch.web,de.tum.cit.aet.artemis.quiz.web,de.tum.cit.aet.artemis.atlas.web"),
                 // Legacy URL aliases stay mapped in Java for old clients (canonical path first, legacy second), but are kept out
                 // of the specification: in the generated client each alias would become a name/name_ method pair.
                 "-Dspringdoc.paths-to-exclude=/api/quiz/quiz-exercises/*/start-batch,/api/tutorialgroup/courses/*/tutorial-groups-configuration,/api/tutorialgroup/courses/*/tutorial-groups-configuration/**",
+            ] + (openApiGroup ? [] : [
+                // atlas.web is only partly DTO-based, so only its migrated paths are listed. The other packages are matched whole.
+                "-Dspringdoc.paths-to-match=" + [
+                    "/api/aiworker/**",
+                    "/api/calendar/**",
+                    "/api/global-search/**",
+                    "/api/search/**",
+                    "/api/hyperion/**",
+                    "/api/quiz/**",
+                    "/api/tutorialgroup/**",
+                    // LearningPathResource
+                    "/api/atlas/courses/{courseId}/learning-paths/enable",
+                    "/api/atlas/courses/{courseId}/learning-paths/generate-missing",
+                    "/api/atlas/courses/{courseId}/learning-paths",
+                    "/api/atlas/courses/{courseId}/learning-path/average-progress",
+                    "/api/atlas/courses/{courseId}/learning-path-health",
+                    "/api/atlas/courses/{courseId}/learning-path/competency-instructor-graph",
+                    "/api/atlas/courses/{courseId}/learning-path/me",
+                    "/api/atlas/courses/{courseId}/learning-path",
+                    "/api/atlas/learning-paths/{learningPathId}/start",
+                    "/api/atlas/learning-paths/{learningPathId}",
+                    "/api/atlas/learning-paths/{learningPathId}/competency-graph",
+                    "/api/atlas/learning-paths/{learningPathId}/navigation",
+                    "/api/atlas/learning-paths/{learningPathId}/navigation-overview",
+                    "/api/atlas/learning-paths/{learningPathId}/relative-navigation",
+                    "/api/atlas/learning-paths/{learningPathId}/competency-progress",
+                    "/api/atlas/learning-paths/{learningPathId}/competencies",
+                    "/api/atlas/learning-paths/{learningPathId}/competencies/{competencyId}/learning-objects",
+                ].join(","),
+            ]) + [
                 "-Dartemis.hyperion.enabled=true",
                 "-Dartemis.hyperion.exercise-generation.enabled=true",
                 // Controller introspection only; no generation job is admitted by this documentation process.
