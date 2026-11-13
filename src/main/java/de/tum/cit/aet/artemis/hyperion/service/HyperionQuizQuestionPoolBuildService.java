@@ -141,6 +141,11 @@ public class HyperionQuizQuestionPoolBuildService {
     /** How long a cancel request is kept for a build that never released its lease to clear it. */
     private static final Duration CANCEL_REQUEST_LIFETIME = Duration.ofDays(1);
 
+    /** Markdown in a title: backticks, bold and italic markers, and dollar-sign math delimiters. */
+    private static final Pattern TITLE_MARKDOWN = Pattern.compile("`|\\*\\*|__|(?<!\\w)[*_]|[*_](?!\\w)|\\$");
+
+    private static final Pattern WHITESPACE = Pattern.compile("\\s+");
+
     /** Fenced code blocks and code spans, inside which math delimiters are left as they are. */
     private static final Pattern MARKDOWN_CODE = Pattern.compile("```.*?```|`[^`]*`", Pattern.DOTALL);
 
@@ -1189,8 +1194,19 @@ public class HyperionQuizQuestionPoolBuildService {
         List<GeneratedQuizAnswerOptionDTO> options = generated.options().stream()
                 .map(option -> new GeneratedQuizAnswerOptionDTO(format(option.text()), Boolean.TRUE.equals(option.correct()), null, null)).toList();
         String explanation = format(generated.explanation());
-        return Optional.of(new GeneratedQuizQuestionDTO(questionType, sanitizeInput(generated.title()), format(generated.questionText()), options, null,
+        return Optional.of(new GeneratedQuizQuestionDTO(questionType, plainTitle(generated.title()), format(generated.questionText()), options, null,
                 explanation.isBlank() ? null : explanation));
+    }
+
+    /**
+     * Removes the Markdown a model sets in a title, which is shown as plain text: backticks, bold and italic markers and dollar-sign math
+     * delimiters.
+     *
+     * @param title the model's title, or {@code null}
+     * @return the title without Markdown
+     */
+    static String plainTitle(@Nullable String title) {
+        return WHITESPACE.matcher(TITLE_MARKDOWN.matcher(sanitizeInput(title)).replaceAll("")).replaceAll(" ").strip();
     }
 
     private static String format(@Nullable String text) {

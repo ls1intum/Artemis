@@ -50,7 +50,7 @@ Rules:
 - The question text contains the question only. Never list, number or repeat the answer options in it, and never add a section such as "Options:" or lines opening with "A)", "B)", "1." or "2." that enumerate answers. The options belong in `options` alone; a question whose text repeats them is discarded.
 - Answer options are shown in random order. Never refer to an option by its position, letter or number, neither in another option nor in the explanation; refer to it by its content.
 - An answer option contains the answer and nothing else. Do not attach remarks, hints or comments about the option itself, such as "(not linear)", "(for comparison only)" or "(trick option)".
-- Give every question a short, specific title of three to ten words in the requested language, unique among the questions you return.
+- Give every question a short, specific title of three to ten words in the requested language, unique among the questions you return. The title is shown as plain text: write it without Markdown, backticks, dollar signs or LaTeX, so a keyword is written as the bare word, for example "Behavior of continue in a while loop".
 - The explanation of every question must state why the correct option is correct, why the distractors are wrong, and what work the reader must do to reach the answer. If that work amounts to recalling a definition or a formula and the competency's level is above REMEMBER, the question is below the competency's cognitive level: rewrite it before returning it.
 - Do not include hints. The question-level `explanation` is always required.
 - Aim every question at the requested difficulty.

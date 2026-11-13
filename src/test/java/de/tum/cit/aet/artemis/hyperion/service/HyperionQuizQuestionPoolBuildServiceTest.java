@@ -701,6 +701,13 @@ class HyperionQuizQuestionPoolBuildServiceTest {
     }
 
     @Test
+    void plainTitle_removesMarkdownButKeepsIdentifiers() {
+        assertThat(HyperionQuizQuestionPoolBuildService.plainTitle("Behavior of `continue` in a `while` loop")).isEqualTo("Behavior of continue in a while loop");
+        assertThat(HyperionQuizQuestionPoolBuildService.plainTitle("**Bounds** of $n!$ and *my_var*")).isEqualTo("Bounds of n! and my_var");
+        assertThat(HyperionQuizQuestionPoolBuildService.plainTitle(null)).isEmpty();
+    }
+
+    @Test
     void correctOptionCounts_listsTheCountOfEveryMultipleChoiceQuestion() {
         HyperionCourseSettings settings = new HyperionCourseSettings(false, 0, true, 6, 1, 3, 20, 50, 30);
 
