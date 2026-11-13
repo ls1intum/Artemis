@@ -165,25 +165,30 @@ artemis:
       shutdown-drain-timeout: PT11M
       test-case-sync-timeout: PT10M
     quiz-pool:
-      # The pool sends course material only to its own self-hosted, OpenAI-compatible endpoint (for example Logos or vLLM), never to the
-      # chat model configured under spring.ai. Leave base-url, generator-model and judge-model empty to keep the pool off; a partial
-      # configuration, a model missing from allowed-models or a cloud provider host also keeps it off and is logged as a warning at startup.
-      base-url: # including the /v1 prefix, e.g. https://logos.example.org/v1
+      # The pool sends course material only to a self-hosted, OpenAI-compatible endpoint (for example Logos or vLLM): base-url and api-key
+      # below when set, otherwise the endpoint of Hyperion's chat model under spring.ai.openai. A cloud provider endpoint, including
+      # Microsoft Foundry, keeps the pool off. Leave generator-model and judge-model empty to turn the pool off; a model missing from
+      # allowed-models or an invalid base-url also keeps it off and is logged as a warning at startup.
+      base-url: # including the /v1 prefix, e.g. https://logos.example.org/v1; empty to use spring.ai.openai.base-url
       api-key:
       # HTTP timeout of one model call.
       timeout: 5m
       # Self-hosted models the pool may use; generator-model and judge-model must each be one of them.
-      allowed-models: openai/gpt-oss-120b,Qwen/Qwen3.8-27B
+      allowed-models: Qwen/Qwen3.8-27B
       # Model that generates pool questions.
-      generator-model:
+      generator-model: Qwen/Qwen3.8-27B
       # Model that judges generated questions.
-      judge-model:
+      judge-model: Qwen/Qwen3.8-27B
       # Questions requested per generation call; a cell larger than this is filled in several calls.
       generation-batch-size: 8
       # A generation or filter claim older than this is treated as abandoned by a dead node and released at the next build.
       stale-claim-minutes: 30
       # Characters of a lecture unit's text (slide PDF, transcript or text unit) that a generation prompt receives at most.
       max-material-characters: 60000
+      # When the overnight run over the courses that enabled overnight generation starts; a Spring cron expression on the node with the scheduling profile.
+      schedule-cron: "0 0 0 * * *"
+      # How long the overnight run lasts at most (1-23); afterwards it starts no further course and the running build stops after its current unit of work.
+      schedule-window-hours: 7
       # How long a running build holds its course's lease without a heartbeat before another node may build the course.
       build-lease-minutes: 10
   aiworker:

@@ -32,6 +32,15 @@
                     "cancelRequested": "The build stops after its current step.",
                     "cancelNotRunning": "No build is running.",
                     "cancelFailed": "The build could not be cancelled.",
+                    "lastBuild": "Last build:",
+                    "trigger": {
+                        "MANUAL": "started manually,",
+                        "SCHEDULED": "started by the nightly schedule,"
+                    },
+                    "lastBuildFinished": "finished {{ time }}.",
+                    "lastBuildRunning": "running since {{ time }}.",
+                    "lastBuildCounts": "{{ enqueued }} added, {{ generated }} generated, {{ accepted }} accepted, {{ rejected }} rejected, {{ failed }} failed.",
+                    "lastBuildFailure": "Stopped early: {{ failure }}",
                     "modelMissing": "Smart Quizzes needs a self-hosted language model, which is not configured correctly on this server. Ask your Artemis administrator to set it up; until then no questions can be generated."
                 },
                 "settings": {
@@ -52,6 +61,8 @@
                     "easyPercent": "Easy (%)",
                     "mediumPercent": "Medium (%)",
                     "hardPercent": "Hard (%)",
+                    "poolGenerationEnabled": "Generate overnight for new lecture material",
+                    "poolGenerationHelp": "Every night, Hyperion generates questions for lecture units that are new or whose material changed since the last build.",
                     "save": "Save settings",
                     "saved": "Settings saved.",
                     "saveFailed": "The settings could not be saved.",
@@ -62,6 +73,8 @@
                     "summaryMultipleOnFixed": "{{ count }} multiple-choice questions per lecture unit with {{ min }} correct options",
                     "summaryMultipleOff": "no multiple-choice questions",
                     "summaryMix": "difficulty {{ easy }} / {{ medium }} / {{ hard }} %",
+                    "summaryOvernightOn": "overnight builds on",
+                    "summaryOvernightOff": "overnight builds off",
                     "countHint": "Between {{ min }} and {{ max }}.",
                     "summaryRunningBuild": "Running build:",
                     "summaryNextBuild": "Next build:",
@@ -119,7 +132,9 @@
                     "needsReviewToggle": "Show or hide the flagged questions",
                     "deleteCompetency": "Delete the questions of this competency",
                     "deleteCourseChanged": "Nothing was deleted because another course is shown now. Open the course again and repeat the deletion.",
-                    "deleteBlocked": "Questions cannot be deleted while a build is running."
+                    "deleteBlocked": "Questions cannot be deleted while a build is running.",
+                    "materialChanged": "Material changed",
+                    "materialChangedHint": "The lecture unit's material changed after this question was generated. The question is kept but no longer counts towards the pool."
                 },
                 "errors": {
                     "loadFailed": "The quiz question pool could not be loaded.",
@@ -131,6 +146,27 @@
                     "typeCourseTitle": "Type the title of the course to confirm.",
                     "deleted": "{{ count }} questions deleted.",
                     "failed": "The questions could not be deleted."
+                },
+                "units": {
+                    "title": "Lecture units ({{ count }})",
+                    "toggle": "Show or hide the lecture units",
+                    "hint": "Questions are generated for every lecture unit linked to a competency. Exclude a unit to skip it in future builds; its unreviewed questions are deleted and approved ones are kept.",
+                    "excludedCount": "{{ count }} excluded",
+                    "changedCount": "{{ count }} with changed material",
+                    "counts": "{{ count }} questions, {{ approved }} approved",
+                    "lastBuilt": "last built {{ time }}",
+                    "neverBuilt": "not built yet",
+                    "excludedTag": "Excluded",
+                    "materialChanged": "Material changed",
+                    "materialChangedHint": "Approved questions of this unit were generated from earlier material. Check them; the next build generates new questions from the current material.",
+                    "exclude": "Exclude",
+                    "include": "Include",
+                    "excludeConfirmHeader": "Exclude this lecture unit?",
+                    "excludeConfirmMessage": "Builds will skip \"{{ unit }}\". Its unreviewed questions are deleted now; approved questions are kept.",
+                    "excludeBlocked": "Lecture units cannot be excluded while a build is running.",
+                    "excluded": "Lecture unit excluded.",
+                    "included": "Lecture unit included. The next build generates its questions.",
+                    "relevanceFailed": "The change could not be saved."
                 }
             }
         }

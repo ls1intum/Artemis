@@ -37,7 +37,9 @@ Rules:
 - Spread the questions across the supplied material. No two questions may test the same fact.
 - No question may refer to another question. Each question must be answerable alone, in any order, without having seen the others.
 - For single-choice questions, produce exactly the requested number of answer options, of which exactly one is correct.
-- For multiple-choice questions, produce exactly the requested number of answer options. The task states for each question how many of them are correct: mark exactly that many options correct, and make every correct option a distinct claim that is correct on its own.
+- For multiple-choice questions, produce exactly the requested number of answer options. The task states for each question how many of them are correct: mark exactly that many options correct, and make every correct option a distinct claim that is correct on its own. The task decides this number, not the content: plan the question so that exactly that many options are true, and count the options you marked correct before returning the question. A question whose count differs is discarded.
+- The question text of a multiple-choice question asks for every option that applies and must not reveal how many options are correct. Do not word it as if only one option were correct. When a question has two or more correct options, ask which of several statements about the topic are true, and write each correct option as its own true statement.
+- Write every statement the reader judges as an answer option. Never list statements, claims or cases in the question text and let the options refer to them by number or name, such as "Statement 1 is correct" or "Only II and III".
 - For true-false questions, produce exactly the two options "True" and "False", of which exactly one is correct.
 - Every distractor must be plausible to a student who has not mastered the topic, and unambiguously wrong to one who has.
 - Distractors must reflect realistic misconceptions about this material, not filler text or joke answers.
@@ -45,12 +47,16 @@ Rules:
 - Do not use "all of the above", "none of the above", or options that reference other options.
 - The question text must not reveal or hint at the correct answer.
 - Do not prefix options with letters or numbers.
-- Give every question a short, specific title of three to ten words in the requested language, unique among the questions you return.
+- The question text contains the question only. Never list, number or repeat the answer options in it, and never add a section such as "Options:" or lines opening with "A)", "B)", "1." or "2." that enumerate answers. The options belong in `options` alone; a question whose text repeats them is discarded.
+- Answer options are shown in random order. Never refer to an option by its position, letter or number, neither in another option nor in the explanation; refer to it by its content.
+- An answer option contains the answer and nothing else. Do not attach remarks, hints or comments about the option itself, such as "(not linear)", "(for comparison only)" or "(trick option)".
+- Give every question a short, specific title of three to ten words in the requested language, unique among the questions you return. The title is shown as plain text: write it without Markdown, backticks, dollar signs or LaTeX, so a keyword is written as the bare word, for example "Behavior of continue in a while loop".
 - The explanation of every question must state why the correct option is correct, why the distractors are wrong, and what work the reader must do to reach the answer. If that work amounts to recalling a definition or a formula and the competency's level is above REMEMBER, the question is below the competency's cognitive level: rewrite it before returning it.
 - Do not include hints. The question-level `explanation` is always required.
 - Aim every question at the requested difficulty.
 - Write in the requested language.
 - Use basic Markdown (bold, italic, inline code, code blocks, tables, and lists) in question text and answer options where it structures the information and improves clarity. Avoid over-formatting.
+- Write every mathematical expression, symbol, variable and formula in LaTeX between dollar signs: inline as `$x_1 \leq x_2$`, and a displayed formula in the question text as `$$…$$` on lines of their own. A LaTeX command such as `\leq`, `\frac` or `\cdot` outside dollar signs is shown to the student as raw text, and a question containing one is discarded. Answer options use inline math only.
 - Set every piece of source code in Markdown code: a fragment inside a sentence, such as an identifier, an expression, a literal or a keyword, in backticks; anything that spans one or more whole lines, such as a statement, a method or a class, in a fenced code block that names the language. This applies to the question text, to every answer option and to the explanation. An answer option that consists of code is written entirely in backticks. Code outside code formatting is a defect.
 - If a question mentions a tableau, table, graph, network or program instance, the full data of that instance must appear inside the question text. A question that mentions material not contained in its own text is invalid and will be discarded.
 - When you construct a numeric instance, verify it before returning it: a solution you state as feasible must satisfy every stated constraint, a value you state as optimal must actually be optimal for the stated data, and every derived number must follow from the given ones. A question whose premise is mathematically inconsistent is worthless.

@@ -8,6 +8,8 @@ export type PoolReviewState = 'PENDING' | 'APPROVED' | 'EXCLUDED';
 
 export type PoolDifficulty = 'EASY' | 'MEDIUM' | 'HARD';
 
+export type PoolBuildTrigger = 'MANUAL' | 'SCHEDULED';
+
 /** The filter's judgement on one failure mode; severity runs from 0 (absent) to 1 (severe). */
 export interface PoolFilterVerdict {
     mode: PoolFailureMode;
@@ -39,6 +41,8 @@ export interface PoolQuestion {
     reviewState: PoolReviewState;
     /** Whether the filter's verdicts ask for a review; decided by the server once the question is judged. */
     flagged?: boolean;
+    /** The lecture unit's material changed after the question was generated; such a question is kept but no longer counted. */
+    materialChanged: boolean;
     question?: GeneratedQuestion;
     decision?: PoolFilterDecision;
     failure?: string;
@@ -60,6 +64,44 @@ export interface PoolProgress {
     buildSettings?: PoolSettings;
     /** Whether the pool has its own self-hosted model endpoint; builds are refused without one. */
     modelConfigured: boolean;
+    /** The most recent build; absent before the first. */
+    lastBuild?: PoolBuild;
+}
+
+/** One build of the pool; finishedAt is absent while it runs and failure is set when it stopped early. */
+export interface PoolBuild {
+    id: number;
+    trigger: PoolBuildTrigger;
+    startedAt: string;
+    finishedAt?: string;
+    enqueued: number;
+    generated: number;
+    judged: number;
+    accepted: number;
+    rejected: number;
+    failed: number;
+    failure?: string;
+}
+
+/** One lecture unit the pool can generate from, for one competency it is linked to. */
+export interface PoolLectureUnit {
+    competencyId: number;
+    competencyTitle: string;
+    lectureUnitId: number;
+    lectureUnitName: string;
+    lectureTitle?: string;
+    excluded: boolean;
+    materialChanged: boolean;
+    questionCount: number;
+    approvedCount: number;
+    lastBuiltAt?: string;
+}
+
+/** The lecture units of one competency, as the lecture units panel lists them. */
+export interface PoolLectureUnitGroup {
+    competencyId: number;
+    competencyTitle: string;
+    units: PoolLectureUnit[];
 }
 
 export interface PoolSettings {

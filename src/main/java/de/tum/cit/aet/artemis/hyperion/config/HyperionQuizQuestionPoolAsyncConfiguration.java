@@ -10,8 +10,9 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
  * Dedicated executor for quiz question pool builds.
  * <p>
  * A build issues one model call per batch of questions and one per generated question, so it runs for minutes and must not
- * occupy the shared task executor. Builds of different courses may run in parallel; builds of the same course are serialised
- * by {@code HyperionQuizQuestionPoolBuildService}.
+ * occupy the shared task executor. Two threads run at all times, so a manual build is not queued behind the overnight run that
+ * {@code HyperionQuizQuestionPoolScheduleService} starts on this executor. Builds of different courses may run in parallel; builds
+ * of the same course are serialised by {@code HyperionQuizQuestionPoolBuildService}.
  */
 @Configuration
 @Conditional(HyperionEnabled.class)
@@ -21,12 +22,12 @@ public class HyperionQuizQuestionPoolAsyncConfiguration {
     /**
      * Bounded pool for quiz question pool builds.
      *
-     * @return the executor used by {@code HyperionQuizQuestionPoolTaskService.runBuildAsync}
+     * @return the executor used by {@code HyperionQuizQuestionPoolTaskService.runBuildAsync} and the overnight run
      */
     @Bean("hyperionQuizQuestionPoolTaskExecutor")
     public ThreadPoolTaskExecutor hyperionQuizQuestionPoolTaskExecutor() {
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
-        executor.setCorePoolSize(1);
+        executor.setCorePoolSize(2);
         executor.setMaxPoolSize(2);
         executor.setQueueCapacity(16);
         executor.setThreadNamePrefix("quiz-pool-");

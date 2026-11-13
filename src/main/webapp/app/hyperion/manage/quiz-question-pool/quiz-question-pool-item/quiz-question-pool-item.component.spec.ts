@@ -27,6 +27,7 @@ describe('QuizQuestionPoolItemComponent', () => {
                 flagged: true,
                 question: { id: 'pool-7', type: 'single-choice', title: 'Q7', questionText: 'What?', options: [{ text: 'A', correct: true }] },
                 decision: { accepted: true, aggregateScore: 0.6, verdicts: [verdict], rationale: 'checked' },
+                materialChanged: false,
                 updatedAt: '2026-10-13T10:00:00Z',
             },
             index: 2,
@@ -59,6 +60,17 @@ describe('QuizQuestionPoolItemComponent', () => {
 
         expect(emitted).toHaveBeenNthCalledWith(1, { questionId: 7, reviewState: 'PENDING' });
         expect(emitted).toHaveBeenNthCalledWith(2, { questionId: 7, reviewState: 'EXCLUDED' });
+    });
+
+    it('should tag a question whose lecture unit material changed', () => {
+        const item = view();
+        setup(item);
+        expect(fixture.debugElement.query(By.css('[data-testid="pool-material-changed-7"]'))).toBeNull();
+
+        fixture.componentRef.setInput('item', { ...item, question: { ...item.question, materialChanged: true } });
+        fixture.detectChanges();
+
+        expect(fixture.debugElement.query(By.css('[data-testid="pool-material-changed-7"]'))).not.toBeNull();
     });
 
     it('should mark a triggered verdict with an icon and a text cue', () => {
