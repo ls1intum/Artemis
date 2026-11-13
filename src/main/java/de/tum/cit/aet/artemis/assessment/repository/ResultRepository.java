@@ -623,8 +623,7 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
     }
 
     /**
-     * Counts finished assessments per submission for text, modeling and file upload, and per participation for programming.
-     * Due dates and rated flags do not affect the count.
+     * Counts finished assessments per submission for text, modeling and file upload, and per participation for programming. Due dates and rated flags do not affect the count.
      *
      * @param exerciseIds - the exercise ids of the course we are interested in (should be filtered to only include exercises with manual assessment)
      * @return a number of assessments for the course
