@@ -33,7 +33,13 @@
             <small id="deimos-order-error" class="text-state-danger" role="alert" jhiTranslate="artemisApp.deimos.modal.validation.order"></small>
         }
         @if (isWindowTooLarge()) {
-            <small id="deimos-window-error" class="text-state-danger" role="alert" jhiTranslate="artemisApp.deimos.modal.validation.window"></small>
+            <small
+                id="deimos-window-error"
+                class="text-state-danger"
+                role="alert"
+                jhiTranslate="artemisApp.deimos.modal.validation.window"
+                [translateValues]="{ maxWindowDays: maxWindowDays }"
+            ></small>
         }
     </div>
 

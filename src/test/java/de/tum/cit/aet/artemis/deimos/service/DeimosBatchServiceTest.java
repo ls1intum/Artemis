@@ -11,6 +11,7 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.concurrent.Executor;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.stream.LongStream;
 
@@ -26,12 +27,20 @@ import org.springframework.web.server.ResponseStatusException;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
+import de.tum.cit.aet.artemis.deimos.config.DeimosLimits;
 import de.tum.cit.aet.artemis.deimos.dto.DeimosAnalysisCompleteEmailDTO;
 import de.tum.cit.aet.artemis.deimos.dto.DeimosBatchRequestDTO;
 import de.tum.cit.aet.artemis.deimos.dto.DeimosBatchScope;
 import de.tum.cit.aet.artemis.deimos.dto.DeimosBatchSummaryDTO;
 import de.tum.cit.aet.artemis.deimos.dto.DeimosExerciseScopeInfoDTO;
+import de.tum.cit.aet.artemis.deimos.dto.DeimosFailedAnalysisDetail;
+import de.tum.cit.aet.artemis.deimos.dto.DeimosFailureType;
+import de.tum.cit.aet.artemis.deimos.dto.DeimosMaliciousParticipationLink;
+import de.tum.cit.aet.artemis.deimos.dto.DeimosManipulationFinding;
+import de.tum.cit.aet.artemis.deimos.dto.DeimosOmission;
+import de.tum.cit.aet.artemis.deimos.dto.DeimosOmissionReason;
 import de.tum.cit.aet.artemis.deimos.dto.DeimosTriggerType;
+import de.tum.cit.aet.artemis.deimos.dto.DeimosVerdict;
 import de.tum.cit.aet.artemis.deimos.repository.DeimosBatchParticipationRepository;
 import de.tum.cit.aet.artemis.notification.dto.MailRecipientDTO;
 import de.tum.cit.aet.artemis.notification.service.notifications.MailSendingService;
@@ -62,8 +71,12 @@ class DeimosBatchServiceTest {
         mailSendingService = Mockito.mock(MailSendingService.class);
         courseRepository = Mockito.mock(CourseRepository.class);
         programmingExerciseRepository = Mockito.mock(ProgrammingExerciseRepository.class);
-        deimosBatchService = new DeimosBatchService(deimosBatchParticipationRepository, deimosAnalysisService, mailSendingService, courseRepository, programmingExerciseRepository,
-                URI.create("http://localhost:8080").toURL(), r -> r.run());
+        deimosBatchService = createService(Runnable::run, DeimosLimits.DEFAULT_MAX_PARTICIPATIONS_PER_RUN, DeimosLimits.DEFAULT_MAX_WINDOW_DAYS);
+    }
+
+    private DeimosBatchService createService(Executor executor, long maxParticipationsPerRun, long maxWindowDays) throws MalformedURLException {
+        return new DeimosBatchService(deimosBatchParticipationRepository, deimosAnalysisService, mailSendingService, courseRepository, programmingExerciseRepository,
+                URI.create("http://localhost:8080").toURL(), executor, maxParticipationsPerRun, maxWindowDays);
     }
 
     @Test
@@ -103,9 +116,8 @@ class DeimosBatchServiceTest {
                 .thenReturn(new SliceImpl<>(List.of(101L, 102L)));
         when(courseRepository.getCourseTitle(7L)).thenReturn("Course 7");
         when(deimosAnalysisService.analyze(any(), eq(DeimosTriggerType.MANUAL), eq(DeimosBatchScope.COURSE), eq(from), eq(to), eq(List.of(101L, 102L))))
-                .thenReturn(new DeimosBatchSummaryDTO("run-1", "MANUAL", "COURSE", from, to, 2, 2, 1, 1, 0,
-                        List.of(new DeimosBatchSummaryDTO.ParticipationAnalysis(101L, 55L, true, "bad"), new DeimosBatchSummaryDTO.ParticipationAnalysis(102L, 55L, false, "ok")),
-                        List.of()));
+                .thenReturn(new DeimosBatchSummaryDTO("run-1", "MANUAL", "COURSE", from, to, 2, 2, 0, 1, 0, 1, 0,
+                        List.of(analysis(101L, DeimosVerdict.MALICIOUS, true, "bad"), analysis(102L, DeimosVerdict.BENIGN, false, "ok")), List.of()));
 
         var triggerUser = createTriggerUser();
         var response = deimosBatchService.triggerCourseBatch(7L, new DeimosBatchRequestDTO(from, to), triggerUser);
@@ -139,15 +151,30 @@ class DeimosBatchServiceTest {
         when(programmingExerciseRepository.findDeimosExerciseScopeInfoById(12L))
                 .thenReturn(java.util.Optional.of(new DeimosExerciseScopeInfoDTO(12L, "Exercise 12", 7L, "Course 7", null)));
         when(deimosAnalysisService.analyze(any(), eq(DeimosTriggerType.MANUAL), eq(DeimosBatchScope.EXERCISE), eq(from), eq(to), eq(List.of(201L, 202L))))
-                .thenReturn(new DeimosBatchSummaryDTO("run-3", "MANUAL", "EXERCISE", from, to, 2, 2, 1, 1, 0, List.of(), List.of()));
+                .thenReturn(new DeimosBatchSummaryDTO("run-3", "MANUAL", "EXERCISE", from, to, 2, 2, 0, 1, 0, 1, 0,
+                        List.of(new DeimosBatchSummaryDTO.ParticipationAnalysis(201L, 12L, DeimosVerdict.MALICIOUS, true, "bad", null, List.of(), 0, false, List.of(), 0),
+                                new DeimosBatchSummaryDTO.ParticipationAnalysis(202L, 12L, DeimosVerdict.BENIGN, false, "ok", null, List.of(), 0, false, List.of(), 0)),
+                        List.of()));
 
         var triggerUser = createTriggerUser();
         var response = deimosBatchService.triggerExerciseBatch(12L, new DeimosBatchRequestDTO(from, to), triggerUser);
 
         assertThat(response.status()).isEqualTo("ACCEPTED");
         var recipientCaptor = ArgumentCaptor.forClass(MailRecipientDTO.class);
-        verify(mailSendingService).buildAndSendAsync(recipientCaptor.capture(), eq("email.deimos.analysisComplete.title"), eq("mail/deimos/deimosAnalysisCompleteEmail"), any());
+        @SuppressWarnings("unchecked")
+        ArgumentCaptor<java.util.Map<String, Object>> contextCaptor = ArgumentCaptor.forClass((Class<java.util.Map<String, Object>>) (Class<?>) java.util.Map.class);
+        verify(mailSendingService).buildAndSendAsync(recipientCaptor.capture(), eq("email.deimos.analysisComplete.title"), eq("mail/deimos/deimosAnalysisCompleteEmail"),
+                contextCaptor.capture());
         assertThat(recipientCaptor.getValue()).isEqualTo(MailRecipientDTO.from(triggerUser));
+        var emailData = (DeimosAnalysisCompleteEmailDTO) contextCaptor.getValue().get("analysis");
+        assertThat(emailData.courseId()).isEqualTo(7L);
+        assertThat(emailData.courseTitle()).isEqualTo("Course 7");
+        assertThat(emailData.scopeTitle()).isEqualTo("Exercise 12");
+        assertThat(emailData.maliciousParticipationLinks()).singleElement().satisfies(link -> {
+            assertThat(link.participationId()).isEqualTo(201L);
+            assertThat(link.url()).isEqualTo("http://localhost:8080/course-management/7/programming-exercises/12/participations/201/submissions");
+            assertThat(link.rationale()).isEqualTo("bad");
+        });
     }
 
     @Test
@@ -174,8 +201,9 @@ class DeimosBatchServiceTest {
         assertThat(emailData.failed()).isEqualTo(2L);
         assertThat(emailData.maliciousCount()).isEqualTo(0L);
         assertThat(emailData.failedAnalysisDetails()).hasSize(1);
-        assertThat(emailData.failedAnalysisDetails().getFirst().participationId()).isZero();
+        assertThat(emailData.failedAnalysisDetails().getFirst().participationId()).isEqualTo(DeimosBatchSummaryDTO.BATCH_LEVEL_FAILURE_PARTICIPATION_ID);
         assertThat(emailData.failedAnalysisDetails().getFirst().reason()).contains("IllegalStateException").contains("LLM unavailable");
+        assertThat(emailData.failedAnalysisDetails().getFirst().translationKey()).isEqualTo("email.deimos.analysisComplete.failureType.OTHER");
     }
 
     @Test
@@ -204,10 +232,9 @@ class DeimosBatchServiceTest {
         ZonedDateTime to = FIXED_NOW;
         when(deimosBatchParticipationRepository.countDistinctParticipationIdsForCourseInRange(42L, from, to)).thenReturn(10L);
 
-        var rejectingBatchService = new DeimosBatchService(deimosBatchParticipationRepository, deimosAnalysisService, mailSendingService, courseRepository,
-                programmingExerciseRepository, URI.create("http://localhost:8080").toURL(), task -> {
-                    throw new RejectedExecutionException("queue full");
-                });
+        var rejectingBatchService = createService(task -> {
+            throw new RejectedExecutionException("queue full");
+        }, DeimosLimits.DEFAULT_MAX_PARTICIPATIONS_PER_RUN, DeimosLimits.DEFAULT_MAX_WINDOW_DAYS);
 
         assertThatThrownBy(() -> rejectingBatchService.triggerCourseBatch(42L, new DeimosBatchRequestDTO(from, to), createTriggerUser()))
                 .isInstanceOf(ResponseStatusException.class).satisfies(ex -> assertThat(((ResponseStatusException) ex).getStatusCode()).isEqualTo(HttpStatus.SERVICE_UNAVAILABLE));
@@ -219,10 +246,9 @@ class DeimosBatchServiceTest {
         ZonedDateTime to = FIXED_NOW;
         when(deimosBatchParticipationRepository.countDistinctParticipationIdsForExerciseInRange(24L, from, to)).thenReturn(10L);
 
-        var rejectingBatchService = new DeimosBatchService(deimosBatchParticipationRepository, deimosAnalysisService, mailSendingService, courseRepository,
-                programmingExerciseRepository, URI.create("http://localhost:8080").toURL(), task -> {
-                    throw new RejectedExecutionException("queue full");
-                });
+        var rejectingBatchService = createService(task -> {
+            throw new RejectedExecutionException("queue full");
+        }, DeimosLimits.DEFAULT_MAX_PARTICIPATIONS_PER_RUN, DeimosLimits.DEFAULT_MAX_WINDOW_DAYS);
 
         assertThatThrownBy(() -> rejectingBatchService.triggerExerciseBatch(24L, new DeimosBatchRequestDTO(from, to), createTriggerUser()))
                 .isInstanceOf(ResponseStatusException.class).satisfies(ex -> assertThat(((ResponseStatusException) ex).getStatusCode()).isEqualTo(HttpStatus.SERVICE_UNAVAILABLE));
@@ -246,9 +272,205 @@ class DeimosBatchServiceTest {
         verify(mailSendingService).buildAndSendAsync(any(), eq("email.deimos.analysisComplete.title"), eq("mail/deimos/deimosAnalysisCompleteEmail"), contextCaptor.capture());
         var emailData = (DeimosAnalysisCompleteEmailDTO) contextCaptor.getValue().get("analysis");
         assertThat(emailData.analyzed()).isEqualTo(0L);
-        assertThat(emailData.failed()).isEqualTo(1L);
+        // The collection aborts before the candidate list is assigned, so the count observed while collecting is what
+        // the email has to report. Reporting one failure instead would tell the instructor a single participation went
+        // wrong, when in fact none of more than five thousand of them was examined.
+        assertThat(emailData.failed()).isEqualTo(PARTICIPATION_LIMIT + 1);
         assertThat(emailData.failedAnalysisDetails()).hasSize(1);
         assertThat(emailData.failedAnalysisDetails().getFirst().reason()).contains("exceeded");
+    }
+
+    @Test
+    void notificationListsEveryReportedVerdictAndTheCategoryOfEveryFailure() {
+        ZonedDateTime from = FIXED_NOW.minusDays(1);
+        ZonedDateTime to = FIXED_NOW;
+        var finding = new DeimosManipulationFinding("src/Attack.java", 3, "abcdef12, 2026-01-15T10:00Z");
+        var omission = new DeimosOmission(DeimosOmissionReason.FILE_INPUT_LIMIT, "src/Big.java", "abcdef12, 2026-01-15T10:00Z");
+        var manipulation = new DeimosBatchSummaryDTO.ParticipationAnalysis(301L, 55L, DeimosVerdict.MANIPULATION_ATTEMPT, null, null, DeimosFailureType.LLM_TIMEOUT,
+                List.of(finding), 4, false, List.of(), 0);
+        var incomplete = new DeimosBatchSummaryDTO.ParticipationAnalysis(303L, 55L, DeimosVerdict.INCOMPLETELY_CHECKED, false, "looks fine", null, List.of(), 0, false,
+                List.of(omission), 12);
+        var failures = List.of(new DeimosBatchSummaryDTO.FailedAnalysis(305L, DeimosFailureType.LLM_AUTHENTICATION_FAILED, "rejected"),
+                new DeimosBatchSummaryDTO.FailedAnalysis(DeimosBatchSummaryDTO.BATCH_LEVEL_FAILURE_PARTICIPATION_ID, DeimosFailureType.LLM_AUTHENTICATION_FAILED, "aborted"));
+        when(deimosBatchParticipationRepository.countDistinctParticipationIdsForCourseInRange(7L, from, to)).thenReturn(7L);
+        when(deimosBatchParticipationRepository.findParticipationIdsForCourseInRange(eq(7L), eq(from), eq(to), any(Pageable.class)))
+                .thenReturn(new SliceImpl<>(List.of(301L, 302L, 303L, 304L, 305L, 306L, 307L)));
+        when(courseRepository.getCourseTitle(7L)).thenReturn("Course 7");
+        when(deimosAnalysisService.analyze(any(), any(), any(), any(), any(), any())).thenReturn(new DeimosBatchSummaryDTO("run-9", "MANUAL", "COURSE", from, to, 7, 4, 1, 1, 1, 1,
+                3, List.of(manipulation, analysis(302L, DeimosVerdict.MALICIOUS, true, "bad"), incomplete, analysis(304L, DeimosVerdict.BENIGN, false, "ok")), failures));
+
+        deimosBatchService.triggerCourseBatch(7L, new DeimosBatchRequestDTO(from, to), createTriggerUser());
+
+        var emailData = captureEmailData();
+        assertThat(emailData.manipulationAttemptCount()).isEqualTo(1);
+        assertThat(emailData.incompletelyCheckedCount()).isEqualTo(1);
+        assertThat(emailData.manipulationAttemptLinks()).singleElement().satisfies(link -> {
+            assertThat(link.participationId()).isEqualTo(301L);
+            assertThat(link.findings()).containsExactly(finding);
+            assertThat(link.findingCount()).isEqualTo(4);
+            assertThat(link.llmMalicious()).isNull();
+            assertThat(link.rationale()).isNull();
+            assertThat(link.failureTranslationKey()).isEqualTo("email.deimos.analysisComplete.failureType.LLM_TIMEOUT");
+        });
+        assertThat(emailData.maliciousParticipationLinks()).extracting(DeimosMaliciousParticipationLink::participationId).containsExactly(302L);
+        assertThat(emailData.incompletelyCheckedLinks()).singleElement().satisfies(link -> {
+            assertThat(link.participationId()).isEqualTo(303L);
+            assertThat(link.omissions()).containsExactly(omission);
+            assertThat(link.omissionCount()).isEqualTo(12);
+            assertThat(link.rationale()).isEqualTo("looks fine");
+        });
+        // A benign participation is counted but never listed.
+        assertThat(emailData.benignCount()).isEqualTo(1);
+        assertThat(emailData.failedAnalysisDetails()).extracting(DeimosFailedAnalysisDetail::translationKey)
+                .containsOnly("email.deimos.analysisComplete.failureType.LLM_AUTHENTICATION_FAILED");
+        // The batch-level entry stands for the participations the aborted run never reached.
+        assertThat(emailData.failureBreakdown()).singleElement().satisfies(entry -> {
+            assertThat(entry.failureType()).isEqualTo(DeimosFailureType.LLM_AUTHENTICATION_FAILED);
+            assertThat(entry.count()).isEqualTo(3);
+        });
+    }
+
+    @Test
+    void notificationListsAParticipationCheckedWithoutTheModelWithoutRationale() {
+        ZonedDateTime from = FIXED_NOW.minusDays(1);
+        ZonedDateTime to = FIXED_NOW;
+        var omission = new DeimosOmission(DeimosOmissionReason.NON_TEXT_FILE, "lib/tool.so", "abcdef12, 2026-01-15T10:00Z");
+        // Only a binary file changed: no model answer, no rationale and no failure.
+        var incomplete = new DeimosBatchSummaryDTO.ParticipationAnalysis(311L, 55L, DeimosVerdict.INCOMPLETELY_CHECKED, null, null, null, List.of(), 0, false, List.of(omission),
+                1);
+        when(deimosBatchParticipationRepository.countDistinctParticipationIdsForCourseInRange(7L, from, to)).thenReturn(1L);
+        when(deimosBatchParticipationRepository.findParticipationIdsForCourseInRange(eq(7L), eq(from), eq(to), any(Pageable.class))).thenReturn(new SliceImpl<>(List.of(311L)));
+        when(courseRepository.getCourseTitle(7L)).thenReturn("Course 7");
+        when(deimosAnalysisService.analyze(any(), any(), any(), any(), any(), any()))
+                .thenReturn(new DeimosBatchSummaryDTO("run-10", "MANUAL", "COURSE", from, to, 1, 1, 0, 0, 1, 0, 0, List.of(incomplete), List.of()));
+
+        deimosBatchService.triggerCourseBatch(7L, new DeimosBatchRequestDTO(from, to), createTriggerUser());
+
+        var emailData = captureEmailData();
+        assertThat(emailData.incompletelyCheckedCount()).isEqualTo(1);
+        assertThat(emailData.incompletelyCheckedLinks()).singleElement().satisfies(link -> {
+            assertThat(link.participationId()).isEqualTo(311L);
+            assertThat(link.omissions()).containsExactly(omission);
+            assertThat(link.rationale()).isEmpty();
+        });
+        assertThat(emailData.failedAnalysisDetails()).isEmpty();
+    }
+
+    @Test
+    void notificationKeepsTheModelRationaleOfAManipulationAttempt() {
+        ZonedDateTime from = FIXED_NOW.minusDays(1);
+        ZonedDateTime to = FIXED_NOW;
+        var finding = new DeimosManipulationFinding("src/Attack.java", 3, "abcdef12, 2026-01-15T10:00Z");
+        // The model answered, so there is a rationale to show and no failure to explain.
+        var manipulation = new DeimosBatchSummaryDTO.ParticipationAnalysis(314L, 55L, DeimosVerdict.MANIPULATION_ATTEMPT, true, " forged marker ", null, List.of(finding),
+                DeimosAnalysisService.MAX_TRACKED_FINDINGS_PER_PARTICIPATION, true, List.of(), 0);
+        when(deimosBatchParticipationRepository.countDistinctParticipationIdsForCourseInRange(7L, from, to)).thenReturn(1L);
+        when(deimosBatchParticipationRepository.findParticipationIdsForCourseInRange(eq(7L), eq(from), eq(to), any(Pageable.class))).thenReturn(new SliceImpl<>(List.of(314L)));
+        when(courseRepository.getCourseTitle(7L)).thenReturn("Course 7");
+        when(deimosAnalysisService.analyze(any(), any(), any(), any(), any(), any()))
+                .thenReturn(new DeimosBatchSummaryDTO("run-12", "MANUAL", "COURSE", from, to, 1, 1, 1, 0, 0, 0, 0, List.of(manipulation), List.of()));
+
+        deimosBatchService.triggerCourseBatch(7L, new DeimosBatchRequestDTO(from, to), createTriggerUser());
+
+        assertThat(captureEmailData().manipulationAttemptLinks()).singleElement().satisfies(link -> {
+            assertThat(link.llmMalicious()).isTrue();
+            assertThat(link.rationale()).isEqualTo("forged marker");
+            assertThat(link.failureTranslationKey()).isNull();
+            assertThat(link.findingCount()).isEqualTo(DeimosAnalysisService.MAX_TRACKED_FINDINGS_PER_PARTICIPATION);
+            assertThat(link.findingCountCapped()).isTrue();
+        });
+    }
+
+    @Test
+    void notificationReportsAFailureWithoutCategoryAsOther() {
+        ZonedDateTime from = FIXED_NOW.minusDays(1);
+        ZonedDateTime to = FIXED_NOW;
+        var failure = new DeimosBatchSummaryDTO.FailedAnalysis(315L, null, "unknown");
+        when(deimosBatchParticipationRepository.countDistinctParticipationIdsForCourseInRange(7L, from, to)).thenReturn(1L);
+        when(deimosBatchParticipationRepository.findParticipationIdsForCourseInRange(eq(7L), eq(from), eq(to), any(Pageable.class))).thenReturn(new SliceImpl<>(List.of(315L)));
+        when(courseRepository.getCourseTitle(7L)).thenReturn("Course 7");
+        when(deimosAnalysisService.analyze(any(), any(), any(), any(), any(), any()))
+                .thenReturn(new DeimosBatchSummaryDTO("run-13", "MANUAL", "COURSE", from, to, 1, 0, 0, 0, 0, 0, 1, List.of(), List.of(failure)));
+
+        deimosBatchService.triggerCourseBatch(7L, new DeimosBatchRequestDTO(from, to), createTriggerUser());
+
+        var emailData = captureEmailData();
+        assertThat(emailData.failedAnalysisDetails()).singleElement().satisfies(detail -> {
+            assertThat(detail.failureType()).isEqualTo(DeimosFailureType.OTHER);
+            assertThat(detail.translationKey()).isEqualTo("email.deimos.analysisComplete.failureType.OTHER");
+        });
+        assertThat(emailData.failureBreakdown()).singleElement().satisfies(entry -> {
+            assertThat(entry.failureType()).isEqualTo(DeimosFailureType.OTHER);
+            assertThat(entry.count()).isEqualTo(1);
+        });
+    }
+
+    @Test
+    void notificationLeavesOutAParticipationWithoutExerciseButKeepsTheOthers() {
+        ZonedDateTime from = FIXED_NOW.minusDays(1);
+        ZonedDateTime to = FIXED_NOW;
+        // Without an exercise id there is no page to link to, so the entry is left out; the counts still include it.
+        var withoutExercise = new DeimosBatchSummaryDTO.ParticipationAnalysis(312L, 0L, DeimosVerdict.MALICIOUS, true, "no exercise", null, List.of(), 0, false, List.of(), 0);
+        var withExercise = new DeimosBatchSummaryDTO.ParticipationAnalysis(313L, 55L, DeimosVerdict.MALICIOUS, true, "with exercise", null, List.of(), 0, false, List.of(), 0);
+        when(deimosBatchParticipationRepository.countDistinctParticipationIdsForCourseInRange(7L, from, to)).thenReturn(2L);
+        when(deimosBatchParticipationRepository.findParticipationIdsForCourseInRange(eq(7L), eq(from), eq(to), any(Pageable.class)))
+                .thenReturn(new SliceImpl<>(List.of(312L, 313L)));
+        when(courseRepository.getCourseTitle(7L)).thenReturn("Course 7");
+        when(deimosAnalysisService.analyze(any(), any(), any(), any(), any(), any()))
+                .thenReturn(new DeimosBatchSummaryDTO("run-11", "MANUAL", "COURSE", from, to, 2, 2, 0, 2, 0, 0, 0, List.of(withoutExercise, withExercise), List.of()));
+
+        deimosBatchService.triggerCourseBatch(7L, new DeimosBatchRequestDTO(from, to), createTriggerUser());
+
+        var emailData = captureEmailData();
+        assertThat(emailData.analyzed()).isEqualTo(2);
+        assertThat(emailData.maliciousCount()).isEqualTo(2);
+        assertThat(emailData.maliciousParticipationLinks()).singleElement().satisfies(link -> {
+            assertThat(link.participationId()).isEqualTo(313L);
+            assertThat(link.url()).endsWith("/course-management/7/programming-exercises/55/participations/313/submissions");
+            assertThat(link.rationale()).isEqualTo("with exercise");
+        });
+    }
+
+    @Test
+    void configuredLimitsReplaceTheDefaults() throws MalformedURLException {
+        var restrictedService = createService(Runnable::run, 10, 7);
+        ZonedDateTime to = FIXED_NOW;
+
+        assertThatThrownBy(() -> restrictedService.triggerCourseBatch(42L, new DeimosBatchRequestDTO(to.minusDays(7).minusSeconds(1), to), createTriggerUser()))
+                .isInstanceOf(BadRequestAlertException.class).hasMessageContaining("window");
+
+        when(deimosBatchParticipationRepository.countDistinctParticipationIdsForCourseInRange(42L, to.minusDays(7), to)).thenReturn(11L);
+        assertThatThrownBy(() -> restrictedService.triggerCourseBatch(42L, new DeimosBatchRequestDTO(to.minusDays(7), to), createTriggerUser()))
+                .isInstanceOf(BadRequestAlertException.class).hasMessageContaining("participation limit");
+    }
+
+    @Test
+    void configuredParticipationLimitAppliesWhileCollecting() throws MalformedURLException {
+        var restrictedService = createService(Runnable::run, 10, DeimosLimits.DEFAULT_MAX_WINDOW_DAYS);
+        ZonedDateTime from = FIXED_NOW.minusHours(2);
+        ZonedDateTime to = FIXED_NOW;
+        when(deimosBatchParticipationRepository.countDistinctParticipationIdsForCourseInRange(42L, from, to)).thenReturn(10L);
+        when(deimosBatchParticipationRepository.findParticipationIdsForCourseInRange(eq(42L), eq(from), eq(to), any(Pageable.class)))
+                .thenReturn(new SliceImpl<>(LongStream.rangeClosed(1, 11).boxed().toList()));
+        when(courseRepository.getCourseTitle(42L)).thenReturn("Course 42");
+
+        restrictedService.triggerCourseBatch(42L, new DeimosBatchRequestDTO(from, to), createTriggerUser());
+
+        verify(deimosAnalysisService, Mockito.never()).analyze(any(), any(), any(), any(), any(), any());
+        var emailData = captureEmailData();
+        assertThat(emailData.failed()).isEqualTo(11L);
+        assertThat(emailData.failedAnalysisDetails().getFirst().reason()).contains("exceeded 10");
+    }
+
+    private DeimosAnalysisCompleteEmailDTO captureEmailData() {
+        @SuppressWarnings("unchecked")
+        ArgumentCaptor<java.util.Map<String, Object>> contextCaptor = ArgumentCaptor.forClass((Class<java.util.Map<String, Object>>) (Class<?>) java.util.Map.class);
+        verify(mailSendingService).buildAndSendAsync(any(), eq("email.deimos.analysisComplete.title"), eq("mail/deimos/deimosAnalysisCompleteEmail"), contextCaptor.capture());
+        return (DeimosAnalysisCompleteEmailDTO) contextCaptor.getValue().get("analysis");
+    }
+
+    private static DeimosBatchSummaryDTO.ParticipationAnalysis analysis(long participationId, DeimosVerdict verdict, boolean malicious, String rationale) {
+        return new DeimosBatchSummaryDTO.ParticipationAnalysis(participationId, 55L, verdict, malicious, rationale, null, List.of(), 0, false, List.of(), 0);
     }
 
     private static User createTriggerUser() {
