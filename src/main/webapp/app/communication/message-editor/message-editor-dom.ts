@@ -8,6 +8,7 @@ import { formatMessageBlocks } from './message-editor-blocks';
 import { editorToMessage, isMessageLinkSafe, messageToEditorFragment, protectMessagePostReferences, splitProtectedMessageMarks } from './message-editor-conversion';
 import { formatMessageSelection, messageSelectionOffset, restoreMessageSelection, setMessageSelectionMarks } from './message-editor-formatting';
 import { EMOTICON_TO_EMOJI } from 'app/editor/monaco-editor/model/emoticon-emoji.util';
+import { isHttpUrl } from 'app/foundation/util/markdown.util';
 import { DiffMatchPatch } from 'diff-match-patch-typescript';
 
 const inlineMarks = ['strong', 'em', 'ins', 's', 'code'] as const;
@@ -364,6 +365,9 @@ export class MessageEditorDom {
 
     /** Preserves supported clipboard formatting while code and unsupported clipboard formats retain literal text. */
     insertClipboard(html: string, text: string, internal = ''): void {
+        if (!internal && this.linkSelectionWithPastedUrl(text)) {
+            return;
+        }
         const code = this.parentElement(this.range().startContainer)?.closest('pre, code');
         const fragment = code ? undefined : (decodeMessageClipboard(internal) ?? clipboardToEditorFragment(html));
         if (fragment === undefined) {
@@ -371,6 +375,17 @@ export class MessageEditorDom {
         } else {
             this.insertContent(fragment);
         }
+    }
+
+    /** Pasting one http(s) URL over selected text links that text, as the link form would; a selected URL or link is replaced as usual. */
+    private linkSelectionWithPastedUrl(text: string): boolean {
+        const url = text.trim();
+        const label = this.linkRange().toString();
+        if (!label.trim() || !isHttpUrl(url) || isHttpUrl(label) || this.linkAtSelection() || !isMessageLinkSafe(url, label) || !this.canLinkSelection()) {
+            return false;
+        }
+        this.setLink(label, url);
+        return true;
     }
 
     /** Adds a sanitized wire-format copy for references and literal hashes; ordinary text keeps native copying. */
