@@ -14,6 +14,8 @@ import db_schema
 from verify_schema import (
     evaluate_unbounded_text_columns,
     is_unbounded_text,
+    is_unbounded_text_source,
+    is_unbounded_varchar,
     normalize_identifier,
     scan_text_introductions,
 )
@@ -34,8 +36,8 @@ def schema(tables: dict) -> db_schema.SchemaModel:
     return db_schema.SchemaModel(tables=tables)
 
 
-def column(sql_type: str) -> dict:
-    return {"type": sql_type, "length": ""}
+def column(sql_type: str, length: str = "") -> dict:
+    return {"type": sql_type, "length": length}
 
 
 class NormalizeTest(unittest.TestCase):
@@ -49,17 +51,44 @@ class NormalizeTest(unittest.TestCase):
     def test_is_unbounded_text(self):
         yes = (
             "text", "TEXT", "longtext", "mediumtext", "clob", " text ", "text()", "ntext", "NTEXT", "nclob",
-            "longvarchar", "longnvarchar", "LONGVARCHAR",
+            "longvarchar", "longnvarchar", "LONGVARCHAR", "long varchar", "LONG VARCHAR", "long  nvarchar",
             "java.sql.Types.CLOB", "java.sql.Types.LONGVARCHAR", "java.sql.Types.LONGNVARCHAR", "java.sql.Types.NCLOB",
         )
         for value in yes:
             self.assertTrue(is_unbounded_text(value), value)
+        # tinytext is bounded once MATERIALISED (MySQL TINYTEXT, 255), so the materialised check excludes it.
         no = (
             "varchar(255)", "nvarchar(255)", "character varying", "tinytext", "bigint", "", None, "integer",
             "java.sql.Types.VARCHAR", "my_schema.text", "myschema.clob",
         )
         for value in no:
             self.assertFalse(is_unbounded_text(value), value)
+
+    def test_pg_catalog_text_is_unbounded(self):
+        # pg_catalog.text is PostgreSQL's built-in unbounded text; a custom my_schema.text is not.
+        self.assertTrue(is_unbounded_text("pg_catalog.text"))
+        self.assertFalse(is_unbounded_text("pg_catalog.int4"))
+        self.assertFalse(is_unbounded_text("my_schema.text"))
+
+    def test_is_unbounded_varchar(self):
+        for yes in ("varchar", "VARCHAR", "character varying", "nvarchar", "national character varying"):
+            self.assertTrue(is_unbounded_varchar(yes), yes)  # no length -> unbounded
+        self.assertTrue(is_unbounded_varchar("character varying", ""))
+        self.assertTrue(is_unbounded_varchar("character varying", "0"))
+        for no in ("varchar(255)", "character varying(255)", "text", "bigint", "", None):
+            self.assertFalse(is_unbounded_varchar(no), no)
+        self.assertFalse(is_unbounded_varchar("character varying", "255"))
+
+    def test_is_unbounded_text_source_also_flags_tinytext(self):
+        # A declared tinytext is materialised as unbounded TEXT on PostgreSQL, so the SOURCE check must flag it.
+        self.assertTrue(is_unbounded_text_source("tinytext"))
+        self.assertTrue(is_unbounded_text_source("TINYTEXT"))
+        # Everything the materialised check flags, the source check flags too.
+        for value in ("text", "longtext", "clob", "long varchar", "java.sql.Types.CLOB"):
+            self.assertTrue(is_unbounded_text_source(value), value)
+        # Still bounded: real length-bounded types.
+        for value in ("varchar(255)", "nvarchar(255)", "java.sql.Types.VARCHAR", "my_schema.text", None):
+            self.assertFalse(is_unbounded_text_source(value), value)
 
 
 class ScanTextIntroductionsTest(unittest.TestCase):
@@ -252,6 +281,34 @@ class ScanTextIntroductionsTest(unittest.TestCase):
         body = '<changeSet id="cs1" author="x"><mergeColumns tableName="foo" column1Name="a" column2Name="b" finalColumnName="bar" finalColumnType="varchar(255)" joinString=" "/></changeSet>'
         self.assertEqual(self.run_scan(body), [])
 
+    def test_tinytext_source_declaration_is_flagged(self):
+        # A declared tinytext materialises as unbounded TEXT on PostgreSQL, so re-adding a grandfathered column
+        # as tinytext must be caught at the source (the materialised MySQL TINYTEXT stays bounded separately).
+        body = '<changeSet id="cs1" author="x"><addColumn tableName="course"><column name="description" type="tinytext"/></addColumn></changeSet>'
+        failures = self.run_scan(body)
+        self.assertEqual(len(failures), 1)
+        self.assertIn("course.description", failures[0])
+
+    def test_spaced_long_varchar_add_column_is_flagged(self):
+        body = '<changeSet id="cs1" author="x"><addColumn tableName="foo"><column name="bar" type="long varchar"/></addColumn></changeSet>'
+        failures = self.run_scan(body)
+        self.assertEqual(len(failures), 1)
+        self.assertIn("foo.bar", failures[0])
+
+    def test_no_length_varchar_source_declaration_is_flagged(self):
+        # PostgreSQL 'varchar'/'character varying' with no length is unbounded; a declared no-length varchar must
+        # be flagged, while varchar(255) stays bounded (test_bounded_varchar_passes).
+        body = '<changeSet id="cs1" author="x"><addColumn tableName="foo"><column name="bar" type="varchar"/></addColumn></changeSet>'
+        failures = self.run_scan(body)
+        self.assertEqual(len(failures), 1)
+        self.assertIn("foo.bar", failures[0])
+
+    def test_pg_catalog_text_source_declaration_is_flagged(self):
+        body = '<changeSet id="cs1" author="x"><addColumn tableName="course"><column name="description" type="pg_catalog.text"/></addColumn></changeSet>'
+        failures = self.run_scan(body)
+        self.assertEqual(len(failures), 1)
+        self.assertIn("course.description", failures[0])
+
     def test_stale_allowed_entry_is_reported(self):
         body = '<changeSet id="cs1" author="x"><addColumn tableName="foo"><column name="bar" type="varchar(10)"/></addColumn></changeSet>'
         allowed = {(FILE, "cs1", "x", "foo", "bar"): "no longer text"}
@@ -281,8 +338,33 @@ class EvaluateColumnTypesTest(unittest.TestCase):
         self.assertEqual(evaluate_unbounded_text_columns(model, {("foo", "bar")}, check_stale=True), [])
 
     def test_bounded_column_ignored(self):
-        model = schema({"foo": {"columns": {"bar": column("character varying")}}})
+        model = schema({"foo": {"columns": {"bar": column("character varying", "255")}}})
         self.assertEqual(evaluate_unbounded_text_columns(model, set(), check_stale=True), [])
+
+    def test_no_length_character_varying_is_unbounded(self):
+        # A materialised 'character varying' with no length limit is unbounded and must be flagged.
+        model = schema({"foo": {"columns": {"bar": column("character varying", "")}}})
+        failures = evaluate_unbounded_text_columns(model, set(), check_stale=True)
+        self.assertEqual(len(failures), 1)
+        self.assertIn("foo.bar", failures[0])
+
+    def test_pg_catalog_text_materialised_is_unbounded(self):
+        model = schema({"foo": {"columns": {"bar": column("pg_catalog.text")}}})
+        failures = evaluate_unbounded_text_columns(model, set(), check_stale=True)
+        self.assertEqual(len(failures), 1)
+        self.assertIn("foo.bar", failures[0])
+
+    def test_materialized_tinytext_is_bounded(self):
+        # A materialised MySQL TINYTEXT is bounded (255), so the final-schema check must not flag it, even though
+        # the source scan treats a declared tinytext as unbounded.
+        model = schema({"foo": {"columns": {"bar": column("tinytext")}}})
+        self.assertEqual(evaluate_unbounded_text_columns(model, set(), check_stale=False), [])
+
+    def test_materialized_spaced_long_varchar_is_unbounded(self):
+        model = schema({"foo": {"columns": {"bar": column("long varchar")}}})
+        failures = evaluate_unbounded_text_columns(model, set(), check_stale=True)
+        self.assertEqual(len(failures), 1)
+        self.assertIn("foo.bar", failures[0])
 
     def test_liquibase_bookkeeping_tables_skipped(self):
         model = schema({"databasechangelog": {"columns": {"description": column("text")}}})

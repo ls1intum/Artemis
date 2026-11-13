@@ -91,11 +91,23 @@ CHANGESET_TAG = f"{NAMESPACE}changeSet"
 # historical identity so that dropping a grandfathered column and re-adding it under the same name in a
 # NEW changeset is not waved through by the name alone.
 
-# The Liquibase ClobType family: every alias Liquibase resolves to its unbounded CLOB type. ntext/nclob are
-# the national-charset siblings of text/clob; longvarchar/longnvarchar are the JDBC-named large-text types.
-# The java.sql.Types.* forms (e.g. java.sql.Types.CLOB) are handled in is_unbounded_text by comparing the
-# final dotted segment. tinytext (255) stays out: it is bounded, not free-form unbounded text.
-UNBOUNDED_TEXT_TYPES = frozenset({"text", "mediumtext", "longtext", "clob", "ntext", "nclob", "longvarchar", "longnvarchar"})
+# The Liquibase ClobType family (every alias Liquibase resolves to its unbounded CLOB type), as MATERIALISED.
+# ntext/nclob are the national-charset siblings; longvarchar/longnvarchar and their spaced forms
+# "long varchar"/"long nvarchar" are the JDBC-named large-text aliases. The java.sql.Types.* forms (e.g.
+# java.sql.Types.CLOB) are handled in is_unbounded_text by comparing the final dotted segment.
+# tinytext is deliberately NOT here: Liquibase keeps a declared tinytext bounded (TINYTEXT, 255) on MySQL, so a
+# materialised MySQL tinytext column is bounded. But a declared tinytext is materialised as unbounded TEXT on
+# PostgreSQL, so the SOURCE scan must still treat it as unbounded -- SOURCE_UNBOUNDED_TEXT_TYPES adds it for the
+# changelog scan only, while the materialised-schema check keeps excluding MySQL TINYTEXT.
+UNBOUNDED_TEXT_TYPES = frozenset(
+    {"text", "mediumtext", "longtext", "clob", "ntext", "nclob", "longvarchar", "longnvarchar", "long varchar", "long nvarchar"}
+)
+SOURCE_UNBOUNDED_TEXT_TYPES = UNBOUNDED_TEXT_TYPES | {"tinytext"}
+
+# Character-varying types are unbounded only when NO length limit is given: a PostgreSQL 'character varying' /
+# 'varchar' with no (n) stores up to ~1 GB. Handled separately (is_unbounded_varchar) because it depends on the
+# length, not the type name alone.
+VARYING_TYPES = frozenset({"varchar", "character varying", "nvarchar", "national character varying"})
 
 # The (table, column) pairs that were already unbounded text when this guard was introduced. They are
 # grandfathered so the guard is green on day one; a new unbounded-text column must not be added (give it a
@@ -208,7 +220,7 @@ COMMENT_TAG = f"{NAMESPACE}comment"
 # with="TEXT"/>). check_column_types backstops everything by inspecting the final materialised schema
 # regardless of how a column was created.
 HARD_OPAQUE_TAGS = frozenset({f"{NAMESPACE}sqlFile", f"{NAMESPACE}customChange"})
-TEXT_TYPE_TOKEN = re.compile(r"\b(?:text|longtext|mediumtext|clob|ntext|nclob|longvarchar|longnvarchar)\b", re.IGNORECASE)
+TEXT_TYPE_TOKEN = re.compile(r"\b(?:text|longtext|mediumtext|clob|ntext|nclob|longvarchar|longnvarchar|long\s+varchar|long\s+nvarchar)\b", re.IGNORECASE)
 
 
 def normalize_identifier(name: str | None) -> str:
@@ -223,21 +235,70 @@ def normalize_identifier(name: str | None) -> str:
     return name.lower()
 
 
+def _is_unbounded_text(sql_type: str | None, types: frozenset[str] | set[str]) -> bool:
+    """Shared core: True when sql_type (any length argument dropped, case- and whitespace-normalised) names one
+    of the given unbounded types. Handles the java.sql.Types.* forms by comparing the final dotted segment on
+    that exact prefix only, so a schema-qualified/custom type such as my_schema.text is not misread."""
+    if not sql_type:
+        return False
+    # Drop any length argument, lower-case, and collapse internal whitespace ("long  varchar" -> "long varchar").
+    base = " ".join(sql_type.split("(", 1)[0].lower().split())
+    if not base:
+        return False
+    if base in types:
+        return True
+    # Recognise a type named through a known namespace (JDBC java.sql.Types.* or PostgreSQL pg_catalog.*) by its
+    # final segment, on these exact prefixes only, so a schema-qualified/custom type such as my_schema.text is
+    # not misread as unbounded.
+    for prefix in ("java.sql.types.", "pg_catalog."):
+        if base.startswith(prefix):
+            return base.rsplit(".", 1)[-1] in types
+    return False
+
+
 def is_unbounded_text(sql_type: str | None) -> bool:
     """
-    True for the Liquibase unbounded-text/CLOB family (text/mediumtext/longtext/clob/ntext/nclob/longvarchar/
-    longnvarchar and their java.sql.Types.* aliases), ignoring any length argument and case.
+    MATERIALISED-schema test: True for the Liquibase unbounded-text/CLOB family (text/mediumtext/longtext/clob/
+    ntext/nclob/longvarchar/longnvarchar, the spaced "long varchar"/"long nvarchar", and their java.sql.Types.*
+    aliases). A materialised MySQL TINYTEXT is bounded and is NOT matched here.
+    """
+    return _is_unbounded_text(sql_type, UNBOUNDED_TEXT_TYPES)
+
+
+def is_unbounded_text_source(sql_type: str | None) -> bool:
+    """
+    SOURCE-declaration test: like is_unbounded_text, but also treats a declared `tinytext` as unbounded, because
+    Liquibase materialises a declared tinytext as unbounded TEXT on PostgreSQL (only MySQL keeps the bounded
+    TINYTEXT). Used for changelog introductions; the materialised-schema check uses is_unbounded_text instead.
+    """
+    return _is_unbounded_text(sql_type, SOURCE_UNBOUNDED_TEXT_TYPES)
+
+
+def is_unbounded_varchar(sql_type: str | None, length: str | int | None = None) -> bool:
+    """
+    True for a character-varying type with no length limit (an unbounded PostgreSQL 'character varying'/'varchar').
+
+    The limit may be inline (varchar(255)) or recorded as separate schema metadata (``length``); when neither is
+    present the column is unbounded. A declared type with no length metadata (``length`` is None) and no inline
+    ``(n)`` is treated as unbounded -- the source-scan case, where only the declared type string is available.
     """
     if not sql_type:
         return False
-    base = sql_type.strip().lower().split("(", 1)[0].strip()
-    if base in UNBOUNDED_TEXT_TYPES:
-        return True
-    # java.sql.Types.CLOB / .LONGVARCHAR / ...: match the JDBC type name on this exact prefix only, so a
-    # schema-qualified or custom type such as my_schema.text is not misread as unbounded.
-    if base.startswith("java.sql.types."):
-        return base.rsplit(".", 1)[-1] in UNBOUNDED_TEXT_TYPES
-    return False
+    raw = sql_type.strip().lower()
+    if "(" in raw:  # an inline length such as varchar(255) / character varying(255)
+        return False
+    if " ".join(raw.split()) not in VARYING_TYPES:
+        return False
+    return length is None or str(length).strip() in ("", "0")
+
+
+def introduces_unbounded_text(sql_type: str | None) -> bool:
+    """
+    Source-side predicate for a declared column type: True when it materialises as unbounded text -- the Liquibase
+    ClobType family (tinytext included, see is_unbounded_text_source) or a character-varying type declared with no
+    length.
+    """
+    return is_unbounded_text_source(sql_type) or is_unbounded_varchar(sql_type)
 
 
 def log(message: str) -> None:
@@ -777,13 +838,13 @@ def unbounded_text_introductions(changeset) -> set[tuple[str, str]]:
         if element.tag in (CREATE_TABLE_TAG, ADD_COLUMN_TAG):
             table = normalize_identifier(element.get("tableName"))
             for column in element:
-                if column.tag == COLUMN_TAG and is_unbounded_text(column.get("type")):
+                if column.tag == COLUMN_TAG and introduces_unbounded_text(column.get("type")):
                     found.add((table, normalize_identifier(column.get("name"))))
-        elif element.tag == MODIFY_DATA_TYPE_TAG and is_unbounded_text(element.get("newDataType")):
+        elif element.tag == MODIFY_DATA_TYPE_TAG and introduces_unbounded_text(element.get("newDataType")):
             found.add((normalize_identifier(element.get("tableName")), normalize_identifier(element.get("columnName"))))
-        elif element.tag == RENAME_COLUMN_TAG and is_unbounded_text(element.get("columnDataType")):
+        elif element.tag == RENAME_COLUMN_TAG and introduces_unbounded_text(element.get("columnDataType")):
             found.add((normalize_identifier(element.get("tableName")), normalize_identifier(element.get("newColumnName"))))
-        elif element.tag == MERGE_COLUMNS_TAG and is_unbounded_text(element.get("finalColumnType")):
+        elif element.tag == MERGE_COLUMNS_TAG and introduces_unbounded_text(element.get("finalColumnType")):
             found.add((normalize_identifier(element.get("tableName")), normalize_identifier(element.get("finalColumnName"))))
     return found
 
@@ -928,7 +989,7 @@ def evaluate_unbounded_text_columns(schema: db_schema.SchemaModel, grandfathered
         if normalize_identifier(table) in ("databasechangelog", "databasechangeloglock"):
             continue
         for column, meta in sorted(schema.tables[table]["columns"].items()):
-            if not is_unbounded_text(meta.get("type")):
+            if not (is_unbounded_text(meta.get("type")) or is_unbounded_varchar(meta.get("type"), meta.get("length"))):
                 continue
             key = (normalize_identifier(table), normalize_identifier(column))
             present.add(key)
