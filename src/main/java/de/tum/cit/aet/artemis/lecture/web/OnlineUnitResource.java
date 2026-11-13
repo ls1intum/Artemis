@@ -138,7 +138,7 @@ public class OnlineUnitResource {
         existingOnlineUnit.setReleaseDate(onlineUnitDto.releaseDate());
 
         // This method computes the relevant changes for competency links and applies them to the existingTextUnit
-        lectureUnitService.updateCompetencyLinks(onlineUnitDto, existingOnlineUnit);
+        lectureUnitService.updateCompetencyLinks(onlineUnitDto, existingOnlineUnit, existingOnlineUnit.getLecture().getCourse().getId());
 
         // Note: Competency links are persisted automatically (due to CascadeType.PERSIST)
         existingOnlineUnit = onlineUnitRepository.save(existingOnlineUnit);
@@ -194,7 +194,7 @@ public class OnlineUnitResource {
         onlineUnit.setSource(onlineUnitDto.source());
         onlineUnit.setName(onlineUnitDto.name());
         onlineUnit.setReleaseDate(onlineUnitDto.releaseDate());
-        lectureUnitService.updateCompetencyLinks(onlineUnitDto, onlineUnit);
+        lectureUnitService.updateCompetencyLinks(onlineUnitDto, onlineUnit, lecture.getCourse().getId());
 
         lecture.addLectureUnit(onlineUnit);
         Lecture updatedLecture = lectureRepository.saveAndFlush(lecture);

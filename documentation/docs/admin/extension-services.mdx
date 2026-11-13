@@ -2,7 +2,7 @@
 id: extensions-setup
 title: Setup of Extension Services
 sidebar_label: Extensions Setup
-last_reviewed: 2026-11-03
+last_reviewed: 2026-11-12
 ---
 
 import { CalloutVariant } from '../../src/components/Callout/Callout.types';
@@ -86,7 +86,11 @@ artemis:
         secret: <shared-secret>
 ```
 
-Use a deployment-managed shared secret. For the service-side module layout and decorator contracts, refer to the [Athena module structure](https://ls1intum.github.io/edutelligence/athena/docs/dev/module/structure/).
+Use a deployment-managed shared secret that is unique to your installation, for example `openssl rand -hex 32`, and configure the same value in Athena.
+Without a secret, Artemis neither sends requests to Athena nor answers its repository requests.
+Under the `prod` profile, Artemis refuses to start with the Athena module enabled when the secret is empty, is one of the example values shipped with Artemis, or starts with `CHANGE_ME`.
+The example environment files under `deployment/docker/artemis/config` carry such a placeholder on purpose.
+For the service-side module layout and decorator contracts, refer to the [Athena module structure](https://ls1intum.github.io/edutelligence/athena/docs/dev/module/structure/).
 
 ## Other Extension Services
 

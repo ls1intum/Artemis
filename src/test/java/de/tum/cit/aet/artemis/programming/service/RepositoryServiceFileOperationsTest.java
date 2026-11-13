@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.programming.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+import static org.assertj.core.api.Assertions.assertThatIOException;
 
 import java.io.ByteArrayInputStream;
 import java.io.FileNotFoundException;
@@ -374,8 +375,45 @@ class RepositoryServiceFileOperationsTest {
         assertThat(fallback.getFilesContentFromBareRepositoryForLastCommitBeforeOrAt(uri, java.time.ZonedDateTime.now().plusHours(1))).containsEntry("cached.txt",
                 "cached committed contents");
         org.mockito.Mockito.doThrow(new org.eclipse.jgit.api.errors.TransportException("Checkout unavailable")).when(checkout).getOrCheckoutRepository(uri, true, false);
-        org.assertj.core.api.Assertions.assertThatIOException().isThrownBy(() -> fallback.getFilesContentFromBareRepositoryForLastCommit(uri))
-                .withMessageContaining("Failed to retrieve repository content");
+        assertThatIOException().isThrownBy(() -> fallback.getFilesContentFromBareRepositoryForLastCommit(uri)).withMessageContaining("Failed to retrieve repository content");
     }
 
+    @Test
+    void readingAllFilesLeavesOutATextFileAboveTheSizeLimitAndFailsForAReadOfThatFile() throws Exception {
+        FileUtils.writeStringToFile(workingTree.resolve("small.txt").toFile(), "small", StandardCharsets.UTF_8);
+        FileUtils.writeByteArrayToFile(workingTree.resolve("large.txt").toFile(), new byte[(int) (RepositoryService.MAX_FILE_CONTENT_BYTES + 1)]);
+        try (Git git = Git.open(workingTree.toFile())) {
+            git.add().addFilepattern(".").call();
+            GitService.commit(git).setMessage("files").setAuthor("a", "a@example.com").call();
+        }
+
+        // The features that read a whole repository, such as the code of an exercise for an AI model, still work with the other files
+        assertThat(repositoryService.getFilesContentFromBareRepositoryForLastCommit(repository)).containsOnlyKeys("small.txt");
+        // A read of the file itself says that it is too large, and does not report the file as missing
+        assertThatIOException().isThrownBy(() -> repositoryService.getFileContentFromBareRepository(repository, "HEAD", "large.txt")).withMessageContaining("large.txt");
+    }
+
+    @Test
+    void aCompleteSnapshotOfACommitFailsInsteadOfOmittingAFileAboveTheSizeLimit() throws Exception {
+        FileUtils.writeStringToFile(workingTree.resolve("small.txt").toFile(), "small", StandardCharsets.UTF_8);
+        FileUtils.writeByteArrayToFile(workingTree.resolve("large.txt").toFile(), new byte[(int) (RepositoryService.MAX_FILE_CONTENT_BYTES + 1)]);
+        try (Git git = Git.open(workingTree.toFile())) {
+            git.add().addFilepattern(".").call();
+            GitService.commit(git).setMessage("files").setAuthor("a", "a@example.com").call();
+        }
+
+        // A caller that compares two snapshots would read a missing file as a deletion
+        assertThatIOException().isThrownBy(() -> repositoryService.getFilesContentFromBareRepository(repository, "HEAD")).withMessageContaining("large.txt");
+    }
+
+    @Test
+    void readingAllFilesWithinTheLimitsReturnsThem() throws Exception {
+        FileUtils.writeStringToFile(workingTree.resolve("small.txt").toFile(), "small", StandardCharsets.UTF_8);
+        try (Git git = Git.open(workingTree.toFile())) {
+            git.add().addFilepattern(".").call();
+            GitService.commit(git).setMessage("files").setAuthor("a", "a@example.com").call();
+        }
+
+        assertThat(repositoryService.getFilesContentFromBareRepositoryForLastCommit(repository)).containsEntry("small.txt", "small");
+    }
 }

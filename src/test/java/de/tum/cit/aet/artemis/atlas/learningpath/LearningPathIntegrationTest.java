@@ -786,6 +786,18 @@ class LearningPathIntegrationTest extends AbstractAtlasIntegrationTest {
 
     @Test
     @WithMockUser(username = STUDENT1_OF_COURSE, roles = "USER")
+    void testGetLearningObjectsForCompetencyOfAnotherCourse_badRequest() throws Exception {
+        course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
+        final var student = userTestRepository.findOneByLogin(STUDENT1_OF_COURSE).orElseThrow();
+        final var learningPath = learningPathRepository.findByCourseIdAndUserIdElseThrow(course.getId(), student.getId());
+        final var otherCompetency = competencyUtilService.createCompetency(courseUtilService.createEnrolledCourse(TEST_PREFIX));
+
+        request.getList("/api/atlas/learning-paths/" + learningPath.getId() + "/competencies/" + otherCompetency.getId() + "/learning-objects", HttpStatus.BAD_REQUEST,
+                LearningPathNavigationObjectDTO.class);
+    }
+
+    @Test
+    @WithMockUser(username = STUDENT1_OF_COURSE, roles = "USER")
     void testGetLearningObjectsForCompetency() throws Exception {
         course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
         final var student = userTestRepository.findOneByLogin(STUDENT1_OF_COURSE).orElseThrow();

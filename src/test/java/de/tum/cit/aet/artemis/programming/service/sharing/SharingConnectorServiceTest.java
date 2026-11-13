@@ -112,6 +112,22 @@ class SharingConnectorServiceTest extends AbstractSpringIntegrationIndependentTe
     }
 
     @Test
+    void validateApiKey_withoutConfiguredKeyOrWithNearMatches_shouldReturnFalse() {
+        String configuredApiKey = sharingConnectorService.getSharingApiKey();
+        try {
+            assertThat(sharingConnectorService.validateApiKey(configuredApiKey.substring(1))).isFalse();
+            assertThat(sharingConnectorService.validateApiKey(configuredApiKey + "x")).isFalse();
+
+            sharingConnectorService.setSharingApiKey(null);
+            assertThat(sharingConnectorService.validateApiKey(configuredApiKey)).isFalse();
+            assertThat(sharingConnectorService.validateApiKey("null")).isFalse();
+        }
+        finally {
+            sharingConnectorService.setSharingApiKey(configuredApiKey);
+        }
+    }
+
+    @Test
     void testTriggerReinit() {
         String reinitUrl = SharingPlatformMockProvider.SHARING_BASEURL_PLUGIN + "/reInitialize?apiKey=" + sharingPlatformMockProvider.getTestSharingApiKey();
         final ResponseActions responseActions = sharingPlatformMockProvider.getMockSharingServer().expect(ExpectedCount.once(), requestTo(reinitUrl))

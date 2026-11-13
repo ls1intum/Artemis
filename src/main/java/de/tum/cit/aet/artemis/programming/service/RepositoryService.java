@@ -23,7 +23,6 @@ import java.util.stream.Collectors;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.text.StringEscapeUtils;
 import org.eclipse.jgit.api.errors.GitAPIException;
-import org.eclipse.jgit.diff.RawText;
 import org.eclipse.jgit.errors.MissingObjectException;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.FileMode;
@@ -32,7 +31,6 @@ import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.RevSort;
 import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.jgit.treewalk.TreeWalk;
-import org.eclipse.jgit.treewalk.filter.PathFilterGroup;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
@@ -84,11 +82,16 @@ public class RepositoryService {
 
     static final long MAX_SELECTED_FILE_SIZE_BYTES = 1024L * 1024;
 
-    static final long MAX_SELECTED_FILES_TOTAL_SIZE_BYTES = 5L * 1024 * 1024;
+    /**
+     * The largest file whose content is read into memory when the files of a repository are read. A larger file is left out of a read of all files, and is an error for a read of
+     * one file.
+     */
+    static final long MAX_FILE_CONTENT_BYTES = 10L * 1024 * 1024;
 
-    private enum BinaryFileFilter {
-        NONE, EXTENSION, CONTENT
-    }
+    /** The most that the files of one repository add up to when all of them are read into memory. A repository with more is an error, and not a smaller result. */
+    static final long MAX_TOTAL_CONTENT_BYTES = 100L * 1024 * 1024;
+
+    static final long MAX_SELECTED_FILES_TOTAL_SIZE_BYTES = 5L * 1024 * 1024;
 
     public RepositoryService(GitService gitService, BareGitRepositoryService bareGitRepositoryService, Optional<VcsAccessLogService> vcsAccessLogService) {
         this.gitService = gitService;
@@ -168,10 +171,12 @@ public class RepositoryService {
                 return Map.of();
             }
             if (selectedFilePaths == null) {
-                return getFileContentFromBareRepositoryForCommitId(repository, commitObjectId, null, BinaryFileFilter.EXTENSION, Long.MAX_VALUE, Long.MAX_VALUE);
+                // The result is compared with another snapshot (commit details, exam timeline), where a file that is left out would show up as deleted: fail instead.
+                return RepositoryContentReader.read(repository, commitObjectId, null, RepositoryContentReader.BinaryFileFilter.EXTENSION, MAX_FILE_CONTENT_BYTES,
+                        MAX_TOTAL_CONTENT_BYTES, true, true);
             }
-            return getFileContentFromBareRepositoryForCommitId(repository, commitObjectId, selectedFilePaths, BinaryFileFilter.CONTENT, MAX_SELECTED_FILE_SIZE_BYTES,
-                    MAX_SELECTED_FILES_TOTAL_SIZE_BYTES);
+            return RepositoryContentReader.read(repository, commitObjectId, selectedFilePaths, RepositoryContentReader.BinaryFileFilter.CONTENT, MAX_SELECTED_FILE_SIZE_BYTES,
+                    MAX_SELECTED_FILES_TOTAL_SIZE_BYTES, false, false);
         }
     }
 
@@ -321,6 +326,9 @@ public class RepositoryService {
      * It is primarily designed to read text files, converting the binary content to a UTF-8 string.
      * Usage of this method with binary files may lead to data corruption or misrepresentation as
      * binary data does not convert cleanly into UTF-8 strings.
+     * The result is a complete snapshot, which callers may compare with another one. A text file above {@link #MAX_FILE_CONTENT_BYTES}, files above
+     * {@link #MAX_TOTAL_CONTENT_BYTES} in total or a tree with more than {@link RepositoryContentReader#MAX_TREE_ENTRIES} entries is therefore an error and never a smaller result.
+     * Consumers that only need context use the methods for the last commit, which leave out what does not fit.
      *
      * @param repository The repository from which file contents are to be retrieved. Must be a bare repository.
      * @param commitHash The commit identifier from which to extract file contents.
@@ -334,7 +342,8 @@ public class RepositoryService {
         if (commitId == null) {
             return Map.of();
         }
-        return getFileContentFromBareRepositoryForCommitId(repository, commitId, null, BinaryFileFilter.EXTENSION, Long.MAX_VALUE, Long.MAX_VALUE);
+        return RepositoryContentReader.read(repository, commitId, null, RepositoryContentReader.BinaryFileFilter.EXTENSION, MAX_FILE_CONTENT_BYTES, MAX_TOTAL_CONTENT_BYTES, true,
+                true);
     }
 
     /**
@@ -355,8 +364,9 @@ public class RepositoryService {
         if (commitId == null) {
             return Optional.empty();
         }
-        return Optional.ofNullable(
-                getFileContentFromBareRepositoryForCommitId(repository, commitId, Set.of(filePath), BinaryFileFilter.NONE, Long.MAX_VALUE, Long.MAX_VALUE).get(filePath));
+        return Optional.ofNullable(RepositoryContentReader
+                .read(repository, commitId, Set.of(filePath), RepositoryContentReader.BinaryFileFilter.NONE, MAX_FILE_CONTENT_BYTES, MAX_TOTAL_CONTENT_BYTES, true, true)
+                .get(filePath));
     }
 
     /**
@@ -374,7 +384,8 @@ public class RepositoryService {
             return Map.of();
         }
 
-        return getFileContentFromBareRepositoryForCommitId(repository, headCommitId, null, BinaryFileFilter.EXTENSION, Long.MAX_VALUE, Long.MAX_VALUE);
+        return RepositoryContentReader.read(repository, headCommitId, null, RepositoryContentReader.BinaryFileFilter.EXTENSION, MAX_FILE_CONTENT_BYTES, MAX_TOTAL_CONTENT_BYTES,
+                false, false);
     }
 
     /**
@@ -415,8 +426,8 @@ public class RepositoryService {
             if (headCommitId == null) {
                 return Map.of();
             }
-            return getFileContentFromBareRepositoryForCommitId(bareRepository, headCommitId, null, BinaryFileFilter.EXTENSION,
-                    Math.min(maxFileSizeBytes, MAX_SELECTED_FILE_SIZE_BYTES), MAX_SELECTED_FILES_TOTAL_SIZE_BYTES, pathFilter, null);
+            return RepositoryContentReader.read(bareRepository, headCommitId, null, RepositoryContentReader.BinaryFileFilter.EXTENSION,
+                    Math.min(maxFileSizeBytes, MAX_SELECTED_FILE_SIZE_BYTES), MAX_SELECTED_FILES_TOTAL_SIZE_BYTES, false, false, pathFilter, null);
         }
         catch (GitException exception) {
             log.debug("Bare repository for {} is unavailable, falling back to checked out repository", repositoryUri, exception);
@@ -444,8 +455,8 @@ public class RepositoryService {
                 return new CommittedPathContents(Map.of(), Set.of());
             }
             Set<String> omitted = new HashSet<>();
-            Map<String, String> files = getFileContentFromBareRepositoryForCommitId(bareRepository, headCommitId, paths, BinaryFileFilter.NONE, MAX_SELECTED_FILE_SIZE_BYTES,
-                    MAX_SELECTED_FILES_TOTAL_SIZE_BYTES, null, omitted);
+            Map<String, String> files = RepositoryContentReader.read(bareRepository, headCommitId, paths, RepositoryContentReader.BinaryFileFilter.NONE,
+                    MAX_SELECTED_FILE_SIZE_BYTES, MAX_SELECTED_FILES_TOTAL_SIZE_BYTES, false, false, null, omitted);
             return new CommittedPathContents(files, omitted);
         }
         catch (GitException exception) {
@@ -483,7 +494,8 @@ public class RepositoryService {
 
             for (RevCommit commit : walk) {
                 if (((long) commit.getCommitTime()) <= epochSeconds) {
-                    return getFileContentFromBareRepositoryForCommitId(repository, commit.getId(), null, BinaryFileFilter.EXTENSION, Long.MAX_VALUE, Long.MAX_VALUE);
+                    return RepositoryContentReader.read(repository, commit.getId(), null, RepositoryContentReader.BinaryFileFilter.EXTENSION, MAX_FILE_CONTENT_BYTES,
+                            MAX_TOTAL_CONTENT_BYTES, false, false);
                 }
             }
         }
@@ -509,88 +521,6 @@ public class RepositoryService {
             log.debug("Bare repository for {} before deadline {} is unavailable, falling back to checked out repository", repositoryUri, deadline, exception);
             return getFilesContentFromCheckedOutRepository(repositoryUri, deadline);
         }
-    }
-
-    /**
-     * Reads file content through one shared JGit traversal for full-repository exports, selected files, and single-file lookups.
-     *
-     * @param repository        The repository from which file contents are retrieved.
-     * @param commitId          The commit from which file contents are retrieved.
-     * @param selectedFilePaths The paths to retrieve, or null to traverse all files.
-     * @param binaryFileFilter  The strategy used to exclude binary files.
-     * @param maxFileSizeBytes  The maximum size of an individual returned file.
-     * @param maxTotalSizeBytes The maximum aggregate size of all returned files.
-     * @return A map of repository-relative file paths to UTF-8 content.
-     * @throws IOException If the commit or file content cannot be read.
-     */
-    private Map<String, String> getFileContentFromBareRepositoryForCommitId(org.eclipse.jgit.lib.Repository repository, @NonNull ObjectId commitId,
-            @Nullable Set<String> selectedFilePaths, BinaryFileFilter binaryFileFilter, long maxFileSizeBytes, long maxTotalSizeBytes) throws IOException {
-        return getFileContentFromBareRepositoryForCommitId(repository, commitId, selectedFilePaths, binaryFileFilter, maxFileSizeBytes, maxTotalSizeBytes, null, null);
-    }
-
-    /** Like the method above, with a path filter (applied before sizes are counted) and an optional collector for paths skipped because of their size. */
-    private Map<String, String> getFileContentFromBareRepositoryForCommitId(org.eclipse.jgit.lib.Repository repository, @NonNull ObjectId commitId,
-            @Nullable Set<String> selectedFilePaths, BinaryFileFilter binaryFileFilter, long maxFileSizeBytes, long maxTotalSizeBytes, @Nullable Predicate<String> pathFilter,
-            @Nullable Set<String> omittedPaths) throws IOException {
-        Map<String, String> filesWithContent = new HashMap<>();
-        long totalSize = 0;
-
-        try (RevWalk revWalk = new RevWalk(repository); TreeWalk treeWalk = new TreeWalk(repository)) {
-            RevCommit commit = revWalk.parseCommit(commitId);
-            treeWalk.addTree(commit.getTree());
-            treeWalk.setRecursive(true);
-            if (selectedFilePaths != null) {
-                if (selectedFilePaths.isEmpty()) {
-                    return Map.of();
-                }
-                treeWalk.setFilter(PathFilterGroup.createFromStrings(selectedFilePaths));
-            }
-
-            while (treeWalk.next()) {
-                String path = treeWalk.getPathString();
-                if (selectedFilePaths != null && !selectedFilePaths.contains(path)) {
-                    continue;
-                }
-                if (treeWalk.getFileMode(0) == FileMode.SYMLINK || treeWalk.getFileMode(0).getObjectType() != Constants.OBJ_BLOB
-                        || binaryFileFilter == BinaryFileFilter.EXTENSION && isBinaryFile(path) || pathFilter != null && !pathFilter.test(path)) {
-                    continue;
-                }
-
-                ObjectId objectId = treeWalk.getObjectId(0);
-                try {
-                    var blobLoader = repository.open(objectId);
-                    long blobSize = blobLoader.getSize();
-                    if (blobSize > maxFileSizeBytes || blobSize > maxTotalSizeBytes - totalSize) {
-                        if (omittedPaths != null) {
-                            omittedPaths.add(path);
-                        }
-                        continue;
-                    }
-                    byte[] bytes;
-                    try (InputStream inputStream = blobLoader.openStream()) {
-                        bytes = inputStream.readAllBytes();
-                    }
-                    if (binaryFileFilter == BinaryFileFilter.CONTENT && RawText.isBinary(bytes)) {
-                        continue;
-                    }
-                    filesWithContent.put(path, new String(bytes, StandardCharsets.UTF_8));
-                    totalSize += blobSize;
-                }
-                catch (MissingObjectException e) {
-                    // Log diagnostic info to help debug intermittent CI failures where objects
-                    // appear missing despite being flushed to disk moments before
-                    var repoDir = repository.getDirectory();
-                    var objectsDir = repoDir != null ? repoDir.toPath().resolve("objects") : null;
-                    log.error(
-                            "MissingObjectException reading blob {} for file '{}' at commit {} in repo {}. " + "Objects dir exists: {}, pack dir exists: {}, repo isBare: {}. "
-                                    + "This may indicate a JGit object visibility race condition on the CI filesystem.",
-                            objectId.name(), path, commitId.name(), repoDir, objectsDir != null && Files.exists(objectsDir),
-                            objectsDir != null && Files.exists(objectsDir.resolve("pack")), repository.isBare());
-                    throw e;
-                }
-            }
-        }
-        return filesWithContent;
     }
 
     @Nullable
