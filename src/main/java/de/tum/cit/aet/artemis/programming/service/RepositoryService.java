@@ -381,9 +381,6 @@ public class RepositoryService {
      * Retrieves the contents of text-based files from the latest commit in a bare repository identified by its URI.
      * If the bare repository is unavailable, falls back to retrieving files from the checked-out repository.
      * Binary files, as defined by {@link BinaryFileExtensionConfiguration}, are excluded.
-     * <p>
-     * The result is complete. Use {@link #getContextFilesContentFromBareRepositoryForLastCommit(LocalVCRepositoryUri, Predicate)} for context of a language model, which is
-     * bounded.
      *
      * @param repositoryUri the {@link LocalVCRepositoryUri} identifying the repository location.
      * @return a {@link Map} where keys are file paths and values are file contents as UTF-8 strings.
@@ -401,43 +398,21 @@ public class RepositoryService {
     }
 
     /**
-     * Retrieves the contents of text-based files from the latest commit as context for a language model, with bounded size.
-     * A file larger than {@link #MAX_SELECTED_FILE_SIZE_BYTES} is skipped and the files together stay within {@link #MAX_SELECTED_FILES_TOTAL_SIZE_BYTES}. Without these limits
-     * a repository that holds a huge text file (a data set or a log, for example) produces a request of hundreds of megabytes that Pyris rejects.
-     * <p>
-     * Only files whose path is accepted by the given filter are read, and only they count towards the limit of the total size. A file that the caller would discard afterwards
-     * (e.g. a data set next to the source files) therefore cannot use up the limit and leave out files that the caller needs.
-     * <p>
-     * Because the result can leave out files that exist, an absent path does not prove that the file is new. Use
-     * {@link #getCommittedContentOfPaths(LocalVCRepositoryUri, Set)} for the committed content of given paths.
+     * Retrieves the text-based files of the latest commit as bounded context for a language model: a file larger than the given size (at most
+     * {@link #MAX_SELECTED_FILE_SIZE_BYTES}) is skipped and the files together stay within {@link #MAX_SELECTED_FILES_TOTAL_SIZE_BYTES}. Only files accepted by the
+     * filter are read and counted. An absent path does not prove that the file is new; use {@link #getCommittedContentOfPaths} for given paths.
      *
-     * @param repositoryUri the {@link LocalVCRepositoryUri} identifying the repository location.
-     * @param pathFilter    accepts the repository-relative paths of the files to read, or null to read all text files
-     * @return a {@link Map} where keys are file paths and values are file contents as UTF-8 strings.
-     * @throws IOException if an error occurs while accessing the repository.
-     */
-    public Map<String, String> getContextFilesContentFromBareRepositoryForLastCommit(LocalVCRepositoryUri repositoryUri, @Nullable Predicate<String> pathFilter)
-            throws IOException {
-        return getContextFilesContentFromBareRepositoryForLastCommit(repositoryUri, pathFilter, MAX_SELECTED_FILE_SIZE_BYTES);
-    }
-
-    /**
-     * Like {@link #getContextFilesContentFromBareRepositoryForLastCommit(LocalVCRepositoryUri, Predicate)}, but a file is skipped when it is larger than the given size, which
-     * cannot exceed {@link #MAX_SELECTED_FILE_SIZE_BYTES}. A caller that discards larger files anyway thereby keeps them from using up the limit of the total size.
-     *
-     * @param repositoryUri    the {@link LocalVCRepositoryUri} identifying the repository location.
-     * @param pathFilter       accepts the repository-relative paths of the files to read, or null to read all text files
+     * @param repositoryUri    the repository
+     * @param pathFilter       accepts the repository-relative paths to read, or null to read all text files
      * @param maxFileSizeBytes the size above which a file is skipped
-     * @return a {@link Map} where keys are file paths and values are file contents as UTF-8 strings.
+     * @return the file paths with their UTF-8 content
      * @throws IOException if an error occurs while accessing the repository.
      */
     public Map<String, String> getContextFilesContentFromBareRepositoryForLastCommit(LocalVCRepositoryUri repositoryUri, @Nullable Predicate<String> pathFilter,
             long maxFileSizeBytes) throws IOException {
-
         try (Repository bareRepository = bareGitRepositoryService.getBareRepository(repositoryUri, false)) {
             ObjectId headCommitId = bareRepository.resolve("HEAD");
             if (headCommitId == null) {
-                log.warn("Cannot resolve HEAD. The repository might be empty.");
                 return Map.of();
             }
             return getFileContentFromBareRepositoryForCommitId(bareRepository, headCommitId, null, BinaryFileFilter.EXTENSION,
@@ -449,23 +424,17 @@ public class RepositoryService {
         }
     }
 
-    /**
-     * The committed content of requested paths.
-     *
-     * @param files   the content of the paths that exist and fit the limits
-     * @param omitted the paths that exist but were left out because they exceed the limits
-     */
+    /** The committed content of requested paths: those that fit the limits, and those that exist but exceed them. */
     public record CommittedPathContents(Map<String, String> files, Set<String> omitted) {
     }
 
     /**
-     * Retrieves the content of the given paths from the latest commit, within the limits of the context of a language model. A path that does not exist in the commit is in
-     * neither part of the result, a path that exists but exceeds the limits is reported as omitted. It tells a file that the bounded context read left out apart from a file
-     * that is new, without reading more than the limits allow.
+     * Retrieves the content of the given paths from the latest commit within the context limits. A missing path is in neither part of the result, a path that exceeds the
+     * limits is reported as omitted, which tells it apart from a new file.
      *
-     * @param repositoryUri the {@link LocalVCRepositoryUri} identifying the repository location.
+     * @param repositoryUri the repository
      * @param paths         the repository-relative paths to read
-     * @return the content of the paths that fit and the paths that were left out, both empty if the bare repository is unavailable.
+     * @return the content of the paths that fit and the paths that were left out
      * @throws IOException if an error occurs while accessing the repository.
      */
     public CommittedPathContents getCommittedContentOfPaths(LocalVCRepositoryUri repositoryUri, Set<String> paths) throws IOException {
@@ -559,10 +528,7 @@ public class RepositoryService {
         return getFileContentFromBareRepositoryForCommitId(repository, commitId, selectedFilePaths, binaryFileFilter, maxFileSizeBytes, maxTotalSizeBytes, null, null);
     }
 
-    /**
-     * Like the method above, with a filter for the paths that are read. A path that the filter rejects is skipped before its size is counted. The paths of the files that
-     * are skipped because of their size are added to {@code omittedPaths}, if given.
-     */
+    /** Like the method above, with a path filter (applied before sizes are counted) and an optional collector for paths skipped because of their size. */
     private Map<String, String> getFileContentFromBareRepositoryForCommitId(org.eclipse.jgit.lib.Repository repository, @NonNull ObjectId commitId,
             @Nullable Set<String> selectedFilePaths, BinaryFileFilter binaryFileFilter, long maxFileSizeBytes, long maxTotalSizeBytes, @Nullable Predicate<String> pathFilter,
             @Nullable Set<String> omittedPaths) throws IOException {

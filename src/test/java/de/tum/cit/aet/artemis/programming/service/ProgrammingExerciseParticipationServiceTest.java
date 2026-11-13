@@ -27,6 +27,7 @@ import de.tum.cit.aet.artemis.exercise.test_repository.SubmissionTestRepository;
 import de.tum.cit.aet.artemis.localvc.service.BareGitRepositoryService;
 import de.tum.cit.aet.artemis.localvc.service.GitService;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
+import de.tum.cit.aet.artemis.localvc.service.WorkingCopyReplacement;
 import de.tum.cit.aet.artemis.localvc.service.vcs.VersionControlService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
@@ -406,7 +407,7 @@ class ProgrammingExerciseParticipationServiceTest {
     private void withCheckouts(de.tum.cit.aet.artemis.programming.domain.Repository target, de.tum.cit.aet.artemis.programming.domain.Repository source) throws Exception {
         // the replacement runs on the target working copy, like GitService does it while it holds the lock
         org.mockito.Mockito.doAnswer(invocation -> {
-            invocation.<GitService.WorkingCopyReplacement>getArgument(1).replace(target);
+            invocation.<WorkingCopyReplacement>getArgument(1).replace(target);
             return null;
         }).when(gitService).replaceWorkingCopyContent(org.mockito.ArgumentMatchers.eq(target.getRemoteRepositoryUri()), any());
         when(gitService.getOrCheckoutRepository(source.getRemoteRepositoryUri(), true, true)).thenReturn(source);

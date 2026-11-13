@@ -84,6 +84,7 @@ import de.tum.cit.aet.artemis.exercise.test_repository.SubmissionTestRepository;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.localvc.service.GitService;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
+import de.tum.cit.aet.artemis.localvc.service.WorkingCopyReplacement;
 import de.tum.cit.aet.artemis.localvc.util.LocalVCTestRepository;
 import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -2061,7 +2062,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
         LocalVCRepositoryUri participationUri = studentParticipationRepository.save(participation).getVcsRepositoryUri();
         var running = new java.util.concurrent.atomic.AtomicInteger();
         var maxRunning = new java.util.concurrent.atomic.AtomicInteger();
-        GitService.WorkingCopyReplacement replacement = targetRepository -> {
+        WorkingCopyReplacement replacement = targetRepository -> {
             maxRunning.accumulateAndGet(running.incrementAndGet(), Math::max);
             try {
                 Thread.sleep(300);

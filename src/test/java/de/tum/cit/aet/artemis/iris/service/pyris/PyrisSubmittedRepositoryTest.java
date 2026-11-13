@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.iris.service.pyris;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.entry;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -93,7 +94,8 @@ class PyrisSubmittedRepositoryTest {
         // the committed contents instead, every file would look changed. Only the repository fetch is mocked, so the
         // merge and the diff below it are the production ones.
         var repositoryService = mock(RepositoryService.class);
-        when(repositoryService.getContextFilesContentFromBareRepositoryForLastCommit(any(LocalVCRepositoryUri.class), any())).thenReturn(Map.of("src/Main.java", "COMMITTED"));
+        when(repositoryService.getContextFilesContentFromBareRepositoryForLastCommit(any(LocalVCRepositoryUri.class), any(), anyLong()))
+                .thenReturn(Map.of("src/Main.java", "COMMITTED"));
         var service = new PyrisDTOService(repositoryService, mock(ProgrammingFeedbackSynthesizerService.class), mock(BuildLogEntryService.class),
                 mock(IrisProactiveProperties.class));
 
@@ -116,7 +118,7 @@ class PyrisSubmittedRepositoryTest {
     void testsRepository_isFilteredByLanguageLikeTheOtherRepositories() throws IOException {
         // A tests repository can hold large data sets next to the tests. Only the files of the exercise language are context for Iris.
         var repositoryService = mock(RepositoryService.class);
-        when(repositoryService.getContextFilesContentFromBareRepositoryForLastCommit(any(LocalVCRepositoryUri.class), any()))
+        when(repositoryService.getContextFilesContentFromBareRepositoryForLastCommit(any(LocalVCRepositoryUri.class), any(), anyLong()))
                 .thenReturn(Map.of("src/test/MainTest.java", "TEST", "data/scenario.xml", "HUGE"));
         var service = new PyrisDTOService(repositoryService, mock(ProgrammingFeedbackSynthesizerService.class), mock(BuildLogEntryService.class),
                 mock(IrisProactiveProperties.class));
@@ -132,7 +134,8 @@ class PyrisSubmittedRepositoryTest {
     void aChangedFileThatTheBoundedReadLeftOutKeepsItsCommittedBaseline() throws IOException {
         // The bounded read leaves out a committed file above the size limit. The edited file must still be diffed against its committed content, not sent as new.
         var repositoryService = mock(RepositoryService.class);
-        when(repositoryService.getContextFilesContentFromBareRepositoryForLastCommit(any(LocalVCRepositoryUri.class), any())).thenReturn(Map.of("src/Main.java", "COMMITTED"));
+        when(repositoryService.getContextFilesContentFromBareRepositoryForLastCommit(any(LocalVCRepositoryUri.class), any(), anyLong()))
+                .thenReturn(Map.of("src/Main.java", "COMMITTED"));
         when(repositoryService.getCommittedContentOfPaths(any(LocalVCRepositoryUri.class), eq(Set.of("src/Huge.java", "src/New.java"))))
                 .thenReturn(new RepositoryService.CommittedPathContents(Map.of("src/Huge.java", "COMMITTED HUGE"), Set.of()));
         var service = new PyrisDTOService(repositoryService, mock(ProgrammingFeedbackSynthesizerService.class), mock(BuildLogEntryService.class),
@@ -155,7 +158,8 @@ class PyrisSubmittedRepositoryTest {
     void aBaselineThatDoesNotFitTheLimitsIsNotSentAndMakesTheDiffIncomplete() throws IOException {
         // A large committed file that the student replaces by a small local edit must not bring its content back into the request
         var repositoryService = mock(RepositoryService.class);
-        when(repositoryService.getContextFilesContentFromBareRepositoryForLastCommit(any(LocalVCRepositoryUri.class), any())).thenReturn(Map.of("src/Main.java", "COMMITTED"));
+        when(repositoryService.getContextFilesContentFromBareRepositoryForLastCommit(any(LocalVCRepositoryUri.class), any(), anyLong()))
+                .thenReturn(Map.of("src/Main.java", "COMMITTED"));
         when(repositoryService.getCommittedContentOfPaths(any(LocalVCRepositoryUri.class), eq(Set.of("src/Huge.java", "src/New.java"))))
                 .thenReturn(new RepositoryService.CommittedPathContents(Map.of(), Set.of("src/Huge.java")));
         var service = new PyrisDTOService(repositoryService, mock(ProgrammingFeedbackSynthesizerService.class), mock(BuildLogEntryService.class),

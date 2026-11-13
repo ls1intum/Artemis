@@ -380,7 +380,7 @@ public class PyrisDTOService {
             return null;
         }
         try {
-            return repositoryService.getContextFilesContentFromBareRepositoryForLastCommit(repositoryUri, language == null ? null : language::matchesFileExtension);
+            return repositoryService.getContextFilesContentFromBareRepositoryForLastCommit(repositoryUri, language == null ? null : language::matchesFileExtension, Long.MAX_VALUE);
         }
         catch (IOException e) {
             log.error("Could not get repository content", e);

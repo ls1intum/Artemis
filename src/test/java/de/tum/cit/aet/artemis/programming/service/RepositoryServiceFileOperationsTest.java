@@ -306,7 +306,7 @@ class RepositoryServiceFileOperationsTest {
         org.mockito.Mockito.when(bare.getBareRepository(uri, false)).thenAnswer(invocation -> new Repository(workingTree.resolve(".git").toString(), uri));
         var limited = new RepositoryService(org.mockito.Mockito.mock(GitService.class), bare, Optional.empty());
 
-        var contents = limited.getContextFilesContentFromBareRepositoryForLastCommit(uri, null);
+        var contents = limited.getContextFilesContentFromBareRepositoryForLastCommit(uri, null, Long.MAX_VALUE);
 
         // Only the context of language models is bounded: comparisons and exports keep every file, and the committed content of a path can be read on its own.
         assertThat(limited.getFilesContentFromBareRepositoryForLastCommit(uri)).containsKey("huge.txt");
@@ -334,8 +334,8 @@ class RepositoryServiceFileOperationsTest {
         org.mockito.Mockito.when(bare.getBareRepository(uri, false)).thenAnswer(invocation -> new Repository(workingTree.resolve(".git").toString(), uri));
         var limited = new RepositoryService(org.mockito.Mockito.mock(GitService.class), bare, Optional.empty());
 
-        assertThat(limited.getContextFilesContentFromBareRepositoryForLastCommit(uri, null)).doesNotContainKey("z-Main.java");
-        assertThat(limited.getContextFilesContentFromBareRepositoryForLastCommit(uri, path -> path.endsWith(".java"))).containsOnlyKeys("z-Main.java");
+        assertThat(limited.getContextFilesContentFromBareRepositoryForLastCommit(uri, null, Long.MAX_VALUE)).doesNotContainKey("z-Main.java");
+        assertThat(limited.getContextFilesContentFromBareRepositoryForLastCommit(uri, path -> path.endsWith(".java"), Long.MAX_VALUE)).containsOnlyKeys("z-Main.java");
     }
 
     @Test
@@ -354,7 +354,7 @@ class RepositoryServiceFileOperationsTest {
         org.mockito.Mockito.when(bare.getBareRepository(uri, false)).thenAnswer(invocation -> new Repository(workingTree.resolve(".git").toString(), uri));
         var limited = new RepositoryService(org.mockito.Mockito.mock(GitService.class), bare, Optional.empty());
 
-        assertThat(limited.getContextFilesContentFromBareRepositoryForLastCommit(uri, null)).doesNotContainKey("z-Main.java");
+        assertThat(limited.getContextFilesContentFromBareRepositoryForLastCommit(uri, null, Long.MAX_VALUE)).doesNotContainKey("z-Main.java");
         assertThat(limited.getContextFilesContentFromBareRepositoryForLastCommit(uri, null, 100 * 1024L)).containsOnlyKeys("z-Main.java");
     }
 

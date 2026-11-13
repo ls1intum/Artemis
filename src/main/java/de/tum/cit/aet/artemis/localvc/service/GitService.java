@@ -671,7 +671,7 @@ public class GitService extends AbstractGitService {
      * Get branch that origin/HEAD points to, useful to handle default branches that are not main
      *
      * @param repo Local Repository Object.
-     * @return name of the origin/HEAD branch, e.g. 'main' or 'course/main', or null if there is no HEAD
+     * @return name of the origin/HEAD branch, e.g. 'main' or 'course/main' or null if there is no HEAD
      */
     private String getOriginHead(Repository repo) throws GitAPIException {
         Ref originHeadRef;
@@ -684,7 +684,6 @@ public class GitService extends AbstractGitService {
             return null;
         }
 
-        // Only the prefix is removed: a configured default branch can contain a slash, e.g. 'course/main'
         String fullName = originHeadRef.getTarget().getName();
         return fullName.startsWith(Constants.R_HEADS) ? fullName.substring(Constants.R_HEADS.length()) : fullName;
     }
@@ -716,12 +715,9 @@ public class GitService extends AbstractGitService {
     }
 
     /**
-     * Get the local repository for a given remote repository URI like {@link #getOrCheckoutRepository(LocalVCRepositoryUri, boolean, boolean)} with a pull, but for a caller that
-     * is about to replace the content of the repository. Instead of merging the remote into the working copy, the working copy is hard reset to the remote.
-     * <p>
-     * The merge of a pull fails with a checkout conflict if the working copy holds a local modification of a file that the remote changed in the meantime. An example is an edit
-     * of the online editor that was saved but never committed, while the student pushed from their own IDE. The working copy stays in that state, so every later pull fails the
-     * same way, including the one that the caller needs to recover from it.
+     * Get the local repository like {@link #getOrCheckoutRepository(LocalVCRepositoryUri, boolean, boolean)} with a pull, but for a caller that is about to replace the
+     * content of the repository: the working copy is hard reset to the remote instead of merging it. A merge fails with a checkout conflict if the working copy holds an
+     * uncommitted edit of a file that the remote changed meanwhile, and every later pull would fail the same way.
      *
      * @param repoUri     The remote repository.
      * @param writeAccess Whether we want to write to the repository
@@ -738,9 +734,8 @@ public class GitService extends AbstractGitService {
     }
 
     /**
-     * Replaces the content of the working copy of a repository like {@link #getOrCheckoutRepositoryDiscardingLocalChanges(LocalVCRepositoryUri, boolean)}, but keeps the lock
-     * of the working copy until the replacement is done. Two replacements of the same repository therefore cannot interleave, e.g. one of them hard resetting the files that
-     * the other one has just staged.
+     * Replaces the content of the working copy like {@link #getOrCheckoutRepositoryDiscardingLocalChanges(LocalVCRepositoryUri, boolean)}, but keeps the lock of the
+     * working copy until the replacement is done, so two replacements cannot interleave.
      *
      * @param repoUri     the remote repository
      * @param replacement the change of the working copy, which is run with the repository equal to the head of the remote repository
@@ -751,7 +746,6 @@ public class GitService extends AbstractGitService {
         Path localPath = getLocalPathOfRepo(repoClonePath, repoUri);
         try {
             workingCopyLocks.withLock(localPath, () -> {
-                // the lock is reentrant for the same thread
                 try {
                     replacement.replace(getOrCheckoutRepositoryDiscardingLocalChanges(repoUri, true));
                 }
@@ -764,15 +758,6 @@ public class GitService extends AbstractGitService {
         catch (UncheckedIOException exception) {
             throw exception.getCause();
         }
-    }
-
-    /**
-     * A change of a working copy that runs while its lock is held.
-     */
-    @FunctionalInterface
-    public interface WorkingCopyReplacement {
-
-        void replace(Repository targetRepository) throws GitAPIException, IOException;
     }
 
     /**
