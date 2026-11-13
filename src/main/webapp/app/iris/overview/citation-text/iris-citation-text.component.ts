@@ -6,7 +6,7 @@ import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { IrisCitationMetaDTO } from 'app/iris/shared/entities/iris-citation-meta-dto.model';
 import DOMPurify, { type Config } from 'dompurify';
-import { htmlForMarkdown } from 'app/foundation/util/markdown.conversion.util';
+import { htmlForMarkdown, restrictRenderedAttributes } from 'app/foundation/util/markdown.conversion.util';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { IrisCitationParsed, IrisCitationVersion } from './iris-citation-text.model';
@@ -17,12 +17,14 @@ import { IconDefinition, faChevronLeft, faChevronRight, faCircleExclamation, faC
 
 /**
  * Sanitizer settings for the finished markup. The markup contains the citation bubbles (spans, an inline SVG and the navigation buttons) next to the rendered markdown,
- * so only the form controls, styles and attributes that retarget a request are refused, as for rendered markdown.
+ * so only the form controls and the attributes that retarget a request are refused, as for rendered markdown. Inline styles are reduced by restrictRenderedAttributes.
  */
 const CITATION_MARKUP_PURIFY_CONFIG: Config = {
     FORBID_TAGS: ['style', 'form', 'input', 'select', 'option', 'optgroup', 'textarea', 'fieldset', 'legend', 'link', 'meta', 'base', 'object', 'embed'],
-    FORBID_ATTR: ['style', 'form', 'formaction', 'action', 'formmethod', 'formtarget'],
+    FORBID_ATTR: ['form', 'formaction', 'action', 'formmethod', 'formtarget'],
 };
+
+const restrictFinishedMarkup = (node: Element) => restrictRenderedAttributes(node);
 
 /**
  * Translation keys for the notices shown when the cited material is no longer the one the answer was written against.
@@ -93,7 +95,13 @@ export class IrisCitationTextComponent {
 
         // The citation markup is inserted into the HTML string, so a marker inside an attribute value (for example the alt text of an image) would end that attribute
         // early. Sanitizing the finished markup keeps whatever that exposes from reaching the DOM.
-        return DOMPurify.sanitize(withCitations, CITATION_MARKUP_PURIFY_CONFIG);
+        // Formulas keep the validated styles KaTeX positions its glyphs with; every other inline style is removed.
+        DOMPurify.addHook('afterSanitizeAttributes', restrictFinishedMarkup);
+        try {
+            return DOMPurify.sanitize(withCitations, CITATION_MARKUP_PURIFY_CONFIG);
+        } finally {
+            DOMPurify.removeHook('afterSanitizeAttributes', restrictFinishedMarkup);
+        }
     }
 
     /**

@@ -95,6 +95,14 @@ describe('IrisCitationTextComponent', () => {
         expect(el.querySelectorAll('[onerror]')).toHaveLength(0);
     });
 
+    it('keeps the styles of formulas next to a citation and removes other inline styles', () => {
+        const el = render('The ratio is $\\frac{1}{2}$ [cite:L:7::::Key:Summary] <span style="color:red">x</span>');
+
+        expect(el.querySelector('.katex')).toBeTruthy();
+        expect(el.querySelectorAll('.katex [style]').length).toBeGreaterThan(0);
+        expect(el.querySelector('span[style*="color"]')).toBeNull();
+    });
+
     it('keeps the citation bubble markup that the sanitizer must not remove', () => {
         const citationInfo: IrisCitationMetaDTO[] = [{ entityId: 7, lectureTitle: 'L', lectureUnitTitle: '', lectureId: 1, courseId: 1 }];
         const el = render('[cite:L:7:3:::Key:Summary]', citationInfo);
