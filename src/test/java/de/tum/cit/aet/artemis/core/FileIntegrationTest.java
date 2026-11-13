@@ -1440,4 +1440,20 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
         request.get("/api/core/files/drag-and-drop/questions/" + dndQuestion.getId() + "/backgrounds/background.png", HttpStatus.NOT_FOUND, byte[].class);
     }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetDragAndDropPicturesBeforeQuizRelease() throws Exception {
+        var quiz = quizExerciseUtilService.createAndSaveEnrolledQuiz(TEST_PREFIX, ZonedDateTime.now().plusDays(1), ZonedDateTime.now().plusDays(2), QuizMode.INDIVIDUAL);
+        var dndQuestion = quiz.getQuizQuestions().stream().filter(DragAndDropQuestion.class::isInstance).map(DragAndDropQuestion.class::cast).findFirst().orElseThrow();
+        String backgroundUrl = "/api/core/files/drag-and-drop/questions/" + dndQuestion.getId() + "/backgrounds/background.png";
+        String dragItemUrl = "/api/core/files/drag-and-drop/questions/" + dndQuestion.getId() + "/drag-items/1/item.png";
+
+        request.get(backgroundUrl, HttpStatus.FORBIDDEN, byte[].class);
+        request.get(dragItemUrl, HttpStatus.FORBIDDEN, byte[].class);
+
+        // teaching assistants pass the release check; the question has no background, so the file is missing
+        userUtilService.changeUser(TEST_PREFIX + "tutor1");
+        request.get(backgroundUrl, HttpStatus.NOT_FOUND, byte[].class);
+    }
 }

@@ -8,6 +8,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 import org.slf4j.Logger;
@@ -40,6 +41,14 @@ public class HyperionProgrammingLanguageContextFilterService {
         ProgrammingLanguage language();
 
         Map<String, String> filter(Map<String, String> files);
+
+        /**
+         * @param path a repository-relative path
+         * @return whether a file of this path can pass the filter, judged by its path alone
+         */
+        default boolean includesPath(String path) {
+            return !filter(Map.of(path, "")).isEmpty();
+        }
     }
 
     private final Map<ProgrammingLanguage, Strategy> strategies = new EnumMap<>(ProgrammingLanguage.class);
@@ -130,6 +139,22 @@ public class HyperionProgrammingLanguageContextFilterService {
         Strategy strategy = strategies.getOrDefault(language, DEFAULT_STRATEGY);
 
         return strategy.filter(files);
+    }
+
+    /**
+     * The size above which {@link #filter} drops a file, in bytes. A file that is larger is not worth reading.
+     */
+    public static final long MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE * 1024;
+
+    /**
+     * Provides the path rule of {@link #filter}, so that a caller can leave out the files that the filter would drop before they are read.
+     *
+     * @param language the programming language
+     * @return accepts the repository-relative paths of the files that can pass the filter
+     */
+    public Predicate<String> pathFilterFor(ProgrammingLanguage language) {
+        Strategy strategy = strategies.getOrDefault(language, DEFAULT_STRATEGY);
+        return strategy::includesPath;
     }
 
     /**

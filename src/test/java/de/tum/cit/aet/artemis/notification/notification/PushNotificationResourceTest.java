@@ -7,11 +7,15 @@ import java.util.Set;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.read.ListAppender;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.account.util.UserUtilService;
@@ -37,6 +41,8 @@ class PushNotificationResourceTest extends AbstractSpringIntegrationIndependentT
 
     private static final String FAKE_TOKEN = "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJ4eDQ0eHh4IiwiYXV0aCI6IlJPTEVfVEEsUk9MRV9JTlNUUlVDVE9SLFJPTEVfVVNFUiIsImV4cCI6MjUzNDAyMjU3NjAwfQ.mm9sUblgWLp97xC5ML2z6KZ0rQucKOyP7zmmI_bINlfu_axQ1dmw7A60gzOH7kzArWtx7ZmHYQZN3RMwlKHRIA";
 
+    private static final String UNPARSABLE_CREDENTIAL = "not-a-token-but-the-session-credential";
+
     private static final String USER_LOGIN = "test-user";
 
     private static final String FAKE_FIREBASE_TOKEN = "FakeFirebaseToken";
@@ -55,6 +61,27 @@ class PushNotificationResourceTest extends AbstractSpringIntegrationIndependentT
         // Delete configurations before user to respect FK constraints
         pushNotificationDeviceConfigurationRepository.deleteAll();
         userRepository.delete(user);
+    }
+
+    /**
+     * The credential of the request is the session token. A registration that cannot use it must not write it to the log.
+     */
+    @Test
+    @WithMockUser(username = USER_LOGIN, roles = "USER", password = UNPARSABLE_CREDENTIAL)
+    void shouldNotLogTheCredentialWhenItCannotBeParsed() throws Exception {
+        Logger resourceLogger = (Logger) LoggerFactory.getLogger("de.tum.cit.aet.artemis.notification.web.PushNotificationResource");
+        ListAppender<ILoggingEvent> appender = new ListAppender<>();
+        appender.start();
+        resourceLogger.addAppender(appender);
+        try {
+            PushNotificationRegisterBodyDTO body = new PushNotificationRegisterBodyDTO(FAKE_FIREBASE_TOKEN, PushNotificationDeviceType.FIREBASE);
+            request.postWithoutLocation("/api/notification/push_notification/register", body, HttpStatus.UNAUTHORIZED, null);
+
+            assertThat(appender.list).isNotEmpty().allSatisfy(event -> assertThat(event.getFormattedMessage()).doesNotContain(UNPARSABLE_CREDENTIAL));
+        }
+        finally {
+            resourceLogger.detachAppender(appender);
+        }
     }
 
     @Test

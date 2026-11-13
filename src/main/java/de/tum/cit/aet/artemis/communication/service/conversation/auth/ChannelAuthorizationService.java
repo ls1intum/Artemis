@@ -40,12 +40,15 @@ public class ChannelAuthorizationService extends ConversationAuthorizationServic
     /**
      * Checks if a user is allowed to create a channel in a course or throws an exception if not
      *
-     * @param course the course the channel should be created in
-     * @param user   the user that wants to create the channel
+     * Teaching assistants can create regular channels, announcement channels can only be created by instructors, as only instructors can moderate them.
+     *
+     * @param course                the course the channel should be created in
+     * @param user                  the user that wants to create the channel
+     * @param isAnnouncementChannel whether the channel to create is an announcement channel
      */
-    public void isAllowedToCreateChannel(@NonNull Course course, @NonNull User user) {
+    public void isAllowedToCreateChannel(@NonNull Course course, @NonNull User user, boolean isAnnouncementChannel) {
         var userToCheck = getUserIfNecessary(user);
-        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, userToCheck);
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(isAnnouncementChannel ? Role.INSTRUCTOR : Role.TEACHING_ASSISTANT, course, userToCheck);
     }
 
     /**
