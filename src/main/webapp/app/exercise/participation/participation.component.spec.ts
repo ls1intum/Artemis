@@ -292,7 +292,7 @@ describe('ParticipationComponent', () => {
             await componentFixture.whenStable();
             componentFixture.detectChanges();
 
-            expect(component.tableOptions().showSearch).toBe(true);
+            expect(component.hideParticipantInformation()).toBe(false);
             expect(component.columns()[0].field).toBe('participantName');
             expect(component.columns().some((column) => column.headerKey === 'artemisApp.participation.repository')).toBe(true);
             expect(componentFixture.nativeElement.querySelector('jhi-code-button')).not.toBeNull();
@@ -368,7 +368,7 @@ describe('ParticipationComponent', () => {
         it.each([false, true])('should retain identity columns and search for instructors (team mode: %s)', (teamMode) => {
             component.exercise.set({ ...exercise, teamMode, isAtLeastInstructor: true });
 
-            expect(component.tableOptions().showSearch).not.toBe(false);
+            expect(component.hideParticipantInformation()).toBe(false);
             expect(component.columns()[0]).toMatchObject({
                 headerKey: teamMode ? 'artemisApp.participation.team' : 'artemisApp.participation.student',
                 field: 'participantName',
@@ -614,14 +614,16 @@ describe('ParticipationComponent', () => {
             [FilterProp.MANUAL, { type: ExerciseType.TEXT }, true, true],
             [FilterProp.SEMI_AUTOMATIC, { type: ExerciseType.MODELING }, true, true],
             [FilterProp.SEMI_AUTOMATIC, { type: ExerciseType.TEXT }, true, true],
-            [FilterProp.SEMI_AUTOMATIC, { type: ExerciseType.FILE_UPLOAD }, true, false],
+            [FilterProp.SEMI_AUTOMATIC, { type: ExerciseType.FILE_UPLOAD }, true, true],
             [FilterProp.AUTOMATIC, { type: ExerciseType.PROGRAMMING, allowComplaintsForAutomaticAssessments: false }, false, true],
             [FilterProp.AUTOMATIC, { type: ExerciseType.TEXT }, true, false],
+            [FilterProp.AUTOMATIC, { type: ExerciseType.FILE_UPLOAD }, true, true],
+            [FilterProp.GRADED, { type: ExerciseType.FILE_UPLOAD }, true, true],
             [FilterProp.LOCKED, { type: ExerciseType.PROGRAMMING, isAtLeastInstructor: true }, true, true],
             [FilterProp.LOCKED, { type: ExerciseType.PROGRAMMING, isAtLeastInstructor: false }, false, false],
             [FilterProp.LOCKED, { type: ExerciseType.TEXT }, true, false],
             [FilterProp.AUTOMATIC, { type: ExerciseType.MODELING }, true, false],
-            [FilterProp.MANUAL, { type: ExerciseType.FILE_UPLOAD }, true, false],
+            [FilterProp.MANUAL, { type: ExerciseType.FILE_UPLOAD }, true, true],
             [FilterProp.GRADED, { type: ExerciseType.QUIZ }, false, true],
             [FilterProp.GRADED, { type: ExerciseType.TEXT }, false, true],
             [FilterProp.GRADED, { type: ExerciseType.MODELING }, false, true],

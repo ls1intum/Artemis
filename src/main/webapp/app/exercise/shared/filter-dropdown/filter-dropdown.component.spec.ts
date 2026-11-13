@@ -27,6 +27,32 @@ describe('Participation filter toolbar', () => {
         await fixture.whenStable();
     });
 
+    it('gives checkboxes unique ids across toolbar instances and keeps each label associated', async () => {
+        const groups = [{ labelKey: 'Practice', items: ['NoPracticeMode'] }];
+        fixture.componentRef.setInput('groupedFilters', groups);
+        fixture.detectChanges();
+        const second = TestBed.createComponent(FilterDropdownComponent);
+        try {
+            second.componentRef.setInput('groupedFilters', groups);
+            second.componentRef.setInput('activeFilters', []);
+            second.detectChanges();
+            await second.whenStable();
+            const firstInput = fixture.nativeElement.querySelector('input[type="checkbox"]') as HTMLInputElement;
+            const secondInput = second.nativeElement.querySelector('input[type="checkbox"]') as HTMLInputElement;
+            expect(firstInput.id).not.toBe(secondInput.id);
+            expect(fixture.nativeElement.querySelector('label').htmlFor).toBe(firstInput.id);
+            expect(second.nativeElement.querySelector('label').htmlFor).toBe(secondInput.id);
+            const secondChanged = vi.fn();
+            second.componentInstance.filterChange.subscribe(secondChanged);
+            second.nativeElement.querySelector('label').click();
+            second.detectChanges();
+            expect(secondChanged).toHaveBeenCalledWith(['NoPracticeMode']);
+            expect(firstInput.checked).toBe(false);
+        } finally {
+            second.destroy();
+        }
+    });
+
     it('switches segmented results and clears them with All while retaining assessment selections', async () => {
         fixture.componentRef.setInput('groupedFilters', [
             { labelKey: 'Results', items: ['Successful', 'Unsuccessful'], segmented: true },
@@ -36,7 +62,7 @@ describe('Participation filter toolbar', () => {
         fixture.detectChanges();
         await fixture.whenStable();
         fixture.detectChanges();
-        const buttons = fixture.nativeElement.querySelectorAll('tumaet-ui-select-button button') as NodeListOf<HTMLButtonElement>;
+        const buttons = fixture.nativeElement.querySelectorAll('tumaet-ui-button-group button') as NodeListOf<HTMLButtonElement>;
         expect(buttons).toHaveLength(3);
         expect(buttons[0].getAttribute('aria-pressed')).toBe('true');
         buttons[1].click();
@@ -91,7 +117,7 @@ describe('Participation filter toolbar', () => {
         (fixture.nativeElement.querySelector('button[tumAetUiButton]') as HTMLButtonElement).click();
         fixture.detectChanges();
         expect(changed).toHaveBeenLastCalledWith([]);
-        expect((fixture.nativeElement.querySelector('button[tumAetUiButton]') as HTMLButtonElement).disabled).toBe(true);
+        expect(fixture.nativeElement.querySelector('button[tumAetUiButton]').getAttribute('aria-disabled')).toBe('true');
     });
 
     it('stays open on scroll and input refresh, and closes when the backdrop is clicked', () => {
@@ -158,7 +184,7 @@ describe('Participation filter toolbar', () => {
         expect(changed).toHaveBeenLastCalledWith(['Successful']);
     });
 
-    it('places checkboxes after dropdowns regardless of category order', () => {
+    it('places checkboxes after dropdowns', () => {
         fixture.componentRef.setInput('groupedFilters', [
             { labelKey: 'Locked', items: ['Locked'] },
             { labelKey: 'Submissions', items: ['NoSubmissions', 'ValidSubmissions'] },

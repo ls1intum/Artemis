@@ -1,6 +1,7 @@
 {
     "artemisApp": {
         "participation": {
+            "triggerOptions": "Trigger builds",
             "resetDisabled": "No filters selected",
             "searchStudents": "Search: Smith, Jones",
             "searchTeams": "Search: Team 1, Team 2",

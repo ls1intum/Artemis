@@ -2,15 +2,18 @@ import { TranslateService } from '@ngx-translate/core';
 import { ChangeDetectionStrategy, Component, computed, inject, input, output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import {
+    TumAetUiButtonComponent,
     TumAetUiButtonDirective,
+    TumAetUiButtonGroupComponent,
     TumAetUiCheckboxComponent,
     TumAetUiChipComponent,
     TumAetUiMultiSelectComponent,
-    TumAetUiSelectButtonComponent,
     TumAetUiSelectComponent,
     TumAetUiTooltipDirective,
 } from '@tumaet/ui-angular';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+
+let nextFilterDropdownId = 0;
 
 export interface FilterGroup {
     labelKey: string;
@@ -29,7 +32,8 @@ export interface FilterGroup {
         TumAetUiCheckboxComponent,
         TumAetUiChipComponent,
         TumAetUiMultiSelectComponent,
-        TumAetUiSelectButtonComponent,
+        TumAetUiButtonComponent,
+        TumAetUiButtonGroupComponent,
         TumAetUiSelectComponent,
         TumAetUiTooltipDirective,
     ],
@@ -38,6 +42,9 @@ export interface FilterGroup {
 })
 export class FilterDropdownComponent {
     private readonly translateService = inject(TranslateService);
+    protected readonly allValue = '';
+    protected readonly checkboxIdPrefix = `exercise-filter-${nextFilterDropdownId++}-`;
+
     readonly groupedFilters = input.required<FilterGroup[]>();
     readonly activeFilters = input.required<string[]>();
     readonly filterChange = output<string[]>();
@@ -56,7 +63,10 @@ export class FilterDropdownComponent {
 
     protected singleOptions(group: FilterGroup): { value: string; label: string }[] {
         return [
-            { value: 'All', label: (group.segmented ? '' : this.translateService.instant(group.labelKey) + ': ') + this.translateService.instant('artemisApp.exercise.showAll') },
+            {
+                value: this.allValue,
+                label: (group.segmented ? '' : this.translateService.instant(group.labelKey) + ': ') + this.translateService.instant('artemisApp.exercise.showAll'),
+            },
             ...group.items.map((value) => ({ value, label: this.translateService.instant('artemisApp.exercise.show' + value) })),
         ];
     }

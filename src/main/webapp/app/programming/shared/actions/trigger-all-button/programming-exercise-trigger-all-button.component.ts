@@ -31,7 +31,7 @@ import { hasDueDatePassed } from 'app/programming/shared/utils/programming-exerc
             [size]="btnSize() === ButtonSize.SMALL ? 'small' : btnSize() === ButtonSize.LARGE ? 'large' : 'default'"
             severity="danger"
             [variant]="inDropdown() ? 'text' : 'solid'"
-            [class]="inDropdown() ? 'w-full justify-start!' : ''"
+            [class.w-full]="inDropdown()"
             [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
             [forceDisabled]="disabled() || isTriggeringBuildAll()"
             [attr.aria-label]="'artemisApp.programmingExercise.resubmitAll' | artemisTranslate"
@@ -42,7 +42,7 @@ import { hasDueDatePassed } from 'app/programming/shared/utils/programming-exerc
         >
             <fa-icon [icon]="faRedo" [animation]="isTriggeringBuildAll() ? 'spin' : undefined" />
             <span
-                [class]="shouldToggle() ? (toggleBreakpoint() === 'md' ? 'hidden md:inline' : 'hidden xl:inline') : ''"
+                [class]="inDropdown() ? 'flex-1 text-start' : shouldToggle() ? (toggleBreakpoint() === 'md' ? 'hidden md:inline' : 'hidden xl:inline') : ''"
                 [jhiTranslate]="'artemisApp.programmingExercise.resubmitAll'"
             ></span>
         </button>

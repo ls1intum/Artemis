@@ -73,10 +73,10 @@
                     type="button"
                     tumAetUiButton
                     id="trigger-failed-button"
+                    class="w-full"
                     size="small"
                     severity="secondary"
                     variant="text"
-                    class="w-full justify-start!"
                     [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
                     [forceDisabled]="!hasFailedSubmissions() || isBuildingFailedSubmissions()"
                     [attr.aria-label]="'artemisApp.programmingExercise.resubmitFailed' | artemisTranslate"
@@ -86,7 +86,7 @@
                     (click)="triggerBuildOfFailedSubmissions()"
                 >
                     <fa-icon [icon]="faRedo" [animation]="isBuildingFailedSubmissions() ? 'spin' : undefined" />
-                    <span [jhiTranslate]="'artemisApp.programmingExercise.resubmitFailed'"></span>
+                    <span class="flex-1 text-start" [jhiTranslate]="'artemisApp.programmingExercise.resubmitFailed'"></span>
                 </button>
             </div>
         </tumaet-ui-popover>

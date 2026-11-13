@@ -1,6 +1,7 @@
 {
     "artemisApp": {
         "participation": {
+            "triggerOptions": "Builds auslösen",
             "resetDisabled": "Keine Filter ausgewählt",
             "searchStudents": "Suchen: Müller, Schmidt",
             "searchTeams": "Suchen: Team 1, Team 2",

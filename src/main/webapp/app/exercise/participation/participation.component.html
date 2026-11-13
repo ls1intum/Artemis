@@ -36,12 +36,12 @@
                             size="small"
                             variant="text"
                             severity="secondary"
-                            class="w-full justify-start!"
                             [attr.aria-label]="'artemisApp.exercise.export.names' | artemisTranslate"
+                            class="w-full"
                             (click)="exportNames()"
                         >
                             <fa-icon [icon]="faDownload" />
-                            <span jhiTranslate="artemisApp.exercise.export.names"></span>
+                            <span class="flex-1 text-start" jhiTranslate="artemisApp.exercise.export.names"></span>
                         </button>
                         <jhi-exercise-scores-export-button [inDropdown]="true" [exercise]="exercise()!" />
                         @if (exercise()!.type === ExerciseType.PROGRAMMING) {
@@ -70,7 +70,7 @@
         @if (rangeFilter()) {
             <h4 class="flex flex-wrap items-center gap-3!">
                 <span>
-                    <strong class="text-(--tumaet-ui-primary-color)"> {{ 'artemisApp.assessment.dashboard.activeFilter' | artemisTranslate }}: </strong>
+                    <strong class="text-primary"> {{ 'artemisApp.assessment.dashboard.activeFilter' | artemisTranslate }}: </strong>
                     <span class="ms-1" jhiTranslate="artemisApp.exercise.showingOnlyInRange" [translateValues]="{ range: rangeFilter()!.toString() }"></span>
                 </span>
                 <button type="button" tumAetUiButton severity="secondary" (click)="resetFilterOptions()" jhiTranslate="artemisApp.assessment.dashboard.resetFilter"></button>
@@ -95,7 +95,16 @@
 <!-- Filter dropdown in the table caption bar -->
 
 <ng-template #filterActionsTemplate>
-    <jhi-filter-dropdown [groupedFilters]="filterGroups()" [activeFilters]="activeFilters()" (filterChange)="updateParticipationFilter($event)" />
+    <jhi-filter-dropdown [groupedFilters]="filterGroups()" [activeFilters]="activeFilters()" (filterChange)="updateParticipationFilter($event)">
+        @if (!hideParticipantInformation()) {
+            <jhi-search-filter
+                class="w-64 max-w-full shrink-0"
+                size="small"
+                [placeholderKey]="tableOptions().searchPlaceholder ?? 'artemisApp.participation.searchStudents'"
+                (newSearchEvent)="onSearchChange($event)"
+            />
+        }
+    </jhi-filter-dropdown>
 </ng-template>
 
 <!-- Row actions -->
@@ -142,7 +151,7 @@
                     [title]="'artemisApp.programmingExercise.resubmitSingleLabel'"
                 />
             } @else {
-                <fa-icon [icon]="faCircleNotch" animation="spin" class="text-(--tumaet-ui-muted-color)" />
+                <fa-icon [icon]="faCircleNotch" animation="spin" class="text-text-secondary" />
             }
         }
         @if (basicPresentationEnabled() && !dto.testRun && dto.presentationScore !== 1) {
@@ -363,7 +372,7 @@
             @if (cell.data.individualDueDate) {
                 {{ cell.data.individualDueDate | artemisDate }}
             } @else {
-                <span class="italic text-(--tumaet-ui-muted-color)" jhiTranslate="artemisApp.participation.noIndividualDueDate"></span>
+                <span class="italic text-text-secondary" jhiTranslate="artemisApp.participation.noIndividualDueDate"></span>
             }
             @if (exercise()!.isAtLeastInstructor) {
                 <button

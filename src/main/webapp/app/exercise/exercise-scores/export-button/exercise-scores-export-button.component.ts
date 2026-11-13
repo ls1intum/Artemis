@@ -40,8 +40,8 @@ export class ExerciseScoresExportButtonComponent {
 
     readonly inDropdown = input(false);
     protected readonly submenuPositions: ConnectedPosition[] = [
-        { originX: 'end', originY: 'top', overlayX: 'start', overlayY: 'top', offsetX: 8 },
-        { originX: 'start', originY: 'top', overlayX: 'end', overlayY: 'top', offsetX: -8 },
+        { originX: 'end', originY: 'top', overlayX: 'start', overlayY: 'top' },
+        { originX: 'start', originY: 'top', overlayX: 'end', overlayY: 'top' },
     ];
     protected readonly faChevronRight = faChevronRight;
     protected readonly faChevronDown = faChevronDown;

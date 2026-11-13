@@ -1,3 +1,4 @@
+import { SearchFilterComponent } from 'app/shared-ui/search-filter/search-filter.component';
 import { CellTemplateRef, ColumnDef, TableViewComponent, TableViewLazyLoadEvent, TableViewOptions } from 'app/shared-ui/table-view/table-view';
 import { buildDbQueryFromLazyEvent } from 'app/shared-ui/table-view/request-builder';
 import { Component, OnDestroy, OnInit, computed, effect, inject, signal, untracked, viewChild } from '@angular/core';
@@ -119,6 +120,7 @@ export enum FilterProp {
         TumAetUiPopoverTriggerDirective,
         TumAetUiTooltipDirective,
         TableViewComponent,
+        SearchFilterComponent,
         CodeButtonComponent,
         TumAetUiDatePickerComponent,
         ProgrammingExerciseInstructorTriggerBuildButtonComponent,
@@ -222,7 +224,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
         const ex = this.exercise();
         if (!ex) return [];
         const isProgramming = ex.type === ExerciseType.PROGRAMMING;
-        const assessmentTypeFilterable = isProgramming || ex.type === ExerciseType.TEXT || ex.type === ExerciseType.MODELING;
+        const assessmentTypeFilterable = ex.type !== ExerciseType.QUIZ;
         const manualAssessmentEnabled = ex.type !== ExerciseType.QUIZ && (!isProgramming || ex.assessmentType !== AssessmentType.AUTOMATIC);
         return [
             { labelKey: 'artemisApp.participation.filterGroup.results', items: [FilterProp.SUCCESSFUL, FilterProp.UNSUCCESSFUL], segmented: true },
@@ -235,15 +237,13 @@ export class ParticipationComponent implements OnInit, OnDestroy {
                 ? [
                       {
                           labelKey: 'artemisApp.participation.filterGroup.assessmentType',
-                          items: [FilterProp.MANUAL, FilterProp.SEMI_AUTOMATIC, ...(isProgramming ? [FilterProp.AUTOMATIC] : [])],
+                          items: [FilterProp.MANUAL, FilterProp.SEMI_AUTOMATIC, ...(isProgramming || ex.type === ExerciseType.FILE_UPLOAD ? [FilterProp.AUTOMATIC] : [])],
                       },
                   ]
                 : []),
-            ...(isProgramming ? [{ labelKey: 'artemisApp.participation.filterGroup.mode', items: [FilterProp.NO_PRACTICE_MODE] }] : []),
-            ...(isProgramming || ex.type === ExerciseType.QUIZ || ex.type === ExerciseType.TEXT || ex.type === ExerciseType.MODELING
-                ? [{ labelKey: 'artemisApp.participation.filterGroup.gradingStatus', items: [FilterProp.GRADED] }]
-                : []),
-            ...(manualAssessmentEnabled && ex.isAtLeastInstructor ? [{ labelKey: 'artemisApp.participation.filterGroup.assessmentStatus', items: [FilterProp.LOCKED] }] : []),
+            ...(isProgramming ? [{ labelKey: 'artemisApp.exercise.showNoPracticeMode', items: [FilterProp.NO_PRACTICE_MODE] }] : []),
+            { labelKey: 'artemisApp.exercise.showGraded', items: [FilterProp.GRADED] },
+            ...(manualAssessmentEnabled && ex.isAtLeastInstructor ? [{ labelKey: 'artemisApp.exercise.showLocked', items: [FilterProp.LOCKED] }] : []),
         ];
     });
 
@@ -273,7 +273,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
         searchFullWidth: true,
         striped: true,
         fill: true,
-        showSearch: !this.hideParticipantInformation(),
+        showSearch: false,
         searchPlaceholder: this.exercise()?.teamMode ? 'artemisApp.participation.searchTeams' : 'artemisApp.participation.searchStudents',
     }));
 
@@ -484,6 +484,10 @@ export class ParticipationComponent implements OnInit, OnDestroy {
         const submissionSub = this.websocketService.subscribe(`/topic/exercise/${exerciseId}/newSubmissions`).subscribe(() => reloadIfFailedFilterActive());
         const resultSub = this.websocketService.subscribe(`/topic/exercise/${exerciseId}/newResults`).subscribe(() => reloadIfFailedFilterActive());
         this.websocketSubscriptions.push(submissionSub, resultSub);
+    }
+
+    onSearchChange(searchTerm: string) {
+        this.onLazyLoad(cloneWith(this.lastLazyEvent ?? {}, { first: 0, globalFilter: searchTerm }));
     }
 
     onLazyLoad(event: TableViewLazyLoadEvent) {

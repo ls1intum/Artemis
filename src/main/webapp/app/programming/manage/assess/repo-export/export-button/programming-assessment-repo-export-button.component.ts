@@ -19,8 +19,8 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
             tumAetUiButton
             size="small"
             [variant]="inDropdown() ? 'text' : 'solid'"
+            [class.w-full]="inDropdown()"
             severity="secondary"
-            [class]="inDropdown() ? 'w-full justify-start!' : ''"
             [jhiFeatureToggle]="[FeatureToggle.ProgrammingExercises, FeatureToggle.Exports]"
             [forceDisabled]="!programmingExercises() || false"
             [attr.aria-label]="
@@ -29,7 +29,10 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
             (click)="openRepoExportDialog($event)"
         >
             <fa-icon [icon]="faDownload" />
-            <span [jhiTranslate]="singleParticipantMode() ? 'artemisApp.instructorDashboard.exportRepos.titleSingle' : 'artemisApp.instructorDashboard.exportRepos.title'"></span>
+            <span
+                [class]="inDropdown() ? 'flex-1 text-start' : ''"
+                [jhiTranslate]="singleParticipantMode() ? 'artemisApp.instructorDashboard.exportRepos.titleSingle' : 'artemisApp.instructorDashboard.exportRepos.title'"
+            ></span>
         </button>
     `,
     imports: [TumAetUiButtonDirective, FaIconComponent, ArtemisTranslatePipe, FeatureToggleDirective, TranslateDirective],

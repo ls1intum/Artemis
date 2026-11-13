@@ -5,29 +5,22 @@
         [attr.aria-label]="'artemisApp.exercise.export.results.title' | artemisTranslate"
         size="small"
         [variant]="inDropdown() ? 'text' : 'solid'"
+        [class.w-full]="inDropdown()"
         severity="secondary"
-        [class]="inDropdown() ? 'w-full justify-start!' : ''"
         id="export-results-dropdown"
         [tumAetUiMenuTrigger]="resultExportMenu"
         [tumAetUiMenuPosition]="inDropdown() ? submenuPositions : undefined"
     >
         <fa-icon [icon]="faDownload" />
-        <span [class]="inDropdown() ? '' : 'hidden md:inline'" jhiTranslate="artemisApp.exercise.export.results.title"></span>
+        <span [class]="inDropdown() ? 'flex-1 text-start' : 'hidden md:inline'" jhiTranslate="artemisApp.exercise.export.results.title"></span>
         <fa-icon [icon]="inDropdown() ? faChevronRight : faChevronDown" class="ms-auto" />
     </button>
     <ng-template #resultExportMenu>
-        <tumaet-ui-menu [class]="inDropdown() ? 'min-w-64! max-w-[calc(100vw-2rem)] p-3! gap-1' : ''">
+        <tumaet-ui-menu>
+            <button type="button" tumAetUiMenuItem (triggered)="exportResults(false, false)" jhiTranslate="artemisApp.exercise.export.results.withoutTestCases"></button>
             <button
                 type="button"
                 tumAetUiMenuItem
-                [class]="inDropdown() ? 'text-sm! px-2.5! py-1.5! rounded-md' : ''"
-                (triggered)="exportResults(false, false)"
-                jhiTranslate="artemisApp.exercise.export.results.withoutTestCases"
-            ></button>
-            <button
-                type="button"
-                tumAetUiMenuItem
-                [class]="inDropdown() ? 'text-sm! px-2.5! py-1.5! rounded-md' : ''"
                 (triggered)="exportResults(true, false)"
                 [tumAetUiTooltip]="'artemisApp.exercise.export.results.withTestCasesTooltip' | artemisTranslate"
                 tumAetUiTooltipPlacement="left"
@@ -36,7 +29,6 @@
             <button
                 type="button"
                 tumAetUiMenuItem
-                [class]="inDropdown() ? 'text-sm! px-2.5! py-1.5! rounded-md' : ''"
                 (triggered)="exportResults(true, true)"
                 [tumAetUiTooltip]="'artemisApp.exercise.export.results.withTestCasesAndFeedbackTooltip' | artemisTranslate"
                 tumAetUiTooltipPlacement="left"
@@ -51,11 +43,11 @@
         [attr.aria-label]="'artemisApp.exercise.export.results.title' | artemisTranslate"
         size="small"
         [variant]="inDropdown() ? 'text' : 'solid'"
+        [class.w-full]="inDropdown()"
         severity="secondary"
-        [class]="inDropdown() ? 'w-full justify-start!' : ''"
         (click)="exportResults(false, false)"
     >
         <fa-icon [icon]="faDownload" />
-        <span [class]="inDropdown() ? '' : 'hidden md:inline'" jhiTranslate="artemisApp.exercise.export.results.title"></span>
+        <span [class]="inDropdown() ? 'flex-1 text-start' : 'hidden md:inline'" jhiTranslate="artemisApp.exercise.export.results.title"></span>
     </button>
 }

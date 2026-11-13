@@ -20,13 +20,13 @@ import { TranslateService } from '@ngx-translate/core';
             [jhiFeatureToggle]="FeatureToggle.Exports"
             [disabled]="!exerciseId()"
             [variant]="inDropdown() ? 'text' : 'solid'"
+            [class.w-full]="inDropdown()"
             severity="secondary"
-            [class]="inDropdown() ? 'w-full justify-start!' : ''"
             [attr.aria-label]="'artemisApp.instructorDashboard.exportSubmissions.title' | artemisTranslate"
             size="small"
             (click)="openSubmissionExportDialog($event)"
         >
-            <fa-icon [icon]="faDownload" /><span jhiTranslate="artemisApp.instructorDashboard.exportSubmissions.title"></span>
+            <fa-icon [icon]="faDownload" /><span [class]="inDropdown() ? 'flex-1 text-start' : ''" jhiTranslate="artemisApp.instructorDashboard.exportSubmissions.title"></span>
         </button>
     `,
     imports: [ArtemisTranslatePipe, TumAetUiButtonDirective, TranslateDirective, FaIconComponent, FeatureToggleDirective],
