@@ -376,7 +376,7 @@ class ApollonDiagramResourceIntegrationTest extends AbstractSpringIntegrationInd
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "user1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetDiagramTitleAsUser() throws Exception {
         testGetDiagramTitle();
     }
@@ -387,6 +387,16 @@ class ApollonDiagramResourceIntegrationTest extends AbstractSpringIntegrationInd
 
         final var title = request.get("/api/modeling/apollon-diagrams/" + savedDiagram.getId() + "/title", HttpStatus.OK, String.class);
         assertThat(title).isEqualTo(apollonDiagram.getTitle());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "outsider", roles = "USER")
+    void testGetDiagramTitleAsUserOutsideTheCourse_forbidden() throws Exception {
+        userUtilService.createAndSaveUser(TEST_PREFIX + "outsider");
+        apollonDiagram.setCourseId(course1.getId());
+        ApollonDiagram savedDiagram = apollonDiagramRepository.save(apollonDiagram);
+
+        request.get("/api/modeling/apollon-diagrams/" + savedDiagram.getId() + "/title", HttpStatus.FORBIDDEN, String.class);
     }
 
     @Test

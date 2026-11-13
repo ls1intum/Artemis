@@ -42,7 +42,6 @@ import de.tum.cit.aet.artemis.core.dto.vm.ManagedUserVM;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EmailAlreadyUsedException;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
-import de.tum.cit.aet.artemis.core.util.FileSystemLocation;
 
 @Profile(PROFILE_CORE)
 @Lazy
@@ -228,7 +227,8 @@ public class UserCreationService {
 
     /**
      * Update basic information (first name, last name, email, language) for the current user.
-     * This method is typically invoked by the user
+     * This method is typically invoked by the user. The profile picture is not part of it: it is owned by the server and only changes through the upload and removal of the
+     * picture, so a value sent with the account information is not taken over.
      *
      * @param firstName first name of user
      * @param lastName  last name of user
@@ -236,17 +236,13 @@ public class UserCreationService {
      *                      pass one: it would be compared with the address the account has now, and an address that was confirmed after the caller read the
      *                      account would be written back as the old one.
      * @param langKey   language key
-     * @param imageUrl  image URL of user
      */
-    public void updateBasicInformationOfCurrentUser(String firstName, String lastName, @Nullable String email, String langKey, String imageUrl) {
+    public void updateBasicInformationOfCurrentUser(String firstName, String lastName, @Nullable String email, String langKey) {
         SecurityUtils.getCurrentUserLogin().flatMap(userRepository::findOneByLogin).ifPresent(user -> {
             if (email == null) {
                 // The address is not part of this save: only the columns of the form are written, so nothing else is written back as it was read, in particular not an address
                 // that a confirmation applied after the account was read.
                 userRepository.updateBasicInformation(user.getId(), firstName, lastName, langKey, user.getLogin(), Instant.now());
-                if (imageUrl != null) {
-                    userRepository.updateUserImageUrl(user.getId(), FileSystemLocation.storedFilename(imageUrl));
-                }
                 log.info("Changed Information for User: {}", user.getLogin());
                 return;
             }
@@ -254,9 +250,6 @@ public class UserCreationService {
             user.setFirstName(firstName);
             user.setLastName(lastName);
             user.setLangKey(langKey);
-            if (imageUrl != null) {
-                user.setImageUrl(imageUrl);
-            }
             saveUser(user);
             log.info("Changed Information for User: {}", user);
         });

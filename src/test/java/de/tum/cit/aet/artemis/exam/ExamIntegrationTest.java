@@ -2363,7 +2363,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "user1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetExamTitleAsUser() throws Exception {
         // Only user and role matter, so we can re-use the logic
         testGetExamTitle();
@@ -2392,6 +2392,16 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
         final var title = request.get("/api/exam/exams/" + exam.getId() + "/title", HttpStatus.OK, String.class);
 
         assertThat(title).isEqualTo("Test Exam title");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "outsider", roles = "USER")
+    void testGetExamTitleAsUserOutsideTheCourse_forbidden() throws Exception {
+        userUtilService.createAndSaveUser(TEST_PREFIX + "outsider");
+        Exam exam = ExamFactory.generateExam(course1);
+        exam = examRepository.save(exam);
+
+        request.get("/api/exam/exams/" + exam.getId() + "/title", HttpStatus.FORBIDDEN, String.class);
     }
 
     @Test

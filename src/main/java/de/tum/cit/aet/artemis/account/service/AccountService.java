@@ -136,7 +136,7 @@ public class AccountService {
             pendingEmailChange = emailChangeService.requestChange(currentUser, userDTO.getEmail(), userDTO.getLangKey());
         }
 
-        userCreationService.updateBasicInformationOfCurrentUser(userDTO.getFirstName(), userDTO.getLastName(), emailToSave, userDTO.getLangKey(), userDTO.getImageUrl());
+        userCreationService.updateBasicInformationOfCurrentUser(userDTO.getFirstName(), userDTO.getLastName(), emailToSave, userDTO.getLangKey());
 
         if (emailChangeNeedsConfirmation) {
             return new BasicInformationUpdateResultDTO(pendingEmailChange);

@@ -328,7 +328,7 @@ class EmailChangeIntegrationTest extends AbstractSpringIntegrationIndependentTes
         var racingService = new UserCreationService(racingRepository, passwordService, authorityRepository, organizationRepository, accountCredentialRevocationService,
                 accountSecurityNotificationService, auditEventRepository, userRecoveryKeyService, userActivityService);
 
-        racingService.updateBasicInformationOfCurrentUser("Renamed", "Account", null, user.getLangKey(), null);
+        racingService.updateBasicInformationOfCurrentUser("Renamed", "Account", null, user.getLangKey());
 
         assertThat(confirmed).isTrue();
         User saved = userTestRepository.findOneByLogin(LOGIN).orElseThrow();
@@ -372,7 +372,7 @@ class EmailChangeIntegrationTest extends AbstractSpringIntegrationIndependentTes
         user.setEmail(NEW_EMAIL);
         userTestRepository.save(user);
 
-        userCreationService.updateBasicInformationOfCurrentUser("Renamed", "Account", null, user.getLangKey(), null);
+        userCreationService.updateBasicInformationOfCurrentUser("Renamed", "Account", null, user.getLangKey());
 
         User saved = userTestRepository.findOneByLogin(LOGIN).orElseThrow();
         assertThat(saved.getEmail()).isEqualTo(NEW_EMAIL);
