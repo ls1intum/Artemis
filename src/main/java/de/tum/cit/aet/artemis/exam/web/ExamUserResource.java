@@ -39,6 +39,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.config.Constants;
+import de.tum.cit.aet.artemis.core.dto.PagedSearchDTO;
 import de.tum.cit.aet.artemis.core.dto.UserForRegistrationDTO;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
@@ -56,7 +57,6 @@ import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
 import de.tum.cit.aet.artemis.exam.domain.ExamUser;
 import de.tum.cit.aet.artemis.exam.dto.ExamAttendanceUpdateDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamStudentDTO;
-import de.tum.cit.aet.artemis.exam.dto.ExamStudentSearchDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamUserAttendanceCheckDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamUserDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamUsersNotFoundDTO;
@@ -280,7 +280,7 @@ public class ExamUserResource {
     @GetMapping("courses/{courseId}/exams/{examId}/exam-students/paged")
     @EnforceAtLeastStudent
     @ManualConfig
-    public ResponseEntity<List<ExamStudentDTO>> getExamStudentsPaged(@PathVariable long courseId, @PathVariable long examId, @Valid ExamStudentSearchDTO search) {
+    public ResponseEntity<List<ExamStudentDTO>> getExamStudentsPaged(@PathVariable long courseId, @PathVariable long examId, @Valid PagedSearchDTO search) {
         log.debug("REST request to get paged exam-students for exam: {}", examId);
         examAccessService.checkCourseAndExamAccessForTeachingAssistantElseThrow(courseId, examId);
         Page<ExamStudentDTO> page = examUserService.findExamStudentsForExamPaged(examId, search);
@@ -308,7 +308,7 @@ public class ExamUserResource {
 
     /**
      * GET courses/{courseId}/exams/{examId}/students/search : Search for users that can be registered for the exam.
-     * Searches across login (prefix), full name (contains), email (contains), and registration number (contains).
+     * Matches the search term anywhere in the login, full name, email or registration number.
      * Already registered users are flagged with {@code isRegistered = true}.
      *
      * @param courseId   the id of the course

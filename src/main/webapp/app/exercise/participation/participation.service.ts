@@ -1,9 +1,9 @@
 import { Service, inject } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { map, tap } from 'rxjs/operators';
 import { createRequestOption } from 'app/foundation/util/request.util';
-import { PageableResult, ParticipationSearch } from 'app/foundation/pagination/pageable-table';
+import { PageableResult, ParticipationSearch, toPageableResult } from 'app/foundation/pagination/pageable-table';
 import { ParticipationNameExportDTO } from 'app/exercise/exercise-scores/participation-name-export-dto.model';
 import { ParticipationManagementDTO } from 'app/exercise/participation/participation-management-dto.model';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -110,8 +110,8 @@ export class ParticipationService {
                 observe: 'response',
             })
             .pipe(
-                map((res: HttpResponse<ParticipationManagementDTO[]>) => {
-                    const content = res.body ?? [];
+                map(toPageableResult),
+                tap(({ content }) =>
                     content.forEach((dto) => {
                         dto.initializationDate = convertDateFromServer(dto.initializationDate);
                         dto.individualDueDate = convertDateFromServer(dto.individualDueDate);
@@ -119,9 +119,8 @@ export class ParticipationService {
                         dto.correctionRoundResults?.forEach((result) => {
                             result.completionDate = convertDateFromServer(result.completionDate);
                         });
-                    });
-                    return { content, totalElements: Number(res.headers.get('X-Total-Count') ?? 0) };
-                }),
+                    }),
+                ),
             );
     }
 

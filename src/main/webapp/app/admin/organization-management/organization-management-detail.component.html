@@ -50,6 +50,7 @@
             [trackBy]="trackByUserId"
             [loading]="usersLoading()"
             [rowActions]="userActions"
+            searchPlaceholder="artemisApp.organizationManagement.userSearch.searchForUsers"
             (dataRequest)="loadUsers($event)"
             [striped]="true"
         />

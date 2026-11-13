@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TableViewLazyLoadEvent as TableLazyLoadEvent, TableViewPageEvent as TablePageEvent } from './table-view-query';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { Mock, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ColumnDef, TableViewComponent, TableViewOptions } from './table-view';
 
 interface TestData {
@@ -263,8 +263,10 @@ describe('TableViewComponent', () => {
             expect(onLazyLoadSpy).not.toHaveBeenCalled();
         });
 
-        it('should reset pagination state and emit a lazy load event at page 0 with cleared filters', () => {
-            component['query'].set({ field: 'name', order: 1, search: 'test' });
+        it('should restore the initial state and emit a lazy load event at page 0', () => {
+            fixture.componentRef.setInput('options', { initialSortField: 'name', initialSortOrder: 1, pageSize: 20 });
+            component['query'].set({ field: 'email', order: -1, search: 'test' });
+            component['columnFilters'].set({ email: 'example' });
             component.pageChange({ first: 50, rows: 10 });
             const onLazyLoadSpy = vi.fn();
             component.onLazyLoad.subscribe(onLazyLoadSpy);
@@ -273,11 +275,13 @@ describe('TableViewComponent', () => {
 
             expect(component['currentFirst']()).toBe(0);
             expect(component['currentPageSizeOverride']()).toBeUndefined();
-            expect(component['currentFirst']()).toBe(0);
             expect(component['columnFilters']()).toEqual({});
             expect(onLazyLoadSpy).toHaveBeenCalledOnce();
             const event = onLazyLoadSpy.mock.calls[0][0] as TableLazyLoadEvent;
             expect(event.first).toBe(0);
+            expect(event.rows).toBe(20);
+            expect(event.sortField).toBe('name');
+            expect(event.sortOrder).toBe(1);
             expect(event.globalFilter).toBeNull();
             expect(event.filters).toEqual({});
         });
@@ -312,6 +316,7 @@ describe('TableViewComponent', () => {
 
         it('should default to the current page, preserving sort, active filter, and position', () => {
             component['query'].set({ field: 'name', order: -1, search: 'my search' });
+            fixture.componentRef.setInput('totalRows', 100);
             component.pageChange({ first: 50, rows: 10 });
             const onLazyLoadSpy = vi.fn();
             component.onLazyLoad.subscribe(onLazyLoadSpy);
@@ -328,17 +333,17 @@ describe('TableViewComponent', () => {
             expect(event.rows).toBe(10);
         });
 
-        it('should reset to page 0 when explicitly requested', () => {
+        it('should load page 0 when requested and keep the page size', () => {
+            fixture.componentRef.setInput('totalRows', 100);
             component.pageChange({ first: 50, rows: 10 });
             const onLazyLoadSpy = vi.fn();
             component.onLazyLoad.subscribe(onLazyLoadSpy);
 
-            component.reload(0);
+            component.reload({ page: 0 });
 
             expect(component['currentFirst']()).toBe(0);
             const event = onLazyLoadSpy.mock.calls[0][0] as TableLazyLoadEvent;
             expect(event.first).toBe(0);
-            // The page size the user picked via pageChange() must survive a reload — only the position changes.
             expect(event.rows).toBe(10);
         });
 
@@ -352,60 +357,67 @@ describe('TableViewComponent', () => {
             expect(event.globalFilter).toBeNull();
         });
 
-        it('should reload at the given page, converting it to a row offset using the current page size', () => {
+        it('should convert the given page to a row offset using the current page size', () => {
+            fixture.componentRef.setInput('totalRows', 100);
             component.pageChange({ first: 50, rows: 10 });
             const onLazyLoadSpy = vi.fn();
             component.onLazyLoad.subscribe(onLazyLoadSpy);
 
-            component.reload(3);
+            component.reload({ page: 3 });
 
             expect(component['currentFirst']()).toBe(30);
             const event = onLazyLoadSpy.mock.calls[0][0] as TableLazyLoadEvent;
             expect(event.first).toBe(30);
             expect(event.rows).toBe(10);
         });
-    });
 
-    describe('reloadAfterRemoval', () => {
-        it('should be a no-op in non-lazy mode', () => {
-            fixture.componentRef.setInput('options', { lazy: false });
-            const reloadSpy = vi.spyOn(component, 'reload');
+        describe('clamping', () => {
+            let onLazyLoadSpy: Mock<(event: TableLazyLoadEvent) => void>;
 
-            component.reloadAfterRemoval();
+            beforeEach(() => {
+                onLazyLoadSpy = vi.fn();
+                component.onLazyLoad.subscribe(onLazyLoadSpy);
+            });
 
-            expect(reloadSpy).not.toHaveBeenCalled();
-        });
+            const loadedFirst = () => (onLazyLoadSpy.mock.calls[0][0] as TableLazyLoadEvent).first;
 
-        it('should step back one page when removing the last row of the last page', () => {
-            // Page 2 (0-based) of a 10-per-page table holding 21 rows: a single row on the last page.
-            component.pageChange({ first: 20, rows: 10 });
-            fixture.componentRef.setInput('totalRows', 21);
-            const reloadSpy = vi.spyOn(component, 'reload');
+            it('should clamp a page beyond the last one to the last page', () => {
+                fixture.componentRef.setInput('totalRows', 25);
+                component.pageChange({ first: 0, rows: 10 });
 
-            component.reloadAfterRemoval();
+                component.reload({ page: 999 });
 
-            expect(reloadSpy).toHaveBeenCalledExactlyOnceWith(1);
-        });
+                expect(loadedFirst()).toBe(20);
+            });
 
-        it('should stay on the current page when it still has rows after the removal', () => {
-            // Page 2 (0-based) of a 10-per-page table holding 25 rows: 5 rows on the last page.
-            component.pageChange({ first: 20, rows: 10 });
-            fixture.componentRef.setInput('totalRows', 25);
-            const reloadSpy = vi.spyOn(component, 'reload');
+            it('should step back one page when removing the last row of the last page', () => {
+                // Page 2 (0-based) of a 10-per-page table holding 21 rows: a single row on the last page.
+                fixture.componentRef.setInput('totalRows', 21);
+                component.pageChange({ first: 20, rows: 10 });
 
-            component.reloadAfterRemoval();
+                component.reload({ rowsRemoved: 1 });
 
-            expect(reloadSpy).toHaveBeenCalledExactlyOnceWith(2);
-        });
+                expect(loadedFirst()).toBe(10);
+            });
 
-        it('should clamp to page 0 when removedCount empties the whole table', () => {
-            component.pageChange({ first: 20, rows: 10 });
-            fixture.componentRef.setInput('totalRows', 21);
-            const reloadSpy = vi.spyOn(component, 'reload');
+            it('should stay on the current page when it still has rows after the removal', () => {
+                // Page 2 (0-based) of a 10-per-page table holding 25 rows: 5 rows on the last page.
+                fixture.componentRef.setInput('totalRows', 25);
+                component.pageChange({ first: 20, rows: 10 });
 
-            component.reloadAfterRemoval(21);
+                component.reload({ rowsRemoved: 1 });
 
-            expect(reloadSpy).toHaveBeenCalledExactlyOnceWith(0);
+                expect(loadedFirst()).toBe(20);
+            });
+
+            it('should clamp to page 0 when the removal empties the whole table', () => {
+                fixture.componentRef.setInput('totalRows', 21);
+                component.pageChange({ first: 20, rows: 10 });
+
+                component.reload({ rowsRemoved: 21 });
+
+                expect(loadedFirst()).toBe(0);
+            });
         });
     });
 

@@ -246,15 +246,15 @@ describe('CourseGroupComponent', () => {
             expect(dialogErrors).toHaveLength(1);
         });
 
-        it('should reload the table via reloadAfterRemoval, so a page that is now empty steps back automatically', () => {
+        it('should reload the table with the removed row, so a page that is now empty steps back automatically', () => {
             const tableView = createRealTableView();
-            const reloadAfterRemovalSpy = vi.spyOn(tableView, 'reloadAfterRemoval');
+            const reloadSpy = vi.spyOn(tableView, 'reload');
             const removeFn = vi.fn().mockReturnValue(of(new HttpResponse<void>()));
             fixture.componentRef.setInput('removeUserFromGroup', removeFn);
 
             comp.removeFromGroup(user1);
 
-            expect(reloadAfterRemovalSpy).toHaveBeenCalledOnce();
+            expect(reloadSpy).toHaveBeenCalledExactlyOnceWith({ rowsRemoved: 1 });
         });
     });
 
@@ -266,7 +266,7 @@ describe('CourseGroupComponent', () => {
 
             comp.onMembersAdded();
 
-            expect(reloadSpy).toHaveBeenCalledOnce();
+            expect(reloadSpy).toHaveBeenCalledExactlyOnceWith();
         });
     });
 
