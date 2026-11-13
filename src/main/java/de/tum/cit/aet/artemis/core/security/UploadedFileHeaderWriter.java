@@ -31,10 +31,9 @@ public class UploadedFileHeaderWriter implements HeaderWriter {
     static final String UPLOADED_FILE_POLICY_DIRECTIVES = "default-src 'none'; img-src 'self' data:; media-src 'self'; style-src 'unsafe-inline'; sandbox";
 
     /**
-     * The REST endpoints that serve stored files, and the static resource handlers of {@code StaticResourcesConfiguration} that still serve the upload directories directly.
+     * The REST endpoints that serve stored files, and the static resource handlers of {@code StaticResourcesConfiguration} that serve upload directories directly.
      */
-    private static final List<PathPattern> UPLOADED_FILE_PATHS = List
-            .of("/api/core/files/**", "/course/icons/**", "/user/profile-pictures/**", "/drag-and-drop/**", "/markdown/**", "/exam-user/**").stream()
+    private static final List<PathPattern> UPLOADED_FILE_PATHS = List.of("/api/core/files/**", "/course/icons/**", "/user/profile-pictures/**", "/drag-and-drop/**").stream()
             .map(PathPatternParser.defaultInstance::parse).toList();
 
     private static final String CONTENT_SECURITY_POLICY_HEADER = "Content-Security-Policy";
