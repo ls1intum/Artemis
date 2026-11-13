@@ -36,7 +36,6 @@ import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
-import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
 import de.tum.cit.aet.artemis.fileupload.config.FileUploadEnabled;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadSubmission;
@@ -66,9 +65,8 @@ public class FileUploadAssessmentResource extends AssessmentResource {
 
     public FileUploadAssessmentResource(AuthorizationCheckService authCheckService, AssessmentService assessmentService, UserRepository userRepository,
             FileUploadExerciseRepository fileUploadExerciseRepository, FileUploadSubmissionRepository fileUploadSubmissionRepository, ExerciseRepository exerciseRepository,
-            ResultRepository resultRepository, ExampleSubmissionRepository exampleSubmissionRepository, SubmissionRepository submissionRepository, TeamRepository teamRepository) {
-        super(ENTITY_NAME, authCheckService, userRepository, exerciseRepository, assessmentService, resultRepository, exampleSubmissionRepository, submissionRepository,
-                teamRepository);
+            ResultRepository resultRepository, ExampleSubmissionRepository exampleSubmissionRepository, SubmissionRepository submissionRepository) {
+        super(ENTITY_NAME, authCheckService, userRepository, exerciseRepository, assessmentService, resultRepository, exampleSubmissionRepository, submissionRepository);
         this.fileUploadExerciseRepository = fileUploadExerciseRepository;
         this.fileUploadSubmissionRepository = fileUploadSubmissionRepository;
     }

@@ -70,7 +70,6 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
-import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
 import de.tum.cit.aet.artemis.text.config.TextEnabled;
 import de.tum.cit.aet.artemis.text.domain.TextBlock;
 import de.tum.cit.aet.artemis.text.domain.TextBlockType;
@@ -135,9 +134,8 @@ public class TextAssessmentResource extends AssessmentResource {
             TextSubmissionService textSubmissionService, ExerciseRepository exerciseRepository, ResultRepository resultRepository,
             GradingCriterionRepository gradingCriterionRepository, ExampleSubmissionRepository exampleSubmissionRepository, SubmissionRepository submissionRepository,
             FeedbackRepository feedbackRepository, ResultService resultService, LongFeedbackTextRepository longFeedbackTextRepository,
-            Optional<AthenaFeedbackApi> athenaFeedbackApi, CourseAthenaConfigRepository courseAthenaConfigRepository, TeamRepository teamRepository) {
-        super(ENTITY_NAME, authCheckService, userRepository, exerciseRepository, textAssessmentService, resultRepository, exampleSubmissionRepository, submissionRepository,
-                teamRepository);
+            Optional<AthenaFeedbackApi> athenaFeedbackApi, CourseAthenaConfigRepository courseAthenaConfigRepository) {
+        super(ENTITY_NAME, authCheckService, userRepository, exerciseRepository, textAssessmentService, resultRepository, exampleSubmissionRepository, submissionRepository);
         this.courseAthenaConfigRepository = courseAthenaConfigRepository;
 
         this.textAssessmentService = textAssessmentService;

@@ -50,7 +50,6 @@ import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
-import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
 import de.tum.cit.aet.artemis.modeling.config.ModelingEnabled;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
@@ -87,9 +86,8 @@ public class ModelingAssessmentResource extends AssessmentResource {
     public ModelingAssessmentResource(AuthorizationCheckService authCheckService, UserRepository userRepository, ModelingExerciseRepository modelingExerciseRepository,
             AssessmentService assessmentService, ModelingSubmissionRepository modelingSubmissionRepository, ExampleSubmissionRepository exampleSubmissionRepository,
             ExerciseRepository exerciseRepository, ResultRepository resultRepository, SubmissionRepository submissionRepository, FeedbackRepository feedbackRepository,
-            LongFeedbackTextRepository longFeedbackTextRepository, TeamRepository teamRepository) {
-        super(ENTITY_NAME, authCheckService, userRepository, exerciseRepository, assessmentService, resultRepository, exampleSubmissionRepository, submissionRepository,
-                teamRepository);
+            LongFeedbackTextRepository longFeedbackTextRepository) {
+        super(ENTITY_NAME, authCheckService, userRepository, exerciseRepository, assessmentService, resultRepository, exampleSubmissionRepository, submissionRepository);
         this.modelingExerciseRepository = modelingExerciseRepository;
         this.authCheckService = authCheckService;
         this.modelingSubmissionRepository = modelingSubmissionRepository;

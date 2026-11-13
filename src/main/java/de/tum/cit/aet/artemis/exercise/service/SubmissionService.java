@@ -10,12 +10,10 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Function;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import org.jspecify.annotations.Nullable;
@@ -61,7 +59,6 @@ import de.tum.cit.aet.artemis.exercise.dto.SubmissionWithComplaintDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
-import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
@@ -77,8 +74,6 @@ public class SubmissionService {
     private static final String ENTITY_NAME = "submission";
 
     protected final ExerciseDateService exerciseDateService;
-
-    private final TeamRepository teamRepository;
 
     protected final SubmissionRepository submissionRepository;
 
@@ -110,8 +105,7 @@ public class SubmissionService {
             ResultRepository resultRepository, StudentParticipationRepository studentParticipationRepository, ParticipationService participationService,
             FeedbackRepository feedbackRepository, ExerciseDateService exerciseDateService, ParticipationRepository participationRepository,
             ComplaintRepository complaintRepository, FeedbackService feedbackService, Optional<AthenaApi> athenaApi, TestCaseFeedbackRepository testCaseFeedbackRepository,
-            ScaFeedbackRepository scaFeedbackRepository, TeamRepository teamRepository) {
-        this.teamRepository = teamRepository;
+            ScaFeedbackRepository scaFeedbackRepository) {
         this.submissionRepository = submissionRepository;
         this.userRepository = userRepository;
         this.authCheckService = authCheckService;
@@ -428,19 +422,19 @@ public class SubmissionService {
         if (oldResult == null || oldResult.getId() == null) {
             return;
         }
-        // Fetch messages eagerly so copied feedback can be synthesized without lazy-loading failures.
+        // fetch the shared message rows eagerly: the copies keep the message reference, and the new result
+        // may be synthesized for serialization right away (e.g. exam test-run drafts) - a lazy proxy would
+        // fail there with a LazyInitializationException
         testCaseFeedbackRepository.findWithTestCaseAndMessageByResultIds(List.of(oldResult.getId())).stream().map(feedbackService::copyTestCaseFeedback)
                 .forEach(newResult::addTestCaseFeedback);
         scaFeedbackRepository.findWithMessageByResultIds(List.of(oldResult.getId())).stream().map(feedbackService::copyScaFeedback).forEach(newResult::addScaFeedback);
 
-        // Persist copies now for their synthesized IDs; retain the managed collection wrappers.
+        // Insert the copies right away when the target result already exists: a synthesized legacy view is addressed by the id of the row it comes from, so every caller that
+        // serializes the new result afterwards needs those ids. The rows are new, so this persists them in place - the ids land on these very instances and the eagerly
+        // fetched test cases and messages above survive, both of which a merge copy would lose. A result that is not persisted yet gets its rows through the caller's save.
         if (newResult.getId() != null) {
-            var savedTestCases = testCaseFeedbackRepository.saveAll(newResult.getTestCaseFeedbacks());
-            newResult.getTestCaseFeedbacks().clear();
-            newResult.getTestCaseFeedbacks().addAll(savedTestCases);
-            var savedSca = scaFeedbackRepository.saveAll(newResult.getScaFeedbacks());
-            newResult.getScaFeedbacks().clear();
-            newResult.getScaFeedbacks().addAll(savedSca);
+            newResult.setTestCaseFeedbacks(testCaseFeedbackRepository.saveAll(newResult.getTestCaseFeedbacks()));
+            newResult.setScaFeedbacks(scaFeedbackRepository.saveAll(newResult.getScaFeedbacks()));
         }
     }
 
@@ -668,29 +662,6 @@ public class SubmissionService {
      * @throws BadRequestAlertException if the correction round is negative
      */
     protected Result lockSubmission(Submission submission, int correctionRound) {
-        return withTeamAssessmentLock(submission, correctionRound, () -> claimSubmission(submission, correctionRound));
-    }
-
-    /** Coordinates team assessment claims with tutor reassignment, excluding test runs and teamless participations. */
-    protected Result withTeamAssessmentLock(Submission submission, int correctionRound, Supplier<Result> assessment) {
-        if (submission.getParticipation().getExercise().isTeamMode() && submission.getParticipation() instanceof StudentParticipation participation && !participation.isTestRun()
-                && participation.getTeam().isPresent()) {
-            return teamRepository.withAssessmentLock(participation.getTeam().get(), () -> {
-                var results = resultRepository.findTeamAssessmentResultsForRound(participation.getId(), correctionRound);
-                // Replace detached snapshots, including results deleted while this request waited for the lock.
-                submission.getResults().removeIf(result -> Objects.equals(result.getCorrectionRound(), correctionRound) && !result.isAutomatic() && !result.isAthenaBased());
-                results.stream().filter(result -> result.getSubmission().getId().equals(submission.getId())).forEach(submission::addResult);
-                if (!results.isEmpty() && submission.getResultForCorrectionRound(correctionRound) == null) {
-                    throw new AccessForbiddenException("Another submission of this team already has an assessment for this correction round.");
-                }
-                return assessment.get();
-            });
-        }
-        return assessment.get();
-    }
-
-    /** Creates or reuses the result after authorization, under the team lock when applicable. */
-    private Result claimSubmission(Submission submission, int correctionRound) {
         checkCorrectionRoundIsNotNegativeElseThrow(correctionRound);
         authCheckService.checkTeamAssessmentAccessElseThrow(submission);
         Result result = submission.getResultForCorrectionRound(correctionRound);

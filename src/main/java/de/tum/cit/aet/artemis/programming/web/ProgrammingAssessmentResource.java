@@ -39,7 +39,6 @@ import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
-import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
 import de.tum.cit.aet.artemis.exercise.service.SubmissionService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
@@ -77,9 +76,8 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
     public ProgrammingAssessmentResource(AuthorizationCheckService authCheckService, UserRepository userRepository, ProgrammingAssessmentService programmingAssessmentService,
             ProgrammingSubmissionRepository programmingSubmissionRepository, ExerciseRepository exerciseRepository, ResultRepository resultRepository,
             StudentParticipationRepository studentParticipationRepository, ExampleSubmissionRepository exampleSubmissionRepository, SubmissionRepository submissionRepository,
-            SubmissionService submissionService, ProgrammingFeedbackSynthesizerService programmingFeedbackSynthesizerService, TeamRepository teamRepository) {
-        super(ENTITY_NAME, authCheckService, userRepository, exerciseRepository, programmingAssessmentService, resultRepository, exampleSubmissionRepository, submissionRepository,
-                teamRepository);
+            SubmissionService submissionService, ProgrammingFeedbackSynthesizerService programmingFeedbackSynthesizerService) {
+        super(ENTITY_NAME, authCheckService, userRepository, exerciseRepository, programmingAssessmentService, resultRepository, exampleSubmissionRepository, submissionRepository);
         this.programmingAssessmentService = programmingAssessmentService;
         this.programmingSubmissionRepository = programmingSubmissionRepository;
         this.studentParticipationRepository = studentParticipationRepository;

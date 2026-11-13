@@ -6,27 +6,17 @@ import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphTyp
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
-import java.util.function.Supplier;
-
-import jakarta.persistence.LockModeType;
-import jakarta.persistence.QueryHint;
 
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.EntityGraph;
-import org.springframework.data.jpa.repository.Lock;
-import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.jpa.repository.QueryHints;
 import org.springframework.data.repository.query.Param;
 import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Repository;
-import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.account.domain.User;
-import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
@@ -182,93 +172,6 @@ public interface TeamRepository extends ArtemisJpaRepository<Team, Long> {
         team = save(team);
         return findWithStudentsByIdElseThrow(team.getId());
     }
-
-    /**
-     * Saves the tutor change and transfers unfinished assessments across matching course teams.
-     *
-     * @param exercise the team's exercise
-     * @param team     the updated team
-     * @param assessor the eligible new assessor, or null to unassign drafts
-     * @return the saved team
-     */
-    @Transactional
-    default Team saveWithTutorChange(Exercise exercise, Team team, User assessor) {
-        var instances = lockCourseTeamsForAssessment(exercise.getCourseViaExerciseGroupOrCourseMemberElseThrow().getId(), team.getShortName(), team.getId());
-        Team saved = save(exercise, team);
-        instances.forEach(instance -> instance.setOwner(saved.getOwner()));
-        saveAll(instances);
-        reassignDraftAssessors(instances.stream().map(Team::getId).toList(), assessor);
-        return saved;
-    }
-
-    /**
-     * Locks matching teams in a stable order before transferring their drafts.
-     *
-     * @param courseId  the course containing the matching teams
-     * @param shortName the shared team short name
-     * @param teamId    the edited team, also included if renamed
-     * @return the matching teams in ID order
-     */
-    @Lock(LockModeType.PESSIMISTIC_WRITE)
-    @QueryHints(@QueryHint(name = "org.hibernate.flushMode", value = "COMMIT"))
-    @Query("SELECT t FROM Team t WHERE (t.exercise.course.id = :courseId AND t.shortName = :shortName) OR t.id = :teamId ORDER BY t.id")
-    List<Team> lockCourseTeamsForAssessment(@Param("courseId") long courseId, @Param("shortName") String shortName, @Param("teamId") long teamId);
-
-    /**
-     * Holds the team lock until assessment creation has committed.
-     *
-     * @param <T>        the assessment operation result type
-     * @param team       the previously loaded team
-     * @param assessment the operation to perform under the team lock
-     * @return the assessment operation result
-     */
-    @Transactional
-    default <T> T withAssessmentLock(Team team, Supplier<T> assessment) {
-        lockTeamForAssessment(team.getId());
-        // Reject stale requests instead of saving a result loaded under the previous tutor.
-        if (!Objects.equals(team.getOwner(), findAssessmentOwner(team.getId()))) {
-            throw new AccessForbiddenException("The team tutor changed. Reload the assessment.");
-        }
-        return assessment.get();
-    }
-
-    /**
-     * Locks a team against reassignment while its assessment is claimed.
-     *
-     * @param teamId the team to lock
-     * @return the locked team
-     */
-    @Lock(LockModeType.PESSIMISTIC_WRITE)
-    @QueryHints(@QueryHint(name = "org.hibernate.flushMode", value = "COMMIT"))
-    @Query("SELECT t FROM Team t WHERE t.id = :teamId")
-    Team lockTeamForAssessment(@Param("teamId") long teamId);
-
-    /**
-     * Reads the persisted owner rather than a previously loaded team association.
-     *
-     * @param teamId the team whose owner is read
-     * @return the current owner, or null if unassigned
-     */
-    @QueryHints(@QueryHint(name = "org.hibernate.flushMode", value = "COMMIT"))
-    @Query("SELECT owner FROM Team t LEFT JOIN t.owner owner WHERE t.id = :teamId")
-    User findAssessmentOwner(@Param("teamId") long teamId);
-
-    /**
-     * Transfers drafts without changing completed results, feedback, or notes.
-     *
-     * @param teamIds the teams whose drafts are transferred
-     * @param owner   the new assessor, or null to unassign
-     */
-    @Modifying(flushAutomatically = true)
-    @Query("""
-            UPDATE Result r SET r.assessor = :owner
-            WHERE r.completionDate IS NULL
-                AND r.assessmentType IN (de.tum.cit.aet.artemis.assessment.domain.AssessmentType.MANUAL,
-                    de.tum.cit.aet.artemis.assessment.domain.AssessmentType.SEMI_AUTOMATIC)
-                AND r.submission.id IN (SELECT submission.id FROM StudentParticipation p JOIN p.submissions submission
-                    WHERE p.team.id IN :teamIds AND p.testRun = FALSE AND p.exercise.mode = de.tum.cit.aet.artemis.exercise.domain.ExerciseMode.TEAM)
-            """)
-    void reassignDraftAssessors(@Param("teamIds") List<Long> teamIds, @Param("owner") User owner);
 
     /**
      * Checks for each student in the given team whether they already belong to a different team

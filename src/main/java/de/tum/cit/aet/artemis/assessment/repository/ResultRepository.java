@@ -981,20 +981,4 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
             """)
     List<AssessmentQueueResultDTO> findTeamQueueResults(@Param("ids") List<Long> ids);
 
-    /**
-     * Loads persisted team assessment results across the participation for one round.
-     *
-     * @param participationId the participation ID
-     * @param correctionRound the requested round
-     * @return the persisted assessment results for the round
-     */
-    @Query("""
-            SELECT r FROM Result r LEFT JOIN FETCH r.feedbacks LEFT JOIN FETCH r.assessor LEFT JOIN FETCH r.assessmentNote
-            WHERE r.submission.participation.id = :participationId AND r.correctionRound = :correctionRound
-                AND (r.assessmentType IS NULL OR r.assessmentType IN (
-                    de.tum.cit.aet.artemis.assessment.domain.AssessmentType.MANUAL,
-                    de.tum.cit.aet.artemis.assessment.domain.AssessmentType.SEMI_AUTOMATIC))
-            """)
-    List<Result> findTeamAssessmentResultsForRound(@Param("participationId") long participationId, @Param("correctionRound") int correctionRound);
-
 }

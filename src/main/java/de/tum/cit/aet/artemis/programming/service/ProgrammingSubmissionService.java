@@ -46,7 +46,6 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation
 import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
-import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationAuthorizationCheckService;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationService;
@@ -101,9 +100,9 @@ public class ProgrammingSubmissionService extends SubmissionService {
             StudentParticipationRepository studentParticipationRepository, FeedbackRepository feedbackRepository, ExerciseDateService exerciseDateService,
             ParticipationRepository participationRepository, ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository,
             ComplaintRepository complaintRepository, ParticipationAuthorizationCheckService participationAuthCheckService, TestCaseFeedbackRepository testCaseFeedbackRepository,
-            ScaFeedbackRepository scaFeedbackRepository, TeamRepository teamRepository) {
+            ScaFeedbackRepository scaFeedbackRepository) {
         super(submissionRepository, userRepository, authCheckService, resultRepository, studentParticipationRepository, participationService, feedbackRepository,
-                exerciseDateService, participationRepository, complaintRepository, feedbackService, athenaApi, testCaseFeedbackRepository, scaFeedbackRepository, teamRepository);
+                exerciseDateService, participationRepository, complaintRepository, feedbackService, athenaApi, testCaseFeedbackRepository, scaFeedbackRepository);
         this.programmingSubmissionRepository = programmingSubmissionRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.asyncBuildTriggerService = asyncBuildTriggerService;
@@ -536,11 +535,6 @@ public class ProgrammingSubmissionService extends SubmissionService {
     @Override
     // TODO: why do we override this method and why do we not try to reuse the method in the super class?
     public Result lockSubmission(Submission submission, int correctionRound) {
-        return withTeamAssessmentLock(submission, correctionRound, () -> claimSubmission(submission, correctionRound));
-    }
-
-    /** Claims the submission while holding the team lock, when applicable. */
-    private Result claimSubmission(Submission submission, int correctionRound) {
         SubmissionService.checkCorrectionRoundIsNotNegativeElseThrow(correctionRound);
         authCheckService.checkTeamAssessmentAccessElseThrow(submission);
         var assignedResult = reuseTeamAssessmentResult(submission, correctionRound);
@@ -592,8 +586,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
 
             newResult.copyProgrammingExerciseCounters(existingResult);
         }
-        // Preserve Hibernate's collection wrapper while the team claim transaction is active.
-        newResult.getFeedbacks().addAll(automaticFeedbacks);
+        newResult.setFeedbacks(automaticFeedbacks);
 
         // Deliberately keep (and return) the original object instead of the merge result: the merge would
         // replace the assessor and the eagerly fetched test-case/message associations of the typed copies
