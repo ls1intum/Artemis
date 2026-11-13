@@ -2,8 +2,10 @@ package de.tum.cit.aet.artemis;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -27,6 +29,7 @@ import io.swagger.v3.oas.models.media.Content;
 import io.swagger.v3.oas.models.media.MediaType;
 import io.swagger.v3.oas.models.media.Schema;
 import io.swagger.v3.oas.models.media.StringSchema;
+import io.swagger.v3.oas.models.parameters.Parameter;
 import io.swagger.v3.oas.models.responses.ApiResponse;
 import io.swagger.v3.oas.models.responses.ApiResponses;
 import io.swagger.v3.oas.models.security.SecurityRequirement;
@@ -53,6 +56,8 @@ public class OpenAPIConfiguration {
     private static final int RESOURCE_NUMBER_OF_CHARACTERS = 9;
 
     private static final int DTO_NUMBER_OF_CHARACTERS = 3;
+
+    private static final Set<String> USER_FILTERS = Set.of("authorities", "origins", "status", "registrationNumbers");
 
     private static final String AGENT_API_GROUP = "agent";
 
@@ -103,6 +108,11 @@ public class OpenAPIConfiguration {
                 removeDtoSuffixFromAttributeNames(schemas);
 
                 components.setSchemas(schemas);
+                // The organization registration projection always has an identity, a display name and a membership flag.
+                var registration = schemas.get("UserForRegistration");
+                if (registration != null && openApi.getPaths() != null && openApi.getPaths().containsKey("/api/admin/organizations/{organizationId}/users/search")) {
+                    registration.setRequired(List.of("id", "login", "name", "isRegistered"));
+                }
             }
             else {
                 log.warn("Components or Schemas are null in OpenAPI configuration.");
@@ -119,9 +129,48 @@ public class OpenAPIConfiguration {
                     removeDtoSuffixFromRequestBodyIfExisting(operation);
 
                     removeResourceSuffixFromTags(operation);
+                    documentAdminPaging(path, operation);
                 });
             });
         };
+    }
+
+    private void documentAdminPaging(String path, Operation operation) {
+        boolean userList = "/api/account/admin/users".equals(path) && "getAllUsers".equals(operation.getOperationId());
+        boolean organizationList = path.startsWith("/api/admin/organizations")
+                && Set.of("getOrganizations", "getOrganizationUsers", "getOrganizationCourses").contains(operation.getOperationId());
+        if ((!userList && !organizationList) || operation.getParameters() == null) {
+            return;
+        }
+
+        // ParameterObject flattens the fields, but it skips the generic sortedColumn on the organization searches
+        // and derives requiredness for searchTerm from the getter, which returns an empty string when omitted.
+        if (organizationList) {
+            operation.addParametersItem(new Parameter().in("query").name("sortedColumn").schema(new StringSchema()));
+        }
+        for (Parameter parameter : operation.getParameters()) {
+            switch (parameter.getName()) {
+                case "page" -> {
+                    parameter.getSchema().setMinimum(BigDecimal.ZERO);
+                    parameter.getSchema().setDefault(0);
+                }
+                case "pageSize" -> {
+                    parameter.setRequired(true);
+                    parameter.getSchema().setMinimum(BigDecimal.ONE);
+                }
+                case "searchTerm" -> {
+                    parameter.setRequired(false);
+                    parameter.getSchema().setDefault("");
+                }
+                case "sortedColumn" -> parameter.setRequired(userList);
+                default -> {
+                    if (userList && USER_FILTERS.contains(parameter.getName())) {
+                        parameter.setStyle(Parameter.StyleEnum.FORM);
+                        parameter.setExplode(false);
+                    }
+                }
+            }
+        }
     }
 
     private void removeDtoSuffixFromResponseSchemas(Operation operation) {
