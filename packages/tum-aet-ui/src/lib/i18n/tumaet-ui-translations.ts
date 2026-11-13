@@ -36,7 +36,7 @@ export const TUM_AET_UI_DEFAULT_TRANSLATIONS = {
     'tumAetUi.panel.collapse': 'Collapse',
     'tumAetUi.panel.expand': 'Expand',
     'tumAetUi.paginator.ariaLabel': 'Pagination',
-    'tumAetUi.paginator.currentPageReport': 'Showing {first} to {second} of {total}',
+    'tumAetUi.paginator.compactReport': '{first}–{second} of {total}',
     'tumAetUi.paginator.first': 'First page',
     'tumAetUi.paginator.last': 'Last page',
     'tumAetUi.paginator.next': 'Next page',
@@ -49,6 +49,7 @@ export const TUM_AET_UI_DEFAULT_TRANSLATIONS = {
     'tumAetUi.select.filter': 'Filter options',
     'tumAetUi.select.noResults': 'No matching options',
     'tumAetUi.table.actions': 'Actions',
+    'tumAetUi.table.empty': 'No entries yet',
     'tumAetUi.table.noResults': 'No results found',
     'tumAetUi.table.searchPlaceholder': 'Search',
 } as const satisfies Readonly<Record<string, string>>;

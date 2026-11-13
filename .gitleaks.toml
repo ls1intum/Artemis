@@ -1,0 +1,17 @@
+# Configuration of the secret scan in .github/workflows/security-scans.yml
+title = "Artemis secret scan"
+
+[extend]
+useDefault = true
+
+# Examples in the documentation show a request with a placeholder token. They are not credentials.
+[[allowlists]]
+description = "Placeholder tokens in curl examples of the documentation"
+targetRules = ["curl-auth-header"]
+paths = ['''documentation/docs/.*\.mdx?$''']
+
+# Test code holds fixtures that look like credentials: tokens of mocked services, keys of test installations and example requests of the E2E suites.
+[[allowlists]]
+description = "Fixtures in test code"
+targetRules = ["generic-api-key", "private-key", "jwt", "aws-access-token", "curl-auth-header"]
+paths = ['''^src/test/.*''', '''^src/main/webapp/.*\.spec\.ts$''', '''^supporting_scripts/(.*/)?tests?/.*''']

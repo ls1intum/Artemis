@@ -65,7 +65,11 @@
             "textSubmissionSizeHint": "This value shows the number of words in the text.",
             "modelingSubmissionSizeHint": "This value shows the number of elements used in the model.",
             "exampleAssessmentCreated": "Example Assessment Created",
-            "exampleAssessmentWarning": "You need to complete the assessment to use this submission in the assessment training."
+            "exampleAssessmentWarning": "You need to complete the assessment to use this submission in the assessment training.",
+            "empty": {
+                "title": "No example submissions yet",
+                "description": "Create or import an example submission to show tutors how to assess."
+            }
         },
         "tutorParticipation": {
             "deleted": "The tutor participation was deleted successfully"

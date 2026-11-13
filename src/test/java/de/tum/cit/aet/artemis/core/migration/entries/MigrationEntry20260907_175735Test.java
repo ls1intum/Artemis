@@ -22,10 +22,13 @@ import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Stream;
 
 import org.apache.commons.io.FileUtils;
+import org.jspecify.annotations.Nullable;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.ResourceLock;
 import org.yaml.snakeyaml.Yaml;
 
 import de.tum.cit.aet.artemis.core.config.migration.MigrationIncompleteException;
@@ -45,13 +48,27 @@ import de.tum.cit.aet.artemis.lecture.dto.AttachmentFileLocationDTO;
  * Real files are written under the configured upload root with random ids, rather than the upload root being redirected, because that root is static and the suite runs in
  * parallel.
  */
+@ResourceLock("FilePathConverter")
 class MigrationEntry20260907_175735Test {
 
     private static final String CONTENT_IN_LECTURE_DIRECTORY = "the file the changelog left behind";
 
+    @Nullable
+    private static Path originalFileUploadPath;
+
     @BeforeAll
     static void setUploadPath() {
+        originalFileUploadPath = FilePathConverter.getFileUploadPath();
         FilePathConverter.setFileUploadPath(readFileUploadPathFromConfig());
+    }
+
+    @AfterAll
+    static void restoreFileUploadPath() {
+        // The path is process-wide and the integration test base sets it once per JVM: put back what was there. A null means nothing had published it yet, and the base does that
+        // on its first use.
+        if (originalFileUploadPath != null) {
+            FilePathConverter.setFileUploadPath(originalFileUploadPath);
+        }
     }
 
     @SuppressWarnings("unchecked")

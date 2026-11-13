@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.buildagent.service;
 
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
@@ -39,6 +40,7 @@ import com.github.dockerjava.api.model.Container;
 import com.github.dockerjava.api.model.HostConfig;
 
 import de.tum.cit.aet.artemis.buildagent.dto.DockerRunConfig;
+import de.tum.cit.aet.artemis.localci.exception.LocalCIException;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.shared.base.AbstractArtemisBuildAgentTest;
 
@@ -183,6 +185,14 @@ class BuildJobContainerServiceTest extends AbstractArtemisBuildAgentTest {
         HostConfig hostConfig = captureHostConfig();
         assertThat(hostConfig).isNotNull();
         assertThat(hostConfig.getNetworkMode()).isNull();
+    }
+
+    @Test
+    void testNetworkOfTheHostOrAnotherContainerIsRejected() {
+        for (String network : List.of("host", "HOST", " host ", "container:other", "Container:other")) {
+            var runConfig = new DockerRunConfig(List.of(), network, 1, 1, 1);
+            assertThatThrownBy(() -> buildJobContainerService.configureContainer(CONTAINER_NAME, IMAGE_NAME, BUILD_SCRIPT, runConfig)).isInstanceOf(LocalCIException.class);
+        }
     }
 
     @Test

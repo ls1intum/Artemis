@@ -496,7 +496,7 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentBatchTe
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void getLectureWithDetails_youtubeUnit_populatesYoutubeVideoId() throws Exception {
         attachmentVideoUnit.setVideoSource("https://www.youtube.com/watch?v=dQw4w9WgXcQ");
-        attachmentVideoUnitRepository.save(attachmentVideoUnit);
+        attachmentVideoUnitRepository.saveWithVideoSource(attachmentVideoUnit);
 
         LectureDetailsDTO receivedLectureWithDetails = request.get("/api/lecture/lectures/" + lecture1.getId() + "/details", HttpStatus.OK, LectureDetailsDTO.class);
 
@@ -511,7 +511,7 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentBatchTe
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void getLectureWithDetails_nonYoutubeUnit_bothFieldsNull() throws Exception {
         attachmentVideoUnit.setVideoSource("https://live.rbg.tum.de/w/foo/123");
-        attachmentVideoUnitRepository.save(attachmentVideoUnit);
+        attachmentVideoUnitRepository.saveWithVideoSource(attachmentVideoUnit);
 
         LectureDetailsDTO receivedLectureWithDetails = request.get("/api/lecture/lectures/" + lecture1.getId() + "/details", HttpStatus.OK, LectureDetailsDTO.class);
 

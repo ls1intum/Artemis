@@ -204,13 +204,17 @@ public class ProgrammingExerciseBuildConfigService {
     }
 
     /**
-     * Checks whether a Docker network is allowed on this instance.
+     * Checks whether a Docker network is allowed on this instance. Attaching a build to the network of the host or of
+     * another container is never accepted, whatever the configured list contains.
      *
      * @param network a Docker network, or null or blank for the default network
      * @return whether a container may join it on this instance
      */
     public boolean isAllowedNetwork(@Nullable String network) {
-        return StringUtils.isBlank(network) || allowedNetworks.contains(network);
+        if (StringUtils.isBlank(network)) {
+            return true;
+        }
+        return !DockerRunConfig.sharesNetworkNamespace(network) && allowedNetworks.contains(network);
     }
 
     private void requireAllowedNetwork(String network) {

@@ -1,6 +1,9 @@
 <div class="iris-context-selection flex items-center gap-2">
+    <!-- Load the options before the panel opens: an empty panel is positioned for its tiny height and then grows out of the viewport. -->
     <span
         class="iris-context-trigger-wrapper"
+        (pointerenter)="loadContextOptions()"
+        (focusin)="loadContextOptions()"
         [pTooltip]="'artemisApp.iris.contextSelection.addContextTooltip' | artemisTranslate"
         tooltipPosition="bottom"
         tooltipStyleClass="iris-context-tooltip iris-context-tooltip-tight"
@@ -27,6 +30,7 @@
             [filterPlaceholder]="'artemisApp.iris.contextSelection.search' | artemisTranslate"
             [resetFilterOnHide]="true"
             scrollHeight="40vh"
+            appendTo="body"
             [panelStyle]="{ 'min-width': '250px' }"
             variant="outlined"
             size="small"

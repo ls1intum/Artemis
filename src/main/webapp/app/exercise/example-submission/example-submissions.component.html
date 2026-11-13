@@ -1,33 +1,41 @@
 <div>
     @if (exercise() && exercise().id && exercise().course && exercise().course!.id) {
-        <div class="flex flex-wrap items-center justify-between gap-4">
-            <div class="min-w-0">
-                <h4>
-                    <span jhiTranslate="artemisApp.exampleSubmission.exampleSubmissions"></span>
-                </h4>
-            </div>
-            <div class="flex flex-wrap items-center gap-1 me-1 mb-1">
+        <h4 class="mb-3">
+            <span jhiTranslate="artemisApp.exampleSubmission.exampleSubmissions"></span>
+        </h4>
+        <tumaet-ui-table-layout
+            [empty]="!exercise().exampleSubmissions?.length"
+            emptyTitle="artemisApp.exampleSubmission.empty.title"
+            [emptyDescription]="exercise().course!.isAtLeastEditor ? 'artemisApp.exampleSubmission.empty.description' : undefined"
+        >
+            <div tumAetUiTableToolbar class="flex min-w-0 flex-1 items-center gap-2">
+                <span class="flex-1"></span>
                 @if (exercise().course!.isAtLeastEditor) {
-                    <a severity="primary" tumAetUiButton class="me-1 mb-1" [routerLink]="getLinkToExampleSubmission('new')">
+                    <a
+                        [attr.aria-label]="'artemisApp.modelingExercise.createExampleSubmission' | artemisTranslate"
+                        severity="primary"
+                        size="small"
+                        tumAetUiButton
+                        [routerLink]="getLinkToExampleSubmission('new')"
+                    >
                         <fa-icon [icon]="faPlus" />
-                        <fa-icon class="xl:hidden" [icon]="faFont" />
-                        <span class="hidden xl:inline" jhiTranslate="artemisApp.modelingExercise.createExampleSubmission" id="create-example-submission"></span>
+                        <span class="hidden md:inline" jhiTranslate="artemisApp.modelingExercise.createExampleSubmission" id="create-example-submission"></span>
                     </a>
-                }
-                @if (exercise().course!.isAtLeastEditor) {
-                    <button type="button" severity="secondary" tumAetUiButton data-testid="import-example-submission" class="me-1 mb-1" (click)="openImportModal()">
+                    <button
+                        [attr.aria-label]="'artemisApp.exampleSubmission.useAsExampleSubmission' | artemisTranslate"
+                        type="button"
+                        severity="secondary"
+                        size="small"
+                        tumAetUiButton
+                        data-testid="import-example-submission"
+                        (click)="openImportModal()"
+                    >
                         <fa-icon [icon]="faPlus" />
-                        <fa-icon class="xl:hidden" [icon]="faFont" />
-                        <span class="hidden xl:inline" jhiTranslate="artemisApp.exampleSubmission.useAsExampleSubmission"></span>
+                        <span class="hidden md:inline" jhiTranslate="artemisApp.exampleSubmission.useAsExampleSubmission"></span>
                     </button>
                 }
             </div>
-        </div>
-    }
-    <br />
-    <div class="overflow-x-auto">
-        @if (exercise() && exercise().id && exercise().course && exercise().course!.id) {
-            <table striped tumAetUiTable class="align-middle">
+            <table striped tumAetUiTable size="small" class="align-middle">
                 <thead>
                     <tr>
                         <th><span jhiTranslate="global.field.id"></span></th>
@@ -118,6 +126,14 @@
                     }
                 </tbody>
             </table>
-        }
-    </div>
+            <div tumAetUiTableEmptyActions>
+                @if (exercise().course!.isAtLeastEditor) {
+                    <a tumAetUiButton size="small" data-testid="empty-create-example-submission" [routerLink]="getLinkToExampleSubmission('new')">
+                        <fa-icon [icon]="faPlus" />
+                        <span jhiTranslate="artemisApp.modelingExercise.createExampleSubmission"></span>
+                    </a>
+                }
+            </div>
+        </tumaet-ui-table-layout>
+    }
 </div>

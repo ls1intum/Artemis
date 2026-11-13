@@ -2315,6 +2315,9 @@ public class CourseTestService {
         parameters.set("nameOfUser", "student2");
         List<CourseMemberDTO> student2 = request.getList("/api/course/courses/" + course.getId() + "/search-other-users", HttpStatus.OK, CourseMemberDTO.class, parameters);
         assertThat(student2).as("Another student in course found").hasSize(1);
+        // the search result only carries the data needed to pick a user
+        assertThat(student2.getFirst().login()).isNotNull();
+        assertThat(student2.getFirst().email()).isNull();
 
         // find a tutor for course
         parameters.set("nameOfUser", "tutor1");

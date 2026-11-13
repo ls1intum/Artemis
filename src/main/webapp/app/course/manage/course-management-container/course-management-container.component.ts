@@ -405,6 +405,9 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
         sidebarItems.push(this.sidebarItemService.getFaqManagementItem(courseId));
 
         // 8+. Other management items
+        if (this.atlasEnabled && this.hyperionEnabled && isEditor) {
+            sidebarItems.push(this.sidebarItemService.getQuizQuestionPoolItem(courseId));
+        }
         sidebarItems.push(...this.addCommunicationItem(currentCourse));
         if (isInstructor) {
             sidebarItems.push(...this.getIrisSettingsItem(), ...this.getAthenaSettingsItem());
