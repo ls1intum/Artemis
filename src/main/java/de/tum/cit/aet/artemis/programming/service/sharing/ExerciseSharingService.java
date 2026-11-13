@@ -137,7 +137,7 @@ public class ExerciseSharingService {
         try {
             // Reviewed false positive (Sonar S5144): the only caller, ExerciseSharingResource.loadShoppingBasket, verifies the checksum signed with the shared API key
             // and the configured Sharing API base URL before it passes the base URL on.
-            ShoppingBasket shoppingBasket = restTemplate.getForObject(basketRequestURL, ShoppingBasket.class); // NOSONAR
+            ShoppingBasket shoppingBasket = restTemplate.getForObject(basketRequestURL, ShoppingBasket.class); // NOSONAR // codeql[java/ssrf]
             return Optional.ofNullable(shoppingBasket);
         }
         catch (HttpClientErrorException.NotFound nf) {

@@ -65,7 +65,7 @@ export class IrisCitationTextComponent {
     readonly renderedContent = computed<SafeHtml>(() => {
         const processed = this.processText(this.text(), this.citationInfo());
         // Reviewed false positive (Sonar S6268): htmlForMarkdown sanitizes the markdown and every citation value inserted afterwards goes through escapeHtml.
-        return this.domSanitizer.bypassSecurityTrustHtml(processed); // NOSONAR
+        return this.domSanitizer.bypassSecurityTrustHtml(processed); // NOSONAR // nosemgrep
     });
 
     /**

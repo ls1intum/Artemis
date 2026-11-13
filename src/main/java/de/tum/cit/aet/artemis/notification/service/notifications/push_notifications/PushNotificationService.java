@@ -185,7 +185,7 @@ public abstract class PushNotificationService {
             // We need to get a fresh instance here for every notification to avoid a race condition between tasks
             // Reviewed accepted risk (Sonar S5542): the cipher is a wire contract with the installed mobile apps, see Constants.PUSH_NOTIFICATION_ENCRYPTION_ALGORITHM for the
             // reasoning and the migration path.
-            var cipher = Cipher.getInstance(Constants.PUSH_NOTIFICATION_ENCRYPTION_ALGORITHM); // NOSONAR
+            var cipher = Cipher.getInstance(Constants.PUSH_NOTIFICATION_ENCRYPTION_ALGORITHM); // NOSONAR // codeql[java/weak-cryptographic-algorithm]
 
             cipher.init(Cipher.ENCRYPT_MODE, key, new IvParameterSpec(initializationVector));
 

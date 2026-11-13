@@ -17,12 +17,12 @@ export class HighlightMatchPipe implements PipeTransform {
         if (!text) return '';
         const escaped = this.escapeHtml(text);
         // Reviewed false positive (Sonar S6268): the text is HTML-escaped by escapeHtml before it is trusted.
-        if (!query?.trim()) return this.sanitizer.bypassSecurityTrustHtml(escaped); // NOSONAR
+        if (!query?.trim()) return this.sanitizer.bypassSecurityTrustHtml(escaped); // NOSONAR // nosemgrep
 
         const safeQuery = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
         const highlighted = escaped.replace(new RegExp(safeQuery, 'gi'), (match) => `<strong>${match}</strong>`);
         // Reviewed false positive (Sonar S6268): the text is HTML-escaped and the query is regex-escaped, the only markup added is <strong>.
-        return this.sanitizer.bypassSecurityTrustHtml(highlighted); // NOSONAR
+        return this.sanitizer.bypassSecurityTrustHtml(highlighted); // NOSONAR // nosemgrep
     }
 
     private escapeHtml(text: string): string {

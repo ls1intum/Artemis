@@ -24,6 +24,6 @@ export class SafeUrlPipe implements PipeTransform {
         // exactly instead of only matching against.
         const rejected = sanitized === null || sanitized.startsWith('unsafe:');
         // Reviewed false positive (Sonar S6268): the URL went through Angular's URL sanitizer above and a rejected URL is replaced by an empty string.
-        return this.sanitizer.bypassSecurityTrustUrl(rejected ? '' : sanitized); // NOSONAR
+        return this.sanitizer.bypassSecurityTrustUrl(rejected ? '' : sanitized); // NOSONAR // nosemgrep
     }
 }

@@ -50,7 +50,7 @@ export class ImageComponent implements OnDestroy {
             }
             this.rawLocalImageUrl = URL.createObjectURL(blob);
             // Reviewed false positive (Sonar S6268): the URL is a blob: URL created by URL.createObjectURL in this component, never a user-supplied string.
-            return this.domSanitizer.bypassSecurityTrustUrl(this.rawLocalImageUrl); // NOSONAR - we need DomSanitizer to trust the url
+            return this.domSanitizer.bypassSecurityTrustUrl(this.rawLocalImageUrl); // NOSONAR - we need DomSanitizer to trust the url // nosemgrep
         },
     });
 

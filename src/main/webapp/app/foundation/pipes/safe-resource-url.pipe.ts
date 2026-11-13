@@ -31,7 +31,7 @@ export class SafeResourceUrlPipe implements PipeTransform {
         // spec anyway, but one caller is a form `action`, and action="" submits to the current URL — so an empty
         // string there would POST the LTI launch payload back at Artemis rather than going nowhere.
         // Reviewed false positive (Sonar S6268): only http(s) URLs pass isEmbeddable, everything else becomes about:blank.
-        return this.sanitizer.bypassSecurityTrustResourceUrl(this.isEmbeddable(value) ? value! : 'about:blank'); // NOSONAR
+        return this.sanitizer.bypassSecurityTrustResourceUrl(this.isEmbeddable(value) ? value! : 'about:blank'); // NOSONAR // nosemgrep
     }
 
     private isEmbeddable(value: string | undefined | null): boolean {

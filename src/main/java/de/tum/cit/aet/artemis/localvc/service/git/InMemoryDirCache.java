@@ -149,7 +149,7 @@ public class InMemoryDirCache extends DirCache {
         byte[] data = buffer.toByteArray();
         try {
             // Reviewed false positive (Sonar S4790): the git index format defines SHA-1 as its trailing checksum, so no other algorithm produces a valid index.
-            MessageDigest messageDigest = MessageDigest.getInstance("SHA-1"); // NOSONAR
+            MessageDigest messageDigest = MessageDigest.getInstance("SHA-1"); // NOSONAR // nosemgrep
             byte[] checksum = messageDigest.digest(data);
             outputStream.write(data);
             outputStream.write(checksum);

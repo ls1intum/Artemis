@@ -74,7 +74,7 @@ public class SAML2Configuration {
             // Else the request is filtered by {@link de.tum.cit.aet.artemis.core.config.SecurityConfiguration}.
             .securityMatcher("/api/core/public/saml2", "/saml2/**", "/login/saml2/**")
             // Needed for SAML to work properly
-            .csrf(AbstractHttpConfigurer::disable) // NOSONAR - reviewed (Sonar S4502), the SAML response posted by the identity provider cannot carry a CSRF token and is authenticated by its signature
+            .csrf(AbstractHttpConfigurer::disable) // NOSONAR - reviewed (Sonar S4502), the SAML response posted by the identity provider cannot carry a CSRF token and is authenticated by its signature // codeql[java/spring-disabled-csrf-protection]
             .authorizeHttpRequests(auth -> auth
                 // The request to the api is permitted and checked directly
                 // This allows returning a 401 if the user is not logged in via SAML2

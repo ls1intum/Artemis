@@ -361,7 +361,7 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
             const diagram = await ApollonEditor.exportModelAsSvg(ModelingEditorComponent.modelWithoutAssessments(model));
             if (!this.isDestroyed && revision === this.readOnlyExportRevision) {
                 // Reviewed false positive (Sonar S6268): Apollon renders the diagram with React, which escapes every label, and serializes the resulting DOM.
-                this.readOnlySVG.set(this.sanitizer.bypassSecurityTrustHtml(diagram.svg)); // NOSONAR
+                this.readOnlySVG.set(this.sanitizer.bypassSecurityTrustHtml(diagram.svg)); // NOSONAR // nosemgrep
             }
         } catch (error) {
             if (!this.isDestroyed && revision === this.readOnlyExportRevision) {

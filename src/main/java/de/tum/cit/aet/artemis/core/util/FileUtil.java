@@ -281,7 +281,7 @@ public class FileUtil {
         try {
             // Reviewed false positive (Sonar S2083): callers pass a path built from sanitized file names, as the contract of saveFile requires,
             // e.g. SlideSplitterService, where convertByteArrayToMultipart runs the name through sanitizeFilename.
-            FileUtils.copyInputStreamToFile(file.getInputStream(), filePath.toFile()); // NOSONAR
+            FileUtils.copyInputStreamToFile(file.getInputStream(), filePath.toFile()); // NOSONAR // codeql[java/path-injection]
         }
         catch (IOException e) {
             log.error("Could not save file {}", filePath.getFileName(), e);

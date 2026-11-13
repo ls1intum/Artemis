@@ -193,7 +193,8 @@ public class FileUploadSubmissionService extends SubmissionService {
         final URI newFilePath = URI.create(new PublicFileUrl.FileUploadSubmission(exercise.getId(), fileUploadSubmission.getId(), savePath.getFileName().toString()).clientPath());
 
         // We need to ensure that we can access the store file and the stored file is the same as was passed to us in the request
-        final var storedFileHash = DigestUtils.sha256Hex(Files.newInputStream(savePath));
+        // Reviewed false positive (CodeQL java/path-injection): savePath comes from saveFileForSubmission, which builds it from a sanitized file name.
+        final var storedFileHash = DigestUtils.sha256Hex(Files.newInputStream(savePath)); // codeql[java/path-injection]
         if (!multipartFileHash.equals(storedFileHash)) {
             throw new IOException("The file " + file.getName() + "could not be stored");
         }

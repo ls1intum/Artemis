@@ -84,7 +84,7 @@ public class TextBlock implements Serializable {
         final String idString = submissionId + ";" + startIndex + "-" + endIndex + ";" + text;
         // Reviewed false positive (Sonar S4790): the id is a content-derived identifier, not a security control. It must stay identical to the client implementation and to stored
         // ids.
-        id = sha1Hex(idString); // NOSONAR
+        id = sha1Hex(idString); // NOSONAR // nosemgrep
     }
 
     public TextBlock id(String id) {
