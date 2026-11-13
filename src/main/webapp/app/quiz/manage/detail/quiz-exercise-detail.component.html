@@ -3,10 +3,13 @@
         @if (quizExercise()) {
             <div>
                 <jhi-exercise-detail-header [exercise]="quizExercise()" [documentationType]="documentationType" />
-                <jhi-quiz-exercise-manage-buttons [quizExercise]="quizExercise()" [isDetailPage]="true" (loadQuizExercises)="load()" />
-                @if (!isExamMode()) {
-                    <jhi-quiz-exercise-lifecycle-buttons [quizExercise]="quizExercise()" (loadOne)="load()" (handleNewQuizExercise)="load()" />
-                }
+                <jhi-quiz-exercise-manage-buttons [quizExercise]="quizExercise()" [isDetailPage]="true" (loadQuizExercises)="load()">
+                    <div lifecycleActions class="contents">
+                        @if (!isExamMode()) {
+                            <jhi-quiz-exercise-lifecycle-buttons [quizExercise]="quizExercise()" (loadOne)="load()" (handleNewQuizExercise)="load()" />
+                        }
+                    </div>
+                </jhi-quiz-exercise-manage-buttons>
                 @if (showStatistics()) {
                     <div class="mt-6!">
                         <jhi-exercise-detail-statistics

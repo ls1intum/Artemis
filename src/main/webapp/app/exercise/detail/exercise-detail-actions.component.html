@@ -3,17 +3,27 @@
         <div class="nav-group flex min-w-0 flex-wrap items-stretch gap-2 [&_span]:hidden @4xl:[&_span]:inline [&>*]:min-w-0 [&>*]:flex-initial">
             <ng-content select="[detailNavigationActions]" />
         </div>
-        <!-- The editing actions and "More actions" move to the next line together, so the menu never sits alone at the left edge.
-             A thin divider separates the three kinds of action; it is left out next to a group that has no actions. -->
-        <div class="flex min-w-0 items-start gap-x-3 gap-y-2 border-s border-border ps-3 [.nav-group:not(:has(*))+&]:border-s-0 [.nav-group:not(:has(*))+&]:ps-0">
+        <!-- The editing actions and "More actions" move to the next line together, so the menu never sits alone at the left edge. While a
+             lifecycle button is shown (a third group in this row), the groups wrap between each other instead and keep their divider.
+             A thin divider separates the kinds of action; it is left out next to a group that has no actions. -->
+        <div
+            class="flex min-w-0 items-start gap-x-3 gap-y-2 border-s border-border ps-3 [&:has(.lifecycle-group_button:not([hidden]))]:flex-wrap [.nav-group:not(:has(*))+&]:border-s-0 [.nav-group:not(:has(*))+&]:ps-0"
+        >
             <div
                 data-testid="exercise-editing-actions"
                 class="edit-group flex min-w-0 flex-wrap items-stretch gap-1 @sm:gap-2 [&_a]:min-w-8 [&_a]:whitespace-nowrap! [&_a>span]:hidden @sm:[&_a>span]:inline [&_button]:whitespace-normal! [&>*]:flex-none"
             >
                 <ng-content select="[detailEditingActions]" />
             </div>
+            <!-- Lifecycle actions (e.g. start or end a quiz). Only the buttons that are currently shown count, so no stray divider is left behind. -->
             <div
-                class="flex items-start border-s border-border ps-3 [.edit-group:not(:has(*))+&]:border-s-0 [.edit-group:not(:has(*))+&]:ps-0 [&:not(:has(*))]:hidden [&_button>span]:hidden @3xl:[&_button>span]:inline"
+                data-testid="exercise-lifecycle-actions"
+                class="lifecycle-group flex items-start border-s border-border ps-3 [&:not(:has(button:not([hidden])))]:hidden [.edit-group:not(:has(*))+&]:border-s-0 [.edit-group:not(:has(*))+&]:ps-0"
+            >
+                <ng-content select="[detailLifecycleActions]" />
+            </div>
+            <div
+                class="flex items-start border-s border-border ps-3 [.edit-group:not(:has(*))+.lifecycle-group:not(:has(button:not([hidden])))+&]:border-s-0 [.edit-group:not(:has(*))+.lifecycle-group:not(:has(button:not([hidden])))+&]:ps-0 [&:not(:has(*))]:hidden [&_button>span]:hidden @3xl:[&_button>span]:inline"
             >
                 <ng-content select="[detailMoreActions]" />
             </div>
