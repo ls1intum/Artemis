@@ -492,6 +492,7 @@ mkdir -p \
     "$ARTEMIS_DATA_DIR/repos-download" \
     "$ARTEMIS_DATA_DIR/uploads" \
     "$ARTEMIS_DATA_DIR/exports" \
+    "$ARTEMIS_DATA_DIR/data-exports" \
     "$ARTEMIS_DATA_DIR/legal" \
     "$ARTEMIS_DATA_DIR/build-logs" \
     "$ARTEMIS_DATA_DIR/failed-build-logs" \
@@ -555,6 +556,7 @@ launch_node() {
         export ARTEMIS_REPODOWNLOADCLONEPATH="$ARTEMIS_DATA_DIR/repos-download"
         export ARTEMIS_FILEUPLOADPATH="$ARTEMIS_DATA_DIR/uploads"
         export ARTEMIS_SUBMISSIONEXPORTPATH="$ARTEMIS_DATA_DIR/exports"
+        export ARTEMIS_DATAEXPORTPATH="$ARTEMIS_DATA_DIR/data-exports"
         export ARTEMIS_LEGALPATH="$ARTEMIS_DATA_DIR/legal"
         export ARTEMIS_BUILDLOGSPATH="$ARTEMIS_DATA_DIR/build-logs"
         export ARTEMIS_FAILEDBUILDLOGSPATH="$ARTEMIS_DATA_DIR/failed-build-logs"

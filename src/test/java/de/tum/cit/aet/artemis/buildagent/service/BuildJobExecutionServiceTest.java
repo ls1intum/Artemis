@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.buildagent.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -34,6 +35,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentDTO;
@@ -119,6 +121,44 @@ class BuildJobExecutionServiceTest {
         verify(git).setCloneTokenForCurrentThread("job-clone-token");
         verify(git).clearCloneTokenForCurrentThread();
         verify(logs).appendBuildLogEntry("job", "The file blank.xml does not contain any testcases.");
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "../other", "a/b", "..", ".", "a b", "", "job\u0000" })
+    void buildJobIdThatCouldLeaveTheCheckoutDirectoryIsRejected(String id) {
+        assertThatThrownBy(() -> BuildJobExecutionService.validateBuildJobId(id)).isInstanceOf(LocalCIException.class);
+    }
+
+    @Test
+    void buildJobIdThatIsTooLongOrMissingIsRejected() {
+        assertThatThrownBy(() -> BuildJobExecutionService.validateBuildJobId("x".repeat(101))).isInstanceOf(LocalCIException.class);
+        assertThatThrownBy(() -> BuildJobExecutionService.validateBuildJobId(null)).isInstanceOf(LocalCIException.class);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "../other", "a/b", ".." })
+    void runBuildJobRefusesAnIdThatCouldLeaveTheCheckoutDirectoryBeforeTouchingAnything(String id) throws Exception {
+        var job = buildJob(id, RepositoryType.USER, true, null, new String[0]);
+
+        assertThatThrownBy(() -> service.runBuildJob(job)).isInstanceOf(LocalCIException.class);
+
+        verify(git, never()).cloneRepository(any(), any());
+        verify(git, never()).setCloneTokenForCurrentThread(any());
+        verify(runner, never()).execute(any(), any());
+    }
+
+    @Test
+    void runBuildJobAcceptsAnIdOfTheLongestAllowedLength() throws Exception {
+        when(runner.execute(any(), any())).thenReturn(new BuildJobRunnerResult(null, 0, completedAt, () -> {
+        }));
+
+        assertThatCode(() -> service.runBuildJob(buildJob("a".repeat(100), RepositoryType.USER, true, null, new String[0]))).doesNotThrowAnyException();
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "12345671700000000000", "hyperion-sync-7", "job", "build_job-1" })
+    void buildJobIdOfTheUsualFormatIsAccepted(String id) {
+        assertThatCode(() -> BuildJobExecutionService.validateBuildJobId(id)).doesNotThrowAnyException();
     }
 
     @ParameterizedTest
@@ -260,12 +300,16 @@ class BuildJobExecutionServiceTest {
     }
 
     private BuildJobQueueItem buildJob(RepositoryType trigger, boolean explicitCommits, String solution, String[] auxiliary) {
+        return buildJob("job", trigger, explicitCommits, solution, auxiliary);
+    }
+
+    private BuildJobQueueItem buildJob(String id, RepositoryType trigger, boolean explicitCommits, String solution, String[] auxiliary) {
         var repositories = new RepositoryInfo("repository", RepositoryType.USER, trigger, uri("course-student"), uri("course-tests"), solution, auxiliary,
                 new String[auxiliary.length]);
         var timing = new JobTimingInfo(completedAt.minusMinutes(1), null, null, null, 60);
         var config = new BuildConfig("echo test", "ubuntu:24.04", "commit", explicitCommits ? "assignment-commit" : null, explicitCommits ? "test-commit" : null, "main",
                 ProgrammingLanguage.JAVA, null, false, false, List.of("results/*.xml"), 60, "assignment", "tests", "solution", new DockerRunConfig(List.of(), null, 0, 0, 0));
-        return new BuildJobQueueItem("job", "job", new BuildAgentDTO(null, null, null), 1, 2, 3, 0, 1, null, repositories, timing, config, null, null, "job-clone-token");
+        return new BuildJobQueueItem(id, id, new BuildAgentDTO(null, null, null), 1, 2, 3, 0, 1, null, repositories, timing, config, null, null, "job-clone-token");
     }
 
     private byte[] archive(Map<String, String> entries) throws IOException {

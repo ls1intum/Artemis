@@ -498,7 +498,6 @@
                     "task": "Aufgabe",
                     "testcase": "Testfall",
                     "errorCategory": "Fehlerkategorie",
-                    "totalItems": "Insgesamt {{count}} Element(e)",
                     "error": "Beim Laden des Feedbacks ist ein Fehler aufgetreten.",
                     "search": "Suche ...",
                     "filter": "Filter",

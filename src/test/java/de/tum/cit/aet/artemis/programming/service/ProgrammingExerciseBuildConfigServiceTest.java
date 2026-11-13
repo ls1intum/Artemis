@@ -173,6 +173,18 @@ class ProgrammingExerciseBuildConfigServiceTest {
     }
 
     @Test
+    void aContainerCannotJoinTheNetworkOfTheHostOrOfAnotherContainerEvenIfItIsListed() {
+        var service = serviceWithoutDefaults();
+        ReflectionTestUtils.setField(service, "allowedNetworks", List.of("none", "host", "container:database"));
+
+        for (String network : List.of("host", "container:database")) {
+            var containerFlags = new BuildContainerDockerFlagsDTO(network, null, null, null, null);
+            assertThatExceptionOfType(ResponseStatusException.class).isThrownBy(() -> service.getDockerRunConfig(buildConfigWithFlags(EXERCISE_FLAGS), exercise, containerFlags))
+                    .withMessageContaining("Invalid network: " + network);
+        }
+    }
+
+    @Test
     void aContainerOverridesTheDefaultsAndTheExerciseByName() {
         var containerFlags = new BuildContainerDockerFlagsDTO("none", Map.of("MODE", "student"), null, null, null);
 

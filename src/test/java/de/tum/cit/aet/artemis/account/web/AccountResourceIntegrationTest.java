@@ -8,6 +8,7 @@ import static org.mockito.Mockito.verify;
 
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.HashSet;
 import java.util.Locale;
 import java.util.Optional;
 import java.util.regex.Pattern;
@@ -126,6 +127,96 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
 
         // make request
         request.postWithoutLocation("/api/core/public/register", userVM, HttpStatus.CREATED, null);
+    }
+
+    @Test
+    void registerAccountAgainWhileActivationIsPending() throws Exception {
+        String password = getValidPassword();
+        ManagedUserVM userVM = new ManagedUserVM(UserFactory.generateActivatedUser("pendingreg1"));
+        userVM.setPassword(password);
+        request.postWithoutLocation("/api/core/public/register", userVM, HttpStatus.CREATED, null);
+        User first = userTestRepository.findOneWithAuthoritiesByLogin(userVM.getLogin()).orElseThrow();
+        // data of the stored account that the registration request does not carry
+        first.setImageUrl("pendingreg1-image.png");
+        first.setRegistrationNumber("01234567");
+        first = userTestRepository.save(first);
+        String storedImageUrl = first.getImageUrl();
+        var authoritiesBefore = new HashSet<>(first.getAuthorities());
+
+        String newPassword = password + "b";
+        userVM.setPassword(newPassword);
+        userVM.setFirstName("Changed");
+        userVM.setLastName("Name");
+        userVM.setLangKey("de");
+        request.postWithoutLocation("/api/core/public/register", userVM, HttpStatus.CREATED, null);
+
+        User second = userTestRepository.findOneWithAuthoritiesByLogin(userVM.getLogin()).orElseThrow();
+        assertThat(second.getId()).isEqualTo(first.getId());
+        assertThat(second.getFirstName()).isEqualTo("Changed");
+        assertThat(second.getLastName()).isEqualTo("Name");
+        assertThat(second.getLangKey()).isEqualTo("de");
+        // only the data of the request is applied, everything else of the stored account is kept
+        assertThat(second.getImageUrl()).isEqualTo(storedImageUrl);
+        assertThat(second.getRegistrationNumber()).isEqualTo("01234567");
+        assertThat(second.getAuthorities()).containsExactlyInAnyOrderElementsOf(authoritiesBefore);
+        assertThat(second.isInternal()).isTrue();
+        assertThat(second.getActivated()).isFalse();
+        assertThat(passwordService.checkPasswordMatch(newPassword, second.getPassword())).isTrue();
+        assertThat(userRecoveryKeyService.findActivationKey(second.getId())).isNotNull();
+    }
+
+    @Test
+    void registerAccountWithOtherEmailWhileActivationIsPending_doesNotNameTheStoredEmail() throws Exception {
+        String password = getValidPassword();
+        ManagedUserVM userVM = new ManagedUserVM(UserFactory.generateActivatedUser("pendingreg4"));
+        userVM.setPassword(password);
+        request.postWithoutLocation("/api/core/public/register", userVM, HttpStatus.CREATED, null);
+        String storedEmail = userTestRepository.findOneByLogin(userVM.getLogin()).orElseThrow().getEmail();
+        String requestedEmail = "someone.else@example.org";
+        userVM.setEmail(requestedEmail);
+
+        var response = request.postWithoutResponseBody("/api/core/public/register", userVM, HttpStatus.BAD_REQUEST, null);
+
+        // the client recognizes the answer by its type, and the message only names the address of the request
+        assertThat(response.getContentAsString()).contains("account-registration-blocked").contains(requestedEmail).doesNotContain(storedEmail);
+        assertThat(userTestRepository.findOneByLogin(userVM.getLogin()).orElseThrow().getEmail()).isEqualTo(storedEmail);
+    }
+
+    @Test
+    void registerAccountRejectsExistingAccountWithoutPendingActivation() throws Exception {
+        String password = getValidPassword();
+        ManagedUserVM userVM = new ManagedUserVM(UserFactory.generateActivatedUser("pendingreg2"));
+        userVM.setPassword(password);
+        request.postWithoutLocation("/api/core/public/register", userVM, HttpStatus.CREATED, null);
+        User existing = userTestRepository.findOneByLogin(userVM.getLogin()).orElseThrow();
+        // the account no longer has an outstanding activation
+        userRecoveryKeyService.clearActivationKey(existing.getId());
+        String storedPassword = existing.getPassword();
+
+        userVM.setPassword(password + "b");
+        request.postWithoutLocation("/api/core/public/register", userVM, HttpStatus.BAD_REQUEST, null);
+
+        User unchanged = userTestRepository.findOneByLogin(userVM.getLogin()).orElseThrow();
+        assertThat(unchanged.getPassword()).isEqualTo(storedPassword);
+    }
+
+    @Test
+    void registerAccountRejectsExistingExternalAccount() throws Exception {
+        String password = getValidPassword();
+        ManagedUserVM userVM = new ManagedUserVM(UserFactory.generateActivatedUser("pendingreg3"));
+        userVM.setPassword(password);
+        request.postWithoutLocation("/api/core/public/register", userVM, HttpStatus.CREATED, null);
+        User existing = userTestRepository.findOneByLogin(userVM.getLogin()).orElseThrow();
+        existing.setInternal(false);
+        userTestRepository.save(existing);
+        String storedPassword = existing.getPassword();
+
+        userVM.setPassword(password + "b");
+        request.postWithoutLocation("/api/core/public/register", userVM, HttpStatus.BAD_REQUEST, null);
+
+        User unchanged = userTestRepository.findOneByLogin(userVM.getLogin()).orElseThrow();
+        assertThat(unchanged.getPassword()).isEqualTo(storedPassword);
+        assertThat(unchanged.isInternal()).isFalse();
     }
 
     @ParameterizedTest
@@ -414,6 +505,22 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
         Optional<User> updatedUser = userTestRepository.findOneByLogin(AUTHENTICATEDUSER);
         assertThat(updatedUser).isPresent();
         assertThat(updatedUser.get().getFirstName()).isEqualTo(updatedFirstName);
+    }
+
+    @Test
+    @WithMockUser(username = AUTHENTICATEDUSER)
+    void saveAccountWithMaximumLengthDisplayName() throws Exception {
+        String firstName = "a".repeat(50);
+        String lastName = "b".repeat(50);
+        User user = userUtilService.createAndSaveUser(AUTHENTICATEDUSER);
+        user.setFirstName(firstName);
+        user.setLastName(lastName);
+
+        request.put("/api/account/basic-information", new UserDTO(user), HttpStatus.OK);
+
+        User updatedUser = userTestRepository.findOneByLogin(AUTHENTICATEDUSER).orElseThrow();
+        assertThat(updatedUser.getFirstName()).isEqualTo(firstName);
+        assertThat(updatedUser.getLastName()).isEqualTo(lastName);
     }
 
     @Test

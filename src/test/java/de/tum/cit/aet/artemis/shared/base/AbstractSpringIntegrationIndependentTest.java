@@ -7,14 +7,18 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_DEMO;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_SCHEDULING;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_TEST_INDEPENDENT;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.parallel.ResourceLock;
+import org.mockito.Mockito;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.testcontainers.weaviate.WeaviateContainer;
 
+import de.tum.cit.aet.artemis.atlas.api.ScienceEventApi;
 import de.tum.cit.aet.artemis.shared.WeaviateTestConfiguration;
 import de.tum.cit.aet.artemis.shared.WeaviateTestContainerFactory;
 
@@ -28,10 +32,14 @@ import de.tum.cit.aet.artemis.shared.WeaviateTestContainerFactory;
 @ActiveProfiles({ SPRING_PROFILE_TEST, PROFILE_TEST_INDEPENDENT, PROFILE_ARTEMIS, PROFILE_CORE, PROFILE_SCHEDULING, PROFILE_DEMO })
 @TestPropertySource(properties = { "artemis.user-management.use-external=false", "artemis.sharing.enabled=true", "artemis.user-management.passkey.enabled=true",
         "spring.jpa.properties.hibernate.cache.hazelcast.instance_name=Artemis_independent", "artemis.iris.enabled=true", "artemis.deimos.enabled=true", "artemis.lti.enabled=true",
-        "artemis.atlas.enabled=true", "artemis.atlas.atlasml.enabled=true", "artemis.atlas.atlasllm.enabled=true", "artemis.athena.enabled=true", "artemis.apollon.enabled=true",
+        "artemis.atlas.enabled=true", "artemis.atlas.atlasllm.enabled=true", "artemis.athena.enabled=true", "artemis.apollon.enabled=true",
         // Property moved here to avoid creating a separate Spring context in AutomaticBuildJobCleanupServiceIntegrationTest
         "artemis.continuous-integration.build-job.retention-period=30" })
 public abstract class AbstractSpringIntegrationIndependentTest extends AbstractSpringIntegrationIndependentTestBase {
+
+    // A spy so that a test can make the rename of science identities fail, which no real input can provoke.
+    @MockitoSpyBean
+    protected ScienceEventApi scienceEventApi;
 
     protected static final WeaviateContainer weaviateContainer;
 
@@ -44,5 +52,12 @@ public abstract class AbstractSpringIntegrationIndependentTest extends AbstractS
     @DynamicPropertySource
     static void registerWeaviateProperties(DynamicPropertyRegistry registry) {
         WeaviateTestConfiguration.registerWeaviateProperties(registry, weaviateContainer, UNIQUE_COLLECTION_PREFIX);
+    }
+
+    @AfterEach
+    @Override
+    protected void resetSpyBeans() {
+        Mockito.reset(scienceEventApi);
+        super.resetSpyBeans();
     }
 }
