@@ -1927,6 +1927,19 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
                 null, HttpStatus.BAD_REQUEST, "gradedParticipationMismatch");
     }
 
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void checkResetRepository_gradedParticipationIsTheParticipationItself_badRequest() throws Exception {
+        startProgrammingExercise();
+        var participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
+        participation.setPracticeMode(true);
+        participationRepository.save(participation);
+
+        request.putAndExpectError(
+                "/api/programming/programming-exercise-participations/" + participation.getId() + "/reset-repository?gradedParticipationId=" + participation.getId(), null,
+                HttpStatus.BAD_REQUEST, "gradedParticipationIsTarget");
+    }
+
     /**
      * The access to the graded participation is validated before its exercise is compared, so the answer for a participation that may not be read is the same for every
      * exercise.
