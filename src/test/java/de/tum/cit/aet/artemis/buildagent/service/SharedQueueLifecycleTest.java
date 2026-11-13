@@ -456,7 +456,7 @@ class SharedQueueLifecycleTest {
 
     private BuildJobQueueItem withStart(BuildJobQueueItem job, ZonedDateTime start, BuildAgentDTO agent) {
         return new BuildJobQueueItem(job.id(), job.name(), agent, job.participationId(), job.courseId(), job.exerciseId(), job.retryCount(), job.priority(), job.status(),
-                job.repositoryInfo(), new JobTimingInfo(job.jobTimingInfo().submissionDate(), start, null, null, 0), job.buildConfig(), null, job.cloneToken());
+                job.repositoryInfo(), new JobTimingInfo(job.jobTimingInfo().submissionDate(), start, null, null, 0), job.buildConfig(), null, job.buildGroup(), job.cloneToken());
     }
 
     private void submit(BuildJobQueueItem job) {
@@ -469,6 +469,6 @@ class SharedQueueLifecycleTest {
         var timing = new JobTimingInfo(ZonedDateTime.now(), null, null, null, -1);
         var config = new BuildConfig("script", "image", "commit", "assignment", "tests", "main", ProgrammingLanguage.JAVA, null, false, false, List.of(), 60, "assignment", "tests",
                 "solution", new DockerRunConfig(List.of(), null, 0, 0, 0));
-        return new BuildJobQueueItem("job", "job", new BuildAgentDTO("", "", ""), 1, 2, 3, retryCount, 1, null, repositories, timing, config, null, "clone-token");
+        return new BuildJobQueueItem("job", "job", new BuildAgentDTO("", "", ""), 1, 2, 3, retryCount, 1, null, repositories, timing, config, null, null, "clone-token");
     }
 }

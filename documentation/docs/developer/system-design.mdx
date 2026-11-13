@@ -2,7 +2,7 @@
 id: system-design
 title: System Design
 sidebar_label: System Design
-last_reviewed: 2026-11-03
+last_reviewed: 2026-11-10
 ---
 
 import Callout from "../../src/components/Callout/Callout";
@@ -257,6 +257,39 @@ If the build is part of a batch, for example, if an instructor triggers a re-bui
 If none of the above conditions apply, for example, exercises that are part of a real course and not part of an exam, the priority is set to `2`.
 Additionally, if the exercise is part of a test course, a penalty is added to the priority, making it less urgent. The penalty is implemented by adding a value of `5` to the priority.
 The priority calculation is implemented in the `LocalCITriggerService`.
+
+#### Multi-Container Builds
+
+A build plan can define several build containers, each with its own Docker image, build phases, timeout, repository selection and Docker flags (see [Run the Build in Several Containers](/instructor/exercises/programming-exercise/configure-the-build#run-the-build-in-several-containers-optional)).
+Each container is executed as an ordinary build job.
+The build agent does not know that a job belongs to a larger build: it runs the job's script in the job's image and returns its result like for any other job.
+Everything specific to multi-container builds therefore happens in the CI Management, when the build jobs are created and when their results arrive.
+
+When the `triggerBuild` method of the `LocalCITriggerService` is called for a build plan with several containers, it creates one `BuildJobQueueItem` per container.
+The items of one build share a build group, which consists of a group id, the number of containers the group expects, and the name of the item's container.
+A build plan with a single container creates a single item without a build group, so it is processed exactly like before.
+All jobs of a group are saved in the database before any of them is added to the job queue, because a group counts as complete once all of its jobs in the database have finished.
+
+The `LocalCIResultProcessingService` merges the results of a build group into one result.
+The first container that reports creates the aggregated result of the build, which stays in progress (it has no completion date) until every container of the group has finished.
+Every container appends its feedback to this result, keeping one feedback per test case: if several containers report the same test case, a failed outcome replaces a successful one.
+The last container that finishes finalizes the result using the `finalizeContainerResult` method of the `ProgrammingExerciseGradingService`.
+The method scores the merged feedback like a single-container result, marks the result as unsuccessful if a container failed to build or did not finish, and sets the completion date.
+The build logs of a failed container are stored with the name of the container.
+A lock on the build group serializes the containers of one build, and a lock on the participation prevents a concurrent build of the same participation from taking a result that is still being created for an abandoned one.
+
+Since each container reports only its share of the test cases, a solution build registers new test cases per container, but deactivates absent test cases only during the finalization, over the test cases of all containers.
+If test discovery is coordinated with the exercise generation of Hyperion, only the finalization completes the synchronization, and only if the revisions of the build are still current and every container ran without failures.
+
+Builds of the same submission are ordered by the time they were triggered, not by the time they finish.
+If an older build finalizes after a newer one, it is discarded, so it overwrites neither the newer result nor a tutor's assessment.
+Aggregated results that are still in progress although no running job will complete them are deleted by the next finalization on the same submission.
+
+A container can be lost, for example when its build agent crashes, or the finalization can fail after the last container reported.
+To recover from this, the `LocalCIMissingJobService` periodically calls the `finalizeCompletedBuildGroups` method of the `LocalCIResultProcessingService`, which finalizes build groups whose result is still in progress although none of their jobs is queued or running.
+A lost job is retried like the job of a single-container build: the retry runs the whole build again as a new group, and the group of the lost job is closed once the job is no longer retried.
+
+The `build_job` table stores the build group of a job (`build_group_id`), whether its container failed to build (`build_failed`), and whether its build script exited without errors and reported no failed test (`clean_run`).
 
 ### Build Agent
 

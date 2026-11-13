@@ -3,6 +3,7 @@
         <jhi-build-phase
             [phase]="phase"
             [index]="$index"
+            [idPrefix]="idPrefix()"
             [phaseNames]="phaseNames()"
             [isLast]="$index === phaseCount() - 1"
             [readonly]="readonly()"
@@ -14,7 +15,18 @@
         />
     }
 
-    <button type="button" id="add-phase-button" class="m-1" pButton [text]="true" size="small" severity="secondary" [hidden]="readonly()" (click)="addPhase()">
+    <button
+        type="button"
+        [id]="idPrefix() + 'add-phase-button'"
+        data-testid="add-phase-button"
+        class="m-1"
+        pButton
+        [text]="true"
+        size="small"
+        severity="secondary"
+        [hidden]="readonly()"
+        (click)="addPhase()"
+    >
         <fa-icon [icon]="faPlus" pButtonIcon />
         <span pButtonLabel jhiTranslate="artemisApp.programmingExercise.buildPhasesEditor.addPhase"></span>
     </button>

@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { NO_ERRORS_SCHEMA } from '@angular/core';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { BehaviorSubject, of } from 'rxjs';
+import { BuildJobStatisticsComponent } from 'app/localci/build-job-statistics/build-job-statistics.component';
 import { BuildOverviewComponent } from 'app/localci/build-queue/build-overview.component';
 import { BuildOverviewService } from 'app/localci/build-queue/build-overview.service';
 import dayjs from 'dayjs/esm';
@@ -511,6 +512,46 @@ describe('BuildQueueComponent', () => {
 
         // Expectations: The service method for canceling all running build jobs is called without a course ID
         expect(mockBuildQueueService.cancelAllRunningBuildJobs).toHaveBeenCalled();
+    });
+
+    describe('a finished job that changed', () => {
+        let websocketService: MockWebsocketService;
+        const incrementStatisticsByStatus = vi.fn();
+
+        beforeEach(() => {
+            routeStub.setParamMap({});
+            mockBuildQueueService.getFinishedBuildJobs.mockReturnValue(of(mockFinishedJobsResponse));
+            websocketService = TestBed.inject(WebsocketService) as unknown as MockWebsocketService;
+            // the statistics child is not rendered here, so the view child query is answered with a stand-in
+            vi.spyOn(component, 'statisticsComponent').mockReturnValue({ incrementStatisticsByStatus } as unknown as BuildJobStatisticsComponent);
+            component.ngOnInit();
+        });
+
+        it('should replace the listed job and leave the statistics alone', () => {
+            // the container of a multi-container build was announced with its result in progress; the finalized result follows
+            websocketService.emit<FinishedBuildJob>('/topic/admin/finished-job-updates', { ...mockFinishedJobs[1], status: 'SUCCESSFUL', commitHash: 'finalized' });
+
+            expect(component.finishedBuildJobs().map((job) => [job.id, job.commitHash])).toEqual([
+                ['5', 'abc127'],
+                ['6', 'finalized'],
+            ]);
+            // the job was counted when it was announced as finished
+            expect(incrementStatisticsByStatus).not.toHaveBeenCalled();
+        });
+
+        it('should ignore a job that is not on the page shown', () => {
+            websocketService.emit<FinishedBuildJob>('/topic/admin/finished-job-updates', { ...mockFinishedJobs[1], id: '99', status: 'SUCCESSFUL' });
+
+            expect(component.finishedBuildJobs().map((job) => job.id)).toEqual(['5', '6']);
+            expect(incrementStatisticsByStatus).not.toHaveBeenCalled();
+        });
+
+        it('should still count a job that is announced as finished', () => {
+            websocketService.emit<FinishedBuildJob>('/topic/admin/finished-jobs', { ...mockFinishedJobs[1], id: '7', status: 'SUCCESSFUL' });
+
+            expect(incrementStatisticsByStatus).toHaveBeenCalledExactlyOnceWith('SUCCESSFUL');
+            expect(component.finishedBuildJobs().map((job) => job.id)).toEqual(['7', '5', '6']);
+        });
     });
 
     it('should load finished build jobs on initialization', () => {

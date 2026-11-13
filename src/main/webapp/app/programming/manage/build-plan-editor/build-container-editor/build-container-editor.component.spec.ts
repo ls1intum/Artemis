@@ -1,0 +1,369 @@
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { Component } from '@angular/core';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
+import { TranslateService } from '@ngx-translate/core';
+import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
+import { TumAetUiButtonComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { BuildContainerEditorComponent } from './build-container-editor.component';
+import { BuildPhasesEditorComponent } from 'app/programming/manage/build-plan-editor/build-phases-editor/build-phases-editor.component';
+import { BuildPhaseEditorComponent } from 'app/programming/manage/build-plan-editor/build-phases-editor/build-phase/build-phase-editor.component';
+import { MonacoEditorFitTextComponent } from 'app/programming/manage/build-plan-editor/build-phases-editor/monaco-editor-auto-size/monaco-editor-fit-text.component';
+import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
+import { BuildContainer } from 'app/programming/shared/entities/build-plan-phases.model';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+
+describe('BuildContainerEditorComponent', () => {
+    let fixture: ComponentFixture<BuildContainerEditorComponent>;
+    let component: BuildContainerEditorComponent;
+
+    const container: BuildContainer = {
+        name: 'student_tests',
+        dockerImage: 'image-a:1',
+        repositories: [{ type: 'USER' }],
+        phases: [{ name: 'test', script: 'echo test', condition: 'ALWAYS', forceRun: false, resultPaths: [] }],
+    };
+
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
+            imports: [BuildContainerEditorComponent],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }],
+        })
+            .overrideComponent(BuildContainerEditorComponent, {
+                remove: { imports: [TumAetUiButtonComponent, TumAetUiTooltipDirective, TranslateDirective, ArtemisTranslatePipe, HelpIconComponent, BuildPhasesEditorComponent] },
+                add: {
+                    imports: [
+                        MockComponent(TumAetUiButtonComponent),
+                        MockDirective(TumAetUiTooltipDirective),
+                        MockDirective(TranslateDirective),
+                        MockPipe(ArtemisTranslatePipe, (key: string) => key),
+                        MockComponent(HelpIconComponent),
+                        MockComponent(BuildPhasesEditorComponent),
+                    ],
+                },
+            })
+            .compileComponents();
+
+        fixture = TestBed.createComponent(BuildContainerEditorComponent);
+        component = fixture.componentInstance;
+        fixture.componentRef.setInput('container', { ...container, phases: [...container.phases] });
+        fixture.componentRef.setInput('containerIndex', 0);
+        fixture.componentRef.setInput('containerCount', 2);
+    });
+
+    const getRemoveButton = () => fixture.debugElement.query(By.css('[data-testid="remove-container-button"]'));
+
+    it('should emit remove when the remove button is clicked', () => {
+        fixture.componentRef.setInput('canRemove', true);
+        fixture.detectChanges();
+        const removeSpy = vi.fn();
+        component.remove.subscribe(removeSpy);
+
+        // the button is a mocked TUM UI component, so its clicked output is triggered rather than the DOM click
+        getRemoveButton().triggerEventHandler('clicked', undefined);
+
+        expect(removeSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should not offer the remove button for the last container', () => {
+        fixture.componentRef.setInput('canRemove', false);
+        fixture.detectChanges();
+
+        expect(getRemoveButton()).toBeNull();
+    });
+
+    it('should derive the ids of its fields from its position, so that they stay unique and stable while the name is edited', () => {
+        // a container added in the editor starts without a name, so ids built from the name would collide between containers
+        fixture.componentRef.setInput('container', { ...container, name: '' });
+        fixture.componentRef.setInput('containerIndex', 1);
+        fixture.detectChanges();
+        const getNameField = () => fixture.debugElement.query(By.css('#field_container_name_1'));
+
+        expect(getNameField()).not.toBeNull();
+        expect(fixture.debugElement.query(By.css('label[for="field_container_name_1"]'))).not.toBeNull();
+
+        component.setName('instructor_tests');
+        fixture.detectChanges();
+
+        expect(getNameField()).not.toBeNull();
+    });
+
+    it('should flag a duplicate container name regardless of case', () => {
+        fixture.componentRef.setInput('otherContainerNames', ['Student_Tests']);
+        fixture.detectChanges();
+
+        expect(component.isNameUnique()).toBe(false);
+        expect(component.nameValidationMessageKey()).toBe('artemisApp.programmingExercise.buildContainersEditor.containerNameDuplicate');
+    });
+
+    it('should show an invalid timeout below the row of fields, so that the timeout field stays aligned with the others', () => {
+        fixture.componentRef.setInput('timeoutMinValue', 10);
+        fixture.componentRef.setInput('timeoutMaxValue', 240);
+        fixture.componentRef.setInput('container', { ...container, timeoutSeconds: 500 });
+        fixture.detectChanges();
+
+        const message = fixture.debugElement.query(By.css('[data-testid="container-timeout-invalid"]'));
+        const timeoutField = fixture.debugElement.query(By.css('[data-testid="container-timeout-input"]'));
+        expect(component.isTimeoutValid()).toBe(false);
+        expect(message).not.toBeNull();
+        expect(timeoutField.nativeElement.classList).toContain('is-invalid');
+        // inside the field's column, the message would grow it and push the bottom-aligned field up
+        expect(timeoutField.nativeElement.parentElement.contains(message.nativeElement)).toBe(false);
+    });
+
+    it('should offer only the repositories the trigger scopes, not the assignment and template repositories', () => {
+        fixture.detectChanges();
+        const offered = fixture.debugElement
+            .queryAll(By.css('input[id^="field_container_repo_0_"]'))
+            .map((checkbox) => checkbox.nativeElement.id.replace('field_container_repo_0_', ''));
+
+        expect(offered).toEqual(['SOLUTION', 'TESTS', 'AUXILIARY']);
+    });
+
+    describe('Docker flags', () => {
+        const getEnvVarRows = () => fixture.debugElement.queryAll(By.css('[data-testid="container-env-var-row"]'));
+        const getField = (id: string) => fixture.debugElement.query(By.css('#' + id));
+
+        it('should hide the flags of a container that runs with the flags of the exercise', () => {
+            fixture.detectChanges();
+
+            expect(component.overridesDockerFlags()).toBe(false);
+            expect(getField('field_container_cpu_count_0')).toBeNull();
+        });
+
+        it('should show the flags once the container overrides them and discard them when the override is switched off', () => {
+            fixture.detectChanges();
+
+            component.toggleDockerFlags(true);
+            fixture.detectChanges();
+            expect(component.container().dockerFlags).toEqual({});
+            expect(getField('field_container_cpu_count_0')).not.toBeNull();
+
+            component.setCpuCount(2);
+            component.toggleDockerFlags(false);
+            fixture.detectChanges();
+            expect(component.container().dockerFlags).toBeUndefined();
+            expect(getField('field_container_cpu_count_0')).toBeNull();
+        });
+
+        it('should show the flags of a container that arrives with an override', () => {
+            fixture.componentRef.setInput('container', { ...container, dockerFlags: { cpuCount: 2, env: { MODE: 'strict' } } });
+            fixture.detectChanges();
+
+            expect(component.overridesDockerFlags()).toBe(true);
+            expect(getEnvVarRows()).toHaveLength(1);
+        });
+
+        it('should offer the network only where the language supports selecting one', () => {
+            fixture.componentRef.setInput('container', { ...container, dockerFlags: {} });
+            fixture.detectChanges();
+            expect(getField('field_container_network_0')).toBeNull();
+
+            fixture.componentRef.setInput('customNetworks', ['none', 'custom']);
+            fixture.detectChanges();
+            // the empty option stands for the network of the exercise
+            expect(getField('field_container_network_0').queryAll(By.css('option'))).toHaveLength(3);
+
+            component.setNetwork('none');
+            expect(component.container().dockerFlags?.network).toBe('none');
+            component.setNetwork('');
+            expect(component.container().dockerFlags?.network).toBeUndefined();
+        });
+
+        it('should take a resource limit from its field and drop it again when the field is emptied', () => {
+            fixture.componentRef.setInput('container', { ...container, dockerFlags: {} });
+            fixture.detectChanges();
+
+            component.setCpuCount(2);
+            component.setMemory('512');
+            component.setMemorySwap(0);
+            expect(component.container().dockerFlags).toEqual({ cpuCount: 2, memory: 512, memorySwap: 0 });
+
+            component.setMemory('');
+            component.setCpuCount(null);
+            expect(component.container().dockerFlags).toEqual({ cpuCount: undefined, memory: undefined, memorySwap: 0 });
+        });
+
+        it('should mark a resource limit outside the bounds of the server', () => {
+            fixture.componentRef.setInput('container', { ...container, dockerFlags: { cpuCount: 0, memory: 5, memorySwap: -1 } });
+            fixture.detectChanges();
+
+            expect(component.isCpuCountValid()).toBe(false);
+            expect(component.isMemoryValid()).toBe(false);
+            expect(component.isMemorySwapValid()).toBe(false);
+            expect(getField('field_container_cpu_count_0').nativeElement.classList.contains('is-invalid')).toBe(true);
+
+            component.setCpuCount(1);
+            component.setMemory(6);
+            component.setMemorySwap(0);
+            expect(component.isCpuCountValid()).toBe(true);
+            expect(component.isMemoryValid()).toBe(true);
+            expect(component.isMemorySwapValid()).toBe(true);
+        });
+
+        it('should keep an environment variable row without a key out of the container until it has one', () => {
+            fixture.componentRef.setInput('container', { ...container, dockerFlags: { env: { MODE: 'strict' } } });
+            fixture.detectChanges();
+
+            component.addEnvVar();
+            fixture.detectChanges();
+            expect(getEnvVarRows()).toHaveLength(2);
+            expect(component.container().dockerFlags?.env).toEqual({ MODE: 'strict' });
+
+            component.setEnvVarValue(1, 'info');
+            fixture.detectChanges();
+            expect(getEnvVarRows()).toHaveLength(2);
+            expect(component.container().dockerFlags?.env).toEqual({ MODE: 'strict' });
+
+            component.setEnvVarKey(1, 'LOG_LEVEL');
+            fixture.detectChanges();
+            expect(getEnvVarRows()).toHaveLength(2);
+            expect(component.container().dockerFlags?.env).toEqual({ MODE: 'strict', LOG_LEVEL: 'info' });
+        });
+
+        it('should remove an environment variable and leave no empty map behind', () => {
+            fixture.componentRef.setInput('container', { ...container, dockerFlags: { env: { MODE: 'strict' } } });
+            fixture.detectChanges();
+
+            component.removeEnvVar(0);
+            fixture.detectChanges();
+
+            expect(getEnvVarRows()).toHaveLength(0);
+            expect(component.container().dockerFlags?.env).toBeUndefined();
+        });
+
+        it('should show the variables of another container that takes this editor', () => {
+            // the editors are tracked by position, so removing a container hands its editor the next container
+            fixture.componentRef.setInput('container', { ...container, dockerFlags: { env: { MODE: 'strict' } } });
+            fixture.detectChanges();
+            component.addEnvVar();
+
+            fixture.componentRef.setInput('container', { ...container, name: 'other', dockerFlags: { env: { A: '1', B: '2' } } });
+            fixture.detectChanges();
+
+            expect(getEnvVarRows()).toHaveLength(2);
+        });
+    });
+});
+
+describe('BuildContainerEditorComponent as the only container of a build plan', () => {
+    let fixture: ComponentFixture<BuildContainerEditorComponent>;
+
+    const plainContainer: BuildContainer = {
+        name: 'default',
+        dockerImage: 'image-a:1',
+        phases: [{ name: 'test', script: 'echo test', condition: 'ALWAYS', forceRun: false, resultPaths: [] }],
+    };
+
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
+            imports: [BuildContainerEditorComponent],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }],
+        })
+            .overrideComponent(BuildContainerEditorComponent, {
+                remove: { imports: [BuildPhasesEditorComponent] },
+                add: { imports: [MockComponent(BuildPhasesEditorComponent)] },
+            })
+            .compileComponents();
+
+        fixture = TestBed.createComponent(BuildContainerEditorComponent);
+        fixture.componentRef.setInput('containerIndex', 0);
+    });
+
+    const render = (rendered: BuildContainer, containerCount: number) => {
+        fixture.componentRef.setInput('container', rendered);
+        fixture.componentRef.setInput('containerCount', containerCount);
+        fixture.detectChanges();
+    };
+    const isShown = (id: string) => fixture.nativeElement.querySelector(`#${id}`) !== null;
+    const settingFields = ['field_container_name_0', 'field_container_timeout_0', 'field_container_scoped_0', 'field_container_docker_flags_0'];
+
+    it('should show only the image and the phases of a plain container', () => {
+        render(plainContainer, 1);
+
+        expect(settingFields.filter(isShown)).toEqual([]);
+        expect(isShown('field_container_image_0')).toBe(true);
+        expect(fixture.debugElement.query(By.directive(BuildPhasesEditorComponent))).not.toBeNull();
+    });
+
+    it('should show the settings once the build plan has a second container', () => {
+        render(plainContainer, 2);
+
+        expect(settingFields.every(isShown)).toBe(true);
+    });
+
+    it.each<[string, Partial<BuildContainer>]>([
+        ['a name of its own', { name: 'tests' }],
+        ['an invalid name', { name: '' }],
+        ['a timeout', { timeoutSeconds: 90 }],
+        ['scoped repositories', { repositories: [] }],
+        ['Docker flags', { dockerFlags: {} }],
+    ])('should not hide the settings of an only container with %s, which would still take effect', (_, setting) => {
+        render({ ...plainContainer, ...setting }, 1);
+
+        expect(settingFields.every(isShown)).toBe(true);
+    });
+});
+
+/** two containers on one page, as the build plan editor renders them */
+@Component({
+    imports: [BuildContainerEditorComponent],
+    template: `
+        @for (container of containers; track $index) {
+            <jhi-build-container-editor [container]="container" [containerIndex]="$index" [containerCount]="containers.length" />
+        }
+    `,
+})
+class TwoContainersHostComponent {
+    readonly containers: BuildContainer[] = ['instructor_tests', 'student_tests'].map((name) => ({
+        name,
+        phases: [{ name: 'test', script: 'echo test', condition: 'ALWAYS', forceRun: false, resultPaths: [] }],
+    }));
+}
+
+describe('BuildContainerEditorComponent with several containers on one page', () => {
+    let root: HTMLElement;
+
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
+            imports: [TwoContainersHostComponent],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }],
+        })
+            .overrideComponent(BuildPhaseEditorComponent, {
+                remove: { imports: [MonacoEditorFitTextComponent] },
+                add: { imports: [MockComponent(MonacoEditorFitTextComponent)] },
+            })
+            .compileComponents();
+
+        const fixture = TestBed.createComponent(TwoContainersHostComponent);
+        fixture.detectChanges();
+        root = fixture.nativeElement;
+    });
+
+    const getEditors = () => Array.from(root.querySelectorAll<HTMLElement>('jhi-build-container-editor'));
+
+    it('should give every control of the phase editors an id of its own', () => {
+        const ids = Array.from(root.querySelectorAll('[id]'))
+            .map((element) => element.id)
+            .filter((id) => id.includes('phase'));
+
+        expect(ids.length).toBeGreaterThan(0);
+        expect(new Set(ids).size).toBe(ids.length);
+    });
+
+    it('should let every label of a phase target a control of its own container', () => {
+        const editors = getEditors();
+        expect(editors).toHaveLength(2);
+
+        for (const editor of editors) {
+            const phaseLabels = Array.from(editor.querySelectorAll<HTMLLabelElement>('jhi-build-phase label[for]'));
+            expect(phaseLabels.length).toBeGreaterThan(0);
+            for (const label of phaseLabels) {
+                const target = root.querySelector(`[id="${label.htmlFor}"]`);
+                expect(editor.contains(target), `the target of the label for ${label.htmlFor}`).toBe(true);
+            }
+        }
+    });
+});

@@ -54,6 +54,23 @@ export class CodeEditorBuildOutputComponent implements OnInit, OnDestroy {
             : 'artemisApp.editor.noBuildOutput';
     });
 
+    /**
+     * The build output grouped by the container that produced it, in the order the containers first reported; each
+     * group keeps its entries in time order. A submission built by a single container yields one unnamed group.
+     */
+    readonly buildLogGroups = computed(() => {
+        const entriesByContainer = new Map<string | undefined, BuildLogEntry[]>();
+        for (const entry of this.rawBuildLogs()) {
+            const entries = entriesByContainer.get(entry.containerName);
+            if (entries) {
+                entries.push(entry);
+            } else {
+                entriesByContainer.set(entry.containerName, [entry]);
+            }
+        }
+        return [...entriesByContainer].map(([containerName, entries]) => ({ containerName, entries }));
+    });
+
     private resultSubscription?: Subscription;
     private inputResultSubscription?: Subscription;
     // Preserve deduplication across input-triggered resubscriptions to the cached result BehaviorSubject.
