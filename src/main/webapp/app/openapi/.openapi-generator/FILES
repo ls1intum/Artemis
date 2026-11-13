@@ -1,4 +1,5 @@
 api/admin-ai-worker-api.ts
+api/admin-cleanup-api.ts
 api/admin-hyperion-generation-api.ts
 api/admin-hyperion-generation-monitoring-api.ts
 api/calendar-api.ts
@@ -50,6 +51,8 @@ model/checklist-action-request.ts
 model/checklist-action-response.ts
 model/checklist-analysis-request.ts
 model/checklist-analysis-response.ts
+model/cleanup-configuration.ts
+model/cleanup-service-execution-record.ts
 model/code-generation-job-start.ts
 model/code-generation-request.ts
 model/competency-exercise-link.ts
@@ -147,6 +150,14 @@ model/multiple-choice-submitted-answer-after-evaluation.ts
 model/multiple-choice-submitted-answer-before-evaluation.ts
 model/multiple-choice-submitted-answer-from-live-client.ts
 model/multiple-choice-submitted-answer-from-student.ts
+model/non-latest-non-rated-results-cleanup-count.ts
+model/non-latest-rated-results-cleanup-count.ts
+model/not-enrolled-users-cleanup-count.ts
+model/old-courses-cleanup-count.ts
+model/old-feedback-cleanup-count.ts
+model/orphan-cleanup-count.ts
+model/plagiarism-cases-cleanup-count.ts
+model/plagiarism-comparison-cleanup-count.ts
 model/point-counter.ts
 model/problem-statement-generation-request.ts
 model/problem-statement-generation-response.ts
@@ -252,6 +263,7 @@ model/student-quiz-participation-with-solutions.ts
 model/student-quiz-participation-without-questions.ts
 model/student-quiz-participation.ts
 model/student.ts
+model/submission-versions-cleanup-count.ts
 model/submitted-answer-after-evaluation.ts
 model/submitted-answer-before-evaluation.ts
 model/submitted-answer-from-live-client.ts
