@@ -421,6 +421,9 @@ public class ProgrammingExerciseParticipationResource {
 
         LocalVCRepositoryUri sourceUri;
         if (gradedParticipationId != null) {
+            if (gradedParticipationId.equals(participationId)) {
+                throw new BadRequestAlertException("The repository cannot be reset to itself", ENTITY_NAME, "gradedParticipationIsTarget");
+            }
             ProgrammingExerciseStudentParticipation gradedParticipation = programmingExerciseStudentParticipationRepository.findByIdElseThrow(gradedParticipationId);
             // the access check comes first, so that a caller who may not read the participation gets the same answer wherever it belongs to
             repositoryAccessService.checkAccessRepositoryElseThrow(gradedParticipation, user, exercise, RepositoryActionType.READ);

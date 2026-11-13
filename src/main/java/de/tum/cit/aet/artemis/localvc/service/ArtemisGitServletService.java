@@ -109,7 +109,7 @@ public class ArtemisGitServletService extends GitServlet {
         this.addReceivePackFilter(new LocalVCPushFilter(localVCServletService, pushProcessingService, usageTrackingService));
 
         this.setReceivePackFactory((request, repository) -> {
-            ReceivePack receivePack = new ReceivePack(repository);
+            ReceivePack receivePack = LocalVCReceivePackLimits.apply(new ReceivePack(repository));
             // we only need to set the PreReceiveHook and PostReceiveHook for authorized POST requests, as only these trigger onPreReceive or onPostReceive.
             if (isAuthorizedPostRequest(request)) {
                 final User user;
@@ -129,7 +129,7 @@ public class ArtemisGitServletService extends GitServlet {
         });
 
         this.setUploadPackFactory((request, repository) -> {
-            UploadPack uploadPack = new UploadPack(repository);
+            UploadPack uploadPack = LocalVCReceivePackLimits.apply(new UploadPack(repository));
             // we only need to set the LocalVCFetchPreUploadHook for authorized POST requests, as only these trigger onBeginNegotiateRound
             if (isAuthorizedPostRequest(request)) {
                 // Add the custom pre-upload hook, to distinguish between clone and pull operations

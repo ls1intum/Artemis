@@ -361,6 +361,35 @@ describe('markdown.conversion.util', () => {
                 expect(result).not.toContain('onerror');
             });
 
+            it('should keep only the placement of a formula and no other style, also on elements that claim a formula class', () => {
+                const formula = htmlForMarkdown('$x^2$');
+                expect(formula).toContain('style="');
+
+                const forged = htmlForMarkdown('<span class="katex" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: red">x</span>');
+                expect(forged).not.toContain('position');
+                expect(forged).not.toContain('background');
+                expect(forged).not.toContain('100vw');
+                expect(forged).not.toContain('100vh');
+            });
+
+            it('should keep what a formula needs to draw rules, boxes and colors', () => {
+                const rule = htmlForMarkdown('$\\rule[1em]{2em}{0.4em}$');
+                expect(rule).toContain('border-right-width:2em');
+                expect(rule).toContain('bottom:1em');
+
+                const colored = htmlForMarkdown('$\\textcolor{red}{x} \\colorbox{yellow}{y} \\fbox{z}$');
+                expect(colored).toContain('color:red');
+                expect(colored).toContain('background-color:yellow');
+                expect(colored).toContain('border-style:solid');
+            });
+
+            it('should refuse values of a formula style that are not plain colors or lengths', () => {
+                const forged = htmlForMarkdown('<span class="katex" style="color: url(https://example.com/a); position: fixed; width: calc(100vw)">x</span>');
+                expect(forged).not.toContain('url(');
+                expect(forged).not.toContain('fixed');
+                expect(forged).not.toContain('calc');
+            });
+
             it('should sanitize style tags', () => {
                 const result = htmlForMarkdown('<style>body { display: none; }</style>');
                 expect(result).not.toContain('<style>');

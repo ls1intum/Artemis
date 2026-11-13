@@ -32,6 +32,11 @@ public class OIDCAuthenticationFailureHandler implements AuthenticationFailureHa
 
     private static final Logger log = LoggerFactory.getLogger(OIDCAuthenticationFailureHandler.class);
 
+    /**
+     * The error code Spring Security uses when a callback matches no stored authorization request. It is a literal in Spring's OAuth2LoginAuthenticationFilter.
+     */
+    private static final String AUTHORIZATION_REQUEST_NOT_FOUND = "authorization_request_not_found";
+
     private final TemplateEngine templateEngine;
 
     public OIDCAuthenticationFailureHandler(TemplateEngine templateEngine) {
@@ -49,7 +54,14 @@ public class OIDCAuthenticationFailureHandler implements AuthenticationFailureHa
      */
     @Override
     public void onAuthenticationFailure(HttpServletRequest request, HttpServletResponse response, AuthenticationException exception) throws IOException, ServletException {
-        log.error("OIDC authentication failed: {}", exception.getMessage(), exception);
+        if (exception instanceof OAuth2AuthenticationException oauth2Exception && AUTHORIZATION_REQUEST_NOT_FOUND.equals(oauth2Exception.getError().getErrorCode())) {
+            // The browser came back without the state cookie of its login attempt, e.g. because the cookie expired, was blocked or the login was opened in another browser.
+            // That is not a defect of the server and the user simply signs in again, so there is no stack trace to analyse.
+            log.warn("OIDC authentication failed: {}", exception.getMessage());
+        }
+        else {
+            log.error("OIDC authentication failed: {}", exception.getMessage(), exception);
+        }
         // Absent if the callback could not be matched to an authorization request, e.g. because it expired or was already used
         String redirectTarget = null;
         if (request.getAttribute(OIDCConstants.OIDC_AUTHORIZATION_REQUEST_ATTRIBUTE) instanceof OAuth2AuthorizationRequest authorizationRequest) {

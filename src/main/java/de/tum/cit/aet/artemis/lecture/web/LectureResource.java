@@ -579,7 +579,7 @@ public class LectureResource {
     @FeatureUsage(UserFeature.LECTURE_PAGES)
     @UsageInteraction(FeatureInteraction.AUTOMATIC)
     @GetMapping("lectures/{lectureId}/title")
-    @EnforceAtLeastStudent
+    @EnforceAtLeastStudentInLecture
     public ResponseEntity<String> getLectureTitle(@PathVariable Long lectureId) {
         final var title = lectureRepository.getLectureTitle(lectureId);
         return title == null ? ResponseEntity.notFound().build() : ResponseEntity.ok(title);
