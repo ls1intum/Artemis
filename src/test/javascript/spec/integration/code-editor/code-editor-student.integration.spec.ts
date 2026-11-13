@@ -25,6 +25,7 @@ import { CodeEditorContainerComponent } from 'app/programming/manage/code-editor
 import { CodeEditorFileBrowserComponent } from 'app/programming/manage/code-editor/file-browser/code-editor-file-browser.component';
 import { ProgrammingExerciseParticipationService } from 'app/programming/manage/services/programming-exercise-participation.service';
 import { CodeEditorStudentContainerComponent } from 'app/programming/overview/code-editor-student-container/code-editor-student-container.component';
+import { ProgrammingExerciseInstructorTriggerBuildButtonComponent } from 'app/programming/shared/actions/trigger-build-button/instructor/programming-exercise-instructor-trigger-build-button.component';
 import { ProgrammingExerciseStudentTriggerBuildButtonComponent } from 'app/programming/shared/actions/trigger-build-button/student/programming-exercise-student-trigger-build-button.component';
 import { CodeEditorActionsComponent } from 'app/programming/shared/code-editor/actions/code-editor-actions.component';
 import { CodeEditorInstructionsComponent } from 'app/programming/shared/code-editor/instructions/code-editor-instructions.component';
@@ -114,6 +115,7 @@ describe('CodeEditorStudentIntegration', () => {
                         MockComponent(IncludedInScoreBadgeComponent),
                         MockComponent(UpdatingResultComponent),
                         MockComponent(ProgrammingExerciseStudentTriggerBuildButtonComponent),
+                        MockComponent(ProgrammingExerciseInstructorTriggerBuildButtonComponent),
                         MockComponent(ProgrammingExerciseInstructionComponent),
                         MockComponent(AdditionalFeedbackComponent),
                         MockPipe(ArtemisTranslatePipe),
@@ -238,6 +240,27 @@ describe('CodeEditorStudentIntegration', () => {
 
         expect((containerFixture.nativeElement as HTMLElement).firstElementChild!.classList.contains('module-bg')).toBe(fullPage);
         expect(containerDebugElement.query(By.css('jhi-programming-exercise-instructions')).nativeElement.classList.contains('d-none')).toBe(!fullPage);
+    });
+
+    // The result and the submissions of a participation of a student come on the topics of the student. An instructor who edits the code of a student gets them
+    // on the topics of the instructors, so the page of its own uses the non-personal subscriptions and the build button of the instructors.
+    it.each([true, false])('should subscribe to the topics of the instructors and offer the build of an instructor only as a page of its own (full page: %s)', (fullPage) => {
+        Object.assign(route.snapshot.data, fullPage ? { fullPageEditor: true } : {});
+        container.ngOnInit();
+        const participation = { id: 1, submissions: [], exercise: { id: 99 } as ProgrammingExercise } as Participation;
+        const findWithLatestResultSubject = new Subject<Participation>();
+        getStudentParticipationWithLatestResultStub.mockReturnValue(findWithLatestResultSubject);
+
+        routeSubject.next({ participationId: 1 });
+        findWithLatestResultSubject.next(participation);
+        containerFixture.detectChanges();
+
+        const result = containerDebugElement.query(By.directive(UpdatingResultComponent)).componentInstance as UpdatingResultComponent;
+        const instructions = containerDebugElement.query(By.directive(ProgrammingExerciseInstructionComponent)).componentInstance as ProgrammingExerciseInstructionComponent;
+        expect(result.personalParticipation()).toBe(!fullPage);
+        expect(instructions.personalParticipation()).toBe(!fullPage);
+        expect(containerDebugElement.query(By.directive(ProgrammingExerciseInstructorTriggerBuildButtonComponent)) !== null).toBe(fullPage);
+        expect(containerDebugElement.query(By.directive(ProgrammingExerciseStudentTriggerBuildButtonComponent)) !== null).toBe(!fullPage);
     });
 
     it('should abort initialization and show error state if participation cannot be retrieved', () => {

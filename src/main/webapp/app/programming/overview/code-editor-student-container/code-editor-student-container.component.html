@@ -67,19 +67,23 @@
                   [showUngradedResults]="true"
                   [showBadge]="true"
                   [participation]="participation()"
-                  [personalParticipation]="true"
+                  [personalParticipation]="!fullPage()"
                   (onParticipationChange)="receivedNewResult()"
                   [showProgressBar]="true"
                   [showProgressBarBorder]="true"
                   class="me-2"
                 />
               }
-              <jhi-programming-exercise-student-trigger-build-button
-                class="me-2"
-                [exercise]="exercise()"
-                [participation]="participation()"
-                [btnSize]="ButtonSize.MEDIUM"
-              />
+              @if (fullPage()) {
+                <jhi-programming-exercise-instructor-trigger-build-button class="me-2" [exercise]="exercise()" [participation]="participation()" [btnSize]="ButtonSize.MEDIUM" />
+              } @else {
+                <jhi-programming-exercise-student-trigger-build-button
+                  class="me-2"
+                  [exercise]="exercise()"
+                  [participation]="participation()"
+                  [btnSize]="ButtonSize.MEDIUM"
+                />
+              }
             </div>
             <jhi-programming-exercise-instructions
                 [class.d-none]="lightweight()"
@@ -87,7 +91,7 @@
                 (onNoInstructionsAvailable)="showEditorInstructions = false"
                 [exercise]="exercise()"
                 [participation]="participation()"
-                [personalParticipation]="true"
+                [personalParticipation]="!fullPage()"
                 class="instructions-wrapper__content card-body p-0"
             />
         </jhi-code-editor-container>

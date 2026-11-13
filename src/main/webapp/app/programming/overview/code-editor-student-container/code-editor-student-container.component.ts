@@ -28,6 +28,7 @@ import { ProgrammingExerciseInstructionComponent } from '../../shared/instructio
 import { AdditionalFeedbackComponent } from 'app/exercise/additional-feedback/additional-feedback.component';
 import { CodeEditorRepositoryIsLockedComponent } from 'app/programming/shared/code-editor/layout/code-editor-repository-is-locked.component';
 import { ProgrammingExerciseStudentTriggerBuildButtonComponent } from 'app/programming/shared/actions/trigger-build-button/student/programming-exercise-student-trigger-build-button.component';
+import { ProgrammingExerciseInstructorTriggerBuildButtonComponent } from 'app/programming/shared/actions/trigger-build-button/instructor/programming-exercise-instructor-trigger-build-button.component';
 import { DomainService } from 'app/programming/shared/code-editor/services/code-editor-domain.service';
 import { DomainType } from 'app/programming/shared/code-editor/model/code-editor.model';
 
@@ -42,6 +43,7 @@ import { DomainType } from 'app/programming/shared/code-editor/model/code-editor
         CodeEditorRepositoryIsLockedComponent,
         UpdatingResultComponent,
         ProgrammingExerciseStudentTriggerBuildButtonComponent,
+        ProgrammingExerciseInstructorTriggerBuildButtonComponent,
         ProgrammingExerciseInstructionComponent,
         AdditionalFeedbackComponent,
     ],
