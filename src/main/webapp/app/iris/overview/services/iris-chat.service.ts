@@ -610,7 +610,7 @@ export class IrisChatService implements OnDestroy {
      */
     private addLatestEmptySessionToChatSessions(newIrisSession: IrisSession) {
         // Tutor-suggestion sessions have no chat mode and do not belong in the chat-history list.
-        if (newIrisSession.mode === undefined) {
+        if (newIrisSession.mode === undefined || newIrisSession.entityId === undefined) {
             return;
         }
 
@@ -638,13 +638,14 @@ export class IrisChatService implements OnDestroy {
         return {
             next: (newIrisSession: IrisSession) => {
                 this.addLatestEmptySessionToChatSessions(newIrisSession);
-                const serverCtx: SessionContext | undefined = newIrisSession.mode ? { mode: newIrisSession.mode, entityId: newIrisSession.entityId } : undefined;
+                const { mode, entityId } = newIrisSession;
+                const serverCtx: SessionContext | undefined = mode !== undefined && entityId !== undefined ? { mode, entityId } : undefined;
                 this.contextService.adoptServerContext(serverCtx);
 
                 this.sessionId = newIrisSession.id;
                 this.citationInfo.next(newIrisSession.citationInfo || []);
                 // Summaries are for Iris only; the student keeps seeing the original messages.
-                this.messages.next((newIrisSession.messages || []).filter((message) => message.sender !== IrisSender.SUMMARY));
+                this.messages.next((newIrisSession.messages || []).filter((message) => message.sender !== IrisSender.SUMMARY).map((message) => this.mapMessageDTO(message)));
                 this.parseLatestSuggestions(newIrisSession.latestSuggestions);
                 this.resetLiveAssistantDraftTracking();
                 this.resetRunTracking();

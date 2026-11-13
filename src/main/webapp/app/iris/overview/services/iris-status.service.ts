@@ -1,9 +1,7 @@
 import { OnDestroy, Service, inject } from '@angular/core';
-import { HttpClient, HttpResponse } from '@angular/common/http';
 import { BehaviorSubject, Observable, Subscription, firstValueFrom } from 'rxjs';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
-import { Response } from 'app/iris/overview/services/iris-chat-http.service';
-import { IrisStatusDTO } from 'app/iris/shared/entities/iris-health.model';
+import { IrisApi } from 'app/openapi/api/iris-api';
 import { IrisRateLimitInformation } from 'app/iris/shared/entities/iris-ratelimit-info.model';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MODULE_FEATURE_IRIS } from 'app/app.constants';
@@ -17,7 +15,7 @@ import { MODULE_FEATURE_IRIS } from 'app/app.constants';
 @Service()
 export class IrisStatusService implements OnDestroy {
     private websocketService = inject(WebsocketService);
-    private httpClient = inject(HttpClient);
+    private irisApi = inject(IrisApi);
     private profileService = inject(ProfileService);
 
     private readonly HEARTBEAT_INTERVAL_MS = 60 * 1000 * 5; // 5 minutes
@@ -100,15 +98,11 @@ export class IrisStatusService implements OnDestroy {
      */
     private checkHeartbeat(): void {
         if (!this.irisModuleActive || this.disconnected || !this.currentCourseId) return;
-        void firstValueFrom(this.getIrisStatus(this.currentCourseId)).then((response: HttpResponse<IrisStatusDTO>) => {
-            if (response.body) {
-                this.active = Boolean(response.body.active);
-
-                if (response.body.rateLimitInfo) {
-                    this.currentRatelimitInfoSubject.next(response.body.rateLimitInfo);
-                }
-            } else {
-                this.active = false;
+        void firstValueFrom(this.irisApi.getCourseStatus(this.currentCourseId)).then((status) => {
+            this.active = Boolean(status?.active);
+            if (status?.rateLimitInfo) {
+                const { currentMessageCount, rateLimit, rateLimitTimeframeHours } = status.rateLimitInfo;
+                this.currentRatelimitInfoSubject.next(new IrisRateLimitInformation(currentMessageCount, rateLimit, rateLimitTimeframeHours));
             }
             this.activeSubject.next(this.active);
         });
@@ -121,14 +115,5 @@ export class IrisStatusService implements OnDestroy {
     ngOnDestroy(): void {
         if (this.intervalId !== undefined) clearInterval(this.intervalId);
         this.websocketStatusSubscription?.unsubscribe();
-    }
-
-    /**
-     * Checks whether Iris is active for the given course.
-     * @param courseId The course ID to check status for
-     * @return An Observable of the HTTP response containing the status.
-     */
-    private getIrisStatus(courseId: number): Response<IrisStatusDTO> {
-        return this.httpClient.get<IrisStatusDTO>(`api/iris/courses/${courseId}/status`, { observe: 'response' });
     }
 }

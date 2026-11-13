@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { LectureSearchService } from './lecture-search.service';
 import { SKIP_HTTP_ERROR_ALERT } from 'app/core/interceptor/errorhandler.interceptor';
 import { LectureSearchResult } from 'app/core/navbar/global-search/models/lecture-search-result.model';
@@ -101,6 +101,19 @@ describe('LectureSearchService', () => {
         expect(req.request.body).not.toHaveProperty('courseIds');
 
         req.flush([]);
+    });
+
+    it('accepts a lecture unit whose empty query parameter map was omitted on the wire', () => {
+        const next = vi.fn();
+        service.search('query').subscribe(next);
+        httpTesting.expectOne('api/iris/lecture-search').flush([
+            {
+                course: { id: 1, name: 'Web development' },
+                lecture: { id: 1, name: 'Angular' },
+                lectureUnit: { id: 1, name: 'Signals', link: '/courses/1/lectures/1', pageNumber: 1, sourceType: 'lecture_unit_slide' },
+            },
+        ]);
+        expect(next).toHaveBeenCalledWith([expect.objectContaining({ lectureUnit: expect.objectContaining({ queryParams: {} }) })]);
     });
 
     it('should return the results from the server', () => {

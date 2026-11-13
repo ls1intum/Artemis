@@ -1,5 +1,5 @@
 import { BaseEntity } from 'app/foundation/model/base-entity';
-import { IrisMessage } from 'app/iris/shared/entities/iris-message.model';
+import { IrisMessageResponseDTO } from 'app/iris/shared/entities/iris-message-response-dto.model';
 import { ChatServiceMode } from 'app/iris/shared/entities/iris-session-context.model';
 import { IrisCitationMetaDTO } from 'app/iris/shared/entities/iris-citation-meta-dto.model';
 
@@ -9,11 +9,11 @@ export const IRIS_SESSION_QUERY_PARAM = 'irisSession';
 export interface IrisSession extends BaseEntity {
     id: number;
     userId: number;
-    messages?: IrisMessage[];
+    messages?: IrisMessageResponseDTO[];
     latestSuggestions?: string;
     title?: string;
-    creationDate: Date;
+    creationDate: string;
     mode?: ChatServiceMode;
-    entityId: number;
+    entityId?: number;
     citationInfo?: IrisCitationMetaDTO[];
 }
