@@ -46,13 +46,6 @@
                     [name]="'containerTimeout_' + containerIndex()"
                     [class.is-invalid]="!isTimeoutValid()"
                 />
-                @if (!isTimeoutValid()) {
-                    <div
-                        class="text-state-danger small"
-                        jhiTranslate="artemisApp.programmingExercise.buildContainersEditor.timeoutInvalid"
-                        [translateValues]="{ min: timeoutMinValue(), max: timeoutMaxValue() }"
-                    ></div>
-                }
             </div>
         }
         @if (canRemove()) {
@@ -66,9 +59,17 @@
             />
         }
     </div>
+    <!-- the messages sit outside the row above: its fields are aligned at the bottom, so a message inside a field's column would push that field up -->
     @if (nameValidationMessageKey(); as messageKey) {
-        <!-- the message sits outside the row above so that showing it does not change the height of the row and shift the fields -->
         <div class="text-state-danger mb-2" [jhiTranslate]="messageKey"></div>
+    }
+    @if (showsSettings() && !isTimeoutValid()) {
+        <div
+            class="text-state-danger mb-2"
+            data-testid="container-timeout-invalid"
+            jhiTranslate="artemisApp.programmingExercise.buildContainersEditor.timeoutInvalid"
+            [translateValues]="{ min: timeoutMinValue(), max: timeoutMaxValue() }"
+        ></div>
     }
 
     @if (showsSettings()) {

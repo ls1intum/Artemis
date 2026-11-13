@@ -98,6 +98,21 @@ describe('BuildContainerEditorComponent', () => {
         expect(component.nameValidationMessageKey()).toBe('artemisApp.programmingExercise.buildContainersEditor.containerNameDuplicate');
     });
 
+    it('should show an invalid timeout below the row of fields, so that the timeout field stays aligned with the others', () => {
+        fixture.componentRef.setInput('timeoutMinValue', 10);
+        fixture.componentRef.setInput('timeoutMaxValue', 240);
+        fixture.componentRef.setInput('container', { ...container, timeoutSeconds: 500 });
+        fixture.detectChanges();
+
+        const message = fixture.debugElement.query(By.css('[data-testid="container-timeout-invalid"]'));
+        const timeoutField = fixture.debugElement.query(By.css('[data-testid="container-timeout-input"]'));
+        expect(component.isTimeoutValid()).toBe(false);
+        expect(message).not.toBeNull();
+        expect(timeoutField.nativeElement.classList).toContain('is-invalid');
+        // inside the field's column, the message would grow it and push the bottom-aligned field up
+        expect(timeoutField.nativeElement.parentElement.contains(message.nativeElement)).toBe(false);
+    });
+
     it('should offer only the repositories the trigger scopes, not the assignment and template repositories', () => {
         fixture.detectChanges();
         const offered = fixture.debugElement
