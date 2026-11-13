@@ -20,6 +20,12 @@ public enum ParticipationFilter {
         this.group = group;
     }
 
+    /**
+     * Parses query selections, accepting legacy unfiltered values and rejecting unknown names.
+     *
+     * @param value comma-separated selections, or null for no filters
+     * @return trimmed, de-duplicated filter selections
+     */
     public static Set<ParticipationFilter> parse(String value) {
         var filters = EnumSet.noneOf(ParticipationFilter.class);
         if (value == null || value.isBlank() || value.equals("All") || value.equals("ALL")) {

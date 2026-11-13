@@ -4112,8 +4112,11 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         void filterNoSubmissionsAppliesToTeamRowsAndPracticeRows() throws Exception {
             assertThat(list("", "NoSubmissions", "id", SortingOrder.ASCENDING).ids()).containsExactlyElementsOf(allIdsById());
 
-            participationUtilService.addSubmission(practiceOfStudent3, new TextSubmission());
-            participationUtilService.addSubmission(zuluParticipation, new TextSubmission());
+            for (var participation : List.of(practiceOfStudent3, zuluParticipation)) {
+                var submission = new TextSubmission();
+                submission.setSubmitted(true);
+                participationUtilService.addSubmission(participation, submission);
+            }
 
             var listing = list("", "NoSubmissions", "id", SortingOrder.ASCENDING);
             assertThat(listing.ids()).containsExactly(alphaParticipation.getId(), practiceOfStudent1.getId(), practiceOfStudent4.getId());
@@ -4130,8 +4133,11 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
 
         @Test
         void filterAndSearchAndSortCombine() throws Exception {
-            participationUtilService.addSubmission(practiceOfStudent3, new TextSubmission());
-            participationUtilService.addSubmission(zuluParticipation, new TextSubmission());
+            for (var participation : List.of(practiceOfStudent3, zuluParticipation)) {
+                var submission = new TextSubmission();
+                submission.setSubmitted(true);
+                participationUtilService.addSubmission(participation, submission);
+            }
 
             var listing = list("student", "NoSubmissions", "participantName", SortingOrder.DESCENDING);
 

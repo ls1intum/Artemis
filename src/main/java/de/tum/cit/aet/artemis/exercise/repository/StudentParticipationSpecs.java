@@ -341,7 +341,15 @@ public class StudentParticipationSpecs {
         return (root, query, cb) -> cb.or(cb.isNull(root.get(Participation_.TEST_RUN)), cb.equal(root.get(Participation_.TEST_RUN), false));
     }
 
-    /** Combines category alternatives and shares one latest-result lookup across result conditions and score bounds. */
+    /**
+     * Combines category alternatives and shares one latest-result lookup across result conditions and score bounds.
+     *
+     * @param filters          validated filter selections
+     * @param stuckBuildCutoff cutoff for builds without a result, or null to disable the Failed filter
+     * @param scoreRangeLower  inclusive lower score bound, or null to skip the range
+     * @param scoreRangeUpper  upper score bound, exclusive unless 100, or null to skip the range
+     * @return specification matching the selected filters and score range
+     */
     @NonNull
     public static Specification<StudentParticipation> managementFilters(Set<ParticipationFilter> filters, @Nullable ZonedDateTime stuckBuildCutoff,
             @Nullable Integer scoreRangeLower, @Nullable Integer scoreRangeUpper) {
@@ -384,14 +392,18 @@ public class StudentParticipationSpecs {
             if (requiresResult) {
                 conditions.add(existsLatestResultMatching(root, query, cb, (r, c) -> {
                     List<Predicate> results = new ArrayList<>();
-                    if (successful && !unsuccessful)
+                    if (successful && !unsuccessful) {
                         results.add(c.isTrue(r.get(Result_.SUCCESSFUL)));
-                    if (!assessmentTypes.isEmpty())
+                    }
+                    if (!assessmentTypes.isEmpty()) {
                         results.add(r.get(Result_.ASSESSMENT_TYPE).in(assessmentTypes));
-                    if (filters.contains(ParticipationFilter.Graded))
+                    }
+                    if (filters.contains(ParticipationFilter.Graded)) {
                         results.add(c.isTrue(r.get(Result_.RATED)));
-                    if (filters.contains(ParticipationFilter.Locked))
+                    }
+                    if (filters.contains(ParticipationFilter.Locked)) {
                         results.add(c.isNull(r.get(Result_.COMPLETION_DATE)));
+                    }
                     if (scoreRange) {
                         results.add(c.ge(r.get(Result_.SCORE), scoreRangeLower));
                         results.add(scoreRangeUpper == 100 ? c.le(r.get(Result_.SCORE), 100) : c.lt(r.get(Result_.SCORE), scoreRangeUpper));
