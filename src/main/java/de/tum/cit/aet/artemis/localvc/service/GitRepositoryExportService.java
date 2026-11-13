@@ -17,7 +17,6 @@ import org.apache.commons.io.output.CloseShieldOutputStream;
 import org.eclipse.jgit.api.ArchiveCommand;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
-import org.eclipse.jgit.archive.ZipFormat;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.ObjectId;
 import org.slf4j.Logger;
@@ -29,6 +28,7 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.localvc.service.git.InMemoryRepositoryBuilder;
+import de.tum.cit.aet.artemis.localvc.service.git.SnapshotZipFormat;
 import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
@@ -72,7 +72,7 @@ public class GitRepositoryExportService {
         this.bareGitRepositoryService = bareGitRepositoryService;
 
         try {
-            ArchiveCommand.registerFormat("zip", new ZipFormat());
+            ArchiveCommand.registerFormat("zip", new SnapshotZipFormat());
         }
         catch (Exception e) {
             log.error("Could not register zip format", e);
