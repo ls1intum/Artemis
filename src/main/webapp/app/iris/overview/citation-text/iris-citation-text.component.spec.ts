@@ -95,6 +95,12 @@ describe('IrisCitationTextComponent', () => {
         expect(el.querySelectorAll('[onerror]')).toHaveLength(0);
     });
 
+    it('requests images without a referrer after the citations are inserted', () => {
+        const el = render('![chart](https://example.org/a.png) [cite:L:7::::Key:Summary]');
+
+        expect(el.querySelector('img')?.getAttribute('referrerpolicy')).toBe('no-referrer');
+    });
+
     it('keeps the styles of formulas next to a citation and removes other inline styles', () => {
         const el = render('The ratio is $\\frac{1}{2}$ [cite:L:7::::Key:Summary] <span style="color:red">x</span>');
 
