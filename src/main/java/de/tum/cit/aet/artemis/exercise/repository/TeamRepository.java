@@ -6,19 +6,27 @@ import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphTyp
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.function.Supplier;
+
+import jakarta.persistence.LockModeType;
+import jakarta.persistence.QueryHint;
 
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.EntityGraph;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.jpa.repository.QueryHints;
 import org.springframework.data.repository.query.Param;
 import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
@@ -185,13 +193,41 @@ public interface TeamRepository extends ArtemisJpaRepository<Team, Long> {
      */
     @Transactional
     default Team saveWithTutorChange(Exercise exercise, Team team, User assessor) {
+        var instances = lockCourseTeamsForAssessment(exercise.getCourseViaExerciseGroupOrCourseMemberElseThrow().getId(), team.getShortName(), team.getId());
         Team saved = save(exercise, team);
-        var instances = findAllByExerciseCourseIdAndShortName(exercise.getCourseViaExerciseGroupOrCourseMemberElseThrow().getId(), saved.getShortName());
         instances.forEach(instance -> instance.setOwner(saved.getOwner()));
         saveAll(instances);
         reassignDraftAssessors(instances.stream().map(Team::getId).toList(), assessor);
         return saved;
     }
+
+    /** Locks matching teams in a stable order before transferring their drafts. */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @QueryHints(@QueryHint(name = "org.hibernate.flushMode", value = "COMMIT"))
+    @Query("SELECT t FROM Team t WHERE (t.exercise.course.id = :courseId AND t.shortName = :shortName) OR t.id = :teamId ORDER BY t.id")
+    List<Team> lockCourseTeamsForAssessment(@Param("courseId") long courseId, @Param("shortName") String shortName, @Param("teamId") long teamId);
+
+    /** Holds the team lock until assessment creation has committed. */
+    @Transactional
+    default <T> T withAssessmentLock(Team team, Supplier<T> assessment) {
+        lockTeamForAssessment(team.getId());
+        // Reject stale requests instead of saving a result loaded under the previous tutor.
+        if (!Objects.equals(team.getOwner(), findAssessmentOwner(team.getId()))) {
+            throw new AccessForbiddenException("The team tutor changed. Reload the assessment.");
+        }
+        return assessment.get();
+    }
+
+    /** Locks a team against reassignment while its assessment is claimed. */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @QueryHints(@QueryHint(name = "org.hibernate.flushMode", value = "COMMIT"))
+    @Query("SELECT t FROM Team t WHERE t.id = :teamId")
+    Team lockTeamForAssessment(@Param("teamId") long teamId);
+
+    /** Reads the persisted owner rather than a previously loaded team association. */
+    @QueryHints(@QueryHint(name = "org.hibernate.flushMode", value = "COMMIT"))
+    @Query("SELECT owner FROM Team t LEFT JOIN t.owner owner WHERE t.id = :teamId")
+    User findAssessmentOwner(@Param("teamId") long teamId);
 
     /**
      * Transfers drafts without changing completed results, feedback, or notes.

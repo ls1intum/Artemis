@@ -724,21 +724,33 @@ class SubmissionServiceTest extends AbstractSpringIntegrationIndependentBatchTes
         assertThat(request.getList(url, HttpStatus.OK, AssessmentQueueTeamDTO.class)).extracting(entry -> entry.submission().id()).containsExactly(submitted.getId());
     }
 
-    /** Programming queue candidates use dates, except that legacy null dates retain ID ordering. */
+    /** Programming queue candidates prefer dates, using IDs for ties and when all dates are missing. */
     @ParameterizedTest
-    @org.junit.jupiter.params.provider.CsvSource({ "false,false", "true,false", "false,true" })
+    @org.junit.jupiter.params.provider.CsvSource({ "false,false,false", "true,false,false", "false,true,false", "false,true,true" })
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
-    void programmingTeamQueueSelectsLatestCandidateByDate(boolean sameDate, boolean nullDate) throws Exception {
+    void programmingTeamQueueSelectsLatestCandidateByDate(boolean sameDate, boolean nullDate, boolean allUndated) throws Exception {
         var exercise = teamExercise(ExerciseType.PROGRAMMING);
         var first = teamSubmission(exercise, tutor1, "own");
+        var latestDate = first.getSubmissionDate();
+        if (allUndated) {
+            first.setSubmissionDate(null);
+            submissionRepository.save(first);
+        }
         var second = participationUtilService.addSubmission((StudentParticipation) first.getParticipation(), new ProgrammingSubmission());
         second.setSubmitted(true);
         second.setSubmissionDate(nullDate ? null : sameDate ? first.getSubmissionDate() : first.getSubmissionDate().minusDays(1));
         submissionRepository.save(second);
+        if (nullDate && !allUndated) {
+            var older = participationUtilService.addSubmission((StudentParticipation) first.getParticipation(), new ProgrammingSubmission());
+            older.setSubmitted(true);
+            older.setSubmissionDate(latestDate.minusDays(1));
+            submissionRepository.save(older);
+            assertThat(older.getId()).isGreaterThan(second.getId());
+        }
         assertThat(second.getId()).isGreaterThan(first.getId());
         assertThat(studentParticipationRepository.findCourseTeamQueueCandidates(exercise.getId(), ZonedDateTime.now(), tutor1.getId())).extracting(candidate -> candidate.id())
-                .containsExactly(sameDate || nullDate ? second.getId() : first.getId());
-        var selectedId = sameDate || nullDate ? second.getId() : first.getId();
+                .containsExactly(sameDate || allUndated ? second.getId() : first.getId());
+        var selectedId = sameDate || allUndated ? second.getId() : first.getId();
         var queueUrl = "/api/exercise/exercises/" + exercise.getId() + "/assessment-queue-teams";
         assertThat(request.getList(queueUrl, HttpStatus.OK, AssessmentQueueTeamDTO.class)).extracting(entry -> entry.submission().id()).containsExactly(selectedId);
         request.get(assessmentStartUrl(ExerciseType.PROGRAMMING, selectedId), HttpStatus.OK, String.class);
@@ -809,7 +821,7 @@ class SubmissionServiceTest extends AbstractSpringIntegrationIndependentBatchTes
     @ParameterizedTest
     @org.junit.jupiter.params.provider.ValueSource(booleans = { false, true })
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
-    void programmingReusesCompletedResultButNotUntypedResult(boolean completed) throws Exception {
+    void programmingRecoversUntypedDraftInRequestedRound(boolean completed) throws Exception {
         var exercise = teamExercise(ExerciseType.PROGRAMMING);
         var original = teamSubmission(exercise, tutor1, "own");
         var opened = request.get(assessmentStartUrl(ExerciseType.PROGRAMMING, original.getId()), HttpStatus.OK,
@@ -829,9 +841,83 @@ class SubmissionServiceTest extends AbstractSpringIntegrationIndependentBatchTes
             assertThat(savedSubmission.getResultForCorrectionRound(0).getId()).isEqualTo(resultId);
         }
         else {
-            assertThat(locked.getId()).isNotEqualTo(resultId);
+            assertThat(locked.getId()).isEqualTo(resultId);
+            assertThat(locked.getCorrectionRound()).isZero();
+            assertThat(locked.getAssessmentType()).isEqualTo(AssessmentType.SEMI_AUTOMATIC);
+            assertThat(locked.getAssessor()).isEqualTo(tutor1);
         }
-        assertThat(resultRepository.findByIdWithEagerSubmissionAndFeedbackAndAssessmentNoteElseThrow(resultId).getAssessor()).isNull();
+        var reopened = request.get(assessmentStartUrl(ExerciseType.PROGRAMMING, original.getId()), HttpStatus.OK,
+                de.tum.cit.aet.artemis.programming.dto.ProgrammingSubmissionForTutorAssessmentDTO.class);
+        assertThat(reopened.results()).singleElement().satisfies(returned -> {
+            assertThat(returned.id()).isEqualTo(resultId);
+            assertThat(returned.correctionRound()).isZero();
+        });
+        assertThat(submissionRepository.findOneWithEagerResultAndFeedbackAndAssessmentNote(original.getId()).getManualResults()).hasSize(1);
+        assertThat(resultRepository.findByIdWithEagerSubmissionAndFeedbackAndAssessmentNoteElseThrow(resultId).getAssessor()).isEqualTo(completed ? null : tutor1);
+    }
+
+    /** Tutor reassignment waits for a started draft to commit, then transfers that draft too. */
+    @ParameterizedTest
+    @EnumSource(value = ExerciseType.class, names = { "TEXT", "MODELING", "FILE_UPLOAD", "PROGRAMMING" })
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void teamDraftCreationIsSerializedWithTutorChange(ExerciseType type) throws Exception {
+        var exercise = teamExercise(type);
+        var submission = teamSubmission(exercise, tutor1, "own");
+        var team = ((StudentParticipation) submission.getParticipation()).getTeam().orElseThrow();
+        var transferStarted = new java.util.concurrent.CountDownLatch(1);
+        var transfer = new java.util.concurrent.atomic.AtomicReference<java.util.concurrent.Future<Team>>();
+        try (var executor = java.util.concurrent.Executors.newSingleThreadExecutor()) {
+            var resultId = teamRepository.withAssessmentLock(team, () -> {
+                transfer.set(executor.submit(() -> {
+                    var updated = teamRepository.findWithStudentsByIdElseThrow(team.getId());
+                    updated.setOwner(tutor2);
+                    transferStarted.countDown();
+                    return teamRepository.saveWithTutorChange(exercise, updated, tutor2);
+                }));
+                try {
+                    assertThat(transferStarted.await(5, java.util.concurrent.TimeUnit.SECONDS)).isTrue();
+                    org.assertj.core.api.Assertions.assertThatThrownBy(() -> transfer.get().get(200, java.util.concurrent.TimeUnit.MILLISECONDS))
+                            .isInstanceOf(java.util.concurrent.TimeoutException.class);
+                }
+                catch (InterruptedException exception) {
+                    Thread.currentThread().interrupt();
+                    throw new AssertionError(exception);
+                }
+                return (type == ExerciseType.PROGRAMMING ? programmingSubmissionService.lockSubmission(submission, 0) : submissionService.lockSubmission(submission, 0)).getId();
+            });
+            transfer.get().get(10, java.util.concurrent.TimeUnit.SECONDS);
+            assertThat(resultRepository.findByIdWithEagerFeedbacksAndAssessor(resultId).orElseThrow().getAssessor()).isEqualTo(tutor2);
+            // Simulate a request that loaded ownership before the transfer, but reaches the lock afterwards.
+            team.setOwner(tutor1);
+            assertThatExceptionOfType(AccessForbiddenException.class).isThrownBy(() -> {
+                if (type == ExerciseType.PROGRAMMING) {
+                    programmingSubmissionService.lockSubmission(submission, 0);
+                }
+                else {
+                    submissionService.lockSubmission(submission, 0);
+                }
+            });
+        }
+    }
+
+    /** Direct service callers enforce the same team deadlines as dashboard links. */
+    @ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(booleans = { false, true })
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void programmingTeamLockServiceRechecksDeadline(boolean individualDeadline) {
+        var exercise = teamExercise(ExerciseType.PROGRAMMING);
+        var submission = teamSubmission(exercise, tutor1, "own");
+        if (individualDeadline) {
+            var participation = (StudentParticipation) submission.getParticipation();
+            participation.setIndividualDueDate(ZonedDateTime.now().plusDays(1));
+            studentParticipationRepository.save(participation);
+        }
+        else {
+            exercise.setDueDate(ZonedDateTime.now().plusDays(1));
+            exerciseRepository.save(exercise);
+        }
+        assertThatExceptionOfType(AccessForbiddenException.class).isThrownBy(() -> programmingSubmissionService.lockSubmission(submission, 0));
+        assertThat(submissionRepository.findOneWithEagerResultAndFeedbackAndAssessmentNote(submission.getId()).getManualResults()).isEmpty();
     }
 
     /** Returns the proposal endpoint for an exercise type. */

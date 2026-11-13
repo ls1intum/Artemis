@@ -14,6 +14,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import org.jspecify.annotations.Nullable;
@@ -59,6 +60,7 @@ import de.tum.cit.aet.artemis.exercise.dto.SubmissionWithComplaintDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
+import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
@@ -73,7 +75,9 @@ public class SubmissionService {
 
     private static final String ENTITY_NAME = "submission";
 
-    private final ExerciseDateService exerciseDateService;
+    protected final ExerciseDateService exerciseDateService;
+
+    private final TeamRepository teamRepository;
 
     protected final SubmissionRepository submissionRepository;
 
@@ -105,7 +109,8 @@ public class SubmissionService {
             ResultRepository resultRepository, StudentParticipationRepository studentParticipationRepository, ParticipationService participationService,
             FeedbackRepository feedbackRepository, ExerciseDateService exerciseDateService, ParticipationRepository participationRepository,
             ComplaintRepository complaintRepository, FeedbackService feedbackService, Optional<AthenaApi> athenaApi, TestCaseFeedbackRepository testCaseFeedbackRepository,
-            ScaFeedbackRepository scaFeedbackRepository) {
+            ScaFeedbackRepository scaFeedbackRepository, TeamRepository teamRepository) {
+        this.teamRepository = teamRepository;
         this.submissionRepository = submissionRepository;
         this.userRepository = userRepository;
         this.authCheckService = authCheckService;
@@ -337,10 +342,7 @@ public class SubmissionService {
     }
 
     /**
-     * Removes sensitive information (e.g. example solution of the exercise) from the submission based on the role of the current user. This should be called before sending a
-     * submission to the client.
-     * ***IMPORTANT***: Do not call this method from a transactional context as this would remove the sensitive information also from the entities in the
-     * database without explicitly saving them.
+     * Removes sensitive submission details according to the user's role. Call outside a transaction to avoid persisting removals.
      *
      * @param submission Submission to be modified.
      * @param user       the currently logged-in user which is used for hiding specific submission details based on instructor and teaching assistant rights
@@ -652,10 +654,7 @@ public class SubmissionService {
     }
 
     /**
-     * Defence in depth for {@link #checkCorrectionRoundIsValidElseThrow(Exercise, int)}: the endpoints validate the round against
-     * the exercise before they lock, this only makes sure that no path which skips that validation can persist a result for a
-     * negative round. The upper bound is not checked here because the exercise reachable from a submission does not
-     * necessarily have its exam loaded.
+     * Rejects negative rounds only. Validate the upper bound separately using the fully loaded exercise.
      *
      * @param correctionRound the correction round to check
      * @throws BadRequestAlertException if the correction round is negative
@@ -667,7 +666,7 @@ public class SubmissionService {
     }
 
     /**
-     * Claims an unfinished submission for assessment, creating a result if necessary. Completed team results are returned unchanged.
+     * Creates or reuses an assessment for the requested round. Completed team results are returned unchanged.
      *
      * @param submission      the submission to lock
      * @param correctionRound the correction round to lock the submission for, must not be negative
@@ -675,6 +674,20 @@ public class SubmissionService {
      * @throws BadRequestAlertException if the correction round is negative
      */
     protected Result lockSubmission(Submission submission, int correctionRound) {
+        return withTeamAssessmentLock(submission, () -> claimSubmission(submission, correctionRound));
+    }
+
+    /** Coordinates team assessment claims with tutor reassignment, excluding test runs and teamless participations. */
+    protected Result withTeamAssessmentLock(Submission submission, Supplier<Result> assessment) {
+        if (submission.getParticipation().getExercise().isTeamMode() && submission.getParticipation() instanceof StudentParticipation participation && !participation.isTestRun()
+                && participation.getTeam().isPresent()) {
+            return teamRepository.withAssessmentLock(participation.getTeam().get(), assessment);
+        }
+        return assessment.get();
+    }
+
+    /** Creates or reuses the result after authorization, under the team lock when applicable. */
+    private Result claimSubmission(Submission submission, int correctionRound) {
         checkCorrectionRoundIsNotNegativeElseThrow(correctionRound);
         authCheckService.checkTeamAssessmentAccessElseThrow(submission);
         Result result = submission.getResultForCorrectionRound(correctionRound);
@@ -700,10 +713,7 @@ public class SubmissionService {
         // The requested correction round takes precedence over the round derived by Submission.addResult.
         result.setCorrectionRound(correctionRound);
         result.setAssessmentType(AssessmentType.MANUAL);
-        // Deliberately keep (and return) the object the submission's result set already holds instead of the
-        // merge result: the set ignores re-adding an equal copy, so a caller that adds the returned result back
-        // would keep the stale instance. Returning the original also avoids the assessor (and every other
-        // association) turning into an uninitialized proxy, which the merge result does.
+        // Return the instance already held by the submission to avoid stale copies and lazy merge proxies.
         resultRepository.save(result);
         return result;
     }
@@ -785,9 +795,7 @@ public class SubmissionService {
     }
 
     /**
-     * The correction round is a request parameter, so a caller can send any int. A round outside {@code [0, numberOfCorrectionRounds)}
-     * would otherwise be stored on a new manual result that no dashboard, lookup or score calculation ever reaches again.
-     * Call this before locking a submission, at a point where the exercise (and its exam, for exam exercises) is loaded.
+     * Validates that the requested round is within {@code [0, exercise.getNumberOfCorrectionRounds())}.
      *
      * @param exercise        the exercise the submission belongs to
      * @param correctionRound the requested correction round
@@ -801,9 +809,7 @@ public class SubmissionService {
     }
 
     /**
-     * Like {@link #checkCorrectionRoundIsValidElseThrow(Exercise, int)}, but for an endpoint that opens one specific submission. Such a
-     * submission may already hold a result for a round beyond the exercise's number of correction rounds: the response to a complaint
-     * is stored as an additional manual result with the next round. Opening that existing result is valid and creates nothing.
+     * Validates the requested round, also allowing existing manual results beyond configured rounds, such as complaint responses.
      *
      * @param exercise        the exercise the submission belongs to
      * @param submissionId    the id of the submission that is opened
@@ -820,15 +826,10 @@ public class SubmissionService {
     }
 
     /**
-     * Checks that manual assessment of the given exam exercise is already possible, i.e. that the exam is over for every
-     * student and, for programming exercises, that the tests have run once more on the final submissions.
-     * <p>
-     * Course exercises use {@link #checkIfExerciseDueDateIsReached}; instructor test runs bypass this gate.
-     * <p>
-     * NOTE: the check is exam-wide, i.e. based on the latest individual end date of all student exams, not on the
-     * individual student behind the given participation. For test exams the latest individual end date is derived from the start of the
-     * availability window rather than from each attempt, so the gate opens earlier than the last attempt can end; test
-     * exams cannot be assessed anyway, as they are validated to zero correction rounds.
+     * Checks the exam-wide assessment start time, including grace periods and the configured programming build/test date.
+     * Uses the latest individual exam end date, rather than the opened participation's end date.
+     * No-op for course exercises, test-run participations, and exams without assessment dates.
+     * Course exercise deadlines are checked by {@link #checkIfExerciseDueDateIsReached}.
      *
      * @param exercise      the exercise whose submission a tutor wants to assess
      * @param participation the participation the submission belongs to, or {@code null} if no specific participation is
@@ -868,14 +869,13 @@ public class SubmissionService {
     }
 
     /**
-     * Given an exerciseId, returns all the submissions for that exercise, including their results. Submissions can be filtered to include only already submitted
-     * submissions
+     * Returns each participation's latest submission with results; {@code submittedOnly} skips unsubmitted latest entries.
      *
      * @param exerciseId    - the id of the exercise we are interested into
      * @param submittedOnly - if true, it returns only submission with submitted flag set to true
      * @param examMode      - set flag to ignore exam test run submissions
      * @param <T>           the submission type
-     * @return a list of modeling submissions for the given exercise id
+     * @return the latest submissions for the given exercise
      */
     public <T extends Submission> List<T> getAllSubmissionsForExercise(Long exerciseId, boolean submittedOnly, boolean examMode) {
         Collection<StudentParticipation> participations;
@@ -979,13 +979,11 @@ public class SubmissionService {
     }
 
     /**
-     * Search for all submissions fitting a {@link SearchTermPageableSearchDTO search query}. The result is paged,
-     * meaning that there is only a predefined portion of the result returned to the user, so that the server doesn't
-     * have to send hundreds/thousands of submissions if there are that many in Artemis.
+     * Returns the latest available submission from each participation on the requested search-results page.
      *
      * @param search     DTO containing the search term and information required for pagination and sorting
      * @param exerciseId Id of the exercise the submissions belongs to
-     * @return A wrapper object containing a list of all found submissions and the total number of pages
+     * @return the page's latest submissions and the total number of matching participation pages
      */
     public SearchResultPageDTO<SubmissionResponseDTO> getSubmissionsOnPageWithSize(SearchTermPageableSearchDTO<String> search, Long exerciseId) {
         final var pageable = PageUtil.createDefaultPageRequest(search, PageUtil.ColumnMapping.STUDENT_PARTICIPATION);

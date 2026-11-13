@@ -2400,7 +2400,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
      * @return eligible submission metadata
      */
     @Query("""
-            SELECT DISTINCT new de.tum.cit.aet.artemis.exercise.dto.AssessmentQueueSubmissionDTO(s.id, s.submitted, s.type, s.exampleSubmission, s.submissionDate,
+            SELECT new de.tum.cit.aet.artemis.exercise.dto.AssessmentQueueSubmissionDTO(s.id, s.submitted, s.type, s.exampleSubmission, s.submissionDate,
                 TYPE(s), p.id, p.initializationState, p.initializationDate, p.individualDueDate, team.name,
                 programming.buildFailed, programming.commitHash, text.language)
             FROM StudentParticipation p
@@ -2408,7 +2408,6 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                 LEFT JOIN p.submissions s
                 LEFT JOIN ProgrammingSubmission programming ON programming.id = s.id
                 LEFT JOIN TextSubmission text ON text.id = s.id
-                LEFT JOIN s.results r
             WHERE p.exercise.id = :exerciseId
                 AND (:teamOwnerId IS NULL OR team.owner.id = :teamOwnerId)
                 AND ((p.individualDueDate IS NULL AND (p.exercise.dueDate IS NULL OR p.exercise.dueDate <= :now))
@@ -2427,7 +2426,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                 AND s.id = (
                     SELECT MAX(s3.id) FROM p.submissions s3
                     WHERE s3.submitted = TRUE AND (programming.id IS NULL
-                        OR EXISTS (SELECT undated.id FROM p.submissions undated WHERE undated.submitted = TRUE AND undated.submissionDate IS NULL)
+                        OR NOT EXISTS (SELECT dated.id FROM p.submissions dated WHERE dated.submitted = TRUE AND dated.submissionDate IS NOT NULL)
                         OR s3.submissionDate = (SELECT MAX(dated.submissionDate) FROM p.submissions dated WHERE dated.submitted = TRUE))
                 )
             """)
