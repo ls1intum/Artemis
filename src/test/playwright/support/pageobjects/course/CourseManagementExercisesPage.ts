@@ -188,17 +188,14 @@ export class CourseManagementExercisesPage {
         await this.page.locator(`.exercise-${exerciseID}`).locator('.import').click();
     }
 
+    /** Starts the quiz through its row action, inline or in the row's overflow menu. */
     async startQuiz(quizID: number) {
-        const startButton = this.page.locator(`#instructor-quiz-start-${quizID}`);
-        await startButton.waitFor({ state: 'visible', timeout: 10000 });
-        await startButton.click();
+        await this.clickRowAction(quizID, 'start-quiz');
     }
 
+    /** Ends the quiz through its row action, inline or in the row's overflow menu, and confirms the end-now dialog. */
     async endQuiz(quizExercise: QuizExercise) {
-        const endButton = this.page.locator(`#quiz-set-end-${quizExercise.id}`);
-        await endButton.waitFor({ state: 'visible', timeout: 10000 });
-        await endButton.scrollIntoViewIfNeeded();
-        await endButton.click();
+        await this.clickRowAction(quizExercise.id!, 'end-quiz');
         await this.page.locator('#confirm-entity-name').fill(quizExercise.title!);
         // Wait for the end-now request to actually complete before returning. Otherwise a follow-up step (e.g. a student
         // loading the exercise to practice) can race the in-flight end-now and observe the quiz as still "Waiting for
