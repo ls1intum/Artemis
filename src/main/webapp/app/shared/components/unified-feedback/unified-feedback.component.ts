@@ -10,6 +10,7 @@ import {
     FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER,
     FEEDBACK_SUGGESTION_IDENTIFIER,
     Feedback,
+    MAX_MANUAL_CREDITS,
     NON_GRADED_FEEDBACK_SUGGESTION_IDENTIFIER,
     STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER,
 } from 'app/assessment/shared/entities/feedback.model';
@@ -300,6 +301,8 @@ export class UnifiedFeedbackComponent {
     protected readonly faMinus = faMinus;
 
     /** Points are graded in half steps throughout Artemis, so the arrow keys and the step buttons of the points input move in the same increments. */
+    protected readonly CREDITS_MIN = -MAX_MANUAL_CREDITS;
+    protected readonly CREDITS_MAX = MAX_MANUAL_CREDITS;
     protected readonly CREDITS_STEP = 0.5;
 
     private currentTitlePrefix(): string {
@@ -358,8 +361,8 @@ export class UnifiedFeedbackComponent {
     }
 
     /**
-     * Snaps the typed credits onto the half-point grid when the field is left or Enter is pressed. The points input
-     * shows the snapped value again because {@link feedbackCredits} is bound to it with `[ngModel]`.
+     * Snaps the typed credits onto the half-point grid and into the bounds when the field is left or Enter is pressed.
+     * The points input shows the snapped value again because {@link feedbackCredits} is bound to it with `[ngModel]`.
      */
     onCreditsCommit(): void {
         if (this.feedback()?.gradingInstruction) {
@@ -375,7 +378,7 @@ export class UnifiedFeedbackComponent {
         if (value === null || value === undefined || !Number.isFinite(value)) {
             return undefined;
         }
-        return Math.round(value / this.CREDITS_STEP) * this.CREDITS_STEP;
+        return Math.min(this.CREDITS_MAX, Math.max(this.CREDITS_MIN, Math.round(value / this.CREDITS_STEP) * this.CREDITS_STEP));
     }
 
     handleDeleteConfirmed(): void {

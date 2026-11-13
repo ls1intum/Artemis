@@ -55,6 +55,8 @@
                                     [incrementLabel]="'artemisApp.assessment.detail.increasePoints' | artemisTranslate"
                                     [decrementLabel]="'artemisApp.assessment.detail.decreasePoints' | artemisTranslate"
                                     snapToStep
+                                    [min]="CREDITS_MIN"
+                                    [max]="CREDITS_MAX"
                                     [step]="CREDITS_STEP"
                                     [ngModel]="feedbackCredits()"
                                     (ngModelChange)="onCreditsChange($event)"

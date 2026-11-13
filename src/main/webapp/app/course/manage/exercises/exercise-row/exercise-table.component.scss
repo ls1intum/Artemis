@@ -16,55 +16,45 @@ tbody td {
     width: 2.5rem;
 }
 
-// The actions column takes all leftover width, so without a floor here the title and categories are squeezed into
-// narrow columns and wrap although the row has plenty of free space. The floors are lower on narrower screens so that
-// the actions column keeps room for its inline buttons instead of folding them all into the menu.
+// Every exercise type renders its own table. Fixed widths for the columns before the categories line them up across
+// those tables; the categories take the leftover width and the actions column sits at the right edge.
 .col-title {
-    width: 28rem;
-    max-width: 28rem;
-    min-width: 18rem;
+    width: 18rem;
+    min-width: 13rem;
 }
 
-// Categories sit side by side and only wrap when the column is full.
-.col-categories {
-    min-width: 12rem;
-
-    jhi-exercise-categories {
-        display: inline-flex;
-        flex-wrap: wrap;
-        gap: 0.25rem;
-    }
-}
-
-@media (min-width: 1400px) {
-    .col-title {
-        min-width: 23rem;
-    }
-
-    .col-categories {
-        min-width: 14rem;
-    }
-}
-
+// Each date stays on one line.
 .col-dates {
-    min-width: 16rem;
+    width: 13rem;
+    white-space: nowrap;
 }
 
-// Takes the leftover width; buttons fold into the ellipsis as it shrinks. The floor keeps room for one inline button
-// (Edit in editor) next to the overflow trigger, including gaps, the safety margin and the cell padding, so the table
-// scrolls sideways before the most used action disappears into the menu. Rows with quiz buttons (which never fold)
-// raise --actions-min-width further so the table scrolls rather than clipping them.
+.col-points {
+    width: 6rem;
+}
+
+.col-difficulty {
+    width: 7rem;
+}
+
+.col-group {
+    width: 9rem;
+}
+
+// As wide as the widest row's buttons (--actions-width, measured by the rows; the leftover width until then), so the
+// other columns get the rest; buttons fold into the ellipsis as it shrinks. Rows with quiz buttons (which never fold)
+// raise --actions-min-width so the table scrolls rather than clipping them.
 th.col-actions,
 td.col-actions {
-    width: 100%;
+    width: var(--actions-width, 100%);
     max-width: 60rem;
-    min-width: var(--actions-min-width, 7rem);
+    min-width: var(--actions-min-width, 4rem);
     position: relative;
     overflow: hidden;
 }
 
 .col-group-select {
-    width: 10rem;
+    width: 8rem;
 }
 
 .drag-handle {
