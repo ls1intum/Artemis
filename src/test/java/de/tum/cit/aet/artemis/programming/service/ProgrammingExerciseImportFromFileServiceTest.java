@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.programming.service;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.inOrder;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -34,6 +35,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
 import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.repository.BuildPlanRepository;
+import de.tum.cit.aet.artemis.programming.service.security.SecurityFrameworkService;
 
 @ExtendWith(MockitoExtension.class)
 class ProgrammingExerciseImportFromFileServiceTest {
@@ -77,7 +79,7 @@ class ProgrammingExerciseImportFromFileServiceTest {
     void setUp() {
         programmingExerciseImportFromFileService = new ProgrammingExerciseImportFromFileService(programmingExerciseCreationUpdateService, programmingExerciseValidationService,
                 new ZipFileService(fileService), staticCodeAnalysisService, programmingExerciseProjectNameService, programmingExerciseImportRepositoryService, fileService,
-                profileService, buildPlanRepository, tempFileUtilService, Optional.of(legacyBuildPlanConverterService));
+                profileService, buildPlanRepository, tempFileUtilService, Optional.of(legacyBuildPlanConverterService), mock(SecurityFrameworkService.class));
     }
 
     @Test

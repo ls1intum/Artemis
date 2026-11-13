@@ -22,6 +22,7 @@ import { CheckoutDirectoriesDto } from 'app/programming/shared/entities/checkout
 import { ProgrammingExerciseTheiaConfig } from 'app/programming/shared/entities/programming-exercise-theia.config';
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
+import { SecurityFrameworkChoice, withSecurityFrameworkChoice } from 'app/programming/shared/entities/security-framework-config.model';
 
 export type EntityResponseType = HttpResponse<ProgrammingExercise>;
 export type EntityArrayResponseType = HttpResponse<ProgrammingExercise[]>;
@@ -63,11 +64,13 @@ export class ProgrammingExerciseService {
      *
      * @param programmingExercise which should be setup
      * @param emptyRepositories if true, clear sources in template, solution, and test repositories after setup
+     * @param securityFramework the Security Framework setting to apply before the first builds; omit to keep the template's
      */
-    automaticSetup(programmingExercise: ProgrammingExercise, emptyRepositories = false): Observable<EntityResponseType> {
+    automaticSetup(programmingExercise: ProgrammingExercise, emptyRepositories = false, securityFramework?: SecurityFrameworkChoice): Observable<EntityResponseType> {
         let copy = this.convertDataFromClient(programmingExercise);
         copy = ExerciseService.setBonusPointsConstrainedByIncludedInOverallScore(copy);
         ExerciseService.stringifyExerciseCategories(copy);
+        copy = withSecurityFrameworkChoice(copy, securityFramework);
         const params = this.addHyperionChecklistProvenanceParams(new HttpParams().set('emptyRepositories', String(emptyRepositories)), programmingExercise);
         return this.http
             .post<ProgrammingExercise>(this.resourceUrl + '/setup', copy, { observe: 'response', params })
@@ -150,13 +153,19 @@ export class ProgrammingExerciseService {
      *                                         values that should get discarded (like the old ID) will be handled by the
      *                                         server.
      * @param importOptions see {@link ImportOptions}
+     * @param securityFramework the Security Framework setting to apply before the first builds; omit to keep the imported one
      */
-    importExercise(adaptedSourceProgrammingExercise: ProgrammingExercise, importOptions: ImportOptions): Observable<EntityResponseType> {
+    importExercise(
+        adaptedSourceProgrammingExercise: ProgrammingExercise,
+        importOptions: ImportOptions,
+        securityFramework?: SecurityFrameworkChoice,
+    ): Observable<EntityResponseType> {
         const options = createRequestOption(importOptions);
         // Route through convertDataFromClient like automaticSetup and importFromFile do, so competency-link back-references are stripped.
-        const exercise = ExerciseService.setBonusPointsConstrainedByIncludedInOverallScore(this.convertDataFromClient(adaptedSourceProgrammingExercise));
+        let exercise = ExerciseService.setBonusPointsConstrainedByIncludedInOverallScore(this.convertDataFromClient(adaptedSourceProgrammingExercise));
 
         ExerciseService.stringifyExerciseCategories(exercise);
+        exercise = withSecurityFrameworkChoice(exercise, securityFramework);
         return this.http
             .post<ProgrammingExercise>(`${this.resourceUrl}/import?sourceExerciseId=${adaptedSourceProgrammingExercise.id}`, exercise, {
                 params: options,
@@ -587,11 +596,12 @@ export class ProgrammingExerciseService {
         return this.http.get<ProgrammingExerciseTheiaConfig>(`${this.resourceUrl}/${exerciseId}/theia-config`);
     }
 
-    /** Imports a programming exercise from a given zip file **/
-    importFromFile(exercise: ProgrammingExercise, courseId: number): Observable<EntityResponseType> {
+    /** Imports a programming exercise from a given zip file, applying the given Security Framework setting (if any) before the first builds **/
+    importFromFile(exercise: ProgrammingExercise, courseId: number, securityFramework?: SecurityFrameworkChoice): Observable<EntityResponseType> {
         let copy = this.convertDataFromClient(exercise);
         copy = ExerciseService.setBonusPointsConstrainedByIncludedInOverallScore(copy);
         ExerciseService.stringifyExerciseCategories(copy);
+        copy = withSecurityFrameworkChoice(copy, securityFramework);
         const formData = new FormData();
         formData.append('file', exercise.zipFileForImport!);
         const exerciseBlob = new Blob([JSON.stringify(copy)], { type: 'application/json' });

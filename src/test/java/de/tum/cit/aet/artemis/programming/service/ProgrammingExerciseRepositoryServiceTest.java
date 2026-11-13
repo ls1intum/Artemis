@@ -83,7 +83,7 @@ class ProgrammingExerciseRepositoryServiceTest {
         IOException deletionFailure = new IOException("Checkout cannot be removed");
         doThrow(deletionFailure).when(gitService).deleteLocalRepository(staleRepository);
 
-        assertThatThrownBy(() -> programmingExerciseRepositoryService.setupExerciseTemplate(exercise, new ProgrammingExerciseBuildConfig(), new User(), false))
+        assertThatThrownBy(() -> programmingExerciseRepositoryService.setupExerciseTemplate(exercise, new ProgrammingExerciseBuildConfig(), new User(), false, null))
                 .isInstanceOf(GitException.class).hasMessageContaining("Could not clear stale checkout").hasCause(deletionFailure);
         verifyNoInteractions(resourceLoaderService);
     }

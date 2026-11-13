@@ -2298,10 +2298,18 @@ components:
         plagiarismDetectionConfig: {$ref: '#/components/schemas/PlagiarismDetectionConfigDTO'}
         course: {$ref: '#/components/schemas/CourseRefDTO'}
         exerciseGroup: {$ref: '#/components/schemas/ExerciseGroupIdDTO'}
+        securityFramework: {$ref: '#/components/schemas/SecurityFrameworkChoiceDTO'}
     ExerciseGroupIdDTO:
       type: object
       properties:
         id: {type: integer, format: int64}
+    SecurityFrameworkChoiceDTO:
+      type: object
+      properties:
+        action:
+          type: string
+          enum: [ACTIVATE, DEACTIVATE]
+        frameworkVersion: {type: string}
     SimpleLectureDTO:
       type: object
       properties:

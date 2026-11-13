@@ -12,6 +12,7 @@ import dayjs from 'dayjs/esm';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
+import { SecurityFrameworkAction, SecurityFrameworkChoice } from 'app/programming/shared/entities/security-framework-config.model';
 
 describe('ProgrammingExercise Sharing Service', () => {
     let service: ProgrammingExerciseSharingService;
@@ -84,6 +85,16 @@ describe('ProgrammingExercise Sharing Service', () => {
                 .subscribe((res: HttpResponse<ProgrammingExercise>) => expect(res.body).toEqual(programmingExercise));
             const req = httpMock.expectOne({ method: 'POST' });
             req.flush(programmingExercise);
+        });
+
+        it('should send the Security Framework choice with the exercise of the import', () => {
+            const choice: SecurityFrameworkChoice = { action: SecurityFrameworkAction.DEACTIVATE };
+
+            service.setUpFromSharingImport(new ProgrammingExercise(undefined, undefined), 1, defailtSharingInfo, choice).subscribe();
+
+            const req = httpMock.expectOne({ method: 'POST' });
+            expect(req.request.body.exercise.securityFramework).toEqual(choice);
+            req.flush({});
         });
 
         it('should setup for import with null body response', () => {

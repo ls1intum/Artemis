@@ -136,6 +136,64 @@ describe('TumAetUiSelectComponent', () => {
         expect(emitSpy).toHaveBeenCalledWith('b');
     });
 
+    describe('optionDisabled', () => {
+        const WITH_DISABLED = [
+            { label: 'Alpha', value: 'a' },
+            { label: 'Bravo', value: 'b', unavailable: true },
+            { label: 'Charlie', value: 'c' },
+        ];
+
+        beforeEach(() => {
+            fixture.componentRef.setInput('options', WITH_DISABLED);
+            fixture.componentRef.setInput('optionDisabled', 'unavailable');
+            component.writeValue('a');
+            fixture.detectChanges();
+        });
+
+        it('shows a disabled option but neither changes the value nor emits when it is clicked', () => {
+            const onChangeCallback = vi.fn();
+            component.registerOnChange(onChangeCallback);
+            const emitSpy = vi.spyOn(component.selectionChange, 'emit');
+            openPanel();
+            expect(optionElements()[1].getAttribute('aria-disabled')).toBe('true');
+            expect(optionElements()[0].getAttribute('aria-disabled')).toBeNull();
+
+            optionElements()[1].click();
+            fixture.detectChanges();
+
+            expect(onChangeCallback).not.toHaveBeenCalled();
+            expect(emitSpy).not.toHaveBeenCalled();
+            expect(labelText()).toBe('Alpha');
+            expect(listbox()).not.toBeNull();
+        });
+
+        it('skips a disabled option with the keyboard', () => {
+            const emitSpy = vi.spyOn(component.selectionChange, 'emit');
+            openPanel();
+            triggerButton().dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', keyCode: DOWN_ARROW, bubbles: true }));
+            fixture.detectChanges();
+            expect(triggerButton().getAttribute('aria-activedescendant')).toBe(optionElements()[2].id);
+            triggerButton().dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+            fixture.detectChanges();
+            expect(emitSpy).toHaveBeenCalledWith('c');
+        });
+
+        it('closes on Tab without selecting when the active option is disabled', () => {
+            component.writeValue('b');
+            fixture.detectChanges();
+            const emitSpy = vi.spyOn(component.selectionChange, 'emit');
+            openPanel();
+            expect(triggerButton().getAttribute('aria-activedescendant')).toBe(optionElements()[1].id);
+
+            triggerButton().dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab', bubbles: true }));
+            fixture.detectChanges();
+
+            expect(emitSpy).not.toHaveBeenCalled();
+            expect(listbox()).toBeNull();
+            expect(labelText()).toBe('Bravo');
+        });
+    });
+
     it('keyboard: ArrowDown stops at the final option', () => {
         openPanel();
         triggerButton().dispatchEvent(new KeyboardEvent('keydown', { key: 'End', keyCode: END, bubbles: true }));
@@ -294,6 +352,27 @@ describe('TumAetUiSelectComponent', () => {
         beforeEach(() => {
             fixture.componentRef.setInput('filter', true);
             fixture.detectChanges();
+        });
+
+        it('returns focus to the trigger when Tab in the search field closes the panel without a selection', () => {
+            fixture.componentRef.setInput('options', [
+                { label: 'Alpha', value: 'a' },
+                { label: 'Bravo', value: 'b', unavailable: true },
+            ]);
+            fixture.componentRef.setInput('optionDisabled', 'unavailable');
+            component.writeValue('b');
+            fixture.detectChanges();
+            const emitSpy = vi.spyOn(component.selectionChange, 'emit');
+            openPanel();
+            const field = requireFilterField();
+            field.focus();
+
+            field.dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab', bubbles: true }));
+            fixture.detectChanges();
+
+            expect(emitSpy).not.toHaveBeenCalled();
+            expect(listbox()).toBeNull();
+            expect(document.activeElement).toBe(triggerButton());
         });
 
         it('shows no search field unless asked for one', () => {
