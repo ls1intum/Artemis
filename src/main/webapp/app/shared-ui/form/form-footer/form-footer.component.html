@@ -2,10 +2,7 @@
     <div class="text-start">
         @if (isSimpleMode() !== undefined && switchEditMode() !== undefined && !isImport()) {
             <div class="d-flex align-items-center">
-                <div
-                    ngbTooltip="{{ 'artemisApp.programmingExercise.auxiliaryRepository.invalidConfigurationPreventsSwitchingEditMode' | artemisTranslate }}"
-                    [disableTooltip]="areAuxiliaryRepositoriesValid()"
-                >
+                <div [tumAetUiTooltip]="'artemisApp.programmingExercise.auxiliaryRepository.invalidConfigurationPreventsSwitchingEditMode' | artemisTranslate">
                     <jhi-switch-edit-mode-button
                         class="me-1"
                         [isSimpleMode]="isSimpleMode()!"
