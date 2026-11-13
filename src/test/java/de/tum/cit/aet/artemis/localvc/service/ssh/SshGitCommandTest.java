@@ -9,10 +9,18 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Path;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import org.apache.sshd.common.util.threads.SshThreadPoolExecutor;
+import org.apache.sshd.common.util.threads.SshdThreadFactory;
+import org.apache.sshd.common.util.threads.ThreadUtils;
 import org.apache.sshd.git.GitLocationResolver;
+import org.apache.sshd.server.Environment;
 import org.apache.sshd.server.ExitCallback;
+import org.apache.sshd.server.channel.ChannelSession;
 import org.apache.sshd.server.session.ServerSession;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
@@ -101,5 +109,35 @@ class SshGitCommandTest {
         String message = "Push rejected: Exercise generation is running Please retry the push later.";
         assertThat(error.toString()).contains(message);
         verify(exitCallback).onExit(-1, message);
+    }
+
+    @Test
+    void startRefusesACommandWhenThePoolRejectsItWithoutFailingTheSession() throws Exception {
+        SshThreadPoolExecutor pool = new SshThreadPoolExecutor(1, 1, 0L, TimeUnit.MILLISECONDS, new ArrayBlockingQueue<>(1), new SshdThreadFactory("git-ssh-test"),
+                (task, executor) -> {
+                    throw new RejectedExecutionException("full");
+                });
+        try {
+            pool.shutdown();
+            ExitCallback exitCallback = mock(ExitCallback.class);
+            ByteArrayOutputStream error = new ByteArrayOutputStream();
+            SshGitCommand command = new SshGitCommand((_, _, _, _) -> tempPath, "git-receive-pack 'busy.git'", ThreadUtils.noClose(pool), mock(LocalVCServletService.class),
+                    mock(LocalVCAccessLogRecorderService.class), mock(LocalVCPushProcessingService.class), mock(PasswordAuthenticationNoticeService.class));
+            command.setSession(mock(ServerSession.class));
+            command.setInputStream(InputStream.nullInputStream());
+            command.setOutputStream(new ByteArrayOutputStream());
+            command.setErrorStream(error);
+            command.setExitCallback(exitCallback);
+
+            // No exception: an exception would make the server close the whole session with the other commands of the client
+            command.start(mock(ChannelSession.class), mock(Environment.class));
+
+            String message = "The server is busy. Please try again later.";
+            assertThat(error.toString()).contains(message);
+            verify(exitCallback).onExit(-1, message);
+        }
+        finally {
+            pool.shutdownNow();
+        }
     }
 }

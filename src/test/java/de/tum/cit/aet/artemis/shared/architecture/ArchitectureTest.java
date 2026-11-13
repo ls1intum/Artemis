@@ -965,7 +965,7 @@ class ArchitectureTest extends AbstractArchitectureTest {
                 "AssessmentUploadConstructorTest", "AuxiliaryRepositoryResourceTest", "BuildJobQueueResourceTest", "CourseArchiveResourceTest",
                 "ProgrammingExerciseParticipationResourceResetTest", "PublicProgrammingExerciseResultResourceTest", "RepositoryProgrammingExerciseParticipationResourceTest",
                 "IrisGlobalSearchResourceTest", "IngestionCoverageResourceTest", "PyrisInternalIngestionWorkerResourceTest", "GlobalSearchResourceCandidateTest",
-                "FaqImportResourceTest" };
+                "FaqImportResourceTest", "AthenaSecretHandlingTest", "SharingSupportResourceTest" };
         // Resource unit tests exercise validation and ownership checks directly. Their nested parameterized cases belong to the same test, not production code.
         final var resourceBehaviourTests = new String[] { "ParticipationResourceGenerationGuardTest", "ProgrammingExerciseCreationResourceMutationGuardTest",
                 "ProgrammingExerciseDeletionResourceMutationGuardTest", "ProgrammingExerciseBuildConfigResourceMutationGuardTest", "ProgrammingExercisePartialUpdateResourceTest",

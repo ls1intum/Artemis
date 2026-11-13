@@ -24,6 +24,9 @@ public class LocalVCRepositoryUri extends VcsRepositoryUri {
      * Compiled once. A {@code LocalVCRepositoryUri} is constructed on every git request, and {@code String#matches}
      * compiles its pattern on every call.
      */
+    /** Project keys are built from short names, which consist of ASCII letters and digits only. */
+    private static final Pattern PROJECT_KEY_PATTERN = Pattern.compile("[A-Za-z0-9]+");
+
     private static final Pattern REPOSITORY_NAME_PATTERN = Pattern.compile("[a-zA-Z0-9]+-[a-zA-Z0-9-]+");
 
     /** The project key under which the repository is categorized in the local VC system. */
@@ -273,9 +276,13 @@ public class LocalVCRepositoryUri extends VcsRepositoryUri {
      *
      * @param projectKey     The project key that should prefix the repository slug.
      * @param repositorySlug The slug or name of the repository to be validated.
-     * @throws LocalVCInternalException If the repository slug does not start with the project key, indicating an incorrect or malformed slug.
+     * @throws LocalVCInternalException If the project key does not consist of ASCII letters and digits only (which also excludes the path segments {@code .} and {@code ..}),
+     *                                      or if the repository slug does not start with the project key, indicating an incorrect or malformed slug.
      */
     private void validateProjectKeyAndRepositorySlug(String projectKey, String repositorySlug) {
+        if (!PROJECT_KEY_PATTERN.matcher(projectKey).matches()) {
+            throw new LocalVCInternalException("Invalid project key: " + projectKey);
+        }
         if (!repositorySlug.toLowerCase(Locale.ROOT).startsWith(projectKey.toLowerCase(Locale.ROOT))) {
             throw new LocalVCInternalException("Invalid project key and repository slug: " + projectKey + ", " + repositorySlug);
         }

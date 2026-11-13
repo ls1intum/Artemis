@@ -233,10 +233,9 @@ class RepositoryUriTest {
 
     @ParameterizedTest
     @ValueSource(strings = { "https://artemis.tum.de/git/../..x.git", "https://artemis.tum.de/git/./..git" })
-    void testResolveFolderBelowRejectsAProjectKeyThatIsNotAFolderName(String uriString) {
-        var uri = new LocalVCRepositoryUri(uriString);
-
-        assertThatThrownBy(() -> uri.resolveFolderBelow(Path.of("repos"))).isInstanceOf(IllegalArgumentException.class);
+    void testAProjectKeyThatIsNotAFolderNameIsRefusedWhenTheUriIsParsed(String uriString) {
+        // The project key has to consist of letters and digits, so such an address is refused before it can be resolved to a folder
+        assertThatThrownBy(() -> new LocalVCRepositoryUri(uriString)).isInstanceOf(LocalVCInternalException.class).hasMessageContaining("Invalid project key");
     }
 
     @Test
