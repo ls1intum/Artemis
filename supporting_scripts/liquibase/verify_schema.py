@@ -109,6 +109,11 @@ SOURCE_UNBOUNDED_TEXT_TYPES = UNBOUNDED_TEXT_TYPES | {"tinytext"}
 # length, not the type name alone.
 VARYING_TYPES = frozenset({"varchar", "character varying", "nvarchar", "national character varying"})
 
+# Type namespaces whose final segment names the real type: JDBC (java.sql.Types.*) and PostgreSQL's system
+# catalog (pg_catalog.*). Only these exact prefixes are unwrapped, so a schema-qualified/custom type such as
+# my_schema.text is never reinterpreted.
+KNOWN_TYPE_NAMESPACES = ("java.sql.types.", "pg_catalog.")
+
 # The (table, column) pairs that were already unbounded text when this guard was introduced. They are
 # grandfathered so the guard is green on day one; a new unbounded-text column must not be added (give it a
 # bounded type, varchar(n)). Tightening these existing columns is tracked by the text-length hardening
@@ -221,6 +226,10 @@ COMMENT_TAG = f"{NAMESPACE}comment"
 # regardless of how a column was created.
 HARD_OPAQUE_TAGS = frozenset({f"{NAMESPACE}sqlFile", f"{NAMESPACE}customChange"})
 TEXT_TYPE_TOKEN = re.compile(r"\b(?:text|longtext|mediumtext|clob|ntext|nclob|longvarchar|longnvarchar|long\s+varchar|long\s+nvarchar)\b", re.IGNORECASE)
+# A character-varying type with no length is unbounded. In raw SQL / modifySql we cannot read a length argument
+# reliably, so we flag a varchar/character varying/nvarchar token that is NOT immediately followed by a "(...)"
+# length -- "varchar(255)" is bounded and does not match, a bare "varchar" does and is sent to attestation.
+VARYING_SQL_TOKEN = re.compile(r"\b(?:varchar|character\s+varying|nvarchar|national\s+character\s+varying)\b(?!\s*\()", re.IGNORECASE)
 
 
 def normalize_identifier(name: str | None) -> str:
@@ -235,25 +244,30 @@ def normalize_identifier(name: str | None) -> str:
     return name.lower()
 
 
+def _normalize_type(sql_type: str) -> str:
+    """Drop any length argument, lower-case, and collapse internal whitespace ("long  varchar" -> "long varchar")."""
+    return " ".join(sql_type.split("(", 1)[0].lower().split())
+
+
+def _strip_known_namespace(base: str) -> str:
+    """For a type named through a known namespace (java.sql.Types.* / pg_catalog.*) return its final segment;
+    otherwise return the name unchanged, so a schema-qualified/custom type such as my_schema.text is not
+    reinterpreted."""
+    for prefix in KNOWN_TYPE_NAMESPACES:
+        if base.startswith(prefix):
+            return base.rsplit(".", 1)[-1]
+    return base
+
+
 def _is_unbounded_text(sql_type: str | None, types: frozenset[str] | set[str]) -> bool:
-    """Shared core: True when sql_type (any length argument dropped, case- and whitespace-normalised) names one
-    of the given unbounded types. Handles the java.sql.Types.* forms by comparing the final dotted segment on
-    that exact prefix only, so a schema-qualified/custom type such as my_schema.text is not misread."""
+    """Shared core: True when sql_type (any length argument dropped, case- and whitespace-normalised, and a known
+    java.sql.Types.* / pg_catalog.* namespace unwrapped) names one of the given unbounded types."""
     if not sql_type:
         return False
-    # Drop any length argument, lower-case, and collapse internal whitespace ("long  varchar" -> "long varchar").
-    base = " ".join(sql_type.split("(", 1)[0].lower().split())
+    base = _normalize_type(sql_type)
     if not base:
         return False
-    if base in types:
-        return True
-    # Recognise a type named through a known namespace (JDBC java.sql.Types.* or PostgreSQL pg_catalog.*) by its
-    # final segment, on these exact prefixes only, so a schema-qualified/custom type such as my_schema.text is
-    # not misread as unbounded.
-    for prefix in ("java.sql.types.", "pg_catalog."):
-        if base.startswith(prefix):
-            return base.rsplit(".", 1)[-1] in types
-    return False
+    return base in types or _strip_known_namespace(base) in types
 
 
 def is_unbounded_text(sql_type: str | None) -> bool:
@@ -281,13 +295,15 @@ def is_unbounded_varchar(sql_type: str | None, length: str | int | None = None) 
     The limit may be inline (varchar(255)) or recorded as separate schema metadata (``length``); when neither is
     present the column is unbounded. A declared type with no length metadata (``length`` is None) and no inline
     ``(n)`` is treated as unbounded -- the source-scan case, where only the declared type string is available.
+    A known namespace is unwrapped first, so pg_catalog.varchar / java.sql.Types.VARCHAR are recognised too.
     """
     if not sql_type:
         return False
     raw = sql_type.strip().lower()
     if "(" in raw:  # an inline length such as varchar(255) / character varying(255)
         return False
-    if " ".join(raw.split()) not in VARYING_TYPES:
+    base = _strip_known_namespace(" ".join(raw.split()))
+    if base not in VARYING_TYPES:
         return False
     return length is None or str(length).strip() in ("", "0")
 
@@ -866,42 +882,44 @@ def raw_sql_text(element) -> str:
     return "".join(parts)
 
 
+def _mentions_unbounded(blob: str) -> bool:
+    """True when a chunk of raw SQL mentions an unbounded type: a text/CLOB token, a no-length varchar token, or
+    an unresolved ${property} that could substitute either."""
+    return bool(TEXT_TYPE_TOKEN.search(blob) or VARYING_SQL_TOKEN.search(blob)) or "${" in blob
+
+
 def modify_sql_introduces_text(element) -> bool:
     """
-    True when a <modifySql> rewrites the generated SQL to mention an unbounded-text type, or carries an
-    unresolved ${property} that could.
+    True when a <modifySql> rewrites the generated SQL to an unbounded type, or carries an unresolved ${property}
+    that could.
 
-    <modifySql> post-processes the SQL Liquibase generates (e.g. ``<replace replace="VARCHAR(255)"
-    with="TEXT"/>``), so a column declared as a bounded type can still end up unbounded in the database
-    (reported). The replacement text lives in attributes (``with=``/``value=``) as well as element text, so
-    both are inspected across the whole subtree. The scanner cannot map the result to a (table, column) pair,
-    so the changeset is sent to manual attestation rather than reported as a precise introduction.
+    <modifySql> post-processes the SQL Liquibase generates (e.g. ``<replace replace="VARCHAR(255)" with="TEXT"/>``
+    or ``with="VARCHAR"`` dropping the length), so a column declared as a bounded type can still end up unbounded
+    in the database (reported). The replacement text lives in attributes (``with=``/``value=``) as well as element
+    text, so both are inspected across the whole subtree. The scanner cannot map the result to a (table, column)
+    pair, so the changeset is sent to manual attestation rather than reported as a precise introduction.
     """
     for node in element.iter():
-        for value in node.attrib.values():
-            if TEXT_TYPE_TOKEN.search(value) or "${" in value:
-                return True
-        for text in (node.text, node.tail):
-            if text and (TEXT_TYPE_TOKEN.search(text) or "${" in text):
-                return True
+        if any(_mentions_unbounded(value) for value in node.attrib.values()):
+            return True
+        if any(text and _mentions_unbounded(text) for text in (node.text, node.tail)):
+            return True
     return False
 
 
 def needs_manual_review(changeset) -> bool:
     """
     True when a changeset (outside its <rollback>) carries something the scanner cannot read for certain: a
-    <sqlFile> or custom change class, a raw <sql> block mentioning a text type or an unresolved ${property}
-    expression (which could substitute a text type), a <modifySql> that rewrites the SQL to a text type, or a
+    <sqlFile> or custom change class, a raw <sql> block mentioning an unbounded type (a text/CLOB type, a
+    no-length varchar, or an unresolved ${property}), a <modifySql> that rewrites the SQL to such a type, or a
     column/modifyDataType/renameColumn/mergeColumns whose type is an unresolved ${property}. Such a changeset
     must be attested in UNVERIFIABLE_CHANGESETS.
     """
     for element in iter_forward_elements(changeset):
         if element.tag in HARD_OPAQUE_TAGS or element.get("class"):
             return True
-        if element.tag == SQL_TAG:
-            sql_text = raw_sql_text(element)
-            if TEXT_TYPE_TOKEN.search(sql_text) or "${" in sql_text:
-                return True
+        if element.tag == SQL_TAG and _mentions_unbounded(raw_sql_text(element)):
+            return True
         if element.tag == MODIFY_SQL_TAG and modify_sql_introduces_text(element):
             return True
         if element.tag == COLUMN_TAG and "${" in (element.get("type") or ""):
