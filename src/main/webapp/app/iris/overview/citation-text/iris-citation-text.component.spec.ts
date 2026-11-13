@@ -86,6 +86,23 @@ describe('IrisCitationTextComponent', () => {
         expect(el.textContent).toContain('Hello world');
     });
 
+    it('does not let a citation marker inside an attribute add attributes to the element', () => {
+        const el = render('![x [cite:L:7::::Key:a onerror=alert(1) b]](https://example.org/a.png)');
+
+        const image = el.querySelector('img');
+        expect(image).toBeTruthy();
+        expect(Array.from(image!.attributes).map((attribute) => attribute.name)).not.toContain('onerror');
+        expect(el.querySelectorAll('[onerror]')).toHaveLength(0);
+    });
+
+    it('keeps the citation bubble markup that the sanitizer must not remove', () => {
+        const citationInfo: IrisCitationMetaDTO[] = [{ entityId: 7, lectureTitle: 'L', lectureUnitTitle: '', lectureId: 1, courseId: 1 }];
+        const el = render('[cite:L:7:3:::Key:Summary]', citationInfo);
+
+        expect(el.querySelector('.iris-citation__icon svg path')).toBeTruthy();
+        expect(el.querySelector('.iris-citation[data-course-id="1"][data-lecture-id="1"]')).toBeTruthy();
+    });
+
     it('renders single citation with summary and lecture info', () => {
         const citationInfo: IrisCitationMetaDTO[] = [{ entityId: 7, lectureTitle: 'My Lecture', lectureUnitTitle: 'My Unit', lectureId: 1, courseId: 1 }];
         const el = render('Hello [cite:L:7::::Keyword:Summary] world', citationInfo);
