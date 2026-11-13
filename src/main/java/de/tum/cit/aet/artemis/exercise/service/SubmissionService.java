@@ -425,7 +425,7 @@ public class SubmissionService {
      * @param newResult the result to copy the typed feedback to
      * @param oldResult the result to copy the typed feedback from
      */
-    protected void copyTypedFeedbackToResult(Result newResult, Result oldResult) {
+    public void copyTypedFeedbackToResult(Result newResult, Result oldResult) {
         if (oldResult == null || oldResult.getId() == null) {
             return;
         }
