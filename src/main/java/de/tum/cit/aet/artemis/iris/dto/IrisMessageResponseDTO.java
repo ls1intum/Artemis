@@ -13,11 +13,13 @@ import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageOrigin;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisProactiveOutcome;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisActivityDTO;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record IrisMessageResponseDTO(@Nullable Long id, @Nullable ZonedDateTime sentAt, @Nullable Boolean helpful, IrisMessageSender sender, @Nullable IrisMessageOrigin origin,
-        @Nullable IrisProactiveOutcome proactiveOutcome, @Nullable String proactiveEpisodeId, List<IrisMessageContentResponseDTO> content,
-        @Nullable List<PyrisActivityDTO> activities, @Nullable Integer messageDifferentiator, @JsonProperty("final") @Nullable Boolean finalResult) {
+public record IrisMessageResponseDTO(@Nullable Long id, @Nullable ZonedDateTime sentAt, @Nullable Boolean helpful,
+        @Schema(requiredMode = Schema.RequiredMode.REQUIRED) IrisMessageSender sender, @Nullable IrisMessageOrigin origin, @Nullable IrisProactiveOutcome proactiveOutcome,
+        @Nullable String proactiveEpisodeId, List<IrisMessageContentResponseDTO> content, @Nullable List<PyrisActivityDTO> activities, @Nullable Integer messageDifferentiator,
+        @JsonProperty("final") @Nullable Boolean finalResult) {
 
     /**
      * Creates a response DTO from an {@link IrisMessage} entity.

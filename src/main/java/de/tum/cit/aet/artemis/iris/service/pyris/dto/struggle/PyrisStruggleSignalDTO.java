@@ -4,6 +4,8 @@ import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
 /**
  * Compact struggle signal emitted by the client engine and forwarded to the Pyris struggle-intervention
  * pipeline. camelCase to match the cross-repo wire contract (Pyris' {@code StruggleSignal}).
@@ -22,6 +24,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 public record PyrisStruggleSignalDTO(AlertDTO alert, List<TickDTO> trajectory, double sessionSeconds) {
 
     @JsonInclude
+    @Schema(name = "StruggleAlertDTO")
     public record AlertDTO(double tSessionS, String primaryBoundary, List<String> boundaryTypes, double severity, String path, boolean inWarmup, boolean inGrace) {
     }
 
@@ -29,6 +32,7 @@ public record PyrisStruggleSignalDTO(AlertDTO alert, List<TickDTO> trajectory, d
      * One 10-s engine tick of the severity trajectory: {@code s} is the severity sBase at tick {@code t}.
      */
     @JsonInclude
+    @Schema(name = "StruggleTickDTO")
     public record TickDTO(double t, double s) {
     }
 }

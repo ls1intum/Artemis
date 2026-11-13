@@ -140,10 +140,10 @@ class IrisSettingsServiceTest extends AbstractIrisIntegrationTest {
     @Test
     void updateCourseSettings_anExplicitLegacyDecisionIsPersisted() {
         var dto = irisSettingsService.updateCourseSettings(course.getId(), IrisCourseSettings.of(true, null, null, null, null, false, false), true);
-        assertThat(dto.settings().legacyBuildTriggersEffective()).isFalse();
+        assertThat(dto.settings().toDomain().legacyBuildTriggersEffective()).isFalse();
 
         var reEnabled = irisSettingsService.updateCourseSettings(course.getId(), IrisCourseSettings.of(true, null, null, null, null, false, true), true);
-        assertThat(reEnabled.settings().legacyBuildTriggersEffective()).isTrue();
+        assertThat(reEnabled.settings().toDomain().legacyBuildTriggersEffective()).isTrue();
     }
 
     @Test
@@ -151,7 +151,7 @@ class IrisSettingsServiceTest extends AbstractIrisIntegrationTest {
         var dto = irisSettingsService.updateCourseSettings(course.getId(), IrisCourseSettings.of(true, null, null, null, null), true);
 
         assertThat(dto.settings().legacyBuildTriggersEnabled()).isNull();
-        assertThat(dto.settings().legacyBuildTriggersEffective()).isTrue();
+        assertThat(dto.settings().toDomain().legacyBuildTriggersEffective()).isTrue();
     }
 
     @Test

@@ -134,7 +134,9 @@ class IrisTutorSuggestionIntegrationTest extends AbstractIrisIntegrationTest {
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void getCurrentSession() throws Exception {
         var post = createPostInProgrammingExerciseChat(programmingExercise, TEST_PREFIX);
-        var irisSession = request.postWithResponseBody(tutorSuggestionUrl(post.getId()), null, IrisChatSessionResponseDTO.class, HttpStatus.CREATED);
+        var created = request.postWithoutResponseBody(tutorSuggestionUrl(post.getId()) + "/current", null, HttpStatus.CREATED, null);
+        var irisSession = request.getObjectMapper().readValue(created.getContentAsString(), IrisChatSessionResponseDTO.class);
+        assertThat(created.getHeader("Location")).isEqualTo(irisSessionUrl(irisSession.id()));
         var currentIrisSession = request.postWithResponseBody(tutorSuggestionUrl(post.getId()) + "/current", null, IrisChatSessionResponseDTO.class, HttpStatus.OK);
         assertThat(currentIrisSession.id()).isEqualTo(irisSession.id());
     }
@@ -167,7 +169,10 @@ class IrisTutorSuggestionIntegrationTest extends AbstractIrisIntegrationTest {
             pipelineDone.set(true);
         });
 
-        request.postWithResponseBody(irisSessionUrl(irisSession.id()) + "/tutor-suggestion", null, Void.class, HttpStatus.CREATED);
+        String suggestionUrl = irisSessionUrl(irisSession.id()) + "/tutor-suggestion";
+        var created = request.postWithoutResponseBody(suggestionUrl, null, HttpStatus.CREATED, null);
+        assertThat(created.getHeader("Location")).isEqualTo(suggestionUrl);
+        assertThat(created.getContentAsString()).isEmpty();
         await().atMost(java.time.Duration.ofSeconds(5)).until(pipelineDone::get);
     }
 

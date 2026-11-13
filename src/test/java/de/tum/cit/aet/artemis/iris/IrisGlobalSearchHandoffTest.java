@@ -63,8 +63,10 @@ class IrisGlobalSearchHandoffTest extends AbstractIrisChatSessionTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void handoff_toTheCourse_opensACourseChatHoldingTheQuestionAndTheAnswer() throws Exception {
-        var created = handoff(handoffDTO(null), HttpStatus.CREATED);
+        var response = request.postWithoutResponseBody(HANDOFF_URL, handoffDTO(null), HttpStatus.CREATED, null);
+        var created = request.getObjectMapper().readValue(response.getContentAsString(), IrisChatSessionResponseDTO.class);
 
+        assertThat(response.getHeader("Location")).isEqualTo("/api/iris/chat/courses/" + course.getId() + "/sessions/" + created.id());
         assertThat(created.mode()).isEqualTo(IrisChatMode.COURSE_CHAT);
         assertThat(created.title()).isEqualTo(QUESTION);
         var messages = loadMessages(created.id());

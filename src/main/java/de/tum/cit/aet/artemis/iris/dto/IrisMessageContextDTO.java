@@ -3,6 +3,9 @@ package de.tum.cit.aet.artemis.iris.dto;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
+import io.swagger.v3.oas.annotations.media.DiscriminatorMapping;
+import io.swagger.v3.oas.annotations.media.Schema;
+
 /**
  * Base interface for context information attached to Iris messages.
  * Context provides additional information about what the user is currently viewing or working on,
@@ -22,6 +25,10 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 // write the discriminator from that existing component instead of emitting a second one. `visible = true` keeps
 // the component populated on deserialization and present on the wire (same pattern as LectureDetailsDTO and
 // QuizQuestionRefinementResponseDTO). The wire format is unchanged: a single `type` field with the subtype name.
+@Schema(discriminatorProperty = "type", discriminatorMapping = { @DiscriminatorMapping(value = "video", schema = IrisVideoContextDTO.class),
+        @DiscriminatorMapping(value = "slides", schema = IrisSlidesContextDTO.class),
+        @DiscriminatorMapping(value = "combinedView", schema = IrisCombinedViewContextDTO.class) }, oneOf = { IrisVideoContextDTO.class, IrisSlidesContextDTO.class,
+                IrisCombinedViewContextDTO.class })
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.EXISTING_PROPERTY, property = "type", visible = true)
 @JsonSubTypes({ @JsonSubTypes.Type(value = IrisVideoContextDTO.class, name = "video"), @JsonSubTypes.Type(value = IrisSlidesContextDTO.class, name = "slides"),
         @JsonSubTypes.Type(value = IrisCombinedViewContextDTO.class, name = "combinedView") })

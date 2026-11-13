@@ -11,10 +11,12 @@ import de.tum.cit.aet.artemis.core.config.RawJsonStringDeserializer;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisJsonMessageContent;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageContent;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisTextMessageContent;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record IrisMessageContentResponseDTO(@Nullable Long id, String type, @Nullable String textContent,
-        @Nullable @JsonRawValue @JsonDeserialize(using = RawJsonStringDeserializer.class) String attributes) {
+public record IrisMessageContentResponseDTO(@Nullable Long id, @Schema(requiredMode = Schema.RequiredMode.REQUIRED) String type, @Nullable String textContent,
+        @Schema(implementation = Object.class, types = {
+                "object" }, additionalProperties = Schema.AdditionalPropertiesValue.TRUE, description = "Raw JSON attributes of this message content.") @Nullable @JsonRawValue @JsonDeserialize(using = RawJsonStringDeserializer.class) String attributes){
 
     /**
      * Creates a response DTO from an {@link IrisMessageContent} entity.

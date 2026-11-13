@@ -7,6 +7,7 @@ import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatMode;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
  * Listing DTO for the cross-mode chat-history endpoint ({@code /api/iris/chat-history/{courseId}/sessions}).
@@ -25,6 +26,7 @@ import de.tum.cit.aet.artemis.iris.domain.session.IrisChatMode;
  * @param mode             the chat mode enum
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record IrisChatSessionDTO(long id, long entityId, @Nullable String entityName, @Nullable String title, ZonedDateTime creationDate, @Nullable ZonedDateTime lastActivityDate,
-        IrisChatMode mode) {
+public record IrisChatSessionDTO(@Schema(requiredMode = Schema.RequiredMode.REQUIRED) long id, @Schema(requiredMode = Schema.RequiredMode.REQUIRED) long entityId,
+        @Nullable String entityName, @Nullable String title, @Schema(requiredMode = Schema.RequiredMode.REQUIRED) ZonedDateTime creationDate,
+        @Nullable ZonedDateTime lastActivityDate, @Schema(requiredMode = Schema.RequiredMode.REQUIRED) IrisChatMode mode) {
 }

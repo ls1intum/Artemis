@@ -23,7 +23,9 @@ import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisCourseSettings;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisCourseSettingsEntity;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisRateLimitConfiguration;
+import de.tum.cit.aet.artemis.iris.dto.IrisCourseSettingsDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisCourseSettingsWithRateLimitDTO;
+import de.tum.cit.aet.artemis.iris.dto.IrisRateLimitConfigurationDTO;
 import de.tum.cit.aet.artemis.iris.repository.IrisCourseSettingsRepository;
 
 /**
@@ -93,10 +95,7 @@ public class IrisSettingsService {
      * @return DTO containing the payload with effective rate limits
      */
     public IrisCourseSettingsWithRateLimitDTO getCourseSettingsWithRateLimit(long courseId) {
-        var settings = getSettingsForCourse(courseId);
-        var defaults = getApplicationRateLimitDefaults();
-        var effective = resolveEffectiveRateLimit(settings, defaults);
-        return new IrisCourseSettingsWithRateLimitDTO(courseId, settings, effective, defaults);
+        return toRestSettings(courseId, getSettingsForCourse(courseId));
     }
 
     /**
@@ -130,9 +129,22 @@ public class IrisSettingsService {
             // Nothing was stored, so answering with the requested values would claim a change that did not happen
             throw new EntityNotFoundException("IrisCourseSettings", courseId);
         }
+        return toRestSettings(courseId, sanitizedRequest);
+    }
+
+    private IrisCourseSettingsWithRateLimitDTO toRestSettings(long courseId, IrisCourseSettings settings) {
         var defaults = getApplicationRateLimitDefaults();
-        var effective = resolveEffectiveRateLimit(sanitizedRequest, defaults);
-        return new IrisCourseSettingsWithRateLimitDTO(courseId, sanitizedRequest, effective, defaults);
+        var effective = resolveEffectiveRateLimit(settings, defaults);
+        return new IrisCourseSettingsWithRateLimitDTO(courseId, IrisCourseSettingsDTO.of(settings), IrisRateLimitConfigurationDTO.of(effective),
+                IrisRateLimitConfigurationDTO.of(defaults));
+    }
+
+    /**
+     * @param courseId the course ID
+     * @return the rate limit configuration used for enforcement in this course
+     */
+    public IrisRateLimitConfiguration getEffectiveRateLimit(long courseId) {
+        return resolveEffectiveRateLimit(getSettingsForCourse(courseId), getApplicationRateLimitDefaults());
     }
 
     // Resolves one nullable flag of an incoming payload against what is stored.

@@ -2,6 +2,8 @@ package de.tum.cit.aet.artemis.iris;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.util.Map;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -134,10 +136,12 @@ class IrisSettingsResourceIntegrationTest extends AbstractIrisIntegrationTest {
         var update = IrisCourseSettings.of(current.enabled(), current.customInstructions(), IrisPipelineVariant.ADVANCED, current.supportLevel(), current.rateLimit(),
                 current.proactiveStruggleEnabled());
 
-        var response = request.putWithResponseBody("/api/iris/courses/" + course1.getId() + "/iris-settings", update, IrisCourseSettingsWithRateLimitDTO.class, HttpStatus.OK);
+        String url = "/api/iris/courses/" + course1.getId() + "/iris-settings";
+        var response = request.putWithResponseBody(url, update, IrisCourseSettingsWithRateLimitDTO.class, HttpStatus.OK, Map.of("X-Frame-Options", "DENY"));
 
         assertThat(response).isNotNull();
         assertThat(response.settings().variant()).isEqualTo(IrisPipelineVariant.ADVANCED);
+        assertThat(request.get(url, HttpStatus.OK, String.class)).contains("\"variant\":\"advanced\"", "\"supportLevel\":\"moderate\"");
 
         // Verify persistence
         var saved = irisSettingsService.getSettingsForCourse(course1);
