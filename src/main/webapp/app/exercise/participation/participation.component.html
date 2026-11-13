@@ -98,7 +98,7 @@
     <jhi-filter-dropdown [groupedFilters]="filterGroups()" [activeFilters]="activeFilters()" (filterChange)="updateParticipationFilter($event)">
         @if (!hideParticipantInformation()) {
             <jhi-search-filter
-                class="w-64 max-w-full shrink-0"
+                class="me-2 w-64 max-w-full shrink-0"
                 size="small"
                 [placeholderKey]="tableOptions().searchPlaceholder ?? 'artemisApp.participation.searchStudents'"
                 (newSearchEvent)="onSearchChange($event)"

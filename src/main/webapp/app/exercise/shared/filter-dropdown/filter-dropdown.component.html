@@ -56,6 +56,9 @@
             }
         }
     }
+    @if (checkboxGroups().length) {
+        <span class="hidden basis-full @min-[80rem]:block" aria-hidden="true"></span>
+    }
     @for (group of checkboxGroups(); track group.labelKey) {
         <div class="inline-flex shrink-0 items-center gap-2 text-sm text-text">
             <tumaet-ui-checkbox
