@@ -425,6 +425,226 @@ paths:
           content:
             application/json:
               schema: {$ref: '#/components/schemas/QuizQuestionPoolItem'}
+  /api/exercise/exercises/{exerciseId}/teams/{teamId}:
+    get:
+      tags: [team]
+      operationId: getTeam
+      parameters:
+      - name: exerciseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: teamId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/TeamResponse'}
+    put:
+      tags: [team]
+      operationId: updateTeam
+      parameters:
+      - name: exerciseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: teamId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/TeamInput'}
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/TeamResponse'}
+    delete:
+      tags: [team]
+      operationId: deleteTeam
+      parameters:
+      - name: exerciseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: teamId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200': {description: OK}
+  /api/exercise/exercises/{exerciseId}/teams/import-from-list:
+    put:
+      tags: [team]
+      operationId: importTeamsFromList
+      parameters:
+      - name: exerciseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: importStrategyType
+        in: query
+        required: true
+        schema:
+          type: string
+          enum: [PURGE_EXISTING, CREATE_ONLY]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: array
+              items: {$ref: '#/components/schemas/TeamImport'}
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/TeamResponse'}
+  /api/exercise/exercises/{exerciseId}/teams/import-from-exercise:
+    put:
+      tags: [team]
+      operationId: importTeamsFromSourceExercise
+      parameters:
+      - name: exerciseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: sourceExerciseId
+        in: query
+        required: true
+        schema: {type: integer, format: int64}
+      - name: importStrategyType
+        in: query
+        required: true
+        schema:
+          type: string
+          enum: [PURGE_EXISTING, CREATE_ONLY]
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/TeamResponse'}
+  /api/exercise/exercises/{exerciseId}/review-threads/{threadId}/resolved:
+    put:
+      tags: [exercise-review]
+      operationId: updateThreadResolvedState
+      parameters:
+      - name: exerciseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: threadId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/UpdateThreadResolvedState'}
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/CommentThread'}
+  /api/exercise/exercises/{exerciseId}/review-thread-groups/{groupId}/resolved:
+    put:
+      tags: [exercise-review]
+      operationId: updateThreadGroupResolvedState
+      parameters:
+      - name: exerciseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: groupId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/UpdateThreadResolvedState'}
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/CommentThread'}
+  /api/exercise/exercises/{exerciseId}/review-comments/{commentId}:
+    put:
+      tags: [exercise-review]
+      operationId: updateUserCommentContent
+      parameters:
+      - name: exerciseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: commentId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/UserCommentContent'}
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Comment'}
+    delete:
+      tags: [exercise-review]
+      operationId: deleteComment
+      parameters:
+      - name: exerciseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: commentId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '204': {description: The review comment was deleted.}
+  /api/exercise/exercises/{exerciseId}/review-comments/{commentId}/inline-fix/applied:
+    put:
+      tags: [exercise-review]
+      operationId: markConsistencyInlineFixApplied
+      parameters:
+      - name: exerciseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: commentId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Comment'}
   /api/tutorialgroup/courses/{courseId}/tutorial-groups:
     get:
       tags: [tutorial-group]
@@ -1333,6 +1553,126 @@ paths:
                 type: array
                 items: {type: string, maxLength: 128}
                 maxItems: 500
+  /api/exercise/exercises/{exerciseId}/teams:
+    get:
+      tags: [team]
+      operationId: getTeamsForExercise
+      parameters:
+      - name: exerciseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: teamOwnerId
+        in: query
+        required: false
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/TeamResponse'}
+    post:
+      tags: [team]
+      operationId: createTeam
+      parameters:
+      - name: exerciseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/TeamInput'}
+        required: true
+      responses:
+        '201':
+          description: The team was created.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/TeamResponse'}
+  /api/exercise/exercises/{exerciseId}/review-threads:
+    get:
+      tags: [exercise-review]
+      operationId: getThreads
+      parameters:
+      - name: exerciseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/CommentThread'}
+    post:
+      tags: [exercise-review]
+      operationId: createThread
+      parameters:
+      - name: exerciseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/CreateCommentThread'}
+        required: true
+      responses:
+        '201':
+          description: The review thread was created.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/CommentThread'}
+  /api/exercise/exercises/{exerciseId}/review-threads/{threadId}/comments:
+    post:
+      tags: [exercise-review]
+      operationId: createUserComment
+      parameters:
+      - name: exerciseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: threadId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/UserCommentContent'}
+        required: true
+      responses:
+        '201':
+          description: The review comment was created.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Comment'}
+  /api/exercise/exercises/{exerciseId}/review-thread-groups:
+    post:
+      tags: [exercise-review]
+      operationId: createThreadGroup
+      parameters:
+      - name: exerciseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/CreateCommentThreadGroup'}
+        required: true
+      responses:
+        '201':
+          description: The review thread group was created.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/CommentThreadGroup'}
   /api/tutorialgroup/courses/{courseId}/tutorial-groups/{tutorialGroupId}/sessions/{sessionId}/cancel:
     patch:
       tags: [tutorial-group-session]
@@ -2259,6 +2599,88 @@ paths:
           content:
             application/json:
               schema: {$ref: '#/components/schemas/CourseBrowserData'}
+  /api/exercise/courses/{courseId}/teams/{teamShortName}/with-exercises-and-participations:
+    get:
+      tags: [team]
+      operationId: getCourseWithExercisesAndParticipationsForTeam
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: teamShortName
+        in: path
+        required: true
+        schema: {type: string}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/CourseWithTeamExercises'}
+  /api/exercise/courses/{courseId}/teams/{teamShortName}/with-exercises-and-participations/for-staff:
+    get:
+      tags: [team]
+      operationId: getCourseWithExercisesAndParticipationsForTeamForStaff
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: teamShortName
+        in: path
+        required: true
+        schema: {type: string}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/CourseWithTeamExercises'}
+  /api/exercise/courses/{courseId}/teams/exists:
+    get:
+      tags: [team]
+      operationId: existsTeamByShortName
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: shortName
+        in: query
+        required: true
+        schema: {type: string}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {type: boolean}
+  /api/exercise/courses/{courseId}/exercises/{exerciseId}/team-search-users:
+    get:
+      tags: [team]
+      operationId: searchTeamInExercise
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: exerciseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: loginOrName
+        in: query
+        required: true
+        schema: {type: string}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/TeamSearchUser'}
   /api/calendar/subscription-token:
     get:
       tags: [calendar]
@@ -2457,6 +2879,21 @@ paths:
         schema: {type: string}
       responses:
         '200': {description: OK}
+  /api/exercise/exercises/{exerciseId}/review-thread-groups/{groupId}:
+    delete:
+      tags: [exercise-review]
+      operationId: deleteThreadGroup
+      parameters:
+      - name: exerciseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: groupId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '204': {description: The review thread group was deleted.}
 components:
   schemas:
     CourseCompetency:
@@ -2685,6 +3122,28 @@ components:
       required: [agentTurns, attempts, cachedInputTokens, cachedInputTokensComplete,
         estimatedCostEur, estimatedCostEurComplete, inputTokens, modelCalls, models,
         outputTokens, providerRequestIds, providerRequestIdsComplete, toolCalls]
+    ConsistencyIssueCommentContent:
+      description: Content describing a detected consistency issue in a review.
+      required: [category, contentType, severity, text]
+      type: object
+      properties:
+        severity:
+          type: string
+          description: Severity level assigned to the issue.
+          enum: [LOW, MEDIUM, HIGH]
+        category:
+          type: string
+          description: Category of the consistency issue.
+          enum: [METHOD_RETURN_TYPE_MISMATCH, METHOD_PARAMETER_MISMATCH, CONSTRUCTOR_PARAMETER_MISMATCH,
+            ATTRIBUTE_TYPE_MISMATCH, VISIBILITY_MISMATCH, IDENTIFIER_NAMING_INCONSISTENCY,
+            GENERATION_REVIEW_REQUIRED]
+        text: {type: string, description: Human-readable description of the issue.,
+          maxLength: 10000, minLength: 0}
+        suggestedFix: {$ref: '#/components/schemas/InlineCodeChange', description: 'Inline
+            code change suggestion, if applicable.'}
+        contentType:
+          type: string
+          enum: [CONSISTENCY_CHECK]
     ExerciseGenerationJobStart:
       type: object
       properties:
@@ -2912,6 +3371,11 @@ components:
           type: array
           items: {$ref: '#/components/schemas/TutorialGroupSession'}
       required: [id, isOnline, language, sessions, title, tutorId, tutorLogin, tutorName]
+    StudentIdentifier:
+      type: object
+      properties:
+        login: {type: string}
+        visibleRegistrationNumber: {type: string}
     DragAndDropSubmittedAnswerFromLiveClient:
       required: [type]
       type: object
@@ -3250,6 +3714,30 @@ components:
         typeCounts:
           type: array
           items: {$ref: '#/components/schemas/IngestionTypeCount'}
+    SubmissionOverview:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        submissionDate: {type: string, format: date-time}
+        submitted: {type: boolean}
+        type:
+          type: string
+          enum: [MANUAL, TIMEOUT, TEST, OTHER, INSTRUCTOR, EXTERNAL]
+        submissionExerciseType: {type: string}
+        buildFailed: {type: boolean}
+        commitHash: {type: string}
+        results:
+          type: array
+          items: {$ref: '#/components/schemas/ResultOverview'}
+    Team:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        name: {type: string}
+        shortName: {type: string}
+        students:
+          type: array
+          items: {$ref: '#/components/schemas/UserName'}
     QuizQuestionBulkRefinementRequest:
       type: object
       description: Request to refine multiple quiz questions at once using a single
@@ -3356,6 +3844,17 @@ components:
         ownerNodeId: {type: string}
         startedAt: {type: string, format: date-time}
         ownerLeftCluster: {type: boolean}
+    CreateCommentThreadGroup:
+      type: object
+      description: Request payload to create a new comment thread group.
+      properties:
+        threadIds:
+          type: array
+          description: Thread ids to associate with the new group.
+          items: {type: integer, format: int64}
+          maxItems: 2147483647
+          minItems: 2
+      required: [threadIds]
     CreateOrUpdateTutorialGroupSessionRequest:
       type: object
       properties:
@@ -3431,6 +3930,12 @@ components:
       properties:
         type: {type: string}
       required: [type]
+    UpdateThreadResolvedState:
+      type: object
+      description: Request payload to update the resolved state of a thread.
+      properties:
+        resolved: {type: boolean, description: Whether the thread is resolved.}
+      required: [resolved]
     ShortAnswerMappingFromEditor:
       type: object
       properties:
@@ -3485,6 +3990,14 @@ components:
           items: {$ref: '#/components/schemas/ExerciseGenerationRetainedFile'}
         empty: {type: boolean}
       required: [completeness, files, jobId]
+    CourseWithTeamExercises:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        exercises:
+          type: array
+          items: {$ref: '#/components/schemas/TeamExercise'}
+          uniqueItems: true
     TutorialGroupSessionCount:
       type: object
       properties:
@@ -3602,6 +4115,35 @@ components:
           items: {$ref: '#/components/schemas/GeneratedAssessmentCriterion'}
           minItems: 1
       required: [criteria]
+    TeamInput:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        name: {type: string, maxLength: 250, minLength: 0}
+        shortName: {type: string, maxLength: 10, minLength: 0}
+        image: {type: string, maxLength: 500, minLength: 0}
+        students:
+          type: array
+          items: {type: integer, format: int64}
+          uniqueItems: true
+        ownerId: {type: integer, format: int64}
+      required: [name, shortName]
+    TeamExercise:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        title: {type: string}
+        type:
+          type: string
+          enum: [text, programming, modeling, file-upload, quiz]
+        releaseDate: {type: string, format: date-time}
+        dueDate: {type: string, format: date-time}
+        teams:
+          type: array
+          items: {$ref: '#/components/schemas/Team'}
+        studentParticipations:
+          type: array
+          items: {$ref: '#/components/schemas/TeamParticipation'}
     AnswerOptionWithoutSolution:
       type: object
       properties:
@@ -3752,6 +4294,26 @@ components:
           items: {$ref: '#/components/schemas/QuizQuestionReEvaluate'}
           minItems: 1
       required: [includedInOverallScore, quizQuestions, randomizeQuestionOrder, title]
+    TeamParticipation:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        type: {type: string}
+        testRun: {type: boolean}
+        initializationState:
+          type: string
+          enum: [UNINITIALIZED, REPO_COPIED, REPO_CONFIGURED, INACTIVE, BUILD_PLAN_COPIED,
+            BUILD_PLAN_CONFIGURED, INITIALIZED, FINISHED]
+        initializationDate: {type: string, format: date-time}
+        individualDueDate: {type: string, format: date-time}
+        presentationScore: {type: number, format: double}
+        submissionCount: {type: integer, format: int32}
+        repositoryUri: {type: string}
+        team: {$ref: '#/components/schemas/Team'}
+        submissions:
+          type: array
+          items: {$ref: '#/components/schemas/SubmissionOverview'}
+          uniqueItems: true
     RewriteFaqResponse:
       type: object
       description: Response containing rewritten FAQ
@@ -3781,6 +4343,17 @@ components:
           type: string
           default: short-answer
           enum: [short-answer]
+    TeamImport:
+      type: object
+      properties:
+        name: {type: string, maxLength: 250, minLength: 0}
+        shortName: {type: string, maxLength: 10, minLength: 0}
+        image: {type: string, maxLength: 500, minLength: 0}
+        students:
+          type: array
+          items: {$ref: '#/components/schemas/StudentIdentifier'}
+          uniqueItems: true
+      required: [name, shortName]
     CourseWithId:
       type: object
       properties:
@@ -3881,6 +4454,21 @@ components:
           type: string
           default: drag-and-drop
           enum: [drag-and-drop]
+    TeamResponse:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        name: {type: string}
+        shortName: {type: string}
+        image: {type: string}
+        createdBy: {type: string}
+        createdDate: {type: string, format: date-time}
+        lastModifiedBy: {type: string}
+        lastModifiedDate: {type: string, format: date-time}
+        owner: {$ref: '#/components/schemas/TeamMember'}
+        students:
+          type: array
+          items: {$ref: '#/components/schemas/TeamMember'}
     QuizQuestionStatisticResponse:
       type: object
       properties:
@@ -3963,6 +4551,16 @@ components:
           type: array
           items: {type: string}
         matchedCourseCompetencyId: {type: integer, format: int64}
+    UserCommentContent:
+      description: Content for a user-provided review comment.
+      required: [contentType, text]
+      type: object
+      properties:
+        text: {type: string, description: Comment text supplied by the reviewer.,
+          maxLength: 10000, minLength: 0}
+        contentType:
+          type: string
+          enum: [USER]
     SubmittedAnswerAfterEvaluation:
       discriminator:
         propertyName: type
@@ -3982,6 +4580,12 @@ components:
         points: {type: number, format: double}
         ratedCounter: {type: integer, format: int32}
         unRatedCounter: {type: integer, format: int32}
+    UserName:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        login: {type: string}
+        name: {type: string}
     ExerciseGenerationCapabilities:
       type: object
       properties:
@@ -4210,6 +4814,17 @@ components:
         userPrompt: {type: string, description: User prompt for global refinement,
           maxLength: 1000, minLength: 1}
       required: [problemStatementText, userPrompt]
+    CommentContent:
+      description: Base type for review comment content. Discriminator is contentType.
+      discriminator:
+        propertyName: contentType
+        mapping: {USER: '#/components/schemas/UserCommentContent', CONSISTENCY_CHECK: '#/components/schemas/ConsistencyIssueCommentContent'}
+      oneOf:
+      - {$ref: '#/components/schemas/UserCommentContent'}
+      - {$ref: '#/components/schemas/ConsistencyIssueCommentContent'}
+      properties:
+        contentType: {type: string}
+      required: [contentType]
     QuizQuestionRefinementSuccess:
       description: Successful refinement result containing the refined question and
         an explanation of the changes
@@ -4335,6 +4950,18 @@ components:
         instructionDescription: {type: string}
         feedback: {type: string}
         usageCount: {type: integer, format: int32}
+    CommentThreadGroup:
+      type: object
+      description: DTO representing a comment thread group.
+      properties:
+        id: {type: integer, format: int64, description: Group identifier.}
+        exerciseId: {type: integer, format: int64, description: Identifier of the
+            owning exercise.}
+        threadIds:
+          type: array
+          description: Thread identifiers associated with the group.
+          items: {type: integer, format: int64}
+      required: [exerciseId, id]
     DragAndDropQuestionReEvaluate:
       required: [correctMappings, dragItems, dropLocations, id, invalid, randomizeOrder,
         scoringType, title, type]
@@ -4707,6 +5334,21 @@ components:
           type: string
           default: drag-and-drop
           enum: [drag-and-drop]
+    InlineCodeChange:
+      type: object
+      description: Inline code change suggestion that can be applied to a specific
+        line range.
+      properties:
+        startLine: {type: integer, format: int32, description: First line number (inclusive)
+            of the replacement range.}
+        endLine: {type: integer, format: int32, description: Last line number (inclusive)
+            of the replacement range.}
+        expectedCode: {type: string, description: Code expected in the replacement
+            range before applying the change., maxLength: 10000, minLength: 0}
+        replacementCode: {type: string, description: Code that replaces the expected
+            code within the range., maxLength: 10000, minLength: 0}
+        applied: {type: boolean, description: Whether the change has been applied.}
+      required: [applied, endLine, startLine]
     IndexedEntityRecord:
       type: object
       properties:
@@ -4852,6 +5494,17 @@ components:
         difficulty: {type: integer, format: int32, description: Difficulty as a value
             from 0 to 100, maximum: 100, minimum: 0}
       required: [difficulty, language, numberOfQuestions, questionTypes]
+    TeamSearchUser:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        login: {type: string, maxLength: 50, minLength: 1, pattern: '^[_''.@A-Za-z0-9-]*$'}
+        name: {type: string, maxLength: 50, minLength: 0}
+        firstName: {type: string, maxLength: 50, minLength: 0}
+        lastName: {type: string, maxLength: 50, minLength: 0}
+        email: {type: string, maxLength: 100, minLength: 0}
+        assignedTeamId: {type: integer, format: int64}
+      required: [login]
     TutorialGroupSummarySession:
       type: object
       properties:
@@ -4880,6 +5533,20 @@ components:
           type: string
           default: short-answer
           enum: [short-answer]
+    ResultOverview:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        completionDate: {type: string, format: date-time}
+        score: {type: number, format: double}
+        rated: {type: boolean}
+        successful: {type: boolean}
+        assessmentType:
+          type: string
+          enum: [AUTOMATIC, SEMI_AUTOMATIC, MANUAL, AUTOMATIC_ATHENA]
+        codeIssueCount: {type: integer, format: int32}
+        testCaseCount: {type: integer, format: int32}
+        passedTestCaseCount: {type: integer, format: int32}
     WorkerStatus:
       type: object
       properties:
@@ -5203,6 +5870,40 @@ components:
           items: {$ref: '#/components/schemas/ShortAnswerSolution'}
         similarityValue: {type: integer, format: int32}
         matchLetterCase: {type: boolean}
+    CommentThread:
+      type: object
+      description: DTO representing a review comment thread.
+      properties:
+        id: {type: integer, format: int64, description: Thread identifier.}
+        groupId: {type: integer, format: int64, description: Grouping identifier for
+            related threads.}
+        exerciseId: {type: integer, format: int64, description: Identifier of the
+            owning exercise.}
+        targetType:
+          type: string
+          description: Location type of the thread.
+          enum: [PROBLEM_STATEMENT, TEMPLATE_REPO, SOLUTION_REPO, TEST_REPO, AUXILIARY_REPO]
+        auxiliaryRepositoryId: {type: integer, format: int64, description: 'Identifier
+            of the auxiliary repository, if applicable.'}
+        initialVersionId: {type: integer, format: int64, description: 'Identifier
+            of the initial exercise version, if available.'}
+        initialCommitSha: {type: string, description: 'Initial commit SHA for repository-based
+            threads, if available.'}
+        filePath: {type: string, description: Current file path for repository-based
+            threads.}
+        initialFilePath: {type: string, description: Initial file path captured at
+            thread creation.}
+        lineNumber: {type: integer, format: int32, description: Current line number
+            for repository-based threads., minimum: 1}
+        initialLineNumber: {type: integer, format: int32, description: Initial line
+            number captured at thread creation., minimum: 1}
+        outdated: {type: boolean, description: Whether the thread is outdated.}
+        resolved: {type: boolean, description: Whether the thread is resolved.}
+        comments:
+          type: array
+          description: Comments belonging to the thread.
+          items: {$ref: '#/components/schemas/Comment'}
+      required: [exerciseId, id, initialLineNumber, outdated, resolved, targetType]
     VariantGenerationRequest:
       type: object
       properties:
@@ -5399,6 +6100,23 @@ components:
         repositoryType:
           type: string
           enum: [TEMPLATE, SOLUTION, TESTS, AUXILIARY, USER]
+    CreateCommentThread:
+      type: object
+      description: Request payload to create a new comment thread.
+      properties:
+        targetType:
+          type: string
+          description: Location type of the thread.
+          enum: [PROBLEM_STATEMENT, TEMPLATE_REPO, SOLUTION_REPO, TEST_REPO, AUXILIARY_REPO]
+        auxiliaryRepositoryId: {type: integer, format: int64, description: 'Identifier
+            of the auxiliary repository, if applicable.'}
+        initialFilePath: {type: string, description: Initial file path captured at
+            thread creation., maxLength: 1024, minLength: 0}
+        initialLineNumber: {type: integer, format: int32, description: Initial line
+            number captured at thread creation., minimum: 1}
+        initialComment: {$ref: '#/components/schemas/UserCommentContent', description: Initial
+            user comment that populates the thread.}
+      required: [initialComment, initialLineNumber, targetType]
     ActiveGeneration:
       type: object
       properties:
@@ -5763,6 +6481,28 @@ components:
       properties:
         refinedProblemStatement: {type: string, description: Refined problem statement
             text}
+    Comment:
+      type: object
+      description: DTO representing a review comment.
+      properties:
+        id: {type: integer, format: int64, description: Comment identifier.}
+        threadId: {type: integer, format: int64, description: Identifier of the owning
+            comment thread.}
+        authorName: {type: string, description: 'Display name of the author, if available.'}
+        type:
+          type: string
+          description: Type of the comment.
+          enum: [USER, CONSISTENCY_CHECK]
+        content: {$ref: '#/components/schemas/CommentContent', description: Polymorphic
+            content payload of the comment.}
+        initialVersionId: {type: integer, format: int64, description: 'Identifier
+            of the initial exercise version, if available.'}
+        initialCommitSha: {type: string, description: 'Initial commit SHA for repository-based
+            comments, if available.'}
+        createdDate: {type: string, format: date-time, description: Creation timestamp.}
+        lastModifiedDate: {type: string, format: date-time, description: Last modification
+            timestamp.}
+      required: [content, createdDate, id, lastModifiedDate, threadId, type]
     ExerciseGenerationLiveUsage:
       type: object
       description: What a generation run has spent so far, streamed while it runs
@@ -5887,6 +6627,16 @@ components:
       required: [easyPercent, hardPercent, mediumPercent, multipleChoiceEnabled, multipleChoiceMaxCorrectOptions,
         multipleChoiceMinCorrectOptions, multipleChoiceQuestionsPerLectureUnit, poolGenerationEnabled,
         singleChoiceQuestionsPerLectureUnit]
+    TeamMember:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        login: {type: string}
+        name: {type: string}
+        firstName: {type: string}
+        lastName: {type: string}
+        email: {type: string}
+        visibleRegistrationNumber: {type: string}
     QuizQuestionPoolBuildStart:
       type: object
       description: Outcome of a request to build a course's quiz question pool
