@@ -25,6 +25,7 @@ import de.tum.cit.aet.artemis.account.repository.oidc.DistributedOIDCAuthorizati
 import de.tum.cit.aet.artemis.account.security.OIDCAuthenticationFailureHandler;
 import de.tum.cit.aet.artemis.account.security.OIDCAuthenticationSuccessHandler;
 import de.tum.cit.aet.artemis.account.security.OIDCService;
+import de.tum.cit.aet.artemis.admin.service.RateLimitService;
 
 /**
  * Isolated configuration tests ensuring that OIDC beans and the custom SecurityFilterChain
@@ -58,6 +59,11 @@ class OIDCConfigurationTest {
         @Bean
         DistributedOIDCAuthorizationRequestRepository distributedOIDCAuthorizationRequestRepository() {
             return Mockito.mock(DistributedOIDCAuthorizationRequestRepository.class);
+        }
+
+        @Bean
+        RateLimitService rateLimitService() {
+            return Mockito.mock(RateLimitService.class);
         }
     }
 

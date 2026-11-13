@@ -52,6 +52,24 @@ public enum RateLimitType {
     LOGIN_OPTIONS(30),
 
     /**
+     * Rate limit for unauthenticated OIDC authorization initialization requests via {@code /oauth2/authorization/**}.
+     * <p>
+     * Kept in its own bucket to ensure that initiating an OpenID Connect login flow does not exhaust the budget for
+     * subsequent {@link #AUTHENTICATION} or independent {@link #LOGIN_OPTIONS} lookups.
+     * <p>
+     * While the web client requests login options before redirecting, external integrations like the VS Code extension
+     * and mobile applications (iOS and Android) bypass that step and hit the OIDC authorization endpoint directly.
+     * <p>
+     * Every valid request here allocates and stores a pending authorization request in the distributed data provider's
+     * {@code oidcAuthorizationRequests} map for 10 minutes, making this endpoint a high-risk target for memory-filling DoS attacks.
+     * To protect the cluster's memory without blocking legitimate users—such as an entire campus network initiating an exam
+     * simultaneously from behind a single NAT address—this limit is configured to be significantly higher than standard authentication limits.
+     * <p>
+     * Default: 3000 requests per minute per client.
+     */
+    OIDC_AUTHORIZATION(3000),
+
+    /**
      * Rate limit for the stateless problem-statement rendering endpoint.
      * The endpoint does PlantUML rendering and HTML sanitization, which are comparatively expensive,
      * so the rate limit exists to bound abuse from authenticated clients.

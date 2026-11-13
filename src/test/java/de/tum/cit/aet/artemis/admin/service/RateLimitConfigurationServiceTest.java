@@ -105,6 +105,33 @@ class RateLimitConfigurationServiceTest {
     }
 
     @Test
+    void testGetEffectiveRpm_OidcAuthorization_WithCustomValue_ShouldReturnCustomValue() {
+        when(properties.getOidcAuthorizationRequestsPerMinute()).thenReturn(500);
+
+        int rpm = configurationService.getEffectiveRpm(RateLimitType.OIDC_AUTHORIZATION);
+
+        assertThat(rpm).isEqualTo(500);
+    }
+
+    @Test
+    void testGetEffectiveRpm_OidcAuthorization_WithNullValue_ShouldReturnDefault() {
+        when(properties.getOidcAuthorizationRequestsPerMinute()).thenReturn(null);
+
+        int rpm = configurationService.getEffectiveRpm(RateLimitType.OIDC_AUTHORIZATION);
+
+        assertThat(rpm).isEqualTo(RateLimitType.OIDC_AUTHORIZATION.getDefaultRpm()); // 3000
+    }
+
+    @Test
+    void testGetEffectiveRpm_OidcAuthorization_DoesNotShareTheAuthenticationBudget() {
+        when(properties.getOidcAuthorizationRequestsPerMinute()).thenReturn(7);
+        when(properties.getAuthenticationRequestsPerMinute()).thenReturn(99);
+
+        assertThat(configurationService.getEffectiveRpm(RateLimitType.OIDC_AUTHORIZATION)).isEqualTo(7);
+        assertThat(configurationService.getEffectiveRpm(RateLimitType.AUTHENTICATION)).isEqualTo(99);
+    }
+
+    @Test
     void testGetEffectiveRpm_GitAuthentication_UsesTheCustomValueOrTheDefault() {
         when(properties.getGitAuthenticationRequestsPerMinute()).thenReturn(300);
         assertThat(configurationService.getEffectiveRpm(RateLimitType.GIT_AUTHENTICATION)).isEqualTo(300);
