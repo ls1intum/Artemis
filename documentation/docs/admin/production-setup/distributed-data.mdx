@@ -135,7 +135,13 @@ read fails with the message `Type <name> is not allowed in the distributed data 
 message, `Resolving class <name> is not allowed`. Artemis logs the refused name on the Redis or Valkey provider.
 
 The filter only restricts what is read. It does not change how values are written, the stored format or the schema
-version, so mixed-version rollouts and the migration described on this page are not affected.
+version, so the migration described on this page is not affected. A mixed-version rollout needs one precaution: the result
+of a failed build job carries the exception of the failure with its causes, and an updated build agent replaces causes of
+types outside the list (for example a Git client exception of a failed clone) by plain exceptions before it publishes them.
+A build agent that is not updated yet still publishes the original types, and an updated core node refuses to read them.
+Update the build agents before or together with the core nodes. If an old agent can still publish results, or such a result
+is already queued, wait until the result queues are empty, or add the missing prefix, for example `org.eclipse.jgit.`, to
+`artemis.distributed-data.additional-allowed-types` until all agents are updated.
 
 The default list contains:
 

@@ -185,6 +185,8 @@ public class ProgrammingExerciseUpdateResource {
         // Initialize the course of the entity reloaded under the mutation lease.
         courseService.retrieveCourseOfLoadedExercise(updatedProgrammingExercise);
 
+        programmingExerciseValidationService.validateBuildPhaseNames(buildConfig);
+        programmingExerciseValidationService.validateAutomaticAssessmentTestWeights(updatedProgrammingExercise);
         if (checkReferences) {
             programmingExerciseValidationService.checkProgrammingExerciseForError(updatedProgrammingExercise, buildConfig);
         }

@@ -1,5 +1,8 @@
 package de.tum.cit.aet.artemis.atlas.competency;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
+import java.time.ZonedDateTime;
 import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -113,8 +116,22 @@ class PrerequisiteIntegrationTest extends AbstractCompetencyPrerequisiteIntegrat
 
     @Test
     @WithMockUser(username = OTHER_PREFIX + "student42", roles = "USER")
-    void shouldRefuseListingForStudentNotInCourse() throws Exception {
+    void shouldRefuseListingForStudentNotInCourseWhenEnrollmentIsOff() throws Exception {
         getAllCall(course.getId(), HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = OTHER_PREFIX + "student42", roles = "USER")
+    void shouldReturnPrerequisitesForStudentWhoMayEnrollInTheCourse() throws Exception {
+        // The registration page shows the prerequisites before the user is a member
+        course.setEnrollmentEnabled(true);
+        course.setEnrollmentStartDate(ZonedDateTime.now().minusDays(1));
+        course.setEnrollmentEndDate(ZonedDateTime.now().plusDays(1));
+        courseRepository.save(course);
+
+        List<? extends CourseCompetency> prerequisites = getAllCall(course.getId(), HttpStatus.OK);
+
+        assertThat(prerequisites).isNotNull();
     }
 
     void deleteCall(long courseId, long competencyId, HttpStatus expectedStatus) throws Exception {
