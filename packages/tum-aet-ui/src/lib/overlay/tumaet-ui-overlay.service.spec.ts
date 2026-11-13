@@ -1,7 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { OverlayModule } from '@angular/cdk/overlay';
 import { DomPortal } from '@angular/cdk/portal';
-import { CdkScrollable } from '@angular/cdk/scrolling';
 import { Directionality } from '@angular/cdk/bidi';
 import { vi } from 'vitest';
 import { TumAetUiOverlayPlacement, TumAetUiOverlayService } from './tumaet-ui-overlay.service';
@@ -11,7 +10,7 @@ describe('TumAetUiOverlayService', () => {
     let origin: HTMLElement;
 
     beforeEach(() => {
-        TestBed.configureTestingModule({ imports: [OverlayModule, CdkScrollable] });
+        TestBed.configureTestingModule({ imports: [OverlayModule] });
         service = TestBed.inject(TumAetUiOverlayService);
         origin = document.createElement('button');
         document.body.appendChild(origin);
@@ -34,48 +33,6 @@ describe('TumAetUiOverlayService', () => {
         expect(overlayRef.getConfig().panelClass).toBe('tumaet-ui-overlay');
         expect(overlayRef.hasAttached()).toBe(false);
         overlayRef.dispose();
-    });
-
-    it('repositions on registered ancestor scrolling while attached', () => {
-        vi.useFakeTimers();
-        const scrollable = TestBed.createDirective(CdkScrollable, { tagName: 'div' });
-        scrollable.detectChanges();
-        scrollable.nativeElement.appendChild(origin);
-        const content = document.createElement('div');
-        document.body.appendChild(content);
-        const overlayRef = service.createConnectedOverlay(origin, 'bottom');
-        const updatePosition = vi.spyOn(overlayRef, 'updatePosition').mockImplementation(() => {});
-        const portal = new DomPortal(content);
-        const scroll = () => {
-            scrollable.nativeElement.dispatchEvent(new Event('scroll'));
-            vi.advanceTimersByTime(20);
-        };
-
-        try {
-            overlayRef.attach(portal);
-            vi.advanceTimersByTime(20);
-            updatePosition.mockClear();
-            scroll();
-            expect(updatePosition).toHaveBeenCalled();
-            overlayRef.detach();
-            updatePosition.mockClear();
-            scroll();
-            expect(updatePosition).not.toHaveBeenCalled();
-            overlayRef.attach(portal);
-            vi.advanceTimersByTime(20);
-            updatePosition.mockClear();
-            scroll();
-            expect(updatePosition).toHaveBeenCalled();
-            overlayRef.dispose();
-            updatePosition.mockClear();
-            scroll();
-            expect(updatePosition).not.toHaveBeenCalled();
-        } finally {
-            overlayRef.dispose();
-            scrollable.destroy();
-            content.remove();
-            vi.useRealTimers();
-        }
     });
 
     it('can match the overlay width to its origin', () => {

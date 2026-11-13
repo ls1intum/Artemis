@@ -22,7 +22,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
             [class.w-full]="inDropdown()"
             severity="secondary"
             [jhiFeatureToggle]="[FeatureToggle.ProgrammingExercises, FeatureToggle.Exports]"
-            [forceDisabled]="!programmingExercises() || false"
+            [forceDisabled]="!programmingExercises()"
             [attr.aria-label]="
                 (singleParticipantMode() ? 'artemisApp.instructorDashboard.exportRepos.titleSingle' : 'artemisApp.instructorDashboard.exportRepos.title') | artemisTranslate
             "

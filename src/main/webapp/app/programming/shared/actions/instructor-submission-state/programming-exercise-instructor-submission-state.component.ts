@@ -4,7 +4,6 @@ import { EMPTY, Subscription, merge, timer } from 'rxjs';
 import { catchError, debounceTime, filter, map, switchMap, take, tap } from 'rxjs/operators';
 import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
-import { ButtonSize } from 'app/shared-ui/components/buttons/button/button.component';
 import { faChevronDown, faCircleNotch, faClock, faExclamationTriangle, faRedo } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ProgrammingExerciseTriggerAllButtonComponent } from '../trigger-all-button/programming-exercise-trigger-all-button.component';
@@ -54,7 +53,6 @@ export class ProgrammingExerciseInstructorSubmissionStateComponent implements On
     private destroyRef = inject(DestroyRef);
 
     FeatureToggle = FeatureToggle;
-    ButtonSize = ButtonSize;
     ProgrammingSubmissionState = ProgrammingSubmissionState;
 
     readonly exercise = input.required<ProgrammingExercise>();

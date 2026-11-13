@@ -6,12 +6,11 @@ import { TranslateService } from '@ngx-translate/core';
 import { DialogService, DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
-import { ButtonSize } from 'app/shared-ui/components/buttons/button/button.component';
 import { faBan, faRedo, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { FormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TumAetUiButtonDirective, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective, TumAetUiButtonSize, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { FeatureToggleDirective } from 'app/foundation/feature-toggle/feature-toggle.directive';
 import { ProgrammingSubmissionService } from 'app/programming/shared/services/programming-submission.service';
@@ -28,7 +27,7 @@ import { hasDueDatePassed } from 'app/programming/shared/utils/programming-exerc
             type="button"
             tumAetUiButton
             id="trigger-all-button"
-            [size]="btnSize() === ButtonSize.SMALL ? 'small' : btnSize() === ButtonSize.LARGE ? 'large' : 'default'"
+            [size]="btnSize()"
             severity="danger"
             [variant]="inDropdown() ? 'text' : 'solid'"
             [class.w-full]="inDropdown()"
@@ -56,11 +55,10 @@ export class ProgrammingExerciseTriggerAllButtonComponent {
     private readonly translateService = inject(TranslateService);
 
     FeatureToggle = FeatureToggle;
-    ButtonSize = ButtonSize;
     readonly exercise = input.required<ProgrammingExercise>();
     readonly disabled = input(false);
     readonly inDropdown = input(false);
-    readonly btnSize = input(ButtonSize.MEDIUM);
+    readonly btnSize = input<TumAetUiButtonSize>('default');
     readonly shouldToggle = input(false);
     readonly toggleBreakpoint = input<'md' | 'xl'>('xl');
 

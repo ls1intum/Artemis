@@ -106,7 +106,9 @@ export interface TableConfig {
     showSearch: boolean;
     /** Translation key for the search input placeholder. Default: 'artemisApp.course.exercise.search.searchPlaceholder' */
     searchPlaceholder: string;
+    /** Search input size. Leave undefined for the default size. */
     searchSize?: 'small' | 'large';
+    /** Put search above the other toolbar controls and stretch it to the available width. Default: false. */
     searchFullWidth?: boolean;
     /** Translation key for the message shown when the table has no rows. Default: 'artemisApp.dataTable.search.noResults' */
     emptyMessageTranslation: string;
