@@ -1,5 +1,5 @@
 import { TumAetUiTableDirective } from '@tumaet/ui-angular';
-import { ChangeDetectionStrategy, Component, computed, inject, input, output, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, ElementRef, afterNextRender, computed, inject, input, output, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -18,6 +18,7 @@ import { QuizExerciseGroupCellComponent } from 'app/exam/manage/exercise-groups/
 import { ModelingExerciseGroupCellComponent } from 'app/exam/manage/exercise-groups/modeling-exercise-cell/modeling-exercise-group-cell.component';
 import { FileUploadExerciseGroupCellComponent } from 'app/exam/manage/exercise-groups/file-upload-exercise-cell/file-upload-exercise-group-cell.component';
 import dayjs from 'dayjs/esm';
+import { ActionsColumnWidth } from 'app/exercise/exercise-action-bar/actions-column-width';
 
 export interface ExamTableGroupChange {
     exercise: Exercise;
@@ -32,7 +33,8 @@ export interface ExamTableGroupChange {
     // the rows actually report — so it collapses every main button into the ellipsis before the table scrolls, yet
     // never clips the (non-collapsing) warning. Stays unset when no row reports reserved content, so the column
     // collapses fully (SCSS default). Mirrors the course exercise-table's `--actions-min-width` binding.
-    host: { '[style.--actions-min-width]': 'actionsMinWidthVar()' },
+    // `--actions-width` sizes the column to the widest row's buttons, so the leftover width goes to the other columns.
+    host: { '[style.--actions-min-width]': 'actionsMinWidthVar()', '[style.--actions-width]': 'actionsWidthVar()' },
     imports: [
         RouterLink,
         FaIconComponent,
@@ -53,6 +55,8 @@ export interface ExamTableGroupChange {
 })
 export class ExamExerciseTableComponent {
     private readonly translateService = inject(TranslateService);
+    private readonly destroyRef = inject(DestroyRef);
+    private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
 
     readonly exercises = input.required<Exercise[]>();
     readonly group = input.required<ExerciseGroup>();
@@ -105,6 +109,16 @@ export class ExamExerciseTableComponent {
         if (width > this.maxActionsMinWidth()) {
             this.maxActionsMinWidth.set(width);
         }
+    }
+
+    /** Sizes the actions column to the widest current row's buttons. */
+    protected readonly actionsColumn = new ActionsColumnWidth(computed(() => this.exercises().map((exercise) => exercise.id!)));
+    /** CSS value for the actions-column width, or undefined until a row has measured its buttons. */
+    protected readonly actionsWidthVar = this.actionsColumn.cssWidth;
+
+    constructor() {
+        // The table fills the host, so the host's width is the one the percentage refers to.
+        afterNextRender(() => this.destroyRef.onDestroy(this.actionsColumn.observe(this.host.nativeElement)));
     }
 
     icon(exercise: Exercise) {
