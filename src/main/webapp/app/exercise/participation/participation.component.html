@@ -116,7 +116,7 @@
                 size="small"
                 severity="warn"
                 tumAetUiButton
-                [routerLink]="['/courses', course()!.id, 'exercises', 'programming-exercises', exercise()!.id, 'code-editor', dto.participationId]"
+                [routerLink]="onlineEditorLink(dto.participationId)"
                 [attr.aria-label]="'artemisApp.participation.onlineEditor' | artemisTranslate"
                 [jhiFeatureToggleLink]="FeatureToggle.ProgrammingExercises"
             >

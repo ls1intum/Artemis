@@ -222,6 +222,24 @@ describe('CodeEditorStudentIntegration', () => {
         expect(buildOutput.collapsed()).toBe(false);
     });
 
+    // The exercise page shows the problem statement next to the editor, so the editor of a student leaves out its own instructions there. The code of a
+    // student that an instructor opens from the participations page has no such page around it: the editor brings the instructions and is framed like the
+    // other editors of the course management.
+    it.each([true, false])('should bring its instructions and frame itself like the other editors only as a page of its own (full page: %s)', (fullPage) => {
+        Object.assign(route.snapshot.data, fullPage ? { fullPageEditor: true } : {});
+        container.ngOnInit();
+        const participation = { id: 1, submissions: [], exercise: { id: 99 } as ProgrammingExercise } as Participation;
+        const findWithLatestResultSubject = new Subject<Participation>();
+        getStudentParticipationWithLatestResultStub.mockReturnValue(findWithLatestResultSubject);
+
+        routeSubject.next({ participationId: 1 });
+        findWithLatestResultSubject.next(participation);
+        containerFixture.detectChanges();
+
+        expect((containerFixture.nativeElement as HTMLElement).firstElementChild!.classList.contains('module-bg')).toBe(fullPage);
+        expect(containerDebugElement.query(By.css('jhi-programming-exercise-instructions')).nativeElement.classList.contains('d-none')).toBe(!fullPage);
+    });
+
     it('should abort initialization and show error state if participation cannot be retrieved', () => {
         container.ngOnInit();
         const findWithLatestResultSubject = new Subject<{ body: Participation }>();
