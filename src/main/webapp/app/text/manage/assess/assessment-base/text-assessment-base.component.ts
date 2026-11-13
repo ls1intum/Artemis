@@ -9,6 +9,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { TextAssessmentService } from 'app/text/manage/assess/service/text-assessment.service';
 import { StructuredGradingCriterionService } from 'app/exercise/structured-grading-criterion/structured-grading-criterion.service';
 import { AlertService } from 'app/foundation/service/alert.service';
+import { FEEDBACK_CREDITS_OUT_OF_BOUNDS, isCreditsOutOfBounds } from 'app/assessment/shared/util/feedback-credits-bounds.util';
 import { Feedback } from 'app/assessment/shared/entities/feedback.model';
 import { getPositiveAndCappedTotalScore, getTotalMaxPoints } from 'app/exercise/util/exercise.utils';
 import { getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -93,6 +94,10 @@ export abstract class TextAssessmentBaseComponent implements OnInit {
         // The exam may have re-opened (e.g. a working time extension), in which case the server explains when
         // assessment is possible again; without this the tutor would see the raw HTTP failure text.
         if (alertIfAssessmentNotPossibleYet(error, this.alertService, this.datePipe)) {
+            return;
+        }
+        if (isCreditsOutOfBounds(error)) {
+            this.alertService.error(FEEDBACK_CREDITS_OUT_OF_BOUNDS);
             return;
         }
         const errorMessage = error.headers?.get('X-artemisApp-message') || error.message;
