@@ -147,6 +147,53 @@ class HyperionQuizQuestionChecksTest {
     }
 
     @Test
+    void defectOf_rejectsAQuestionTextThatEnumeratesTheOptions() {
+        assertThat(defectOf(question("Which method is idempotent?\n\nA) PUT\nB) POST\nC) PATCH\nD) GET", "PUT", "POST", "PATCH", "GET"))).contains(Defect.OPTIONS_IN_QUESTION_TEXT);
+        assertThat(defectOf(question("Which method is idempotent?\n- **a:** the first\n- **b:** the second", "PUT", "POST", "PATCH", "GET")))
+                .contains(Defect.OPTIONS_IN_QUESTION_TEXT);
+    }
+
+    @Test
+    void defectOf_rejectsAQuestionTextThatRepeatsTheOptions() {
+        assertThat(defectOf(question("Which method is idempotent: PUT, POST, PATCH or DELETE?", "PUT", "POST", "PATCH", "DELETE"))).contains(Defect.OPTIONS_IN_QUESTION_TEXT);
+    }
+
+    @Test
+    void defectOf_rejectsOptionsThatReferToStatementsOfTheText() {
+        GeneratedQuizQuestionDTO question = new GeneratedQuizQuestionDTO(QuizQuestionGenerationType.MULTIPLE_CHOICE, "Logic",
+                "Which statements are correct?\n1. OR is $x_1 + x_2 \\geq 1$.\n2. AND is $x_1 + x_2 = 2$.\n3. XOR is $x_1 = x_2$.\n4. NOT is $1 - x_1$.",
+                List.of(option("Aussage 1 ist korrekt.", true), option("Aussage 2 ist korrekt.", true), option("Statement 3 is correct.", false),
+                        option("Statement IV is correct.", false)),
+                null, null);
+
+        assertThat(defectOf(question)).contains(Defect.OPTIONS_IN_QUESTION_TEXT);
+    }
+
+    @Test
+    void defectOf_acceptsNumberedRulesAndSingleMentionsOfAnOption() {
+        GeneratedQuizQuestionDTO question = new GeneratedQuizQuestionDTO(QuizQuestionGenerationType.MULTIPLE_CHOICE, "Rules",
+                "Two rules hold:\n1. Project A and project B exclude each other.\n2. Project A requires project B.\nIn case a project is chosen, which constraints are correct?",
+                List.of(option("$x_A + x_B \\leq 1$ models rule 1", true), option("$x_A \\leq x_B$ models rule 2", true), option("$x_A + x_B = 1$ models rule 1", false),
+                        option("$x_B \\leq x_A$ models rule 2", false)),
+                null, null);
+
+        assertThat(defectOf(question)).isEmpty();
+        assertThat(defectOf(question("Is PUT idempotent, and which method is?", "PUT", "POST", "PATCH", "GET"))).isEmpty();
+    }
+
+    @Test
+    void defectOf_rejectsLatexOutsideMathDelimiters() {
+        assertThat(defectOf(question("Which constraint models the implication?", "x \\leq y", "x \\geq y", "x = y", "x + y = 1"))).contains(Defect.UNDELIMITED_MATH);
+        assertThat(defectOf(question("What is the decimal value of \\frac{1}{2}?", "0.5", "0.2", "1.2", "2.0"))).contains(Defect.UNDELIMITED_MATH);
+    }
+
+    @Test
+    void defectOf_acceptsLatexInsideMathDelimitersAndCode() {
+        assertThat(defectOf(question("Which constraint models $x \\Rightarrow y$?\n$$\n\\max \\; x\n$$", "$x \\leq y$", "$x \\geq y$", "$x = y$", "$x + y = 1$"))).isEmpty();
+        assertThat(defectOf(question("What does `System.out.print(\"a\\nb\")` print?", "Two lines", "One line", "Nothing", "An error"))).isEmpty();
+    }
+
+    @Test
     void normalise_collapsesCaseAndWhitespace() {
         assertThat(HyperionQuizQuestionChecks.normalise("  Which  Method\nis Idempotent? ")).isEqualTo("which method is idempotent?");
     }

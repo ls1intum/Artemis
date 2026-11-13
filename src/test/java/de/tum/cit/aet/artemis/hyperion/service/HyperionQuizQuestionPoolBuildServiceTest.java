@@ -446,7 +446,8 @@ class HyperionQuizQuestionPoolBuildServiceTest {
 
         service.build(5L, 7L, leaseToken);
 
-        assertThat(prompt.get().getUserMessage().getText()).contains("Correct answer options per question: question 1: exactly 2; question 2: exactly 3");
+        assertThat(prompt.get().getUserMessage().getText())
+                .contains("- question 1: exactly 2 of its 4 options correct, 2 wrong\n- question 2: exactly 3 of its 4 options correct, 1 wrong");
         assertThat(first.getState()).isEqualTo(QuizQuestionPoolItemState.PENDING);
         assertThat(first.getFailure()).isEqualTo(HyperionQuizQuestionPoolBuildService.FAILURE_NO_VALID_QUESTION);
         assertThat(first.getQuestion()).isNull();
@@ -655,7 +656,7 @@ class HyperionQuizQuestionPoolBuildServiceTest {
     @Test
     void toQuestion_fallsBackToTheRequestedTypeWhenTheModelOmitsIt() {
         HyperionQuizQuestionPoolBuildService.PoolQuestionOutput generated = new HyperionQuizQuestionPoolBuildService.PoolQuestionOutput(null, "Loop count",
-                "How often does the body run?",
+                "How often does the body run?", 1,
                 List.of(new HyperionQuizQuestionPoolBuildService.PoolOptionOutput("5 times", true), new HyperionQuizQuestionPoolBuildService.PoolOptionOutput("4 times", false)),
                 "The condition is checked before every iteration.");
 
@@ -672,14 +673,42 @@ class HyperionQuizQuestionPoolBuildServiceTest {
     void toQuestion_matchesTypeNamesIgnoringCaseAndSeparators() {
         List<HyperionQuizQuestionPoolBuildService.PoolOptionOutput> options = List.of(new HyperionQuizQuestionPoolBuildService.PoolOptionOutput("A", true));
 
-        assertThat(HyperionQuizQuestionPoolBuildService.toQuestion(new HyperionQuizQuestionPoolBuildService.PoolQuestionOutput("single_choice", "T", "Q", options, null),
+        assertThat(HyperionQuizQuestionPoolBuildService.toQuestion(new HyperionQuizQuestionPoolBuildService.PoolQuestionOutput("single_choice", "T", "Q", null, options, null),
                 QuizQuestionGenerationType.SINGLE_CHOICE)).hasValueSatisfying(mapped -> assertThat(mapped.type()).isEqualTo(QuizQuestionGenerationType.SINGLE_CHOICE));
-        assertThat(HyperionQuizQuestionPoolBuildService.toQuestion(new HyperionQuizQuestionPoolBuildService.PoolQuestionOutput("Multiple Choice", "T", "Q", options, null),
+        assertThat(HyperionQuizQuestionPoolBuildService.toQuestion(new HyperionQuizQuestionPoolBuildService.PoolQuestionOutput("Multiple Choice", "T", "Q", null, options, null),
                 QuizQuestionGenerationType.SINGLE_CHOICE)).hasValueSatisfying(mapped -> assertThat(mapped.type()).isEqualTo(QuizQuestionGenerationType.MULTIPLE_CHOICE));
-        assertThat(HyperionQuizQuestionPoolBuildService.toQuestion(new HyperionQuizQuestionPoolBuildService.PoolQuestionOutput("essay", "T", "Q", options, null),
+        assertThat(HyperionQuizQuestionPoolBuildService.toQuestion(new HyperionQuizQuestionPoolBuildService.PoolQuestionOutput("essay", "T", "Q", null, options, null),
                 QuizQuestionGenerationType.SINGLE_CHOICE)).isEmpty();
-        assertThat(HyperionQuizQuestionPoolBuildService.toQuestion(new HyperionQuizQuestionPoolBuildService.PoolQuestionOutput(null, "T", "Q", null, null),
+        assertThat(HyperionQuizQuestionPoolBuildService.toQuestion(new HyperionQuizQuestionPoolBuildService.PoolQuestionOutput(null, "T", "Q", null, null, null),
                 QuizQuestionGenerationType.SINGLE_CHOICE)).isEmpty();
+    }
+
+    @Test
+    void toQuestion_rewritesParenthesisAndBracketMathAsDollarMath() {
+        HyperionQuizQuestionPoolBuildService.PoolQuestionOutput generated = new HyperionQuizQuestionPoolBuildService.PoolQuestionOutput(null, "Dual",
+                "Consider \\(\\max 5x_1\\) subject to\n\\[x_1 \\leq 4\\]\nand the code `f(\\(x\\))`.", 1,
+                List.of(new HyperionQuizQuestionPoolBuildService.PoolOptionOutput("\\(y_1 \\geq 5\\)", true),
+                        new HyperionQuizQuestionPoolBuildService.PoolOptionOutput("$y_1 \\leq 5$", false)),
+                "Because \\(y_1 \\geq 5\\).");
+
+        Optional<GeneratedQuizQuestionDTO> question = HyperionQuizQuestionPoolBuildService.toQuestion(generated, QuizQuestionGenerationType.SINGLE_CHOICE);
+
+        assertThat(question).hasValueSatisfying(mapped -> {
+            assertThat(mapped.questionText()).isEqualTo("Consider $\\max 5x_1$ subject to\n$$x_1 \\leq 4$$\nand the code `f(\\(x\\))`.");
+            assertThat(mapped.options()).extracting(GeneratedQuizAnswerOptionDTO::text).containsExactly("$y_1 \\geq 5$", "$y_1 \\leq 5$");
+            assertThat(mapped.explanation()).isEqualTo("Because $y_1 \\geq 5$.");
+        });
+    }
+
+    @Test
+    void correctOptionCounts_listsTheCountOfEveryMultipleChoiceQuestion() {
+        HyperionCourseSettings settings = new HyperionCourseSettings(false, 0, true, 6, 1, 3, 20, 50, 30);
+
+        assertThat(HyperionQuizQuestionPoolBuildService
+                .correctOptionCounts(List.of(item(3L, QuizQuestionGenerationType.MULTIPLE_CHOICE), item(4L, QuizQuestionGenerationType.MULTIPLE_CHOICE)), settings))
+                .isEqualTo("- question 1: exactly 1 of its 4 options correct, 3 wrong\n- question 2: exactly 2 of its 4 options correct, 2 wrong");
+        assertThat(HyperionQuizQuestionPoolBuildService.correctOptionCounts(List.of(item(3L, QuizQuestionGenerationType.SINGLE_CHOICE)), settings))
+                .isEqualTo("- every question: exactly 1 correct option");
     }
 
     @Test

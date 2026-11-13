@@ -21,6 +21,8 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.UUID;
 import java.util.function.Function;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import org.jspecify.annotations.Nullable;
@@ -138,6 +140,13 @@ public class HyperionQuizQuestionPoolBuildService {
 
     /** How long a cancel request is kept for a build that never released its lease to clear it. */
     private static final Duration CANCEL_REQUEST_LIFETIME = Duration.ofDays(1);
+
+    /** Fenced code blocks and code spans, inside which math delimiters are left as they are. */
+    private static final Pattern MARKDOWN_CODE = Pattern.compile("```.*?```|`[^`]*`", Pattern.DOTALL);
+
+    private static final Pattern INLINE_MATH_PARENTHESES = Pattern.compile("\\\\\\((.+?)\\\\\\)", Pattern.DOTALL);
+
+    private static final Pattern DISPLAY_MATH_BRACKETS = Pattern.compile("\\\\\\[(.+?)\\\\]", Pattern.DOTALL);
 
     private static final int MAX_FAILURE_LENGTH = 500;
 
@@ -909,19 +918,18 @@ public class HyperionQuizQuestionPoolBuildService {
         return settings.multipleChoiceMinCorrectOptions() + (int) (item.getId() % range);
     }
 
-    /** The number of correct options of every question of the batch, as the prompt states it. */
-    private static String correctOptionCounts(List<QuizQuestionPoolItem> batch, HyperionCourseSettings settings) {
+    /** The number of correct options of every question of the batch, as the prompt states it: one line per question. */
+    static String correctOptionCounts(List<QuizQuestionPoolItem> batch, HyperionCourseSettings settings) {
         if (batch.getFirst().getQuestionType() != QuizQuestionGenerationType.MULTIPLE_CHOICE) {
-            return "exactly 1 for every question";
+            return "- every question: exactly 1 correct option";
         }
-        StringBuilder counts = new StringBuilder();
+        int optionCount = HyperionQuizQuestionChecks.optionCountFor(QuizQuestionGenerationType.MULTIPLE_CHOICE);
+        List<String> lines = new ArrayList<>();
         for (int index = 0; index < batch.size(); index++) {
-            if (index > 0) {
-                counts.append("; ");
-            }
-            counts.append("question ").append(index + 1).append(": exactly ").append(correctOptionCountFor(batch.get(index), settings));
+            int correct = correctOptionCountFor(batch.get(index), settings);
+            lines.add("- question " + (index + 1) + ": exactly " + correct + " of its " + optionCount + " options correct, " + (optionCount - correct) + " wrong");
         }
-        return counts.toString();
+        return String.join("\n", lines);
     }
 
     /**
@@ -939,7 +947,8 @@ public class HyperionQuizQuestionPoolBuildService {
     private List<@Nullable GeneratedQuizQuestionDTO> parseQuestions(ChatResponse chatResponse, QuizQuestionGenerationType requestedType, long courseId,
             List<Integer> correctOptionCounts, int maxCorrectOptions) {
         String responseText = LLMTokenUsageService.extractResponseText(chatResponse);
-        if (responseText == null) {
+        if (responseText == null || responseText.isBlank()) {
+            log.warn("The model answered the generation of pool questions for course [{}] with no text", courseId);
             return List.of();
         }
         PoolQuestionsOutput output;
@@ -950,7 +959,8 @@ public class HyperionQuizQuestionPoolBuildService {
             log.warn("Failed to parse generated pool questions for course [{}]: {}", courseId, e.getMessage());
             return List.of();
         }
-        if (output == null || output.questions() == null) {
+        if (output == null || output.questions() == null || output.questions().isEmpty()) {
+            log.warn("The model's answer to the generation of pool questions for course [{}] contains no questions", courseId);
             return List.of();
         }
         List<@Nullable GeneratedQuizQuestionDTO> questions = new ArrayList<>();
@@ -971,7 +981,7 @@ public class HyperionQuizQuestionPoolBuildService {
             questions.add(question.orElseThrow());
         }
         if (!defects.isEmpty()) {
-            log.debug("Discarded {} of {} generated pool questions for course [{}]: {}", defects.values().stream().mapToInt(Integer::intValue).sum(), output.questions().size(),
+            log.info("Discarded {} of {} generated pool questions for course [{}]: {}", defects.values().stream().mapToInt(Integer::intValue).sum(), output.questions().size(),
                     courseId, defects);
         }
         return questions;
@@ -1177,16 +1187,47 @@ public class HyperionQuizQuestionPoolBuildService {
             }
         }
         List<GeneratedQuizAnswerOptionDTO> options = generated.options().stream()
-                .map(option -> new GeneratedQuizAnswerOptionDTO(formatCode(sanitizeInput(option.text())), Boolean.TRUE.equals(option.correct()), null, null)).toList();
-        String explanation = formatCode(sanitizeInput(generated.explanation()));
-        return Optional.of(new GeneratedQuizQuestionDTO(questionType, sanitizeInput(generated.title()), formatCode(sanitizeInput(generated.questionText())), options, null,
+                .map(option -> new GeneratedQuizAnswerOptionDTO(format(option.text()), Boolean.TRUE.equals(option.correct()), null, null)).toList();
+        String explanation = format(generated.explanation());
+        return Optional.of(new GeneratedQuizQuestionDTO(questionType, sanitizeInput(generated.title()), format(generated.questionText()), options, null,
                 explanation.isBlank() ? null : explanation));
+    }
+
+    private static String format(@Nullable String text) {
+        return formatCode(normaliseMathDelimiters(sanitizeInput(text)));
+    }
+
+    /**
+     * Rewrites math delimited by {@code \(…\)} as {@code $…$} and math delimited by {@code \[…\]} as {@code $$…$$}, outside Markdown code,
+     * since the Markdown renderer only recognises dollar signs.
+     *
+     * @param text a text of a generated question
+     * @return the text with dollar-sign math delimiters
+     */
+    static String normaliseMathDelimiters(String text) {
+        if (!text.contains("\\(") && !text.contains("\\[")) {
+            return text;
+        }
+        StringBuilder result = new StringBuilder();
+        Matcher code = MARKDOWN_CODE.matcher(text);
+        int start = 0;
+        while (code.find()) {
+            result.append(replaceMathDelimiters(text.substring(start, code.start()))).append(code.group());
+            start = code.end();
+        }
+        return result.append(replaceMathDelimiters(text.substring(start))).toString();
+    }
+
+    private static String replaceMathDelimiters(String text) {
+        String inline = INLINE_MATH_PARENTHESES.matcher(text).replaceAll(match -> Matcher.quoteReplacement("$" + match.group(1) + "$"));
+        return DISPLAY_MATH_BRACKETS.matcher(inline).replaceAll(match -> Matcher.quoteReplacement("$$" + match.group(1) + "$$"));
     }
 
     private record PoolQuestionsOutput(List<PoolQuestionOutput> questions) {
     }
 
     record PoolQuestionOutput(@JsonPropertyDescription("the requested question type, exactly as given") String type, String title, String questionText,
+            @JsonPropertyDescription("how many options the task requires this question to mark correct; decide it before writing the options") Integer correctOptionCount,
             List<PoolOptionOutput> options,
             @JsonPropertyDescription("why the correct option is correct, why the distractors are wrong, and what work the reader must do to reach the answer") String explanation) {
     }
