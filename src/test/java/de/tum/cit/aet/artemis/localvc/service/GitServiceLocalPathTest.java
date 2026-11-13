@@ -12,6 +12,8 @@ import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
+import de.tum.cit.aet.artemis.localvc.exception.LocalVCInternalException;
+
 /**
  * Unit tests for where {@link GitService#getLocalPathOfRepo} places a checked out repository: strictly below the target path.
  */
@@ -65,11 +67,8 @@ class GitServiceLocalPathTest {
 
     @ParameterizedTest
     @ValueSource(strings = { "https://artemis.example.com/git/../..x.git", "https://artemis.example.com/git/./..git" })
-    void getLocalPathOfRepo_forAProjectKeyThatIsNotAFolderName_isRejected(String uriString) {
-        var repositoryUri = new LocalVCRepositoryUri(uriString);
-
-        assertThatExceptionOfType(IllegalArgumentException.class).as("the URI '%s' must be rejected", uriString)
-                .isThrownBy(() -> gitService.getLocalPathOfRepo(repoClonePath, repositoryUri));
+    void aProjectKeyThatIsNotAFolderName_isRejectedWhenTheUriIsParsed(String uriString) {
+        assertThatExceptionOfType(LocalVCInternalException.class).as("the URI '%s' must be rejected", uriString).isThrownBy(() -> new LocalVCRepositoryUri(uriString));
     }
 
     @ParameterizedTest

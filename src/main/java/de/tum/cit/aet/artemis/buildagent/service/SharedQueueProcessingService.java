@@ -898,7 +898,7 @@ public class SharedQueueProcessingService {
                 BuildResult failedResult = new BuildResult(buildJob.buildConfig().branch(), buildJob.buildConfig().assignmentCommitHash(), buildJob.buildConfig().testCommitHash(),
                         buildLogs, false);
 
-                ResultQueueItem resultQueueItem = new ResultQueueItem(failedResult, finishedBuildJob, buildLogs, ex);
+                ResultQueueItem resultQueueItem = new ResultQueueItem(failedResult, finishedBuildJob, buildLogs, ResultQueueExceptionNormalizer.normalize(ex));
                 enqueueBuildResult(resultQueueItem);
                 // This is the single point where localProcessingJobs is decremented for failed/cancelled jobs.
                 // Other code (e.g., stale job cleanup) must NOT decrement the counter directly.
