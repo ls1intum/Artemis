@@ -900,6 +900,33 @@ class SubmissionServiceTest extends AbstractSpringIntegrationIndependentBatchTes
         }
     }
 
+    /** A request loaded before another claim reuses the committed draft after acquiring the team lock. */
+    @ParameterizedTest
+    @EnumSource(value = ExerciseType.class, names = { "TEXT", "MODELING", "FILE_UPLOAD", "PROGRAMMING" })
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void teamAssessmentReusesDraftFromPreLockSnapshot(ExerciseType type) {
+        var exercise = teamExercise(type);
+        var first = teamSubmission(exercise, tutor1, "own");
+        Submission stale = switch (type) {
+            case TEXT -> new TextSubmission();
+            case MODELING -> new ModelingSubmission();
+            case FILE_UPLOAD -> new FileUploadSubmission();
+            case PROGRAMMING -> new ProgrammingSubmission();
+            default -> throw new IllegalArgumentException();
+        };
+        stale.setId(first.getId());
+        stale.setParticipation(first.getParticipation());
+        stale.setSubmitted(first.isSubmitted());
+        stale.setSubmissionDate(first.getSubmissionDate());
+        stale.setResults(new java.util.LinkedHashSet<>(first.getResults()));
+        var firstResult = type == ExerciseType.PROGRAMMING ? programmingSubmissionService.lockSubmission(first, 0) : submissionService.lockSubmission(first, 0);
+        assertThat(stale.getResultForCorrectionRound(0)).isNull();
+        var secondResult = type == ExerciseType.PROGRAMMING ? programmingSubmissionService.lockSubmission(stale, 0) : submissionService.lockSubmission(stale, 0);
+        assertThat(secondResult.getId()).isEqualTo(firstResult.getId());
+        assertThat(stale.getResultForCorrectionRound(0).getId()).isEqualTo(firstResult.getId());
+        assertThat(submissionRepository.findOneWithEagerResultAndFeedbackAndAssessmentNote(first.getId()).getManualResults()).hasSize(1);
+    }
+
     /** Direct service callers enforce the same team deadlines as dashboard links. */
     @ParameterizedTest
     @org.junit.jupiter.params.provider.ValueSource(booleans = { false, true })

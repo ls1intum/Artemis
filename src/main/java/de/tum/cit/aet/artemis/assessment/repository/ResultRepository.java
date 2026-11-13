@@ -851,12 +851,7 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
         return getValueElseThrow(findWithBidirectionalSubmissionAndFeedbackAndAssessorAndAssessmentNoteAndTeamStudentsById(resultId), resultId);
     }
 
-    /**
-     * Get a result from the database by its id together with the associated submission and the list of feedback items.
-     *
-     * @param resultId the id of the result to load from the database
-     * @return the result with submission and feedback list
-     */
+    /** Loads the result with submission, feedback and team students, or throws if missing. */
     default Result findWithSubmissionAndFeedbackAndTeamStudentsByIdElseThrow(long resultId) {
         return getValueElseThrow(findWithSubmissionAndFeedbackAndTeamStudentsById(resultId), resultId);
     }
@@ -865,13 +860,7 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
         return getValueElseThrow(findWithEagerSubmissionAndFeedbackAndAssessmentNoteById(resultId), resultId);
     }
 
-    /**
-     * Get the result with the given id from the database. The result is loaded together with its feedback. Throws an EntityNotFoundException if no
-     * result could be found for the given id.
-     *
-     * @param resultId the id of the submission that should be loaded from the database
-     * @return the result with the given id
-     */
+    /** Loads the result with feedback, or throws if missing. */
     default Result findByIdWithEagerFeedbacksElseThrow(long resultId) {
         return getValueElseThrow(findByIdWithEagerFeedbacks(resultId), resultId);
     }
@@ -997,4 +986,15 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
             FROM Result r LEFT JOIN r.assessor assessor WHERE r.submission.id IN :ids
             """)
     List<AssessmentQueueResultDTO> findTeamQueueResults(@Param("ids") List<Long> ids);
+
+    /** Loads persisted team assessment results for one round without relying on the submission's cached collection. */
+    @EntityGraph(type = EntityGraph.EntityGraphType.FETCH, attributePaths = { "feedbacks", "assessor", "assessmentNote" })
+    @Query("""
+            SELECT r FROM Result r WHERE r.submission.id = :submissionId AND r.correctionRound = :correctionRound
+                AND (r.assessmentType IS NULL OR r.assessmentType IN (
+                    de.tum.cit.aet.artemis.assessment.domain.AssessmentType.MANUAL,
+                    de.tum.cit.aet.artemis.assessment.domain.AssessmentType.SEMI_AUTOMATIC))
+            """)
+    List<Result> findTeamAssessmentResultsForRound(@Param("submissionId") long submissionId, @Param("correctionRound") int correctionRound);
+
 }

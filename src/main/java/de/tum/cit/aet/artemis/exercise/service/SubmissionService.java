@@ -674,14 +674,17 @@ public class SubmissionService {
      * @throws BadRequestAlertException if the correction round is negative
      */
     protected Result lockSubmission(Submission submission, int correctionRound) {
-        return withTeamAssessmentLock(submission, () -> claimSubmission(submission, correctionRound));
+        return withTeamAssessmentLock(submission, correctionRound, () -> claimSubmission(submission, correctionRound));
     }
 
     /** Coordinates team assessment claims with tutor reassignment, excluding test runs and teamless participations. */
-    protected Result withTeamAssessmentLock(Submission submission, Supplier<Result> assessment) {
+    protected Result withTeamAssessmentLock(Submission submission, int correctionRound, Supplier<Result> assessment) {
         if (submission.getParticipation().getExercise().isTeamMode() && submission.getParticipation() instanceof StudentParticipation participation && !participation.isTestRun()
                 && participation.getTeam().isPresent()) {
-            return teamRepository.withAssessmentLock(participation.getTeam().get(), assessment);
+            return teamRepository.withAssessmentLock(participation.getTeam().get(), () -> {
+                resultRepository.findTeamAssessmentResultsForRound(submission.getId(), correctionRound).forEach(submission::addResult);
+                return assessment.get();
+            });
         }
         return assessment.get();
     }
@@ -738,8 +741,7 @@ public class SubmissionService {
     }
 
     /**
-     * Filters the submissions to contain only in-time submissions if there are any.
-     * If not, the original list is returned.
+     * Prefers on-time submissions when available; otherwise returns the original list.
      *
      * @param submissions The submissions to filter
      * @param <T>         Placeholder for subclass of {@link Submission} e.g. {@link TextSubmission}

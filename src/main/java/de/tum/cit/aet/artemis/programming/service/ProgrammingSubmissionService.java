@@ -536,7 +536,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
     @Override
     // TODO: why do we override this method and why do we not try to reuse the method in the super class?
     public Result lockSubmission(Submission submission, int correctionRound) {
-        return withTeamAssessmentLock(submission, () -> claimSubmission(submission, correctionRound));
+        return withTeamAssessmentLock(submission, correctionRound, () -> claimSubmission(submission, correctionRound));
     }
 
     /** Claims the submission while holding the team lock, when applicable. */
