@@ -91,9 +91,11 @@ CHANGESET_TAG = f"{NAMESPACE}changeSet"
 # historical identity so that dropping a grandfathered column and re-adding it under the same name in a
 # NEW changeset is not waved through by the name alone.
 
-# ntext and nclob are the national-charset siblings of text/clob; Liquibase materialises them as unbounded
-# text as well, so they count here (reported: a grandfathered column re-added as ntext slipped through).
-UNBOUNDED_TEXT_TYPES = frozenset({"text", "mediumtext", "longtext", "clob", "ntext", "nclob"})
+# The Liquibase ClobType family: every alias Liquibase resolves to its unbounded CLOB type. ntext/nclob are
+# the national-charset siblings of text/clob; longvarchar/longnvarchar are the JDBC-named large-text types.
+# The java.sql.Types.* forms (e.g. java.sql.Types.CLOB) are handled in is_unbounded_text by comparing the
+# final dotted segment. tinytext (255) stays out: it is bounded, not free-form unbounded text.
+UNBOUNDED_TEXT_TYPES = frozenset({"text", "mediumtext", "longtext", "clob", "ntext", "nclob", "longvarchar", "longnvarchar"})
 
 # The (table, column) pairs that were already unbounded text when this guard was introduced. They are
 # grandfathered so the guard is green on day one; a new unbounded-text column must not be added (give it a
@@ -191,6 +193,8 @@ CREATE_TABLE_TAG = f"{NAMESPACE}createTable"
 ADD_COLUMN_TAG = f"{NAMESPACE}addColumn"
 COLUMN_TAG = f"{NAMESPACE}column"
 MODIFY_DATA_TYPE_TAG = f"{NAMESPACE}modifyDataType"
+RENAME_COLUMN_TAG = f"{NAMESPACE}renameColumn"
+MERGE_COLUMNS_TAG = f"{NAMESPACE}mergeColumns"
 ROLLBACK_TAG = f"{NAMESPACE}rollback"
 SQL_TAG = f"{NAMESPACE}sql"
 MODIFY_SQL_TAG = f"{NAMESPACE}modifySql"
@@ -204,7 +208,7 @@ COMMENT_TAG = f"{NAMESPACE}comment"
 # with="TEXT"/>). check_column_types backstops everything by inspecting the final materialised schema
 # regardless of how a column was created.
 HARD_OPAQUE_TAGS = frozenset({f"{NAMESPACE}sqlFile", f"{NAMESPACE}customChange"})
-TEXT_TYPE_TOKEN = re.compile(r"\b(?:text|longtext|mediumtext|clob|ntext|nclob)\b", re.IGNORECASE)
+TEXT_TYPE_TOKEN = re.compile(r"\b(?:text|longtext|mediumtext|clob|ntext|nclob|longvarchar|longnvarchar)\b", re.IGNORECASE)
 
 
 def normalize_identifier(name: str | None) -> str:
@@ -220,11 +224,20 @@ def normalize_identifier(name: str | None) -> str:
 
 
 def is_unbounded_text(sql_type: str | None) -> bool:
-    """True for text/mediumtext/longtext/clob/ntext/nclob, ignoring any length argument and case."""
+    """
+    True for the Liquibase unbounded-text/CLOB family (text/mediumtext/longtext/clob/ntext/nclob/longvarchar/
+    longnvarchar and their java.sql.Types.* aliases), ignoring any length argument and case.
+    """
     if not sql_type:
         return False
     base = sql_type.strip().lower().split("(", 1)[0].strip()
-    return base in UNBOUNDED_TEXT_TYPES
+    if base in UNBOUNDED_TEXT_TYPES:
+        return True
+    # java.sql.Types.CLOB / .LONGVARCHAR / ...: match the JDBC type name on this exact prefix only, so a
+    # schema-qualified or custom type such as my_schema.text is not misread as unbounded.
+    if base.startswith("java.sql.types."):
+        return base.rsplit(".", 1)[-1] in UNBOUNDED_TEXT_TYPES
+    return False
 
 
 def log(message: str) -> None:
@@ -753,7 +766,12 @@ def iter_forward_elements(element):
 
 
 def unbounded_text_introductions(changeset) -> set[tuple[str, str]]:
-    """Every (table, column) a changeset introduces as unbounded text, via createTable/addColumn/modifyDataType."""
+    """
+    Every (table, column) a changeset introduces as unbounded text, via a declarative change whose type is
+    readable: createTable/addColumn (the column's type), modifyDataType (newDataType), renameColumn
+    (columnDataType, which some databases require to re-emit the column's type), and mergeColumns
+    (finalColumnType of the new merged column).
+    """
     found: set[tuple[str, str]] = set()
     for element in iter_forward_elements(changeset):
         if element.tag in (CREATE_TABLE_TAG, ADD_COLUMN_TAG):
@@ -763,6 +781,10 @@ def unbounded_text_introductions(changeset) -> set[tuple[str, str]]:
                     found.add((table, normalize_identifier(column.get("name"))))
         elif element.tag == MODIFY_DATA_TYPE_TAG and is_unbounded_text(element.get("newDataType")):
             found.add((normalize_identifier(element.get("tableName")), normalize_identifier(element.get("columnName"))))
+        elif element.tag == RENAME_COLUMN_TAG and is_unbounded_text(element.get("columnDataType")):
+            found.add((normalize_identifier(element.get("tableName")), normalize_identifier(element.get("newColumnName"))))
+        elif element.tag == MERGE_COLUMNS_TAG and is_unbounded_text(element.get("finalColumnType")):
+            found.add((normalize_identifier(element.get("tableName")), normalize_identifier(element.get("finalColumnName"))))
     return found
 
 
@@ -809,7 +831,8 @@ def needs_manual_review(changeset) -> bool:
     True when a changeset (outside its <rollback>) carries something the scanner cannot read for certain: a
     <sqlFile> or custom change class, a raw <sql> block mentioning a text type or an unresolved ${property}
     expression (which could substitute a text type), a <modifySql> that rewrites the SQL to a text type, or a
-    column whose type is an unresolved ${property}. Such a changeset must be attested in UNVERIFIABLE_CHANGESETS.
+    column/modifyDataType/renameColumn/mergeColumns whose type is an unresolved ${property}. Such a changeset
+    must be attested in UNVERIFIABLE_CHANGESETS.
     """
     for element in iter_forward_elements(changeset):
         if element.tag in HARD_OPAQUE_TAGS or element.get("class"):
@@ -823,6 +846,10 @@ def needs_manual_review(changeset) -> bool:
         if element.tag == COLUMN_TAG and "${" in (element.get("type") or ""):
             return True
         if element.tag == MODIFY_DATA_TYPE_TAG and "${" in (element.get("newDataType") or ""):
+            return True
+        if element.tag == RENAME_COLUMN_TAG and "${" in (element.get("columnDataType") or ""):
+            return True
+        if element.tag == MERGE_COLUMNS_TAG and "${" in (element.get("finalColumnType") or ""):
             return True
     return False
 

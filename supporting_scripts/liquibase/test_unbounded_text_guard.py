@@ -47,10 +47,19 @@ class NormalizeTest(unittest.TestCase):
         self.assertEqual(normalize_identifier(None), "")
 
     def test_is_unbounded_text(self):
-        for yes in ("text", "TEXT", "longtext", "mediumtext", "clob", " text ", "text()", "ntext", "NTEXT", "nclob"):
-            self.assertTrue(is_unbounded_text(yes), yes)
-        for no in ("varchar(255)", "character varying", "tinytext", "bigint", "", None, "integer"):
-            self.assertFalse(is_unbounded_text(no), no)
+        yes = (
+            "text", "TEXT", "longtext", "mediumtext", "clob", " text ", "text()", "ntext", "NTEXT", "nclob",
+            "longvarchar", "longnvarchar", "LONGVARCHAR",
+            "java.sql.Types.CLOB", "java.sql.Types.LONGVARCHAR", "java.sql.Types.LONGNVARCHAR", "java.sql.Types.NCLOB",
+        )
+        for value in yes:
+            self.assertTrue(is_unbounded_text(value), value)
+        no = (
+            "varchar(255)", "nvarchar(255)", "character varying", "tinytext", "bigint", "", None, "integer",
+            "java.sql.Types.VARCHAR", "my_schema.text", "myschema.clob",
+        )
+        for value in no:
+            self.assertFalse(is_unbounded_text(value), value)
 
 
 class ScanTextIntroductionsTest(unittest.TestCase):
@@ -211,6 +220,36 @@ class ScanTextIntroductionsTest(unittest.TestCase):
         # A <comment>'s own text is excluded, so the word "text" in prose does not force review when the SQL
         # itself introduces nothing.
         body = '<changeSet id="cs1" author="x"><sql><comment>free text migration</comment>UPDATE foo SET bar = 1</sql></changeSet>'
+        self.assertEqual(self.run_scan(body), [])
+
+    def test_longvarchar_add_column_is_flagged(self):
+        body = '<changeSet id="cs1" author="x"><addColumn tableName="foo"><column name="bar" type="longvarchar"/></addColumn></changeSet>'
+        failures = self.run_scan(body)
+        self.assertEqual(len(failures), 1)
+        self.assertIn("foo.bar", failures[0])
+
+    def test_java_sql_types_clob_is_flagged(self):
+        body = '<changeSet id="cs1" author="x"><addColumn tableName="foo"><column name="bar" type="java.sql.Types.CLOB"/></addColumn></changeSet>'
+        failures = self.run_scan(body)
+        self.assertEqual(len(failures), 1)
+        self.assertIn("foo.bar", failures[0])
+
+    def test_rename_column_to_text_is_flagged(self):
+        # renameColumn carries columnDataType; some databases re-emit the type, so an unbounded one must be caught.
+        body = '<changeSet id="cs1" author="x"><renameColumn tableName="foo" oldColumnName="a" newColumnName="bar" columnDataType="text"/></changeSet>'
+        failures = self.run_scan(body)
+        self.assertEqual(len(failures), 1)
+        self.assertIn("foo.bar", failures[0])
+
+    def test_merge_columns_to_text_is_flagged(self):
+        # mergeColumns creates a new column finalColumnName of finalColumnType.
+        body = '<changeSet id="cs1" author="x"><mergeColumns tableName="foo" column1Name="a" column2Name="b" finalColumnName="bar" finalColumnType="longtext" joinString=" "/></changeSet>'
+        failures = self.run_scan(body)
+        self.assertEqual(len(failures), 1)
+        self.assertIn("foo.bar", failures[0])
+
+    def test_merge_columns_bounded_type_passes(self):
+        body = '<changeSet id="cs1" author="x"><mergeColumns tableName="foo" column1Name="a" column2Name="b" finalColumnName="bar" finalColumnType="varchar(255)" joinString=" "/></changeSet>'
         self.assertEqual(self.run_scan(body), [])
 
     def test_stale_allowed_entry_is_reported(self):
