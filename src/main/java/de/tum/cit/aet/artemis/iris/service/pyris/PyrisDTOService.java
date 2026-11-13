@@ -128,36 +128,47 @@ public class PyrisDTOService {
         // or a submission without one aborts the whole conversion instead of degrading to "nothing readable".
         var programmingLanguage = participation != null ? participation.getProgrammingExercise().getProgrammingLanguage() : null;
         var baseline = withBaselinesOfOmittedFiles(participation, committed, uncommittedFiles, programmingLanguage);
-        var submittedRepository = buildSubmittedRepository(baseline.files(), uncommittedFiles, programmingLanguage, baseline.readable());
+        Map<String, String> uncommittedWithBaseline = new HashMap<>(uncommittedFiles);
+        uncommittedWithBaseline.keySet().removeAll(baseline.omittedPaths());
+        var submittedRepository = buildSubmittedRepository(baseline.files(), uncommittedWithBaseline, programmingLanguage, baseline.readable());
         // Lets Pyris tell "no code changed since the submission" apart from "the submitted code could not be read",
         // which would otherwise both be an empty map. Taken from the fetch rather than the file count, because a
         // repository holding no file of the exercise language is readable and empty.
-        boolean submittedRepositoryAvailable = baseline.readable();
+        boolean submittedRepositoryAvailable = baseline.complete();
         return new PyrisSubmissionDTO(submission.getId(), toInstant(submission.getSubmissionDate()), mergedRepository, submittedRepository, submittedRepositoryAvailable,
                 submission.getParticipation() != null && submission.getParticipation().isPracticeMode(), submission.isBuildFailed(), buildLogEntries, getLatestResult(submission));
     }
 
     // The committed contents are bounded in size, so a file the client changed locally can be missing from them because it was left out, not because it is new.
-    // The committed content of such a path is read separately, so that an existing file is never sent as an all-added diff. If that read fails, the baseline counts as
-    // unreadable and no diff is fabricated.
-    private RepositoryContents withBaselinesOfOmittedFiles(@Nullable ProgrammingExerciseParticipation participation, RepositoryContents committed,
-            Map<String, String> uncommittedFiles, @Nullable ProgrammingLanguage language) {
+    // The committed content of such a path is read separately within the same limits, so that an existing file is never sent as an all-added diff. A baseline that
+    // does not fit is not sent at all and the diff counts as incomplete, and so does one that cannot be read, so that no diff is fabricated.
+    private Baseline withBaselinesOfOmittedFiles(@Nullable ProgrammingExerciseParticipation participation, RepositoryContents committed, Map<String, String> uncommittedFiles,
+            @Nullable ProgrammingLanguage language) {
         if (!committed.readable() || participation == null || participation.getVcsRepositoryUri() == null) {
-            return committed;
+            return new Baseline(committed.readable(), committed.files(), Set.of());
         }
         Set<String> absentPaths = uncommittedFiles.keySet().stream().filter(path -> !committed.files().containsKey(path))
                 .filter(path -> language == null || language.matchesFileExtension(path)).collect(Collectors.toSet());
         if (absentPaths.isEmpty()) {
-            return committed;
+            return new Baseline(true, committed.files(), Set.of());
         }
         try {
-            Map<String, String> baseline = new HashMap<>(committed.files());
-            baseline.putAll(repositoryService.getCommittedContentOfPaths(participation.getVcsRepositoryUri(), absentPaths));
-            return new RepositoryContents(true, baseline);
+            var restored = repositoryService.getCommittedContentOfPaths(participation.getVcsRepositoryUri(), absentPaths);
+            Map<String, String> files = new HashMap<>(committed.files());
+            files.putAll(restored.files());
+            return new Baseline(true, files, restored.omitted());
         }
         catch (IOException e) {
             log.error("Could not get the committed content of the changed files", e);
-            return RepositoryContents.UNREADABLE;
+            return new Baseline(false, Map.of(), Set.of());
+        }
+    }
+
+    // The committed files that the diff is made against, whether they could be read, and the changed paths whose committed content does not fit the limits
+    private record Baseline(boolean readable, Map<String, String> files, Set<String> omittedPaths) {
+
+        boolean complete() {
+            return readable && omittedPaths.isEmpty();
         }
     }
 

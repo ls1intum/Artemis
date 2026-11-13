@@ -13,6 +13,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -417,6 +418,21 @@ public class RepositoryService {
      */
     public Map<String, String> getContextFilesContentFromBareRepositoryForLastCommit(LocalVCRepositoryUri repositoryUri, @Nullable Predicate<String> pathFilter)
             throws IOException {
+        return getContextFilesContentFromBareRepositoryForLastCommit(repositoryUri, pathFilter, MAX_SELECTED_FILE_SIZE_BYTES);
+    }
+
+    /**
+     * Like {@link #getContextFilesContentFromBareRepositoryForLastCommit(LocalVCRepositoryUri, Predicate)}, but a file is skipped when it is larger than the given size, which
+     * cannot exceed {@link #MAX_SELECTED_FILE_SIZE_BYTES}. A caller that discards larger files anyway thereby keeps them from using up the limit of the total size.
+     *
+     * @param repositoryUri    the {@link LocalVCRepositoryUri} identifying the repository location.
+     * @param pathFilter       accepts the repository-relative paths of the files to read, or null to read all text files
+     * @param maxFileSizeBytes the size above which a file is skipped
+     * @return a {@link Map} where keys are file paths and values are file contents as UTF-8 strings.
+     * @throws IOException if an error occurs while accessing the repository.
+     */
+    public Map<String, String> getContextFilesContentFromBareRepositoryForLastCommit(LocalVCRepositoryUri repositoryUri, @Nullable Predicate<String> pathFilter,
+            long maxFileSizeBytes) throws IOException {
 
         try (Repository bareRepository = bareGitRepositoryService.getBareRepository(repositoryUri, false)) {
             ObjectId headCommitId = bareRepository.resolve("HEAD");
@@ -424,8 +440,8 @@ public class RepositoryService {
                 log.warn("Cannot resolve HEAD. The repository might be empty.");
                 return Map.of();
             }
-            return getFileContentFromBareRepositoryForCommitId(bareRepository, headCommitId, null, BinaryFileFilter.EXTENSION, MAX_SELECTED_FILE_SIZE_BYTES,
-                    MAX_SELECTED_FILES_TOTAL_SIZE_BYTES, pathFilter);
+            return getFileContentFromBareRepositoryForCommitId(bareRepository, headCommitId, null, BinaryFileFilter.EXTENSION,
+                    Math.min(maxFileSizeBytes, MAX_SELECTED_FILE_SIZE_BYTES), MAX_SELECTED_FILES_TOTAL_SIZE_BYTES, pathFilter, null);
         }
         catch (GitException exception) {
             log.debug("Bare repository for {} is unavailable, falling back to checked out repository", repositoryUri, exception);
@@ -434,25 +450,38 @@ public class RepositoryService {
     }
 
     /**
-     * Retrieves the content of the given paths from the latest commit, without any size limit. A path that does not exist in the commit is absent from the result.
-     * It tells a file that the bounded context read left out apart from a file that is new.
+     * The committed content of requested paths.
+     *
+     * @param files   the content of the paths that exist and fit the limits
+     * @param omitted the paths that exist but were left out because they exceed the limits
+     */
+    public record CommittedPathContents(Map<String, String> files, Set<String> omitted) {
+    }
+
+    /**
+     * Retrieves the content of the given paths from the latest commit, within the limits of the context of a language model. A path that does not exist in the commit is in
+     * neither part of the result, a path that exists but exceeds the limits is reported as omitted. It tells a file that the bounded context read left out apart from a file
+     * that is new, without reading more than the limits allow.
      *
      * @param repositoryUri the {@link LocalVCRepositoryUri} identifying the repository location.
      * @param paths         the repository-relative paths to read
-     * @return a {@link Map} of the existing paths to their file contents as UTF-8 strings, empty if the bare repository is unavailable.
+     * @return the content of the paths that fit and the paths that were left out, both empty if the bare repository is unavailable.
      * @throws IOException if an error occurs while accessing the repository.
      */
-    public Map<String, String> getCommittedContentOfPaths(LocalVCRepositoryUri repositoryUri, Set<String> paths) throws IOException {
+    public CommittedPathContents getCommittedContentOfPaths(LocalVCRepositoryUri repositoryUri, Set<String> paths) throws IOException {
         try (Repository bareRepository = bareGitRepositoryService.getBareRepository(repositoryUri, false)) {
             ObjectId headCommitId = bareRepository.resolve("HEAD");
             if (headCommitId == null) {
-                return Map.of();
+                return new CommittedPathContents(Map.of(), Set.of());
             }
-            return getFileContentFromBareRepositoryForCommitId(bareRepository, headCommitId, paths, BinaryFileFilter.NONE, Long.MAX_VALUE, Long.MAX_VALUE);
+            Set<String> omitted = new HashSet<>();
+            Map<String, String> files = getFileContentFromBareRepositoryForCommitId(bareRepository, headCommitId, paths, BinaryFileFilter.NONE, MAX_SELECTED_FILE_SIZE_BYTES,
+                    MAX_SELECTED_FILES_TOTAL_SIZE_BYTES, null, omitted);
+            return new CommittedPathContents(files, omitted);
         }
         catch (GitException exception) {
             log.debug("Bare repository for {} is unavailable", repositoryUri, exception);
-            return Map.of();
+            return new CommittedPathContents(Map.of(), Set.of());
         }
     }
 
@@ -527,15 +556,16 @@ public class RepositoryService {
      */
     private Map<String, String> getFileContentFromBareRepositoryForCommitId(org.eclipse.jgit.lib.Repository repository, @NonNull ObjectId commitId,
             @Nullable Set<String> selectedFilePaths, BinaryFileFilter binaryFileFilter, long maxFileSizeBytes, long maxTotalSizeBytes) throws IOException {
-        return getFileContentFromBareRepositoryForCommitId(repository, commitId, selectedFilePaths, binaryFileFilter, maxFileSizeBytes, maxTotalSizeBytes, null);
+        return getFileContentFromBareRepositoryForCommitId(repository, commitId, selectedFilePaths, binaryFileFilter, maxFileSizeBytes, maxTotalSizeBytes, null, null);
     }
 
     /**
-     * Like the method above, with a filter for the paths that are read. A path that the filter rejects is skipped before its size is counted.
+     * Like the method above, with a filter for the paths that are read. A path that the filter rejects is skipped before its size is counted. The paths of the files that
+     * are skipped because of their size are added to {@code omittedPaths}, if given.
      */
     private Map<String, String> getFileContentFromBareRepositoryForCommitId(org.eclipse.jgit.lib.Repository repository, @NonNull ObjectId commitId,
-            @Nullable Set<String> selectedFilePaths, BinaryFileFilter binaryFileFilter, long maxFileSizeBytes, long maxTotalSizeBytes, @Nullable Predicate<String> pathFilter)
-            throws IOException {
+            @Nullable Set<String> selectedFilePaths, BinaryFileFilter binaryFileFilter, long maxFileSizeBytes, long maxTotalSizeBytes, @Nullable Predicate<String> pathFilter,
+            @Nullable Set<String> omittedPaths) throws IOException {
         Map<String, String> filesWithContent = new HashMap<>();
         long totalSize = 0;
 
@@ -565,6 +595,9 @@ public class RepositoryService {
                     var blobLoader = repository.open(objectId);
                     long blobSize = blobLoader.getSize();
                     if (blobSize > maxFileSizeBytes || blobSize > maxTotalSizeBytes - totalSize) {
+                        if (omittedPaths != null) {
+                            omittedPaths.add(path);
+                        }
                         continue;
                     }
                     byte[] bytes;

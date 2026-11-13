@@ -134,7 +134,7 @@ class PyrisSubmittedRepositoryTest {
         var repositoryService = mock(RepositoryService.class);
         when(repositoryService.getContextFilesContentFromBareRepositoryForLastCommit(any(LocalVCRepositoryUri.class), any())).thenReturn(Map.of("src/Main.java", "COMMITTED"));
         when(repositoryService.getCommittedContentOfPaths(any(LocalVCRepositoryUri.class), eq(Set.of("src/Huge.java", "src/New.java"))))
-                .thenReturn(Map.of("src/Huge.java", "COMMITTED HUGE"));
+                .thenReturn(new RepositoryService.CommittedPathContents(Map.of("src/Huge.java", "COMMITTED HUGE"), Set.of()));
         var service = new PyrisDTOService(repositoryService, mock(ProgrammingFeedbackSynthesizerService.class), mock(BuildLogEntryService.class),
                 mock(IrisProactiveProperties.class));
         var exercise = new ProgrammingExercise();
@@ -149,5 +149,30 @@ class PyrisSubmittedRepositoryTest {
         var dto = service.toPyrisSubmissionDTO(submission, Map.of("src/Huge.java", "EDITED HUGE", "src/New.java", "NEW"));
 
         assertThat(dto.submittedRepository()).containsOnly(entry("src/Huge.java", "COMMITTED HUGE"), entry("src/New.java", ""));
+    }
+
+    @Test
+    void aBaselineThatDoesNotFitTheLimitsIsNotSentAndMakesTheDiffIncomplete() throws IOException {
+        // A large committed file that the student replaces by a small local edit must not bring its content back into the request
+        var repositoryService = mock(RepositoryService.class);
+        when(repositoryService.getContextFilesContentFromBareRepositoryForLastCommit(any(LocalVCRepositoryUri.class), any())).thenReturn(Map.of("src/Main.java", "COMMITTED"));
+        when(repositoryService.getCommittedContentOfPaths(any(LocalVCRepositoryUri.class), eq(Set.of("src/Huge.java", "src/New.java"))))
+                .thenReturn(new RepositoryService.CommittedPathContents(Map.of(), Set.of("src/Huge.java")));
+        var service = new PyrisDTOService(repositoryService, mock(ProgrammingFeedbackSynthesizerService.class), mock(BuildLogEntryService.class),
+                mock(IrisProactiveProperties.class));
+        var exercise = new ProgrammingExercise();
+        exercise.setProgrammingLanguage(JAVA);
+        var participation = new ProgrammingExerciseStudentParticipation();
+        participation.setProgrammingExercise(exercise);
+        participation.setRepositoryUri("http://localhost:8080/git/ABC/abc-student1.git");
+        var submission = new ProgrammingSubmission();
+        submission.setId(1L);
+        submission.setParticipation(participation);
+
+        var dto = service.toPyrisSubmissionDTO(submission, Map.of("src/Huge.java", "SMALL EDIT", "src/New.java", "NEW"));
+
+        // The file is neither sent with its committed content nor as a new file, and the diff is marked incomplete
+        assertThat(dto.submittedRepository()).containsOnly(entry("src/New.java", ""));
+        assertThat(dto.submittedRepositoryAvailable()).isFalse();
     }
 }
