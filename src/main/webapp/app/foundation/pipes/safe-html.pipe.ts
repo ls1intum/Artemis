@@ -14,6 +14,7 @@ export class SafeHtmlPipe implements PipeTransform {
      * @param value The HTML to sanitize and render.
      */
     transform(value: string | null | undefined): SafeHtml {
-        return this.sanitizer.bypassSecurityTrustHtml(DOMPurify.sanitize(value ?? ''));
+        // Reviewed false positive (Sonar S6268): the value is sanitized with DOMPurify right here, only the sanitized result is trusted.
+        return this.sanitizer.bypassSecurityTrustHtml(DOMPurify.sanitize(value ?? '')); // NOSONAR
     }
 }

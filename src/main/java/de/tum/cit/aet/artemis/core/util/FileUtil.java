@@ -279,7 +279,9 @@ public class FileUtil {
 
     private static void copyFile(MultipartFile file, Path filePath) {
         try {
-            FileUtils.copyInputStreamToFile(file.getInputStream(), filePath.toFile());
+            // Reviewed false positive (Sonar S2083): callers pass a path built from sanitized file names, as the contract of saveFile requires,
+            // e.g. SlideSplitterService, where convertByteArrayToMultipart runs the name through sanitizeFilename.
+            FileUtils.copyInputStreamToFile(file.getInputStream(), filePath.toFile()); // NOSONAR
         }
         catch (IOException e) {
             log.error("Could not save file {}", filePath.getFileName(), e);

@@ -30,7 +30,8 @@ export class SafeResourceUrlPipe implements PipeTransform {
         // 'about:blank' rather than '' for the rejected case. An empty <iframe src> resolves to about:blank by
         // spec anyway, but one caller is a form `action`, and action="" submits to the current URL — so an empty
         // string there would POST the LTI launch payload back at Artemis rather than going nowhere.
-        return this.sanitizer.bypassSecurityTrustResourceUrl(this.isEmbeddable(value) ? value! : 'about:blank');
+        // Reviewed false positive (Sonar S6268): only http(s) URLs pass isEmbeddable, everything else becomes about:blank.
+        return this.sanitizer.bypassSecurityTrustResourceUrl(this.isEmbeddable(value) ? value! : 'about:blank'); // NOSONAR
     }
 
     private isEmbeddable(value: string | undefined | null): boolean {

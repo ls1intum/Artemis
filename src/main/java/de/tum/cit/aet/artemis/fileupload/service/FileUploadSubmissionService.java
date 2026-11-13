@@ -184,7 +184,7 @@ public class FileUploadSubmissionService extends SubmissionService {
             throw new EmptyFileException(file.getOriginalFilename());
         }
 
-        final String multipartFileHash = DigestUtils.md5Hex(file.getInputStream());
+        final String multipartFileHash = DigestUtils.sha256Hex(file.getInputStream());
         // We need to set id for newly created submissions
         if (fileUploadSubmission.getId() == null) {
             fileUploadSubmission = fileUploadSubmissionRepository.save(fileUploadSubmission);
@@ -193,7 +193,7 @@ public class FileUploadSubmissionService extends SubmissionService {
         final URI newFilePath = URI.create(new PublicFileUrl.FileUploadSubmission(exercise.getId(), fileUploadSubmission.getId(), savePath.getFileName().toString()).clientPath());
 
         // We need to ensure that we can access the store file and the stored file is the same as was passed to us in the request
-        final var storedFileHash = DigestUtils.md5Hex(Files.newInputStream(savePath));
+        final var storedFileHash = DigestUtils.sha256Hex(Files.newInputStream(savePath));
         if (!multipartFileHash.equals(storedFileHash)) {
             throw new IOException("The file " + file.getName() + "could not be stored");
         }

@@ -183,7 +183,9 @@ public abstract class PushNotificationService {
     private static Optional<String> encrypt(@NonNull String payload, SecretKey key, byte[] initializationVector) {
         try {
             // We need to get a fresh instance here for every notification to avoid a race condition between tasks
-            var cipher = Cipher.getInstance(Constants.PUSH_NOTIFICATION_ENCRYPTION_ALGORITHM);
+            // Reviewed accepted risk (Sonar S5542): the cipher is a wire contract with the installed mobile apps, see Constants.PUSH_NOTIFICATION_ENCRYPTION_ALGORITHM for the
+            // reasoning and the migration path.
+            var cipher = Cipher.getInstance(Constants.PUSH_NOTIFICATION_ENCRYPTION_ALGORITHM); // NOSONAR
 
             cipher.init(Cipher.ENCRYPT_MODE, key, new IvParameterSpec(initializationVector));
 

@@ -59,7 +59,8 @@ export class MarkdownDirective {
                 .then((html) => {
                     // Ignore a render whose inputs were superseded before the lazy chunk/conversion resolved.
                     if (generation === this.renderGeneration) {
-                        this.renderedHtml.set(this.sanitizer.bypassSecurityTrustHtml(html));
+                        // Reviewed false positive (Sonar S6268): renderMarkdownToHtml sanitizes the rendered HTML with DOMPurify.
+                        this.renderedHtml.set(this.sanitizer.bypassSecurityTrustHtml(html)); // NOSONAR
                         this.markdownRendered.emit();
                     }
                 })

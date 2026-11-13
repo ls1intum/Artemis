@@ -389,7 +389,7 @@ public class SecurityConfiguration {
             //
             // Consequence: relaxing the attribute to SameSite=None removes the only CSRF defence this application has.
             // Do not change it without adding token-based protection here first.
-            .csrf(CsrfConfigurer::disable)
+            .csrf(CsrfConfigurer::disable) // NOSONAR - reviewed (Sonar S4502), the comment above explains why SameSite=Lax is the CSRF defence
             // Adds a CORS (Cross-Origin Resource Sharing) filter before the username/password authentication to handle cross-origin requests.
             .addFilterBefore(corsFilter, UsernamePasswordAuthenticationFilter.class)
             // Authenticates personal access tokens (bearer tokens starting with art_pat_) on /api/ requests. Inert unless agent access is enabled.
