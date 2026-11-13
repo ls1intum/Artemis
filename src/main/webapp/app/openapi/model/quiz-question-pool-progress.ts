@@ -35,6 +35,6 @@ export interface QuizQuestionPoolProgress {
     buildSettings?: HyperionCourseSettings;
     /** The most recent build, absent before the first */
     lastBuild?: QuizQuestionPoolBuild;
-    /** Whether the pool has its own model endpoint; builds are refused without one */
+    /** Whether the pool has a usable model configuration; builds are refused without one */
     modelConfigured?: boolean;
 }

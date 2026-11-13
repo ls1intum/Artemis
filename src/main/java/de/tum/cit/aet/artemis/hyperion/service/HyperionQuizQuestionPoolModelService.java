@@ -24,13 +24,14 @@ import de.tum.cit.aet.artemis.core.exception.ServiceUnavailableAlertException;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
 
 /**
- * Provides the language models of the quiz question pool. The pool reaches its models only through its own OpenAI-compatible endpoint,
- * configured under {@code artemis.hyperion.quiz-pool} ({@code base-url}, {@code api-key}, {@code timeout}, {@code generator-model},
- * {@code judge-model}, {@code allowed-models}), and never through the chat model the rest of Artemis uses.
+ * Provides the language models of the quiz question pool. The pool calls an OpenAI-compatible endpoint with the models configured under
+ * {@code artemis.hyperion.quiz-pool} ({@code generator-model}, {@code judge-model}, {@code allowed-models}, {@code timeout}). The endpoint
+ * is the pool's own {@code base-url} and {@code api-key} when set, and otherwise the endpoint of Hyperion's chat model
+ * ({@code spring.ai.openai.base-url} and {@code api-key}).
  * <p>
- * Without {@code base-url} and both model names the pool is not configured: builds are refused and no model is called. A partial
- * configuration, a model that is not listed in {@code allowed-models}, or an endpoint that is not an http(s) URL or lies on a known
- * cloud provider leaves the pool off in the same way and is logged as a warning that names the setting to fix.
+ * Without both model names, or without any endpoint, the pool is not configured: builds are refused and no model is called. The same holds
+ * when the endpoint lies on a known cloud provider or is a Microsoft Foundry endpoint, when only one model is set, or when a model is not
+ * listed in {@code allowed-models}. A configuration error in the pool's own settings is logged as a warning that names the setting to fix.
  */
 @Service
 @Lazy(false)
@@ -46,6 +47,8 @@ public class HyperionQuizQuestionPoolModelService {
             "anthropic.com", "googleapis.com", "mistral.ai", "cohere.com", "cohere.ai", "groq.com", "together.xyz", "together.ai", "openrouter.ai", "deepseek.com", "x.ai",
             "fireworks.ai", "perplexity.ai", "amazonaws.com");
 
+    private static final String OPENAI_CHAT_MODEL_PROVIDER = "openai";
+
     /** Sent when the endpoint needs no key, so the client never falls back to a key from the environment. */
     private static final String NO_API_KEY = "none";
 
@@ -58,48 +61,64 @@ public class HyperionQuizQuestionPoolModelService {
 
     public HyperionQuizQuestionPoolModelService(@Value("${" + PROPERTY_PREFIX + "base-url:}") String baseUrl, @Value("${" + PROPERTY_PREFIX + "api-key:}") String apiKey,
             @Value("${" + PROPERTY_PREFIX + "timeout:5m}") Duration timeout, @Value("${" + PROPERTY_PREFIX + "generator-model:}") String generatorModel,
-            @Value("${" + PROPERTY_PREFIX + "judge-model:}") String judgeModel, @Value("${" + PROPERTY_PREFIX + "allowed-models:}") List<String> allowedModels) {
+            @Value("${" + PROPERTY_PREFIX + "judge-model:}") String judgeModel, @Value("${" + PROPERTY_PREFIX + "allowed-models:}") List<String> allowedModels,
+            @Value("${spring.ai.model.chat:}") String chatModelProvider, @Value("${spring.ai.openai.base-url:}") String chatBaseUrl,
+            @Value("${spring.ai.openai.api-key:}") String chatApiKey, @Value("${spring.ai.openai.microsoft-foundry:false}") boolean chatMicrosoftFoundry) {
         this.generatorModel = trim(generatorModel);
         this.judgeModel = trim(judgeModel);
-        String endpoint = trim(baseUrl);
-        boolean configured;
+        this.chatClient = createChatClient(trim(baseUrl), trim(apiKey), timeout, allowedModels, trim(chatModelProvider), trim(chatBaseUrl), trim(chatApiKey), chatMicrosoftFoundry);
+    }
+
+    private @Nullable ChatClient createChatClient(String baseUrl, String apiKey, Duration timeout, List<String> allowedModels, String chatModelProvider, String chatBaseUrl,
+            String chatApiKey, boolean chatMicrosoftFoundry) {
+        if (generatorModel.isEmpty() && judgeModel.isEmpty()) {
+            log.info("The quiz question pool is off: no models are configured under {}generator-model and {}judge-model", PROPERTY_PREFIX, PROPERTY_PREFIX);
+            return null;
+        }
+        String endpoint = baseUrl;
+        String key = apiKey;
+        String endpointProperty = PROPERTY_PREFIX + "base-url";
+        if (endpoint.isEmpty()) {
+            if (!OPENAI_CHAT_MODEL_PROVIDER.equals(chatModelProvider) || chatBaseUrl.isEmpty()) {
+                log.info("The quiz question pool is off: neither {}base-url nor spring.ai.openai.base-url is configured", PROPERTY_PREFIX);
+                return null;
+            }
+            if (chatMicrosoftFoundry || isCloudHostOf(chatBaseUrl)) {
+                log.info("The quiz question pool is off: Hyperion's chat endpoint is a cloud provider; set {}base-url to a self-hosted endpoint to enable the pool",
+                        PROPERTY_PREFIX);
+                return null;
+            }
+            endpoint = chatBaseUrl;
+            key = chatApiKey;
+            endpointProperty = "spring.ai.openai.base-url";
+        }
         try {
-            configured = validate(endpoint, this.generatorModel, this.judgeModel, allowedModels);
+            validate(endpoint, endpointProperty, generatorModel, judgeModel, allowedModels);
         }
         catch (IllegalStateException e) {
             log.warn("The quiz question pool is off because its model configuration is invalid: {}", e.getMessage());
-            this.chatClient = null;
-            return;
+            return null;
         }
-        if (!configured) {
-            log.info("The quiz question pool is off: no model endpoint is configured under {}base-url", PROPERTY_PREFIX);
-            this.chatClient = null;
-            return;
-        }
-        OpenAiChatOptions options = OpenAiChatOptions.builder().baseUrl(endpoint).apiKey(trim(apiKey).isEmpty() ? NO_API_KEY : trim(apiKey)).microsoftFoundry(false)
-                .gitHubModels(false).timeout(timeout).model(this.generatorModel).build();
-        this.chatClient = ChatClient.create(OpenAiChatModel.builder().options(options).build());
-        log.info("The quiz question pool uses the endpoint {} with the generator model {} and the judge model {}", endpoint, this.generatorModel, this.judgeModel);
+        OpenAiChatOptions options = OpenAiChatOptions.builder().baseUrl(endpoint).apiKey(key.isEmpty() ? NO_API_KEY : key).microsoftFoundry(false).gitHubModels(false)
+                .timeout(timeout).model(generatorModel).build();
+        log.info("The quiz question pool uses the endpoint {} (from {}) with the generator model {} and the judge model {}", endpoint, endpointProperty, generatorModel,
+                judgeModel);
+        return ChatClient.create(OpenAiChatModel.builder().options(options).build());
     }
 
     /**
      * Checks the pool's model configuration.
      *
-     * @param baseUrl        the endpoint, blank when none is configured
-     * @param generatorModel the generator model, blank when none is configured
-     * @param judgeModel     the judge model, blank when none is configured
-     * @param allowedModels  the models the pool may use
-     * @return whether the pool is configured; {@code false} when no part of the configuration is set
-     * @throws IllegalStateException if the configuration is incomplete, names a model outside {@code allowedModels}, or points at a cloud provider
+     * @param baseUrl         the endpoint
+     * @param baseUrlProperty the property the endpoint was read from, for the error message
+     * @param generatorModel  the generator model, blank when none is configured
+     * @param judgeModel      the judge model, blank when none is configured
+     * @param allowedModels   the models the pool may use
+     * @throws IllegalStateException if a model is missing or not listed in {@code allowedModels}, or the endpoint is not an http(s) URL or lies on a
+     *                                   cloud provider
      */
-    static boolean validate(String baseUrl, String generatorModel, String judgeModel, List<String> allowedModels) {
-        if (baseUrl.isEmpty() && generatorModel.isEmpty() && judgeModel.isEmpty()) {
-            return false;
-        }
+    static void validate(String baseUrl, String baseUrlProperty, String generatorModel, String judgeModel, List<String> allowedModels) {
         List<String> missing = new ArrayList<>();
-        if (baseUrl.isEmpty()) {
-            missing.add(PROPERTY_PREFIX + "base-url");
-        }
         if (generatorModel.isEmpty()) {
             missing.add(PROPERTY_PREFIX + "generator-model");
         }
@@ -107,11 +126,11 @@ public class HyperionQuizQuestionPoolModelService {
             missing.add(PROPERTY_PREFIX + "judge-model");
         }
         if (!missing.isEmpty()) {
-            throw new IllegalStateException("The quiz question pool configuration is incomplete; set " + String.join(", ", missing) + " or leave all of them empty");
+            throw new IllegalStateException("The quiz question pool configuration is incomplete; set " + String.join(" and ", missing) + " or leave both empty");
         }
-        String host = hostOf(baseUrl);
+        String host = hostOf(baseUrl, baseUrlProperty);
         if (isCloudHost(host)) {
-            throw new IllegalStateException(PROPERTY_PREFIX + "base-url must point at a self-hosted endpoint, got the cloud provider host " + host);
+            throw new IllegalStateException(baseUrlProperty + " must point at a self-hosted endpoint, got the cloud provider host " + host);
         }
         List<String> allowed = allowedModels == null ? List.of() : allowedModels.stream().filter(Objects::nonNull).map(String::trim).filter(model -> !model.isEmpty()).toList();
         for (String model : List.of(generatorModel, judgeModel)) {
@@ -119,20 +138,29 @@ public class HyperionQuizQuestionPoolModelService {
                 throw new IllegalStateException("The quiz question pool model " + model + " is not listed in " + PROPERTY_PREFIX + "allowed-models " + allowed);
             }
         }
-        return true;
     }
 
-    private static String hostOf(String baseUrl) {
+    /** Whether the URL's host lies on a cloud provider; {@code false} for a URL without a host, which {@link #validate} rejects. */
+    private static boolean isCloudHostOf(String baseUrl) {
+        try {
+            return isCloudHost(hostOf(baseUrl, ""));
+        }
+        catch (IllegalStateException _) {
+            return false;
+        }
+    }
+
+    private static String hostOf(String baseUrl, String baseUrlProperty) {
         URI uri;
         try {
             uri = new URI(baseUrl);
         }
         catch (URISyntaxException e) {
-            throw new IllegalStateException(PROPERTY_PREFIX + "base-url is not a valid URL: " + baseUrl, e);
+            throw new IllegalStateException(baseUrlProperty + " is not a valid URL: " + baseUrl, e);
         }
         String scheme = uri.getScheme() == null ? "" : uri.getScheme().toLowerCase(Locale.ROOT);
         if ((!scheme.equals("http") && !scheme.equals("https")) || uri.getHost() == null) {
-            throw new IllegalStateException(PROPERTY_PREFIX + "base-url must be an http or https URL with a host, got " + baseUrl);
+            throw new IllegalStateException(baseUrlProperty + " must be an http or https URL with a host, got " + baseUrl);
         }
         return uri.getHost().toLowerCase(Locale.ROOT);
     }

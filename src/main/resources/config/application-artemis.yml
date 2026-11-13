@@ -165,19 +165,20 @@ artemis:
       shutdown-drain-timeout: PT11M
       test-case-sync-timeout: PT10M
     quiz-pool:
-      # The pool sends course material only to its own self-hosted, OpenAI-compatible endpoint (for example Logos or vLLM), never to the
-      # chat model configured under spring.ai. Leave base-url, generator-model and judge-model empty to keep the pool off; a partial
-      # configuration, a model missing from allowed-models or a cloud provider host also keeps it off and is logged as a warning at startup.
-      base-url: # including the /v1 prefix, e.g. https://logos.example.org/v1
+      # The pool sends course material only to a self-hosted, OpenAI-compatible endpoint (for example Logos or vLLM): base-url and api-key
+      # below when set, otherwise the endpoint of Hyperion's chat model under spring.ai.openai. A cloud provider endpoint, including
+      # Microsoft Foundry, keeps the pool off. Leave generator-model and judge-model empty to turn the pool off; a model missing from
+      # allowed-models or an invalid base-url also keeps it off and is logged as a warning at startup.
+      base-url: # including the /v1 prefix, e.g. https://logos.example.org/v1; empty to use spring.ai.openai.base-url
       api-key:
       # HTTP timeout of one model call.
       timeout: 5m
       # Self-hosted models the pool may use; generator-model and judge-model must each be one of them.
-      allowed-models: openai/gpt-oss-120b
+      allowed-models: Qwen/Qwen3.8-27B
       # Model that generates pool questions.
-      generator-model:
+      generator-model: Qwen/Qwen3.8-27B
       # Model that judges generated questions.
-      judge-model:
+      judge-model: Qwen/Qwen3.8-27B
       # Questions requested per generation call; a cell larger than this is filled in several calls.
       generation-batch-size: 8
       # A generation or filter claim older than this is treated as abandoned by a dead node and released at the next build.
