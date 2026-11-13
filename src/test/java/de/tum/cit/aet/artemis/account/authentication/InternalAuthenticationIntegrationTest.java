@@ -5,6 +5,7 @@ import static de.tum.cit.aet.artemis.account.util.UserFactory.USER_PASSWORD;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -43,7 +44,6 @@ import de.tum.cit.aet.artemis.account.domain.Authority;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.AuthorityRepository;
 import de.tum.cit.aet.artemis.account.security.ArtemisInternalAuthenticationProvider;
-import de.tum.cit.aet.artemis.account.service.ArtemisSuccessfulLoginService;
 import de.tum.cit.aet.artemis.account.service.user.PasswordService;
 import de.tum.cit.aet.artemis.account.service.user.UserService;
 import de.tum.cit.aet.artemis.account.util.UserFactory;
@@ -194,18 +194,18 @@ class InternalAuthenticationIntegrationTest extends AbstractSpringIntegrationJen
         var features = mock(FeatureToggleService.class);
         when(features.isFeatureEnabled(Feature.RateLimit)).thenReturn(true);
         var limiter = new RateLimitService(new RateLimitConfig().localRateLimitProxyManager(), new RateLimitConfigurationService(properties), features);
-        var failingLoginService = mock(ArtemisSuccessfulLoginService.class);
-        doThrow(new IllegalStateException("mail failed")).when(failingLoginService).sendLoginEmail(any(), any(), any());
+        var failingCookieService = mock(JWTCookieService.class);
+        doThrow(new IllegalStateException("cookie failed")).when(failingCookieService).buildLoginCookie(anyBoolean(), any());
         Object resource = AopTestUtils.getUltimateTargetObject(applicationContext.getBean("publicUserJwtResource"));
         Object originalLimiter = ReflectionTestUtils.getField(resource, "rateLimitService");
-        Object originalLoginService = ReflectionTestUtils.getField(resource, "artemisSuccessfulLoginService");
+        Object originalCookieService = ReflectionTestUtils.getField(resource, "jwtCookieService");
         try {
             ReflectionTestUtils.setField(resource, "rateLimitService", limiter);
 
             request.postWithoutResponseBody("/api/core/public/authenticate", loginVM(USERNAME, "wrong-password-1"), HttpStatus.UNAUTHORIZED, browserHeaders());
-            ReflectionTestUtils.setField(resource, "artemisSuccessfulLoginService", failingLoginService);
+            ReflectionTestUtils.setField(resource, "jwtCookieService", failingCookieService);
             request.postWithoutResponseBody("/api/core/public/authenticate", loginVM(USERNAME, USER_PASSWORD), HttpStatus.INTERNAL_SERVER_ERROR, browserHeaders());
-            ReflectionTestUtils.setField(resource, "artemisSuccessfulLoginService", originalLoginService);
+            ReflectionTestUtils.setField(resource, "jwtCookieService", originalCookieService);
 
             // One wrong password was counted, so exactly one more is allowed
             request.postWithoutResponseBody("/api/core/public/authenticate", loginVM(USERNAME, "wrong-password-2"), HttpStatus.UNAUTHORIZED, browserHeaders());
@@ -213,7 +213,7 @@ class InternalAuthenticationIntegrationTest extends AbstractSpringIntegrationJen
         }
         finally {
             ReflectionTestUtils.setField(resource, "rateLimitService", originalLimiter);
-            ReflectionTestUtils.setField(resource, "artemisSuccessfulLoginService", originalLoginService);
+            ReflectionTestUtils.setField(resource, "jwtCookieService", originalCookieService);
         }
     }
 
