@@ -75,7 +75,9 @@
                 />
               }
               @if (fullPage()) {
-                <jhi-programming-exercise-instructor-trigger-build-button class="me-2" [exercise]="exercise()" [participation]="participation()" [btnSize]="ButtonSize.MEDIUM" />
+                @if (exercise().isAtLeastInstructor) {
+                  <jhi-programming-exercise-instructor-trigger-build-button class="me-2" [exercise]="exercise()" [participation]="participation()" [btnSize]="ButtonSize.MEDIUM" />
+                }
               } @else {
                 <jhi-programming-exercise-student-trigger-build-button
                   class="me-2"

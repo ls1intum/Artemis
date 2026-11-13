@@ -8,7 +8,7 @@ import { CodeEditorSubmissionService } from 'app/programming/shared/code-editor/
 import { DomainChange, DomainType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { ProgrammingSubmissionService } from 'app/programming/shared/services/programming-submission.service';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
-import { User } from 'app/core/user/user.model';
+import { User } from 'app/account/user/user.model';
 import { Team } from 'app/exercise/shared/entities/team/team.model';
 
 describe('CodeEditorSubmissionService', () => {

@@ -244,24 +244,31 @@ describe('CodeEditorStudentIntegration', () => {
 
     // The result and the submissions of a participation of a student come on the topics of the student. An instructor who edits the code of a student gets them
     // on the topics of the instructors, so the page of its own uses the non-personal subscriptions and the build button of the instructors.
-    it.each([true, false])('should subscribe to the topics of the instructors and offer the build of an instructor only as a page of its own (full page: %s)', (fullPage) => {
-        Object.assign(route.snapshot.data, fullPage ? { fullPageEditor: true } : {});
-        container.ngOnInit();
-        const participation = { id: 1, submissions: [], exercise: { id: 99 } as ProgrammingExercise } as Participation;
-        const findWithLatestResultSubject = new Subject<Participation>();
-        getStudentParticipationWithLatestResultStub.mockReturnValue(findWithLatestResultSubject);
+    it.each([
+        { fullPage: true, isAtLeastInstructor: true },
+        { fullPage: true, isAtLeastInstructor: false },
+        { fullPage: false, isAtLeastInstructor: false },
+    ])(
+        'should subscribe to the topics of the instructors and offer the build of an instructor only as a page of its own for instructors (%o)',
+        ({ fullPage, isAtLeastInstructor }) => {
+            Object.assign(route.snapshot.data, fullPage ? { fullPageEditor: true } : {});
+            container.ngOnInit();
+            const participation = { id: 1, submissions: [], exercise: { id: 99, isAtLeastInstructor } as ProgrammingExercise } as Participation;
+            const findWithLatestResultSubject = new Subject<Participation>();
+            getStudentParticipationWithLatestResultStub.mockReturnValue(findWithLatestResultSubject);
 
-        routeSubject.next({ participationId: 1 });
-        findWithLatestResultSubject.next(participation);
-        containerFixture.detectChanges();
+            routeSubject.next({ participationId: 1 });
+            findWithLatestResultSubject.next(participation);
+            containerFixture.detectChanges();
 
-        const result = containerDebugElement.query(By.directive(UpdatingResultComponent)).componentInstance as UpdatingResultComponent;
-        const instructions = containerDebugElement.query(By.directive(ProgrammingExerciseInstructionComponent)).componentInstance as ProgrammingExerciseInstructionComponent;
-        expect(result.personalParticipation()).toBe(!fullPage);
-        expect(instructions.personalParticipation()).toBe(!fullPage);
-        expect(containerDebugElement.query(By.directive(ProgrammingExerciseInstructorTriggerBuildButtonComponent)) !== null).toBe(fullPage);
-        expect(containerDebugElement.query(By.directive(ProgrammingExerciseStudentTriggerBuildButtonComponent)) !== null).toBe(!fullPage);
-    });
+            const result = containerDebugElement.query(By.directive(UpdatingResultComponent)).componentInstance as UpdatingResultComponent;
+            const instructions = containerDebugElement.query(By.directive(ProgrammingExerciseInstructionComponent)).componentInstance as ProgrammingExerciseInstructionComponent;
+            expect(result.personalParticipation()).toBe(!fullPage);
+            expect(instructions.personalParticipation()).toBe(!fullPage);
+            expect(containerDebugElement.query(By.directive(ProgrammingExerciseInstructorTriggerBuildButtonComponent)) !== null).toBe(fullPage && isAtLeastInstructor);
+            expect(containerDebugElement.query(By.directive(ProgrammingExerciseStudentTriggerBuildButtonComponent)) !== null).toBe(!fullPage);
+        },
+    );
 
     it('should abort initialization and show error state if participation cannot be retrieved', () => {
         container.ngOnInit();
