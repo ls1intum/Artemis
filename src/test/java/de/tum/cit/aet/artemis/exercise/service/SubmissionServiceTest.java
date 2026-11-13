@@ -714,25 +714,6 @@ class SubmissionServiceTest extends AbstractSpringIntegrationIndependentBatchTes
         assertThat(submissionRepository.findOneWithEagerResultAndFeedbackAndAssessmentNote(submission.getId()).getManualResults()).isEmpty();
     }
 
-    /** Returns the proposal endpoint for an exercise type. */
-    private String assessmentProposalUrl(ExerciseType type, Long exerciseId) {
-        var path = switch (type) {
-            case TEXT -> "text/text";
-            case MODELING -> "modeling/modeling";
-            case FILE_UPLOAD -> "fileupload/file-upload";
-            case PROGRAMMING -> "programming/programming";
-            default -> throw new IllegalArgumentException("Unsupported assessment type: " + type);
-        };
-        var parts = path.split("/");
-        return "/api/" + parts[0] + "/exercises/" + exerciseId + "/" + parts[1] + "-submission-without-assessment";
-    }
-
-    /** Returns the current tutor assessment-list endpoint. */
-    private String assessmentListUrl(ExerciseType type, Long exerciseId) {
-        var url = assessmentProposalUrl(type, exerciseId).replace("-submission-without-assessment", "-submissions");
-        return url + (type == ExerciseType.PROGRAMMING ? "?assessedByTutor=true" : "/assessed-by-me");
-    }
-
     /** Creates a released team exercise with a passed submission deadline. */
     private Exercise teamExercise(ExerciseType type) {
         Exercise exercise = switch (type) {
@@ -802,26 +783,15 @@ class SubmissionServiceTest extends AbstractSpringIntegrationIndependentBatchTes
 
     /** Submits an assessment through its exercise-specific endpoint. */
     private void completeTeamAssessment(ExerciseType type, Submission submission, Long resultId, HttpStatus expectedStatus) throws Exception {
-        writeTeamAssessment(type, submission, resultId, expectedStatus, true);
-    }
-
-    /** Saves or submits feedback through the exercise-specific endpoint. */
-    private void writeTeamAssessment(ExerciseType type, Submission submission, Long resultId, HttpStatus expectedStatus, boolean submit) throws Exception {
         var body = Map.of("id", resultId, "feedbacks", List.of(), "textBlocks", Set.of(), "rated", true, "score", 0.0, "successful", false);
         switch (type) {
             case TEXT -> {
                 var base = "/api/text/participations/" + submission.getParticipation().getId() + "/results/" + resultId;
-                if (submit) {
-                    request.postWithoutResponseBody(base + "/submit-text-assessment", body, expectedStatus);
-                }
-                else {
-                    request.put(base + "/text-assessment", body, expectedStatus);
-                }
+                request.postWithoutResponseBody(base + "/submit-text-assessment", body, expectedStatus);
             }
-            case MODELING ->
-                request.put("/api/modeling/modeling-submissions/" + submission.getId() + "/results/" + resultId + "/assessment?submit=" + submit, body, expectedStatus);
-            case FILE_UPLOAD -> request.put("/api/fileupload/file-upload-submissions/" + submission.getId() + "/feedback?submit=" + submit, body, expectedStatus);
-            case PROGRAMMING -> request.put("/api/programming/participations/" + submission.getParticipation().getId() + "/manual-results?submit=" + submit, body, expectedStatus);
+            case MODELING -> request.put("/api/modeling/modeling-submissions/" + submission.getId() + "/results/" + resultId + "/assessment?submit=true", body, expectedStatus);
+            case FILE_UPLOAD -> request.put("/api/fileupload/file-upload-submissions/" + submission.getId() + "/feedback?submit=true", body, expectedStatus);
+            case PROGRAMMING -> request.put("/api/programming/participations/" + submission.getParticipation().getId() + "/manual-results?submit=true", body, expectedStatus);
             default -> throw new IllegalArgumentException("Unsupported assessment type: " + type);
         }
     }

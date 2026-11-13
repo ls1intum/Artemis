@@ -268,7 +268,7 @@ public interface ProgrammingSubmissionRepository extends ArtemisJpaRepository<Pr
     @EntityGraph(type = LOAD, attributePaths = { "results", "results.feedbacks", "results.feedbacks.longFeedbackText", "buildLogEntries", "participation.exercise" })
     Optional<ProgrammingSubmission> findWithEagerResultsAndFeedbacksAndBuildLogsById(long submissionId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "results", "results.feedbacks", "results.assessor" })
+    @EntityGraph(type = LOAD, attributePaths = { "results", "results.feedbacks", "results.assessor", "results.assessmentNote" })
     Optional<ProgrammingSubmission> findWithEagerResultsFeedbacksAssessorById(long submissionId);
 
     @EntityGraph(type = LOAD, attributePaths = { "buildLogEntries" })
@@ -368,14 +368,5 @@ public interface ProgrammingSubmissionRepository extends ArtemisJpaRepository<Pr
             ORDER BY s.submissionDate ASC, s.id ASC
             """)
     List<ProgrammingSubmission> findByParticipationIdOrderBySubmissionDateAsc(@Param("participationId") long participationId);
-
-    /**
-     * Loads the private note when reopening a team draft.
-     *
-     * @param id the submission id
-     * @return the submission, if present
-     */
-    @EntityGraph(type = LOAD, attributePaths = { "results", "results.feedbacks", "results.assessor", "results.assessmentNote" })
-    Optional<ProgrammingSubmission> findTeamAssessmentById(long id);
 
 }

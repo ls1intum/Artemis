@@ -476,9 +476,6 @@ public class ProgrammingSubmissionService extends SubmissionService {
      */
     public ProgrammingSubmission lockAndGetProgrammingSubmission(Long submissionId, int correctionRound) {
         ProgrammingSubmission programmingSubmission = programmingSubmissionRepository.findByIdWithResultsFeedbacksAssessor(submissionId);
-        if (programmingSubmission.getParticipation().getExercise().isTeamMode()) {
-            programmingSubmission = programmingSubmissionRepository.findTeamAssessmentById(submissionId).orElseThrow();
-        }
         var manualResult = lockSubmission(programmingSubmission, correctionRound);
         return (ProgrammingSubmission) manualResult.getSubmission();
     }

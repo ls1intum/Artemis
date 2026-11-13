@@ -422,14 +422,7 @@
                                                         : 'artemisApp.exerciseAssessmentDashboard.yourTeams'
                                                 "
                                                 data-testid="assessment-queue-title"
-                                            >
-                                                {{
-                                                    (exercise().isAtLeastInstructor
-                                                        ? 'artemisApp.exerciseAssessmentDashboard.allTeams'
-                                                        : 'artemisApp.exerciseAssessmentDashboard.yourTeams'
-                                                    ) | artemisTranslate
-                                                }}
-                                            </h4>
+                                            ></h4>
                                         } @else if (!isExamMode()) {
                                             <h4 class="m-0" jhiTranslate="artemisApp.exerciseAssessmentDashboard.studentsSubmissions"></h4>
                                         } @else {
