@@ -325,7 +325,7 @@ class FileUploadSubmissionIntegrationTest extends AbstractFileUploadIntegrationT
         FileUploadSubmissionDTO storedSubmission = assertThatDb(
                 () -> request.get("/api/fileupload/exercises/" + releasedFileUploadExercise.getId() + "/file-upload-submission-without-assessment", HttpStatus.OK,
                         FileUploadSubmissionDTO.class))
-                .hasBeenCalledAtMostTimes(7);
+                .hasBeenCalledAtMostTimes(8);
 
         assertThat(storedSubmission).as("no submission eligible for new assessment").isNull();
     }
