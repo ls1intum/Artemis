@@ -133,6 +133,7 @@
         "exerciseNotDefined": "The exercise is not defined.",
         "exerciseIdMismatch": "The exercise IDs do not match.",
         "feedbackIdMismatch": "The assessment contains feedback of another result.",
+        "feedbackCreditsOutOfBounds": "The points of a feedback must be between -100 and 100.",
         "resultParticipationMismatch": "The result is not a manual result of this participation.",
         "textBlockSubmissionMismatch": "The assessment contains a text block of another submission.",
         "solutionEntryError": "An error occurred while retrieving the extracted tasks from the problem statement.",
@@ -183,6 +184,15 @@
             "cannotStart": "Team exercise cannot be started without assigned team."
         },
         "assignmentRepositoryNotAllowed": "Assignment repositories are not supported for exam exercises. Please use the test run feature instead to try out the exercise.",
+        "assessmentUpload": {
+            "fileEmpty": "The uploaded file is empty",
+            "fileTooLarge": "The uploaded file exceeds the maximum file size of {{ maxSize }}",
+            "invalidZipFile": "The uploaded file could not be read as a zip file",
+            "multipleCorrectionRounds": "Manual assessments can only be uploaded for exercises with exactly one correction round",
+            "manualResultsNotAllowed": "Manual assessments are not allowed for this exercise yet",
+            "automaticAssessment": "Manual assessments can only be uploaded for exercises that have manual assessment enabled",
+            "tooManyParticipantsForTemplate": "The exercise has too many participants to generate a manual-assessment upload template"
+        },
         "room": {
             "fileEmpty": "The uploaded file is empty",
             "fileTooLarge": "The uploaded file exceeds the maximum file size of {{ maxSize }}",
@@ -365,6 +375,10 @@
         "buildPlanConfigurationTooLarge": "The build plan configuration is too large to be processed. Please reduce the size of your build phases.",
         "sharingInfoMissing": "The sharing platform information is missing.",
         "problemStatementTooLong": "The problem statement must not exceed 100,000 characters.",
+        "scienceExportInvalidDateRange": "The export start date must be before the end date.",
+        "scienceExportFailed": "The export could not be created. No file was kept.",
+        "scienceCourseNotEnabled": "This course does not collect science data.",
+        "scienceExportMissingEventTypes": "Select at least one event type for the export.",
         "generationBriefRequired": "Enter a brief before generating an exercise without a problem statement.",
         "generationCapacityUnavailable": "Artemis has no free capacity for AI generation right now. Nothing has been generated — try again in a few minutes.",
         "exerciseGenerationRunning": "Another operation or an unfinished recovery is protecting this exercise. Try again later; contact an administrator if recovery is required."

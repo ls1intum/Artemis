@@ -920,6 +920,27 @@ class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
     }
 
     @Test
+    void testStudentRepositoryLargerThan20MbIsRejected() throws Exception {
+        localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+
+        // Every file is below the limit for a single file, but together they are larger than a student repository may be.
+        for (int i = 0; i < 5; i++) {
+            Path file = assignmentRepository.workingCopyPath().resolve("data" + i + ".txt");
+            FileUtils.writeByteArrayToFile(file.toFile(), new byte[5 * 1024 * 1024]);
+        }
+        assignmentRepository.workingCopy().add().addFilepattern(".").call();
+        GitService.commit(assignmentRepository.workingCopy()).setMessage("Add data files").call();
+
+        String repositoryUri = localVCLocalCITestService.buildLocalVCUri(student1Login, projectKey1, assignmentRepositorySlug);
+        PushResult pushResult = assignmentRepository.workingCopy().push().setRemote(repositoryUri)
+                .setRefSpecs(new RefSpec("refs/heads/" + defaultBranch + ":refs/heads/" + defaultBranch)).call().iterator().next();
+        RemoteRefUpdate remoteRefUpdate = pushResult.getRemoteUpdates().iterator().next();
+        assertThat(remoteRefUpdate.getStatus()).isEqualTo(RemoteRefUpdate.Status.REJECTED_OTHER_REASON);
+        assertThat(remoteRefUpdate.getMessage()).contains("limit is 20 MB").contains("Download them during the build instead")
+                .contains("write-code-and-tests#keep-repositories-small");
+    }
+
+    @Test
     void testFetch_expiredUserVcsAccessToken_isRejected() throws InvalidNameException {
         localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
         var student = userUtilService.getUserByLogin(student1Login);

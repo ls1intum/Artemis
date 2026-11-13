@@ -10,6 +10,8 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 import java.util.Map;
 
 import org.junit.jupiter.api.Nested;
@@ -289,6 +291,50 @@ class ConfigurationValidatorTest {
         when(mockEnvironment.getProperty("artemis.version-control.build-agent-git-password")).thenReturn(buildAgentGitPassword);
         return new ConfigurationValidator(mockEnvironment, false, internalAdminUsername, internalAdminPassword, false, null, VALID_HTTP_PORT, VALID_GRPC_PORT, null, null, null,
                 null, false, "http://localhost", VALID_DEIMOS_BASE_URL, VALID_DEIMOS_MODEL, VALID_DEIMOS_COMPLETIONS_PATH, 90, 3);
+    }
+
+    @Nested
+    class AthenaSecretTest {
+
+        private ConfigurationValidator createAthenaValidator(boolean productionProfileActive, boolean athenaEnabled, String athenaSecret) {
+            Environment mockEnvironment = mock(Environment.class);
+            when(mockEnvironment.getProperty(Constants.PASSKEY_ENABLED_PROPERTY_NAME, Boolean.class)).thenReturn(false);
+            when(mockEnvironment.matchesProfiles(ArtemisConstants.SPRING_PROFILE_PRODUCTION)).thenReturn(productionProfileActive);
+            when(mockEnvironment.getProperty("jhipster.security.authentication.jwt.base64-secret"))
+                    .thenReturn(Base64.getEncoder().encodeToString("k".repeat(64).getBytes(StandardCharsets.UTF_8)));
+            when(mockEnvironment.getProperty("artemis.athena.enabled", Boolean.class)).thenReturn(athenaEnabled);
+            when(mockEnvironment.getProperty("artemis.athena.secret")).thenReturn(athenaSecret);
+            when(mockEnvironment.getProperty(Constants.DEIMOS_ENABLED_PROPERTY_NAME, Boolean.class)).thenReturn(false);
+            return new ConfigurationValidator(mockEnvironment, false, null, null, false, null, VALID_HTTP_PORT, VALID_GRPC_PORT, null, null, null, null, false, "http://localhost",
+                    VALID_DEIMOS_BASE_URL, VALID_DEIMOS_MODEL, VALID_DEIMOS_COMPLETIONS_PATH, 90, 3);
+        }
+
+        @ParameterizedTest
+        @ValueSource(strings = { "abcdef12345", "abcdefg12345", "CHANGE_ME_ATHENA_SECRET", "CHANGE_ME_other" })
+        void testShippedAthenaSecretIsRejectedUnderProdProfile(String secret) {
+            ConfigurationValidator validator = createAthenaValidator(true, true, secret);
+
+            assertThatThrownBy(validator::validateConfigurations).isInstanceOf(InsecureDefaultCredentialException.class).hasMessageContaining("artemis.athena.secret");
+        }
+
+        @ParameterizedTest
+        @ValueSource(strings = { "", "   " })
+        void testBlankAthenaSecretIsRejectedUnderProdProfile(String secret) {
+            ConfigurationValidator validator = createAthenaValidator(true, true, secret);
+
+            assertThatThrownBy(validator::validateConfigurations).isInstanceOf(InsecureDefaultCredentialException.class).hasMessageContaining("no shared secret");
+        }
+
+        @Test
+        void testShippedAthenaSecretIsToleratedWhenAthenaIsDisabledOrOutsideProd() {
+            assertThatCode(createAthenaValidator(true, false, "abcdef12345")::validateConfigurations).doesNotThrowAnyException();
+            assertThatCode(createAthenaValidator(false, true, "abcdef12345")::validateConfigurations).doesNotThrowAnyException();
+        }
+
+        @Test
+        void testUniqueAthenaSecretIsAcceptedUnderProdProfile() {
+            assertThatCode(createAthenaValidator(true, true, "4f9a8c1e7b2d44e0a6c3d5f7")::validateConfigurations).doesNotThrowAnyException();
+        }
     }
 
     @Nested

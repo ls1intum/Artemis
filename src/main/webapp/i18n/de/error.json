@@ -133,6 +133,7 @@
         "exerciseNotDefined": "Die Aufgabe ist nicht definiert.",
         "exerciseIdMismatch": "Die Aufgaben-IDs stimmen nicht überein.",
         "feedbackIdMismatch": "Die Bewertung enthält Feedback eines anderen Ergebnisses.",
+        "feedbackCreditsOutOfBounds": "Die Punkte eines Feedbacks müssen zwischen -100 und 100 liegen.",
         "resultParticipationMismatch": "Das Ergebnis ist kein manuelles Ergebnis dieser Teilnahme.",
         "textBlockSubmissionMismatch": "Die Bewertung enthält einen Textblock einer anderen Abgabe.",
         "solutionEntryError": "Fehler beim Laden der extrahierten Aufgaben aus der Aufgabenstellung.",
@@ -183,6 +184,15 @@
             "cannotStart": "Teamübung kann nicht ohne zugewiesenes Team gestartet werden."
         },
         "assignmentRepositoryNotAllowed": "Assignment-Repositories werden für Klausuraufgaben nicht unterstützt. Bitte nutze stattdessen das Testlauf-Feature, um die Aufgabe auszuprobieren.",
+        "assessmentUpload": {
+            "fileEmpty": "Die hochgeladene Datei enthält keinen Inhalt",
+            "fileTooLarge": "Die hochgeladene Datei überschreitet die maximal zulässige Dateigröße von {{ maxSize }}",
+            "invalidZipFile": "Die hochgeladene Datei konnte nicht als ZIP-Datei gelesen werden",
+            "multipleCorrectionRounds": "Manuelle Bewertungen können nur für Aufgaben mit genau einer Korrekturrunde hochgeladen werden",
+            "manualResultsNotAllowed": "Manuelle Bewertungen sind für diese Aufgabe noch nicht erlaubt",
+            "automaticAssessment": "Manuelle Bewertungen können nur für Aufgaben hochgeladen werden, bei denen die manuelle Bewertung aktiviert ist",
+            "tooManyParticipantsForTemplate": "Die Aufgabe hat zu viele Teilnehmende, um eine Vorlage für den Upload manueller Bewertungen zu erzeugen"
+        },
         "room": {
             "fileEmpty": "Die hochgeladene Datei enthält keinen Inhalt",
             "fileTooLarge": "Die hochgeladene Datei überschreitet die maximal zulässige Dateigröße von {{ maxSize }}",
@@ -365,6 +375,10 @@
         "buildPlanConfigurationTooLarge": "Die Build-Plan-Konfiguration ist zu groß, um verarbeitet zu werden. Bitte reduziere die Größe deiner Build-Phasen.",
         "sharingInfoMissing": "Die Informationen der Sharing-Plattform fehlen.",
         "problemStatementTooLong": "Die Aufgabenstellung darf 100.000 Zeichen nicht überschreiten.",
+        "scienceExportInvalidDateRange": "Das Startdatum des Exports muss vor dem Enddatum liegen.",
+        "scienceExportFailed": "Der Export konnte nicht erstellt werden. Es wurde keine Datei behalten.",
+        "scienceCourseNotEnabled": "Für diesen Kurs werden keine Kursinteraktionsdaten erhoben.",
+        "scienceExportMissingEventTypes": "Wähle mindestens einen Ereignistyp für den Export aus.",
         "generationBriefRequired": "Gib eine Aufgabenbeschreibung ein, bevor du eine Aufgabe ohne Problemstellung generierst.",
         "generationCapacityUnavailable": "Artemis hat gerade keine freie Kapazität für die KI-Generierung. Es wurde nichts generiert — versuche es in ein paar Minuten erneut.",
         "exerciseGenerationRunning": "Die Aufgabe ist durch einen anderen Vorgang oder eine unvollständige Wiederherstellung gesperrt. Versuche es später erneut; wende dich bei einer erforderlichen Wiederherstellung an die Administration."

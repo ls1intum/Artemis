@@ -218,6 +218,10 @@ public class CourseUpdateResource {
             // delete old course icon
             fileService.schedulePathForDeletion(new FileSystemLocation.CourseIcon(existingCourseIcon).path(), 0);
         }
+        else {
+            // without a new file, a request can only keep or remove the icon of the course, never name another stored file
+            existingCourse.setCourseIcon(existingCourseIcon);
+        }
 
         if (!Objects.equals(courseUpdateDTO.courseInformationSharingMessagingCodeOfConduct(), oldCodeOfConduct)) {
             conductAgreementService.resetUsersAgreeToCodeOfConductInCourse(existingCourse);
