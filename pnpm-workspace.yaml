@@ -7,24 +7,24 @@ packages:
   - 'packages/*'
 
 catalog:
-  '@analogjs/vite-plugin-angular': 2.9.6
-  '@analogjs/vitest-angular': 2.9.6
+  '@analogjs/vite-plugin-angular': 2.9.7
+  '@analogjs/vitest-angular': 2.9.7
   '@arethetypeswrong/cli': 0.18.5
-  '@angular-devkit/architect': 0.2202.6
-  '@angular-devkit/core': 22.2.6
+  '@angular-devkit/architect': 0.2202.7
+  '@angular-devkit/core': 22.2.7
   # Released from angular/components with @angular/cdk, and peers on exactly that cdk version:
   # move both together.
-  '@angular/aria': 22.2.6
-  '@angular/build': 22.2.6
-  '@angular/cdk': 22.2.6
-  '@angular/cli': 22.2.6
-  '@angular/common': 22.2.5
-  '@angular/compiler': 22.2.5
-  '@angular/compiler-cli': 22.2.5
-  '@angular/core': 22.2.5
-  '@angular/forms': 22.2.5
-  '@angular/localize': 22.2.5
-  '@angular/platform-browser': 22.2.5
+  '@angular/aria': 22.2.7
+  '@angular/build': 22.2.7
+  '@angular/cdk': 22.2.7
+  '@angular/cli': 22.2.7
+  '@angular/common': 22.2.6
+  '@angular/compiler': 22.2.6
+  '@angular/compiler-cli': 22.2.6
+  '@angular/core': 22.2.6
+  '@angular/forms': 22.2.6
+  '@angular/localize': 22.2.6
+  '@angular/platform-browser': 22.2.6
   '@fortawesome/angular-fontawesome': 5.1.0
   '@fortawesome/fontawesome-svg-core': 7.3.1
   '@fortawesome/free-solid-svg-icons': 7.3.1
@@ -44,11 +44,11 @@ catalog:
   '@vitest/coverage-istanbul': 5.1.0
   '@vitest/coverage-v8': 5.1.0
   chokidar: 5.0.0
-  concurrently: 10.0.6
+  concurrently: 10.0.7
   cross-env: 10.1.0
   dayjs: 1.11.23
   eslint: 10.14.0
-  eslint-plugin-storybook: 10.6.6
+  eslint-plugin-storybook: 10.6.7
   jsdom: 30.0.1
   lodash-es: 4.18.1
   ng-packagr: 22.2.6
@@ -59,7 +59,7 @@ catalog:
   # Must equal the react and react-dom overrides below - see the note there.
   react: 19.2.8
   rxjs: 7.8.2
-  sass: 1.108.0
+  sass: 1.108.2
   semver: 7.8.6
   storybook: 10.6.6
   stylelint: 17.16.0
@@ -133,13 +133,13 @@ overrides:
   # @angular/localize is only pulled in transitively (e.g. via @ng-bootstrap/ng-bootstrap,
   # whose peer range requires the current Angular major). Without this pin it resolves to a
   # straggler from an older major that violates that peer range; keep it equal to @angular/core.
-  '@angular/localize': 22.2.5
+  '@angular/localize': 22.2.6
   # @angular/animations is never declared either: it arrives as an optional auto-installed peer of
   # @angular/platform-browser. Both sides of that edge pin an exact patch - platform-browser asks for
   # animations of its own version and animations asks for core of its own version - so without this pin
   # an Angular patch bump leaves animations behind on the old patch against the new core. Keep it equal
   # to @angular/core.
-  '@angular/animations': 22.2.5
+  '@angular/animations': 22.2.6
   'babel-plugin-istanbul>test-exclude': '8.0.0'
   '@babel/core': '7.29.7'
   '@babel/runtime': '7.29.10'
