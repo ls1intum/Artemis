@@ -145,6 +145,62 @@ public class RateLimitService {
     }
 
     /**
+     * Reserves one token of the budget of a key before the work starts, and refuses the request when none is left.
+     * <p>
+     * For a limit that is not about the client address but about what is being tried, such as the failed password logins of one account. The token is taken
+     * before the credentials are verified, so that concurrent requests cannot all pass a check that has not spent anything yet. The caller gives the token
+     * back with {@link #refundBudget} when the verification does not count as a failure. Exempt client addresses are not consulted, as the key is not an address.
+     *
+     * @param key     what is limited, for example the lower-cased login name
+     * @param rpmType the rate limit type to determine the RPM configuration
+     * @throws RateLimitExceededException if the budget of the key is empty
+     */
+    public void enforceBudget(String key, RateLimitType rpmType) {
+        if (isSwitchedOff(rpmType)) {
+            return;
+        }
+        ConsumptionProbe probe = getOrCreatePerMinuteBucket(key, rpmType, configurationService.getEffectiveRpm(rpmType)).tryConsumeAndReturnRemaining(1);
+        if (!probe.isConsumed()) {
+            long seconds = Math.max(1, probe.getNanosToWaitForRefill() / 1_000_000_000L);
+            log.warn("Rate limit exceeded for a key at {}, retry after {} seconds", rpmType.name(), seconds);
+            throw new RateLimitExceededException(seconds);
+        }
+    }
+
+    /**
+     * Gives back the token that {@link #enforceBudget} reserved, because the verification succeeded or failed for a reason that does not count.
+     *
+     * @param key     what is limited, for example the lower-cased login name
+     * @param rpmType the rate limit type to determine the RPM configuration
+     */
+    public void refundBudget(String key, RateLimitType rpmType) {
+        if (isSwitchedOff(rpmType)) {
+            return;
+        }
+        getOrCreatePerMinuteBucket(key, rpmType, configurationService.getEffectiveRpm(rpmType)).addTokens(1);
+    }
+
+    /**
+     * Reserves one token of the budget of failed checks of a shared secret of an external service for the calling address, and refuses the check when the
+     * address has used up its budget.
+     * <p>
+     * Call this before comparing the secret and {@link #refundServiceCredentialBudget()} when the comparison succeeds, so that a caller that presents the right
+     * secret spends nothing. The address is the TCP peer, which a sender cannot choose.
+     *
+     * @throws RateLimitExceededException if the address has used up its budget of failed checks
+     */
+    public void requireServiceCredentialBudget() {
+        enforcePerMinute(resolvePeerId(), RateLimitType.SERVICE_CREDENTIAL_FAILURE);
+    }
+
+    /**
+     * Gives back the token reserved by {@link #requireServiceCredentialBudget()}, because the secret was right.
+     */
+    public void refundServiceCredentialBudget() {
+        refundPerMinute(resolvePeerId(), RateLimitType.SERVICE_CREDENTIAL_FAILURE);
+    }
+
+    /**
      * Whether the limit of a type is not enforced because rate limiting is disabled. A type that is always enforced is never switched off.
      */
     private boolean isSwitchedOff(RateLimitType rpmType) {
@@ -152,9 +208,13 @@ public class RateLimitService {
     }
 
     private Bucket getOrCreatePerMinuteBucket(IPAddress clientId, RateLimitType rpmType, int rpm) {
+        return getOrCreatePerMinuteBucket(String.valueOf(clientId), rpmType, rpm);
+    }
+
+    private Bucket getOrCreatePerMinuteBucket(String key, RateLimitType rpmType, int rpm) {
         BucketConfiguration cfg = perMinuteCfgCache.computeIfAbsent(rpm, RateLimitConfig::perMinute);
         // Include the rate-limit type in the bucket key so two types with the same RPM do not share a bucket.
-        return proxyManager.getProxy("type=" + rpmType.name() + "#rpm=" + rpm + "#" + clientId, () -> cfg);
+        return proxyManager.getProxy("type=" + rpmType.name() + "#rpm=" + rpm + "#" + key, () -> cfg);
     }
 
     /**

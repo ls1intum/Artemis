@@ -1338,6 +1338,18 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void testExamAttendanceCheckRejectsTooLongMessage() throws Exception {
+        exam1.setVisibleDate(ZonedDateTime.now().minusMinutes(1));
+        exam1 = examRepository.save(exam1);
+
+        var tooLongMessage = "a".repeat(1001);
+        request.postWithPlainStringResponseBody(
+                "/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/students/" + studentExam1.getUser().getLogin() + "/attendance-check", tooLongMessage,
+                ExamAttendanceCheckEventDTO.class, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testExamsCanNotBeSentBeforeVisibleDateForAttendance() throws Exception {
         exam1.setVisibleDate(ZonedDateTime.now().plusMinutes(1));
         exam1 = examRepository.save(exam1);
