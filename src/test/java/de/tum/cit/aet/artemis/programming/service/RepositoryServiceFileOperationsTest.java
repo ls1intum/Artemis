@@ -293,6 +293,73 @@ class RepositoryServiceFileOperationsTest {
     }
 
     @Test
+    void repositoryContentForLanguageModelsSkipsHugeFilesAndStaysWithinTheTotalLimit() throws Exception {
+        FileUtils.writeStringToFile(workingTree.resolve("small.txt").toFile(), "small", StandardCharsets.UTF_8);
+        FileUtils.writeStringToFile(workingTree.resolve("huge.txt").toFile(), "x".repeat((int) RepositoryService.MAX_SELECTED_FILE_SIZE_BYTES + 1), StandardCharsets.UTF_8);
+        for (int i = 0; i < 8; i++) {
+            FileUtils.writeStringToFile(workingTree.resolve("medium" + i + ".txt").toFile(), "y".repeat(900_000), StandardCharsets.UTF_8);
+        }
+        var git = org.eclipse.jgit.api.Git.wrap(repository);
+        git.add().addFilepattern(".").call();
+        GitService.commit(git).setMessage("Commit large files").setAuthor("Fixture", "fixture@example.com").call();
+        var uri = new LocalVCRepositoryUri(URI.create("https://artemis.example.com"), "ABC", "abc-exercise");
+        var bare = org.mockito.Mockito.mock(BareGitRepositoryService.class);
+        org.mockito.Mockito.when(bare.getBareRepository(uri, false)).thenAnswer(invocation -> new Repository(workingTree.resolve(".git").toString(), uri));
+        var limited = new RepositoryService(org.mockito.Mockito.mock(GitService.class), bare, Optional.empty());
+
+        var contents = limited.getContextFilesContentFromBareRepositoryForLastCommit(uri, null, Long.MAX_VALUE);
+
+        // Only the context of language models is bounded: comparisons and exports keep every file, and the committed content of a path can be read on its own.
+        assertThat(limited.getFilesContentFromBareRepositoryForLastCommit(uri)).containsKey("huge.txt");
+        // The committed content of a path is read within the limits too. A path that exists but does not fit is reported as omitted, a missing path is in neither part.
+        var committed = limited.getCommittedContentOfPaths(uri, java.util.Set.of("huge.txt", "small.txt", "missing.txt"));
+        assertThat(committed.files()).containsOnlyKeys("small.txt");
+        assertThat(committed.omitted()).containsExactly("huge.txt");
+        assertThat(contents).doesNotContainKey("huge.txt");
+        assertThat(contents.values().stream().mapToLong(String::length).sum()).isLessThanOrEqualTo(RepositoryService.MAX_SELECTED_FILES_TOTAL_SIZE_BYTES);
+        assertThat(contents).containsKey("small.txt").hasSizeLessThan(9);
+    }
+
+    @Test
+    void repositoryContentWithPathFilterDoesNotCountFilesThatTheFilterRejects() throws Exception {
+        // The files of another language come first in the traversal and would use up the total limit, if they were counted before they are filtered.
+        for (int i = 0; i < 8; i++) {
+            FileUtils.writeStringToFile(workingTree.resolve("a-data" + i + ".txt").toFile(), "y".repeat(900_000), StandardCharsets.UTF_8);
+        }
+        FileUtils.writeStringToFile(workingTree.resolve("z-Main.java").toFile(), "//".repeat(400_000), StandardCharsets.UTF_8);
+        var git = org.eclipse.jgit.api.Git.wrap(repository);
+        git.add().addFilepattern(".").call();
+        GitService.commit(git).setMessage("Commit data and source").setAuthor("Fixture", "fixture@example.com").call();
+        var uri = new LocalVCRepositoryUri(URI.create("https://artemis.example.com"), "ABC", "abc-exercise");
+        var bare = org.mockito.Mockito.mock(BareGitRepositoryService.class);
+        org.mockito.Mockito.when(bare.getBareRepository(uri, false)).thenAnswer(invocation -> new Repository(workingTree.resolve(".git").toString(), uri));
+        var limited = new RepositoryService(org.mockito.Mockito.mock(GitService.class), bare, Optional.empty());
+
+        assertThat(limited.getContextFilesContentFromBareRepositoryForLastCommit(uri, null, Long.MAX_VALUE)).doesNotContainKey("z-Main.java");
+        assertThat(limited.getContextFilesContentFromBareRepositoryForLastCommit(uri, path -> path.endsWith(".java"), Long.MAX_VALUE)).containsOnlyKeys("z-Main.java");
+    }
+
+    @Test
+    void repositoryContentWithAFileSizeLimitDoesNotCountFilesAboveIt() throws Exception {
+        // Files above the size that the caller keeps would use up the limit of the total size and leave out the source file, which comes last in the traversal
+        for (int i = 0; i < 8; i++) {
+            FileUtils.writeStringToFile(workingTree.resolve("a-build" + i + ".txt").toFile(), "y".repeat(1_040_000), StandardCharsets.UTF_8);
+        }
+        // five of the files above fit the limit of the total size and leave less room than this source file needs
+        FileUtils.writeStringToFile(workingTree.resolve("z-Main.java").toFile(), "//".repeat(25_000), StandardCharsets.UTF_8);
+        var git = org.eclipse.jgit.api.Git.wrap(repository);
+        git.add().addFilepattern(".").call();
+        GitService.commit(git).setMessage("Commit build output and source").setAuthor("Fixture", "fixture@example.com").call();
+        var uri = new LocalVCRepositoryUri(URI.create("https://artemis.example.com"), "ABC", "abc-exercise");
+        var bare = org.mockito.Mockito.mock(BareGitRepositoryService.class);
+        org.mockito.Mockito.when(bare.getBareRepository(uri, false)).thenAnswer(invocation -> new Repository(workingTree.resolve(".git").toString(), uri));
+        var limited = new RepositoryService(org.mockito.Mockito.mock(GitService.class), bare, Optional.empty());
+
+        assertThat(limited.getContextFilesContentFromBareRepositoryForLastCommit(uri, null, Long.MAX_VALUE)).doesNotContainKey("z-Main.java");
+        assertThat(limited.getContextFilesContentFromBareRepositoryForLastCommit(uri, null, 100 * 1024L)).containsOnlyKeys("z-Main.java");
+    }
+
+    @Test
     void unavailableBareRepositoryFallsBackToCheckoutAndReportsCheckoutFailure() throws Exception {
         FileUtils.writeStringToFile((workingTree.resolve("cached.txt")).toFile(), "cached committed contents", StandardCharsets.UTF_8);
         var git = org.eclipse.jgit.api.Git.wrap(repository);
