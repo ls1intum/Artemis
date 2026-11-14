@@ -425,6 +425,21 @@ paths:
           content:
             application/json:
               schema: {$ref: '#/components/schemas/QuizQuestionPoolItem'}
+  /api/videosource/courses/{courseId}/binding/approval:
+    post:
+      tags: [gocast-integration]
+      operationId: startApproval
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/GocastApprovalStart'}
   /api/tutorialgroup/courses/{courseId}/tutorial-groups:
     get:
       tags: [tutorial-group]
@@ -1370,6 +1385,31 @@ paths:
         required: true
         schema: {type: integer, format: int64}
       - name: sessionId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200': {description: OK}
+  /api/videosource/courses/{courseId}/binding:
+    get:
+      tags: [gocast-integration]
+      operationId: getBinding
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/GocastBinding'}
+    delete:
+      tags: [gocast-integration]
+      operationId: unlink
+      parameters:
+      - name: courseId
         in: path
         required: true
         schema: {type: integer, format: int64}
@@ -2692,6 +2732,20 @@ components:
         exerciseId: {type: integer, format: int64}
         sourceExerciseId: {type: integer, format: int64}
       required: [jobId]
+    GocastBinding:
+      type: object
+      properties:
+        available: {type: boolean}
+        status:
+          type: string
+          enum: [UNLINKED, PENDING, EXPIRED, ACTIVE, REVOKED]
+        courseId: {type: integer, format: int64}
+        courseName: {type: string}
+        courseSlug: {type: string}
+        courseVisibility: {type: string}
+        expiresAt: {type: string, format: date-time}
+        upstreamUnavailable: {type: boolean}
+      required: [available, status, upstreamUnavailable]
     QuizQuestionWithSolution:
       discriminator:
         propertyName: type
@@ -5710,6 +5764,12 @@ components:
       properties:
         summary: {type: string}
         detail: {type: string}
+    GocastApprovalStart:
+      type: object
+      properties:
+        approvalUrl: {type: string}
+        expiresAt: {type: string, format: date-time}
+      required: [approvalUrl, expiresAt]
     TutorialGroupSummarySchedule:
       type: object
       properties:

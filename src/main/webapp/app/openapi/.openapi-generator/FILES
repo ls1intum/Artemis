@@ -3,6 +3,7 @@ api/admin-hyperion-generation-api.ts
 api/admin-hyperion-generation-monitoring-api.ts
 api/calendar-api.ts
 api/global-search-api.ts
+api/gocast-integration-api.ts
 api/hyperion-assessment-criteria-generation-api.ts
 api/hyperion-authoring-run-api.ts
 api/hyperion-code-generation-api.ts
@@ -123,6 +124,8 @@ model/generated-assessment-instruction.ts
 model/generated-quiz-answer-option.ts
 model/generated-quiz-question.ts
 model/global-search-result.ts
+model/gocast-approval-start.ts
+model/gocast-binding.ts
 model/grading-criterion.ts
 model/grading-instruction.ts
 model/hyperion-course-settings.ts

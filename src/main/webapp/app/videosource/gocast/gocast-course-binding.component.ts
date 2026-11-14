@@ -8,10 +8,10 @@ import { TumAetUiButtonComponent, TumAetUiDialogComponent, TumAetUiMessageCompon
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { GocastBinding, GocastBindingStatus } from './gocast.model';
-import { GocastService } from './gocast.service';
+import { GocastIntegrationApi } from 'app/openapi/api/gocast-integration-api';
+import { GocastBinding, GocastBindingStatusEnum } from 'app/openapi/model/gocast-binding';
 
-const STATUS_SEVERITY: Record<GocastBindingStatus, TumAetUiTagSeverity> = {
+const STATUS_SEVERITY: Record<GocastBindingStatusEnum, TumAetUiTagSeverity> = {
     UNLINKED: 'secondary',
     PENDING: 'info',
     EXPIRED: 'warn',
@@ -35,7 +35,7 @@ const STATUS_SEVERITY: Record<GocastBindingStatus, TumAetUiTagSeverity> = {
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class GocastCourseBindingComponent {
-    private readonly gocastService = inject(GocastService);
+    private readonly gocastIntegrationApi = inject(GocastIntegrationApi);
     private readonly destroyRef = inject(DestroyRef);
 
     readonly courseId = input.required<number>();
@@ -73,7 +73,7 @@ export class GocastCourseBindingComponent {
         this.loading.set(true);
         this.error.set(false);
         this.statusAnnouncement.set(announceCompletion ? 'artemisApp.gocast.checking' : undefined);
-        this.gocastService
+        this.gocastIntegrationApi
             .getBinding(courseId)
             .pipe(
                 takeUntilDestroyed(this.destroyRef),
@@ -107,7 +107,7 @@ export class GocastCourseBindingComponent {
         this.action.set('connect');
         this.error.set(false);
         this.statusAnnouncement.set(undefined);
-        this.gocastService
+        this.gocastIntegrationApi
             .startApproval(courseId)
             .pipe(
                 takeUntilDestroyed(this.destroyRef),
@@ -150,7 +150,7 @@ export class GocastCourseBindingComponent {
         this.action.set('disconnect');
         this.error.set(false);
         this.statusAnnouncement.set(undefined);
-        this.gocastService
+        this.gocastIntegrationApi
             .unlink(courseId)
             .pipe(
                 takeUntilDestroyed(this.destroyRef),
@@ -163,7 +163,7 @@ export class GocastCourseBindingComponent {
             .subscribe({
                 next: () => {
                     if (this.isCurrentCourse(courseId, courseGeneration)) {
-                        this.binding.set({ available: true, status: 'UNLINKED' });
+                        this.binding.set({ available: true, status: 'UNLINKED', upstreamUnavailable: false });
                         this.statusAnnouncement.set('artemisApp.gocast.disconnectComplete');
                     }
                 },
