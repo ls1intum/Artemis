@@ -2269,6 +2269,16 @@ paths:
           content:
             text/plain:
               schema: {type: string}
+  /api/calendar/subscription-token/rotate:
+    post:
+      tags: [calendar]
+      operationId: rotateCalendarEventSubscriptionToken
+      responses:
+        '200':
+          description: OK
+          content:
+            text/plain:
+              schema: {type: string}
   /api/calendar/courses/{courseId}/calendar-events:
     get:
       tags: [calendar]

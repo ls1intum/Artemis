@@ -102,6 +102,30 @@ public class CalendarSubscriptionService {
         throw new IllegalStateException("Could not generate a unique calendar subscription token after " + MAXIMUM_ATTEMPT_NUMBER + " attempts");
     }
 
+    /**
+     * Replaces the subscription token of the user with a new one, so that subscription links that contain the previous token stop working.
+     * A user who has no token yet receives a new one.
+     *
+     * @param userLogin the login of the {@link User} whose token is rotated
+     * @return the new token
+     */
+    public String rotateSubscriptionTokenForUser(String userLogin) {
+        final int MAXIMUM_ATTEMPT_NUMBER = 10;
+        for (int attempt = 1; attempt <= MAXIMUM_ATTEMPT_NUMBER; attempt++) {
+            String token = convertBytesToSubscriptionToken(generateSubscriptionTokenBytes());
+            try {
+                if (calendarSubscriptionTokenStoreRepository.replaceTokenByUserLogin(userLogin, token) > 0) {
+                    return token;
+                }
+                return createSubscriptionTokenForUser(userLogin);
+            }
+            catch (DataIntegrityViolationException ignored) {
+                // The token collided with the token of another user, which is astronomically rare: retry with a fresh one
+            }
+        }
+        throw new IllegalStateException("Could not generate a unique calendar subscription token after " + MAXIMUM_ATTEMPT_NUMBER + " attempts");
+    }
+
     private byte[] generateSubscriptionTokenBytes() {
         byte[] bytes = new byte[16];
         SECURE_RANDOM.nextBytes(bytes);

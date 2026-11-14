@@ -131,5 +131,12 @@
                 }
             </button>
         </div>
+        <span jhiTranslate="artemisApp.calendar.subscriptionPopover.rotateExplanation"></span>
+        <div>
+            <button type="button" tumAetUiButton variant="outlined" data-testid="subscription-token-rotate-button" (click)="rotateSubscriptionToken()">
+                <fa-icon [icon]="faRotate" />
+                <span jhiTranslate="artemisApp.calendar.subscriptionPopover.rotateButtonLabel"></span>
+            </button>
+        </div>
     </div>
 </tumaet-ui-popover>
