@@ -666,7 +666,8 @@ export class MessageEditorDom {
                     }
                     content.textContent = label || url;
                 }
-                existing.setAttribute('href', url);
+                // Reviewed false positive (CodeQL js/xss, js/client-side-unvalidated-url-redirection): isMessageLinkSafe above only accepts http, https and mailto destinations.
+                existing.setAttribute('href', url); // codeql[js/xss, js/client-side-unvalidated-url-redirection]
                 const caret = this.element.ownerDocument.createRange();
                 caret.setStartAfter(existing);
                 caret.collapse(true);
@@ -683,7 +684,8 @@ export class MessageEditorDom {
                 } else {
                     link.textContent = label || url;
                 }
-                link.setAttribute('href', url);
+                // Reviewed false positive (CodeQL js/xss, js/client-side-unvalidated-url-redirection): isMessageLinkSafe above only accepts http, https and mailto destinations.
+                link.setAttribute('href', url); // codeql[js/xss, js/client-side-unvalidated-url-redirection]
                 this.select(selection);
                 this.replace(link);
             }

@@ -367,6 +367,18 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationIndepend
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void createExampleModelingAssessment_asTutor_forbidden() throws Exception {
+        ExampleSubmission storedExampleSubmission = participationUtilService
+                .addExampleSubmission(participationUtilService.generateExampleSubmission(validModel, modelingExercise, true));
+        List<Feedback> feedbacks = participationUtilService.loadAssessmentFomResources("test-data/model-assessment/assessment.54727.json");
+
+        request.putWithResponseBody("/api/modeling/modeling-submissions/" + storedExampleSubmission.getId() + "/example-assessment", feedbacks, Result.class, HttpStatus.FORBIDDEN);
+
+        assertThat(resultRepository.findDistinctWithFeedbackBySubmissionId(storedExampleSubmission.getSubmission().getId())).isEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void createExampleModelingAssessment() throws Exception {
         ExampleSubmission storedExampleSubmission = participationUtilService
                 .addExampleSubmission(participationUtilService.generateExampleSubmission(validModel, modelingExercise, true));
@@ -380,12 +392,14 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationIndepend
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void getExampleModelingAssessment_whenTutorAndUsedForTutorial_shouldSendCleanedResult() throws Exception {
         ExampleSubmission exampleSubmission = participationUtilService
                 .addExampleSubmission(participationUtilService.generateExampleSubmission(validModel, modelingExercise, true, true));
         List<Feedback> feedbacks = participationUtilService.loadAssessmentFomResources("test-data/model-assessment/assessment.54727.json");
         request.putWithResponseBody("/api/modeling/modeling-submissions/" + exampleSubmission.getId() + "/example-assessment", feedbacks, Result.class, HttpStatus.OK);
+        // the tutor reads the example assessment
+        userUtilService.changeUser(TEST_PREFIX + "tutor1");
 
         Result cleanResult = request.get(
                 "/api/modeling/exercises/" + modelingExercise.getId() + "/modeling-submissions/" + exampleSubmission.getSubmission().getId() + "/example-assessment", HttpStatus.OK,

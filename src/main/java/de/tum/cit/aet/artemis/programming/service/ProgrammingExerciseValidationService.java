@@ -252,9 +252,11 @@ public class ProgrammingExerciseValidationService {
      * @param buildConfig         its build configuration, which is stored separately and read by the caller
      */
     public void validateStaticCodeAnalysisSettings(ProgrammingExercise programmingExercise, ProgrammingExerciseBuildConfig buildConfig) {
-        ProgrammingLanguageFeature programmingLanguageFeature = programmingLanguageFeatureService.orElseThrow()
-                .getProgrammingLanguageFeatures(programmingExercise.getProgrammingLanguage());
-        programmingExercise.validateStaticCodeAnalysisSettings(programmingLanguageFeature, buildConfig);
+        // The features are known whenever the exercise can be built, which is the only case in which static code analysis can be configured
+        programmingLanguageFeatureService.ifPresent(featureService -> {
+            ProgrammingLanguageFeature programmingLanguageFeature = featureService.getProgrammingLanguageFeatures(programmingExercise.getProgrammingLanguage());
+            programmingExercise.validateStaticCodeAnalysisSettings(programmingLanguageFeature, buildConfig);
+        });
     }
 
     /**
@@ -473,6 +475,24 @@ public class ProgrammingExerciseValidationService {
     }
 
     /**
+     * Checks that an exercise with automatic assessment has at least one active test case with a weight above zero.
+     *
+     * @param exercise the programming exercise to be checked
+     * @throws BadRequestAlertException if no test case has a positive weight
+     */
+    public void validateAutomaticAssessmentTestWeights(ProgrammingExercise exercise) {
+        // It has already been checked when setting the test case weights that their sum is at least >= 0.
+        // Only when changing the assessment format to automatic an additional check for > 0 has to be performed.
+        if (exercise.getAssessmentType() == AssessmentType.AUTOMATIC) {
+            final Set<ProgrammingExerciseTestCase> testCases = programmingExerciseTestCaseRepository.findByExerciseIdAndActive(exercise.getId(), true);
+            if (!ProgrammingExerciseTestCaseService.isTestCaseWeightSumValid(testCases)) {
+                throw new BadRequestAlertException("For exercises with only automatic assignment at least one test case weight must be greater than zero.", "Exercise",
+                        ProgrammingExerciseErrorKeys.INVALID_TEST_CASE_WEIGHTS);
+            }
+        }
+    }
+
+    /**
      * Checks whether the exercise to be updated has valid references to its template and solution repositories and build plans.
      *
      * @param exercise    the programming exercise to be checked
@@ -480,8 +500,6 @@ public class ProgrammingExerciseValidationService {
      * @throws BadRequestAlertException if one of the references is invalid
      */
     public void checkProgrammingExerciseForError(ProgrammingExercise exercise, ProgrammingExerciseBuildConfig buildConfig) {
-        validateBuildPhaseNames(buildConfig);
-
         ContinuousIntegrationService continuousIntegration = continuousIntegrationService.orElseThrow();
         VersionControlService versionControl = versionControlService.orElseThrow();
 
@@ -497,16 +515,6 @@ public class ProgrammingExerciseValidationService {
         var solutionRepositoryUri = exercise.getVcsSolutionRepositoryUri();
         if (solutionRepositoryUri != null && !versionControl.repositoryUriIsValid(solutionRepositoryUri)) {
             throw new BadRequestAlertException("The Solution Repository URI seems to be invalid.", "Exercise", ProgrammingExerciseErrorKeys.INVALID_SOLUTION_REPOSITORY_URL);
-        }
-
-        // It has already been checked when setting the test case weights that their sum is at least >= 0.
-        // Only when changing the assessment format to automatic an additional check for > 0 has to be performed.
-        if (exercise.getAssessmentType() == AssessmentType.AUTOMATIC) {
-            final Set<ProgrammingExerciseTestCase> testCases = programmingExerciseTestCaseRepository.findByExerciseIdAndActive(exercise.getId(), true);
-            if (!ProgrammingExerciseTestCaseService.isTestCaseWeightSumValid(testCases)) {
-                throw new BadRequestAlertException("For exercises with only automatic assignment at least one test case weight must be greater than zero.", "Exercise",
-                        ProgrammingExerciseErrorKeys.INVALID_TEST_CASE_WEIGHTS);
-            }
         }
     }
 

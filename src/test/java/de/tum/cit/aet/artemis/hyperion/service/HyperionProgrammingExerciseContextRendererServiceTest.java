@@ -11,6 +11,8 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Map;
+import java.util.function.Predicate;
 
 import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.BeforeEach;
@@ -24,6 +26,7 @@ import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
+import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.service.RepositoryService;
 
 class HyperionProgrammingExerciseContextRendererServiceTest {
@@ -64,6 +67,23 @@ class HyperionProgrammingExerciseContextRendererServiceTest {
 
         assertThat(result).isNotNull();
         assertThat(result).contains("Implement a sorting algorithm");
+    }
+
+    @Test
+    void renderContext_readsOnlyTheFilesThatTheLanguageFilterKeepsAndWithinItsSizeLimit() throws IOException {
+        // Files that the filter drops (build output, large files) must not use up the limit of the total size before the source files are read
+        var participation = new TemplateProgrammingExerciseParticipation();
+        participation.setRepositoryUri("http://localhost:8080/git/ABC/abc-exercise.git");
+        exercise.setTemplateParticipation(participation);
+        Predicate<String> pathFilter = path -> path.startsWith("src/");
+        when(languageFilter.pathFilterFor(ProgrammingLanguage.JAVA)).thenReturn(pathFilter);
+        when(repositoryService.getContextFilesContentFromBareRepositoryForLastCommit(any(LocalVCRepositoryUri.class), eq(pathFilter),
+                eq(HyperionProgrammingLanguageContextFilterService.MAX_FILE_SIZE_BYTES))).thenReturn(Map.of("src/Main.java", "class Main {}"));
+        when(languageFilter.filter(any(), eq(ProgrammingLanguage.JAVA))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        String result = contextRendererService.renderContext(exercise);
+
+        assertThat(result).contains("class Main {}");
     }
 
     @Test

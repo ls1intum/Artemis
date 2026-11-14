@@ -119,11 +119,12 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy {
         this.routeParamsSubscription = this.route.params.subscribe((params) => {
             const repositoryType = params['repositoryType'] ?? 'USER';
             const courseId = Number(params['courseId']);
-            const repositoryId = Number(params['repositoryId']);
+            // The page of the code of a student has the id of the participation instead of the one of a repository
+            const repositoryId = Number(params['repositoryId'] ?? params['participationId']);
             const exerciseId = Number(params['exerciseId']);
             const examId = Number(params['examId']);
             const exerciseGroupId = Number(params['exerciseGroupId']);
-            this.repositoryLink.set(getLocalRepositoryLink(courseId, exerciseId, repositoryType, repositoryId, examId, exerciseGroupId));
+            this.repositoryLink.set(getLocalRepositoryLink(courseId, exerciseId, repositoryType, repositoryId, exerciseGroupId, examId));
         });
         this.isInCourseManagement.set(this.router.url.includes('course-management'));
 

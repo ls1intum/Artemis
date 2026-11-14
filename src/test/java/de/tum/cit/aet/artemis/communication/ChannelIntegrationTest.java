@@ -1076,6 +1076,47 @@ class ChannelIntegrationTest extends AbstractConversationTest {
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void getExerciseChannel_exerciseOfAnotherCourse_shouldBeRejected() throws Exception {
+        Course course = courseUtilService.createEnrolledCourse(TEST_PREFIX);
+        courseUtilService.enableMessagingForCourse(course);
+        TextExercise exercise = textExerciseUtilService.createIndividualTextExercise(course, ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(1),
+                ZonedDateTime.now().plusDays(1));
+        conversationUtilService.addChannelToExercise(exercise);
+
+        // the path names the course of the user, but the exercise belongs to another course
+        request.get("/api/communication/courses/" + exampleCourseId + "/exercises/" + exercise.getId() + "/channel", HttpStatus.BAD_REQUEST, ChannelDTO.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void createChannel_announcementChannelAsTutor_shouldBeForbidden() throws Exception {
+        var channelDTO = new ChannelDTO();
+        channelDTO.setName(TEST_PREFIX + "announce");
+        channelDTO.setIsPublic(true);
+        channelDTO.setIsAnnouncementChannel(true);
+        channelDTO.setDescription("announcements");
+        channelDTO.setIsCourseWide(true);
+
+        request.postWithResponseBody("/api/communication/courses/" + exampleCourseId + "/channels", channelDTO, ChannelDTO.class, HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void createChannel_announcementChannelAsInstructor_shouldCreateChannel() throws Exception {
+        var channelDTO = new ChannelDTO();
+        channelDTO.setName(TEST_PREFIX + "announce");
+        channelDTO.setIsPublic(true);
+        channelDTO.setIsAnnouncementChannel(true);
+        channelDTO.setDescription("announcements");
+        channelDTO.setIsCourseWide(false);
+
+        var created = request.postWithResponseBody("/api/communication/courses/" + exampleCourseId + "/channels", channelDTO, ChannelDTO.class, HttpStatus.CREATED);
+        assertThat(created.getIsAnnouncementChannel()).isTrue();
+        conversationRepository.deleteById(created.getId());
+    }
+
+    @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void getLectureChannel_asCourseStudent_shouldGetLectureChannel() throws Exception {
         Course course = courseRepository.findById(exampleCourseId).orElseThrow();
@@ -1146,6 +1187,21 @@ class ChannelIntegrationTest extends AbstractConversationTest {
         assertThat(response).isNotNull();
         assertThat(response.getName()).isEqualTo("feedback-channel");
         assertThat(response.getDescription()).isEqualTo("Discussion channel for feedback");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
+    void createFeedbackChannel_asEditor_announcementChannelShouldReturnForbidden() throws Exception {
+        ChannelDTO channelDTO = new ChannelDTO();
+        channelDTO.setName("feedback-announcements");
+        channelDTO.setDescription("Announcements about feedback");
+        channelDTO.setIsPublic(true);
+        channelDTO.setIsAnnouncementChannel(true);
+        channelDTO.setIsCourseWide(false);
+
+        FeedbackChannelRequestDTO feedbackChannelRequest = new FeedbackChannelRequestDTO(channelDTO, List.of("Sample feedback text"), "Sample testName");
+
+        request.postWithoutResponseBody("/api/communication/courses/" + exampleCourseId + "/exercises/1/feedback-channel", feedbackChannelRequest, HttpStatus.FORBIDDEN);
     }
 
     @Test

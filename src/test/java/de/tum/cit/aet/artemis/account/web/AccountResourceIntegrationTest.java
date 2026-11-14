@@ -507,6 +507,27 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
         assertThat(updatedUser.get().getFirstName()).isEqualTo(updatedFirstName);
     }
 
+    /**
+     * The profile picture is owned by the server and changes only through the upload and removal of the picture, not through the account information.
+     */
+    @Test
+    @WithMockUser(username = AUTHENTICATEDUSER)
+    void saveAccountDoesNotTakeOverTheImageUrl() throws Exception {
+        User user = userUtilService.createAndSaveUser(AUTHENTICATEDUSER);
+        user.setImageUrl("stored-picture.png");
+        userTestRepository.save(user);
+        String storedImageUrl = userTestRepository.findOneByLogin(AUTHENTICATEDUSER).orElseThrow().getImageUrl();
+
+        user.setFirstName("UpdatedFirstName");
+        UserDTO userDTO = new UserDTO(user);
+        userDTO.setImageUrl("someone-elses-picture.png");
+        request.put("/api/account/basic-information", userDTO, HttpStatus.OK);
+
+        User updatedUser = userTestRepository.findOneByLogin(AUTHENTICATEDUSER).orElseThrow();
+        assertThat(updatedUser.getFirstName()).isEqualTo("UpdatedFirstName");
+        assertThat(updatedUser.getImageUrl()).isEqualTo(storedImageUrl);
+    }
+
     @Test
     @WithMockUser(username = AUTHENTICATEDUSER)
     void saveAccountWithMaximumLengthDisplayName() throws Exception {

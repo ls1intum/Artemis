@@ -102,6 +102,31 @@ describe('CodeEditorActionsComponent', () => {
         vi.restoreAllMocks();
     });
 
+    describe('repository link', () => {
+        const setRouteParams = (params: Record<string, number | string>) => {
+            (TestBed.inject(ActivatedRoute) as unknown as MockActivatedRoute).setParameters(params);
+            comp.ngOnInit();
+        };
+
+        it('should link the repository of a repository id', () => {
+            setRouteParams({ courseId: 1, exerciseId: 2, repositoryType: 'TEMPLATE', repositoryId: 3 });
+
+            expect(comp.repositoryLink()).toEqual(['/course-management', '1', 'programming-exercises', '2', 'repository', 'TEMPLATE', '3']);
+        });
+
+        it('should link the repository of the participation of a student opened from the participations page', () => {
+            setRouteParams({ courseId: 1, exerciseId: 2, participationId: 3 });
+
+            expect(comp.repositoryLink()).toEqual(['/course-management', '1', 'programming-exercises', '2', 'repository', 'USER', '3']);
+        });
+
+        it('should link the repository of an exam exercise with the exercise group before the exam in the right place', () => {
+            setRouteParams({ courseId: 1, examId: 4, exerciseGroupId: 5, exerciseId: 2, participationId: 3 });
+
+            expect(comp.repositoryLink()).toEqual(['/course-management', '1', 'exams', '4', 'exercise-groups', '5', 'programming-exercises', '2', 'repository', 'USER', '3']);
+        });
+    });
+
     it('should show refresh and submit button without any inputs', () => {
         fixture.detectChanges();
         const submitButton = fixture.debugElement.query(By.css('#submit_button'));

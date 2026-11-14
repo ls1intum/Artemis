@@ -23,6 +23,7 @@ export class SafeUrlPipe implements PipeTransform {
         // that string would render a visibly broken link, and it makes the rejection something a test can assert
         // exactly instead of only matching against.
         const rejected = sanitized === null || sanitized.startsWith('unsafe:');
-        return this.sanitizer.bypassSecurityTrustUrl(rejected ? '' : sanitized);
+        // Reviewed false positive (Sonar S6268): the URL went through Angular's URL sanitizer above and a rejected URL is replaced by an empty string.
+        return this.sanitizer.bypassSecurityTrustUrl(rejected ? '' : sanitized); // NOSONAR // nosemgrep
     }
 }
