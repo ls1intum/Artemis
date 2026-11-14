@@ -1,6 +1,5 @@
 import { TranslateService } from '@ngx-translate/core';
 import { Service, inject, signal } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
 import { Subscription, firstValueFrom } from 'rxjs';
 import { TumAetUiDialogService } from '@tumaet/ui-angular';
 import dayjs from 'dayjs/esm';
@@ -23,6 +22,7 @@ import {
     ExerciseMetadataConflictModalResult,
 } from 'app/exercise/synchronization/metadata/exercise-metadata-conflict-modal.component';
 import { ExerciseSnapshotDTO } from 'app/exercise/synchronization/metadata/exercise-metadata-snapshot.dto';
+import { ExerciseVersionHistoryService } from 'app/exercise/version-history/shared/exercise-version-history.service';
 
 /**
  * Context required to apply metadata synchronization to a live exercise editor.
@@ -178,7 +178,7 @@ export const metadataValuesEqual = (value: unknown, otherValue: unknown): boolea
 @Service()
 export class ExerciseMetadataSyncService {
     private readonly exerciseEditorSyncService = inject(ExerciseEditorSyncService);
-    private readonly http = inject(HttpClient);
+    private readonly exerciseVersionHistoryService = inject(ExerciseVersionHistoryService);
     private readonly dialogService = inject(TumAetUiDialogService);
     private readonly translateService = inject(TranslateService);
     private readonly alertService = inject(AlertService);
@@ -360,7 +360,7 @@ export class ExerciseMetadataSyncService {
      */
     private async fetchSnapshot(exerciseId: number, versionId: number): Promise<ExerciseSnapshotDTO | undefined> {
         try {
-            return await firstValueFrom(this.http.get<ExerciseSnapshotDTO>(`api/exercise/exercises/${exerciseId}/versions/${versionId}`));
+            return await firstValueFrom(this.exerciseVersionHistoryService.getSnapshot(exerciseId, versionId));
         } catch {
             this.alertService.warning('artemisApp.exercise.metadataSync.snapshotFetchFailed');
             return undefined;

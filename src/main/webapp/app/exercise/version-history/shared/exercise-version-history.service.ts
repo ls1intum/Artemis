@@ -1,4 +1,4 @@
-import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
+import { HttpHeaders } from '@angular/common/http';
 import { Service, inject } from '@angular/core';
 import { ParseLinks } from 'app/admin/system-notification-management/parse-links.service';
 import { ExerciseSnapshotDTO } from 'app/exercise/synchronization/metadata/exercise-metadata-snapshot.dto';
@@ -6,13 +6,8 @@ import { convertDateStringFromServer } from 'app/foundation/util/date.utils';
 import dayjs from 'dayjs/esm';
 import { Observable, map } from 'rxjs';
 import { ExerciseVersionMetadata, ExerciseVersionPage } from 'app/exercise/version-history/shared/exercise-version-history.model';
-
-/** Raw JSON shape returned by the server before date conversion. */
-interface ExerciseVersionMetadataResponse {
-    id: number;
-    author?: ExerciseVersionMetadata['author'];
-    createdDate?: string;
-}
+import { ExerciseVersionApi } from 'app/openapi/api/exercise-version-api';
+import { ExerciseVersionMetadata as ApiExerciseVersionMetadata } from 'app/openapi/model/exercise-version-metadata';
 
 /**
  * Service for fetching exercise version history data.
@@ -22,10 +17,8 @@ interface ExerciseVersionMetadataResponse {
  */
 @Service()
 export class ExerciseVersionHistoryService {
-    private readonly http = inject(HttpClient);
+    private readonly exerciseVersionApi = inject(ExerciseVersionApi);
     private readonly parseLinks = inject(ParseLinks);
-
-    private readonly resourceUrl = 'api/exercise';
 
     /**
      * Fetches a paginated list of version metadata for the given exercise.
@@ -39,22 +32,13 @@ export class ExerciseVersionHistoryService {
      * @returns an observable that emits a single {@link ExerciseVersionPage}
      */
     getVersions(exerciseId: number, page: number, size: number): Observable<ExerciseVersionPage> {
-        const params = new HttpParams().set('page', page).set('size', size);
-        return this.http
-            .get<ExerciseVersionMetadataResponse[]>(`${this.resourceUrl}/exercises/${exerciseId}/versions`, {
-                params,
-                observe: 'response',
-            })
-            .pipe(
-                map((response) => {
-                    const versions = (response.body ?? []).map((item) => this.convertMetadata(item));
-                    return {
-                        versions,
-                        nextPage: this.parseNextPage(response.headers),
-                        totalItems: Number(response.headers.get('X-Total-Count') ?? 0),
-                    };
-                }),
-            );
+        return this.exerciseVersionApi.getExerciseVersions(exerciseId, page, size).pipe(
+            map((response) => ({
+                versions: (response.body ?? []).map((item) => this.convertMetadata(item)),
+                nextPage: this.parseNextPage(response.headers),
+                totalItems: Number(response.headers.get('X-Total-Count') ?? 0),
+            })),
+        );
     }
 
     /**
@@ -65,11 +49,11 @@ export class ExerciseVersionHistoryService {
      * @returns an observable that emits the complete {@link ExerciseSnapshotDTO}
      */
     getSnapshot(exerciseId: number, versionId: number): Observable<ExerciseSnapshotDTO> {
-        return this.http.get<ExerciseSnapshotDTO>(`${this.resourceUrl}/exercises/${exerciseId}/versions/${versionId}`);
+        return this.exerciseVersionApi.getExerciseSnapshot(exerciseId, versionId);
     }
 
     /** Converts a raw server response into a typed {@link ExerciseVersionMetadata} with a dayjs date. */
-    private convertMetadata(item: ExerciseVersionMetadataResponse): ExerciseVersionMetadata {
+    private convertMetadata(item: ApiExerciseVersionMetadata): ExerciseVersionMetadata {
         return {
             id: item.id,
             author: item.author,
