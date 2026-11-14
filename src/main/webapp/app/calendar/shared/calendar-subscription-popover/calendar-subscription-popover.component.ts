@@ -2,12 +2,13 @@ import { Component, computed, effect, inject, input, signal, viewChild } from '@
 import { TumAetUiButtonDirective, TumAetUiCheckboxComponent, TumAetUiPopoverComponent, TumAetUiSelectButtonComponent } from '@tumaet/ui-angular';
 import { TextFieldModule } from '@angular/cdk/text-field';
 import { FormsModule } from '@angular/forms';
-import { faCheck, faCopy } from '@fortawesome/free-solid-svg-icons';
+import { faCheck, faCopy, faRotate } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TranslateService } from '@ngx-translate/core';
 import { getCurrentLocaleSignal } from 'app/foundation/util/global.utils';
+import { CalendarService } from 'app/calendar/shared/service/calendar.service';
 
 @Component({
     selector: 'jhi-calendar-subscription-popover',
@@ -26,11 +27,13 @@ import { getCurrentLocaleSignal } from 'app/foundation/util/global.utils';
 })
 export class CalendarSubscriptionPopoverComponent {
     private translateService = inject(TranslateService);
+    private calendarService = inject(CalendarService);
     private isOnlyOneEventTypeSelected = computed<boolean>(() => this.computeIsOnlyOneEventTypeSelected());
     private currentLocale = getCurrentLocaleSignal(this.translateService);
 
     readonly faCopy = faCopy;
     readonly faCheck = faCheck;
+    readonly faRotate = faRotate;
 
     calendarSubscriptionPopover = viewChild<TumAetUiPopoverComponent>('calendarSubscriptionPopover');
     subscriptionToken = input.required<string>();
@@ -64,6 +67,10 @@ export class CalendarSubscriptionPopoverComponent {
             this.copiedUrl.set(true);
             void navigator.clipboard.writeText(url);
         }
+    }
+
+    rotateSubscriptionToken() {
+        this.calendarService.rotateSubscriptionToken();
     }
 
     /** Opens the popover next to the element that received the click. */

@@ -1619,5 +1619,29 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentBatchT
             assertThat(actualToken.length()).isEqualTo(32);
             assertThat(actualToken).matches("^[0-9a-f]+$");
         }
+
+        @Test
+        @WithMockUser(username = STUDENT_LOGIN, roles = "USER")
+        void shouldRotateTokenAndInvalidateThePreviousOne() throws Exception {
+            String previousToken = "921651b1118f216d04b190fc0659386b";
+            userUtilService.clearAllTokensAndSetTokenForUser(student, previousToken);
+
+            String rotatedToken = request.postWithResponseBodyString("/api/calendar/subscription-token/rotate", null, HttpStatus.OK);
+
+            assertThat(rotatedToken).hasSize(32).matches("^[0-9a-f]+$").isNotEqualTo(previousToken);
+            assertThat(request.get("/api/calendar/subscription-token", HttpStatus.OK, String.class)).isEqualTo(rotatedToken);
+            request.get("/api/calendar/courses/-3/calendar-events-ics?token=" + previousToken + "&filterOptions=LECTURES&language=ENGLISH", HttpStatus.FORBIDDEN, String.class);
+        }
+
+        @Test
+        @WithMockUser(username = STUDENT_LOGIN, roles = "USER")
+        void shouldCreateTokenWhenRotatingWithoutExistingToken() throws Exception {
+            userUtilService.clearAllTokensAndSetTokenForUser(instructor, "00000000000000000000000000000000");
+
+            String rotatedToken = request.postWithResponseBodyString("/api/calendar/subscription-token/rotate", null, HttpStatus.OK);
+
+            assertThat(rotatedToken).hasSize(32);
+            assertThat(request.get("/api/calendar/subscription-token", HttpStatus.OK, String.class)).isEqualTo(rotatedToken);
+        }
     }
 }

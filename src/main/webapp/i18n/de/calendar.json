@@ -41,6 +41,10 @@
                 "configurationExplanation": "Um dein Abonnement zu konfigurieren, wähle bitte eine Sprache und entscheide für welche Kursinhalte du Events abonnieren möchtest:",
                 "copyExplanation": "Du kannst den folgenden Link verwenden, um den Artemis Kalender in externen Kalender Anwendungen zu abonnieren.",
                 "copyButtonLabel": "Abonnement-Link kopieren",
+                "rotateExplanation": "Abonnement-Links, die du bereits verwendest, funktionieren nicht mehr, sobald du einen neuen Link erzeugst. Abonniere danach erneut mit dem neuen Link.",
+                "rotateButtonLabel": "Neuen Link erzeugen",
+                "rotateSuccess": "Der Abonnement-Link wurde erneuert. Bitte verwende den neuen Link in deinen Kalender Anwendungen.",
+                "rotateError": "Der Abonnement-Link konnte nicht erneuert werden. Bitte versuche es erneut.",
                 "languageOption": {
                     "german": "Deutsch",
                     "english": "Englisch"

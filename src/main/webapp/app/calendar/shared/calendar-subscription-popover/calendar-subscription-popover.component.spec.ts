@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { CalendarSubscriptionPopoverComponent } from 'app/calendar/shared/calendar-subscription-popover/calendar-subscription-popover.component';
+import { CalendarService } from 'app/calendar/shared/service/calendar.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 const getParametersOf = (urlStr: string) => new URL(urlStr, 'http://dummy.invalid').searchParams;
 const splitFilterParameters = (parameters: URLSearchParams) => (parameters.get('filterOptions') ?? '').split(',').filter(Boolean).sort();
@@ -9,6 +10,7 @@ const splitFilterParameters = (parameters: URLSearchParams) => (parameters.get('
 describe('CalendarSubscriptionPopoverComponent (signal-based tests)', () => {
     let fixture: ComponentFixture<CalendarSubscriptionPopoverComponent>;
     let component: CalendarSubscriptionPopoverComponent;
+    const calendarService = { rotateSubscriptionToken: vi.fn() };
 
     afterEach(() => {
         vi.restoreAllMocks();
@@ -17,7 +19,10 @@ describe('CalendarSubscriptionPopoverComponent (signal-based tests)', () => {
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [CalendarSubscriptionPopoverComponent],
-            providers: [{ provide: TranslateService, useClass: MockTranslateService }],
+            providers: [
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: CalendarService, useValue: calendarService },
+            ],
         }).compileComponents();
 
         fixture = TestBed.createComponent(CalendarSubscriptionPopoverComponent);
@@ -66,6 +71,12 @@ describe('CalendarSubscriptionPopoverComponent (signal-based tests)', () => {
         expect(writeText).toHaveBeenCalledWith(component.subscriptionUrl());
         expect(component.copiedUrl()).toBe(true);
         vi.unstubAllGlobals();
+    });
+
+    it('asks the calendar service for a new token', () => {
+        component.rotateSubscriptionToken();
+
+        expect(calendarService.rotateSubscriptionToken).toHaveBeenCalledOnce();
     });
 
     it('marks the last remaining checkbox as disabled', () => {

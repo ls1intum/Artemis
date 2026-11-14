@@ -129,6 +129,24 @@ export class CalendarService implements OnDestroy {
         });
     }
 
+    /**
+     * Replaces the subscription token with a new one. Subscription links that contain the previous token stop working.
+     */
+    rotateSubscriptionToken(): void {
+        const generation = this.stateGeneration;
+        this.apiService.rotateCalendarEventSubscriptionToken().subscribe({
+            next: (token: string) => {
+                if (this.stateGeneration !== generation) return;
+                this.currentSubscriptionToken.set(token);
+                this.alertService.success('artemisApp.calendar.subscriptionPopover.rotateSuccess');
+            },
+            error: () => {
+                if (this.stateGeneration !== generation) return;
+                this.alertService.addErrorAlert('artemisApp.calendar.subscriptionPopover.rotateError');
+            },
+        });
+    }
+
     private loadSubscriptionToken() {
         const generation = this.stateGeneration;
         this.apiService
