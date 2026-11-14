@@ -101,8 +101,12 @@ public class OIDCService extends OidcUserService {
             }
         }
         else {
-            // Update user information and store changes if necessary
             actualUser = localUser.get();
+            if (actualUser.isInternal()) {
+                log.warn("OIDC login refused: the account '{}' is an internal account with its own password and cannot be used with an external login.", username);
+                throw new OAuth2AuthenticationException(new OAuth2Error("internal_account"), "The account is not managed by the identity provider.");
+            }
+            // Update user information and store changes if necessary
             boolean isUpdated = applyProfileClaims(actualUser, oidcUser);
             boolean isMatriculationNumberUpdated = updateMatriculationNumberIfChanged(actualUser, oidcUser.getAttribute(matriculationClaimKey));
             if (isUpdated || isMatriculationNumberUpdated) {

@@ -116,6 +116,10 @@ info:
         syncUserData: false
 ```
 
+## Accounts With a Password of Their Own
+
+An external login only works for accounts that the identity provider manages, which are the accounts that Artemis created at an earlier external login. If the login name of an external login belongs to an internal account, one with a password of its own, Artemis refuses the login and writes a warning with the login name to the server log. Users of such an account keep signing in with their password. Artemis does not merge the two kinds of accounts.
+
 ## Startup fails while decoding IdP certificates
 
 If startup fails while creating the SAML2 configuration or relying-party registration, check the deepest exception.

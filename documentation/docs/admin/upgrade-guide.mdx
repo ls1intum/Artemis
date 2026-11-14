@@ -201,6 +201,10 @@ Some releases change behavior in a way that requires a one-time action on existi
 
 `POST /api/core/public/authenticate` returns the session token in the JSON body (`access_token`) only when the request asks for it. The web application uses the cookie that the same response sets and does not read the body, so browsers are not affected. Clients that cannot use a cookie opt in with the query parameter `returnToken=true`. A request that carries a `tool` parameter, which is how tools such as Scorpio sign in, receives the token as before. **If a script or a tool of yours reads `access_token` from the response without either parameter, add `?returnToken=true` to its request before you upgrade.**
 
+### 10.8: External Logins and Internal Accounts
+
+A SAML2 or OpenID Connect login is refused when its login name belongs to an internal account, that is an account with a password of its own. Before, such a login signed in to the internal account and updated its data. Artemis logs a warning with the login name for every refused login. Accounts that an external login created are not affected. **Before you upgrade, check that no person signs in to the same account both with a password and through the identity provider**, for example after an administrator set a password on an externally created account. Such an account has to use one way only. See [OpenID Connect](/admin/oidc-login-registration#accounts-with-a-password-of-their-own) and [SAML2](/admin/saml2-login-registration#accounts-with-a-password-of-their-own).
+
 ### 10.8: Client Address of Requests
 
 Artemis takes the address of a client from the address that Tomcat resolved for the request, and no longer reads `X-Forwarded-For` or other address headers itself. This applies to all rate limits except the one for Git over HTTP, which counts the address as described in the section linked below, to the check of internal endpoints (`artemis.security.internal.allowed-cidrs`) and to the address that is stored in an exam session.

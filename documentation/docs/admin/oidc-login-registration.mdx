@@ -73,6 +73,10 @@ Artemis requests the scopes `openid`, `profile` and `email` unless you configure
 
 At startup Artemis logs the scopes it requests (`OIDC login requests the scopes [...]`). Check this line first when an identity provider does not release a claim you expect.
 
+## Accounts With a Password of Their Own
+
+An external login only works for accounts that the identity provider manages, which are the accounts that Artemis created at an earlier external login. If the login name of an external login belongs to an internal account, one with a password of its own, Artemis refuses the login and writes a warning with the login name to the server log. Users of such an account keep signing in with their password. Artemis does not merge the two kinds of accounts.
+
 ## Matriculation Number with TUM Login
 
 TUM Login releases the matriculation number through the client-specific scope `imMatrikelNr`. TUM IT has to register this scope and the attribute of the same name for your client first. Request the scope and map the claim of the same name:
