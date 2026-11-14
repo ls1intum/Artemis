@@ -1,6 +1,6 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { HttpClient, HttpErrorResponse, HttpHeaders, HttpParams } from '@angular/common/http';
+import { HttpErrorResponse } from '@angular/common/http';
 import { AccountService } from 'app/core/auth/account.service';
 import { captureException } from 'app/core/error-reporting/capture-exception';
 import { LtiService } from 'app/foundation/service/lti.service';
@@ -8,19 +8,8 @@ import { Theme, ThemeService } from 'app/core/theme/shared/theme.service';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { LtiLoginContinuationService } from './lti-login-continuation.service';
-
-type LtiLaunchResponse = {
-    targetLinkUri: string;
-    ltiIdToken: string;
-    clientRegistrationId: string;
-};
-
-/** Body returned by the LTI auth-login endpoint on a 401 that requires an interactive login/redirect. */
-type LtiLaunchErrorBody = {
-    targetLinkUri: string;
-    ltiIdToken: string;
-    clientRegistrationId: string;
-};
+import { LtiApi } from 'app/openapi/api/lti-api';
+import { Lti13AuthenticationResponse } from 'app/openapi/model/lti13authentication-response';
 
 @Component({
     selector: 'jhi-lti-exercise-launch',
@@ -29,7 +18,7 @@ type LtiLaunchErrorBody = {
 })
 export class Lti13ExerciseLaunchComponent implements OnInit {
     private route = inject(ActivatedRoute);
-    private http = inject(HttpClient);
+    private ltiApi = inject(LtiApi);
     private accountService = inject(AccountService);
     private router = inject(Router);
     private sessionStorageService = inject(SessionStorageService);
@@ -58,24 +47,18 @@ export class Lti13ExerciseLaunchComponent implements OnInit {
 
         this.loginContinuation.clearPendingLaunch();
 
-        const requestBody = new HttpParams().set('state', state).set('id_token', idToken);
-
-        this.http
-            .post<LtiLaunchResponse>('api/lti/public/lti13/auth-login', requestBody.toString(), {
-                headers: new HttpHeaders().set('Content-Type', 'application/x-www-form-urlencoded'),
-            })
-            .subscribe({
-                next: (data) => {
-                    this.handleLtiLaunchSuccess(data);
-                },
-                error: (error) => {
-                    if (error.status === 401) {
-                        this.authenticateUserThenRedirect(error);
-                    } else {
-                        this.handleLtiLaunchError();
-                    }
-                },
-            });
+        this.ltiApi.lti13AuthLogin(state, idToken).subscribe({
+            next: (data) => {
+                this.handleLtiLaunchSuccess(data);
+            },
+            error: (error) => {
+                if (error.status === 401) {
+                    this.authenticateUserThenRedirect(error);
+                } else {
+                    this.handleLtiLaunchError();
+                }
+            },
+        });
     }
 
     authenticateUserThenRedirect(error: HttpErrorResponse): void {
@@ -93,19 +76,27 @@ export class Lti13ExerciseLaunchComponent implements OnInit {
     }
 
     redirectUserToTargetLink(data: HttpErrorResponse): void {
-        const errorBody = data.error as LtiLaunchErrorBody;
+        // A 401 carries the same body as a successful launch: the user has to sign in before it continues.
+        const errorBody = data.error as Lti13AuthenticationResponse;
         const ltiIdToken = errorBody['ltiIdToken'];
         const clientRegistrationId = errorBody['clientRegistrationId'];
 
         this.storeLtiSessionData(ltiIdToken, clientRegistrationId);
 
+        const targetLinkUri = errorBody['targetLinkUri'];
+        if (!targetLinkUri) {
+            captureException('No LTI targetLinkUri received for a launch that requires sign-in');
+            this.handleLtiLaunchError();
+            return;
+        }
         // Redirect to target link since the user is already logged in
-        this.replaceWindowLocationWrapper(errorBody['targetLinkUri'].toString());
+        this.replaceWindowLocationWrapper(targetLinkUri);
     }
 
     redirectUserToLoginThenTargetLink(error: HttpErrorResponse): void {
-        const body = error.error as LtiLaunchErrorBody;
-        if (!this.loginContinuation.prepare(body.targetLinkUri, body.ltiIdToken, body.clientRegistrationId)) {
+        const body = error.error as Lti13AuthenticationResponse;
+        // prepare rejects and reports a missing value.
+        if (!this.loginContinuation.prepare(body.targetLinkUri ?? '', body.ltiIdToken ?? '', body.clientRegistrationId ?? '')) {
             this.handleLtiLaunchError();
             return;
         }
@@ -113,7 +104,7 @@ export class Lti13ExerciseLaunchComponent implements OnInit {
         void this.router.navigate(['/sign-in']);
     }
 
-    handleLtiLaunchSuccess(data: LtiLaunchResponse): void {
+    handleLtiLaunchSuccess(data: Lti13AuthenticationResponse): void {
         const targetLinkUri = data.targetLinkUri;
         const ltiIdToken = data.ltiIdToken;
         const clientRegistrationId = data.clientRegistrationId;
@@ -134,7 +125,7 @@ export class Lti13ExerciseLaunchComponent implements OnInit {
         this.isLaunching.set(false);
     }
 
-    storeLtiSessionData(ltiIdToken: string, clientRegistrationId: string): void {
+    storeLtiSessionData(ltiIdToken: string | undefined, clientRegistrationId: string | undefined): void {
         if (!ltiIdToken) {
             captureException(new Error('LTI ID token required to store session data.'));
             return;
