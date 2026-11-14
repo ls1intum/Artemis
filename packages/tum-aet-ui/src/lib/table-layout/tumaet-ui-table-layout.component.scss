@@ -21,7 +21,7 @@
     max-height: none;
 }
 
-// Never wraps and never grows: labels collapse to icons in the consumer, and a toolbar that is still too wide scrolls
+// By default, never wraps and never grows: labels collapse to icons in the consumer, and a toolbar that is still too wide scrolls
 // sideways instead of breaking onto a second line.
 .tumaet-ui-table-layout-toolbar {
     display: flex;
@@ -70,4 +70,9 @@
     align-items: center;
     justify-content: center;
     background-color: color-mix(in srgb, var(--tumaet-ui-content-background) 60%, transparent);
+}
+
+.tumaet-ui-table-layout-toolbar-auto {
+    height: auto;
+    padding-block: 0.5rem;
 }

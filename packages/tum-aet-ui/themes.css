@@ -2,6 +2,7 @@
 [data-theme='light'] {
     color-scheme: light;
 
+    --tumaet-ui-panel-enter-duration: 160ms;
     --tumaet-ui-spacing: 0.25rem;
     --tumaet-ui-splitter-divider-size: 6px;
     --tumaet-ui-font-family: ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';

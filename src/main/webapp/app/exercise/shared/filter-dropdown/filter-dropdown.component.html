@@ -1,32 +1,84 @@
-<span class="relative inline-block">
-    <select
-        class="[&_option]:text-text [&_optgroup]:text-text h-10.5 appearance-none rounded-md border border-border bg-(--tumaet-ui-control-background) py-2 ps-3 pe-9 text-sm"
-        [ngModel]="activeFilter()"
-        (ngModelChange)="filterChange.emit($event ?? allValue())"
-        [attr.aria-label]="filterLabelKey() | artemisTranslate"
-        [class.text-state-success]="isFiltered()"
-    >
-        <option [ngValue]="allValue()">{{ filterLabelKey() | artemisTranslate }}</option>
-        @if (groupedFilters(); as groups) {
-            @for (group of groups; track $index) {
-                @if (group.labelKey) {
-                    <optgroup [label]="group.labelKey | artemisTranslate">
-                        @for (filter of group.items; track filter) {
-                            <option [ngValue]="filter">{{ translationPrefix() + filter | artemisTranslate }}</option>
-                        }
-                    </optgroup>
-                } @else {
-                    @for (filter of group.items; track filter) {
-                        <option [ngValue]="filter">{{ translationPrefix() + filter | artemisTranslate }}</option>
+<fieldset class="m-0 flex min-w-0 flex-wrap items-center gap-2 border-0 p-0" [attr.aria-label]="'artemisApp.exercise.filter' | artemisTranslate">
+    <ng-content />
+    @for (group of groups(); track group.labelKey) {
+        @if (group.items.length > 1) {
+            @if (group.segmented) {
+                <span class="text-sm">{{ group.labelKey | artemisTranslate }}:</span>
+                <tumaet-ui-button-group [attr.aria-label]="group.labelKey | artemisTranslate">
+                    @for (option of singleOptions(group); track option.value) {
+                        <tumaet-ui-button
+                            size="small"
+                            variant="text"
+                            [severity]="(option.value === allValue ? group.selected.length === 0 : group.selected.includes(option.value)) ? 'primary' : 'secondary'"
+                            [ariaPressed]="option.value === allValue ? group.selected.length === 0 : group.selected.includes(option.value)"
+                            (clicked)="toggleGroupOption(group, option.value)"
+                            >{{ option.label }}</tumaet-ui-button
+                        >
                     }
-                }
-            }
-        } @else {
-            @for (filter of filters(); track filter) {
-                <option [ngValue]="filter">{{ translationPrefix() + filter | artemisTranslate }}</option>
+                </tumaet-ui-button-group>
+            } @else if (group.single) {
+                <tumaet-ui-select
+                    class="w-56 max-w-full shrink-0"
+                    [matchTriggerWidth]="false"
+                    [options]="singleOptions(group)"
+                    optionLabel="label"
+                    optionValue="value"
+                    [ngModel]="group.selected.length === 1 ? group.selected[0] : allValue"
+                    (ngModelChange)="updateGroup(group, [$event])"
+                    [ariaLabel]="group.labelKey | artemisTranslate"
+                    size="small"
+                />
+            } @else {
+                <tumaet-ui-multi-select
+                    class="w-56 max-w-full shrink-0"
+                    [options]="group.items"
+                    [ngModel]="group.selected"
+                    (ngModelChange)="updateGroup(group, $event)"
+                    [ariaLabel]="group.labelKey | artemisTranslate"
+                    size="small"
+                >
+                    <ng-template #option let-filter>
+                        <span class="whitespace-normal">{{ 'artemisApp.exercise.show' + filter | artemisTranslate }}</span>
+                    </ng-template>
+                    <ng-template #selectedItems>
+                        <span class="block min-w-0 truncate">
+                            {{ group.labelKey | artemisTranslate }}:
+                            @if (group.selected.length === 0) {
+                                {{ 'artemisApp.exercise.showAll' | artemisTranslate }}
+                            } @else if (group.selected.length === 1) {
+                                {{ 'artemisApp.exercise.show' + group.selected[0] | artemisTranslate }}
+                            } @else {
+                                {{ group.selected.length }} {{ 'artemisApp.participation.filters.selected' | artemisTranslate }}
+                            }
+                        </span>
+                    </ng-template>
+                </tumaet-ui-multi-select>
             }
         }
-    </select>
-    <!-- The native chevron sits high and tight against the edge, so it is drawn here, centered on the select. -->
-    <fa-icon [icon]="faChevronDown" class="pointer-events-none absolute end-3 top-1/2 -translate-y-1/2 text-xs text-text-secondary" />
-</span>
+    }
+    @if (checkboxGroups().length) {
+        <span class="hidden basis-full @min-[80rem]:block" aria-hidden="true"></span>
+    }
+    @for (group of checkboxGroups(); track group.labelKey) {
+        <div class="inline-flex shrink-0 items-center gap-2 text-sm text-text">
+            <tumaet-ui-checkbox
+                [inputId]="checkboxIdPrefix + group.items[0]"
+                [checked]="group.selected.length > 0"
+                (changed)="updateGroup(group, $event.checked ? group.items : [])"
+            />
+            <label [for]="checkboxIdPrefix + group.items[0]">{{ 'artemisApp.exercise.show' + group.items[0] | artemisTranslate }}</label>
+        </div>
+    }
+    <button
+        type="button"
+        tumAetUiButton
+        variant="text"
+        size="small"
+        class="aria-disabled:cursor-default aria-disabled:opacity-60"
+        [attr.aria-disabled]="!activeFilters().length"
+        [tumAetUiTooltip]="activeFilters().length ? '' : ('artemisApp.participation.resetDisabled' | artemisTranslate)"
+        (click)="activeFilters().length && filterChange.emit([])"
+    >
+        {{ 'artemisApp.assessment.dashboard.resetFilter' | artemisTranslate }}
+    </button>
+</fieldset>
