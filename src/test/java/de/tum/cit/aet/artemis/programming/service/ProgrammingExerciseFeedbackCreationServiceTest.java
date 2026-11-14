@@ -751,6 +751,51 @@ class ProgrammingExerciseFeedbackCreationServiceTest extends AbstractProgramming
     }
 
     @Test
+    void failureIsNotAClassErrorWhenAKnownTestWithoutClassMayBelongToTheClass() {
+        // the report of outerTest names no class, but the test case says it lives in the failed class: the class did run, so its failure must not land on innerTest
+        registerClassifiedSolutionTests();
+        var result = resultWithPassedTests("outerTest");
+
+        addFeedbackOfClassLevelFailures(result, List.of(classLevelFailure(OUTER, "unrelated failure")), testIn("outerTest", null));
+
+        assertThat(feedbackByTestName(result)).containsOnlyKeys("outerTest");
+    }
+
+    @Test
+    void failureIsNotAClassErrorWhenAnUnknownTestWithoutClassWasReported() {
+        // nothing says where this test belongs, so it may well be a test of the failed class
+        registerClassifiedSolutionTests();
+        var result = resultWithPassedTests();
+
+        addFeedbackOfClassLevelFailures(result, List.of(classLevelFailure(OUTER, "unrelated failure")), testIn("unknownTest", null));
+
+        assertThat(feedbackByTestName(result)).isEmpty();
+    }
+
+    @Test
+    void failureIsNotAClassErrorWhenATestWithoutClassHasATestCaseWithoutClass() {
+        registerSolutionTests(testIn("outerTest", OUTER), testIn("legacyTest", null));
+        var result = resultWithPassedTests("legacyTest");
+
+        addFeedbackOfClassLevelFailures(result, List.of(classLevelFailure(OUTER, "unrelated failure")), testIn("legacyTest", null));
+
+        assertThat(feedbackByTestName(result)).containsOnlyKeys("legacyTest");
+    }
+
+    @Test
+    void classLevelFailureIsStillShownWhenTheTestsWithoutClassAreKnownToBelongElsewhere() {
+        registerClassifiedSolutionTests();
+        var result = resultWithPassedTests("otherTest");
+
+        addFeedbackOfClassLevelFailures(result, List.of(classLevelFailure(OUTER, "setup exploded")), testIn("otherTest", null));
+
+        var feedback = feedbackByTestName(result);
+        assertThat(feedback).containsOnlyKeys("outerTest", "innerTest", "otherTest");
+        assertThat(feedback.get("outerTest").getMessageText()).contains("setup exploded");
+        assertThat(feedback.get("innerTest").getMessageText()).contains("setup exploded");
+    }
+
+    @Test
     void classLevelFailureWithoutClassChangesNothing() {
         registerClassifiedSolutionTests();
         var result = resultWithPassedTests("otherTest");
@@ -874,6 +919,24 @@ class ProgrammingExerciseFeedbackCreationServiceTest extends AbstractProgramming
         feedbackCreationService.generateTestCasesFromBuildResult(solutionBuildOf(testIn("sharedName", OUTER), testIn("sharedName", "de.tum.Other")), programmingExercise);
 
         assertThat(testCaseRepository.findByExerciseId(programmingExercise.getId())).extracting(ProgrammingExerciseTestCase::getTestClass).containsExactly(OUTER);
+    }
+
+    @Test
+    void shouldStoreNoClassForANewTestNameThatTheFirstBuildReportsFromTwoClasses() {
+        // the duplicate removal keeps one of the two new test cases, which must not keep the class it happened to be reported from
+        registerSolutionTests(testIn("sharedName", OUTER), testIn("sharedName", "de.tum.Other"), testIn("uniqueName", INNER));
+
+        var testCases = testCaseRepository.findByExerciseId(programmingExercise.getId());
+        assertThat(testCases).extracting(ProgrammingExerciseTestCase::getTestName, ProgrammingExerciseTestCase::getTestClass).containsExactlyInAnyOrder(tuple("sharedName", null),
+                tuple("uniqueName", INNER));
+    }
+
+    @Test
+    void shouldStoreNoClassWhenEveryNewTestNameIsReportedFromTwoClasses() {
+        registerSolutionTests(testIn("sharedName", OUTER), testIn("sharedName", "de.tum.Other"));
+
+        assertThat(testCaseRepository.findByExerciseId(programmingExercise.getId())).extracting(ProgrammingExerciseTestCase::getTestName, ProgrammingExerciseTestCase::getTestClass)
+                .containsExactly(tuple("sharedName", null));
     }
 
     @Test
