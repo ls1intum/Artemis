@@ -580,7 +580,7 @@ If your reverse proxy reaches Artemis from a public address, or from an IPv6 add
 ### Internal Endpoints
 
 Some endpoints are meant to be called by other components of the installation, such as the AI services. They accept requests only from the address ranges in `artemis.security.internal.allowed-cidrs`, in addition to the secret that each of them checks.
-The shipped default allows every address, so that a first installation works. Restrict it to the addresses of the components that call Artemis:
+The shipped default allows every address (`::/0` and `0.0.0.0/0`), so that a first installation works. Under the `prod` profile, Artemis logs a warning at startup for as long as the list still admits every address. Restrict it to the addresses of the components that call Artemis:
 
 ```yaml
 artemis:
