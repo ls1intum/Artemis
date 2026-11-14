@@ -276,6 +276,15 @@ describe('StructuredGradingInstructionsAssessmentLayoutComponent', () => {
             expect(instructionRowDraggable()).toBe('false');
         });
 
+        it('should hand over the title of the criterion with the dragged instruction', () => {
+            TestBed.inject(GradingInstructionSelectionService).setCriteria([{ title: 'Domain Quality', structuredGradingInstructions: [instruction] } as GradingCriterion]);
+            const dataTransfer = { setData: vi.fn() };
+
+            comp.drag({ dataTransfer, preventDefault: vi.fn() } as unknown as DragEvent, instruction);
+
+            expect(JSON.parse(dataTransfer.setData.mock.calls[0][1])).toMatchObject({ id: instruction.id, criterionTitle: 'Domain Quality' });
+        });
+
         it('should not hand over any instruction data once its usage limit is exhausted', () => {
             instruction.usageCount = 1;
             setApplicationCount(1);
