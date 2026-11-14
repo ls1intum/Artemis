@@ -16,6 +16,7 @@ import java.io.IOException;
 import java.security.SecureRandom;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -28,6 +29,8 @@ import java.util.TreeMap;
 import java.util.TreeSet;
 
 import org.apache.commons.codec.digest.DigestUtils;
+import org.eclipse.jgit.errors.IncorrectObjectTypeException;
+import org.eclipse.jgit.errors.MissingObjectException;
 import org.eclipse.jgit.lib.ObjectId;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
@@ -54,11 +57,13 @@ import de.tum.cit.aet.artemis.deimos.exception.DeimosLlmException;
 import de.tum.cit.aet.artemis.deimos.exception.DeimosSnapshotHistoryException;
 import de.tum.cit.aet.artemis.deimos.service.DeimosDiffBuilder.DiffOmission;
 import de.tum.cit.aet.artemis.deimos.service.DeimosSnapshotReader.TextSnapshot;
+import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.localvc.service.BareGitRepositoryService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
+import de.tum.cit.aet.artemis.programming.dto.ProgrammingSubmissionCommitHashDTO;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingSubmissionRepository;
 import de.tum.cit.aet.artemis.programming.repository.TemplateProgrammingExerciseParticipationRepository;
@@ -235,7 +240,7 @@ public class DeimosAnalysisService {
             }
 
             String sentinel = generateSentinel();
-            SnapshotHistory snapshotHistory = buildSnapshotHistory(participationId, programmingParticipation, sentinel, evidence);
+            SnapshotHistory snapshotHistory = buildSnapshotHistory(participationId, programmingParticipation, participation.getInitializationDate(), sentinel, evidence);
             if (snapshotHistory.payload().isBlank()) {
                 log.info("Skipping Deimos analysis for participation {}: no observed change to text files", participationId);
                 // An empty file whose name imitates a marker produces no diff, yet it is still a finding.
@@ -451,14 +456,16 @@ public class DeimosAnalysisService {
      * clean participation. Imitated fence markers found in the full snapshot contents and every omission caused by a
      * limit are recorded in {@code evidence}.
      *
-     * @param participationId the participation to reconstruct
-     * @param participation   the programming participation owning the repository
-     * @param sentinel        the sentinel that will fence the payload, checked against the snapshot contents
-     * @param evidence        collects findings and omissions
+     * @param participationId    the participation to reconstruct
+     * @param participation      the programming participation owning the repository
+     * @param participationStart when the server set the participation up, which selects the template baseline
+     * @param sentinel           the sentinel that will fence the payload, checked against the snapshot contents
+     * @param evidence           collects findings and omissions
      * @return the reconstructed history
      * @throws DeimosSnapshotHistoryException if the repository or any snapshot could not be read
      */
-    private SnapshotHistory buildSnapshotHistory(long participationId, ProgrammingExerciseParticipation participation, String sentinel, ParticipationEvidence evidence) {
+    private SnapshotHistory buildSnapshotHistory(long participationId, ProgrammingExerciseParticipation participation, @Nullable ZonedDateTime participationStart, String sentinel,
+            ParticipationEvidence evidence) {
         if (participation.getProgrammingExercise() == null) {
             throw new DeimosSnapshotHistoryException("Participation " + participationId + " has no programming exercise");
         }
@@ -472,7 +479,7 @@ public class DeimosAnalysisService {
         }
 
         try (Repository repository = bareGitRepositoryService.getBareRepository(participation.getVcsRepositoryUri(), false)) {
-            TextSnapshot template = readTemplate(participation.getProgrammingExercise().getId());
+            TextSnapshot template = readTemplate(participationId, participation.getProgrammingExercise().getId(), participationStart);
             var history = new HistoryAccumulator(participationId, repository, template, new MarkerScan(participationId, template, sentinel, evidence), evidence);
             for (ProgrammingSubmission submission : submissions) {
                 history.add(submission);
@@ -488,18 +495,27 @@ public class DeimosAnalysisService {
     }
 
     /**
-     * Reads the baseline of the analysis: the current state of the exercise's template repository on the exercise branch.
+     * Reads the baseline of the analysis: the template the participation repository was most likely copied from.
      * <p>
      * Taken from the template repository rather than from the setup commit in the participation repository, because the
      * student controls that history: a merged or pushed older commit carrying the setup message would otherwise decide
      * which content counts as the instructor's, hiding unchanged files from the diffs and their markers from the scan.
      * Without a readable template the analysis fails, since an empty baseline would attribute the template to the student.
+     * <p>
+     * The participation repository is a copy without history, so a later change of the template never reaches it. The
+     * current template would present such a change as the student's, and a marker the instructor removed afterwards as
+     * one the student added. The baseline is therefore the template commit of the latest template submission the server
+     * recorded at or before the participation was set up. Both dates are written by the server, and only staff and the
+     * server write the template repository. Without such a record, or when its commit is gone, the current template is
+     * used as before.
      *
-     * @param exerciseId the exercise the participation belongs to
+     * @param participationId    the participation the baseline is read for, for logging
+     * @param exerciseId         the exercise the participation belongs to
+     * @param participationStart when the server set the participation up, or {@code null} if it never recorded that
      * @return the text files of the template and all its other entries
      * @throws DeimosSnapshotHistoryException if the template repository, its branch or its commit cannot be read
      */
-    private TextSnapshot readTemplate(long exerciseId) {
+    private TextSnapshot readTemplate(long participationId, long exerciseId, @Nullable ZonedDateTime participationStart) {
         var templateParticipation = templateProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(exerciseId)
                 .orElseThrow(() -> new DeimosSnapshotHistoryException("Exercise " + exerciseId + " has no template participation"));
         if (templateParticipation.getVcsRepositoryUri() == null) {
@@ -511,10 +527,11 @@ public class DeimosAnalysisService {
         }
         try (Repository templateRepository = bareGitRepositoryService.getBareRepository(templateParticipation.getVcsRepositoryUri(), false)) {
             // Resolved once, so the whole analysis reads one immutable commit even if the instructor pushes meanwhile.
-            ObjectId templateCommit = templateRepository.resolve("refs/heads/" + branch + "^{commit}");
-            if (templateCommit == null) {
+            ObjectId templateHead = templateRepository.resolve("refs/heads/" + branch + "^{commit}");
+            if (templateHead == null) {
                 throw new DeimosSnapshotHistoryException("Could not resolve branch " + branch + " in the template repository of exercise " + exerciseId);
             }
+            ObjectId templateCommit = templateCommitAtStart(templateRepository, templateParticipation.getId(), templateHead, participationStart, participationId);
             return readSnapshot(templateRepository, templateCommit.getName());
         }
         catch (DeimosSnapshotHistoryException ex) {
@@ -522,6 +539,39 @@ public class DeimosAnalysisService {
         }
         catch (Exception ex) {
             throw new DeimosSnapshotHistoryException("Could not read the template repository of exercise " + exerciseId, ex);
+        }
+    }
+
+    private ObjectId templateCommitAtStart(Repository templateRepository, long templateParticipationId, ObjectId templateHead, @Nullable ZonedDateTime participationStart,
+            long participationId) throws IOException {
+        if (participationStart == null) {
+            return templateHead;
+        }
+        // A TEST submission of the template participation carries the commit of the tests repository, not of the template.
+        var latestRecord = programmingSubmissionRepository.findCommitHashesByParticipationId(templateParticipationId).stream()
+                .filter(templateSubmission -> templateSubmission.type() != SubmissionType.TEST && templateSubmission.commitHash() != null
+                        && ObjectId.isId(templateSubmission.commitHash()) && templateSubmission.submissionDate() != null
+                        && !templateSubmission.submissionDate().isAfter(participationStart))
+                .max(Comparator.comparing(ProgrammingSubmissionCommitHashDTO::submissionDate).thenComparingLong(ProgrammingSubmissionCommitHashDTO::id));
+        if (latestRecord.isEmpty()) {
+            log.info("No template submission precedes the setup of participation {}, using the current template as its baseline", participationId);
+            return templateHead;
+        }
+        ObjectId recordedCommit = resolveCommit(templateRepository, latestRecord.get().commitHash());
+        if (recordedCommit == null) {
+            log.warn("Template commit {} recorded for the setup of participation {} is no longer available, using the current template as its baseline",
+                    latestRecord.get().commitHash(), participationId);
+            return templateHead;
+        }
+        return recordedCommit;
+    }
+
+    private static @Nullable ObjectId resolveCommit(Repository repository, String commitHash) throws IOException {
+        try {
+            return repository.resolve(commitHash + "^{commit}");
+        }
+        catch (MissingObjectException | IncorrectObjectTypeException ex) {
+            return null;
         }
     }
 

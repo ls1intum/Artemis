@@ -22,12 +22,15 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.errors.IncorrectObjectTypeException;
+import org.eclipse.jgit.errors.MissingObjectException;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.PersonIdent;
 import org.junit.jupiter.api.BeforeEach;
@@ -57,6 +60,7 @@ import de.tum.cit.aet.artemis.deimos.dto.DeimosTriggerType;
 import de.tum.cit.aet.artemis.deimos.dto.DeimosVerdict;
 import de.tum.cit.aet.artemis.deimos.exception.DeimosLlmException;
 import de.tum.cit.aet.artemis.deimos.exception.DeimosSnapshotHistoryException;
+import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.localvc.service.BareGitRepositoryService;
@@ -67,6 +71,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParti
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExerciseParticipation;
+import de.tum.cit.aet.artemis.programming.dto.ProgrammingSubmissionCommitHashDTO;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingSubmissionRepository;
 import de.tum.cit.aet.artemis.programming.repository.TemplateProgrammingExerciseParticipationRepository;
@@ -81,6 +86,8 @@ class DeimosAnalysisServiceTest {
     private static final String TEMPLATE_COMMIT_HASH = TEMPLATE_COMMIT.getName();
 
     private static final String EXERCISE_BRANCH = "main";
+
+    private static final long TEMPLATE_PARTICIPATION_ID = 7L;
 
     private ProgrammingSubmissionRepository programmingSubmissionRepository;
 
@@ -127,6 +134,7 @@ class DeimosAnalysisServiceTest {
         templateRepositoryUri = Mockito.mock(LocalVCRepositoryUri.class);
         var templateParticipation = Mockito.mock(TemplateProgrammingExerciseParticipation.class);
         lenient().when(templateParticipation.getVcsRepositoryUri()).thenReturn(templateRepositoryUri);
+        lenient().when(templateParticipation.getId()).thenReturn(TEMPLATE_PARTICIPATION_ID);
         lenient().when(templateProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(42L)).thenReturn(Optional.of(templateParticipation));
         lenient().when(programmingExerciseRepository.findBranchByExerciseId(42L)).thenReturn(EXERCISE_BRANCH);
         lenient().when(bareGitRepositoryService.getBareRepository(templateRepositoryUri, false)).thenReturn(templateRepository);
@@ -1501,6 +1509,145 @@ class DeimosAnalysisServiceTest {
             assertThat(analysis.verdict()).isEqualTo(DeimosVerdict.MANIPULATION_ATTEMPT);
             assertThat(analysis.findings()).extracting(DeimosManipulationFinding::filePath, DeimosManipulationFinding::lineNumber).containsExactly(tuple("Evil.java", 1));
         });
+    }
+
+    @Test
+    void analyzeIgnoresATemplateChangeMadeAfterTheParticipationWasSetUp(@TempDir Path tempDir) throws Exception {
+        DeimosBatchSummaryDTO summary = analyzeAgainstTemplateEditedAfter(tempDir, ZonedDateTime.parse("2026-01-12T10:00:00Z"));
+
+        // Against the current template, the marker the instructor removed later would read as one the student added.
+        assertThat(capturedPayload()).contains("+class Main { int a; }").doesNotContain("Example.java");
+        assertThat(summary.analyzedParticipations()).singleElement().satisfies(analysis -> {
+            assertThat(analysis.verdict()).isEqualTo(DeimosVerdict.BENIGN);
+            assertThat(analysis.findings()).isEmpty();
+        });
+    }
+
+    @Test
+    void analyzeStillReportsAMarkerTheTemplateNoLongerHadWhenTheParticipationWasSetUp(@TempDir Path tempDir) throws Exception {
+        DeimosBatchSummaryDTO summary = analyzeAgainstTemplateEditedAfter(tempDir, ZonedDateTime.parse("2026-01-14T10:00:00Z"));
+
+        assertThat(capturedPayload()).contains("+++ b/Example.java");
+        assertThat(summary.analyzedParticipations()).singleElement().satisfies(analysis -> {
+            assertThat(analysis.verdict()).isEqualTo(DeimosVerdict.MANIPULATION_ATTEMPT);
+            assertThat(analysis.findings()).extracting(DeimosManipulationFinding::filePath, DeimosManipulationFinding::lineNumber).containsExactly(tuple("Example.java", 1));
+        });
+    }
+
+    /**
+     * A template whose example marker the instructor removes on 13 January, and a participation set up at the given time
+     * whose repository was copied from the version that still had it: the student keeps the marker and changes another file.
+     */
+    private DeimosBatchSummaryDTO analyzeAgainstTemplateEditedAfter(Path tempDir, ZonedDateTime participationStart) throws Exception {
+        Path templateTree = tempDir.resolve("template");
+        Path studentTree = tempDir.resolve("student");
+        String withMarker;
+        String withoutMarker;
+        String studentCommit;
+        try (Git git = Git.init().setDirectory(templateTree.toFile()).setInitialBranch("main").call()) {
+            FileUtils.writeStringToFile(templateTree.resolve("Main.java").toFile(), "class Main {}\n", StandardCharsets.UTF_8);
+            FileUtils.writeStringToFile(templateTree.resolve("Example.java").toFile(), markerLines(1) + "class Example {}\n", StandardCharsets.UTF_8);
+            withMarker = commitAll(git, "Set up template for exercise");
+            // A rewritten history: the version the student received is no longer an ancestor of the exercise branch.
+            git.checkout().setOrphan(true).setName("rewritten").call();
+            FileUtils.writeStringToFile(templateTree.resolve("Example.java").toFile(), "class Example {}\n", StandardCharsets.UTF_8);
+            withoutMarker = commitAll(git, "Remove the example marker");
+        }
+        try (Git git = Git.init().setDirectory(studentTree.toFile()).setInitialBranch("main").call()) {
+            FileUtils.writeStringToFile(studentTree.resolve("Main.java").toFile(), "class Main {}\n", StandardCharsets.UTF_8);
+            FileUtils.writeStringToFile(studentTree.resolve("Example.java").toFile(), markerLines(1) + "class Example {}\n", StandardCharsets.UTF_8);
+            commitAll(git, "Set up template for exercise");
+            FileUtils.writeStringToFile(studentTree.resolve("Main.java").toFile(), "class Main { int a; }\n", StandardCharsets.UTF_8);
+            studentCommit = commitAll(git, "Student changes");
+        }
+        useAsTemplate(templateTree, withoutMarker);
+        // Taken for a template state, the tests repository commit of the TEST submission would not resolve.
+        when(programmingSubmissionRepository.findCommitHashesByParticipationId(TEMPLATE_PARTICIPATION_ID))
+                .thenReturn(List.of(new ProgrammingSubmissionCommitHashDTO(1L, SubmissionType.INSTRUCTOR, withMarker, ZonedDateTime.parse("2026-01-10T10:00:00Z")),
+                        new ProgrammingSubmissionCommitHashDTO(2L, SubmissionType.TEST, "f".repeat(40), ZonedDateTime.parse("2026-01-11T10:00:00Z")),
+                        new ProgrammingSubmissionCommitHashDTO(3L, SubmissionType.MANUAL, withoutMarker, ZonedDateTime.parse("2026-01-13T10:00:00Z"))));
+        var participation = mockParticipation(700L);
+        when(participation.getInitializationDate()).thenReturn(participationStart);
+        var studentRepository = new Repository(studentTree.resolve(".git").toString(), new LocalVCRepositoryUri(URI.create("https://artemis.example.com"), "ABC", "abc-student"));
+        when(bareGitRepositoryService.getBareRepository(participation.getVcsRepositoryUri(), false)).thenReturn(studentRepository);
+        var submission = createSubmission(7000L, studentCommit, ZonedDateTime.parse("2026-01-15T10:00:00Z"));
+        when(programmingSubmissionRepository.findByParticipationIdOrderBySubmissionDateAsc(700L)).thenReturn(List.of(submission));
+        when(deimosLlmClient.analyze(any())).thenReturn(new DeimosLlmResponse(false, "ordinary"));
+        deimosAnalysisService = new DeimosAnalysisService(programmingSubmissionRepository, studentParticipationRepository, templateProgrammingExerciseParticipationRepository,
+                programmingExerciseRepository, deimosLlmClient, deimosPromptTemplateService, new DeimosSnapshotReader(), bareGitRepositoryService,
+                DeimosLimits.DEFAULT_MAX_FILE_INPUT_BYTES, DeimosLimits.DEFAULT_MAX_FILE_DIFF_BYTES, DeimosLimits.DEFAULT_MAX_PAYLOAD_BYTES,
+                DeimosLimits.DEFAULT_FINAL_STATE_RESERVED_BYTES);
+        return analyze(List.of(700L));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "recorded before the start", "recorded at the start", "newest of equal dates", "newest date with a smaller id", "newer test submission",
+            "only recorded after the start", "no start date", "no usable record", "invalid hash", "commit gone", "not a commit", "unresolvable commit" })
+    void analyzeTakesTheTemplateRecordedWhenTheParticipationWasSetUp(String scenario) throws Exception {
+        ZonedDateTime start = ZonedDateTime.parse("2026-01-12T10:00:00Z");
+        ObjectId recorded = objectId('a');
+        ObjectId other = objectId('b');
+        stubHistory(591L, Map.of(), new Snapshot("single01", Map.of("src/Main.java", "class Main {}\n")));
+        var participation = studentParticipationRepository.findById(591L).orElseThrow();
+        when(participation.getInitializationDate()).thenReturn("no start date".equals(scenario) ? null : start);
+        when(templateRepository.resolve(recorded.getName() + "^{commit}")).thenReturn(recorded);
+        when(templateRepository.resolve(other.getName() + "^{commit}")).thenReturn(other);
+        // Reading a snapshot resolves its commit once more.
+        when(templateRepository.resolve(recorded.getName())).thenReturn(recorded);
+        when(templateRepository.resolve(other.getName())).thenReturn(other);
+        var recordedBefore = new ProgrammingSubmissionCommitHashDTO(1L, SubmissionType.INSTRUCTOR, recorded.getName(), start.minusDays(1));
+        List<ProgrammingSubmissionCommitHashDTO> records = switch (scenario) {
+            case "recorded at the start" -> List.of(new ProgrammingSubmissionCommitHashDTO(1L, SubmissionType.MANUAL, recorded.getName(), start));
+            case "newest of equal dates" -> List.of(new ProgrammingSubmissionCommitHashDTO(5L, SubmissionType.INSTRUCTOR, recorded.getName(), start.minusHours(1)),
+                    new ProgrammingSubmissionCommitHashDTO(4L, SubmissionType.INSTRUCTOR, other.getName(), start.minusHours(1)),
+                    new ProgrammingSubmissionCommitHashDTO(3L, SubmissionType.INSTRUCTOR, other.getName(), start.minusDays(2)));
+            case "newest date with a smaller id" -> List.of(new ProgrammingSubmissionCommitHashDTO(9L, SubmissionType.INSTRUCTOR, other.getName(), start.minusDays(2)),
+                    new ProgrammingSubmissionCommitHashDTO(2L, SubmissionType.INSTRUCTOR, recorded.getName(), start.minusHours(1)));
+            case "newer test submission" -> List.of(recordedBefore, new ProgrammingSubmissionCommitHashDTO(2L, SubmissionType.TEST, other.getName(), start.minusHours(1)));
+            case "only recorded after the start" -> List.of(new ProgrammingSubmissionCommitHashDTO(1L, SubmissionType.INSTRUCTOR, recorded.getName(), start.plusSeconds(1)));
+            case "no usable record" -> List.of(new ProgrammingSubmissionCommitHashDTO(1L, SubmissionType.INSTRUCTOR, null, start.minusDays(1)),
+                    new ProgrammingSubmissionCommitHashDTO(2L, SubmissionType.INSTRUCTOR, recorded.getName(), null));
+            // A revision expression rather than a commit id is never resolved, even where it would name a commit.
+            case "invalid hash" -> List.of(new ProgrammingSubmissionCommitHashDTO(1L, SubmissionType.INSTRUCTOR, "HEAD", start.minusDays(1)));
+            default -> List.of(recordedBefore);
+        };
+        when(programmingSubmissionRepository.findCommitHashesByParticipationId(TEMPLATE_PARTICIPATION_ID)).thenReturn(records);
+        switch (scenario) {
+            case "commit gone" -> when(templateRepository.resolve(recorded.getName() + "^{commit}")).thenThrow(new MissingObjectException(recorded, "commit"));
+            case "not a commit" -> when(templateRepository.resolve(recorded.getName() + "^{commit}")).thenThrow(new IncorrectObjectTypeException(recorded, "commit"));
+            case "unresolvable commit" -> when(templateRepository.resolve(recorded.getName() + "^{commit}")).thenReturn(null);
+            case "invalid hash" -> when(templateRepository.resolve("HEAD^{commit}")).thenReturn(other);
+            default -> {
+                // The recorded commit resolves.
+            }
+        }
+        when(deimosLlmClient.analyze(any())).thenReturn(new DeimosLlmResponse(false, "ordinary"));
+        boolean takesRecorded = Set.of("recorded before the start", "recorded at the start", "newest of equal dates", "newest date with a smaller id", "newer test submission")
+                .contains(scenario);
+
+        analyze(List.of(591L));
+
+        String expected = takesRecorded ? recorded.getName() : TEMPLATE_COMMIT_HASH;
+        verify(deimosSnapshotReader).read(templateRepository, expected);
+        verify(deimosSnapshotReader, never()).read(templateRepository, other.getName());
+        verify(deimosSnapshotReader, never()).read(templateRepository, takesRecorded ? TEMPLATE_COMMIT_HASH : recorded.getName());
+    }
+
+    @Test
+    void analyzeFailsWhenTheRecordedTemplateCommitCannotBeRead() throws Exception {
+        ZonedDateTime start = ZonedDateTime.parse("2026-01-12T10:00:00Z");
+        ObjectId recorded = objectId('a');
+        stubHistory(592L, Map.of(), new Snapshot("single01", Map.of("src/Main.java", "class Main {}\n")));
+        when(studentParticipationRepository.findById(592L).orElseThrow().getInitializationDate()).thenReturn(start);
+        when(programmingSubmissionRepository.findCommitHashesByParticipationId(TEMPLATE_PARTICIPATION_ID))
+                .thenReturn(List.of(new ProgrammingSubmissionCommitHashDTO(1L, SubmissionType.INSTRUCTOR, recorded.getName(), start.minusDays(1))));
+        when(templateRepository.resolve(recorded.getName() + "^{commit}")).thenThrow(new IOException("broken pack"));
+
+        DeimosBatchSummaryDTO summary = analyze(List.of(592L));
+
+        // Only a commit that is gone falls back to the current template; a repository that cannot be read fails.
+        verify(deimosLlmClient, never()).analyze(any());
+        assertThat(summary.failedAnalyses()).singleElement().satisfies(failure -> assertThat(failure.failureType()).isEqualTo(DeimosFailureType.SNAPSHOT_HISTORY_ERROR));
     }
 
     @Test

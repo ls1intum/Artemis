@@ -113,13 +113,28 @@ walking the git graph. Consequences worth knowing:
   file mode alone is not recorded. Deleted entries leave nothing to examine. These omissions are recorded before any
   budget decision, so a dropped snapshot section keeps them. The payload gets one notice with their number but no
   paths, because the names are the student's.
-- The baseline is the head of the exercise branch in the template repository, resolved once to a single commit per
-  participation. It is deliberately not the setup commit of the participation repository: that history is the
+- The baseline is a commit of the template repository, resolved once per participation so the diffs and the marker
+  scan share it. It is deliberately not the setup commit of the participation repository: that history is the
   student's, and `getFirstCommitWithMessage` would accept an older commit with the setup message from a merged
   history or another branch, which would then hide its files from the diffs and its markers from the scan. A missing
   template participation, branch or commit throws `DeimosSnapshotHistoryException` rather than falling back to an
-  empty baseline, which would attribute the whole template to the student. The cost is that a template changed after
-  a student started differs from that student's starting point.
+  empty baseline, which would attribute the whole template to the student.
+- The participation repository is a copy without history, so later template changes never reach it. Deimos therefore
+  approximates the template at participation setup: the commit of the latest submission of the template participation
+  whose `submissionDate` is at or before the participation's `initializationDate`. Both dates are set by the server,
+  `createInitialSubmission` records the template at setup, and a push to the template records its head commit unless
+  a submission for that commit already exists.
+  `TEST` submissions are skipped, because they carry the commit of the tests repository. A recorded commit that still
+  exists in the template repository is used even when it is no longer reachable from the branch: only staff and the
+  server write that repository, so an orphaned commit is still a genuine template state.
+- Without an initialisation date (programming practice participations), without an eligible record, or when the
+  recorded commit object is gone, the baseline is the head of the exercise branch, as it was before. This is best effort: it
+  improves the attribution where the records match the copied state, and can keep or introduce errors where they do
+  not. Known gaps are the time between the copy and the recorded date, missing or deleted template submissions, a
+  repository recreated after cleanup under the preserved date, a force push back to a commit that was already
+  recorded (it gets no new submission, so a later record wins), and practice participations copied from the graded
+  repository, whose content comes from the graded participation's baseline. Recording the template commit when the
+  repository is copied, inheriting it into practice copies and keeping its objects would close most of these gaps.
 
 Diffs are real unified diffs built with JGit in memory, under four configurable byte budgets. The defaults live in
 `DeimosLimits` and every `@Value` fallback refers to them; `application.yml` repeats them, and `DeimosLimitsTest`
