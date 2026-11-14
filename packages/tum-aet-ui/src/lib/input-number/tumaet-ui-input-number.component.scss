@@ -90,12 +90,12 @@
     .tumaet-ui-input-number-decrement {
         grid-column: 1;
         border-inline-end: 0;
-        border-radius: 0.375rem 0 0 0.375rem;
+        border-radius: var(--tumaet-ui-radius-md) 0 0 var(--tumaet-ui-radius-md);
     }
 
     .tumaet-ui-input-number-increment {
         grid-column: 3;
         border-inline-start: 0;
-        border-radius: 0 0.375rem 0.375rem 0;
+        border-radius: 0 var(--tumaet-ui-radius-md) var(--tumaet-ui-radius-md) 0;
     }
 }

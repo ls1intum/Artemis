@@ -37,6 +37,10 @@ describe('TumAetUiInputNumberComponent', () => {
         input().dispatchEvent(new Event('input'));
         fixture.detectChanges();
         const increase = fixture.nativeElement.querySelector('[data-testid="input-number-increment"]') as HTMLButtonElement;
+        const decrease = fixture.nativeElement.querySelector('[data-testid="input-number-decrement"]') as HTMLButtonElement;
+        expect(Array.from(fixture.nativeElement.querySelectorAll('input, button'))).toEqual([decrease, input(), increase]);
+        expect(decrease.tabIndex).toBe(0);
+        expect(increase.tabIndex).toBe(0);
         expect(increase.getAttribute('aria-label')).toBe('Increase points');
         expect(increase.getAttribute('aria-hidden')).toBeNull();
         const down = new MouseEvent('mousedown', { cancelable: true });

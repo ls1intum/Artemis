@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, ElementRef, booleanAttribute, computed, forwardRef, input, linkedSignal, numberAttribute, signal, viewChild } from '@angular/core';
+import { NgTemplateOutlet } from '@angular/common';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faChevronDown, faChevronUp, faMinus, faPlus } from '@fortawesome/free-solid-svg-icons';
@@ -17,7 +18,7 @@ interface LocaleNumberSyntax {
     selector: 'tumaet-ui-input-number',
     templateUrl: './tumaet-ui-input-number.component.html',
     styleUrl: './tumaet-ui-input-number.component.scss',
-    imports: [TumAetUiInputDirective, FaIconComponent],
+    imports: [TumAetUiInputDirective, FaIconComponent, NgTemplateOutlet],
     host: {
         class: 'tumaet-ui-input-number',
         '[class.tumaet-ui-input-number-fluid]': 'fluid()',

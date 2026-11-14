@@ -8,7 +8,14 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 import { GradingInstructionSelectionService } from 'app/exercise/structured-grading-criterion/grading-instruction-selection.service';
-import { TumAetUiButtonComponent, TumAetUiCheckboxComponent, TumAetUiMessageComponent, TumAetUiTagComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import {
+    TumAetUiButtonComponent,
+    TumAetUiButtonDirective,
+    TumAetUiCheckboxComponent,
+    TumAetUiMessageComponent,
+    TumAetUiTagComponent,
+    TumAetUiTooltipDirective,
+} from '@tumaet/ui-angular';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { DeleteDialogService } from 'app/shared-ui/delete-dialog/service/delete-dialog.service';
 import { ActionType } from 'app/shared-ui/delete-dialog/delete-dialog.model';
@@ -33,6 +40,7 @@ export interface SortedGradingCriterion {
         TumAetUiCheckboxComponent,
         TumAetUiTagComponent,
         TumAetUiButtonComponent,
+        TumAetUiButtonDirective,
         TumAetUiMessageComponent,
         TumAetUiTooltipDirective,
         ArtemisTranslatePipe,
