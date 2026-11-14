@@ -10,6 +10,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import de.tum.cit.aet.artemis.admin.domain.FeatureUsageStatus;
 import de.tum.cit.aet.artemis.core.service.featureusage.ProductArea;
 import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
  * The usage of one user-facing feature over a window, summed over every endpoint and module that serves it.
@@ -40,6 +41,8 @@ import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
  * @param hasActionEndpoints whether any of them is an action, which is what makes {@code noActions} meaningful
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
+@Schema(requiredProperties = { "feature", "area", "status", "noActions", "actionCount", "viewCount", "automaticCount", "systemCount", "errorCount", "durationSumMs",
+        "durationMaxMs", "activeDays", "actionDays", "endpointCount", "hasActionEndpoints" })
 public record UserFeatureUsageDTO(UserFeature feature, ProductArea area, FeatureUsageStatus status, boolean noActions, long actionCount, long viewCount, long automaticCount,
         long systemCount, long errorCount, long durationSumMs, int durationMaxMs, long activeDays, long actionDays, @Nullable LocalDate lastUsedDay,
         @Nullable LocalDate lastActionDay, List<String> modules, int endpointCount, boolean hasActionEndpoints) {

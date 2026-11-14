@@ -136,6 +136,30 @@ describe('FeatureUsageComponent', () => {
         expect(component.loading()).toBe(false);
     });
 
+    it('should reuse an empty adoption result when the window or role changes', () => {
+        const adoptionSpy = vi.spyOn(featureUsageService, 'getAdoption').mockReturnValue(of([]));
+
+        fixture.detectChanges();
+        component.onWindowChanged(7);
+        component.onCallerRoleChanged('STUDENT');
+
+        expect(adoptionSpy).toHaveBeenCalledOnce();
+        expect(component.adoption()).toEqual([]);
+    });
+
+    it('should retry a failed adoption request on the next load', () => {
+        const adoptionSpy = vi.spyOn(featureUsageService, 'getAdoption').mockReturnValueOnce(throwError(() => new Error('adoption unavailable')));
+
+        fixture.detectChanges();
+        expect(alertService.error).toHaveBeenCalledWith('adoption unavailable');
+        expect(component.adoption()).toBeUndefined();
+
+        component.onWindowChanged(7);
+
+        expect(adoptionSpy).toHaveBeenCalledTimes(2);
+        expect(component.adoption()).toEqual(adoption);
+    });
+
     it('should lead with use, not with calls, so automatic calls cannot make the page look busy', () => {
         fixture.detectChanges();
 
@@ -267,6 +291,7 @@ describe('FeatureUsageComponent', () => {
         vi.spyOn(featureUsageService, 'sendDigestEmail').mockReturnValue(throwError(() => new Error('no recipient')));
         component.sendDigestEmail();
         expect(alertService.error).toHaveBeenCalledWith('artemisApp.featureUsage.digestFailed');
+        expect(component.sendingDigest()).toBe(false);
     });
 
     it('should report a failing overview request', () => {

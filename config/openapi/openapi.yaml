@@ -1333,6 +1333,15 @@ paths:
                 type: array
                 items: {type: string, maxLength: 128}
                 maxItems: 500
+  /api/admin/feature-usage/digest/send-email:
+    post:
+      tags: [admin-feature-usage]
+      summary: Send the feature usage digest email now
+      operationId: sendFeatureUsageDigestEmail
+      responses:
+        '200': {description: The digest was sent to every resolved recipient.}
+        '400': {description: 'Recording or digest delivery is disabled, no recipient
+            was resolved, or building or delivering the digest failed.'}
   /api/tutorialgroup/courses/{courseId}/tutorial-groups/{tutorialGroupId}/sessions/{sessionId}/cancel:
     patch:
       tags: [tutorial-group-session]
@@ -2351,6 +2360,130 @@ paths:
               schema:
                 type: array
                 items: {$ref: '#/components/schemas/WorkerStatus'}
+  /api/admin/feature-usage:
+    get:
+      tags: [admin-feature-usage]
+      summary: Get the feature usage overview
+      operationId: getFeatureUsage
+      parameters:
+      - name: days
+        in: query
+        description: 'Window length in days. Allowed values: 7, 30, 90, 180.'
+        required: false
+        schema: {type: integer, format: int32, default: 30}
+      - name: callerRole
+        in: query
+        description: Restricts the totals to callers whose highest global role is
+          the given case-sensitive role name.
+        required: false
+        schema:
+          type: string
+          enum: [SUPER_ADMIN, ADMIN, INSTRUCTOR, EDITOR, TEACHING_ASSISTANT, STUDENT,
+            ANONYMOUS]
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/FeatureUsageOverview'}
+  /api/admin/feature-usage/trend:
+    get:
+      tags: [admin-feature-usage]
+      summary: Get daily feature usage by interaction
+      description: Provide exactly one of feature or a nonempty list of featureIds.
+        Days without calls are omitted.
+      operationId: getFeatureUsageTrend
+      parameters:
+      - name: feature
+        in: query
+        description: Case-sensitive catalogue feature name.
+        required: false
+        schema:
+          type: [string, 'null']
+          enum: [COURSE_DASHBOARD, COURSE_OVERVIEW, COURSE_ENROLLMENT, STUDENT_COURSE_STATISTICS,
+            CALENDAR, GLOBAL_SEARCH, COURSE_CREATION, COURSE_MANAGEMENT_OVERVIEW,
+            COURSE_SETTINGS, COURSE_MEMBERS, COURSE_MATERIAL_IMPORT, COURSE_STATISTICS,
+            COURSE_SCORES, COURSE_ARCHIVE, COURSE_RESET_DELETE, MARKDOWN_UPLOADS,
+            EXERCISE_DETAILS, EXERCISE_PARTICIPATION, EXERCISE_FEEDBACK, TEAM_EXERCISES,
+            EXERCISE_VARIANT_GROUPS, EXERCISE_MANAGEMENT, EXERCISE_VERSION_HISTORY,
+            EXERCISE_REVIEW, EXERCISE_PARTICIPATIONS_STAFF, EXERCISE_SCORES, PROGRAMMING_ONLINE_EDITOR,
+            PROGRAMMING_LOCAL_IDE, PROGRAMMING_ONLINE_IDE, PROGRAMMING_REPOSITORY_HISTORY,
+            PROGRAMMING_RESULTS, PROGRAMMING_AUTHORING, PROGRAMMING_REPOSITORY_EDITING,
+            PROGRAMMING_BUILD_CONFIGURATION, PROGRAMMING_GRADING_CONFIGURATION, PROGRAMMING_REEVALUATION,
+            PROGRAMMING_SUBMISSION_POLICY, PROGRAMMING_CONSISTENCY_CHECK, PROGRAMMING_IMPORT_EXPORT,
+            QUIZ_LIVE, QUIZ_PRACTICE, QUIZ_TRAINING, QUIZ_AUTHORING, QUIZ_LIFECYCLE,
+            QUIZ_EVALUATION, TEXT_EXERCISES, TEXT_AUTHORING, MODELING_EXERCISES, MODELING_AUTHORING,
+            FILE_UPLOAD_EXERCISES, FILE_UPLOAD_AUTHORING, ASSESSMENT_DASHBOARD, MANUAL_ASSESSMENT,
+            COMPLAINTS, FEEDBACK_RATINGS, TUTOR_TRAINING, TUTOR_EFFORT, GRADING_KEYS,
+            BONUS, RESULTS_AND_FEEDBACK_ANALYSIS, PRESENTATION_ASSESSMENT, EXAM_TAKE,
+            EXAM_TEST_EXAMS, EXAM_RESULTS, EXAM_AUTHORING, EXAM_REGISTRATION, EXAM_ROOMS,
+            EXAM_ATTENDANCE, EXAM_CONDUCTION_MANAGEMENT, EXAM_SUSPICIOUS_BEHAVIOR,
+            EXAM_SCORES, EXAM_ARCHIVE, LECTURE_PAGES, LECTURE_UNITS, LECTURE_VIDEO,
+            LECTURE_AUTHORING, LECTURE_SLIDE_PROCESSING, LECTURE_CONTENT_PROCESSING,
+            MESSAGING, CHANNELS, DIRECT_MESSAGES, CONVERSATION_ORGANIZATION, MESSAGE_INTERACTIONS,
+            LINK_PREVIEWS, FAQ, COURSE_NOTIFICATIONS, NOTIFICATION_DELIVERY, NOTIFICATION_SETTINGS,
+            SYSTEM_NOTIFICATIONS, TUTORIAL_GROUPS, TUTORIAL_GROUP_MANAGEMENT, TUTORIAL_GROUP_SESSIONS,
+            COMPETENCY_PROGRESS, COMPETENCY_MANAGEMENT, STANDARDIZED_COMPETENCIES,
+            LEARNING_PATHS, LEARNING_PATH_MANAGEMENT, LEARNER_PROFILE, SCIENCE, IRIS_CHAT,
+            IRIS_STRUGGLE_INTERVENTION, IRIS_SEARCH_ANSWER, IRIS_SETTINGS, IRIS_CONTENT_INGESTION,
+            AI_FEEDBACK_REQUEST, HYPERION_PROBLEM_STATEMENT, HYPERION_CHECKLIST, HYPERION_CONSISTENCY_CHECK,
+            HYPERION_CODE_GENERATION, HYPERION_EXERCISE_GENERATION, HYPERION_GENERATION_MONITORING,
+            HYPERION_GENERATION_RECOVERY, HYPERION_VARIANT_GENERATION, HYPERION_QUIZ_GENERATION,
+            HYPERION_ASSESSMENT_CRITERIA, HYPERION_FAQ_REWRITE, ATHENA_FEEDBACK_SUGGESTIONS,
+            IRIS_TUTOR_SUGGESTIONS, ATLAS_AGENT, COMPETENCY_ORCHESTRATION, AI_COMPETENCY_GENERATION,
+            PLAGIARISM_CHECKS, CONTINUOUS_PLAGIARISM_CONTROL, PLAGIARISM_CASES, DEIMOS,
+            SIGN_IN, REGISTRATION_PASSWORD, ACCOUNT_SETTINGS, PASSKEYS, GIT_CREDENTIALS,
+            PERSONAL_DATA_EXPORT, AGENT_ACCESS, LTI, SHARING_PLATFORM, MOBILE_APPS,
+            VS_CODE_EXTENSION, BUILD_OVERVIEW, BUILD_AGENTS, AI_WORKERS, USER_MANAGEMENT,
+            ORGANIZATIONS, FEATURE_TOGGLES, MONITORING, USAGE_STATISTICS, FEATURE_USAGE,
+            DATA_CLEANUP, ADMIN_DATA_EXPORTS, LEGAL_PAGES, DEPENDENCIES, IRIS_ADMIN_DASHBOARD,
+            INGESTION_DASHBOARD, UPCOMING_EXAMS_AND_EXERCISES]
+      - name: featureIds
+        in: query
+        description: Inventory IDs as repeated query parameters, for example featureIds=1&featureIds=2.
+          An empty list is treated as absent.
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: array
+          items: {type: integer, format: int64}
+          maxItems: 200
+      - name: days
+        in: query
+        description: 'Window length in days. Allowed values: 7, 30, 90, 180.'
+        required: false
+        schema: {type: integer, format: int32, default: 30}
+      - name: callerRole
+        in: query
+        description: Restricts the totals to callers whose highest global role is
+          the given case-sensitive role name.
+        required: false
+        schema:
+          type: string
+          enum: [SUPER_ADMIN, ADMIN, INSTRUCTOR, EDITOR, TEACHING_ASSISTANT, STUDENT,
+            ANONYMOUS]
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/FeatureUsageTrendPoint'}
+  /api/admin/feature-usage/adoption:
+    get:
+      tags: [admin-feature-usage]
+      summary: Get adoption counts for optional feature settings
+      operationId: getFeatureAdoption
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/FeatureAdoption'}
   /api/tutorialgroup/courses/{courseId}/tutorial-groups/{tutorialGroupId}/deregister/{studentLogin}:
     delete:
       tags: [tutorial-group]
@@ -2523,6 +2656,15 @@ components:
         dueDate: {type: string, format: date-time}
         assessmentDueDate: {type: string, format: date-time}
         exampleSolutionPublicationDate: {type: string, format: date-time}
+    FeatureUsageTrendPoint:
+      type: object
+      properties:
+        usageDay: {type: string, format: date}
+        interaction:
+          type: string
+          enum: [ACTION, VIEW, AUTOMATIC, SYSTEM]
+        callCount: {type: integer, format: int64}
+      required: [callCount, interaction, usageDay]
     ChecklistAnalysisRequest:
       type: object
       description: Request to analyze a problem statement for quality, competencies,
@@ -3602,6 +3744,40 @@ components:
           items: {$ref: '#/components/schemas/GeneratedAssessmentCriterion'}
           minItems: 1
       required: [criteria]
+    FeatureUsageOverview:
+      type: object
+      properties:
+        days: {type: integer, format: int32}
+        from: {type: string, format: date}
+        callerRole:
+          type: string
+          enum: [SUPER_ADMIN, ADMIN, INSTRUCTOR, EDITOR, TEACHING_ASSISTANT, STUDENT,
+            ANONYMOUS]
+        availableFeatures: {type: integer, format: int64}
+        usedFeatures: {type: integer, format: int64}
+        onlyAutomatic: {type: integer, format: int64}
+        unusedFeatures: {type: integer, format: int64}
+        notAvailable: {type: integer, format: int64}
+        noActions: {type: integer, format: int64}
+        retiredEndpoints: {type: integer, format: int64}
+        actionCount: {type: integer, format: int64}
+        viewCount: {type: integer, format: int64}
+        automaticCount: {type: integer, format: int64}
+        systemCount: {type: integer, format: int64}
+        inventoryRefreshedAt: {type: string, format: date-time}
+        recordingSince: {type: string, format: date-time}
+        features:
+          type: array
+          items: {$ref: '#/components/schemas/UserFeatureUsage'}
+        endpoints:
+          type: array
+          items: {$ref: '#/components/schemas/FeatureUsageEntry'}
+        roleDistribution:
+          type: array
+          items: {$ref: '#/components/schemas/FeatureUsageRoleShare'}
+      required: [actionCount, automaticCount, availableFeatures, days, from, inventoryRefreshedAt,
+        noActions, notAvailable, onlyAutomatic, retiredEndpoints, systemCount, unusedFeatures,
+        usedFeatures, viewCount]
     AnswerOptionWithoutSolution:
       type: object
       properties:
@@ -3815,6 +3991,15 @@ components:
       type: object
       properties:
         title: {type: string}
+    FeatureUsageRoleShare:
+      type: object
+      properties:
+        callerRole:
+          type: string
+          enum: [SUPER_ADMIN, ADMIN, INSTRUCTOR, EDITOR, TEACHING_ASSISTANT, STUDENT,
+            ANONYMOUS]
+        callCount: {type: integer, format: int64}
+      required: [callCount, callerRole]
     QuizQuestionFilterVerdict:
       type: object
       description: The filter's judgement of one generated quiz question on one failure
@@ -4210,6 +4395,78 @@ components:
         userPrompt: {type: string, description: User prompt for global refinement,
           maxLength: 1000, minLength: 1}
       required: [problemStatementText, userPrompt]
+    UserFeatureUsage:
+      type: object
+      properties:
+        feature:
+          type: string
+          enum: [COURSE_DASHBOARD, COURSE_OVERVIEW, COURSE_ENROLLMENT, STUDENT_COURSE_STATISTICS,
+            CALENDAR, GLOBAL_SEARCH, COURSE_CREATION, COURSE_MANAGEMENT_OVERVIEW,
+            COURSE_SETTINGS, COURSE_MEMBERS, COURSE_MATERIAL_IMPORT, COURSE_STATISTICS,
+            COURSE_SCORES, COURSE_ARCHIVE, COURSE_RESET_DELETE, MARKDOWN_UPLOADS,
+            EXERCISE_DETAILS, EXERCISE_PARTICIPATION, EXERCISE_FEEDBACK, TEAM_EXERCISES,
+            EXERCISE_VARIANT_GROUPS, EXERCISE_MANAGEMENT, EXERCISE_VERSION_HISTORY,
+            EXERCISE_REVIEW, EXERCISE_PARTICIPATIONS_STAFF, EXERCISE_SCORES, PROGRAMMING_ONLINE_EDITOR,
+            PROGRAMMING_LOCAL_IDE, PROGRAMMING_ONLINE_IDE, PROGRAMMING_REPOSITORY_HISTORY,
+            PROGRAMMING_RESULTS, PROGRAMMING_AUTHORING, PROGRAMMING_REPOSITORY_EDITING,
+            PROGRAMMING_BUILD_CONFIGURATION, PROGRAMMING_GRADING_CONFIGURATION, PROGRAMMING_REEVALUATION,
+            PROGRAMMING_SUBMISSION_POLICY, PROGRAMMING_CONSISTENCY_CHECK, PROGRAMMING_IMPORT_EXPORT,
+            QUIZ_LIVE, QUIZ_PRACTICE, QUIZ_TRAINING, QUIZ_AUTHORING, QUIZ_LIFECYCLE,
+            QUIZ_EVALUATION, TEXT_EXERCISES, TEXT_AUTHORING, MODELING_EXERCISES, MODELING_AUTHORING,
+            FILE_UPLOAD_EXERCISES, FILE_UPLOAD_AUTHORING, ASSESSMENT_DASHBOARD, MANUAL_ASSESSMENT,
+            COMPLAINTS, FEEDBACK_RATINGS, TUTOR_TRAINING, TUTOR_EFFORT, GRADING_KEYS,
+            BONUS, RESULTS_AND_FEEDBACK_ANALYSIS, PRESENTATION_ASSESSMENT, EXAM_TAKE,
+            EXAM_TEST_EXAMS, EXAM_RESULTS, EXAM_AUTHORING, EXAM_REGISTRATION, EXAM_ROOMS,
+            EXAM_ATTENDANCE, EXAM_CONDUCTION_MANAGEMENT, EXAM_SUSPICIOUS_BEHAVIOR,
+            EXAM_SCORES, EXAM_ARCHIVE, LECTURE_PAGES, LECTURE_UNITS, LECTURE_VIDEO,
+            LECTURE_AUTHORING, LECTURE_SLIDE_PROCESSING, LECTURE_CONTENT_PROCESSING,
+            MESSAGING, CHANNELS, DIRECT_MESSAGES, CONVERSATION_ORGANIZATION, MESSAGE_INTERACTIONS,
+            LINK_PREVIEWS, FAQ, COURSE_NOTIFICATIONS, NOTIFICATION_DELIVERY, NOTIFICATION_SETTINGS,
+            SYSTEM_NOTIFICATIONS, TUTORIAL_GROUPS, TUTORIAL_GROUP_MANAGEMENT, TUTORIAL_GROUP_SESSIONS,
+            COMPETENCY_PROGRESS, COMPETENCY_MANAGEMENT, STANDARDIZED_COMPETENCIES,
+            LEARNING_PATHS, LEARNING_PATH_MANAGEMENT, LEARNER_PROFILE, SCIENCE, IRIS_CHAT,
+            IRIS_STRUGGLE_INTERVENTION, IRIS_SEARCH_ANSWER, IRIS_SETTINGS, IRIS_CONTENT_INGESTION,
+            AI_FEEDBACK_REQUEST, HYPERION_PROBLEM_STATEMENT, HYPERION_CHECKLIST, HYPERION_CONSISTENCY_CHECK,
+            HYPERION_CODE_GENERATION, HYPERION_EXERCISE_GENERATION, HYPERION_GENERATION_MONITORING,
+            HYPERION_GENERATION_RECOVERY, HYPERION_VARIANT_GENERATION, HYPERION_QUIZ_GENERATION,
+            HYPERION_ASSESSMENT_CRITERIA, HYPERION_FAQ_REWRITE, ATHENA_FEEDBACK_SUGGESTIONS,
+            IRIS_TUTOR_SUGGESTIONS, ATLAS_AGENT, COMPETENCY_ORCHESTRATION, AI_COMPETENCY_GENERATION,
+            PLAGIARISM_CHECKS, CONTINUOUS_PLAGIARISM_CONTROL, PLAGIARISM_CASES, DEIMOS,
+            SIGN_IN, REGISTRATION_PASSWORD, ACCOUNT_SETTINGS, PASSKEYS, GIT_CREDENTIALS,
+            PERSONAL_DATA_EXPORT, AGENT_ACCESS, LTI, SHARING_PLATFORM, MOBILE_APPS,
+            VS_CODE_EXTENSION, BUILD_OVERVIEW, BUILD_AGENTS, AI_WORKERS, USER_MANAGEMENT,
+            ORGANIZATIONS, FEATURE_TOGGLES, MONITORING, USAGE_STATISTICS, FEATURE_USAGE,
+            DATA_CLEANUP, ADMIN_DATA_EXPORTS, LEGAL_PAGES, DEPENDENCIES, IRIS_ADMIN_DASHBOARD,
+            INGESTION_DASHBOARD, UPCOMING_EXAMS_AND_EXERCISES]
+        area:
+          type: string
+          enum: [COURSES, COURSE_MANAGEMENT, EXERCISES, PROGRAMMING, QUIZ, TEXT_MODELING_UPLOAD,
+            ASSESSMENT, EXAMS, LECTURES, COMMUNICATION, NOTIFICATIONS, TUTORIAL_GROUPS,
+            COMPETENCIES, AI_LEARNERS, AI_AUTHORING, INTEGRITY, ACCOUNT, INTEGRATIONS,
+            BUILD_SYSTEM, ADMINISTRATION]
+        status:
+          type: string
+          enum: [USED, ONLY_AUTOMATIC, UNUSED, NOT_AVAILABLE]
+        noActions: {type: boolean}
+        actionCount: {type: integer, format: int64}
+        viewCount: {type: integer, format: int64}
+        automaticCount: {type: integer, format: int64}
+        systemCount: {type: integer, format: int64}
+        errorCount: {type: integer, format: int64}
+        durationSumMs: {type: integer, format: int64}
+        durationMaxMs: {type: integer, format: int32}
+        activeDays: {type: integer, format: int64}
+        actionDays: {type: integer, format: int64}
+        lastUsedDay: {type: string, format: date}
+        lastActionDay: {type: string, format: date}
+        modules:
+          type: array
+          items: {type: string}
+        endpointCount: {type: integer, format: int32}
+        hasActionEndpoints: {type: boolean}
+      required: [actionCount, actionDays, activeDays, area, automaticCount, durationMaxMs,
+        durationSumMs, endpointCount, errorCount, feature, hasActionEndpoints, noActions,
+        status, systemCount, viewCount]
     QuizQuestionRefinementSuccess:
       description: Successful refinement result containing the refined question and
         an explanation of the changes
@@ -5247,6 +5504,31 @@ components:
         id: {type: integer, format: int64}
         title: {type: string}
         active: {type: boolean}
+    FeatureUsageEntry:
+      type: object
+      properties:
+        featureId: {type: integer, format: int64}
+        featureKind:
+          type: string
+          enum: [REST, GIT, BACKGROUND]
+        module: {type: string}
+        identifier: {type: string}
+        featureLabel: {type: string}
+        interaction:
+          type: string
+          enum: [ACTION, VIEW, AUTOMATIC, SYSTEM]
+        resource: {type: string}
+        callCount: {type: integer, format: int64}
+        errorCount: {type: integer, format: int64}
+        durationSumMs: {type: integer, format: int64}
+        durationMaxMs: {type: integer, format: int32}
+        activeDays: {type: integer, format: int64}
+        lastUsedDay: {type: string, format: date}
+        lastRegisteredAt: {type: string, format: date-time}
+        retired: {type: boolean}
+      required: [activeDays, callCount, durationMaxMs, durationSumMs, errorCount,
+        featureId, featureKind, identifier, interaction, lastRegisteredAt, module,
+        retired]
     QuizQuestionPoolPage:
       type: object
       description: One page of a course's quiz question pool
@@ -5307,6 +5589,54 @@ components:
         explanation: {type: string, description: Optional explanation for the overall
             question, maxLength: 2000, minLength: 0}
       required: [options, questionText, title, type]
+    FeatureAdoption:
+      type: object
+      properties:
+        module: {type: string}
+        key: {type: string}
+        feature:
+          type: string
+          enum: [COURSE_DASHBOARD, COURSE_OVERVIEW, COURSE_ENROLLMENT, STUDENT_COURSE_STATISTICS,
+            CALENDAR, GLOBAL_SEARCH, COURSE_CREATION, COURSE_MANAGEMENT_OVERVIEW,
+            COURSE_SETTINGS, COURSE_MEMBERS, COURSE_MATERIAL_IMPORT, COURSE_STATISTICS,
+            COURSE_SCORES, COURSE_ARCHIVE, COURSE_RESET_DELETE, MARKDOWN_UPLOADS,
+            EXERCISE_DETAILS, EXERCISE_PARTICIPATION, EXERCISE_FEEDBACK, TEAM_EXERCISES,
+            EXERCISE_VARIANT_GROUPS, EXERCISE_MANAGEMENT, EXERCISE_VERSION_HISTORY,
+            EXERCISE_REVIEW, EXERCISE_PARTICIPATIONS_STAFF, EXERCISE_SCORES, PROGRAMMING_ONLINE_EDITOR,
+            PROGRAMMING_LOCAL_IDE, PROGRAMMING_ONLINE_IDE, PROGRAMMING_REPOSITORY_HISTORY,
+            PROGRAMMING_RESULTS, PROGRAMMING_AUTHORING, PROGRAMMING_REPOSITORY_EDITING,
+            PROGRAMMING_BUILD_CONFIGURATION, PROGRAMMING_GRADING_CONFIGURATION, PROGRAMMING_REEVALUATION,
+            PROGRAMMING_SUBMISSION_POLICY, PROGRAMMING_CONSISTENCY_CHECK, PROGRAMMING_IMPORT_EXPORT,
+            QUIZ_LIVE, QUIZ_PRACTICE, QUIZ_TRAINING, QUIZ_AUTHORING, QUIZ_LIFECYCLE,
+            QUIZ_EVALUATION, TEXT_EXERCISES, TEXT_AUTHORING, MODELING_EXERCISES, MODELING_AUTHORING,
+            FILE_UPLOAD_EXERCISES, FILE_UPLOAD_AUTHORING, ASSESSMENT_DASHBOARD, MANUAL_ASSESSMENT,
+            COMPLAINTS, FEEDBACK_RATINGS, TUTOR_TRAINING, TUTOR_EFFORT, GRADING_KEYS,
+            BONUS, RESULTS_AND_FEEDBACK_ANALYSIS, PRESENTATION_ASSESSMENT, EXAM_TAKE,
+            EXAM_TEST_EXAMS, EXAM_RESULTS, EXAM_AUTHORING, EXAM_REGISTRATION, EXAM_ROOMS,
+            EXAM_ATTENDANCE, EXAM_CONDUCTION_MANAGEMENT, EXAM_SUSPICIOUS_BEHAVIOR,
+            EXAM_SCORES, EXAM_ARCHIVE, LECTURE_PAGES, LECTURE_UNITS, LECTURE_VIDEO,
+            LECTURE_AUTHORING, LECTURE_SLIDE_PROCESSING, LECTURE_CONTENT_PROCESSING,
+            MESSAGING, CHANNELS, DIRECT_MESSAGES, CONVERSATION_ORGANIZATION, MESSAGE_INTERACTIONS,
+            LINK_PREVIEWS, FAQ, COURSE_NOTIFICATIONS, NOTIFICATION_DELIVERY, NOTIFICATION_SETTINGS,
+            SYSTEM_NOTIFICATIONS, TUTORIAL_GROUPS, TUTORIAL_GROUP_MANAGEMENT, TUTORIAL_GROUP_SESSIONS,
+            COMPETENCY_PROGRESS, COMPETENCY_MANAGEMENT, STANDARDIZED_COMPETENCIES,
+            LEARNING_PATHS, LEARNING_PATH_MANAGEMENT, LEARNER_PROFILE, SCIENCE, IRIS_CHAT,
+            IRIS_STRUGGLE_INTERVENTION, IRIS_SEARCH_ANSWER, IRIS_SETTINGS, IRIS_CONTENT_INGESTION,
+            AI_FEEDBACK_REQUEST, HYPERION_PROBLEM_STATEMENT, HYPERION_CHECKLIST, HYPERION_CONSISTENCY_CHECK,
+            HYPERION_CODE_GENERATION, HYPERION_EXERCISE_GENERATION, HYPERION_GENERATION_MONITORING,
+            HYPERION_GENERATION_RECOVERY, HYPERION_VARIANT_GENERATION, HYPERION_QUIZ_GENERATION,
+            HYPERION_ASSESSMENT_CRITERIA, HYPERION_FAQ_REWRITE, ATHENA_FEEDBACK_SUGGESTIONS,
+            IRIS_TUTOR_SUGGESTIONS, ATLAS_AGENT, COMPETENCY_ORCHESTRATION, AI_COMPETENCY_GENERATION,
+            PLAGIARISM_CHECKS, CONTINUOUS_PLAGIARISM_CONTROL, PLAGIARISM_CASES, DEIMOS,
+            SIGN_IN, REGISTRATION_PASSWORD, ACCOUNT_SETTINGS, PASSKEYS, GIT_CREDENTIALS,
+            PERSONAL_DATA_EXPORT, AGENT_ACCESS, LTI, SHARING_PLATFORM, MOBILE_APPS,
+            VS_CODE_EXTENSION, BUILD_OVERVIEW, BUILD_AGENTS, AI_WORKERS, USER_MANAGEMENT,
+            ORGANIZATIONS, FEATURE_TOGGLES, MONITORING, USAGE_STATISTICS, FEATURE_USAGE,
+            DATA_CLEANUP, ADMIN_DATA_EXPORTS, LEGAL_PAGES, DEPENDENCIES, IRIS_ADMIN_DASHBOARD,
+            INGESTION_DASHBOARD, UPCOMING_EXAMS_AND_EXERCISES]
+        count: {type: integer, format: int64}
+        total: {type: integer, format: int64}
+      required: [count, key, module, total]
     ShortAnswerSolutionReEvaluate:
       type: object
       properties:
@@ -5461,9 +5791,9 @@ components:
         subTypeReferenceId: {type: integer, format: int64}
         subTypeReferenceStartDate: {type: string, format: date-time}
         subTypeReferenceEndDate: {type: string, format: date-time}
-        subTypeWithReferenceFromChannel: {$ref: '#/components/schemas/Channel', writeOnly: true}
         subTypeReferenceDates: {$ref: '#/components/schemas/ChannelSubTypeReferenceDates',
           writeOnly: true}
+        subTypeWithReferenceFromChannel: {$ref: '#/components/schemas/Channel', writeOnly: true}
     ShortAnswerQuizQuestionWithSolution:
       required: [type]
       type: object
