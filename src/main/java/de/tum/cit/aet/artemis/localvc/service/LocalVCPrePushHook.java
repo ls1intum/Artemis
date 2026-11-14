@@ -38,8 +38,6 @@ public record LocalVCPrePushHook(LocalVCServletService localVCServletService, Us
         this.user = user;
     }
 
-    private static final long MAX_BLOB_SIZE_BYTES = 10L * 1024 * 1024; // 10MB
-
     private static final String REPOSITORY_SIZE_DOCUMENTATION_URL = "https://docs.artemis.tum.de/instructor/exercises/programming-exercise/write-code-and-tests#keep-repositories-small";
 
     /** The most entries of the tree of the pushed commit that are examined. A tree can reference the same subtree many times, so its paths are far more than its objects. */
@@ -211,7 +209,7 @@ public record LocalVCPrePushHook(LocalVCServletService localVCServletService, Us
                 ObjectId objectId = treeWalk.getObjectId(0);
                 // Only the size is read, the content of the file is not loaded
                 long size = reader.getObjectSize(objectId, Constants.OBJ_BLOB);
-                if (size > MAX_BLOB_SIZE_BYTES) {
+                if (size > LocalVCReceivePackLimits.MAX_BLOB_SIZE_BYTES) {
                     command.setResult(ReceiveCommand.Result.REJECTED_OTHER_REASON,
                             "File '%s' exceeds 10MB size limit (%.2f MB)".formatted(treeWalk.getPathString(), size / (1024.0 * 1024.0)));
                     return;

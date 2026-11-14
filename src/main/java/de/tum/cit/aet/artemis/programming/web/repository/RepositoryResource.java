@@ -35,6 +35,7 @@ import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.localvc.service.GitService;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCPushProcessingService;
+import de.tum.cit.aet.artemis.localvc.service.LocalVCReceivePackLimits;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.domain.File;
 import de.tum.cit.aet.artemis.programming.domain.FileType;
@@ -427,7 +428,12 @@ public abstract class RepositoryResource {
             throw new IOException("File could not be found.");
         }
 
-        try (var inputStream = new ByteArrayInputStream(submission.getFileContent().getBytes(StandardCharsets.UTF_8))) {
+        byte[] content = submission.getFileContent().getBytes(StandardCharsets.UTF_8);
+        if (content.length > LocalVCReceivePackLimits.MAX_BLOB_SIZE_BYTES) {
+            throw new IOException("The file exceeds the size limit of " + LocalVCReceivePackLimits.MAX_BLOB_SIZE_BYTES + " bytes.");
+        }
+
+        try (var inputStream = new ByteArrayInputStream(content)) {
             FileUtils.copyToFile(inputStream, file.get());
         }
     }
