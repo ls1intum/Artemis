@@ -10,7 +10,7 @@
 
 
 export interface IndexedContentPresence {
-    key?: string;
-    unitIds?: Array<number>;
-    orphanedUnitIds?: Array<number>;
+    key: string;
+    unitIds: Array<number>;
+    orphanedUnitIds: Array<number>;
 }

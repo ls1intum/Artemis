@@ -2,10 +2,11 @@ package de.tum.cit.aet.artemis.globalsearch.dto;
 
 import java.util.Set;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
  * Which lecture units actually hold content in one Iris collection for a course, for the admin content browser's tree.
+ * Empty sets remain present in JSON.
  * <p>
  * This is presence, not payload. The browser needs to know which units have slides, a transcript, and so on in order to
  * draw the tree; it does not need the objects themselves until a node is selected. Reading presence as a distinct unit
@@ -16,6 +17,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * @param unitIds         the ids of the lecture units holding at least one object in the backing collection
  * @param orphanedUnitIds ids that still hold content in this collection but are no longer expected for its indexing rule
  */
-@JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record IndexedContentPresenceDTO(String key, Set<Long> unitIds, Set<Long> orphanedUnitIds) {
+public record IndexedContentPresenceDTO(@Schema(requiredMode = Schema.RequiredMode.REQUIRED) String key, @Schema(requiredMode = Schema.RequiredMode.REQUIRED) Set<Long> unitIds,
+        @Schema(requiredMode = Schema.RequiredMode.REQUIRED) Set<Long> orphanedUnitIds) {
 }

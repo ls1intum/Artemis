@@ -3,7 +3,11 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideTranslateService } from '@ngx-translate/core';
 
 import { CourseIngestionBrowserTreeComponent } from 'app/admin/course-ingestion-dashboard/course-ingestion-browser-tree/course-ingestion-browser-tree.component';
-import { IndexedContentPresence, IndexedEntity, IngestionTypeCount, MissingEntity } from 'app/admin/course-ingestion-dashboard/course-ingestion-dashboard.model';
+
+import { IngestionTypeCount } from 'app/openapi/model/ingestion-type-count';
+import { IndexedEntity } from 'app/openapi/model/indexed-entity';
+import { IndexedContentPresence } from 'app/openapi/model/indexed-content-presence';
+import { MissingEntity } from 'app/openapi/model/missing-entity';
 
 describe('CourseIngestionBrowserTreeComponent', () => {
     let component: CourseIngestionBrowserTreeComponent;
@@ -28,8 +32,8 @@ describe('CourseIngestionBrowserTreeComponent', () => {
     ];
 
     const contentPresence: IndexedContentPresence[] = [
-        { key: 'slides', unitIds: [11] },
-        { key: 'transcript', unitIds: [11, 12] },
+        { key: 'slides', unitIds: [11], orphanedUnitIds: [] },
+        { key: 'transcript', unitIds: [11, 12], orphanedUnitIds: [] },
     ];
 
     const typeCounts: IngestionTypeCount[] = [
@@ -127,7 +131,7 @@ describe('CourseIngestionBrowserTreeComponent', () => {
         // Unit 99 holds slides in Iris but has no lecture_unit entity: its database row and its indexed record are both
         // gone. The coverage row counts those objects as orphaned, so dropping them from the tree would name a number
         // with nothing behind it.
-        fixture.componentRef.setInput('contentPresence', [...contentPresence, { key: 'slides', unitIds: [11, 99] }]);
+        fixture.componentRef.setInput('contentPresence', [...contentPresence, { key: 'slides', unitIds: [11, 99], orphanedUnitIds: [] }]);
         fixture.detectChanges();
 
         expect(query('tree-node-orphaned:99')).toBeTruthy();
@@ -153,7 +157,7 @@ describe('CourseIngestionBrowserTreeComponent', () => {
         // Unit 30 exists in the database but its metadata never reached the index, while its slides did. Absence from
         // `entities` alone must not be read as deletion: the unit is live and its content is valid, not stale.
         fixture.componentRef.setInput('missingEntities', [...missingEntities, { type: 'lecture_unit', entityId: 30, title: 'Late slides', lectureId: 20 }]);
-        fixture.componentRef.setInput('contentPresence', [...contentPresence, { key: 'slides', unitIds: [30] }]);
+        fixture.componentRef.setInput('contentPresence', [...contentPresence, { key: 'slides', unitIds: [30], orphanedUnitIds: [] }]);
         fixture.detectChanges();
 
         expect(query('tree-node-orphaned:30')).toBeFalsy();
@@ -170,7 +174,7 @@ describe('CourseIngestionBrowserTreeComponent', () => {
         // completeness off the content alone drew it green under a green lecture 20, so a collapsed tree gave no sign
         // that the branch held a gap at all.
         fixture.componentRef.setInput('missingEntities', [...missingEntities, { type: 'lecture_unit', entityId: 30, title: 'Late slides', lectureId: 20 }]);
-        fixture.componentRef.setInput('contentPresence', [...contentPresence, { key: 'slides', unitIds: [30] }]);
+        fixture.componentRef.setInput('contentPresence', [...contentPresence, { key: 'slides', unitIds: [30], orphanedUnitIds: [] }]);
         fixture.detectChanges();
 
         click('tree-toggle-lecture:20');
@@ -289,17 +293,35 @@ describe('CourseIngestionBrowserTreeComponent', () => {
         expect(component.selection()).toEqual({ kind: 'collection', unitId: 11, key: 'slides' });
     });
 
-    it('should treat omitted and empty orphaned-unit ids as compatible healthy content', () => {
+    it('should treat empty orphaned-unit ids as healthy content', () => {
         fixture.componentRef.setInput('contentGaps', []);
-        fixture.componentRef.setInput('contentPresence', [{ key: 'unit_summary', unitIds: [11] }]);
-        fixture.detectChanges();
-        expect(query('tree-dot-lecture:20')?.className).toContain('text-state-success');
-
         fixture.componentRef.setInput('contentPresence', [{ key: 'unit_summary', unitIds: [11], orphanedUnitIds: [] }]);
         fixture.detectChanges();
         expect(query('tree-dot-lecture:20')?.className).toContain('text-state-success');
         click('tree-toggle-lecture:20');
         click('tree-toggle-unit:11');
         expect(query('content-orphaned:coll:11:unit_summary')).toBeFalsy();
+    });
+    it('ignores nullable parents and accepts empty content sets without inventing numeric nodes', () => {
+        const sparseEntities: IndexedEntity[] = [
+            { type: 'lecture', entityId: 20, title: null, expected: false },
+            { type: 'lecture_unit', entityId: 10, lectureId: null, expected: false },
+        ];
+        const sparsePresence: IndexedContentPresence[] = [
+            { key: 'slides', unitIds: [], orphanedUnitIds: [] },
+            { key: 'transcript', unitIds: [], orphanedUnitIds: [] },
+        ];
+        const missing: MissingEntity[] = [{ type: 'lecture_unit', entityId: 11, lectureId: null, title: null }];
+        fixture.componentRef.setInput('entities', sparseEntities);
+        fixture.componentRef.setInput('contentPresence', sparsePresence);
+        fixture.componentRef.setInput('missingEntities', missing);
+        fixture.componentRef.setInput('contentGaps', []);
+        fixture.detectChanges();
+        expect(query('tree-node-lecture:20')).toBeTruthy();
+        expect(query('tree-node-lecture:null')).toBeFalsy();
+        expect(query('tree-node-lecture:0')).toBeFalsy();
+        expect(component['orphanedContentUnits']()).toEqual([]);
+        expect(component['lectures']()[0].units).toEqual([]);
+        expect(component['lectures']()[0].complete).toBe(false);
     });
 });
