@@ -8,6 +8,8 @@ import org.jspecify.annotations.NonNull;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
 /**
  * Context information for video content in lectures.
  * Provides information about which lecture unit video the user is watching and the current timestamp.
@@ -20,8 +22,9 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  * @param timestamp     video timestamp in seconds (supports decimals like 125.5)
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record IrisVideoContextDTO(@JsonProperty("type") @NonNull String type, @Positive @NonNull Long lectureUnitId, @PositiveOrZero @NonNull Double timestamp)
-        implements IrisMessageContextDTO {
+public record IrisVideoContextDTO(@Schema(type = "string", allowableValues = {
+        "video" }, requiredMode = Schema.RequiredMode.REQUIRED) @JsonProperty("type") @NonNull String type, @Positive @NonNull Long lectureUnitId,
+        @PositiveOrZero @NonNull Double timestamp) implements IrisMessageContextDTO{
 
     /**
      * Convenience constructor that automatically sets the type to "video".

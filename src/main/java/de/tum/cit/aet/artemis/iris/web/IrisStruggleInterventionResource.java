@@ -34,6 +34,8 @@ import de.tum.cit.aet.artemis.iris.dto.StruggleInterventionAcceptedDTO;
 import de.tum.cit.aet.artemis.iris.service.session.IrisProactiveEpisodeService;
 import de.tum.cit.aet.artemis.iris.service.session.IrisStruggleInterventionService;
 import de.tum.cit.aet.artemis.iris.service.session.IrisStruggleTriggerService;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 
 /**
  * Exercise-keyed trigger for the proactive struggle-intervention feature. The client engine has already gated the
@@ -78,6 +80,7 @@ public class IrisStruggleInterventionResource {
     @EnforceAtLeastStudent
     @AllowedTools(ToolTokenType.SCORPIO)
     @LimitRequestsPerMinute(type = RateLimitType.STRUGGLE_INTERVENTION)
+    @ApiResponse(responseCode = "202", description = "Struggle intervention request accepted for processing")
     public ResponseEntity<StruggleInterventionAcceptedDTO> triggerStruggleIntervention(@PathVariable long exerciseId,
             @Valid @RequestBody IrisStruggleInterventionRequestDTO requestDTO) {
         var user = userRepository.getUserWithAuthorities();
@@ -123,6 +126,7 @@ public class IrisStruggleInterventionResource {
     @DeleteMapping("exercises/{exerciseId}/messages/{messageId}/proactive")
     @EnforceAtLeastStudent
     @AllowedTools(ToolTokenType.SCORPIO)
+    @ApiResponse(responseCode = "204", description = "Proactive message deletion completed", content = @Content)
     public ResponseEntity<Void> deleteProactiveMessage(@PathVariable long exerciseId, @PathVariable long messageId) {
         var user = userRepository.getUserWithAuthorities();
         struggleInterventionService.deleteSupersededProactiveMessage(user, messageId);
@@ -144,6 +148,7 @@ public class IrisStruggleInterventionResource {
     @PostMapping("exercises/{exerciseId}/struggle-intervention/cancel")
     @EnforceAtLeastStudent
     @AllowedTools(ToolTokenType.SCORPIO)
+    @ApiResponse(responseCode = "204", description = "Struggle intervention cancellation processed", content = @Content)
     public ResponseEntity<Void> cancelStruggleJob(@PathVariable long exerciseId, @RequestBody CancelStruggleJobRequestDTO body) {
         var user = userRepository.getUserWithAuthorities();
         struggleTriggerService.cancelOutstandingStruggleJob(user, exerciseId, body.requestToken());

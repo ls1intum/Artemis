@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.iris;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
@@ -16,9 +17,11 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.actuate.audit.AuditEvent;
+import org.springframework.boot.health.contributor.Health;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.admin.repository.CustomAuditEventRepository;
@@ -45,9 +48,11 @@ import de.tum.cit.aet.artemis.iris.dto.IrisChatSessionCountDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisChatSessionDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisChatSessionResponseDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisMessageResponseDTO;
+import de.tum.cit.aet.artemis.iris.dto.IrisStatusDTO;
 import de.tum.cit.aet.artemis.iris.repository.IrisChatSessionRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisMessageRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisSessionRepository;
+import de.tum.cit.aet.artemis.iris.service.pyris.PyrisHealthIndicator;
 import de.tum.cit.aet.artemis.iris.util.IrisChatSessionFactory;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 
@@ -82,9 +87,22 @@ class IrisChatSessionResourceTest extends AbstractIrisChatSessionTest {
     @Autowired
     private ChannelRepository channelRepository;
 
+    @MockitoSpyBean
+    private PyrisHealthIndicator pyrisHealthIndicator;
+
     @Override
     protected String getTestPrefix() {
         return TEST_PREFIX;
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void statusReturnsAvailabilityAndQuotaForCourseMember() throws Exception {
+        doReturn(Health.up().build()).when(pyrisHealthIndicator).health(true);
+        String url = "/api/iris/courses/" + course.getId() + "/status";
+        var status = request.get(url, HttpStatus.OK, IrisStatusDTO.class);
+        assertThat(status.active()).isTrue();
+        assertThat(status.rateLimitInfo().currentMessageCount()).isZero();
     }
 
     // =========================================================================

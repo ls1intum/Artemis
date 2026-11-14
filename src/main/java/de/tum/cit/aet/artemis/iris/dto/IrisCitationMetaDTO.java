@@ -4,6 +4,8 @@ import jakarta.validation.constraints.NotNull;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
 /**
  * Metadata holding the lecture name and the lecture unit name of a lecture unit id in a citation used in an Iris response.
  *
@@ -14,5 +16,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * @param courseId         the id of the course containing the lecture
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record IrisCitationMetaDTO(long entityId, @NotNull String lectureTitle, @NotNull String lectureUnitTitle, long lectureId, long courseId) {
+public record IrisCitationMetaDTO(@Schema(requiredMode = Schema.RequiredMode.REQUIRED) long entityId,
+        @Schema(requiredMode = Schema.RequiredMode.REQUIRED) @NotNull String lectureTitle, @Schema(requiredMode = Schema.RequiredMode.REQUIRED) @NotNull String lectureUnitTitle,
+        @Schema(requiredMode = Schema.RequiredMode.REQUIRED) long lectureId, @Schema(requiredMode = Schema.RequiredMode.REQUIRED) long courseId) {
 }

@@ -53,6 +53,10 @@ import de.tum.cit.aet.artemis.iris.service.IrisCitationService;
 import de.tum.cit.aet.artemis.iris.service.IrisSessionService;
 import de.tum.cit.aet.artemis.iris.service.session.IrisChatSessionService;
 import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
+import io.swagger.v3.oas.annotations.headers.Header;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 
 /**
  * REST controller for managing {@link IrisChatSession}.
@@ -120,6 +124,7 @@ public class IrisChatSessionResource {
     @PostMapping("sessions/current")
     @EnforceAtLeastStudent
     @AllowedTools(ToolTokenType.SCORPIO)
+    @ApiResponse(responseCode = "200", description = "Current chat session", headers = @Header(name = IrisOpenApiHeaders.FRAME_OPTIONS, description = IrisOpenApiHeaders.FRAME_OPTIONS_DESCRIPTION, schema = @Schema(type = "string")))
     public ResponseEntity<IrisChatSessionResponseDTO> getCurrentSessionOrCreateIfNotExists(@RequestParam IrisChatMode mode, @RequestParam long entityId) {
         var user = userRepository.getUserWithAuthorities();
         var session = irisChatSessionService.getCurrentSessionOrCreateIfNotExists(mode, entityId, user);
@@ -139,6 +144,7 @@ public class IrisChatSessionResource {
     @PostMapping("sessions")
     @EnforceAtLeastStudent
     @AllowedTools(ToolTokenType.SCORPIO)
+    @ApiResponse(responseCode = "201", description = "New or reused empty course chat session", headers = @Header(name = IrisOpenApiHeaders.LOCATION, description = IrisOpenApiHeaders.SESSION_LOCATION_DESCRIPTION, schema = @Schema(type = "string")))
     public ResponseEntity<IrisChatSessionResponseDTO> createCourseSession(@RequestParam long courseId) throws URISyntaxException {
         var user = userRepository.getUserWithAuthorities();
         var session = irisChatSessionService.findOrCreateEmptySession(courseId, user);
@@ -158,6 +164,7 @@ public class IrisChatSessionResource {
      */
     @PostMapping("sessions/global-search-handoff")
     @EnforceAtLeastStudent
+    @ApiResponse(responseCode = "201", description = "Chat session for the global search handoff", headers = @Header(name = IrisOpenApiHeaders.LOCATION, description = IrisOpenApiHeaders.SESSION_LOCATION_DESCRIPTION, schema = @Schema(type = "string")))
     public ResponseEntity<IrisChatSessionResponseDTO> createSessionFromGlobalSearch(@RequestBody @Valid IrisGlobalSearchHandoffDTO handoff) throws URISyntaxException {
         var user = userRepository.getUserWithAuthorities();
         var session = irisChatSessionService.createSessionFromGlobalSearch(handoff, user);
@@ -213,6 +220,7 @@ public class IrisChatSessionResource {
     @GetMapping({ "courses/{courseId}/sessions/overview", "{courseId}/sessions/overview" })
     @EnforceAtLeastStudentInCourse
     @AllowedTools(ToolTokenType.SCORPIO)
+    @ApiResponse(responseCode = "200", description = "Chat session overview, or an empty list if the user has not opted into AI usage")
     public ResponseEntity<List<IrisChatSessionDTO>> getAllSessionsForCourse(@PathVariable Long courseId) {
         User user = userRepository.getUserWithAuthorities();
         Course course = courseRepository.findById(courseId).orElseThrow();
@@ -251,6 +259,7 @@ public class IrisChatSessionResource {
      */
     @DeleteMapping("sessions")
     @EnforceAtLeastStudent
+    @ApiResponse(responseCode = "204", description = "Chat sessions deleted", headers = @Header(name = IrisOpenApiHeaders.FRAME_OPTIONS, description = IrisOpenApiHeaders.FRAME_OPTIONS_DESCRIPTION, schema = @Schema(type = "string")), content = @Content)
     public ResponseEntity<Void> deleteAllSessionsForCurrentUser() {
         User user = userRepository.getUserWithAuthorities();
         long sessionCount = irisSessionRepository.countByUserId(user.getId());
@@ -271,6 +280,7 @@ public class IrisChatSessionResource {
      */
     @DeleteMapping("sessions/{sessionId}")
     @EnforceAtLeastStudent
+    @ApiResponse(responseCode = "204", description = "Chat session deleted", headers = @Header(name = IrisOpenApiHeaders.FRAME_OPTIONS, description = IrisOpenApiHeaders.FRAME_OPTIONS_DESCRIPTION, schema = @Schema(type = "string")), content = @Content)
     public ResponseEntity<Void> deleteSession(@PathVariable Long sessionId) {
         User user = userRepository.getUserWithAuthorities();
         IrisChatSession session = irisChatSessionRepository.findById(sessionId).orElseThrow(() -> new EntityNotFoundException("Iris chat session", sessionId));

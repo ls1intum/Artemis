@@ -38,6 +38,8 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.GlobalSearchAskReque
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.GlobalSearchLectureRequestDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.PyrisEntityCandidateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.PyrisLectureSearchResultDTO;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 
 /**
  * REST controller for Iris global search.
@@ -123,6 +125,7 @@ public class IrisGlobalSearchResource {
     @PostMapping("search-answer")
     @EnforceAtLeastStudent
     @LimitRequestsPerMinute(type = RateLimitType.AI_SEARCH_PIPELINE)
+    @ApiResponse(responseCode = "202", description = "Search answer requested", content = @Content)
     public ResponseEntity<Void> ask(@RequestBody @Valid GlobalSearchAskRequestDTO requestDTO, Principal principal) {
         var user = userRepository.getUserWithCourseRolesAndAuthorities();
         userAiPreferenceService.hasOptedIntoLlmUsageElseThrow(user.getId());

@@ -1,17 +1,20 @@
 import { Service, inject } from '@angular/core';
-import { HttpClient, HttpResponse } from '@angular/common/http';
-import { Observable } from 'rxjs';
-import { IrisMessage, IrisUserMessage } from 'app/iris/shared/entities/iris-message.model';
+import { HttpResponse } from '@angular/common/http';
+import { Observable, defer, throwError } from 'rxjs';
+import { IrisUserMessage } from 'app/iris/shared/entities/iris-message.model';
 import { IrisMessageResponseDTO } from 'app/iris/shared/entities/iris-message-response-dto.model';
 import { map, tap } from 'rxjs/operators';
 import { McqResponseData } from 'app/iris/shared/entities/iris-content-type.model';
-import dayjs from 'dayjs/esm';
 import { IrisSession } from 'app/iris/shared/entities/iris-session.model';
 import { IrisSessionDTO } from 'app/iris/shared/entities/iris-session-dto.model';
 import { IrisGlobalSearchHandoffDTO } from 'app/iris/shared/entities/iris-global-search-handoff-dto.model';
 import { IrisMessageRequestDTO } from 'app/iris/shared/entities/iris-message-request-dto.model';
 import { randomInt } from 'app/foundation/util/utils';
-import { ChatServiceMode } from 'app/iris/overview/services/iris-chat.service';
+import { ChatServiceMode } from 'app/iris/shared/entities/iris-session-context.model';
+import { IrisChatSessionApi } from 'app/openapi/api/iris-chat-session-api';
+import { IrisMessageApi } from 'app/openapi/api/iris-message-api';
+import { IrisTutorSuggestionSessionApi } from 'app/openapi/api/iris-tutor-suggestion-session-api';
+import { mapChatMessage, mapChatSession, mapChatSessionSummary, mapResponseBody, toPendingContext } from 'app/iris/overview/services/iris-chat-http.mapper';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 export type Response<T> = Observable<HttpResponse<T>>;
@@ -21,41 +24,9 @@ export type Response<T> = Observable<HttpResponse<T>>;
  */
 @Service()
 export class IrisChatHttpService {
-    protected httpClient = inject(HttpClient);
-
-    protected apiPrefix: string = 'api/iris';
-
-    /**
-     * gets all messages for a session by its id
-     * @param {number} sessionId
-     * @return {Observable<EntityArrayResponseType>}
-     */
-    getMessages(sessionId: number): Response<IrisMessage[]> {
-        return this.httpClient.get<IrisMessageResponseDTO[]>(`${this.apiPrefix}/sessions/${sessionId}/messages`, { observe: 'response' }).pipe(
-            map((response) => {
-                const dtos = response.body;
-                // No body to convert: re-type the empty response via clone's generic overload (clone with no
-                // body key copies the existing body verbatim), preserving the real HttpResponse instance.
-                if (!dtos) return response.clone<IrisMessage[]>({});
-
-                const messages: IrisMessage[] = dtos.map((dto) => {
-                    return cloneWith(dto, {
-                        sentAt: dto.sentAt ? dayjs(dto.sentAt) : undefined,
-                    }) as IrisMessage;
-                });
-
-                messages.sort((a, b) => {
-                    if (a.sentAt && b.sentAt) {
-                        if (a.sentAt === b.sentAt) return 0;
-                        return a.sentAt.isBefore(b.sentAt) ? -1 : 1;
-                    }
-                    return 0;
-                });
-
-                return response.clone<IrisMessage[]>({ body: messages });
-            }),
-        );
-    }
+    private readonly sessions = inject(IrisChatSessionApi);
+    private readonly messages = inject(IrisMessageApi);
+    private readonly tutorSessions = inject(IrisTutorSuggestionSessionApi);
 
     /**
      * creates a new message in a session
@@ -63,7 +34,10 @@ export class IrisChatHttpService {
      * @param request   the message request DTO containing content, optional uncommitted files and optional pending context
      */
     createMessage(sessionId: number, request: IrisMessageRequestDTO): Response<IrisMessageResponseDTO> {
-        return this.httpClient.post<IrisMessageResponseDTO>(`${this.apiPrefix}/sessions/${sessionId}/messages`, request, { observe: 'response' });
+        return defer(() => {
+            const body = cloneWith(request, { pendingContext: toPendingContext(request.pendingContext) });
+            return this.messages.createMessage(sessionId, body);
+        }).pipe(map((response) => mapResponseBody(response, mapChatMessage)));
     }
 
     /**
@@ -71,7 +45,7 @@ export class IrisChatHttpService {
      * @param sessionId of the session
      */
     createTutorSuggestion(sessionId: number): Response<void> {
-        return this.httpClient.post<void>(`${this.apiPrefix}/sessions/${sessionId}/tutor-suggestion`, {}, { observe: 'response' });
+        return this.messages.sendTutorSuggestionMessage(sessionId);
     }
 
     /**
@@ -82,18 +56,18 @@ export class IrisChatHttpService {
      */
     resendMessage(sessionId: number, message: IrisUserMessage, clientId: string): Response<IrisMessageResponseDTO> {
         message.messageDifferentiator = message.messageDifferentiator ?? randomInt();
-        return this.httpClient
-            .post<IrisMessageResponseDTO>(`${this.apiPrefix}/sessions/${sessionId}/messages/${message.id}/resend`, null, {
-                observe: 'response',
-                params: { clientId },
-            })
-            .pipe(
-                tap((response) => {
-                    if (response.body && response.body.id) {
-                        message.id = response.body.id;
-                    }
-                }),
-            );
+        const messageId = message.id;
+        if (messageId === undefined) {
+            return throwError(() => new Error('Cannot resend an Iris message without an ID'));
+        }
+        return this.messages.resendMessage(sessionId, messageId, clientId).pipe(
+            tap((response) => {
+                if (response.body?.id) {
+                    message.id = response.body.id;
+                }
+            }),
+            map((response) => mapResponseBody(response, mapChatMessage)),
+        );
     }
 
     /**
@@ -104,7 +78,7 @@ export class IrisChatHttpService {
      * @return {Observable<EntityResponseType>} an Observable of the HTTP responses
      */
     rateMessage(sessionId: number, messageId: number, helpful: boolean): Response<IrisMessageResponseDTO> {
-        return this.httpClient.put<IrisMessageResponseDTO>(`${this.apiPrefix}/sessions/${sessionId}/messages/${messageId}/helpful`, helpful, { observe: 'response' });
+        return this.messages.rateMessage(sessionId, messageId, helpful).pipe(map((response) => mapResponseBody(response, mapChatMessage)));
     }
 
     /**
@@ -114,14 +88,15 @@ export class IrisChatHttpService {
      * @param response the user's answer selection
      */
     saveMcqResponse(sessionId: number, messageId: number, response: McqResponseData): Response<void> {
-        return this.httpClient.put<void>(`${this.apiPrefix}/sessions/${sessionId}/messages/${messageId}/mcq-response`, response, { observe: 'response' });
+        return this.messages.saveMcqResponse(sessionId, messageId, response);
     }
 
     getCurrentSessionOrCreateIfNotExists(mode: ChatServiceMode, entityId: number): Response<IrisSession> {
-        if (mode === ChatServiceMode.TUTOR_SUGGESTION) {
-            return this.httpClient.post<IrisSession>(`${this.apiPrefix}/tutor-suggestion/posts/${entityId}/sessions/current`, null, { observe: 'response' });
-        }
-        return this.httpClient.post<IrisSession>(`${this.apiPrefix}/chat/sessions/current`, null, { observe: 'response', params: { mode, entityId } });
+        const session$ =
+            mode === ChatServiceMode.TUTOR_SUGGESTION
+                ? this.tutorSessions.getCurrentSessionOrCreateIfNotExists(entityId)
+                : this.sessions.getCurrentSessionOrCreateIfNotExists(mode, entityId);
+        return session$.pipe(map((response) => mapResponseBody(response, mapChatSession)));
     }
 
     /**
@@ -129,7 +104,7 @@ export class IrisChatHttpService {
      * exercise/lecture context is layered on later via a context switch.
      */
     createCourseSession(courseId: number): Response<IrisSession> {
-        return this.httpClient.post<IrisSession>(`${this.apiPrefix}/chat/sessions`, null, { observe: 'response', params: { courseId } });
+        return this.sessions.createCourseSession(courseId).pipe(map((response) => mapResponseBody(response, mapChatSession)));
     }
 
     /**
@@ -138,15 +113,22 @@ export class IrisChatHttpService {
      * @return the new session, already on the requested lecture or exercise
      */
     createSessionFromGlobalSearch(handoff: IrisGlobalSearchHandoffDTO): Observable<IrisSession> {
-        return this.httpClient.post<IrisSession>(`${this.apiPrefix}/chat/sessions/global-search-handoff`, handoff);
+        return defer(() => this.sessions.createSessionFromGlobalSearch(cloneWith(handoff, { context: toPendingContext(handoff.context) }))).pipe(
+            map(({ body }) => {
+                if (body === null) {
+                    throw new Error('Iris global search handoff returned no session');
+                }
+                return mapChatSession(body);
+            }),
+        );
     }
 
     getChatSessions(courseId: number): Observable<IrisSessionDTO[]> {
-        return this.httpClient.get<IrisSessionDTO[]>(`${this.apiPrefix}/chat/courses/${courseId}/sessions/overview`);
+        return this.sessions.getAllSessionsForCourse(courseId).pipe(map((sessions) => sessions.map(mapChatSessionSummary)));
     }
 
     getChatSessionById(courseId: number, sessionId: number): Observable<IrisSession> {
-        return this.httpClient.get<IrisSession>(`${this.apiPrefix}/chat/courses/${courseId}/sessions/${sessionId}`);
+        return this.sessions.getSessionById(courseId, sessionId).pipe(map(mapChatSession));
     }
 
     /**
@@ -154,9 +136,7 @@ export class IrisChatHttpService {
      * @return Observable of the count response
      */
     getSessionAndMessageCount(): Observable<{ sessions: number; messages: number }> {
-        return this.httpClient
-            .get<{ sessions?: number; messages?: number }>(`${this.apiPrefix}/chat/sessions/count`)
-            .pipe(map((counts) => ({ sessions: counts.sessions ?? 0, messages: counts.messages ?? 0 })));
+        return this.sessions.getSessionAndMessageCount().pipe(map(({ sessions, messages }) => ({ sessions, messages })));
     }
 
     /**
@@ -164,7 +144,7 @@ export class IrisChatHttpService {
      * @return Observable of the HTTP response
      */
     deleteAllSessions(): Observable<HttpResponse<void>> {
-        return this.httpClient.delete<void>(`${this.apiPrefix}/chat/sessions`, { observe: 'response' });
+        return this.sessions.deleteAllSessionsForCurrentUser();
     }
 
     /**
@@ -173,6 +153,6 @@ export class IrisChatHttpService {
      * @return Observable of the HTTP response
      */
     deleteSession(sessionId: number): Observable<HttpResponse<void>> {
-        return this.httpClient.delete<void>(`${this.apiPrefix}/chat/sessions/${sessionId}`, { observe: 'response' });
+        return this.sessions.deleteSession(sessionId);
     }
 }

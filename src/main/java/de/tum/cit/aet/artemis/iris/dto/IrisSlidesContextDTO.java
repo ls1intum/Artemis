@@ -8,6 +8,8 @@ import org.jspecify.annotations.NonNull;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
 /**
  * Context information for slide/PDF content in lectures.
  * Provides information about which lecture unit slides the user is viewing and the current page number.
@@ -20,8 +22,9 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  * @param page          the current page number
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record IrisSlidesContextDTO(@JsonProperty("type") @NonNull String type, @Positive @NonNull Long lectureUnitId, @Min(1) @NonNull Integer page)
-        implements IrisMessageContextDTO {
+public record IrisSlidesContextDTO(@Schema(type = "string", allowableValues = {
+        "slides" }, requiredMode = Schema.RequiredMode.REQUIRED) @JsonProperty("type") @NonNull String type, @Positive @NonNull Long lectureUnitId, @Min(1) @NonNull Integer page)
+        implements IrisMessageContextDTO{
 
     /**
      * Convenience constructor that automatically sets the type to "slides".

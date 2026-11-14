@@ -61,6 +61,10 @@ import de.tum.cit.aet.artemis.iris.service.IrisMessageService;
 import de.tum.cit.aet.artemis.iris.service.IrisSessionService;
 import de.tum.cit.aet.artemis.iris.service.session.IrisChatSessionService;
 import de.tum.cit.aet.artemis.iris.service.session.IrisProactiveEpisodeService;
+import io.swagger.v3.oas.annotations.headers.Header;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 
 /**
  * REST controller for managing {@link IrisMessage}.
@@ -130,6 +134,7 @@ public class IrisMessageResource {
     @PostMapping("sessions/{sessionId}/messages")
     @EnforceAtLeastStudent
     @AllowedTools(ToolTokenType.SCORPIO)
+    @ApiResponse(responseCode = "201", description = "Message created", headers = @Header(name = IrisOpenApiHeaders.LOCATION, description = "URI identifying the created message", schema = @Schema(type = "string")))
     public ResponseEntity<IrisMessageResponseDTO> createMessage(@PathVariable Long sessionId, @Valid @RequestBody IrisMessageRequestDTO requestDTO, HttpServletRequest request)
             throws URISyntaxException {
         var session = irisSessionRepository.findByIdElseThrow(sessionId);
@@ -176,6 +181,7 @@ public class IrisMessageResource {
     @PostMapping("sessions/{sessionId}/tutor-suggestion")
     @EnforceAtLeastStudent
     @ManualConfig
+    @ApiResponse(responseCode = "201", description = "Tutor suggestion requested", headers = @Header(name = IrisOpenApiHeaders.LOCATION, description = "URI identifying the tutor suggestion request", schema = @Schema(type = "string")), content = @Content)
     public ResponseEntity<Void> sendTutorSuggestionMessage(@PathVariable Long sessionId) throws URISyntaxException {
         var session = irisSessionRepository.findByIdWithMessagesElseThrow(sessionId);
         if (!(session instanceof IrisTutorSuggestionSession)) {
@@ -204,6 +210,7 @@ public class IrisMessageResource {
     @PostMapping("sessions/{sessionId}/messages/{messageId}/resend")
     @EnforceAtLeastStudent
     @AllowedTools(ToolTokenType.SCORPIO)
+    @ApiResponse(responseCode = "200", description = "Message resent", headers = @Header(name = IrisOpenApiHeaders.FRAME_OPTIONS, description = IrisOpenApiHeaders.FRAME_OPTIONS_DESCRIPTION, schema = @Schema(type = "string")))
     public ResponseEntity<IrisMessageResponseDTO> resendMessage(@PathVariable Long sessionId, @PathVariable Long messageId,
             @RequestParam(required = false) @Size(max = 64) String clientId, HttpServletRequest request) {
         var session = irisSessionRepository.findByIdWithMessagesElseThrow(sessionId);
@@ -242,6 +249,7 @@ public class IrisMessageResource {
     @PutMapping(value = "sessions/{sessionId}/messages/{messageId}/helpful")
     @EnforceAtLeastStudent
     @AllowedTools(ToolTokenType.SCORPIO)
+    @ApiResponse(responseCode = "200", description = "Message rating updated", headers = @Header(name = IrisOpenApiHeaders.FRAME_OPTIONS, description = IrisOpenApiHeaders.FRAME_OPTIONS_DESCRIPTION, schema = @Schema(type = "string")))
     public ResponseEntity<IrisMessageResponseDTO> rateMessage(@PathVariable Long sessionId, @PathVariable Long messageId, @RequestBody(required = false) Boolean helpful) {
         var message = irisMessageRepository.findByIdElseThrow(messageId);
         var session = message.getSession();
@@ -333,6 +341,7 @@ public class IrisMessageResource {
      */
     @PutMapping(value = "sessions/{sessionId}/messages/{messageId}/mcq-response")
     @EnforceAtLeastStudent
+    @ApiResponse(responseCode = "200", description = "Multiple-choice response saved", headers = @Header(name = IrisOpenApiHeaders.FRAME_OPTIONS, description = IrisOpenApiHeaders.FRAME_OPTIONS_DESCRIPTION, schema = @Schema(type = "string")), content = @Content)
     public ResponseEntity<Void> saveMcqResponse(@PathVariable Long sessionId, @PathVariable Long messageId, @RequestBody IrisMcqResponseDTO responseDTO) {
         var message = irisMessageRepository.findByIdElseThrow(messageId);
         var session = message.getSession();

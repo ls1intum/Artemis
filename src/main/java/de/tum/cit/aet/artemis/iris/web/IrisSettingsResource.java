@@ -23,9 +23,12 @@ import de.tum.cit.aet.artemis.core.service.featureusage.UsageInteraction;
 import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
-import de.tum.cit.aet.artemis.iris.domain.settings.IrisCourseSettings;
+import de.tum.cit.aet.artemis.iris.dto.IrisCourseSettingsDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisCourseSettingsWithRateLimitDTO;
 import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
+import io.swagger.v3.oas.annotations.headers.Header;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 
 @Conditional(IrisEnabled.class)
 @Lazy
@@ -64,10 +67,11 @@ public class IrisSettingsResource {
      */
     @PutMapping("courses/{courseId}/iris-settings")
     @EnforceAtLeastInstructorInCourse
-    public ResponseEntity<IrisCourseSettingsWithRateLimitDTO> updateCourseSettings(@PathVariable Long courseId, @Valid @RequestBody IrisCourseSettings update) {
+    @ApiResponse(responseCode = "200", description = "Course Iris settings updated", headers = @Header(name = IrisOpenApiHeaders.FRAME_OPTIONS, description = IrisOpenApiHeaders.FRAME_OPTIONS_DESCRIPTION, schema = @Schema(type = "string")))
+    public ResponseEntity<IrisCourseSettingsWithRateLimitDTO> updateCourseSettings(@PathVariable Long courseId, @Valid @RequestBody IrisCourseSettingsDTO update) {
         courseRepository.findByIdElseThrow(courseId);
         var isAdmin = authorizationCheckService.isCurrentUserAdminAccessEnabled();
-        var saved = irisSettingsService.updateCourseSettings(courseId, update, isAdmin);
+        var saved = irisSettingsService.updateCourseSettings(courseId, update.toDomain(), isAdmin);
         return ResponseEntity.ok(saved);
     }
 }

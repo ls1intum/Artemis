@@ -3,7 +3,7 @@ import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
-import { firstValueFrom, of, skip, take } from 'rxjs';
+import { BehaviorSubject, firstValueFrom, skip, take } from 'rxjs';
 import { IrisStatusService } from 'app/iris/overview/services/iris-status.service';
 import { IrisRateLimitInformation } from 'app/iris/shared/entities/iris-ratelimit-info.model';
 import { provideHttpClient } from '@angular/common/http';
@@ -14,17 +14,19 @@ describe('IrisStatusService', () => {
     let service: IrisStatusService;
     let httpMock: HttpTestingController;
 
+    let connectionState: BehaviorSubject<{ connected: boolean; wasEverConnectedBefore: boolean }>;
     let isModuleFeatureActive: ReturnType<typeof vi.fn>;
 
     /** Builds the service with the iris module feature either active or inactive, since that decides whether it does anything at all. */
     function configureWithIrisModule(active: boolean) {
+        connectionState = new BehaviorSubject<{ connected: boolean; wasEverConnectedBefore: boolean }>({ connected: true, wasEverConnectedBefore: true });
         isModuleFeatureActive = vi.fn().mockReturnValue(active);
         TestBed.configureTestingModule({
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),
                 IrisStatusService,
-                { provide: WebsocketService, useValue: { connectionState: of({ connected: true, wasEverConnectedBefore: true }) } },
+                { provide: WebsocketService, useValue: { connectionState } },
                 LocalStorageService,
                 { provide: ProfileService, useValue: { isModuleFeatureActive } },
             ],
@@ -54,7 +56,7 @@ describe('IrisStatusService', () => {
             const activePromise = firstValueFrom(service.getActiveStatus().pipe(skip(1), take(1)));
             service.setCurrentCourse(123);
 
-            const req = httpMock.expectOne('api/iris/courses/123/status');
+            const req = httpMock.expectOne('/api/iris/courses/123/status');
             expect(req.request.method).toBe('GET');
             req.flush({ active: true, rateLimitInfo: { currentMessageCount: 100, rateLimit: 50, rateLimitTimeframeHours: 0 } });
 
@@ -65,11 +67,36 @@ describe('IrisStatusService', () => {
             const activePromise = firstValueFrom(service.getActiveStatus().pipe(skip(1), take(1)));
             service.setCurrentCourse(456);
 
-            const req = httpMock.expectOne('api/iris/courses/456/status');
+            const req = httpMock.expectOne('/api/iris/courses/456/status');
             expect(req.request.method).toBe('GET');
             req.flush({ active: false, rateLimitInfo: { currentMessageCount: 100, rateLimit: 50, rateLimitTimeframeHours: 0 } });
 
             await expect(activePromise).resolves.toBe(false);
+        });
+
+        it('publishes a quota instance from the status response', async () => {
+            const quota = firstValueFrom(service.currentRatelimitInfo().pipe(skip(1)));
+            service.setCurrentCourse(123);
+            httpMock.expectOne('/api/iris/courses/123/status').flush({
+                active: true,
+                rateLimitInfo: { currentMessageCount: 2, rateLimit: 5, rateLimitTimeframeHours: 1, rateLimitExceeded: false },
+            });
+
+            await expect(quota).resolves.toBeInstanceOf(IrisRateLimitInformation);
+            await expect(quota).resolves.toEqual(new IrisRateLimitInformation(2, 5, 1));
+        });
+
+        it('publishes inactive for an empty response', async () => {
+            const active = firstValueFrom(service.getActiveStatus().pipe(skip(1)));
+            service.setCurrentCourse(123);
+            httpMock.expectOne('/api/iris/courses/123/status').flush(null, { status: 200, statusText: 'OK' });
+            await expect(active).resolves.toBe(false);
+        });
+
+        it('skips course changes while disconnected after a successful connection', () => {
+            connectionState.next({ connected: false, wasEverConnectedBefore: true });
+            service.setCurrentCourse(123);
+            httpMock.expectNone('/api/iris/courses/123/status');
         });
 
         it('should get current rate limit info', async () => {
@@ -82,22 +109,22 @@ describe('IrisStatusService', () => {
 
         it('should not fetch status again if same course is set', async () => {
             service.setCurrentCourse(123);
-            const req = httpMock.expectOne('api/iris/courses/123/status');
+            const req = httpMock.expectOne('/api/iris/courses/123/status');
             req.flush({ active: true, rateLimitInfo: { currentMessageCount: 0, rateLimit: 100, rateLimitTimeframeHours: 24 } });
 
             // Setting same course should not trigger another request
             service.setCurrentCourse(123);
-            httpMock.expectNone('api/iris/courses/123/status');
+            httpMock.expectNone('/api/iris/courses/123/status');
         });
 
         it('should fetch status when course changes', async () => {
             service.setCurrentCourse(123);
-            const req1 = httpMock.expectOne('api/iris/courses/123/status');
+            const req1 = httpMock.expectOne('/api/iris/courses/123/status');
             req1.flush({ active: true, rateLimitInfo: { currentMessageCount: 0, rateLimit: 100, rateLimitTimeframeHours: 24 } });
 
             // Changing to different course should trigger new request
             service.setCurrentCourse(456);
-            const req2 = httpMock.expectOne('api/iris/courses/456/status');
+            const req2 = httpMock.expectOne('/api/iris/courses/456/status');
             req2.flush({ active: true, rateLimitInfo: { currentMessageCount: 5, rateLimit: 50, rateLimitTimeframeHours: 12 } });
         });
     });
@@ -115,11 +142,11 @@ describe('IrisStatusService', () => {
 
         it('should fetch the status again for the current course', () => {
             service.setCurrentCourse(123);
-            httpMock.expectOne('api/iris/courses/123/status').flush({ active: true, rateLimitInfo: { currentMessageCount: 0, rateLimit: 100, rateLimitTimeframeHours: 24 } });
+            httpMock.expectOne('/api/iris/courses/123/status').flush({ active: true, rateLimitInfo: { currentMessageCount: 0, rateLimit: 100, rateLimitTimeframeHours: 24 } });
 
             vi.advanceTimersByTime(5 * 60 * 1000);
 
-            httpMock.expectOne('api/iris/courses/123/status').flush({ active: true, rateLimitInfo: { currentMessageCount: 1, rateLimit: 100, rateLimitTimeframeHours: 24 } });
+            httpMock.expectOne('/api/iris/courses/123/status').flush({ active: true, rateLimitInfo: { currentMessageCount: 1, rateLimit: 100, rateLimitTimeframeHours: 24 } });
         });
     });
 
@@ -134,7 +161,7 @@ describe('IrisStatusService', () => {
         it('should not request the status when a course is set', () => {
             service.setCurrentCourse(123);
 
-            httpMock.expectNone('api/iris/courses/123/status');
+            httpMock.expectNone('/api/iris/courses/123/status');
         });
 
         it('should neither start the heartbeat nor watch the websocket connection', () => {

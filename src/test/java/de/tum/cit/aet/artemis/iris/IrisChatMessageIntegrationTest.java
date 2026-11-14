@@ -941,8 +941,10 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
             });
 
             IrisMessageRequestDTO requestDto = buildTextRequestDto(session, uncommittedFiles);
-            var response = request.postWithResponseBody(messagesUrl(session), requestDto, IrisMessageResponseDTO.class, HttpStatus.CREATED);
+            var created = request.postWithoutResponseBody(messagesUrl(session), requestDto, HttpStatus.CREATED, null);
+            var response = request.getObjectMapper().readValue(created.getContentAsString(), IrisMessageResponseDTO.class);
             assertThat(response.id()).isNotNull();
+            assertThat(created.getHeader("Location")).isEqualTo(messagesUrl(session) + "/" + response.id());
         }
 
         @Test

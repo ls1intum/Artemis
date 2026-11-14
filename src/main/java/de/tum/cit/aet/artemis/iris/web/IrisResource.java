@@ -27,11 +27,14 @@ import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.dto.IngestionState;
+import de.tum.cit.aet.artemis.iris.dto.IrisRateLimitInformationDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisStatusDTO;
 import de.tum.cit.aet.artemis.iris.service.IrisRateLimitService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisConnectorException;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisHealthIndicator;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisWebhookService;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 
 @Conditional(IrisEnabled.class)
 @Lazy
@@ -79,7 +82,7 @@ public class IrisResource {
         var health = pyrisHealthIndicator.health(true);
         var rateLimitInfo = irisRateLimitService.getRateLimitInformation(courseId, user);
 
-        return ResponseEntity.ok(new IrisStatusDTO(health.getStatus() == Status.UP, rateLimitInfo));
+        return ResponseEntity.ok(new IrisStatusDTO(health.getStatus() == Status.UP, IrisRateLimitInformationDTO.of(rateLimitInfo)));
     }
 
     /**
@@ -99,6 +102,8 @@ public class IrisResource {
     @FeatureUsage(UserFeature.IRIS_CONTENT_INGESTION)
     @GetMapping("courses/{courseId}/faqs/{faqId}/ingestion-state")
     @EnforceAtLeastInstructorInCourse
+    @ApiResponse(responseCode = "200", description = "Ingestion state keyed by the requested FAQ ID")
+    @ApiResponse(responseCode = "503", description = "Ingestion state unavailable from Pyris", content = @Content)
     public ResponseEntity<Map<Long, IngestionState>> getStatusOfFaqIngestion(@PathVariable long courseId, @PathVariable long faqId) {
         try {
             Map<Long, IngestionState> responseMap = Map.of(faqId, pyrisWebhookService.getFaqIngestionState(courseId, faqId));

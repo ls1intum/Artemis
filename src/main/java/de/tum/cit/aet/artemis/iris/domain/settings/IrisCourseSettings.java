@@ -75,7 +75,11 @@ public record IrisCourseSettings(boolean enabled, @Size(max = IRIS_CUSTOM_INSTRU
         return DEFAULT;
     }
 
-    private static String sanitizeCustomInstructions(@Nullable String instructions) {
+    /**
+     * @param instructions the optional custom instructions
+     * @return trimmed instructions, or null for an absent or blank value
+     */
+    public static @Nullable String sanitizeCustomInstructions(@Nullable String instructions) {
         if (instructions == null) {
             return null;
         }

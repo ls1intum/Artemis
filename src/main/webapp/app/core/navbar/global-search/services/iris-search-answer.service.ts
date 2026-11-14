@@ -5,6 +5,7 @@ import { IrisSearchStatusUpdate } from 'app/core/navbar/global-search/models/iri
 import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { generateUuid } from 'app/foundation/util/crypto.utils';
 import { SKIP_HTTP_ERROR_ALERT } from 'app/core/interceptor/errorhandler.interceptor';
+import { GlobalSearchAskRequest } from 'app/openapi/model/global-search-ask-request';
 
 /** Maximum time (ms) to wait for a WebSocket response before the Observable errors. */
 export const IRIS_SEARCH_ANSWER_WS_TIMEOUT_MS = 60_000;
@@ -65,11 +66,11 @@ export class IrisSearchAnswerService {
 
             // 2. Fire the HTTP request with the client-generated runId. Server returns 202 with no body.
             // The answer card shows its own failure state, so the global error alert would only repeat it.
-            const httpSubscription = this.http
-                .post('api/iris/search-answer', { query, limit, runId, courseIds, excludeCourseIds }, { context: new HttpContext().set(SKIP_HTTP_ERROR_ALERT, true) })
-                .subscribe({
-                    error: (err) => subscriber.error(err),
-                });
+            const body: GlobalSearchAskRequest = { query, limit, runId, courseIds, excludeCourseIds };
+            // The pinned generator does not support per-call HttpContext.
+            const httpSubscription = this.http.post<void>('api/iris/search-answer', body, { context: new HttpContext().set(SKIP_HTTP_ERROR_ALERT, true) }).subscribe({
+                error: (err) => subscriber.error(err),
+            });
 
             return () => {
                 wsSubscription.unsubscribe();

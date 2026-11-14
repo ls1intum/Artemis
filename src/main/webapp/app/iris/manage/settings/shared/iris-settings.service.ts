@@ -1,8 +1,9 @@
 import { Service, inject } from '@angular/core';
-import { HttpClient, HttpResponse } from '@angular/common/http';
+import { HttpResponse } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
 import { finalize, map, shareReplay, tap } from 'rxjs/operators';
 import { IrisCourseSettingsDTO, IrisCourseSettingsWithRateLimitDTO } from 'app/iris/shared/entities/settings/iris-course-settings.model';
+import { IrisSettingsApi } from 'app/openapi/api/iris-settings-api';
 
 /**
  * Service for managing Iris course-level settings.
@@ -10,9 +11,7 @@ import { IrisCourseSettingsDTO, IrisCourseSettingsWithRateLimitDTO } from 'app/i
  */
 @Service()
 export class IrisSettingsService {
-    private http = inject(HttpClient);
-
-    public resourceUrl = 'api/iris';
+    private api = inject(IrisSettingsApi);
 
     // Simplified caching for course settings only
     private courseSettingsCache = new Map<number, IrisCourseSettingsWithRateLimitDTO>();
@@ -41,8 +40,8 @@ export class IrisSettingsService {
             return pending;
         }
 
-        const request$ = this.http.get<IrisCourseSettingsWithRateLimitDTO>(`${this.resourceUrl}/courses/${courseId}/iris-settings`, { observe: 'response' }).pipe(
-            map((res: HttpResponse<IrisCourseSettingsWithRateLimitDTO>) => res.body ?? undefined),
+        const request$ = this.api.getCourseSettings(courseId).pipe(
+            map((settings) => settings ?? undefined),
             tap((settings) => {
                 if (settings) {
                     this.courseSettingsCache.set(courseId, settings);
@@ -65,7 +64,7 @@ export class IrisSettingsService {
      * @param settings the settings to update
      */
     updateCourseSettings(courseId: number, settings: IrisCourseSettingsDTO): Observable<HttpResponse<IrisCourseSettingsWithRateLimitDTO>> {
-        return this.http.put<IrisCourseSettingsWithRateLimitDTO>(`${this.resourceUrl}/courses/${courseId}/iris-settings`, settings, { observe: 'response' }).pipe(
+        return this.api.updateCourseSettings(courseId, settings).pipe(
             tap(() => {
                 // Invalidate cache on successful update
                 this.courseSettingsCache.delete(courseId);

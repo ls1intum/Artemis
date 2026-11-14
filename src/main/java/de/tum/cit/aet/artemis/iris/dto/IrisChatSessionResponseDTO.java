@@ -10,6 +10,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatMode;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisSession;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
  * Detail DTO for a single Iris chat session, returned by per-mode session controllers (create, get-current, get-all-for-entity).
@@ -23,8 +24,7 @@ import de.tum.cit.aet.artemis.iris.domain.session.IrisSession;
  *                              {@link de.tum.cit.aet.artemis.iris.domain.session.IrisTutorSuggestionSession}, which
  *                              has no chat mode
  * @param entityId          the ID of the associated domain entity (course, exercise, lecture, or post);
- *                              nullable for {@link de.tum.cit.aet.artemis.iris.domain.session.IrisTutorSuggestionSession}
- *                              since its {@code postId} field is a boxed {@code Long}
+ *                              may be absent for tutor suggestion sessions because the stored post ID is nullable
  * @param userId            the owning user's ID
  * @param title             optional user-assigned session title
  * @param creationDate      when the session was created
@@ -33,7 +33,8 @@ import de.tum.cit.aet.artemis.iris.domain.session.IrisSession;
  * @param citationInfo      optional citation metadata resolved from message content
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record IrisChatSessionResponseDTO(long id, @Nullable IrisChatMode mode, @Nullable Long entityId, long userId, @Nullable String title, ZonedDateTime creationDate,
+public record IrisChatSessionResponseDTO(@Schema(requiredMode = Schema.RequiredMode.REQUIRED) long id, @Nullable IrisChatMode mode, @Nullable Long entityId,
+        @Schema(requiredMode = Schema.RequiredMode.REQUIRED) long userId, @Nullable String title, @Schema(requiredMode = Schema.RequiredMode.REQUIRED) ZonedDateTime creationDate,
         @Nullable List<IrisMessageResponseDTO> messages, @Nullable String latestSuggestions, @Nullable List<IrisCitationMetaDTO> citationInfo) {
 
     /**

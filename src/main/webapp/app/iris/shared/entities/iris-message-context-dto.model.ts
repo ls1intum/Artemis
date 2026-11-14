@@ -5,9 +5,7 @@
  *
  * Context information is NOT persisted in the database - it is only sent to Pyris for enhanced responses.
  */
-export interface IrisMessageContextDTO {
-    type: string;
-}
+export type IrisMessageContextDTO = IrisVideoContextDTO | IrisSlidesContextDTO | IrisCombinedViewContextDTO;
 
 /**
  * Provider interface for collecting context from visible lecture materials.
@@ -21,7 +19,7 @@ export interface LectureContextsProvider {
  * Context information for video content in lectures.
  * Provides information about which lecture unit video the user is watching and the current timestamp.
  */
-export interface IrisVideoContextDTO extends IrisMessageContextDTO {
+export interface IrisVideoContextDTO {
     type: 'video';
     lectureUnitId: number;
     timestamp: number;
@@ -31,7 +29,7 @@ export interface IrisVideoContextDTO extends IrisMessageContextDTO {
  * Context information for slide/PDF content in lectures.
  * Provides information about which lecture unit slides the user is viewing and the current page number.
  */
-export interface IrisSlidesContextDTO extends IrisMessageContextDTO {
+export interface IrisSlidesContextDTO {
     type: 'slides';
     lectureUnitId: number;
     page: number;
@@ -47,7 +45,7 @@ export interface IrisSlidesContextDTO extends IrisMessageContextDTO {
  * absent (e.g. no PDF is open, or the video has not been played yet), but not both. The lecture unit
  * ID is derived from whichever nested context is present and is used to scope RAG search.
  */
-export interface IrisCombinedViewContextDTO extends IrisMessageContextDTO {
+export interface IrisCombinedViewContextDTO {
     type: 'combinedView';
     slides?: IrisSlidesContextDTO;
     video?: IrisVideoContextDTO;
