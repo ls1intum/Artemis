@@ -75,8 +75,9 @@ Every build container starts with a reduced set of Linux capabilities, and its p
 
 - **Dropped capabilities:** `NET_RAW`, `MKNOD`, `SYS_CHROOT`, `SETFCAP` and `AUDIT_WRITE`. They are part of the default set of Docker and Kubernetes but ordinary builds do not use them.
 - **What keeps working:** outbound TCP and UDP connections, DNS, dependency downloads, web requests of the tests, file ownership and permission changes, starting processes as another user (`su`, `gosu` as root), and installing packages as `root`.
-- **What stops working:**
-  - Programs that send raw packets or ICMP echo requests, such as `ping`, fail because they need `NET_RAW`.
+- **What stops working** (checked with a Debian image on Docker):
+  - Programs that need raw sockets, such as packet capture tools, fail because they need `NET_RAW`. The usual `ping` keeps working on Docker, because it falls back to ICMP datagram sockets, which the default
+    `net.ipv4.ping_group_range` of a Docker container allows. On Kubernetes this depends on the cluster setting, and `ping` needs `NET_RAW` where the setting does not include the group of the build user.
   - A program that gains privileges through a setuid binary, for example `sudo` started by a non-root user of the image, is refused.
   - Creating device files with `mknod`, using `chroot`, and setting file capabilities with `setcap` fail.
 - **Keeping `NET_RAW`:** instructors can enable **Allow raw network sockets** in the container configuration of an exercise, see

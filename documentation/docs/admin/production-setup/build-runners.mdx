@@ -112,7 +112,7 @@ neither a Docker socket nor a Kubernetes API token.
   capabilities `NET_RAW`, `MKNOD`, `SYS_CHROOT`, `SETFCAP` and `AUDIT_WRITE`. The Docker runner applies the same
   restrictions. Builds that run as root still install packages, change file ownership and open network connections.
   Programs that rely on a setuid binary, for example `sudo` started by a non-root user of the image, no longer gain
-  privileges. An exercise can keep `NET_RAW` for tools such as `ping`, see
+  privileges. An exercise can keep `NET_RAW` for tools that need raw sockets, see
   [Which privileges a build has](/admin/production-setup/localci-build-environment#which-privileges-a-build-has).
 - Exercises configured with the Docker network mode `none` additionally get a short trusted init container that drops
   all IPv4 and IPv6 traffic except loopback. Only that init container gets `NET_ADMIN`; the builder does not. The builder
