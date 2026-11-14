@@ -9,6 +9,7 @@ import { Router } from '@angular/router';
 import { provideHttpClient } from '@angular/common/http';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { BrowserFingerprintService } from 'app/account/fingerprint/browser-fingerprint.service';
+import { DataGuard } from 'app/account/user/settings/ai-experience/data-guard.service';
 import { expectedProfileInfo } from 'test/helpers/sample/profile-info-sample-data';
 
 describe('ProfileService', () => {
@@ -174,5 +175,25 @@ describe('ProfileService', () => {
                 expect(service.isTestServer()).toBe(false);
             });
         });
+    });
+    it.each([
+        { name: 'a configured local Home provider', localLLMDeploymentEnabled: false, courseHomeAiAvailable: true, courseHomeAiLocation: 'LOCAL', expected: false },
+        { name: 'a configured cloud Home provider', localLLMDeploymentEnabled: false, courseHomeAiAvailable: true, courseHomeAiLocation: 'CLOUD', expected: false },
+        { name: 'no Home provider', localLLMDeploymentEnabled: false, courseHomeAiAvailable: false, courseHomeAiLocation: undefined, expected: false },
+        { name: 'the global flag and a cloud Home provider', localLLMDeploymentEnabled: true, courseHomeAiAvailable: true, courseHomeAiLocation: 'CLOUD', expected: true },
+        { name: 'the global flag without a Home provider', localLLMDeploymentEnabled: true, courseHomeAiAvailable: false, courseHomeAiLocation: undefined, expected: true },
+    ])('offers the shared local option only by the global flag with $name', async ({ localLLMDeploymentEnabled, courseHomeAiAvailable, courseHomeAiLocation, expected }) => {
+        const loading = service.loadProfileInfo();
+        httpMock.expectOne('management/info').flush({ ...expectedProfileInfo, activeModuleFeatures: [], localLLMDeploymentEnabled, courseHomeAiAvailable, courseHomeAiLocation });
+        await loading;
+        expect(service.isLLMDeploymentEnabled()).toBe(expected);
+    });
+    it('still opens the AI preferences page for a standalone Home provider', async () => {
+        const loading = service.loadProfileInfo();
+        httpMock
+            .expectOne('management/info')
+            .flush({ ...expectedProfileInfo, activeModuleFeatures: [], localLLMDeploymentEnabled: false, courseHomeAiAvailable: true, courseHomeAiLocation: 'LOCAL' });
+        await loading;
+        expect(TestBed.inject(DataGuard).canActivate()).toBe(true);
     });
 });

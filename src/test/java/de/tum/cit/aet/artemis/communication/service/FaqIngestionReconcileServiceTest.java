@@ -27,7 +27,7 @@ import de.tum.cit.aet.artemis.communication.domain.FaqState;
 import de.tum.cit.aet.artemis.communication.dto.FaqCensusDTO;
 import de.tum.cit.aet.artemis.communication.dto.FaqCensusEntryDTO;
 import de.tum.cit.aet.artemis.communication.dto.FaqFingerprintInputDTO;
-import de.tum.cit.aet.artemis.communication.repository.FaqRepository;
+import de.tum.cit.aet.artemis.communication.test_repository.FaqTestRepository;
 import de.tum.cit.aet.artemis.iris.api.IrisSettingsApi;
 import de.tum.cit.aet.artemis.iris.api.PyrisFaqApi;
 
@@ -37,7 +37,7 @@ class FaqIngestionReconcileServiceTest {
 
     private static final long DISABLED_COURSE = 2L;
 
-    private FaqRepository faqRepository;
+    private FaqTestRepository faqRepository;
 
     private PyrisFaqApi pyrisFaqApi;
 
@@ -49,7 +49,7 @@ class FaqIngestionReconcileServiceTest {
 
     @BeforeEach
     void setUp() {
-        faqRepository = mock(FaqRepository.class);
+        faqRepository = mock(FaqTestRepository.class);
         pyrisFaqApi = mock(PyrisFaqApi.class);
         irisSettingsApi = mock(IrisSettingsApi.class);
         when(faqRepository.findFingerprintInputsByFaqState(FaqState.ACCEPTED)).thenReturn(accepted);

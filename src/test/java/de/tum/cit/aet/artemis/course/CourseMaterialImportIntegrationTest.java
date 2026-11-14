@@ -15,7 +15,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.communication.domain.Faq;
 import de.tum.cit.aet.artemis.communication.domain.FaqState;
-import de.tum.cit.aet.artemis.communication.repository.FaqRepository;
+import de.tum.cit.aet.artemis.communication.test_repository.FaqTestRepository;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.dto.CourseMaterialImportOptionsDTO;
 import de.tum.cit.aet.artemis.course.dto.CourseMaterialImportResultDTO;
@@ -44,7 +44,7 @@ class CourseMaterialImportIntegrationTest extends AbstractSpringIntegrationIndep
     private static final String TEST_PREFIX = "coursematerialimport";
 
     @Autowired
-    private FaqRepository faqRepository;
+    private FaqTestRepository faqRepository;
 
     @Autowired
     private TextExerciseRepository textExerciseRepository;

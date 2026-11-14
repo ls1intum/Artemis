@@ -111,9 +111,16 @@ class GradingCriteriaMapperTest {
         var exercise = new TextExercise();
         var criterion = new GradingCriterion();
         criterion.setId(5L);
+        criterion.setTitle("Rubric to copy");
+        criterion.setExercise(exercise);
         criterion.setSortOrder(4_000_000_001L);
         var instruction = new GradingInstruction();
         instruction.setId(6L);
+        instruction.setCredits(2.5);
+        instruction.setFeedback("Clear explanation");
+        instruction.setGradingScale("Good");
+        instruction.setInstructionDescription("Explain the result");
+        instruction.setUsageCount(3);
         instruction.setSortOrder(4_000_000_002L);
         criterion.addStructuredGradingInstruction(instruction);
         exercise.setGradingCriteria(new LinkedHashSet<>(List.of(criterion)));
@@ -122,14 +129,26 @@ class GradingCriteriaMapperTest {
         var copied = exercise.copyGradingCriteria(tracker);
 
         assertThat(copied).singleElement().satisfies(copy -> {
+            assertThat(copy).isNotSameAs(criterion);
             assertThat(copy.getId()).isNull();
+            assertThat(copy.getTitle()).isEqualTo("Rubric to copy");
+            assertThat(copy.getExercise()).isSameAs(exercise);
             assertThat(copy.getSortOrder()).isEqualTo(4_000_000_001L);
             assertThat(copy.getStructuredGradingInstructions()).singleElement().satisfies(copiedInstruction -> {
                 assertThat(copiedInstruction.getId()).isNull();
+                assertThat(copiedInstruction).isNotSameAs(instruction);
+                assertThat(copiedInstruction.getCredits()).isEqualTo(2.5);
+                assertThat(copiedInstruction.getFeedback()).isEqualTo("Clear explanation");
+                assertThat(copiedInstruction.getGradingScale()).isEqualTo("Good");
+                assertThat(copiedInstruction.getInstructionDescription()).isEqualTo("Explain the result");
+                assertThat(copiedInstruction.getUsageCount()).isEqualTo(3);
+                assertThat(copiedInstruction.getFeedbacks()).isEmpty();
                 assertThat(copiedInstruction.getSortOrder()).isEqualTo(4_000_000_002L);
                 assertThat(copiedInstruction.getGradingCriterion()).isSameAs(copy);
                 assertThat(tracker.get(6L)).isSameAs(copiedInstruction);
             });
         });
+        assertThat(criterion.getStructuredGradingInstructions()).containsExactly(instruction);
+        assertThat(instruction.getGradingCriterion()).isSameAs(criterion);
     }
 }

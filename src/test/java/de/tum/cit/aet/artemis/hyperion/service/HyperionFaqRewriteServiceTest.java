@@ -23,7 +23,7 @@ import org.springframework.ai.chat.prompt.ChatOptions;
 import org.springframework.ai.chat.prompt.Prompt;
 
 import de.tum.cit.aet.artemis.communication.domain.Faq;
-import de.tum.cit.aet.artemis.communication.repository.FaqRepository;
+import de.tum.cit.aet.artemis.communication.test_repository.FaqTestRepository;
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorAlertException;
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.hyperion.dto.RewriteFaqResponseDTO;
@@ -32,7 +32,7 @@ import io.micrometer.observation.ObservationRegistry;
 class HyperionFaqRewriteServiceTest {
 
     @Mock
-    private FaqRepository faqRepository;
+    private FaqTestRepository faqRepository;
 
     @Mock
     private ChatModel chatModel;

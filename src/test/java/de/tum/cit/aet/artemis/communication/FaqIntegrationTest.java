@@ -28,7 +28,7 @@ import de.tum.cit.aet.artemis.communication.dto.FaqDTO;
 import de.tum.cit.aet.artemis.communication.dto.FaqImportCandidateDTO;
 import de.tum.cit.aet.artemis.communication.dto.ImportFaqsDTO;
 import de.tum.cit.aet.artemis.communication.dto.UpdateFaqDTO;
-import de.tum.cit.aet.artemis.communication.repository.FaqRepository;
+import de.tum.cit.aet.artemis.communication.test_repository.FaqTestRepository;
 import de.tum.cit.aet.artemis.core.connector.IrisRequestMockProvider;
 import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
@@ -42,7 +42,7 @@ class FaqIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     private static final String OTHER_PREFIX = TEST_PREFIX + "other";
 
     @Autowired
-    private FaqRepository faqRepository;
+    private FaqTestRepository faqRepository;
 
     @Autowired
     private IrisRequestMockProvider irisRequestMockProvider;

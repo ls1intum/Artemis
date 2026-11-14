@@ -10,6 +10,9 @@ import { admin, studentOne } from '../../support/users';
  * re-issuing it. The duplicate-request assertion is kept; what changed is which endpoints a course entry uses.
  */
 test.describe('Course overview navigation', { tag: '@fast' }, () => {
+    // Automatic page recovery would add requests outside this navigation contract.
+    test.use({ recoverNavigation: false });
+
     test('loads the course shell and tabs once each', async ({ page, login, courseManagementAPIRequests }) => {
         await login(admin);
         const course = await courseManagementAPIRequests.createCourse();
@@ -62,9 +65,11 @@ test.describe('Course overview navigation', { tag: '@fast' }, () => {
             }
         });
 
-        // Entering the course lands on the exercises tab, which loads its own content
+        // Home does not load the full exercise graph; opening Exercises loads it once.
         await login(studentOne, `/courses/${course.id}`);
-        await page.waitForURL(`**/courses/${course.id}/exercises**`);
+        await page.waitForURL(`**/courses/${course.id}/home`);
+        expect(exerciseRequests).toHaveLength(0);
+        await page.locator(`jhi-course-sidebar a[href="/courses/${course.id}/exercises"]`).first().click();
         await expect.poll(() => exerciseRequests.length, { timeout: 15_000 }).toBe(1);
 
         // Selecting the tab that is already open acts as a refresh, so the data cannot go stale behind the user

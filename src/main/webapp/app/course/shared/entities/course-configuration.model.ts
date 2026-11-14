@@ -5,6 +5,7 @@
  */
 export class CourseConfiguration {
     public id?: number;
+    public studentWelcomeContext?: string;
     public gradeRelevant?: boolean;
     public dataRetentionHold?: boolean;
     public autoOrchestratorEnabled?: boolean;

@@ -41,7 +41,12 @@ export class ProfileService {
     }
 
     public isLLMDeploymentEnabled(): boolean {
+        // Only the administrator's global confirmation offers local inference for the shared preference. A Home provider does not establish that the connected services support it.
         return this.profileInfo.localLLMDeploymentEnabled ?? false;
+    }
+
+    public isCourseHomeAiAvailable(): boolean {
+        return this.profileInfo.courseHomeAiAvailable === true;
     }
 
     public isGocastEnabled(): boolean {
