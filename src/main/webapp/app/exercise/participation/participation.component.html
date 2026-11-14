@@ -132,6 +132,7 @@
         }
         @if (exercise()!.type === ExerciseType.PROGRAMMING && canAccessLiveRepository()) {
             <a
+                data-testid="participation-online-editor"
                 [routerLink]="onlineEditorLink(dto.participationId)"
                 tumAetUiButton
                 severity="warn"

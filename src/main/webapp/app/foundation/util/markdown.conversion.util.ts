@@ -197,7 +197,7 @@ function formulaStyle(style: string): string {
  * placement properties with plain lengths. It is also kept where the caller lists `style` as an allowed attribute. Images are requested without a referrer, so
  * the address of the page does not reach the image host.
  */
-function restrictRenderedAttributes(node: Element, keepStyle = false): void {
+export function restrictRenderedAttributes(node: Element, keepStyle = false): void {
     if (!keepStyle && node.hasAttribute?.('style')) {
         const allowedStyle = node.closest?.('[class*="katex"]') ? formulaStyle(node.getAttribute('style') ?? '') : '';
         if (allowedStyle) {
