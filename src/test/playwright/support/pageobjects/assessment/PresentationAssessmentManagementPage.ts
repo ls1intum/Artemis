@@ -2,6 +2,7 @@ import { Locator, Page, expect } from '@playwright/test';
 import dayjs from 'dayjs';
 import { Commands } from '../../commands';
 import { fillDateTimePicker } from '../../utils';
+import { PresentationGradingMethod } from '../../constants';
 
 /** The date-only field of the TUM AET UI date picker shows the date as DD.MM.YYYY. */
 const PRESENTATION_DATE_FORMAT = 'DD.MM.YYYY';
@@ -28,10 +29,26 @@ export class PresentationAssessmentManagementPage {
         await expect(this.page.getByTestId('presentation-instances-table')).toBeVisible();
     }
 
-    async createPresentation(title: string, maxPoints: number) {
+    /**
+     * Creates a presentation through the steps of the create dialog: its details, its grading method and, unless graded by pass/fail,
+     * the configuration of the method, which is the max points of a score or the criteria of a rubric.
+     */
+    async createPresentation(title: string, gradingMethod: PresentationGradingMethod, configuration: { maxPoints?: number; criteria?: { name: string; weight: number }[] } = {}) {
         await this.page.getByTestId('create-presentation-button').click();
         await this.page.locator('#presentation-assessment-title').fill(title);
-        await this.page.locator('#presentation-assessment-max-points').fill(String(maxPoints));
+        await this.page.getByTestId('continue-presentation-button').click();
+        await this.page.getByTestId(`grading-method-${gradingMethod}`).click();
+        if (gradingMethod !== PresentationGradingMethod.PASS_FAIL) {
+            await this.page.getByTestId('continue-presentation-button').click();
+        }
+        if (configuration.maxPoints !== undefined) {
+            await this.page.locator('#presentation-assessment-max-points').fill(String(configuration.maxPoints));
+        }
+        for (const [index, criterion] of (configuration.criteria ?? []).entries()) {
+            await this.page.getByTestId(index === 0 ? 'rubric-add-first-criterion' : 'rubric-add-criterion').click();
+            await this.page.getByTestId(`rubric-criterion-name-${index}`).fill(criterion.name);
+            await this.page.getByTestId(`rubric-criterion-weight-${index}`).locator('input').fill(String(criterion.weight));
+        }
         const created = this.page.waitForResponse((response) => response.request().method() === 'POST' && response.url().endsWith('/presentation-assessments'));
         await this.page.getByTestId('save-presentation-button').click();
         expect((await created).status()).toBe(201);
@@ -39,13 +56,21 @@ export class PresentationAssessmentManagementPage {
 
     /** Assigns a student to the open presentation and records the grade in one go. */
     async assignAndGrade(studentLogin: string, date: dayjs.Dayjs, points: number) {
-        await this.page.getByTestId('create-instance-button').click();
-        await fillDateTimePicker(this.page.locator('#presentation-instance-date'), date, PRESENTATION_DATE_FORMAT);
-        await this.page.locator('#presentation-instance-result').fill(String(points));
-        await this.selectPresenter(studentLogin);
-        const saved = this.page.waitForResponse((response) => response.request().method() === 'POST' && response.url().endsWith('/instances'));
-        await this.page.getByTestId('save-instance-button').click();
-        expect((await saved).ok()).toBe(true);
+        await this.assign(studentLogin, date, () => this.page.locator('#presentation-instance-result').fill(String(points)));
+    }
+
+    /** Assigns a student to a presentation graded by pass/fail and records whether the student passed. */
+    async assignAndGradeByPassFail(studentLogin: string, date: dayjs.Dayjs, passed: boolean) {
+        await this.assign(studentLogin, date, () => this.page.getByTestId(passed ? 'presentation-instance-passed' : 'presentation-instance-failed').click());
+    }
+
+    /** Assigns a student to a presentation graded by rubric and rates every criterion at the given level position, counting from 0 at the lowest level. */
+    async assignAndGradeByRubric(studentLogin: string, date: dayjs.Dayjs, levelPositions: number[]) {
+        await this.assign(studentLogin, date, async () => {
+            for (const [criterionIndex, position] of levelPositions.entries()) {
+                await this.page.getByTestId(`rubric-grading-level-${criterionIndex}-${position}`).click();
+            }
+        });
     }
 
     async changeGrade(studentLogin: string, points: number) {
@@ -81,5 +106,15 @@ export class PresentationAssessmentManagementPage {
     private async selectPresenter(studentLogin: string) {
         await this.page.getByTestId('presenter-search').locator('input').fill(studentLogin);
         await this.page.getByRole('option', { name: studentLogin }).click();
+    }
+
+    private async assign(studentLogin: string, date: dayjs.Dayjs, enterResult: () => Promise<unknown>) {
+        await this.page.getByTestId('create-instance-button').click();
+        await fillDateTimePicker(this.page.locator('#presentation-instance-date'), date, PRESENTATION_DATE_FORMAT);
+        await enterResult();
+        await this.selectPresenter(studentLogin);
+        const saved = this.page.waitForResponse((response) => response.request().method() === 'POST' && response.url().endsWith('/instances'));
+        await this.page.getByTestId('save-instance-button').click();
+        expect((await saved).ok()).toBe(true);
     }
 }

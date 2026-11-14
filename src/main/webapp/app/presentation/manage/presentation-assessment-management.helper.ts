@@ -66,10 +66,6 @@ export function createPresentationSidebarData(
     };
 }
 
-export function hasResultPoints(resultPoints: number | null | undefined): resultPoints is number {
-    return resultPoints !== undefined && resultPoints !== null;
-}
-
 function toSidebarItem(assessment: PresentationAssessment, courseId: number, linkIcon?: IconDefinition): SidebarCardElement {
     return {
         id: assessment.id!,

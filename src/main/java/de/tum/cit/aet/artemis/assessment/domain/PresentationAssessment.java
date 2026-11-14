@@ -2,6 +2,8 @@ package de.tum.cit.aet.artemis.assessment.domain;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
@@ -30,8 +32,12 @@ public class PresentationAssessment extends DomainObject {
     @Column(name = "description")
     private String description;
 
-    @Column(name = "max_points", nullable = false)
-    private double maxPoints;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "grading_method", nullable = false, length = 20)
+    private PresentationGradingMethod gradingMethod;
+
+    @Column(name = "max_points")
+    private Double maxPoints;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "course_id", nullable = false)
@@ -57,11 +63,19 @@ public class PresentationAssessment extends DomainObject {
         this.description = description;
     }
 
-    public double getMaxPoints() {
+    public PresentationGradingMethod getGradingMethod() {
+        return gradingMethod;
+    }
+
+    public void setGradingMethod(PresentationGradingMethod gradingMethod) {
+        this.gradingMethod = gradingMethod;
+    }
+
+    public Double getMaxPoints() {
         return maxPoints;
     }
 
-    public void setMaxPoints(double maxPoints) {
+    public void setMaxPoints(Double maxPoints) {
         this.maxPoints = maxPoints;
     }
 

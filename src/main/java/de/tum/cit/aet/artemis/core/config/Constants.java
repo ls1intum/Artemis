@@ -105,6 +105,10 @@ public final class Constants {
     // Keep in sync with MAX_PRESENTATION_COUNT in input.constants.ts.
     public static final int MAX_PRESENTATION_COUNT = 100;
 
+    // Upper bound for the number of criteria of a presentation rubric, and with that for the ratings of one assessment. A domain limit.
+    // Keep in sync with MAX_RUBRIC_CRITERIA in presentation-rubric.util.ts.
+    public static final int MAX_RUBRIC_CRITERIA = 20;
+
     public static final String FILE_ENDING_REGEX = "^[a-zA-Z0-9]{1,5}";
 
     public static final Pattern FILE_ENDING_PATTERN = Pattern.compile(FILE_ENDING_REGEX);

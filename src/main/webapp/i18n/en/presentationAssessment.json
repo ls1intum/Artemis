@@ -14,18 +14,54 @@
             "maxPoints": "Max. points",
             "resultPoints": "Points",
             "resultPointsExceedMaxPoints": "Points must not exceed max. points.",
+            "presentationDetails": "Presentation details",
+            "pointsOf": "of",
+            "generalRemark": "General remark",
             "placeholder": {
                 "title": "Title",
                 "maxPoints": "0",
                 "resultPoints": "0.0",
-                "description": "Enter a description"
+                "description": "Enter a description",
+                "remark": "Add a remark",
+                "generalRemark": "Add overall feedback for the student."
+            },
+            "optional": "Optional",
+            "pointsUnit": "points",
+            "result": {
+                "label": "Result",
+                "passed": "Passed",
+                "failed": "Failed"
             },
             "validation": {
                 "maxPointsMin": "Please enter a value greater than 0.",
                 "resultPointsMin": "Points must be at least 0.",
                 "pointsMax": "Points must not exceed {{ max }}.",
                 "exerciseNotSelected": "Select an exercise from the list or clear the field.",
-                "meetingLinkInvalid": "Please enter a link that starts with http:// or https://."
+                "meetingLinkInvalid": "Please enter a link that starts with http:// or https://.",
+                "resultRequired": "A saved result can be changed but not removed."
+            },
+            "gradingMethod": {
+                "label": "Grading method",
+                "question": "How should this presentation be assessed?",
+                "hint": "Choose one method. Score and rubric are configured in the next step.",
+                "PASS_FAIL": "Pass / Fail",
+                "SCORE": "Score",
+                "RUBRIC": "Rubric",
+                "description": {
+                    "PASS_FAIL": "Mark the presentation as passed or failed.",
+                    "SCORE": "Award points up to a configurable maximum.",
+                    "RUBRIC": "Assess multiple weighted criteria with individual rating scales."
+                }
+            },
+            "scoreConfiguration": {
+                "title": "Configure score assessment",
+                "hint": "Set the maximum number of points available for this presentation."
+            },
+            "step": {
+                "number": "Step {{ number }}",
+                "details": "Presentation details",
+                "method": "Assessment method",
+                "configuration": "Configure assessment"
             },
             "presentationDate": "Presentation date",
             "presentationTime": "Time",
@@ -42,6 +78,7 @@
             "assessment": "Assessment",
             "remark": "Remark",
             "remarkTooLong": "The remark must not exceed {{ max }} characters.",
+            "descriptionTooLong": "The description must not exceed {{ max }} characters.",
             "assessed": "Assessed",
             "pending": "Pending",
             "searchStudent": "Search for a student",
@@ -93,6 +130,69 @@
             },
             "students": {
                 "removeQuestion": "Are you sure you want to remove the user with login <strong>{{ title }}</strong> from this presentation instance?"
+            },
+            "rubric": {
+                "title": "Rubric",
+                "heading": "Rubric criteria",
+                "hint": "Define weighted criteria and an independent rating scale for each.",
+                "loading": "Loading rubric",
+                "unavailable": "The rubric could not be loaded. Close the dialog and try again.",
+                "saved": "The rubric was successfully updated",
+                "weightChange": {
+                    "header": "Recalculate results",
+                    "message": "Changing the weights recalculates the results of {{ count }} assessed presentations.",
+                    "confirm": "Save and recalculate"
+                },
+                "criterion": "Criterion {{ number }}",
+                "name": "Name",
+                "description": "Description",
+                "weight": "Weight",
+                "scaleLabel": "Scale",
+                "scale": {
+                    "THREE_POINT": "3-Point Rating Scale",
+                    "FIVE_POINT": "5-Point Rating Scale"
+                },
+                "scaleHint": "1 ({{ lowest }}) to {{ count }} ({{ highest }})",
+                "configureScale": "Configure scale",
+                "hideScale": "Hide scale",
+                "value": "Value",
+                "key": "Key",
+                "levelDescription": "Description",
+                "levelsHeading": "Rating scale for criterion {{ number }}",
+                "levelKey": {
+                    "poor": "Poor",
+                    "needsImprovement": "Needs Improvement",
+                    "satisfactory": "Satisfactory",
+                    "good": "Good",
+                    "excellent": "Excellent"
+                },
+                "feedbackFor": "Feedback for {{ name }} (optional)",
+                "feedbackPlaceholder": "Explain why this rating was given.",
+                "notRated": "Not rated yet. Select one level.",
+                "overallResult": "Overall result",
+                "calculatedAutomatically": "Calculated automatically",
+                "remaining": "Not rated yet: {{ count }}. Rate every criterion, or none, to save.",
+                "emptyTitle": "Start building your rubric",
+                "empty": "Add criteria, give each a weight and choose its rating scale.",
+                "addFirstCriterion": "Add first criterion",
+                "addCriterion": "Add criterion",
+                "removeCriterion": "Remove criterion",
+                "maxCriteriaReached": "A rubric can have at most {{ max }} criteria.",
+                "totalWeight": "Total weight",
+                "lockedHint": "Some presentations have already been assessed. Criteria can no longer be added or removed, and their scale is fixed.",
+                "scaleChange": {
+                    "header": "Change scale",
+                    "message": "Changing the scale discards the level descriptions of this criterion.",
+                    "confirm": "Change scale"
+                },
+                "validation": {
+                    "empty": "Add at least one criterion",
+                    "weightSum": "Total weight must equal {{ requiredTotal }} %",
+                    "weightSumDetail": "The current total is {{ total }} %. Adjust the weights before saving.",
+                    "nameRequired": "Please enter a name.",
+                    "weightRange": "Please enter a whole number from 1 to {{ max }}.",
+                    "levelDescriptionTooLong": "A level description exceeds {{ max }} characters. Open the scale to shorten it."
+                }
             },
             "noPresenters": "No presenters yet",
             "noPresentersDescription": "Search for a student above to add the first presenter."

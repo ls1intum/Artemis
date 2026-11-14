@@ -1,0 +1,275 @@
+<ng-container [formArray]="form()">
+    <div class="flex flex-col gap-4">
+        <div class="flex flex-wrap items-start justify-between gap-4">
+            <div class="flex flex-col gap-1">
+                <h3 class="m-0! text-lg! font-semibold!">{{ 'artemisApp.presentationAssessment.rubric.heading' | artemisTranslate }}</h3>
+                <p class="m-0! text-sm text-(--text-body-secondary)" jhiTranslate="artemisApp.presentationAssessment.rubric.hint"></p>
+            </div>
+            @let total = totalState();
+            <div
+                class="flex w-40 flex-col gap-1 rounded-lg border bg-(--module-bg) p-3"
+                [class]="total === 'invalid' ? 'border-state-danger' : 'border-(--border-color)'"
+                data-testid="rubric-total-weight"
+            >
+                <span jhiPresentationLabel jhiTranslate="artemisApp.presentationAssessment.rubric.totalWeight"></span>
+                <strong class="text-xl" [class]="total === 'valid' ? 'text-state-success' : total === 'invalid' ? 'text-state-danger' : ''">{{ totalWeight() }} %</strong>
+                <tumaet-ui-progress-bar
+                    size="small"
+                    [showValue]="false"
+                    [value]="totalWeight()"
+                    [severity]="total === 'valid' ? 'success' : total === 'invalid' ? 'danger' : 'primary'"
+                    [ariaLabel]="'artemisApp.presentationAssessment.rubric.totalWeight' | artemisTranslate"
+                />
+            </div>
+        </div>
+
+        @if (locked()) {
+            <tumaet-ui-message severity="info" data-testid="rubric-locked-hint">
+                <span jhiTranslate="artemisApp.presentationAssessment.rubric.lockedHint"></span>
+            </tumaet-ui-message>
+        }
+
+        @if (showErrors()) {
+            @if (form().hasError('rubricEmpty')) {
+                <tumaet-ui-message severity="error" data-testid="rubric-empty-error">
+                    <strong jhiTranslate="artemisApp.presentationAssessment.rubric.validation.empty"></strong>
+                </tumaet-ui-message>
+            } @else if (form().hasError('rubricWeightSum')) {
+                <tumaet-ui-message severity="error" data-testid="rubric-weight-sum-error">
+                    <strong jhiTranslate="artemisApp.presentationAssessment.rubric.validation.weightSum" [translateValues]="{ requiredTotal: weightSum }"></strong>
+                    <span jhiTranslate="artemisApp.presentationAssessment.rubric.validation.weightSumDetail" [translateValues]="{ total: totalWeight() }"></span>
+                </tumaet-ui-message>
+            }
+        }
+
+        @if (form().length === 0) {
+            <tumaet-ui-empty-state
+                data-testid="rubric-empty"
+                [icon]="faTableCellsLarge"
+                [title]="'artemisApp.presentationAssessment.rubric.emptyTitle' | artemisTranslate"
+                [description]="'artemisApp.presentationAssessment.rubric.empty' | artemisTranslate"
+            >
+                <ng-container tumAetUiEmptyStateActions>
+                    @if (!locked()) {
+                        <tumaet-ui-button data-testid="rubric-add-first-criterion" [icon]="faPlus" (clicked)="addCriterion()">
+                            <span jhiTranslate="artemisApp.presentationAssessment.rubric.addFirstCriterion"></span>
+                        </tumaet-ui-button>
+                    }
+                </ng-container>
+            </tumaet-ui-empty-state>
+        }
+
+        @for (view of criteria(); track view.criterion; let index = $index) {
+            @let criterion = view.criterion;
+            <section
+                class="flex flex-col rounded-lg border border-(--border-color) bg-(--module-bg)"
+                [formGroup]="criterion"
+                [attr.aria-label]="'artemisApp.presentationAssessment.rubric.criterion' | artemisTranslate: { number: index + 1 }"
+                [attr.data-testid]="'rubric-criterion-' + index"
+            >
+                <!-- On a narrow screen the fields stack between the number and the trash button -->
+                <div
+                    class="grid grid-cols-[1.75rem_minmax(0,1fr)_2.25rem] items-start gap-4 p-4 lg:grid-cols-[1.75rem_minmax(8rem,0.75fr)_minmax(10rem,1.35fr)_6rem_22rem_2.25rem]"
+                >
+                    <!-- The top margin aligns the number with the inputs below their labels -->
+                    <span
+                        class="row-start-1 mt-7 inline-flex size-7 items-center justify-center rounded-full bg-(--hover-slightly-darker-body-bg) text-sm font-semibold text-(--primary) lg:row-start-auto"
+                        aria-hidden="true"
+                        >{{ index + 1 }}</span
+                    >
+
+                    <div class="col-start-2 flex min-w-0 flex-col gap-2 lg:col-start-auto">
+                        <label [for]="'rubric-criterion-name-' + index">
+                            <span jhiTranslate="artemisApp.presentationAssessment.rubric.name"></span>
+                            <span class="text-state-danger" aria-hidden="true"> *</span>
+                        </label>
+                        <input
+                            [id]="'rubric-criterion-name-' + index"
+                            [tumAetUiInputId]="'rubric-criterion-name-' + index"
+                            tumAetUiInput
+                            class="w-full"
+                            type="text"
+                            formControlName="name"
+                            required
+                            [tumAetUiInputInvalid]="criterion.controls.name.invalid && criterion.controls.name.touched"
+                            [tumAetUiInputDescribedBy]="criterion.controls.name.invalid && criterion.controls.name.touched ? 'rubric-criterion-name-error-' + index : undefined"
+                            [attr.data-testid]="'rubric-criterion-name-' + index"
+                        />
+                        @if (criterion.controls.name.invalid && criterion.controls.name.touched) {
+                            <tumaet-ui-message severity="error" [id]="'rubric-criterion-name-error-' + index">
+                                <span jhiTranslate="artemisApp.presentationAssessment.rubric.validation.nameRequired"></span>
+                            </tumaet-ui-message>
+                        }
+                    </div>
+
+                    <div class="col-start-2 flex min-w-0 flex-col gap-2 lg:col-start-auto">
+                        <label [for]="'rubric-criterion-description-' + index">{{ 'artemisApp.presentationAssessment.rubric.description' | artemisTranslate }}</label>
+                        <input
+                            [id]="'rubric-criterion-description-' + index"
+                            [tumAetUiInputId]="'rubric-criterion-description-' + index"
+                            tumAetUiInput
+                            class="w-full"
+                            type="text"
+                            formControlName="description"
+                            [tumAetUiInputInvalid]="criterion.controls.description.hasError('maxlength')"
+                            [tumAetUiInputDescribedBy]="criterion.controls.description.hasError('maxlength') ? 'rubric-criterion-description-error-' + index : undefined"
+                        />
+                        @if (criterion.controls.description.hasError('maxlength')) {
+                            <tumaet-ui-message
+                                severity="error"
+                                [id]="'rubric-criterion-description-error-' + index"
+                                [attr.data-testid]="'rubric-criterion-description-error-' + index"
+                            >
+                                <span
+                                    jhiTranslate="artemisApp.presentationAssessment.descriptionTooLong"
+                                    [translateValues]="{ max: criterion.controls.description.getError('maxlength').requiredLength }"
+                                ></span>
+                            </tumaet-ui-message>
+                        }
+                    </div>
+
+                    <div class="col-start-2 flex w-24 flex-col gap-2 lg:col-start-auto">
+                        <label [for]="'rubric-criterion-weight-' + index">
+                            <span jhiTranslate="artemisApp.presentationAssessment.rubric.weight"></span>
+                            <span class="text-state-danger" aria-hidden="true"> *</span>
+                        </label>
+                        <tumaet-ui-input-number
+                            [inputId]="'rubric-criterion-weight-' + index"
+                            fluid
+                            [min]="1"
+                            [max]="weightSum"
+                            suffix=" %"
+                            formControlName="weight"
+                            [invalid]="criterion.controls.weight.invalid && criterion.controls.weight.touched"
+                            [ariaDescribedBy]="criterion.controls.weight.invalid && criterion.controls.weight.touched ? 'rubric-criterion-weight-error-' + index : undefined"
+                            [attr.data-testid]="'rubric-criterion-weight-' + index"
+                        />
+                        @if (criterion.controls.weight.invalid && criterion.controls.weight.touched) {
+                            <tumaet-ui-message severity="error" [id]="'rubric-criterion-weight-error-' + index">
+                                <span jhiTranslate="artemisApp.presentationAssessment.rubric.validation.weightRange" [translateValues]="{ max: weightSum }"></span>
+                            </tumaet-ui-message>
+                        }
+                    </div>
+
+                    <div class="col-start-2 flex min-w-0 flex-col gap-2 lg:col-start-auto">
+                        <label [for]="'rubric-criterion-scale-' + index">{{ 'artemisApp.presentationAssessment.rubric.scaleLabel' | artemisTranslate }}</label>
+                        <tumaet-ui-select
+                            [inputId]="'rubric-criterion-scale-' + index"
+                            [options]="scaleOptions()"
+                            optionLabel="label"
+                            optionValue="value"
+                            formControlName="scale"
+                            [attr.data-testid]="'rubric-criterion-scale-' + index"
+                            (selectionChange)="changeScale(criterion)"
+                        />
+                        <div class="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 text-xs">
+                            <span
+                                class="text-(--text-body-secondary)"
+                                jhiTranslate="artemisApp.presentationAssessment.rubric.scaleHint"
+                                [translateValues]="{
+                                    count: view.scaleHint.count,
+                                    lowest: view.scaleHint.lowestKey | artemisTranslate,
+                                    highest: view.scaleHint.highestKey | artemisTranslate,
+                                }"
+                            ></span>
+                            <button
+                                type="button"
+                                class="inline-flex cursor-pointer items-center gap-1 border-0 bg-transparent p-0 text-(--primary) hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--primary)"
+                                [attr.aria-expanded]="view.expanded"
+                                [attr.data-testid]="'rubric-toggle-levels-' + index"
+                                (click)="toggleLevels(criterion)"
+                            >
+                                <span
+                                    [jhiTranslate]="
+                                        view.expanded ? 'artemisApp.presentationAssessment.rubric.hideScale' : 'artemisApp.presentationAssessment.rubric.configureScale'
+                                    "
+                                ></span>
+                                <fa-icon [icon]="view.expanded ? faChevronUp : faChevronDown" />
+                            </button>
+                        </div>
+                        @if (!view.expanded && criterion.controls.levels.invalid) {
+                            <tumaet-ui-message severity="error" [attr.data-testid]="'rubric-levels-error-' + index">
+                                <span
+                                    jhiTranslate="artemisApp.presentationAssessment.rubric.validation.levelDescriptionTooLong"
+                                    [translateValues]="{ max: maxDescriptionLength }"
+                                ></span>
+                            </tumaet-ui-message>
+                        }
+                    </div>
+
+                    @if (!locked()) {
+                        <tumaet-ui-button
+                            class="col-start-3 row-start-1 mt-7 lg:col-start-auto lg:row-start-auto"
+                            severity="danger"
+                            variant="text"
+                            [icon]="faTrash"
+                            [ariaLabel]="'artemisApp.presentationAssessment.rubric.removeCriterion' | artemisTranslate"
+                            [attr.data-testid]="'rubric-remove-criterion-' + index"
+                            (clicked)="removeCriterion(index)"
+                        />
+                    }
+                </div>
+
+                @if (view.expanded) {
+                    <div class="flex flex-col gap-3 rounded-b-lg border-t border-(--border-color) bg-(--hover-slightly-darker-body-bg) p-4" formArrayName="levels">
+                        <h4 class="m-0! text-base! font-semibold!">{{ 'artemisApp.presentationAssessment.rubric.levelsHeading' | artemisTranslate: { number: index + 1 } }}</h4>
+                        <div class="grid grid-cols-[2.5rem_minmax(0,1fr)] items-center gap-x-4 gap-y-2 sm:grid-cols-[4rem_11rem_1fr]">
+                            <span class="font-semibold" jhiPresentationLabel jhiTranslate="artemisApp.presentationAssessment.rubric.value"></span>
+                            <span class="font-semibold" jhiPresentationLabel jhiTranslate="artemisApp.presentationAssessment.rubric.key"></span>
+                            <span class="font-semibold" jhiPresentationLabel jhiTranslate="artemisApp.presentationAssessment.rubric.levelDescription"></span>
+                            @for (position of view.positionsHighestFirst; track position) {
+                                <ng-container [formGroupName]="position">
+                                    <span class="font-semibold">{{ position + 1 }}</span>
+                                    <span [jhiTranslate]="view.levelKeys[position]"></span>
+                                    <input
+                                        tumAetUiInput
+                                        class="col-span-full w-full sm:col-span-1"
+                                        type="text"
+                                        formControlName="description"
+                                        [tumAetUiInputInvalid]="criterion.controls.levels.at(position).controls.description.hasError('maxlength')"
+                                        [tumAetUiInputDescribedBy]="
+                                            criterion.controls.levels.at(position).controls.description.hasError('maxlength')
+                                                ? 'rubric-level-description-error-' + index + '-' + position
+                                                : undefined
+                                        "
+                                        [attr.aria-label]="view.levelKeys[position] | artemisTranslate"
+                                        [attr.data-testid]="'rubric-level-description-' + index + '-' + position"
+                                    />
+                                    @if (criterion.controls.levels.at(position).controls.description.hasError('maxlength')) {
+                                        <tumaet-ui-message class="col-span-full sm:col-start-3" severity="error" [id]="'rubric-level-description-error-' + index + '-' + position">
+                                            <span
+                                                jhiTranslate="artemisApp.presentationAssessment.descriptionTooLong"
+                                                [translateValues]="{ max: criterion.controls.levels.at(position).controls.description.getError('maxlength').requiredLength }"
+                                            ></span>
+                                        </tumaet-ui-message>
+                                    }
+                                </ng-container>
+                            }
+                        </div>
+                    </div>
+                }
+            </section>
+        }
+
+        @if (form().length > 0 && !locked()) {
+            <button
+                tumAetUiButton
+                type="button"
+                severity="secondary"
+                variant="outlined"
+                class="w-full"
+                data-testid="rubric-add-criterion"
+                [disabled]="form().length >= maxCriteria"
+                (click)="addCriterion()"
+            >
+                <fa-icon [icon]="faPlus" />
+                <span jhiTranslate="artemisApp.presentationAssessment.rubric.addCriterion"></span>
+            </button>
+            @if (form().length >= maxCriteria) {
+                <small jhiTranslate="artemisApp.presentationAssessment.rubric.maxCriteriaReached" [translateValues]="{ max: maxCriteria }"></small>
+            }
+        }
+
+        <tumaet-ui-confirm-dialog />
+    </div>
+</ng-container>
