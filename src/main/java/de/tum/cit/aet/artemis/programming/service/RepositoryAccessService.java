@@ -298,7 +298,7 @@ public class RepositoryAccessService {
             }
             boolean isAtLeastStudent = authorizationCheckService.isAtLeastStudentInCourse(getCourseOrThrow(programmingParticipation.getProgrammingExercise()), user);
             if (isAtLeastStudent && plagiarismAccessApi.isPresent()
-                    && plagiarismAccessApi.get().hasAccessToSubmission(programmingParticipation.getId(), user.getLogin(), (Participation) programmingParticipation)) {
+                    && plagiarismAccessApi.get().hasAccessToParticipation((Participation) programmingParticipation, user.getLogin())) {
                 return;
             }
         }

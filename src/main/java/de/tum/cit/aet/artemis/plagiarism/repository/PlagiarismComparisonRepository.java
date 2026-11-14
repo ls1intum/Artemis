@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.plagiarism.repository;
 import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
@@ -19,6 +20,7 @@ import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.plagiarism.config.PlagiarismEnabled;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismComparison;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismStatus;
+import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismSubmission;
 
 /**
  * Spring Data JPA repository for the PlagiarismComparison entity.
@@ -74,6 +76,46 @@ public interface PlagiarismComparisonRepository extends ArtemisJpaRepository<Pla
 
     @EntityGraph(type = LOAD, attributePaths = { "submissions", "submissions.plagiarismCase" })
     Optional<Set<PlagiarismComparison>> findBySubmissions_SubmissionId(long submissions_submissionId);
+
+    /**
+     * Finds the comparisons that contain a submission of the given participation. The submissions of a comparison refer to submissions, not to participations.
+     *
+     * @param participationId the id of the participation
+     * @return the comparisons with all their submissions and the plagiarism cases of these
+     */
+    @Query("""
+            SELECT DISTINCT comparison
+            FROM PlagiarismComparison comparison
+                LEFT JOIN FETCH comparison.submissions submissions
+                LEFT JOIN FETCH submissions.plagiarismCase
+            WHERE comparison.id IN (
+                SELECT comparedSubmission.plagiarismComparison.id
+                FROM PlagiarismSubmission comparedSubmission
+                WHERE comparedSubmission.submissionId IN (
+                    SELECT submission.id
+                    FROM Submission submission
+                    WHERE submission.participation.id = :participationId
+                )
+            )
+            """)
+    Set<PlagiarismComparison> findAllBySubmissionOfParticipation(@Param("participationId") long participationId);
+
+    /**
+     * Finds the compared submissions that are submissions of the given participation.
+     *
+     * @param participationId the id of the participation
+     * @return the compared submissions of the participation
+     */
+    @Query("""
+            SELECT plagiarismSubmission
+            FROM PlagiarismSubmission plagiarismSubmission
+            WHERE plagiarismSubmission.submissionId IN (
+                SELECT submission.id
+                FROM Submission submission
+                WHERE submission.participation.id = :participationId
+            )
+            """)
+    List<PlagiarismSubmission> findPlagiarismSubmissionsOfParticipation(@Param("participationId") long participationId);
 
     @Modifying
     @Transactional // ok because of delete

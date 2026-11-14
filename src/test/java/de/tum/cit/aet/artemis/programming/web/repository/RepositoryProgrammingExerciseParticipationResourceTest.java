@@ -231,8 +231,8 @@ class RepositoryProgrammingExerciseParticipationResourceTest {
     @Test
     void getFilesForPlagiarismView_readsTheRepositoryThroughThePlagiarismSpecificLookup() throws Exception {
         // The plagiarism view is shown to people who are not allowed into the editor, so it has its own access path.
-        when(repositoryParticipationService.getRepositoryForPlagiarismView(PARTICIPATION_ID)).thenReturn(repository);
-        when(repositoryService.getFiles(repository)).thenReturn(java.util.Map.of("Main.java", de.tum.cit.aet.artemis.programming.domain.FileType.FILE));
+        when(repositoryParticipationService.getFilesForPlagiarismView(PARTICIPATION_ID))
+                .thenReturn(java.util.Map.of("Main.java", de.tum.cit.aet.artemis.programming.domain.FileType.FILE));
 
         var response = resource.getFilesForPlagiarismView(PARTICIPATION_ID);
 
@@ -321,8 +321,7 @@ class RepositoryProgrammingExerciseParticipationResourceTest {
 
     @Test
     void getFileForPlagiarismView_readsTheFileThroughThePlagiarismSpecificLookup() throws Exception {
-        when(repositoryParticipationService.getRepositoryForPlagiarismView(PARTICIPATION_ID)).thenReturn(repository);
-        when(repositoryService.getFileFromRepository("Main.java", repository)).thenReturn(org.springframework.http.ResponseEntity.ok("content".getBytes()));
+        when(repositoryParticipationService.getFileForPlagiarismView(PARTICIPATION_ID, "Main.java")).thenReturn(org.springframework.http.ResponseEntity.ok("content".getBytes()));
 
         assertThat(resource.getFileForPlagiarismView(PARTICIPATION_ID, "Main.java").getBody()).asString().isEqualTo("content");
     }
