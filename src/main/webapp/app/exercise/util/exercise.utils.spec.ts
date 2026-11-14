@@ -478,6 +478,10 @@ describe('ExerciseUtils', () => {
             { totalScore: -3, maxPoints: 10, expected: 0 },
             { totalScore: 12.5, maxPoints: 10, expected: 10 },
             { totalScore: 3.14159, maxPoints: 10, expected: 3.14 },
+            // rounding to two decimal places must not lift a total above a maximum with three decimal places
+            { totalScore: 10.006, maxPoints: 10.006, expected: 10.006 },
+            { totalScore: 12, maxPoints: 10.006, expected: 10.006 },
+            { totalScore: 10.004, maxPoints: 10.006, expected: 10 },
         ])('should return $expected for the score $totalScore and the maximum $maxPoints', ({ totalScore, maxPoints, expected }) => {
             expect(getPositiveAndCappedTotalScore(totalScore, maxPoints)).toBe(expected);
         });
