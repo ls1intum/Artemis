@@ -8,6 +8,7 @@ import { of, throwError } from 'rxjs';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { AccountSettingsDialogComponent } from 'app/account/settings/account-settings-dialog.component';
 import { User } from 'app/account/user/user.model';
+import { PendingEmailChangeDTO } from 'app/account/user/shared/dto/pending-email-change.dto';
 import { AccountService } from 'app/core/auth/account.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -117,8 +118,9 @@ describe('AccountSettingsDialogComponent', () => {
         component.saveSettings();
 
         expect(accountService.save).toHaveBeenCalledWith(expect.objectContaining({ firstName: 'Grace', lastName: 'Hopper', email: 'grace@example.com', langKey: 'en' }));
+        // A changed email address is not applied: the account keeps its current address until the change is confirmed
         expect(accountService.authenticate).toHaveBeenCalledWith(
-            expect.objectContaining({ name: 'Grace Hopper', firstName: 'Grace', lastName: 'Hopper', email: 'grace@example.com' }),
+            expect.objectContaining({ name: 'Grace Hopper', firstName: 'Grace', lastName: 'Hopper', email: 'ada@example.com' }),
         );
         expect(userIdentity()).toEqual(expect.objectContaining({ firstName: 'Ada', lastName: 'Lovelace', email: 'ada@example.com' }));
         expect(component.visible()).toBe(false);
@@ -180,5 +182,126 @@ describe('AccountSettingsDialogComponent', () => {
 
         component.saveSettings();
         expect(accountService.save).not.toHaveBeenCalled();
+    });
+
+    describe('email change', () => {
+        const pendingEmailChange: PendingEmailChangeDTO = {
+            newEmail: 'grace@example.com',
+            requestedAt: '2026-10-13T10:00:00Z',
+            expiresAt: '2026-10-14T10:00:00Z',
+            currentAddressConfirmed: false,
+            newAddressConfirmed: false,
+        };
+
+        function saveNewEmail(): PendingEmailChangeDTO[] {
+            const emitted: PendingEmailChangeDTO[] = [];
+            component.emailChangeRequested.subscribe((pending) => emitted.push(pending));
+            component.initializeForm();
+            component.visible.set(true);
+            component.settingsModel.set({ firstName: 'Ada', lastName: 'Lovelace', email: 'grace@example.com' });
+            component.saveSettings();
+            return emitted;
+        }
+
+        it('announces the request that a changed email address created and keeps the current address', () => {
+            accountService.save.mockReturnValue(of({ pendingEmailChange }));
+            createComponent();
+
+            const emitted = saveNewEmail();
+
+            expect(emitted).toEqual([pendingEmailChange]);
+            expect(accountService.authenticate).toHaveBeenCalledWith(expect.objectContaining({ email: 'ada@example.com' }));
+            expect(component.visible()).toBe(false);
+        });
+
+        it('does not announce confirmation mails when the email address was not changed', () => {
+            accountService.save.mockReturnValue(of({ pendingEmailChange }));
+            createComponent();
+            const emitted: PendingEmailChangeDTO[] = [];
+            component.emailChangeRequested.subscribe((pending) => emitted.push(pending));
+            component.initializeForm();
+            component.settingsModel.set({ firstName: 'Grace', lastName: 'Lovelace', email: 'ada@example.com' });
+
+            component.saveSettings();
+
+            expect(emitted).toEqual([]);
+        });
+
+        it('announces mails when a save replaces the pending request with a later one', () => {
+            accountService.save.mockReturnValue(of({ pendingEmailChange: { ...pendingEmailChange, requestedAt: '2026-10-13T10:05:00Z' } }));
+            createComponent();
+            fixture.componentRef.setInput('pendingEmailChange', pendingEmailChange);
+
+            const emitted = saveNewEmail();
+
+            expect(emitted).toHaveLength(1);
+        });
+
+        it('does not announce mails again when the server returns the same pending request', () => {
+            accountService.save.mockReturnValue(of({ pendingEmailChange }));
+            createComponent();
+            fixture.componentRef.setInput('pendingEmailChange', pendingEmailChange);
+
+            const emitted = saveNewEmail();
+
+            expect(emitted).toEqual([]);
+        });
+
+        it('keeps the email field editable and shows no hint when mails are configured', () => {
+            profileService.getProfileInfo.mockReturnValue({ mailConfigured: true });
+            createComponent();
+            component.initializeForm();
+            component.visible.set(true);
+            fixture.detectChanges();
+
+            expect(component.settingsForm.email().disabled()).toBe(false);
+            expect(document.querySelector('[data-testid="settings-mail-not-configured-hint"]')).toBeNull();
+        });
+
+        it('disables the email field but keeps the name editable and shows a hint when the server cannot send mails', () => {
+            profileService.getProfileInfo.mockReturnValue({ mailConfigured: false });
+            createComponent();
+            component.initializeForm();
+            component.visible.set(true);
+            fixture.detectChanges();
+
+            expect(component.settingsForm.email().disabled()).toBe(true);
+            expect(component.settingsForm.firstName().disabled()).toBe(false);
+            expect(document.querySelector('[data-testid="settings-mail-not-configured-hint"]')).not.toBeNull();
+        });
+
+        it.each([
+            { name: 'the jhipster problem type', error: { type: 'https://www.jhipster.tech/problem/email-already-used' } },
+            { name: 'the error key', error: { errorKey: 'emailAlreadyUsed' } },
+        ])('shows that the email address is in use for $name', ({ error }) => {
+            accountService.save.mockReturnValue(throwError(() => ({ status: 400, error })));
+            createComponent();
+
+            saveNewEmail();
+
+            expect(component.errorEmailExists()).toBe(true);
+            expect(component.errorMessageKey()).toBeUndefined();
+            expect(component.visible()).toBe(true);
+        });
+
+        it('shows the message of a known email change error', () => {
+            accountService.save.mockReturnValue(throwError(() => ({ status: 400, error: { errorKey: 'emailChangeRequestedTooRecently' } })));
+            createComponent();
+
+            saveNewEmail();
+
+            expect(component.errorMessageKey()).toBe('settings.messages.error.emailChangeRequestedTooRecently');
+        });
+
+        it('shows a generic message for an unknown failure and clears it when the dialog opens again', () => {
+            accountService.save.mockReturnValue(throwError(() => ({ status: 500, error: { errorKey: 'somethingElse' } })));
+            createComponent();
+
+            saveNewEmail();
+            expect(component.errorMessageKey()).toBe('settings.messages.error.fail');
+
+            component.initializeForm();
+            expect(component.errorMessageKey()).toBeUndefined();
+        });
     });
 });
