@@ -1,5 +1,4 @@
 import { ChangeDetectionStrategy, Component, ElementRef, OnInit, effect, inject, input, output, signal, untracked, viewChild } from '@angular/core';
-import { DomSanitizer, SafeStyle, SafeUrl } from '@angular/platform-browser';
 import { CropperOptions, OutputFormat } from '../interfaces/cropper-options.interface';
 import { CropperSettings } from '../interfaces/cropper.settings';
 import { MoveStart, MoveTypes } from '../interfaces/move-start.interface';
@@ -42,16 +41,16 @@ export class ImageCropperComponent implements OnInit {
     private cropService = inject(CropService);
     private cropperPositionService = inject(CropperPositionService);
     private loadImageService = inject(LoadImageService);
-    private sanitizer = inject(DomSanitizer);
 
     settings = new CropperSettings();
     setImageMaxSizeRetries = 0;
     moveStart!: MoveStart; // set in constructor via reset()
     loadedImage?: LoadedImage;
 
-    readonly safeImgDataUrl = signal<SafeUrl | string>('');
-    readonly safeTransformStyle = signal<SafeStyle | string>('');
-    readonly marginLeft = signal<SafeStyle | string>('0px');
+    // Plain strings are enough: Angular does not sanitize style bindings, and it accepts the PNG data URL that the canvas produces.
+    readonly imageDataUrl = signal('');
+    readonly transformStyle = signal('');
+    readonly marginLeft = signal('0px');
     // Backed by a signal because the template reads it; the getter/setter facade keeps the existing in-place
     // mutations (and pass-by-reference into services) working. Call commitMaxSize() after in-place mutations in
     // async paths so the template re-renders.
@@ -290,25 +289,23 @@ export class ImageCropperComponent implements OnInit {
     private setCssTransform() {
         // Defend against parents binding `[transform]="undefined"`, which overrides the input default.
         const transform = this.transform() ?? {};
-        this.safeTransformStyle.set(
-            this.sanitizer.bypassSecurityTrustStyle(
-                'scaleX(' +
-                    (transform.scale || 1) * (transform.flipH ? -1 : 1) +
-                    ')' +
-                    'scaleY(' +
-                    (transform.scale || 1) * (transform.flipV ? -1 : 1) +
-                    ')' +
-                    'rotate(' +
-                    (transform.rotate || 0) +
-                    'deg)',
-            ),
+        this.transformStyle.set(
+            'scaleX(' +
+                (transform.scale || 1) * (transform.flipH ? -1 : 1) +
+                ')' +
+                'scaleY(' +
+                (transform.scale || 1) * (transform.flipV ? -1 : 1) +
+                ')' +
+                'rotate(' +
+                (transform.rotate || 0) +
+                'deg)',
         );
     }
 
     private reset(): void {
         this.imageVisible.set(false);
         this.loadedImage = undefined;
-        this.safeImgDataUrl.set('data:image/png;base64,iVBORw0KGg' + 'oAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAC0lEQVQYV2NgAAIAAAU' + 'AAarVyFEAAAAASUVORK5CYII=');
+        this.imageDataUrl.set('data:image/png;base64,iVBORw0KGg' + 'oAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAC0lEQVQYV2NgAAIAAAU' + 'AAarVyFEAAAAASUVORK5CYII=');
         this.moveStart = {
             active: false,
             type: undefined,
@@ -352,7 +349,7 @@ export class ImageCropperComponent implements OnInit {
 
     private setLoadedImage(loadedImage: LoadedImage): void {
         this.loadedImage = loadedImage;
-        this.safeImgDataUrl.set(this.sanitizer.bypassSecurityTrustResourceUrl(loadedImage.transformed!.base64));
+        this.imageDataUrl.set(loadedImage.transformed!.base64);
     }
 
     private loadImageError(error: Error): void {
@@ -494,7 +491,7 @@ export class ImageCropperComponent implements OnInit {
             const sourceImageElement = sourceImage.nativeElement;
             this.maxSize.width = sourceImageElement.offsetWidth;
             this.maxSize.height = sourceImageElement.offsetHeight;
-            this.marginLeft.set(this.sanitizer.bypassSecurityTrustStyle('calc(50% - ' + this.maxSize.width / 2 + 'px)'));
+            this.marginLeft.set('calc(50% - ' + this.maxSize.width / 2 + 'px)');
         }
     }
 

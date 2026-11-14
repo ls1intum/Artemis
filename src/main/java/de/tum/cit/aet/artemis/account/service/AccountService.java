@@ -104,7 +104,7 @@ public class AccountService {
         final String previousEmail = currentUser.getEmail();
         final String previousLangKey = currentUser.getLangKey();
 
-        userCreationService.updateBasicInformationOfCurrentUser(userDTO.getFirstName(), userDTO.getLastName(), userDTO.getEmail(), userDTO.getLangKey(), userDTO.getImageUrl());
+        userCreationService.updateBasicInformationOfCurrentUser(userDTO.getFirstName(), userDTO.getLastName(), userDTO.getEmail(), userDTO.getLangKey());
 
         boolean emailChanged = !Objects.equals(User.canonicalEmail(previousEmail), User.canonicalEmail(userDTO.getEmail()));
         if (emailChanged) {

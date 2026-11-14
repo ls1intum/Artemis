@@ -288,6 +288,16 @@ class CourseCompetencyIntegrationTest extends AbstractCompetencyPrerequisiteInte
 
         @Test
         @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
+        void shouldRejectCompetencyOfAnotherCourse() throws Exception {
+            var otherCourse = courseUtilService.createEnrolledCourse(TEST_PREFIX);
+            var otherCompetency = competencyUtilService.createCompetency(otherCourse);
+
+            request.get("/api/atlas/courses/" + course.getId() + "/course-competencies/" + otherCompetency.getId() + "/course-progress", HttpStatus.BAD_REQUEST,
+                    CourseCompetencyProgressDTO.class);
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
         void shouldGetCompetencyCourseProgress() throws Exception {
             User student1 = userTestRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow();
             User student2 = userTestRepository.findOneByLogin(TEST_PREFIX + "student2").orElseThrow();
@@ -421,6 +431,13 @@ class CourseCompetencyIntegrationTest extends AbstractCompetencyPrerequisiteInte
         void shouldReturnCompetencyTitleWhenCompetencyExists() throws Exception {
             String title = request.get("/api/atlas/course-competencies/" + courseCompetency.getId() + "/title", HttpStatus.OK, String.class);
             assertThat(title).isEqualTo(courseCompetency.getTitle());
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "outsider", roles = "USER")
+        void shouldRefuseUserOutsideTheCourse() throws Exception {
+            userUtilService.createAndSaveUser(TEST_PREFIX + "outsider");
+            request.get("/api/atlas/course-competencies/" + courseCompetency.getId() + "/title", HttpStatus.FORBIDDEN, String.class);
         }
 
         @Test

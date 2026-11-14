@@ -3032,12 +3032,22 @@ public class CourseTestService {
 
     // Test
     public void testGetCourseTitle() throws Exception {
-        Course course = courseUtilService.createCourse();
+        Course course = courseUtilService.createEnrolledCourse(userPrefix);
         course.setTitle("Test Course");
-        course = courseRepo.saveWithDefaultConfigurations(course);
+        course = courseRepo.save(course);
 
         final var title = request.get("/api/course/courses/" + course.getId() + "/title", HttpStatus.OK, String.class);
         assertThat(title).isEqualTo(course.getTitle());
+    }
+
+    // Test
+    public void testGetCourseTitleAndAllowedComplaintsForUserOutsideTheCourse(String outsiderLogin) throws Exception {
+        userUtilService.createAndSaveUser(outsiderLogin);
+        Course course = courseUtilService.createCourse();
+        course = courseRepo.saveWithDefaultConfigurations(course);
+
+        request.get("/api/course/courses/" + course.getId() + "/title", HttpStatus.FORBIDDEN, String.class);
+        request.get("/api/course/courses/" + course.getId() + "/allowed-complaints", HttpStatus.FORBIDDEN, Long.class);
     }
 
     // Test

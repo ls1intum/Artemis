@@ -99,6 +99,9 @@ artemis:
     # REMOVE_IN_ARTEMIS_11 (Jenkins): option 3 goes away with Jenkins support
     # See documentation/docs/admin/production-setup/security.mdx#build-agent-authentication.
     # build-agent-use-ssh: true
+    # max-repository-size-mb: 20    # A push is rejected if it makes the files of a template, student or auxiliary repository larger than this, in MB. 0 disables the limit.
+    # max-tests-and-solution-repository-size-mb: 50    # The same limit for tests and solution repositories.
+    # See documentation/docs/instructor/exercises/programming-exercise/write-code-and-tests.mdx#keep-repositories-small.
     default-branch: main            # The branch that should be used as default branch for all newly created repositories. This does NOT have to be equal to the default branch of the VCS
     repository-authentication-mechanisms: token,ssh,password # the order of authentication mechanisms in the code button pop up. Removing parts removes them from the drop-down
     # password-authentication-end-date: 2027-01-15  # ISO date on which you plan to stop accepting account passwords for Git. Only announced in the email and the push message sent to users who still use a password; Artemis does not reject passwords on that day
@@ -149,6 +152,7 @@ artemis:
     account-management-requests-per-minute: 5
     authentication-requests-per-minute: 30
     login-options-requests-per-minute: 30
+    failed-login-requests-per-minute: 10 # Wrong passwords per minute and login name, whatever the client address
     # Addresses exempt from every rate limit, as literal IPv4/IPv6 addresses or CIDR blocks. The limits
     # are per client address, which protects against one abusive client but throttles a load generator
     # almost immediately, since a benchmark drives thousands of logins from a single address. Leave

@@ -68,6 +68,12 @@ public class RateLimitingProperties {
     private Integer loginOptionsRequestsPerMinute;
 
     /**
+     * Failed password logins per minute that one account tolerates before further logins for it are answered with 429.
+     * If not specified, uses the default from {@link de.tum.cit.aet.artemis.core.security.RateLimitType#FAILED_LOGIN}.
+     */
+    private Integer failedLoginRequestsPerMinute;
+
+    /**
      * Requests per minute for the problem-statement rendering endpoint.
      * If not specified, uses the default from {@link de.tum.cit.aet.artemis.core.security.RateLimitType#PROBLEM_STATEMENT_RENDERING}.
      */
@@ -108,6 +114,12 @@ public class RateLimitingProperties {
      * If not specified, uses the default from {@link de.tum.cit.aet.artemis.core.security.RateLimitType#CLIENT_ERROR_REPORT}.
      */
     private Integer clientErrorReportRequestsPerMinute;
+
+    /**
+     * Failed shared-secret checks per minute for the endpoints called by external services.
+     * If not specified, uses the default from {@link de.tum.cit.aet.artemis.core.security.RateLimitType#SERVICE_CREDENTIAL_FAILURE}.
+     */
+    private Integer serviceCredentialFailureRequestsPerMinute;
 
     public List<String> getExemptAddresses() {
         return exemptAddresses;
@@ -205,11 +217,27 @@ public class RateLimitingProperties {
         this.onlineResourceFetchRequestsPerMinute = onlineResourceFetchRequestsPerMinute;
     }
 
+    public Integer getServiceCredentialFailureRequestsPerMinute() {
+        return serviceCredentialFailureRequestsPerMinute;
+    }
+
+    public void setServiceCredentialFailureRequestsPerMinute(Integer serviceCredentialFailureRequestsPerMinute) {
+        this.serviceCredentialFailureRequestsPerMinute = serviceCredentialFailureRequestsPerMinute;
+    }
+
     public Integer getClientErrorReportRequestsPerMinute() {
         return clientErrorReportRequestsPerMinute;
     }
 
     public void setClientErrorReportRequestsPerMinute(Integer clientErrorReportRequestsPerMinute) {
         this.clientErrorReportRequestsPerMinute = clientErrorReportRequestsPerMinute;
+    }
+
+    public Integer getFailedLoginRequestsPerMinute() {
+        return failedLoginRequestsPerMinute;
+    }
+
+    public void setFailedLoginRequestsPerMinute(Integer failedLoginRequestsPerMinute) {
+        this.failedLoginRequestsPerMinute = failedLoginRequestsPerMinute;
     }
 }

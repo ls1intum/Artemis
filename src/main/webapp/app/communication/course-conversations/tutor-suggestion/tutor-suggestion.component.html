@@ -11,7 +11,7 @@
                         @for (content of suggestion.content; track content.id) {
                             <div>
                                 @for (line of (content | as: IrisTextMessageContent).textContent.split('\n'); track line) {
-                                    <div [innerHTML]="line" class="iris-suggestion-text"></div>
+                                    <div class="iris-suggestion-text">{{ line }}</div>
                                 }
                             </div>
                         }
