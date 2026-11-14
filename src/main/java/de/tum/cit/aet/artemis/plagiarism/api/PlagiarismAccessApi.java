@@ -1,5 +1,8 @@
 package de.tum.cit.aet.artemis.plagiarism.api;
 
+import java.util.Optional;
+
+import org.jspecify.annotations.Nullable;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Controller;
@@ -21,16 +24,26 @@ public class PlagiarismAccessApi extends AbstractPlagiarismApi {
     }
 
     /**
-     * Check if the user has access to the submission.
-     * This method also checks if the submission is before due date.
+     * Check if the user has access to the participation in the plagiarism view.
+     * This method also checks if the participation is before due date.
      *
-     * @param submissionId  the id of the submission
+     * @param participation the participation whose content the user wants to see
      * @param userLogin     the login of the user
-     * @param participation the participation of the user
-     * @return true if the user has access to the submission, false otherwise
+     * @return true if the user has access to the participation, false otherwise
      */
-    public boolean hasAccessToSubmission(Long submissionId, String userLogin, Participation participation) {
-        return plagiarismAccessService.hasAccessToSubmission(submissionId, userLogin, participation);
+    public boolean hasAccessToParticipation(Participation participation, String userLogin) {
+        return plagiarismAccessService.hasAccessToParticipation(participation, userLogin);
+    }
+
+    /**
+     * Finds the submission of the participation that was compared in a plagiarism check.
+     *
+     * @param participationId the id of the participation
+     * @param userLogin       the login of the student asking to see the comparison, or null for staff
+     * @return the id of the compared submission, or empty if no submission of the participation was compared in a comparison the user may see
+     */
+    public Optional<Long> findComparedSubmissionId(long participationId, @Nullable String userLogin) {
+        return plagiarismAccessService.findComparedSubmissionId(participationId, userLogin);
     }
 
     /**

@@ -93,28 +93,41 @@ class KubernetesBuildJobFactoryTest {
     }
 
     @Test
-    void networkNoneDropsRawSocketsFromTheBuilderSoThatThePacketSocketCannotBypassTheFirewallRules() {
-        Job job = factory.createJob(buildJob(new DockerRunConfig(List.of(), "none", 0, 0, 0)), "local-ci-job-r2", "agent");
+    void administratorCanLiftTheRestrictionOnPrivilegeGain() {
+        ReflectionTestUtils.setField(factory, "allowPrivilegeEscalation", true);
+
+        Job job = factory.createJob(buildJob(new DockerRunConfig(List.of(), null, 0, 0, 0)), "local-ci-job-r3", "agent");
 
         Container builder = container(job, KubernetesBuildJobFactory.BUILDER_CONTAINER);
-        assertThat(builder.getSecurityContext().getCapabilities().getDrop()).containsExactly("NET_RAW");
-        // the rest of the context is unchanged: the seccomp profile stays, and nothing else is dropped or added
+        assertThat(builder.getSecurityContext().getAllowPrivilegeEscalation()).isTrue();
+        assertThat(builder.getSecurityContext().getCapabilities().getDrop()).contains("NET_RAW", "MKNOD");
+    }
+
+    @Test
+    void networkNoneDropsRawSocketsEvenWhenTheExerciseAsksForThem() {
+        Job job = factory.createJob(buildJob(new DockerRunConfig(List.of(), "none", 0, 0, 0, true)), "local-ci-job-r2", "agent");
+
+        Container builder = container(job, KubernetesBuildJobFactory.BUILDER_CONTAINER);
+        assertThat(builder.getSecurityContext().getCapabilities().getDrop()).contains("NET_RAW", "MKNOD", "SYS_CHROOT", "SETFCAP", "AUDIT_WRITE");
         assertThat(builder.getSecurityContext().getSeccompProfile().getType()).isEqualTo("RuntimeDefault");
         assertThat(builder.getSecurityContext().getCapabilities().getAdd()).isNullOrEmpty();
-        assertThat(builder.getSecurityContext().getAllowPrivilegeEscalation()).isNull();
+        assertThat(builder.getSecurityContext().getAllowPrivilegeEscalation()).isFalse();
         // the helper container keeps dropping everything
         assertThat(container(job, KubernetesBuildJobFactory.HELPER_CONTAINER).getSecurityContext().getCapabilities().getDrop()).containsExactly("ALL");
     }
 
     @Test
-    void theDefaultNetworkKeepsTheDefaultCapabilitiesOfTheBuilder() {
+    void theDefaultNetworkDropsTheUnusualCapabilitiesAndKeepsRawSocketsOnlyOnRequest() {
         for (String network : new String[] { null, "", " " }) {
             Job job = factory.createJob(buildJob(new DockerRunConfig(List.of(), network, 0, 0, 0)), "local-ci-job-r2", "agent");
-
             Container builder = container(job, KubernetesBuildJobFactory.BUILDER_CONTAINER);
-            assertThat(builder.getSecurityContext().getCapabilities()).as("network '%s'", network).isNull();
-            assertThat(builder.getSecurityContext().getSeccompProfile().getType()).isEqualTo("RuntimeDefault");
+            assertThat(builder.getSecurityContext().getCapabilities().getDrop()).as("network '%s'", network).containsExactlyInAnyOrder("NET_RAW", "MKNOD", "SYS_CHROOT", "SETFCAP",
+                    "AUDIT_WRITE");
+            assertThat(builder.getSecurityContext().getAllowPrivilegeEscalation()).isFalse();
         }
+        Job job = factory.createJob(buildJob(new DockerRunConfig(List.of(), null, 0, 0, 0, true)), "local-ci-job-r2", "agent");
+        assertThat(container(job, KubernetesBuildJobFactory.BUILDER_CONTAINER).getSecurityContext().getCapabilities().getDrop()).containsExactlyInAnyOrder("MKNOD", "SYS_CHROOT",
+                "SETFCAP", "AUDIT_WRITE");
     }
 
     @Test

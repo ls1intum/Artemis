@@ -15,6 +15,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.jspecify.annotations.NonNull;
@@ -618,6 +619,14 @@ class ExamUserIntegrationTest extends AbstractProgrammingIntegrationLocalCILocal
         var paginationExam = createPaginationTestExam();
         List<ExamStudentDTO> result = request.getList(pagedUrl(paginationExam), HttpStatus.OK, ExamStudentDTO.class, pageParams(""));
         assertThat(result).isNotNull();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void testGetExamStudentsPaged_doesNotContainEmailAddresses() throws Exception {
+        var paginationExam = createPaginationTestExam();
+        List<Map> rows = request.getList(pagedUrl(paginationExam), HttpStatus.OK, Map.class, pageParams(""));
+        assertThat(rows).isNotEmpty().allSatisfy(row -> assertThat(row).doesNotContainKey("email").containsKey("login"));
     }
 
     @Test

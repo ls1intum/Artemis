@@ -227,6 +227,25 @@ describe('ModelingSubmissionComponent', () => {
         expect(comp.participation()).toEqual(participation);
     });
 
+    it('should not treat a participation without owner information as owned by the current user', () => {
+        createModelingSubmissionComponent();
+        const modelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, undefined);
+        const participation = new StudentParticipation();
+        participation.exercise = modelingExercise;
+        participation.id = 1;
+        const submission = new ModelingSubmission();
+        submission.id = 20;
+        submission.submitted = true;
+        submission.participation = participation;
+        vi.spyOn(service, 'getLatestSubmissionForModelingEditor').mockReturnValue(of(submission));
+        const isOwnerSpy = vi.spyOn(TestBed.inject(AccountService), 'isOwnerOfParticipation');
+
+        comp.ngOnInit();
+
+        expect(isOwnerSpy).not.toHaveBeenCalled();
+        expect(comp.isOwnerOfParticipation()).toBe(false);
+    });
+
     it.each([
         { teamMode: false, testRun: false, expected: false },
         { teamMode: false, testRun: true, expected: false },

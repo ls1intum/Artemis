@@ -6,6 +6,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.charset.CharacterCodingException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.FileAlreadyExistsException;
@@ -21,6 +22,7 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.text.StringEscapeUtils;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.errors.MissingObjectException;
@@ -52,6 +54,7 @@ import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.localvc.service.BareGitRepositoryService;
 import de.tum.cit.aet.artemis.localvc.service.GitService;
+import de.tum.cit.aet.artemis.localvc.service.LocalVCReceivePackLimits;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.localvc.service.VcsAccessLogService;
 import de.tum.cit.aet.artemis.programming.domain.File;
@@ -639,7 +642,51 @@ public class RepositoryService {
     public void createFile(Repository repository, String filePath, InputStream inputStream) throws IOException {
         Path safePath = checkIfPathIsValidAndExistenceAndReturnSafePath(repository, filePath, false);
         File file = checkIfPathAndFileAreValidAndReturnSafeFile(repository, safePath);
-        FileUtils.copyToFile(inputStream, file);
+        checkNoSymbolicLinkOnPathElseThrow(repository, safePath);
+        writeWithinSizeLimit(inputStream, file);
+    }
+
+    /**
+     * Writes the stream to the file, and refuses a stream that is larger than the files that a repository accepts in a push.
+     *
+     * @param inputStream the content to write
+     * @param file        the file to write
+     * @throws IOException              if the file cannot be written
+     * @throws IllegalArgumentException if the content exceeds the size limit, in which case the file is not left behind
+     */
+    private static void writeWithinSizeLimit(InputStream inputStream, File file) throws IOException {
+        long written;
+        try (OutputStream outputStream = FileUtils.openOutputStream(file)) {
+            // one byte more than the limit is read, to tell a file of exactly the limit from a larger one
+            written = IOUtils.copyLarge(inputStream, outputStream, 0, LocalVCReceivePackLimits.MAX_BLOB_SIZE_BYTES + 1);
+        }
+        if (written > LocalVCReceivePackLimits.MAX_BLOB_SIZE_BYTES) {
+            FileUtils.deleteQuietly(file);
+            throw new IllegalArgumentException("The file exceeds the size limit of " + LocalVCReceivePackLimits.MAX_BLOB_SIZE_BYTES + " bytes");
+        }
+    }
+
+    /**
+     * Refuses a path in which the file or one of its folders is a symbolic link, as writing to it would leave the repository.
+     *
+     * @param repository   the repository the path belongs to
+     * @param relativePath the repository-relative path of the file or folder to write
+     * @throws IllegalArgumentException if a symbolic link is part of the path
+     */
+    public void checkNoSymbolicLinkOnPathElseThrow(Repository repository, Path relativePath) {
+        Path root = repository.getLocalPath();
+        Path current = root;
+        // An absolute path inside the repository is checked element by element below the repository root, as an iteration would otherwise skip the root component
+        Path elements = relativePath.isAbsolute() && relativePath.startsWith(root) ? root.relativize(relativePath) : relativePath;
+        if (elements.isAbsolute()) {
+            throw new IllegalArgumentException("The path is not inside the repository");
+        }
+        for (Path element : elements) {
+            current = current.resolve(element);
+            if (Files.isSymbolicLink(current)) {
+                throw new IllegalArgumentException("The path contains a symbolic link: " + element);
+            }
+        }
     }
 
     /**
@@ -653,10 +700,19 @@ public class RepositoryService {
     public void createFolder(Repository repository, String folderPath, InputStream inputStream) throws IOException {
         Path safePath = checkIfPathIsValidAndExistenceAndReturnSafePath(repository, folderPath, false);
         checkIfPathAndFileAreValidAndReturnSafeFile(repository, safePath);
-        Files.createDirectory(repository.getLocalPath().resolve(safePath));
+        checkNoSymbolicLinkOnPathElseThrow(repository, safePath);
+        Path directory = repository.getLocalPath().resolve(safePath);
+        Files.createDirectory(directory);
         // We need to add an empty keep file so that the folder can be added to the git repository
-        File keep = new File(repository.getLocalPath().resolve(safePath).resolve(".keep"), repository);
-        FileUtils.copyToFile(inputStream, keep);
+        File keep = new File(directory.resolve(".keep"), repository);
+        try {
+            writeWithinSizeLimit(inputStream, keep);
+        }
+        catch (IOException | RuntimeException e) {
+            // Remove the folder created by this call, so that a retry with valid content does not fail on the existing folder
+            FileUtils.deleteQuietly(directory.toFile());
+            throw e;
+        }
     }
 
     /**

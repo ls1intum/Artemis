@@ -256,6 +256,8 @@ class ArchitectureTest extends AbstractArchitectureTest {
             "de.tum.cit.aet.artemis.core.util.FileUtil.replacePlaceholderSections(java.nio.file.Path, java.util.Map)",
             // the branch expression configured on the exercise
             "de.tum.cit.aet.artemis.localvc.service.LocalVCServletService.isBranchNameAllowedForRepository(org.eclipse.jgit.lib.Repository, java.lang.String)",
+            // the branch expression of an exercise, checked when it is saved
+            "de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseValidationService.validateBranchRegex(java.lang.String)",
             // the exceptions to filter, which the caller passes in
             "de.tum.cit.aet.artemis.localci.service.ProgrammingExerciseFeedbackCreationService.prepareJVMResultMessageMatcher(java.util.List)",
             // Hyperion probes build expressions from the generated names and contracts of each exercise.

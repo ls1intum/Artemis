@@ -15,7 +15,6 @@ import java.util.stream.Collectors;
 import jakarta.validation.Valid;
 import jakarta.ws.rs.BadRequestException;
 
-import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.slf4j.Logger;
@@ -35,6 +34,7 @@ import org.springframework.web.bind.annotation.RestController;
 import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyLearningObjectLink;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
+import de.tum.cit.aet.artemis.communication.service.linkpreview.LinkPreviewDocumentFetcher;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
 import de.tum.cit.aet.artemis.core.security.RateLimitType;
@@ -288,8 +288,8 @@ public class OnlineUnitResource {
         log.info("Requesting online resource at {}", LINE_BREAK_PATTERN.matcher(url.toString()).replaceAll("_"));
 
         try {
-            // Request the document, limited to 3 seconds and 500 KB (enough for most websites)
-            Document document = Jsoup.connect(url.toString()).timeout(3000).maxBodySize(500000).get();
+            // The fetcher only talks to public hosts, re-validates every redirect target and limits the duration and the size of the response
+            Document document = LinkPreviewDocumentFetcher.fetch(url.toString());
             String title = getMetaTagContent(document, "title");
             String description = getMetaTagContent(document, "description");
 

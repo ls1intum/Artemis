@@ -29,6 +29,9 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.stereotype.Service;
 
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
+
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.admin.service.RateLimitService;
@@ -503,6 +506,13 @@ public class LocalVCServletService {
         return limitInMegabytes > 0 ? limitInMegabytes * 1024 * 1024 : Long.MAX_VALUE;
     }
 
+    /** The longest branch name that is matched against the branch expression of an exercise. */
+    private static final int MAX_BRANCH_NAME_LENGTH = 255;
+
+    private static final int MAX_COMPILED_BRANCH_REGEXES = 1000;
+
+    private static final Cache<String, Pattern> COMPILED_BRANCH_REGEXES = Caffeine.newBuilder().maximumSize(MAX_COMPILED_BRANCH_REGEXES).build();
+
     public static enum BranchingStatus {
         BRANCHING_DISABLED, NAME_DOES_NOT_MATCH_REGEX, BRANCH_ALLOWED
     }
@@ -524,12 +534,21 @@ public class LocalVCServletService {
             return BranchingStatus.BRANCHING_DISABLED;
         }
 
-        Pattern pattern;
-        try {
-            pattern = Pattern.compile(buildConfig.getBranchRegex());
-        }
-        catch (PatternSyntaxException e) {
+        if (branchName.length() > MAX_BRANCH_NAME_LENGTH) {
             return BranchingStatus.NAME_DOES_NOT_MATCH_REGEX;
+        }
+
+        // The expression is compiled once and then reused by the following pushes
+        String branchRegex = buildConfig.getBranchRegex();
+        Pattern pattern = COMPILED_BRANCH_REGEXES.getIfPresent(branchRegex);
+        if (pattern == null) {
+            try {
+                pattern = Pattern.compile(branchRegex);
+            }
+            catch (PatternSyntaxException e) {
+                return BranchingStatus.NAME_DOES_NOT_MATCH_REGEX;
+            }
+            COMPILED_BRANCH_REGEXES.put(branchRegex, pattern);
         }
 
         return pattern.matcher(branchName).matches() ? BranchingStatus.BRANCH_ALLOWED : BranchingStatus.NAME_DOES_NOT_MATCH_REGEX;

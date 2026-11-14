@@ -148,7 +148,7 @@ class RepositoryAccessServiceTest {
         participation.setExercise(exerciseWithCourse(course));
         user.setLogin("student1");
         var plagiarismAccessApi = mock(PlagiarismAccessApi.class);
-        when(plagiarismAccessApi.hasAccessToSubmission(5L, "student1", participation)).thenReturn(true);
+        when(plagiarismAccessApi.hasAccessToParticipation(participation, "student1")).thenReturn(true);
         when(authorizationCheckService.isAtLeastTeachingAssistantInCourse(course, user)).thenReturn(false);
         when(authorizationCheckService.isAtLeastStudentInCourse(course, user)).thenReturn(true);
 
@@ -164,7 +164,7 @@ class RepositoryAccessServiceTest {
         participation.setExercise(exerciseWithCourse(course));
         user.setLogin("student1");
         var plagiarismAccessApi = mock(PlagiarismAccessApi.class);
-        when(plagiarismAccessApi.hasAccessToSubmission(5L, "student1", participation)).thenReturn(false);
+        when(plagiarismAccessApi.hasAccessToParticipation(participation, "student1")).thenReturn(false);
         when(authorizationCheckService.isAtLeastTeachingAssistantInCourse(course, user)).thenReturn(false);
         when(authorizationCheckService.isAtLeastStudentInCourse(course, user)).thenReturn(true);
 
@@ -181,7 +181,7 @@ class RepositoryAccessServiceTest {
         user.setLogin("noncourseuser1");
         // the module would allow the access, so the refusal below has to come from the missing course role
         var plagiarismAccessApi = mock(PlagiarismAccessApi.class);
-        when(plagiarismAccessApi.hasAccessToSubmission(5L, "noncourseuser1", participation)).thenReturn(true);
+        when(plagiarismAccessApi.hasAccessToParticipation(participation, "noncourseuser1")).thenReturn(true);
         when(authorizationCheckService.isAtLeastTeachingAssistantInCourse(course, user)).thenReturn(false);
         when(authorizationCheckService.isAtLeastStudentInCourse(course, user)).thenReturn(false);
 

@@ -14,8 +14,8 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record ExamStudentDTO(
         // ExamUser fields
-        Long id, Long userId, String login, String name, String email, String visibleRegistrationNumber, String studentImagePath, String plannedRoom, String actualRoom,
-        String plannedSeat, String actualSeat, Boolean didCheckImage, Boolean didCheckName, Boolean didCheckLogin, Boolean didCheckRegistrationNumber, String signingImagePath,
+        Long id, Long userId, String login, String name, String visibleRegistrationNumber, String studentImagePath, String plannedRoom, String actualRoom, String plannedSeat,
+        String actualSeat, Boolean didCheckImage, Boolean didCheckName, Boolean didCheckLogin, Boolean didCheckRegistrationNumber, String signingImagePath,
         Boolean didExamUserAttendExam,
         // StudentExam fields
         Long studentExamId, Integer workingTime, Boolean started, Boolean submitted, ZonedDateTime startedDate, ZonedDateTime submissionDate, Long numberOfExamSessions,

@@ -4,24 +4,31 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.io.IOException;
 import java.util.Map;
+import java.util.Optional;
 
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
 import de.tum.cit.aet.artemis.localvc.service.GitService;
+import de.tum.cit.aet.artemis.plagiarism.api.PlagiarismAccessApi;
+import de.tum.cit.aet.artemis.programming.domain.FileType;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingSubmissionRepository;
 import de.tum.cit.aet.artemis.programming.web.repository.RepositoryActionType;
 
 /**
@@ -46,24 +53,33 @@ public class RepositoryParticipationService {
 
     private final RepositoryService repositoryService;
 
+    private final Optional<PlagiarismAccessApi> plagiarismAccessApi;
+
+    private final ProgrammingSubmissionRepository programmingSubmissionRepository;
+
     /**
      * Constructor for the RepositoryParticipationService.
      *
-     * @param participationRepository       the participation repository
-     * @param gitService                    the git service
-     * @param userRepository                the user repository
-     * @param repositoryAccessService       the repository access service
-     * @param programmingExerciseRepository the programming exercise repository
-     * @param repositoryService             the repository service used to read file contents
+     * @param participationRepository         the participation repository
+     * @param gitService                      the git service
+     * @param userRepository                  the user repository
+     * @param repositoryAccessService         the repository access service
+     * @param programmingExerciseRepository   the programming exercise repository
+     * @param repositoryService               the repository service used to read file contents
+     * @param plagiarismAccessApi             the plagiarism module, if it is enabled
+     * @param programmingSubmissionRepository the programming submission repository
      */
     public RepositoryParticipationService(ParticipationRepository participationRepository, GitService gitService, UserRepository userRepository,
-            RepositoryAccessService repositoryAccessService, ProgrammingExerciseRepository programmingExerciseRepository, RepositoryService repositoryService) {
+            RepositoryAccessService repositoryAccessService, ProgrammingExerciseRepository programmingExerciseRepository, RepositoryService repositoryService,
+            Optional<PlagiarismAccessApi> plagiarismAccessApi, ProgrammingSubmissionRepository programmingSubmissionRepository) {
         this.participationRepository = participationRepository;
         this.gitService = gitService;
         this.userRepository = userRepository;
         this.repositoryAccessService = repositoryAccessService;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.repositoryService = repositoryService;
+        this.plagiarismAccessApi = plagiarismAccessApi;
+        this.programmingSubmissionRepository = programmingSubmissionRepository;
     }
 
     /**
@@ -91,14 +107,46 @@ public class RepositoryParticipationService {
     }
 
     /**
-     * Get the repository for the plagiarism view of the given participation.
+     * Get the files of the participation for the plagiarism view.
+     * <p>
+     * The files are the ones of the commit that was compared in the plagiarism check, and not the ones of the repository as it is now.
+     * Only if no submission of the participation was compared, which is only possible for staff, the current files are returned.
      *
-     * @param participationId the id of the participation to retrieve the repository for
-     * @return the repository for the plagiarism view of the given participation
+     * @param participationId the id of the participation to retrieve the files for
+     * @return a map with the file path as key and the file type as value
      * @throws GitAPIException          if the repository could not be accessed
+     * @throws IOException              if the repository could not be read
      * @throws AccessForbiddenException if the user does not have access to the repository
      */
-    public Repository getRepositoryForPlagiarismView(Long participationId) throws GitAPIException, AccessForbiddenException {
+    public Map<String, FileType> getFilesForPlagiarismView(Long participationId) throws GitAPIException, IOException, AccessForbiddenException {
+        ProgrammingExerciseParticipation participation = getParticipationForPlagiarismView(participationId);
+        Optional<String> comparedCommitHash = findComparedCommitHash(participation);
+        if (comparedCommitHash.isPresent()) {
+            return repositoryService.getFilesAtCommit(participation, comparedCommitHash.get());
+        }
+        return repositoryService.getFiles(getRepositoryFromGitService(true, participation));
+    }
+
+    /**
+     * Get a file of the participation for the plagiarism view, see {@link #getFilesForPlagiarismView(Long)}.
+     *
+     * @param participationId the id of the participation to retrieve the file for
+     * @param filename        the path of the file in the repository
+     * @return the file as an attachment
+     * @throws GitAPIException          if the repository could not be accessed
+     * @throws IOException              if the repository could not be read
+     * @throws AccessForbiddenException if the user does not have access to the repository
+     */
+    public ResponseEntity<byte[]> getFileForPlagiarismView(Long participationId, String filename) throws GitAPIException, IOException, AccessForbiddenException {
+        ProgrammingExerciseParticipation participation = getParticipationForPlagiarismView(participationId);
+        Optional<String> comparedCommitHash = findComparedCommitHash(participation);
+        if (comparedCommitHash.isPresent()) {
+            return repositoryService.getFileAtCommit(participation, comparedCommitHash.get(), filename);
+        }
+        return repositoryService.getFileFromRepository(filename, getRepositoryFromGitService(true, participation));
+    }
+
+    private ProgrammingExerciseParticipation getParticipationForPlagiarismView(Long participationId) throws AccessForbiddenException {
         Participation participation = participationRepository.findByIdElseThrow(participationId);
 
         if (!(participation instanceof ProgrammingExerciseParticipation programmingParticipation)) {
@@ -106,8 +154,19 @@ public class RepositoryParticipationService {
         }
 
         repositoryAccessService.checkHasAccessToPlagiarismSubmission(programmingParticipation, userRepository.getUserWithAuthorities(), RepositoryActionType.READ);
+        return programmingParticipation;
+    }
 
-        return getRepositoryFromGitService(true, programmingParticipation);
+    private Optional<String> findComparedCommitHash(ProgrammingExerciseParticipation participation) throws AccessForbiddenException {
+        User user = userRepository.getUserWithAuthorities();
+        String userLogin = repositoryAccessService.isStaffInPlagiarismView(participation, user) ? null : user.getLogin();
+        Optional<ProgrammingSubmission> comparedSubmission = plagiarismAccessApi.flatMap(api -> api.findComparedSubmissionId(participation.getId(), userLogin))
+                .flatMap(programmingSubmissionRepository::findById);
+        if (comparedSubmission.isPresent() && comparedSubmission.get().getCommitHash() == null) {
+            // Never fall back to the current content of the repository when a submission was compared but its commit is unknown
+            throw new AccessForbiddenException("The compared submission of participation " + participation.getId() + " has no commit");
+        }
+        return comparedSubmission.map(ProgrammingSubmission::getCommitHash);
     }
 
     /**

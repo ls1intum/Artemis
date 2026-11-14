@@ -57,6 +57,16 @@ class ProgrammingExerciseBuildConfigServiceTest {
     }
 
     @Test
+    void theRawSocketOptionOfTheExerciseReachesTheRunConfigAndIsOffOtherwise() {
+        DockerRunConfig enabled = serviceWith(List.of(), null).getDockerRunConfig(buildConfigWithFlags("{\"allowRawSockets\":true}"), exercise);
+        DockerRunConfig disabled = serviceWith(List.of(), null).getDockerRunConfig(buildConfigWithFlags("{\"cpuCount\":2}"), exercise);
+
+        assertThat(enabled).isNotNull();
+        assertThat(enabled.allowRawSockets()).isTrue();
+        assertThat(disabled.allowRawSockets()).isFalse();
+    }
+
+    @Test
     void withoutDefaultsTheExerciseAloneDecidesAsBefore() {
         DockerRunConfig config = serviceWith(List.of(), null).getDockerRunConfig(buildConfigWithFlags("{\"network\":\"none\",\"env\":{\"A\":\"1\"},\"cpuCount\":2}"), exercise);
 

@@ -1,11 +1,13 @@
 package de.tum.cit.aet.artemis.plagiarism.service;
 
-import static java.util.function.Predicate.isEqual;
 import static java.util.function.Predicate.not;
 
-import java.util.Objects;
+import java.util.Comparator;
+import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -33,23 +35,41 @@ public class PlagiarismAccessService {
     }
 
     /**
-     * A student should not see both answers from both students for the comparison before the due date
+     * A student should not see both answers from both students for the comparison before the due date.
+     * The compared submissions are looked up through the submissions of the participation, as a plagiarism comparison refers to submissions and not to participations.
      *
-     * @param submissionId  the id of the submission to check.
+     * @param participation the participation whose content the user wants to see.
      * @param userLogin     the user login of the student asking to see their plagiarism comparison.
-     * @param participation the participation of the student asking to see their plagiarism comparison.
-     * @return true is the user has access to the submission
+     * @return true is the user has access to the participation
      */
-    public boolean hasAccessToSubmission(Long submissionId, String userLogin, Participation participation) {
-        var comparisonOptional = plagiarismComparisonRepository.findBySubmissions_SubmissionId(submissionId);
-        return comparisonOptional.filter(not(Set::isEmpty)).isPresent() && isOwnSubmissionOrIsAfterExerciseDueDate(submissionId, userLogin, comparisonOptional.get(), participation)
-                && wasUserNotifiedByInstructor(userLogin, comparisonOptional.get());
+    public boolean hasAccessToParticipation(Participation participation, String userLogin) {
+        Set<PlagiarismComparison> comparisons = plagiarismComparisonRepository.findAllBySubmissionOfParticipation(participation.getId());
+        if (comparisons.isEmpty()) {
+            return false;
+        }
+        boolean isOwnSubmission = plagiarismComparisonRepository.findPlagiarismSubmissionsOfParticipation(participation.getId()).stream()
+                .anyMatch(plagiarismSubmission -> userLogin.equals(plagiarismSubmission.getStudentLogin()));
+        return (isOwnSubmission || exerciseDateService.isAfterDueDate(participation)) && wasUserNotifiedByInstructor(userLogin, comparisons);
     }
 
-    private boolean isOwnSubmissionOrIsAfterExerciseDueDate(Long submissionId, String userLogin, Set<PlagiarismComparison> comparisons, Participation participation) {
-        var isOwnSubmission = comparisons.stream().flatMap(it -> it.getSubmissions().stream()).filter(Objects::nonNull).filter(it -> it.getSubmissionId() == submissionId)
-                .findFirst().map(PlagiarismSubmission::getStudentLogin).filter(isEqual(userLogin)).isPresent();
-        return isOwnSubmission || exerciseDateService.isAfterDueDate(participation);
+    /**
+     * Finds the submission of the participation that was compared. If several were compared, the latest one is used.
+     * <p>
+     * For a student, only comparisons about which the student was notified are considered, so that the submission shown is the one of the comparison that grants the access.
+     *
+     * @param participationId the id of the participation
+     * @param userLogin       the login of the student asking to see the comparison, or null for staff, for whom every comparison counts
+     * @return the id of the compared submission, or empty if no submission of the participation was compared in a comparison the user may see
+     */
+    public Optional<Long> findComparedSubmissionId(long participationId, @Nullable String userLogin) {
+        Set<Long> submissionIdsOfParticipation = plagiarismComparisonRepository.findPlagiarismSubmissionsOfParticipation(participationId).stream()
+                .map(PlagiarismSubmission::getSubmissionId).collect(Collectors.toSet());
+        if (userLogin == null) {
+            return submissionIdsOfParticipation.stream().max(Comparator.naturalOrder());
+        }
+        return plagiarismComparisonRepository.findAllBySubmissionOfParticipation(participationId).stream()
+                .filter(comparison -> wasUserNotifiedByInstructor(userLogin, Set.of(comparison))).flatMap(comparison -> comparison.getSubmissions().stream())
+                .map(PlagiarismSubmission::getSubmissionId).filter(submissionIdsOfParticipation::contains).max(Comparator.naturalOrder());
     }
 
     /**

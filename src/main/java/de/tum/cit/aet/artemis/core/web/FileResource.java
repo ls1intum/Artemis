@@ -205,6 +205,7 @@ public class FileResource {
         if (file.getSize() > Constants.MAX_FILE_SIZE_COMMUNICATION) {
             throw new ResponseStatusException(HttpStatus.CONTENT_TOO_LARGE, "The file is too large. Maximum file size is " + Constants.MAX_FILE_SIZE_COMMUNICATION + " bytes.");
         }
+        fileUploadService.checkCanAccessConversationFilesElseThrow(courseId, conversationId, userRepository.getUser().getId());
         var filePathInformation = FileUtil.handleSaveFileInConversation(file, courseId, conversationId);
         String publicPath = filePathInformation.publicPath().toString();
 
@@ -229,7 +230,7 @@ public class FileResource {
     @GetMapping("files/courses/{courseId}/conversations/{conversationId}/{filename}")
     @EnforceAtLeastStudentInCourse
     public ResponseEntity<byte[]> getMarkdownFileForConversation(@PathVariable Long courseId, @PathVariable Long conversationId, @PathVariable String filename) {
-        // TODO: Improve the access check
+        fileUploadService.checkCanAccessConversationFilesElseThrow(courseId, conversationId, userRepository.getUser().getId());
         log.debug("REST request to get file for markdown in conversation: File {} for conversation {} in course {}", filename, conversationId, courseId);
         sanitizeFilenameElseThrow(filename);
 
@@ -238,10 +239,10 @@ public class FileResource {
         var fileUpload = fileUploadService.findByPath(publicPath);
 
         if (fileUpload.isPresent()) {
-            return buildFileResponse(serverFilePath, filename, Optional.ofNullable(fileUpload.get().getFilename()), true);
+            return buildFileResponse(serverFilePath, filename, Optional.ofNullable(fileUpload.get().getFilename()), false);
         }
 
-        return buildFileResponse(serverFilePath, filename, true);
+        return buildFileResponse(serverFilePath, filename, false);
     }
 
     /**

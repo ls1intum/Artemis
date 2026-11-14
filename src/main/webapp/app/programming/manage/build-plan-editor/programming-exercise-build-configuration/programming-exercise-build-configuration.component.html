@@ -77,6 +77,22 @@
                 </div>
             }
         </div>
+        @if (network() !== 'none') {
+            <div class="form-check mb-2">
+                <input
+                    type="checkbox"
+                    class="form-check-input"
+                    id="field_allowRawSockets"
+                    data-testid="allow-raw-sockets"
+                    [checked]="allowRawSockets()"
+                    (change)="onAllowRawSocketsChange($event)"
+                />
+                <label class="form-check-label" for="field_allowRawSockets">
+                    <span jhiTranslate="artemisApp.programmingExercise.dockerFlags.allowRawSockets.label"></span>
+                </label>
+                <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.dockerFlags.allowRawSockets.help" />
+            </div>
+        }
     }
     <div class="mb-2">
         <label for="field_dockerCpuCount">

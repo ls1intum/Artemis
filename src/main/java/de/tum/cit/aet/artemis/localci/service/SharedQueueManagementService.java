@@ -219,6 +219,30 @@ public class SharedQueueManagementService {
         }
     }
 
+    /**
+     * Cancel a build job of the given course by removing it from the queue or stopping the build process.
+     * <p>
+     * The course is compared with the job that is actually cancelled, not with an earlier look at the queue: a job that is handed over from the queue to an agent is in neither
+     * of them for a moment, and a job of another course is never cancelled here.
+     *
+     * @param buildJobId id of the build job to cancel
+     * @param courseId   id of the course the job has to belong to
+     */
+    public void cancelBuildJobOfCourse(String buildJobId, long courseId) {
+        List<BuildJobQueueItem> toRemove = distributedDataAccessService.getQueuedJobs().stream().filter(job -> Objects.equals(job.id(), buildJobId) && job.courseId() == courseId)
+                .toList();
+        if (!toRemove.isEmpty()) {
+            distributedDataAccessService.getDistributedBuildJobQueue().removeAll(toRemove);
+            updateCancelledQueuedBuildJobsStatus(toRemove);
+            return;
+        }
+        // The id of a job always belongs to the same course, so the job that is removed here is the one that has been compared
+        BuildJobQueueItem processingJob = distributedDataAccessService.getDistributedProcessingJobs().get(buildJobId);
+        if (processingJob != null && processingJob.courseId() == courseId && distributedDataAccessService.getDistributedProcessingJobs().remove(buildJobId) != null) {
+            triggerBuildJobCancellation(buildJobId);
+        }
+    }
+
     private void updateCancelledQueuedBuildJobsStatus(List<BuildJobQueueItem> queuedJobs) {
         for (BuildJobQueueItem queuedJob : queuedJobs) {
             buildJobRepository.updateBuildJobStatus(queuedJob.id(), BuildStatus.CANCELLED);

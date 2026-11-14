@@ -881,7 +881,16 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
         request.get(participationsBaseUrl + participation.getId() + "/repository/file", HttpStatus.FORBIDDEN, byte[].class, params);
     }
 
-    private void addPlagiarismCaseToProgrammingExercise(String studentLoginWithoutPost, String studentLoginWithPost) {
+    private void addPlagiarismCaseToProgrammingExercise(String studentLoginWithoutPost, String studentLoginWithPost) throws Exception {
+        // The compared submission is the submission of the participation at the commit that is pushed so far
+        var comparedSubmission = new ProgrammingSubmission();
+        comparedSubmission.setParticipation(participation);
+        comparedSubmission.setCommitHash(studentRepository.workingCopy().getRepository().resolve("HEAD").getName());
+        comparedSubmission = (ProgrammingSubmission) participationUtilService.addSubmission(participation, comparedSubmission);
+        addPlagiarismCaseToProgrammingExercise(studentLoginWithoutPost, studentLoginWithPost, comparedSubmission.getId());
+    }
+
+    private void addPlagiarismCaseToProgrammingExercise(String studentLoginWithoutPost, String studentLoginWithPost, long comparedSubmissionId) {
         var textPlagiarismResult = textExerciseUtilService.createPlagiarismResultForExercise(programmingExercise);
         var plagiarismComparison = new PlagiarismComparison();
         plagiarismComparison.setPlagiarismResult(textPlagiarismResult);
@@ -889,11 +898,11 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
 
         var plagiarismSubmissionA = new PlagiarismSubmission();
         plagiarismSubmissionA.setStudentLogin(studentLoginWithoutPost);
-        plagiarismSubmissionA.setSubmissionId(participation.getId());
+        plagiarismSubmissionA.setSubmissionId(comparedSubmissionId);
 
         var plagiarismSubmissionB = new PlagiarismSubmission();
         plagiarismSubmissionB.setStudentLogin(studentLoginWithPost);
-        plagiarismSubmissionB.setSubmissionId(participation.getId() + 1);
+        plagiarismSubmissionB.setSubmissionId(comparedSubmissionId + 1);
 
         plagiarismComparison.setSubmissionA(plagiarismSubmissionA);
         plagiarismComparison.setSubmissionB(plagiarismSubmissionB);
@@ -946,6 +955,72 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
         var file = request.get(participationsBaseUrl + participation.getId() + "/repository/file-plagiarism-view", HttpStatus.OK, byte[].class, params);
         assertThat(file).isNotEmpty();
         assertThat(new String(file)).isEqualTo(currentLocalFileContent);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student2", roles = "USER")
+    void plagiarismViewShowsTheComparedCommitInsteadOfTheLatestCode() throws Exception {
+        programmingExercise.setDueDate(ZonedDateTime.now().minusHours(1));
+        programmingExerciseRepository.save(programmingExercise);
+        addPlagiarismCaseToProgrammingExercise(TEST_PREFIX + "student1", TEST_PREFIX + "student2");
+        pushCommitFromLocalClone("code that was pushed after the comparison");
+
+        var file = request.get(participationsBaseUrl + participation.getId() + "/repository/file-plagiarism-view", HttpStatus.OK, byte[].class, fileParams(currentLocalFileName));
+
+        assertThat(new String(file, StandardCharsets.UTF_8)).isEqualTo(currentLocalFileContent);
+        var files = request.getMap(participationsBaseUrl + participation.getId() + "/repository/files-plagiarism-view", HttpStatus.OK, String.class, FileType.class);
+        assertThat(files).containsKey(currentLocalFileName);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student2", roles = "USER")
+    void plagiarismViewIsRefusedWhenOnlyTheIdOfAComparedSubmissionEqualsTheParticipationId() throws Exception {
+        programmingExercise.setDueDate(ZonedDateTime.now().minusHours(1));
+        programmingExerciseRepository.save(programmingExercise);
+        // The id of a compared submission that is not a submission of this participation happens to be the id of the participation
+        addPlagiarismCaseToProgrammingExercise(TEST_PREFIX + "student1", TEST_PREFIX + "student2", participation.getId());
+
+        request.getMap(participationsBaseUrl + participation.getId() + "/repository/files-plagiarism-view", HttpStatus.FORBIDDEN, String.class, FileType.class);
+        request.get(participationsBaseUrl + participation.getId() + "/repository/file-plagiarism-view", HttpStatus.FORBIDDEN, byte[].class, fileParams(currentLocalFileName));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student2", roles = "USER")
+    void plagiarismViewIsRefusedWhenTheComparedSubmissionHasNoCommit() throws Exception {
+        programmingExercise.setDueDate(ZonedDateTime.now().minusHours(1));
+        programmingExerciseRepository.save(programmingExercise);
+        var comparedSubmission = new ProgrammingSubmission();
+        comparedSubmission.setParticipation(participation);
+        comparedSubmission = (ProgrammingSubmission) participationUtilService.addSubmission(participation, comparedSubmission);
+        addPlagiarismCaseToProgrammingExercise(TEST_PREFIX + "student1", TEST_PREFIX + "student2", comparedSubmission.getId());
+        pushCommitFromLocalClone("code that was pushed after the comparison");
+
+        // The current content of the repository is never shown instead of a compared snapshot that is unknown
+        request.getMap(participationsBaseUrl + participation.getId() + "/repository/files-plagiarism-view", HttpStatus.FORBIDDEN, String.class, FileType.class);
+        request.get(participationsBaseUrl + participation.getId() + "/repository/file-plagiarism-view", HttpStatus.FORBIDDEN, byte[].class, fileParams(currentLocalFileName));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student2", roles = "USER")
+    void plagiarismViewShowsTheSubmissionOfTheComparisonTheStudentWasNotifiedAbout() throws Exception {
+        programmingExercise.setDueDate(ZonedDateTime.now().minusHours(1));
+        programmingExerciseRepository.save(programmingExercise);
+        addPlagiarismCaseToProgrammingExercise(TEST_PREFIX + "student1", TEST_PREFIX + "student2");
+        // The helper gives the other side of the comparison the id that follows the compared submission, so a submission with that id keeps the ids of both comparisons apart
+        var filler = new ProgrammingSubmission();
+        filler.setParticipation(participation);
+        filler.setCommitHash(studentRepository.workingCopy().getRepository().resolve("HEAD").getName());
+        participationUtilService.addSubmission(participation, filler);
+        // A later submission of the same participation is part of another comparison, about which only another student was notified
+        var laterSubmission = new ProgrammingSubmission();
+        laterSubmission.setParticipation(participation);
+        laterSubmission.setCommitHash("0000000000000000000000000000000000000000");
+        laterSubmission = (ProgrammingSubmission) participationUtilService.addSubmission(participation, laterSubmission);
+        addPlagiarismCaseToProgrammingExercise(TEST_PREFIX + "student1", TEST_PREFIX + "student3", laterSubmission.getId());
+
+        var file = request.get(participationsBaseUrl + participation.getId() + "/repository/file-plagiarism-view", HttpStatus.OK, byte[].class, fileParams(currentLocalFileName));
+
+        assertThat(new String(file, StandardCharsets.UTF_8)).isEqualTo(currentLocalFileContent);
     }
 
     @Test

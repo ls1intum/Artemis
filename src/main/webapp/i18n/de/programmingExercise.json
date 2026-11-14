@@ -863,6 +863,10 @@
                     "help": "Die maximale Größe des Arbeitsspeichers, die der Docker-Container verwenden kann. Weitere Informationen findest du in der Docker-Dokumentation.",
                     "invalid": "Die Arbeitsspeichergröße muss eine ganze Zahl von mindestens 6 MB sein."
                 },
+                "allowRawSockets": {
+                    "label": "Rohe Netzwerk-Sockets erlauben",
+                    "help": "Standardmäßig laufen Builds ohne die Linux-Berechtigung, rohe Netzwerk-Sockets zu öffnen. Gewöhnliche TCP- und UDP-Verbindungen, DNS, das Herunterladen von Abhängigkeiten und das übliche ping funktionieren weiterhin. Aktiviere diese Option nur, wenn die Aufgabe ein Werkzeug nutzt, das rohe Sockets braucht, zum Beispiel einen Paketmitschnitt oder ein traceroute mit rohen Paketen. Sie hat keine Wirkung, wenn das Netzwerk auf \"None\" gesetzt ist."
+                },
                 "memorySwap": {
                     "label": "Maximale Swap-Speichergröße bearbeiten (in MB)",
                     "help": "Die maximale Größe des Swap-Speichers, die der Docker-Container verwenden kann. Weitere Informationen findest du in der Docker-Dokumentation.",

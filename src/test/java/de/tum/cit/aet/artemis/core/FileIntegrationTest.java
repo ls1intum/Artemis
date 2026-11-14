@@ -920,6 +920,36 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
         byte[] retrievedContent = request.get(responsePath, HttpStatus.OK, byte[].class);
         assertThat(retrievedContent).isEqualTo(file.getBytes());
+
+        // The response depends on the access of the user and must not be stored by shared caches
+        var cacheControl = mockMvc.perform(get(responsePath)).andExpect(status().isOk()).andReturn().getResponse().getHeader(HttpHeaders.CACHE_CONTROL);
+        assertThat(cacheControl).satisfiesAnyOf(value -> assertThat(value).isNull(), value -> assertThat(value).doesNotContain("public"));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student2", roles = "USER")
+    void studentCannotUploadOrReadFilesOfGroupChatTheyDoNotBelongTo() throws Exception {
+        userUtilService.addUsers(TEST_PREFIX, 4, 4, 4, 1);
+        var course = courseUtilService.createEnrolledCourse(TEST_PREFIX);
+        var groupChat = conversationUtilService.createGroupChat(course, userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
+        MockMultipartFile file = new MockMultipartFile("file", "image.png", "image/png", new byte[] { 1, 2, 3 });
+
+        mockMvc.perform(multipart("/api/core/files/courses/" + course.getId() + "/conversations/" + groupChat.getId()).file(file).accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isForbidden());
+        request.get("/api/core/files/courses/" + course.getId() + "/conversations/" + groupChat.getId() + "/someFile.png", HttpStatus.FORBIDDEN, byte[].class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void studentCannotUseConversationFilesThroughAnotherCourse() throws Exception {
+        userUtilService.addUsers(TEST_PREFIX, 4, 4, 4, 1);
+        var course = courseUtilService.createEnrolledCourse(TEST_PREFIX);
+        var otherCourse = courseUtilService.createEnrolledCourse(TEST_PREFIX);
+        var groupChat = conversationUtilService.createGroupChat(course, userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
+        MockMultipartFile file = new MockMultipartFile("file", "image.png", "image/png", new byte[] { 1, 2, 3 });
+
+        mockMvc.perform(multipart("/api/core/files/courses/" + otherCourse.getId() + "/conversations/" + groupChat.getId()).file(file).accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isForbidden());
     }
 
     @Test

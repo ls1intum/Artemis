@@ -123,6 +123,21 @@ class BuildJobExecutionServiceTest {
         verify(logs).appendBuildLogEntry("job", "The file blank.xml does not contain any testcases.");
     }
 
+    @Test
+    void resultFilesAboveTheSizeLimitAreSkippedWithoutReadingThem() throws Exception {
+        Map<String, String> entries = new LinkedHashMap<>();
+        entries.put("TEST-oversized.xml", "x".repeat((int) BuildJobExecutionService.MAX_RESULT_FILE_BYTES + 1));
+        entries.put("TEST-result.xml", "<testsuite name=\"suite\"><testcase name=\"pass\" classname=\"Example\"/></testsuite>");
+        when(logs.getAndTruncateBuildLogs("job")).thenReturn(List.of());
+        when(runner.execute(any(), any())).thenReturn(new BuildJobRunnerResult(new ByteArrayInputStream(archive(entries)), 0, completedAt, () -> {
+        }));
+
+        var result = service.runBuildJob(buildJob(RepositoryType.USER, false, null, new String[0]));
+
+        assertThat(result.jobs().getFirst().successfulTests()).extracting(LocalCITestJobDTO::name).containsExactly("pass");
+        verify(logs).appendBuildLogEntry("job", "The file TEST-oversized.xml is too large and is ignored.");
+    }
+
     @ParameterizedTest
     @ValueSource(strings = { "../other", "a/b", "..", ".", "a b", "", "job\u0000" })
     void buildJobIdThatCouldLeaveTheCheckoutDirectoryIsRejected(String id) {
