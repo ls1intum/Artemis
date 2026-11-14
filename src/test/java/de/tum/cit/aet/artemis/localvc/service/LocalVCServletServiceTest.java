@@ -418,6 +418,16 @@ class LocalVCServletServiceTest {
         }
 
         @Test
+        void aBranchNameLongerThanAnyReasonableName_isRefusedWithoutMatching() {
+            configureBranching(true, ".*");
+
+            assertThat(localVCServletService.isBranchNameAllowedForRepository(repositoryOfProject("TEST"), "a".repeat(256)))
+                    .isEqualTo(LocalVCServletService.BranchingStatus.NAME_DOES_NOT_MATCH_REGEX);
+            assertThat(localVCServletService.isBranchNameAllowedForRepository(repositoryOfProject("TEST"), "a".repeat(255)))
+                    .isEqualTo(LocalVCServletService.BranchingStatus.BRANCH_ALLOWED);
+        }
+
+        @Test
         void disabledBranching_refusesEveryBranch() {
             configureBranching(false, "feature/.*");
 
