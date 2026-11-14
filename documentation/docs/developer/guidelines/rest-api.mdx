@@ -818,7 +818,7 @@ public ResponseEntity<String> getVcsAccessToken(@RequestParam("participationId")
 
 **How to Get Tool Tokens:**
 1. Verify the tool type is defined in `ToolTokenType.java`
-2. Send a POST request to `{{base_url}}/api/core/public/authenticate?tool=TOOLTYPE`
+2. Send a POST request to `{{base_url}}/api/core/public/authenticate?tool=TOOLTYPE`. The response body contains the token as `access_token`. Without the `tool` parameter the body carries the token only for `returnToken=true`; the web application relies on the cookie and does not request it.
 
 ## JSON Serialization
 

@@ -11,7 +11,7 @@ core.web.open.PublicClientErrorResource#reportClientError(ClientErrorReportDTO,S
 core.web.open.PublicImprintResource#getImprint(String)
 core.web.open.PublicPrivacyStatementResource#getPrivacyStatement(String)
 core.web.open.PublicUsageStatisticsResource#getUsageStatistics()
-core.web.open.PublicUserJwtResource#authenticate(LoginVM,String,ToolTokenType,HttpServletRequest,HttpServletResponse)
+core.web.open.PublicUserJwtResource#authenticate(LoginVM,String,ToolTokenType,boolean,HttpServletRequest,HttpServletResponse)
 core.web.open.PublicUserJwtResource#authorizeSAML2(String,HttpServletResponse,HttpServletRequest)
 core.web.open.PublicUserJwtResource#exchangeCodeToJwtToken(OIDCCodeExchangeDTO)
 core.web.open.PublicUserJwtResource#logout(HttpServletRequest,HttpServletResponse)
