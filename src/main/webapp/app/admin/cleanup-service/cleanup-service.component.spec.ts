@@ -3,7 +3,7 @@
  */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { HttpErrorResponse } from '@angular/common/http';
 import { of, throwError } from 'rxjs';
 import { signal } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
@@ -39,7 +39,7 @@ describe('CleanupServiceComponent', () => {
 
     beforeEach(async () => {
         const mockCleanupService = {
-            getLastExecutions: vi.fn().mockReturnValue(of(new HttpResponse<CleanupServiceExecutionRecordDTO[]>({ body: [] }))),
+            getLastExecutions: vi.fn().mockReturnValue(of([])),
             getCleanupConfiguration: vi.fn().mockReturnValue(of(CONFIGURATION)),
         };
 
@@ -59,17 +59,13 @@ describe('CleanupServiceComponent', () => {
     });
 
     it('should load last executions on init', () => {
-        const executionRecord: CleanupServiceExecutionRecordDTO[] = [{ executionDate: dayjs(), jobType: 'deleteOrphans' }];
-        const response = new HttpResponse<CleanupServiceExecutionRecordDTO[]>({
-            body: executionRecord,
-        });
-
-        vi.spyOn(cleanupService, 'getLastExecutions').mockReturnValue(of(response));
+        const executionDate = dayjs();
+        vi.spyOn(cleanupService, 'getLastExecutions').mockReturnValue(of([{ executionDate, jobType: 'deleteOrphans' }]));
 
         comp.ngOnInit();
 
         expect(cleanupService.getLastExecutions).toHaveBeenCalledOnce();
-        expect(comp.cleanupOperations()[0].lastExecuted).toEqual(dayjs(executionRecord[0].executionDate));
+        expect(comp.cleanupOperations()[0].lastExecuted).toEqual(executionDate);
     });
 
     it('should match execution records by server job type, not array position', () => {
@@ -78,12 +74,10 @@ describe('CleanupServiceComponent', () => {
         // be attributed to the operation whose serverJobTypeByName matches, never by index.
         const ratedDate = dayjs().subtract(1, 'day');
         const submissionDate = dayjs().subtract(2, 'days');
-        const response = new HttpResponse<CleanupServiceExecutionRecordDTO[]>({
-            body: [
-                { executionDate: ratedDate, jobType: 'deleteRatedResults' },
-                { executionDate: submissionDate, jobType: 'deleteSubmissionVersions' },
-            ],
-        });
+        const response: CleanupServiceExecutionRecordDTO[] = [
+            { executionDate: ratedDate, jobType: 'deleteRatedResults' },
+            { executionDate: submissionDate, jobType: 'deleteSubmissionVersions' },
+        ];
         vi.spyOn(cleanupService, 'getLastExecutions').mockReturnValue(of(response));
 
         comp.ngOnInit();

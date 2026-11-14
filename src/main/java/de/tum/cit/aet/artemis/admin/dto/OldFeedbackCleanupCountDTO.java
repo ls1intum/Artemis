@@ -2,6 +2,8 @@ package de.tum.cit.aet.artemis.admin.dto;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
 /**
  * DTO previewing the entities that would be deleted by the age-based "delete feedback of non-latest results" cleanup for
  * courses that ended before the configured cutoff. Combines the rated and non-rated variants; only the feedback (feedback
@@ -12,5 +14,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * @param feedback         the number of feedback rows that would be deleted
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
+@Schema(requiredProperties = { "longFeedbackText", "textBlock", "feedback" })
 public record OldFeedbackCleanupCountDTO(int longFeedbackText, int textBlock, int feedback) {
 }
