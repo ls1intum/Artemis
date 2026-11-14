@@ -138,7 +138,7 @@ jobs:
         run: |
           for dir in src/test/playwright/test-results src/test/playwright/test-reports; do
               [ -d "$dir" ] || continue
-              docker run --rm --user 0:0 --volume "$PWD/$dir:/output" docker.io/library/alpine:3.24.3 chown -R "$(id -u):$(id -g)" /output
+              docker run --rm --user 0:0 --volume "$PWD/$dir:/output" docker.io/library/alpine:3.24.4 chown -R "$(id -u):$(id -g)" /output
           done
 
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -357,7 +357,7 @@ jobs:
         run: |
           for dir in src/test/playwright/test-results src/test/playwright/test-reports; do
               [ -d "$dir" ] || continue
-              docker run --rm --user 0:0 --volume "$PWD/$dir:/output" docker.io/library/alpine:3.24.3 chown -R "$(id -u):$(id -g)" /output
+              docker run --rm --user 0:0 --volume "$PWD/$dir:/output" docker.io/library/alpine:3.24.4 chown -R "$(id -u):$(id -g)" /output
           done
 
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -565,7 +565,7 @@ jobs:
         run: |
           for dir in src/test/playwright/test-results src/test/playwright/test-reports; do
               [ -d "$dir" ] || continue
-              docker run --rm --user 0:0 --volume "$PWD/$dir:/output" docker.io/library/alpine:3.24.3 chown -R "$(id -u):$(id -g)" /output
+              docker run --rm --user 0:0 --volume "$PWD/$dir:/output" docker.io/library/alpine:3.24.4 chown -R "$(id -u):$(id -g)" /output
           done
 
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -756,7 +756,7 @@ jobs:
         run: |
           for dir in src/test/playwright/test-results src/test/playwright/test-reports; do
               [ -d "$dir" ] || continue
-              docker run --rm --user 0:0 --volume "$PWD/$dir:/output" docker.io/library/alpine:3.24.3 chown -R "$(id -u):$(id -g)" /output
+              docker run --rm --user 0:0 --volume "$PWD/$dir:/output" docker.io/library/alpine:3.24.4 chown -R "$(id -u):$(id -g)" /output
           done
 
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1

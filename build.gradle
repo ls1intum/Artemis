@@ -70,8 +70,8 @@ buildscript {
         // shipped WAR only ever contains the patched versions. enforcedPlatform applies each jackson-bom's
         // authoritative per-module versions, so no version is invented. Build-time only, not shipped. Keep
         // both versions in sync with the project-level jackson-bom imports below.
-        classpath enforcedPlatform("tools.jackson:jackson-bom:3.2.4")
-        classpath enforcedPlatform("com.fasterxml.jackson:jackson-bom:2.22.4")
+        classpath enforcedPlatform("tools.jackson:jackson-bom:3.3.0")
+        classpath enforcedPlatform("com.fasterxml.jackson:jackson-bom:2.23.0")
         classpath "com.diffplug.spotless:spotless-plugin-gradle:${spotless_plugin_version}"
         // This is required so that the latest version of the liquibase gradle plugin works
         classpath("org.liquibase:liquibase-core:${liquibase_version}") {
@@ -112,7 +112,7 @@ plugins {
     // from .openapi-generator/VERSION.
     id "org.openapi.generator" version "7.27.0"
     id "com.google.osdetector" version "1.7.3"
-    id "org.cyclonedx.bom" version "3.5.1"
+    id "org.cyclonedx.bom" version "3.6.1"
 }
 
 // Load Docker image versions from .env (single source of truth for Docker, tests, and build dependencies)
@@ -264,8 +264,9 @@ ext["logback.version"] = logback_version
 // pinning tools.jackson.core:jackson-databind on its own — is what keeps the sibling modules (notably
 // jackson-dataformat-cbor) on the same patch: a sibling left behind on an older patch re-declares that older
 // jackson-databind in its POM, and the GitHub dependency graph then reports it as a vulnerable version even
-// though no configuration resolves it. Keep Jackson 3 on the minor that webauthn4j / spring-ai expect, and
-// bump both families to the latest patched release when new advisories land.
+// though no configuration resolves it. webauthn4j and spring-ai declare older Jackson 3 minors (3.2 and 3.1), which
+// Jackson keeps binary compatible, so both families follow the latest release. After a minor bump, run the passkey,
+// LTI and Spring AI tests; bump both families to the latest patched release when new advisories land.
 // Import order matters and is load-bearing: the Jackson 3 BOM also manages
 // com.fasterxml.jackson.core:jackson-annotations (that artifact never moved to the tools.jackson group) at a
 // version trailing the Jackson 2 line, and io.spring.dependency-management lets a later import override an
@@ -276,8 +277,8 @@ ext["logback.version"] = logback_version
 dependencyManagement {
     imports {
         mavenBom "io.opentelemetry:opentelemetry-bom:${opentelemetry_version}"
-        mavenBom "tools.jackson:jackson-bom:3.2.4"
-        mavenBom "com.fasterxml.jackson:jackson-bom:2.22.4"
+        mavenBom "tools.jackson:jackson-bom:3.3.0"
+        mavenBom "com.fasterxml.jackson:jackson-bom:2.23.0"
     }
 }
 
@@ -830,7 +831,7 @@ dependencyManagement {
     imports {
         mavenBom "org.springframework.cloud:spring-cloud-dependencies:${spring_cloud_version}"
         // BOM uses 3-part versions (e.g. 18.1.0); POSTGRES_VERSION from .env may be 2-part (e.g. 18.1)
-        def pgVersion = findProperty('postgres_version') ?: '18.6'
+        def pgVersion = findProperty('postgres_version') ?: '18.7'
         def bomVersion = pgVersion.count('.') < 2 ? "${pgVersion}.0" : pgVersion
         mavenBom "io.zonky.test.postgres:embedded-postgres-binaries-bom:${bomVersion}"
         mavenBom "org.testcontainers:testcontainers-bom:${testcontainers_version}"
