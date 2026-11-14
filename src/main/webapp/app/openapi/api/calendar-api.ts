@@ -68,4 +68,13 @@ export class CalendarApi {
         return this.http.get<{ [key: string]: Array<CalendarEvent>; }>(url);
     }
 
+    /**
+     *
+     *
+     */
+    rotateCalendarEventSubscriptionToken(): Observable<string> {
+        const url = `${this.basePath}/api/calendar/subscription-token/rotate`;
+        return this.http.post(url, null, { responseType: 'text' });
+    }
+
 }

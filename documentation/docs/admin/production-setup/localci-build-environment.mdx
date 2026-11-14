@@ -162,6 +162,24 @@ Four details decide whether this works:
 Artemis does not store registry credentials in its own configuration or in the exercise, and instructors never enter them. An exercise only names the image.
 The Kubernetes runner uses `image-pull-secrets` instead, see [LocalCI Build Runners](/admin/production-setup/build-runners#configuration).
 
+### Limiting the registries of exercise images
+
+By default an instructor may enter an image from any registry. To limit this, list the registries that images may come from on the core nodes:
+
+```yaml
+artemis:
+    continuous-integration:
+        allowed-docker-registries:
+            - registry.example.org
+            - docker.io
+```
+
+The list is empty by default, which allows every registry. An entry is the host name of a registry, with its port if the image names one (`registry.example.org:5000`).
+An image name without a host, such as `ubuntu:24.04` or `library/ubuntu`, comes from `docker.io`, so list `docker.io` if instructors use such images.
+Artemis checks the image that an instructor enters when an exercise is created, updated or imported, and in the build plan editor. It answers a request with another registry with a `400` and the error key `dockerImageRegistryNotAllowed`.
+Exercises that exist already are checked the next time they are saved. An exercise without an image of its own uses the default image of its language, which Artemis does not check, so make sure the registry of
+`build.images` is on the list if instructors save such exercises.
+
 ### Pull policy
 
 The Docker runner has **one policy, and it is not configurable**: it inspects the image on the build agent, and pulls it only when the image is not present there.
@@ -259,6 +277,7 @@ Set agent settings on the build agents and core settings on the core nodes, see 
 | --- | --- | --- | --- |
 | Default CPU, memory, swap and process limit of a build | `build.default-docker-flags` (a list of `flag` and `value` pairs: `--cpus`, `--memory`, `--memory-swap`, `--pids-limit`) | 2 CPUs, 2g, 2g, 1000 | Build agent |
 | Upper limits an exercise may request | `container-flags-limit.max-cpu-count`, `max-memory`, `max-memory-swap` | see `application-buildagent.yml` | Core and build agent |
+| Registries that exercise images may come from | `allowed-docker-registries` (a list of registry host names) | empty, every registry | Core |
 | Networks an instructor may select | `container-flags-limit.allowed-custom-networks` | `none` | Core and build agent |
 | Variables of every build container | `container-defaults.env` (a list of `KEY=value`) | none | Core |
 | Network of the builds that select none | `container-defaults.network` | blank, the default network of the runtime | Core |

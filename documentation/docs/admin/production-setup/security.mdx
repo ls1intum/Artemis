@@ -309,6 +309,19 @@ uses. Docker applies a subnet only when it creates a network, so run `docker com
     the credential pair stays, because Jenkins is not an Artemis build agent and has neither a key nor a build job.
 </Callout>
 
+#### Host key of the SSH server
+
+A build agent that clones over SSH checks the host key of the core node. It reads the SHA-256 fingerprints that the core node publishes at `api/localvc/public/ssh-fingerprints` (the same values that users see on the page for SSH keys) and compares the fingerprint of the key it is shown with them. The agent reaches the endpoint at `artemis.version-control.url`. It keeps the fingerprints for five minutes and reads them again before it refuses a key, so a host key that you replaced on the core nodes is accepted without restarting the agents.
+
+If the fingerprint is none of the published ones, the clone fails and the log of the build agent names the host and the fingerprints. This does not depend on any setting, except `off` below. If the agent cannot read the fingerprints, because `artemis.version-control.url` does not reach a core node or the core node publishes none, the setting `artemis.version-control.ssh-host-key-verification` on the build agent decides:
+
+| Value | Behavior when the fingerprints cannot be read |
+|-------|-----------------------------------------------|
+| `if-available` (default) | The clone continues and the agent logs a warning. This is how agents behaved before the host key was checked. |
+| `required` | The clone fails. |
+
+Use `required` once every agent reaches the endpoint. With several core nodes behind a load balancer, give all of them the same host key (`artemis.version-control.ssh-host-key-path`), otherwise the agent sees fingerprints of different nodes.
+
 ### Database Credentials
 
 The database services used by `deployment/docker/artemis-prod-postgres.yml` and `deployment/docker/artemis-prod-mysql.yml` extend the shared `deployment/docker/postgres.yml`/`deployment/docker/mysql.yml` service definitions, which default to `deployment/docker/postgres/default.env` and `deployment/docker/mysql/default.env` for local development and testing. Those default env files intentionally use no real authentication (Postgres `POSTGRES_HOST_AUTH_METHOD=trust`, MySQL `MYSQL_ALLOW_EMPTY_PASSWORD=yes` with an empty root password) so a fresh local setup works without any configuration.
@@ -493,8 +506,12 @@ Artemis tells browsers not to show its pages inside a frame of another site. It 
 Artemis itself (`base-uri 'self'`).
 
 The [LTI module](/instructor/integrations/lti-configuration) is the exception. Learning management systems launch Artemis in a frame, so
-the LTI configuration removes `X-Frame-Options` while the module is enabled, and no `frame-ancestors` directive is sent.
-If you want to restrict which sites may embed Artemis in that case, or without LTI, list their origins:
+the LTI configuration removes `X-Frame-Options` while the module is enabled. As long as no LTI platform is configured and no origin is listed below, no `frame-ancestors` directive is sent.
+
+Artemis derives the sites that may embed it from the LTI platforms that you configure. The origin (scheme, host and port) of the issuer and of the authorization address of every platform is added
+to the directive, so that after the first platform the policy is `frame-ancestors 'self'` followed by these origins. Artemis reads the platforms again at most once a minute, so a new platform
+takes effect within a minute without a restart. An origin that a platform needs but that is not part of these two addresses has to be listed explicitly: Canvas, for example, authorizes at a central
+address, while the pages that embed Artemis come from the address of your institution. To list further origins, or to restrict the embedding without LTI, set:
 
 ```yaml
 artemis:
@@ -503,12 +520,24 @@ artemis:
     frame-ancestors: https://lms.example.org
 ```
 
-With origins configured, Artemis sends `frame-ancestors 'self' <origins>` and no `X-Frame-Options`. An entry that is not of
+With origins configured, Artemis sends `frame-ancestors 'self' <origins>` and no `X-Frame-Options`. The origins of the LTI platforms are added to the ones listed here. An entry that is not of
 that form stops the server at startup.
 
 The OpenAPI specification (`/api-docs`) and the Swagger UI (`/swagger-ui`) are switched off by default
 (`springdoc.api-docs.enabled` and `springdoc.swagger-ui.enabled`). Only where you switch them on, the paths are reachable
 without a login. On a server where they are off, a request to these paths needs a signed-in user like any other path.
+
+## Hosts of Images in Markdown
+
+Posts, problem statements, announcements and other markdown can show images from any web address. To limit the hosts that images may be loaded from, list them in the setting `info.allowedImageHosts` of the core nodes:
+
+```yaml
+info:
+    # Comma separated host names. A leading `*.` stands for every subdomain.
+    allowedImageHosts: images.example.org, *.cdn.example.org
+```
+
+The setting is empty by default, which allows every host. Once it holds a host, Artemis shows images of the listed hosts, of the own host of the server (`server.url`), relative addresses and inline `data:` images. An image of any other host is not loaded: the client removes its address when it renders the markdown, and the server removes the image from the problem statements that it renders itself (`api/exercise/problem-statement/render`). A host name has to match exactly, so list `example.org` and `*.example.org` separately if you want both. The client receives the list with the other public settings of the server (`management/info`), so a change takes effect after a restart of the core nodes and a reload of the page.
 
 ## Rate Limiting
 
@@ -539,6 +568,7 @@ artemis:
     failed-login-requests-per-minute: 10
     client-error-report-requests-per-minute: 60
     service-credential-failure-requests-per-minute: 30
+    re-evaluation-requests-per-minute: 6
 ```
 
 ### Where It Is Enforced
@@ -563,6 +593,7 @@ artemis:
   **When you upgrade:** git used to share `authentication-requests-per-minute`, and with the defaults one address could make 30 requests of both kinds in total. Now it can make up to 30 logins and up to 30 git authentications.
   With a login limit of your own, the git limit is a separate 30 on top of it.
   Review the git setting on every installation, whether you raised, lowered or never set the login limit, see [10.7 in the Upgrade Guide](/admin/upgrade-guide#107-rate-limit-of-git-operations).
+- Re-evaluation of all results of a programming exercise and the update of an exercise with a re-evaluation, in one bucket of their own, `re-evaluation-requests-per-minute`. It is counted per signed-in user and not per client address, so instructors who share an address do not draw on each other's budget. The default is 6 per minute, which is far above what an instructor needs, because the request recalculates and saves every latest result of the exercise.
 - [Client error reports](/admin/client-error-reports) of clients that are not signed in
 - Failed checks of the shared secrets that Athena, Pyris and the sharing platform present to Artemis, in a bucket of their own, `service-credential-failure-requests-per-minute`. Only a failed check spends a token, so a service with the right secret is never limited. Once an address has used up its tokens, Artemis refuses its further requests with 429 without comparing the secret.
 
@@ -580,7 +611,7 @@ If your reverse proxy reaches Artemis from a public address, or from an IPv6 add
 ### Internal Endpoints
 
 Some endpoints are meant to be called by other components of the installation, such as the AI services. They accept requests only from the address ranges in `artemis.security.internal.allowed-cidrs`, in addition to the secret that each of them checks.
-The shipped default allows every address, so that a first installation works. Restrict it to the addresses of the components that call Artemis:
+The shipped default allows every address (`::/0` and `0.0.0.0/0`), so that a first installation works. Under the `prod` profile, Artemis logs a warning at startup for as long as the list still admits every address. Restrict it to the addresses of the components that call Artemis:
 
 ```yaml
 artemis:

@@ -131,6 +131,7 @@ public class RateLimitConfigurationService {
             case CLIENT_ERROR_REPORT -> properties.getClientErrorReportRequestsPerMinute() != null ? properties.getClientErrorReportRequestsPerMinute() : type.getDefaultRpm();
             case SERVICE_CREDENTIAL_FAILURE ->
                 properties.getServiceCredentialFailureRequestsPerMinute() != null ? properties.getServiceCredentialFailureRequestsPerMinute() : type.getDefaultRpm();
+            case RE_EVALUATION -> properties.getReEvaluationRequestsPerMinute() != null ? properties.getReEvaluationRequestsPerMinute() : type.getDefaultRpm();
         };
     }
 }

@@ -6,6 +6,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -121,6 +122,31 @@ class SecurityConfigurationTest {
 
         assertThat(securityConfiguration.contentSecurityPolicy(true)).endsWith("frame-ancestors 'self' https://lms.example.org https://*.example.com:8443");
         assertThat(securityConfiguration.contentSecurityPolicy(false)).endsWith("frame-ancestors 'self' https://lms.example.org https://*.example.com:8443");
+    }
+
+    @Test
+    void contentSecurityPolicy_withLtiPlatformsOnly_allowsTheirOriginsToEmbed() {
+        assertThat(securityConfiguration.contentSecurityPolicy(true, List.of("https://moodle.example.org", "https://lms.example.com:8443")))
+                .endsWith("frame-ancestors 'self' https://moodle.example.org https://lms.example.com:8443");
+    }
+
+    @Test
+    void contentSecurityPolicy_withLtiPlatformsAndConfiguredOrigins_listsBoth() {
+        ReflectionTestUtils.setField(securityConfiguration, "frameAncestors", "https://extra.example.org, https://moodle.example.org");
+
+        assertThat(securityConfiguration.contentSecurityPolicy(true, List.of("https://moodle.example.org")))
+                .endsWith("frame-ancestors 'self' https://moodle.example.org https://extra.example.org");
+    }
+
+    @Test
+    void contentSecurityPolicy_withoutLtiPlatforms_staysAsBefore() {
+        assertThat(securityConfiguration.contentSecurityPolicy(true, List.of())).doesNotContain("frame-ancestors");
+        assertThat(securityConfiguration.contentSecurityPolicy(false, List.of())).endsWith("frame-ancestors 'none'");
+    }
+
+    @Test
+    void contentSecurityPolicy_skipsPlatformOriginsThatCannotBeUsed() {
+        assertThat(securityConfiguration.contentSecurityPolicy(true, List.of("https://moodle.example.org; script-src *", "not an origin"))).doesNotContain("frame-ancestors");
     }
 
     @ParameterizedTest

@@ -22,6 +22,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.node.ObjectNode;
 
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildResult;
@@ -37,7 +38,9 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.LockRepositoryPolicy;
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.SubmissionPenaltyPolicy;
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.SubmissionPolicy;
+import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseResponseDTO;
 import de.tum.cit.aet.artemis.programming.dto.SubmissionPolicyDTO;
+import de.tum.cit.aet.artemis.programming.dto.UpdateProgrammingExerciseDTO;
 import de.tum.cit.aet.artemis.programming.repository.SubmissionPolicyRepository;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
 
@@ -770,6 +773,38 @@ class SubmissionPolicyIntegrationTest extends AbstractProgrammingIntegrationLoca
 
     private void addSubmissionPolicyToExercise(SubmissionPolicy policy) {
         programmingExerciseUtilService.addSubmissionPolicyToExercise(policy, programmingExercise);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void test_updateProgrammingExercise_keepsPolicyWhenRequestOmitsIt() throws Exception {
+        addAnySubmissionPolicyToExercise();
+        ObjectNode body = updateRequestBody();
+        body.putNull("submissionPolicy");
+
+        request.putWithResponseBody("/api/programming/programming-exercises", body, ProgrammingExerciseResponseDTO.class, HttpStatus.OK);
+
+        assertThat(updatedExercise().getSubmissionPolicy()).as("the update does not remove the policy").isNotNull();
+        assertThat(request.get(requestUrl(), HttpStatus.OK, SubmissionPolicyDTO.class).submissionLimit()).isEqualTo(5);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void test_updateProgrammingExercise_keepsPolicyValuesWhenRequestChangesThem() throws Exception {
+        addAnySubmissionPolicyToExercise();
+        ObjectNode body = updateRequestBody();
+        ((ObjectNode) body.get("submissionPolicy")).put("submissionLimit", 1).put("active", false);
+
+        request.putWithResponseBody("/api/programming/programming-exercises", body, ProgrammingExerciseResponseDTO.class, HttpStatus.OK);
+
+        SubmissionPolicyDTO policy = request.get(requestUrl(), HttpStatus.OK, SubmissionPolicyDTO.class);
+        assertThat(policy.submissionLimit()).as("the update does not change the policy").isEqualTo(5);
+        assertThat(policy.active()).isTrue();
+    }
+
+    private ObjectNode updateRequestBody() {
+        ProgrammingExercise loaded = programmingExerciseRepository.findByIdWithSubmissionPolicyElseThrow(programmingExerciseId);
+        return objectMapper.valueToTree(UpdateProgrammingExerciseDTO.of(loaded, programmingExerciseUtilService.buildConfigOf(loaded)));
     }
 
     private void addAnySubmissionPolicyToExercise() {

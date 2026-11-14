@@ -44,6 +44,7 @@ import tools.jackson.databind.json.JsonMapper;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.core.util.FileUtil;
+import de.tum.cit.aet.artemis.core.util.ImageHostPolicy;
 import de.tum.cit.aet.artemis.exercise.dto.RenderedProblemStatementDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ResultSummaryInputDTO;
 import de.tum.cit.aet.artemis.exercise.dto.TestFeedbackInputDTO;
@@ -161,6 +162,9 @@ public class ProblemStatementRenderingService {
     private final FileService fileService;
 
     private final String serverUrl;
+
+    @Value("${info.allowedImageHosts:}")
+    private String allowedImageHosts = "";
 
     private final HtmlRenderer commonMarkRenderer;
 
@@ -477,7 +481,15 @@ public class ProblemStatementRenderingService {
 
     private String renderWithCommonMark(String markdown) {
         String html = commonMarkRenderer.render(COMMONMARK_PARSER.parse(markdown));
-        return Jsoup.clean(html, HTML_SAFELIST);
+        String cleanedHtml = Jsoup.clean(html, HTML_SAFELIST);
+        ImageHostPolicy imageHostPolicy = ImageHostPolicy.of(allowedImageHosts, serverUrl);
+        if (imageHostPolicy.isOpen()) {
+            return cleanedHtml;
+        }
+        var document = Jsoup.parseBodyFragment(cleanedHtml);
+        imageHostPolicy.removeDisallowedImages(document.body());
+        document.outputSettings().prettyPrint(false);
+        return document.body().html();
     }
 
     private record ResolvedMarkdownImage(String filename, String mime, Path realPath) {
@@ -638,6 +650,8 @@ public class ProblemStatementRenderingService {
             }
             digest.update((byte) 0);
             digest.update((inlineImages ? "INLINE" : "URL").getBytes(StandardCharsets.UTF_8));
+            digest.update((byte) 0);
+            digest.update(allowedImageHosts.getBytes(StandardCharsets.UTF_8));
             digest.update((byte) 0);
             return HexFormat.of().formatHex(digest.digest());
         }

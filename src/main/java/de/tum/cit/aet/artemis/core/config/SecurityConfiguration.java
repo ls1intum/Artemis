@@ -3,9 +3,15 @@ package de.tum.cit.aet.artemis.core.config;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.regex.Pattern;
+
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -308,11 +314,43 @@ public class SecurityConfiguration {
      * @throws IllegalStateException if a configured origin is not of the form {@code scheme://host[:port]}
      */
     String contentSecurityPolicy(boolean ltiEnabled) {
-        List<String> origins = configuredFrameAncestors();
+        return contentSecurityPolicy(ltiEnabled, Set.of());
+    }
+
+    /**
+     * Builds the Content Security Policy like {@link #contentSecurityPolicy(boolean)}, where the origins of the configured LTI platforms may embed the client as well.
+     * Together with the origins of {@code artemis.security.frame-ancestors} they form the {@code frame-ancestors} directive. Without any of them, the policy is the same
+     * as before.
+     *
+     * @param ltiEnabled         whether the LTI module is enabled
+     * @param ltiPlatformOrigins the origins of the configured LTI platforms, which are skipped if they are not of the form {@code scheme://host[:port]}
+     * @return the policy directives
+     * @throws IllegalStateException if a configured origin is not of the form {@code scheme://host[:port]}
+     */
+    String contentSecurityPolicy(boolean ltiEnabled, Collection<String> ltiPlatformOrigins) {
+        Set<String> origins = new LinkedHashSet<>();
+        for (String platformOrigin : ltiPlatformOrigins) {
+            if (FRAME_ANCESTOR_ORIGIN.matcher(platformOrigin).matches()) {
+                origins.add(platformOrigin);
+            }
+            else {
+                log.warn("The origin {} of an LTI platform cannot be used as a frame ancestor and is skipped", platformOrigin);
+            }
+        }
+        origins.addAll(configuredFrameAncestors());
         if (!origins.isEmpty()) {
             return CSP_POLICY_DIRECTIVES + "; frame-ancestors 'self' " + String.join(" ", origins);
         }
         return ltiEnabled ? CSP_POLICY_DIRECTIVES : CSP_POLICY_DIRECTIVES + "; frame-ancestors 'none'";
+    }
+
+    /**
+     * Writes the Content Security Policy of the response. It is computed for every response, because the LTI platforms that may embed the client can change while the
+     * server is running. The origins of the platforms are cached for a short time by the LTI configuration.
+     */
+    private void writeContentSecurityPolicy(HttpServletRequest request, HttpServletResponse response) {
+        Set<String> platformOrigins = customLti13Configurer.map(CustomLti13Configurer::getPlatformOrigins).orElse(Set.of());
+        response.setHeader("Content-Security-Policy", contentSecurityPolicy(moduleFeatureService.isLtiEnabled(), platformOrigins));
     }
 
     /**
@@ -400,10 +438,8 @@ public class SecurityConfiguration {
             .addFilterAfter(new SpaWebFilter(), BasicAuthenticationFilter.class)
             // Configures security headers.
             .headers(headers -> headers
-                // Sets Content Security Policy (CSP) directives to prevent XSS attacks.
-                .contentSecurityPolicy(csp -> csp
-                    .policyDirectives(contentSecurityPolicy(moduleFeatureService.isLtiEnabled()))
-                )
+                // Sets the Content Security Policy (CSP) directives and the framing restriction.
+                .addHeaderWriter(this::writeContentSecurityPolicy)
                 // Prevents the website from being framed. The LTI configuration below removes this header again, as learning management systems embed the client.
                 .frameOptions(this::configureFrameOptions)
                 // Sets Referrer Policy to limit the amount of referrer information sent with requests.

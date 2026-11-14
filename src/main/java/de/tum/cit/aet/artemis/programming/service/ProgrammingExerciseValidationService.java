@@ -19,6 +19,7 @@ import java.util.regex.Pattern;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
@@ -48,6 +49,14 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTestCase
 public class ProgrammingExerciseValidationService {
 
     private static final Logger log = LoggerFactory.getLogger(ProgrammingExerciseValidationService.class);
+
+    private static final String DEFAULT_DOCKER_REGISTRY = "docker.io";
+
+    /**
+     * Registries that a Docker image of an exercise may come from. Empty means that every registry is allowed.
+     */
+    @Value("${artemis.continuous-integration.allowed-docker-registries:}")
+    private List<String> allowedDockerRegistries = List.of();
 
     /** A run of whitespace, which a project key may not contain. */
     private static final Pattern WHITESPACE_RUN = Pattern.compile("\\s+");
@@ -153,6 +162,7 @@ public class ProgrammingExerciseValidationService {
         validateCustomCheckoutPaths(buildConfig);
         // Check the build config field lengths before the configuration is parsed
         validateBuildConfigSize(buildConfig);
+        validateDockerImageRegistry(buildConfig);
         validateBuildPhaseNames(buildConfig);
         validateDockerFlags(buildConfig);
         auxiliaryRepositoryService.validateAndAddAuxiliaryRepositoriesOfProgrammingExercise(programmingExercise, programmingExercise.getAuxiliaryRepositories());
@@ -332,6 +342,60 @@ public class ProgrammingExerciseValidationService {
         if (dockerFlags != null && dockerFlags.length() > MAX_DOCKER_FLAGS_LENGTH) {
             throw new BadRequestAlertException("The docker flags are too long. Max " + MAX_DOCKER_FLAGS_LENGTH + " characters", "Exercise", "dockerFlagsTooLong");
         }
+    }
+
+    /**
+     * Checks that the Docker image of the build plan configuration comes from one of the registries in
+     * {@code artemis.continuous-integration.allowed-docker-registries}. Nothing is checked while that list is empty, and a configuration without
+     * an image is not checked either, because it uses the default image of Artemis.
+     *
+     * @param buildConfig the build configuration to validate, or {@code null} when the request carries none
+     */
+    public void validateDockerImageRegistry(@Nullable ProgrammingExerciseBuildConfig buildConfig) {
+        if (buildConfig == null || allowedDockerRegistries.isEmpty()) {
+            return;
+        }
+        String buildPlanConfiguration = buildConfig.getBuildPlanConfiguration();
+        if (buildPlanConfiguration == null || buildPlanConfiguration.isBlank()) {
+            return;
+        }
+        try {
+            validateDockerImageRegistry(BuildPlanPhasesDTO.fromBuildPlanConfiguration(buildPlanConfiguration).dockerImage());
+        }
+        catch (JacksonException e) {
+            // an unreadable configuration is rejected by the validation of the build phases
+            log.debug("The Docker image registry was not checked, because the build plan configuration could not be read", e);
+        }
+    }
+
+    /**
+     * Checks that a Docker image comes from one of the registries in {@code artemis.continuous-integration.allowed-docker-registries}.
+     * An image without a registry in its name comes from {@code docker.io}.
+     *
+     * @param dockerImage the Docker image, or {@code null} for the default image of Artemis
+     */
+    public void validateDockerImageRegistry(@Nullable String dockerImage) {
+        if (dockerImage == null || allowedDockerRegistries.isEmpty()) {
+            return;
+        }
+        String registry = registryOf(dockerImage.trim());
+        boolean allowed = allowedDockerRegistries.stream().map(entry -> entry.trim().toLowerCase(Locale.ROOT)).anyMatch(entry -> entry.equals(registry));
+        if (!allowed) {
+            throw new BadRequestAlertException("The Docker image comes from the registry " + registry + ", which is not allowed on this server", "programmingExercise",
+                    "dockerImageRegistryNotAllowed");
+        }
+    }
+
+    private static String registryOf(String dockerImage) {
+        int firstSlash = dockerImage.indexOf('/');
+        if (firstSlash > 0) {
+            String first = dockerImage.substring(0, firstSlash).toLowerCase(Locale.ROOT);
+            // Like Docker, treat the first component as a registry when it looks like a host name, with a dot or a port, or is localhost
+            if (first.contains(".") || first.contains(":") || "localhost".equals(first)) {
+                return "index.docker.io".equals(first) || "registry-1.docker.io".equals(first) ? DEFAULT_DOCKER_REGISTRY : first;
+            }
+        }
+        return DEFAULT_DOCKER_REGISTRY;
     }
 
     /**

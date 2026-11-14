@@ -68,6 +68,8 @@ By using the filter component of the calendar, users can include or exclude even
 Users can subscribe external calendar applications to the Artemis calendar by clicking the Subscribe button, selecting a language, choosing which event types to include, and copying the generated link.
 This link can then be pasted into the settings of third-party calendar applications (e.g., Apple Calendar, Google Calendar, etc.) to subscribe them to the Artemis calendar.
 
+The link contains a personal token that identifies you, so share it with nobody. The token does not expire. If you want to stop a link from working, for example because you shared it by mistake, click **Create new link** in the same popover. Artemis then replaces your token, and every link you created before stops working. Subscribe again with the new link in your calendar applications.
+
 <div style={{ display: 'flex', alignItems: 'start', gap: '1rem' }}>
     <Image src={desktopSubscriptionComponent} alt={"iCalendar Subscription Popover for Large Devices"} caption={"iCalendar Subscription Popover for Large Devices"} style={{ maxHeight: '340px', maxWidth: 'none' }}></Image>
     <Image src={mobileSubscriptionComponent} alt={"iCalendar Subscription Popover for Small Devices"} caption={"iCalendar Subscription Popover for Small Devices"} style={{ maxHeight: '340px', maxWidth: 'none' }}></Image>
