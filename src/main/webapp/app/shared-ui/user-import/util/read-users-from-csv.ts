@@ -3,7 +3,8 @@ import { cleanString } from 'app/foundation/util/utils';
 import { StudentDTO } from 'app/core/shared/entities/student-dto.model';
 import { ExamUserDTO } from 'app/exam/shared/entities/exam-user-dto.model';
 
-export type StudentParsingResult = { ok: true; students: StudentDTO[] } | { ok: false; invalidRowIndices: number[] };
+type ParsedStudent = StudentDTO & Required<Pick<StudentDTO, 'registrationNumber' | 'login' | 'email' | 'firstName' | 'lastName'>>;
+export type StudentParsingResult = { ok: true; students: ParsedStudent[] } | { ok: false; invalidRowIndices: number[] };
 export type ExamUserParsingResult = { ok: true; examUsers: ExamUserDTO[] } | { ok: false; invalidRowIndices: number[] };
 interface CsvUser {
     [key: string]: string;
@@ -75,7 +76,7 @@ async function readValidatedCsvUsers(csvFile: File): Promise<CsvUserParsingResul
     return { ok: true, users, header: (aliases) => headers.find((name) => aliases.includes(name)) || '' };
 }
 
-function csvUserIdentityReader(header: (aliases: string[]) => string): (user: CsvUser) => StudentDTO {
+function csvUserIdentityReader(header: (aliases: string[]) => string): (user: CsvUser) => ParsedStudent {
     const registrationNumber = header(POSSIBLE_REGISTRATION_NUMBER_HEADERS);
     const login = header(POSSIBLE_LOGIN_HEADERS);
     const email = header(POSSIBLE_EMAIL_HEADERS);

@@ -2,6 +2,7 @@ api/admin-ai-worker-api.ts
 api/admin-hyperion-generation-api.ts
 api/admin-hyperion-generation-monitoring-api.ts
 api/calendar-api.ts
+api/course-access-api.ts
 api/global-search-api.ts
 api/hyperion-assessment-criteria-generation-api.ts
 api/hyperion-authoring-run-api.ts
@@ -59,10 +60,16 @@ model/consistency-check-response.ts
 model/consistency-issue.ts
 model/conversation-user.ts
 model/costs.ts
+model/course-access-rights.ts
+model/course-access-state.ts
 model/course-browser-data.ts
 model/course-competency.ts
+model/course-for-enrollment.ts
 model/course-for-quiz-exercise.ts
 model/course-for-search-filter.ts
+model/course-member.ts
+model/course-prerequisite.ts
+model/course-role-member.ts
 model/course-with-id.ts
 model/create-exercise-variant-group.ts
 model/create-or-update-tutorial-group-request.ts
@@ -147,6 +154,7 @@ model/multiple-choice-submitted-answer-after-evaluation.ts
 model/multiple-choice-submitted-answer-before-evaluation.ts
 model/multiple-choice-submitted-answer-from-live-client.ts
 model/multiple-choice-submitted-answer-from-student.ts
+model/organization.ts
 model/point-counter.ts
 model/problem-statement-generation-request.ts
 model/problem-statement-generation-response.ts
@@ -275,6 +283,10 @@ model/tutorial-group-summary-schedule.ts
 model/tutorial-group-summary-session.ts
 model/tutorial-group-summary.ts
 model/update-quiz-exercise.ts
+model/user-for-registration.ts
+model/user-name-and-login.ts
+model/user-public-info.ts
+model/user.ts
 model/variant-generation-request.ts
 model/variant-job-detail.ts
 model/variant-job-start.ts

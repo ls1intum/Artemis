@@ -1333,6 +1333,215 @@ paths:
                 type: array
                 items: {type: string, maxLength: 128}
                 maxItems: 500
+  /api/course/courses/{courseId}/{courseRoleSlug}:
+    post:
+      tags: [course-access]
+      operationId: addUsersToCourseRole
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: courseRoleSlug
+        in: path
+        description: 'Course role: students, tutors, editors or instructors (case
+          insensitive)'
+        required: true
+        schema: {type: string}
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: array
+              items: {$ref: '#/components/schemas/Student'}
+        required: true
+      responses:
+        '200':
+          description: OK
+          headers:
+            Cache-Control:
+              description: Default cache policy for authenticated responses
+              style: simple
+              schema: {type: string}
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/Student'}
+  /api/course/courses/{courseId}/unenroll:
+    post:
+      tags: [course-access]
+      operationId: unenrollFromCourse
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          headers:
+            Cache-Control:
+              description: Default cache policy for authenticated responses
+              style: simple
+              schema: {type: string}
+  /api/course/courses/{courseId}/tutors/{login}:
+    post:
+      tags: [course-access]
+      operationId: addTutorToCourse
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: login
+        in: path
+        required: true
+        schema: {type: string, pattern: '^[_''.@A-Za-z0-9-]*$'}
+      responses:
+        '200': {description: OK}
+    delete:
+      tags: [course-access]
+      operationId: removeTutorFromCourse
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: login
+        in: path
+        required: true
+        schema: {type: string, pattern: '^[_''.@A-Za-z0-9-]*$'}
+      responses:
+        '200':
+          description: OK
+          headers:
+            Cache-Control:
+              description: Default cache policy for authenticated responses
+              style: simple
+              schema: {type: string}
+  /api/course/courses/{courseId}/students/{login}:
+    post:
+      tags: [course-access]
+      operationId: addStudentToCourse
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: login
+        in: path
+        required: true
+        schema: {type: string, pattern: '^[_''.@A-Za-z0-9-]*$'}
+      responses:
+        '200': {description: OK}
+    delete:
+      tags: [course-access]
+      operationId: removeStudentFromCourse
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: login
+        in: path
+        required: true
+        schema: {type: string, pattern: '^[_''.@A-Za-z0-9-]*$'}
+      responses:
+        '200':
+          description: OK
+          headers:
+            Cache-Control:
+              description: Default cache policy for authenticated responses
+              style: simple
+              schema: {type: string}
+  /api/course/courses/{courseId}/instructors/{login}:
+    post:
+      tags: [course-access]
+      operationId: addInstructorToCourse
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: login
+        in: path
+        required: true
+        schema: {type: string, pattern: '^[_''.@A-Za-z0-9-]*$'}
+      responses:
+        '200': {description: OK}
+    delete:
+      tags: [course-access]
+      operationId: removeInstructorFromCourse
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: login
+        in: path
+        required: true
+        schema: {type: string, pattern: '^[_''.@A-Za-z0-9-]*$'}
+      responses:
+        '200':
+          description: OK
+          headers:
+            Cache-Control:
+              description: Default cache policy for authenticated responses
+              style: simple
+              schema: {type: string}
+  /api/course/courses/{courseId}/enroll:
+    post:
+      tags: [course-access]
+      operationId: enrollInCourse
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          headers:
+            Cache-Control:
+              description: Default cache policy for authenticated responses
+              style: simple
+              schema: {type: string}
+  /api/course/courses/{courseId}/editors/{login}:
+    post:
+      tags: [course-access]
+      operationId: addEditorToCourse
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: login
+        in: path
+        required: true
+        schema: {type: string, pattern: '^[_''.@A-Za-z0-9-]*$'}
+      responses:
+        '200': {description: OK}
+    delete:
+      tags: [course-access]
+      operationId: removeEditorFromCourse
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: login
+        in: path
+        required: true
+        schema: {type: string, pattern: '^[_''.@A-Za-z0-9-]*$'}
+      responses:
+        '200':
+          description: OK
+          headers:
+            Cache-Control:
+              description: Default cache policy for authenticated responses
+              style: simple
+              schema: {type: string}
   /api/tutorialgroup/courses/{courseId}/tutorial-groups/{tutorialGroupId}/sessions/{sessionId}/cancel:
     patch:
       tags: [tutorial-group-session]
@@ -2259,6 +2468,376 @@ paths:
           content:
             application/json:
               schema: {$ref: '#/components/schemas/CourseBrowserData'}
+  /api/course/courses/{courseId}/{courseRoleSlug}/users/search:
+    get:
+      tags: [course-access]
+      operationId: searchUsersForCourseRole
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: courseRoleSlug
+        in: path
+        description: 'Course role: students, tutors, editors or instructors (case
+          insensitive)'
+        required: true
+        schema: {type: string}
+      - name: searchTerm
+        in: query
+        required: true
+        schema: {type: string}
+      - name: page
+        in: query
+        required: false
+        schema: {type: integer, format: int32, default: 0, maximum: 100000, minimum: 0}
+      - name: size
+        in: query
+        required: false
+        schema: {type: integer, format: int32, default: 10, maximum: 200, minimum: 1}
+      responses:
+        '200':
+          description: OK
+          headers:
+            X-Total-Count:
+              description: Total number of matching users
+              style: simple
+              schema: {type: integer, format: int64}
+            Link:
+              description: Pagination links
+              style: simple
+              schema: {type: string}
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/UserForRegistration'}
+  /api/course/courses/{courseId}/{courseRoleSlug}/paged:
+    get:
+      tags: [course-access]
+      operationId: getPagedUsersInCourseRole
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: courseRoleSlug
+        in: path
+        description: 'Course role: students, tutors, editors or instructors (case
+          insensitive)'
+        required: true
+        schema: {type: string}
+      - name: page
+        in: query
+        required: true
+        schema: {type: integer, format: int32, maximum: 100000, minimum: 0}
+      - name: pageSize
+        in: query
+        required: true
+        schema: {type: integer, format: int32, maximum: 200, minimum: 1}
+      - name: sortingOrder
+        in: query
+        required: false
+        schema:
+          type: string
+          enum: [ASCENDING, DESCENDING]
+      - name: sortedColumn
+        in: query
+        required: false
+        schema: {type: string}
+      - name: searchTerm
+        in: query
+        required: false
+        schema: {type: string}
+      responses:
+        '200':
+          description: OK
+          headers:
+            X-Total-Count:
+              description: Total number of matching users
+              style: simple
+              schema: {type: integer, format: int64}
+            Link:
+              description: Pagination links
+              style: simple
+              schema: {type: string}
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/CourseRoleMember'}
+  /api/course/courses/{courseId}/users/search:
+    get:
+      tags: [course-access]
+      operationId: searchUsersInCourse
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: loginOrName
+        in: query
+        description: Login or name, at least three characters when searching for students
+        required: true
+        schema: {type: string}
+      - name: roles
+        in: query
+        required: true
+        style: form
+        schema:
+          type: array
+          items: {type: string}
+      responses:
+        '200':
+          description: OK
+          headers:
+            X-Total-Count:
+              description: Total number of matching users
+              style: simple
+              schema: {type: integer, format: int64}
+            Link:
+              description: Pagination links
+              style: simple
+              schema: {type: string}
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/UserPublicInfo'}
+  /api/course/courses/{courseId}/tutors:
+    get:
+      tags: [course-access]
+      operationId: getTutorsInCourse
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          headers:
+            Cache-Control:
+              description: Default cache policy for authenticated responses
+              style: simple
+              schema: {type: string}
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/CourseMember'}
+                uniqueItems: true
+  /api/course/courses/{courseId}/students:
+    get:
+      tags: [course-access]
+      operationId: getStudentsInCourse
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          headers:
+            Cache-Control:
+              description: Default cache policy for authenticated responses
+              style: simple
+              schema: {type: string}
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/CourseMember'}
+                uniqueItems: true
+  /api/course/courses/{courseId}/students/search:
+    get:
+      tags: [course-access]
+      operationId: searchStudentsInCourse
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: loginOrName
+        in: query
+        required: true
+        schema: {type: string, minLength: 3}
+      - name: page
+        in: query
+        required: false
+        schema: {type: integer, format: int32, default: 0, minimum: 0}
+      - name: size
+        in: query
+        required: false
+        schema: {type: integer, format: int32, default: 25, maximum: 100, minimum: 1}
+      responses:
+        '200':
+          description: OK
+          headers:
+            X-Total-Count:
+              description: Total number of matching users
+              style: simple
+              schema: {type: integer, format: int64}
+            Link:
+              description: Pagination links
+              style: simple
+              schema: {type: string}
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/User'}
+  /api/course/courses/{courseId}/search-other-users:
+    get:
+      tags: [course-access]
+      operationId: searchOtherUsersInCourse
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: nameOfUser
+        in: query
+        required: true
+        schema: {type: string, minLength: 3}
+      responses:
+        '200':
+          description: OK
+          headers:
+            Cache-Control:
+              description: Default cache policy for authenticated responses
+              style: simple
+              schema: {type: string}
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/CourseMember'}
+  /api/course/courses/{courseId}/members/search:
+    get:
+      tags: [course-access]
+      operationId: searchMembersOfCourse
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: loginOrName
+        in: query
+        required: true
+        schema: {type: string}
+      responses:
+        '200':
+          description: OK
+          headers:
+            Cache-Control:
+              description: Default cache policy for authenticated responses
+              style: simple
+              schema: {type: string}
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/UserNameAndLogin'}
+  /api/course/courses/{courseId}/instructors:
+    get:
+      tags: [course-access]
+      operationId: getInstructorsInCourse
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          headers:
+            Cache-Control:
+              description: Default cache policy for authenticated responses
+              style: simple
+              schema: {type: string}
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/CourseMember'}
+                uniqueItems: true
+  /api/course/courses/{courseId}/for-enrollment:
+    get:
+      tags: [course-access]
+      operationId: getCourseForEnrollment
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          headers:
+            Cache-Control:
+              description: Default cache policy for authenticated responses
+              style: simple
+              schema: {type: string}
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/CourseForEnrollment'}
+  /api/course/courses/{courseId}/editors:
+    get:
+      tags: [course-access]
+      operationId: getEditorsInCourse
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          headers:
+            Cache-Control:
+              description: Default cache policy for authenticated responses
+              style: simple
+              schema: {type: string}
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/CourseMember'}
+                uniqueItems: true
+  /api/course/courses/{courseId}/access-state:
+    get:
+      tags: [course-access]
+      operationId: getCourseAccessState
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/CourseAccessState'}
+  /api/course/courses/for-enrollment:
+    get:
+      tags: [course-access]
+      operationId: getCoursesForEnrollment
+      responses:
+        '200':
+          description: OK
+          headers:
+            Cache-Control:
+              description: Default cache policy for authenticated responses
+              style: simple
+              schema: {type: string}
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/CourseForEnrollment'}
   /api/calendar/subscription-token:
     get:
       tags: [calendar]
@@ -2649,6 +3228,11 @@ components:
         dropLocationId: {type: integer, format: int64}
         ratedCounter: {type: integer, format: int32}
         unRatedCounter: {type: integer, format: int32}
+    UserNameAndLogin:
+      type: object
+      properties:
+        name: {type: string}
+        login: {type: string}
     SubmittedAnswerFromLiveClient:
       discriminator:
         propertyName: type
@@ -3291,6 +3875,20 @@ components:
         lectureUnitId: {type: integer, format: int64}
         title: {type: string}
         kind: {type: string}
+    CourseMember:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        login: {type: string}
+        name: {type: string}
+        firstName: {type: string}
+        lastName: {type: string}
+        email: {type: string}
+        visibleRegistrationNumber: {type: string}
+        imageUrl: {type: string}
+        activated: {type: boolean}
+        internal: {type: boolean}
+      required: [activated, id, internal]
     QuizQuestionGenerationResponse:
       type: object
       description: Response containing generated quiz questions
@@ -3431,6 +4029,16 @@ components:
       properties:
         type: {type: string}
       required: [type]
+    CourseRoleMember:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        login: {type: string}
+        name: {type: string}
+        email: {type: string}
+        visibleRegistrationNumber: {type: string}
+        imageUrl: {type: string}
+      required: [id, login, name]
     ShortAnswerMappingFromEditor:
       type: object
       properties:
@@ -3811,6 +4419,30 @@ components:
           items: {$ref: '#/components/schemas/AuthoringRun'}
         nextBeforeId: {type: integer, format: int64}
       required: [runs]
+    CourseAccessRights:
+      type: object
+      properties:
+        courseId: {type: integer, format: int64}
+        roles:
+          type: array
+          items:
+            type: string
+            enum: [STUDENT, TEACHING_ASSISTANT, EDITOR, INSTRUCTOR]
+          uniqueItems: true
+      required: [courseId, roles]
+    CourseForEnrollment:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        title: {type: string}
+        description: {type: string}
+        semester: {type: string}
+        enrollmentConfirmationMessage: {type: string}
+        prerequisites:
+          type: array
+          items: {$ref: '#/components/schemas/CoursePrerequisite'}
+          uniqueItems: true
+      required: [id]
     QuizSearchCourse:
       type: object
       properties:
@@ -4750,6 +5382,18 @@ components:
           enum: [LOWER, MATCH, HIGHER, UNKNOWN]
         taskCount: {type: integer, format: int32}
         testCount: {type: integer, format: int32}
+    Organization:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        name: {type: string}
+        shortName: {type: string}
+        url: {type: string}
+        description: {type: string}
+        emailPattern: {type: string}
+        logoUrl: {type: string}
+        numberOfUsers: {type: integer, format: int64}
+        numberOfCourses: {type: integer, format: int64}
     QuizExerciseWithQuestions:
       type: object
       properties:
@@ -4852,6 +5496,17 @@ components:
         difficulty: {type: integer, format: int32, description: Difficulty as a value
             from 0 to 100, maximum: 100, minimum: 0}
       required: [difficulty, language, numberOfQuestions, questionTypes]
+    UserForRegistration:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        login: {type: string}
+        name: {type: string}
+        email: {type: string}
+        registrationNumber: {type: string}
+        profilePictureUrl: {type: string}
+        isRegistered: {type: boolean}
+      required: [id, isRegistered, login, name]
     TutorialGroupSummarySession:
       type: object
       properties:
@@ -5461,9 +6116,9 @@ components:
         subTypeReferenceId: {type: integer, format: int64}
         subTypeReferenceStartDate: {type: string, format: date-time}
         subTypeReferenceEndDate: {type: string, format: date-time}
-        subTypeWithReferenceFromChannel: {$ref: '#/components/schemas/Channel', writeOnly: true}
         subTypeReferenceDates: {$ref: '#/components/schemas/ChannelSubTypeReferenceDates',
           writeOnly: true}
+        subTypeWithReferenceFromChannel: {$ref: '#/components/schemas/Channel', writeOnly: true}
     ShortAnswerQuizQuestionWithSolution:
       required: [type]
       type: object
@@ -5550,6 +6205,11 @@ components:
       properties:
         id: {type: integer, format: int64}
         exam: {$ref: '#/components/schemas/ExamWithIdAndCourse'}
+    CourseAccessState:
+      type: object
+      properties:
+        hasAccess: {type: boolean}
+      required: [hasAccess]
     SubmittedAnswerBeforeEvaluation:
       discriminator:
         propertyName: type
@@ -5563,6 +6223,19 @@ components:
       properties:
         type: {type: string}
       required: [type]
+    UserPublicInfo:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        login: {type: string}
+        name: {type: string}
+        firstName: {type: string}
+        lastName: {type: string}
+        imageUrl: {type: string}
+        isInstructor: {type: boolean}
+        isEditor: {type: boolean}
+        isTeachingAssistant: {type: boolean}
+        isStudent: {type: boolean}
     MultipleChoiceSubmittedAnswerAfterEvaluation:
       required: [type]
       type: object
@@ -5610,6 +6283,47 @@ components:
             in EUR, example: 0.016513}
         totalEur: {type: number, format: double, description: Total costs in EUR,
           example: 0.027738}
+    User:
+      type: object
+      properties:
+        createdBy: {type: string}
+        createdDate: {type: string, format: date-time}
+        lastModifiedBy: {type: string}
+        lastModifiedDate: {type: string, format: date-time}
+        id: {type: integer, format: int64}
+        login: {type: string, maxLength: 50, minLength: 4, pattern: '^[_''.@A-Za-z0-9-]*$'}
+        name: {type: string, maxLength: 101, minLength: 0}
+        firstName: {type: string, maxLength: 50, minLength: 0}
+        lastName: {type: string, maxLength: 50, minLength: 0}
+        email: {type: string, format: email, maxLength: 100, minLength: 5}
+        visibleRegistrationNumber: {type: string}
+        imageUrl: {type: string, maxLength: 256, minLength: 0}
+        activated: {type: boolean}
+        langKey: {type: string, maxLength: 6, minLength: 2}
+        internal: {type: boolean}
+        authorities:
+          type: array
+          items: {type: string}
+          uniqueItems: true
+        courseRoles:
+          type: array
+          items: {$ref: '#/components/schemas/CourseAccessRights'}
+        organizations:
+          type: array
+          items: {$ref: '#/components/schemas/Organization'}
+          uniqueItems: true
+        vcsAccessToken: {type: string}
+        vcsAccessTokenExpiryDate: {type: string, format: date-time}
+        askToSetupPasskey: {type: boolean}
+        selectedLLMUsageTimestamp: {type: string, format: date-time}
+        selectedLLMUsage:
+          type: string
+          enum: [NO_AI, LOCAL_AI, CLOUD_AI]
+        testUser: {type: boolean}
+        passkeySuperAdminApproved: {type: boolean}
+        loggedInWithPasskey: {type: boolean}
+        isTestUser: {type: boolean}
+      required: [login]
     MultipleChoiceSubmittedAnswerFromLiveClient:
       required: [type]
       type: object
@@ -5785,6 +6499,22 @@ components:
             for every response counted so far}
       required: [billableTokens, cachedInputTokens, estimatedCostComplete, inputTokens,
         modelCalls, outputTokens, tokenBudget]
+    CoursePrerequisite:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        title: {type: string}
+        description: {type: string}
+        taxonomy:
+          type: string
+          enum: [REMEMBER, UNDERSTAND, APPLY, ANALYZE, EVALUATE, CREATE]
+        softDueDate: {type: string, format: date-time}
+        masteryThreshold: {type: integer, format: int32}
+        optional: {type: boolean}
+        type:
+          type: string
+          enum: [prerequisite]
+      required: [id, masteryThreshold, optional, type]
     ShortAnswerSubmittedTextFromStudent:
       type: object
       properties:
