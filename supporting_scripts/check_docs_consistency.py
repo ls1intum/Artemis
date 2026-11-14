@@ -5,10 +5,10 @@ check_docs_references.py proves that the names in the documentation exist. This 
 the numbers, commands and examples next to those names are still true. Every check reports only
 what it can prove, and every exception has an entry with a reason below.
 
-  * Versions. "Java 25", "Node 24", "Angular 22", "Spring Boot 4.1", "PostgreSQL 18" and "Gradle 9"
+  * Versions. "Java 25", "Node 26", "Angular 22", "Spring Boot 4.1", "PostgreSQL 18" and "Gradle 9"
     in the prose have to agree with the build files that pin them (build.gradle, gradle.properties,
     pnpm-workspace.yaml, .env and the Gradle wrapper). A claim may name fewer segments than the pin:
-    "Node 24" matches 24.21.0.
+    "Node 26" matches 26.13.1.
   * Defaults. A table row or a sentence that gives the default of an `artemis.` property has to
     agree with the value in the YAML configuration, when the YAML sets one.
   * Commands. `pnpm run <script>` has to name a script of a package.json, `./gradlew <task>` a task

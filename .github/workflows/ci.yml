@@ -612,7 +612,7 @@ jobs:
         if: needs.detect-changes.outputs.tests_deferred != 'true' && needs.test.outputs.affected_tests != 'true' && (steps.changes.outputs.has_client_changes == 'true' || steps.changes.outputs.has_server_changes == 'true')
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          node-version: '24'
+          node-version: '26'
       - name: Generate coverage table
         id: coverage
         if: needs.detect-changes.outputs.tests_deferred != 'true' && needs.test.outputs.affected_tests != 'true' && (steps.changes.outputs.has_client_changes == 'true' || steps.changes.outputs.has_server_changes == 'true')
@@ -800,7 +800,7 @@ jobs:
         if: steps.badges-checkout.outcome == 'success'
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          node-version: '24'
+          node-version: '26'
 
       - name: Compute and publish the coverage badge
         if: steps.badges-checkout.outcome == 'success'

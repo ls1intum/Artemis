@@ -262,8 +262,8 @@ command -v docker >/dev/null 2>&1 || MISSING="$MISSING docker"
 command -v java >/dev/null 2>&1   || MISSING="$MISSING java"
 command -v node >/dev/null 2>&1   || MISSING="$MISSING node"
 
-# Activate the pnpm version pinned in package.json via Corepack (shipped with
-# Node 24). Idempotent and quick; ensures `pnpm` is on PATH on fresh setups.
+# Activate the pnpm version pinned in package.json via Corepack (install it once with
+# `npm install --global corepack`). Idempotent and quick; ensures `pnpm` is on PATH on fresh setups.
 if command -v corepack >/dev/null 2>&1; then
     corepack enable >/dev/null 2>&1 || true
 fi

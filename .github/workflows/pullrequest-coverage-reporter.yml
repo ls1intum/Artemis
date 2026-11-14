@@ -26,7 +26,7 @@ on:
 
 env:
   CI: true
-  node: 24
+  node: 26
 
 permissions:
   contents: read
