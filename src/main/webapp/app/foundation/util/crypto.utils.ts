@@ -14,8 +14,10 @@ export function generateUuid(): string {
     if (webCrypto?.getRandomValues) {
         webCrypto.getRandomValues(bytes);
     } else {
+        // Reviewed false positive (Sonar S2245): last resort for an environment without any Web Crypto RNG, where throwing would
+        // break bootstrap. The callers use the UUID as a client-side identifier (e.g. for files, sync sessions and calendar events), never as a secret.
         for (let i = 0; i < 16; i++) {
-            bytes[i] = Math.floor(Math.random() * 256);
+            bytes[i] = Math.floor(Math.random() * 256); // NOSONAR // nosemgrep
         }
     }
     bytes[6] = (bytes[6] & 0x0f) | 0x40; // version 4
