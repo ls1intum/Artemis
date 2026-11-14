@@ -14,6 +14,14 @@ import de.tum.cit.aet.artemis.programming.domain.StaticCodeAnalysisTool;
 import de.tum.cit.aet.artemis.programming.dto.StaticCodeAnalysisIssue;
 import de.tum.cit.aet.artemis.programming.dto.StaticCodeAnalysisReportDTO;
 
+/**
+ * The root element {@code <checkstyle version="...">} carries an attribute, so the XML module hands it to the deserializer as an object that
+ * contains the {@code file} elements. Reading the root as a plain list only worked for XML modules that dropped root attributes.
+ */
+@JsonIgnoreProperties(ignoreUnknown = true)
+record CheckstyleReport(@JacksonXmlElementWrapper(useWrapping = false) @JacksonXmlProperty(localName = "file") List<CheckstyleFile> files) {
+}
+
 @JsonIgnoreProperties(ignoreUnknown = true)
 record CheckstyleFile(@JacksonXmlProperty(isAttribute = true, localName = "name") String name,
 
@@ -43,9 +51,8 @@ public class CheckstyleParser implements ParserStrategy {
     @Override
     public StaticCodeAnalysisReportDTO parse(String reportContent) {
         try {
-            List<CheckstyleFile> files = xmlMapper.readValue(reportContent, new tools.jackson.core.type.TypeReference<>() {
-            });
-            return createReportFromFiles(files);
+            CheckstyleReport report = xmlMapper.readValue(reportContent, CheckstyleReport.class);
+            return createReportFromFiles(report.files() == null ? List.of() : report.files());
         }
         catch (JacksonException e) {
             throw new RuntimeException("Failed to parse XML", e);
