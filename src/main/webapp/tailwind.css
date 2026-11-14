@@ -173,6 +173,7 @@
 @source './app/assessment/overview';
 @source './app/assessment/manage/complaints-for-tutor';
 @source './app/assessment/manage/complaint-response';
+@source './app/assessment/manage/structured-grading-instructions-assessment-layout';
 @source './app/text/overview/text-editor';
 @source './app/fileupload/overview/file-upload-submission';
 @source './app/exercise/dashboards/tutor-leaderboard';
@@ -305,6 +306,7 @@
 @source './app/fileupload/manage/assess/file-upload-assessment.component.html';
 @source './app/plagiarism/manage/plagiarism-split-view/text-submission-viewer/text-submission-viewer.component.html';
 @source './app/programming/manage/assess/code-editor-tutor-assessment-inline-feedback/code-editor-tutor-assessment-inline-feedback.component.html';
+@source './app/shared/components/unified-feedback/unified-feedback.component.html';
 @source './app/programming/manage/code-editor/file-browser/file/code-editor-file-browser-file.component.html';
 @source './app/programming/manage/code-editor/file-browser/folder/code-editor-file-browser-folder.component.html';
 @source './app/programming/manage/grading/charts/test-case-distribution-chart.component.html';

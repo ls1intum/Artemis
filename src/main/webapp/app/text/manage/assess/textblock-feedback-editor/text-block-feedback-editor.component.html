@@ -1,5 +1,8 @@
 <jhi-unified-feedback
+    [assessmentLayout]="true"
+    (applyInstruction)="applyArmedInstruction()"
     [editable]="true"
+    (instructionUnlinked)="didChange()"
     [readOnly]="readOnly()"
     [feedback]="feedback()"
     [showReference]="false"

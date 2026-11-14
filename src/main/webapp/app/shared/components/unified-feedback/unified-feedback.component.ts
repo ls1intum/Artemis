@@ -1,7 +1,8 @@
-import { Component, DestroyRef, ElementRef, afterNextRender, afterRenderEffect, computed, inject, input, model, output, viewChild } from '@angular/core';
+import { GradingInstructionSelectionService } from 'app/exercise/structured-grading-criterion/grading-instruction-selection.service';
+import { Component, ElementRef, afterRenderEffect, computed, inject, input, model, output, viewChild } from '@angular/core';
 import { NgClass } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
 import { faCheck, faExclamationTriangle, faMinus, faQuestionCircle, faTimes, faTrashAlt } from '@fortawesome/free-solid-svg-icons';
 import {
@@ -21,7 +22,7 @@ import { GradingInstructionLinkIconComponent } from 'app/shared-ui/grading-instr
 import { FeedbackSuggestionBadgeComponent } from 'app/exercise/feedback/feedback-suggestion-badge/feedback-suggestion-badge.component';
 import { AssessmentCorrectionRoundBadgeComponent } from 'app/assessment/manage/unreferenced-feedback-detail/assessment-correction-round-badge/assessment-correction-round-badge.component';
 import { FormsModule } from '@angular/forms';
-import { PointsInputComponent } from 'app/shared-ui/tum-aet-ui-integration/points-input/points-input.component';
+import { POINTS_MAX_FRACTION_DIGITS, PointsInputComponent } from 'app/shared-ui/tum-aet-ui-integration/points-input/points-input.component';
 import { autogrowTextarea } from 'app/foundation/util/textarea-autogrow.util';
 
 export type FeedbackType = 'correct' | 'needs_revision' | 'not_attempted' | 'non_compliant';
@@ -40,18 +41,20 @@ interface FeedbackTypeConfig {
         NgClass,
         FaIconComponent,
         TumAetUiTooltipDirective,
+        TumAetUiButtonDirective,
         FormsModule,
         ConfirmIconComponent,
         GradingInstructionLinkIconComponent,
         FeedbackSuggestionBadgeComponent,
         AssessmentCorrectionRoundBadgeComponent,
         PointsInputComponent,
+        ArtemisTranslatePipe,
     ],
 })
 export class UnifiedFeedbackComponent {
+    protected readonly selectionService = inject(GradingInstructionSelectionService);
     private artemisTranslatePipe = inject(ArtemisTranslatePipe);
     private localeConversionService = inject(LocaleConversionService);
-    private destroyRef = inject(DestroyRef);
 
     constructor() {
         // afterRenderEffect (not effect): the textarea DOM read/write here must happen after the view -
@@ -67,12 +70,8 @@ export class UnifiedFeedbackComponent {
             }
         });
 
-        // Re-measuring only on feedbackDetail/feedbackTitle changes misses the case where a textarea's own
-        // available width shrinks later (e.g. a modeling exercise's Apollon diagram finishes laying out after an
-        // AI feedback suggestion already landed) - the text then wraps into more lines than the height that was
-        // computed at mount time, with nothing left to trigger a re-measure. Watch width specifically (not
-        // the observed box as a whole) so our own height writes below don't retrigger this callback.
-        afterNextRender(() => {
+        // Watch each mounted textarea's width; viewChild changes when an assessment card opens or closes.
+        afterRenderEffect((onCleanup) => {
             const detailTextarea = this.detailTextarea()?.nativeElement;
             const titleTextarea = this.titleTextarea()?.nativeElement;
             if (!detailTextarea && !titleTextarea) {
@@ -80,6 +79,8 @@ export class UnifiedFeedbackComponent {
             }
             let lastDetailWidth = detailTextarea?.clientWidth;
             let lastTitleWidth = titleTextarea?.clientWidth;
+            // Render-effect cleanup disconnects on both textarea replacement and component destruction.
+            // eslint-disable-next-line localRules/enforce-cleanup-on-destroy
             const resizeObserver = new ResizeObserver((entries) => {
                 for (const entry of entries) {
                     const width = entry.contentRect.width;
@@ -98,7 +99,7 @@ export class UnifiedFeedbackComponent {
             if (titleTextarea) {
                 resizeObserver.observe(titleTextarea);
             }
-            this.destroyRef.onDestroy(() => resizeObserver.disconnect());
+            onCleanup(() => resizeObserver.disconnect());
         });
     }
 
@@ -112,6 +113,9 @@ export class UnifiedFeedbackComponent {
     assessmentsNames = input<AssessmentNamesForModelId | undefined>(undefined);
     showReference = input<boolean>(true);
 
+    /** Assessment card presentation; other feedback views keep their existing layout. */
+    assessmentLayout = input(false);
+
     editable = input<boolean>(false);
     readOnly = input<boolean>(false);
     highlightDifferences = input<boolean>(false);
@@ -121,12 +125,16 @@ export class UnifiedFeedbackComponent {
      * this to false so the UI never invites editing a value that would be discarded. Defaults to true.
      */
     titleEditable = input<boolean>(true);
+    /** Hides generated file/line titles when an assessment editor supplies its own context. */
+    showTitle = input(true);
 
     feedbackTitle = model<string | undefined>(undefined);
     feedbackDetail = model<string | undefined>(undefined);
     feedbackCredits = model<number | undefined>(0);
 
     readonly onDelete = output<void>();
+    readonly applyInstruction = output<void>();
+    readonly instructionUnlinked = output<void>();
 
     private readonly detailTextarea = viewChild<ElementRef<HTMLTextAreaElement>>('detailTextarea');
     private readonly titleTextarea = viewChild<ElementRef<HTMLTextAreaElement>>('titleTextarea');
@@ -206,14 +214,14 @@ export class UnifiedFeedbackComponent {
 
     /** Signed, compact points label for the read-only pill, e.g. `+10`, `-5`, `0` (no "Point(s)" word). */
     readonly pointsLabel = computed(() => {
-        const points = this.points();
-        const formatted = this.localeConversionService.toLocaleString(points, this.scoreAccuracy());
+        const points = this.effectivePoints();
+        const formatted = this.localeConversionService.toLocaleString(points, this.assessmentLayout() ? POINTS_MAX_FRACTION_DIGITS : this.scoreAccuracy());
         return points > 0 ? `+${formatted}` : formatted;
     });
 
     /** Read-only pill color: follows the sign of the points value directly, independent of the inferred/explicit type. */
     readonly pointsSeverity = computed<'positive' | 'negative' | 'neutral'>(() => {
-        const points = this.points();
+        const points = this.effectivePoints();
         if (points > 0) {
             return 'positive';
         }
@@ -357,6 +365,9 @@ export class UnifiedFeedbackComponent {
      * The points input shows the snapped value again because {@link feedbackCredits} is bound to it with `[ngModel]`.
      */
     onCreditsCommit(): void {
+        if (this.feedback()?.gradingInstruction) {
+            return;
+        }
         const normalized = this.normalizedCredits(this.feedbackCredits());
         if (normalized !== this.feedbackCredits()) {
             this.feedbackCredits.set(normalized);
@@ -375,7 +386,7 @@ export class UnifiedFeedbackComponent {
     }
 
     toggleDeleteConfirm(): void {
-        if (this.canDismissWithoutConfirm()) {
+        if (!this.assessmentLayout() && this.canDismissWithoutConfirm()) {
             this.handleDeleteConfirmed();
         } else {
             this.confirmIcon()?.toggle();
@@ -408,7 +419,16 @@ export class UnifiedFeedbackComponent {
         autogrowTextarea(textarea);
     }
 
+    stopToolbarEnterPropagation(event: Event): void {
+        if (!this.assessmentLayout() || !(event as KeyboardEvent).ctrlKey) {
+            event.stopPropagation();
+        }
+    }
+
     private getReferencedFeedbackTitle(feedback: Feedback): string {
+        if (this.assessmentLayout() && feedback.gradingInstruction) {
+            return '';
+        }
         if (feedback.text) {
             if (Feedback.isFeedbackSuggestion(feedback)) {
                 return Feedback.stripSuggestionPrefix(feedback.text);

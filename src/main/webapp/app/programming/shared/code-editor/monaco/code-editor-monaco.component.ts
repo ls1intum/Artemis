@@ -22,6 +22,7 @@ import { RepositoryFileService } from 'app/programming/shared/services/repositor
 import { MonacoEditorComponent } from 'app/editor/monaco-editor/monaco-editor.component';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { Subscription, firstValueFrom, take, timeout } from 'rxjs';
+import { GradingCriterion } from 'app/exercise/structured-grading-criterion/grading-criterion.model';
 import { Feedback } from 'app/assessment/shared/entities/feedback.model';
 import { Course } from 'app/course/shared/entities/course.model';
 import { CodeEditorTutorAssessmentInlineFeedbackComponent } from 'app/programming/manage/assess/code-editor-tutor-assessment-inline-feedback/code-editor-tutor-assessment-inline-feedback.component';
@@ -89,6 +90,7 @@ export class CodeEditorMonacoComponent implements OnDestroy {
     readonly commitId = input<string | undefined>(undefined);
     readonly disableActions = input<boolean>(false);
     readonly selectedFile = input<string>();
+    readonly gradingCriteria = input<GradingCriterion[]>([]);
     readonly selectedRepository = input<RepositoryType>();
     readonly sessionId = input.required<number | string>();
     readonly buildAnnotations = input<Annotation[]>([]);
@@ -110,6 +112,17 @@ export class CodeEditorMonacoComponent implements OnDestroy {
 
     readonly loadingCount = signal<number>(0);
     readonly newFeedbackLines = signal<number[]>([]);
+
+    hasUnsavedInlineFeedback(): boolean {
+        return this.newFeedbackLines().length > 0 || this.inlineFeedbackComponents().some((component) => component.feedback() !== undefined && component.hasUnsavedEdits());
+    }
+
+    discardUnsavedInlineFeedback(): void {
+        this.inlineFeedbackComponents()
+            .filter((component) => component.hasUnsavedEdits())
+            .forEach((component) => component.cancelFeedback());
+        this.newFeedbackLines.set([]);
+    }
     readonly binaryFileSelected = signal<boolean>(false);
     readonly imagePreviewUrl = signal<string | undefined>(undefined);
     readonly imagePreviewError = signal<boolean>(false);
@@ -321,7 +334,6 @@ export class CodeEditorMonacoComponent implements OnDestroy {
         }
 
         if (feedbacksChanged) {
-            this.newFeedbackLines.set([]);
             this.renderFeedbackWidgets();
         }
 
@@ -548,7 +560,7 @@ export class CodeEditorMonacoComponent implements OnDestroy {
      */
     addNewFeedback(lineNumber: number): void {
         const lineNumberZeroBased = lineNumber - 1;
-        if (!this.getInlineFeedbackNode(lineNumberZeroBased)) {
+        if (!this.readOnlyManualFeedback() && !this.newFeedbackLines().includes(lineNumberZeroBased)) {
             this.newFeedbackLines.set([...this.newFeedbackLines(), lineNumberZeroBased]);
             this.renderFeedbackWidgets(lineNumberZeroBased);
         }
@@ -633,7 +645,11 @@ export class CodeEditorMonacoComponent implements OnDestroy {
 
                 // New, unsaved feedback has no associated object yet.
                 for (const line of this.newFeedbackLines()) {
-                    const feedbackNode = this.getInlineFeedbackNodeOrElseThrow(line);
+                    const feedbackNode = this.inlineFeedbackComponents().find((component) => component.codeLine() === line && component.feedback() === undefined)?.elementRef
+                        .nativeElement;
+                    if (!feedbackNode) {
+                        throw new Error('No draft feedback node found at line ' + line);
+                    }
                     this.editor().addLineWidget(line + 1, 'feedback-new-' + line, feedbackNode);
                 }
 
@@ -642,7 +658,10 @@ export class CodeEditorMonacoComponent implements OnDestroy {
                 if (focusLine !== undefined) {
                     // The inline feedback editor renders its description field through jhi-unified-feedback, which
                     // identifies the textarea by class rather than by a (non-reusable) id.
-                    this.getInlineFeedbackNode(focusLine)?.querySelector<HTMLTextAreaElement>('.unified-feedback-detail-input')?.focus();
+                    const detailTextarea = this.inlineFeedbackComponents()
+                        .find((component) => component.codeLine() === focusLine && component.feedback() === undefined)
+                        ?.elementRef.nativeElement.querySelector('.unified-feedback-detail-input') as HTMLTextAreaElement | null;
+                    detailTextarea?.focus();
                 }
             },
             { injector: this.injector },
