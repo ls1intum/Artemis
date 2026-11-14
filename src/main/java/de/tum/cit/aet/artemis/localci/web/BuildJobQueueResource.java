@@ -36,6 +36,8 @@ import de.tum.cit.aet.artemis.core.service.featureusage.UsageInteraction;
 import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.core.util.SliceUtil;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
+import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
+import de.tum.cit.aet.artemis.exercise.service.ParticipationAuthorizationCheckService;
 import de.tum.cit.aet.artemis.localci.domain.BuildJob;
 import de.tum.cit.aet.artemis.localci.repository.BuildJobRepository;
 import de.tum.cit.aet.artemis.localci.service.DistributedDataAccessService;
@@ -56,11 +58,18 @@ public class BuildJobQueueResource {
 
     private final BuildJobRepository buildJobRepository;
 
+    private final ParticipationRepository participationRepository;
+
+    private final ParticipationAuthorizationCheckService participationAuthorizationCheckService;
+
     public BuildJobQueueResource(SharedQueueManagementService localCIBuildJobQueueService, BuildJobRepository buildJobRepository,
-            DistributedDataAccessService distributedDataAccessService) {
+            DistributedDataAccessService distributedDataAccessService, ParticipationRepository participationRepository,
+            ParticipationAuthorizationCheckService participationAuthorizationCheckService) {
         this.localCIBuildJobQueueService = localCIBuildJobQueueService;
         this.buildJobRepository = buildJobRepository;
         this.distributedDataAccessService = distributedDataAccessService;
+        this.participationRepository = participationRepository;
+        this.participationAuthorizationCheckService = participationAuthorizationCheckService;
     }
 
     /**
@@ -143,8 +152,8 @@ public class BuildJobQueueResource {
             throw new AccessForbiddenException("You are not allowed to cancel the build job of this course!");
         }
 
-        // Call the cancelBuildJob method in LocalCIBuildJobManagementService
-        localCIBuildJobQueueService.cancelBuildJob(buildJobId);
+        // The course is checked again against the job that is actually cancelled, as a job can be handed over from the queue to an agent after the check above
+        localCIBuildJobQueueService.cancelBuildJobOfCourse(buildJobId, courseId);
 
         return ResponseEntity.noContent().build();
     }
@@ -230,6 +239,7 @@ public class BuildJobQueueResource {
 
     /**
      * Returns the estimated start date of the build job for the given participation.
+     * The user needs access to the participation.
      *
      * @param participationId the id of the participation
      * @return the estimated queue duration
@@ -243,6 +253,7 @@ public class BuildJobQueueResource {
         if (participationId <= 0) {
             return ResponseEntity.badRequest().build();
         }
+        participationAuthorizationCheckService.checkCanAccessParticipationElseThrow(participationRepository.findByIdElseThrow(participationId));
         ZonedDateTime estimatedJobQueueReleaseTime = localCIBuildJobQueueService.getBuildJobEstimatedStartDate(participationId);
         log.debug("Queue duration estimation took {} ms", TimeLogUtil.formatDurationFrom(start));
         return ResponseEntity.ok(estimatedJobQueueReleaseTime);
