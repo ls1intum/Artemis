@@ -36,6 +36,35 @@ public interface ConversationRepository extends ArtemisJpaRepository<Conversatio
     Optional<Conversation> findWithParticipantsById(long conversationId);
 
     /**
+     * Checks whether the conversation belongs to the given course and the user takes part in it, or the conversation is a course-wide channel.
+     *
+     * @param conversationId the id of the conversation
+     * @param courseId       the id of the course the conversation is expected to belong to
+     * @param userId         the id of the user
+     * @return true if the user may use the conversation
+     */
+    @Query("""
+            SELECT COUNT(conv.id) > 0
+            FROM Conversation conv
+            WHERE conv.id = :conversationId
+                AND conv.course.id = :courseId
+                AND (
+                    EXISTS (
+                        SELECT cp.id
+                        FROM ConversationParticipant cp
+                        WHERE cp.conversation.id = conv.id
+                            AND cp.user.id = :userId
+                    )
+                    OR conv.id IN (
+                        SELECT channel.id
+                        FROM Channel channel
+                        WHERE channel.isCourseWide = TRUE
+                    )
+                )
+            """)
+    boolean isConversationOfCourseAccessibleByUser(@Param("conversationId") long conversationId, @Param("courseId") long courseId, @Param("userId") long userId);
+
+    /**
      * Retrieves a list of user-related information for the provided conversations for the given user
      *
      * @param conversationIds a list of conversation ids you want to retrieve information for
