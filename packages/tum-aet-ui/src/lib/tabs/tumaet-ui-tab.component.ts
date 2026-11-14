@@ -50,9 +50,13 @@ export class TumAetUiTabComponent extends Tab implements OnInit, OnDestroy {
     }
 
     protected readonly hostClasses = computed(() => {
-        const state = this.selected() ? 'tumaet:text-accent' : 'tumaet:text-muted tumaet:hover:text-text';
+        const selectedColor = this.tabsService.selectedColor() === 'text' ? 'tumaet:text-text-hover' : 'tumaet:text-accent';
+        const state = this.selected() ? selectedColor : 'tumaet:text-muted tumaet:hover:text-text';
+        const size = this.tabsService.size() === 'small' ? 'tumaet-ui-tab-small' : '';
         const disabled = this.disabled() ? 'tumaet-ui-tab-disabled' : '';
-        return `tumaet-ui-tab tumaet:focus-visible:outline tumaet:focus-visible:outline-2 tumaet:focus-visible:outline-focus ${state} ${disabled}`.trim();
+        return `tumaet-ui-tab tumaet:focus-visible:outline tumaet:focus-visible:outline-2 tumaet:focus-visible:outline-focus ${state} ${size} ${disabled}`
+            .replace(/\s+/g, ' ')
+            .trim();
     });
 
     override ngOnInit(): void {

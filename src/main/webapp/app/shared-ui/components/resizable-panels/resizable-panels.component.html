@@ -3,7 +3,7 @@
         class="resizable-panels-splitter w-full h-full"
         [class.right-collapsed]="isRightPanelCollapsed()"
         [panelSizes]="panelSizesForSplitter()"
-        [minSizes]="[0, 0]"
+        [minSizes]="[effectiveLeftMinSizePercent(), 0]"
         [gutterSize]="gutterSize"
         [collapsedSecondSize]="isRightPanelCollapsed() ? '3rem' : undefined"
         [ariaLabel]="'artemisApp.modelingSubmission.resizePanel' | artemisTranslate: { panel: rightPanels()[activeRightIndex()].label() | artemisTranslate }"
