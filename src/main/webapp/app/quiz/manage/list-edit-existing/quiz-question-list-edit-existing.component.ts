@@ -1,4 +1,5 @@
-import { ChangeDetectionStrategy, Component, ViewEncapsulation, effect, inject, input, output, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, ViewEncapsulation, computed, effect, inject, input, output, signal } from '@angular/core';
+import { orderBy } from 'lodash-es';
 import { QuizQuestion, QuizQuestionType } from 'app/quiz/shared/entities/quiz-question.model';
 import { DragAndDropQuestion } from 'app/quiz/shared/entities/drag-and-drop-question.model';
 import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice-question.model';
@@ -17,13 +18,22 @@ import { onError } from 'app/foundation/util/global.utils';
 import { checkForInvalidFlaggedQuestions } from 'app/quiz/shared/service/quiz-manage-util.service';
 import { strFromU8 } from 'fflate';
 import { ZipEntries, readZipEntries } from 'app/foundation/util/zip.util';
-import { KeyValuePipe, NgClass } from '@angular/common';
+import { KeyValuePipe } from '@angular/common';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FormsModule } from '@angular/forms';
 import { FileService } from 'app/foundation/service/file.service';
 import { parseJson } from 'app/foundation/util/json.util';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { TumAetUiButtonComponent, TumAetUiDialogComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import {
+    TumAetUiButtonComponent,
+    TumAetUiButtonDirective,
+    TumAetUiDialogComponent,
+    TumAetUiTableDirective,
+    TumAetUiTableLayoutComponent,
+    TumAetUiTableSortEvent,
+    TumAetUiTableSortableColumnComponent,
+    TumAetUiTooltipDirective,
+} from '@tumaet/ui-angular';
 import { faEye } from '@fortawesome/free-solid-svg-icons';
 import { QuizQuestionPreviewComponent } from 'app/quiz/manage/quiz-question-preview/quiz-question-preview.component';
 
@@ -40,13 +50,16 @@ export enum State {
     styleUrls: ['../../shared/quiz.scss'],
     encapsulation: ViewEncapsulation.None,
     imports: [
-        NgClass,
         TranslateDirective,
         FormsModule,
         KeyValuePipe,
         ArtemisTranslatePipe,
+        TumAetUiButtonDirective,
         TumAetUiButtonComponent,
         TumAetUiDialogComponent,
+        TumAetUiTableDirective,
+        TumAetUiTableLayoutComponent,
+        TumAetUiTableSortableColumnComponent,
         TumAetUiTooltipDirective,
         QuizQuestionPreviewComponent,
     ],
@@ -79,6 +92,17 @@ export class QuizQuestionListEditExistingComponent {
     readonly exams = signal<Exam[]>([]);
     readonly allExistingQuestions = signal<QuizQuestion[]>([]);
     readonly existingQuestions = signal<QuizQuestion[]>([]);
+    readonly sortField = signal('');
+    readonly sortOrder = signal(1);
+    readonly sortedQuestions = computed(() => {
+        const field = this.sortField();
+        if (!field) {
+            // Keep the order returned by the server until the user picks a column.
+            return this.existingQuestions();
+        }
+        const key = (question: QuizQuestion): string => String((field === 'exercise' ? question.exercise?.title : question[field as 'title' | 'type']) ?? '').toLowerCase();
+        return orderBy(this.existingQuestions(), [key], [this.sortOrder() === 1 ? 'asc' : 'desc']);
+    });
     searchQueryText?: string;
     dndFilterEnabled = true;
     mcqFilterEnabled = true;
@@ -88,6 +112,11 @@ export class QuizQuestionListEditExistingComponent {
     readonly previewVisible = signal(false);
     readonly previewQuestion = signal<QuizQuestion | undefined>(undefined);
     protected readonly faEye = faEye;
+
+    onSort(event: TumAetUiTableSortEvent): void {
+        this.sortField.set(event.field);
+        this.sortOrder.set(event.order);
+    }
 
     constructor() {
         effect(() => {

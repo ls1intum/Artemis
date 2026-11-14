@@ -14,8 +14,8 @@ import org.springframework.stereotype.Controller;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
-import de.tum.cit.aet.artemis.exam.dto.StudentExamWorkingTimeDTO;
 import de.tum.cit.aet.artemis.exam.repository.StudentExamRepository;
+import de.tum.cit.aet.artemis.exam.service.ExamService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 
@@ -36,6 +36,19 @@ public class StudentExamApi extends AbstractExamApi {
 
     public Optional<StudentExam> findStudentExam(Exercise exercise, StudentParticipation participation) {
         return studentExamRepository.findStudentExam(exercise, participation);
+    }
+
+    /**
+     * Whether the student may already see the result of the given exam participation, i.e. the exam is running for a programming exercise or the results have been published. This
+     * delegates to the static {@link ExamService#shouldStudentSeeResult} and therefore adds no bean dependency, so callers that already depend on this API do not pull the exam
+     * service into their startup dependency chain.
+     *
+     * @param studentExam   the student exam the participation belongs to
+     * @param participation the student's participation
+     * @return true if the student may see the result
+     */
+    public boolean shouldStudentSeeResult(StudentExam studentExam, StudentParticipation participation) {
+        return ExamService.shouldStudentSeeResult(studentExam, participation);
     }
 
     public Set<StudentExam> findAllWithExercisesByExamId(long examId) {
@@ -68,18 +81,6 @@ public class StudentExamApi extends AbstractExamApi {
      */
     public Map<Course, List<StudentExam>> findStudentExamsByCourseForUserId(long userId) {
         return studentExamRepository.findAllWithExercisesByUserId(userId).stream().collect(Collectors.groupingBy(studentExam -> studentExam.getExam().getCourse()));
-    }
-
-    /**
-     * Reads only the working time and started date of a student exam, for callers that need nothing but the individual
-     * end date.
-     *
-     * @param examId the id of the exam
-     * @param userId the id of the student
-     * @return the working time projection, if a student exam exists
-     */
-    public Optional<StudentExamWorkingTimeDTO> findWorkingTimeByExamIdAndUserId(Long examId, Long userId) {
-        return studentExamRepository.findWorkingTimeByExamIdAndUserId(examId, userId);
     }
 
     /**

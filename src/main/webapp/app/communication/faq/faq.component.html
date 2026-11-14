@@ -4,12 +4,13 @@
             <div class="flex-grow-1">
                 <jhi-search-filter (newSearchEvent)="setSearchValue($event)" />
             </div>
-            <div aria-label="Button group with nested dropdown" class="btn-group" role="group">
+            <div aria-label="Button group with nested dropdown" class="flex flex-wrap items-center gap-2" role="group">
                 <div class="me-2 align-self-center" aria-label="Filter Dropdown" ngbDropdown>
                     <button
+                        tumAetUiButton
+                        size="small"
                         type="button"
-                        class="btn btn-sm"
-                        [ngClass]="{ 'btn-secondary': activeFilters().size === 0, 'btn-success': activeFilters().size > 0 }"
+                        [severity]="activeFilters().size === 0 ? 'secondary' : 'success'"
                         ngbDropdownToggle
                         id="filter-dropdown-button"
                         [disabled]="!hasCategories()"
@@ -38,11 +39,18 @@
                 </div>
                 <div class="d-flex justify-content-end align-items-center gap-2">
                     @if (isAtLeastInstructor()) {
-                        <tumaet-ui-button size="small" variant="outlined" [icon]="faFileImport" (clicked)="importDialogOpen.set(true)" data-testid="import-faqs">
+                        <tumaet-ui-button
+                            severity="secondary"
+                            size="small"
+                            variant="outlined"
+                            [icon]="faFileImport"
+                            (clicked)="importDialogOpen.set(true)"
+                            data-testid="import-faqs"
+                        >
                             <span jhiTranslate="artemisApp.faq.import.title"></span>
                         </tumaet-ui-button>
                     }
-                    <a id="{{ isAtLeastInstructor() ? 'create-faq' : 'propose-faq' }}" class="btn btn-sm btn-primary" [routerLink]="['new']">
+                    <a tumAetUiButton size="small" severity="primary" id="{{ isAtLeastInstructor() ? 'create-faq' : 'propose-faq' }}" [routerLink]="['new']">
                         <fa-icon [icon]="faPlus" />
                         <span jhiTranslate="{{ isAtLeastInstructor() ? 'artemisApp.faq.home.createLabel' : 'artemisApp.faq.home.proposeLabel' }}"></span>
                     </a>
@@ -50,32 +58,26 @@
             </div>
         </div>
     </div>
-    <br />
 
     @if (loaded() && filteredFaqs().length > 0) {
-        <div class="table-responsive">
-            <table class="table table-striped">
+        <tumaet-ui-table-layout>
+            <table tumAetUiTable size="small" [sortField]="predicate()" [sortOrder]="ascending() ? 1 : -1" (sortChange)="onSort($event)">
                 <thead>
-                    <tr jhiSort [(predicate)]="predicate" [(ascending)]="ascending" (sortChange)="sortRows()">
-                        <th class="d-md-table-cell" jhiSortBy="id">
+                    <tr>
+                        <th [tumAetUiSortableColumn]="'id'">
                             <span jhiTranslate="global.field.id"></span>
-                            <fa-icon [icon]="faSort" />
                         </th>
-                        <th jhiSortBy="questionTitle">
+                        <th [tumAetUiSortableColumn]="'questionTitle'">
                             <span jhiTranslate="artemisApp.faq.table.questionTitle"></span>
-                            <fa-icon [icon]="faSort" />
                         </th>
-                        <th jhiSortBy="questionAnswer">
+                        <th [tumAetUiSortableColumn]="'questionAnswer'">
                             <span jhiTranslate="artemisApp.faq.table.questionAnswer"></span>
-                            <fa-icon [icon]="faSort" />
                         </th>
-                        <th jhiSortBy="faqState">
+                        <th [tumAetUiSortableColumn]="'faqState'">
                             <span jhiTranslate="artemisApp.faq.table.state"></span>
-                            <fa-icon [icon]="faSort" />
                         </th>
-                        <th jhiSortBy="categories">
+                        <th [tumAetUiSortableColumn]="'categories'">
                             <span jhiTranslate="artemisApp.faq.table.categories"></span>
-                            <fa-icon [icon]="faSort" />
                         </th>
                         <th></th>
                     </tr>
@@ -96,38 +98,65 @@
                                 <p class="markdown-preview" [jhiMarkdown]="faq.faqState"></p>
                             </td>
                             <td>
-                                <div class="d-flex">
+                                <div class="flex">
                                     @for (category of faq.categories; track category) {
                                         <jhi-custom-exercise-category-badge [category]="category" />
                                     }
                                 </div>
                             </td>
                             <td class="text-end">
-                                <div class="btn-group flex-btn-group-container">
+                                <div class="flex flex-wrap justify-end gap-1">
                                     @if (faq.faqState === FaqState.PROPOSED && isAtLeastInstructor()) {
-                                        <div class="btn-group-vertical me-1 mb-1">
-                                            <button type="button" class="btn btn-success btn-sm" (click)="acceptProposedFaq(courseId(), faq)">
+                                        <div class="flex flex-col gap-1">
+                                            <button
+                                                [attr.aria-label]="'artemisApp.faq.home.accept' | artemisTranslate"
+                                                tumAetUiButton
+                                                size="small"
+                                                severity="success"
+                                                type="button"
+                                                (click)="acceptProposedFaq(courseId(), faq)"
+                                            >
                                                 <fa-icon [icon]="faCheck" />
-                                                <span class="d-none d-md-inline" jhiTranslate="artemisApp.faq.home.accept"></span>
+                                                <span class="hidden md:inline" jhiTranslate="artemisApp.faq.home.accept"></span>
                                             </button>
-                                            <button type="button" class="mt-1 btn btn-sm btn-warning" id="reject-faq-{{ faq.id }}" (click)="rejectFaq(courseId(), faq)">
+                                            <button
+                                                [attr.aria-label]="'artemisApp.faq.home.reject' | artemisTranslate"
+                                                tumAetUiButton
+                                                size="small"
+                                                severity="danger"
+                                                type="button"
+                                                class="mt-1"
+                                                id="reject-faq-{{ faq.id }}"
+                                                (click)="rejectFaq(courseId(), faq)"
+                                            >
                                                 <fa-icon [icon]="faCancel" />
-                                                <span class="d-none d-md-inline" jhiTranslate="artemisApp.faq.home.reject"></span>
+                                                <span class="hidden md:inline" jhiTranslate="artemisApp.faq.home.reject"></span>
                                             </button>
                                         </div>
                                     }
-                                    <div class="btn-group-vertical me-1 mb-1">
+                                    <div class="flex flex-col gap-1">
                                         @if (isAtLeastInstructor() || faq.faqState !== FaqState.ACCEPTED) {
-                                            <a [routerLink]="[faq.id, 'edit']" class="btn btn-primary btn-sm">
+                                            <a
+                                                [attr.aria-label]="'entity.action.edit' | artemisTranslate"
+                                                tumAetUiButton
+                                                size="small"
+                                                severity="warn"
+                                                [routerLink]="[faq.id, 'edit']"
+                                            >
                                                 <fa-icon [icon]="faPencilAlt" />
-                                                <span class="d-none d-md-inline" jhiTranslate="entity.action.edit"></span>
+                                                <span class="hidden md:inline" jhiTranslate="entity.action.edit"></span>
                                             </a>
                                         }
                                         @if (isAtLeastInstructor()) {
                                             <button
                                                 type="button"
                                                 class="mt-1"
+                                                tumAetUiButton
+                                                severity="danger"
+                                                variant="text"
+                                                size="small"
                                                 jhiDeleteButton
+                                                [renderButtonStyle]="false"
                                                 id="delete-faq-{{ faq.id }}"
                                                 [entityTitle]="faq.questionTitle || ''"
                                                 deleteQuestion="artemisApp.faq.delete.question"
@@ -145,7 +174,7 @@
                     }
                 </tbody>
             </table>
-        </div>
+        </tumaet-ui-table-layout>
     } @else if (loaded()) {
         <tumaet-ui-empty-state
             class="mt-5"
@@ -155,7 +184,7 @@
         >
             <ng-container tumAetUiEmptyStateActions>
                 @if (!hasFaqs()) {
-                    <a class="btn btn-sm btn-primary" [routerLink]="['new']">
+                    <a tumAetUiButton size="small" severity="primary" [routerLink]="['new']">
                         <fa-icon [icon]="faPlus" />
                         <span jhiTranslate="{{ isAtLeastInstructor() ? 'artemisApp.faq.home.createLabel' : 'artemisApp.faq.home.proposeLabel' }}"></span>
                     </a>

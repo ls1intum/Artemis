@@ -9,6 +9,7 @@
             "quarter": "Quarter",
             "year": "Year"
         },
+        "spanLabel": "Time range",
         "title": "User Statistics",
         "course_statistics_title": "Course statistics",
         "submissions": "Submissions",

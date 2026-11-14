@@ -27,7 +27,7 @@
                         [tumAetUiTooltip]="'entity.action.scores' | artemisTranslate"
                         tumAetUiTooltipPlacement="top"
                         tumAetUiButton
-                        severity="secondary"
+                        severity="info"
                         size="small"
                     >
                         <fa-icon [icon]="faTable" />
@@ -40,7 +40,7 @@
                         [tumAetUiTooltip]="'artemisApp.course.gradingSystem' | artemisTranslate"
                         tumAetUiTooltipPlacement="top"
                         tumAetUiButton
-                        severity="secondary"
+                        severity="warn"
                         size="small"
                     >
                         <fa-icon [icon]="faClipboard" />
@@ -53,7 +53,7 @@
                             [tumAetUiTooltip]="'artemisApp.plagiarism.cases.plagiarismCases' | artemisTranslate"
                             tumAetUiTooltipPlacement="top"
                             tumAetUiButton
-                            severity="secondary"
+                            severity="info"
                             size="small"
                         >
                             <fa-icon [icon]="faHeartBroken" />
@@ -160,188 +160,182 @@
                         </div>
                     }
                 </div>
-                @if (allExercises().length === 0) {
-                    <tumaet-ui-message class="mt-2 w-full" severity="info" [icon]="faCircleInfo" [text]="'artemisApp.assessmentDashboard.noExercises' | artemisTranslate" />
-                } @else if (currentlyShownExercises().length === 0) {
-                    <tumaet-ui-message
-                        class="mt-2 w-full"
-                        severity="info"
-                        [icon]="faCircleInfo"
-                        [text]="'artemisApp.assessmentDashboard.noExercisesMatchFilters' | artemisTranslate"
-                    />
-                } @else {
-                    <div class="w-full overflow-x-auto border-t border-surface">
-                        <table
-                            tumAetUiTable
-                            size="small"
-                            class="min-w-[42rem] xl:min-w-[56rem]"
-                            [striped]="true"
-                            [rowHover]="true"
-                            [sortField]="exercisesSortingPredicate()"
-                            [sortOrder]="exercisesReverseOrder() ? 1 : -1"
-                            (sortChange)="onExerciseSortChange($event)"
-                        >
-                            <thead>
+                <tumaet-ui-table-layout
+                    class="mt-2 w-full"
+                    [empty]="currentlyShownExercises().length === 0"
+                    [emptyTitle]="allExercises().length === 0 ? 'artemisApp.assessmentDashboard.noExercises' : 'artemisApp.assessmentDashboard.noExercisesMatchFilters'"
+                >
+                    <table
+                        tumAetUiTable
+                        size="small"
+                        class="min-w-[42rem] xl:min-w-[56rem]"
+                        [striped]="true"
+                        [rowHover]="true"
+                        [sortField]="exercisesSortingPredicate()"
+                        [sortOrder]="exercisesReverseOrder() ? 1 : -1"
+                        (sortChange)="onExerciseSortChange($event)"
+                    >
+                        <thead>
+                            <tr>
+                                <th tumAetUiSortableColumn="type" class="hidden min-w-12 xl:table-cell xl:w-[6%]">
+                                    <span jhiTranslate="artemisApp.assessmentDashboard.exerciseType"></span>
+                                </th>
+                                <th tumAetUiSortableColumn="title" class="w-[10rem] min-w-[8rem] xl:w-[18%] 2xl:min-w-[14rem] 2xl:max-w-none">
+                                    <span jhiTranslate="artemisApp.assessmentDashboard.exercise"></span>
+                                </th>
+                                @if (!isTestRun()) {
+                                    <th class="w-[20rem] min-w-[18rem] xl:w-[42%] 2xl:w-[42%]" jhiTranslate="artemisApp.assessmentDashboard.yourStatus"></th>
+                                }
+                                <th tumAetUiSortableColumn="averageRating" class="hidden min-w-14 xl:table-cell xl:w-[7%]">
+                                    <span class="block whitespace-nowrap break-words leading-tight" jhiTranslate="artemisApp.assessmentDashboard.exerciseAverageRating"></span>
+                                </th>
+                                @if (!isExamMode()) {
+                                    <th tumAetUiSortableColumn="dueDate" class="hidden min-w-16 xl:table-cell xl:w-[8%]">
+                                        <span class="block whitespace-nowrap break-words leading-tight" jhiTranslate="artemisApp.assessmentDashboard.exerciseDueDate"></span>
+                                    </th>
+                                }
+                                @if (!isExamMode()) {
+                                    <th tumAetUiSortableColumn="assessmentDueDate" class="hidden min-w-16 xl:table-cell xl:w-[8%]">
+                                        <span class="block whitespace-nowrap break-words leading-tight" jhiTranslate="artemisApp.assessmentDashboard.assessmentsDueDate"></span>
+                                    </th>
+                                }
+                                @if (!isExamMode()) {
+                                    <th class="w-28 min-w-24 xl:hidden">
+                                        <span class="block whitespace-nowrap break-words leading-tight" jhiTranslate="artemisApp.assessmentDashboard.dueDates"></span>
+                                    </th>
+                                }
+                                <th class="w-10 min-w-10 text-end xl:w-[16%]">
+                                    <span class="sr-only xl:not-sr-only" jhiTranslate="artemisApp.assessmentDashboard.actions"></span>
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @for (exercise of currentlyShownExercises(); track exercise) {
                                 <tr>
-                                    <th tumAetUiSortableColumn="type" class="hidden min-w-12 !whitespace-normal xl:table-cell xl:w-[6%]">
-                                        <span jhiTranslate="artemisApp.assessmentDashboard.exerciseType"></span>
-                                    </th>
-                                    <th tumAetUiSortableColumn="title" class="w-[10rem] min-w-[8rem] xl:w-[18%] 2xl:min-w-[14rem] 2xl:max-w-none">
-                                        <span jhiTranslate="artemisApp.assessmentDashboard.exercise"></span>
-                                    </th>
-                                    @if (!isTestRun()) {
-                                        <th class="w-[20rem] min-w-[18rem] xl:w-[42%] 2xl:w-[42%]" jhiTranslate="artemisApp.assessmentDashboard.yourStatus"></th>
-                                    }
-                                    <th tumAetUiSortableColumn="averageRating" class="hidden min-w-14 !whitespace-normal xl:table-cell xl:w-[7%]">
-                                        <span class="block whitespace-normal break-words leading-tight" jhiTranslate="artemisApp.assessmentDashboard.exerciseAverageRating"></span>
-                                    </th>
-                                    @if (!isExamMode()) {
-                                        <th tumAetUiSortableColumn="dueDate" class="hidden min-w-16 !whitespace-normal xl:table-cell xl:w-[8%]">
-                                            <span class="block whitespace-normal break-words leading-tight" jhiTranslate="artemisApp.assessmentDashboard.exerciseDueDate"></span>
-                                        </th>
-                                    }
-                                    @if (!isExamMode()) {
-                                        <th tumAetUiSortableColumn="assessmentDueDate" class="hidden min-w-16 !whitespace-normal xl:table-cell xl:w-[8%]">
-                                            <span class="block whitespace-normal break-words leading-tight" jhiTranslate="artemisApp.assessmentDashboard.assessmentsDueDate"></span>
-                                        </th>
-                                    }
-                                    @if (!isExamMode()) {
-                                        <th class="w-28 min-w-24 !whitespace-normal xl:hidden">
-                                            <span class="block whitespace-normal break-words leading-tight" jhiTranslate="artemisApp.assessmentDashboard.dueDates"></span>
-                                        </th>
-                                    }
-                                    <th class="w-10 min-w-10 text-end xl:w-[16%]">
-                                        <span class="sr-only xl:not-sr-only" jhiTranslate="artemisApp.assessmentDashboard.actions"></span>
-                                    </th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @for (exercise of currentlyShownExercises(); track exercise) {
-                                    <tr>
-                                        <td class="hidden min-w-12 whitespace-normal break-words xl:table-cell xl:w-[6%]">
+                                    <td class="hidden min-w-12 whitespace-normal break-words xl:table-cell xl:w-[6%]">
+                                        <fa-icon
+                                            [icon]="getIcon(exercise.type)"
+                                            [tumAetUiTooltip]="getIconTooltip(exercise.type) | artemisTranslate"
+                                            tumAetUiTooltipPlacement="right"
+                                        />
+                                    </td>
+                                    <td class="w-[10rem] min-w-[8rem] whitespace-normal break-words font-semibold xl:w-[18%] 2xl:min-w-[14rem] 2xl:max-w-none">
+                                        <div class="flex min-w-0 items-center gap-2">
                                             <fa-icon
                                                 [icon]="getIcon(exercise.type)"
+                                                class="shrink-0 xl:hidden"
                                                 [tumAetUiTooltip]="getIconTooltip(exercise.type) | artemisTranslate"
                                                 tumAetUiTooltipPlacement="right"
                                             />
-                                        </td>
-                                        <td class="w-[10rem] min-w-[8rem] whitespace-normal break-words font-semibold xl:w-[18%] 2xl:min-w-[14rem] 2xl:max-w-none">
-                                            <div class="flex min-w-0 items-center gap-2">
-                                                <fa-icon
-                                                    [icon]="getIcon(exercise.type)"
-                                                    class="shrink-0 xl:hidden"
-                                                    [tumAetUiTooltip]="getIconTooltip(exercise.type) | artemisTranslate"
-                                                    tumAetUiTooltipPlacement="right"
+                                            <span class="min-w-0 flex-1 whitespace-normal break-words">{{ exercise.title }}</span>
+                                        </div>
+                                        <jhi-not-released-tag [exercise]="exercise" />
+                                        <tumaet-ui-tag severity="success" [hidden]="!asQuizExercise(exercise).isActiveQuiz">Live</tumaet-ui-tag>
+                                    </td>
+                                    @if (!isTestRun()) {
+                                        <td class="w-[20rem] min-w-[18rem] xl:w-[42%] 2xl:w-[42%]">
+                                            @if (exercise.tutorParticipations && exercise.tutorParticipations![0]) {
+                                                <jhi-tutor-participation-graph
+                                                    class="block w-full"
+                                                    [exercise]="exercise"
+                                                    [tutorParticipation]="exercise.tutorParticipations![0]"
+                                                    [numberOfSubmissions]="exercise.numberOfSubmissions"
+                                                    [totalNumberOfAssessments]="exercise.totalNumberOfAssessments"
+                                                    [numberOfComplaints]="exercise.numberOfComplaints || 0"
+                                                    [numberOfOpenComplaints]="exercise.numberOfOpenComplaints || 0"
+                                                    [numberOfMoreFeedbackRequests]="exercise.numberOfMoreFeedbackRequests || 0"
+                                                    [numberOfOpenMoreFeedbackRequests]="exercise.numberOfOpenMoreFeedbackRequests || 0"
+                                                    [numberOfAssessmentsOfCorrectionRounds]="exercise.numberOfAssessmentsOfCorrectionRounds"
                                                 />
-                                                <span class="min-w-0 flex-1 whitespace-normal break-words">{{ exercise.title }}</span>
-                                            </div>
-                                            <jhi-not-released-tag [exercise]="exercise" />
-                                            <tumaet-ui-tag severity="success" [hidden]="!asQuizExercise(exercise).isActiveQuiz">Live</tumaet-ui-tag>
+                                            }
                                         </td>
-                                        @if (!isTestRun()) {
-                                            <td class="w-[20rem] min-w-[18rem] xl:w-[42%] 2xl:w-[42%]">
-                                                @if (exercise.tutorParticipations && exercise.tutorParticipations![0]) {
-                                                    <jhi-tutor-participation-graph
-                                                        class="block w-full"
-                                                        [exercise]="exercise"
-                                                        [tutorParticipation]="exercise.tutorParticipations![0]"
-                                                        [numberOfSubmissions]="exercise.numberOfSubmissions"
-                                                        [totalNumberOfAssessments]="exercise.totalNumberOfAssessments"
-                                                        [numberOfComplaints]="exercise.numberOfComplaints || 0"
-                                                        [numberOfOpenComplaints]="exercise.numberOfOpenComplaints || 0"
-                                                        [numberOfMoreFeedbackRequests]="exercise.numberOfMoreFeedbackRequests || 0"
-                                                        [numberOfOpenMoreFeedbackRequests]="exercise.numberOfOpenMoreFeedbackRequests || 0"
-                                                        [numberOfAssessmentsOfCorrectionRounds]="exercise.numberOfAssessmentsOfCorrectionRounds"
-                                                    />
+                                    }
+                                    <td class="hidden min-w-14 whitespace-normal break-words xl:table-cell xl:w-[7%]">
+                                        @if (exercise.averageRating !== undefined) {
+                                            <span> {{ exercise.averageRating.toFixed(1) }} ⭐️ ({{ exercise.numberOfRatings }}) </span>
+                                        }
+                                        @if (exercise.averageRating === undefined) {
+                                            <span> n.a. </span>
+                                        }
+                                    </td>
+                                    @if (!isExamMode()) {
+                                        <td class="hidden min-w-16 whitespace-normal break-words xl:table-cell xl:w-[8%]">
+                                            <span [hidden]="!exercise.dueDate" [tumAetUiTooltip]="exercise.dueDate | artemisDate" tumAetUiTooltipPlacement="right">
+                                                {{ exercise.dueDate | artemisTimeAgo }}
+                                            </span>
+                                        </td>
+                                    }
+                                    @if (!isExamMode()) {
+                                        <td class="hidden min-w-16 whitespace-normal break-words xl:table-cell xl:w-[8%]">
+                                            <span
+                                                [hidden]="!exercise.assessmentDueDate"
+                                                [tumAetUiTooltip]="exercise.assessmentDueDate | artemisDate"
+                                                tumAetUiTooltipPlacement="right"
+                                            >
+                                                {{ exercise.assessmentDueDate | artemisTimeAgo }}
+                                            </span>
+                                        </td>
+                                    }
+                                    @if (!isExamMode()) {
+                                        <td class="w-28 min-w-24 whitespace-normal break-words text-sm xl:hidden">
+                                            <div class="flex flex-col gap-1">
+                                                @if (exercise.dueDate) {
+                                                    <span [tumAetUiTooltip]="exercise.dueDate | artemisDate" tumAetUiTooltipPlacement="right">
+                                                        <span class="font-medium" jhiTranslate="artemisApp.assessmentDashboard.exerciseDueDate"></span>:<br />
+                                                        {{ exercise.dueDate | artemisTimeAgo }}
+                                                    </span>
                                                 }
-                                            </td>
-                                        }
-                                        <td class="hidden min-w-14 whitespace-normal break-words xl:table-cell xl:w-[7%]">
-                                            @if (exercise.averageRating !== undefined) {
-                                                <span> {{ exercise.averageRating.toFixed(1) }} ⭐️ ({{ exercise.numberOfRatings }}) </span>
-                                            }
-                                            @if (exercise.averageRating === undefined) {
-                                                <span> n.a. </span>
-                                            }
+                                                @if (exercise.assessmentDueDate) {
+                                                    <span [tumAetUiTooltip]="exercise.assessmentDueDate | artemisDate" tumAetUiTooltipPlacement="right">
+                                                        <span class="font-medium" jhiTranslate="artemisApp.assessmentDashboard.assessmentsDueDate"></span>:<br />
+                                                        {{ exercise.assessmentDueDate | artemisTimeAgo }}
+                                                    </span>
+                                                }
+                                                @if (!exercise.dueDate && !exercise.assessmentDueDate) {
+                                                    <span>-</span>
+                                                }
+                                            </div>
                                         </td>
-                                        @if (!isExamMode()) {
-                                            <td class="hidden min-w-16 whitespace-normal break-words xl:table-cell xl:w-[8%]">
-                                                <span [hidden]="!exercise.dueDate" [tumAetUiTooltip]="exercise.dueDate | artemisDate" tumAetUiTooltipPlacement="right">
-                                                    {{ exercise.dueDate | artemisTimeAgo }}
-                                                </span>
-                                            </td>
-                                        }
-                                        @if (!isExamMode()) {
-                                            <td class="hidden min-w-16 whitespace-normal break-words xl:table-cell xl:w-[8%]">
-                                                <span
-                                                    [hidden]="!exercise.assessmentDueDate"
-                                                    [tumAetUiTooltip]="exercise.assessmentDueDate | artemisDate"
-                                                    tumAetUiTooltipPlacement="right"
-                                                >
-                                                    {{ exercise.assessmentDueDate | artemisTimeAgo }}
-                                                </span>
-                                            </td>
-                                        }
-                                        @if (!isExamMode()) {
-                                            <td class="w-28 min-w-24 whitespace-normal break-words text-sm xl:hidden">
-                                                <div class="flex flex-col gap-1">
-                                                    @if (exercise.dueDate) {
-                                                        <span [tumAetUiTooltip]="exercise.dueDate | artemisDate" tumAetUiTooltipPlacement="right">
-                                                            <span class="font-medium" jhiTranslate="artemisApp.assessmentDashboard.exerciseDueDate"></span>:<br />
-                                                            {{ exercise.dueDate | artemisTimeAgo }}
-                                                        </span>
-                                                    }
-                                                    @if (exercise.assessmentDueDate) {
-                                                        <span [tumAetUiTooltip]="exercise.assessmentDueDate | artemisDate" tumAetUiTooltipPlacement="right">
-                                                            <span class="font-medium" jhiTranslate="artemisApp.assessmentDashboard.assessmentsDueDate"></span>:<br />
-                                                            {{ exercise.assessmentDueDate | artemisTimeAgo }}
-                                                        </span>
-                                                    }
-                                                    @if (!exercise.dueDate && !exercise.assessmentDueDate) {
-                                                        <span>-</span>
-                                                    }
-                                                </div>
-                                            </td>
-                                        }
-                                        <td class="w-10 min-w-10 whitespace-nowrap xl:w-[16%]">
-                                            <div class="flex flex-wrap justify-end gap-2">
-                                                @if (!exercise.teamMode) {
-                                                    <ng-container>
-                                                        <a
-                                                            data-testid="open-exercise-dashboard"
-                                                            [routerLink]="getAssessmentDashboardLinkForExercise(exercise)"
-                                                            [attr.aria-label]="'entity.action.exerciseDashboard' | artemisTranslate"
-                                                            [tumAetUiTooltip]="'entity.action.exerciseDashboard' | artemisTranslate"
-                                                            tumAetUiTooltipPlacement="top"
-                                                            tumAetUiButton
-                                                            size="small"
-                                                        >
-                                                            <fa-icon [icon]="faArrowUpRightFromSquare" aria-hidden="true" />
-                                                            <span class="hidden xl:inline" jhiTranslate="entity.action.exerciseDashboard"></span>
-                                                        </a>
-                                                    </ng-container>
-                                                } @else {
+                                    }
+                                    <td class="w-10 min-w-10 whitespace-nowrap xl:w-[16%]">
+                                        <div class="flex flex-wrap justify-end gap-2">
+                                            @if (!exercise.teamMode) {
+                                                <ng-container>
                                                     <a
-                                                        [routerLink]="['/course-management', courseId(), 'exercises', exercise.id, 'teams']"
-                                                        [queryParams]="{ filter: TeamFilterProp.OWN }"
-                                                        [attr.aria-label]="'artemisApp.assessmentDashboard.exerciseTeams' | artemisTranslate"
-                                                        [tumAetUiTooltip]="'artemisApp.assessmentDashboard.exerciseTeams' | artemisTranslate"
+                                                        data-testid="open-exercise-dashboard"
+                                                        severity="info"
+                                                        [routerLink]="getAssessmentDashboardLinkForExercise(exercise)"
+                                                        [attr.aria-label]="'entity.action.exerciseDashboard' | artemisTranslate"
+                                                        [tumAetUiTooltip]="'entity.action.exerciseDashboard' | artemisTranslate"
                                                         tumAetUiTooltipPlacement="top"
                                                         tumAetUiButton
                                                         size="small"
                                                     >
                                                         <fa-icon [icon]="faArrowUpRightFromSquare" aria-hidden="true" />
-                                                        <span class="hidden xl:inline" jhiTranslate="artemisApp.assessmentDashboard.exerciseTeams"></span>
+                                                        <span class="hidden xl:inline" jhiTranslate="entity.action.exerciseDashboard"></span>
                                                     </a>
-                                                }
-                                            </div>
-                                        </td>
-                                    </tr>
-                                }
-                            </tbody>
-                        </table>
-                    </div>
-                }
+                                                </ng-container>
+                                            } @else {
+                                                <a
+                                                    [routerLink]="['/course-management', courseId(), 'exercises', exercise.id, 'teams']"
+                                                    [queryParams]="{ filter: TeamFilterProp.OWN }"
+                                                    [attr.aria-label]="'artemisApp.assessmentDashboard.exerciseTeams' | artemisTranslate"
+                                                    [tumAetUiTooltip]="'artemisApp.assessmentDashboard.exerciseTeams' | artemisTranslate"
+                                                    tumAetUiTooltipPlacement="top"
+                                                    tumAetUiButton
+                                                    size="small"
+                                                >
+                                                    <fa-icon [icon]="faArrowUpRightFromSquare" aria-hidden="true" />
+                                                    <span class="hidden xl:inline" jhiTranslate="artemisApp.assessmentDashboard.exerciseTeams"></span>
+                                                </a>
+                                            }
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </tumaet-ui-table-layout>
             </tumaet-ui-panel>
             @if (course() && course().isAtLeastInstructor && tutorIssues().length > 0) {
                 <tumaet-ui-message severity="warn" class="block">

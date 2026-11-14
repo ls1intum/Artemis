@@ -37,8 +37,8 @@
                 />
             </ng-template>
             <div class="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-muted-color">
-                @if (examScoreDTO().maxPoints) {
-                    <span>{{ 'artemisApp.examScores.maxPoints' | artemisTranslate }}: {{ localize(examScoreDTO().maxPoints) }}</span>
+                @if (!hasPerAttemptMaxima() && examScoreDTO().maxPoints) {
+                    <span data-testid="configured-exam-max-points">{{ 'artemisApp.examScores.maxPoints' | artemisTranslate }}: {{ localize(examScoreDTO().maxPoints) }}</span>
                 }
                 <a [routerLink]="['/course-management', course()?.id, 'exams', examScoreDTO().examId, 'exercise-groups']">
                     {{ exerciseGroups().length }} {{ 'artemisApp.examScores.noExerciseGroups' | artemisTranslate }}
@@ -491,7 +491,7 @@
                                             }
                                             @if (gradingScaleExists() && isFirst) {
                                                 <td [rowSpan]="exerciseGroupResult.exerciseResults.length">
-                                                    {{ exerciseGroupResult.averageGrade !== null ? exerciseGroupResult.averageGrade : '-' }}
+                                                    {{ exerciseGroupResult.averageGrade ?? '-' }}
                                                 </td>
                                             }
                                             <td>{{ exerciseResult.title }}</td>
@@ -520,8 +520,8 @@
             <h4 class="mt-12! mb-4!">
                 <span jhiTranslate="artemisApp.examScores.studentResultsTitle"></span>
             </h4>
-            <div class="overflow-x-auto">
-                <table tumAetUiTable striped [sortField]="predicate()" [sortOrder]="ascending() ? 1 : -1" (sortChange)="onSortChange($event)">
+            <tumaet-ui-table-layout [empty]="!studentResults()?.length">
+                <table tumAetUiTable size="small" striped [sortField]="predicate()" [sortOrder]="ascending() ? 1 : -1" (sortChange)="onSortChange($event)">
                     <thead>
                         <tr>
                             <th scope="col">#</th>
@@ -545,6 +545,9 @@
                             <th scope="col" tumAetUiSortableColumn="overallPointsAchieved">
                                 <span jhiTranslate="artemisApp.examScores.overallPointsColumn"></span>
                             </th>
+                            @if (hasPerAttemptMaxima()) {
+                                <th scope="col" tumAetUiSortableColumn="maxPoints"><span jhiTranslate="artemisApp.examScores.maxPoints"></span></th>
+                            }
                             <th scope="col" tumAetUiSortableColumn="overallScoreAchieved">
                                 <span jhiTranslate="artemisApp.examScores.overallScoreColumn"></span>
                             </th>
@@ -609,6 +612,9 @@
                                     }
                                 }
                                 <td data-testid="overall-points">{{ roundAndPerformLocalConversion(studentResult.overallPointsAchieved) }}</td>
+                                @if (hasPerAttemptMaxima()) {
+                                    <td data-testid="attempt-max-points">{{ roundAndPerformLocalConversion(studentResult.maxPoints) }}</td>
+                                }
                                 <td data-testid="overall-score">{{ roundAndPerformLocalConversion(studentResult.overallScoreAchieved) }}</td>
                                 @if (gradingScaleExists()) {
                                     <td data-testid="overall-grade">
@@ -624,8 +630,8 @@
                                     <td>
                                         {{ studentResult.gradeWithBonus?.bonusGrade ?? '-' }}
                                     </td>
-                                    <td>
-                                        {{ studentResult.gradeWithBonus?.finalGrade ?? studentResult.overallGrade ?? '-' }}
+                                    <td data-testid="exam-final-grade">
+                                        {{ studentResult.gradeWithBonus?.pending ? '-' : (studentResult.gradeWithBonus?.finalGrade ?? studentResult.overallGrade ?? '-') }}
                                     </td>
                                 }
                                 @if (gradingScaleExists() && !isBonus() && studentResult.overallGrade && studentResult.hasPassed) {
@@ -652,7 +658,7 @@
                         }
                     </tbody>
                 </table>
-            </div>
+            </tumaet-ui-table-layout>
         </div>
     }
 </div>

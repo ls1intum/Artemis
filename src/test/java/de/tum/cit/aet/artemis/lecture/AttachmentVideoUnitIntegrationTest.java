@@ -314,13 +314,17 @@ class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndepe
     }
 
     private MockMultipartFile createAttachmentVideoUnitPart(AttachmentVideoUnit attachmentVideoUnit, AttachmentUpdateIntent intent) throws IOException {
-        AttachmentVideoUnitDTO attachmentVideoUnitDTO = AttachmentVideoUnitDTO.from(attachmentVideoUnit, intent);
-        return new MockMultipartFile("attachmentVideoUnit", "", MediaType.APPLICATION_JSON_VALUE, mapper.writeValueAsString(attachmentVideoUnitDTO).getBytes());
+        return createAttachmentVideoUnitPart(AttachmentVideoUnitDTO.from(attachmentVideoUnit, intent), intent);
     }
 
+    /** The part an edit form sends: it was loaded with the video URL the unit has now. */
     private MockMultipartFile createAttachmentVideoUnitPart(AttachmentVideoUnitDTO attachmentVideoUnitDTO, AttachmentUpdateIntent intent) throws IOException {
         ObjectNode requestBody = mapper.valueToTree(attachmentVideoUnitDTO);
         requestBody.put("attachmentUpdateIntent", intent.name());
+        if (attachmentVideoUnitDTO.id() != null) {
+            attachmentVideoUnitRepository.findById(attachmentVideoUnitDTO.id()).map(AttachmentVideoUnit::getVideoSource)
+                    .ifPresent(loaded -> requestBody.put("loadedVideoSource", loaded));
+        }
         return new MockMultipartFile("attachmentVideoUnit", "", MediaType.APPLICATION_JSON_VALUE, mapper.writeValueAsBytes(requestBody));
     }
 
@@ -877,6 +881,7 @@ class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndepe
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void createAttachmentVideoUnitWithFilelessEmptyAttachmentReturnsBadRequest() throws Exception {
+        long unitsBefore = attachmentVideoUnitRepository.count();
         attachment.setLink(" ");
         var attachmentVideoUnitPart = new MockMultipartFile("attachmentVideoUnit", "", MediaType.APPLICATION_JSON_VALUE,
                 mapper.writeValueAsBytes(AttachmentVideoUnitDTO.of(attachmentVideoUnit)));
@@ -885,6 +890,25 @@ class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndepe
                 .file(attachmentPart).contentType(MediaType.MULTIPART_FORM_DATA_VALUE);
 
         request.performMvcRequest(builder).andExpect(status().isBadRequest()).andExpect(jsonPath("$.errorKey").value("attachmentLinkRequired"));
+        assertThat(attachmentVideoUnitRepository.count()).isEqualTo(unitsBefore);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void createAttachmentVideoUnitWithoutAttachmentAndVideoSource_shouldCreateEmptyUnit() throws Exception {
+        attachmentVideoUnit.setVideoSource(null);
+        var attachmentVideoUnitPart = new MockMultipartFile("attachmentVideoUnit", "", MediaType.APPLICATION_JSON_VALUE,
+                mapper.writeValueAsBytes(AttachmentVideoUnitDTO.of(attachmentVideoUnit)));
+        var builder = MockMvcRequestBuilders.multipart(HttpMethod.POST, "/api/lecture/lectures/" + lecture1.getId() + "/attachment-video-units").file(attachmentVideoUnitPart)
+                .contentType(MediaType.MULTIPART_FORM_DATA_VALUE);
+
+        var result = request.performMvcRequest(builder).andExpect(status().isCreated()).andReturn();
+        var persisted = mapper.readValue(result.getResponse().getContentAsString(), AttachmentVideoUnitDTO.class);
+
+        var stored = attachmentVideoUnitRepository.findById(persisted.id()).orElseThrow();
+        assertThat(stored.getAttachment()).isNull();
+        assertThat(stored.getVideoSource()).isNull();
+        assertThat(stored.getLecture().getId()).isEqualTo(lecture1.getId());
     }
 
     @Test
@@ -1672,18 +1696,6 @@ class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndepe
     void createAttachmentVideoUnit_urlNeedingEncoding_shouldCreate(String videoSource) throws Exception {
         attachmentVideoUnit.setVideoSource(videoSource);
         request.performMvcRequest(buildCreateAttachmentVideoUnit(attachmentVideoUnit, attachment)).andExpect(status().isCreated());
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
-    void creatingUnitWithoutAttachmentOrVideoLeavesUnitsUnchanged() throws Exception {
-        long before = attachmentVideoUnitRepository.count();
-        attachmentVideoUnit.setVideoSource(null);
-        var part = new MockMultipartFile("attachmentVideoUnit", "", MediaType.APPLICATION_JSON_VALUE, mapper.writeValueAsBytes(attachmentVideoUnit));
-        request.performMvcRequest(MockMvcRequestBuilders.multipart(HttpMethod.POST, "/api/lecture/lectures/{id}/attachment-video-units", lecture1.getId()).file(part))
-                .andExpect(status().isBadRequest())
-                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath("$.errorKey").value("videosourceAndAttachment"));
-        assertThat(attachmentVideoUnitRepository.count()).isEqualTo(before);
     }
 
 }

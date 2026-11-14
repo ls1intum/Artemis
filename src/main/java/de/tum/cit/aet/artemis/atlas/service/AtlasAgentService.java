@@ -171,10 +171,7 @@ public class AtlasAgentService {
             BatchRelationPreviewResponseDTO batchRelationPreview = CompetencyMappingToolsService.getBatchRelationPreview();
             RelationGraphPreviewDTO relationGraphPreview = CompetencyMappingToolsService.getRelationGraphPreview();
 
-            ExerciseCompetencyMappingDTO exerciseMappingPreview = ExerciseMappingToolsService.getExerciseMappingPreview();
-            if (exerciseMappingPreview == null) {
-                exerciseMappingPreview = atlasAgentSessionCacheService.getCachedExerciseMappingPreview(sessionId);
-            }
+            ExerciseCompetencyMappingDTO exerciseMappingPreview = getAvailableExerciseMappingPreview(sessionId);
 
             List<CompetencyRelationPreviewDTO> relationPreviews = previewService.convertToRelationPreviewsList(singleRelationPreview, batchRelationPreview);
             RelationGraphPreviewDTO graphForDto = relationGraphPreview;
@@ -583,11 +580,7 @@ public class AtlasAgentService {
                 return new AtlasAgentChatResponseDTO(combinedResponse, ZonedDateTime.now(), competencyModifiedInCurrentRequest.get(), null, relationPreviews, graphPreview, null);
             }
             case EXERCISE_MAPPER -> {
-                // Fall back to Hazelcast when ThreadLocal is empty (cross-node execution)
-                ExerciseCompetencyMappingDTO exercisePreview = ExerciseMappingToolsService.getExerciseMappingPreview();
-                if (exercisePreview == null) {
-                    exercisePreview = atlasAgentSessionCacheService.getCachedExerciseMappingPreview(sessionId);
-                }
+                ExerciseCompetencyMappingDTO exercisePreview = getAvailableExerciseMappingPreview(sessionId);
                 log.info("delegateToNextStepAgent: EXERCISE_MAPPER produced exercisePreview={}", exercisePreview != null);
                 previewService.addAssistantMessageToMemory(sessionId, combinedResponse);
                 if (exercisePreview != null) {
@@ -601,6 +594,20 @@ public class AtlasAgentService {
                 return new AtlasAgentChatResponseDTO(delegationResponse, ZonedDateTime.now(), competencyModifiedInCurrentRequest.get(), null, null, null, null);
             }
         }
+    }
+
+    /**
+     * Retrieves the latest usable mapping preview, avoiding both retained and cached data after a failed replacement.
+     *
+     * @param sessionId the session whose cached preview can be used when no local preview exists
+     * @return the available preview, or null while the latest attempt remains unsuccessful
+     */
+    private ExerciseCompetencyMappingDTO getAvailableExerciseMappingPreview(String sessionId) {
+        if (ExerciseMappingToolsService.hasRejectedExerciseMappingPreview()) {
+            return null;
+        }
+        ExerciseCompetencyMappingDTO preview = ExerciseMappingToolsService.getExerciseMappingPreview();
+        return preview != null ? preview : atlasAgentSessionCacheService.getCachedExerciseMappingPreview(sessionId);
     }
 
     /**
@@ -721,22 +728,31 @@ public class AtlasAgentService {
      */
     private String getActionInstructionForAgent(ExecutionPlanStateManagerService.NextStepContext nextStep) {
         return switch (nextStep.agentType()) {
-            case COMPETENCY_MAPPER -> "Suggest relation mappings between the competencies from the previous step. "
-                    + "Call getCourseCompetencies first to get the competency IDs, then call suggestRelationMappingsUsingML or "
-                    + "use previewRelationMappings to suggest appropriate relations (ASSUMES, EXTENDS, MATCHES) between them. " + "Set viewOnly=false for the preview.";
+            case COMPETENCY_MAPPER ->
+                "Suggest relation mappings between the competencies from the previous step. " + "Call getCourseCompetencies first to get the competency IDs, then "
+                        + "use previewRelationMappings to suggest appropriate relations (ASSUMES, EXTENDS, MATCHES) between them. " + "Set viewOnly=false for the preview.";
             case EXERCISE_MAPPER -> buildExerciseMapperInstruction(nextStep.exerciseId(), nextStep.exerciseTitle());
             case COMPETENCY_EXPERT -> "Create or update competencies as described in the original user request. " + "Use the context from previous steps if available.";
         };
     }
 
+    /**
+     * Builds the plan-continuation brief, requiring a learning-content read before suggestions and weights are chosen.
+     *
+     * @param exerciseId    the exercise selected in the plan, if available
+     * @param exerciseTitle the plan's exercise title, if available
+     * @return mapping instructions with exercise context or a selection fallback
+     */
     private String buildExerciseMapperInstruction(@Nullable Long exerciseId, @Nullable String exerciseTitle) {
         if (exerciseId != null && exerciseTitle != null && !exerciseTitle.isBlank()) {
             return "Map the competencies from the previous step to the exercise below. " + "EXERCISE_ID: " + exerciseId + " | EXERCISE_TITLE: " + exerciseTitle + ". "
-                    + "Call getCourseCompetencies to get competency IDs, then call " + "previewExerciseCompetencyMapping with viewOnly=false to show the interactive preview. "
+                    + "Call getExerciseContent to inspect its learning content and getCourseCompetencies to get competency IDs before choosing suggested flags and weights. Then call "
+                    + "previewExerciseCompetencyMapping with viewOnly=false to show the interactive preview. "
                     + "Do NOT ask the user how they want to adjust mappings - the preview UI is interactive and handles that.";
         }
         // Fallback if exercise was not embedded in the plan marker (should not happen in normal flow)
-        return "Map the competencies from the previous step to exercises in the course. " + "Call getCourseCompetencies to get competency IDs, then call "
+        return "Map the competencies from the previous step to exercises in the course. "
+                + "Call getExerciseContent for the selected exercise and getCourseCompetencies to get competency IDs before choosing suggested flags and weights. Then call "
                 + "previewExerciseCompetencyMapping with viewOnly=false to show the interactive preview. "
                 + "Do NOT ask the user how they want to adjust mappings - the preview UI is interactive and handles that.";
     }

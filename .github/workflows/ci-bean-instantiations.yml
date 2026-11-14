@@ -30,7 +30,10 @@ jobs:
       # TitleCacheConfiguration at startup.
       # 160 rather than 159 since the reliable mail delivery: the mail sending service reaches the
       # mail retry queue and the test account e-mail service at startup.
-      MAX_INSTANTIATED_BEANS: 160
+      # 165 rather than 160 since the split of LocalVCServletService: the servlet service injects five new startup beans (the repository
+      # resolver, the access log recorder, the build agent authentication, the push processing and the password authentication notice).
+      # Measured with the command below: 158 edges before the split and 163 after it.
+      MAX_INSTANTIATED_BEANS: 165
       MIN_DEFERRED_CHAIN_LENGTH: 1
 
     steps:
@@ -105,7 +108,7 @@ jobs:
           echo "✅ All thresholds match between Java file and GitHub Action"
 
       - name: Set up JDK
-        uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
+        uses: actions/setup-java@77dd5b2ce225ea11469928ac317850245a74ae78 # v6.2.0
         with:
           distribution: temurin
           java-version: '${{ env.java }}'

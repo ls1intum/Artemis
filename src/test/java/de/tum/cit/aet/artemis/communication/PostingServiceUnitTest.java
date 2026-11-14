@@ -205,6 +205,9 @@ class PostingServiceUnitTest {
         when(authorizationCheckService.isAtLeastStudentInCourse(eq(course), any(User.class))).thenReturn(true);
 
         actAndAssertInvalidUserMention(course, content);
+        // the answer to a wrong name must not contain the name that is stored for the login
+        assertThatThrownBy(() -> parseUserMentions.invoke(postingService, course, content)).hasRootCauseInstanceOf(BadRequestAlertException.class).rootCause().message()
+                .doesNotContain("Test User 1");
     }
 
     @Test

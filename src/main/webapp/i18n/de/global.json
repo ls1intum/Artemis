@@ -7,6 +7,8 @@
             "no": "Nein",
             "you": "Du",
             "emptyList": "Keine Elemente verfügbar",
+            "noEntriesYet": "Noch keine Einträge vorhanden",
+            "serverNotReachable": "Server ist nicht erreichbar",
             "filterOptions": "Optionen filtern",
             "noMatchingOptions": "Keine passenden Optionen",
             "selectedCount": "{{ count }} ausgewählt",
@@ -321,6 +323,7 @@
                     "notifications": "Mitteilungen",
                     "examRooms": "Prüfungsräume",
                     "dependencies": "Abhängigkeiten",
+                    "science": "Science",
                     "irisDashboard": "Iris Dashboard",
                     "courseIngestionDashboard": "Index-Dashboard"
                 },
@@ -421,8 +424,8 @@
             "dev": "Development",
             "test": "Testserver"
         },
-        "item-count": "Zeige {{first}} bis {{second}} von {{total}} Einträgen",
         "paginator": {
+            "compactReport": "{{first}}–{{second}} von {{total}}",
             "ariaLabel": "Seitennavigation",
             "first": "Erste Seite",
             "previous": "Vorherige Seite",
@@ -563,7 +566,10 @@
             "value": "Wert"
         },
         "delete": {
-            "title": "Löschen bestätigen"
+            "title": "Löschen bestätigen",
+            "summary": {
+                "largeCountWarning": "Es werden sehr viele Daten gelöscht. Bitte prüfe die folgenden Zahlen sorgfältig, bevor du bestätigst."
+            }
         },
         "unlink": {
             "title": "Trennen bestätigen"

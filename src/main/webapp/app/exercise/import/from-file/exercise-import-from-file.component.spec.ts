@@ -19,24 +19,35 @@ import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
+import { FileUploaderService } from 'app/foundation/service/file-uploader.service';
+import { DragAndDropQuestion } from 'app/quiz/shared/entities/drag-and-drop-question.model';
+import { DragItem } from 'app/quiz/shared/entities/drag-item.model';
+import dayjs from 'dayjs/esm';
 
 describe('ExerciseImportFromFileComponent', () => {
     let component: ExerciseImportFromFileComponent;
     let fixture: ComponentFixture<ExerciseImportFromFileComponent>;
     let dialogRef: TumAetUiDialogRef;
     let alertService: AlertService;
+    let fileUploaderService: FileUploaderService;
     let alertServiceSpy: ReturnType<typeof vi.spyOn>;
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [MockComponent(ButtonComponent), MockComponent(HelpIconComponent)],
-            providers: [MockProvider(TumAetUiDialogRef), MockProvider(AlertService), { provide: TranslateService, useClass: MockTranslateService }],
+            providers: [
+                MockProvider(TumAetUiDialogRef),
+                MockProvider(AlertService),
+                MockProvider(FileUploaderService),
+                { provide: TranslateService, useClass: MockTranslateService },
+            ],
         }).compileComponents();
 
         fixture = TestBed.createComponent(ExerciseImportFromFileComponent);
         component = fixture.componentInstance;
         dialogRef = TestBed.inject(TumAetUiDialogRef);
         alertService = TestBed.inject(AlertService);
+        fileUploaderService = TestBed.inject(FileUploaderService);
     });
 
     it('should close the dialog with result', () => {
@@ -50,19 +61,206 @@ describe('ExerciseImportFromFileComponent', () => {
     });
 
     it.each([ExerciseType.QUIZ, ExerciseType.MODELING, ExerciseType.TEXT, ExerciseType.FILE_UPLOAD])(
-        'should raise error alert if not supported exercise type',
+        'should open the editor of a new %s exercise with the settings from the file',
         async (exerciseType: ExerciseType) => {
-            const alertServiceSpy = vi.spyOn(alertService, 'error');
+            const openImportSpy = vi.spyOn(component, 'openImport');
             fixture.componentRef.setInput('exerciseType', exerciseType);
             component.fileForImport.set((await generateValidTestZipFileWithExerciseType(exerciseType)) as File);
 
             await component.uploadExercise();
 
-            expect(alertServiceSpy).toHaveBeenCalledOnce();
-            expect(alertServiceSpy).toHaveBeenCalledWith('artemisApp.exercise.importFromFile.notSupportedExerciseType', { exerciseType });
-            expect(component.exercise).toBeUndefined();
+            expect(component.exercise).toMatchObject({ type: exerciseType, id: undefined, title: 'Test exercise', channelName: undefined, dueDate: undefined });
+            expect(component.exercise?.zipFileForImport).toBeUndefined();
+            expect(component.exercise?.gradingCriteria?.[0].id).toBeUndefined();
+            expect(component.exercise?.gradingCriteria?.[0].structuredGradingInstructions[0].id).toBeUndefined();
+            expect(openImportSpy).toHaveBeenCalledExactlyOnceWith(component.exercise);
         },
     );
+
+    it('should upload the problem statement images and point the problem statement at the copies', async () => {
+        const uploadSpy = vi.spyOn(fileUploaderService, 'uploadMarkdownFile').mockResolvedValue({ path: '/api/core/files/markdown/Markdown_new.png' });
+        fixture.componentRef.setInput('exerciseType', ExerciseType.TEXT);
+        fixture.componentRef.setInput('courseId', 42);
+        const exercise = new TextExercise(undefined, undefined);
+        exercise.problemStatement =
+            'See ![diagram](/api/core/files/markdown/Markdown_old.png) and <img src="/api/core/files/markdown/Markdown_old.png"> and <img src=/api/core/files/markdown/Markdown_old.png> and ![x](https://source.example/tenant=old/api/core/files/markdown/Markdown_old.png) and <a href=/api/core/files/markdown/Markdown_old.png>full size</a> and ![y](tenant=old/api/core/files/markdown/Markdown_old.png)';
+        const zip = new ZipBuilder();
+        zip.file('Exercise-Details-Test.json', JSON.stringify(exercise));
+        zip.file('files/Markdown_old.png', 'image');
+        zip.file('files/Unused.png', 'image');
+        component.fileForImport.set((await zip.generateBlob()) as File);
+
+        await component.uploadExercise();
+
+        expect(uploadSpy).toHaveBeenCalledOnce();
+        expect(uploadSpy.mock.calls[0][0].name).toBe('Markdown_old.png');
+        expect(uploadSpy.mock.calls[0][1]).toBe(42);
+        expect(component.exercise?.problemStatement).toBe(
+            'See ![diagram](/api/core/files/markdown/Markdown_new.png) and <img src="/api/core/files/markdown/Markdown_new.png"> and <img src=/api/core/files/markdown/Markdown_new.png> and ![x](/api/core/files/markdown/Markdown_new.png) and <a href=/api/core/files/markdown/Markdown_new.png>full size</a> and ![y](/api/core/files/markdown/Markdown_new.png)',
+        );
+    });
+
+    it('should upload and relink every image when several share one line', async () => {
+        const uploadSpy = vi.spyOn(fileUploaderService, 'uploadMarkdownFile').mockImplementation(async (file: File) => ({ path: `/api/core/files/markdown/new_${file.name}` }));
+        fixture.componentRef.setInput('exerciseType', ExerciseType.TEXT);
+        const exercise = new TextExercise(undefined, undefined);
+        exercise.problemStatement = '![a](/api/core/files/markdown/A.png) ![b](/api/core/files/markdown/B.png) ![c](/api/core/files/markdown/A.png2)';
+        const zip = new ZipBuilder();
+        zip.file('Exercise-Details-Test.json', JSON.stringify(exercise));
+        zip.file('files/A.png', 'a');
+        zip.file('files/B.png', 'b');
+        component.fileForImport.set((await zip.generateBlob()) as File);
+
+        await component.uploadExercise();
+
+        expect(uploadSpy).toHaveBeenCalledTimes(2);
+        expect(component.exercise?.problemStatement).toBe(
+            '![a](/api/core/files/markdown/new_A.png) ![b](/api/core/files/markdown/new_B.png) ![c](/api/core/files/markdown/A.png2)',
+        );
+    });
+
+    it('should preserve file fragments and leave external query links unchanged during import', async () => {
+        const uploadSpy = vi.spyOn(fileUploaderService, 'uploadMarkdownFile').mockResolvedValue({ path: '/api/core/files/markdown/new_A.pdf' });
+        fixture.componentRef.setInput('exerciseType', ExerciseType.TEXT);
+        const exercise = new TextExercise(undefined, undefined);
+        exercise.problemStatement =
+            '[file](/api/core/files/markdown/A.pdf#page=2) [same file](/api/core/files/markdown/A.pdf) [external](https://example.org/?redirect=/api/core/files/markdown/A.pdf) [unrelated](/x/foomarkdown/A.pdf)';
+        const zip = new ZipBuilder();
+        zip.file('Exercise-Details-Test.json', JSON.stringify(exercise));
+        zip.file('files/A.pdf', 'pdf');
+        component.fileForImport.set((await zip.generateBlob()) as File);
+
+        await component.uploadExercise();
+
+        expect(uploadSpy).toHaveBeenCalledOnce();
+        expect(component.exercise?.problemStatement).toBe(
+            '[file](/api/core/files/markdown/new_A.pdf#page=2) [same file](/api/core/files/markdown/new_A.pdf) [external](https://example.org/?redirect=/api/core/files/markdown/A.pdf) [unrelated](/x/foomarkdown/A.pdf)',
+        );
+    });
+
+    it('should show an error and reset the importing state if the markdown parser fails to load', async () => {
+        vi.doMock('./markdown-file-destinations', () => {
+            throw new Error('chunk unavailable');
+        });
+        fixture.componentRef.setInput('exerciseType', ExerciseType.TEXT);
+        const exercise = new TextExercise(undefined, undefined);
+        exercise.problemStatement = '![image](/api/core/files/markdown/A.png)';
+        const zip = new ZipBuilder();
+        zip.file('Exercise-Details-Test.json', JSON.stringify(exercise));
+        zip.file('files/A.png', 'image');
+        component.fileForImport.set((await zip.generateBlob()) as File);
+        const alertSpy = vi.spyOn(alertService, 'error');
+        const openImportSpy = vi.spyOn(component, 'openImport');
+
+        try {
+            await component.uploadExercise();
+        } finally {
+            vi.doUnmock('./markdown-file-destinations');
+        }
+
+        expect(alertSpy).toHaveBeenCalledExactlyOnceWith('artemisApp.exercise.importFromFile.importFailed');
+        expect(openImportSpy).not.toHaveBeenCalled();
+        expect(component.isImporting()).toBe(false);
+    });
+
+    it.each([
+        '```text\n/api/core/files/markdown/A.png\n```',
+        '~~~text\n![example](/api/core/files/markdown/A.png)\n~~~',
+        '    ![example](/api/core/files/markdown/A.png)',
+        '`/api/core/files/markdown/A.png`',
+        '`` ![example](/api/core/files/markdown/A.png) `nested` ``',
+        '<!-- <img src="/api/core/files/markdown/A.png"> -->',
+        '<pre><img src="/api/core/files/markdown/A.png"></pre>',
+        '<code>[example](/api/core/files/markdown/A.png)</code>',
+        'A literal path: /api/core/files/markdown/A.png',
+    ])('should preserve %s when importing an exported archive with the same file embedded elsewhere', async (example) => {
+        const uploadSpy = vi.spyOn(fileUploaderService, 'uploadMarkdownFile').mockResolvedValue({ path: '/api/core/files/markdown/new_A.png' });
+        fixture.componentRef.setInput('exerciseType', ExerciseType.TEXT);
+        const exercise = new TextExercise(undefined, undefined);
+        const image = '![image](/api/core/files/markdown/A.png "Original title")';
+        exercise.problemStatement = `${image}\n\n${example}\n\n${image}`;
+        // The export preserves the source statement in the details JSON and Markdown file and includes the genuinely referenced image.
+        const zip = new ZipBuilder();
+        zip.file('Exercise-Details-Test.json', JSON.stringify(exercise));
+        zip.file('Problem-Statement-Test.md', exercise.problemStatement);
+        zip.file('files/A.png', 'image');
+        component.fileForImport.set((await zip.generateBlob()) as File);
+
+        await component.uploadExercise();
+
+        const importedImage = '![image](/api/core/files/markdown/new_A.png "Original title")';
+        expect(uploadSpy).toHaveBeenCalledOnce();
+        expect(component.exercise?.problemStatement).toBe(`${importedImage}\n\n${example}\n\n${importedImage}`);
+    });
+
+    it('should not upload an archived file referenced only in code', async () => {
+        const uploadSpy = vi.spyOn(fileUploaderService, 'uploadMarkdownFile');
+        fixture.componentRef.setInput('exerciseType', ExerciseType.TEXT);
+        const exercise = new TextExercise(undefined, undefined);
+        exercise.problemStatement = '```text\n/api/core/files/markdown/A.png\n```';
+        const zip = new ZipBuilder();
+        zip.file('Exercise-Details-Test.json', JSON.stringify(exercise));
+        zip.file('files/A.png', 'image');
+        component.fileForImport.set((await zip.generateBlob()) as File);
+
+        await component.uploadExercise();
+
+        expect(uploadSpy).not.toHaveBeenCalled();
+        expect(component.exercise?.problemStatement).toBe(exercise.problemStatement);
+    });
+
+    it('should not open the editor if a problem statement image cannot be uploaded', async () => {
+        vi.spyOn(fileUploaderService, 'uploadMarkdownFile').mockRejectedValue(new Error('upload failed'));
+        const alertSpy = vi.spyOn(alertService, 'error');
+        const openImportSpy = vi.spyOn(component, 'openImport');
+        fixture.componentRef.setInput('exerciseType', ExerciseType.TEXT);
+        const exercise = new TextExercise(undefined, undefined);
+        exercise.problemStatement = '![diagram](/api/core/files/markdown/Markdown_old.png)';
+        const zip = new ZipBuilder();
+        zip.file('Exercise-Details-Test.json', JSON.stringify(exercise));
+        zip.file('files/Markdown_old.png', 'image');
+        component.fileForImport.set((await zip.generateBlob()) as File);
+
+        await component.uploadExercise();
+
+        expect(alertSpy).toHaveBeenCalledExactlyOnceWith('artemisApp.exercise.importFromFile.imageUploadFailed', { fileName: 'Markdown_old.png' });
+        expect(openImportSpy).not.toHaveBeenCalled();
+    });
+
+    it('should read the file only once when the import is clicked twice', async () => {
+        const openImportSpy = vi.spyOn(component, 'openImport');
+        fixture.componentRef.setInput('exerciseType', ExerciseType.TEXT);
+        component.fileForImport.set((await generateValidTestZipFileWithExerciseType(ExerciseType.TEXT)) as File);
+
+        await Promise.all([component.uploadExercise(), component.uploadExercise()]);
+
+        expect(openImportSpy).toHaveBeenCalledOnce();
+        expect(component.isImporting()).toBe(false);
+    });
+
+    it('should hand the drag and drop images of a quiz to the question editor', async () => {
+        fixture.componentRef.setInput('exerciseType', ExerciseType.QUIZ);
+        component.fileForImport.set((await generateQuizZip(true)) as File);
+
+        await component.uploadExercise();
+
+        const question = (component.exercise as QuizExercise).quizQuestions![0] as DragAndDropQuestion;
+        expect(question.backgroundFilePath).toBe('background.png');
+        expect(question.dragItems![0].pictureFilePath).toBe('item.png');
+        expect([...question.importedFiles!.keys()]).toEqual(['background.png', 'item.png']);
+    });
+
+    it('should not open the editor if a drag and drop image is missing', async () => {
+        const alertSpy = vi.spyOn(alertService, 'error');
+        const openImportSpy = vi.spyOn(component, 'openImport');
+        fixture.componentRef.setInput('exerciseType', ExerciseType.QUIZ);
+        component.fileForImport.set((await generateQuizZip(false)) as File);
+
+        await component.uploadExercise();
+
+        expect(alertSpy).toHaveBeenCalledExactlyOnceWith('artemisApp.exercise.importFromFile.missingImage', { fileName: 'item.png' });
+        expect(openImportSpy).not.toHaveBeenCalled();
+    });
 
     it('should raise error alert if not one json file at the root level', async () => {
         alertServiceSpy = vi.spyOn(alertService, 'error');
@@ -127,7 +325,7 @@ describe('ExerciseImportFromFileComponent', () => {
         await component.uploadExercise();
 
         expect(alertServiceSpy).toHaveBeenCalledOnce();
-        expect(alertServiceSpy).toHaveBeenCalledWith('artemisApp.programmingExercise.importFromFile.noExerciseDetailsJsonAtRootLevel');
+        expect(alertServiceSpy).toHaveBeenCalledWith('artemisApp.exercise.importFromFile.noExerciseDetailsJson');
         alertServiceSpy.mockClear();
     }
 
@@ -144,7 +342,7 @@ describe('ExerciseImportFromFileComponent', () => {
         component.setFileForExerciseImport(event);
 
         expect(alertServiceSpy).toHaveBeenCalledOnce();
-        expect(alertServiceSpy).toHaveBeenCalledWith('artemisApp.programmingExercise.importFromFile.fileCountError');
+        expect(alertServiceSpy).toHaveBeenCalledWith('artemisApp.exercise.importFromFile.fileCountError');
         expect(component.fileForImport()).toBeUndefined();
     });
 
@@ -160,7 +358,7 @@ describe('ExerciseImportFromFileComponent', () => {
         component.setFileForExerciseImport(event);
 
         expect(alertServiceSpy).toHaveBeenCalledOnce();
-        expect(alertServiceSpy).toHaveBeenCalledWith('artemisApp.programmingExercise.importFromFile.fileExtensionError');
+        expect(alertServiceSpy).toHaveBeenCalledWith('artemisApp.exercise.importFromFile.fileTypeNotSupportedError');
         expect(component.fileForImport()).toBeUndefined();
     });
 
@@ -276,6 +474,11 @@ async function generateValidTestZipFileWithExerciseType(exerciseType: ExerciseTy
     }
     exercise.id = 1246;
     exercise.title = 'Test exercise';
+    exercise.channelName = 'exercise-test';
+    exercise.dueDate = dayjs();
+    exercise.gradingCriteria = [
+        { id: 3, title: 'Criterion', structuredGradingInstructions: [{ id: 4, credits: 1, gradingScale: '', instructionDescription: '', feedback: '', usageCount: 0 }] },
+    ];
     zip.file('test.json', JSON.stringify(exercise));
     return zip.generateBlob();
 }
@@ -290,5 +493,24 @@ async function generateTestZipFileWithTwoJsonFiles(): Promise<Blob> {
     const zip = new ZipBuilder();
     zip.file('test.json', '{ "type": "text", "id": 1246, "title": "Test exercise" }');
     zip.file('test2.json', '{ "type": "text", "id": 1246, "title": "Test exercise" }');
+    return zip.generateBlob();
+}
+
+/** A quiz with one drag and drop question, exported with its background and, if requested, its drag item picture. */
+async function generateQuizZip(withDragItemPicture: boolean): Promise<Blob> {
+    const question = new DragAndDropQuestion();
+    question.id = 7;
+    question.backgroundFilePath = '/api/core/files/drag-and-drop/backgrounds/7/background.png';
+    const dragItem = new DragItem();
+    dragItem.pictureFilePath = '/api/core/files/drag-and-drop/drag-items/9/item.png';
+    question.dragItems = [dragItem];
+    const quiz = new QuizExercise(undefined, undefined);
+    quiz.quizQuestions = [question];
+    const zip = new ZipBuilder();
+    zip.file('Exercise-Details-Quiz.json', JSON.stringify(quiz));
+    zip.file('images-for-drag-and-drop-question-7/background.png', 'background');
+    if (withDragItemPicture) {
+        zip.file('images-for-drag-and-drop-question-7/item.png', 'item');
+    }
     return zip.generateBlob();
 }

@@ -2,7 +2,7 @@
 id: distributed-data
 title: Distributed Data with Redis or Valkey
 sidebar_label: Distributed Data with Redis or Valkey
-last_reviewed: 2026-11-03
+last_reviewed: 2026-11-12
 ---
 
 import Callout from "../../../src/components/Callout/Callout";
@@ -126,6 +126,50 @@ bypassing this protection.
 
 Stop all new nodes before restoring the backup. Never let old and new Artemis releases use the restored store at the
 same time.
+
+## Types that Artemis reads from the store
+
+Both distributed data providers, Hazelcast and Redis or Valkey, only create objects of known types when they read a
+stored value. A class name found in the store that is not on the list is refused before the class is loaded, and the
+read fails with the message `Type <name> is not allowed in the distributed data store`. Hazelcast reports its own
+message, `Resolving class <name> is not allowed`. Artemis logs the refused name on the Redis or Valkey provider.
+
+The filter only restricts what is read. It does not change how values are written, the stored format or the schema
+version, so the migration described on this page is not affected. A mixed-version rollout needs one precaution: the result
+of a failed build job carries the exception of the failure with its causes, and an updated build agent replaces causes of
+types outside the list (for example a Git client exception of a failed clone) by plain exceptions before it publishes them.
+A build agent that is not updated yet still publishes the original types, and an updated core node refuses to read them.
+Update the build agents before or together with the core nodes. If an old agent can still publish results, or such a result
+is already queued, wait until the result queues are empty, or add the missing prefix, for example `org.eclipse.jgit.`, to
+`artemis.distributed-data.additional-allowed-types` until all agents are updated.
+
+The default list contains:
+
+| Entries                                                                                  | Reason                                                       |
+| ---------------------------------------------------------------------------------------- | ------------------------------------------------------------ |
+| `de.tum.cit.aet.artemis.` (everything below this prefix)                                 | Queue items, DTO records, enums and cache values of Artemis  |
+| `java.util.`, `java.time.`, `java.math.`                                                 | Collections, dates and numbers inside those records          |
+| A fixed set of `java.lang` classes, for example `String`, the number types and `Throwable` | Values and exceptions held by stored records                 |
+| `org.springframework.security.web.webauthn.api.`                                         | Passkey registration options                                 |
+| `org.springframework.security.oauth2.core.`                                              | Pending OpenID Connect sign-in requests                      |
+| `com.nimbusds.jose.`                                                                     | Signing keys of the LTI key set                              |
+| `com.github.dockerjava.api.exception.`                                                   | Exceptions of failed build jobs                              |
+| Two Spring cache markers, `NullValue` and `SimpleKey`                                    | A cached `null` and a composite cache key                    |
+| `com.hazelcast.`, `io.github.bucket4j.` (Hazelcast only)                                 | Classes that Hazelcast and the rate limiter store themselves |
+
+Types outside the default list, such as those in `java.net` or most of `java.io`, are refused. Most
+installations need no change. If a plugin or a locally patched Artemis stores additional types, add them with the
+property `artemis.distributed-data.additional-allowed-types`. It takes a comma separated list. An entry that ends with
+a dot allows every type below that prefix, any other entry allows exactly one class:
+
+```yaml
+artemis:
+    distributed-data:
+        additional-allowed-types: org.example.extension., org.example.other.StoredValue
+```
+
+Set the property identically on all core nodes and build agents, because every node reads values that another node
+wrote. A change takes effect when the node restarts.
 
 ## Legacy keys after the first migration
 

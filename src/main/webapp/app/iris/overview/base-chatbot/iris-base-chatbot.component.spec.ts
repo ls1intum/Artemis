@@ -829,7 +829,26 @@ describe('IrisBaseChatbotComponent', () => {
             trail.open = true;
             fixture.detectChanges();
 
-            expect(trail.querySelector('jhi-iris-activity-feed')).toBeTruthy();
+            expect(trail.querySelectorAll('.iris-activity-row')).toHaveLength(2);
+        });
+
+        it('should show each message its own steps, right before its text', () => {
+            const interim = cloneWith(deepClone(mockServerMessage), { id: 501, final: false, activities: [persistedActivities[0]] }) as IrisAssistantMessage;
+            const answer = cloneWith(deepClone(mockServerMessage), { id: 502, activities: [persistedActivities[1]] }) as IrisAssistantMessage;
+            chatService.messages.next([interim, answer]);
+            fixture.detectChanges();
+
+            const wrappers = fixture.nativeElement.querySelectorAll('.llm-message-wrapper') as NodeListOf<HTMLElement>;
+            expect(wrappers).toHaveLength(2);
+            wrappers.forEach((wrapper, index) => {
+                const rows = wrapper.querySelectorAll('details.activity-trail .iris-activity-row');
+                expect(rows).toHaveLength(1);
+                expect(rows[0].getAttribute('aria-label')).toContain(index === 0 ? 'Lecture content retrieval' : 'Faq content retrieval');
+                // The group comes before the message text.
+                const group = wrapper.querySelector('jhi-iris-activity-feed')!;
+                const text = wrapper.querySelector('.bubble-left')!;
+                expect(group.compareDocumentPosition(text) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+            });
         });
 
         it('should not render a persisted trail for messages without activities', () => {
@@ -2401,7 +2420,7 @@ describe('IrisBaseChatbotComponent', () => {
             emitFrame({ type: IrisChatWebsocketPayloadType.STATUS, runId: 'run-zero', runState: IrisRunState.RUNNING });
             fixture.detectChanges();
             expect(component.shouldShowThinkingBubble()).toBe(true);
-            expect(fixture.nativeElement.querySelector('.iris-activity-stepper')).toBeFalsy();
+            expect(fixture.nativeElement.querySelector('.iris-activity-group')).toBeFalsy();
 
             emitFrame({ type: IrisChatWebsocketPayloadType.PARTIAL, runId: 'run-zero', partialResult: 'draft', partialSeq: 1 });
             fixture.detectChanges();

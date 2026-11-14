@@ -2,7 +2,7 @@
 id: security
 title: Security
 sidebar_label: Security
-last_reviewed: 2026-11-03
+last_reviewed: 2026-11-12
 ---
 
 import Callout from "../../../src/components/Callout/Callout";
@@ -75,6 +75,8 @@ ARTEMIS_VERSIONCONTROL_BUILDAGENTGITPASSWORD="<a unique password, kept in sync w
 Artemis also pins the restrictive rendering profile of the diagram renderer at startup, in every profile. If `PLANTUML_SECURITY_PROFILE` is set explicitly, it has to name either `SANDBOX` or `ALLOWLIST`; any other value is rejected. Artemis passes its diagram theme as inline content, so no Artemis feature depends on the other profiles.
 
 ### Build Agent Authentication
+
+Which components may connect to each other, and how to check that your network follows this, is described in the [network model](/admin/production-setup/network-model).
 
 Build agents clone repositories from the core nodes. A clone is only served when the caller is a known agent, is calling from an address that agent is connected from, and is asking for a repository it currently has a build job for.
 
@@ -484,6 +486,30 @@ address, whose forwarded headers Artemis uses. Otherwise, add these origins to `
 `jhipster.cors.allowed-origin-patterns`. This allows them to call the REST API as well. The server logs every refused
 connection request with its origin.
 
+## Embedding in Other Pages and API Documentation
+
+Artemis tells browsers not to show its pages inside a frame of another site. It sends `X-Frame-Options: DENY` and the
+`frame-ancestors 'none'` directive of the Content Security Policy. The policy also restricts the document base to
+Artemis itself (`base-uri 'self'`).
+
+The [LTI module](/instructor/integrations/lti-configuration) is the exception. Learning management systems launch Artemis in a frame, so
+the LTI configuration removes `X-Frame-Options` while the module is enabled, and no `frame-ancestors` directive is sent.
+If you want to restrict which sites may embed Artemis in that case, or without LTI, list their origins:
+
+```yaml
+artemis:
+  security:
+    # Comma separated origins, scheme://host[:port], with an optional leading `*.` wildcard
+    frame-ancestors: https://lms.example.org
+```
+
+With origins configured, Artemis sends `frame-ancestors 'self' <origins>` and no `X-Frame-Options`. An entry that is not of
+that form stops the server at startup.
+
+The OpenAPI specification (`/api-docs`) and the Swagger UI (`/swagger-ui`) are switched off by default
+(`springdoc.api-docs.enabled` and `springdoc.swagger-ui.enabled`). Only where you switch them on, the paths are reachable
+without a login. On a server where they are off, a request to these paths needs a signed-in user like any other path.
+
 ## Rate Limiting
 
 Artemis provides **cluster-wide rate limiting** powered by [Bucket4j](https://bucket4j.com) (token buckets). The bucket state lives in the configured distributed data provider (Hazelcast, Redis or Valkey), or in the process itself with the `Local` provider.
@@ -497,7 +523,7 @@ It helps protect authentication and account management endpoints from brute-forc
 - Enforces limits for REST authentication, WebAuthn, and Git operations
 - Returns HTTP **429 Too Many Requests** with `Retry-After` header
 - Allows per-category configuration of requests per minute
-- Automatically excludes build agents from rate limiting
+- Excludes build agents that are registered with an address. An agent that clones over HTTPS without one has its own budget for clone tokens (`build-agent-clone-token-requests-per-minute`, 30 by default)
 
 
 ### Configuring the Rate Limit
@@ -508,8 +534,11 @@ artemis:
     enabled: true # the default
     account-management-requests-per-minute: 5
     authentication-requests-per-minute: 30
+    git-authentication-requests-per-minute: 30
     login-options-requests-per-minute: 30
+    failed-login-requests-per-minute: 10
     client-error-report-requests-per-minute: 60
+    service-credential-failure-requests-per-minute: 30
 ```
 
 ### Where It Is Enforced
@@ -520,8 +549,44 @@ artemis:
 - Login options lookup (the identifier step of the login form, in its own bucket so that consuming it does not
   reduce the number of logins a shared address can perform)
 - Username/password login
+- Failed username/password logins of one account. Every wrong password, and every login name that does not exist, spends a token of the login name that was tried,
+  independent of the client address, and a login name whose budget is empty is answered with **429** before its password is checked. The budget is `failed-login-requests-per-minute`
+  (10 by default) and it refills continuously, so this is a throttle and not a lock: the owner of an account that someone else tries to guess waits a few seconds, and
+  guessing is held to that rate however many addresses it comes from. Successful logins spend nothing. Because the check does not depend on the address, addresses in `exempt-addresses` are subject to it as well
 - WebAuthn authentication
-- Git over SSH and HTTP operations
+- Git over SSH and HTTP operations, in a bucket of their own, `git-authentication-requests-per-minute`. What consumes it:
+    - **HTTP:** the `/info/refs` request that starts a clone, fetch or push, when it carries credentials. The requests that follow it, `git-upload-pack` and `git-receive-pack`, are authenticated too. A password is charged one token before it is checked and receives it back when it is correct, for the `/info/refs` request as well as for the requests that follow it. A regular clone or push with the correct password is therefore not charged, and it completes even where the limit is a single request. Wrong passwords keep their token.
+    - **SSH:** the user authentication with a key that is recognized and has not expired.
+
+  The bucket is separate from the login so that students who push from a lecture hall behind one address cannot use up the logins of everyone else on it. Raise it where many students share one address,
+  for example behind a campus NAT. It starts at the same 30 as the login, and git over HTTP can verify a password like a login does, so raise it deliberately and not to an arbitrary value.
+  **When you upgrade:** git used to share `authentication-requests-per-minute`, and with the defaults one address could make 30 requests of both kinds in total. Now it can make up to 30 logins and up to 30 git authentications.
+  With a login limit of your own, the git limit is a separate 30 on top of it.
+  Review the git setting on every installation, whether you raised, lowered or never set the login limit, see [10.7 in the Upgrade Guide](/admin/upgrade-guide#107-rate-limit-of-git-operations).
 - [Client error reports](/admin/client-error-reports) of clients that are not signed in
+- Failed checks of the shared secrets that Athena, Pyris and the sharing platform present to Artemis, in a bucket of their own, `service-credential-failure-requests-per-minute`. Only a failed check spends a token, so a service with the right secret is never limited. Once an address has used up its tokens, Artemis refuses its further requests with 429 without comparing the secret.
 
 We plan to add the rate-limit to more endpoints (like Oauth2) in the future.
+
+### Client Address of Git Requests
+
+The limit for Git over HTTP counts the address of the client as the reverse proxies of your installation report it. Tomcat resolves `X-Forwarded-For` for the proxies in `server.tomcat.remoteip.internal-proxies`, which are the private networks by default, and the proxies listed in `artemis.continuous-integration.build-agent-network.trusted-proxies` are believed in addition (see [Build Agent Authentication](#build-agent-authentication)). A header sent by any other peer is ignored. If your reverse proxy has a public address and is in neither list, all clients share the address of the proxy and therefore one budget, so list it in `trusted-proxies`.
+
+The other limits in this section, the check of internal endpoints and the address that is stored in an exam session use the same address: the one that Tomcat resolved for the request. Artemis does not read address headers itself, so what a client
+sends in `X-Forwarded-For` or a similar header only counts when it comes through one of your proxies. Make sure that the first reverse proxy in front of Artemis replaces the header with the address of the connection it accepted (`proxy_set_header X-Forwarded-For $remote_addr;` in nginx), as the nginx configuration of the repository does, and does not append to what the client sent. Tomcat believes an entry that a client wrote into the header when the client itself is in a private network.
+By default, Tomcat believes forwarding headers from every private address. Restrict `server.tomcat.remoteip.internal-proxies` to your own proxies, and keep other hosts of the private network from reaching Artemis directly, so that only the proxies can name an address for a request.
+If your reverse proxy reaches Artemis from a public address, or from an IPv6 address that is not in the private range, name it in `server.tomcat.remoteip.internal-proxies` as well. The property takes a regular expression and replaces the default list, so include the ranges that you still need. A proxy that is in front of your own proxy, such as a CDN or a central load balancer, belongs in `server.tomcat.remoteip.trusted-proxies`. The setting `artemis.continuous-integration.build-agent-network.trusted-proxies` applies to Git over HTTP only. If a proxy is not named, every client has the address of the proxy, and all clients share one budget of the rate limits and one address in their exam sessions.
+
+### Internal Endpoints
+
+Some endpoints are meant to be called by other components of the installation, such as the AI services. They accept requests only from the address ranges in `artemis.security.internal.allowed-cidrs`, in addition to the secret that each of them checks.
+The shipped default allows every address, so that a first installation works. Restrict it to the addresses of the components that call Artemis:
+
+```yaml
+artemis:
+  security:
+    internal:
+      allowed-cidrs:
+        - 10.0.0.0/24
+```
+

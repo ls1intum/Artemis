@@ -1,7 +1,10 @@
 import { Service, inject } from '@angular/core';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, map } from 'rxjs';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
+import { EntitySummaryCategory } from 'app/shared-ui/delete-dialog/delete-dialog.model';
+import { ExerciseGroupDeletionSummaryDTO } from 'app/exam/shared/entities/exercise-group-deletion-summary.model';
+import { buildExerciseGroupDeletionSummary } from 'app/exam/manage/services/exam-deletion-summary.util';
 
 type EntityResponseType = HttpResponse<ExerciseGroup>;
 type EntityArrayResponseType = HttpResponse<ExerciseGroup[]>;
@@ -11,6 +14,18 @@ export class ExerciseGroupService {
     private http = inject(HttpClient);
 
     public resourceUrl = 'api/exam/courses';
+
+    /**
+     * Returns what is deleted together with an exercise group, grouped into categories for the delete dialog.
+     * @param courseId The course id.
+     * @param examId The exam id.
+     * @param exerciseGroupId The id of the exercise group.
+     */
+    getDeletionSummary(courseId: number, examId: number, exerciseGroupId: number): Observable<EntitySummaryCategory[]> {
+        return this.http
+            .get<ExerciseGroupDeletionSummaryDTO>(`${this.resourceUrl}/${courseId}/exams/${examId}/exercise-groups/${exerciseGroupId}/deletion-summary`)
+            .pipe(map((summary) => buildExerciseGroupDeletionSummary(summary)));
+    }
 
     /**
      * Create an exercise group on the server using a POST request.

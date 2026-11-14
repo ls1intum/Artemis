@@ -24,12 +24,9 @@
                     <span jhiTranslate="artemisApp.hyperion.workers.updated"></span> {{ updated | date: 'mediumTime' }}
                 </p>
             }
-            @if (generationsUpdatedAt() && !generations().length && !failed()) {
-                <p data-testid="hyperion-no-active-runs" jhiTranslate="artemisApp.hyperion.workers.noActiveRuns"></p>
-            }
-            @if (generations().length) {
-                <div class="overflow-x-auto">
-                    <table tumAetUiTable data-testid="hyperion-active-runs">
+            @if (generations().length || (generationsUpdatedAt() && !failed())) {
+                <tumaet-ui-table-layout [empty]="!generations().length" emptyTitle="artemisApp.hyperion.workers.noActiveRuns" style="--table-layout-offset: 28rem">
+                    <table tumAetUiTable size="small" data-testid="hyperion-active-runs">
                         <caption class="sr-only" jhiTranslate="artemisApp.hyperion.workers.activeRuns"></caption>
                         <thead>
                             <tr>
@@ -89,6 +86,8 @@
                                             "
                                         >
                                             <tumaet-ui-button
+                                                data-button-intent="destructive"
+                                                data-button-intent-reason="Stops the selected generation job"
                                                 severity="danger"
                                                 variant="outlined"
                                                 size="small"
@@ -105,7 +104,7 @@
                             }
                         </tbody>
                     </table>
-                </div>
+                </tumaet-ui-table-layout>
             }
         </section>
     }
@@ -139,7 +138,13 @@
             <tumaet-ui-button severity="secondary" variant="outlined" [disabled]="cancelling()" (clicked)="cancelDialogVisible.set(false)"
                 ><span jhiTranslate="artemisApp.hyperion.workers.keepRunning"></span
             ></tumaet-ui-button>
-            <tumaet-ui-button severity="danger" [disabled]="!canSubmitCancellation()" (clicked)="cancelGeneration()" data-testid="hyperion-admin-confirm-cancel"
+            <tumaet-ui-button
+                data-button-intent="destructive"
+                data-button-intent-reason="Stops the selected generation job"
+                severity="danger"
+                [disabled]="!canSubmitCancellation()"
+                (clicked)="cancelGeneration()"
+                data-testid="hyperion-admin-confirm-cancel"
                 ><span jhiTranslate="artemisApp.hyperion.workers.cancel"></span
             ></tumaet-ui-button>
         </div>

@@ -17,7 +17,7 @@
     </p>
 
     <div class="flex items-center gap-2 mb-3" data-testid="action-buttons">
-        <tumaet-ui-button size="small" variant="outlined" (clicked)="loadNodes()" [disabled]="loading()" data-testid="refresh-button">
+        <tumaet-ui-button size="small" severity="secondary" variant="outlined" (clicked)="loadNodes()" [disabled]="loading()" data-testid="refresh-button">
             <fa-icon [icon]="faSync" />
             <span class="ms-2" jhiTranslate="artemisApp.websocketAdmin.refreshNodes"></span>
         </tumaet-ui-button>
@@ -39,7 +39,7 @@
     </div>
 
     @if (nodes().length > 0) {
-        <table tumAetUiTable data-testid="nodes-table">
+        <table tumAetUiTable size="small" data-testid="nodes-table">
             <thead>
                 <tr>
                     <th scope="col" jhiTranslate="artemisApp.websocketAdmin.name"></th>

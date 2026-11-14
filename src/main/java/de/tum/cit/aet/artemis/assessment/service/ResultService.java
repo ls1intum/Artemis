@@ -184,37 +184,38 @@ public class ResultService {
     }
 
     /**
-     * Handle the manual creation of a new result potentially including feedback
+     * Handles the manual creation of a new result potentially including feedback.
+     * <p>
+     * <b>Precondition:</b> {@code result} is non-{@code null}.
+     * <p>
+     * <b>Postcondition:</b> the result is stored as a manual result and the corresponding notifications have been sent.
      *
      * @param result      newly created Result
      * @param ratedResult override value for rated property of result
      * @return updated result with eagerly loaded Submission and Feedback items.
+     * @throws IllegalArgumentException                                       if {@code result} is {@code null}
+     * @throws de.tum.cit.aet.artemis.core.exception.BadRequestAlertException if a feedback references a grading instruction of another exercise
      */
-    public Result createNewManualResult(Result result, boolean ratedResult) {
+    public Result createNewManualResult(final Result result, final boolean ratedResult) {
+        if (result == null) {
+            throw new IllegalArgumentException("The manual result must not be null");
+        }
         validateGradingInstructions(result.getFeedbacks(), result.getExerciseId());
-        User user = userRepository.getUserWithAuthorities();
-
+        final User assessor = userRepository.getUserWithAuthorities();
         result.setAssessmentType(AssessmentType.MANUAL);
-        result.setAssessor(user);
+        result.setAssessor(assessor);
         result.setCompletionDate(ZonedDateTime.now());
-
-        // manual feedback is always rated, can be overwritten though in the case of a result for an external submission
+        // Manual feedback is always rated, but can be overwritten for an external submission.
         result.setRated(ratedResult);
-
         result.getFeedbacks().forEach(feedback -> feedback.setResult(result));
 
-        // this call should cascade all feedback relevant changed and save them accordingly
         resultRepository.save(result);
-        // The websocket client expects the submission and feedbacks, so we retrieve the result again instead of using the save result.
-        var savedResult = resultRepository.findWithSubmissionAndFeedbackAndTeamStudentsByIdElseThrow(result.getId());
-
-        // if it is an example result we do not have any participation (isExampleResult can be also null)
+        final Result savedResult = resultRepository.findWithSubmissionAndFeedbackAndTeamStudentsByIdElseThrow(result.getId());
+        // If it is an example result we do not have any participation (isExampleResult can also be null).
         if (Boolean.FALSE.equals(savedResult.isExampleResult()) || savedResult.isExampleResult() == null) {
-
             if (savedResult.getSubmission().getParticipation() instanceof ProgrammingExerciseStudentParticipation && ltiApi.isPresent()) {
                 ltiApi.get().onNewResult((StudentParticipation) savedResult.getSubmission().getParticipation());
             }
-
             resultWebsocketService.broadcastNewResult(savedResult.getSubmission().getParticipation(), savedResult);
         }
         return savedResult;
@@ -237,6 +238,21 @@ public class ResultService {
                 && (instructionIds.contains(null) || gradingInstructionRepository.countByIdInAndGradingCriterionExerciseId(instructionIds, exerciseId) != instructionIds.size())) {
             throw new BadRequestAlertException("Every grading instruction must belong to the assessed exercise.", "feedback", "invalidGradingInstruction");
         }
+    }
+
+    /**
+     * Reads the stored credits of the grading instructions the feedback links to, since the credits of an instruction sent by the client are not trusted.
+     *
+     * @param feedbacks the feedback whose instructions are read
+     * @return the stored credits by instruction id; an instruction that does not exist is missing
+     */
+    public Map<Long, Double> getGradingInstructionCredits(Collection<Feedback> feedbacks) {
+        Set<Long> instructionIds = feedbacks.stream().map(Feedback::getGradingInstruction).filter(Objects::nonNull).map(GradingInstruction::getId).filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+        if (instructionIds.isEmpty()) {
+            return Map.of();
+        }
+        return gradingInstructionRepository.findAllById(instructionIds).stream().collect(Collectors.toMap(GradingInstruction::getId, GradingInstruction::getCredits));
     }
 
     /**
@@ -305,6 +321,19 @@ public class ResultService {
             assessmentNoteRepository.deleteByResultId(resultId);
             resultRepository.deleteResultById(resultId);
         }
+    }
+
+    /**
+     * Deletes a result from an already loaded participation graph using Hibernate's cascade lifecycle. Participant
+     * scores are removed by the caller. Bulk SQL deletion would leave managed children in the parent's orphan-removal
+     * collection and cause another deletion when the submission is removed in the same transaction.
+     *
+     * @param result the result belonging to the participation being deleted
+     */
+    public void deleteResultWithCascade(Result result) {
+        deleteNonCascadedResultReferences(result.getId(), false);
+        result.getSubmission().getResults().remove(result);
+        resultRepository.deleteById(result.getId());
     }
 
     /**
@@ -500,9 +529,12 @@ public class ResultService {
 
     private void filterSensitiveFeedbacksInExamExercise(Participation participation, Collection<Result> results, Exercise exercise) {
         boolean shouldResultsBePublished = areExamResultsPublished(participation, exercise);
+        // Feedback of the assessment is shown together with the published results only. A test run is the exception: its summary shows what a student sees after publication.
+        boolean holdBackAssessment = !shouldResultsBePublished && !(participation instanceof StudentParticipation studentParticipation && studentParticipation.isTestRun());
         for (Result result : results) {
             if (Hibernate.isInitialized(result.getFeedbacks())) {
                 result.filterSensitiveFeedbacks(!shouldResultsBePublished);
+                result.getFeedbacks().removeIf(feedback -> holdBackAssessment && feedback.getType() != null && feedback.getType() != FeedbackType.AUTOMATIC);
             }
         }
     }

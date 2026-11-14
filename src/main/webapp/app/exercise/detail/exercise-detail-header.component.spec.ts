@@ -20,6 +20,14 @@ describe('Exercise detail header', () => {
         expect(fixture.nativeElement.querySelector('h1').textContent).not.toContain('123456');
         expect(fixture.debugElement.query(By.directive(FaIconComponent)).componentInstance.icon()).toEqual(getIcon(type));
     });
+    it('shows only the type icon and keeps the type label as screen-reader text', () => {
+        fixture.componentRef.setInput('exercise', { title: 'Saved exercise title', type: ExerciseType.PROGRAMMING });
+        fixture.detectChanges();
+        const label = fixture.nativeElement.querySelector('h1 .sr-only') as HTMLElement;
+        expect(label).not.toBeNull();
+        expect(label.textContent).toContain('artemisApp.exerciseDetail.types.programming');
+        expect(label.parentElement!.querySelectorAll('fa-icon')).toHaveLength(1);
+    });
     it('refreshes the heading after exercise navigation', () => {
         fixture.componentRef.setInput('exercise', { title: 'First', type: ExerciseType.TEXT });
         fixture.detectChanges();

@@ -75,7 +75,10 @@
 @source './app/exercise/review';
 @source './app/programming/manage/code-editor/instructor-and-editor-container';
 @source './app/programming/manage/detail';
+@source './app/programming/manage/vcs-repository-access-log-view';
 @source './app/programming/manage/status';
+@source './app/programming/shared/instructions-render/step-wizard';
+@source './app/localvc/repository-view';
 @source './app/quiz/manage/detail';
 @source './app/quiz/manage/manage-buttons';
 @source './app/quiz/manage/lifecyle-buttons';
@@ -116,6 +119,27 @@
 @source './app/shared-ui/detail-overview-list';
 @source './app/course/shared/course-sidebar-toggle-button';
 @source './app/atlas/shared/competency-contribution';
+@source './app/aiworker/admin';
+@source './app/atlas/manage/competency-management';
+@source './app/atlas/manage/import';
+@source './app/atlas/manage/import-list';
+@source './app/atlas/manage/learning-paths-table';
+@source './app/communication/course-conversations-components/dialogs/conversation-detail-dialog/tabs/conversation-members';
+@source './app/course/manage/course-lti-configuration';
+@source './app/course/manage/course-material-import';
+@source './app/course/manage/course-scores';
+@source './app/lti/manage/lti13-deep-linking';
+@source './app/programming/manage/assess/repo-export/export-dialog';
+@source './app/programming/manage/consistency-check';
+@source './app/programming/manage/edit-selected';
+@source './app/programming/manage/grading/feedback-analysis';
+@source './app/programming/manage/grading/feedback-analysis/modal/feedback-affected-students';
+@source './app/programming/shared/commits-info';
+@source './app/quiz/manage/list-edit-existing';
+@source './app/quiz/overview/course-training/course-training-quiz/leaderboard';
+@source './app/shared-ui/form/form-footer';
+@source './app/sharing';
+@source './app/text/manage/tutor-effort';
 @source './app/atlas/manage/orchestration-trigger';
 @source './app/atlas/shared/orchestration-result-dialog';
 @source './app/core/feature-overview';
@@ -123,6 +147,7 @@
 @source './app/core/navbar/global-search/components/modal/global-search-modal.component.html';
 @source './app/course/overview/setup-passkey-modal';
 @source './app/course/overview/courses';
+@source './app/course/overview/course-registration';
 @source './app/course/sidebar';
 @source './app/notification';
 @source './app/communication/faq';
@@ -239,9 +264,9 @@
 
 /* Keep navbar trigger colors local; portalled content retains the body theme. */
 .jh-navbar jhi-hyperion-activity-tray > button {
-    --tumaet-ui-contrast-background: var(--navbar-light-active-color);
+    --tumaet-ui-button-contrast-foreground: var(--navbar-light-active-color);
     --tumaet-ui-text-color: var(--navbar-light-color);
-    --tumaet-ui-focus-color: var(--navbar-light-active-color);
+    --tumaet-ui-button-focus-color: var(--navbar-light-active-color);
 }
 
 /* Preflight is disabled, so provide its semantic default for bare Tailwind border utilities. */
@@ -261,3 +286,45 @@
     --color-text: var(--tumaet-ui-text-color);
     --color-text-secondary: var(--tumaet-ui-muted-color);
 }
+
+/* Button action groups migrated to TUM AET UI; keep their layout utilities explicit. */
+@source './app/atlas/manage/competency-management/competency-management-table.component.html';
+@source './app/atlas/manage/competency-management/competency-management.component.html';
+@source './app/atlas/manage/competency-management/import-all-competencies.component.html';
+@source './app/atlas/manage/generate-competencies/competency-recommendation-detail.component.html';
+@source './app/atlas/manage/import/import-course-competencies.component.html';
+@source './app/atlas/manage/learning-paths-configuration/learning-paths-configuration.component.html';
+@source './app/communication/answer-post/answer-post.component.html';
+@source './app/communication/posting-reactions-bar/posting-reactions-bar.component.html';
+@source './app/core/legal/data-export/confirmation/data-export-confirmation-dialog.component.html';
+@source './app/core/legal/data-export/data-export.component.html';
+@source './app/course/manage/control-center/athena-enabled/athena-enabled.component.html';
+@source './app/course/manage/course-material-import/course-material-import-dialog.component.html';
+@source './app/course/manage/course-scores/course-scores.component.html';
+@source './app/course/manage/exercises/course-management-exercises.component.html';
+@source './app/fileupload/manage/assess/file-upload-assessment.component.html';
+@source './app/plagiarism/manage/plagiarism-split-view/text-submission-viewer/text-submission-viewer.component.html';
+@source './app/programming/manage/assess/code-editor-tutor-assessment-inline-feedback/code-editor-tutor-assessment-inline-feedback.component.html';
+@source './app/programming/manage/code-editor/file-browser/file/code-editor-file-browser-file.component.html';
+@source './app/programming/manage/code-editor/file-browser/folder/code-editor-file-browser-folder.component.html';
+@source './app/programming/manage/grading/charts/test-case-distribution-chart.component.html';
+@source './app/programming/manage/grading/table-actions/programming-exercise-grading-table-actions.component.html';
+@source './app/programming/manage/grading/tasks/programming-exercise-grading-tasks-table/programming-exercise-grading-tasks-table.component.html';
+@source './app/programming/manage/version-history/programming-exercise-version-programming-metadata.component.html';
+@source './app/programming/shared/actions/trigger-build-button/programming-exercise-trigger-build-button.component.html';
+@source './app/programming/shared/code-editor/actions/code-editor-actions.component.html';
+@source './app/quiz/manage/drag-and-drop-question/drag-and-drop-question-edit.component.html';
+@source './app/quiz/manage/export/quiz-exercise-export.component.html';
+@source './app/quiz/manage/list-edit-existing/quiz-question-list-edit-existing.component.html';
+@source './app/quiz/manage/multiple-choice-question/multiple-choice-question-edit.component.html';
+@source './app/quiz/manage/re-evaluate/quiz-re-evaluate.component.html';
+@source './app/quiz/manage/re-evaluate/warning/quiz-re-evaluate-warning.component.html';
+@source './app/quiz/manage/short-answer-question/short-answer-question-edit.component.html';
+@source './app/quiz/manage/statistics/quiz-statistics-footer/quiz-statistics-footer.component.html';
+@source './app/quiz/manage/update/quiz-exercise-update.component.html';
+@source './app/quiz/overview/participation/quiz-participation.component.html';
+@source './app/shared-ui/components/buttons/exercise-action-button/exercise-action-button.component.html';
+@source './app/shared-ui/export/modal/export-modal.component.html';
+@source './app/shared-ui/form/form-footer/form-footer.component.html';
+@source './app/sharing/sharing.component.html';
+@source './app/text/manage/example-text-submission/example-text-submission.component.html';
