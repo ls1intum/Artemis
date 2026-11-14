@@ -122,11 +122,11 @@ export class LegalDocumentUpdateComponent implements OnInit {
         this.isSaving.set(true);
         doc.text = this.currentContentTrimmed();
         if (this.legalDocumentType === LegalDocumentType.PRIVACY_STATEMENT) {
-            this.legalDocumentService.updatePrivacyStatement(doc).subscribe((statement) => {
+            this.legalDocumentService.updatePrivacyStatement(doc, doc.text).subscribe((statement) => {
                 this.setUpdatedDocument(statement);
             });
         } else {
-            this.legalDocumentService.updateImprint(doc).subscribe((imprint) => {
+            this.legalDocumentService.updateImprint(doc, doc.text).subscribe((imprint) => {
                 this.setUpdatedDocument(imprint);
             });
         }

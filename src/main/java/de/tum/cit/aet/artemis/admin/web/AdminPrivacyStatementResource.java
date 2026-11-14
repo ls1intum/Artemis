@@ -20,6 +20,11 @@ import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 
 /**
  * REST controller for editing the Privacy Statement as an admin.
@@ -47,7 +52,14 @@ public class AdminPrivacyStatementResource {
      * @return the ResponseEntity with status 200 (OK) and with body the privacy statement
      */
     @GetMapping("privacy-statement-for-update")
-    public ResponseEntity<PrivacyStatementDTO> getPrivacyStatementForUpdate(@RequestParam("language") String language) {
+    @Operation(summary = "Get the privacy statement for editing", description = "Requires an administrator. If the selected language has no file, the response omits text.")
+    @ApiResponse(responseCode = "200", description = "The privacy statement in the requested language", content = @Content(schema = @Schema(implementation = PrivacyStatementDTO.class)))
+    @ApiResponse(responseCode = "400", description = "Missing or unsupported language", content = @Content)
+    @ApiResponse(responseCode = "401", description = "Authentication required", content = @Content)
+    @ApiResponse(responseCode = "403", description = "Administrator role required", content = @Content)
+    @ApiResponse(responseCode = "500", description = "Could not read the privacy statement file", content = @Content)
+    public ResponseEntity<PrivacyStatementDTO> getPrivacyStatementForUpdate(
+            @RequestParam("language") @Parameter(description = "Requested language short name", schema = @Schema(allowableValues = { "en", "de" })) String language) {
         if (!Language.isValidShortName(language)) {
             throw new BadRequestException("Language not supported");
         }
@@ -61,6 +73,12 @@ public class AdminPrivacyStatementResource {
      * @return the ResponseEntity with status 200 (OK) and with body the updated privacy statement
      */
     @PutMapping("privacy-statement")
+    @Operation(summary = "Save the privacy statement", description = "Requires an administrator. Creates the file if it does not exist.", requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(required = true, description = "Provide type, language, and nonblank Markdown text.", content = @Content(schema = @Schema(allOf = PrivacyStatementDTO.class, requiredProperties = "text"))))
+    @ApiResponse(responseCode = "200", description = "The saved privacy statement", content = @Content(schema = @Schema(implementation = PrivacyStatementDTO.class)))
+    @ApiResponse(responseCode = "400", description = "Blank Markdown text", content = @Content)
+    @ApiResponse(responseCode = "401", description = "Authentication required", content = @Content)
+    @ApiResponse(responseCode = "403", description = "Administrator role required", content = @Content)
+    @ApiResponse(responseCode = "500", description = "Could not write the privacy statement file", content = @Content)
     public ResponseEntity<PrivacyStatementDTO> updatePrivacyStatement(@RequestBody PrivacyStatementDTO privacyStatement) {
         return ResponseEntity.ok(legalDocumentService.updatePrivacyStatement(privacyStatement));
     }

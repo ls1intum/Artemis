@@ -6,6 +6,10 @@ export enum LegalDocumentLanguage {
     ENGLISH = 'en',
 }
 
+export function isLegalDocumentLanguage(language: string): language is LegalDocumentLanguage {
+    return language === LegalDocumentLanguage.GERMAN || language === LegalDocumentLanguage.ENGLISH;
+}
+
 /**
  * An enum representing the types of legal documents (privacy statement, imprint)
  */
