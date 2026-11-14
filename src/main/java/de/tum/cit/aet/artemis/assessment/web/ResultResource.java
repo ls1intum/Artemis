@@ -291,6 +291,11 @@ public class ResultResource {
                     .headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, ineligibility.get().getErrorKey(), ineligibility.get().getDefaultMessage())).build();
         }
 
+        // checked on the raw value before the conversion rounds it (which fails on a non-finite score) and before the participation and the
+        // empty submission are created; an unrated external result may have no score at all
+        if (resultDTO.score() != null) {
+            exercise.checkScoreWithinBoundsElseThrow(resultDTO.score());
+        }
         Result result = resultDTO.toEntity();
         resultService.validateGradingInstructions(result.getFeedbacks(), exercise.getId());
 

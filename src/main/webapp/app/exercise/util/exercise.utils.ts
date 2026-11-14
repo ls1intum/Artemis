@@ -236,7 +236,8 @@ export const getPositiveAndCappedTotalScore = (totalScore: number, maxPoints: nu
         totalScore = maxPoints;
     }
 
-    return +totalScore.toFixed(2);
+    // Points have up to three decimal places, so rounding to two can exceed the maximum again (10.006 becomes 10.01) and the server rejects such a score
+    return Math.min(+totalScore.toFixed(2), maxPoints);
 };
 
 export const getTotalMaxPoints = (exercise?: Exercise): number => {

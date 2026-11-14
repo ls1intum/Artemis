@@ -3,6 +3,8 @@ package de.tum.cit.aet.artemis.assessment;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -20,11 +22,13 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import tools.jackson.databind.JsonNode;
@@ -55,6 +59,7 @@ import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
+import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
@@ -923,6 +928,56 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
         assertThat(persistedFeedback.isPositive()).isTrue();
         assertThat(persistedFeedback.getType()).isEqualTo(FeedbackType.MANUAL);
         assertThat(feedbackRepository.findByResult(persistedResult)).hasSize(1);
+    }
+
+    // With 10 max points the cap is 100%; 5 bonus points raise it to 150%.
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
+    @CsvSource({ "-1, 0", "100.0001, 0", "150, 0", "150.0001, 5" })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void createResultForExternalSubmission_scoreOutOfRange_isRejected(double score, double bonusPoints) throws Exception {
+        setPointsOfModelingExercise(bonusPoints);
+        var result = new ExternalSubmissionResultDTO(score, true, null);
+
+        request.postWithResponseBody(externalResultPath(modelingExercise.getId(), TEST_PREFIX + "student1"), result, ResultDTO.class, HttpStatus.BAD_REQUEST);
+
+        // the score is checked before the participation and the empty external submission are created
+        assertThat(studentParticipationRepository.findByExerciseId(modelingExercise.getId()))
+                .noneMatch(participation -> (TEST_PREFIX + "student1").equals(participation.getParticipantIdentifier()));
+    }
+
+    // JSON has no token for infinity, but Jackson parses a valid number beyond the double range as infinity
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
+    @ValueSource(strings = { "1e400", "-1e400" })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void createResultForExternalSubmission_nonFiniteScore_isRejected(String score) throws Exception {
+        setPointsOfModelingExercise(0);
+        String body = "{\"rated\": true, \"score\": " + score + "}";
+
+        var response = request.performMvcRequest(post(externalResultPath(modelingExercise.getId(), TEST_PREFIX + "student1")).contentType(MediaType.APPLICATION_JSON).content(body))
+                .andExpect(status().isBadRequest()).andReturn().getResponse();
+
+        assertThat(request.getObjectMapper().readValue(response.getContentAsString(), Map.class)).containsEntry("errorKey", "scoreOutOfRange");
+        assertThat(studentParticipationRepository.findByExerciseId(modelingExercise.getId()))
+                .noneMatch(participation -> (TEST_PREFIX + "student1").equals(participation.getParticipantIdentifier()));
+    }
+
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
+    @CsvSource({ "0, 0", "100, 0", "150, 5" })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void createResultForExternalSubmission_scoreWithinBounds_isAccepted(double score, double bonusPoints) throws Exception {
+        setPointsOfModelingExercise(bonusPoints);
+        var result = new ExternalSubmissionResultDTO(score, true, null);
+
+        var createdResult = request.postWithResponseBody(externalResultPath(modelingExercise.getId(), TEST_PREFIX + "student1"), result, ResultDTO.class, HttpStatus.CREATED);
+
+        assertThat(resultRepository.findWithSubmissionAndFeedbackAndTeamStudentsByIdElseThrow(createdResult.id()).getScore()).isEqualTo(score);
+    }
+
+    private void setPointsOfModelingExercise(double bonusPoints) {
+        modelingExercise.setIncludedInOverallScore(IncludedInOverallScore.INCLUDED_COMPLETELY);
+        modelingExercise.setMaxPoints(10.0);
+        modelingExercise.setBonusPoints(bonusPoints);
+        modelingExercise = modelingExerciseRepository.save(modelingExercise);
     }
 
     @Test

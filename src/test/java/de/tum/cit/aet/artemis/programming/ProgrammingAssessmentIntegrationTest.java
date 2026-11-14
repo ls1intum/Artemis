@@ -23,6 +23,7 @@ import org.assertj.core.data.Offset;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -544,11 +545,14 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
         programmingExercise.setMaxPoints(10.0);
         programmingExercise.setBonusPoints(0.0);
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
-        setupStudentSubmissions();
         manualResult.getSubmission().getParticipation().setExercise(programmingExercise);
-
+        setupStudentSubmissions();
     }
 
+    /**
+     * Expects an exercise without bonus points to be attached to the manual result already: the points are capped with its max points
+     * like in the client, so 15 awarded points of a 10-point exercise result in 100%.
+     */
     private void setupStudentSubmissions() throws Exception {
         // setting up student submission
         List<Feedback> feedbacks = new ArrayList<>();
@@ -557,7 +561,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
         addAssessmentFeedbackAndCheckScore(feedbacks, 1.0, 0D);
         addAssessmentFeedbackAndCheckScore(feedbacks, 5.0, 50D);
         addAssessmentFeedbackAndCheckScore(feedbacks, 5.0, 100D);
-        addAssessmentFeedbackAndCheckScore(feedbacks, 5.0, 150D);
+        addAssessmentFeedbackAndCheckScore(feedbacks, 5.0, 100D);
     }
 
     @Test
@@ -568,9 +572,9 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
         programmingExercise.setMaxPoints(10.0);
         programmingExercise.setBonusPoints(0.0);
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
+        manualResult.getSubmission().getParticipation().setExercise(programmingExercise);
         // setting up student submission
         setupStudentSubmissions();
-        manualResult.getSubmission().getParticipation().setExercise(programmingExercise);
     }
 
     @Test
@@ -581,9 +585,9 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
         programmingExercise.setMaxPoints(10.0);
         programmingExercise.setBonusPoints(0.0);
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
+        manualResult.getSubmission().getParticipation().setExercise(programmingExercise);
         // setting up student submission
         setupStudentSubmissions();
-        manualResult.getSubmission().getParticipation().setExercise(programmingExercise);
     }
 
     private void addAssessmentFeedbackAndCheckScore(List<Feedback> feedbacks, Double pointsAwarded, Double expectedScore) throws Exception {
@@ -625,6 +629,53 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
                 Result.class, HttpStatus.OK);
 
         assertThat(response.getScore()).isEqualTo(110, Offset.offset(offsetByTenThousandth));
+    }
+
+    // The exercise has 100 max points and 10 bonus points, so the highest score a client can legitimately send is 110%.
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
+    @CsvSource({ "-50, false", "-50, true", "-0.0001, false", "-0.0001, true", "110.0001, false", "110.0001, true", "150, false", "150, true", "99999, false", "99999, true" })
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void createManualProgrammingExerciseResult_scoreOutOfRange_isRejected(double score, boolean submit) throws Exception {
+        long participationId = programmingExerciseStudentParticipation.getId();
+        List<Double> scoresBefore = resultRepository.findAllBySubmissionParticipationIdOrderByCompletionDateDesc(participationId).stream().map(Result::getScore).toList();
+        manualResult.score(score);
+        manualResult.rated(true);
+
+        request.put("/api/programming/participations/" + participationId + "/manual-results?submit=" + submit, manualResult, HttpStatus.BAD_REQUEST);
+
+        List<Double> scoresAfter = resultRepository.findAllBySubmissionParticipationIdOrderByCompletionDateDesc(participationId).stream().map(Result::getScore).toList();
+        assertThat(scoresAfter).isEqualTo(scoresBefore);
+    }
+
+    // JSON has no token for infinity, but Jackson parses a valid number beyond the double range as infinity
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
+    @ValueSource(strings = { "1e400", "-1e400" })
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void createManualProgrammingExerciseResult_nonFiniteScore_isRejected(String score) throws Exception {
+        long participationId = programmingExerciseStudentParticipation.getId();
+        List<Double> scoresBefore = resultRepository.findAllBySubmissionParticipationIdOrderByCompletionDateDesc(participationId).stream().map(Result::getScore).toList();
+        String body = "{\"rated\": true, \"successful\": false, \"feedbacks\": [], \"score\": " + score + "}";
+
+        var response = request
+                .performMvcRequest(put("/api/programming/participations/" + participationId + "/manual-results?submit=true").contentType(MediaType.APPLICATION_JSON).content(body))
+                .andExpect(status().isBadRequest()).andReturn().getResponse();
+
+        assertThat(request.getObjectMapper().readValue(response.getContentAsString(), Map.class)).containsEntry("errorKey", "scoreOutOfRange");
+        List<Double> scoresAfter = resultRepository.findAllBySubmissionParticipationIdOrderByCompletionDateDesc(participationId).stream().map(Result::getScore).toList();
+        assertThat(scoresAfter).isEqualTo(scoresBefore);
+    }
+
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
+    @ValueSource(doubles = { 0.0, 110.0 })
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void createManualProgrammingExerciseResult_scoreAtBounds_isAccepted(double score) throws Exception {
+        manualResult.score(score);
+        manualResult.rated(true);
+
+        Result response = request.putWithResponseBody("/api/programming/participations/" + programmingExerciseStudentParticipation.getId() + "/manual-results?submit=true",
+                manualResult, Result.class, HttpStatus.OK);
+
+        assertThat(response.getScore()).isEqualTo(score, Offset.offset(offsetByTenThousandth));
     }
 
     @Test

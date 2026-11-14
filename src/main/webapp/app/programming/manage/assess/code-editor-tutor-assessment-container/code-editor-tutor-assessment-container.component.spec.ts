@@ -612,6 +612,20 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         addFeedbackAndValidateScore(comp, 5, 100);
     });
 
+    it('should not exceed 100% for max points with three decimal places', async () => {
+        comp.ngOnInit();
+        await flushMicrotasks();
+
+        comp.exercise().maxPoints = 10.006;
+        comp.exercise().bonusPoints = 0;
+        comp.automaticFeedback.set([]);
+        comp.referencedFeedback.set([]);
+        comp.unreferencedFeedback.set([]);
+        // full marks are rounded to 10.01 points, which would be sent as 100.04% and rejected by the server
+        addFeedbackAndValidateScore(comp, 10.006, 100);
+        addFeedbackAndValidateScore(comp, 1, 100);
+    });
+
     it('should calculate score correctly for IncludedAsBonusExercise', async () => {
         comp.ngOnInit();
         await flushMicrotasks();
