@@ -7,21 +7,33 @@ import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 
+import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
+import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
+import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import org.mockito.ArgumentCaptor;
 import org.mockito.ArgumentMatchers;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import com.github.dockerjava.api.async.ResultCallback;
+import com.github.dockerjava.api.command.CopyArchiveToContainerCmd;
 import com.github.dockerjava.api.command.CreateContainerCmd;
 import com.github.dockerjava.api.command.ExecCreateCmd;
 import com.github.dockerjava.api.command.ExecCreateCmdResponse;
@@ -210,5 +222,33 @@ class BuildJobContainerServiceTest extends AbstractArtemisBuildAgentTest {
         // This guards against regression: previously, setup commands accidentally used detached mode.
         verify(execStartCmd, atLeastOnce()).withDetach(false);
         verify(execStartCmd, never()).withDetach(true);
+    }
+
+    @Test
+    void testRepositoryArchiveIsStreamedFromDiskInsteadOfBeingHeldInMemory(@TempDir Path repository) throws Exception {
+        FileUtils.writeStringToFile(repository.resolve("file.txt").toFile(), "content", StandardCharsets.UTF_8);
+        CopyArchiveToContainerCmd copyCommand = mock(CopyArchiveToContainerCmd.class);
+        when(buildAgentConfiguration.getDockerClient().copyArchiveToContainerCmd(anyString())).thenReturn(copyCommand);
+        when(copyCommand.withRemotePath(anyString())).thenReturn(copyCommand);
+        AtomicReference<InputStream> uploadedStream = new AtomicReference<>();
+        when(copyCommand.withTarInputStream(any())).thenAnswer(invocation -> {
+            uploadedStream.set(invocation.getArgument(0));
+            return copyCommand;
+        });
+        List<String> uploadedEntries = new ArrayList<>();
+        doAnswer(invocation -> {
+            try (TarArchiveInputStream tar = new TarArchiveInputStream(uploadedStream.get())) {
+                TarArchiveEntry entry;
+                while ((entry = tar.getNextEntry()) != null) {
+                    uploadedEntries.add(entry.getName());
+                }
+            }
+            return null;
+        }).when(copyCommand).exec();
+
+        ReflectionTestUtils.invokeMethod(buildJobContainerService, "copyToContainer", repository, DUMMY_CONTAINER_ID, "build-job-1");
+
+        assertThat(uploadedStream.get()).isNotInstanceOf(ByteArrayInputStream.class);
+        assertThat(uploadedEntries.contains(repository.getFileName() + "/file.txt")).as("the archive holds the file of the repository").isTrue();
     }
 }

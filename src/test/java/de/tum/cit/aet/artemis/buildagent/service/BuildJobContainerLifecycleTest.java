@@ -50,6 +50,7 @@ import com.github.dockerjava.api.model.StreamType;
 import de.tum.cit.aet.artemis.buildagent.BuildAgentConfiguration;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildLogDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.DockerRunConfig;
+import de.tum.cit.aet.artemis.core.service.TempFileUtilService;
 import de.tum.cit.aet.artemis.localci.exception.LocalCIException;
 
 class BuildJobContainerLifecycleTest {
@@ -60,7 +61,7 @@ class BuildJobContainerLifecycleTest {
 
     private final BuildLogsMap logs = mock(BuildLogsMap.class);
 
-    private final BuildJobContainerService service = new BuildJobContainerService(configuration, logs);
+    private final BuildJobContainerService service = new BuildJobContainerService(configuration, logs, new TempFileUtilService());
 
     private final ListContainersCmd list = mock(ListContainersCmd.class, RETURNS_SELF);
 
