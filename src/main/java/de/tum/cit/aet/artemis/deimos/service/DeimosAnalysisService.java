@@ -21,9 +21,9 @@ import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.HexFormat;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
@@ -305,9 +305,9 @@ public class DeimosAnalysisService {
 
     private static ParticipationAnalysis toAnalysis(long participationId, long exerciseId, DeimosVerdict verdict, @Nullable DeimosLlmResponse response,
             @Nullable DeimosFailureType failureType, ParticipationEvidence evidence) {
-        List<DeimosOmission> reportedOmissions = evidence.omissions.stream().limit(MAX_REPORTED_OMISSIONS_PER_PARTICIPATION).map(RecordedOmission::toDisplay).toList();
+        List<DeimosOmission> reportedOmissions = evidence.reportedOmissions.stream().map(RecordedOmission::toDisplay).toList();
         return new ParticipationAnalysis(participationId, exerciseId, verdict, response != null ? response.malicious() : null, response != null ? response.rationale() : null,
-                failureType, List.copyOf(evidence.reportedFindings), evidence.findingKeys.size(), evidence.findingCountCapped, reportedOmissions, evidence.omissions.size());
+                failureType, List.copyOf(evidence.reportedFindings), evidence.findingKeys.size(), evidence.findingCountCapped, reportedOmissions, evidence.omissionCount);
     }
 
     /**
@@ -375,10 +375,25 @@ public class DeimosAnalysisService {
         private final List<DeimosManipulationFinding> reportedFindings = new ArrayList<>();
 
         /**
-         * All distinct omissions in order of occurrence. Kept in full so the reported total is exact; only the display
-         * is capped.
+         * How many distinct omissions occurred, exactly.
          */
-        private final Set<RecordedOmission> omissions = new LinkedHashSet<>();
+        private long omissionCount;
+
+        /**
+         * The first distinct omissions in order of occurrence, as many as the report lists.
+         */
+        private final List<RecordedOmission> reportedOmissions = new ArrayList<>();
+
+        private boolean textOmitted;
+
+        /**
+         * The distinct omissions of the snapshot recorded last. Every omission carries its snapshot, and the omissions of
+         * one snapshot are recorded together, so only these can repeat. Keeping all of them instead would let a history of
+         * many snapshots, each changing many binary files, exhaust the heap while every payload stays within its bound.
+         */
+        private final Set<RecordedOmission> currentSnapshotOmissions = new HashSet<>();
+
+        private @Nullable SnapshotRef currentSnapshot;
 
         private boolean sentinelSeen;
 
@@ -401,8 +416,29 @@ public class DeimosAnalysisService {
             return !findingKeys.isEmpty();
         }
 
+        void addOmission(RecordedOmission omission) {
+            if (!Objects.equals(omission.snapshot(), currentSnapshot)) {
+                currentSnapshotOmissions.clear();
+                currentSnapshot = omission.snapshot();
+            }
+            if (!currentSnapshotOmissions.add(omission)) {
+                return;
+            }
+            omissionCount++;
+            if (omission.reason() != DeimosOmissionReason.NON_TEXT_FILE) {
+                textOmitted = true;
+            }
+            if (reportedOmissions.size() < MAX_REPORTED_OMISSIONS_PER_PARTICIPATION) {
+                reportedOmissions.add(omission);
+            }
+        }
+
+        void addOmissions(List<RecordedOmission> omissions) {
+            omissions.forEach(this::addOmission);
+        }
+
         boolean hasOmissions() {
-            return !omissions.isEmpty();
+            return omissionCount > 0;
         }
 
         /**
@@ -410,7 +446,7 @@ public class DeimosAnalysisService {
          * reaches the model.
          */
         boolean hasTextOmissions() {
-            return omissions.stream().anyMatch(omission -> omission.reason() != DeimosOmissionReason.NON_TEXT_FILE);
+            return textOmitted;
         }
     }
 
@@ -626,7 +662,7 @@ public class DeimosAnalysisService {
                 // so it cannot masquerade as a participation that simply never changed anything.
                 log.warn("Submission {} of participation {} has no commit hash, skipping snapshot", submission.getId(), participationId);
                 unexaminableSubmissions++;
-                evidence.omissions.add(new RecordedOmission(DeimosOmissionReason.MISSING_COMMIT_HASH, null, snapshot));
+                evidence.addOmission(new RecordedOmission(DeimosOmissionReason.MISSING_COMMIT_HASH, null, snapshot));
                 return;
             }
 
@@ -658,10 +694,10 @@ public class DeimosAnalysisService {
                 // The section is dropped as a whole, so its file-level omissions do not describe what the model
                 // misses: the entire snapshot is missing.
                 omittedSnapshots++;
-                evidence.omissions.add(new RecordedOmission(DeimosOmissionReason.PAYLOAD_LIMIT, null, snapshot));
+                evidence.addOmission(new RecordedOmission(DeimosOmissionReason.PAYLOAD_LIMIT, null, snapshot));
                 return;
             }
-            evidence.omissions.addAll(sectionOmissions);
+            evidence.addOmissions(sectionOmissions);
             sb.append(section);
             usedBytes += sectionBytes;
             emittedSnapshots++;
@@ -715,7 +751,7 @@ public class DeimosAnalysisService {
             if (cumulativeResult.text().isEmpty()) {
                 return "";
             }
-            evidence.omissions.addAll(recorded(cumulativeResult.omissions(), null));
+            evidence.addOmissions(recorded(cumulativeResult.omissions(), null));
             return header + cumulativeResult.text();
         }
     }
@@ -834,7 +870,7 @@ public class DeimosAnalysisService {
             ObjectId objectId = entry.getValue();
             boolean changed = !objectId.equals(previousOtherFiles.get(entry.getKey())) && !objectId.equals(template.otherFiles().get(entry.getKey()));
             if (changed) {
-                evidence.omissions.add(new RecordedOmission(DeimosOmissionReason.NON_TEXT_FILE, entry.getKey(), snapshot));
+                evidence.addOmission(new RecordedOmission(DeimosOmissionReason.NON_TEXT_FILE, entry.getKey(), snapshot));
                 recorded++;
             }
         }

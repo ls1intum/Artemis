@@ -1059,6 +1059,28 @@ class DeimosAnalysisServiceTest {
     }
 
     @Test
+    void analyzeCountsTheOmissionsOfEverySnapshotButListsOnlyTheFirst() throws Exception {
+        // Every snapshot changes the same four binary files, so no omission repeats one of an earlier snapshot.
+        Snapshot[] snapshots = IntStream.range(0, 30)
+                .mapToObj(snapshot -> new Snapshot("bin%05d".formatted(snapshot), Map.of(),
+                        IntStream.range(0, 4).boxed()
+                                .collect(Collectors.toMap("lib/native%d.so"::formatted, file -> ObjectId.fromString("%040x".formatted(snapshot * 4 + file + 1))))))
+                .toArray(Snapshot[]::new);
+        stubHistory(547L, Map.of(), snapshots);
+
+        DeimosBatchSummaryDTO summary = analyze(List.of(547L));
+
+        assertThat(summary.analyzedParticipations()).singleElement().satisfies(analysis -> {
+            assertThat(analysis.verdict()).isEqualTo(DeimosVerdict.INCOMPLETELY_CHECKED);
+            assertThat(analysis.omissionCount()).isEqualTo(120);
+            assertThat(analysis.omissions()).hasSize(10).allSatisfy(omission -> assertThat(omission.reason()).isEqualTo(DeimosOmissionReason.NON_TEXT_FILE));
+            assertThat(analysis.omissions()).extracting(omission -> omission.snapshot().substring(0, 8)).containsExactly("bin00000", "bin00000", "bin00000", "bin00000", "bin00001",
+                    "bin00001", "bin00001", "bin00001", "bin00002", "bin00002");
+            assertThat(analysis.omissions()).extracting(DeimosOmission::filePath).startsWith("lib/native0.so", "lib/native1.so", "lib/native2.so", "lib/native3.so");
+        });
+    }
+
+    @Test
     void analyzeCountsOmittedFilesSeparatelyEvenWhenTheirShortenedPathsCoincide() throws Exception {
         String sharedPrefix = "src/" + "d".repeat(300) + "/";
         stubHistory(546L, Map.of(), new Snapshot("long0001", Map.of(sharedPrefix + "First.java", "x".repeat(300 * 1024), sharedPrefix + "Second.java", "y".repeat(300 * 1024))));
