@@ -1,6 +1,10 @@
 package de.tum.cit.aet.artemis.communication;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.util.HashSet;
 import java.util.List;
@@ -17,8 +21,11 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.cit.aet.artemis.communication.domain.Faq;
@@ -405,6 +412,8 @@ class FaqIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     void importSelectedFaqs_limitsSelectionBeforeLoadingOrSaving() throws Exception {
         var maximumSelection = LongStream.rangeClosed(1, 500).boxed().collect(Collectors.toSet());
         assertThat(validator.validate(new ImportFaqsDTO(maximumSelection))).isEmpty();
+        assertThat(validator.validate(new ImportFaqsDTO(Set.of()))).singleElement().satisfies(violation -> assertThat(violation.getPropertyPath().toString()).isEqualTo("faqIds"));
+        assertThat(validator.validate(new ImportFaqsDTO(null))).singleElement().satisfies(violation -> assertThat(violation.getPropertyPath().toString()).isEqualTo("faqIds"));
         var oversizedSelection = LongStream.rangeClosed(1, 501).map(id -> Long.MAX_VALUE - id).boxed().collect(Collectors.toSet());
         assertThat(validator.validate(new ImportFaqsDTO(oversizedSelection))).singleElement()
                 .satisfies(violation -> assertThat(violation.getPropertyPath().toString()).isEqualTo("faqIds"));
@@ -500,6 +509,114 @@ class FaqIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         assertThat(imported).hasSize(1);
         assertThat(imported.getFirst().id()).isNotEqualTo(faq.getId());
         assertThat(faqRepository.countByCourseId(course2.getId())).isEqualTo(1);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void createFaq_returnsCreatedLocationAndOmitsEmptyFields() throws Exception {
+        String body = """
+                {"courseId": %d, "questionTitle": "Wire question", "faqState": "PROPOSED"}
+                """.formatted(course1.getId());
+        var result = request
+                .performMvcRequest(MockMvcRequestBuilders.post("/api/communication/courses/" + course1.getId() + "/faqs").contentType(MediaType.APPLICATION_JSON).content(body))
+                .andExpect(status().isCreated()).andExpect(header().string("X-Frame-Options", "DENY")).andExpect(jsonPath("$.questionTitle").value("Wire question"))
+                .andExpect(jsonPath("$.faqState").value("PROPOSED")).andExpect(jsonPath("$.questionAnswer").doesNotExist()).andExpect(jsonPath("$.categories").doesNotExist())
+                .andReturn();
+        FaqDTO created = request.getObjectMapper().readValue(result.getResponse().getContentAsString(), FaqDTO.class);
+        assertThat(result.getResponse().getHeader(HttpHeaders.LOCATION)).isEqualTo("/api/communication/courses/" + course1.getId() + "/faqs/" + created.id());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void createFaq_missingBodyCourseId_returnsBadRequest() throws Exception {
+        long countBefore = faqRepository.countByCourseId(course1.getId());
+        request.performMvcRequest(MockMvcRequestBuilders.post("/api/communication/courses/" + course1.getId() + "/faqs").contentType(MediaType.APPLICATION_JSON)
+                .content("{\"questionTitle\": \"No course\", \"faqState\": \"PROPOSED\"}")).andExpect(status().isBadRequest());
+        assertThat(faqRepository.countByCourseId(course1.getId())).isEqualTo(countBefore);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void updateFaq_nonPositiveBodyId_returnsBadRequest() throws Exception {
+        UpdateFaqDTO dto = new UpdateFaqDTO(0, "Changed title", "answer", Set.of(), FaqState.PROPOSED);
+        request.putWithResponseBody("/api/communication/courses/" + course1.getId() + "/faqs/" + faq.getId(), dto, FaqDTO.class, HttpStatus.BAD_REQUEST);
+        assertThat(faqRepository.findByIdElseThrow(faq.getId()).getQuestionTitle()).isEqualTo(faq.getQuestionTitle());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void updateFaq_returnsEncodedCategoriesAsStrings() throws Exception {
+        String category = "{\"category\":\"Exams\",\"color\":\"#123456\"}";
+        UpdateFaqDTO dto = new UpdateFaqDTO(faq.getId(), "Encoded", null, Set.of(category), FaqState.PROPOSED);
+        request.performMvcRequest(MockMvcRequestBuilders.put("/api/communication/courses/" + course1.getId() + "/faqs/" + faq.getId()).contentType(MediaType.APPLICATION_JSON)
+                .content(request.getObjectMapper().writeValueAsString(dto))).andExpect(status().isOk()).andExpect(header().string("X-Frame-Options", "DENY"))
+                .andExpect(jsonPath("$.categories[0]").value(category)).andExpect(jsonPath("$.questionAnswer").doesNotExist());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void deleteFaq_returnsAlertHeadersWithoutBody() throws Exception {
+        irisRequestMockProvider.mockFaqDeletionWebhookRunResponse(dto -> assertThat(dto.settings().authenticationToken()).isNotNull());
+        request.performMvcRequest(MockMvcRequestBuilders.delete("/api/communication/courses/" + course1.getId() + "/faqs/" + faq.getId())).andExpect(status().isOk())
+                .andExpect(header().string("X-artemisApp-alert", "artemisApp.faq.deleted")).andExpect(header().string("X-artemisApp-params", faq.getId().toString()))
+                .andExpect(content().string(""));
+        assertThat(faqRepository.findById(faq.getId())).isEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void faqReads_declareTheExistingFrameOptionsHeader() throws Exception {
+        Faq accepted = faqRepository.save(FaqFactory.generateFaq(course1, FaqState.ACCEPTED, "accepted title", "accepted answer"));
+        String base = "/api/communication/courses/" + course1.getId();
+        for (String path : List.of("/faqs", "/faqs/" + accepted.getId(), "/faqs/" + faq.getId() + "/for-management", "/faqs/for-management",
+                "/faqs/for-management?faqState=PROPOSED", "/faq-state/ACCEPTED", "/faq-categories", "/faq-categories/ACCEPTED", "/faq-categories/for-management",
+                "/faq-categories/for-management?faqState=PROPOSED")) {
+            request.performMvcRequest(MockMvcRequestBuilders.get(base + path)).andExpect(status().isOk()).andExpect(header().string("X-Frame-Options", "DENY"))
+                    .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON));
+        }
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void searchFaqsForImport_emptyPageOmitsResultsAndSendsZeroTotals() throws Exception {
+        String path = "/api/communication/courses/" + course2.getId() + "/faqs/for-import";
+        request.performMvcRequest(MockMvcRequestBuilders.get(path).param("searchTerm", "no FAQ contains this text").param("page", "0")).andExpect(status().isOk())
+                .andExpect(jsonPath("$.resultsOnPage").doesNotExist()).andExpect(jsonPath("$.numberOfPages").value(0)).andExpect(jsonPath("$.totalElements").value(0));
+        // An omitted page is the first page.
+        String uniqueTitle = "Wire search " + faq.getId();
+        faq.setQuestionTitle(uniqueTitle);
+        faqRepository.save(faq);
+        request.performMvcRequest(MockMvcRequestBuilders.get(path).param("searchTerm", uniqueTitle)).andExpect(status().isOk())
+                .andExpect(jsonPath("$.resultsOnPage.length()").value(1)).andExpect(jsonPath("$.resultsOnPage[0].id").value(faq.getId()))
+                .andExpect(jsonPath("$.resultsOnPage[0].questionTitle").value(uniqueTitle)).andExpect(jsonPath("$.resultsOnPage[0].courseId").value(course1.getId()))
+                .andExpect(jsonPath("$.resultsOnPage[0].faqState").value("PROPOSED")).andExpect(jsonPath("$.numberOfPages").value(1))
+                .andExpect(jsonPath("$.totalElements").value(1));
+        // An omitted search term matches every visible FAQ.
+        request.performMvcRequest(MockMvcRequestBuilders.get(path)).andExpect(status().isOk()).andExpect(jsonPath("$.totalElements").isNumber());
+        request.performMvcRequest(MockMvcRequestBuilders.get(path).param("searchTerm", "x".repeat(201))).andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void importSelectedFaqs_returnsListLocationAndEncodedCategories() throws Exception {
+        String category = "{\"category\":\"Exams\",\"color\":\"#123456\"}";
+        faq.setCategories(Set.of(category));
+        faqRepository.save(faq);
+        String path = "/api/communication/courses/" + course2.getId() + "/faqs/import";
+        request.performMvcRequest(MockMvcRequestBuilders.post(path).contentType(MediaType.APPLICATION_JSON).content("{\"faqIds\": [%d, %d]}".formatted(faq.getId(), faq.getId())))
+                .andExpect(status().isCreated()).andExpect(header().string(HttpHeaders.LOCATION, "/api/communication/courses/" + course2.getId() + "/faqs"))
+                .andExpect(jsonPath("$.length()").value(1)).andExpect(jsonPath("$[0].categories[0]").value(category)).andExpect(jsonPath("$[0].faqState").value("PROPOSED"));
+        assertThat(faqRepository.countByCourseId(course2.getId())).isEqualTo(1);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void importSelectedFaqs_rejectsNullAndZeroIds() throws Exception {
+        String path = "/api/communication/courses/" + course2.getId() + "/faqs/import";
+        for (String body : List.of("{\"faqIds\": [null]}", "{\"faqIds\": [0]}", "{}")) {
+            request.performMvcRequest(MockMvcRequestBuilders.post(path).contentType(MediaType.APPLICATION_JSON).content(body)).andExpect(status().isBadRequest());
+        }
+        assertThat(faqRepository.countByCourseId(course2.getId())).isZero();
     }
 
 }
