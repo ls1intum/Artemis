@@ -211,7 +211,7 @@ Updating a programming exercise with `PUT /api/programming/programming-exercises
 
 ### 10.8: Rate Limit of Re-evaluations
 
-Re-evaluating all results of a programming exercise (`PUT /api/programming/programming-exercises/{exerciseId}/grading/re-evaluate`) is limited to 6 requests per minute and user. Set `artemis.rate-limiting.re-evaluation-requests-per-minute` to change the limit. Instructors who exceed it receive a 429 response with a `Retry-After` header. Nothing else changes. See [Rate Limiting](/admin/production-setup/security#rate-limiting).
+Re-evaluating all results of a programming exercise (`PUT /api/programming/programming-exercises/{exerciseId}/grading/re-evaluate`) and saving an exercise update with a re-evaluation (`PUT /api/programming/programming-exercises/{exerciseId}/re-evaluate`) together are limited to 6 requests per minute and user. Set `artemis.rate-limiting.re-evaluation-requests-per-minute` to change the limit. Instructors who exceed it receive a 429 response with a `Retry-After` header. Nothing else changes. See [Rate Limiting](/admin/production-setup/security#rate-limiting).
 
 ### 10.8: Token in the Response of the Login
 
