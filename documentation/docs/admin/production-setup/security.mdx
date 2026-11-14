@@ -309,6 +309,19 @@ uses. Docker applies a subnet only when it creates a network, so run `docker com
     the credential pair stays, because Jenkins is not an Artemis build agent and has neither a key nor a build job.
 </Callout>
 
+#### Host key of the SSH server
+
+A build agent that clones over SSH checks the host key of the core node. It reads the SHA-256 fingerprints that the core node publishes at `api/localvc/public/ssh-fingerprints` (the same values that users see on the page for SSH keys) and compares the fingerprint of the key it is shown with them. The agent reaches the endpoint at `artemis.version-control.url`. It keeps the fingerprints for five minutes and reads them again before it refuses a key, so a host key that you replaced on the core nodes is accepted without restarting the agents.
+
+If the fingerprint is none of the published ones, the clone fails and the log of the build agent names the host and the fingerprints. This does not depend on any setting, except `off` below. If the agent cannot read the fingerprints, because `artemis.version-control.url` does not reach a core node or the core node publishes none, the setting `artemis.version-control.ssh-host-key-verification` on the build agent decides:
+
+| Value | Behavior when the fingerprints cannot be read |
+|-------|-----------------------------------------------|
+| `if-available` (default) | The clone continues and the agent logs a warning. This is how agents behaved before the host key was checked. |
+| `required` | The clone fails. |
+
+Use `required` once every agent reaches the endpoint. With several core nodes behind a load balancer, give all of them the same host key (`artemis.version-control.ssh-host-key-path`), otherwise the agent sees fingerprints of different nodes.
+
 ### Database Credentials
 
 The database services used by `deployment/docker/artemis-prod-postgres.yml` and `deployment/docker/artemis-prod-mysql.yml` extend the shared `deployment/docker/postgres.yml`/`deployment/docker/mysql.yml` service definitions, which default to `deployment/docker/postgres/default.env` and `deployment/docker/mysql/default.env` for local development and testing. Those default env files intentionally use no real authentication (Postgres `POSTGRES_HOST_AUTH_METHOD=trust`, MySQL `MYSQL_ALLOW_EMPTY_PASSWORD=yes` with an empty root password) so a fresh local setup works without any configuration.

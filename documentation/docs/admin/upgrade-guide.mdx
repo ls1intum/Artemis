@@ -197,6 +197,10 @@ Restore the backup taken in step 4 of the upgrade procedure if the cause cannot 
 
 Some releases change behavior in a way that requires a one-time action on existing data. These steps are additional to the upgrade scenarios above.
 
+### 10.8: Host Key Check of Build Agents
+
+A build agent that clones over SSH (`build-agent-use-ssh: true`) now compares the SSH host key it is shown with the fingerprints that the core node publishes at `api/localvc/public/ssh-fingerprints`, and refuses a clone from a host with another key. Before, it accepted every host key. **Check that `artemis.version-control.url` on each agent reaches a core node, and that all core nodes behind one address share one host key (`ssh-host-key-path`).** An agent that cannot read the fingerprints keeps cloning and logs a warning, unless you set `artemis.version-control.ssh-host-key-verification: required` on it. See [Host key of the SSH server](/admin/production-setup/security#host-key-of-the-ssh-server).
+
 ### 10.8: Submission Policy in Exercise Updates
 
 Updating a programming exercise with `PUT /api/programming/programming-exercises` no longer adds, changes or removes its submission policy. Before, a request that omitted the policy removed it without applying the effect of the removal to the participations. The policy is now managed only through the `submission-policy` endpoints of the exercise, which the grading page of the client uses. The client needs no change, because its edit page already shows the policy read-only. Scripts that changed a policy through the exercise update have to call the dedicated endpoints.

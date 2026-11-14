@@ -78,6 +78,10 @@ artemis:
         #
         # See documentation/docs/admin/production-setup/security.mdx#build-agent-authentication.
         # ------------------------------------------------------------------------------------------------------------------------------------------------------------
+        # How strictly the agent checks the SSH host key of the core node, see the host key section in security.mdx.
+        #   if-available: continue with a warning when the fingerprints that the core node publishes cannot be read (default)
+        #   required:     fail the clone in that case
+        # ssh-host-key-verification: if-available
         # build-agent-git-username:
         # build-agent-git-password:
     continuous-integration:
