@@ -68,8 +68,9 @@ Before installing Artemis, install and configure the following dependencies:
    **Troubleshooting `corepack enable`:**
    - **Permission denied / EACCES on macOS or Linux:** Corepack writes shim symlinks next to the Node.js binary. If Node.js was installed system-wide (e.g. via `apt`/`brew install node`), run `sudo corepack enable` once. With [nvm](https://github.com/nvm-sh/nvm), [fnm](https://github.com/Schniz/fnm), or [Volta](https://volta.sh), no `sudo` is needed.
    - **`corepack: command not found`:** Node.js 25 and later do not bundle Corepack. Run `npm install --global corepack` once, then `corepack enable`.
+   - **`npm install --global corepack` fails with `EEXIST`:** A global `pnpm` or `yarn` executable already occupies the path Corepack wants to write. Remove the old installation, for example with `npm uninstall --global yarn` for a global Yarn (or delete the executables that `which -a pnpm` lists for a global pnpm), then run the installation again. An old global `pnpm` on the `PATH` can also shadow the pinned version.
    - **`pnpm: command not found` after `corepack enable`:** Restart your shell so the new shim is picked up on `PATH`.
-   - **Behind a corporate proxy:** Corepack fetches the pinned pnpm tarball from npmjs.org on first use. Set `HTTPS_PROXY` / `HTTP_PROXY` env vars if your network requires it.
+   - **Behind a corporate proxy:** Corepack fetches the pinned pnpm tarball from npmjs.org on first use. Set `HTTPS_PROXY` / `HTTP_PROXY` env vars if your network requires it, together with `NODE_USE_ENV_PROXY=1`, which makes Node honor them.
 
    We migrated from npm to pnpm to get deterministic, content-addressable installs (faster cold installs locally and in CI, byte-identical `node_modules` across machines, stricter override semantics, and patch application via `pnpm.patchedDependencies` instead of a `postinstall` `patch-package` step).
 
