@@ -618,7 +618,7 @@ jobs:
 
       - name: All Tests Report (PR)
         id: test-report
-        uses: mikepenz/action-junit-report@6ef3fdcfcd5f0b5d14df3e659ef19b8c6820f93d  # v6.6.1
+        uses: mikepenz/action-junit-report@a16be3a69023e9bd7e748ede768b3282ea7b30ce  # v6.7.1
         if: ${{ !cancelled() }}
         with:
           commit: ${{ inputs.commit_sha }}
@@ -797,7 +797,7 @@ jobs:
           path: all-test-results
 
       - name: All Tests Report (Non-PR)
-        uses: mikepenz/action-junit-report@6ef3fdcfcd5f0b5d14df3e659ef19b8c6820f93d  # v6.6.1
+        uses: mikepenz/action-junit-report@a16be3a69023e9bd7e748ede768b3282ea7b30ce  # v6.7.1
         if: ${{ !cancelled() }}
         with:
           commit: ${{ inputs.commit_sha }}
