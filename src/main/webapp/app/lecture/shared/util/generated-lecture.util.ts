@@ -50,15 +50,25 @@ type AnyGeneratedAttachment = GeneratedAttachment | LectureDetailsAttachment | L
 type AnyGeneratedCompetencyLink = CompetencyLink | LectureDetailsCompetencyLink;
 type AnyGeneratedLecture = SimpleLecture | LectureDetails | GetLectures;
 
-const UNIT_CLASSES: Record<LectureUnitType, () => LectureUnit> = {
-    [LectureUnitType.ATTACHMENT_VIDEO]: () => new AttachmentVideoUnit(),
-    [LectureUnitType.EXERCISE]: () => new ExerciseUnit(),
-    [LectureUnitType.ONLINE]: () => new OnlineUnit(),
-    [LectureUnitType.TEXT]: () => new TextUnit(),
-};
-
-function isLectureUnitType(type: string | undefined): type is LectureUnitType {
-    return type !== undefined && type in UNIT_CLASSES;
+/**
+ * Creates the unit subclass for the `type` the server sent.
+ *
+ * @param type the unit type from the response
+ * @returns a new unit of that class, or undefined for a type the client does not know
+ */
+function createLectureUnit(type: string | undefined): LectureUnit | undefined {
+    switch (type) {
+        case LectureUnitType.ATTACHMENT_VIDEO:
+            return new AttachmentVideoUnit();
+        case LectureUnitType.EXERCISE:
+            return new ExerciseUnit();
+        case LectureUnitType.ONLINE:
+            return new OnlineUnit();
+        case LectureUnitType.TEXT:
+            return new TextUnit();
+        default:
+            return undefined;
+    }
 }
 
 /**
@@ -105,13 +115,14 @@ export function toLectureForOverview(lecture: GeneratedLectureForOverview): Lect
  * @throws Error if the server sent a unit type the client does not know
  */
 export function toLectureUnit<T extends LectureUnit = LectureUnit>(unit: AnyGeneratedLectureUnit): T {
-    if (!isLectureUnitType(unit.type)) {
+    const instance = createLectureUnit(unit.type);
+    if (!instance) {
         throw new Error(`Unknown lecture unit type '${unit.type}' for lecture unit ${unit.id}`);
     }
     const { releaseDate, attachment, slides, competencyLinks, exercise, lecture, ...fields } = unit as GeneratedAttachmentVideoUnit &
         LectureSlidesAttachmentVideoUnit &
         GeneratedExerciseUnit & { exercise?: object; lecture?: object };
-    const result = hydrate(UNIT_CLASSES[unit.type](), fields);
+    const result = hydrate(instance, fields);
     result.releaseDate = convertDateStringFromServer(releaseDate);
     if (lecture) {
         result.lecture = hydrate(new Lecture(), lecture);
