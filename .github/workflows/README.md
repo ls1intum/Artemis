@@ -529,7 +529,7 @@ quality gate nor the source/exclusion contract with Codacy is weakened.
 
 ### Scope, coverage and runner cost
 
-Analysis runs on GitHub-hosted `ubuntu-latest` with Java 25, Node 24, client dependencies, the TUM
+Analysis runs on GitHub-hosted `ubuntu-latest` with Java 25, Node 26, client dependencies, the TUM
 AET UI package build and compiled Java bytecode. It skips the Angular application bundle and never
 reruns tests. Drafts, superseded revisions and changes entirely outside Sonar's source/configuration
 scope skip analysis. Unknown scope and the 3,000-file API limit expand validation. Draft promotion

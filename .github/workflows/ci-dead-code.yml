@@ -24,7 +24,7 @@ permissions: {}  # default-deny; each job grants only what it needs
 # Workflow-level node pin is drift-checked by ci-workflows.yml.
 env:
   CI: true
-  node: 24
+  node: 26
 
 jobs:
   server-dead-code:

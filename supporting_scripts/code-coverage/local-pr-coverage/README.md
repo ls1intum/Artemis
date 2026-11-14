@@ -11,8 +11,8 @@ This script generates a code coverage report for changed files in a PR by runnin
 
 ## Prerequisites
 
-- Node.js 24+ (same as project requirement)
-- For client tests: `pnpm install` completed (activate pnpm once via `corepack enable`)
+- Node.js 26+ (same as project requirement)
+- For client tests: `pnpm install` completed (activate pnpm once via `npm install --global corepack` and `corepack enable`)
 - For server tests: Java 25+ and Gradle
 
 ## Usage

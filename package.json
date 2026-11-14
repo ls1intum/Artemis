@@ -128,7 +128,7 @@
         "zone.js": "catalog:"
     },
     "engines": {
-        "node": ">=24.21.0",
+        "node": ">=26.13.1",
         "pnpm": ">=12.15.0"
     },
     "scripts": {

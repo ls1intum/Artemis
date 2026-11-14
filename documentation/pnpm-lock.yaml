@@ -165,7 +165,7 @@ settings:
 overrides:
   '@babel/core': 7.29.7
   '@babel/plugin-transform-modules-systemjs': 7.29.8
-  '@types/node': 24.19.2
+  '@types/node': 26.6.6
   '@swc/core': 1.16.22
   '@swc/html': 1.16.22
   body-parser: 2.4.0
@@ -2404,8 +2404,8 @@ packages:
   '@types/ms@2.1.0':
     resolution: {integrity: sha512-GsCCIZDE/p3i96vtEqx+7dBUGXrc7zeSK3wwPHIaRThS+9OhWIXRqzs4d6k1SVU8g91DrNRWxWUGhp5KXQb2VA==}
 
-  '@types/node@24.19.2':
-    resolution: {integrity: sha512-93d49wCWJkCyN87MxLpNN6KXPCwFw7bVUg79mGUV1OS40JGWwVCr8n61DXCSqz7CV6/VfPkb7xec7uP2M+QHWQ==}
+  '@types/node@26.6.6':
+    resolution: {integrity: sha512-MzQj+8Kx3XI40OmUAE6Qoh58ZMNstNNMwn2nfd3qWsfe7nDNSqJNzes4njhz6AHwrSHOffSLwXU6yb474Q4aog==}
 
   '@types/prismjs@1.26.6':
     resolution: {integrity: sha512-vqlvI7qlMvcCBbVe0AKAb4f97//Hy0EBTaiW8AalRnG/xAN5zOiWWyrNqNXeq8+KAuvRewjCVY1+IPxk4RdNYw==}
@@ -5869,8 +5869,8 @@ packages:
     engines: {node: '>=14.17'}
     hasBin: true
 
-  undici-types@7.24.6:
-    resolution: {integrity: sha512-WRNW+sJgj5OBN4/0JpHFqtqzhpbnV0GuB+OozA9gCL7a993SmU+1JBZCzLNxYsbMfIeDL+lTsphD5jN5N+n0zg==}
+  undici-types@8.9.0:
+    resolution: {integrity: sha512-KTDyRTYX8sWmKXAikPHHSyc63CRPETMctyjKFupcC6OBLXT3xsN0e9aF7m+mIXutFWpUXuedtowG7iLOzp0kQg==}
 
   undici@8.12.4:
     resolution: {integrity: sha512-8Mx+uNKKER2bA4AdtedkqRbwUCIJFr2nJckXRe5yrDqzePqwLP7VNcctN8/XdmDSbF7mS+jJKIszlL+vbam1VA==}
@@ -8607,7 +8607,7 @@ snapshots:
       '@jest/schemas': 29.6.3
       '@types/istanbul-lib-coverage': 2.0.6
       '@types/istanbul-reports': 3.0.4
-      '@types/node': 24.19.2
+      '@types/node': 26.6.6
       '@types/yargs': 17.0.35
       chalk: 4.1.2
 
@@ -9326,20 +9326,20 @@ snapshots:
   '@types/body-parser@1.19.6':
     dependencies:
       '@types/connect': 3.4.38
-      '@types/node': 24.19.2
+      '@types/node': 26.6.6
 
   '@types/bonjour@3.5.13':
     dependencies:
-      '@types/node': 24.19.2
+      '@types/node': 26.6.6
 
   '@types/connect-history-api-fallback@1.5.4':
     dependencies:
       '@types/express-serve-static-core': 5.1.3
-      '@types/node': 24.19.2
+      '@types/node': 26.6.6
 
   '@types/connect@3.4.38':
     dependencies:
-      '@types/node': 24.19.2
+      '@types/node': 26.6.6
 
   '@types/debug@4.1.13':
     dependencies:
@@ -9355,7 +9355,7 @@ snapshots:
 
   '@types/express-serve-static-core@5.1.3':
     dependencies:
-      '@types/node': 24.19.2
+      '@types/node': 26.6.6
       '@types/qs': 6.15.1
       '@types/range-parser': 1.2.7
       '@types/send': 1.2.1
@@ -9398,9 +9398,9 @@ snapshots:
 
   '@types/ms@2.1.0': {}
 
-  '@types/node@24.19.2':
+  '@types/node@26.6.6':
     dependencies:
-      undici-types: 7.24.6
+      undici-types: 8.9.0
 
   '@types/prismjs@1.26.6': {}
 
@@ -9433,11 +9433,11 @@ snapshots:
 
   '@types/sax@1.2.7':
     dependencies:
-      '@types/node': 24.19.2
+      '@types/node': 26.6.6
 
   '@types/send@1.2.1':
     dependencies:
-      '@types/node': 24.19.2
+      '@types/node': 26.6.6
 
   '@types/serve-index@1.9.4':
     dependencies:
@@ -9446,7 +9446,7 @@ snapshots:
   '@types/serve-static@2.2.0':
     dependencies:
       '@types/http-errors': 2.0.5
-      '@types/node': 24.19.2
+      '@types/node': 26.6.6
 
   '@types/unist@2.0.11': {}
 
@@ -9454,7 +9454,7 @@ snapshots:
 
   '@types/ws@8.18.2':
     dependencies:
-      '@types/node': 24.19.2
+      '@types/node': 26.6.6
 
   '@types/yargs-parser@21.0.3': {}
 
@@ -10615,7 +10615,7 @@ snapshots:
 
   eval@0.1.8:
     dependencies:
-      '@types/node': 24.19.2
+      '@types/node': 26.6.6
       require-like: 0.1.2
 
   eventemitter3@4.0.7: {}
@@ -11237,7 +11237,7 @@ snapshots:
   jest-util@29.7.0:
     dependencies:
       '@jest/types': 29.6.3
-      '@types/node': 24.19.2
+      '@types/node': 26.6.6
       chalk: 4.1.2
       ci-info: 3.9.0
       graceful-fs: 4.2.11
@@ -11245,13 +11245,13 @@ snapshots:
 
   jest-worker@27.5.1:
     dependencies:
-      '@types/node': 24.19.2
+      '@types/node': 26.6.6
       merge-stream: 2.0.0
       supports-color: 8.1.1
 
   jest-worker@29.7.0:
     dependencies:
-      '@types/node': 24.19.2
+      '@types/node': 26.6.6
       jest-util: 29.7.0
       merge-stream: 2.0.0
       supports-color: 8.1.1
@@ -13198,7 +13198,7 @@ snapshots:
 
   sitemap@7.1.3:
     dependencies:
-      '@types/node': 24.19.2
+      '@types/node': 26.6.6
       '@types/sax': 1.2.7
       arg: 5.0.2
       sax: 1.6.1
@@ -13411,7 +13411,7 @@ snapshots:
 
   typescript@6.0.3: {}
 
-  undici-types@7.24.6: {}
+  undici-types@8.9.0: {}
 
   undici@8.12.4: {}
 
