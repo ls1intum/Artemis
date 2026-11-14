@@ -9,9 +9,9 @@
                         <tumaet-ui-button
                             size="small"
                             variant="text"
-                            [severity]="(group.selected[0] ?? allValue) === option.value ? 'primary' : 'secondary'"
-                            [ariaPressed]="(group.selected[0] ?? allValue) === option.value"
-                            (clicked)="updateGroup(group, [option.value])"
+                            [severity]="(option.value === allValue ? group.selected.length === 0 : group.selected.includes(option.value)) ? 'primary' : 'secondary'"
+                            [ariaPressed]="option.value === allValue ? group.selected.length === 0 : group.selected.includes(option.value)"
+                            (clicked)="toggleGroupOption(group, option.value)"
                             >{{ option.label }}</tumaet-ui-button
                         >
                     }

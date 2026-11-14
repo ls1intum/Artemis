@@ -53,7 +53,7 @@ describe('Participation filter toolbar', () => {
         }
     });
 
-    it('switches segmented results and clears them with All while retaining assessment selections', async () => {
+    it('combines segmented results, toggles each independently, and clears them with All', async () => {
         fixture.componentRef.setInput('groupedFilters', [
             { labelKey: 'Results', items: ['Successful', 'Unsuccessful'], segmented: true },
             { labelKey: 'Assessment', items: ['Manual', 'Automatic'] },
@@ -70,7 +70,14 @@ describe('Participation filter toolbar', () => {
         expect(changed).toHaveBeenLastCalledWith(['Manual', 'Automatic', 'Successful']);
         buttons[2].click();
         fixture.detectChanges();
+        expect(changed).toHaveBeenLastCalledWith(['Manual', 'Automatic', 'Successful', 'Unsuccessful']);
+        expect(buttons[1].getAttribute('aria-pressed')).toBe('true');
+        expect(buttons[2].getAttribute('aria-pressed')).toBe('true');
+        expect(buttons[0].getAttribute('aria-pressed')).toBe('false');
+        buttons[1].click();
+        fixture.detectChanges();
         expect(changed).toHaveBeenLastCalledWith(['Manual', 'Automatic', 'Unsuccessful']);
+        expect(buttons[1].getAttribute('aria-pressed')).toBe('false');
         buttons[0].click();
         fixture.detectChanges();
         expect(changed).toHaveBeenLastCalledWith(['Manual', 'Automatic']);

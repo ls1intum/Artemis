@@ -59,6 +59,35 @@ describe('ProgrammingExercise Trigger All Button Component', () => {
         vi.restoreAllMocks();
     });
 
+    it('clears running state when switching to an exercise without build updates', async () => {
+        const previousUpdates = new Subject<BuildRunState>();
+        const nextUpdates = new Subject<BuildRunState>();
+        const service = TestBed.inject(ProgrammingBuildRunService);
+        vi.mocked(service.getBuildRunUpdates).mockImplementation((id) => (id === programmingExercise.id ? previousUpdates : nextUpdates));
+        fixture.detectChanges();
+        await fixture.whenStable();
+        previousUpdates.next(BuildRunState.RUNNING);
+        fixture.detectChanges();
+        expect(fixture.componentInstance.isTriggeringBuildAll()).toBe(true);
+        expect((fixture.nativeElement.querySelector('#trigger-all-button') as HTMLButtonElement).disabled).toBe(true);
+
+        const nextExercise = new ProgrammingExercise(course, undefined);
+        nextExercise.id = 789;
+        fixture.componentRef.setInput('exercise', nextExercise);
+        fixture.detectChanges();
+        await fixture.whenStable();
+        fixture.detectChanges();
+        expect(fixture.componentInstance.isTriggeringBuildAll()).toBe(false);
+        expect((fixture.nativeElement.querySelector('#trigger-all-button') as HTMLButtonElement).disabled).toBe(false);
+        expect(previousUpdates.observed).toBe(false);
+        previousUpdates.next(BuildRunState.RUNNING);
+        expect(fixture.componentInstance.isTriggeringBuildAll()).toBe(false);
+        nextUpdates.next(BuildRunState.RUNNING);
+        expect(fixture.componentInstance.isTriggeringBuildAll()).toBe(true);
+        nextUpdates.next(BuildRunState.COMPLETED);
+        expect(fixture.componentInstance.isTriggeringBuildAll()).toBe(false);
+    });
+
     it('should trigger builds for all participants on confirmation', () => {
         const onClose = new Subject<boolean | undefined>();
         const mockDialogRef = { onClose } as any;

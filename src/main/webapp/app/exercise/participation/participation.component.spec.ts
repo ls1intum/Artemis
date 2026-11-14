@@ -626,7 +626,7 @@ describe('ParticipationComponent', () => {
 
     it('preserves server paging, descending sorting, search and combined filters from the participation table', () => {
         component.exercise.set({ ...exercise, isAtLeastInstructor: true });
-        component.activeFilters.set([FilterProp.SUCCESSFUL, FilterProp.MANUAL]);
+        component.activeFilters.set([FilterProp.SUCCESSFUL, FilterProp.UNSUCCESSFUL, FilterProp.MANUAL]);
         const search = vi.spyOn(participationService, 'searchParticipations').mockReturnValue(of({ content: [], totalElements: 0 }));
         component.onLazyLoad({ first: 50, rows: 25, globalFilter: 'alice', sortField: 'score', sortOrder: -1 });
         expect(search).toHaveBeenCalledExactlyOnceWith(
@@ -637,7 +637,7 @@ describe('ParticipationComponent', () => {
                 searchTerm: 'alice',
                 sortedColumn: 'score',
                 sortingOrder: 'DESCENDING',
-                filterProp: 'Successful,Manual',
+                filterProp: 'Successful,Unsuccessful,Manual',
             }),
             'course',
         );

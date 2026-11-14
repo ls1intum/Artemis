@@ -71,6 +71,11 @@ export class FilterDropdownComponent {
         ];
     }
 
+    protected toggleGroupOption(group: FilterGroup & { selected: string[] }, value: string): void {
+        const selected = group.selected.includes(value) ? group.selected.filter((item) => item !== value) : [...group.selected, value];
+        this.updateGroup(group, value === this.allValue ? [] : selected);
+    }
+
     protected updateGroup(group: FilterGroup, values: unknown[]): void {
         this.filterChange.emit([...this.activeFilters().filter((value) => !group.items.includes(value)), ...group.items.filter((value) => values.includes(value))]);
     }

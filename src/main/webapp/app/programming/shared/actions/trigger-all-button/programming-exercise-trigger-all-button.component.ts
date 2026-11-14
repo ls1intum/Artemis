@@ -1,6 +1,6 @@
 import { Component, inject, input, output, signal } from '@angular/core';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
-import { catchError, map, switchMap } from 'rxjs/operators';
+import { catchError, map, startWith, switchMap } from 'rxjs/operators';
 import { of } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import { DialogService, DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
@@ -66,7 +66,12 @@ export class ProgrammingExerciseTriggerAllButtonComponent {
     readonly confirmationOpening = output<void>();
     readonly isTriggeringBuildAll = toSignal(
         toObservable(this.exercise).pipe(
-            switchMap((exercise) => this.programmingBuildRunService.getBuildRunUpdates(exercise.id!).pipe(map((state) => state === BuildRunState.RUNNING))),
+            switchMap((exercise) =>
+                this.programmingBuildRunService.getBuildRunUpdates(exercise.id!).pipe(
+                    map((state) => state === BuildRunState.RUNNING),
+                    startWith(false),
+                ),
+            ),
         ),
         { initialValue: false },
     );
