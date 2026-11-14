@@ -895,6 +895,27 @@ class FileUploadSubmissionIntegrationTest extends AbstractFileUploadIntegrationT
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void fileStaffEditorDoesNotNameTheStudentForTutors() throws Exception {
+        var submission = fileUploadExerciseUtilService.saveFileUploadSubmissionWithResultAndAssessorFeedback(assessedFileUploadExercise, submittedFileUploadSubmission,
+                TEST_PREFIX + "student1", TEST_PREFIX + "tutor1", ParticipationFactory.generateFeedback());
+        var url = "/api/fileupload/participations/" + submission.getParticipation().getId() + "/file-upload-editor/for-staff";
+        var dto = request.get(url, HttpStatus.OK, FileUploadSubmissionDTO.class);
+        assertThat(dto.participation().participantName()).isNull();
+        assertThat(dto.participation().participantIdentifier()).isNull();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void fileStaffEditorNamesTheStudentForInstructors() throws Exception {
+        var submission = fileUploadExerciseUtilService.saveFileUploadSubmissionWithResultAndAssessorFeedback(assessedFileUploadExercise, submittedFileUploadSubmission,
+                TEST_PREFIX + "student1", TEST_PREFIX + "tutor1", ParticipationFactory.generateFeedback());
+        var url = "/api/fileupload/participations/" + submission.getParticipation().getId() + "/file-upload-editor/for-staff";
+        var dto = request.get(url, HttpStatus.OK, FileUploadSubmissionDTO.class);
+        assertThat(dto.participation().participantIdentifier()).isEqualTo(TEST_PREFIX + "student1");
+    }
+
+    @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void fileStaffEditorRetainsResultTiming() throws Exception {
         var submission = fileUploadExerciseUtilService.saveFileUploadSubmissionWithResultAndAssessorFeedback(assessedFileUploadExercise, submittedFileUploadSubmission,

@@ -480,6 +480,8 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
         var validationResult = validateParticipation(participationId, staffView);
         var studentParticipation = validationResult.studentParticipation;
         var exercise = validationResult.modelingExercise;
+        // Decided before the exercise is stripped below, as it resolves the course through the exam of an exam exercise
+        boolean includeOwner = mayIncludeParticipationOwner(studentParticipation, exercise, staffView);
 
         Optional<Submission> optionalLatestSubmission = studentParticipation.findLatestSubmission();
         ModelingSubmission modelingSubmission;
@@ -516,7 +518,18 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
         // verify ownership (individual: participation.student.login, team: participation.team.students[*].login). The
         // masked/filtered entity is mapped here, so the exercise carries no sensitive information and, for exams, the
         // exercise group carries no exam.
-        return ResponseEntity.ok(ModelingSubmissionResponseDTO.of(modelingSubmission, true));
+        return ResponseEntity.ok(ModelingSubmissionResponseDTO.of(modelingSubmission, includeOwner));
+    }
+
+    /**
+     * The participation owner is part of the response for the owner and for instructors, but not for tutors who view the participation of somebody else.
+     */
+    private boolean mayIncludeParticipationOwner(StudentParticipation participation, ModelingExercise exercise, boolean staffView) {
+        if (!staffView) {
+            return true;
+        }
+        User user = userRepository.getUser();
+        return authCheckService.isAtLeastInstructorForExercise(exercise, user) || authCheckService.isOwnerOfParticipation(participation, user);
     }
 
     /**
@@ -587,8 +600,9 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
 
         // The consumer is the owning student's modeling editor (feedback timeline); include the participation owner so the
         // client can promote an element to the active editor submission and verify ownership.
+        boolean includeOwner = mayIncludeParticipationOwner(studentParticipation, validationResult.modelingExercise, staffView);
         List<ModelingSubmissionResponseDTO> submissionDTOs = submissionsWithResults.stream()
-                .map(submission -> ModelingSubmissionResponseDTO.of((ModelingSubmission) submission, true)).toList();
+                .map(submission -> ModelingSubmissionResponseDTO.of((ModelingSubmission) submission, includeOwner)).toList();
         return ResponseEntity.ok().body(submissionDTOs);
     }
 
