@@ -303,7 +303,7 @@ public class ProgrammingExerciseFeedbackCreationService {
             Set<ProgrammingExerciseTestCase> activeTestCases, Result result, ProgrammingExercise exercise) {
         for (TestCaseBase failure : unmatchedFailures) {
             String failedClass = ProgrammingExerciseTestCase.normalizeTestClass(failure.testClass());
-            if (failedClass == null || reportedTests.stream().filter(reported -> ProgrammingExerciseTestCase.isClassInOrBelow(reported.testClass(), failedClass)).count() != 1) {
+            if (failedClass == null || reportedTests.stream().filter(reported -> mayBelongToClass(reported, failedClass, activeTestCases)).count() != 1) {
                 continue;
             }
             List<ProgrammingExerciseTestCase> affectedTestCases = activeTestCases.stream()
@@ -314,6 +314,21 @@ public class ProgrammingExerciseFeedbackCreationService {
                 affectedTestCases.forEach(testCase -> result.addTestCaseFeedback(buildTestCaseFeedback(testCase, false, message)));
             }
         }
+    }
+
+    /**
+     * Whether a reported test may have been run as part of the given class or a class nested in it. A report that names its class answers this itself. A report without a class
+     * can only be ruled out through the class stored for the test case of the same name; a test that is not known, or whose class is not known either, may belong to the class,
+     * so it counts as a test that ran there and keeps the failure from being taken for an error of the whole class.
+     */
+    private static boolean mayBelongToClass(TestCaseBase reported, String failedClass, Set<ProgrammingExerciseTestCase> activeTestCases) {
+        String reportedClass = ProgrammingExerciseTestCase.normalizeTestClass(reported.testClass());
+        if (reportedClass != null) {
+            return ProgrammingExerciseTestCase.isClassInOrBelow(reportedClass, failedClass);
+        }
+        String reportedName = ProgrammingExerciseTestCase.normalizeTestName(reported.name());
+        return activeTestCases.stream().filter(testCase -> reportedName.equalsIgnoreCase(testCase.getTestName())).findAny()
+                .map(testCase -> testCase.getTestClass() == null || testCase.isDeclaredInOrBelow(failedClass)).orElse(true);
     }
 
     private TestCaseFeedback buildTestCaseFeedback(ProgrammingExerciseTestCase testCase, boolean successful, FeedbackMessage message) {
@@ -483,8 +498,8 @@ public class ProgrammingExerciseFeedbackCreationService {
 
     /**
      * Keeps the class of the test cases in line with the latest build, so that a test moved to another (e.g. nested) class is attributed correctly. A name that the build
-     * reports from more than one class is ambiguous and left alone, and so is a name for which the build reports no class. A test case that is saved anyway gets the class
-     * on that copy; the others are saved on their own, which does not count as a change of the test cases.
+     * reports from more than one class is ambiguous: an existing test case keeps its class, and a new one gets none. A name for which the build reports no class is left alone.
+     * A test case that is saved anyway gets the class on that copy; the others are saved on their own, which does not count as a change of the test cases.
      */
     private void backfillTestClasses(Set<ProgrammingExerciseTestCase> existingTestCases, BuildResultNotification buildResult, Set<ProgrammingExerciseTestCase> testCasesToSave) {
         Map<String, Set<String>> reportedClasses = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
@@ -500,11 +515,23 @@ public class ProgrammingExerciseFeedbackCreationService {
                 unambiguousClasses.put(name, classes.iterator().next());
             }
         });
-        if (unambiguousClasses.isEmpty()) {
+        if (reportedClasses.isEmpty()) {
             return;
         }
-        testCasesToSave.stream().filter(testCase -> testCase.getId() != null && unambiguousClasses.containsKey(testCase.getTestName()))
-                .forEach(testCase -> testCase.setTestClass(unambiguousClasses.get(testCase.getTestName())));
+        // The duplicate removal above keeps an arbitrary one of several new test cases with the same name, each created with the class it was reported from.
+        // So the class of a new test case is decided here from the complete report: a name reported from several classes belongs to none of them.
+        testCasesToSave.forEach(testCase -> {
+            Set<String> classes = reportedClasses.get(testCase.getTestName());
+            if (classes == null) {
+                return;
+            }
+            if (classes.size() == 1) {
+                testCase.setTestClass(classes.iterator().next());
+            }
+            else if (testCase.getId() == null) {
+                testCase.setTestClass(null);
+            }
+        });
         Set<Long> savedIds = testCasesToSave.stream().map(ProgrammingExerciseTestCase::getId).filter(Objects::nonNull).collect(Collectors.toSet());
         Set<ProgrammingExerciseTestCase> withNewClass = existingTestCases.stream().filter(existing -> !savedIds.contains(existing.getId())
                 && unambiguousClasses.containsKey(existing.getTestName()) && !unambiguousClasses.get(existing.getTestName()).equals(existing.getTestClass()))
