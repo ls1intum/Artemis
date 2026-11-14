@@ -19,6 +19,7 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { onError } from 'app/foundation/util/global.utils';
 import { Exercise, IncludedInOverallScore, getIcon, getIconTooltip } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { StatsForDashboard } from 'app/assessment/shared/assessment-dashboard/stats-for-dashboard.model';
+import { StatsForDashboard as StatsForDashboardDTO } from 'app/openapi/model/stats-for-dashboard';
 import { Course } from 'app/course/shared/entities/course.model';
 import { DueDateStat } from 'app/assessment/shared/assessment-dashboard/due-date-stat.model';
 import { FilterProp as TeamFilterProp } from 'app/exercise/team/teams/teams.component';
@@ -285,8 +286,8 @@ export class AssessmentDashboardComponent implements OnInit {
             });
 
             this.courseService.getStatsForTutors(this.courseId()).subscribe({
-                next: (res: HttpResponse<StatsForDashboard>) => {
-                    const stats = StatsForDashboard.from(res.body!);
+                next: (statsDTO: StatsForDashboardDTO) => {
+                    const stats = StatsForDashboard.from(statsDTO);
                     this.stats.set(stats);
                     this.numberOfSubmissions.set(stats.numberOfSubmissions);
                     this.totalNumberOfAssessments.set(stats.totalNumberOfAssessments);

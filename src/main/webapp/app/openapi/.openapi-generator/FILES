@@ -2,6 +2,7 @@ api/admin-ai-worker-api.ts
 api/admin-hyperion-generation-api.ts
 api/admin-hyperion-generation-monitoring-api.ts
 api/calendar-api.ts
+api/course-stats-api.ts
 api/global-search-api.ts
 api/hyperion-assessment-criteria-generation-api.ts
 api/hyperion-authoring-run-api.ts
@@ -63,6 +64,7 @@ model/course-browser-data.ts
 model/course-competency.ts
 model/course-for-quiz-exercise.ts
 model/course-for-search-filter.ts
+model/course-management-detail-view.ts
 model/course-with-id.ts
 model/create-exercise-variant-group.ts
 model/create-or-update-tutorial-group-request.ts
@@ -93,6 +95,7 @@ model/drop-location-create.ts
 model/drop-location-from-editor.ts
 model/drop-location-re-evaluate.ts
 model/drop-location.ts
+model/due-date-stat.ts
 model/entity-id-ref.ts
 model/exam-seat.ts
 model/exam-with-id-and-course.ts
@@ -245,6 +248,7 @@ model/short-answer-submitted-answer-from-student.ts
 model/short-answer-submitted-text-from-live-client.ts
 model/short-answer-submitted-text-from-student.ts
 model/short-answer-submitted-text.ts
+model/stats-for-dashboard.ts
 model/step-output.ts
 model/student-export.ts
 model/student-quiz-participation-with-questions.ts
@@ -258,6 +262,7 @@ model/submitted-answer-from-live-client.ts
 model/submitted-answer-from-student.ts
 model/timing.ts
 model/tokens.ts
+model/tutor-leaderboard.ts
 model/tutorial-group-configuration-free-period.ts
 model/tutorial-group-configuration.ts
 model/tutorial-group-detail-data.ts
