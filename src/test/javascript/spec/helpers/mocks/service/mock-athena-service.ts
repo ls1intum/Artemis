@@ -1,12 +1,13 @@
 import { Observable, of } from 'rxjs';
-import { ProgrammingFeedbackSuggestion, TextFeedbackSuggestion } from 'app/assessment/shared/entities/feedback-suggestion.model';
+import { ProgrammingFeedback } from 'app/openapi/model/programming-feedback';
+import { TextFeedback } from 'app/openapi/model/text-feedback';
 
 export class MockAthenaService {
-    getTextFeedbackSuggestions(exerciseId: number, submissionId: number): Observable<TextFeedbackSuggestion[]> {
-        return of([] as TextFeedbackSuggestion[]);
+    getTextFeedbackSuggestions(exerciseId: number, submissionId: number): Observable<TextFeedback[]> {
+        return of([] as TextFeedback[]);
     }
 
-    getProgrammingFeedbackSuggestions(exerciseId: number, submissionId: number): Observable<ProgrammingFeedbackSuggestion[]> {
-        return of([] as ProgrammingFeedbackSuggestion[]);
+    getProgrammingFeedbackSuggestions(exerciseId: number, submissionId: number): Observable<ProgrammingFeedback[]> {
+        return of([] as ProgrammingFeedback[]);
     }
 }
