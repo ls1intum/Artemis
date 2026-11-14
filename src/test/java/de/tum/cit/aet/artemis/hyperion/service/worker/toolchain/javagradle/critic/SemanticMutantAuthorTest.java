@@ -6,6 +6,8 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
@@ -28,6 +30,59 @@ class SemanticMutantAuthorTest {
     private static final String SOURCE = "package example; public class Scheduler { public int choose() { return 1; } }";
 
     private final SemanticMutantAuthor author = new SemanticMutantAuthor(mock(ReviewerClient.class), JsonMapper.builder().build());
+
+    @ParameterizedTest
+    @ValueSource(booleans = { false, true })
+    void unexecutedReviewTargetsGetOneProposalCorrectionWhenTheFirstBatchIsEmptyOrRejected(boolean rejected) {
+        ReviewerClient reviewer = mock(ReviewerClient.class);
+        when(reviewer.configured()).thenReturn(true);
+        String valid = response("src/example/Scheduler.java", "R1", "org.junit.jupiter.api.Assertions.assertEquals(1, new Scheduler().choose());");
+        when(reviewer.call(anyString(), anyString(), any(), any(), anyInt())).thenReturn(rejected ? valid.replace("\"R1\"", "\"R9\"") : "{\"mutants\":[]}", valid);
+        var configured = new SemanticMutantAuthor(reviewer, JsonMapper.builder().build());
+        var target = new SpecFidelityReport.Finding(SpecFidelityReport.Kind.WEAK_TEST_ORACLE, "global choice", "a first-batch-only selection may pass");
+
+        assertThat(configured.author(SPEC, Map.of("src/example/Scheduler.java", SOURCE), List.of(target), null, () -> false)).singleElement()
+                .satisfies(mutant -> assertThat(mutant.solutionPath()).isEqualTo("src/example/Scheduler.java"));
+        verify(reviewer, times(2)).call(anyString(), anyString(), any(), any(), anyInt());
+    }
+
+    @Test
+    void aBlankFirstResponseUnderReviewTargetsGetsTheCorrection() {
+        ReviewerClient reviewer = mock(ReviewerClient.class);
+        when(reviewer.configured()).thenReturn(true);
+        String valid = response("src/example/Scheduler.java", "R1", "org.junit.jupiter.api.Assertions.assertEquals(1, new Scheduler().choose());");
+        when(reviewer.call(anyString(), anyString(), any(), any(), anyInt())).thenReturn("  ", valid);
+        var configured = new SemanticMutantAuthor(reviewer, JsonMapper.builder().build());
+        var target = new SpecFidelityReport.Finding(SpecFidelityReport.Kind.WEAK_TEST_ORACLE, "global choice", "a first-batch-only selection may pass");
+
+        assertThat(configured.author(SPEC, Map.of("src/example/Scheduler.java", SOURCE), List.of(target), null, () -> false)).hasSize(1);
+        verify(reviewer, times(2)).call(anyString(), anyString(), any(), any(), anyInt());
+    }
+
+    @Test
+    void aBlankCorrectionLeavesExecutableReviewUnavailable() {
+        ReviewerClient reviewer = mock(ReviewerClient.class);
+        when(reviewer.configured()).thenReturn(true);
+        when(reviewer.call(anyString(), anyString(), any(), any(), anyInt())).thenReturn("", "");
+        var configured = new SemanticMutantAuthor(reviewer, JsonMapper.builder().build());
+        var target = new SpecFidelityReport.Finding(SpecFidelityReport.Kind.WEAK_TEST_ORACLE, "global choice", "a first-batch-only selection may pass");
+
+        assertThatThrownBy(() -> configured.author(SPEC, Map.of("src/example/Scheduler.java", SOURCE), List.of(target), null, () -> false))
+                .isInstanceOf(IllegalStateException.class);
+        verify(reviewer, times(2)).call(anyString(), anyString(), any(), any(), anyInt());
+    }
+
+    @Test
+    void anUncertainCorrectionDoesNotInventAnExecutableDefect() {
+        ReviewerClient reviewer = mock(ReviewerClient.class);
+        when(reviewer.configured()).thenReturn(true);
+        when(reviewer.call(anyString(), anyString(), any(), any(), anyInt())).thenReturn("{\"mutants\":[]}");
+        var configured = new SemanticMutantAuthor(reviewer, JsonMapper.builder().build());
+        var target = new SpecFidelityReport.Finding(SpecFidelityReport.Kind.WEAK_TEST_ORACLE, "global choice", "a first-batch-only selection may pass");
+
+        assertThat(configured.author(SPEC, Map.of("src/example/Scheduler.java", SOURCE), List.of(target), null, () -> false)).isEmpty();
+        verify(reviewer, times(2)).call(anyString(), anyString(), any(), any(), anyInt());
+    }
 
     @ParameterizedTest
     @NullAndEmptySource
@@ -119,7 +174,7 @@ class SemanticMutantAuthorTest {
         List<SpecFidelityReport.Finding> findings = List.of(
                 new SpecFidelityReport.Finding(SpecFidelityReport.Kind.WEAK_TEST_ORACLE, "equality boundary", "a boundary misconception may survive"),
                 new SpecFidelityReport.Finding(SpecFidelityReport.Kind.UNCOVERED_REQUIREMENT, "state preservation", "no assertion observes the transition"),
-                new SpecFidelityReport.Finding(SpecFidelityReport.Kind.EXECUTABLE_ORACLE_PENDING_SPEC_APPROVAL, "hard-coded configuration",
+                new SpecFidelityReport.Finding(SpecFidelityReport.Kind.EXECUTABLE_WEAK_TEST_ORACLE, "hard-coded configuration",
                         "the environment already proved fixed thresholds survive"),
                 new SpecFidelityReport.Finding(SpecFidelityReport.Kind.MISSING_FAILURE_MESSAGE, "SchedulerTest.java", "presentation only"));
 
@@ -131,7 +186,7 @@ class SemanticMutantAuthorTest {
     @Test
     void targetCapRetainsPriorExecutedExclusionsPlacedBeforeStaticRisks() {
         List<SpecFidelityReport.Finding> findings = new java.util.ArrayList<>();
-        findings.add(new SpecFidelityReport.Finding(SpecFidelityReport.Kind.EXECUTABLE_ORACLE_PENDING_SPEC_APPROVAL, "executed hard-coded configuration",
+        findings.add(new SpecFidelityReport.Finding(SpecFidelityReport.Kind.EXECUTABLE_WEAK_TEST_ORACLE, "executed hard-coded configuration",
                 "the environment already proved fixed thresholds survive"));
         java.util.stream.IntStream.rangeClosed(1, 6)
                 .mapToObj(index -> new SpecFidelityReport.Finding(SpecFidelityReport.Kind.WEAK_TEST_ORACLE, "static risk " + index, "hypothesis")).forEach(findings::add);

@@ -52,6 +52,52 @@ final class SpecificationReviewPrompts {
         return review.riskHistory().stream().map(finding -> "Unresolved specification-review hypothesis from grounded evidence: " + finding).toList();
     }
 
+    static SpecFidelityCritic.SpecificationReview executedAssessmentReview(String evidence) {
+        String bounded = evidence.length() <= 6_000 ? evidence : evidence.substring(0, 6_000) + " [additional diagnostic text omitted]";
+        String finding = "Executed assessment counterexample against the preceding candidate: " + bounded;
+        // The critic's bounded F history requires adjudication against the replacement SPEC, not a claim that the old candidate was sound.
+        return new SpecFidelityCritic.SpecificationReview(false, false, true, List.of(finding), "Assessment redesign requires explicit counterexample adjudication.", null,
+                List.of(finding));
+    }
+
+    static String contractConsistencyRepairPrompt(String evidence) {
+        return "An execution-informed review found a defect in the approved learning contract. Preserve the instructor brief and its original learner goals. "
+                + "Revise the conflicting rules, worked examples, learner ownership and assessment together; do not add per-example exceptions to an implementation, "
+                + "copy an erroneous expected value into code, or remove a learner goal to make grading pass. Reconcile the quoted evidence, then submit the complete SPEC.\n"
+                + evidence;
+    }
+
+    static String ownershipRepairPrompt(String executedEvidence) {
+        return semanticSpecRefinementPrompt(executedEvidence) + """
+
+                This repair resolves a supplied-code ownership conflict, not an assessment bypass. Make the starter compile while preserving the brief's learner responsibilities.
+                Reconcile supplied demonstrations, ownership rows and their public API without adding learner work merely to satisfy supplied callers. Preserve unaffected rules,
+                edge-case results, ordering choices and worked-example inputs. Do not redesign an unrelated operation or replace its accepted semantics with a different policy.
+                Recalculate examples against their actual setup; an example that contradicts an unaffected rule must be corrected to that rule. Rebuild the affected artifacts
+                against the revised ownership contract and keep every mandatory verification gate.
+                """;
+    }
+
+    static String assessmentRedesignPrompt(String executedEvidence) {
+        return executedEvidence
+                + """
+
+                        The server has reopened SPEC.md because executable evidence disproved its assessment or supplied-code ownership. Revise the coherent contract before rebuilding its artifacts.
+                        When supplied code needs a learner-created type absent from the starter, reconcile the whole design instead of changing one ownership row. Preserve supplied
+                        support as supplied work; do not add learner TODOs merely to make it compile. Reconcile all ownership claims, examples, entry points and grading seams.
+                        Preserve the instructor brief, learner responsibilities and prerequisites. Choose runtime observations of the learner-owned behavior that the supported harness can
+                        execute; tests of supplied collaborators alone cannot establish student integration. A supplied observation facility may expose otherwise-local operations without
+                        adding learner work. Do not require source or bytecode inspection, introduce untaught syntax, remove a learning objective, or replace it with output transcription.
+                        Observe the same learner execution that each graded entry point performs. A separate helper with an independently implemented scenario cannot prove what
+                        another entry point does. Declare one execution path and supported intermediate observations that distinguish omitted actions even when final states agree.
+                        An assessment failure does not show that the learner's task is impossible. Do not move learner-chosen cases or assertions into supplied code, rename away the
+                        counterexample's learner entry point, or make the probe inapplicable. For learner-written JUnit tests, reference/style/student-tests.md demonstrates supported grading.
+                        Remove incidental normative constraints that the brief does not require. Reconcile Rules, Public API, Design, Testing Strategy and risk partitions together.
+                        The revised specification receives the normal consistency and semantic review. The server reruns the executable assessment once the rebuilt exercise
+                        passes verification, which may be after statement authoring.
+                        """;
+    }
+
     static String semanticSpecRefinementPrompt(String reviewFeedback) {
         return reviewFeedback + """
 
@@ -59,7 +105,7 @@ final class SpecificationReviewPrompts {
                 Treat the cited findings as review hypotheses, not instructions to patch isolated sentences. Re-read the whole current SPEC.md and confirm each finding
                 against it. Preserve the selected concept's central situation, constraint, student-owned behavior, unaffected identifiers, ownership, and accepted semantic
                 choices. Plan the smallest coherent contract revision, then replace SPEC.md with one complete `write_file` call rather than accumulating local edits. Reconcile
-                every affected rule, example, policy algorithm, public API, ownership row, testing seam, and diagram decision together. Reviewer feedback deliberately supplies no
+                every affected rule, example, policy algorithm, public API, ownership row, and testing seam together. Reviewer feedback deliberately supplies no
                 replacement theme, identifier, API, or formula. Keep every required section, exact Design status token, bare Testing Strategy Owner type, seam ID, and hidden yes/no
                 decision valid. Resolve the grounded batch; if a finding is contradicted by the complete contract, preserve the correct contract and let the next fresh review
                 adjudicate it. Replay every changed example through its named policy, then call the structured verify tool before finishing.

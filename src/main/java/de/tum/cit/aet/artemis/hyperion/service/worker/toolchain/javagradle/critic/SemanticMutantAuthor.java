@@ -10,6 +10,7 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
@@ -100,9 +101,24 @@ class SemanticMutantAuthor {
         String exclusionPrompt = priorProposals.isBlank() ? ""
                 : "\n\nPRIOR ENVIRONMENT-EXECUTED PROPOSALS (novelty exclusions only; NOT requirements or contract evidence):\n" + priorProposals
                         + "\nDo not repeat a renamed, recoded, or numerically varied equivalent. Choose another applicable observable misconception or return fewer proposals.";
-        String prompt = "APPROVED SPECIFICATION (sole rule authority):\n" + specification.strip() + "\n\nPRISTINE REFERENCE SOLUTION:\n" + renderedSolution + targetPrompt
-                + exclusionPrompt;
-        return parse(reviewer.call(SYSTEM_PROMPT, prompt, usageSink, cancelled, MAX_OUTPUT_TOKENS), specification, visibleSolutionFiles, visibleTargets);
+        String prompt = "APPROVED SPECIFICATION (sole rule authority):\n" + ContractWitnessAuthor.witnessContract(specification) + "\n\nAUTHORITATIVE TEMPLATE OWNERSHIP:\n"
+                + ContractWitnessAuthor.renderTemplateOwnership(SpecFidelityCritic.designTemplateStatuses(specification)) + "\n\nPRISTINE REFERENCE SOLUTION:\n" + renderedSolution
+                + targetPrompt + exclusionPrompt;
+        String response = Objects.requireNonNullElse(reviewer.call(SYSTEM_PROMPT, prompt, usageSink, cancelled, MAX_OUTPUT_TOKENS), "");
+        boolean correctable = !visibleTargets.isEmpty() && exclusions.isEmpty() && !cancelled.getAsBoolean();
+        // A blank first response under review targets gets the same bounded correction; parse still rejects a blank correction as unavailable.
+        List<SemanticMutant> proposals = correctable && response.isBlank() ? List.of() : parse(response, specification, visibleSolutionFiles, visibleTargets);
+        if (proposals.isEmpty() && correctable) {
+            String correction = prompt + "\n\nThe initial response yielded no admissible executable proposal for the review hypotheses above. "
+                    + "Reconsider one grounded hypothesis using an exact visible solutionPath, an existing R-number rule, one complete changed Java source file, "
+                    + "and a self-contained, fully qualified JUnit method whose declared name matches testName. "
+                    + "The counterexample must observe the actual exercise operation, not a separately computed expected value. "
+                    + "Do not invent a rule or repeat a prior executed mutant. Return an empty array if no grounded proposal is possible; "
+                    + "the unexecuted review hypotheses remain review items, not proven defects or resolved findings.\n\nPRIOR RESPONSE (untrusted proposal data):\n"
+                    + (response.length() <= MAX_ARTIFACT_EVIDENCE_CHARS ? response : response.substring(0, MAX_ARTIFACT_EVIDENCE_CHARS));
+            proposals = parse(reviewer.call(SYSTEM_PROMPT, correction, usageSink, cancelled, MAX_OUTPUT_TOKENS), specification, visibleSolutionFiles, visibleTargets);
+        }
+        return proposals;
     }
 
     static String renderReviewTargets(List<SpecFidelityReport.Finding> reviewTargets) {
@@ -150,11 +166,8 @@ class SemanticMutantAuthor {
     }
 
     private static List<SpecFidelityReport.Finding> reviewTargets(List<SpecFidelityReport.Finding> findings) {
-        return findings.stream()
-                .filter(finding -> finding.kind() == SpecFidelityReport.Kind.WEAK_TEST_ORACLE || finding.kind() == SpecFidelityReport.Kind.UNCOVERED_REQUIREMENT
-                        || finding.kind() == SpecFidelityReport.Kind.EXECUTABLE_WEAK_TEST_ORACLE
-                        || finding.kind() == SpecFidelityReport.Kind.EXECUTABLE_ORACLE_PENDING_SPEC_APPROVAL)
-                .limit(MAX_MUTANTS).toList();
+        return findings.stream().filter(finding -> finding.kind() == SpecFidelityReport.Kind.WEAK_TEST_ORACLE || finding.kind() == SpecFidelityReport.Kind.UNCOVERED_REQUIREMENT
+                || finding.kind() == SpecFidelityReport.Kind.EXECUTABLE_WEAK_TEST_ORACLE).limit(MAX_MUTANTS).toList();
     }
 
     private static SpecFidelityReport.@Nullable Finding reviewTarget(Item item, List<SpecFidelityReport.Finding> targets) {

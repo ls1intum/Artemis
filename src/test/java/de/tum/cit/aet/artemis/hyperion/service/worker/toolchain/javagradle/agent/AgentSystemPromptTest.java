@@ -2,6 +2,10 @@ package de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.agen
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Set;
 
@@ -44,8 +48,8 @@ class AgentSystemPromptTest {
 
         assertThat(prompt)
                 .contains("tests/test/<package path>", "tests/build.gradle", "DisplayNameGenerator.Simple.class", "@Policy(value = \"SecurityPolicy.yaml\")",
-                        "theFollowingClassesAreTestClasses", "SECURITY BOUNDARY", "./gradlew", "Design an observable learner entry point", "Java 25", "JUnit Jupiter")
-                .doesNotContain("Maven", "mvn ", "For an existing Ares 1 harness");
+                        "tests/SecurityPolicy.yaml is managed by Artemis", "SECURITY BOUNDARY", "./gradlew", "Design an observable learner entry point", "Java 25", "JUnit Jupiter")
+                .doesNotContain("Maven", "mvn ", "For an existing Ares 1 harness", "theFollowingClassesAreTestClasses");
         if (mode == Mode.ADAPT) {
             assertThat(prompt).contains("Edit only exercise-specific test sources required by the feedback; preserve all others.");
         }
@@ -58,7 +62,8 @@ class AgentSystemPromptTest {
     void reflectionGuidanceUsesTheInstalledAresApiOnlyInInstructorTests() {
         for (String prompt : Set.of(prompts.build(input(false), Mode.GENERATE), prompts.build(input(false), Mode.ADAPT), prompts.buildStage(input(false), GenerationStage.TESTS))) {
             assertThat(prompt).contains("de.tum.cit.ase.ares.api.util.ReflectionTestUtils", "getConstructor(getClazz(ownerName)", "invokeMethod(instance, getMethod(instance",
-                    "Reflection belongs only in instructor tests", "Never import JUnit or Ares into solution/ or template/");
+                    "Reflection belongs only in instructor tests", "Never import Ares into solution/ or template/",
+                    "import JUnit there only in test classes the exercise asks students");
         }
     }
 
@@ -106,5 +111,35 @@ class AgentSystemPromptTest {
     void hiddenTestGuidanceTracksTheImmutableDueDateCapability() {
         assertThat(prompts.buildStage(input(false), GenerationStage.TESTS)).contains("Every Testing Strategy hidden-variant cell must be `no`");
         assertThat(prompts.buildStage(input(true), GenerationStage.TESTS)).contains("configured due date", "additional `AFTER_DUE_DATE` witness");
+    }
+
+    @Test
+    void theServerOwnsTheDiagramDecisionAndTheStatementStageReceivesItsRule() throws IOException {
+        String rule = normalizeWhitespace(AgentSystemPrompt.DIAGRAM_REQUIREMENT_RULE);
+
+        assertThat(prompts.buildStage(input(false), GenerationStage.SPEC)).doesNotContain("`## Diagram`:").contains("Artemis decides from the Design table and Public API");
+        assertThat(normalizeWhitespace(prompts.buildStage(input(false), GenerationStage.STATEMENT))).contains(rule, "The handoff states whether this exercise requires a diagram.");
+        try (InputStream input = new GenerationResources().getResource(Path.of("templates/hyperion/style/final-statement.md")).getInputStream()) {
+            assertThat(normalizeWhitespace(new String(input.readAllBytes(), StandardCharsets.UTF_8))).contains(rule);
+        }
+        try (InputStream input = new GenerationResources().getResource(Path.of("templates/hyperion/style/spec.md")).getInputStream()) {
+            assertThat(new String(input.readAllBytes(), StandardCharsets.UTF_8)).doesNotContain("## Diagram");
+        }
+    }
+
+    private static String normalizeWhitespace(String text) {
+        return text.replaceAll("\\s+", " ");
+    }
+
+    @Test
+    void theTestableStudentCodeRuleIsOneTextAcrossTheSpecificationPromptAndTheStyleGuides() throws IOException {
+        String rule = normalizeWhitespace(AgentSystemPrompt.TESTABLE_STUDENT_CODE_RULE);
+
+        assertThat(normalizeWhitespace(prompts.buildStage(input(false), GenerationStage.SPEC))).contains(rule);
+        for (String guide : List.of("spec.md", "tests.md")) {
+            try (InputStream input = new GenerationResources().getResource(Path.of("templates/hyperion/style/" + guide)).getInputStream()) {
+                assertThat(normalizeWhitespace(new String(input.readAllBytes(), StandardCharsets.UTF_8))).as(guide).contains(rule);
+            }
+        }
     }
 }

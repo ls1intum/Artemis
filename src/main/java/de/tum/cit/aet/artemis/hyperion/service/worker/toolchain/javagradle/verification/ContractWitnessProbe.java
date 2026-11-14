@@ -27,15 +27,31 @@ public final class ContractWitnessProbe {
 
     private static final Pattern METHOD_DECLARATION = Pattern.compile("\\bvoid\\s+([a-zA-Z_$][a-zA-Z\\d_$]*)\\s*\\(");
 
+    private static final List<String> PROBE_IMPORTS = List.of("import org.junit.jupiter.api.Test;", "import static org.junit.jupiter.api.Assertions.*;",
+            "import static de.tum.cit.ase.ares.api.util.ReflectionTestUtils.*;", "import de.tum.cit.ase.ares.api.StrictTimeout;");
+
+    private static final String PROBE_CLASS_HEADER = "@de.tum.cit.ase.ares.api.jupiter.Public\n" + "@de.tum.cit.ase.ares.api.Policy(value = \"SecurityPolicy.yaml\")\n"
+            + "@de.tum.cit.ase.ares.api.StrictTimeout(" + JavaSourceInspector.MAX_STRICT_TIMEOUT_SECONDS + ")\n"
+            + "@org.junit.jupiter.api.DisplayNameGeneration(org.junit.jupiter.api.DisplayNameGenerator.Simple.class)\nclass " + PROBE_CLASS_NAME + " {\n";
+
+    /**
+     * The actual server-owned compiler context, shared by initial design, compiler repair and execution rather than inferred from candidate tests.
+     *
+     * @return the trusted imports and annotated probe-class skeleton, without candidate implementation or grader bodies
+     */
+    public static String compilationContext() {
+        return String.join("\n", PROBE_IMPORTS) + "\n\n" + PROBE_CLASS_HEADER + "    // Supply one @Test method; these imports and class annotations already exist.\n}\n";
+    }
+
     private ContractWitnessProbe() {
     }
 
     /**
-     * Combines witness methods with an existing test's package and imports, using the same Ares restrictions as instructor tests. The caller restores the candidate after probing,
-     * so these temporary tests never enter the saved grading suite.
+     * Combines self-contained witness fragments with the JUnit/Ares probe API and an existing test's package. Uses the same Ares restrictions as instructor tests; the
+     * caller restores the candidate after probing, so these temporary tests never enter the saved grading suite.
      *
-     * @param existingTestSource one graded test source from the same repository, used only as the source of the package and import declarations
-     * @param witnesses          the candidate witnesses, each contributing one method
+     * @param existingTestSource one graded test source from the same repository, used only as the source of the package declaration
+     * @param witnesses          the candidate witnesses, each contributing optional imports and one method
      * @return the complete probe source, or empty when there is nothing to build
      */
     public static String buildProbeSource(String existingTestSource, List<ContractWitness> witnesses) {
@@ -43,27 +59,50 @@ public final class ContractWitnessProbe {
             return "";
         }
         StringBuilder source = new StringBuilder();
-        Matcher packageMatcher = PACKAGE_DECLARATION.matcher(existingTestSource);
+        Matcher packageMatcher = PACKAGE_DECLARATION.matcher(JavaSourceInspector.maskCommentsAndLiterals(existingTestSource));
         if (packageMatcher.find()) {
             source.append(packageMatcher.group().strip()).append("\n\n");
         }
-        Set<String> imports = new LinkedHashSet<>();
-        Matcher importMatcher = IMPORT_DECLARATION.matcher(existingTestSource);
-        while (importMatcher.find()) {
-            imports.add(importMatcher.group().strip());
-        }
+        Set<String> imports = new LinkedHashSet<>(PROBE_IMPORTS);
+        List<ProbeFragment> fragments = witnesses.stream().map(witness -> splitFragment(witness.code())).toList();
+        fragments.forEach(fragment -> imports.addAll(fragment.imports()));
         imports.forEach(declaration -> source.append(declaration).append("\n"));
-        if (!imports.isEmpty()) {
-            source.append("\n");
-        }
-        source.append("@de.tum.cit.ase.ares.api.jupiter.Public\n").append("@de.tum.cit.ase.ares.api.Policy(value = \"SecurityPolicy.yaml\")\n")
-                .append("@de.tum.cit.ase.ares.api.StrictTimeout(").append(JavaSourceInspector.MAX_STRICT_TIMEOUT_SECONDS).append(")\n")
-                .append("@org.junit.jupiter.api.DisplayNameGeneration(org.junit.jupiter.api.DisplayNameGenerator.Simple.class)\n").append("class ").append(PROBE_CLASS_NAME)
-                .append(" {\n");
-        for (ContractWitness witness : witnesses) {
-            source.append("\n").append(witness.code().strip().indent(4));
+        source.append("\n");
+        source.append(PROBE_CLASS_HEADER);
+        for (ProbeFragment fragment : fragments) {
+            source.append("\n").append(fragment.method().strip().indent(4));
         }
         return source.append("}\n").toString();
+    }
+
+    private static ProbeFragment splitFragment(String code) {
+        String masked = JavaSourceInspector.maskCommentsAndLiterals(code);
+        Matcher method = METHOD_DECLARATION.matcher(masked);
+        int prefixEnd = method.find() ? method.start() : 0;
+        Matcher declarations = IMPORT_DECLARATION.matcher(masked);
+        List<String> imports = new ArrayList<>();
+        StringBuilder body = new StringBuilder(code);
+        while (declarations.find() && declarations.end() <= prefixEnd) {
+            imports.add(code.substring(declarations.start(), declarations.end()).strip());
+            // Keep offsets, line breaks and all literal contents unchanged when lifting imports.
+            for (int offset = declarations.start(); offset < declarations.end(); offset++) {
+                if (body.charAt(offset) != '\n' && body.charAt(offset) != '\r') {
+                    body.setCharAt(offset, ' ');
+                }
+            }
+        }
+        return new ProbeFragment(List.copyOf(imports), body.toString());
+    }
+
+    private record ProbeFragment(List<String> imports, String method) {
+    }
+
+    /**
+     * @param diagnostic sanitized compiler output from an unexecuted probe
+     * @return whether Java compilation specifically rejected the temporary witness source
+     */
+    public static boolean hasCompilationFailure(@Nullable String diagnostic) {
+        return diagnostic != null && diagnostic.contains(PROBE_CLASS_NAME + ".java") && diagnostic.contains("error:");
     }
 
     /** Builds the temporary source and policy overlay without changing the candidate's resource permissions. */

@@ -43,9 +43,6 @@ final class AresConventions {
         GenerationBuildTool buildTool = producedTestsFiles.containsKey("pom.xml") && !producedTestsFiles.containsKey("build.gradle") ? GenerationBuildTool.MAVEN
                 : GenerationBuildTool.GRADLE;
         reasons.addAll(AresTestHarness.reasons(buildTool, producedTestsFiles));
-        if (producedTestsFiles.containsKey(AresSecurityPolicy.PATH)) {
-            reasons.addAll(AresSecurityPolicy.reasons(seed, producedTestsFiles));
-        }
 
         List<String> missingClassAnnotations = new ArrayList<>();
         List<String> missingTimeouts = new ArrayList<>();
@@ -70,7 +67,7 @@ final class AresConventions {
             }
         }
         if (!missingClassAnnotations.isEmpty()) {
-            reasons.add("Java test classes must use trusted Ares 2 @Public and @Policy(value = \"SecurityPolicy.yaml\"); missing or shadowed in "
+            reasons.add("Java test classes must use trusted Ares 2 @Public and @Policy naming \"SecurityPolicy.yaml\"; missing or shadowed in "
                     + sampleNames(new LinkedHashSet<>(missingClassAnnotations)));
         }
         if (!missingTimeouts.isEmpty()) {

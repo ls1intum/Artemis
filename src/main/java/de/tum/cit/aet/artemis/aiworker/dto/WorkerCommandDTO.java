@@ -10,7 +10,11 @@ import de.tum.cit.aet.artemis.aiworker.domain.WorkerCommandType;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record WorkerCommandDTO(int protocolVersion, WorkerCommandType type, ExecutionIdentityDTO identity, @Nullable ExecutionAssignmentDTO assignment) {
 
-    public static final int PROTOCOL_VERSION = 4;
+    /**
+     * Bumped whenever a payload record either side decodes strictly changes shape: both codecs reject unknown properties and enum constants, so a mixed-version core and
+     * worker must fail at the envelope rather than mid-run. Version 5: review findings carry a location and the pending-spec-approval finding kind is gone.
+     */
+    public static final int PROTOCOL_VERSION = 6;
 
     public WorkerCommandDTO {
         if (protocolVersion != PROTOCOL_VERSION || type == null || identity == null

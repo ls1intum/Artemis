@@ -3,7 +3,10 @@ package de.tum.cit.aet.artemis.hyperion.runtime.agent;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BooleanSupplier;
@@ -19,7 +22,6 @@ import org.springframework.ai.chat.messages.ToolResponseMessage;
 import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.model.ChatResponse;
-import org.springframework.ai.chat.model.Generation;
 import org.springframework.ai.chat.prompt.ChatOptions;
 import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.ai.model.tool.ToolCallingManager;
@@ -29,7 +31,6 @@ import org.springframework.ai.tool.ToolCallback;
 import org.springframework.ai.tool.ToolCallbackProvider;
 import org.springframework.ai.tool.execution.DefaultToolExecutionExceptionProcessor;
 import org.springframework.ai.tool.method.MethodToolCallbackProvider;
-import org.springframework.ai.util.JsonHelper;
 
 import de.tum.cit.aet.artemis.aiworker.api.SandboxUnavailableException;
 import de.tum.cit.aet.artemis.hyperion.runtime.security.HyperionSecretMaterialPolicy;
@@ -54,10 +55,6 @@ public class AgentLoopRunner {
     private static final Logger log = LoggerFactory.getLogger(AgentLoopRunner.class);
 
     private static final int MAX_CONSECUTIVE_TOOL_FAILURES = 5;
-
-    private static final String SUBMIT_TOOL_NAME = "submit";
-
-    private static final JsonHelper TOOL_ARGUMENT_JSON = new JsonHelper();
 
     /** Emitted immediately before every provider call; see {@link #emitWaitingOnModel}. */
     static final String WAITING_ON_MODEL_MESSAGE = "Thinking about the next step.";
@@ -134,6 +131,9 @@ public class AgentLoopRunner {
     /** The model's usable context window in tokens; compaction keeps the conversation below {@code contextWindow - RESERVE_TOKENS}. Configurable because deployments cap it. */
     private final int contextWindowTokens;
 
+    @Nullable
+    private final String repairModel;
+
     /**
      * Injects the collection (not a single {@link ChatModel}) and uses the first available one: multiple beans may be on the classpath, so a single-bean injection would be
      * ambiguous and fail startup.
@@ -150,16 +150,22 @@ public class AgentLoopRunner {
         this.toolCallingManager = ToolCallingManager.builder().unlimitedCallsPerTool().unlimitedTotalToolCalls()
                 .toolExecutionExceptionProcessor(DefaultToolExecutionExceptionProcessor.builder().alwaysThrow(true).build()).build();
         this.contextWindowTokens = contextWindowTokens;
+        this.repairModel = null;
         this.providerHardFailureCooldown = providerHardFailureCooldown;
         this.providerFailureCooldown = providerFailureCooldown;
     }
 
     /** Derivation constructor for {@link #forSettings}; shares the wrapped model, tool manager, and cooldown state of the deployment-wide runner. */
     private AgentLoopRunner(AgentLoopRunner deploymentRunner, HyperionGenerationSettings settings) {
+        this(deploymentRunner, settings.chatOptions() != null ? settings.chatOptions() : deploymentRunner.effectiveOptions, settings.contextWindowTokens(), settings.repairModel());
+    }
+
+    private AgentLoopRunner(AgentLoopRunner deploymentRunner, @Nullable ChatOptions options, int contextWindowTokens, @Nullable String repairModel) {
         this.chatModel = deploymentRunner.chatModel;
-        this.effectiveOptions = settings.chatOptions() != null ? settings.chatOptions() : deploymentRunner.effectiveOptions;
+        this.effectiveOptions = options;
         this.toolCallingManager = deploymentRunner.toolCallingManager;
-        this.contextWindowTokens = settings.contextWindowTokens();
+        this.contextWindowTokens = contextWindowTokens;
+        this.repairModel = repairModel;
         this.providerHardFailureCooldown = deploymentRunner.providerHardFailureCooldown;
         this.providerFailureCooldown = deploymentRunner.providerFailureCooldown;
         this.emptyResponseRetryBaseMillis = deploymentRunner.emptyResponseRetryBaseMillis;
@@ -298,10 +304,17 @@ public class AgentLoopRunner {
         if (cancelled.getAsBoolean()) {
             return session(AgentLoopResult.Status.CANCELLED, 0, "", conversation);
         }
-        Prompt prompt = new Prompt(conversation, agentOptions(toolCallbacks, conversation, 0, 0, toolDefinitionTokens));
+        AgentLoopRunner activeRunner = this;
+        AuthoringProgress progressSource = tools instanceof AuthoringProgress source ? source : null;
+        AuthoringProgressMonitor workMonitor = progressSource == null ? null : new AuthoringProgressMonitor(progressSource.authoringProgress());
+        int repairLastTurn = maxTurns;
+        Prompt prompt = new Prompt(conversation, activeRunner.agentOptions(toolCallbacks, conversation, 0, 0, toolDefinitionTokens));
         String lastAssistantText = "";
         int consecutiveToolFailures = 0;
         int consecutiveRejectedActions = 0;
+        boolean previousReplyCutOffWithoutAction = false;
+        Map<String, Integer> repeatedCallCounts = new HashMap<>();
+        int repeatedRejections = 0;
         long lastPromptTokens = 0;
         int messagesAtLastCall = 0;
         // Compaction invalidates provider usage even when the rebuilt history still has enough messages.
@@ -314,6 +327,36 @@ public class AgentLoopRunner {
                 emit(stepListener, "Cancelling generation…");
                 return session(AgentLoopResult.Status.CANCELLED, turn - 1, lastAssistantText, conversation);
             }
+            if (turn > repairLastTurn) {
+                return session(AgentLoopResult.Status.BUDGET_EXHAUSTED, turn - 1, "The bounded repair-model block ended; verify and retain the best draft.", conversation);
+            }
+            if (workMonitor != null && (turn - 1) > 0 && (turn - 1) % AuthoringProgressMonitor.BLOCK_TURNS == 0) {
+                AuthoringProgressMonitor.Decision decision = workMonitor.assess(progressSource.authoringProgress());
+                if (decision == AuthoringProgressMonitor.Decision.VERIFIED) {
+                    emit(stepListener, "The current artifact passed its tool check; handing it to authoritative verification.");
+                    return session(AgentLoopResult.Status.COMPLETED, turn - 1, lastAssistantText, conversation);
+                }
+                if (decision == AuthoringProgressMonitor.Decision.STALLED) {
+                    if (activeRunner == this && repairModel != null && !repairModel.equals(configuredModel()) && progressSource.claimRepairModelHandoff()) {
+                        activeRunner = new AgentLoopRunner(this, configuredOptionsBuilder().model(repairModel).build(), contextWindowTokens, null);
+                        repairLastTurn = Math.min(maxTurns, turn - 1 + AuthoringProgressMonitor.BLOCK_TURNS);
+                        emit(stepListener, "No verified improvement across two work blocks; handing the current repair to " + repairModel
+                                + " for at most 20 turns within the remaining job budget.");
+                        conversation.add(new UserMessage(
+                                "Continue from the current files and latest verifier evidence. Diagnose the repeated failure and make one scoped correction. Do not restart the exercise or add requirements."));
+                    }
+                    else {
+                        emit(stepListener, "No verified improvement across two work blocks; checking and retaining the current draft instead of spending further turns.");
+                        return session(AgentLoopResult.Status.BUDGET_EXHAUSTED, turn - 1, "Authoring paused after two blocks without verified improvement.", conversation);
+                    }
+                }
+                else {
+                    emit(stepListener, "Authoring work checkpoint: require a concrete verification result before extending another block.");
+                    conversation.add(new UserMessage(
+                            "Work checkpoint: use the structured verifier on the current artifacts, fix its concrete failures, and submit once this stage passes. File edits alone are not evidence of improvement."));
+                }
+                prompt = new Prompt(conversation, activeRunner.agentOptions(toolCallbacks, conversation, lastPromptTokens, messagesAtLastCall, toolDefinitionTokens));
+            }
             // Recorded unconditionally and before anything can fail, so a run abandoned at a gate still reports the turns it spent.
             recordTurn(usageSink);
             if (activity != null) {
@@ -324,20 +367,25 @@ public class AgentLoopRunner {
             }
 
             AgentPromptSafety.requirePromptSafe(prompt);
+            if (conversation != lastPromptConversation) {
+                // Only compaction replaces the conversation between two prompts. It drops earlier results, so re-reading them is not a repeat.
+                AgentToolBatch.forgetObservations(repeatedCallCounts);
+            }
             messagesAtLastCall = conversation.size();
             lastPromptConversation = conversation;
             emitWaitingOnModel(stepListener, activity);
             ChatResponse response;
             try {
-                response = callModel(prompt, turn, cancelled, usageSink, stepListener, activity);
+                response = activeRunner.callModel(prompt, turn, cancelled, usageSink, stepListener, activity);
             }
             catch (UsageAccountingException | UsageUncertainException failure) {
-                return session(AgentLoopResult.Status.ERROR, turn, lastAssistantText, conversation);
+                return failed(turn, lastAssistantText, conversation, "The provider usage of a model call could not be accounted for, so no further model call was made.");
             }
             if (response == null) {
-                return session(cancelled.getAsBoolean() ? AgentLoopResult.Status.CANCELLED : AgentLoopResult.Status.ERROR, turn, lastAssistantText, conversation);
+                return cancelled.getAsBoolean() ? session(AgentLoopResult.Status.CANCELLED, turn, lastAssistantText, conversation)
+                        : failed(turn, lastAssistantText, conversation, "The AI service returned no usable response on turn " + turn + ".");
             }
-            response = normalizeToolNames(response);
+            response = AgentToolBatch.normalizeToolNames(response);
             lastPromptTokens = AgentConversationContext.promptTokensOf(response);
             List<AssistantMessage.ToolCall> toolCalls = response.getResult() != null && response.getResult().getOutput() != null ? response.getResult().getOutput().getToolCalls()
                     : List.of();
@@ -351,14 +399,40 @@ public class AgentLoopRunner {
             }
 
             String assistantText = extractText(response);
-            if (assistantText != null && !assistantText.isBlank()) {
+            // A text-only reply cut off at the output limit is discarded below, so it must not become the session's final message either.
+            boolean discardedCutOffText = !response.hasToolCalls() && AgentToolBatch.isTruncatedByTokenLimit(response);
+            if (!discardedCutOffText && assistantText != null && !assistantText.isBlank()) {
                 lastAssistantText = assistantText;
             }
 
             if (!response.hasToolCalls()) {
-                if (isTruncatedByTokenLimit(response)) {
+                if (discardedCutOffText) {
                     emit(stepListener, "The AI response was cut off before it could finish.");
-                    return session(AgentLoopResult.Status.ERROR, turn, lastAssistantText, conversation);
+                    if (previousReplyCutOffWithoutAction || turn == maxTurns || toolCallbacks.length == 0) {
+                        return failed(turn, lastAssistantText, conversation, "The AI response was cut off at the output token limit on turn " + turn + ".");
+                    }
+                    // A text-only reply that fills the whole output limit is almost always runaway text. Its call completed, so its usage is already accounted; drop the
+                    // text so it cannot crowd the context, and ask once for a short reply that acts.
+                    previousReplyCutOffWithoutAction = true;
+                    conversation.add(new UserMessage("Your previous reply was cut off at the output token limit before it took any action, so it was discarded. Reply "
+                            + "briefly and act through a tool call; split large content across several smaller calls."));
+                    prompt = new Prompt(conversation, activeRunner.agentOptions(toolCallbacks, conversation, lastPromptConversation == conversation ? lastPromptTokens : 0,
+                            messagesAtLastCall, toolDefinitionTokens));
+                    continue;
+                }
+                Optional<String> pendingCompletion = tools == null ? Optional.empty() : tools.pendingCompletionFeedback();
+                if (pendingCompletion.isPresent()) {
+                    previousReplyCutOffWithoutAction = false;
+                    emit(stepListener, "The stage still needs its files and explicit submission.");
+                    conversation.add(response.getResult().getOutput());
+                    conversation.add(new UserMessage(pendingCompletion.get()));
+                    conversation = activeRunner.compactIfNeeded(conversation, lastPromptTokens, messagesAtLastCall, toolDefinitionTokens, usageSink, cancelled, stepListener);
+                    if (cancelled.getAsBoolean()) {
+                        return session(AgentLoopResult.Status.CANCELLED, turn, lastAssistantText, conversation);
+                    }
+                    prompt = new Prompt(conversation, activeRunner.agentOptions(toolCallbacks, conversation, lastPromptConversation == conversation ? lastPromptTokens : 0,
+                            messagesAtLastCall, toolDefinitionTokens));
+                    continue;
                 }
                 // Append this closing turn before returning so a caller carrying the conversation forward does not lose it.
                 emit(stepListener, "Preparing the exercise for verification.");
@@ -367,23 +441,21 @@ public class AgentLoopRunner {
                 return session(AgentLoopResult.Status.COMPLETED, turn, lastAssistantText, completedConversation);
             }
 
+            previousReplyCutOffWithoutAction = false;
             // A completion cut off by the token limit may carry silently truncated tool arguments (half a file in write_file's content). Executing them would corrupt the
             // workspace while the model believes the calls landed, so every call id is answered with a re-issue instruction instead.
-            if (isTruncatedByTokenLimit(response) && !toolCalls.isEmpty()) {
+            if (AgentToolBatch.isTruncatedByTokenLimit(response) && !toolCalls.isEmpty()) {
                 emit(stepListener, "The response was cut off at the length limit; asking the agent to re-issue its last actions.");
                 conversation.add(response.getResult().getOutput());
-                List<ToolResponseMessage.ToolResponse> truncatedResponses = toolCalls.stream()
-                        .map(toolCall -> new ToolResponseMessage.ToolResponse(toolCall.id(), toolCall.name(),
-                                "ERROR: this tool call was not executed - the response hit the output token limit, so its arguments may be truncated. "
-                                        + "Re-issue the call with complete arguments, splitting large content across smaller calls if needed."))
-                        .toList();
-                conversation.add(ToolResponseMessage.builder().responses(truncatedResponses).build());
-                conversation = compactIfNeeded(conversation, lastPromptTokens, messagesAtLastCall, toolDefinitionTokens, usageSink, cancelled, stepListener);
+                conversation.add(AgentToolBatch.unexecutedResponses(toolCalls,
+                        "ERROR: this tool call was not executed - the response hit the output token limit, so its arguments may be truncated. "
+                                + "Re-issue the call with complete arguments, splitting large content across smaller calls if needed."));
+                conversation = activeRunner.compactIfNeeded(conversation, lastPromptTokens, messagesAtLastCall, toolDefinitionTokens, usageSink, cancelled, stepListener);
                 if (cancelled.getAsBoolean()) {
                     return session(AgentLoopResult.Status.CANCELLED, turn, lastAssistantText, conversation);
                 }
-                prompt = new Prompt(conversation,
-                        agentOptions(toolCallbacks, conversation, lastPromptConversation == conversation ? lastPromptTokens : 0, messagesAtLastCall, toolDefinitionTokens));
+                prompt = new Prompt(conversation, activeRunner.agentOptions(toolCallbacks, conversation, lastPromptConversation == conversation ? lastPromptTokens : 0,
+                        messagesAtLastCall, toolDefinitionTokens));
                 continue;
             }
 
@@ -391,29 +463,27 @@ public class AgentLoopRunner {
                 if (activity != null) {
                     activity.recordToolCall();
                 }
-                if (!SUBMIT_TOOL_NAME.equals(toolCall.name())) {
+                if (!AgentToolBatch.SUBMIT_TOOL_NAME.equals(toolCall.name())) {
                     emit(stepListener, AgentToolProgress.describe(toolCall));
                 }
             }
-            boolean submitRequested = toolCalls.stream().anyMatch(toolCall -> SUBMIT_TOOL_NAME.equals(toolCall.name()));
+            boolean submitRequested = toolCalls.stream().anyMatch(toolCall -> AgentToolBatch.SUBMIT_TOOL_NAME.equals(toolCall.name()));
             if (submitRequested && toolCalls.size() != 1) {
                 conversation.add(response.getResult().getOutput());
-                List<ToolResponseMessage.ToolResponse> rejectedResponses = toolCalls.stream().map(toolCall -> new ToolResponseMessage.ToolResponse(toolCall.id(), toolCall.name(),
-                        "ERROR: no call in this batch was executed. Submit must be the only tool call in its response. Finish other actions first, then submit separately."))
-                        .toList();
-                conversation.add(ToolResponseMessage.builder().responses(rejectedResponses).build());
-                conversation = compactIfNeeded(conversation, lastPromptTokens, messagesAtLastCall, toolDefinitionTokens, usageSink, cancelled, stepListener);
+                conversation.add(AgentToolBatch.unexecutedResponses(toolCalls,
+                        "ERROR: no call in this batch was executed. Submit must be the only tool call in its response. Finish other actions first, then submit separately."));
+                conversation = activeRunner.compactIfNeeded(conversation, lastPromptTokens, messagesAtLastCall, toolDefinitionTokens, usageSink, cancelled, stepListener);
                 if (cancelled.getAsBoolean()) {
                     return session(AgentLoopResult.Status.CANCELLED, turn, lastAssistantText, conversation);
                 }
-                prompt = new Prompt(conversation,
-                        agentOptions(toolCallbacks, conversation, lastPromptConversation == conversation ? lastPromptTokens : 0, messagesAtLastCall, toolDefinitionTokens));
+                prompt = new Prompt(conversation, activeRunner.agentOptions(toolCallbacks, conversation, lastPromptConversation == conversation ? lastPromptTokens : 0,
+                        messagesAtLastCall, toolDefinitionTokens));
                 continue;
             }
             ToolExecutionResult toolExecutionResult;
             boolean executionStarted = false;
             try {
-                validateToolBatch(toolCalls, toolCallbacks);
+                AgentToolBatch.validateToolBatch(toolCalls, toolCallbacks);
                 executionStarted = true;
                 toolExecutionResult = toolCallingManager.executeToolCalls(prompt, response);
                 // Preserve the model call and tool results even when a sandbox failure ends the session.
@@ -425,10 +495,18 @@ public class AgentLoopRunner {
                 }
                 if (isSandboxSessionTerminated(tools)) {
                     emit(stepListener, "The build environment stopped responding.");
-                    return session(AgentLoopResult.Status.ERROR, turn, lastAssistantText, conversation);
+                    return failed(turn, lastAssistantText, conversation, "The build environment stopped responding on turn " + turn + ".");
                 }
-                if (hasRejectedToolAction(conversation)) {
-                    if (hasOnlyRecoverableFileToolRejections(conversation)) {
+                if (AgentToolBatch.escalateRepeatedRejections(conversation, toolCalls, repeatedCallCounts)) {
+                    repeatedRejections++;
+                    log.warn("Agent loop repeated an identical tool call on turn {} (repeats this session: {})", turn, repeatedRejections);
+                    if (repeatedRejections >= MAX_CONSECUTIVE_TOOL_FAILURES) {
+                        return failed(turn, lastAssistantText, conversation, "The agent repeated identical rejected tool calls " + repeatedRejections
+                                + " times after being told they would keep failing. Last rejection: " + AgentToolBatch.lastRejection(conversation));
+                    }
+                }
+                if (AgentToolBatch.hasRejectedToolAction(conversation)) {
+                    if (AgentToolBatch.hasOnlyRecoverableFileToolRejections(conversation)) {
                         consecutiveRejectedActions++;
                         consecutiveToolFailures = 0;
                         log.warn("Agent loop file-tool action was rejected on turn {} (consecutive recoverable rejections: {})", turn, consecutiveRejectedActions);
@@ -443,7 +521,8 @@ public class AgentLoopRunner {
                         consecutiveToolFailures++;
                         log.warn("Agent loop tool action was rejected on turn {} (consecutive failures: {})", turn, consecutiveToolFailures);
                         if (consecutiveToolFailures >= MAX_CONSECUTIVE_TOOL_FAILURES) {
-                            return session(AgentLoopResult.Status.ERROR, turn, lastAssistantText, conversation);
+                            return failed(turn, lastAssistantText, conversation,
+                                    consecutiveToolFailures + " consecutive tool calls were rejected. Last rejection: " + AgentToolBatch.lastRejection(conversation));
                         }
                     }
                 }
@@ -459,7 +538,7 @@ public class AgentLoopRunner {
                 if (hasCause(e, SandboxUnavailableException.class)) {
                     log.warn("Agent loop lost its sandbox on turn {} ({})", turn, e.getClass().getSimpleName());
                     emit(stepListener, "The build environment stopped responding.");
-                    return session(AgentLoopResult.Status.ERROR, turn, lastAssistantText, conversation);
+                    return failed(turn, lastAssistantText, conversation, "The build environment stopped responding on turn " + turn + ".");
                 }
                 // A preflight rejection changed nothing. A callback failure may have followed successful calls, so do not claim that those calls failed.
                 consecutiveToolFailures++;
@@ -470,19 +549,18 @@ public class AgentLoopRunner {
                 // Every requested call id must be answered, or the chat-completions tool-pairing contract is violated on the next request.
                 String outcome = executionStarted
                         ? "ERROR: this batch stopped after execution began. Some calls may have completed. Inspect the workspace before retrying any action."
-                        : "ERROR: no call in this batch was executed. Use only available tools with valid JSON object arguments, then retry.";
-                List<ToolResponseMessage.ToolResponse> errorResponses = failedTurn.getToolCalls().stream()
-                        .map(toolCall -> new ToolResponseMessage.ToolResponse(toolCall.id(), toolCall.name(), outcome)).toList();
-                conversation.add(ToolResponseMessage.builder().responses(errorResponses).build());
+                        : AgentToolBatch.preflightRejectionFeedback(toolCallbacks);
+                conversation.add(AgentToolBatch.unexecutedResponses(failedTurn.getToolCalls(), outcome));
                 if (consecutiveToolFailures >= MAX_CONSECUTIVE_TOOL_FAILURES) {
-                    return session(AgentLoopResult.Status.ERROR, turn, lastAssistantText, conversation);
+                    return failed(turn, lastAssistantText, conversation,
+                            consecutiveToolFailures + " consecutive tool calls could not be executed (last failure: " + e.getClass().getSimpleName() + ").");
                 }
-                conversation = compactIfNeeded(conversation, lastPromptTokens, messagesAtLastCall, toolDefinitionTokens, usageSink, cancelled, stepListener);
+                conversation = activeRunner.compactIfNeeded(conversation, lastPromptTokens, messagesAtLastCall, toolDefinitionTokens, usageSink, cancelled, stepListener);
                 if (cancelled.getAsBoolean()) {
                     return session(AgentLoopResult.Status.CANCELLED, turn, lastAssistantText, conversation);
                 }
-                prompt = new Prompt(conversation,
-                        agentOptions(toolCallbacks, conversation, lastPromptConversation == conversation ? lastPromptTokens : 0, messagesAtLastCall, toolDefinitionTokens));
+                prompt = new Prompt(conversation, activeRunner.agentOptions(toolCallbacks, conversation, lastPromptConversation == conversation ? lastPromptTokens : 0,
+                        messagesAtLastCall, toolDefinitionTokens));
                 continue;
             }
 
@@ -490,7 +568,7 @@ public class AgentLoopRunner {
                 return session(AgentLoopResult.Status.CANCELLED, turn, lastAssistantText, conversation);
             }
             if (submitRequested) {
-                if (isSubmitVetoed(tools) || hasRejectedToolAction(conversation)) {
+                if (isSubmitVetoed(tools) || AgentToolBatch.hasRejectedToolAction(conversation)) {
                     // The rejection message is already the tool result in `conversation`, so falling through to the ordinary next-turn handling lets the model fix and resubmit.
                     emit(stepListener, "Submit was rejected by the stage check; continuing to address the reported issues.");
                 }
@@ -505,59 +583,31 @@ public class AgentLoopRunner {
                 conversation.add(new UserMessage("You are close to the step limit. Finish the current change, make sure the build and tests reflect the intended outcome, "
                         + "and then stop calling tools."));
             }
-            conversation = compactIfNeeded(conversation, lastPromptTokens, messagesAtLastCall, toolDefinitionTokens, usageSink, cancelled, stepListener);
+            conversation = activeRunner.compactIfNeeded(conversation, lastPromptTokens, messagesAtLastCall, toolDefinitionTokens, usageSink, cancelled, stepListener);
             if (cancelled.getAsBoolean()) {
                 return session(AgentLoopResult.Status.CANCELLED, turn, lastAssistantText, conversation);
             }
-            prompt = new Prompt(conversation,
-                    agentOptions(toolCallbacks, conversation, lastPromptConversation == conversation ? lastPromptTokens : 0, messagesAtLastCall, toolDefinitionTokens));
+            prompt = new Prompt(conversation, activeRunner.agentOptions(toolCallbacks, conversation, lastPromptConversation == conversation ? lastPromptTokens : 0,
+                    messagesAtLastCall, toolDefinitionTokens));
         }
 
         emit(stepListener, "The generation step limit was reached.");
         return session(AgentLoopResult.Status.BUDGET_EXHAUSTED, maxTurns, lastAssistantText, conversation);
     }
 
-    private static boolean hasRejectedToolAction(List<Message> conversation) {
-        for (int i = conversation.size() - 1; i >= 0; i--) {
-            if (conversation.get(i) instanceof ToolResponseMessage toolResponse) {
-                return toolResponse.getResponses().stream().anyMatch(response -> !"verify".equals(response.name()) && isErrorResponse(response.responseData()));
-            }
-        }
-        return false;
-    }
-
-    private static boolean hasOnlyRecoverableFileToolRejections(List<Message> conversation) {
-        for (int i = conversation.size() - 1; i >= 0; i--) {
-            if (conversation.get(i) instanceof ToolResponseMessage toolResponse) {
-                List<ToolResponseMessage.ToolResponse> rejected = toolResponse.getResponses().stream()
-                        .filter(response -> !"verify".equals(response.name()) && isErrorResponse(response.responseData())).toList();
-                return !rejected.isEmpty() && rejected.stream().allMatch(response -> "edit_file".equals(response.name()) || "search".equals(response.name()));
-            }
-        }
-        return false;
-    }
-
-    private static boolean isErrorResponse(@Nullable String responseData) {
-        if (responseData == null) {
-            return false;
-        }
-        String normalized = responseData.stripLeading();
-        // MethodToolCallback serializes String return values as JSON strings, while other callbacks may return plain text.
-        return normalized.startsWith("ERROR:") || normalized.startsWith("\"ERROR:");
-    }
-
-    /** Whether the provider reports this completion was cut off by the output token limit (OpenAI-style finish reason "length"). */
-    private static boolean isTruncatedByTokenLimit(ChatResponse response) {
-        if (response.getResult() == null || response.getResult().getMetadata() == null) {
-            return false;
-        }
-        return "length".equalsIgnoreCase(response.getResult().getMetadata().getFinishReason());
-    }
-
     /** Builds a session result, stripping the leading system message so the returned conversation is ready to pass as {@code priorConversation} to the next call. */
     private static AgentLoopSession session(AgentLoopResult.Status status, int turns, String finalMessage, List<Message> conversation) {
+        return session(status, turns, finalMessage, conversation, null);
+    }
+
+    /** An {@link AgentLoopResult.Status#ERROR} session that records why it stopped, so the run's outcome can name the cause instead of only "not verified". */
+    private static AgentLoopSession failed(int turns, String finalMessage, List<Message> conversation, String stopCause) {
+        return session(AgentLoopResult.Status.ERROR, turns, finalMessage, conversation, "The agent session stopped: " + stopCause);
+    }
+
+    private static AgentLoopSession session(AgentLoopResult.Status status, int turns, String finalMessage, List<Message> conversation, @Nullable String stopCause) {
         List<Message> withoutSystemMessage = conversation.isEmpty() ? List.of() : new ArrayList<>(conversation.subList(1, conversation.size()));
-        return new AgentLoopSession(new AgentLoopResult(status, turns, finalMessage), withoutSystemMessage);
+        return new AgentLoopSession(new AgentLoopResult(status, turns, finalMessage, stopCause), withoutSystemMessage);
     }
 
     private static boolean hasCause(Throwable failure, Class<? extends Throwable> type) {
@@ -575,51 +625,6 @@ public class AgentLoopRunner {
 
     private static boolean isSubmitVetoed(SubmitVetoAware tools) {
         return tools != null && tools.consumeSubmitVeto();
-    }
-
-    /**
-     * Removes leaked harmony control tokens from tool-call names, so a name like {@code bash<|channel|>commentary} dispatches as {@code bash} instead of matching no registered
-     * tool.
-     */
-    private static ChatResponse normalizeToolNames(ChatResponse response) {
-        if (response.getResult() == null || response.getResult().getOutput() == null) {
-            return response;
-        }
-        AssistantMessage output = response.getResult().getOutput();
-        List<AssistantMessage.ToolCall> toolCalls = output.getToolCalls();
-        if (toolCalls == null || toolCalls.isEmpty()) {
-            return response;
-        }
-        boolean changed = false;
-        List<AssistantMessage.ToolCall> normalized = new ArrayList<>(toolCalls.size());
-        for (AssistantMessage.ToolCall toolCall : toolCalls) {
-            String sanitized = sanitizeToolName(toolCall.name());
-            if (!sanitized.equals(toolCall.name())) {
-                changed = true;
-                log.warn("Normalized a leaked model tool name to '{}'", sanitized);
-                normalized.add(new AssistantMessage.ToolCall(toolCall.id(), toolCall.type(), sanitized, toolCall.arguments()));
-            }
-            else {
-                normalized.add(toolCall);
-            }
-        }
-        if (!changed) {
-            return response;
-        }
-        AssistantMessage rebuilt = AssistantMessage.builder().content(output.getText() == null ? "" : output.getText()).properties(output.getMetadata()).media(output.getMedia())
-                .toolCalls(normalized).build();
-        return new ChatResponse(List.of(new Generation(rebuilt, response.getResult().getMetadata())), response.getMetadata());
-    }
-
-    static String sanitizeToolName(String name) {
-        if (name == null || name.isEmpty()) {
-            return "";
-        }
-        if (!name.contains("<|")) {
-            return name.strip();
-        }
-        // Everything before the first control token is the real tool name; the rest is leakage.
-        return name.substring(0, name.indexOf("<|")).strip();
     }
 
     void setEmptyResponseRetryTimingForTests(long baseMillis, long capMillis) {
@@ -909,22 +914,6 @@ public class AgentLoopRunner {
             return "";
         }
         return response.getResult().getOutput().getText();
-    }
-
-    private static void validateToolBatch(List<AssistantMessage.ToolCall> calls, ToolCallback[] callbacks) {
-        for (AssistantMessage.ToolCall call : calls) {
-            boolean available = false;
-            for (ToolCallback callback : callbacks) {
-                if (callback.getToolDefinition().name().equals(call.name())) {
-                    available = true;
-                    break;
-                }
-            }
-            if (!available || call.arguments() == null || !call.arguments().stripLeading().startsWith("{")) {
-                throw new IllegalArgumentException("Unknown tool or invalid arguments");
-            }
-            TOOL_ARGUMENT_JSON.fromJsonToMap(call.arguments());
-        }
     }
 
     private static void emit(@Nullable Consumer<String> stepListener, String message) {

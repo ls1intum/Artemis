@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.orchestration;
 
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -44,6 +45,7 @@ import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.agent
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.agent.SandboxAgentTools;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.critic.SpecFidelityCritic;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification.ApprovedSpecRegistry;
+import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification.BriefScaffoldingGate;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification.DifferentialVerifier;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification.ExerciseIntegrityGate;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification.StageChecks;
@@ -111,8 +113,20 @@ public class GenerationOrchestrator {
         this.stageCheckService = stageCheckService;
         this.approvedSpecs = approvedSpecs;
         int maxGenerationAttempts = GenerationAttemptLoop.MAX_MECHANICAL_ATTEMPTS + maxSemanticRepairs + 1;
-        this.attemptLoopDependencies = new GenerationAttemptLoop.Dependencies(workspace, agentLoopRunner, verifier, structuralOracleSeeder, specFidelityCritic,
+        this.attemptLoopDependencies = new GenerationAttemptLoop.Dependencies(workspace, agentLoopRunner, verifier, structuralOracleSeeder, stageCheckService, specFidelityCritic,
                 stagedGenerationRunner, transcriptWriter, stagedGenerationEnabled, maxTurns, maxGenerationAttempts, maxSemanticRepairs);
+    }
+
+    SpecFidelityReport preserveBriefScaffolding(SpecFidelityReport report, String sessionId, @Nullable String specification, Map<RepositoryRole, Map<String, String>> artifacts,
+            @Nullable GenerationProgressSink progress) {
+        List<SpecFidelityReport.Finding> findings = new ArrayList<>(report.findings());
+        findings.addAll(BriefScaffoldingGate.artifactFindings(approvedSpecs.learningGoals(sessionId).orElse(null), specification,
+                artifacts.getOrDefault(RepositoryRole.TEMPLATE, Map.of()), artifacts.getOrDefault(RepositoryRole.SOLUTION, Map.of())));
+        SpecFidelityReport combined = new SpecFidelityReport(findings);
+        if (combined.hasFindings()) {
+            emit(progress, GenerationReviewSupport.reviewSummary(combined));
+        }
+        return combined;
     }
 
     /**
@@ -169,6 +183,7 @@ public class GenerationOrchestrator {
             Map<String, String> testsSeedSnapshot = replacePlaceholders(workspaceSeed.testsSeedSnapshot(), placeholderReplacements);
             structuralOracleSeeder.captureBaseline(sessionId, workspaceSeed.testsSeedSnapshot());
             baselineRepositoryFiles = replacePlaceholdersByRepository(workspaceSeed.repositoryTextFiles(), placeholderReplacements);
+            verifier.captureBaselineStudentTests(sessionId, testsSeedSnapshot, baselineRepositoryFiles.getOrDefault(RepositoryRole.SOLUTION, Map.of()));
             capture = new AuthoringStageCapture(this, workspace, sandbox, sessionId, lifecycle, workspaceSeed, placeholderReplacements, baselineRepositoryFiles,
                     baselineProblemStatement);
             if (cancelled.getAsBoolean()) {
@@ -216,12 +231,8 @@ public class GenerationOrchestrator {
                 return decidedInLoop.withTermination(attemptLoop.terminationReason());
             }
 
-            // A semantic repair can accidentally break a candidate that already built and graded correctly. Never discard that more useful checkpoint in favour of a later
-            // mechanically broken tree; return the last buildable candidate and its unresolved review findings.
-            boolean currentCandidateRejected = attemptLoop.verification() == null || !attemptLoop.verification().mechanicallyVerified()
-                    || attemptLoop.terminationReason() == TerminationReason.REVIEW_UNAVAILABLE
-                            && RepairRoundScheduler.hasPrimaryReviewUnavailableFinding(attemptLoop.specFidelityReport());
-            if (currentCandidateRejected && attemptLoop.lastMechanicallyVerifiedCandidate() != null) {
+            // The selected immutable checkpoint owns its files, contract and findings together. A stopped redesign may leave a different contract in the mutable workspace.
+            if (attemptLoop.lastMechanicallyVerifiedCandidate() != null) {
                 return preserveCandidate(attemptLoop.lastMechanicallyVerifiedCandidate(), sandbox, sessionId, workspaceSeed).withTermination(attemptLoop.terminationReason());
             }
             return new GenerationOutcome(attemptLoop.loopResult(), attemptLoop.verification(), attemptLoop.producedFilesByType(), attemptLoop.producedProblemStatement(),

@@ -6,6 +6,8 @@ import java.util.List;
 import java.util.Map;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import tools.jackson.databind.json.JsonMapper;
 
@@ -204,18 +206,21 @@ class CriticVerdictParserTest {
                   "contradictions": [{
                     "requirement": "Dispatcher must be student-created",
                     "sourceQuote": "| Dispatcher | delegates to a strategy | student-creates |",
+                    "contradicted": true,
                     "evidenceArtifact": "TEMPLATE: src/Dispatcher.java",
                     "evidenceQuote": "public class Dispatcher",
                     "reason": "Template supplies a full implementation (or omits the stub)."
                   }, {
                     "requirement": "Dispatcher delegation must remain student-owned.",
                     "sourceQuote": "| Dispatcher | delegates to a strategy | student-creates |",
+                    "contradicted": true,
                     "evidenceArtifact": "TEMPLATE: src/Client.java",
                     "evidenceQuote": "class Client { Dispatcher dispatch; }",
                     "reason": "The starter's provided Client directly implements the Dispatcher responsibility instead of delegating through it."
                   }, {
                     "requirement": "A produced implementation authorizes its own contract.",
                     "sourceQuote": "public class Dispatcher",
+                    "contradicted": true,
                     "evidenceArtifact": "SOLUTION: src/Dispatcher.java",
                     "evidenceQuote": "public class Dispatcher",
                     "reason": "The solution conflicts with itself."
@@ -238,6 +243,61 @@ class CriticVerdictParserTest {
     }
 
     @Test
+    void refutedContradictionDoesNotBecomeAnInstructorBlocker() {
+        String source = "Duplicate requests throw IllegalStateException and leave size unchanged.";
+        String statement = "The duplicate throws IllegalStateException; the log still contains two requests.";
+        String solution = "return false;";
+        List<SpecFidelityReport.Finding> findings = parser.parseCritique("""
+                {
+                  "exampleChecks": [], "apiChecks": [], "templateChecks": [],
+                  "contradictions": [{
+                    "requirement": "Duplicate rejection conflicts with the statement.",
+                    "sourceQuote": "Duplicate requests throw IllegalStateException and leave size unchanged.",
+                    "evidenceArtifact": "PRODUCED PROBLEM STATEMENT",
+                    "evidenceQuote": "The duplicate throws IllegalStateException; the log still contains two requests.",
+                    "contradicted": false,
+                    "reason": "The specification's example is inconsistent, but the statement, solution and tests agree. There is no downstream contradiction; omit it."
+                  }, {
+                    "requirement": "The solution returns false instead of rejecting the duplicate.",
+                    "sourceQuote": "Duplicate requests throw IllegalStateException and leave size unchanged.",
+                    "evidenceArtifact": "SOLUTION: src/RequestLog.java",
+                    "evidenceQuote": "return false;",
+                    "contradicted": true,
+                    "reason": "Returning false does not throw the required exception. Replace the duplicate return with the required exception."
+                  }],
+                  "hiddenRequirements": [], "missingExamples": [], "invented": [], "unrequestedChanges": [], "missingRequestedChanges": []
+                }
+                """, CriticVerdictParser.ReviewPass.CONTRACT, false, source, source, statement + "\n" + solution,
+                Map.of("PRODUCED PROBLEM STATEMENT", statement, "SOLUTION: src/RequestLog.java", solution), statement, false, false, false, false, Map.of());
+
+        assertThat(findings).singleElement().satisfies(finding -> {
+            assertThat(finding.kind()).isEqualTo(SpecFidelityReport.Kind.CONTRACT_CONTRADICTION);
+            assertThat(finding.requirement()).isEqualTo("The solution returns false instead of rejecting the duplicate.");
+        });
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "", "\"contradicted\": null," })
+    void contradictionWithoutFinalDecisionCannotProduceACompleteReview(String decision) {
+        List<SpecFidelityReport.Finding> findings = parser.parseCritique("""
+                {
+                  "exampleChecks": [], "apiChecks": [], "templateChecks": [],
+                  "contradictions": [{
+                    "requirement": "A duplicate must be rejected.",
+                    "sourceQuote": "Reject duplicates.",
+                    "evidenceArtifact": "DOWNSTREAM",
+                    "evidenceQuote": "return false;",
+                    %s
+                    "reason": "The solution does not reject duplicates."
+                  }],
+                  "hiddenRequirements": [], "missingExamples": [], "invented": [], "unrequestedChanges": [], "missingRequestedChanges": []
+                }
+                """.formatted(decision), CriticVerdictParser.ReviewPass.CONTRACT, false, "Reject duplicates.", "return false;", "", false, false, false, false, Map.of());
+
+        assertThat(findings).isNull();
+    }
+
+    @Test
     void contradictionWithoutArtifactBoundEvidenceFailsClosed() {
         List<SpecFidelityReport.Finding> findings = parser.parseCritique("""
                 {
@@ -247,6 +307,7 @@ class CriticVerdictParserTest {
                   "contradictions": [{
                     "requirement": "conflict",
                     "sourceQuote": "authoritative rule",
+                    "contradicted": true,
                     "evidenceArtifact": "TEMPLATE: src/Thing.java",
                     "reason": "the template conflicts"
                   }],

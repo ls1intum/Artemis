@@ -12,24 +12,25 @@ it" — the template is where students actually read while coding.
 
 ## TODO placement
 
-Anchor each stubbed seam with an imperative `// TODO S1: <mirror of the task wording>` INSIDE its owner member body, using
-the stable ID from the specification's Testing Strategy and placing it at the assigned change location
-(above the placeholder throw for a new unfinished body) — never between the javadoc and the signature, never between an annotation and
-the signature. Every unfinished member of a stubbed owner carries its seam ID; the same ID may repeat within that owner when one task spans several members. A TODO marks unfinished student work only:
+Anchor each stubbed seam with `// TODO: <exact Observable responsibility from the Testing Strategy>` INSIDE its owner member body, placing it
+at the assigned change location (above the placeholder throw for a new unfinished body) — never between the javadoc and the signature,
+never between an annotation and the signature. Never put the specification's seam ID (`S1`, ...) in the comment: students read the
+TODO, but the statement never defines seam IDs, and the Testing Strategy already links each seam to its owner. Every unfinished member of a
+stubbed owner carries a TODO; the same wording may repeat within that owner when one task spans several members. A TODO marks unfinished student work only:
 never leave one on code that is already complete, and never leave authoring or design notes in any file.
 
 The exception is a stubbed owner whose approved Public API marks a member `/** @studentCreates */`, either because declaring it is the learning objective or because its signature needs an absent type. Omit only the marked members; retain the owner's supplied fields, constructors, and working operations. Keep it compile-safe and put
-one owner-seam TODO in its class body where students add the missing declarations. Never restore the missing type, use `Object`, edit the specification, or reuse the absent type's seam.
+one TODO in its class body where students add the missing declarations. Never restore the missing type, use `Object`, edit the specification, or anchor the absent type's work there.
 
 ## Types students must create
 
 When the design says students define a type themselves, the template must NOT ship that type: omit its file and
 keep the template compiling without it. Its statement task and reflective/structural tests are the truthful
-anchors; do not attach that seam ID to unrelated collaborator code merely because the type has no template file.
+anchors; do not put a TODO for it on unrelated collaborator code merely because the type has no template file.
 
 When a provided context will eventually refer to an omitted student-created interface, keep the context class
 but omit only the student-owned members explicitly marked `@studentCreates` in the approved contract. Do not ship an empty interface merely to make those signatures compile, and do not
-weaken only the template API to `Object`; use the class-body owner-seam TODO above, and let tests inspect the completed API reflectively.
+weaken only the template API to `Object`; use the class-body owner TODO above, and let tests inspect the completed API reflectively.
 
 ## Data-holder plumbing
 
@@ -45,7 +46,7 @@ remain implemented, including within a method the learner modifies.
 
 ## What may vary
 
-For modification tasks, preserve the existing implementation and mark the assigned change with its seam TODO.
+For modification tasks, preserve the existing implementation and mark the assigned change with its TODO.
 Do not replace working context with an empty body. Preservation checks must pass on both repositories and
 carry zero credit; assessed tests must still fail on the starter.
 

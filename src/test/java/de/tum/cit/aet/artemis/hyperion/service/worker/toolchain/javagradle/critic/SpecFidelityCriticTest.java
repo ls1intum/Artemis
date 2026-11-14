@@ -28,6 +28,7 @@ import java.util.stream.Stream;
 import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
@@ -64,6 +65,8 @@ import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verif
 class SpecFidelityCriticTest {
 
     private static final String GITHUB_SENTINEL = "ghp_ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghij";
+
+    private static final JsonMapper FIXTURE_MAPPER = JsonMapper.builder().build();
 
     private final JsonMapper objectMapper = JsonMapper.builder().build();
 
@@ -144,7 +147,42 @@ class SpecFidelityCriticTest {
         if (body.startsWith("{") && body.contains("\"learningFit\"") && !body.contains("\"boundaryChecks\"")) {
             body = "{\"boundaryChecks\":[]," + body.substring(1);
         }
+        if (body.startsWith("{") && body.contains("\"learningFit\"") && !body.contains("\"goalChecks\"")) {
+            try {
+                SpecificationFixture fixture = FIXTURE_MAPPER.readValue(body, SpecificationFixture.class);
+                if (fixture.learningFit() != null) {
+                    String checks = FIXTURE_MAPPER.writeValueAsString(List.of(new GoalCheckFixture("G1", true, fixture.learningFit().specEvidenceIds(),
+                            "The fixture assigns the requested learner work through the cited specification.")));
+                    body = "{\"goalChecks\":" + checks + "," + body.substring(1);
+                }
+            }
+            catch (RuntimeException ignored) {
+                // Preserve intentionally malformed provider responses for the parser tests.
+            }
+        }
         return exactRawResponse(body);
+    }
+
+    private record SpecificationFixture(@Nullable LearningFitFixture learningFit) {
+    }
+
+    private record LearningFitFixture(@Nullable List<String> specEvidenceIds) {
+    }
+
+    private record GoalCheckFixture(String goalId, boolean covered, @Nullable List<String> specEvidenceIds, String reason) {
+    }
+
+    private record BriefGoalRequestFixture(String brief) {
+    }
+
+    private record GoalQuoteFixture(String quote, BriefLearningGoals.ConstructorBaseline constructorBaseline, BriefLearningGoals.LearnerArtifact learnerArtifact) {
+
+        GoalQuoteFixture(String quote, BriefLearningGoals.ConstructorBaseline constructorBaseline) {
+            this(quote, constructorBaseline, BriefLearningGoals.LearnerArtifact.UNSPECIFIED);
+        }
+    }
+
+    private record GoalInventoryFixture(List<GoalQuoteFixture> goals) {
     }
 
     private static ChatResponse exactRawResponse(String body) {
@@ -219,6 +257,26 @@ class SpecFidelityCriticTest {
         verify(scripted.model(), times(2)).call(prompts.capture());
         assertThat(prompts.getAllValues()).allSatisfy(prompt -> assertThat(prompt.getContents()).containsOnlyOnce(sharedContent).contains("SOLUTION: build-support.txt",
                 "TEMPLATE: build-support.txt", "TESTS: build-support.txt"));
+    }
+
+    @Test
+    void duplicateRepairDiffCannotDisplaceTheCompleteCurrentCandidateFromReview() {
+        var scripted = criticScripted(jsonResponse("{}"), jsonResponse("{}"));
+        String specification = "## Rules\nKeep the contract intact.";
+        SpecFidelityReport prior = new SpecFidelityReport(
+                List.of(new SpecFidelityReport.Finding(Kind.TEMPLATE_QUALITY_GAP, "preserve this previous claim", "recheck its current evidence")));
+
+        SpecFidelityReport result = scripted.critic().critique("Implement the requested behavior.", "# Task", List.of(), COMPLETE_ARTIFACTS, null, () -> false, prior,
+                specification, "duplicate diff\n".repeat(12_000), null);
+
+        assertThat(result.findings()).isEmpty();
+        ArgumentCaptor<Prompt> prompts = ArgumentCaptor.forClass(Prompt.class);
+        verify(scripted.model(), times(2)).call(prompts.capture());
+        assertThat(prompts.getAllValues()).allSatisfy(prompt -> {
+            String text = prompt.getInstructions().get(1).getText();
+            assertThat(text).contains("## Rules", "Keep the contract intact.", "preserve this previous claim", "recheck its current evidence").hasSizeLessThan(120_000);
+            COMPLETE_ARTIFACTS.values().forEach(files -> files.values().forEach(content -> assertThat(text).contains(content)));
+        });
     }
 
     @Test
@@ -299,7 +357,18 @@ class SpecFidelityCriticTest {
     private ScriptedCritic criticScripted(List<ChatResponse> responses) {
         ChatModel chatModel = mock(ChatModel.class);
         if (!responses.isEmpty()) {
-            when(chatModel.call(any(Prompt.class))).thenReturn(responses.getFirst(), responses.subList(1, responses.size()).toArray(ChatResponse[]::new));
+            AtomicInteger responseIndex = new AtomicInteger();
+            when(chatModel.call(any(Prompt.class))).thenAnswer(invocation -> {
+                Prompt prompt = invocation.getArgument(0);
+                String input = prompt.getUserMessage().getText();
+                if (input.startsWith("{\"brief\":")) {
+                    // These existing specification fixtures use one whole-brief goal. Dedicated coverage tests supply atomic inventories.
+                    BriefGoalRequestFixture request = FIXTURE_MAPPER.readValue(input, BriefGoalRequestFixture.class);
+                    return exactRawResponse(FIXTURE_MAPPER
+                            .writeValueAsString(new GoalInventoryFixture(List.of(new GoalQuoteFixture(request.brief(), BriefLearningGoals.ConstructorBaseline.UNSPECIFIED)))));
+                }
+                return responses.get(Math.min(responseIndex.getAndIncrement(), responses.size() - 1));
+            });
         }
         // Spring AI 2.0 merges per-request options with the model defaults, so ChatClient reads getOptions() during the request.
         when(chatModel.getOptions()).thenReturn(ChatOptions.builder().build());
@@ -350,55 +419,55 @@ class SpecFidelityCriticTest {
                 "The bounded reconstruction behavior is deterministic and proportionate.", "Candidate 3");
     }
 
-    @Test
-    void conceptReviewCannotSelectACandidateThatPrematurelyRequiresAnImplementationConstruct() {
-        Map<Integer, String> candidates = Map.of(1, "Classify temperatures. The solution must rely on if-else statements (no switch).", 2,
-                "Reconcile overlapping fragments with a selected conflict policy.", 3, "Classify battery readings with explicit boundaries.");
-        SpecFidelityCritic.ConceptSelectionReview modelReview = new SpecFidelityCritic.ConceptSelectionReview(true, 1, List.of(), "Candidate 1 is selected.",
-                "The model accepted candidate 1.");
+    @ParameterizedTest
+    @CsvSource({
+            "Topic of the week: Java Streams API. Students practise pipelines over object collections.,Students must use a stream pipeline to filter records and answer collection questions.",
+            "The learning objective is recursion over trees. Students practise base cases and decomposition.,Students must implement recursive traversal and aggregation of tree nodes.",
+            "This week students practise Java switch expressions and case selection.,Students must use a switch expression to classify observations into distinct outcomes." })
+    void groundedConceptSelectionDoesNotDependOnMandateKeywordsInTheBrief(String brief, String concept) {
+        SpecFidelityCritic critic = criticReturning(rawResponse(groundedConceptSelectionResponse(false)));
+        var review = critic.reviewConceptCandidates(brief, conceptCandidates(concept, concept + " Alternative domain.", concept + " Another domain."), null, () -> false);
 
-        SpecFidelityCritic.ConceptSelectionReview review = SpecFidelityCritic.enforceExploratoryConcept("Practice comparisons and branching.", candidates, modelReview);
+        assertThat(review.complete()).isTrue();
+        assertThat(review.accepted()).isTrue();
+        assertThat(review.selectedCandidate()).isEqualTo(1);
+        assertThat(review.findings()).isEmpty();
+    }
+
+    @Test
+    void groundedPrematureContractClosureStillRejectsAConcept() {
+        SpecFidelityCritic critic = criticReturning(rawResponse(groundedConceptSelectionResponse(true)));
+        var review = critic.reviewConceptCandidates("Practice collection processing.",
+                conceptCandidates("The proposed technique replaces learner-owned reasoning with prescribed steps.",
+                        "The alternate concept fixes every algorithmic step before specification.", "The third concept leaves only transcription after its choices."),
+                null, () -> false);
 
         assertThat(review.complete()).isTrue();
         assertThat(review.accepted()).isFalse();
         assertThat(review.selectedCandidate()).isNull();
-        assertThat(review.findings()).singleElement().asString().contains("prematurely fixes an implementation construct", "if-else", "non-graded pedagogy");
-        assertThat(review.auditSummary()).contains("Server concept invariant: rejected selected candidate");
+        assertThat(review.findings()).isNotEmpty();
     }
 
-    @Test
-    void conceptReviewPreservesATechniqueExpressedAsTheLearningObjective() {
-        Map<Integer, String> candidates = Map.of(1, "Implement each method recursively.", 2, "Aggregate invoice totals.", 3, "Classify readings.");
-        SpecFidelityCritic.ConceptSelectionReview modelReview = new SpecFidelityCritic.ConceptSelectionReview(true, 1, List.of(),
-                "Candidate 1 directly preserves the instructor's recursion objective.", "The model accepted candidate 1.");
-
-        SpecFidelityCritic.ConceptSelectionReview review = SpecFidelityCritic.enforceExploratoryConcept(
-                "Create an intermediate Java exercise that teaches recursion. Students implement several recursive methods over numbers and strings.", candidates, modelReview);
-
-        assertThat(review).isEqualTo(modelReview);
-        assertThat(review.accepted()).isTrue();
-    }
-
-    /**
-     * The instructor's technique choice can reach the concept negated: on a Streams brief, banning explicit loops is how a concept states "use the Streams API". Comparing the
-     * construct families named by the brief against those named by the concept reads that ban as an iteration mandate the brief never made, and rejected the whole run. Whether
-     * the technique is the requested one is a brief-fit judgment, so the invariant asks only whether the brief fixed a technique at all.
-     */
-    @Test
-    void conceptReviewPreservesAnInstructorTechniqueStatedAsAProhibitionOfItsAlternative() {
-        Map<Integer, String> candidates = Map.of(1, "Aggregate sensor records through a pipeline. The solution must not use loops or external accumulators.", 2,
-                "Total invoice lines.", 3, "Classify readings.");
-        SpecFidelityCritic.ConceptSelectionReview modelReview = new SpecFidelityCritic.ConceptSelectionReview(true, 1, List.of(),
-                "Candidate 1 carries the requested Streams objective.", "The model accepted candidate 1.");
-
-        SpecFidelityCritic.ConceptSelectionReview review = SpecFidelityCritic.enforceExploratoryConcept(
-                "Create an intermediate Java exercise that teaches the Java Streams API and lambdas. Students filter, transform, and aggregate a small collection of records.",
-                candidates, modelReview);
-
-        assertThat(review).isEqualTo(modelReview);
-        assertThat(review.accepted()).isTrue();
-        // The same candidate under a brief that fixes no technique is still rejected, so the acceptance above is the brief's doing and not an undetected mandate.
-        assertThat(SpecFidelityCritic.enforceExploratoryConcept("Aggregate a small collection of records.", candidates, modelReview).accepted()).isFalse();
+    private static String groundedConceptSelectionResponse(boolean premature) {
+        String evaluation = """
+                {"candidate":%d,"candidateEvidenceIds":["C%d.2"],
+                 "briefCoverage":"The cited student work addresses the requested learning objective.",
+                 "objectiveCounterfactual":"The cited technique carries the learner-owned transformation rather than supplied plumbing.",
+                 "difficultyFit":"The student makes the relevant decisions at the requested level.",
+                 "smallestStudentImplementation":"The learner implements the cited transformation of the domain objects.",
+                 "reasoningAfterRoutineWork":"Selecting and combining the domain observations remains learner-owned.",
+                 "domainGrounding":"The domain objects supply the observations needed for the transformation.",
+                 "feasibility":"The bounded transformation fits the requested exercise effort.",
+                 "objectiveEssential":true,"briefCovered":true,"learningFitSufficient":%s,
+                 "learnerOwnsObjectiveMechanism":true,"objectiveObservable":true,"prematureContractClosure":%s,
+                 "difficultySufficient":true,"domainGrounded":true,"feasibleAndProportionate":true}
+                """;
+        List<String> evaluations = new ArrayList<>();
+        for (int candidate = 1; candidate <= 3; candidate++) {
+            evaluations.add(evaluation.formatted(candidate, candidate, !premature, premature));
+        }
+        return "{\"selectedCandidate\":" + (premature ? "null" : "1")
+                + ",\"selectionReason\":\"The grounded axis decisions determine whether the candidate fits.\",\"evaluations\":[" + String.join(",", evaluations) + "]}";
     }
 
     @Test
@@ -684,7 +753,7 @@ class SpecFidelityCriticTest {
 
         assertThat(review.complete()).isTrue();
         ArgumentCaptor<Prompt> prompts = ArgumentCaptor.forClass(Prompt.class);
-        verify(scripted.model(), times(2)).call(prompts.capture());
+        verify(scripted.model(), times(3)).call(prompts.capture());
         assertThat(prompts.getAllValues().getLast().getInstructions().get(1).getText()).contains("One or more mandatory finding arrays were missing");
     }
 
@@ -706,7 +775,7 @@ class SpecFidelityCriticTest {
         assertThat(review.complete()).isFalse();
         assertThat(review.accepted()).isFalse();
         assertThat(review.auditSummary()).contains("objectiveEvidenceIds", "known, substantive E evidence");
-        verify(scripted.model(), times(2)).call(any(Prompt.class));
+        verify(scripted.model(), times(3)).call(any(Prompt.class));
     }
 
     @Test
@@ -805,7 +874,7 @@ class SpecFidelityCriticTest {
 
         assertThat(review.complete()).isTrue();
         assertThat(review.accepted()).isTrue();
-        verify(scripted.model()).call(any(Prompt.class));
+        verify(scripted.model(), times(2)).call(any(Prompt.class));
     }
 
     @Test
@@ -834,8 +903,8 @@ class SpecFidelityCriticTest {
         assertThat(review.complete()).isTrue();
         assertThat(review.accepted()).isTrue();
         ArgumentCaptor<Prompt> prompts = ArgumentCaptor.forClass(Prompt.class);
-        verify(scripted.model(), times(2)).call(prompts.capture());
-        assertThat((prompts.getAllValues().get(1).getInstructions().get(1)).getText()).contains("SERVER VALIDATION FAILURE TO CORRECT", "conceptAlignment validation failed",
+        verify(scripted.model(), times(3)).call(prompts.capture());
+        assertThat((prompts.getAllValues().getLast().getInstructions().get(1)).getText()).contains("SERVER VALIDATION FAILURE TO CORRECT", "conceptAlignment validation failed",
                 "mandatory conceptAlignment object is missing");
     }
 
@@ -864,7 +933,7 @@ class SpecFidelityCriticTest {
 
         assertThat(review.complete()).isTrue();
         ArgumentCaptor<Prompt> prompts = ArgumentCaptor.forClass(Prompt.class);
-        verify(scripted.model(), times(2)).call(prompts.capture());
+        verify(scripted.model(), times(3)).call(prompts.capture());
         assertThat(prompts.getAllValues().getLast().getInstructions().get(1).getText()).contains("candidate heading alone is not evidence");
     }
 
@@ -909,7 +978,7 @@ class SpecFidelityCriticTest {
                         """));
         scripted.critic().reviewSpecification("Students create the strategy interface.", "The design table marks it student-creates.", null, () -> false);
         ArgumentCaptor<Prompt> prompt = ArgumentCaptor.forClass(Prompt.class);
-        verify(scripted.model()).call(prompt.capture());
+        verify(scripted.model(), times(2)).call(prompt.capture());
         assertThat((prompt.getValue().getInstructions().get(1)).getText()).contains("INSTRUCTOR BRIEF EVIDENCE", "[B1] Students create the strategy interface.",
                 "CANDIDATE SPECIFICATION EVIDENCE", "[E1] The design table marks it student-creates.").doesNotContain("FINAL REPRESENTATION-DOMAIN CHECK");
         assertThat((prompt.getValue().getInstructions().getFirst()).getText()).contains("LEARNER PATH", "CONTRACT SOUNDNESS");
@@ -931,7 +1000,7 @@ class SpecFidelityCriticTest {
                 previous, null, () -> false);
 
         ArgumentCaptor<Prompt> prompt = ArgumentCaptor.forClass(Prompt.class);
-        verify(scripted.model()).call(prompt.capture());
+        verify(scripted.model(), times(2)).call(prompt.capture());
         assertThat(prompt.getValue().getInstructions().get(1).getText()).contains("PREVIOUS SPECIFICATION REVIEW HYPOTHESES THAT CAUSED THIS REVISION",
                 "[F1] Internal conflict — lower == upper satisfies both R2 and R4", "Adjudicate every F ID", "merely asserts the conflict is resolved is not evidence");
         assertThat(review.accepted()).isTrue();
@@ -964,7 +1033,7 @@ class SpecFidelityCriticTest {
                 .doesNotContain("lower == upper satisfies both R2 and R4");
         assertThat(review.auditSummary()).contains("F1 STILL_PRESENT", "lower == upper satisfies both R2 and R4", "R2 and R4 still both include equality");
         ArgumentCaptor<Prompt> prompts = ArgumentCaptor.forClass(Prompt.class);
-        verify(scripted.model(), times(2)).call(prompts.capture());
+        verify(scripted.model(), times(3)).call(prompts.capture());
         assertThat(prompts.getAllValues().getLast().getInstructions().get(1).getText()).contains("priorFindingChecks validation failed", "mandatory when F findings were supplied");
     }
 
@@ -985,7 +1054,7 @@ class SpecFidelityCriticTest {
                 "R1 accepts every int floor and minimizes absolute distance.", intermediateAccepted, null, () -> false);
 
         ArgumentCaptor<Prompt> prompt = ArgumentCaptor.forClass(Prompt.class);
-        verify(scripted.model()).call(prompt.capture());
+        verify(scripted.model(), times(2)).call(prompt.capture());
         assertThat(prompt.getValue().getInstructions().get(1).getText()).contains("SPECIFICATION RISK HISTORY", "[F1] " + overflowRisk);
         assertThat(review.findings()).singleElement().asString().contains("Persistent specification defect [F1]", "subtraction overflows");
         assertThat(review.riskHistory()).contains(overflowRisk);
@@ -1072,7 +1141,7 @@ class SpecFidelityCriticTest {
         assertThat(review.complete()).isTrue();
         assertThat(review.accepted()).isFalse();
         assertThat(review.feedback()).contains("preserving state", "resets");
-        verify(scripted.model()).call(any(Prompt.class));
+        verify(scripted.model(), times(2)).call(any(Prompt.class));
     }
 
     @Test
@@ -1091,7 +1160,7 @@ class SpecFidelityCriticTest {
                 """, null, () -> false);
 
         ArgumentCaptor<Prompt> prompts = ArgumentCaptor.forClass(Prompt.class);
-        verify(scripted.model(), times(2)).call(prompts.capture());
+        verify(scripted.model(), times(3)).call(prompts.capture());
         assertThat(prompts.getAllValues().getLast().getInstructions().get(1).getText()).contains("FIELD-SPECIFIC SPEC EVIDENCE GUIDE",
                 "studentOwnershipEvidenceIds: Design-section candidates [E4]", "assessmentEvidenceIds: Testing Strategy-section candidates [E8]",
                 "Authored S labels inside a Testing Strategy row are content");
@@ -1126,7 +1195,7 @@ class SpecFidelityCriticTest {
         assertThat(review.complete()).isTrue();
         assertThat(review.accepted()).isFalse();
         assertThat(review.learningFitDirection()).isEqualTo("TOO_SHALLOW");
-        verify(scripted.model(), times(2)).call(any(Prompt.class));
+        verify(scripted.model(), times(3)).call(any(Prompt.class));
     }
 
     @Test
@@ -1196,7 +1265,7 @@ class SpecFidelityCriticTest {
         assertThat(review.complete()).isFalse();
         assertThat(review.accepted()).isFalse();
         assertThat(review.auditSummary()).contains("known, substantive E evidence");
-        verify(scripted.model(), times(2)).call(any(Prompt.class));
+        verify(scripted.model(), times(3)).call(any(Prompt.class));
     }
 
     @Test
@@ -1223,7 +1292,7 @@ class SpecFidelityCriticTest {
         assertThat(review.complete()).isTrue();
         assertThat(review.accepted()).isTrue();
         assertThat(review.feedback()).doesNotContain("The claims conflict");
-        verify(scripted.model(), times(2)).call(any(Prompt.class));
+        verify(scripted.model(), times(3)).call(any(Prompt.class));
     }
 
     @Test
@@ -1254,7 +1323,7 @@ class SpecFidelityCriticTest {
         assertThat(review.complete()).isTrue();
         assertThat(review.accepted()).isTrue();
         assertThat(review.conceptualReworkRequired()).isFalse();
-        verify(scripted.model(), times(2)).call(any(Prompt.class));
+        verify(scripted.model(), times(3)).call(any(Prompt.class));
     }
 
     @Test
@@ -1281,7 +1350,7 @@ class SpecFidelityCriticTest {
         assertThat(review.complete()).isTrue();
         assertThat(review.accepted()).isTrue();
         assertThat(review.feedback()).doesNotContain("The decisions conflict");
-        verify(scripted.model(), times(2)).call(any(Prompt.class));
+        verify(scripted.model(), times(3)).call(any(Prompt.class));
     }
 
     @Test
@@ -1310,7 +1379,7 @@ class SpecFidelityCriticTest {
         assertThat(review.accepted()).isFalse();
         assertThat(review.feedback()).contains("Persistent specification defect [F1]", "still mandates the exact threshold");
         ArgumentCaptor<Prompt> prompts = ArgumentCaptor.forClass(Prompt.class);
-        verify(scripted.model(), times(2)).call(prompts.capture());
+        verify(scripted.model(), times(3)).call(prompts.capture());
         assertThat(prompts.getAllValues().getLast().getInstructions().get(1).getText()).contains("[F1] Unsupported constraint", "Adjudicate every F ID",
                 "Do not repeat an F finding in an ordinary finding array", "preserve their values and evidence IDs", "objectiveEvidenceIds: E candidates",
                 "Every briefEvidenceIds field: B candidates", "PREVIOUS RESPONSE TO CORRECT", "Students reason about both threshold boundaries");
@@ -1334,7 +1403,7 @@ class SpecFidelityCriticTest {
 
         assertThat(review.complete()).isTrue();
         assertThat(review.accepted()).isTrue();
-        verify(scripted.model(), times(2)).call(any(Prompt.class));
+        verify(scripted.model(), times(3)).call(any(Prompt.class));
     }
 
     @Test
@@ -1355,7 +1424,7 @@ class SpecFidelityCriticTest {
         assertThat(review.complete()).isFalse();
         assertThat(review.auditSummary()).contains("added grounded hypotheses beyond the bounded continuity context", "specification remains unapproved");
         assertThat(review.riskHistory()).containsExactlyElementsOf(priorRisks);
-        verify(scripted.model(), times(1)).call(any(Prompt.class));
+        verify(scripted.model(), times(2)).call(any(Prompt.class));
     }
 
     @Test
@@ -2191,7 +2260,7 @@ class SpecFidelityCriticTest {
     @Test
     void producedArtifactCannotAuthorizeItsOwnContractContradiction() {
         ScriptedCritic scripted = criticScripted(jsonResponse(
-                "{\"contradictions\":[{\"requirement\":\"Graphemes must be absent\",\"sourceQuote\":\"class Graphemes\",\"evidenceArtifact\":\"TEMPLATE: src/Graphemes.java\",\"evidenceQuote\":\"return 0;\",\"reason\":\"the template supplies this type\"}]}"),
+                "{\"contradictions\":[{\"requirement\":\"Graphemes must be absent\",\"sourceQuote\":\"class Graphemes\",\"contradicted\":true,\"evidenceArtifact\":\"TEMPLATE: src/Graphemes.java\",\"evidenceQuote\":\"return 0;\",\"reason\":\"the template supplies this type\"}]}"),
                 rawResponse("""
                         {"mutantChecks":[{"mutant":"return UTF-16 length","killed":true,"reason":"the assertion kills it"}],
                          "uncovered":[],"weakOracle":[]}
@@ -2450,7 +2519,7 @@ class SpecFidelityCriticTest {
 
         for (int i = 0; i < 12; ++i) {
             contradictions.append(i == 0 ? "" : ",").append("{\"requirement\":\"contract ").append(i).append(
-                    "\",\"sourceQuote\":\"user-perceived characters\",\"evidenceArtifact\":\"TEMPLATE: src/Graphemes.java\",\"evidenceQuote\":\"return 0;\",\"reason\":\"statement and test disagree; align both\"}");
+                    "\",\"sourceQuote\":\"user-perceived characters\",\"contradicted\":true,\"evidenceArtifact\":\"TEMPLATE: src/Graphemes.java\",\"evidenceQuote\":\"return 0;\",\"reason\":\"statement and test disagree; align both\"}");
         }
 
         ScriptedCritic scripted = criticScripted(rawResponse("""
@@ -2769,7 +2838,7 @@ class SpecFidelityCriticTest {
     }
 
     @Test
-    void authorContractWitnesses_dropsAProbeThatCallsASuiteLocalHelper() {
+    void authorContractWitnessesCannotReportSuccessWhenEveryProbeCallsASuiteLocalHelper() {
         String testSources = """
                 class ReservationPlannerTest {
                     private static Interval i(int start, int end) { return new Interval(start, end); }
@@ -2777,11 +2846,11 @@ class SpecFidelityCriticTest {
                 }
                 """;
 
-        assertThat(witnessesFrom("""
+        assertThatExceptionOfType(IllegalStateException.class).isThrownBy(() -> witnessesFrom("""
                 {"witnesses":[{"rule":"R1","testName":"testWitnessNegativeSalary",
                  "code":"@Test\\nvoid testWitnessNegativeSalary() { assertIntervalsEqual(i(1, 2), i(1, 2)); }",
                  "wrongBehavior":"accepts negative salary records"}]}
-                """, testSources)).isEmpty();
+                """, testSources)).withMessageContaining("no admissible executable witness");
     }
 
     private static Stream<String> invalidWitnesses() {
@@ -2807,7 +2876,7 @@ class SpecFidelityCriticTest {
     @ParameterizedTest
     @MethodSource("invalidWitnesses")
     void authorContractWitnessesRejectsMissingRationaleMismatchedNamesVacuousTestsAndInventedRules(String response) {
-        assertThat(witnessesFrom(response)).isEmpty();
+        assertThatExceptionOfType(IllegalStateException.class).isThrownBy(() -> witnessesFrom(response)).withMessageContaining("no admissible executable witness");
     }
 
     @Test
@@ -2850,8 +2919,8 @@ class SpecFidelityCriticTest {
     }
 
     @Test
-    void authorContractWitnesses_acceptsAnExplicitEmptyArray() {
-        assertThat(witnessesFrom("{\"witnesses\":[]}")).isEmpty();
+    void authorContractWitnessesReportsAnExplicitEmptyArrayAsUnavailable() {
+        assertThatExceptionOfType(IllegalStateException.class).isThrownBy(() -> witnessesFrom("{\"witnesses\":[]}")).withMessageContaining("no admissible executable witness");
     }
 
     @Test
@@ -3059,4 +3128,18 @@ class SpecFidelityCriticTest {
         verify(chatModel, atLeastOnce()).call(prompts.capture());
         assertThat(prompts.getAllValues()).isNotEmpty().allSatisfy(prompt -> assertThat(prompt.getOptions().getModel()).isEqualTo("bean-model"));
     }
+
+    @Test
+    void anAbsentWitnessReplyGetsOneCorrectionWithoutCertifyingAnEmptyReview() {
+        ReviewerClient reviewer = mock(ReviewerClient.class);
+        when(reviewer.configured()).thenReturn(true);
+        when(reviewer.call(anyString(), anyString(), any(), any(), anyInt())).thenReturn(null, """
+                {"witnesses":[{"rule":"R1","testName":"testBoundary","code":"@Test void testBoundary() { assertEquals(1, 1); }","wrongBehavior":"An incorrect boundary"}]}
+                """);
+        ContractWitnessAuthor author = new ContractWitnessAuthor(reviewer, JsonMapper.builder().build());
+        assertThat(author.authorContractWitnesses(SPEC_WITH_RULES, "class Test {}", "class Solution {}", Map.of(), null, () -> false)).extracting(ContractWitness::testName)
+                .containsExactly("testBoundary");
+        verify(reviewer, times(2)).call(anyString(), anyString(), any(), any(), anyInt());
+    }
+
 }

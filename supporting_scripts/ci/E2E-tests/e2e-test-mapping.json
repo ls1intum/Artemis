@@ -125,6 +125,7 @@
         "src/main/webapp/app/hyperion/"
     ],
     "consumerAuditNotes": [
+        "QuizExerciseManagement intercepts the core account and management-info responses to use German and enable Hyperion, then measures the rendered quiz variant action. Retain core and Hyperion consumers for that workflow.",
         "TutorialGroupImportExport creates/deletes a course, configures groups, looks up a tutor and exercises registration import and CSV/JSON export. Include account/core, automatic group communication and the lecture service used by tutorial management; retain conservative exam coverage for the shared course lifecycle. ExerciseSplitPanelResize also creates and participates in a modeling exercise for the narrow flush-panel contract.",
         "Exam workflows use ExamExerciseGroupCreationPage.addGroupWithExercise (dynamic ExerciseType dispatch) and ExamParticipationPage. Conservatively cover all exercise types and assessment for the entire exam group, including nested test-exam specs.",
         "Exercise creation/management/participation uses shared exercise services, result/assessment handling and automatic communication channels. Communication includes all such workflows plus lecture/exam and course messaging workflows.",
@@ -1155,7 +1156,18 @@
         "e2e/exercise/quiz-exercise/QuizExerciseAssessment.spec.ts": ["assessment", "communication", "course", "exam", "exam-management-client", "exercise", "quiz"],
         "e2e/exercise/quiz-exercise/QuizExerciseDropLocation.spec.ts": ["assessment", "communication", "course", "exam", "exam-management-client", "exercise", "quiz"],
         "e2e/exercise/quiz-exercise/QuizExerciseLifecycle.spec.ts": ["assessment", "atlas", "communication", "course", "exam", "exam-management-client", "exercise", "quiz"],
-        "e2e/exercise/quiz-exercise/QuizExerciseManagement.spec.ts": ["assessment", "atlas", "communication", "core", "course", "exam", "exam-management-client", "exercise", "quiz"],
+        "e2e/exercise/quiz-exercise/QuizExerciseManagement.spec.ts": [
+            "assessment",
+            "atlas",
+            "communication",
+            "core",
+            "course",
+            "exam",
+            "exam-management-client",
+            "exercise",
+            "hyperion",
+            "quiz"
+        ],
         "e2e/exercise/quiz-exercise/QuizExerciseParticipation.spec.ts": ["assessment", "communication", "course", "exam", "exam-management-client", "exercise", "quiz"],
         "e2e/exercise/quiz-exercise/QuizExerciseStatistics.spec.ts": ["assessment", "communication", "course", "exam", "exam-management-client", "exercise", "quiz"],
         "e2e/exercise/quiz-exercise/QuizExerciseSubmissionPaths.spec.ts": ["assessment", "communication", "course", "exam", "exam-management-client", "exercise", "quiz"],

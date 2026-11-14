@@ -50,20 +50,24 @@ the brief. An exact approved API can grade creation of that type, but it is not 
 ownership from the brief and compile-safe dependency graph rather than applying one mandatory Strategy layout.
 When a provided collaborator refers to an omitted type, omit only the dependent members necessary for the starter
 to compile and anchor their insertion point in the statement and reflective tests. Put a separate seam on the
-collaborator only when students implement independently actionable collaborator work; do not reuse an absent
-type's seam ID as a class-body breadcrumb. An empty interface declaration still pre-creates the type, so it is not
+collaborator only when students implement independently actionable collaborator work; do not anchor an absent
+type's work with a class-body TODO in that collaborator. An empty interface declaration still pre-creates the type, so it is not
 faithful when the brief explicitly assigns creating that interface to students.
 A type marked `given` must ship complete, so none of its Public API signatures may name a `student-creates` type
-that is absent from the template. Resolve that ownership dependency in the specification; never make a given type
-empty or silently reassign it to students later merely to make the starter compile.
+that is absent from the template, and neither may its bodies, imports, or private members: a type whose code constructs,
+calls, or imports a student-created type is `stubbed` (its dependent bodies are TODOs), never `given`. Resolve that
+ownership dependency in the specification; never make a given type empty or silently reassign it to students later
+merely to make the starter compile.
 For every piece of MUTABLE STATE, say below the table which type owns it and whether it survives object
 replacement (a swap, reset, or re-registration): tests may only demand what this ownership makes possible.
 ## Public API
 
 After the Design table, add `## Public API` with the exact contract-visible constructors and methods that the
 solution, template, tests, and statement will share, plus only fields deliberately exposed and graded as API.
-List signatures only, grouped by owner type. Do not turn private state into public/reflection API merely because
-the implementation uses it. Later stages copy this contract; they do not invent constructors, validation, or
+List signatures only, grouped by owner type. Write each annotation the code must carry on a type, constructor, method or
+field into its declaration, for example `@Test` on every test method of a test class that students write: the
+structural checks compare annotations exactly, so one missing here fails a correct solution. Do not turn private
+state into public/reflection API merely because the implementation uses it. Later stages copy this contract; they do not invent constructors, validation, or
 alternate signatures after the specification freezes.
 
 Describe the completed solution's API, not an intermediate starter or an earlier task's API. Include all final
@@ -131,8 +135,8 @@ precondition, or approve any error path that has no legal setup through the publ
 ## Testing strategy
 
 A table under `## Testing Strategy` with one row per SEAM — an independently actionable unit of student work.
-Give the first column stable IDs `S1`, `S2`, ...; the template TODOs, grading plan, and statement tasks carry
-these IDs through the rest of generation. The second column, `Owner type`, is one exact bare type from the Design table: the type where students implement that seam.
+Give the first column stable IDs `S1`, `S2`, ...; the grading plan carries these IDs through the rest of generation, while
+template TODOs and statement tasks use the seam's wording and never show the ID to students. The second column, `Owner type`, is one exact bare type from the Design table: the type where students implement that seam.
 The third column, `Observable responsibility`, states the student-owned behavior, collaboration, or state transition the seam grades and groups the input partitions its tests
 need. Keep it an owner-controlled responsibility: do not make a concrete policy's seam responsible for state changes owned by the context that calls it. Each visible seam test
 must be independently diagnosable using given support or a tiny fake/recording collaborator; it must not fail first in another independently actionable student seam. When work is
@@ -141,8 +145,8 @@ machine-readable:
 
 `| Seam | Owner type | Observable responsibility | Weight | Hidden variant |`
 
-A `stubbed` owner carries the seam's TODO inside its own source; a `student-creates` owner is absent and has no template TODO—the statement and tests anchor that work. Never put
-its ID on an unrelated collaborator merely to complete the ID set. If a collaborator has separately actionable student work, give it a separate seam owned by that collaborator.
+A `stubbed` owner carries the seam's TODO inside its own source, with the exact Observable responsibility on the first TODO line; a `student-creates` owner is absent and has no template TODO—the statement and tests anchor that work. Never put
+its TODO on an unrelated collaborator. If a collaborator has separately actionable student work, give it a separate seam owned by that collaborator.
 Each seam grades student-owned executable behavior, not the presence or exact signature of a supplied declaration or a placeholder that is meant to keep throwing. An ordinary
 abstract interface method has no student-owned body: mark the interface `given` when students only implement it, or `student-creates` when the brief assigns its design; do not
 label that declaration `stubbed` merely to create a structural seam.
@@ -153,6 +157,34 @@ behaviour, `1` for edge polish; every planned test for the seam carries that tie
 grades silently and is never bound to a task in the statement. Every row is required graded student work; keep
 optional enrichment outside this table, the test plan, and the Artemis tasks.
 
+Grade the learner-owned operation through runtime evidence that distinguishes a plausible bypass from the required work. Choose the observation mechanism
+together with its Public API, before the specification freezes. Vary inputs when behavior depends on them; observe state or interactions when the objective is
+API use. Supplied runtime observation may expose operations on objects a beginner creates locally without making them write new abstractions. Tests of the
+supplied API alone do not grade the student's integration. When students write tests, checks of the supplied implementation are preservation checks with zero
+student credit. A weighted seam must observe the learner-written tests and distinguish effective assertions from wrong or ineffective ones. Do not assign
+learner credit to a teacher test that never executes learner work. Hidden variants need a declared way to observe that learner work; changing inputs to supplied
+code alone does not qualify. For an operation sequence, execute the learner scenario once per test and obtain all related observations from that same execution.
+Reset supplied observation state before that execution, not inside each accessor. Record immutable values at each required transition, not references to mutable
+objects that later actions change. A final snapshot cannot establish an earlier state erased by a later operation. Observation support must record student
+actions, not perform them. Keep the student's prerequisites and responsibilities intact. Do not invent normative call counts, allocation counts or syntax
+restrictions merely to help a test. Source and bytecode inspection are not supported grading mechanisms.
+Keep observation instrumentation inside supplied API constructors and methods, so the ordinary calls assigned by the brief are recorded automatically.
+Unless instrumentation is an explicit learning objective, learner code must not call recorders, registries, grading callbacks or reset functions to earn credit.
+A conforming learner implementation that follows the statement without those extra calls must pass. Hidden tests cannot make an undeclared recording call mandatory.
+The supplied observer records what the learner actually did; it must neither perform those actions nor trust a learner's claim that an unobserved action happened.
+
+Observe the same learner execution that the task grades. A second independently implemented entry point cannot provide evidence for the first.
+If an entry point delegates to a testable operation, declare that delegation and observe the operation reached through that entry point; do not duplicate the scenario.
+A print-only replacement of a graded entry point must lose its behavioral credit even if another helper still returns correct objects.
+For each intermediate action, name the runtime observation that would change if that action were omitted while the final state stayed the same.
+
+For a beginner entry point that creates local objects, supplied constructors and methods can record the
+created instances and snapshots at the relevant operation boundaries. Tests reset that supplied recorder,
+invoke the student entry point, then inspect its observations. Recording must not establish the association,
+mutation, or other operation the learner is meant to perform. A final-state accessor alone loses evidence
+when a later operation undoes the earlier state; replaying the sequence inside the test supplies no evidence
+that the student entry point did it.
+
 For modification exercises, separate the pre-change behavior from the assigned extension before freezing.
 Describe unchanged successful cases and retained guards as supplied behavior outside the seam and risk
 inventory tables. They get preservation checks, not a seam, a weight tier, a student-work partition, or a
@@ -160,16 +192,10 @@ inventory tables. They get preservation checks, not a seam, a weight tier, a stu
 A row cannot simultaneously say "zero-credit preservation, not student work" and carry a graded tier.
 
 
-## Diagram
-
-Under `## Diagram`, an honest yes/no with a reason grounded in the design: yes when several collaborating
-types or student-created types make an architecture overview genuinely helpful; no when a single class
-carries the work. The reason must follow from the design itself — "no, because the statement has no diagram"
-is circular and invalid; the statement follows this decision, not the other way around.
-
 ## Off-limits at spec time
 
-No `[task]` bindings, no test names, no PlantUML — those belong to later stages. No grading/verifier
+No `[task]` bindings, no test names, no PlantUML — those belong to later stages. Artemis decides from the Design table and
+Public API whether the statement needs a class diagram. No grading/verifier
 internals.
 
 ## What may vary
@@ -204,3 +230,16 @@ not merely method bodies in a supplied hierarchy. The smallest student diff must
 competency; keep unrelated plumbing provided. Where the brief asks for breadth, choose complementary operations
 rather than near-identical repetitions. Do not infer teaching sequence from sheet numbers; use the brief's
 explicit prerequisites and learning objectives.
+
+When the learner writes tests, assess both sides: the learner tests pass on conforming behavior and fail on representative faulty behavior.
+Merely invoking them against the correct supplied implementation accepts empty test bodies. Put fault-variant selection and result interpretation in supplied instructor support;
+it must not become additional learner work. Grade the effect of the learner's assertions, not their source spelling or an incidental assertion-method count.
+Declare how the supplied implementation selects faulty behavior before the specification freezes. The same calls compiled into the learner tests must reach that selection.
+For a static API, use ordinary Java dispatch inside the supplied implementation, such as an instructor-controlled delegate that defaults to correct behavior; restore it in a finally block.
+A reflection wrapper or a changed Method object does not redirect direct static calls. Do not depend on private JDK fields, class redefinition, attached agents, new dependencies,
+extra JVM opens, or new sandbox permissions. If the approved design has no working selection seam, redesign the contract rather than inventing interception during artifact repair.
+Only an assertion failure from the learner test against an activated fault demonstrates detection. Failed fault activation, linkage, discovery, or instructor support is a grader defect,
+not a detected fault. First establish that the same learner suite passes with correct behavior, and keep selection and failure classification out of the learner's responsibilities.
+
+For operation sequences, `reference/style/runtime-observation.md` shows supplied automatic recording from one learner execution.
+A claimed input variant must change a declared stimulus that reaches learner work. Hidden tests may add compatible assertions on the same execution; they cannot require contradictory outputs from identical deterministic invocations.
