@@ -34,6 +34,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.VcsAccessLog;
+import de.tum.cit.aet.artemis.programming.exception.BuildOutsideTimeWindowException;
 import de.tum.cit.aet.artemis.programming.exception.ContinuousIntegrationException;
 import de.tum.cit.aet.artemis.programming.exception.VersionControlException;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
@@ -227,7 +228,14 @@ public class LocalVCPushProcessingService {
 
             // Process push to any repository other than the test repository. The repository type is passed on so the build
             // trigger can reuse the hash this push already carries instead of reading it back off the repository.
-            processNewPushToRepository(participation, commit, user, repositoryType);
+            try {
+                processNewPushToRepository(participation, commit, user, repositoryType);
+            }
+            catch (BuildOutsideTimeWindowException e) {
+                // the push is valid and stays in the repository, so it has to remain auditable although no build follows
+                completeAccessLog(vcsAccessLog, participation, commitHash);
+                throw e;
+            }
 
             completeAccessLog(vcsAccessLog, participation, commitHash);
         }

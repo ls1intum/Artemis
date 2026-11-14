@@ -1,4 +1,5 @@
-import { Component, inject, input } from '@angular/core';
+import { Component, computed, inject, input } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
 import { ProgrammingExerciseTriggerBuildButtonComponent } from '../programming-exercise-trigger-build-button.component';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { catchError } from 'rxjs/operators';
@@ -6,6 +7,7 @@ import { of } from 'rxjs';
 import { SubmissionType } from 'app/exercise/shared/entities/submission/submission.model';
 import { faRedo } from '@fortawesome/free-solid-svg-icons';
 import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
+import { BuildWindowPhase, getBuildTimeWindowFor, injectBuildWindowPhase, isBuildWindowEnforcedFor } from 'app/programming/shared/utils/build-time-window.utils';
 
 @Component({
     selector: 'jhi-programming-exercise-student-trigger-build-button',
@@ -15,6 +17,20 @@ import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.
 export class ProgrammingExerciseStudentTriggerBuildButtonComponent extends ProgrammingExerciseTriggerBuildButtonComponent {
     private alertService = inject(AlertService);
     readonly triggerLastGraded = input(false);
+
+    private readonly buildWindowPhase = injectBuildWindowPhase(computed(() => getBuildTimeWindowFor(this.exercise(), this.participation())));
+
+    /**
+     * A manual build outside of the build time window is refused by the server, so the button is disabled.
+     * This includes triggering a failed build, as that builds the latest commit, which may have been pushed outside of the window.
+     */
+    override readonly isBlockedByBuildWindow = computed(() => {
+        if (!isBuildWindowEnforcedFor(this.exercise(), this.participation())) {
+            return false;
+        }
+        const phase = this.buildWindowPhase();
+        return phase === BuildWindowPhase.BEFORE || phase === BuildWindowPhase.AFTER;
+    });
 
     // Icons
     faRedo = faRedo;
@@ -30,8 +46,11 @@ export class ProgrammingExerciseStudentTriggerBuildButtonComponent extends Progr
         const triggerAction = this.participationHasLatestSubmissionWithoutResult() ? super.triggerFailed(this.triggerLastGraded()) : super.triggerWithType(SubmissionType.MANUAL);
         triggerAction
             .pipe(
-                catchError(() => {
-                    this.alertService.error('artemisApp.programmingExercise.resubmitUnsuccessful');
+                catchError((error: HttpErrorResponse) => {
+                    // the buttons of the exercise list do not know the window, so the server refuses and explains it, which needs no further alert
+                    if (error?.headers?.get('X-artemisApp-error') !== 'error.buildOutsideTimeWindow') {
+                        this.alertService.error('artemisApp.programmingExercise.resubmitUnsuccessful');
+                    }
                     return of(undefined);
                 }),
             )

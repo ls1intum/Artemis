@@ -25,6 +25,9 @@ export enum ProgrammingExerciseInputField {
     // Version Control section
     ALLOW_BRANCHING = 'allowBranching',
 
+    // Build time window section
+    BUILD_TIME_WINDOW = 'buildTimeWindow',
+
     // Problem section
     PROBLEM_STATEMENT = 'problemStatement',
     LINKED_COMPETENCIES = 'linkedCompetencies',
@@ -72,6 +75,8 @@ export const IS_DISPLAYED_IN_SIMPLE_MODE: Record<ProgrammingExerciseInputField, 
     sequentialTestRuns: false,
     // Version Control section
     allowBranching: false,
+    // Build time window section
+    buildTimeWindow: false,
     // Problem section
     problemStatement: true,
     linkedCompetencies: false,
