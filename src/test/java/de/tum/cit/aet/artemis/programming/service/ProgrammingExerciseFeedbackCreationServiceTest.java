@@ -2,8 +2,13 @@ package de.tum.cit.aet.artemis.programming.service;
 
 import static de.tum.cit.aet.artemis.core.util.WebsocketDestinationMatchers.topic;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.tuple;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -19,17 +24,21 @@ import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.domain.ScaFeedback;
 import de.tum.cit.aet.artemis.assessment.domain.TestCaseFeedback;
 import de.tum.cit.aet.artemis.assessment.domain.Visibility;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildResult;
 import de.tum.cit.aet.artemis.buildagent.dto.LocalCIJobDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.LocalCITestJobDTO;
+import de.tum.cit.aet.artemis.buildagent.service.parser.TestResultXmlParser;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
+import de.tum.cit.aet.artemis.localci.service.LocalCIResultService;
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationIndependentTest;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCaseType;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
@@ -49,8 +58,12 @@ class ProgrammingExerciseFeedbackCreationServiceTest extends AbstractProgramming
     @Autowired
     private ProgrammingExerciseTaskTestRepository taskRepository;
 
+    private LocalCIResultService localCIResultService;
+
     @BeforeEach
     void init() {
+        // built by hand: the independent test base does not enable the LocalCI profile that provides the bean
+        localCIResultService = new LocalCIResultService(feedbackCreationService, testCaseRepository, programmingExerciseBuildConfigRepository);
         Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
         programmingExercise = (ProgrammingExercise) course.getExercises().iterator().next();
         programmingExercise.setProgrammingLanguage(ProgrammingLanguage.JAVA);
@@ -632,5 +645,312 @@ class ProgrammingExerciseFeedbackCreationServiceTest extends AbstractProgramming
         final String longText = "0".repeat(Constants.FEEDBACK_DETAIL_TEXT_SOFT_MAX_LENGTH * 2);
         final StaticCodeAnalysisIssue scaIssue = new StaticCodeAnalysisIssue("some/long/file/Path.java", null, null, 0, 123, "RuleName", "scaCategory", longText, null, null);
         return new StaticCodeAnalysisReportDTO(StaticCodeAnalysisTool.CHECKSTYLE, List.of(scaIssue));
+    }
+
+    // --- errors of a whole test class (e.g. in @BeforeAll) ---
+
+    private static final String OUTER = "de.tum.Outer";
+
+    private static final String INNER = "de.tum.Outer$Inner";
+
+    private static LocalCITestJobDTO testIn(String name, String testClass) {
+        return new LocalCITestJobDTO(name, List.of(), testClass);
+    }
+
+    private static LocalCITestJobDTO classLevelFailure(String testClass, String message) {
+        return new LocalCITestJobDTO("classMethod", List.of(message), testClass);
+    }
+
+    private BuildResult solutionBuildOf(LocalCITestJobDTO... tests) {
+        return new BuildResult("main", "solution", "tests", false, null, List.of(new LocalCIJobDTO(List.of(), List.of(tests))), List.of(), List.of(), false, 1);
+    }
+
+    private void registerSolutionTests(LocalCITestJobDTO... tests) {
+        testCaseRepository.deleteAll(testCaseRepository.findByExerciseId(programmingExercise.getId()));
+        feedbackCreationService.generateTestCasesFromBuildResult(solutionBuildOf(tests), programmingExercise);
+    }
+
+    /** Registers one test in the outer class, one in its nested class, one in a class whose name merely starts like the outer one, and one in an unrelated class. */
+    private void registerClassifiedSolutionTests() {
+        registerSolutionTests(testIn("outerTest", OUTER), testIn("innerTest", INNER), testIn("siblingTest", "de.tum.OuterSibling"), testIn("otherTest", "de.tum.Other"));
+    }
+
+    /** Runs the class-level mapping for a build that reported the given failures (which match no test case) and, in addition, the given tests. */
+    private void addFeedbackOfClassLevelFailures(Result result, List<LocalCITestJobDTO> failures, LocalCITestJobDTO... otherReportedTests) {
+        var reportedTests = new ArrayList<>(failures);
+        reportedTests.addAll(List.of(otherReportedTests));
+        feedbackCreationService.addFeedbackForTestsOfFailedClasses(failures, reportedTests, testCaseRepository.findByExerciseIdAndActive(programmingExercise.getId(), true), result,
+                programmingExercise);
+    }
+
+    private Map<String, TestCaseFeedback> feedbackByTestName(Result result) {
+        return result.getTestCaseFeedbacks().stream().collect(Collectors.toMap(feedback -> feedback.getTestCase().getTestName(), feedback -> feedback));
+    }
+
+    private Result resultWithPassedTests(String... testNames) {
+        var activeTestCases = testCaseRepository.findByExerciseIdAndActive(programmingExercise.getId(), true);
+        var result = new Result();
+        for (String testName : testNames) {
+            feedbackCreationService.createFeedbackFromTestCase(testName, List.of(), true, programmingExercise, activeTestCases).ifPresent(result::addTestCaseFeedback);
+        }
+        return result;
+    }
+
+    @Test
+    void classLevelFailureIsShownOnAllTestsOfTheClassAndItsNestedClasses() {
+        registerClassifiedSolutionTests();
+        var result = resultWithPassedTests("siblingTest", "otherTest");
+
+        addFeedbackOfClassLevelFailures(result, List.of(classLevelFailure(OUTER, "java.lang.IllegalStateException: setup exploded")), testIn("siblingTest", "de.tum.OuterSibling"),
+                testIn("otherTest", "de.tum.Other"));
+
+        var feedback = feedbackByTestName(result);
+        assertThat(feedback).containsOnlyKeys("outerTest", "innerTest", "siblingTest", "otherTest");
+        assertThat(feedback.get("outerTest").isPositive()).isFalse();
+        assertThat(feedback.get("outerTest").getMessageText()).contains("setup exploded");
+        assertThat(feedback.get("innerTest").isPositive()).isFalse();
+        assertThat(feedback.get("innerTest").getMessageText()).contains("setup exploded");
+        assertThat(feedback.get("siblingTest").isPositive()).isTrue();
+        assertThat(feedback.get("otherTest").isPositive()).isTrue();
+    }
+
+    @Test
+    void failureInNestedClassLeavesTestsOfTheOuterClassAlone() {
+        registerClassifiedSolutionTests();
+        var result = resultWithPassedTests("outerTest", "siblingTest", "otherTest");
+
+        addFeedbackOfClassLevelFailures(result, List.of(classLevelFailure(INNER, "nested setup exploded")), testIn("outerTest", OUTER),
+                testIn("siblingTest", "de.tum.OuterSibling"), testIn("otherTest", "de.tum.Other"));
+
+        var feedback = feedbackByTestName(result);
+        assertThat(feedback.get("innerTest").isPositive()).isFalse();
+        assertThat(feedback.get("innerTest").getMessageText()).contains("nested setup exploded");
+        assertThat(feedback.get("outerTest").isPositive()).isTrue();
+        assertThat(feedback).hasSize(4);
+    }
+
+    @Test
+    void failureIsNotAClassErrorWhenOtherTestsOfTheClassReportedResults() {
+        // e.g. a test that was renamed before the solution build registered the new name: its failure is an unknown test, and its message must not land on the old tests
+        registerClassifiedSolutionTests();
+        var result = resultWithPassedTests("outerTest");
+
+        addFeedbackOfClassLevelFailures(result, List.of(new LocalCITestJobDTO("renamedTest", List.of("assertion failed"), OUTER)), testIn("outerTest", OUTER));
+
+        assertThat(feedbackByTestName(result)).containsOnlyKeys("outerTest");
+    }
+
+    @Test
+    void failureIsNotAClassErrorWhenATestOfANestedClassReportedResults() {
+        registerClassifiedSolutionTests();
+        var result = resultWithPassedTests("innerTest");
+
+        addFeedbackOfClassLevelFailures(result, List.of(classLevelFailure(OUTER, "after-all failed")), testIn("innerTest", INNER));
+
+        assertThat(feedbackByTestName(result)).containsOnlyKeys("innerTest");
+    }
+
+    @Test
+    void failureIsNotAClassErrorWhenAKnownTestWithoutClassMayBelongToTheClass() {
+        // the report of outerTest names no class, but the test case says it lives in the failed class: the class did run, so its failure must not land on innerTest
+        registerClassifiedSolutionTests();
+        var result = resultWithPassedTests("outerTest");
+
+        addFeedbackOfClassLevelFailures(result, List.of(classLevelFailure(OUTER, "unrelated failure")), testIn("outerTest", null));
+
+        assertThat(feedbackByTestName(result)).containsOnlyKeys("outerTest");
+    }
+
+    @Test
+    void failureIsNotAClassErrorWhenAnUnknownTestWithoutClassWasReported() {
+        // nothing says where this test belongs, so it may well be a test of the failed class
+        registerClassifiedSolutionTests();
+        var result = resultWithPassedTests();
+
+        addFeedbackOfClassLevelFailures(result, List.of(classLevelFailure(OUTER, "unrelated failure")), testIn("unknownTest", null));
+
+        assertThat(feedbackByTestName(result)).isEmpty();
+    }
+
+    @Test
+    void failureIsNotAClassErrorWhenATestWithoutClassHasATestCaseWithoutClass() {
+        registerSolutionTests(testIn("outerTest", OUTER), testIn("legacyTest", null));
+        var result = resultWithPassedTests("legacyTest");
+
+        addFeedbackOfClassLevelFailures(result, List.of(classLevelFailure(OUTER, "unrelated failure")), testIn("legacyTest", null));
+
+        assertThat(feedbackByTestName(result)).containsOnlyKeys("legacyTest");
+    }
+
+    @Test
+    void classLevelFailureIsStillShownWhenTheTestsWithoutClassAreKnownToBelongElsewhere() {
+        registerClassifiedSolutionTests();
+        var result = resultWithPassedTests("otherTest");
+
+        addFeedbackOfClassLevelFailures(result, List.of(classLevelFailure(OUTER, "setup exploded")), testIn("otherTest", null));
+
+        var feedback = feedbackByTestName(result);
+        assertThat(feedback).containsOnlyKeys("outerTest", "innerTest", "otherTest");
+        assertThat(feedback.get("outerTest").getMessageText()).contains("setup exploded");
+        assertThat(feedback.get("innerTest").getMessageText()).contains("setup exploded");
+    }
+
+    @Test
+    void classLevelFailureWithoutClassChangesNothing() {
+        registerClassifiedSolutionTests();
+        var result = resultWithPassedTests("otherTest");
+
+        addFeedbackOfClassLevelFailures(result, List.of(classLevelFailure(null, "no class reported"), classLevelFailure(" ", "blank class")), testIn("otherTest", "de.tum.Other"));
+
+        assertThat(feedbackByTestName(result)).containsOnlyKeys("otherTest");
+    }
+
+    @Test
+    void classLevelFailureChangesNothingForTestCasesWithoutClass() {
+        registerSolutionTests(testIn("outerTest", null), testIn("otherTest", null));
+        var result = resultWithPassedTests("otherTest");
+
+        addFeedbackOfClassLevelFailures(result, List.of(classLevelFailure(OUTER, "class unknown for the tests")), testIn("otherTest", null));
+
+        assertThat(feedbackByTestName(result)).containsOnlyKeys("otherTest");
+    }
+
+    @Test
+    void classLevelFailureOfUnrelatedClassChangesNothing() {
+        registerClassifiedSolutionTests();
+        var result = resultWithPassedTests("otherTest");
+
+        addFeedbackOfClassLevelFailures(result, List.of(classLevelFailure("de.tum.Unrelated", "not a class of the exercise")), testIn("otherTest", "de.tum.Other"));
+
+        assertThat(feedbackByTestName(result)).containsOnlyKeys("otherTest");
+    }
+
+    @Test
+    void classLevelFailureOfAMultiTestClassUsesOneSharedMessage() {
+        registerClassifiedSolutionTests();
+        var result = new Result();
+
+        addFeedbackOfClassLevelFailures(result, List.of(classLevelFailure(OUTER, "shared cause")));
+
+        var feedback = feedbackByTestName(result);
+        assertThat(feedback).containsOnlyKeys("outerTest", "innerTest");
+        assertThat(feedback.get("outerTest").getMessage()).isSameAs(feedback.get("innerTest").getMessage());
+    }
+
+    @Test
+    void errorInBeforeAllIsShownOnTheTestsWhenProcessingABuildResult() throws IOException {
+        // A Gradle report for a class whose @BeforeAll failed: one made-up test for the class, no real test ever ran.
+        registerClassifiedSolutionTests();
+        String report = """
+                <testsuite name="de.tum.Outer" tests="1" failures="1">
+                    <testcase name="classMethod" classname="de.tum.Outer" time="0.001">
+                        <failure message="java.lang.IllegalStateException: setup exploded" type="java.lang.IllegalStateException">stack trace</failure>
+                    </testcase>
+                </testsuite>
+                """;
+        List<LocalCITestJobDTO> failedTests = new ArrayList<>();
+        List<LocalCITestJobDTO> successfulTests = new ArrayList<>();
+        TestResultXmlParser.processTestResultFile(report, failedTests, successfulTests);
+        var buildResult = new BuildResult("main", "assignment", "tests", false, null, List.of(new LocalCIJobDTO(failedTests, successfulTests)), List.of(), List.of(), false, 0);
+        var participation = mock(ProgrammingExerciseParticipation.class);
+        when(participation.getProgrammingExercise()).thenReturn(programmingExercise);
+
+        Result result = localCIResultService.createResultFromBuildResult(buildResult, participation);
+
+        var feedback = feedbackByTestName(result);
+        assertThat(feedback).containsOnlyKeys("outerTest", "innerTest");
+        assertThat(feedback.values()).allSatisfy(testFeedback -> {
+            assertThat(testFeedback.isPositive()).isFalse();
+            assertThat(testFeedback.getMessageText()).contains("setup exploded");
+        });
+    }
+
+    @Test
+    void buildResultWithoutClassInformationIsProcessedAsBefore() throws IOException {
+        // The same report without a classname (an older build agent, or a runner that does not report one): the error is still dropped.
+        registerClassifiedSolutionTests();
+        String report = """
+                <testsuite name="de.tum.Outer" tests="1" failures="1">
+                    <testcase name="classMethod"><failure message="setup exploded"/></testcase>
+                </testsuite>
+                """;
+        List<LocalCITestJobDTO> failedTests = new ArrayList<>();
+        List<LocalCITestJobDTO> successfulTests = new ArrayList<>();
+        TestResultXmlParser.processTestResultFile(report, failedTests, successfulTests);
+        var buildResult = new BuildResult("main", "assignment", "tests", false, null, List.of(new LocalCIJobDTO(failedTests, successfulTests)), List.of(), List.of(), false, 0);
+        var participation = mock(ProgrammingExerciseParticipation.class);
+        when(participation.getProgrammingExercise()).thenReturn(programmingExercise);
+
+        Result result = localCIResultService.createResultFromBuildResult(buildResult, participation);
+
+        assertThat(result.getTestCaseFeedbacks()).isEmpty();
+    }
+
+    @Test
+    void shouldStoreTheClassOfNewTestCases() {
+        registerClassifiedSolutionTests();
+
+        var testCases = testCaseRepository.findByExerciseId(programmingExercise.getId());
+        assertThat(testCases).extracting(ProgrammingExerciseTestCase::getTestName, ProgrammingExerciseTestCase::getTestClass).containsExactlyInAnyOrder(tuple("outerTest", OUTER),
+                tuple("innerTest", INNER), tuple("siblingTest", "de.tum.OuterSibling"), tuple("otherTest", "de.tum.Other"));
+    }
+
+    @Test
+    void shouldFillInAndUpdateTheClassOfExistingTestCasesWithoutMarkingTheTestCasesChanged() {
+        registerSolutionTests(testIn("outerTest", null), testIn("innerTest", INNER), testIn("otherTest", null));
+        var idsBefore = testCaseRepository.findByExerciseId(programmingExercise.getId()).stream()
+                .collect(Collectors.toMap(ProgrammingExerciseTestCase::getTestName, ProgrammingExerciseTestCase::getId));
+
+        // a later build reports the classes: a missing one is filled in, a moved test follows its new class, and a test without a reported class stays as it is
+        boolean changed = feedbackCreationService
+                .generateTestCasesFromBuildResult(solutionBuildOf(testIn("outerTest", OUTER), testIn("innerTest", "de.tum.Moved"), testIn("otherTest", null)), programmingExercise);
+
+        assertThat(changed).isFalse();
+        var testCases = testCaseRepository.findByExerciseId(programmingExercise.getId());
+        assertThat(testCases).allSatisfy(testCase -> assertThat(testCase.getId()).isEqualTo(idsBefore.get(testCase.getTestName())));
+        assertThat(testCases).extracting(ProgrammingExerciseTestCase::getTestName, ProgrammingExerciseTestCase::getTestClass).containsExactlyInAnyOrder(tuple("outerTest", OUTER),
+                tuple("innerTest", "de.tum.Moved"), tuple("otherTest", null));
+    }
+
+    @Test
+    void shouldKeepTheClassWhenABuildReportsTheSameNameFromTwoClasses() {
+        registerSolutionTests(testIn("sharedName", OUTER));
+
+        feedbackCreationService.generateTestCasesFromBuildResult(solutionBuildOf(testIn("sharedName", OUTER), testIn("sharedName", "de.tum.Other")), programmingExercise);
+
+        assertThat(testCaseRepository.findByExerciseId(programmingExercise.getId())).extracting(ProgrammingExerciseTestCase::getTestClass).containsExactly(OUTER);
+    }
+
+    @Test
+    void shouldStoreNoClassForANewTestNameThatTheFirstBuildReportsFromTwoClasses() {
+        // the duplicate removal keeps one of the two new test cases, which must not keep the class it happened to be reported from
+        registerSolutionTests(testIn("sharedName", OUTER), testIn("sharedName", "de.tum.Other"), testIn("uniqueName", INNER));
+
+        var testCases = testCaseRepository.findByExerciseId(programmingExercise.getId());
+        assertThat(testCases).extracting(ProgrammingExerciseTestCase::getTestName, ProgrammingExerciseTestCase::getTestClass).containsExactlyInAnyOrder(tuple("sharedName", null),
+                tuple("uniqueName", INNER));
+    }
+
+    @Test
+    void shouldStoreNoClassWhenEveryNewTestNameIsReportedFromTwoClasses() {
+        registerSolutionTests(testIn("sharedName", OUTER), testIn("sharedName", "de.tum.Other"));
+
+        assertThat(testCaseRepository.findByExerciseId(programmingExercise.getId())).extracting(ProgrammingExerciseTestCase::getTestName, ProgrammingExerciseTestCase::getTestClass)
+                .containsExactly(tuple("sharedName", null));
+    }
+
+    @Test
+    void shouldSetTheClassOfATestCaseThatBecomesActiveAgain() {
+        registerSolutionTests(testIn("comesBack", null), testIn("stays", OUTER));
+        var originalId = testCaseRepository.findByExerciseId(programmingExercise.getId()).stream().filter(testCase -> "comesBack".equals(testCase.getTestName())).findFirst()
+                .orElseThrow().getId();
+        feedbackCreationService.generateTestCasesFromBuildResult(solutionBuildOf(testIn("stays", OUTER)), programmingExercise);
+        assertThat(testCaseRepository.findById(originalId).orElseThrow().isActive()).isFalse();
+
+        feedbackCreationService.generateTestCasesFromBuildResult(solutionBuildOf(testIn("comesBack", INNER), testIn("stays", OUTER)), programmingExercise);
+
+        var comesBack = testCaseRepository.findById(originalId).orElseThrow();
+        assertThat(comesBack.isActive()).isTrue();
+        assertThat(comesBack.getTestClass()).isEqualTo(INNER);
     }
 }

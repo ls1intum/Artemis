@@ -2,7 +2,7 @@
 id: error-analysis
 title: Error Analysis
 sidebar_label: Error Analysis
-last_reviewed: 2026-11-03
+last_reviewed: 2026-11-12
 ---
 
 The error analysis shows which errors happen on your Artemis installation, on the server and in the browsers of your users, without a separate monitoring service. Open it under **Administration > Monitoring > Error Analysis**.
@@ -92,7 +92,7 @@ To start the analysis again from nothing, delete the data. It is only used by th
 How long the data survives a restart depends on the distributed data provider.
 
 - With **Hazelcast**, the default, the data lives in the memory of the nodes. It survives the restart of a single node as long as another node keeps running, and it is lost when the whole cluster stops. There is nothing to clean up, because stopping the cluster removes it.
-- With **Redis** the data survives a restart of the Artemis cluster. The two maps are kept under the keys `artemis:v1:{error-analysis-groups}` and `artemis:v1:{error-analysis-counts}`, which you can find with `redis-cli --scan --pattern '*error-analysis*'`, measure with `redis-cli MEMORY USAGE '<key>'`, and delete. The pattern also finds helper keys that Redis keeps for the expiry of the entries, whose names start with `redisson`, and they belong together with the two maps. Whether the data survives a restart of Redis itself depends on how you configured Redis to persist its data.
+- With **Redis** the data survives a restart of the Artemis cluster. The two maps are kept under the keys `artemis:v2:{error-analysis-groups}` and `artemis:v2:{error-analysis-counts}`, which you can find with `redis-cli --scan --pattern '*error-analysis*'`, measure with `redis-cli MEMORY USAGE '<key>'`, and delete. The pattern also finds helper keys that Redis keeps for the expiry of the entries, whose names start with `redisson`, and they belong together with the two maps. Whether the data survives a restart of Redis itself depends on how you configured Redis to persist its data.
 - With the **Local** provider of a single node, the data is lost when the node restarts.
 
 The counts for a release are kept for 30 days, so for a release that has been running longer than that, **Since current release** shows its last 30 days. For the full history, and for the errors of build agents, use the log of your deployment.

@@ -25,4 +25,14 @@ public interface TestCaseBase {
      */
     @JsonIgnore
     List<String> testMessages();
+
+    /**
+     * Gets the binary name of the test class that declares the test case, e.g. {@code de.tum.Foo$Bar} for a nested class.
+     * For a failure that happened outside of any single test (such as in {@code @BeforeAll}), this is the class that failed.
+     *
+     * @return the class name, or null if the build does not report it
+     */
+    default String testClass() {
+        return null;
+    }
 }

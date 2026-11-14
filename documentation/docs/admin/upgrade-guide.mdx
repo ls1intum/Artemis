@@ -2,7 +2,7 @@
 id: upgrade-guide
 title: Upgrade Guide
 sidebar_label: Upgrade Guide
-last_reviewed: 2026-11-09
+last_reviewed: 2026-11-12
 ---
 
 import Callout from "../../src/components/Callout/Callout";
@@ -202,6 +202,12 @@ Some releases change behavior in a way that requires a one-time action on existi
 Artemis takes the address of a client from the address that Tomcat resolved for the request, and no longer reads `X-Forwarded-For` or other address headers itself. This applies to all rate limits except the one for Git over HTTP, which counts the address as described in the section linked below, to the check of internal endpoints (`artemis.security.internal.allowed-cidrs`) and to the address that is stored in an exam session.
 Tomcat believes forwarding headers only from the proxies in `server.tomcat.remoteip.internal-proxies`, which are the private networks by default. **If your reverse proxy reaches Artemis from a public address, name it there before you upgrade.** Otherwise all clients have the address of the proxy,
 share one budget of the login rate limits, and appear with one address in their exam sessions. See [Client Address of Git Requests](/admin/production-setup/security#client-address-of-git-requests).
+
+### 10.8: Build Results in the Distributed Data
+
+With Redis or Valkey, this release changes the stored layout of build results (schema version `2`). **Finished build results that were still waiting in the result queues when you stop the old nodes are discarded**, and their submissions need a new build. Queued and running builds are kept.
+Pause all build agents and wait until the running builds have finished and the result queues are empty before you upgrade. Hazelcast keeps nothing across a restart and is not affected. See
+[Distributed Data with Redis or Valkey](/admin/production-setup/distributed-data#schema-1-to-2).
 
 ### 10.7: Rate Limit of Git Operations
 

@@ -383,6 +383,7 @@ public class ProgrammingExerciseImportBasicService {
             copy.setActive(testCase.isActive());
             copy.setVisibility(testCase.getVisibility());
             copy.setTestName(testCase.getTestName());
+            copy.setTestClass(testCase.getTestClass());
             copy.setWeight(testCase.getWeight());
             copy.setBonusMultiplier(testCase.getBonusMultiplier());
             copy.setBonusPoints(testCase.getBonusPoints());
