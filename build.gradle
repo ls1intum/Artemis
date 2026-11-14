@@ -70,7 +70,7 @@ buildscript {
         // shipped WAR only ever contains the patched versions. enforcedPlatform applies each jackson-bom's
         // authoritative per-module versions, so no version is invented. Build-time only, not shipped. Keep
         // both versions in sync with the project-level jackson-bom imports below.
-        classpath enforcedPlatform("tools.jackson:jackson-bom:3.3.0")
+        classpath enforcedPlatform("tools.jackson:jackson-bom:3.2.4")
         classpath enforcedPlatform("com.fasterxml.jackson:jackson-bom:2.23.0")
         classpath "com.diffplug.spotless:spotless-plugin-gradle:${spotless_plugin_version}"
         // This is required so that the latest version of the liquibase gradle plugin works
@@ -264,9 +264,10 @@ ext["logback.version"] = logback_version
 // pinning tools.jackson.core:jackson-databind on its own — is what keeps the sibling modules (notably
 // jackson-dataformat-cbor) on the same patch: a sibling left behind on an older patch re-declares that older
 // jackson-databind in its POM, and the GitHub dependency graph then reports it as a vulnerable version even
-// though no configuration resolves it. webauthn4j and spring-ai declare older Jackson 3 minors (3.2 and 3.1), which
-// Jackson keeps binary compatible, so both families follow the latest release. After a minor bump, run the passkey,
-// LTI and Spring AI tests; bump both families to the latest patched release when new advisories land.
+// though no configuration resolves it. Keep Jackson 3 on the minor that webauthn4j / spring-ai expect: Jackson 3.3.0 changed
+// how the XML module reads an empty element that has attributes, which breaks the Checkstyle report parser for every file
+// without findings (StaticCodeAnalysisParserUnitTest.testCheckstyleParser). Jackson 2 follows the latest release. Bump both
+// families to the latest patched release when new advisories land.
 // Import order matters and is load-bearing: the Jackson 3 BOM also manages
 // com.fasterxml.jackson.core:jackson-annotations (that artifact never moved to the tools.jackson group) at a
 // version trailing the Jackson 2 line, and io.spring.dependency-management lets a later import override an
@@ -277,7 +278,7 @@ ext["logback.version"] = logback_version
 dependencyManagement {
     imports {
         mavenBom "io.opentelemetry:opentelemetry-bom:${opentelemetry_version}"
-        mavenBom "tools.jackson:jackson-bom:3.3.0"
+        mavenBom "tools.jackson:jackson-bom:3.2.4"
         mavenBom "com.fasterxml.jackson:jackson-bom:2.23.0"
     }
 }
