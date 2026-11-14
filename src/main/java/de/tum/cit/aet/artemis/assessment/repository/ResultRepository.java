@@ -34,21 +34,18 @@ import de.tum.cit.aet.artemis.core.dto.DueDateStat;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
+import de.tum.cit.aet.artemis.exercise.dto.AssessmentQueueResultDTO;
 import de.tum.cit.aet.artemis.exercise.dto.CorrectionRoundResultDTO;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 
-/**
- * Spring Data JPA repository for the Result entity.
- */
+/** Spring Data JPA repository for results. */
 @Profile(PROFILE_CORE)
 @Lazy
 @Repository
 public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
 
     /**
-     * Deletes a result via JPQL bulk delete, bypassing Hibernate cascade and JPA lifecycle callbacks.
-     * All child entities must be deleted first.
-     * See {@link de.tum.cit.aet.artemis.assessment.service.ResultService#deleteResult ResultService.deleteResult} Path 2 for full details.
+     * Bulk-deletes a result without cascades or lifecycle callbacks; delete child entities first.
      *
      * @param resultId the id of the result to delete
      */
@@ -59,7 +56,6 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
 
     /**
      * Count the number of results for a course by its exercise IDs.
-     * Uses the denormalized result.exerciseId to avoid expensive joins through submission -> participation -> exercise -> course.
      *
      * @param exerciseIds the ids of the exercises in the course
      * @return the total number of results
@@ -76,7 +72,6 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
 
     /**
      * Find all results for an exercise ordered by completion date.
-     * Uses the denormalized result.exerciseId for efficient filtering.
      *
      * @param exerciseId the id of the exercise
      * @return list of results with submissions, ordered by completion date ascending
@@ -92,7 +87,6 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
 
     /**
      * Find all results with submissions and feedbacks for an exercise.
-     * Uses the denormalized result.exerciseId for efficient filtering.
      *
      * @param exerciseId the id of the exercise
      * @return list of results with submissions and feedbacks
@@ -158,12 +152,10 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
     Optional<Result> findResultWithSubmissionAndParticipationById(long resultId);
 
     /**
-     * Finds the first result by participation ID, including its submission and feedback, ordered by completion date in descending order.
-     * This method avoids in-memory paging by retrieving the first result directly from the database.
+     * Finds the latest result with submission and feedback without in-memory paging.
      *
      * @param participationId the ID of the participation to find the result for
-     * @return an {@code Optional} containing the first {@code Result} with submission and feedback, ordered by completion date in descending order,
-     *         or an empty {@code Optional} if no result is found
+     * @return the latest result with submission and feedback, if present
      */
     default Optional<Result> findFirstWithSubmissionAndFeedbacksByParticipationIdOrderByCompletionDateDesc(long participationId) {
         var resultOptional = findFirstBySubmissionParticipationIdOrderByCompletionDateDesc(participationId);
@@ -267,11 +259,8 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
     long countNumberOfFinishedAssessmentsForExerciseIgnoreTestRuns(@Param("exerciseId") long exerciseId);
 
     /**
-     * Counts the submissions of text, modeling and file upload exercises with at least one finished manual result, ignoring test runs.
-     * Every such submission counts exactly once, no matter whether it was submitted in time or late, whether its result is rated and how many results it has
-     * (e.g. after a complaint response). A participation can contain several submitted submissions, which are counted separately.
-     * This matches how {@code SubmissionRepository#countAllByExerciseIdsSubmittedBeforeDueDate} and {@code SubmissionRepository#countAllByExerciseIdsSubmittedAfterDueDate}
-     * count the submissions of the same exercises.
+     * Counts submitted text, modeling and file-upload work with finished manual assessments, ignoring test runs.
+     * Counts each submission once, regardless of its deadline, rated flag or number of results.
      *
      * @param exerciseIds set of exercise IDs
      * @return the number of assessed submissions for the given exercise IDs, ignoring test runs
@@ -292,9 +281,7 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
     long countNumberOfAssessedSubmissionsForExerciseIdsIgnoreTestRuns(@Param("exerciseIds") Set<Long> exerciseIds);
 
     /**
-     * Counts the participations of programming exercises with a submitted submission and at least one finished manual result, ignoring test runs.
-     * A student can have multiple submissions in a programming exercise, so the participations are counted, like
-     * {@code ProgrammingExerciseRepository#countAllSubmissionsByExerciseIdsSubmitted} does for the submissions of the same exercises.
+     * Counts programming participations with submitted work and a finished manual assessment, ignoring test runs.
      *
      * @param exerciseIds set of exercise IDs
      * @return the number of assessed participations for the given exercise IDs, ignoring test runs
@@ -501,13 +488,7 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
     boolean existsManualResultBySubmissionIdAndCorrectionRound(@Param("submissionId") long submissionId, @Param("correctionRound") int correctionRound);
 
     /**
-     * Returns the manual results of the given submissions together with the correction round each belongs to.
-     * <p>
-     * Two callers need this. The participation page renders assessment actions per correction round, so it needs one entry
-     * per round rather than only the newest result, and the exam score statistics report what the first round scored.
-     * Automatic and Athena results are left out because they are not correction rounds, which matches
-     * {@link de.tum.cit.aet.artemis.exercise.domain.Submission#getManualResults()} and keeps a result whose assessment
-     * type is not set yet.
+     * Returns manual and untyped results with their correction rounds, excluding automatic and Athena results.
      *
      * @param submissionIds the submissions whose manual results should be read
      * @return the manual results of those submissions, in no particular order
@@ -527,7 +508,6 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
 
     /**
      * Returns true if there is at least one result for the given exercise.
-     * Uses the denormalized result.exerciseId for efficient filtering.
      *
      * @param exerciseId id of an Exercise.
      * @return true if there is a result, false if not.
@@ -643,9 +623,7 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
     }
 
     /**
-     * Given the exercise ids of a course, return the number of assessed submissions for these exercises that have been completed (e.g. no draft!).
-     * This is the counterpart of the submissions counted for the same exercises, i.e. one per submission for text, modeling and file upload exercises
-     * and one per participation for programming exercises, independent of the due date and the rated flag.
+     * Counts finished assessments per submission for text, modeling and file upload, and per participation for programming. Due dates and rated flags do not affect the count.
      *
      * @param exerciseIds - the exercise ids of the course we are interested in (should be filtered to only include exercises with manual assessment)
      * @return a number of assessments for the course
@@ -660,7 +638,6 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
 
     /**
      * Get the number of assessments for all tutors of a course.
-     * Uses the denormalized result.exerciseId to avoid expensive joins through submission -> participation.
      *
      * @param exerciseIds - ids of the exercises in the course
      * @return list of TutorLeaderboardAssessments
@@ -686,7 +663,6 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
 
     /**
      * Get the number of assessments for all tutors of an exercise.
-     * Uses the denormalized result.exerciseId to avoid expensive joins through submission -> participation.
      *
      * @param exerciseId - id of the exercise
      * @return list of TutorLeaderboardAssessments
@@ -712,7 +688,6 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
 
     /**
      * Get the number of assessments for all tutors of an exam.
-     * Uses the denormalized result.exerciseId to avoid expensive joins through submission -> participation.
      *
      * @param exerciseIds - ids of the exercises to consider
      * @return list of TutorLeaderboardAssessments
@@ -737,8 +712,7 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
     List<TutorLeaderboardAssessmentsDTO> findTutorLeaderboardAssessmentByExerciseIds(@Param("exerciseIds") Collection<Long> exerciseIds);
 
     /**
-     * This function is used for submitting a manual assessment/result.
-     * It updates the completion date and saves the updated result in the database.
+     * Sets the completion date and saves the manual assessment.
      *
      * @param result the result that should be submitted
      * @return the updated result
@@ -794,9 +768,7 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
     }
 
     /**
-     * Helper function to calculate the total points of a feedback list. It loops through all assessed model elements and sums the credits up.
-     * The points of an assessment model is not summed up only in the case the usageCount limit is exceeded
-     * meaning the structured grading instruction was applied on the assessment model more often than allowed
+     * Sums feedback credits while respecting structured grading instruction usage limits.
      *
      * @param assessments the collection of feedback items that are used to calculate the points
      * @return the total points
@@ -819,11 +791,8 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
     }
 
     /**
-     * Finds the id of the latest result a student may see for a participation (the highest visible result id), or empty if none is visible. A result is visible when it is
-     * automatic
-     * (including Athena) or a completed manual assessment whose assessment due date is unset or has passed, mirroring {@link #findLatestResultWithFeedbacksBySubmissionId}.
-     * Selecting
-     * only the id avoids materializing the discarded result history; exam hiding is applied by the caller beforehand.
+     * Finds the highest visible result ID: automatic/Athena results, or completed manual results released by the assessment deadline.
+     * The caller applies exam hiding; only the ID is selected to avoid loading result history.
      *
      * @param participationId the participation to load the latest visible result id for
      * @param dateTime        the reference time compared against the assessment due date (usually now)
@@ -867,10 +836,10 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
     }
 
     /**
-     * Get a result from the database by its id together with the associated submission and the list of feedback items.
+     * Loads the result with submission, feedback and team students, or throws if missing.
      *
-     * @param resultId the id of the result to load from the database
-     * @return the result with submission and feedback list
+     * @param resultId the result ID
+     * @return the result with submission, feedback and team students
      */
     default Result findWithSubmissionAndFeedbackAndTeamStudentsByIdElseThrow(long resultId) {
         return getValueElseThrow(findWithSubmissionAndFeedbackAndTeamStudentsById(resultId), resultId);
@@ -881,11 +850,10 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
     }
 
     /**
-     * Get the result with the given id from the database. The result is loaded together with its feedback. Throws an EntityNotFoundException if no
-     * result could be found for the given id.
+     * Loads the result with feedback, or throws if missing.
      *
-     * @param resultId the id of the submission that should be loaded from the database
-     * @return the result with the given id
+     * @param resultId the result ID
+     * @return the result with feedback
      */
     default Result findByIdWithEagerFeedbacksElseThrow(long resultId) {
         return getValueElseThrow(findByIdWithEagerFeedbacks(resultId), resultId);
@@ -997,4 +965,20 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
                )
             """)
     Set<Result> findLatestResultsByParticipationIds(@Param("participationIds") Set<Long> participationIds);
+
+    /**
+     * Loads queue results and assessors without answer bodies.
+     *
+     * @param ids the submission ids
+     * @return result metadata
+     */
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.exercise.dto.AssessmentQueueResultDTO(
+                r.submission.id, r.id, r.completionDate, r.successful, r.score, r.rated, r.assessmentType, r.correctionRound,
+                r.hasComplaint, r.exampleResult, r.testCaseCount, r.passedTestCaseCount, r.codeIssueCount,
+                assessor.id, assessor.login, assessor.firstName, assessor.lastName)
+            FROM Result r LEFT JOIN r.assessor assessor WHERE r.submission.id IN :ids
+            """)
+    List<AssessmentQueueResultDTO> findTeamQueueResults(@Param("ids") List<Long> ids);
+
 }

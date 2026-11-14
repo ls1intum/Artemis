@@ -34,6 +34,7 @@ import de.tum.cit.aet.artemis.assessment.repository.ScaFeedbackRepository;
 import de.tum.cit.aet.artemis.assessment.repository.TestCaseFeedbackRepository;
 import de.tum.cit.aet.artemis.assessment.service.FeedbackService;
 import de.tum.cit.aet.artemis.athena.api.AthenaApi;
+import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
@@ -479,6 +480,45 @@ public class ProgrammingSubmissionService extends SubmissionService {
         return (ProgrammingSubmission) manualResult.getSubmission();
     }
 
+    /**
+     * Reuses existing team results, claiming only drafts without an assessor.
+     *
+     * @param submission      the submission whose result may be reused
+     * @param correctionRound the requested correction round
+     * @return the reusable result, or empty when a new result is needed
+     */
+    private Optional<Result> reuseTeamAssessmentResult(Submission submission, int correctionRound) {
+        var assignedResult = submission.getResultForCorrectionRound(correctionRound);
+        if (submission.getParticipation().getExercise().isTeamMode() && submission.getParticipation() instanceof StudentParticipation participation
+                && participation.getTeam().isPresent() && assignedResult != null && (assignedResult.getAssessor() != null || assignedResult.isManual()
+                        || assignedResult.getAssessmentType() == null && assignedResult.getCompletionDate() == null)) {
+            if (assignedResult.getCompletionDate() == null && assignedResult.getAssessor() == null) {
+                checkSubmissionLockLimit(submission.getParticipation().getExercise().getCourseViaExerciseGroupOrCourseMemberElseThrow().getId());
+                if (assignedResult.getAssessmentType() == null) {
+                    assignedResult.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
+                }
+                assignedResult.setAssessor(userRepository.getUser());
+                resultRepository.save(assignedResult);
+            }
+            return Optional.of(assignedResult);
+        }
+        return Optional.empty();
+    }
+
+    /** Checks submission state and deadlines only when starting a new team assessment. */
+    private void checkTeamSubmissionDeadline(Submission submission) {
+        if (submission.getParticipation().getExercise().isTeamMode() && submission.getParticipation() instanceof StudentParticipation participation
+                && participation.getTeam().isPresent() && !participation.isTestRun()) {
+            if (!Boolean.TRUE.equals(submission.isSubmitted())) {
+                throw new AccessForbiddenException("The team's submission has not been submitted.");
+            }
+            checkIfExerciseDueDateIsReached(participation.getExercise());
+            if (ExerciseDateService.getDueDate(participation).isPresent() && exerciseDateService.isBeforeDueDate(participation)) {
+                throw new AccessForbiddenException("The team's submission deadline has not passed yet.");
+            }
+        }
+    }
+
     // TODO SE: explain in what context this method is even called
 
     /**
@@ -493,6 +533,12 @@ public class ProgrammingSubmissionService extends SubmissionService {
     // TODO: why do we override this method and why do we not try to reuse the method in the super class?
     public Result lockSubmission(Submission submission, int correctionRound) {
         SubmissionService.checkCorrectionRoundIsNotNegativeElseThrow(correctionRound);
+        authCheckService.checkTeamAssessmentAccessElseThrow(submission);
+        var assignedResult = reuseTeamAssessmentResult(submission, correctionRound);
+        if (assignedResult.isPresent()) {
+            return assignedResult.get();
+        }
+        checkTeamSubmissionDeadline(submission);
         Optional<Result> optionalExistingResult;
         if (correctionRound == 0 && submission.getLatestResult() != null && AssessmentType.AUTOMATIC == submission.getLatestResult().getAssessmentType()) {
             optionalExistingResult = Optional.of(submission.getLatestResult());
@@ -508,9 +554,12 @@ public class ProgrammingSubmissionService extends SubmissionService {
             optionalExistingResult = Optional.ofNullable(submission.getResultForCorrectionRound(correctionRound - 1));
         }
 
-        // Create a new manual result and try to reuse the existing submission with the latest commit hash
-        ProgrammingSubmission existingSubmission = getOrCreateSubmissionWithLastCommitHashForParticipation((ProgrammingExerciseStudentParticipation) submission.getParticipation(),
-                SubmissionType.MANUAL);
+        // Team assessment links identify the selected commit; individual assessments retain latest-commit resolution.
+        if (submission.getParticipation().getExercise().isTeamMode()) {
+            checkSubmissionLockLimit(submission.getParticipation().getExercise().getCourseViaExerciseGroupOrCourseMemberElseThrow().getId());
+        }
+        ProgrammingSubmission existingSubmission = submission.getParticipation().getExercise().isTeamMode() ? (ProgrammingSubmission) submission
+                : getOrCreateSubmissionWithLastCommitHashForParticipation((ProgrammingExerciseStudentParticipation) submission.getParticipation(), SubmissionType.MANUAL);
         Result newResult = saveNewEmptyResult(existingSubmission);
         newResult.setAssessor(userRepository.getUser());
         newResult.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);

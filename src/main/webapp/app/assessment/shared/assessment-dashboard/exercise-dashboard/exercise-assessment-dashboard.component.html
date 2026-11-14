@@ -431,10 +431,18 @@
                             @if ((tutorParticipationStatus() === TRAINED || exercise().isAtLeastInstructor || tutorParticipationStatus() === COMPLETED) && !isTestRun()) {
                                 <div class="mb-4! flex w-full items-center justify-between gap-2" data-testid="correction-round-header">
                                     <div class="flex items-center gap-1">
-                                        @if (!isExamMode()) {
+                                        @if (exercise().teamMode && !isTestRun()) {
+                                            <h4 class="m-0" data-testid="assessment-queue-title">
+                                                {{
+                                                    (exercise().isAtLeastInstructor
+                                                        ? 'artemisApp.exerciseAssessmentDashboard.allTeams'
+                                                        : 'artemisApp.exerciseAssessmentDashboard.yourTeams'
+                                                    ) | artemisTranslate
+                                                }}
+                                            </h4>
+                                        } @else if (!isExamMode()) {
                                             <h4 class="m-0" jhiTranslate="artemisApp.exerciseAssessmentDashboard.studentsSubmissions"></h4>
-                                        }
-                                        @if (isExamMode()) {
+                                        } @else {
                                             <h4
                                                 class="m-0"
                                                 jhiTranslate="artemisApp.exerciseAssessmentDashboard.studentsSubmissionsExam"
@@ -483,7 +491,11 @@
                                                 >
                                                     <thead>
                                                         <tr>
-                                                            <th tumAetUiSortableColumn="id"><span>Id</span></th>
+                                                            @if (exercise().teamMode && !isTestRun()) {
+                                                                <th jhiTranslate="artemisApp.team.shortName.label"></th>
+                                                            } @else {
+                                                                <th tumAetUiSortableColumn="id"><span>Id</span></th>
+                                                            }
                                                             <th tumAetUiSortableColumn="submissionDate">
                                                                 <span jhiTranslate="artemisApp.exerciseAssessmentDashboard.submissionDate"></span>
                                                             </th>
@@ -499,21 +511,39 @@
                                                         </tr>
                                                     </thead>
                                                     <tbody>
-                                                        @if (unassessedSubmissionByRound()[correctionRound]?.id && !exercise().teamMode && !isTestRun()) {
+                                                        @for (submission of getUnassessedSubmissionsForRound(correctionRound); track submission.id) {
                                                             <tr>
-                                                                <td></td>
-                                                                <td>{{ unassessedSubmissionByRound()[correctionRound]!.submissionDate | artemisDate }}</td>
+                                                                <td>
+                                                                    @if (
+                                                                        exercise().teamMode && !isTestRun() && assessmentQueueTeams().get(submission.participation?.id ?? -1);
+                                                                        as team
+                                                                    ) {
+                                                                        <a
+                                                                            data-testid="assessment-queue-team"
+                                                                            [routerLink]="['/course-management', courseId(), 'exercises', exerciseId(), 'teams', team.id]"
+                                                                        >
+                                                                            {{ team.shortName }}
+                                                                        </a>
+                                                                    } @else if (exercise().teamMode || isTestRun()) {
+                                                                        {{ submission.id }}
+                                                                    }
+                                                                </td>
+                                                                <td>{{ submission.submissionDate | artemisDate }}</td>
                                                                 <td></td>
                                                                 @if (exercise().type === ExerciseType.TEXT) {
                                                                     <td>
-                                                                        <jhi-language-table-cell [submission]="unassessedSubmissionByRound()[correctionRound]!" />
+                                                                        <jhi-language-table-cell [submission]="submission" />
                                                                     </td>
                                                                 }
                                                                 <td>
                                                                     <span [tumAetUiTooltip]="assessmentNotPossibleYetTooltip()">
                                                                         <a
                                                                             data-testid="start-new-assessment"
-                                                                            [routerLink]="assessmentNotPossibleYetReason() ? null : getAssessmentLink('new')"
+                                                                            [routerLink]="
+                                                                                assessmentNotPossibleYetReason()
+                                                                                    ? null
+                                                                                    : getAssessmentLink(exercise().teamMode ? submission : 'new')
+                                                                            "
                                                                             [queryParams]="getAssessmentQueryParams(correctionRound)"
                                                                             [class.pointer-events-none]="
                                                                                 openingAssessmentEditorForNewSubmission() || !!assessmentNotPossibleYetReason()
@@ -536,7 +566,21 @@
                                                         }
                                                         @for (submission of assessedSubmissionsByRound()[correctionRound]; track submission) {
                                                             <tr>
-                                                                <td>{{ submission.id }}</td>
+                                                                <td>
+                                                                    @if (
+                                                                        exercise().teamMode && !isTestRun() && assessmentQueueTeams().get(submission.participation?.id ?? -1);
+                                                                        as team
+                                                                    ) {
+                                                                        <a
+                                                                            data-testid="assessment-queue-team"
+                                                                            [routerLink]="['/course-management', courseId(), 'exercises', exerciseId(), 'teams', team.id]"
+                                                                        >
+                                                                            {{ team.shortName }}
+                                                                        </a>
+                                                                    } @else if (!exercise().teamMode || isTestRun()) {
+                                                                        {{ submission.id }}
+                                                                    }
+                                                                </td>
                                                                 <td>{{ submission.submissionDate | artemisDate }}</td>
                                                                 <td>
                                                                     <jhi-result
@@ -552,7 +596,18 @@
                                                                     </td>
                                                                 }
                                                                 <td>
-                                                                    @if ((isTestRun() && complaints().length === 0) || !isTestRun()) {
+                                                                    @if (
+                                                                        exercise().teamMode && getSubmissionResultByCorrectionRound(submission, correctionRound)?.assessor;
+                                                                        as assessor
+                                                                    ) {
+                                                                        <span class="block text-sm text-muted-color" data-testid="assessment-queue-assessor">
+                                                                            <span jhiTranslate="artemisApp.result.assessor"></span>: {{ assessor.name || assessor.login }}
+                                                                        </span>
+                                                                    }
+                                                                    @if (
+                                                                        ((isTestRun() && complaints().length === 0) || !isTestRun()) &&
+                                                                        canContinueTeamTextAssessment(submission, correctionRound)
+                                                                    ) {
                                                                         <span [tumAetUiTooltip]="assessmentNotPossibleYetTooltip()">
                                                                             @if (submission && calculateSubmissionStatusIsDraft(submission, correctionRound)) {
                                                                                 <a
@@ -599,19 +654,11 @@
                                             </tumaet-ui-table-layout>
                                         } @else {
                                             <jhi-assessment-warning [exercise]="exercise()" />
-                                            @if (!exercise().teamMode) {
-                                                <tumaet-ui-message severity="info"
-                                                    ><span jhiTranslate="artemisApp.exerciseAssessmentDashboard.noSubmissions"></span
-                                                ></tumaet-ui-message>
-                                            } @else {
-                                                <tumaet-ui-message severity="warn"
-                                                    ><span jhiTranslate="artemisApp.exerciseAssessmentDashboard.startAssessmentFromTeamPages"></span
-                                                ></tumaet-ui-message>
-                                            }
+                                            <tumaet-ui-message severity="info"><span jhiTranslate="artemisApp.exerciseAssessmentDashboard.noSubmissions"></span></tumaet-ui-message>
                                         }
                                         @if (
                                             isExamMode() &&
-                                            (!unassessedSubmissionByRound()[correctionRound]?.id || exercise().teamMode || isTestRun()) &&
+                                            (getUnassessedSubmissionsForRound(correctionRound).length === 0 || isTestRun()) &&
                                             numberOfSubmissions().inTime !== numberOfAssessmentsOfCorrectionRounds()[correctionRound].inTime
                                         ) {
                                             <tumaet-ui-message severity="info">

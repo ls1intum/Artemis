@@ -425,22 +425,29 @@ public class ProgrammingSubmissionResource {
             throw new AccessForbiddenException("Creating manual results is disabled for this exercise!");
         }
 
+        authCheckService.checkTeamAssessmentAccessElseThrow(programmingSubmission);
+
         long numberOfManualResults = programmingSubmission.getResults().stream().filter(Result::isManual).count();
 
         // this makes sure that new results are only created if it is really necessary.
         // At max 1 for course exercises and at max 2 results in exams with 2 correction rounds enabled.
         // The second (or third) result for complaint responses is not created here.
         if (numberOfManualResults < correctionRound + 1 && numberOfManualResults < numberOfEnabledCorrectionRounds) {
-            // Check lock limit
-            programmingSubmissionService.checkSubmissionLockLimit(programmingExercise.getCourseViaExerciseGroupOrCourseMember().getId());
-
+            if (!programmingExercise.isTeamMode()) {
+                programmingSubmissionService.checkSubmissionLockLimit(programmingExercise.getCourseViaExerciseGroupOrCourseMember().getId());
+            }
             // As no manual result is present we need to lock the submission for assessment
             Result latestAutomaticResult = programmingSubmission.getLatestResult();
-            if (latestAutomaticResult == null) {
+            if (latestAutomaticResult == null && !programmingExercise.isTeamMode()) {
                 // if the participation does not have a result we want to create a new result for the submission of the participation.
                 // If there isn't a submission either, we should not create any result.
                 programmingSubmission = programmingSubmissionService.getLatestPendingSubmission(participation.getId(), false).orElseThrow();
             }
+            programmingSubmission = programmingSubmissionService.lockAndGetProgrammingSubmission(programmingSubmission.getId(), correctionRound);
+        }
+        else if (programmingExercise.isTeamMode() && programmingSubmission.getResultForCorrectionRound(correctionRound) != null
+                && programmingSubmission.getResultForCorrectionRound(correctionRound).getAssessor() == null
+                && programmingSubmission.getResultForCorrectionRound(correctionRound).getCompletionDate() == null) {
             programmingSubmission = programmingSubmissionService.lockAndGetProgrammingSubmission(programmingSubmission.getId(), correctionRound);
         }
 

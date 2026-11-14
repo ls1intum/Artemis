@@ -34,6 +34,7 @@ import de.tum.cit.aet.artemis.core.security.jwt.ElevationClaims;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
@@ -948,6 +949,28 @@ public class AuthorizationCheckService {
 
     public void checkGivenExerciseIdSameForExerciseInRequestBodyElseThrow(Long exerciseId, Exercise exerciseInRequestBody) {
         checkGivenExerciseIdSameForExerciseRequestBodyIdElseThrow(exerciseId, exerciseInRequestBody.getId());
+    }
+
+    /**
+     * Restrict team assessments to the current team tutor.
+     *
+     * @param submission the submission to assess
+     */
+    public void checkTeamAssessmentAccessElseThrow(Submission submission) {
+        var exercise = submission.getParticipation().getExercise();
+        if (!exercise.isTeamMode()) {
+            return;
+        }
+        if (submission.getParticipation() instanceof StudentParticipation practice && practice.isTestRun() && practice.getTeam().isEmpty()) {
+            return;
+        }
+        var user = userRepository.getUserWithAuthorities();
+        if (isAtLeastInstructorForExercise(exercise, user)) {
+            return;
+        }
+        if (!(submission.getParticipation() instanceof StudentParticipation participation) || participation.getTeam().isEmpty() || !participation.getTeam().get().isOwner(user)) {
+            throw new AccessForbiddenException("Only the team tutor may start this assessment.");
+        }
     }
 
     public void checkIsAllowedToAssessExerciseElseThrow(Exercise exercise, User user, Long resultId) {

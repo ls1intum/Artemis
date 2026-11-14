@@ -1,10 +1,13 @@
 package de.tum.cit.aet.artemis.exercise.service;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.MAX_NUMBER_OF_LOCKED_SUBMISSIONS_PER_TUTOR;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.assertj.core.api.Assertions.fail;
 
+import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -12,7 +15,10 @@ import java.util.Set;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.account.domain.User;
@@ -34,10 +40,18 @@ import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
+import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
+import de.tum.cit.aet.artemis.exercise.domain.Team;
+import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.dto.AssessmentQueueTeamDTO;
 import de.tum.cit.aet.artemis.exercise.dto.SubmissionResponseDTO;
 import de.tum.cit.aet.artemis.exercise.dto.SubmissionWithComplaintDTO;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
+import de.tum.cit.aet.artemis.exercise.repository.ExerciseTestRepository;
+import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
+import de.tum.cit.aet.artemis.exercise.test_repository.SubmissionTestRepository;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadSubmission;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
@@ -85,6 +99,21 @@ class SubmissionServiceTest extends AbstractSpringIntegrationIndependentBatchTes
 
     @Autowired
     private ComplaintUtilService complaintUtilService;
+
+    @Autowired
+    private ExerciseTestRepository exerciseRepository;
+
+    @Autowired
+    private TeamRepository teamRepository;
+
+    @Autowired
+    private SubmissionTestRepository submissionRepository;
+
+    @Autowired
+    private de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository studentParticipationRepository;
+
+    @Autowired
+    private de.tum.cit.aet.artemis.programming.service.ProgrammingSubmissionService programmingSubmissionService;
 
     private User student1;
 
@@ -169,6 +198,674 @@ class SubmissionServiceTest extends AbstractSpringIntegrationIndependentBatchTes
         // Remove student1 from the course so they have no enrollment — access should be denied
         userUtilService.unenrollUserFromCourse(student1, examCourse);
         assertThatExceptionOfType(AccessForbiddenException.class).isThrownBy(() -> submissionService.checkSubmissionAllowanceElseThrow(examTextExercise, null, student1));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void assessmentQueueTeamsRejectsStudents() throws Exception {
+        request.get("/api/exercise/exercises/" + examTextExercise.getId() + "/assessment-queue-teams", HttpStatus.FORBIDDEN, String.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void shouldRejectTeamQueueWhenExerciseBelongsToExam() throws Exception {
+        examTextExercise.setMode(ExerciseMode.TEAM);
+        exerciseRepository.save(examTextExercise);
+        request.get("/api/exercise/exercises/" + examTextExercise.getId() + "/assessment-queue-teams", HttpStatus.BAD_REQUEST, String.class);
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = AssessmentType.class, names = { "MANUAL", "SEMI_AUTOMATIC" })
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void teamQueueExistingAssessmentIgnoresAthenaResults(AssessmentType assessmentType) throws Exception {
+        var exercise = teamExercise(ExerciseType.TEXT);
+        var submission = teamSubmission(exercise, tutor1, "own");
+        var athenaResult = new Result();
+        athenaResult.setSubmission(submission);
+        athenaResult.setExerciseId(exercise.getId());
+        athenaResult.setCorrectionRound(0);
+        athenaResult.setAssessmentType(AssessmentType.AUTOMATIC_ATHENA);
+        resultRepository.save(athenaResult);
+        assertThat(studentParticipationRepository.findTeamAssessmentQueueParticipations(exercise.getId(), tutor1.getId(), 0)).hasSize(1)
+                .allSatisfy(entry -> assertThat(entry.submissionId()).isNull());
+        var manualResult = new Result();
+        manualResult.setSubmission(submission);
+        manualResult.setExerciseId(exercise.getId());
+        manualResult.setCorrectionRound(0);
+        manualResult.setAssessmentType(assessmentType);
+        manualResult.setAssessor(tutor1);
+        manualResult.setScore(75.0);
+        manualResult.setRated(true);
+        resultRepository.save(manualResult);
+        var newerSubmission = participationUtilService.addSubmission((StudentParticipation) submission.getParticipation(), new TextSubmission().text("Later answer"));
+        var newerAthenaResult = new Result();
+        newerAthenaResult.setSubmission(newerSubmission);
+        newerAthenaResult.setExerciseId(exercise.getId());
+        newerAthenaResult.setCorrectionRound(0);
+        newerAthenaResult.setAssessmentType(AssessmentType.AUTOMATIC_ATHENA);
+        resultRepository.save(newerAthenaResult);
+        assertThat(studentParticipationRepository.findTeamAssessmentQueueParticipations(exercise.getId(), tutor1.getId(), 0)).extracting(entry -> entry.submissionId())
+                .containsExactly(submission.getId());
+        var queue = request.getList("/api/exercise/exercises/" + exercise.getId() + "/assessment-queue-teams", HttpStatus.OK, AssessmentQueueTeamDTO.class);
+        assertThat(queue).hasSize(1);
+        var displayed = queue.getFirst().submission().results().stream().filter(result -> result.assessmentType() == assessmentType).findFirst().orElseThrow();
+        assertThat(displayed.correctionRound()).isZero();
+        assertThat(displayed.completionDate()).isNull();
+        assertThat(displayed.score()).isEqualTo(75.0);
+        assertThat(displayed.rated()).isTrue();
+        assertThat(displayed.assessor().id()).isEqualTo(tutor1.getId());
+        assertThat(displayed.assessor().name()).isEqualTo(tutor1.getName());
+        assertThat(queue.getFirst().submission().id()).isEqualTo(submission.getId());
+    }
+
+    /** The queue orders assessed work by submission date, using IDs only to break date ties. */
+    @ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(booleans = { false, true })
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void teamQueueSelectsLatestAssessedSubmissionByDate(boolean sameDate) {
+        var exercise = teamExercise(ExerciseType.TEXT);
+        var first = teamSubmission(exercise, tutor1, "own");
+        var second = participationUtilService.addSubmission((StudentParticipation) first.getParticipation(), new TextSubmission().text("Other answer"));
+        second.setSubmissionDate(sameDate ? first.getSubmissionDate() : first.getSubmissionDate().minusDays(1));
+        submissionRepository.save(second);
+        for (var submission : List.of(first, second)) {
+            var result = new Result();
+            result.setSubmission(submission);
+            result.setExerciseId(exercise.getId());
+            result.setCorrectionRound(0);
+            result.setAssessmentType(AssessmentType.MANUAL);
+            resultRepository.save(result);
+        }
+        assertThat(second.getId()).isGreaterThan(first.getId());
+        assertThat(studentParticipationRepository.findTeamAssessmentQueueParticipations(exercise.getId(), tutor1.getId(), 0)).extracting(entry -> entry.submissionId())
+                .containsExactly(sameDate ? second.getId() : first.getId());
+    }
+
+    /** Opening a completed team result cannot claim it, including when the tutor has no lock capacity. */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void completedTeamTextResultRemainsUnassignedAtLockLimit() {
+        var exercise = teamExercise(ExerciseType.TEXT);
+        var completedSubmission = teamSubmission(exercise, tutor1, "own");
+        for (int i = 0; i < MAX_NUMBER_OF_LOCKED_SUBMISSIONS_PER_TUTOR; i++) {
+            var draft = participationUtilService.addSubmission((StudentParticipation) completedSubmission.getParticipation(), new TextSubmission().text("Draft"));
+            var result = new Result();
+            result.setSubmission(draft);
+            result.setExerciseId(exercise.getId());
+            result.setAssessmentType(AssessmentType.MANUAL);
+            result.setCorrectionRound(0);
+            result.setAssessor(tutor1);
+            resultRepository.save(result);
+        }
+        var completed = new Result();
+        completed.setSubmission(completedSubmission);
+        completed.setExerciseId(exercise.getId());
+        completed.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
+        completed.setCorrectionRound(0);
+        completed.setCompletionDate(ZonedDateTime.now());
+        resultRepository.save(completed);
+        var locked = submissionService.lockSubmission(submissionRepository.findOneWithEagerResultAndFeedbackAndAssessmentNote(completedSubmission.getId()), 0);
+        assertThat(locked.getId()).isEqualTo(completed.getId());
+        var saved = resultRepository.findByIdWithEagerFeedbacksAndAssessor(completed.getId()).orElseThrow();
+        assertThat(saved.getAssessor()).isNull();
+        assertThat(saved.getAssessmentType()).isEqualTo(AssessmentType.SEMI_AUTOMATIC);
+        assertThat(saved.getCompletionDate()).isNotNull();
+        assertThat(submissionService.getLockedSubmissions(exercise.getCourseViaExerciseGroupOrCourseMemberElseThrow().getId()))
+                .hasSize(Math.toIntExact(MAX_NUMBER_OF_LOCKED_SUBMISSIONS_PER_TUTOR));
+    }
+
+    @ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(booleans = { false, true })
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void inaccessibleTeamDraftsDoNotConsumeTutorLockAllowance(boolean instructor) throws Exception {
+        var exercise = teamExercise(ExerciseType.TEXT);
+        var first = teamSubmission(exercise, tutor1, "own");
+        var participation = (StudentParticipation) first.getParticipation();
+        var assessor = instructor ? userUtilService.getUserByLogin(TEST_PREFIX + "instructor1") : tutor1;
+        for (int i = 0; i < MAX_NUMBER_OF_LOCKED_SUBMISSIONS_PER_TUTOR; i++) {
+            var submission = i == 0 ? first : participationUtilService.addSubmission(participation, new TextSubmission().text("Draft"));
+            var result = new Result();
+            result.setSubmission(submission);
+            result.setExerciseId(exercise.getId());
+            result.setAssessmentType(AssessmentType.MANUAL);
+            result.setCorrectionRound(0);
+            result.setAssessor(assessor);
+            resultRepository.save(result);
+        }
+        userUtilService.changeUser(assessor.getLogin());
+        var courseId = exercise.getCourseViaExerciseGroupOrCourseMemberElseThrow().getId();
+        assertThat(submissionService.getLockedSubmissions(courseId)).hasSize(Math.toIntExact(MAX_NUMBER_OF_LOCKED_SUBMISSIONS_PER_TUTOR));
+        userUtilService.changeUser(TEST_PREFIX + "instructor1");
+        var team = teamRepository.findWithStudentsByIdElseThrow(participation.getTeam().orElseThrow().getId());
+        team.setOwner(tutor2);
+        request.put("/api/exercise/exercises/" + exercise.getId() + "/teams/" + team.getId(), de.tum.cit.aet.artemis.exercise.dto.TeamInputDTO.of(team), HttpStatus.OK);
+        userUtilService.changeUser(assessor.getLogin());
+        int expected = instructor ? Math.toIntExact(MAX_NUMBER_OF_LOCKED_SUBMISSIONS_PER_TUTOR) : 0;
+        assertThat(submissionService.getLockedSubmissions(courseId)).hasSize(expected);
+        assertThat(submissionRepository.countLockedSubmissionsByUserIdAndCourseId(assessor.getId(), courseId, instructor)).isEqualTo(expected);
+        assertThat(submissionRepository.findOneWithEagerResultAndFeedbackAndAssessmentNote(first.getId()).getLatestResult().getAssessor()).isEqualTo(assessor);
+        var own = teamSubmission(exercise, tutor1, "anotherown");
+        request.get(assessmentStartUrl(ExerciseType.TEXT, own.getId()), instructor ? HttpStatus.BAD_REQUEST : HttpStatus.OK, String.class);
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = ExerciseType.class, names = { "TEXT", "MODELING", "FILE_UPLOAD", "PROGRAMMING" })
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void formerTeamTutorCanCancelTheirDraft(ExerciseType type) throws Exception {
+        var exercise = teamExercise(type);
+        var submission = teamSubmission(exercise, tutor1, "own");
+        request.get(assessmentStartUrl(type, submission.getId()), HttpStatus.OK, String.class);
+        var result = submissionRepository.findOneWithEagerResultAndFeedbackAndAssessmentNote(submission.getId()).getResultForCorrectionRound(0);
+        var team = teamRepository.findWithStudentsByIdElseThrow(((StudentParticipation) submission.getParticipation()).getTeam().orElseThrow().getId());
+        team.setOwner(tutor2);
+        userUtilService.changeUser(TEST_PREFIX + "instructor1");
+        request.put("/api/exercise/exercises/" + exercise.getId() + "/teams/" + team.getId(), de.tum.cit.aet.artemis.exercise.dto.TeamInputDTO.of(team), HttpStatus.OK);
+        var cancelUrl = switch (type) {
+            case TEXT -> "/api/text/participations/" + submission.getParticipation().getId() + "/submissions/" + submission.getId() + "/cancel-assessment";
+            case MODELING -> "/api/modeling/modeling-submissions/" + submission.getId() + "/cancel-assessment";
+            case FILE_UPLOAD -> "/api/fileupload/file-upload-submissions/" + submission.getId() + "/cancel-assessment";
+            case PROGRAMMING -> "/api/programming/programming-submissions/" + submission.getId() + "/cancel-assessment";
+            default -> throw new IllegalArgumentException();
+        };
+        cancelUrl += "?resultId=" + result.getId();
+        userUtilService.changeUser(TEST_PREFIX + "tutor2");
+        if (type == ExerciseType.TEXT) {
+            request.post(cancelUrl, null, HttpStatus.FORBIDDEN);
+        }
+        else {
+            request.put(cancelUrl, null, HttpStatus.FORBIDDEN);
+        }
+        assertThat(resultRepository.findById(result.getId())).isPresent();
+        userUtilService.changeUser(TEST_PREFIX + "tutor1");
+        if (type == ExerciseType.TEXT) {
+            request.post(cancelUrl, null, HttpStatus.OK);
+        }
+        else {
+            request.put(cancelUrl, null, HttpStatus.OK);
+        }
+        assertThat(resultRepository.findById(result.getId())).isEmpty();
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = ExerciseType.class, names = { "TEXT", "MODELING", "FILE_UPLOAD", "PROGRAMMING" })
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void teamQueueAndDirectStartsRespectOwnership(ExerciseType type) throws Exception {
+        var exercise = teamExercise(type);
+        var own = teamSubmission(exercise, tutor1, "own");
+        var other = teamSubmission(exercise, tutor2, "other");
+        var queueUrl = "/api/exercise/exercises/" + exercise.getId() + "/assessment-queue-teams";
+        assertThat(request.getList(queueUrl, HttpStatus.OK, AssessmentQueueTeamDTO.class)).extracting(AssessmentQueueTeamDTO::shortName).containsExactly("own");
+        request.get(assessmentStartUrl(type, other.getId()), HttpStatus.FORBIDDEN, String.class);
+        request.get(assessmentStartUrl(type, own.getId()), HttpStatus.OK, String.class);
+        userUtilService.changeUser(TEST_PREFIX + "instructor1");
+        assertThat(request.getList(queueUrl, HttpStatus.OK, AssessmentQueueTeamDTO.class)).extracting(AssessmentQueueTeamDTO::shortName).containsExactlyInAnyOrder("own", "other");
+        var ownResult = submissionRepository.findOneWithEagerResultAndFeedbackAndAssessmentNote(own.getId()).getLatestResult();
+        request.get(assessmentStartUrl(type, own.getId()), HttpStatus.OK, String.class);
+        assertThat(resultRepository.findByIdWithEagerFeedbacksAndAssessor(ownResult.getId()).orElseThrow().getAssessor()).isEqualTo(tutor1);
+        request.get(assessmentStartUrl(type, other.getId()), HttpStatus.OK, String.class);
+    }
+
+    /** New assessments require a submitted team snapshot; existing drafts remain reopenable. */
+    @ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(booleans = { false, true })
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void unsubmittedProgrammingTeamSubmissionOnlyReopensExistingAssessment(boolean existingDraft) throws Exception {
+        var exercise = teamExercise(ExerciseType.PROGRAMMING);
+        var submission = teamSubmission(exercise, tutor1, "own");
+        var url = assessmentStartUrl(ExerciseType.PROGRAMMING, submission.getId());
+        if (existingDraft) {
+            request.get(url, HttpStatus.OK, String.class);
+        }
+        submission = submissionRepository.findOneWithEagerResultAndFeedbackAndAssessmentNote(submission.getId());
+        var before = submission.getManualResults();
+        var resultIds = before.stream().map(Result::getId).toList();
+        submission.setSubmitted(false);
+        submissionRepository.save(submission);
+        request.get(url, existingDraft ? HttpStatus.OK : HttpStatus.FORBIDDEN, String.class);
+        assertThat(submissionRepository.findOneWithEagerResultAndFeedbackAndAssessmentNote(submission.getId()).getManualResults()).extracting(Result::getId)
+                .containsExactlyInAnyOrderElementsOf(resultIds);
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = ExerciseType.class, names = { "TEXT", "MODELING", "FILE_UPLOAD", "PROGRAMMING" })
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void teamQueueListsAllEligibleSubmissionsAndDraftsWithoutClaiming(ExerciseType type) throws Exception {
+        var exercise = teamExercise(type);
+        var own = teamSubmission(exercise, tutor1, "own");
+        var anotherOwn = teamSubmission(exercise, tutor1, "anotherown");
+        var other = teamSubmission(exercise, tutor2, "other");
+        var url = "/api/exercise/exercises/" + exercise.getId() + "/assessment-queue-teams";
+        request.get(url + "?correction-round=-1", HttpStatus.BAD_REQUEST, String.class);
+        exercise.setDueDate(ZonedDateTime.now().plusDays(1));
+        exerciseRepository.save(exercise);
+        assertThat(request.getList(url, HttpStatus.OK, AssessmentQueueTeamDTO.class)).isEmpty();
+        exercise.setDueDate(ZonedDateTime.now().minusDays(1));
+        exerciseRepository.save(exercise);
+        var queue = request.getList(url, HttpStatus.OK, AssessmentQueueTeamDTO.class);
+        assertThat(queue).extracting(entry -> entry.submission().id()).containsExactlyInAnyOrder(own.getId(), anotherOwn.getId());
+        assertThat(queue).allSatisfy(entry -> {
+            assertThat(entry.submission().text()).isNull();
+            assertThat(entry.submission().model()).isNull();
+        });
+        userUtilService.changeUser(TEST_PREFIX + "instructor1");
+        assertThat(request.getList(url, HttpStatus.OK, AssessmentQueueTeamDTO.class)).extracting(entry -> entry.submission().id()).containsExactlyInAnyOrder(own.getId(),
+                anotherOwn.getId(), other.getId());
+        for (var submission : List.of(own, anotherOwn, other)) {
+            assertThat(submissionRepository.findOneWithEagerResultAndFeedbackAndAssessmentNote(submission.getId()).getManualResults()).isEmpty();
+        }
+        userUtilService.changeUser(TEST_PREFIX + "tutor1");
+        request.get(assessmentStartUrl(type, anotherOwn.getId()), HttpStatus.OK, String.class);
+        queue = request.getList(url, HttpStatus.OK, AssessmentQueueTeamDTO.class);
+        assertThat(queue).hasSize(2);
+        var draft = queue.stream().filter(entry -> entry.shortName().equals("anotherown")).findFirst().orElseThrow().submission();
+        assertThat(draft.results()).anySatisfy(result -> assertThat(result.assessor()).isNotNull());
+        exercise.setDueDate(ZonedDateTime.now().plusDays(1));
+        exerciseRepository.save(exercise);
+        assertThat(request.getList(url, HttpStatus.OK, AssessmentQueueTeamDTO.class)).extracting(AssessmentQueueTeamDTO::shortName).containsExactly("anotherown");
+        exercise.setDueDate(ZonedDateTime.now().minusDays(1));
+        exerciseRepository.save(exercise);
+        userUtilService.changeUser(TEST_PREFIX + "instructor1");
+        assertThat(request.getList(url, HttpStatus.OK, AssessmentQueueTeamDTO.class)).hasSize(3);
+        assertThat(resultRepository.findByIdWithEagerFeedbacksAndAssessor(draft.results().stream().filter(result -> result.assessor() != null).findFirst().orElseThrow().id())
+                .orElseThrow().getAssessor()).isEqualTo(tutor1);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void teamQueueIncludesLateCandidatesWhileRandomSelectionPrefersOnTime() throws Exception {
+        var exercise = teamExercise(ExerciseType.TEXT);
+        var onTime = teamSubmission(exercise, tutor1, "own");
+        var late = teamSubmission(exercise, tutor1, "anotherown");
+        late.setSubmissionDate(exercise.getDueDate().plusHours(1));
+        submissionRepository.save(late);
+        assertThat(request.getList("/api/exercise/exercises/" + exercise.getId() + "/assessment-queue-teams", HttpStatus.OK, AssessmentQueueTeamDTO.class))
+                .extracting(entry -> entry.submission().id()).containsExactlyInAnyOrder(onTime.getId(), late.getId());
+        assertThat(submissionService.getRandomAssessableSubmission(exercise, false, 0)).get().extracting(Submission::getId).isEqualTo(onTime.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void teamQueueUsesEachTeamsEffectiveDeadline() throws Exception {
+        var exercise = teamExercise(ExerciseType.TEXT);
+        exercise.setDueDate(ZonedDateTime.now().plusDays(1));
+        exerciseRepository.save(exercise);
+        var early = teamSubmission(exercise, tutor1, "own");
+        var regular = teamSubmission(exercise, tutor1, "anotherown");
+        var participation = (StudentParticipation) early.getParticipation();
+        participation.setIndividualDueDate(ZonedDateTime.now().minusDays(1));
+        studentParticipationRepository.save(participation);
+        var url = "/api/exercise/exercises/" + exercise.getId() + "/assessment-queue-teams";
+        assertThat(request.getList(url, HttpStatus.OK, AssessmentQueueTeamDTO.class)).extracting(entry -> entry.submission().id()).containsExactly(early.getId());
+        exercise.setDueDate(null);
+        exerciseRepository.save(exercise);
+        assertThat(request.getList(url, HttpStatus.OK, AssessmentQueueTeamDTO.class)).extracting(entry -> entry.submission().id()).containsExactlyInAnyOrder(early.getId(),
+                regular.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void automaticProgrammingTeamQueueHasNoNewCandidates() throws Exception {
+        var exercise = (ProgrammingExercise) teamExercise(ExerciseType.PROGRAMMING);
+        teamSubmission(exercise, tutor1, "own");
+        exercise.setAssessmentType(AssessmentType.AUTOMATIC);
+        exerciseRepository.save(exercise);
+        assertThat(request.getList("/api/exercise/exercises/" + exercise.getId() + "/assessment-queue-teams", HttpStatus.OK, AssessmentQueueTeamDTO.class)).isEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void teamExercisePracticeDraftCanBeReopenedOnlyByItsAssessor() throws Exception {
+        var exercise = teamExercise(ExerciseType.TEXT);
+        var participation = participationUtilService.createAndSavePracticeParticipationForExercise(exercise, TEST_PREFIX + "student1");
+        var submission = participationUtilService.addSubmission(participation, new TextSubmission().text("Practice answer"));
+        var draft = new Result();
+        draft.setSubmission(submission);
+        draft.setExerciseId(exercise.getId());
+        draft.setAssessmentType(AssessmentType.MANUAL);
+        draft.setAssessor(tutor1);
+        draft.setCorrectionRound(0);
+        draft = resultRepository.save(draft);
+        var courseId = exercise.getCourseViaExerciseGroupOrCourseMemberElseThrow().getId();
+        assertThat(submissionService.getLockedSubmissions(courseId)).extracting(Submission::getId).contains(submission.getId());
+        assertThat(submissionRepository.countLockedSubmissionsByUserIdAndCourseId(tutor1.getId(), courseId, false)).isEqualTo(1);
+        var url = assessmentStartUrl(ExerciseType.TEXT, submission.getId());
+        request.get(url, HttpStatus.OK, String.class);
+        assertThat(resultRepository.findByIdWithEagerFeedbacksAndAssessor(draft.getId()).orElseThrow().getAssessor()).isEqualTo(tutor1);
+        userUtilService.changeUser(TEST_PREFIX + "tutor2");
+        request.get(url, HttpStatus.LOCKED, String.class);
+        assertThat(resultRepository.findByIdWithEagerFeedbacksAndAssessor(draft.getId()).orElseThrow().getAssessor()).isEqualTo(tutor1);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void programmingTeamAssessmentKeepsSelectedCommit() throws Exception {
+        var exercise = teamExercise(ExerciseType.PROGRAMMING);
+        var selected = (ProgrammingSubmission) teamSubmission(exercise, tutor1, "own");
+        selected.setCommitHash("1111111111111111111111111111111111111111");
+        submissionRepository.save(selected);
+        var newer = new ProgrammingSubmission();
+        newer.setCommitHash("2222222222222222222222222222222222222222");
+        participationUtilService.addSubmission((StudentParticipation) selected.getParticipation(), newer);
+        var opened = request.get(assessmentStartUrl(ExerciseType.PROGRAMMING, selected.getId()), HttpStatus.OK,
+                de.tum.cit.aet.artemis.programming.dto.ProgrammingSubmissionForTutorAssessmentDTO.class);
+        assertThat(opened.id()).isEqualTo(selected.getId());
+        assertThat(opened.commitHash()).isEqualTo(selected.getCommitHash());
+        assertThat(submissionRepository.findOneWithEagerResultAndFeedbackAndAssessmentNote(newer.getId()).getManualResults()).isEmpty();
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = ExerciseType.class, names = { "MODELING", "FILE_UPLOAD", "PROGRAMMING" })
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void teamlessPracticeDraftRetainsAssessorWhenOpenedByAnotherTutor(ExerciseType type) throws Exception {
+        var exercise = teamExercise(type);
+        var submission = teamSubmission(exercise, tutor1, "own");
+        StudentParticipation participation = type == ExerciseType.PROGRAMMING ? new de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation()
+                : new StudentParticipation();
+        participation.setExercise(exercise);
+        participation.setInitializationState(submission.getParticipation().getInitializationState());
+        participation.setParticipant(userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
+        participation.setTestRun(true);
+        participation = studentParticipationRepository.save(participation);
+        submission.setParticipation(participation);
+        submissionRepository.save(submission);
+        var draft = new Result();
+        draft.setSubmission(submission);
+        draft.setExerciseId(exercise.getId());
+        draft.setAssessmentType(type == ExerciseType.PROGRAMMING ? AssessmentType.SEMI_AUTOMATIC : AssessmentType.MANUAL);
+        draft.setAssessor(tutor1);
+        draft.setCorrectionRound(0);
+        draft = resultRepository.save(draft);
+        request.get(assessmentStartUrl(type, submission.getId()), HttpStatus.OK, String.class);
+        userUtilService.changeUser(TEST_PREFIX + "tutor2");
+        request.get(assessmentStartUrl(type, submission.getId()), HttpStatus.OK, String.class);
+        var saved = resultRepository.findByIdWithEagerFeedbacksAndAssessor(draft.getId()).orElseThrow();
+        assertThat(saved.getAssessor()).isEqualTo(tutor1);
+        completeTeamAssessment(type, submission, draft.getId(), HttpStatus.FORBIDDEN);
+        String cancelUrl = switch (type) {
+            case MODELING -> "/api/modeling/modeling-submissions/";
+            case FILE_UPLOAD -> "/api/fileupload/file-upload-submissions/";
+            case PROGRAMMING -> "/api/programming/programming-submissions/";
+            default -> throw new IllegalArgumentException();
+        };
+        request.put(cancelUrl + submission.getId() + "/cancel-assessment", null, HttpStatus.FORBIDDEN);
+        assertThat(submissionRepository.findOneWithEagerResultAndFeedbackAndAssessmentNote(submission.getId()).getManualResults()).hasSize(1);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void programmingTeamDraftNoteSurvivesReopenAndSave() throws Exception {
+        var exercise = teamExercise(ExerciseType.PROGRAMMING);
+        var submission = teamSubmission(exercise, tutor1, "own");
+        var opened = request.get(assessmentStartUrl(ExerciseType.PROGRAMMING, submission.getId()), HttpStatus.OK,
+                de.tum.cit.aet.artemis.programming.dto.ProgrammingSubmissionForTutorAssessmentDTO.class);
+        var resultId = opened.results().getFirst().id();
+        var saveUrl = "/api/programming/participations/" + opened.participation().id() + "/manual-results";
+        request.put(saveUrl,
+                Map.of("id", resultId, "rated", true, "score", 0.0, "successful", false, "feedbacks", List.of(), "assessmentNote", Map.of("note", "Keep this saved note")),
+                HttpStatus.OK);
+        var saved = resultRepository.findByIdWithEagerSubmissionAndFeedbackAndAssessmentNoteElseThrow(resultId);
+        var noteId = saved.getAssessmentNote().getId();
+        assertThat(opened.id()).isEqualTo(submission.getId());
+        var reopened = request.get(assessmentStartUrl(ExerciseType.PROGRAMMING, submission.getId()), HttpStatus.OK,
+                de.tum.cit.aet.artemis.programming.dto.ProgrammingSubmissionForTutorAssessmentDTO.class);
+        var result = reopened.results().getFirst();
+        assertThat(result.assessmentNote()).isNotNull();
+        assertThat(result.assessmentNote().note()).isEqualTo("Keep this saved note");
+        request.put(saveUrl, result, HttpStatus.OK);
+        var resaved = resultRepository.findByIdWithEagerSubmissionAndFeedbackAndAssessmentNoteElseThrow(resultId);
+        assertThat(resaved.getAssessmentNote().getId()).isEqualTo(noteId);
+        assertThat(resaved.getAssessmentNote().getNote()).isEqualTo("Keep this saved note");
+        assertThat(resaved.getAssessor()).isEqualTo(tutor1);
+    }
+
+    /** Unsubmitted versions cannot hide or change the selected submitted version. */
+    @ParameterizedTest
+    @EnumSource(value = ExerciseType.class, names = { "TEXT", "MODELING", "FILE_UPLOAD", "PROGRAMMING" })
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void teamQueueIgnoresNewerUnsubmittedVersions(ExerciseType type) throws Exception {
+        var exercise = teamExercise(type);
+        var submitted = teamSubmission(exercise, tutor1, "own");
+        Submission draft = switch (type) {
+            case TEXT -> new TextSubmission();
+            case MODELING -> new ModelingSubmission();
+            case FILE_UPLOAD -> new FileUploadSubmission();
+            case PROGRAMMING -> new ProgrammingSubmission();
+            default -> throw new IllegalArgumentException();
+        };
+        draft = participationUtilService.addSubmission((StudentParticipation) submitted.getParticipation(), draft);
+        draft.setSubmitted(false);
+        var url = "/api/exercise/exercises/" + exercise.getId() + "/assessment-queue-teams";
+        for (var date : List.of(submitted.getSubmissionDate().plusHours(1), submitted.getSubmissionDate().minusHours(1))) {
+            draft.setSubmissionDate(date);
+            submissionRepository.save(draft);
+            assertThat(request.getList(url, HttpStatus.OK, AssessmentQueueTeamDTO.class)).extracting(entry -> entry.submission().id()).containsExactly(submitted.getId());
+        }
+        draft.setSubmissionDate(null);
+        submissionRepository.save(draft);
+        assertThat(request.getList(url, HttpStatus.OK, AssessmentQueueTeamDTO.class)).extracting(entry -> entry.submission().id()).containsExactly(submitted.getId());
+    }
+
+    /** Programming queue candidates prefer dates, using IDs for ties and when all dates are missing. */
+    @ParameterizedTest
+    @org.junit.jupiter.params.provider.CsvSource({ "false,false,false", "true,false,false", "false,true,false", "false,true,true" })
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void programmingTeamQueueSelectsLatestCandidateByDate(boolean sameDate, boolean nullDate, boolean allUndated) throws Exception {
+        var exercise = teamExercise(ExerciseType.PROGRAMMING);
+        var first = teamSubmission(exercise, tutor1, "own");
+        var latestDate = first.getSubmissionDate();
+        if (allUndated) {
+            first.setSubmissionDate(null);
+            submissionRepository.save(first);
+        }
+        var second = participationUtilService.addSubmission((StudentParticipation) first.getParticipation(), new ProgrammingSubmission());
+        second.setSubmitted(true);
+        second.setSubmissionDate(nullDate ? null : sameDate ? first.getSubmissionDate() : first.getSubmissionDate().minusDays(1));
+        submissionRepository.save(second);
+        if (nullDate && !allUndated) {
+            var older = participationUtilService.addSubmission((StudentParticipation) first.getParticipation(), new ProgrammingSubmission());
+            older.setSubmitted(true);
+            older.setSubmissionDate(latestDate.minusDays(1));
+            submissionRepository.save(older);
+            assertThat(older.getId()).isGreaterThan(second.getId());
+        }
+        assertThat(second.getId()).isGreaterThan(first.getId());
+        assertThat(studentParticipationRepository.findCourseTeamQueueCandidates(exercise.getId(), ZonedDateTime.now(), tutor1.getId())).extracting(candidate -> candidate.id())
+                .containsExactly(sameDate || allUndated ? second.getId() : first.getId());
+        var selectedId = sameDate || allUndated ? second.getId() : first.getId();
+        var queueUrl = "/api/exercise/exercises/" + exercise.getId() + "/assessment-queue-teams";
+        assertThat(request.getList(queueUrl, HttpStatus.OK, AssessmentQueueTeamDTO.class)).extracting(entry -> entry.submission().id()).containsExactly(selectedId);
+        request.get(assessmentStartUrl(ExerciseType.PROGRAMMING, selectedId), HttpStatus.OK, String.class);
+        var queue = request.getList(queueUrl, HttpStatus.OK, AssessmentQueueTeamDTO.class);
+        assertThat(queue).extracting(entry -> entry.submission().id()).containsExactly(selectedId);
+        assertThat(queue.getFirst().submission().results()).anySatisfy(result -> {
+            assertThat(result.assessmentType()).isEqualTo(AssessmentType.SEMI_AUTOMATIC);
+            assertThat(result.assessor().id()).isEqualTo(tutor1.getId());
+            assertThat(result.completionDate()).isNull();
+        });
+    }
+
+    /** Starting from a stale queue cannot bypass an extended team or exercise deadline. */
+    @ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(booleans = { false, true })
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void programmingTeamStartRechecksDeadlines(boolean individualDeadline) throws Exception {
+        var exercise = teamExercise(ExerciseType.PROGRAMMING);
+        var submission = teamSubmission(exercise, tutor1, "own");
+        if (individualDeadline) {
+            var participation = (StudentParticipation) submission.getParticipation();
+            participation.setIndividualDueDate(ZonedDateTime.now().plusDays(1));
+            studentParticipationRepository.save(participation);
+        }
+        else {
+            exercise.setDueDate(ZonedDateTime.now().plusDays(1));
+            exerciseRepository.save(exercise);
+        }
+        request.get(assessmentStartUrl(ExerciseType.PROGRAMMING, submission.getId()), HttpStatus.FORBIDDEN, String.class);
+        assertThat(submissionRepository.findOneWithEagerResultAndFeedbackAndAssessmentNote(submission.getId()).getManualResults()).isEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void programmingReclaimsUnassignedManualDraft() throws Exception {
+        var exercise = teamExercise(ExerciseType.PROGRAMMING);
+        var original = teamSubmission(exercise, tutor1, "own");
+        var opened = request.get(assessmentStartUrl(ExerciseType.PROGRAMMING, original.getId()), HttpStatus.OK,
+                de.tum.cit.aet.artemis.programming.dto.ProgrammingSubmissionForTutorAssessmentDTO.class);
+        var resultId = opened.results().getFirst().id();
+        var draft = resultRepository.findByIdWithEagerSubmissionAndFeedbackAndAssessmentNoteElseThrow(resultId);
+        draft.setAssessor(null);
+        var note = new de.tum.cit.aet.artemis.assessment.domain.AssessmentNote();
+        note.setNote("Unassigned saved draft");
+        draft.setAssessmentNote(note);
+        resultRepository.save(draft);
+        var reclaimed = request.get(assessmentStartUrl(ExerciseType.PROGRAMMING, original.getId()), HttpStatus.OK,
+                de.tum.cit.aet.artemis.programming.dto.ProgrammingSubmissionForTutorAssessmentDTO.class);
+        assertThat(reclaimed.results()).extracting(result -> result.id()).contains(resultId);
+        var saved = resultRepository.findByIdWithEagerSubmissionAndFeedbackAndAssessmentNoteElseThrow(resultId);
+        assertThat(saved.getAssessor()).isEqualTo(tutor1);
+        assertThat(saved.getAssessmentNote().getNote()).isEqualTo("Unassigned saved draft");
+        assertThat(submissionRepository.findOneWithEagerResultAndFeedbackAndAssessmentNote(opened.id()).getManualResults()).hasSize(1);
+    }
+
+    @ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(booleans = { false, true })
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void programmingRecoversUntypedDraftInRequestedRound(boolean completed) throws Exception {
+        var exercise = teamExercise(ExerciseType.PROGRAMMING);
+        var original = teamSubmission(exercise, tutor1, "own");
+        var opened = request.get(assessmentStartUrl(ExerciseType.PROGRAMMING, original.getId()), HttpStatus.OK,
+                de.tum.cit.aet.artemis.programming.dto.ProgrammingSubmissionForTutorAssessmentDTO.class);
+        var resultId = opened.results().getFirst().id();
+        var result = resultRepository.findByIdWithEagerSubmissionAndFeedbackAndAssessmentNoteElseThrow(resultId);
+        result.setAssessor(null);
+        result.setAssessmentType(completed ? AssessmentType.SEMI_AUTOMATIC : null);
+        result.setCompletionDate(completed ? ZonedDateTime.now() : null);
+        resultRepository.save(result);
+        var locked = programmingSubmissionService
+                .lockSubmission(submissionRepository.findOneWithEagerResultAndFeedbackAndAssessmentNote(completed ? original.getId() : opened.id()), 0);
+        if (completed) {
+            assertThat(locked.getId()).isEqualTo(resultId);
+            var savedSubmission = submissionRepository.findOneWithEagerResultAndFeedbackAndAssessmentNote(opened.id());
+            assertThat(savedSubmission.getManualResults()).hasSize(1);
+            assertThat(savedSubmission.getResultForCorrectionRound(0).getId()).isEqualTo(resultId);
+        }
+        else {
+            assertThat(locked.getId()).isEqualTo(resultId);
+            assertThat(locked.getCorrectionRound()).isZero();
+            assertThat(locked.getAssessmentType()).isEqualTo(AssessmentType.SEMI_AUTOMATIC);
+            assertThat(locked.getAssessor()).isEqualTo(tutor1);
+        }
+        var reopened = request.get(assessmentStartUrl(ExerciseType.PROGRAMMING, original.getId()), HttpStatus.OK,
+                de.tum.cit.aet.artemis.programming.dto.ProgrammingSubmissionForTutorAssessmentDTO.class);
+        assertThat(reopened.results()).singleElement().satisfies(returned -> {
+            assertThat(returned.id()).isEqualTo(resultId);
+            assertThat(returned.correctionRound()).isZero();
+        });
+        assertThat(submissionRepository.findOneWithEagerResultAndFeedbackAndAssessmentNote(original.getId()).getManualResults()).hasSize(1);
+        assertThat(resultRepository.findByIdWithEagerSubmissionAndFeedbackAndAssessmentNoteElseThrow(resultId).getAssessor()).isEqualTo(completed ? null : tutor1);
+    }
+
+    /** Direct service callers enforce the same team deadlines as dashboard links. */
+    @ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(booleans = { false, true })
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void programmingTeamLockServiceRechecksDeadline(boolean individualDeadline) {
+        var exercise = teamExercise(ExerciseType.PROGRAMMING);
+        var submission = teamSubmission(exercise, tutor1, "own");
+        if (individualDeadline) {
+            var participation = (StudentParticipation) submission.getParticipation();
+            participation.setIndividualDueDate(ZonedDateTime.now().plusDays(1));
+            studentParticipationRepository.save(participation);
+        }
+        else {
+            exercise.setDueDate(ZonedDateTime.now().plusDays(1));
+            exerciseRepository.save(exercise);
+        }
+        var refreshed = submissionRepository.findOneWithEagerResultAndFeedbackAndAssessmentNote(submission.getId());
+        assertThatExceptionOfType(AccessForbiddenException.class).isThrownBy(() -> programmingSubmissionService.lockSubmission(refreshed, 0));
+        assertThat(submissionRepository.findOneWithEagerResultAndFeedbackAndAssessmentNote(submission.getId()).getManualResults()).isEmpty();
+    }
+
+    /** Creates a released team exercise with a passed submission deadline. */
+    private Exercise teamExercise(ExerciseType type) {
+        Exercise exercise = switch (type) {
+            case TEXT -> examTextExercise;
+            case MODELING -> examModelingExercise;
+            case FILE_UPLOAD -> examFileUploadExercise;
+            case PROGRAMMING -> examProgrammingExercise;
+            default -> throw new IllegalArgumentException("Unsupported assessment type: " + type);
+        };
+        exercise.setExerciseGroup(null);
+        exercise.setCourse(examCourse);
+        exercise.setMode(ExerciseMode.TEAM);
+        exercise.setReleaseDate(ZonedDateTime.now().minusDays(3));
+        exercise.setDueDate(ZonedDateTime.now().minusDays(1));
+        exercise.setAssessmentDueDate(ZonedDateTime.now().plusDays(1));
+        exercise.setMaxPoints(10.0);
+        return exerciseRepository.save(exercise);
+    }
+
+    /** Creates a submitted team participation owned by the given tutor. */
+    private Submission teamSubmission(Exercise exercise, User owner, String name) {
+        var team = new Team();
+        team.setName(name);
+        team.setShortName(name);
+        team.setExercise(exercise);
+        team.setOwner(owner);
+        String studentLogin = switch (name) {
+            case "other" -> "student2";
+            case "anotherown" -> "student3";
+            default -> "student1";
+        };
+        team.setStudents(Set.of(userUtilService.getUserByLogin(TEST_PREFIX + studentLogin)));
+        team = teamRepository.save(exercise, team);
+        StudentParticipation participation = exercise instanceof ProgrammingExercise programmingExercise
+                ? participationUtilService.addTeamParticipationForProgrammingExercise(programmingExercise, team)
+                : participationUtilService.addTeamParticipationForExercise(exercise, team.getId());
+        Submission submission = switch (exercise) {
+            case TextExercise ignored -> new TextSubmission().text("Team answer");
+            case ModelingExercise ignored -> new ModelingSubmission().model("{}");
+            case FileUploadExercise ignored -> new FileUploadSubmission();
+            case ProgrammingExercise ignored -> new ProgrammingSubmission();
+            default -> throw new IllegalArgumentException("Unsupported assessment exercise");
+        };
+        submission.setSubmitted(true);
+        submission.setSubmissionDate(ZonedDateTime.now().minusDays(2));
+        submission = participationUtilService.addSubmission(participation, submission);
+        if (exercise instanceof ProgrammingExercise) {
+            var automaticResult = new Result();
+            automaticResult.setAssessmentType(AssessmentType.AUTOMATIC);
+            automaticResult.setSubmission(submission);
+            automaticResult.setExerciseId(exercise.getId());
+            resultRepository.save(automaticResult);
+        }
+        return submission;
+    }
+
+    /** Returns the assessment-start endpoint for a submission. */
+    private String assessmentStartUrl(ExerciseType type, Long submissionId) {
+        return switch (type) {
+            case TEXT -> "/api/text/text-submissions/" + submissionId + "/for-assessment";
+            case MODELING -> "/api/modeling/modeling-submissions/" + submissionId + "/for-assessment";
+            case FILE_UPLOAD -> "/api/fileupload/file-upload-submissions/" + submissionId;
+            case PROGRAMMING -> "/api/programming/programming-submissions/" + submissionId + "/lock";
+            default -> throw new IllegalArgumentException("Unsupported assessment type: " + type);
+        };
+    }
+
+    /** Submits an assessment through its exercise-specific endpoint. */
+    private void completeTeamAssessment(ExerciseType type, Submission submission, Long resultId, HttpStatus expectedStatus) throws Exception {
+        var body = Map.of("id", resultId, "feedbacks", List.of(), "textBlocks", Set.of(), "rated", true, "score", 0.0, "successful", false);
+        switch (type) {
+            case TEXT -> {
+                var base = "/api/text/participations/" + submission.getParticipation().getId() + "/results/" + resultId;
+                request.postWithoutResponseBody(base + "/submit-text-assessment", body, expectedStatus);
+            }
+            case MODELING -> request.put("/api/modeling/modeling-submissions/" + submission.getId() + "/results/" + resultId + "/assessment?submit=true", body, expectedStatus);
+            case FILE_UPLOAD -> request.put("/api/fileupload/file-upload-submissions/" + submission.getId() + "/feedback?submit=true", body, expectedStatus);
+            case PROGRAMMING -> request.put("/api/programming/participations/" + submission.getParticipation().getId() + "/manual-results?submit=true", body, expectedStatus);
+            default -> throw new IllegalArgumentException("Unsupported assessment type: " + type);
+        }
     }
 
     private void queryTestingBasics(Exercise exercise) {

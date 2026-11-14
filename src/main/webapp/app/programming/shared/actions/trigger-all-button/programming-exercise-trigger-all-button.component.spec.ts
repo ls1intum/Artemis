@@ -14,7 +14,7 @@ import {
 } from 'app/programming/shared/actions/trigger-all-button/programming-exercise-trigger-all-button.component';
 import { ProgrammingSubmissionService } from 'app/programming/shared/services/programming-submission.service';
 import { BuildRunState, ProgrammingBuildRunService } from 'app/programming/shared/services/programming-build-run.service';
-import { Subject, of } from 'rxjs';
+import { BehaviorSubject, Subject, filter, of } from 'rxjs';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { AccountService } from 'app/core/auth/account.service';
@@ -85,6 +85,30 @@ describe('ProgrammingExercise Trigger All Button Component', () => {
 
         expect(triggerSpy).toHaveBeenCalledOnce();
         expect(triggerSpy).toHaveBeenCalledWith(programmingExercise.id);
+    });
+
+    it('resets the build state when switching from a running exercise to one without updates', () => {
+        const firstUpdates = new Subject<BuildRunState>();
+        const secondUpdates = new BehaviorSubject<BuildRunState | undefined>(undefined);
+        const buildRunService = TestBed.inject(ProgrammingBuildRunService);
+        vi.mocked(buildRunService.getBuildRunUpdates).mockImplementation((id) =>
+            id === programmingExercise.id ? firstUpdates : secondUpdates.pipe(filter((state): state is BuildRunState => state !== undefined)),
+        );
+        fixture.detectChanges();
+        firstUpdates.next(BuildRunState.RUNNING);
+        expect(fixture.componentInstance.isTriggeringBuildAll()).toBe(true);
+
+        const nextExercise = new ProgrammingExercise(course, undefined);
+        nextExercise.id = 789;
+        fixture.componentRef.setInput('exercise', nextExercise);
+        fixture.detectChanges();
+
+        expect(buildRunService.getBuildRunUpdates).toHaveBeenLastCalledWith(789);
+        expect(fixture.componentInstance.isTriggeringBuildAll()).toBe(false);
+        firstUpdates.next(BuildRunState.RUNNING);
+        expect(fixture.componentInstance.isTriggeringBuildAll()).toBe(false);
+        secondUpdates.next(BuildRunState.RUNNING);
+        expect(fixture.componentInstance.isTriggeringBuildAll()).toBe(true);
     });
 
     it('should not trigger any build if the dialog is dismissed', () => {
