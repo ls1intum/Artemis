@@ -95,6 +95,9 @@ public class KubernetesBuildJobFactory {
     @Value("${artemis.continuous-integration.container-flags-limit.max-memory:0}")
     private int maximumMemoryMegabytes;
 
+    @Value("${artemis.continuous-integration.allow-privilege-escalation:false}")
+    private boolean allowPrivilegeEscalation;
+
     public KubernetesBuildJobFactory(KubernetesBuildRunnerProperties properties) {
         this.properties = properties;
     }
@@ -158,7 +161,8 @@ public class KubernetesBuildJobFactory {
      * {@code RuntimeDefault} therefore restores parity with the Docker runner instead of silently running with a weaker sandbox.
      * <p>
      * The container runs with the same restrictions as the Docker build runner: the capabilities that the default set contains but that no build needs are dropped,
-     * and processes cannot gain privileges through setuid programs ({@code allowPrivilegeEscalation} is false). Network access, file ownership and the installation of
+     * and processes cannot gain privileges through setuid programs ({@code allowPrivilegeEscalation} is false) unless the administrator lifted that restriction with
+     * {@code artemis.continuous-integration.allow-privilege-escalation}. Network access, file ownership and the installation of
      * packages as root keep working. The capability to open raw sockets, which a ping needs, stays only if the exercise asks for it and the build has a network. In a build with
      * the network {@code none} the isolation is a set of firewall rules in the network namespace of the Pod, and a root process that keeps this capability could send frames
      * past them, so it is always dropped there.
@@ -172,8 +176,8 @@ public class KubernetesBuildJobFactory {
         if (networkIsolated || !allowRawSockets) {
             dropped.add("NET_RAW");
         }
-        return new SecurityContextBuilder().withSeccompProfile(new SeccompProfileBuilder().withType("RuntimeDefault").build()).withAllowPrivilegeEscalation(false)
-                .withCapabilities(new CapabilitiesBuilder().withDrop(dropped).build()).build();
+        return new SecurityContextBuilder().withSeccompProfile(new SeccompProfileBuilder().withType("RuntimeDefault").build())
+                .withAllowPrivilegeEscalation(allowPrivilegeEscalation).withCapabilities(new CapabilitiesBuilder().withDrop(dropped).build()).build();
     }
 
     private Container helperContainer() {

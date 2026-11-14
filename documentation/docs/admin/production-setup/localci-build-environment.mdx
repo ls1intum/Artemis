@@ -83,6 +83,8 @@ Every build container starts with a reduced set of Linux capabilities, and its p
 - **Keeping `NET_RAW`:** instructors can enable **Allow raw network sockets** in the container configuration of an exercise, see
   [Edit Container Configuration](/instructor/exercises/programming-exercise/configure-the-build#edit-container-configuration-optional). The setting is stored with the other
   container flags of the exercise as `allowRawSockets`, so it needs no database change. It has no effect for an exercise with the network `none`, which never gets `NET_RAW`.
+- **Lifting the restriction on privilege gain:** if images of your exercises rely on setuid programs such as `sudo` for a non-root user, set `artemis.continuous-integration.allow-privilege-escalation: true`
+  on the build agents. Only this restriction is lifted; the dropped capabilities stay. The default is `false`. Prefer fixing the image, for example by running the build as `root`, over lifting it.
 - **Mixed versions:** a build agent that is not updated yet keeps the old behavior, and an exercise that sets `allowRawSockets` is read by an old agent as an exercise without it.
   Update all build agents to the same release.
 

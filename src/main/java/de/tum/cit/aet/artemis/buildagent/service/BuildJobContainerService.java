@@ -254,7 +254,7 @@ public class BuildJobContainerService {
         if (network != null && !network.trim().isBlank()) {
             host.withNetworkMode(network);
         }
-        return BuildAgentConfiguration.restrictPrivileges(host, allowRawSockets);
+        return BuildAgentConfiguration.restrictPrivileges(host, allowRawSockets, buildAgentConfiguration.isPrivilegeEscalationAllowed());
     }
 
     private long convertMemoryFromMBToBytes(long memory) {

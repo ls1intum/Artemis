@@ -93,6 +93,17 @@ class KubernetesBuildJobFactoryTest {
     }
 
     @Test
+    void administratorCanLiftTheRestrictionOnPrivilegeGain() {
+        ReflectionTestUtils.setField(factory, "allowPrivilegeEscalation", true);
+
+        Job job = factory.createJob(buildJob(new DockerRunConfig(List.of(), null, 0, 0, 0)), "local-ci-job-r3", "agent");
+
+        Container builder = container(job, KubernetesBuildJobFactory.BUILDER_CONTAINER);
+        assertThat(builder.getSecurityContext().getAllowPrivilegeEscalation()).isTrue();
+        assertThat(builder.getSecurityContext().getCapabilities().getDrop()).contains("NET_RAW", "MKNOD");
+    }
+
+    @Test
     void networkNoneDropsRawSocketsEvenWhenTheExerciseAsksForThem() {
         Job job = factory.createJob(buildJob(new DockerRunConfig(List.of(), "none", 0, 0, 0, true)), "local-ci-job-r2", "agent");
 

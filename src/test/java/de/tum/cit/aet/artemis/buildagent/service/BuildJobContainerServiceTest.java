@@ -181,6 +181,17 @@ class BuildJobContainerServiceTest extends AbstractArtemisBuildAgentTest {
     }
 
     @Test
+    void testAdministratorCanLiftTheRestrictionOnPrivilegeGain() {
+        when(buildAgentConfiguration.isPrivilegeEscalationAllowed()).thenReturn(true);
+
+        buildJobContainerService.configureContainer(CONTAINER_NAME, IMAGE_NAME, BUILD_SCRIPT, new DockerRunConfig(List.of(), "my-network-name", 1, 1, 1));
+
+        HostConfig hostConfig = captureHostConfig();
+        assertThat(hostConfig.getSecurityOpts()).isNotEqualTo(List.of("no-new-privileges"));
+        assertThat(hostConfig.getCapDrop()).contains(Capability.NET_RAW, Capability.MKNOD);
+    }
+
+    @Test
     void testBuildContainerDropsTheUnusualCapabilitiesAndCannotGainPrivileges() {
         buildJobContainerService.configureContainer(CONTAINER_NAME, IMAGE_NAME, BUILD_SCRIPT, new DockerRunConfig(List.of(), "my-network-name", 1, 1, 1));
 
