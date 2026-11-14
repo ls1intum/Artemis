@@ -206,6 +206,7 @@ describe('CourseLectureDetailsComponent', () => {
 
     afterEach(() => {
         vi.restoreAllMocks();
+        localStorage.clear();
     });
 
     it('should initialize', () => {
@@ -307,6 +308,38 @@ describe('CourseLectureDetailsComponent', () => {
         expect(courseLecturesDetailsComponent.showIris()).toBe(true);
         expect(fixture.nativeElement.querySelector('jhi-iris-base-chatbot')).toBeTruthy();
         expect(TestBed.inject(IrisChatService).openChat).toHaveBeenCalledWith(ChatServiceMode.LECTURE, courseLecturesDetailsComponent.lecture()!.id);
+    });
+
+    it.each([false, true])('restores the shared course panel state %s on the lecture page', async (isCollapsed) => {
+        localStorage.setItem('course-side-panel-collapsed-1', String(isCollapsed));
+        courseLecturesDetailsComponent.irisSettings.set({
+            courseId: 1,
+            settings: { enabled: true, variant: 'default' },
+            effectiveRateLimit: {},
+            applicationRateLimitDefaults: {},
+        });
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        const panels = fixture.debugElement.query(By.directive(ResizablePanelsComponent)).componentInstance as ResizablePanelsComponent;
+        expect(courseLecturesDetailsComponent.showIris()).toBe(true);
+        expect(panels.collapsedStateStorageKey()).toBe('course-side-panel-collapsed-1');
+        expect(panels.isRightPanelCollapsed()).toBe(isCollapsed);
+
+        panels.expandRightPanel();
+        fixture.detectChanges();
+        expect(localStorage.getItem('course-side-panel-collapsed-1')).toBe('false');
+    });
+
+    it('restores the course preference for Communication without Iris', async () => {
+        localStorage.setItem('course-side-panel-collapsed-1', 'true');
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        const panels = fixture.debugElement.query(By.directive(ResizablePanelsComponent)).componentInstance as ResizablePanelsComponent;
+        expect(courseLecturesDetailsComponent.showIris()).toBe(false);
+        expect(courseLecturesDetailsComponent.showDiscussion()).toBe(true);
+        expect(panels.isRightPanelCollapsed()).toBe(true);
     });
 
     /**
