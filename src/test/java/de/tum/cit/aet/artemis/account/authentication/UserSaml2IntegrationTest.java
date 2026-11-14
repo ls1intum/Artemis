@@ -253,13 +253,10 @@ class UserSaml2IntegrationTest extends AbstractSpringIntegrationLocalVCSamlTest 
 
         request.postWithoutResponseBody("/api/core/public/authenticate", createLoginVM(), HttpStatus.OK, httpHeaders);
 
-        // Check SAML Login afterwards ..
-
+        // The account is internal now, so a SAML2 login for the same login name is refused
         TestSecurityContextHolder.clearContext();
-        // Mock existing SAML2 Auth
         mockSAMLAuthentication();
-        // Test whether authorizeSAML2 generates a valid token
-        request.postWithoutResponseBody("/api/core/public/saml2", Boolean.FALSE, HttpStatus.OK);
+        request.postWithoutResponseBody("/api/core/public/saml2", Boolean.FALSE, HttpStatus.FORBIDDEN);
     }
 
     /**
@@ -273,6 +270,20 @@ class UserSaml2IntegrationTest extends AbstractSpringIntegrationLocalVCSamlTest 
         // Test whether authorizeSAML2 generates a no token
         request.post("/api/core/public/saml2", Boolean.FALSE, HttpStatus.UNAUTHORIZED);
         assertStudentNotExists();
+    }
+
+    @Test
+    void testSaml2LoginIsRefusedForAnInternalAccount() throws Exception {
+        assertStudentNotExists();
+        createUser(STUDENT_NAME + "@other.domain.invalid");
+        User existing = userUtilService.getUserByLogin(STUDENT_NAME);
+        existing.setInternal(true);
+        userTestRepository.saveAndFlush(existing);
+
+        mockSAMLAuthentication(createAssertion(STUDENT_REGISTRATION_NUMBER, "ChangedFirstName", "ChangedLastName"));
+        request.postWithoutResponseBody("/api/core/public/saml2", Boolean.FALSE, HttpStatus.FORBIDDEN);
+
+        assertThat(userUtilService.getUserByLogin(STUDENT_NAME).getFirstName()).as("the internal account is left untouched").isNotEqualTo("ChangedFirstName");
     }
 
     private void authenticate(Saml2ResponseAssertionAccessor assertion) throws Exception {
@@ -306,6 +317,7 @@ class UserSaml2IntegrationTest extends AbstractSpringIntegrationLocalVCSamlTest 
         User user = new User();
         user.setLogin(STUDENT_NAME);
         user.setActivated(true);
+        user.setInternal(false);
         user.setEmail(identifyingEmail);
         userTestRepository.save(user);
     }
