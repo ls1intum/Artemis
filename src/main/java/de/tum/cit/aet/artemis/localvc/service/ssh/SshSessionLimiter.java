@@ -36,10 +36,14 @@ public class SshSessionLimiter implements SessionListener {
 
     @Override
     public void sessionEvent(Session session, Event event) {
-        if (event != Event.KeyEstablished || decided.computeIfAbsent(session, _ -> new AtomicBoolean()).getAndSet(true)) {
+        if (event != Event.KeyEstablished || !(session instanceof ServerSession serverSession)) {
             return;
         }
-        if (!(session instanceof ServerSession serverSession)) {
+        if (session.isClosed()) {
+            // The close callback has already run, so nothing may be registered for this session anymore
+            return;
+        }
+        if (decided.computeIfAbsent(session, _ -> new AtomicBoolean()).getAndSet(true)) {
             return;
         }
         String address = AuthenticationContext.hostAddressOf(serverSession.getClientAddress());
@@ -59,6 +63,13 @@ public class SshSessionLimiter implements SessionListener {
             return;
         }
         countedSessions.put(session, address);
+        if (session.isClosed()) {
+            // The session was closed while it was admitted, and its close callback may have run before the registration above. Whoever removes the entry releases the slot.
+            decided.remove(session);
+            if (countedSessions.remove(session) != null) {
+                release(address);
+            }
+        }
     }
 
     @Override
