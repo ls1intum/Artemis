@@ -17,6 +17,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import de.tum.cit.aet.artemis.buildagent.dto.DockerFlagsDTO;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
@@ -235,6 +236,48 @@ class ProgrammingExerciseValidationServiceTest {
 
         assertThatCode(() -> validationService.validateCheckoutDirectoriesUnchanged(original, updated)).doesNotThrowAnyException();
         assertThat(updated.getAssignmentCheckoutPath()).isEqualTo("assignment");
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "ghcr.io/ls1intum/image:1", "ghcr.io:443/ls1intum/image", "GHCR.IO/ls1intum/image" })
+    void validateDockerImageRegistry_acceptsAnImageOfAnAllowedRegistry(String dockerImage) {
+        ReflectionTestUtils.setField(validationService, "allowedDockerRegistries", List.of("ghcr.io", "ghcr.io:443"));
+
+        assertThatCode(() -> validationService.validateDockerImageRegistry(dockerImage)).doesNotThrowAnyException();
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "registry.example.org/team/image:1", "ubuntu:24.04", "library/ubuntu", "docker.io/library/ubuntu", "localhost:5000/image" })
+    void validateDockerImageRegistry_rejectsAnImageOfAnotherRegistry(String dockerImage) {
+        ReflectionTestUtils.setField(validationService, "allowedDockerRegistries", List.of("ghcr.io"));
+
+        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> validationService.validateDockerImageRegistry(dockerImage)).withMessageContaining("not allowed");
+    }
+
+    @Test
+    void validateDockerImageRegistry_treatsAnImageWithoutRegistryAsDockerHub() {
+        ReflectionTestUtils.setField(validationService, "allowedDockerRegistries", List.of("docker.io"));
+
+        assertThatCode(() -> validationService.validateDockerImageRegistry("ubuntu:24.04")).doesNotThrowAnyException();
+        assertThatCode(() -> validationService.validateDockerImageRegistry("index.docker.io/library/ubuntu")).doesNotThrowAnyException();
+    }
+
+    @Test
+    void validateDockerImageRegistry_allowsEveryRegistryWhileTheListIsEmpty() {
+        assertThatCode(() -> validationService.validateDockerImageRegistry("registry.example.org/team/image:1")).doesNotThrowAnyException();
+    }
+
+    @Test
+    void validateDockerImageRegistry_checksTheImageOfTheBuildPlanConfiguration() {
+        ReflectionTestUtils.setField(validationService, "allowedDockerRegistries", List.of("ghcr.io"));
+        ProgrammingExerciseBuildConfig allowed = new ProgrammingExerciseBuildConfig();
+        allowed.setBuildPlanConfiguration("{\"phases\":[],\"dockerImage\":\"ghcr.io/ls1intum/image:1\"}");
+        ProgrammingExerciseBuildConfig refused = new ProgrammingExerciseBuildConfig();
+        refused.setBuildPlanConfiguration("{\"phases\":[],\"dockerImage\":\"registry.example.org/team/image:1\"}");
+
+        assertThatCode(() -> validationService.validateDockerImageRegistry(allowed)).doesNotThrowAnyException();
+        assertThatCode(() -> validationService.validateDockerImageRegistry(new ProgrammingExerciseBuildConfig())).doesNotThrowAnyException();
+        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> validationService.validateDockerImageRegistry(refused));
     }
 
     private static DockerFlagsDTO flags(int cpuCount, int memory, int memorySwap) {

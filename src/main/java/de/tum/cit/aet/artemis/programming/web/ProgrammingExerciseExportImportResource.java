@@ -237,6 +237,7 @@ public class ProgrammingExerciseExportImportResource {
 
         newExercise.validateGeneralSettings();
         programmingExerciseValidationService.validateBuildConfigSize(newBuildConfig);
+        programmingExerciseValidationService.validateDockerImageRegistry(newBuildConfig);
 
         final User user = userRepository.getUserWithAuthorities();
         Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(newExercise);

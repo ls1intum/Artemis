@@ -178,6 +178,7 @@ public class ProgrammingExerciseUpdateResource {
             OriginalSettings original, boolean checkReferences) {
         // Validate the updated exercise
         programmingExerciseValidationService.validateBuildConfigSize(buildConfig);
+        programmingExerciseValidationService.validateDockerImageRegistry(buildConfig);
         updatedProgrammingExercise.validateGeneralSettings();
         updatedProgrammingExercise.checkCourseAndExerciseGroupExclusivity(ENTITY_NAME);
         programmingExerciseValidationService.validateStaticCodeAnalysisSettings(updatedProgrammingExercise, buildConfig);
