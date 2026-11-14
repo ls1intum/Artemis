@@ -351,6 +351,44 @@ class SubmissionServiceTest extends AbstractSpringIntegrationIndependentBatchTes
     @ParameterizedTest
     @EnumSource(value = ExerciseType.class, names = { "TEXT", "MODELING", "FILE_UPLOAD", "PROGRAMMING" })
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void formerTeamTutorCanCancelTheirDraft(ExerciseType type) throws Exception {
+        var exercise = teamExercise(type);
+        var submission = teamSubmission(exercise, tutor1, "own");
+        request.get(assessmentStartUrl(type, submission.getId()), HttpStatus.OK, String.class);
+        var result = submissionRepository.findOneWithEagerResultAndFeedbackAndAssessmentNote(submission.getId()).getResultForCorrectionRound(0);
+        var team = teamRepository.findWithStudentsByIdElseThrow(((StudentParticipation) submission.getParticipation()).getTeam().orElseThrow().getId());
+        team.setOwner(tutor2);
+        userUtilService.changeUser(TEST_PREFIX + "instructor1");
+        request.put("/api/exercise/exercises/" + exercise.getId() + "/teams/" + team.getId(), de.tum.cit.aet.artemis.exercise.dto.TeamInputDTO.of(team), HttpStatus.OK);
+        var cancelUrl = switch (type) {
+            case TEXT -> "/api/text/participations/" + submission.getParticipation().getId() + "/submissions/" + submission.getId() + "/cancel-assessment";
+            case MODELING -> "/api/modeling/modeling-submissions/" + submission.getId() + "/cancel-assessment";
+            case FILE_UPLOAD -> "/api/fileupload/file-upload-submissions/" + submission.getId() + "/cancel-assessment";
+            case PROGRAMMING -> "/api/programming/programming-submissions/" + submission.getId() + "/cancel-assessment";
+            default -> throw new IllegalArgumentException();
+        };
+        cancelUrl += "?resultId=" + result.getId();
+        userUtilService.changeUser(TEST_PREFIX + "tutor2");
+        if (type == ExerciseType.TEXT) {
+            request.post(cancelUrl, null, HttpStatus.FORBIDDEN);
+        }
+        else {
+            request.put(cancelUrl, null, HttpStatus.FORBIDDEN);
+        }
+        assertThat(resultRepository.findById(result.getId())).isPresent();
+        userUtilService.changeUser(TEST_PREFIX + "tutor1");
+        if (type == ExerciseType.TEXT) {
+            request.post(cancelUrl, null, HttpStatus.OK);
+        }
+        else {
+            request.put(cancelUrl, null, HttpStatus.OK);
+        }
+        assertThat(resultRepository.findById(result.getId())).isEmpty();
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = ExerciseType.class, names = { "TEXT", "MODELING", "FILE_UPLOAD", "PROGRAMMING" })
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void teamQueueAndDirectStartsRespectOwnership(ExerciseType type) throws Exception {
         var exercise = teamExercise(type);
         var own = teamSubmission(exercise, tutor1, "own");
