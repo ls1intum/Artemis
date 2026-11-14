@@ -22,7 +22,7 @@ system, and neither of the last two counts as use. The interaction follows from 
 `@UsageInteraction` overrides it; every override is listed at the end. See
 [Feature Usage Analysis](/developer/feature-usage) for how the tracking works.
 
-Currently 20 product areas, 153 features, 1183 REST endpoints in 29 modules, and 70 interaction overrides.
+Currently 20 product areas, 153 features, 1184 REST endpoints in 29 modules, and 71 interaction overrides.
 
 ## Courses
 
@@ -1357,6 +1357,7 @@ Also recorded outside REST by `ContinuousPlagiarismControlService`.
 |--------|----------|--------:|------:|----------:|-------:|
 | admin | `AdminBuildJobQueueResource` | 9 | 9 | 0 | 0 |
 | localvc | `PublicBuildAgentAddressResource` | 0 | 0 | 0 | 1 |
+| localvc | `PublicSshFingerprintsResource` | 0 | 0 | 0 | 1 |
 
 ### AI workers
 
@@ -1577,5 +1578,6 @@ The endpoints whose calls do not count the way their HTTP verb suggests, grouped
 * `GET api/core/sharing/config/is-enabled` (`SHARING_PLATFORM`)
 * `GET api/localci/public/programming-exercises/{exerciseId}/build-plan` (`PROGRAMMING_BUILD_CONFIGURATION`)
 * `GET api/localvc/public/observed-client-address` (`BUILD_AGENTS`)
+* `GET api/localvc/public/ssh-fingerprints` (`BUILD_AGENTS`)
 * `GET api/programming/sharing/export/{token}` (`SHARING_PLATFORM`)
 * `POST api/programming/public/programming-exercises/new-result` (`PROGRAMMING_RESULTS`)
