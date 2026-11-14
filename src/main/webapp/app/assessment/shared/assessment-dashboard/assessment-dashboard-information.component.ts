@@ -1,10 +1,10 @@
+import { AssessmentProgressComponent } from './assessment-progress.component';
 import { TumAetUiPanelComponent, TumAetUiTableDirective } from '@tumaet/ui-angular';
 import { Component, computed, input } from '@angular/core';
 import { DueDateStat } from 'app/assessment/shared/assessment-dashboard/due-date-stat.model';
 import { Course } from 'app/course/shared/entities/course.model';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { RouterLink } from '@angular/router';
-import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 export class AssessmentDashboardInformationEntry {
     constructor(
@@ -12,27 +12,12 @@ export class AssessmentDashboardInformationEntry {
         public tutor: number,
         public done?: number,
     ) {}
-
-    /**
-     * Computes the percentage of done/total ratio and returns it as a string
-     */
-    get doneToTotalPercentage(): string {
-        if (this.done == undefined) {
-            return '';
-        }
-
-        if (this.total === 0) {
-            return '100%';
-        }
-
-        return `${((100 * this.done) / this.total).toFixed().toString()}%`;
-    }
 }
 
 @Component({
     selector: 'jhi-assessment-dashboard-information',
     templateUrl: './assessment-dashboard-information.component.html',
-    imports: [TranslateDirective, RouterLink, ArtemisTranslatePipe, TumAetUiPanelComponent, TumAetUiTableDirective],
+    imports: [AssessmentProgressComponent, TranslateDirective, RouterLink, TumAetUiPanelComponent, TumAetUiTableDirective],
 })
 export class AssessmentDashboardInformationComponent {
     readonly isExamMode = input.required<boolean>();

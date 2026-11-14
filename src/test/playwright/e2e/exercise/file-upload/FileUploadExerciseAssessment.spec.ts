@@ -41,8 +41,19 @@ test.describe('File upload exercise assessment', { tag: '@slow' }, () => {
             await exerciseAssessment.clickHaveReadInstructionsButton();
             await exerciseAssessment.clickStartNewAssessment();
             await expect(fileUploadExerciseAssessment.getInstructionsRootElement().getByText(exercise.title!)).toBeVisible();
-            await expect(fileUploadExerciseAssessment.getInstructionsRootElement().getByTestId('expandable-section-content').getByText(exercise.problemStatement!)).toBeVisible();
-            await expect(fileUploadExerciseAssessment.getInstructionsRootElement().getByTestId('expandable-section-content').getByText(exercise.exampleSolution!)).toBeVisible();
+            const instructions = fileUploadExerciseAssessment.getInstructionsRootElement();
+            for (const [heading, content] of [
+                ['Problem Statement', exercise.problemStatement!],
+                ['Example Solution', exercise.exampleSolution!],
+            ]) {
+                const toggle = instructions.getByRole('button', { name: heading, exact: true });
+                const text = instructions.getByTestId('expandable-section-content').getByText(content, { exact: true });
+                await expect(toggle).toHaveAttribute('aria-expanded', 'false');
+                await expect(text).toBeHidden();
+                await toggle.click();
+                await expect(toggle).toHaveAttribute('aria-expanded', 'true');
+                await expect(text).toBeVisible();
+            }
             await expect(
                 fileUploadExerciseAssessment.getInstructionsRootElement().getByTestId('expandable-section-content').getByText(exercise.gradingInstructions!),
             ).toBeVisible();
