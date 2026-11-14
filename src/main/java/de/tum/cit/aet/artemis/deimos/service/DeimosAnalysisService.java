@@ -606,7 +606,7 @@ public class DeimosAnalysisService {
         try {
             return repository.resolve(commitHash + "^{commit}");
         }
-        catch (MissingObjectException | IncorrectObjectTypeException ex) {
+        catch (MissingObjectException | IncorrectObjectTypeException _) {
             return null;
         }
     }
