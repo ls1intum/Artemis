@@ -1,6 +1,6 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { AdminLtiConfigurationApi } from 'app/openapi/api/admin-lti-configuration-api';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 
 @Component({
@@ -10,7 +10,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 })
 export class Lti13DynamicRegistrationComponent implements OnInit {
     private route = inject(ActivatedRoute);
-    private http = inject(HttpClient);
+    private readonly api = inject(AdminLtiConfigurationApi);
 
     courseId!: number; // set in ngOnInit() from route params
     readonly isRegistering = signal(true);
@@ -33,13 +33,8 @@ export class Lti13DynamicRegistrationComponent implements OnInit {
             return;
         }
 
-        let httpParams = new HttpParams().set('openid_configuration', openIdConfiguration);
-        if (registrationToken) {
-            httpParams = httpParams.set('registration_token', registrationToken);
-        }
-
-        this.http
-            .post(`api/lti/admin/lti13/dynamic-registration`, null, { observe: 'response', params: httpParams })
+        this.api
+            .lti13DynamicRegistration(openIdConfiguration, registrationToken || undefined)
             .subscribe({
                 next: () => {
                     this.registeredSuccessfully.set(true);

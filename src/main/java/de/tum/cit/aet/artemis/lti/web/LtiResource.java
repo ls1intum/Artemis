@@ -11,6 +11,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.oauth2.core.oidc.OidcIdToken;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -46,6 +47,9 @@ import de.tum.cit.aet.artemis.lti.repository.OnlineCourseConfigurationRepository
 import de.tum.cit.aet.artemis.lti.service.DeepLinkingType;
 import de.tum.cit.aet.artemis.lti.service.LtiDeepLinkingService;
 import de.tum.cit.aet.artemis.lti.service.OnlineCourseConfigurationService;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 
 /**
  * REST controller to handle LTI13 launches.
@@ -159,6 +163,7 @@ public class LtiResource {
      * @throws BadRequestAlertException If LTI is not configured for the course, if no valid deep linking type is provided,
      *                                      or if content IDs are required but not provided for the specified resource type.
      */
+    @ApiResponse(responseCode = "200", content = @Content(mediaType = "application/json", schema = @Schema(implementation = DeepLinkingTargetDTO.class)))
     @PostMapping("lti13/courses/{courseId}/deep-linking")
     @EnforceAtLeastInstructorInCourse
     public ResponseEntity<String> lti13DeepLinking(@PathVariable Long courseId, @RequestParam(name = "resourceType") DeepLinkingType resourceType,
@@ -185,7 +190,8 @@ public class LtiResource {
             case COMPETENCY, LEARNING_PATH, IRIS -> ltiDeepLinkingService.performDeepLinking(idToken, clientRegistrationId, courseId, null, resourceType);
         };
 
-        return ResponseEntity.ok(JsonObjectMapper.get().writeValueAsString(new DeepLinkingTargetDTO(targetLink)));
+        // Set explicitly: a String body is otherwise written as text/plain when the client accepts any type.
+        return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(JsonObjectMapper.get().writeValueAsString(new DeepLinkingTargetDTO(targetLink)));
     }
 
     /**

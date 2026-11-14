@@ -367,6 +367,92 @@ paths:
           content:
             application/json:
               schema: {$ref: '#/components/schemas/QuizSubmissionBeforeEvaluation'}
+  /api/lti/courses/{courseId}/online-course-configuration:
+    put:
+      tags: [lti]
+      operationId: updateOnlineCourseConfiguration
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/OnlineCourseConfiguration'}
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/OnlineCourseConfiguration'}
+  /api/lti/admin/lti-platforms:
+    get:
+      tags: [admin-lti-configuration]
+      operationId: getAllConfiguredLtiPlatforms
+      parameters:
+      - name: page
+        in: query
+        description: Zero-based page index (0..N)
+        required: false
+        schema: {type: integer, default: 0, minimum: 0}
+      - name: size
+        in: query
+        description: The size of the page to be returned
+        required: false
+        schema: {type: integer, default: 20, minimum: 1}
+      - name: sort
+        in: query
+        description: 'Sorting criteria in the format: property,(asc|desc). Default
+          sort order is ascending. Multiple sort criteria are supported.'
+        required: false
+        schema:
+          type: array
+          items: {type: string}
+      responses:
+        '200':
+          description: OK
+          headers:
+            X-Total-Count:
+              style: simple
+              schema: {type: integer, format: int64}
+            Link:
+              style: simple
+              schema: {type: string}
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/LtiPlatformConfiguration'}
+    put:
+      tags: [admin-lti-configuration]
+      operationId: updateLtiPlatformConfiguration
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/LtiPlatformConfigurationUpdate'}
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/LtiPlatformConfiguration'}
+    post:
+      tags: [admin-lti-configuration]
+      operationId: addLtiPlatformConfiguration
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/LtiPlatformConfigurationUpdate'}
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/LtiPlatformConfiguration'}
   /api/hyperion/courses/{courseId}/quiz-question-pool/settings:
     get:
       tags: [hyperion-quiz-question-pool]
@@ -899,6 +985,58 @@ paths:
           application/json:
             schema: {$ref: '#/components/schemas/LeaderboardSetting'}
         required: true
+      responses:
+        '200': {description: OK}
+  /api/lti/lti13/courses/{courseId}/deep-linking:
+    post:
+      tags: [lti]
+      operationId: lti13DeepLinking
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: resourceType
+        in: query
+        required: true
+        schema:
+          type: string
+          enum: [EXERCISE, GROUPED_EXERCISE, LECTURE, GROUPED_LECTURE, COMPETENCY,
+            LEARNING_PATH, IRIS]
+      - name: contentIds
+        in: query
+        required: false
+        schema:
+          type: array
+          items: {type: integer, format: int64}
+          uniqueItems: true
+      - name: ltiIdToken
+        in: query
+        required: true
+        schema: {type: string}
+      - name: clientRegistrationId
+        in: query
+        required: true
+        schema: {type: string}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/DeepLinkingTarget'}
+  /api/lti/admin/lti13/dynamic-registration:
+    post:
+      tags: [admin-lti-configuration]
+      operationId: lti13DynamicRegistration
+      parameters:
+      - name: openid_configuration
+        in: query
+        required: true
+        schema: {type: string}
+      - name: registration_token
+        in: query
+        required: false
+        schema: {type: string}
       responses:
         '200': {description: OK}
   /api/hyperion/programming-exercises/{exerciseId}/generation/variants:
@@ -1933,6 +2071,49 @@ paths:
           content:
             application/json:
               schema: {$ref: '#/components/schemas/LeaderboardWithCurrentUserEntry'}
+  /api/lti/courses/for-lti-dashboard:
+    get:
+      tags: [lti]
+      operationId: findAllOnlineCoursesForLtiDashboard
+      parameters:
+      - name: clientId
+        in: query
+        required: true
+        schema: {type: string}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/OnlineCourse'}
+                uniqueItems: true
+  /api/lti/admin/lti-platforms/{platformId}:
+    get:
+      tags: [admin-lti-configuration]
+      operationId: getLtiPlatformConfiguration
+      parameters:
+      - name: platformId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/LtiPlatformConfiguration'}
+    delete:
+      tags: [admin-lti-configuration]
+      operationId: deleteLtiPlatformConfiguration
+      parameters:
+      - name: platformId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200': {description: OK}
   /api/hyperion/variant-jobs:
     get:
       tags: [hyperion-exercise-variant]
@@ -4278,6 +4459,17 @@ components:
           type: string
           default: short-answer
           enum: [short-answer]
+    OnlineCourse:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        title: {type: string}
+        shortName: {type: string}
+        registrationId: {type: string}
+        startDate: {type: string, format: date-time}
+        endDate: {type: string, format: date-time}
+        description: {type: string}
+        numberOfStudents: {type: integer, format: int64}
     QuizQuestionPoolItem:
       type: object
       description: One item of a course's quiz question pool
@@ -5025,6 +5217,26 @@ components:
         isCorrect: {type: boolean}
         invalid: {type: boolean}
       required: [id, invalid, isCorrect, text]
+    LtiPlatformConfiguration:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        registrationId: {type: string, maxLength: 255, minLength: 0}
+        clientId: {type: string, maxLength: 255, minLength: 0}
+        originalUrl: {type: string, maxLength: 255, minLength: 0}
+        customName: {type: string, maxLength: 50, minLength: 0}
+        authorizationUri: {type: string, maxLength: 255, minLength: 0}
+        jwkSetUri: {type: string, maxLength: 255, minLength: 0}
+        tokenUri: {type: string, maxLength: 255, minLength: 0}
+      required: [authorizationUri, clientId, id, jwkSetUri, registrationId, tokenUri]
+    OnlineCourseConfiguration:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        userPrefix: {type: string, maxLength: 30, minLength: 0}
+        requireExistingUser: {type: boolean}
+        ltiPlatformConfiguration: {$ref: '#/components/schemas/LtiPlatformConfiguration'}
+      required: [requireExistingUser, userPrefix]
     QuizStatisticsOverview:
       type: object
       properties:
@@ -5139,6 +5351,18 @@ components:
         maxTokens: {type: integer, format: int64, exclusiveMinimum: 0}
         maxJobDuration: {type: string, format: duration}
       required: [mode]
+    LtiPlatformConfigurationUpdate:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        registrationId: {type: string, maxLength: 255, minLength: 0}
+        clientId: {type: string, maxLength: 255, minLength: 0}
+        originalUrl: {type: string, maxLength: 255, minLength: 0}
+        customName: {type: string, maxLength: 50, minLength: 0}
+        authorizationUri: {type: string, maxLength: 255, minLength: 0}
+        jwkSetUri: {type: string, maxLength: 255, minLength: 0}
+        tokenUri: {type: string, maxLength: 255, minLength: 0}
+      required: [authorizationUri, clientId, customName, jwkSetUri, tokenUri]
     QuizExerciseForStudentResponse:
       discriminator:
         propertyName: quizQuestionsType
@@ -6007,6 +6231,10 @@ components:
         fresh: {type: integer, format: int32, description: How many of this round's
             findings are new since the previous round}
       required: [advisory, attempt, blocking, carriedOver, drained, fresh, round]
+    DeepLinkingTarget:
+      type: object
+      properties:
+        targetLinkUri: {type: string}
     ConversationUser:
       type: object
       properties:

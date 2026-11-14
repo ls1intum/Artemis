@@ -1,6 +1,7 @@
 api/admin-ai-worker-api.ts
 api/admin-hyperion-generation-api.ts
 api/admin-hyperion-generation-monitoring-api.ts
+api/admin-lti-configuration-api.ts
 api/calendar-api.ts
 api/global-search-api.ts
 api/hyperion-assessment-criteria-generation-api.ts
@@ -14,6 +15,7 @@ api/hyperion-programming-variant-api.ts
 api/hyperion-quiz-question-generation-api.ts
 api/hyperion-quiz-question-pool-api.ts
 api/ingestion-browser-api.ts
+api/lti-api.ts
 api/query-params.ts
 api/quiz-assessment-api.ts
 api/quiz-exercise-api.ts
@@ -67,6 +69,7 @@ model/course-with-id.ts
 model/create-exercise-variant-group.ts
 model/create-or-update-tutorial-group-request.ts
 model/create-or-update-tutorial-group-session-request.ts
+model/deep-linking-target.ts
 model/difficulty-assessment.ts
 model/domain-object.ts
 model/drag-and-drop-mapping-create.ts
@@ -135,6 +138,8 @@ model/ingestion-type-count.ts
 model/leaderboard-entry.ts
 model/leaderboard-setting.ts
 model/leaderboard-with-current-user-entry.ts
+model/lti-platform-configuration-update.ts
+model/lti-platform-configuration.ts
 model/missing-content.ts
 model/missing-entity.ts
 model/multiple-choice-question-create.ts
@@ -147,6 +152,8 @@ model/multiple-choice-submitted-answer-after-evaluation.ts
 model/multiple-choice-submitted-answer-before-evaluation.ts
 model/multiple-choice-submitted-answer-from-live-client.ts
 model/multiple-choice-submitted-answer-from-student.ts
+model/online-course-configuration.ts
+model/online-course.ts
 model/point-counter.ts
 model/problem-statement-generation-request.ts
 model/problem-statement-generation-response.ts

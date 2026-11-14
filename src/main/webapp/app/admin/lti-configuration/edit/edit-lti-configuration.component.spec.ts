@@ -223,7 +223,7 @@ describe('EditLtiConfigurationComponent', () => {
 
         describe('Save in create mode', () => {
             it('should call addLtiConfiguration when creating new platform', () => {
-                vi.spyOn(ltiConfigurationService, 'addLtiPlatformConfiguration').mockReturnValue(of(new HttpResponse({ body: mockPlatform })));
+                vi.spyOn(ltiConfigurationService, 'addLtiPlatformConfiguration').mockReturnValue(of(mockPlatform));
                 const navigateSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
 
                 fixture.detectChanges();
