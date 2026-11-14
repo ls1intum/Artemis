@@ -121,6 +121,12 @@ public class RateLimitingProperties {
      */
     private Integer serviceCredentialFailureRequestsPerMinute;
 
+    /**
+     * Re-evaluations of all results of a programming exercise per minute and user.
+     * If not specified, uses the default from {@link de.tum.cit.aet.artemis.core.security.RateLimitType#RE_EVALUATION}.
+     */
+    private Integer reEvaluationRequestsPerMinute;
+
     public List<String> getExemptAddresses() {
         return exemptAddresses;
     }
@@ -239,5 +245,13 @@ public class RateLimitingProperties {
 
     public void setFailedLoginRequestsPerMinute(Integer failedLoginRequestsPerMinute) {
         this.failedLoginRequestsPerMinute = failedLoginRequestsPerMinute;
+    }
+
+    public Integer getReEvaluationRequestsPerMinute() {
+        return reEvaluationRequestsPerMinute;
+    }
+
+    public void setReEvaluationRequestsPerMinute(Integer reEvaluationRequestsPerMinute) {
+        this.reEvaluationRequestsPerMinute = reEvaluationRequestsPerMinute;
     }
 }

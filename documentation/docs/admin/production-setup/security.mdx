@@ -539,6 +539,7 @@ artemis:
     failed-login-requests-per-minute: 10
     client-error-report-requests-per-minute: 60
     service-credential-failure-requests-per-minute: 30
+    re-evaluation-requests-per-minute: 6
 ```
 
 ### Where It Is Enforced
@@ -563,6 +564,7 @@ artemis:
   **When you upgrade:** git used to share `authentication-requests-per-minute`, and with the defaults one address could make 30 requests of both kinds in total. Now it can make up to 30 logins and up to 30 git authentications.
   With a login limit of your own, the git limit is a separate 30 on top of it.
   Review the git setting on every installation, whether you raised, lowered or never set the login limit, see [10.7 in the Upgrade Guide](/admin/upgrade-guide#107-rate-limit-of-git-operations).
+- Re-evaluation of all results of a programming exercise, in a bucket of its own, `re-evaluation-requests-per-minute`. It is counted per signed-in user and not per client address, so instructors who share an address do not draw on each other's budget. The default is 6 per minute, which is far above what an instructor needs, because the request recalculates and saves every latest result of the exercise.
 - [Client error reports](/admin/client-error-reports) of clients that are not signed in
 - Failed checks of the shared secrets that Athena, Pyris and the sharing platform present to Artemis, in a bucket of their own, `service-credential-failure-requests-per-minute`. Only a failed check spends a token, so a service with the right secret is never limited. Once an address has used up its tokens, Artemis refuses its further requests with 429 without comparing the secret.
 

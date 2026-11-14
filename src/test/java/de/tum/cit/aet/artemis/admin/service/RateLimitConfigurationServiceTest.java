@@ -151,6 +151,15 @@ class RateLimitConfigurationServiceTest {
     }
 
     @Test
+    void testGetEffectiveRpm_ReEvaluation_UsesTheCustomValueOrTheDefault() {
+        when(properties.getReEvaluationRequestsPerMinute()).thenReturn(3);
+        assertThat(configurationService.getEffectiveRpm(RateLimitType.RE_EVALUATION)).isEqualTo(3);
+
+        when(properties.getReEvaluationRequestsPerMinute()).thenReturn(null);
+        assertThat(configurationService.getEffectiveRpm(RateLimitType.RE_EVALUATION)).isEqualTo(RateLimitType.RE_EVALUATION.getDefaultRpm());
+    }
+
+    @Test
     void testGetEffectiveRpm_ClientErrorReport_UsesTheCustomValueOrTheDefault() {
         when(properties.getClientErrorReportRequestsPerMinute()).thenReturn(15);
         assertThat(configurationService.getEffectiveRpm(RateLimitType.CLIENT_ERROR_REPORT)).isEqualTo(15);

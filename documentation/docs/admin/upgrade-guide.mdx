@@ -197,6 +197,10 @@ Restore the backup taken in step 4 of the upgrade procedure if the cause cannot 
 
 Some releases change behavior in a way that requires a one-time action on existing data. These steps are additional to the upgrade scenarios above.
 
+### 10.8: Rate Limit of Re-evaluations
+
+Re-evaluating all results of a programming exercise (`PUT /api/programming/programming-exercises/{exerciseId}/grading/re-evaluate`) is limited to 6 requests per minute and user. Set `artemis.rate-limiting.re-evaluation-requests-per-minute` to change the limit. Instructors who exceed it receive a 429 response with a `Retry-After` header. Nothing else changes. See [Rate Limiting](/admin/production-setup/security#rate-limiting).
+
 ### 10.8: Token in the Response of the Login
 
 `POST /api/core/public/authenticate` returns the session token in the JSON body (`access_token`) only when the request asks for it. The web application uses the cookie that the same response sets and does not read the body, so browsers are not affected. Clients that cannot use a cookie opt in with the query parameter `returnToken=true`. A request that carries a `tool` parameter, which is how tools such as Scorpio sign in, receives the token as before. **If a script or a tool of yours reads `access_token` from the response without either parameter, add `?returnToken=true` to its request before you upgrade.**
