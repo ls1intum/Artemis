@@ -21,6 +21,7 @@ import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.dto.UpdateProgrammingExerciseDTO;
 
 class ProgrammingExerciseReEvaluationRateLimitIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalVCTest {
 
@@ -33,13 +34,21 @@ class ProgrammingExerciseReEvaluationRateLimitIntegrationTest extends AbstractPr
 
     private Object originalRateLimitService;
 
+    private Object updateResource;
+
+    private Object originalUpdateRateLimitService;
+
+    private String updateEndpoint;
+
+    private ProgrammingExercise exercise;
+
     private String endpoint;
 
     @BeforeEach
     void init() {
         userUtilService.addUsers(TEST_PREFIX, 0, 0, 0, 2);
         var course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExerciseAndTestCases(TEST_PREFIX);
-        ProgrammingExercise exercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
+        exercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         endpoint = "/api/programming/programming-exercises/" + exercise.getId() + "/grading/re-evaluate";
 
         var properties = new RateLimitingProperties();
@@ -51,11 +60,16 @@ class ProgrammingExerciseReEvaluationRateLimitIntegrationTest extends AbstractPr
         resource = AopTestUtils.getUltimateTargetObject(applicationContext.getBean("programmingExerciseGradingResource"));
         originalRateLimitService = ReflectionTestUtils.getField(resource, "rateLimitService");
         ReflectionTestUtils.setField(resource, "rateLimitService", limiter);
+        updateEndpoint = "/api/programming/programming-exercises/" + exercise.getId() + "/re-evaluate";
+        updateResource = AopTestUtils.getUltimateTargetObject(applicationContext.getBean("programmingExerciseReEvaluationResource"));
+        originalUpdateRateLimitService = ReflectionTestUtils.getField(updateResource, "rateLimitService");
+        ReflectionTestUtils.setField(updateResource, "rateLimitService", limiter);
     }
 
     @AfterEach
     void restoreRateLimitService() {
         ReflectionTestUtils.setField(resource, "rateLimitService", originalRateLimitService);
+        ReflectionTestUtils.setField(updateResource, "rateLimitService", originalUpdateRateLimitService);
     }
 
     @Test
@@ -74,5 +88,15 @@ class ProgrammingExerciseReEvaluationRateLimitIntegrationTest extends AbstractPr
         userUtilService.changeUser(TEST_PREFIX + "instructor2");
 
         request.putWithResponseBody(endpoint, "{}", Integer.class, HttpStatus.OK);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void reEvaluationWithAnUpdateSharesTheLimitOfTheUser() throws Exception {
+        request.putWithResponseBody(endpoint, "{}", Integer.class, HttpStatus.OK);
+
+        // the update path counts against the same budget
+        var update = UpdateProgrammingExerciseDTO.of(exercise, programmingExerciseUtilService.buildConfigOf(exercise));
+        request.put(updateEndpoint, update, HttpStatus.TOO_MANY_REQUESTS);
     }
 }
