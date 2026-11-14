@@ -90,8 +90,7 @@
                                                 <a [routerLink]="['/course-management', course.id]">{{ course.id }}</a>
                                             </td>
                                             <td>
-                                                <a [routerLink]="['/course-management', course.id]" class="bold">{{ course.title }}</a
-                                                ><br />
+                                                <a [routerLink]="['/course-management', course.id]" class="bold">{{ course.title }}</a><br />
                                                 @if (course.shortName) {
                                                     <span> <span class="bold" jhiTranslate="artemisApp.course.shortName"> </span>: {{ course.shortName }} </span>
                                                 }
