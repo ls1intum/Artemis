@@ -1135,7 +1135,8 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
      * @param userSearch used to find users
      * @return all users
      */
-    default Page<UserDTO> getAllManagedUsers(UserPageableSearchDTO userSearch) {
+    // Reviewed false positive (Sonar S7186): the page index, page size and sort are part of the search DTO, and the Pageable is built inside from them.
+    default Page<UserDTO> getAllManagedUsers(UserPageableSearchDTO userSearch) { // NOSONAR
         // Prepare filter
         final var searchTerm = userSearch.getSearchTerm();
         var sorting = Sort.by(userSearch.getSortedColumn());
