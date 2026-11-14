@@ -19,7 +19,6 @@ export interface ExamStudentDTO {
     userId?: number;
     login?: string;
     name?: string;
-    email?: string;
     visibleRegistrationNumber?: string;
     studentImagePath?: string;
     plannedRoom?: string;
