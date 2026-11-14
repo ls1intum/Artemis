@@ -1,5 +1,6 @@
 @if (isVisible()) {
     <div
+        #dialog
         class="modal-backdrop"
         data-testid="llm-selection-modal"
         [class.dark-theme]="themeService.currentTheme() === Theme.DARK"

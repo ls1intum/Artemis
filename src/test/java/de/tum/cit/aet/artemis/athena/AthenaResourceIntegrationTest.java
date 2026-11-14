@@ -35,6 +35,7 @@ import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.repository.FeedbackRepository;
 import de.tum.cit.aet.artemis.atlas.profile.util.LearnerProfileUtilService;
+import de.tum.cit.aet.artemis.core.domain.AiSelectionDecision;
 import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.course.domain.CourseAthenaConfig;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
@@ -137,6 +138,7 @@ class AthenaResourceIntegrationTest extends AbstractAthenaTest {
     protected void initTestCase() {
         super.initTestCase();
         userUtilService.addUsers(TEST_PREFIX, 2, 1, 1, 0);
+        userUtilService.setAiSelectionDecision(userUtilService.getUserByLogin(TEST_PREFIX + "tutor1"), AiSelectionDecision.CLOUD_AI);
 
         // Create learner profiles for test users
         learnerProfileUtilService.createLearnerProfilesForUsers(TEST_PREFIX);
@@ -270,6 +272,40 @@ class AthenaResourceIntegrationTest extends AbstractAthenaTest {
         request.get("/api/athena/" + exerciseType + "-exercises/" + exercise.getId() + "/submissions/" + submission.getId() + "/feedback-suggestions",
                 HttpStatus.SERVICE_UNAVAILABLE, List.class);
         server.verify();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void testGetFeedbackSuggestionsRejectedWhenAssessorDeclinedAiUsage() throws Exception {
+        // Enable Athena grading feedback at course level
+        var course = textExercise.getCourseViaExerciseGroupOrCourseMember();
+        var athenaConfig = new CourseAthenaConfig();
+        athenaConfig.setCourse(course);
+        athenaConfig.setGradingFeedbackEnabled(true);
+        course.setAthenaConfig(athenaConfig);
+        courseUtilService.saveWithConfigurations(course);
+        userUtilService.setAiSelectionDecision(userUtilService.getUserByLogin(TEST_PREFIX + "tutor1"), AiSelectionDecision.NO_AI);
+
+        // No Athena mock is set up: the request must be rejected before any call to Athena is made.
+        // BAD_REQUEST (not FORBIDDEN) with errorKey "llmSelectionRequired", the same one the student-facing
+        // non-graded check uses, so the client can react to either one identically.
+        request.get("/api/athena/text-exercises/" + textExercise.getId() + "/submissions/" + textSubmission.getId() + "/feedback-suggestions", HttpStatus.BAD_REQUEST, List.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void testGetFeedbackSuggestionsRejectedWhenAssessorHasNoAiDecision() throws Exception {
+        // Enable Athena grading feedback at course level
+        var course = textExercise.getCourseViaExerciseGroupOrCourseMember();
+        var athenaConfig = new CourseAthenaConfig();
+        athenaConfig.setCourse(course);
+        athenaConfig.setGradingFeedbackEnabled(true);
+        course.setAthenaConfig(athenaConfig);
+        courseUtilService.saveWithConfigurations(course);
+        userUtilService.clearAiSelectionDecision(userUtilService.getUserByLogin(TEST_PREFIX + "tutor1"));
+
+        // No Athena mock is set up: the request must be rejected before any call to Athena is made.
+        request.get("/api/athena/text-exercises/" + textExercise.getId() + "/submissions/" + textSubmission.getId() + "/feedback-suggestions", HttpStatus.BAD_REQUEST, List.class);
     }
 
     @Test

@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, inject, output, signal } from '@angular/core';
+import { Component, ElementRef, OnDestroy, OnInit, effect, inject, output, signal, viewChild } from '@angular/core';
 import { LLMSelectionModalService } from 'app/logos/llm-selection-popup.service';
 import { Theme, ThemeService } from 'app/core/theme/shared/theme.service';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -24,8 +24,14 @@ export class LLMSelectionModalComponent implements OnInit, OnDestroy {
     readonly isVisible = signal(false);
     readonly currentSelection = signal<LLMSelectionDecision | undefined>(undefined);
     private modalSubscription?: Subscription;
+    private readonly dialog = viewChild<ElementRef<HTMLElement>>('dialog');
 
     readonly isOnPremiseEnabled = signal<boolean>(undefined!);
+
+    constructor() {
+        // Focus starts on the button that opened the dialog; move it inside so keyboard users, and Escape, reach it right away.
+        effect(() => this.dialog()?.nativeElement.focus());
+    }
 
     ngOnInit(): void {
         this.modalSubscription = this.modalService.openModal$.subscribe((currentSelection) => {
@@ -47,6 +53,10 @@ export class LLMSelectionModalComponent implements OnInit, OnDestroy {
         this.isVisible.set(false);
     }
 
+    /**
+     * Closes the modal without a choice. It must resolve the pending choice: otherwise a choice made later elsewhere,
+     * e.g. in the user settings, would resolve it and resume the action that opened the modal.
+     */
     dismiss(): void {
         this.choice.emit(LLM_MODAL_DISMISSED);
         this.modalService.emitChoice(LLM_MODAL_DISMISSED);
