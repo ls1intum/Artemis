@@ -2,6 +2,10 @@
     "global": {
         "title": "Artemis",
         "browsehappy": "You are using an <strong>outdated</strong> browser. Please <a href=\"https://browsehappy.com/?locale=en\">update your browser</a> to improve your experience.",
+        "inputNumber": {
+            "increment": "Increase value",
+            "decrement": "Decrease value"
+        },
         "generic": {
             "yes": "Yes",
             "no": "No",

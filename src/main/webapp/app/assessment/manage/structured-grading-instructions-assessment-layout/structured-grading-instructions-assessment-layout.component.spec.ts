@@ -52,19 +52,29 @@ describe('StructuredGradingInstructionsAssessmentLayoutComponent', () => {
         expect(comp.allowDrop()).toBe(false);
     });
 
-    it('removes button semantics when an instruction card stops being draggable', async () => {
+    it('uses a dedicated arming button and hides it when the instructions become read-only', async () => {
         const instruction: GradingInstruction = { id: 1, credits: 0, gradingScale: 'Scale', instructionDescription: 'Instruction', feedback: 'Feedback' };
         fixture.componentRef.setInput('criteria', [{ title: 'Criterion', structuredGradingInstructions: [instruction] }]);
         fixture.componentRef.setInput('readonly', false);
         await fixture.whenStable();
         const card: HTMLElement = fixture.nativeElement.querySelector('#criterion-0-instruction-0');
-        expect(card.getAttribute('role')).toBe('button');
-        expect(card.getAttribute('aria-pressed')).toBe('false');
+        expect(card.getAttribute('role')).toBeNull();
+        expect(card.getAttribute('tabindex')).toBeNull();
+        const selection = TestBed.inject(GradingInstructionSelectionService);
+        card.click();
+        card.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+        expect(selection.hasArmedInstruction()).toBe(false);
+        const arm = card.querySelector<HTMLButtonElement>('[data-testid="arm-instruction"]')!;
+        expect(arm.type).toBe('button');
+        expect(arm.tabIndex).toBe(0);
+        arm.click();
+        expect(selection.hasArmedInstruction()).toBe(true);
         fixture.componentRef.setInput('readonly', true);
         await fixture.whenStable();
         expect(card.getAttribute('role')).toBeNull();
         expect(card.getAttribute('tabindex')).toBeNull();
         expect(card.getAttribute('aria-pressed')).toBeNull();
+        expect(card.querySelector('[data-testid="arm-instruction"]')).toBeNull();
     });
 
     it('shows the instruction, feedback wording and signed points in each card', async () => {
@@ -196,14 +206,20 @@ describe('StructuredGradingInstructionsAssessmentLayoutComponent', () => {
             expect(TestBed.inject(GradingInstructionSelectionService).hasArmedInstruction()).toBe(false);
         });
 
-        it('keeps the no-host instruction card keyboard-accessible after unregistering its host', () => {
+        it('keeps the arming button available without a registered feedback list', () => {
             fixture.componentRef.setInput('allowArming', true);
             TestBed.inject(GradingInstructionSelectionService).unregister(host);
             fixture.detectChanges();
             const card = fixture.nativeElement.querySelector('#criterion-0-instruction-0') as HTMLElement;
-            expect(card.getAttribute('role')).toBe('button');
-            expect(card.getAttribute('tabindex')).toBe('0');
-            card.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+            expect(card.getAttribute('role')).toBeNull();
+            expect(card.getAttribute('tabindex')).toBeNull();
+            expect(card.querySelector('tumaet-ui-checkbox')).toBeNull();
+            const arm = card.querySelector<HTMLButtonElement>('[data-testid="arm-instruction"]')!;
+            expect(arm.disabled).toBe(false);
+            expect(arm.tabIndex).toBe(0);
+            arm.focus();
+            expect(document.activeElement).toBe(arm);
+            arm.click();
             expect(TestBed.inject(GradingInstructionSelectionService).hasArmedInstruction()).toBe(true);
         });
 

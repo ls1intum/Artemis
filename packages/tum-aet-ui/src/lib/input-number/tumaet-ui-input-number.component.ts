@@ -3,6 +3,7 @@ import { NgTemplateOutlet } from '@angular/common';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faChevronDown, faChevronUp, faMinus, faPlus } from '@fortawesome/free-solid-svg-icons';
+import { TumAetUiTranslatePipe } from '../i18n/tumaet-ui-translate.pipe';
 import { TumAetUiInputDirective } from '../input/tumaet-ui-input.directive';
 
 interface LocaleNumberSyntax {
@@ -18,7 +19,7 @@ interface LocaleNumberSyntax {
     selector: 'tumaet-ui-input-number',
     templateUrl: './tumaet-ui-input-number.component.html',
     styleUrl: './tumaet-ui-input-number.component.scss',
-    imports: [TumAetUiInputDirective, FaIconComponent, NgTemplateOutlet],
+    imports: [TumAetUiInputDirective, FaIconComponent, NgTemplateOutlet, TumAetUiTranslatePipe],
     host: {
         class: 'tumaet-ui-input-number',
         '[class.tumaet-ui-input-number-fluid]': 'fluid()',

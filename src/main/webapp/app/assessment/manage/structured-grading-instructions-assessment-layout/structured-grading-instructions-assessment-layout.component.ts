@@ -186,28 +186,7 @@ export class StructuredGradingInstructionsAssessmentLayoutComponent implements O
         // The mimetype has to be text/plain to enable dragging into an external application, e.g, Apollon
         event.dataTransfer?.setData('text/plain', JSON.stringify(instruction));
     }
-    /**
-     * disables drag if on readOnly mode
-     */
-    /**
-     * Keyboard stand-in for drag-and-drop when there is no checkbox host: Enter/Space on the card toggles the instruction.
-     * Selectable cards use {@link armInstruction} on their dedicated button instead (nested controls forbid role=button).
-     */
-    onInstructionKeydown(event: KeyboardEvent, instruction: GradingInstruction): void {
-        if (!this.allowArming() || this.selectable() || !this.isDraggable(instruction)) {
-            return;
-        }
-        if (event.key !== 'Enter' && event.key !== ' ') {
-            return;
-        }
-        event.preventDefault();
-        this.selectionService.toggleArmedInstruction(instruction);
-    }
-
-    /**
-     * Selectable-branch stand-in for drag-and-drop: toggles the instruction for the next referenced feedback target.
-     * Checkboxes stay the path for the unreferenced feedback list; existing target consumers still apply the armed instruction.
-     */
+    /** Selects an instruction for application to a feedback target without dragging. */
     armInstruction(event: Event, instruction: GradingInstruction): void {
         event.preventDefault();
         event.stopPropagation();

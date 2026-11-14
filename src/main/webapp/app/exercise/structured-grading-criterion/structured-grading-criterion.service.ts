@@ -45,7 +45,7 @@ export class StructuredGradingCriterionService {
     }
 
     /**
-     * Keyboard stand-in for drop: applies and clears a previously armed instruction onto {@code feedback}.
+     * Applies and clears a previously selected instruction onto {@code feedback}.
      * @returns whether an instruction was applied
      */
     applyArmedInstructionToFeedback(feedback: Feedback): boolean {

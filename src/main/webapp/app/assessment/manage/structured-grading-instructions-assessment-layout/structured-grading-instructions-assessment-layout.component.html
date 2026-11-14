@@ -32,10 +32,6 @@
                         class="flex flex-col gap-2 rounded-xl border border-(--border-color) p-3!"
                         [class.sgi-item--armed]="allowArming() && selectionService.isArmed(instruction)"
                         [draggable]="isDraggable(instruction)"
-                        [attr.tabindex]="allowArming() && !selectable() && isDraggable(instruction) ? 0 : null"
-                        [attr.role]="allowArming() && !selectable() && isDraggable(instruction) ? 'button' : null"
-                        [attr.aria-pressed]="allowArming() && !selectable() && isDraggable(instruction) ? selectionService.isArmed(instruction) : null"
-                        (keydown)="onInstructionKeydown($event, instruction)"
                         (dragstart)="drag($event, instruction)"
                         id="criterion-{{ criterionIndex }}-instruction-{{ instructionIndex }}"
                     >
@@ -50,26 +46,26 @@
                                 }
                             </div>
                             <div class="flex items-center gap-2">
+                                @if (allowArming() && !readonly()) {
+                                    <button
+                                        type="button"
+                                        tumAetUiButton
+                                        size="small"
+                                        severity="secondary"
+                                        [variant]="selectionService.isArmed(instruction) ? 'solid' : 'outlined'"
+                                        data-testid="arm-instruction"
+                                        [disabled]="!isDraggable(instruction)"
+                                        [attr.aria-pressed]="selectionService.isArmed(instruction)"
+                                        [attr.aria-label]="
+                                            (selectionService.isArmed(instruction) ? 'artemisApp.exercise.unarmInstruction' : 'artemisApp.exercise.armInstruction')
+                                                | artemisTranslate
+                                        "
+                                        (click)="armInstruction($event, instruction)"
+                                    >
+                                        <fa-icon [icon]="faCrosshairs" />
+                                    </button>
+                                }
                                 @if (selectable()) {
-                                    @if (allowArming()) {
-                                        <button
-                                            type="button"
-                                            tumAetUiButton
-                                            size="small"
-                                            severity="secondary"
-                                            [variant]="selectionService.isArmed(instruction) ? 'solid' : 'outlined'"
-                                            data-testid="arm-instruction"
-                                            [disabled]="!isDraggable(instruction)"
-                                            [attr.aria-pressed]="selectionService.isArmed(instruction)"
-                                            [attr.aria-label]="
-                                                (selectionService.isArmed(instruction) ? 'artemisApp.exercise.unarmInstruction' : 'artemisApp.exercise.armInstruction')
-                                                    | artemisTranslate
-                                            "
-                                            (click)="armInstruction($event, instruction)"
-                                        >
-                                            <fa-icon [icon]="faCrosshairs" />
-                                        </button>
-                                    }
                                     @if (isMultiUse(instruction)) {
                                         <fieldset
                                             class="m-0 inline-flex min-w-0 items-center gap-1 border-0 p-0"

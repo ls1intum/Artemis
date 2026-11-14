@@ -39,10 +39,7 @@ export class GradingInstructionSelectionService {
     private readonly host = signal<GradingInstructionSelectionHost | undefined>(undefined);
     private readonly reservedInstructions = signal<ReadonlyMap<object, GradingInstruction>>(new Map());
 
-    /**
-     * Instruction armed by keyboard (Enter/Space) for the next feedback target without a checkbox host. Consumed by
-     * the next target that accepts it (drop or keyboard), the drag-and-drop stand-in without a checkbox host.
-     */
+    /** Instruction selected for application to the next feedback target. */
     private readonly armedInstruction = signal<GradingInstruction | undefined>(undefined);
 
     /** True while an instruction is armed for the next feedback target. */
@@ -163,7 +160,7 @@ export class GradingInstructionSelectionService {
         this.armedInstruction.set(this.isArmed(instruction) ? undefined : instruction);
     }
 
-    /** Takes and clears the keyboard-armed instruction when its live usage limit still allows an application. */
+    /** Takes and clears the selected instruction when its live usage limit still allows an application. */
     consumeArmedInstruction(): GradingInstruction | undefined {
         const instruction = this.armedInstruction();
         this.armedInstruction.set(undefined);
