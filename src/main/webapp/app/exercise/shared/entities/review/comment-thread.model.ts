@@ -40,7 +40,3 @@ export interface CreateCommentThread {
     initialLineNumber: number;
     initialComment: CreateComment;
 }
-
-export interface UpdateThreadResolvedState {
-    resolved: boolean;
-}
