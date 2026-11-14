@@ -863,6 +863,10 @@
                     "help": "The maximum amount of memory that the Docker container can use. For more information, refer to the Docker documentation.",
                     "invalid": "The memory limit must be a whole number of at least 6 MB."
                 },
+                "allowRawSockets": {
+                    "label": "Allow raw network sockets (for example ping)",
+                    "help": "By default, builds run without the Linux capability to open raw network sockets. Programs that send ICMP echo requests, such as ping, then fail, while TCP and UDP connections, DNS and dependency downloads work as usual. Enable this option only if the exercise needs ping or a similar tool. It has no effect when the network is set to None."
+                },
                 "memorySwap": {
                     "label": "Edit memory swap limit (in MB)",
                     "help": "The maximum amount of memory and swap space that the Docker container can use. For more information, refer to the Docker documentation.",

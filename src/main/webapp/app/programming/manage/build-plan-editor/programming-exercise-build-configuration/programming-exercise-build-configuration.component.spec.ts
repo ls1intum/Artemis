@@ -312,6 +312,42 @@ describe('ProgrammingExercise Docker Image', () => {
         expect(comp.envVars()).toEqual([['key', 'value']]);
     });
 
+    it('should store the raw socket option only when it is switched on', () => {
+        comp.onNetworkChange('');
+        comp.envVars.set([]);
+        comp.cpuCount.set(undefined);
+        comp.memory.set(undefined);
+        comp.memorySwap.set(undefined);
+
+        comp.onAllowRawSocketsChange({ target: { checked: true } } as unknown as Event);
+        expect(comp.programmingExercise()?.buildConfig?.dockerFlags).toBe('{"env":{},"allowRawSockets":true}');
+
+        comp.onAllowRawSocketsChange({ target: { checked: false } } as unknown as Event);
+        expect(comp.programmingExercise()?.buildConfig?.dockerFlags).toBe('{"env":{}}');
+    });
+
+    it('should read the raw socket option of stored docker flags and reset it for the next exercise', () => {
+        programmingExercise.buildConfig!.dockerFlags = '{"env":{},"allowRawSockets":true}';
+        comp.ngOnInit();
+        expect(comp.allowRawSockets()).toBe(true);
+
+        programmingExercise.buildConfig!.dockerFlags = '{"env":{}}';
+        comp.ngOnInit();
+        expect(comp.allowRawSockets()).toBe(false);
+    });
+
+    it('should offer the raw socket option unless the network is none', () => {
+        programmingExercise.programmingLanguage = ProgrammingLanguage.SWIFT;
+        comp.setIsLanguageSupported();
+        comp.onNetworkChange('default');
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelector('[data-testid="allow-raw-sockets"]')).not.toBeNull();
+
+        comp.onNetworkChange('none');
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelector('[data-testid="allow-raw-sockets"]')).toBeNull();
+    });
+
     it('should show warning when network none is selected', () => {
         programmingExercise.programmingLanguage = ProgrammingLanguage.SWIFT;
         comp.setIsLanguageSupported();

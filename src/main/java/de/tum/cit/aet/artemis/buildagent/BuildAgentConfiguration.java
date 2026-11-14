@@ -24,6 +24,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 
 import com.github.dockerjava.api.DockerClient;
+import com.github.dockerjava.api.model.Capability;
 import com.github.dockerjava.api.model.HostConfig;
 import com.github.dockerjava.core.DefaultDockerClientConfig;
 import com.github.dockerjava.core.DockerClientConfig;
@@ -152,8 +153,22 @@ public class BuildAgentConfiguration {
         log.info("Using build job container docker host config with CPU(s): {}, memory: {}, memory swap: {}, pids limit: {}.", cpuCount, formatMemory(memory),
                 formatMemory(memorySwap), pidsLimit);
 
-        return HostConfig.newHostConfig().withCpuQuota(cpuCount * cpuPeriod).withCpuPeriod(cpuPeriod).withMemory(memory).withMemorySwap(memorySwap).withPidsLimit(pidsLimit)
-                .withAutoRemove(true);
+        return restrictPrivileges(HostConfig.newHostConfig().withCpuQuota(cpuCount * cpuPeriod).withCpuPeriod(cpuPeriod).withMemory(memory).withMemorySwap(memorySwap)
+                .withPidsLimit(pidsLimit).withAutoRemove(true), false);
+    }
+
+    /**
+     * Limits what processes of a build container may do. The capabilities that the container runtime grants by default but that no build needs are removed, and the processes
+     * cannot gain privileges through setuid programs. Network access, file ownership and the ordinary use of package managers are not affected.
+     *
+     * @param hostConfig      the configuration of the container
+     * @param allowRawSockets whether the capability to open raw sockets stays, which a ping needs
+     * @return the same configuration
+     */
+    public static HostConfig restrictPrivileges(HostConfig hostConfig, boolean allowRawSockets) {
+        List<Capability> dropped = allowRawSockets ? List.of(Capability.MKNOD, Capability.SYS_CHROOT, Capability.SETFCAP, Capability.AUDIT_WRITE)
+                : List.of(Capability.NET_RAW, Capability.MKNOD, Capability.SYS_CHROOT, Capability.SETFCAP, Capability.AUDIT_WRITE);
+        return hostConfig.withCapDrop(dropped.toArray(Capability[]::new)).withSecurityOpts(List.of("no-new-privileges"));
     }
 
     /**

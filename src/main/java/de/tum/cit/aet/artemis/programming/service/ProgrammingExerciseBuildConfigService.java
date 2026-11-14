@@ -80,12 +80,14 @@ public class ProgrammingExerciseBuildConfigService {
         int cpuCount = 0;
         int memory = 0;
         int memorySwap = 0;
+        boolean allowRawSockets = false;
         if (dockerFlagsDTO != null) {
             network = StringUtils.trimToNull(dockerFlagsDTO.network());
             exerciseEnvironment = dockerFlagsDTO.env();
             cpuCount = dockerFlagsDTO.cpuCount();
             memory = dockerFlagsDTO.memory();
             memorySwap = dockerFlagsDTO.memorySwap();
+            allowRawSockets = dockerFlagsDTO.allowRawSockets();
         }
         if (network == null) {
             network = containerDefaults.network();
@@ -93,14 +95,14 @@ public class ProgrammingExerciseBuildConfigService {
 
         ProgrammingExercise exercise = programmingExercise;
         if (exercise == null) {
-            return createDockerRunConfig(network, withInstallationDefaults(exerciseEnvironment), cpuCount, memory, memorySwap);
+            return createDockerRunConfig(network, withInstallationDefaults(exerciseEnvironment), cpuCount, memory, memorySwap, allowRawSockets);
         }
 
         ProgrammingLanguage programmingLanguage = exercise.getProgrammingLanguage();
         ProjectType projectType = exercise.getProjectType();
         Map<String, String> environment = addLanguageSpecificEnvironment(exerciseEnvironment, programmingLanguage, projectType);
 
-        return createDockerRunConfig(network, withInstallationDefaults(environment), cpuCount, memory, memorySwap);
+        return createDockerRunConfig(network, withInstallationDefaults(environment), cpuCount, memory, memorySwap, allowRawSockets);
     }
 
     /**
@@ -138,7 +140,11 @@ public class ProgrammingExerciseBuildConfigService {
     }
 
     DockerRunConfig createDockerRunConfig(String network, Map<String, String> environmentMap, int cpuCount, int memory, int memorySwap) {
-        if (network == null && environmentMap == null && cpuCount == 0 && memory == 0 && memorySwap == 0) {
+        return createDockerRunConfig(network, environmentMap, cpuCount, memory, memorySwap, false);
+    }
+
+    DockerRunConfig createDockerRunConfig(String network, Map<String, String> environmentMap, int cpuCount, int memory, int memorySwap, boolean allowRawSockets) {
+        if (network == null && environmentMap == null && cpuCount == 0 && memory == 0 && memorySwap == 0 && !allowRawSockets) {
             return null;
         }
         List<String> environmentStrings = new ArrayList<>();
@@ -151,7 +157,7 @@ public class ProgrammingExerciseBuildConfigService {
             }
         }
 
-        return new DockerRunConfig(environmentStrings, network, cpuCount, memory, memorySwap);
+        return new DockerRunConfig(environmentStrings, network, cpuCount, memory, memorySwap, allowRawSockets);
     }
 
     /**

@@ -147,7 +147,7 @@ public class KubernetesBuildJobFactory {
 
         return new ContainerBuilder().withName(BUILDER_CONTAINER).withImage(buildJob.buildConfig().dockerImage()).withImagePullPolicy(properties.imagePullPolicy())
                 .withCommand("bash", "-c", command).withEnv(environment(runConfig)).withResources(builderResources(runConfig))
-                .withSecurityContext(builderSecurityContext(networkIsolated))
+                .withSecurityContext(builderSecurityContext(networkIsolated, runConfig.allowRawSockets()))
                 .withVolumeMounts(new VolumeMountBuilder().withName(WORKSPACE_VOLUME).withMountPath(WORKSPACE_PATH).build()).build();
     }
 
@@ -157,23 +157,23 @@ public class KubernetesBuildJobFactory {
      * Kubernetes leaves seccomp unconfined unless a profile is requested, while the Docker build runner always applies the container runtime's default profile. Requesting
      * {@code RuntimeDefault} therefore restores parity with the Docker runner instead of silently running with a weaker sandbox.
      * <p>
-     * {@code allowPrivilegeEscalation} and the default capability set are deliberately left untouched: exercise images legitimately install packages as root and use setuid
-     * tooling such as {@code sudo} or {@code gosu}. Disabling either would break those exercises, and the Docker runner does not restrict them either. Isolation of the builder
-     * relies on the Pod boundary, the disabled service account token, and the optional network isolation init container.
-     * <p>
-     * The one exception is a build with the network {@code none}. That isolation is a set of firewall rules in the network namespace of the Pod, and a root process that keeps
-     * {@code CAP_NET_RAW}, which the default capability set contains, can open a packet socket that sends and receives frames without passing through them. Student code could
-     * then reach the network although the exercise forbids it, so this capability is dropped. It costs the build raw sockets, which a build without a network has no use for.
+     * The container runs with the same restrictions as the Docker build runner: the capabilities that the default set contains but that no build needs are dropped,
+     * and processes cannot gain privileges through setuid programs ({@code allowPrivilegeEscalation} is false). Network access, file ownership and the installation of
+     * packages as root keep working. The capability to open raw sockets, which a ping needs, stays only if the exercise asks for it and the build has a network. In a build with
+     * the network {@code none} the isolation is a set of firewall rules in the network namespace of the Pod, and a root process that keeps this capability could send frames
+     * past them, so it is always dropped there.
      *
      * @param networkIsolated whether the build runs with the network {@code none}
+     * @param allowRawSockets whether the exercise keeps the capability to open raw sockets
      * @return the security context applied to the builder container
      */
-    private SecurityContext builderSecurityContext(boolean networkIsolated) {
-        var securityContext = new SecurityContextBuilder().withSeccompProfile(new SeccompProfileBuilder().withType("RuntimeDefault").build());
-        if (networkIsolated) {
-            securityContext.withCapabilities(new CapabilitiesBuilder().withDrop("NET_RAW").build());
+    private SecurityContext builderSecurityContext(boolean networkIsolated, boolean allowRawSockets) {
+        List<String> dropped = new ArrayList<>(List.of("MKNOD", "SYS_CHROOT", "SETFCAP", "AUDIT_WRITE"));
+        if (networkIsolated || !allowRawSockets) {
+            dropped.add("NET_RAW");
         }
-        return securityContext.build();
+        return new SecurityContextBuilder().withSeccompProfile(new SeccompProfileBuilder().withType("RuntimeDefault").build()).withAllowPrivilegeEscalation(false)
+                .withCapabilities(new CapabilitiesBuilder().withDrop(dropped).build()).build();
     }
 
     private Container helperContainer() {
