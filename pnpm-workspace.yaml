@@ -62,7 +62,7 @@ catalog:
   sass: 1.108.2
   semver: 7.8.6
   storybook: 10.6.7
-  stylelint: 17.16.0
+  stylelint: 18.0.0
   tailwindcss: 4.3.5
   tslib: 2.9.1
   typescript: 6.0.3
@@ -152,7 +152,6 @@ overrides:
   '@sinonjs/fake-timers': '15.4.0'
   ajv: '8.20.0'
   brace-expansion: '5.0.13'
-  braces: '3.0.3'
   debug: '4.4.3'
   # Must stay >= 5.9.3, which fixed the uneval/stringify advisories reached through svelte (@embedpdf/engines).
   # Kept on the 5.x line; 6.x is a major bump.
@@ -230,12 +229,6 @@ overrides:
 # Patch files applied by pnpm to specific transitive dependencies during install
 # (the pnpm-native replacement for the old patch-package/postinstall flow).
 patchedDependencies:
-  # GHSA-vfj7-8cjw-p6xm has no upstream fixed release. Bound parser and AST
-  # traversal depth while preserving normal brace globbing used by stylelint.
-  # Documentation shares this patch; exercise-template installs are separate.
-  # Version-based audit findings remain visible until upstream ships a fix.
-  # Remove after an upstream fix: https://github.com/micromatch/braces/issues/70
-  braces@3.0.3: config/pnpm/patches/braces@3.0.3.patch
   'eslint@10.14.0': 'config/pnpm/patches/eslint+10.14.0.patch'
   # folder-hash calls minimatch.makeRe, which minimatch 11 removed. minimatch is pinned to 11 above (GHSA-g3hv-75wg-m249),
   # and folder-hash is only used by supporting_scripts/client/prebuild.mjs. Remove once folder-hash supports minimatch 11.
