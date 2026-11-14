@@ -68,6 +68,14 @@ public record LocalVCPrePushHook(LocalVCServletService localVCServletService, Us
      */
     @Override
     public void onPreReceive(ReceivePack receivePack, Collection<ReceiveCommand> commands) {
+        examine(receivePack, commands);
+        if (commands.stream().anyMatch(command -> command.getResult() != ReceiveCommand.Result.NOT_ATTEMPTED)) {
+            // The objects of a rejected push stay in the repository, unreferenced, until the cleanup of rejected pushes removes them.
+            RejectedPushCleanupService.markForCleanup(receivePack.getRepository());
+        }
+    }
+
+    private void examine(ReceivePack receivePack, Collection<ReceiveCommand> commands) {
 
         if (commands.isEmpty()) {
             // E.g. no refs were updated during the push operation.
