@@ -197,6 +197,10 @@ Restore the backup taken in step 4 of the upgrade procedure if the cause cannot 
 
 Some releases change behavior in a way that requires a one-time action on existing data. These steps are additional to the upgrade scenarios above.
 
+### 10.8: Submission Policy in Exercise Updates
+
+Updating a programming exercise with `PUT /api/programming/programming-exercises` no longer adds, changes or removes its submission policy. Before, a request that omitted the policy removed it without applying the effect of the removal to the participations. The policy is now managed only through the `submission-policy` endpoints of the exercise, which the grading page of the client uses. The client needs no change, because its edit page already shows the policy read-only. Scripts that changed a policy through the exercise update have to call the dedicated endpoints.
+
 ### 10.8: Rate Limit of Re-evaluations
 
 Re-evaluating all results of a programming exercise (`PUT /api/programming/programming-exercises/{exerciseId}/grading/re-evaluate`) is limited to 6 requests per minute and user. Set `artemis.rate-limiting.re-evaluation-requests-per-minute` to change the limit. Instructors who exceed it receive a 429 response with a `Retry-After` header. Nothing else changes. See [Rate Limiting](/admin/production-setup/security#rate-limiting).

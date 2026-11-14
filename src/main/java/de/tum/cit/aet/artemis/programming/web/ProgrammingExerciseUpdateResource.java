@@ -451,8 +451,8 @@ public class ProgrammingExerciseUpdateResource {
             exercise.setTestCasesChanged(dto.testCasesChanged());
         }
 
-        // toEntity() copies the id through, so an existing policy keeps its identity instead of inserting a second row
-        exercise.setSubmissionPolicy(dto.submissionPolicy() == null ? null : dto.submissionPolicy().toEntity());
+        // The submission policy is not part of this update. Its dedicated endpoints add, change and remove it, and they also apply the effect of the change to the
+        // participations, so a policy that the request omits or alters here stays as it is.
         exercise.setProjectType(dto.projectType());
         exercise.setReleaseTestsWithExampleSolution(dto.releaseTestsWithExampleSolution());
 

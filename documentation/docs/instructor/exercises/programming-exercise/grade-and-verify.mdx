@@ -275,6 +275,8 @@ Students receive feedback explaining the deduction:
 
 After generating an exercise, submission policies can be updated on the grading page.
 
+Saving the exercise settings on the edit page leaves the submission policy unchanged. The edit page shows the policy read-only and links to the grading page, which is the only place where a policy is changed or removed. Requests that update an exercise through the REST API behave the same way: they keep the existing policy, and the dedicated `submission-policy` endpoints add, change and remove it.
+
 <Image src={submissionPolicyGradingPage} alt="Configure Grading page on the Submission Policy tab" size={ImageSize.large} caption="Submission Policy Management on Grading Page" />
 
 #### (De)activating Submission Policies
