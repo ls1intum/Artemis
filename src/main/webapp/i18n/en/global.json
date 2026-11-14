@@ -7,6 +7,7 @@
             "no": "No",
             "you": "You",
             "emptyList": "No items available",
+            "noEntriesYet": "No entries yet",
             "serverNotReachable": "Server not reachable",
             "filterOptions": "Filter options",
             "noMatchingOptions": "No matching options",
@@ -322,6 +323,7 @@
                     "notifications": "Notifications",
                     "examRooms": "Exam Rooms",
                     "dependencies": "Dependencies",
+                    "science": "Science",
                     "irisDashboard": "Iris Dashboard",
                     "courseIngestionDashboard": "Index Dashboard"
                 },
@@ -422,8 +424,8 @@
             "dev": "Development",
             "test": "Test Server"
         },
-        "item-count": "Showing {{first}} to {{second}} of {{total}} items",
         "paginator": {
+            "compactReport": "{{first}}–{{second}} of {{total}}",
             "ariaLabel": "Pagination",
             "first": "First page",
             "previous": "Previous page",
@@ -564,7 +566,10 @@
             "value": "Value"
         },
         "delete": {
-            "title": "Confirm delete operation"
+            "title": "Confirm delete operation",
+            "summary": {
+                "largeCountWarning": "This deletes a large amount of data. Please check the numbers below carefully before you confirm."
+            }
         },
         "unlink": {
             "title": "Confirm unlink operation"

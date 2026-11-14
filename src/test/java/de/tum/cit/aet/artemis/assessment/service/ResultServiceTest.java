@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.assessment.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 
 import java.time.ZonedDateTime;
 import java.util.List;
@@ -120,6 +121,11 @@ class ResultServiceTest extends AbstractSpringIntegrationIndependentBatchTest {
         participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC_ATHENA, ZonedDateTime.now(), submission);
 
         assertThat(resultRepository.findLatestResultsWithAssessmentNoteBySubmissionIds(Set.of(submission.getId()))).containsExactly(latest);
+    }
+
+    @Test
+    void shouldRejectNullManualResult() {
+        assertThatIllegalArgumentException().isThrownBy(() -> resultService.createNewManualResult(null, true));
     }
 
     @Test

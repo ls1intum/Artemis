@@ -607,6 +607,10 @@
                 "delete": {
                     "question": "Should the <strong>{{ title }}</strong> really be deleted? All associated elements will also be deleted, if they are not referenced by any other test run.",
                     "typeNameToConfirm": "Please type: Test Run to confirm."
+                },
+                "empty": {
+                    "title": "No test runs yet",
+                    "description": "Create a test run to try out the exam from the student perspective."
                 }
             },
             "examStudents": {
@@ -743,7 +747,10 @@
                 "delete": {
                     "question": "Are you sure you want to delete the exercise group <strong>{{ title }}</strong>? All associated exercises will also be deleted.",
                     "questionLocalVC": "Are you sure you want to delete the exercise group <strong>{{ title }}</strong>? All associated exercises will be deleted.<br>All student, template, solution, test, and auxiliary repositories and build plans will also be deleted.<br>Be careful: this can <strong class='text-danger'>NOT</strong> be undone!<br>Before you activate this option, we recommend that you archive the repositories and build plans first! ",
-                    "typeNameToConfirm": "Please type in the name of the exercise group to confirm."
+                    "typeNameToConfirm": "Please type in the name of the exercise group to confirm.",
+                    "summary": {
+                        "title": "What will be deleted"
+                    }
                 },
                 "orderCouldNotBeSaved": "The order could not be saved",
                 "importModal": {
@@ -780,23 +787,39 @@
                 "question": "Are you sure you want to permanently delete the Exam <strong>{{ title }}</strong>? All associated elements will be deleted including the Student Exams. This action can NOT be undone!",
                 "typeNameToConfirm": "Please type in the name of the exam to confirm:",
                 "summary": {
-                    "title": "Exam Summary",
-                    "numberExerciseGroups": "Number of Exercise Groups",
-                    "numberProgrammingExercises": "Number of Programming Exercises",
-                    "numberModelingExercises": "Number of Modeling Exercises",
-                    "numberTextExercises": "Number of Text Exercises",
-                    "numberFileUploadExercises": "Number of File Upload Exercises",
-                    "numberQuizExercises": "Number of Quiz Exercises",
-                    "numberRepositories": "Number of Repositories",
-                    "numberBuilds": "Number of Builds",
-                    "numberRegisteredStudents": "Number of Registered Students",
-                    "numberNotStartedExams": "Number of Exams (not started)",
-                    "numberStartedExams": "Number of Exams",
-                    "numberSubmittedExams": "Number of Exams (submitted)",
-                    "numberCommunicationPosts": "Number of Communication Posts",
-                    "numberAnswerPosts": "Number of Answer Posts",
-                    "isTestExam": "Test Exam",
-                    "isTestCourse": "Test Course"
+                    "title": "What will be deleted",
+                    "category": {
+                        "structure": "Exam structure",
+                        "students": "Students and exams",
+                        "studentWork": "Student work",
+                        "assessment": "Assessment",
+                        "plagiarism": "Plagiarism checks",
+                        "communication": "Communication",
+                        "infrastructure": "Infrastructure"
+                    },
+                    "numberExerciseGroups": "Exercise groups",
+                    "numberProgrammingExercises": "Programming exercises",
+                    "numberQuizExercises": "Quiz exercises",
+                    "numberTextExercises": "Text exercises",
+                    "numberModelingExercises": "Modeling exercises",
+                    "numberFileUploadExercises": "File upload exercises",
+                    "numberRegisteredStudents": "Registered students",
+                    "numberNotStartedExams": "Student exams (not started)",
+                    "numberStartedExams": "Student exams (started)",
+                    "numberSubmittedExams": "Student exams (submitted)",
+                    "numberTestRuns": "Test runs",
+                    "numberExamSessions": "Exam sessions",
+                    "numberExamLiveEvents": "Live events and announcements",
+                    "numberStudentParticipations": "Student participations",
+                    "numberSubmissions": "Submissions",
+                    "numberResults": "Results",
+                    "numberAssessments": "Manual assessments",
+                    "numberComplaints": "Complaints and feedback requests",
+                    "numberPlagiarismComparisons": "Plagiarism comparisons",
+                    "numberCommunicationPosts": "Posts in the exam channel",
+                    "numberAnswerPosts": "Replies in the exam channel",
+                    "numberBuilds": "Build jobs",
+                    "numberStudentExamsOfGroup": "Student exams containing exercises of this group"
                 }
             },
             "reset": {

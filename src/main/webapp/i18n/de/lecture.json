@@ -48,8 +48,7 @@
                     "SEMESTER": "Semester",
                     "doImport": "Importieren"
                 },
-                "search": "Nach Vorlesung suchen:",
-                "loading": "Lade...",
+                "search": "Nach Vorlesung suchen",
                 "label": "Vorlesung importieren"
             },
             "sections": {
@@ -161,6 +160,7 @@
                 "retry": "Erneut versuchen",
                 "discard": "Änderung verwerfen und schließen",
                 "failedAfterLeaving": "Eine Änderung an einem Vorlesungsinhalt konnte nicht gespeichert werden. Öffne die Vorlesung erneut, um ihre Inhalte zu prüfen.",
+                "videoSourceChangedMeanwhile": "Die Video-URL wurde inzwischen geändert, deshalb wurde deine nicht gespeichert. Prüfe sie und speichere sie erneut, wenn du sie weiterhin möchtest.",
                 "unconfirmedContent": "Speichere oder verwirf zuerst die neue Video-URL.",
                 "done": "Fertig"
             },

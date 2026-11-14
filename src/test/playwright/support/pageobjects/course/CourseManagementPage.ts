@@ -1,6 +1,7 @@
 import { Page, expect } from '@playwright/test';
 import { UserCredentials } from '../../users';
 import { COURSE_ADMIN_BASE } from '../../constants';
+import { DELETION_COMPLETION_TIMEOUT } from '../../timeouts';
 import { Course } from 'app/course/shared/entities/course.model';
 import { CourseSummary } from '../../../e2e/course/CourseManagement.spec';
 
@@ -189,9 +190,25 @@ export class CourseManagementPage {
         }
 
         await this.page.locator('#confirm-entity-name').fill(course.title!);
-        const responsePromise = this.page.waitForResponse(`${COURSE_ADMIN_BASE}/${course.id}`);
+        const responsePromise = this.page.waitForResponse((response) => response.url().endsWith(`${COURSE_ADMIN_BASE}/${course.id}`) && response.request().method() === 'DELETE');
         await deleteButton.click();
-        await responsePromise;
+        // The server accepts the deletion and deletes the course in the background.
+        expect((await responsePromise).status()).toBe(202);
+        await this.finishDeletionProgress();
+    }
+
+    /**
+     * Follows the progress overlay of a course deletion until the server reports its end, closes it (which leads to the courses) and
+     * fails with the reason of the server when the deletion failed.
+     */
+    private async finishDeletionProgress() {
+        const progress = this.page.getByTestId('course-operation-progress');
+        await expect(progress).toHaveAttribute('data-status', /COMPLETED|FAILED/, { timeout: DELETION_COMPLETION_TIMEOUT });
+        if ((await progress.getAttribute('data-status')) === 'FAILED') {
+            throw new Error(`The deletion of the course failed: ${(await progress.innerText()).replace(/\s+/g, ' ')}`);
+        }
+        await this.page.getByTestId('course-operation-close').click();
+        await expect(progress).toBeHidden();
     }
 
     /**

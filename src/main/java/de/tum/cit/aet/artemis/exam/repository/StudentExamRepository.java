@@ -36,7 +36,6 @@ import de.tum.cit.aet.artemis.exam.dto.ExamStudentDTO;
 import de.tum.cit.aet.artemis.exam.dto.StudentExamExerciseStartDTO;
 import de.tum.cit.aet.artemis.exam.dto.StudentExamSubmissionGateDTO;
 import de.tum.cit.aet.artemis.exam.dto.StudentExamWorkingPeriodDTO;
-import de.tum.cit.aet.artemis.exam.dto.StudentExamWorkingTimeDTO;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 
@@ -241,6 +240,21 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
             """)
     long countTestRunsByExamId(@Param("examId") Long examId);
 
+    /**
+     * Counts the student exams of real exams (no test runs) that contain at least one of the given exercises.
+     *
+     * @param exerciseIds the ids of the exercises
+     * @return the number of student exams
+     */
+    @Query("""
+            SELECT COUNT(DISTINCT se)
+            FROM StudentExam se
+                JOIN se.exercises ex
+            WHERE ex.id IN :exerciseIds
+                AND (se.testRun IS NULL OR se.testRun = FALSE)
+            """)
+    long countRealStudentExamsContainingExercises(@Param("exerciseIds") Collection<Long> exerciseIds);
+
     @Query("""
             SELECT COUNT(se)
             FROM StudentExam se
@@ -304,24 +318,6 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
             	AND se.user.id = :userId
             """)
     Optional<StudentExam> findByExamIdAndUserId(@Param("examId") long examId, @Param("userId") long userId);
-
-    /**
-     * Reads only the two values needed to compute a student's individual exam end date, rather than loading the whole
-     * student exam. Pair with {@link de.tum.cit.aet.artemis.exam.domain.StudentExam#individualEndDate} and the exam the
-     * caller already holds.
-     *
-     * @param examId the id of the exam
-     * @param userId the id of the student
-     * @return the working time and started date of the student exam, if one exists
-     */
-    @Query("""
-            SELECT new de.tum.cit.aet.artemis.exam.dto.StudentExamWorkingTimeDTO(se.workingTime, se.startedDate)
-            FROM StudentExam se
-            WHERE se.testRun = FALSE
-                AND se.exam.id = :examId
-                AND se.user.id = :userId
-            """)
-    Optional<StudentExamWorkingTimeDTO> findWorkingTimeByExamIdAndUserId(@Param("examId") long examId, @Param("userId") long userId);
 
     /**
      * Reads everything the exam preparation needs to set up the participations of an exam: one row per

@@ -2,8 +2,10 @@ package de.tum.cit.aet.artemis.core.config;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.regex.Pattern;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -119,11 +121,24 @@ public class SecurityConfiguration {
      */
     private final ObjectProvider<ElevatedAccessService> elevatedAccessService;
 
+    @Value("${springdoc.api-docs.enabled:false}")
+    private boolean apiDocsEnabled;
+
+    @Value("${springdoc.swagger-ui.enabled:false}")
+    private boolean swaggerUiEnabled;
+
     @Value("${artemis.user-management.passkey.token-validity-in-seconds-for-passkey:15552000}")
     private long tokenValidityInSecondsForPasskey;
 
-    @Value("#{'${spring.prometheus.monitoringIp:127.0.0.1}'.split(',')}")
-    private List<String> monitoringIpAddresses;
+    /**
+     * Comma separated origins that may embed the client in a frame, for example the origin of a learning management system that launches Artemis through LTI.
+     * Empty by default.
+     */
+    @Value("${artemis.security.frame-ancestors:}")
+    private String frameAncestors = "";
+
+    /** One origin of {@code artemis.security.frame-ancestors}, optionally with a leading wildcard host label and a port. */
+    private static final Pattern FRAME_ANCESTOR_ORIGIN = Pattern.compile("https?://(\\*\\.)?[A-Za-z0-9.-]+(:[0-9]{1,5})?");
 
     /**
      * Validates the configuration of the validity duration of passkey generated jwts
@@ -280,7 +295,47 @@ public class SecurityConfiguration {
      * the browser blocks them.
      * </p>
      */
-    static final String CSP_POLICY_DIRECTIVES = "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.youtube.com; worker-src 'self' blob:";
+    static final String CSP_POLICY_DIRECTIVES = "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.youtube.com; worker-src 'self' blob:; base-uri 'self'";
+
+    /**
+     * Builds the Content Security Policy of the application: {@link #CSP_POLICY_DIRECTIVES} and the framing restriction.
+     * <p>
+     * The LTI module lets learning management systems embed the client, so the {@code X-Frame-Options} header is dropped by the LTI configuration when that module is enabled,
+     * and no {@code frame-ancestors} directive is added then unless origins are configured. Without the LTI module, the client may not be embedded at all.
+     *
+     * @param ltiEnabled whether the LTI module is enabled
+     * @return the policy directives
+     * @throws IllegalStateException if a configured origin is not of the form {@code scheme://host[:port]}
+     */
+    String contentSecurityPolicy(boolean ltiEnabled) {
+        List<String> origins = configuredFrameAncestors();
+        if (!origins.isEmpty()) {
+            return CSP_POLICY_DIRECTIVES + "; frame-ancestors 'self' " + String.join(" ", origins);
+        }
+        return ltiEnabled ? CSP_POLICY_DIRECTIVES : CSP_POLICY_DIRECTIVES + "; frame-ancestors 'none'";
+    }
+
+    /**
+     * Sends {@code X-Frame-Options: DENY} unless origins may embed the client, which the {@code frame-ancestors} directive then states instead.
+     */
+    private void configureFrameOptions(HeadersConfigurer<HttpSecurity>.FrameOptionsConfig frame) {
+        if (configuredFrameAncestors().isEmpty()) {
+            frame.deny();
+        }
+        else {
+            frame.disable();
+        }
+    }
+
+    private List<String> configuredFrameAncestors() {
+        List<String> origins = Arrays.stream(frameAncestors.split(",")).map(String::trim).filter(origin -> !origin.isEmpty()).toList();
+        for (String origin : origins) {
+            if (!FRAME_ANCESTOR_ORIGIN.matcher(origin).matches()) {
+                throw new IllegalStateException("artemis.security.frame-ancestors contains an invalid origin: " + origin);
+            }
+        }
+        return origins;
+    }
 
     /**
      * Configures the {@link SecurityFilterChain} for the application, specifying security settings for HTTP requests.
@@ -303,12 +358,13 @@ public class SecurityConfiguration {
      * @param personalAccessTokenService Resolved when a request arrives for the same reason as the elevated access service: the service exists only
      *                                       when {@code artemis.agent-access.enabled} is true, and no request without a personal access token needs it.
      *                                       A parameter of this method rather than of the constructor keeps the constructor within the dependency limit.
+     * @param monitoringAccessPolicy     Decides which peer addresses may read {@code /management/prometheus}, from addresses and CIDR blocks.
      * @return The configured {@link SecurityFilterChain}.
      * @throws Exception If an error occurs during the configuration process.
      */
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http, AuthenticationEntryPoint entryPoint, AccessDeniedHandler deniedHandler,
-            ObjectProvider<PersonalAccessTokenService> personalAccessTokenService) throws Exception {
+            ObjectProvider<PersonalAccessTokenService> personalAccessTokenService, MonitoringAccessPolicy monitoringAccessPolicy) throws Exception {
         // @formatter:off
         http
             // Disables Spring Security's CSRF token protection. Note what does and does not make that safe here:
@@ -333,7 +389,7 @@ public class SecurityConfiguration {
             //
             // Consequence: relaxing the attribute to SameSite=None removes the only CSRF defence this application has.
             // Do not change it without adding token-based protection here first.
-            .csrf(CsrfConfigurer::disable)
+            .csrf(CsrfConfigurer::disable) // NOSONAR - reviewed (Sonar S4502), the comment above explains why SameSite=Lax is the CSRF defence // codeql[java/spring-disabled-csrf-protection]
             // Adds a CORS (Cross-Origin Resource Sharing) filter before the username/password authentication to handle cross-origin requests.
             .addFilterBefore(corsFilter, UsernamePasswordAuthenticationFilter.class)
             // Authenticates personal access tokens (bearer tokens starting with art_pat_) on /api/ requests. Inert unless agent access is enabled.
@@ -346,10 +402,10 @@ public class SecurityConfiguration {
             .headers(headers -> headers
                 // Sets Content Security Policy (CSP) directives to prevent XSS attacks.
                 .contentSecurityPolicy(csp -> csp
-                    .policyDirectives(CSP_POLICY_DIRECTIVES)
+                    .policyDirectives(contentSecurityPolicy(moduleFeatureService.isLtiEnabled()))
                 )
-                // Prevents the website from being framed, avoiding clickjacking attacks.
-                .frameOptions(HeadersConfigurer.FrameOptionsConfig::deny)
+                // Prevents the website from being framed. The LTI configuration below removes this header again, as learning management systems embed the client.
+                .frameOptions(this::configureFrameOptions)
                 // Sets Referrer Policy to limit the amount of referrer information sent with requests.
                 .referrerPolicy(referrer -> referrer.policy(ReferrerPolicyHeaderWriter.ReferrerPolicy.STRICT_ORIGIN_WHEN_CROSS_ORIGIN))
                 // Disables HTTP Strict Transport Security as it is managed at the reverse proxy level (typically nginx).
@@ -385,8 +441,8 @@ public class SecurityConfiguration {
                     .requestMatchers("/.well-known/jwks.json").permitAll()
                     .requestMatchers("/.well-known/assetlinks.json").permitAll()
                     .requestMatchers("/.well-known/apple-app-site-association").permitAll()
-                    // Prometheus endpoint protected by IP address.
-                    .requestMatchers("/management/prometheus/**").access((_, context) -> new AuthorizationDecision(monitoringIpAddresses.contains(context.getRequest().getRemoteAddr())))
+                    // Prometheus endpoint protected by IP address. spring.prometheus.monitoringIp holds addresses and CIDR blocks.
+                    .requestMatchers("/management/prometheus/**").access((_, context) -> new AuthorizationDecision(monitoringAccessPolicy.isAllowed(context.getRequest().getRemoteAddr())))
                     // The remaining /management/** paths are administrative. The public exceptions (info, health) and
                     // the IP-gated prometheus rule are matched earlier, so this rule covers the rest. Actuator
                     // endpoints are not served by an annotated handler, so this is the only place that can ask for
@@ -396,16 +452,19 @@ public class SecurityConfiguration {
                     // than trusted until the token expires.
                     .requestMatchers("/management/**").access((authentication, _) ->
                         new AuthorizationDecision(elevatedAccessService.getObject().isAdminElevationActive(authentication.get())))
-                    .requestMatchers(("/api-docs")).permitAll()
-                    .requestMatchers(("/api-docs.yaml")).permitAll()
-                    // The agent API group of the specification generation, see OpenAPIConfiguration#agentApi. Like the two above, it
-                    // answers only while springdoc is enabled, which it is not on a running server.
-                    .requestMatchers(("/api-docs/agent")).permitAll()
-                    .requestMatchers("/swagger-ui/**").permitAll()
                     .requestMatchers("/api/calendar/courses/*/calendar-events-ics").permitAll()
                     // `/git/**` endpoints (JGit servlet + LocalVC filters) are only registered under the `localvc` profile
                     // LocalVCFetchFilter/LocalVCPushFilter handle auth
                     .requestMatchers("/git/**").permitAll();
+
+                // The specification and the Swagger UI are public only where springdoc is switched on (`springdoc.api-docs.enabled`, `springdoc.swagger-ui.enabled`), which is the
+                // build-time specification generation. On a running server they stay off, and the requests then need an authenticated user like any other path.
+                if (apiDocsEnabled) {
+                    requests.requestMatchers("/api-docs", "/api-docs.yaml", "/api-docs/agent").permitAll();
+                }
+                if (swaggerUiEnabled) {
+                    requests.requestMatchers("/swagger-ui/**").permitAll();
+                }
 
                 if (moduleFeatureService.isPasskeyEnabled()) {
                     log.info("Passkey authentication is enabled; permitting /login/webauthn endpoint for all users.");

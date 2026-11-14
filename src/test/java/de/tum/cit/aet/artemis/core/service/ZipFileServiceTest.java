@@ -25,6 +25,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ByteArrayResource;
 
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.programming.util.ZipTestUtil;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
@@ -212,6 +213,69 @@ class ZipFileServiceTest extends AbstractSpringIntegrationIndependentTest {
         assertThatExceptionOfType(IOException.class).isThrownBy(() -> zipFileService.extractZipFileRecursively(maliciousZip));
         // the traversal target must never be written outside the extraction directory
         assertThat(zipDir.resolve("escaped.txt")).doesNotExist();
+    }
+
+    /**
+     * An entry name with a NUL character is not a valid path. It has to be reported as a client error, like the other limits of the archive, and not as an I/O failure of the
+     * server.
+     */
+    @Test
+    void testExtractZipFileRecursively_rejectsEntryNameWithNulCharacter() throws IOException {
+        Path zipDir = tempFileUtilService.createTempDirectory("zip-invalid-name");
+        Path zip = zipDir.resolve("invalid-name.zip");
+        try (ZipOutputStream zipOutputStream = new ZipOutputStream(Files.newOutputStream(zip))) {
+            zipOutputStream.putNextEntry(new ZipEntry("dir/file\0.txt"));
+            zipOutputStream.write("content".getBytes());
+            zipOutputStream.closeEntry();
+        }
+
+        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> zipFileService.extractZipFileRecursively(zip)).withMessageContaining("invalid name");
+    }
+
+    @Test
+    void testExtractZipFileRecursively_rejectsDeeplyNestedZipFiles() throws IOException {
+        Path zipDir = tempFileUtilService.createTempDirectory("zip-nested");
+        byte[] content = "nested".getBytes();
+        String entryName = "file.txt";
+        // one more zip file than the extraction allows to be nested
+        for (int level = 0; level <= ZipFileService.MAX_EXTRACTION_DEPTH + 1; level++) {
+            var bytes = new java.io.ByteArrayOutputStream();
+            try (ZipOutputStream zipOutputStream = new ZipOutputStream(bytes)) {
+                zipOutputStream.putNextEntry(new ZipEntry(entryName));
+                zipOutputStream.write(content);
+                zipOutputStream.closeEntry();
+            }
+            content = bytes.toByteArray();
+            entryName = "level" + level + ".zip";
+        }
+        Path outerZip = zipDir.resolve("outer.zip");
+        FileUtils.writeByteArrayToFile(outerZip.toFile(), content);
+
+        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> zipFileService.extractZipFileRecursively(outerZip))
+                .satisfies(exception -> assertThat(exception.getErrorKey()).isEqualTo("zipNestedTooDeeply"));
+    }
+
+    @Test
+    void testExtractZipFileRecursively_acceptsNestingUpToTheLimit() throws IOException {
+        Path zipDir = tempFileUtilService.createTempDirectory("zip-nested-ok");
+        byte[] content = "nested".getBytes();
+        String entryName = "file.txt";
+        for (int level = 0; level <= ZipFileService.MAX_EXTRACTION_DEPTH; level++) {
+            var bytes = new java.io.ByteArrayOutputStream();
+            try (ZipOutputStream zipOutputStream = new ZipOutputStream(bytes)) {
+                zipOutputStream.putNextEntry(new ZipEntry(entryName));
+                zipOutputStream.write(content);
+                zipOutputStream.closeEntry();
+            }
+            content = bytes.toByteArray();
+            entryName = "level" + level + ".zip";
+        }
+        Path outerZip = zipDir.resolve("outer.zip");
+        FileUtils.writeByteArrayToFile(outerZip.toFile(), content);
+
+        zipFileService.extractZipFileRecursively(outerZip);
+
+        assertThat(zipDir.resolve("outer")).isDirectory();
     }
 
 }

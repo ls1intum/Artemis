@@ -607,6 +607,10 @@
                 "delete": {
                     "question": "Soll der <strong>{{ title }}</strong> wirklich gelöscht werden? Alle zugehörigen Elemente werden ebenfalls gelöscht, falls sie von keinem anderen Testlauf referenziert werden.",
                     "typeNameToConfirm": "Bitte gebe: Testlauf zur Bestätigung ein:"
+                },
+                "empty": {
+                    "title": "Noch keine Testläufe vorhanden",
+                    "description": "Erstelle einen Testlauf, um die Klausur aus der Sicht der Studierenden auszuprobieren."
                 }
             },
             "examStudents": {
@@ -743,7 +747,10 @@
                 "delete": {
                     "question": "Soll die Aufgabengruppe <strong>{{ title }}</strong> wirklich gelöscht werden? Alle zugehörigen Aufgaben werden ebenfalls gelöscht.",
                     "questionLocalVC": "Soll die Aufgabengruppe <strong>{{ title }}</strong> wirklich gelöscht werden? Alle zugehörigen Aufgaben werden gelöscht.<br>Alle Studierenden- Template-, Lösungs- und Test-Repositories sowie Build-Pläne werden ebenfalls gelöscht.<br>Achtung: Dies kann <strong class='text-danger'>NICHT</strong> rückgängig gemacht werden!<br>Es wird empfohlen die Repositories und Build-Pläne erst zu sichern! ",
-                    "typeNameToConfirm": "Bitte gib den Namen der Aufgabengruppe zur Bestätigung ein:"
+                    "typeNameToConfirm": "Bitte gib den Namen der Aufgabengruppe zur Bestätigung ein:",
+                    "summary": {
+                        "title": "Was gelöscht wird"
+                    }
                 },
                 "orderCouldNotBeSaved": "Die Reihenfolge konnte nicht gespeichert werden.",
                 "importModal": {
@@ -780,23 +787,39 @@
                 "question": "Soll die Klausur <strong>{{ title }}</strong> wirklich dauerhaft gelöscht werden? Alle zugehörigen Elemente werden gelöscht, inklusive der Klausuren der Studierenden. Diese Aktion kann NICHT rückgängig gemacht werden!",
                 "typeNameToConfirm": "Bitte gib den Namen der Klausur zur Bestätigung ein.",
                 "summary": {
-                    "title": "Klausur-Zusammenfassung",
-                    "numberExerciseGroups": "Anzahl der Aufgabengruppen",
-                    "numberProgrammingExercises": "Anzahl der Programmieraufgaben",
-                    "numberModelingExercises": "Anzahl der Modellierungsaufgaben",
-                    "numberTextExercises": "Anzahl der Textaufgaben",
-                    "numberFileUploadExercises": "Anzahl der Datei-Upload-Aufgaben",
-                    "numberQuizExercises": "Anzahl der Quiz-Aufgaben",
-                    "numberRepositories": "Anzahl der Repositories",
-                    "numberBuilds": "Anzahl der Builds",
-                    "numberRegisteredStudents": "Anzahl der angemeldeten Studierenden",
-                    "numberNotStartedExams": "Anzahl der Klausuren (nicht gestartet)",
-                    "numberStartedExams": "Anzahl der Klausuren",
-                    "numberSubmittedExams": "Anzahl der Klausuren (abgegeben)",
-                    "numberCommunicationPosts": "Anzahl der Kommunikationsbeiträge",
-                    "numberAnswerPosts": "Anzahl der Antwortbeiträge",
-                    "isTestExam": "Testklausur",
-                    "isTestCourse": "Testkurs"
+                    "title": "Was gelöscht wird",
+                    "category": {
+                        "structure": "Klausurstruktur",
+                        "students": "Studierende und Klausuren",
+                        "studentWork": "Studierendenleistungen",
+                        "assessment": "Bewertung",
+                        "plagiarism": "Plagiatsprüfungen",
+                        "communication": "Kommunikation",
+                        "infrastructure": "Infrastruktur"
+                    },
+                    "numberExerciseGroups": "Aufgabengruppen",
+                    "numberProgrammingExercises": "Programmieraufgaben",
+                    "numberQuizExercises": "Quiz-Aufgaben",
+                    "numberTextExercises": "Textaufgaben",
+                    "numberModelingExercises": "Modellierungsaufgaben",
+                    "numberFileUploadExercises": "Datei-Upload-Aufgaben",
+                    "numberRegisteredStudents": "Angemeldete Studierende",
+                    "numberNotStartedExams": "Klausuren von Studierenden (nicht gestartet)",
+                    "numberStartedExams": "Klausuren von Studierenden (gestartet)",
+                    "numberSubmittedExams": "Klausuren von Studierenden (abgegeben)",
+                    "numberTestRuns": "Testläufe",
+                    "numberExamSessions": "Klausursitzungen",
+                    "numberExamLiveEvents": "Live-Ereignisse und Ankündigungen",
+                    "numberStudentParticipations": "Teilnahmen von Studierenden",
+                    "numberSubmissions": "Abgaben",
+                    "numberResults": "Ergebnisse",
+                    "numberAssessments": "Manuelle Bewertungen",
+                    "numberComplaints": "Beschwerden und Feedback-Anfragen",
+                    "numberPlagiarismComparisons": "Plagiatsvergleiche",
+                    "numberCommunicationPosts": "Beiträge im Klausurkanal",
+                    "numberAnswerPosts": "Antworten im Klausurkanal",
+                    "numberBuilds": "Build-Jobs",
+                    "numberStudentExamsOfGroup": "Klausuren von Studierenden, die Aufgaben dieser Gruppe enthalten"
                 }
             },
             "reset": {

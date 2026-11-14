@@ -78,9 +78,9 @@ describe('Markdown Service', () => {
     it('should return sanitized markdown for html input', () => {
         const markdownString = '<b style="background-color: blue">Will this render blue?</b>';
 
-        // Don't disable any html tags or tags
+        // Inline style is dropped unless the caller explicitly allows it
         const safeMarkdownWithTagsAndAttributes = htmlForMarkdown(markdownString);
-        expect(safeMarkdownWithTagsAndAttributes).toBe('<p><b style="background-color: blue">Will this render blue?</b></p>');
+        expect(safeMarkdownWithTagsAndAttributes).toBe('<p><b>Will this render blue?</b></p>');
 
         // Don't disable any html tags but disallow attributes
         const safeMarkdownWithTags = htmlForMarkdown(markdownString, [], undefined, []);
@@ -100,9 +100,9 @@ describe('Markdown Service', () => {
         const safeMarkdownWithSingleTagAndNoAttributes = htmlForMarkdown(markdownString, [], ['b'], []);
         expect(safeMarkdownWithSingleTagAndNoAttributes).toBe('<b>Will this render blue?</b>');
 
-        // Only allow one specific html tag and allow all attributes
+        // Only allow one specific html tag and the default attributes (inline style is not among them)
         const safeMarkdownWithSingleTagAndAttributes = htmlForMarkdown(markdownString, [], ['b']);
-        expect(safeMarkdownWithSingleTagAndAttributes).toBe('<b style="background-color: blue">Will this render blue?</b>');
+        expect(safeMarkdownWithSingleTagAndAttributes).toBe('<b>Will this render blue?</b>');
 
         // Disable all html tags or attributes
         const safeMarkdownWithoutExtras = htmlForMarkdown(markdownString, [], [], []);

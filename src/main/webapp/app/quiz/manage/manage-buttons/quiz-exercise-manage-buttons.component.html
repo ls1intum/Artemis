@@ -24,6 +24,9 @@
                     <jhi-create-variant-with-ai-button [exercise]="quizExercise()" styleClass="min-w-0 flex-1 [&>tumaet-ui-button]:w-full" />
                 }
             </ng-container>
+            <ng-container detailLifecycleActions>
+                <ng-content select="[lifecycleActions]" />
+            </ng-container>
             <ng-container detailMoreActions>
                 @if (quizExercise().isAtLeastEditor) {
                     <button
@@ -71,7 +74,7 @@
                 deleteQuestion="artemisApp.exercise.delete.question"
                 deleteConfirmationText="artemisApp.exercise.delete.typeNameToConfirm"
                 entitySummaryTitle="artemisApp.exercise.delete.summary.title"
-                [fetchEntitySummary]="fetchExerciseDeletionSummary()"
+                [fetchCategorizedEntitySummary]="fetchExerciseDeletionSummary()"
                 [translateValues]="{
                     courseTitle: course()?.title,
                     courseType: course()?.testCourse ? ('artemisApp.exercise.delete.testCourse' | artemisTranslate) : ('artemisApp.exercise.delete.realCourse' | artemisTranslate),
@@ -102,7 +105,7 @@
                     deleteQuestion="artemisApp.exercise.delete.question"
                     deleteConfirmationText="artemisApp.exercise.delete.typeNameToConfirm"
                     entitySummaryTitle="artemisApp.exercise.delete.summary.title"
-                    [fetchEntitySummary]="fetchExerciseDeletionSummary()"
+                    [fetchCategorizedEntitySummary]="fetchExerciseDeletionSummary()"
                     [translateValues]="{
                         courseTitle: course()?.title,
                         courseType: course()?.testCourse

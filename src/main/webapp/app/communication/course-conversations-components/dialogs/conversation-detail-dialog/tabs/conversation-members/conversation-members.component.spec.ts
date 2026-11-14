@@ -3,14 +3,12 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
-import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+import { MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { ChangeDetectorRef, signal } from '@angular/core';
 import { ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
 import { Course } from 'app/course/shared/entities/course.model';
 import { ConversationUserDTO } from 'app/communication/shared/entities/conversation/conversation-user-dto.model';
-import { ItemCountComponent } from 'app/foundation/pagination/item-count.component';
 import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
-import { PaginatorState } from 'primeng/paginator';
 import { Subject } from 'rxjs';
 import { ConversationMemberSearchFilter, ConversationService } from 'app/communication/conversations/service/conversation.service';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -50,7 +48,6 @@ examples.forEach((activeConversation) => {
                     ReactiveFormsModule,
                     FaIconComponent,
                     MockPipe(ArtemisTranslatePipe),
-                    MockComponent(ItemCountComponent),
                     MockDirective(TranslateDirective),
                     SelectModule,
                 ],
@@ -146,9 +143,9 @@ examples.forEach((activeConversation) => {
             expectSearchPerformed('', ConversationMemberSearchFilter.ALL);
         });
 
-        it('onPageChange converts the 0-indexed PrimeNG page to a 1-indexed page and reloads', () => {
+        it('onPageChange converts the 0-indexed paginator page to a 1-indexed page and reloads', () => {
             const transitionSpy = vi.spyOn(component, 'transition');
-            component.onPageChange({ page: 1 } as PaginatorState);
+            component.onPageChange(1);
             expect(component.page()).toBe(2);
             expect(transitionSpy).toHaveBeenCalled();
         });
