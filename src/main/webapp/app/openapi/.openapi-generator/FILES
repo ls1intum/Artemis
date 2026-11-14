@@ -14,6 +14,7 @@ api/hyperion-programming-variant-api.ts
 api/hyperion-quiz-question-generation-api.ts
 api/hyperion-quiz-question-pool-api.ts
 api/ingestion-browser-api.ts
+api/learning-path-api.ts
 api/query-params.ts
 api/quiz-assessment-api.ts
 api/quiz-exercise-api.ts
@@ -53,7 +54,11 @@ model/checklist-analysis-response.ts
 model/code-generation-job-start.ts
 model/code-generation-request.ts
 model/competency-exercise-link.ts
+model/competency-graph-edge.ts
+model/competency-graph-node.ts
 model/competency-link.ts
+model/competency-name.ts
+model/competency-progress-for-learning-path.ts
 model/competency.ts
 model/consistency-check-response.ts
 model/consistency-issue.ts
@@ -135,6 +140,14 @@ model/ingestion-type-count.ts
 model/leaderboard-entry.ts
 model/leaderboard-setting.ts
 model/leaderboard-with-current-user-entry.ts
+model/learning-path-average-progress.ts
+model/learning-path-competency-graph.ts
+model/learning-path-health.ts
+model/learning-path-information.ts
+model/learning-path-navigation-object.ts
+model/learning-path-navigation-overview.ts
+model/learning-path-navigation.ts
+model/learning-path.ts
 model/missing-content.ts
 model/missing-entity.ts
 model/multiple-choice-question-create.ts
@@ -218,6 +231,7 @@ model/result-after-evaluation-with-submission.ts
 model/result-after-evaluation.ts
 model/rewrite-faq-request.ts
 model/rewrite-faq-response.ts
+model/search-result-page-dto-learning-path-information.ts
 model/search-result-page-dto-quiz-exercise-for-search.ts
 model/short-answer-mapping-create.ts
 model/short-answer-mapping-from-editor.ts
@@ -275,6 +289,7 @@ model/tutorial-group-summary-schedule.ts
 model/tutorial-group-summary-session.ts
 model/tutorial-group-summary.ts
 model/update-quiz-exercise.ts
+model/user-name-and-login.ts
 model/variant-generation-request.ts
 model/variant-job-detail.ts
 model/variant-job-start.ts

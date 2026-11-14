@@ -293,7 +293,6 @@
 @source './app/atlas/manage/competency-management/import-all-competencies.component.html';
 @source './app/atlas/manage/generate-competencies/competency-recommendation-detail.component.html';
 @source './app/atlas/manage/import/import-course-competencies.component.html';
-@source './app/atlas/manage/learning-paths-configuration/learning-paths-configuration.component.html';
 @source './app/communication/answer-post/answer-post.component.html';
 @source './app/communication/posting-reactions-bar/posting-reactions-bar.component.html';
 @source './app/core/legal/data-export/confirmation/data-export-confirmation-dialog.component.html';

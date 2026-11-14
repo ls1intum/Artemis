@@ -4,6 +4,8 @@ import org.jspecify.annotations.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
 /**
  * DTO for the navigation of a learning path.
  *
@@ -14,5 +16,5 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record LearningPathNavigationDTO(@Nullable LearningPathNavigationObjectDTO predecessorLearningObject, @Nullable LearningPathNavigationObjectDTO currentLearningObject,
-        @Nullable LearningPathNavigationObjectDTO successorLearningObject, int progress) {
+        @Nullable LearningPathNavigationObjectDTO successorLearningObject, @Schema(requiredMode = Schema.RequiredMode.REQUIRED) int progress) {
 }

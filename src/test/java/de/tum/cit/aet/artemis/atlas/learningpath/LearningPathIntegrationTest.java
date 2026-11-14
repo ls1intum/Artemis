@@ -1,10 +1,16 @@
 package de.tum.cit.aet.artemis.atlas.learningpath;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.time.ZonedDateTime;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -18,8 +24,14 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
+import org.springframework.util.LinkedMultiValueMap;
+
+import tools.jackson.core.type.TypeReference;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
@@ -33,6 +45,7 @@ import de.tum.cit.aet.artemis.atlas.domain.profile.CourseLearnerProfile;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyGraphNodeDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyImportOptionsDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyNameDTO;
+import de.tum.cit.aet.artemis.atlas.dto.CompetencyProgressForLearningPathDTO;
 import de.tum.cit.aet.artemis.atlas.dto.LearningPathAverageProgressDTO;
 import de.tum.cit.aet.artemis.atlas.dto.LearningPathCompetencyGraphDTO;
 import de.tum.cit.aet.artemis.atlas.dto.LearningPathDTO;
@@ -139,6 +152,20 @@ class LearningPathIntegrationTest extends AbstractAtlasIntegrationTest {
         request.getSearchResult("/api/atlas/courses/" + course.getId() + "/learning-paths", HttpStatus.FORBIDDEN, LearningPath.class,
                 pageableSearchUtilService.searchMapping(search));
         request.get("/api/atlas/courses/" + course.getId() + "/learning-path-health", HttpStatus.FORBIDDEN, LearningPathHealthDTO.class);
+        request.get("/api/atlas/courses/" + course.getId() + "/learning-path/average-progress", HttpStatus.FORBIDDEN, LearningPathAverageProgressDTO.class);
+        request.get("/api/atlas/courses/" + course.getId() + "/learning-path/competency-instructor-graph", HttpStatus.FORBIDDEN, LearningPathCompetencyGraphDTO.class);
+    }
+
+    /**
+     * Performs the request and returns the raw response, so that a test can check what is on the wire: an absent body, a header or an omitted field.
+     */
+    private MockHttpServletResponse performRaw(MockHttpServletRequestBuilder requestBuilder, HttpStatus expectedStatus) throws Exception {
+        return request.performMvcRequest(requestBuilder).andExpect(status().is(expectedStatus.value())).andReturn().getResponse();
+    }
+
+    private Map<String, Object> readJsonObject(MockHttpServletResponse response) throws Exception {
+        return request.getObjectMapper().readValue(response.getContentAsString(), new TypeReference<>() {
+        });
     }
 
     private void enableLearningPathsRESTCall(Course course) throws Exception {
@@ -194,7 +221,8 @@ class LearningPathIntegrationTest extends AbstractAtlasIntegrationTest {
     @Test
     @WithMockUser(username = INSTRUCTOR_OF_COURSE, roles = "USER")
     void testEnableLearningPaths() throws Exception {
-        enableLearningPathsRESTCall(course);
+        final var response = performRaw(put("/api/atlas/courses/" + course.getId() + "/learning-paths/enable"), HttpStatus.OK);
+        assertThat(response.getContentAsString()).as("enable has no response body").isEmpty();
         final var updatedCourse = courseRepository.findWithEagerLearningPathsByIdElseThrow(course.getId());
         assertThat(updatedCourse.getLearningPathsEnabled()).as("should enable LearningPaths").isTrue();
         assertThat(updatedCourse.getLearningPaths()).isNotNull();
@@ -228,7 +256,8 @@ class LearningPathIntegrationTest extends AbstractAtlasIntegrationTest {
         courseRepository.save(course);
         final var students = userTestRepository.getStudents(course);
         students.stream().map(User::getId).map(userTestRepository::findWithLearningPathsByIdElseThrow).forEach(learningPathUtilService::deleteLearningPaths);
-        request.put("/api/atlas/courses/" + course.getId() + "/learning-paths/generate-missing", null, HttpStatus.OK);
+        final var response = performRaw(put("/api/atlas/courses/" + course.getId() + "/learning-paths/generate-missing"), HttpStatus.OK);
+        assertThat(response.getContentAsString()).as("generate-missing has no response body").isEmpty();
         students.forEach(user -> {
             user = userTestRepository.findWithLearningPathsByIdElseThrow(user.getId());
             assertThat(user.getLearningPaths()).hasSize(1);
@@ -275,6 +304,34 @@ class LearningPathIntegrationTest extends AbstractAtlasIntegrationTest {
         final var result = request.getSearchResult("/api/atlas/courses/" + course.getId() + "/learning-paths", HttpStatus.OK, LearningPathInformationDTO.class,
                 pageableSearchUtilService.searchMapping(search));
         assertThat(result.getResultsOnPage()).isNullOrEmpty();
+
+        // The typed helper restores an empty list; on the wire the empty results are omitted and the page count is 0.
+        final var params = pageableSearchUtilService.searchMapping(search);
+        final var builder = get("/api/atlas/courses/" + course.getId() + "/learning-paths").queryParams(params);
+        final var page = readJsonObject(performRaw(builder, HttpStatus.OK));
+        assertThat(page).doesNotContainKey("resultsOnPage").containsEntry("numberOfPages", 0);
+    }
+
+    @Test
+    @WithMockUser(username = INSTRUCTOR_OF_COURSE, roles = "USER")
+    void testGetLearningPathsOnPageWithFlatQueryParameters() throws Exception {
+        course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
+        // These are the five flat query parameters the generated client sends.
+        final var params = new LinkedMultiValueMap<String, String>();
+        params.add("page", "1");
+        params.add("pageSize", "2");
+        params.add("sortedColumn", "USER_LOGIN");
+        params.add("sortingOrder", "ASCENDING");
+        params.add("searchTerm", TEST_PREFIX + "student");
+        final var result = request.getSearchResult("/api/atlas/courses/" + course.getId() + "/learning-paths", HttpStatus.OK, LearningPathInformationDTO.class, params);
+
+        assertThat(result.getNumberOfPages()).isEqualTo(3);
+        assertThat(result.getResultsOnPage()).extracting(information -> information.user().login()).containsExactly(STUDENT1_OF_COURSE, STUDENT2_OF_COURSE);
+
+        params.set("page", "3");
+        params.set("sortingOrder", "DESCENDING");
+        final var lastPage = request.getSearchResult("/api/atlas/courses/" + course.getId() + "/learning-paths", HttpStatus.OK, LearningPathInformationDTO.class, params);
+        assertThat(lastPage.getResultsOnPage()).extracting(information -> information.user().login()).containsExactly(STUDENT1_OF_COURSE);
     }
 
     @Test
@@ -427,6 +484,42 @@ class LearningPathIntegrationTest extends AbstractAtlasIntegrationTest {
                 && relation.getTailCompetency().getId() == Long.parseLong(relationDTO.target()) && relation.getHeadCompetency().getId() == Long.parseLong(relationDTO.source())));
     }
 
+    @Test
+    @WithMockUser(username = INSTRUCTOR_OF_COURSE, roles = "USER")
+    void testGetLearningPathCompetencyInstructorGraph() throws Exception {
+        course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
+
+        final var response = request.get("/api/atlas/courses/" + course.getId() + "/learning-path/competency-instructor-graph", HttpStatus.OK,
+                LearningPathCompetencyGraphDTO.class);
+
+        assertThat(response.nodes()).extracting(CompetencyGraphNodeDTO::id)
+                .containsExactlyInAnyOrderElementsOf(Arrays.stream(competencies).map(Competency::getId).map(Object::toString).toList());
+        assertThat(response.nodes()).allSatisfy(node -> {
+            assertThat(node.value()).isNotNull();
+            assertThat(node.valueType()).isEqualTo(CompetencyGraphNodeDTO.CompetencyNodeValueType.AVERAGE_MASTERY_PROGRESS);
+        });
+        assertThat(response.edges()).hasSize(competencies.length - 1).allSatisfy(edge -> assertThat(edge.relationType()).isEqualTo(RelationType.EXTENDS));
+    }
+
+    @Test
+    @WithMockUser(username = NOT_INSTRUCTOR_OF_COURSE, roles = "USER")
+    void testGetLearningPathCompetencyInstructorGraphAsInstructorOfOtherCourse() throws Exception {
+        request.get("/api/atlas/courses/" + course.getId() + "/learning-path/competency-instructor-graph", HttpStatus.FORBIDDEN, LearningPathCompetencyGraphDTO.class);
+    }
+
+    @Test
+    @WithMockUser(username = INSTRUCTOR_OF_COURSE, roles = "USER")
+    void testGetLearningPathCompetencyGraphAsInstructor() throws Exception {
+        course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
+        final var student = userTestRepository.findOneByLogin(STUDENT1_OF_COURSE).orElseThrow();
+        final var learningPath = learningPathRepository.findByCourseIdAndUserIdElseThrow(course.getId(), student.getId());
+
+        final var response = request.get("/api/atlas/learning-paths/" + learningPath.getId() + "/competency-graph", HttpStatus.OK, LearningPathCompetencyGraphDTO.class);
+
+        assertThat(response.nodes()).hasSize(competencies.length)
+                .allSatisfy(node -> assertThat(node.valueType()).isEqualTo(CompetencyGraphNodeDTO.CompetencyNodeValueType.MASTERY_PROGRESS));
+    }
+
     @Nested
     class GetLearningPath {
 
@@ -473,7 +566,10 @@ class LearningPathIntegrationTest extends AbstractAtlasIntegrationTest {
         void shouldGenerateLearningPath() throws Exception {
             course.setLearningPathsEnabled(true);
             course = courseRepository.save(course);
-            final var response = request.postWithResponseBody("/api/atlas/courses/" + course.getId() + "/learning-path", null, LearningPathDTO.class, HttpStatus.CREATED);
+            final var rawResponse = performRaw(post("/api/atlas/courses/" + course.getId() + "/learning-path"), HttpStatus.CREATED);
+            final var response = request.getObjectMapper().readValue(rawResponse.getContentAsString(), LearningPathDTO.class);
+            assertThat(rawResponse.getHeader(HttpHeaders.LOCATION)).isEqualTo("/api/atlas/learning-paths/" + response.id());
+            assertThat(readJsonObject(rawResponse)).containsOnlyKeys("id", "startedByStudent", "progress").containsEntry("startedByStudent", false);
             assertThat(response).isNotNull();
             final var student = userTestRepository.findOneByLogin(STUDENT1_OF_COURSE).orElseThrow();
             final var learningPath = learningPathRepository.findByCourseIdAndUserIdElseThrow(course.getId(), student.getId());
@@ -512,7 +608,8 @@ class LearningPathIntegrationTest extends AbstractAtlasIntegrationTest {
         void shouldStartLearningPath() throws Exception {
             final var student = userTestRepository.findOneByLogin(STUDENT1_OF_COURSE).orElseThrow();
             final var learningPath = learningPathRepository.findByCourseIdAndUserIdElseThrow(course.getId(), student.getId());
-            request.patch("/api/atlas/learning-paths/" + learningPath.getId() + "/start", null, HttpStatus.NO_CONTENT);
+            final var response = performRaw(patch("/api/atlas/learning-paths/" + learningPath.getId() + "/start"), HttpStatus.NO_CONTENT);
+            assertThat(response.getContentAsString()).as("start has no response body").isEmpty();
             final var updatedLearningPath = learningPathRepository.findByIdElseThrow(learningPath.getId());
             assertThat(updatedLearningPath.isStartedByStudent()).isTrue();
         }
@@ -727,6 +824,35 @@ class LearningPathIntegrationTest extends AbstractAtlasIntegrationTest {
         assertThat(result.progress()).isEqualTo(learningPath.getProgress());
     }
 
+    private static Stream<Arguments> relativeNavigationRepeatedTestProvider() {
+        // null: the parameter is not sent, so the server uses its default (false)
+        return Stream.of(Arguments.of((Boolean) null, false), Arguments.of(false, false), Arguments.of(true, true));
+    }
+
+    @ParameterizedTest(name = "repeatedTest={0}")
+    @MethodSource("relativeNavigationRepeatedTestProvider")
+    @WithMockUser(username = STUDENT1_OF_COURSE, roles = "USER")
+    void testGetRelativeLearningPathNavigationForExercise(Boolean repeatedTest, boolean expectedRepeatedTest) throws Exception {
+        course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
+        final var student = userTestRepository.findOneByLogin(STUDENT1_OF_COURSE).orElseThrow();
+        final var learningPath = learningPathRepository.findByCourseIdAndUserIdElseThrow(course.getId(), student.getId());
+        final var params = new LinkedMultiValueMap<String, String>();
+        params.add("learningObjectId", String.valueOf(textExercise.getId()));
+        params.add("learningObjectType", LearningPathNavigationObjectDTO.LearningObjectType.EXERCISE.name());
+        params.add("competencyId", String.valueOf(competencies[1].getId()));
+        if (repeatedTest != null) {
+            params.add("repeatedTest", repeatedTest.toString());
+        }
+
+        final var result = request.get("/api/atlas/learning-paths/" + learningPath.getId() + "/relative-navigation", HttpStatus.OK, LearningPathNavigationDTO.class, params);
+
+        assertThat(result.currentLearningObject()).isNotNull();
+        assertThat(result.currentLearningObject().id()).isEqualTo(textExercise.getId());
+        assertThat(result.currentLearningObject().type()).isEqualTo(LearningPathNavigationObjectDTO.LearningObjectType.EXERCISE);
+        assertThat(result.currentLearningObject().competencyId()).isEqualTo(competencies[1].getId());
+        assertThat(result.currentLearningObject().repeatedTest()).isEqualTo(expectedRepeatedTest);
+    }
+
     @Test
     @WithMockUser(username = STUDENT2_OF_COURSE, roles = "USER")
     void testGetLearningPathNavigationForOtherStudent() throws Exception {
@@ -851,8 +977,14 @@ class LearningPathIntegrationTest extends AbstractAtlasIntegrationTest {
         course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
         final var student = userTestRepository.findOneByLogin(STUDENT1_OF_COURSE).orElseThrow();
         final var learningPath = learningPathRepository.findByCourseIdAndUserIdElseThrow(course.getId(), student.getId());
-        final var result = request.get("/api/atlas/learning-paths/" + learningPath.getId() + "/competency-progress", HttpStatus.OK, Set.class);
-        assertThat(result).hasSize(5);
+        final var result = request.getList("/api/atlas/learning-paths/" + learningPath.getId() + "/competency-progress", HttpStatus.OK, CompetencyProgressForLearningPathDTO.class);
+        assertThat(result).hasSize(competencies.length);
+        assertThat(result).extracting(CompetencyProgressForLearningPathDTO::competencyId)
+                .containsExactlyInAnyOrderElementsOf(Arrays.stream(competencies).map(Competency::getId).toList());
+        assertThat(result).allSatisfy(progress -> {
+            final var competency = Arrays.stream(competencies).filter(candidate -> candidate.getId() == progress.competencyId()).findFirst().orElseThrow();
+            assertThat(progress.masteryThreshold()).isEqualTo(competency.getMasteryThreshold());
+        });
     }
 
     private TextExercise createAndLinkTextExercise(Competency competency, boolean withAssessment) {
