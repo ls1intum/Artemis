@@ -2,12 +2,13 @@ import { Service, inject } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { User } from 'app/account/user/user.model';
-import { UpdateLLMSelectionDecisionDto } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
+import { UserApi } from 'app/openapi/api/user-api';
 import { LLMSelectionDecision } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
 
 @Service()
 export class UserService {
     private http = inject(HttpClient);
+    private readonly userApi = inject(UserApi);
 
     public resourceUrl = 'api/account/users';
     public adminResourceUrl = 'api/account/admin/users';
@@ -32,7 +33,6 @@ export class UserService {
      * Updates the user's AI experience selection.
      */
     updateLLMSelectionDecision(selection: LLMSelectionDecision): Observable<HttpResponse<void>> {
-        const updateLLMSelectionDecisionDto: UpdateLLMSelectionDecisionDto = { selection };
-        return this.http.put<void>(`${this.resourceUrl}/select-llm-usage`, updateLLMSelectionDecisionDto, { observe: 'response' });
+        return this.userApi.setSelectedLLMUsageToTimestampAndEnum({ selection });
     }
 }
