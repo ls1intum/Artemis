@@ -170,7 +170,7 @@ describe('CompetencyManagementTableComponent', () => {
     });
 
     it('should handle delete competency', () => {
-        const deleteSpy = vi.spyOn(competencyService, 'delete').mockReturnValue(of(new HttpResponse<object>({ status: 200 })));
+        const deleteSpy = vi.spyOn(competencyService, 'delete').mockReturnValue(of(new HttpResponse<void>({ status: 200 })));
         const competencyDeletedSpy = vi.spyOn(component, 'competencyDeleted');
         const competency1 = { id: 1, type: CourseCompetencyType.COMPETENCY } as CourseCompetency;
         const competency2 = { id: 2, type: CourseCompetencyType.COMPETENCY } as CourseCompetency;

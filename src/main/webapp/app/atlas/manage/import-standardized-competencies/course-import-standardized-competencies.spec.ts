@@ -9,7 +9,7 @@ import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { CompetencyService } from 'app/atlas/manage/services/competency.service';
-import { Competency } from 'app/atlas/shared/entities/competency.model';
+import { CompetencyImportResponse } from 'app/openapi/model/competency-import-response';
 import { of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { KnowledgeAreaTreeStubComponent } from 'test/helpers/stubs/atlas/knowledge-area-tree-stub.component';
@@ -196,9 +196,14 @@ describe('CourseImportStandardizedCompetenciesComponent', () => {
         const navigateSpy = vi.spyOn(router, 'navigate');
         const competencyService = TestBed.inject(CompetencyService);
         const importSpy = vi.spyOn(competencyService, 'importStandardizedCompetencies').mockReturnValue(
-            of({
-                body: [{ id: 1 }, { id: 2 }],
-            } as HttpResponse<Competency[]>),
+            of(
+                new HttpResponse<CompetencyImportResponse[]>({
+                    body: [
+                        { id: 1, optional: false, generatedByAi: false },
+                        { id: 2, optional: false, generatedByAi: false },
+                    ],
+                }),
+            ),
         );
         component['selectedCompetencies'] = [
             { id: 11, isVisible: true },

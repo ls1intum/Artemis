@@ -425,6 +425,139 @@ paths:
           content:
             application/json:
               schema: {$ref: '#/components/schemas/QuizQuestionPoolItem'}
+  /api/atlas/courses/{courseId}/prerequisites:
+    get:
+      tags: [prerequisite]
+      operationId: getPrerequisitesWithProgress
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/CourseCompetencyResponse'}
+    put:
+      tags: [prerequisite]
+      operationId: updatePrerequisite
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/CourseCompetencyRequest'}
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/CourseCompetencyResponse'}
+    post:
+      tags: [prerequisite]
+      operationId: createPrerequisite
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/CourseCompetencyRequest'}
+        required: true
+      responses:
+        '201':
+          description: The prerequisite was created.
+          headers:
+            Location:
+              description: URI of the created prerequisite.
+              style: simple
+              schema: {type: string, format: uri-reference}
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/CourseCompetencyResponse'}
+  /api/atlas/courses/{courseId}/competencies:
+    get:
+      tags: [competency]
+      summary: List the competencies of a course
+      description: Returns the competencies of the course. Each one carries the caller's
+        own learning progress. Links to exercises and lecture units are not included;
+        get a single competency for those.
+      operationId: getCompetenciesWithProgress
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/CourseCompetencyResponse'}
+    put:
+      tags: [competency]
+      summary: Update a competency
+      description: Replaces the editable fields of an existing competency. The id
+        in the body identifies it, so send the full competency, not only the changed
+        fields. Nothing is deleted.
+      operationId: updateCompetency
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/CourseCompetencyRequest'}
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/CourseCompetencyResponse'}
+    post:
+      tags: [competency]
+      summary: Create a competency
+      description: Creates a competency in the course. The title (at most 255 characters)
+        and the mastery threshold are required. To link the competency to lecture
+        units or exercises, set competencyLinks on those objects; this endpoint does
+        not link anything.
+      operationId: createCompetency
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/CourseCompetencyRequest'}
+        required: true
+      responses:
+        '201':
+          description: The competency was created.
+          headers:
+            Location:
+              description: URI of the created competency.
+              style: simple
+              schema: {type: string, format: uri-reference}
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/CourseCompetencyResponse'}
   /api/tutorialgroup/courses/{courseId}/tutorial-groups:
     get:
       tags: [tutorial-group]
@@ -1333,6 +1466,344 @@ paths:
                 type: array
                 items: {type: string, maxLength: 128}
                 maxItems: 500
+  /api/atlas/courses/{courseId}/prerequisites/import:
+    post:
+      tags: [prerequisite]
+      operationId: importPrerequisite
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/CompetencyImportOptions'}
+        required: true
+      responses:
+        '201':
+          description: The prerequisite was imported.
+          headers:
+            Location:
+              description: URI of the imported prerequisite.
+              style: simple
+              schema: {type: string, format: uri-reference}
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/CourseCompetencyResponse'}
+  /api/atlas/courses/{courseId}/prerequisites/import/bulk:
+    post:
+      tags: [prerequisite]
+      operationId: importPrerequisites
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/CompetencyImportOptions'}
+        required: true
+      responses:
+        '201':
+          description: The prerequisites were imported.
+          headers:
+            Location:
+              description: URI of the course prerequisites collection.
+              style: simple
+              schema: {type: string, format: uri-reference}
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/CompetencyWithTailRelation'}
+                uniqueItems: true
+  /api/atlas/courses/{courseId}/prerequisites/import-standardized:
+    post:
+      tags: [prerequisite]
+      operationId: importStandardizedPrerequisites
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: array
+              items: {type: integer, format: int64}
+        required: true
+      responses:
+        '201':
+          description: The prerequisites were imported.
+          headers:
+            Location:
+              description: URI of the course prerequisites collection.
+              style: simple
+              schema: {type: string, format: uri-reference}
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/CompetencyImportResponse'}
+  /api/atlas/courses/{courseId}/prerequisites/import-all:
+    post:
+      tags: [prerequisite]
+      operationId: importAllPrerequisitesFromCourse
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/CompetencyImportOptions'}
+        required: true
+      responses:
+        '201':
+          description: The prerequisites were imported.
+          headers:
+            Location:
+              description: URI of the course prerequisites collection.
+              style: simple
+              schema: {type: string, format: uri-reference}
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/CompetencyWithTailRelation'}
+                uniqueItems: true
+  /api/atlas/courses/{courseId}/prerequisites/bulk:
+    post:
+      tags: [prerequisite]
+      operationId: createPrerequisites
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: array
+              items: {$ref: '#/components/schemas/CourseCompetencyRequest'}
+        required: true
+      responses:
+        '201':
+          description: The prerequisites were created.
+          headers:
+            Location:
+              description: URI of the course prerequisites collection.
+              style: simple
+              schema: {type: string, format: uri-reference}
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/CourseCompetencyResponse'}
+  /api/atlas/courses/{courseId}/competencies/import:
+    post:
+      tags: [competency]
+      operationId: importCompetency
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/CompetencyImportOptions'}
+        required: true
+      responses:
+        '201':
+          description: The competency was imported.
+          headers:
+            Location:
+              description: URI of the imported competency.
+              style: simple
+              schema: {type: string, format: uri-reference}
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/CourseCompetencyResponse'}
+  /api/atlas/courses/{courseId}/competencies/import/bulk:
+    post:
+      tags: [competency]
+      operationId: importCompetencies
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/CompetencyImportOptions'}
+        required: true
+      responses:
+        '201':
+          description: The competencies were imported.
+          headers:
+            Location:
+              description: URI of the course competencies collection.
+              style: simple
+              schema: {type: string, format: uri-reference}
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/CompetencyWithTailRelation'}
+                uniqueItems: true
+  /api/atlas/courses/{courseId}/competencies/import-standardized:
+    post:
+      tags: [competency]
+      summary: Import standardized competencies
+      description: Adds competencies from the catalogue of standardized competencies
+        to the course. The body is a list of catalogue ids.
+      operationId: importStandardizedCompetencies
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: array
+              items: {type: integer, format: int64}
+        required: true
+      responses:
+        '201':
+          description: The competencies were imported.
+          headers:
+            Location:
+              description: URI of the course competencies collection.
+              style: simple
+              schema: {type: string, format: uri-reference}
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/CompetencyImportResponse'}
+  /api/atlas/courses/{courseId}/competencies/import-all:
+    post:
+      tags: [competency]
+      operationId: importAllCompetenciesFromCourse
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/CompetencyImportOptions'}
+        required: true
+      responses:
+        '201':
+          description: The competencies were imported.
+          headers:
+            Location:
+              description: URI of the course competencies collection.
+              style: simple
+              schema: {type: string, format: uri-reference}
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/CompetencyWithTailRelation'}
+                uniqueItems: true
+  /api/atlas/courses/{courseId}/competencies/generated-from-hyperion-checklist:
+    post:
+      tags: [competency]
+      operationId: createCompetencyGeneratedFromHyperionChecklist
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/CourseCompetencyRequest'}
+        required: true
+      responses:
+        '201':
+          description: The competency was created.
+          headers:
+            Location:
+              description: URI of the created competency.
+              style: simple
+              schema: {type: string, format: uri-reference}
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/CourseCompetencyResponse'}
+  /api/atlas/courses/{courseId}/competencies/bulk:
+    post:
+      tags: [competency]
+      summary: Create several competencies
+      description: Creates all given competencies in one request. The request is rejected
+        as a whole if one of them is invalid.
+      operationId: createCompetencies
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: array
+              items: {$ref: '#/components/schemas/CourseCompetencyRequest'}
+        required: true
+      responses:
+        '201':
+          description: The competencies were created.
+          headers:
+            Location:
+              description: URI of the course competencies collection.
+              style: simple
+              schema: {type: string, format: uri-reference}
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/CourseCompetencyResponse'}
+  /api/atlas/courses/{courseId}/competencies/bulk/generated-from-description:
+    post:
+      tags: [competency]
+      operationId: createCompetenciesGeneratedFromDescription
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: array
+              items: {$ref: '#/components/schemas/CourseCompetencyRequest'}
+        required: true
+      responses:
+        '201':
+          description: The competencies were created.
+          headers:
+            Location:
+              description: URI of the course competencies collection.
+              style: simple
+              schema: {type: string, format: uri-reference}
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/CourseCompetencyResponse'}
   /api/tutorialgroup/courses/{courseId}/tutorial-groups/{tutorialGroupId}/sessions/{sessionId}/cancel:
     patch:
       tags: [tutorial-group-session]
@@ -2339,6 +2810,95 @@ paths:
           content:
             text/calendar:
               schema: {type: string}
+  /api/atlas/courses/{courseId}/prerequisites/{prerequisiteId}:
+    get:
+      tags: [prerequisite]
+      operationId: getPrerequisite
+      parameters:
+      - name: prerequisiteId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/CourseCompetencyResponse'}
+    delete:
+      tags: [prerequisite]
+      operationId: deletePrerequisite
+      parameters:
+      - name: prerequisiteId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: The prerequisite was deleted.
+          headers:
+            X-artemisApp-params:
+              description: Title of the deleted prerequisite.
+              style: simple
+              schema: {type: string}
+            X-artemisApp-alert:
+              description: Translation key for the deletion alert.
+              style: simple
+              schema: {type: string}
+  /api/atlas/courses/{courseId}/competencies/{competencyId}:
+    get:
+      tags: [competency]
+      summary: Get one competency
+      description: Returns a competency with the exercises and lecture units linked
+        to it, as far as the caller may see them.
+      operationId: getCompetency
+      parameters:
+      - name: competencyId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/CourseCompetencyResponse'}
+    delete:
+      tags: [competency]
+      operationId: deleteCompetency
+      parameters:
+      - name: competencyId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: The competency was deleted.
+          headers:
+            X-artemisApp-params:
+              description: Title of the deleted competency.
+              style: simple
+              schema: {type: string}
+            X-artemisApp-alert:
+              description: Translation key for the deletion alert.
+              style: simple
+              schema: {type: string}
   /api/aiworker/admin/workers:
     get:
       tags: [admin-ai-worker]
@@ -2788,6 +3348,13 @@ components:
           type: string
           default: drag-and-drop
           enum: [drag-and-drop]
+    LinkedCourseCompetency:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        courseId: {type: integer, format: int64}
+        courseTitle: {type: string}
+        semester: {type: string}
     UpdateQuizExercise:
       type: object
       properties:
@@ -3165,6 +3732,16 @@ components:
         text: {type: string, maxLength: 255, minLength: 0}
         pictureFilePath: {type: string}
       required: [tempID]
+    CompetencyProgress:
+      type: object
+      properties:
+        progress: {type: number, format: double}
+        confidence: {type: number, format: double}
+        confidenceReason:
+          type: string
+          enum: [NO_REASON, RECENT_SCORES_LOWER, RECENT_SCORES_HIGHER, MORE_EASY_POINTS,
+            MORE_HARD_POINTS, QUICKLY_SOLVED_EXERCISES, MORE_LOW_WEIGHTED_EXERCISES,
+            MORE_HIGH_WEIGHTED_EXERCISES]
     GlobalSearchResult:
       type: object
       description: Unified search result representing an entity found via global search
@@ -3291,6 +3868,27 @@ components:
         lectureUnitId: {type: integer, format: int64}
         title: {type: string}
         kind: {type: string}
+    CourseCompetencyRequest:
+      type: object
+      properties:
+        id: {type: integer, format: int64, description: 'The id of the competency.
+            Required to update one, omitted to create one.'}
+        title: {type: string, description: 'The title of the competency, at most 255
+            characters.', maxLength: 255, minLength: 0}
+        description: {type: string, description: 'A description of what the student
+            should be able to do, at most 10000 characters.', maxLength: 10000, minLength: 0}
+        softDueDate: {type: string, format: date-time, description: A soft due date
+            for reaching the competency. Optional.}
+        masteryThreshold: {type: integer, format: int32, description: 'The progress,
+            from 1 to 100 percent, at which the competency counts as mastered.', maximum: 100,
+          minimum: 1}
+        taxonomy:
+          type: string
+          description: The taxonomy level of the competency. Optional.
+          enum: [REMEMBER, UNDERSTAND, APPLY, ANALYZE, EVALUATE, CREATE]
+        optional: {type: boolean, description: Whether the competency is optional.
+            Defaults to false.}
+      required: [masteryThreshold, title]
     QuizQuestionGenerationResponse:
       type: object
       description: Response containing generated quiz questions
@@ -3301,6 +3899,14 @@ components:
           items: {$ref: '#/components/schemas/GeneratedQuizQuestion'}
           minItems: 1
       required: [questions]
+    CompetencyWithTailRelation:
+      type: object
+      properties:
+        competency: {$ref: '#/components/schemas/CourseCompetencyResponse'}
+        tailRelations:
+          type: array
+          items: {$ref: '#/components/schemas/CompetencyRelation'}
+      required: [competency]
     GeneratedAssessmentInstruction:
       type: object
       description: Generated structured grading instruction
@@ -3673,6 +4279,22 @@ components:
         id: {type: integer, format: int64}
         text: {type: string}
         invalid: {type: boolean}
+    CompetencyRelation:
+      type: object
+      properties:
+        id: {type: integer, format: int64, description: The id of the relation. Omit
+            it when creating a relation.}
+        tailCompetencyId: {type: integer, format: int64, description: 'The id of the
+            tail competency, the one that ASSUMES, EXTENDS or MATCHES the head. Required.'}
+        headCompetencyId: {type: integer, format: int64, description: The id of the
+            head competency. Required. Both competencies must belong to the same course.}
+        relationType:
+          type: string
+          description: 'ASSUMES: the tail assumes the student already achieved the
+            head. EXTENDS: the tail covers the head''s topic in more detail. MATCHES:
+            the tail matches the head, for example a duplicate.'
+          enum: [ASSUMES, EXTENDS, MATCHES]
+      required: [headCompetencyId, relationType, tailCompetencyId]
     QuizBatchForCourse:
       type: object
       properties:
@@ -3785,6 +4407,19 @@ components:
       type: object
       properties:
         id: {type: integer, format: int64}
+    AttachmentForCompetency:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        name: {type: string}
+        link: {type: string}
+        releaseDate: {type: string, format: date-time}
+        uploadDate: {type: string, format: date-time}
+        version: {type: integer, format: int32}
+        attachmentType:
+          type: string
+          enum: [FILE, URL]
+        studentVersion: {type: string}
     MissingEntity:
       type: object
       properties:
@@ -3815,6 +4450,22 @@ components:
       type: object
       properties:
         title: {type: string}
+    CompetencyImportResponse:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        title: {type: string}
+        description: {type: string}
+        taxonomy:
+          type: string
+          enum: [REMEMBER, UNDERSTAND, APPLY, ANALYZE, EVALUATE, CREATE]
+        softDueDate: {type: string, format: date-time}
+        masteryThreshold: {type: integer, format: int32}
+        optional: {type: boolean}
+        generatedByAi: {type: boolean}
+        courseId: {type: integer, format: int64}
+        linkedStandardizedCompetencyId: {type: integer, format: int64}
+      required: [generatedByAi, id, optional]
     QuizQuestionFilterVerdict:
       type: object
       description: The filter's judgement of one generated quiz question on one failure
@@ -3834,6 +4485,12 @@ components:
         flagged: {type: boolean, description: Whether this verdict asks a reviewer
             to look at an accepted question}
       required: [mode]
+    CourseInfo:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        title: {type: string}
+        semester: {type: string}
     QuizQuestionFilterDecision:
       type: object
       description: The filter's decision for one generated quiz question and the per-mode
@@ -3881,6 +4538,13 @@ components:
           type: string
           default: drag-and-drop
           enum: [drag-and-drop]
+    CompetencyLectureUnitLinkResponse:
+      type: object
+      properties:
+        weight: {type: number, format: double}
+        generatedByAi: {type: boolean}
+        lectureUnit: {$ref: '#/components/schemas/LectureUnitForCompetency'}
+      required: [generatedByAi, weight]
     QuizQuestionStatisticResponse:
       type: object
       properties:
@@ -4852,6 +5516,35 @@ components:
         difficulty: {type: integer, format: int32, description: Difficulty as a value
             from 0 to 100, maximum: 100, minimum: 0}
       required: [difficulty, language, numberOfQuestions, questionTypes]
+    CourseCompetencyResponse:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        title: {type: string}
+        description: {type: string}
+        taxonomy:
+          type: string
+          enum: [REMEMBER, UNDERSTAND, APPLY, ANALYZE, EVALUATE, CREATE]
+        softDueDate: {type: string, format: date-time}
+        masteryThreshold: {type: integer, format: int32}
+        optional: {type: boolean}
+        generatedByAi: {type: boolean}
+        type:
+          type: string
+          enum: [competency, prerequisite]
+        linkedCourseCompetency: {$ref: '#/components/schemas/LinkedCourseCompetency'}
+        linkedStandardizedCompetencyId: {type: integer, format: int64}
+        userProgress:
+          type: array
+          items: {$ref: '#/components/schemas/CompetencyProgress'}
+        course: {$ref: '#/components/schemas/CourseInfo'}
+        exerciseLinks:
+          type: array
+          items: {$ref: '#/components/schemas/CompetencyExerciseLinkResponse'}
+        lectureUnitLinks:
+          type: array
+          items: {$ref: '#/components/schemas/CompetencyLectureUnitLinkResponse'}
+      required: [generatedByAi, id, masteryThreshold, optional, type]
     TutorialGroupSummarySession:
       type: object
       properties:
@@ -5203,6 +5896,13 @@ components:
           items: {$ref: '#/components/schemas/ShortAnswerSolution'}
         similarityValue: {type: integer, format: int32}
         matchLetterCase: {type: boolean}
+    CompetencyExerciseLinkResponse:
+      type: object
+      properties:
+        weight: {type: number, format: double}
+        generatedByAi: {type: boolean}
+        exercise: {$ref: '#/components/schemas/ExerciseForCompetency'}
+      required: [generatedByAi, weight]
     VariantGenerationRequest:
       type: object
       properties:
@@ -5270,6 +5970,21 @@ components:
       properties:
         login: {type: string, maxLength: 50, minLength: 0}
         registrationNumber: {type: string, maxLength: 10, minLength: 0}
+    LectureUnitForCompetency:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        lecture: {$ref: '#/components/schemas/LectureReference'}
+        name: {type: string}
+        releaseDate: {type: string, format: date-time}
+        completed: {type: boolean}
+        visibleToStudents: {type: boolean}
+        type: {type: string}
+        description: {type: string}
+        source: {type: string}
+        content: {type: string}
+        attachment: {$ref: '#/components/schemas/AttachmentForCompetency'}
+        videoSource: {type: string}
     ChecklistActionRequest:
       type: object
       description: Request to apply an AI-powered checklist action to the problem
@@ -5392,6 +6107,44 @@ components:
         students:
           type: array
           items: {$ref: '#/components/schemas/StudentExport'}
+    ExerciseForCompetency:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        title: {type: string}
+        shortName: {type: string}
+        type:
+          type: string
+          enum: [text, programming, modeling, file-upload, quiz]
+        releaseDate: {type: string, format: date-time}
+        startDate: {type: string, format: date-time}
+        dueDate: {type: string, format: date-time}
+        assessmentDueDate: {type: string, format: date-time}
+        maxPoints: {type: number, format: double}
+        bonusPoints: {type: number, format: double}
+        assessmentType:
+          type: string
+          enum: [AUTOMATIC, SEMI_AUTOMATIC, MANUAL, AUTOMATIC_ATHENA]
+        difficulty:
+          type: string
+          enum: [EASY, MEDIUM, HARD]
+        includedInOverallScore:
+          type: string
+          enum: [INCLUDED_COMPLETELY, INCLUDED_AS_BONUS, NOT_INCLUDED]
+        mode:
+          type: string
+          enum: [INDIVIDUAL, TEAM]
+        categories:
+          type: array
+          items: {type: string}
+          uniqueItems: true
+        teamMode: {type: boolean}
+        studentAssignedTeamId: {type: integer, format: int64}
+        studentAssignedTeamIdComputed: {type: boolean}
+        allowOnlineEditor: {type: boolean}
+        allowOfflineIde: {type: boolean}
+        quizStarted: {type: boolean}
+        quizEnded: {type: boolean}
     CodeGenerationJobStart:
       type: object
       properties:
@@ -5742,6 +6495,10 @@ components:
         freePeriodId: {type: integer, format: int64}
         count: {type: integer, format: int64}
       required: [count, freePeriodId]
+    LectureReference:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
     ShortAnswerSubmittedTextFromLiveClient:
       type: object
       properties:
@@ -6007,6 +6764,19 @@ components:
         fresh: {type: integer, format: int32, description: How many of this round's
             findings are new since the previous round}
       required: [advisory, attempt, blocking, carriedOver, drained, fresh, round]
+    CompetencyImportOptions:
+      type: object
+      properties:
+        competencyIds:
+          type: array
+          items: {type: integer, format: int64}
+          uniqueItems: true
+        sourceCourseId: {type: integer, format: int64}
+        importRelations: {type: boolean}
+        importExercises: {type: boolean}
+        importLectures: {type: boolean}
+        referenceDate: {type: string, format: date-time}
+        isReleaseDate: {type: boolean}
     ConversationUser:
       type: object
       properties:

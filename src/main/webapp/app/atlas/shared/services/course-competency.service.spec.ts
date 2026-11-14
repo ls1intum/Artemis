@@ -41,8 +41,8 @@ describe('CourseCompetencyService', () => {
         httpTestingController = TestBed.inject(HttpTestingController);
 
         defaultCompetencies = [
-            { id: 0, title: 'title', description: 'description', type: CourseCompetencyType.COMPETENCY } as CourseCompetencyResponseDTO,
-            { id: 1, title: 'title2', description: 'description2', type: CourseCompetencyType.PREREQUISITE } as CourseCompetencyResponseDTO,
+            { id: 0, title: 'title', description: 'description', type: CourseCompetencyType.COMPETENCY, masteryThreshold: 100, optional: false, generatedByAi: false },
+            { id: 1, title: 'title2', description: 'description2', type: CourseCompetencyType.PREREQUISITE, masteryThreshold: 100, optional: false, generatedByAi: false },
         ];
     });
 
@@ -80,7 +80,7 @@ describe('CourseCompetencyService', () => {
         const expected = returnedFromService.map((entry) => {
             const mapped = new CompetencyWithTailRelationDTO();
             mapped.competency = entry.competency ? toCompetency(entry.competency) : undefined;
-            mapped.tailRelations = entry.tailRelations;
+            mapped.tailRelations = [];
             return mapped;
         });
 

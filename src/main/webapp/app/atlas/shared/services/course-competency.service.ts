@@ -4,7 +4,6 @@ import { Observable } from 'rxjs';
 import {
     CompetencyContributionCardDTO,
     CompetencyExerciseLink,
-    CompetencyProgress,
     CompetencyRelation,
     CompetencyRelationDTO,
     CompetencyWithTailRelationDTO,
@@ -27,6 +26,8 @@ import {
     CompetencyWithTailRelationResponseDTO,
     CourseCompetencyResponseDTO,
     toCompetency,
+    toCompetencyProgress,
+    toCompetencyRelationDTO,
     toPrerequisite,
 } from 'app/atlas/shared/dto/course-competency-response.dto';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
@@ -101,13 +102,7 @@ export class CourseCompetencyService {
             .get<CompetencyProgressDTO>(`${this.resourceURL}/courses/${courseId}/course-competencies/${competencyId}/student-progress`, { params, observe: 'response' })
             .pipe(
                 map((res: CompetencyProgressResponseDTOType) => {
-                    const body: CompetencyProgress | undefined = res.body
-                        ? {
-                              progress: res.body.progress,
-                              confidence: res.body.confidence,
-                              confidenceReason: res.body.confidenceReason,
-                          }
-                        : undefined;
+                    const body = res.body ? toCompetencyProgress(res.body) : undefined;
                     return new HttpResponse({ body, headers: res.headers, status: res.status, url: res.url ?? undefined });
                 }),
             );
@@ -171,7 +166,7 @@ export class CourseCompetencyService {
                         const competency = entry.competency ? this.postProcessCompetency(this.toCourseCompetency(entry.competency)) : undefined;
                         return {
                             competency: competency,
-                            tailRelations: entry.tailRelations,
+                            tailRelations: entry.tailRelations?.map(toCompetencyRelationDTO),
                         };
                     });
                     return new HttpResponse({ body, headers: res.headers, status: res.status, url: res.url ?? undefined });
