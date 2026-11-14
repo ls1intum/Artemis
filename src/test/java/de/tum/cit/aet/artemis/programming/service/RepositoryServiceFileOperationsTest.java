@@ -159,6 +159,51 @@ class RepositoryServiceFileOperationsTest {
     }
 
     @Test
+    void checkNoSymbolicLink_forAnAbsolutePathThroughASymbolicLink_isRejected() throws Exception {
+        Path outside = Files.createDirectories(baseDir.resolve("outside"));
+        Files.createSymbolicLink(workingTree.resolve("link"), outside);
+
+        assertThatExceptionOfType(IllegalArgumentException.class)
+                .isThrownBy(() -> repositoryService.checkNoSymbolicLinkOnPathElseThrow(repository, workingTree.resolve("link/new.txt"))).withMessageContaining("symbolic link");
+    }
+
+    @Test
+    void checkNoSymbolicLink_forAnAbsolutePathOutsideTheRepository_isRejected() {
+        assertThatExceptionOfType(IllegalArgumentException.class)
+                .isThrownBy(() -> repositoryService.checkNoSymbolicLinkOnPathElseThrow(repository, baseDir.resolve("outside/new.txt").toAbsolutePath()));
+    }
+
+    @Test
+    void createFolder_aboveTheSizeLimit_leavesNoFolderBehindSoThatARetryWorks() throws Exception {
+        InputStream tooLarge = new InputStream() {
+
+            private long remaining = LocalVCReceivePackLimits.MAX_BLOB_SIZE_BYTES + 1;
+
+            @Override
+            public int read() {
+                return remaining-- > 0 ? 'a' : -1;
+            }
+
+            @Override
+            public int read(byte[] buffer, int offset, int length) {
+                if (remaining <= 0) {
+                    return -1;
+                }
+                int count = (int) Math.min(length, remaining);
+                Arrays.fill(buffer, offset, offset + count, (byte) 'a');
+                remaining -= count;
+                return count;
+            }
+        };
+
+        assertThatExceptionOfType(IllegalArgumentException.class).isThrownBy(() -> repositoryService.createFolder(repository, "src", tooLarge)).withMessageContaining("size limit");
+        assertThat(workingTree.resolve("src")).doesNotExist();
+
+        repositoryService.createFolder(repository, "src", content(""));
+        assertThat(workingTree.resolve("src/.keep")).isRegularFile();
+    }
+
+    @Test
     void createFolder_createsTheDirectoryAndKeepsItInGit() throws Exception {
         repositoryService.createFolder(repository, "src", content(""));
 

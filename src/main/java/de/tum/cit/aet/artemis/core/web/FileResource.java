@@ -239,10 +239,10 @@ public class FileResource {
         var fileUpload = fileUploadService.findByPath(publicPath);
 
         if (fileUpload.isPresent()) {
-            return buildFileResponse(serverFilePath, filename, Optional.ofNullable(fileUpload.get().getFilename()), true);
+            return buildFileResponse(serverFilePath, filename, Optional.ofNullable(fileUpload.get().getFilename()), false);
         }
 
-        return buildFileResponse(serverFilePath, filename, true);
+        return buildFileResponse(serverFilePath, filename, false);
     }
 
     /**

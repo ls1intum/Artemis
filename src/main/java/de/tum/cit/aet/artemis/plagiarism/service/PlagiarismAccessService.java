@@ -5,7 +5,9 @@ import static java.util.function.Predicate.not;
 import java.util.Comparator;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -52,13 +54,22 @@ public class PlagiarismAccessService {
 
     /**
      * Finds the submission of the participation that was compared. If several were compared, the latest one is used.
+     * <p>
+     * For a student, only comparisons about which the student was notified are considered, so that the submission shown is the one of the comparison that grants the access.
      *
      * @param participationId the id of the participation
-     * @return the id of the compared submission, or empty if no submission of the participation was compared
+     * @param userLogin       the login of the student asking to see the comparison, or null for staff, for whom every comparison counts
+     * @return the id of the compared submission, or empty if no submission of the participation was compared in a comparison the user may see
      */
-    public Optional<Long> findComparedSubmissionId(long participationId) {
-        return plagiarismComparisonRepository.findPlagiarismSubmissionsOfParticipation(participationId).stream().map(PlagiarismSubmission::getSubmissionId)
-                .max(Comparator.naturalOrder());
+    public Optional<Long> findComparedSubmissionId(long participationId, @Nullable String userLogin) {
+        Set<Long> submissionIdsOfParticipation = plagiarismComparisonRepository.findPlagiarismSubmissionsOfParticipation(participationId).stream()
+                .map(PlagiarismSubmission::getSubmissionId).collect(Collectors.toSet());
+        if (userLogin == null) {
+            return submissionIdsOfParticipation.stream().max(Comparator.naturalOrder());
+        }
+        return plagiarismComparisonRepository.findAllBySubmissionOfParticipation(participationId).stream()
+                .filter(comparison -> wasUserNotifiedByInstructor(userLogin, Set.of(comparison))).flatMap(comparison -> comparison.getSubmissions().stream())
+                .map(PlagiarismSubmission::getSubmissionId).filter(submissionIdsOfParticipation::contains).max(Comparator.naturalOrder());
     }
 
     /**

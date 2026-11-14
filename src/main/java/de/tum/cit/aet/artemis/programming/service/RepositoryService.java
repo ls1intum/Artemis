@@ -674,8 +674,14 @@ public class RepositoryService {
      * @throws IllegalArgumentException if a symbolic link is part of the path
      */
     public void checkNoSymbolicLinkOnPathElseThrow(Repository repository, Path relativePath) {
-        Path current = repository.getLocalPath();
-        for (Path element : relativePath) {
+        Path root = repository.getLocalPath();
+        Path current = root;
+        // An absolute path inside the repository is checked element by element below the repository root, as an iteration would otherwise skip the root component
+        Path elements = relativePath.isAbsolute() && relativePath.startsWith(root) ? root.relativize(relativePath) : relativePath;
+        if (elements.isAbsolute()) {
+            throw new IllegalArgumentException("The path is not inside the repository");
+        }
+        for (Path element : elements) {
             current = current.resolve(element);
             if (Files.isSymbolicLink(current)) {
                 throw new IllegalArgumentException("The path contains a symbolic link: " + element);
@@ -695,10 +701,18 @@ public class RepositoryService {
         Path safePath = checkIfPathIsValidAndExistenceAndReturnSafePath(repository, folderPath, false);
         checkIfPathAndFileAreValidAndReturnSafeFile(repository, safePath);
         checkNoSymbolicLinkOnPathElseThrow(repository, safePath);
-        Files.createDirectory(repository.getLocalPath().resolve(safePath));
+        Path directory = repository.getLocalPath().resolve(safePath);
+        Files.createDirectory(directory);
         // We need to add an empty keep file so that the folder can be added to the git repository
-        File keep = new File(repository.getLocalPath().resolve(safePath).resolve(".keep"), repository);
-        writeWithinSizeLimit(inputStream, keep);
+        File keep = new File(directory.resolve(".keep"), repository);
+        try {
+            writeWithinSizeLimit(inputStream, keep);
+        }
+        catch (IOException | RuntimeException e) {
+            // Remove the folder created by this call, so that a retry with valid content does not fail on the existing folder
+            FileUtils.deleteQuietly(directory.toFile());
+            throw e;
+        }
     }
 
     /**

@@ -46,20 +46,16 @@ public interface ConversationRepository extends ArtemisJpaRepository<Conversatio
     @Query("""
             SELECT COUNT(conv.id) > 0
             FROM Conversation conv
+                LEFT JOIN ConversationParticipant cp
+                    ON cp.conversation.id = conv.id
+                    AND cp.user.id = :userId
+                LEFT JOIN Channel channel
+                    ON channel.id = conv.id
             WHERE conv.id = :conversationId
                 AND conv.course.id = :courseId
                 AND (
-                    EXISTS (
-                        SELECT cp.id
-                        FROM ConversationParticipant cp
-                        WHERE cp.conversation.id = conv.id
-                            AND cp.user.id = :userId
-                    )
-                    OR conv.id IN (
-                        SELECT channel.id
-                        FROM Channel channel
-                        WHERE channel.isCourseWide = TRUE
-                    )
+                    cp.id IS NOT NULL
+                    OR channel.isCourseWide = TRUE
                 )
             """)
     boolean isConversationOfCourseAccessibleByUser(@Param("conversationId") long conversationId, @Param("courseId") long courseId, @Param("userId") long userId);

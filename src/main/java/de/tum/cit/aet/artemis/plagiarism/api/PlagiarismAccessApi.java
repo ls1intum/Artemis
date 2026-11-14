@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.plagiarism.api;
 
 import java.util.Optional;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Controller;
@@ -38,10 +39,11 @@ public class PlagiarismAccessApi extends AbstractPlagiarismApi {
      * Finds the submission of the participation that was compared in a plagiarism check.
      *
      * @param participationId the id of the participation
-     * @return the id of the compared submission, or empty if no submission of the participation was compared
+     * @param userLogin       the login of the student asking to see the comparison, or null for staff
+     * @return the id of the compared submission, or empty if no submission of the participation was compared in a comparison the user may see
      */
-    public Optional<Long> findComparedSubmissionId(long participationId) {
-        return plagiarismAccessService.findComparedSubmissionId(participationId);
+    public Optional<Long> findComparedSubmissionId(long participationId, @Nullable String userLogin) {
+        return plagiarismAccessService.findComparedSubmissionId(participationId, userLogin);
     }
 
     /**

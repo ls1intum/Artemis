@@ -14,6 +14,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
@@ -156,9 +157,16 @@ public class RepositoryParticipationService {
         return programmingParticipation;
     }
 
-    private Optional<String> findComparedCommitHash(ProgrammingExerciseParticipation participation) {
-        return plagiarismAccessApi.flatMap(api -> api.findComparedSubmissionId(participation.getId())).flatMap(programmingSubmissionRepository::findById)
-                .map(ProgrammingSubmission::getCommitHash);
+    private Optional<String> findComparedCommitHash(ProgrammingExerciseParticipation participation) throws AccessForbiddenException {
+        User user = userRepository.getUserWithAuthorities();
+        String userLogin = repositoryAccessService.isStaffInPlagiarismView(participation, user) ? null : user.getLogin();
+        Optional<ProgrammingSubmission> comparedSubmission = plagiarismAccessApi.flatMap(api -> api.findComparedSubmissionId(participation.getId(), userLogin))
+                .flatMap(programmingSubmissionRepository::findById);
+        if (comparedSubmission.isPresent() && comparedSubmission.get().getCommitHash() == null) {
+            // Never fall back to the current content of the repository when a submission was compared but its commit is unknown
+            throw new AccessForbiddenException("The compared submission of participation " + participation.getId() + " has no commit");
+        }
+        return comparedSubmission.map(ProgrammingSubmission::getCommitHash);
     }
 
     /**

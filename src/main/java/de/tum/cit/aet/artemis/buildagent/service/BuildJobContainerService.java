@@ -835,20 +835,27 @@ public class BuildJobContainerService {
             throw new LocalCIException("Could not create a temporary file for the tar archive of source path: " + sourcePath.toAbsolutePath(), e);
         }
 
+        boolean created = false;
         try (TarArchiveOutputStream tarArchiveOutputStream = new TarArchiveOutputStream(new BufferedOutputStream(Files.newOutputStream(tarFile)))) {
             // Enable POSIX long file mode to support files with names > 100 characters
             tarArchiveOutputStream.setLongFileMode(TarArchiveOutputStream.LONGFILE_POSIX);
 
             addFileToTar(tarArchiveOutputStream, sourcePath, "");
             tarArchiveOutputStream.finish();
+            created = true;
         }
         catch (IOException e) {
             // Only log to application logs here - user-facing messages are logged by the caller after all retries fail
             String errorMessage = "Could not create tar archive for source path: " + sourcePath.toAbsolutePath() + " (Exception: " + e.getClass().getSimpleName() + " - "
                     + e.getMessage() + ")";
             log.warn(errorMessage, e);
-            FileUtils.deleteQuietly(tarFile.toFile());
             throw new LocalCIException(errorMessage, e);
+        }
+        finally {
+            if (!created) {
+                // Also covers unchecked failures while listing directories, so that failed attempts do not accumulate partial archives
+                FileUtils.deleteQuietly(tarFile.toFile());
+            }
         }
         return tarFile;
     }

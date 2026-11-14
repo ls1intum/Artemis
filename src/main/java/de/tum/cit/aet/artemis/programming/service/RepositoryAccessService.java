@@ -198,6 +198,17 @@ public class RepositoryAccessService {
      * @param user     the user who wants to access the repository
      * @throws AccessForbiddenException if offline use is forbidden for this user
      */
+    /**
+     * Whether the user sees plagiarism comparisons of the participation as staff, and not only the ones about which the user was notified.
+     *
+     * @param programmingParticipation the participation shown in the plagiarism view
+     * @param user                     the user who wants to see it
+     * @return true if the user is at least a teaching assistant in the course of the exercise
+     */
+    public boolean isStaffInPlagiarismView(ProgrammingExerciseParticipation programmingParticipation, User user) {
+        return authorizationCheckService.isAtLeastTeachingAssistantInCourse(getCourseOrThrow(programmingParticipation.getProgrammingExercise()), user);
+    }
+
     public void checkHasAccessToOfflineIDEElseThrow(GitRepositoryAccessDTO exercise, User user) throws AccessForbiddenException {
         if (exercise.offlineIdeForbidden() && authorizationCheckService.isOnlyStudentInCourse(exercise.courseId(), user)) {
             throw new AccessForbiddenException();
