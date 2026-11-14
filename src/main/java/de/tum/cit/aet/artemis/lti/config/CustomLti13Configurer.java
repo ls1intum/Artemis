@@ -1,5 +1,16 @@
 package de.tum.cit.aet.artemis.lti.config;
 
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.time.Duration;
+import java.util.Collections;
+import java.util.LinkedHashSet;
+import java.util.Locale;
+import java.util.Set;
+import java.util.TreeSet;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
@@ -9,6 +20,8 @@ import org.springframework.security.web.authentication.logout.LogoutFilter;
 import org.springframework.stereotype.Component;
 
 import de.tum.cit.aet.artemis.core.security.jwt.JWTFilter;
+import de.tum.cit.aet.artemis.lti.domain.LtiPlatformConfiguration;
+import de.tum.cit.aet.artemis.lti.repository.LtiPlatformConfigurationRepository;
 import de.tum.cit.aet.artemis.lti.service.Lti13Service;
 import de.tum.cit.aet.artemis.lti.service.OnlineCourseConfigurationService;
 import uk.ac.ox.ctl.lti13.Lti13Configurer;
@@ -63,13 +76,73 @@ public class CustomLti13Configurer extends Lti13Configurer {
     /** Value for LTI 1.3 deep linking request message. */
     public static final String LTI13_DEEPLINK_MESSAGE_REQUEST = "LtiDeepLinkingRequest";
 
+    private static final Logger log = LoggerFactory.getLogger(CustomLti13Configurer.class);
+
+    /** How long the origins of the configured platforms are reused before they are read again. */
+    private static final Duration PLATFORM_ORIGINS_CACHE_DURATION = Duration.ofMinutes(1);
+
     private final DistributedStateAuthorizationRequestRepository stateRepository;
 
-    public CustomLti13Configurer(DistributedStateAuthorizationRequestRepository stateRepository) {
+    private final LtiPlatformConfigurationRepository ltiPlatformConfigurationRepository;
+
+    private volatile Set<String> cachedPlatformOrigins = Set.of();
+
+    private volatile long cachedPlatformOriginsAtNanos;
+
+    private volatile boolean platformOriginsCached;
+
+    public CustomLti13Configurer(DistributedStateAuthorizationRequestRepository stateRepository, LtiPlatformConfigurationRepository ltiPlatformConfigurationRepository) {
         super.ltiPath(LTI13_BASE_PATH);
         super.loginInitiationPath(LOGIN_INITIATION_PATH);
         super.loginPath(LOGIN_PATH);
         this.stateRepository = stateRepository;
+        this.ltiPlatformConfigurationRepository = ltiPlatformConfigurationRepository;
+    }
+
+    /**
+     * The origins ({@code scheme://host[:port]}) of the configured LTI platforms, which are the origins that embed the client when they launch it. They come from the
+     * issuer and the authorization address of each platform. The result is cached for a minute, because it is needed for every response.
+     *
+     * @return the origins, empty while no platform is configured
+     */
+    public Set<String> getPlatformOrigins() {
+        long now = System.nanoTime();
+        if (platformOriginsCached && now - cachedPlatformOriginsAtNanos < PLATFORM_ORIGINS_CACHE_DURATION.toNanos()) {
+            return cachedPlatformOrigins;
+        }
+        Set<String> origins = new LinkedHashSet<>();
+        try {
+            for (LtiPlatformConfiguration platform : ltiPlatformConfigurationRepository.findAll()) {
+                addOrigin(origins, platform.getOriginalUrl());
+                addOrigin(origins, platform.getAuthorizationUri());
+            }
+        }
+        catch (RuntimeException e) {
+            // The previous origins stay in place rather than opening or closing the framing because of a failed read
+            log.warn("The LTI platforms could not be read to derive the origins that may embed the client: {}", e.getMessage());
+            return cachedPlatformOrigins;
+        }
+        cachedPlatformOrigins = Collections.unmodifiableSortedSet(new TreeSet<>(origins));
+        cachedPlatformOriginsAtNanos = now;
+        platformOriginsCached = true;
+        return cachedPlatformOrigins;
+    }
+
+    private static void addOrigin(Set<String> origins, String url) {
+        if (url == null || url.isBlank()) {
+            return;
+        }
+        try {
+            URI uri = new URI(url.trim());
+            String scheme = uri.getScheme() == null ? null : uri.getScheme().toLowerCase(Locale.ROOT);
+            if (uri.getHost() == null || !("https".equals(scheme) || "http".equals(scheme))) {
+                return;
+            }
+            origins.add(scheme + "://" + uri.getHost().toLowerCase(Locale.ROOT) + (uri.getPort() == -1 ? "" : ":" + uri.getPort()));
+        }
+        catch (URISyntaxException e) {
+            log.debug("The address {} of an LTI platform is not a valid URI", url);
+        }
     }
 
     @Override

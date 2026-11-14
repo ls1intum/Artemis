@@ -506,8 +506,12 @@ Artemis tells browsers not to show its pages inside a frame of another site. It 
 Artemis itself (`base-uri 'self'`).
 
 The [LTI module](/instructor/integrations/lti-configuration) is the exception. Learning management systems launch Artemis in a frame, so
-the LTI configuration removes `X-Frame-Options` while the module is enabled, and no `frame-ancestors` directive is sent.
-If you want to restrict which sites may embed Artemis in that case, or without LTI, list their origins:
+the LTI configuration removes `X-Frame-Options` while the module is enabled. As long as no LTI platform is configured and no origin is listed below, no `frame-ancestors` directive is sent.
+
+Artemis derives the sites that may embed it from the LTI platforms that you configure. The origin (scheme, host and port) of the issuer and of the authorization address of every platform is added
+to the directive, so that after the first platform the policy is `frame-ancestors 'self'` followed by these origins. Artemis reads the platforms again at most once a minute, so a new platform
+takes effect within a minute without a restart. An origin that a platform needs but that is not part of these two addresses has to be listed explicitly: Canvas, for example, authorizes at a central
+address, while the pages that embed Artemis come from the address of your institution. To list further origins, or to restrict the embedding without LTI, set:
 
 ```yaml
 artemis:
@@ -516,7 +520,7 @@ artemis:
     frame-ancestors: https://lms.example.org
 ```
 
-With origins configured, Artemis sends `frame-ancestors 'self' <origins>` and no `X-Frame-Options`. An entry that is not of
+With origins configured, Artemis sends `frame-ancestors 'self' <origins>` and no `X-Frame-Options`. The origins of the LTI platforms are added to the ones listed here. An entry that is not of
 that form stops the server at startup.
 
 The OpenAPI specification (`/api-docs`) and the Swagger UI (`/swagger-ui`) are switched off by default

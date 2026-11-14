@@ -197,6 +197,10 @@ Restore the backup taken in step 4 of the upgrade procedure if the cause cannot 
 
 Some releases change behavior in a way that requires a one-time action on existing data. These steps are additional to the upgrade scenarios above.
 
+### 10.8: Embedding Artemis from LTI Platforms
+
+On an installation with LTI platforms, Artemis now sends `frame-ancestors 'self'` followed by the origins of these platforms, which it derives from the issuer and the authorization address of each platform. Before, no `frame-ancestors` directive was sent and every site could embed Artemis. An installation without LTI platforms and without `artemis.security.frame-ancestors` behaves as before. **Check where your learning management system serves the pages that embed Artemis.** If that origin differs from the issuer and the authorization address of its platform, as it does for Canvas, list it in `artemis.security.frame-ancestors`, otherwise the browser refuses to show Artemis in the frame. See [Embedding in Other Pages](/admin/production-setup/security#embedding-in-other-pages-and-api-documentation).
+
 ### 10.8: Host Key Check of Build Agents
 
 A build agent that clones over SSH (`build-agent-use-ssh: true`) now compares the SSH host key it is shown with the fingerprints that the core node publishes at `api/localvc/public/ssh-fingerprints`, and refuses a clone from a host with another key. Before, it accepted every host key. **Check that `artemis.version-control.url` on each agent reaches a core node, and that all core nodes behind one address share one host key (`ssh-host-key-path`).** An agent that cannot read the fingerprints keeps cloning and logs a warning, unless you set `artemis.version-control.ssh-host-key-verification: required` on it. See [Host key of the SSH server](/admin/production-setup/security#host-key-of-the-ssh-server).
