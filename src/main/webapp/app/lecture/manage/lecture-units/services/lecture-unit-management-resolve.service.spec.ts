@@ -2,7 +2,6 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRouteSnapshot } from '@angular/router';
 import { of } from 'rxjs';
-import { HttpResponse } from '@angular/common/http';
 import { AttachmentVideoUnitResolve } from 'app/lecture/manage/lecture-units/services/lecture-unit-management-resolve.service';
 import { AttachmentVideoUnitService } from 'app/lecture/manage/lecture-units/services/attachment-video-unit.service';
 import { AttachmentVideoUnit } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
@@ -24,7 +23,7 @@ describe('AttachmentVideoUnitResolve', () => {
 
     it('should fetch and return the attachment video unit when ID is present', () => {
         const mockUnit = new AttachmentVideoUnit();
-        (service.findById as ReturnType<typeof vi.fn>).mockReturnValue(of(new HttpResponse({ body: mockUnit, status: 200 })));
+        (service.findById as ReturnType<typeof vi.fn>).mockReturnValue(of(mockUnit));
 
         route.params = { lectureId: 7, attachmentVideoUnitId: 123 };
 

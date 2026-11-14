@@ -16,6 +16,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentUpdateIntent;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
  * DTO for the {@link AttachmentVideoUnit} REST boundary.
@@ -41,6 +42,7 @@ public record AttachmentVideoUnitDTO(Long id, String name, ZonedDateTime release
     /**
      * The lecture an attachment video unit belongs to, reduced to its id.
      */
+    @Schema(name = "AttachmentVideoUnitLectureReferenceDTO")
     @JsonIgnoreProperties(ignoreUnknown = true)
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public record LectureReferenceDTO(Long id) {

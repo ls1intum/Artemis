@@ -6,6 +6,8 @@ import { LectureUnit, LectureUnitType } from 'app/lecture/shared/entities/lectur
 import { LectureUnitCompletionEvent } from 'app/lecture/overview/course-lectures/details/course-lecture-details.component';
 import { LearningPathNavigationService } from 'app/atlas/overview/learning-path-navigation.service';
 import { lastValueFrom } from 'rxjs';
+import { LectureUnitApi } from 'app/openapi/api/lecture-unit-api';
+import { toLectureUnit } from 'app/lecture/shared/util/generated-lecture.util';
 import { TextUnitComponent } from 'app/lecture/overview/course-lectures/text-unit/text-unit.component';
 import { AttachmentVideoUnitComponent } from 'app/lecture/overview/course-lectures/attachment-video-unit/attachment-video-unit.component';
 import { OnlineUnitComponent } from 'app/lecture/overview/course-lectures/online-unit/online-unit.component';
@@ -23,6 +25,7 @@ import { cloneWith } from 'app/foundation/util/deep-clone.util';
 })
 export class LearningPathLectureUnitComponent {
     private readonly lectureUnitService = inject(LectureUnitService);
+    private readonly lectureUnitApi = inject(LectureUnitApi);
     private readonly learningPathNavigationService = inject(LearningPathNavigationService);
     private readonly alertService = inject(AlertService);
 
@@ -47,8 +50,8 @@ export class LearningPathLectureUnitComponent {
     async loadLectureUnit(lectureUnitId: number): Promise<void> {
         try {
             this.isLoading.set(true);
-            const lectureUnit = await lastValueFrom(this.lectureUnitService.getLectureUnitById(lectureUnitId));
-            this.lectureUnit.set(lectureUnit);
+            const lectureUnit = await lastValueFrom(this.lectureUnitApi.getLectureUnitById(lectureUnitId));
+            this.lectureUnit.set(toLectureUnit(lectureUnit));
         } catch (error) {
             this.alertService.error(getErrorMessage(error));
         } finally {

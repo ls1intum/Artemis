@@ -25,10 +25,11 @@ export class AdminAiWorkerApi {
     /**
      *
      *
+     * @param options the HttpContext and extra headers of this request; a declared header parameter overrides a header of the same name
      */
-    getWorkers(): Observable<Array<WorkerStatus>> {
+    getWorkers(options?: import('./request-options').RequestOptions): Observable<Array<WorkerStatus>> {
         const url = `${this.basePath}/api/aiworker/admin/workers`;
-        return this.http.get<Array<WorkerStatus>>(url);
+        return this.http.get<Array<WorkerStatus>>(url, options && { ...(options.context !== undefined && { context: options.context }), ...(options.headers !== undefined && { headers: options.headers }) });
     }
 
 }

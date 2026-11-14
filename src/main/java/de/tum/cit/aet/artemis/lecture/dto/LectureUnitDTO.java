@@ -11,8 +11,14 @@ import de.tum.cit.aet.artemis.lecture.domain.ExerciseUnit;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 import de.tum.cit.aet.artemis.lecture.domain.OnlineUnit;
 import de.tum.cit.aet.artemis.lecture.domain.TextUnit;
+import io.swagger.v3.oas.annotations.media.DiscriminatorMapping;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
+@Schema(discriminatorProperty = "type", discriminatorMapping = { @DiscriminatorMapping(value = "attachment", schema = AttachmentVideoUnitDTO.class),
+        @DiscriminatorMapping(value = "exercise", schema = ExerciseUnitDTO.class), @DiscriminatorMapping(value = "online", schema = OnlineUnitDTO.class),
+        @DiscriminatorMapping(value = "text", schema = TextUnitDTO.class) }, oneOf = { AttachmentVideoUnitDTO.class, ExerciseUnitDTO.class, OnlineUnitDTO.class,
+                TextUnitDTO.class })
 public interface LectureUnitDTO extends CompetencyLinksHolderDTO {
 
     Long id();

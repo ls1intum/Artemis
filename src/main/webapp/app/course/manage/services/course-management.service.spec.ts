@@ -15,7 +15,6 @@ import { Exercise, ExerciseType, ScoresPerExerciseType } from 'app/exercise/shar
 import { SubmissionExerciseType } from 'app/exercise/shared/entities/submission/submission.model';
 import { Organization } from 'app/admin/organization-management/organization.model';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
-import { LectureService } from 'app/lecture/manage/services/lecture.service';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { take } from 'rxjs/operators';
@@ -66,7 +65,6 @@ type CourseDateField = (typeof courseDateFields)[number];
 describe('Course Management Service', () => {
     let courseManagementService: CourseManagementService;
     let accountService: AccountService;
-    let lectureService: LectureService;
     let httpMock: HttpTestingController;
     let courseStorageService: CourseStorageService;
     let scoresStorageService: ScoresStorageService;
@@ -78,7 +76,6 @@ describe('Course Management Service', () => {
     let isAtLeastEditorInCourseSpy: ReturnType<typeof vi.spyOn>;
     let isAtLeastInstructorInCourseSpy: ReturnType<typeof vi.spyOn>;
     let convertExercisesDateFromServerSpy: ReturnType<typeof vi.spyOn>;
-    let convertDatesForLecturesFromServerSpy: ReturnType<typeof vi.spyOn>;
     let parseExerciseCategoriesSpy: ReturnType<typeof vi.spyOn>;
 
     const resourceUrl = 'api/course/courses';
@@ -107,7 +104,6 @@ describe('Course Management Service', () => {
         courseManagementService = TestBed.inject(CourseManagementService);
         httpMock = TestBed.inject(HttpTestingController);
         accountService = TestBed.inject(AccountService);
-        lectureService = TestBed.inject(LectureService);
         courseStorageService = TestBed.inject(CourseStorageService);
         scoresStorageService = TestBed.inject(ScoresStorageService);
         localStorageService = TestBed.inject(LocalStorageService);
@@ -117,7 +113,6 @@ describe('Course Management Service', () => {
         isAtLeastTutorInCourseSpy = vi.spyOn(accountService, 'isAtLeastTutorInCourse').mockReturnValue(false);
         isAtLeastEditorInCourseSpy = vi.spyOn(accountService, 'isAtLeastEditorInCourse').mockReturnValue(false);
         isAtLeastInstructorInCourseSpy = vi.spyOn(accountService, 'isAtLeastInstructorInCourse').mockReturnValue(false);
-        convertDatesForLecturesFromServerSpy = vi.spyOn(lectureService, 'convertLectureArrayDatesFromServer');
         ({ course, exercises } = createSampleCourse());
 
         courseScores = new CourseScores(0, 0, 0, { absoluteScore: 0, absoluteScoreTotal: 0, relativeScore: 0, currentRelativeScore: 0, presentationScore: 0 });
@@ -158,7 +153,6 @@ describe('Course Management Service', () => {
     /** The response adapter owns the conversion, so the service must not run a second date or category pass over it. */
     const expectNoSecondConversion = () => {
         expect(convertExercisesDateFromServerSpy).not.toHaveBeenCalled();
-        expect(convertDatesForLecturesFromServerSpy).not.toHaveBeenCalled();
     };
 
     const expectAccessRightsToBeCalled = (tutorTimes: number, editorTimes: number, instructorTimes: number) => {

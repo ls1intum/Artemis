@@ -57,9 +57,3 @@ export function getIconTooltip(lectureUnitType: LectureUnitType) {
     }
     return lectureUnitTooltips[lectureUnitType];
 }
-
-export class LectureUnitForLearningPathNodeDetailsDTO {
-    public id?: number;
-    public name?: string;
-    public type?: LectureUnitType;
-}

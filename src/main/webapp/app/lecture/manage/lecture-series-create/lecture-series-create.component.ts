@@ -5,13 +5,14 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faPenToSquare, faPlus, faTrash, faXmark } from '@fortawesome/free-solid-svg-icons';
 import { TumAetUiButtonDirective, TumAetUiDatePickerComponent, TumAetUiProgressSpinnerComponent } from '@tumaet/ui-angular';
 import { LectureSeriesDraftEditModalComponent } from 'app/lecture/manage/lecture-series-edit-modal/lecture-series-draft-edit-modal.component';
-import { LectureService } from 'app/lecture/manage/services/lecture.service';
+import { LectureApi } from 'app/openapi/api/lecture-api';
+import { toLectureSeriesCreateRequest } from 'app/lecture/shared/util/generated-lecture.util';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.utils';
 import { Router } from '@angular/router';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { Dayjs } from 'dayjs/esm';
-import { Lecture, LectureSeriesCreateLectureDTO } from 'app/lecture/shared/entities/lecture.model';
+import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { isFirstDateAfterOrEqualSecond } from 'app/foundation/util/date.utils';
 import { generateUuid } from 'app/foundation/util/crypto.utils';
 
@@ -29,7 +30,9 @@ interface InitialLecture {
 export interface LectureDraft {
     id: string;
     state: LectureDraftState;
-    dto: LectureSeriesCreateLectureDTO;
+    title: string;
+    startDate?: Dayjs;
+    endDate?: Dayjs;
 }
 
 export enum LectureDraftState {
@@ -68,7 +71,7 @@ export enum LectureDraftState {
     styleUrl: './lecture-series-create.component.scss',
 })
 export class LectureSeriesCreateComponent {
-    private lectureService = inject(LectureService);
+    private lectureApi = inject(LectureApi);
     private alertService = inject(AlertService);
     private router = inject(Router);
     private navigationUtilService = inject(ArtemisNavigationUtilService);
@@ -117,8 +120,8 @@ export class LectureSeriesCreateComponent {
     }
 
     private saveNewLectures(courseId: number) {
-        const lecturesToSave = this.lectureDrafts().map((d) => d.dto);
-        this.lectureService.createSeries(lecturesToSave, courseId).subscribe({
+        const lecturesToSave = this.lectureDrafts().map(toLectureSeriesCreateRequest);
+        this.lectureApi.createLectureSeries(courseId, lecturesToSave).subscribe({
             next: () => {
                 void this.router.navigate(['course-management', courseId, 'lectures']);
                 this.isLoading.set(false);
@@ -138,7 +141,7 @@ export class LectureSeriesCreateComponent {
             return;
         }
 
-        const sortedLectureDrafts = this.sort(lectureDrafts, (draft) => this.getSortingKeyFor(draft.dto));
+        const sortedLectureDrafts = this.sort(lectureDrafts, (draft) => this.getSortingKeyFor(draft));
         const sortedExistingLectures = this.sort(this.existingLectures(), (lecture) => this.getSortingKeyFor(lecture));
         this.assignTitlesToNewLectures(sortedLectureDrafts, sortedExistingLectures);
 
@@ -182,7 +185,9 @@ export class LectureSeriesCreateComponent {
             newDrafts.push({
                 id: generateUuid(),
                 state: LectureDraftState.REGULAR,
-                dto: new LectureSeriesCreateLectureDTO('', startDate, endDate),
+                title: '',
+                startDate,
+                endDate,
             });
         });
         return newDrafts;
@@ -245,7 +250,7 @@ export class LectureSeriesCreateComponent {
         });
     }
 
-    private getSortingKeyFor(lectureRepresentation: LectureSeriesCreateLectureDTO | Lecture): number | undefined {
+    private getSortingKeyFor(lectureRepresentation: LectureDraft | Lecture): number | undefined {
         const keyDate = lectureRepresentation.startDate ?? lectureRepresentation.endDate;
         if (keyDate) {
             return keyDate.valueOf();
@@ -255,8 +260,7 @@ export class LectureSeriesCreateComponent {
     }
 
     private assignTitlesToNewLectures(sortedLectureDrafts: LectureDraft[], sortedExistingLectures: Lecture[]) {
-        const sortedDTOs = sortedLectureDrafts.map((draft) => draft.dto);
-        const sortedLectureRepresentations = this.mergeSortedLectureRepresentations(sortedExistingLectures, sortedDTOs);
+        const sortedLectureRepresentations = this.mergeSortedLectureRepresentations(sortedExistingLectures, sortedLectureDrafts);
         sortedLectureRepresentations.forEach((lectureRepresentation, index) => {
             if (!lectureRepresentation.title) {
                 lectureRepresentation.title = `Lecture ${index + 1}`;
@@ -264,34 +268,34 @@ export class LectureSeriesCreateComponent {
         });
     }
 
-    private mergeSortedLectureRepresentations(sortedExistingLectures: Lecture[], sortedDTOs: LectureSeriesCreateLectureDTO[]): (Lecture | LectureSeriesCreateLectureDTO)[] {
-        const sortedResult: (Lecture | LectureSeriesCreateLectureDTO)[] = [];
+    private mergeSortedLectureRepresentations(sortedExistingLectures: Lecture[], sortedDrafts: LectureDraft[]): (Lecture | LectureDraft)[] {
+        const sortedResult: (Lecture | LectureDraft)[] = [];
         let existingLectureIndex = 0;
-        let dtoIndex = 0;
-        while (existingLectureIndex < sortedExistingLectures.length && dtoIndex < sortedDTOs.length) {
-            const dto = sortedDTOs[dtoIndex];
+        let draftIndex = 0;
+        while (existingLectureIndex < sortedExistingLectures.length && draftIndex < sortedDrafts.length) {
+            const draft = sortedDrafts[draftIndex];
             const existingLecture = sortedExistingLectures[existingLectureIndex];
-            const dtoKey = this.getSortingKeyFor(dto);
+            const draftKey = this.getSortingKeyFor(draft);
             const existingLectureKey = this.getSortingKeyFor(existingLecture);
-            if (dtoKey !== undefined && existingLectureKey !== undefined) {
-                if (existingLectureKey <= dtoKey) {
+            if (draftKey !== undefined && existingLectureKey !== undefined) {
+                if (existingLectureKey <= draftKey) {
                     sortedResult.push(existingLecture);
                     existingLectureIndex++;
                 } else {
-                    sortedResult.push(dto);
-                    dtoIndex++;
+                    sortedResult.push(draft);
+                    draftIndex++;
                 }
             } else {
-                // our validation logic enforces that there must be a key for all DTOs
-                sortedResult.push(dto);
-                dtoIndex++;
+                // our validation logic enforces that there must be a key for all drafts
+                sortedResult.push(draft);
+                draftIndex++;
             }
         }
         while (existingLectureIndex < sortedExistingLectures.length) {
             sortedResult.push(sortedExistingLectures[existingLectureIndex++]);
         }
-        while (dtoIndex < sortedDTOs.length) {
-            sortedResult.push(sortedDTOs[dtoIndex++]);
+        while (draftIndex < sortedDrafts.length) {
+            sortedResult.push(sortedDrafts[draftIndex++]);
         }
         return sortedResult;
     }

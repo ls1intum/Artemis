@@ -4,6 +4,7 @@ import java.util.Optional;
 
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -80,7 +81,7 @@ public class LectureTranscriptionResource {
      * @return ResponseEntity with the transcription status (PENDING, COMPLETED, FAILED) or 404 if no transcription exists
      */
     @FeatureUsage(UserFeature.LECTURE_CONTENT_PROCESSING)
-    @GetMapping("lecture-units/{lectureUnitId}/transcript/status")
+    @GetMapping(value = "lecture-units/{lectureUnitId}/transcript/status", produces = MediaType.TEXT_PLAIN_VALUE)
     @EnforceAtLeastEditorInLectureUnit
     public ResponseEntity<String> getTranscriptStatus(@PathVariable Long lectureUnitId) {
         Optional<String> statusOpt = lectureTranscriptionsRepositoryApi.getTranscriptStatus(lectureUnitId);

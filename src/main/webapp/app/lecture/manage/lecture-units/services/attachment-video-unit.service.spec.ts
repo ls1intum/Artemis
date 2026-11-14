@@ -1,492 +1,241 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { HttpResponse, provideHttpClient } from '@angular/common/http';
+import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
-import { LectureUnitService } from 'app/lecture/manage/lecture-units/services/lecture-unit.service';
-import { MockProvider } from 'ng-mocks';
-import { take } from 'rxjs/operators';
-import { LectureUnit } from 'app/lecture/shared/entities/lecture-unit/lectureUnit.model';
 import dayjs from 'dayjs/esm';
 import { AttachmentVideoUnit } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
 import { Attachment, AttachmentType } from 'app/lecture/shared/entities/attachment.model';
-import { AttachmentVideoUnitService } from 'app/lecture/manage/lecture-units/services/attachment-video-unit.service';
-import { objectToJsonBlob } from 'app/foundation/util/blob-util';
-import { LectureUnitInformationDTO } from 'app/lecture/manage/lecture-units/attachment-video-units/attachment-video-units.component';
+import { AttachmentVideoUnitService, withFileName } from 'app/lecture/manage/lecture-units/services/attachment-video-unit.service';
+
+async function readJsonPart(formData: FormData, name: string): Promise<any> {
+    const part = formData.get(name) as Blob;
+    expect(part.type).toBe('application/json');
+    return JSON.parse(await part.text());
+}
 
 describe('AttachmentVideoUnitService', () => {
     let service: AttachmentVideoUnitService;
     let httpMock: HttpTestingController;
-    let elemDefault: AttachmentVideoUnit;
-    let expectedResult: any;
+    let unit: AttachmentVideoUnit;
+    let attachment: Attachment;
 
     beforeEach(() => {
-        TestBed.configureTestingModule({
-            providers: [
-                provideHttpClient(),
-                provideHttpClientTesting(),
-                MockProvider(LectureUnitService, {
-                    convertLectureUnitResponseDatesFromServer<T extends LectureUnit>(res: HttpResponse<T>): HttpResponse<T> {
-                        return res;
-                    },
-                }),
-            ],
-        });
-        expectedResult = {} as HttpResponse<AttachmentVideoUnit>;
+        TestBed.configureTestingModule({ providers: [provideHttpClient(), provideHttpClientTesting()] });
         service = TestBed.inject(AttachmentVideoUnitService);
         httpMock = TestBed.inject(HttpTestingController);
 
-        const attachment = new Attachment();
-        attachment.id = 0;
+        attachment = new Attachment();
+        attachment.id = 3;
         attachment.version = 1;
         attachment.attachmentType = AttachmentType.FILE;
-        attachment.releaseDate = dayjs().year(2010).month(3).date(5);
-        attachment.uploadDate = dayjs().year(2010).month(3).date(5);
+        attachment.releaseDate = dayjs('2010-04-05T10:00:00Z');
         attachment.name = 'test';
         attachment.link = '/path/to/file/test.pdf';
+        attachment.linkUrl = 'https://client-only';
 
-        elemDefault = new AttachmentVideoUnit();
-        elemDefault.id = 0;
-        elemDefault.description = 'lorem ipsum';
-        elemDefault.attachment = attachment;
+        unit = new AttachmentVideoUnit();
+        unit.id = 42;
+        unit.name = 'Unit';
+        unit.description = 'lorem ipsum';
+        unit.releaseDate = dayjs('2010-04-05T10:00:00Z');
     });
 
     afterEach(() => {
         httpMock.verify();
     });
 
-    it('should find a AttachmentVideoUnit', async () => {
-        const returnedFromService = { ...elemDefault };
-        service
-            .findById(1, 1)
-            .pipe(take(1))
-            .subscribe((resp) => (expectedResult = resp));
-        const req = httpMock.expectOne({ method: 'GET' });
-        req.flush(returnedFromService);
-        expect(expectedResult.body).toEqual(elemDefault);
+    it('finds a unit and converts it to the lecture unit class', () => {
+        let result: AttachmentVideoUnit | undefined;
+        service.findById(42, 7).subscribe((r) => (result = r));
+
+        httpMock.expectOne({ method: 'GET', url: '/api/lecture/lectures/7/attachment-video-units/42' }).flush({
+            id: 42,
+            type: 'attachment',
+            releaseDate: '2010-04-05T10:00:00Z',
+            attachment: { id: 3, link: 'attachments/test.pdf', releaseDate: '2010-04-05T10:00:00Z' },
+        });
+
+        expect(result).toBeInstanceOf(AttachmentVideoUnit);
+        expect(dayjs.isDayjs(result!.releaseDate)).toBe(true);
+        expect(dayjs.isDayjs(result!.attachment!.releaseDate)).toBe(true);
+        expect(result!.attachment!.linkUrl).toContain('attachments/test.pdf');
     });
 
-    it('should create an AttachmentVideoUnit', async () => {
-        const returnedFromService = { ...elemDefault, id: 0 };
-        const expected = { ...returnedFromService };
-        const formData = new FormData();
-        formData.append('file', new Blob(), 'filename.pdf');
-        formData.append('attachment', objectToJsonBlob(elemDefault.attachment!));
-        formData.append('attachmentVideoUnit', objectToJsonBlob(elemDefault));
-        service
-            .create(formData, 1)
-            .pipe(take(1))
-            .subscribe((resp) => (expectedResult = resp));
-        const req = httpMock.expectOne({ method: 'POST' });
-        req.flush(returnedFromService);
-        expect(expectedResult.body).toEqual(expected);
-    });
+    it('creates a unit with its file, keeps the file name and bypasses the service worker', async () => {
+        const file = new File(['pdf'], 'slides.pdf', { type: 'application/pdf' });
+        let result: AttachmentVideoUnit | undefined;
+        service.create(7, unit, attachment, file).subscribe((r) => (result = r));
 
-    it('should update a AttachmentVideoUnit', async () => {
-        const returnedFromService = { ...elemDefault, name: 'Test' };
-        const expected = { ...returnedFromService };
-        elemDefault.id = 42;
-        const formData = new FormData();
-        formData.append('attachment', objectToJsonBlob(elemDefault.attachment!));
-        formData.append('attachmentVideoUnit', objectToJsonBlob(elemDefault));
-        service
-            .update(1, 42, formData)
-            .pipe(take(1))
-            .subscribe((resp) => (expectedResult = resp));
-        const req = httpMock.expectOne({ method: 'PUT' });
-        req.flush(returnedFromService);
-        expect(expectedResult.body).toEqual(expected);
-    });
-
-    it('should create AttachmentVideoUnits', async () => {
-        const returnedAttachmentVideoUnits = [
-            {
-                type: 'attachment',
-                id: 1,
-                name: 'Unit 1',
-                lecture: {
-                    id: 1,
-                    title: 'test',
-                    course: {
-                        id: 1,
-                        title: 'test',
-                    },
-                },
-                attachment: {
-                    id: 1,
-                    name: 'Unit1',
-                    link: 'attachments/attachment-video-units/235/Unit_1_.pdf',
-                    version: 1,
-                    attachmentType: 'FILE',
-                },
-            },
-        ];
-        let response: any;
-        const returnedFromService = { ...returnedAttachmentVideoUnits };
-
-        const expected = { ...returnedFromService };
-        const filename = 'filename-on-server';
-        const lectureUnitInformation: LectureUnitInformationDTO = {
-            units: [
-                {
-                    unitName: 'Unit 1',
-                    releaseDate: dayjs().year(2022).month(3).date(5),
-                    startPage: 1,
-                    endPage: 20,
-                },
-            ],
-            numberOfPages: 0,
-            removeSlidesCommaSeparatedKeyPhrases: '',
-        };
-
-        service
-            .createUnits(1, filename, lectureUnitInformation)
-            .pipe(take(1))
-            .subscribe((resp) => (response = resp));
-        const req = httpMock.expectOne({ method: 'POST' });
-        req.flush(returnedFromService);
-        expect(response.body).toEqual(expected);
-    });
-
-    it('should get units information', async () => {
-        const unit1 = {
-            unitName: 'Unit 1',
-            releaseDate: dayjs().year(2022).month(3).date(5),
-            startPage: 1,
-            endPage: 20,
-        };
-
-        let response: any;
-        const returnedFromService = { lectureUnitDTOS: [unit1], numberOfPages: 20 };
-
-        const expected = { ...returnedFromService };
-
-        const filename = 'filename-on-server';
-        service
-            .getSplitUnitsData(1, filename)
-            .pipe(take(1))
-            .subscribe((resp) => (response = resp));
-        const req = httpMock.expectOne({ method: 'GET' });
-        req.flush(returnedFromService);
-        expect(response.body).toEqual(expected);
-    });
-
-    it('should get removed slides data', async () => {
-        let response: any;
-        const returnedFromService = [1, 2, 3];
-        const expected = [...returnedFromService];
-
-        const keyphrases = 'phrase1, phrase2';
-        const filename = 'filename-on-server';
-        service
-            .getSlidesToRemove(1, filename, keyphrases)
-            .pipe(take(1))
-            .subscribe((resp) => (response = resp));
-        const req = httpMock.expectOne({ method: 'GET' });
-        req.flush(returnedFromService);
-        expect(response.body).toEqual(expected);
-    });
-
-    it('should upload slides', async () => {
-        let response: any;
-        const returnedFromService = 'filename-on-server';
-        const expected = 'filename-on-server';
-        const file = new File([''], 'testFile.pdf', { type: 'application/pdf' });
-
-        service
-            .uploadSlidesForProcessing(1, file)
-            .pipe(take(1))
-            .subscribe((resp) => (response = resp));
-        const req = httpMock.expectOne({ method: 'POST' });
-        req.flush(returnedFromService);
-
-        expect(response.body).toEqual(expected);
-    });
-    it('create(): sets ngsw-bypass header and keepFilename=true', async () => {
-        const formData = new FormData();
-        formData.append('file', new Blob(), 'file.pdf');
-
-        let resp: any;
-        service
-            .create(formData, 99)
-            .pipe(take(1))
-            .subscribe((r) => (resp = r));
-
-        const req = httpMock.expectOne((r) => r.method === 'POST' && r.url === 'api/lecture/lectures/99/attachment-video-units?keepFilename=true');
+        const req = httpMock.expectOne({ method: 'POST', url: '/api/lecture/lectures/7/attachment-video-units?keepFilename=true' });
         expect(req.request.headers.get('ngsw-bypass')).toBe('true');
-        req.flush({ id: 1 });
-        expect(resp.body).toEqual({ id: 1 });
+        const body = req.request.body as FormData;
+        expect((body.get('file') as File).name).toBe('slides.pdf');
+        expect((await readJsonPart(body, 'attachmentVideoUnit')).name).toBe('Unit');
+        const sentAttachment = await readJsonPart(body, 'attachment');
+        expect(sentAttachment.name).toBe('test');
+        expect(sentAttachment.linkUrl).toBeUndefined();
+        expect(sentAttachment.releaseDate).toBe('2010-04-05T10:00:00.000Z');
+        req.flush({ id: 1, type: 'attachment' });
+
+        expect(result).toBeInstanceOf(AttachmentVideoUnit);
     });
 
-    it('update(): sets ngsw-bypass header and keepFilename=true (no notificationText)', async () => {
-        const formData = new FormData();
-        let resp: any;
+    it('creates a video-only unit without file and attachment parts', () => {
+        service.create(7, unit).subscribe();
 
-        service
-            .update(7, 42, formData)
-            .pipe(take(1))
-            .subscribe((r) => (resp = r));
+        const req = httpMock.expectOne({ method: 'POST', url: '/api/lecture/lectures/7/attachment-video-units?keepFilename=true' });
+        const body = req.request.body as FormData;
+        expect(body.has('file')).toBe(false);
+        expect(body.has('attachment')).toBe(false);
+        expect(body.has('attachmentVideoUnit')).toBe(true);
+        req.flush({ id: 1, type: 'attachment' });
+    });
 
-        const req = httpMock.expectOne((r) => r.method === 'PUT' && r.url === 'api/lecture/lectures/7/attachment-video-units/42');
+    it('updates a unit without a notification text', async () => {
+        let result: AttachmentVideoUnit | undefined;
+        service.update(7, 42, unit).subscribe((r) => (result = r));
+
+        const req = httpMock.expectOne({ method: 'PUT', url: '/api/lecture/lectures/7/attachment-video-units/42?keepFilename=true' });
         expect(req.request.headers.get('ngsw-bypass')).toBe('true');
-        expect(req.request.params.get('keepFilename')).toBe('true');
-        expect(req.request.params.has('notificationText')).toBe(false);
-        req.flush({ id: 42 });
-        expect(resp.body).toEqual({ id: 42 });
+        const body = req.request.body as FormData;
+        expect(body.has('file')).toBe(false);
+        expect(body.has('studentVersion')).toBe(false);
+        expect(body.has('hiddenPages')).toBe(false);
+        expect(body.has('pageOrder')).toBe(false);
+        expect((await readJsonPart(body, 'attachmentVideoUnit')).description).toBe('lorem ipsum');
+        req.flush({ id: 42, name: 'Test', type: 'attachment' });
+
+        expect(result!.name).toBe('Test');
     });
 
-    it('update(): appends notificationText when provided', async () => {
-        const formData = new FormData();
-        let resp: any;
+    it('encodes the notification text and sends an empty one, which also notifies', () => {
+        service.update(7, 42, unit, { notificationText: 'Q&A #2' }).subscribe();
+        httpMock
+            .expectOne({ method: 'PUT', url: '/api/lecture/lectures/7/attachment-video-units/42?keepFilename=true&notificationText=Q%26A+%232' })
+            .flush({ id: 42, type: 'attachment' });
 
-        const notificationText = 'UpdatedVersion';
+        service.update(7, 42, unit, { notificationText: '' }).subscribe();
+        httpMock.expectOne({ method: 'PUT', url: '/api/lecture/lectures/7/attachment-video-units/42?keepFilename=true&notificationText=' }).flush({ id: 42, type: 'attachment' });
+    });
+
+    it('sends the editor parts of an update under their part names', async () => {
+        const file = new File(['pdf'], 'slides.pdf', { type: 'application/pdf' });
+        const studentVersion = new File(['student'], 'slides_student.pdf', { type: 'application/pdf' });
         service
-            .update(7, 42, formData, notificationText)
-            .pipe(take(1))
-            .subscribe((r) => (resp = r));
+            .update(7, 42, unit, {
+                attachment,
+                file,
+                studentVersion,
+                hiddenPages: [{ slideId: 's1', date: '2030-01-01T00:00:00.000Z', exerciseId: 5 }],
+                pageOrder: [{ slideId: 's1', order: 1 }],
+            })
+            .subscribe();
 
-        const req = httpMock.expectOne((r) => r.method === 'PUT' && r.url === 'api/lecture/lectures/7/attachment-video-units/42');
-        expect(req.request.headers.get('ngsw-bypass')).toBe('true');
-        expect(req.request.params.get('keepFilename')).toBe('true');
-        expect(req.request.params.get('notificationText')).toBe(notificationText);
-        req.flush({ id: 42, note: notificationText });
-        expect(resp.body).toEqual({ id: 42, note: notificationText });
-    });
-
-    it('update(): encodes the notification text and sends an empty one, which also notifies', async () => {
-        service.update(7, 42, new FormData(), 'Q&A #2').pipe(take(1)).subscribe();
-        const withText = httpMock.expectOne((r) => r.method === 'PUT' && r.url === 'api/lecture/lectures/7/attachment-video-units/42');
-        expect(withText.request.urlWithParams).toContain('notificationText=Q%26A%20%232');
-        withText.flush({ id: 42 });
-
-        service.update(7, 42, new FormData(), '').pipe(take(1)).subscribe();
-        const empty = httpMock.expectOne((r) => r.method === 'PUT' && r.url === 'api/lecture/lectures/7/attachment-video-units/42');
-        expect(empty.request.params.get('notificationText')).toBe('');
-        empty.flush({ id: 42 });
-    });
-
-    it('updateStudentVersion(): calls correct URL with ngsw-bypass header', async () => {
-        const formData = new FormData();
-        formData.append('file', new Blob(), 'student.pdf');
-        let resp: any;
-
-        service
-            .updateStudentVersion(3, 11, formData)
-            .pipe(take(1))
-            .subscribe((r) => (resp = r));
-
-        const req = httpMock.expectOne((r) => r.method === 'PUT' && r.url === 'api/lecture/lectures/3/attachment-video-units/11/student-version');
-        expect(req.request.headers.get('ngsw-bypass')).toBe('true');
-        req.flush({ id: 11, ok: true });
-        expect(resp.body).toEqual({ id: 11, ok: true });
-    });
-
-    it('uploadSlidesForProcessing(): sends FormData with file field', async () => {
-        const file = new File(['hello'], 'slides.pdf', { type: 'application/pdf' });
-        let resp: any;
-
-        service
-            .uploadSlidesForProcessing(55, file)
-            .pipe(take(1))
-            .subscribe((r) => (resp = r));
-
-        const req = httpMock.expectOne((r) => r.method === 'POST' && r.url === 'api/lecture/lectures/55/attachment-video-units/upload');
-        expect(req.request.body instanceof FormData).toBe(true);
-        const sentFormData = req.request.body as FormData;
-        // Verify FormData contains "file" with our name
-        const fileEntry = sentFormData.get('file') as File;
-        expect(fileEntry).toBeTruthy();
-        expect(fileEntry.name).toBe('slides.pdf');
-
-        req.flush('filename-on-server');
-        expect(resp.body).toBe('filename-on-server');
-    });
-
-    it('getSlidesToRemove(): sets commaSeparatedKeyPhrases param', async () => {
-        const lectureId = 12;
-        const filename = 'deck.pdf';
-        const keyPhrases = 'foo,bar,baz';
-
-        let resp: any;
-        service
-            .getSlidesToRemove(lectureId, filename, keyPhrases)
-            .pipe(take(1))
-            .subscribe((r) => (resp = r));
-
-        const req = httpMock.expectOne(
-            (r) =>
-                r.method === 'GET' &&
-                r.url === `api/lecture/lectures/${lectureId}/attachment-video-units/slides-to-remove/${filename}` &&
-                r.params.get('commaSeparatedKeyPhrases') === keyPhrases,
-        );
-        req.flush([2, 5]);
-        expect(resp.body).toEqual([2, 5]);
-    });
-
-    it('createUnits(): posts DTO payload to correct URL', async () => {
-        const dto: LectureUnitInformationDTO = {
-            units: [{ unitName: 'U1', releaseDate: dayjs('2024-04-05'), startPage: 1, endPage: 10 }],
-            numberOfPages: 10,
-            removeSlidesCommaSeparatedKeyPhrases: 'x,y',
-        };
-        let resp: any;
-
-        service
-            .createUnits(66, 'server-fn.pdf', dto)
-            .pipe(take(1))
-            .subscribe((r) => (resp = r));
-
-        const req = httpMock.expectOne((r) => r.method === 'POST' && r.url === 'api/lecture/lectures/66/attachment-video-units/split/server-fn.pdf');
-        expect(req.request.body).toEqual(dto);
-        req.flush([{ id: 1 }]);
-        expect(resp.body).toEqual([{ id: 1 }]);
-    });
-
-    it('getSplitUnitsData(): hits correct URL and observes response', async () => {
-        let resp: any;
-        service
-            .getSplitUnitsData(77, 'file.pdf')
-            .pipe(take(1))
-            .subscribe((r) => (resp = r));
-
-        const req = httpMock.expectOne((r) => r.method === 'GET' && r.url === 'api/lecture/lectures/77/attachment-video-units/data/file.pdf');
-        req.flush({ lectureUnitDTOS: [], numberOfPages: 0 });
-        expect(resp.body).toEqual({ lectureUnitDTOS: [], numberOfPages: 0 });
+        const req = httpMock.expectOne({ method: 'PUT', url: '/api/lecture/lectures/7/attachment-video-units/42?keepFilename=true' });
+        const body = req.request.body as FormData;
+        expect((body.get('file') as File).name).toBe('slides.pdf');
+        expect((body.get('studentVersion') as File).name).toBe('slides_student.pdf');
+        expect(await readJsonPart(body, 'hiddenPages')).toEqual([{ slideId: 's1', date: '2030-01-01T00:00:00.000Z', exerciseId: 5 }]);
+        expect(await readJsonPart(body, 'pageOrder')).toEqual([{ slideId: 's1', order: 1 }]);
+        expect((await readJsonPart(body, 'attachment')).id).toBe(3);
+        req.flush({ id: 42, type: 'attachment' });
     });
 
     describe('getAttachmentFile', () => {
         it('should retrieve a file as Blob for a given course and attachment video unit ID', () => {
-            const courseId = 5;
-            const attachmentVideoUnitId = 10;
-            const expectedBlob = new Blob(['example data'], {
-                type: 'application/pdf',
-            });
+            const expectedBlob = new Blob(['example data'], { type: 'application/pdf' });
+            let result: Blob | undefined;
 
-            service.getAttachmentFile(courseId, attachmentVideoUnitId).subscribe((response) => {
-                expect(response).toEqual(expectedBlob);
-            });
+            service.getAttachmentFile(5, 10).subscribe((response) => (result = response));
 
-            const req = httpMock.expectOne({
-                url: `api/core/files/courses/${courseId}/attachment-video-units/${attachmentVideoUnitId}`,
-                method: 'GET',
-            });
+            const req = httpMock.expectOne({ url: 'api/core/files/courses/5/attachment-video-units/10', method: 'GET' });
             expect(req.request.responseType).toBe('blob');
             req.flush(expectedBlob);
+            expect(result).toEqual(expectedBlob);
         });
     });
 
     describe('getPlaylistUrl', () => {
-        it('should return playlist URL on success', async () => {
+        it('should return playlist URL on success', () => {
             const playlistUrl = 'https://stream.tum-live.de/video.m3u8?jwt=signed';
             let result: string | undefined;
 
-            service
-                .getPlaylistUrl(7)
-                .pipe(take(1))
-                .subscribe((url) => (result = url));
+            service.getPlaylistUrl(7).subscribe((url) => (result = url));
 
-            const req = httpMock.expectOne((r) => r.method === 'GET' && r.url === 'api/lecture/lecture-units/7/playlist');
+            const req = httpMock.expectOne({ method: 'GET', url: '/api/lecture/lecture-units/7/playlist' });
             expect(req.request.responseType).toBe('text');
             req.flush(playlistUrl);
 
             expect(result).toBe(playlistUrl);
         });
 
-        it('should return undefined on error', async () => {
+        it('should return undefined on error', () => {
             let result: string | undefined = 'initial';
 
-            service
-                .getPlaylistUrl(7)
-                .pipe(take(1))
-                .subscribe((url) => (result = url));
+            service.getPlaylistUrl(7).subscribe((url) => (result = url));
 
-            const req = httpMock.expectOne((r) => r.method === 'GET' && r.url === 'api/lecture/lecture-units/7/playlist');
-            req.flush('Not found', { status: 404, statusText: 'Not Found' });
+            httpMock.expectOne({ method: 'GET', url: '/api/lecture/lecture-units/7/playlist' }).flush('Not found', { status: 404, statusText: 'Not Found' });
 
             expect(result).toBeUndefined();
         });
     });
 
     describe('createAttachmentVideoUnitFromFile', () => {
-        it('should create attachment unit with name derived from filename', async () => {
-            const file = new File(['content'], 'My_Lecture-Slides.pdf', { type: 'application/pdf' });
-            const lectureId = 42;
-            let result: any;
+        function createFrom(fileName: string) {
+            const file = new File(['content'], fileName, { type: 'application/pdf' });
+            let result: AttachmentVideoUnit | undefined;
+            service.createAttachmentVideoUnitFromFile(42, file).subscribe((r) => (result = r));
+            const req = httpMock.expectOne({ method: 'POST', url: '/api/lecture/lectures/42/attachment-video-units?keepFilename=true' });
+            return { file, req, result: () => result };
+        }
 
-            service
-                .createAttachmentVideoUnitFromFile(lectureId, file)
-                .pipe(take(1))
-                .subscribe((resp) => (result = resp));
+        it('should create a unit named after the file with the file attached', async () => {
+            const { file, req, result } = createFrom('My_Lecture-Slides.pdf');
 
-            const req = httpMock.expectOne((r) => r.method === 'POST' && r.url === `api/lecture/lectures/${lectureId}/attachment-video-units?keepFilename=true`);
-
-            // Verify FormData contents
-            const formData = req.request.body as FormData;
-            expect(formData.get('file')).toBe(file);
-
-            const attachmentVideoUnitBlob = formData.get('attachmentVideoUnit') as Blob;
-            const attachmentBlob = formData.get('attachment') as Blob;
-            expect(attachmentVideoUnitBlob).toBeTruthy();
-            expect(attachmentBlob).toBeTruthy();
-
-            req.flush({ id: 1, name: 'My Lecture Slides' });
-            expect(result.body).toEqual({ id: 1, name: 'My Lecture Slides' });
+            const body = req.request.body as FormData;
+            expect(body.get('file')).toBe(file);
+            expect((await readJsonPart(body, 'attachmentVideoUnit')).name).toBe('My Lecture Slides');
+            const sentAttachment = await readJsonPart(body, 'attachment');
+            expect(sentAttachment.name).toBe('My Lecture Slides');
+            expect(sentAttachment.attachmentType).toBe('FILE');
+            req.flush({ id: 1, name: 'My Lecture Slides', type: 'attachment' });
+            expect(result()!.name).toBe('My Lecture Slides');
         });
 
         it('should handle filename with uppercase PDF extension', async () => {
-            const file = new File(['content'], 'Document.PDF', { type: 'application/pdf' });
-            let result: any;
-
-            service
-                .createAttachmentVideoUnitFromFile(1, file)
-                .pipe(take(1))
-                .subscribe((resp) => (result = resp));
-
-            const req = httpMock.expectOne({ method: 'POST' });
-            req.flush({ id: 2, name: 'Document' });
-            expect(result.body.name).toBe('Document');
+            const { req } = createFrom('Document.PDF');
+            expect((await readJsonPart(req.request.body as FormData, 'attachmentVideoUnit')).name).toBe('Document');
+            req.flush({ id: 2, type: 'attachment' });
         });
 
-        it('should replace underscores and hyphens with spaces in unit name', async () => {
-            const file = new File(['content'], 'chapter_01-introduction_to_testing.pdf', { type: 'application/pdf' });
-            let result: any;
-
-            service
-                .createAttachmentVideoUnitFromFile(1, file)
-                .pipe(take(1))
-                .subscribe((resp) => (result = resp));
-
-            const req = httpMock.expectOne({ method: 'POST' });
-            req.flush({ id: 3, name: 'chapter 01 introduction to testing' });
-            expect(result.body.name).toBe('chapter 01 introduction to testing');
+        it('should trim whitespace from the unit name', async () => {
+            const { req } = createFrom('  spaced_name  .pdf');
+            expect((await readJsonPart(req.request.body as FormData, 'attachmentVideoUnit')).name).toBe('spaced name');
+            req.flush({ id: 4, type: 'attachment' });
         });
 
-        it('should trim whitespace from unit name', async () => {
-            const file = new File(['content'], '  spaced_name  .pdf', { type: 'application/pdf' });
-            let result: any;
+        it('should release the unit 15 minutes from now', async () => {
+            const before = dayjs();
+            const { req } = createFrom('test.pdf');
+            const releaseDate = dayjs((await readJsonPart(req.request.body as FormData, 'attachmentVideoUnit')).releaseDate);
+            expect(releaseDate.diff(before, 'minute', true)).toBeGreaterThan(14.9);
+            expect(releaseDate.diff(before, 'minute', true)).toBeLessThan(15.1);
+            req.flush({ id: 5, type: 'attachment' });
+        });
+    });
 
-            service
-                .createAttachmentVideoUnitFromFile(1, file)
-                .pipe(take(1))
-                .subscribe((resp) => (result = resp));
-
-            const req = httpMock.expectOne({ method: 'POST' });
-            req.flush({ id: 4 });
-            expect(result.body).toBeTruthy();
+    describe('withFileName', () => {
+        it('keeps a file that has the wanted name or no wanted name', () => {
+            const file = new File(['a'], 'a.pdf', { type: 'application/pdf' });
+            expect(withFileName(file, 'a.pdf')).toBe(file);
+            expect(withFileName(file)).toBe(file);
         });
 
-        it('should set attachment type to FILE', async () => {
-            const file = new File(['content'], 'test.pdf', { type: 'application/pdf' });
-
-            service.createAttachmentVideoUnitFromFile(1, file).pipe(take(1)).subscribe();
-
-            const req = httpMock.expectOne({ method: 'POST' });
-            const capturedFormData: FormData | undefined = req.request.body as FormData;
-
-            // Parse the attachment blob to verify its content
-            const attachmentBlob = capturedFormData.get('attachment') as Blob;
-            expect(attachmentBlob.type).toBe('application/json');
-
-            req.flush({ id: 5 });
+        it('renames a file with its content and type', async () => {
+            const renamed = withFileName(new File(['a'], 'a.pdf', { type: 'application/pdf' }), 'b.pdf');
+            expect(renamed.name).toBe('b.pdf');
+            expect(renamed.type).toBe('application/pdf');
+            expect(await renamed.text()).toBe('a');
         });
     });
 });

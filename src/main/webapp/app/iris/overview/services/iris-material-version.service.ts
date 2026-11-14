@@ -1,18 +1,7 @@
-import { HttpClient } from '@angular/common/http';
+import { LectureUnitApi } from 'app/openapi/api/lecture-unit-api';
+import type { LectureUnitMaterialVersions } from 'app/openapi/model/lecture-unit-material-versions';
 import { Service, inject } from '@angular/core';
 import { Observable } from 'rxjs';
-
-/**
- * The versions of the material a lecture unit currently offers. A missing value means that kind of material does not exist for the unit.
- * <p>
- * `hasVideo` separates the two reasons a `videoVersion` can be missing: the video is gone, or the video is still there while its transcription is not. Only the first is
- * material that no longer exists.
- */
-export interface LectureUnitMaterialVersions {
-    attachmentVersion?: number;
-    videoVersion?: number;
-    hasVideo?: boolean;
-}
 
 /**
  * Fetches the versions of a lecture unit's material.
@@ -22,7 +11,7 @@ export interface LectureUnitMaterialVersions {
  */
 @Service()
 export class IrisMaterialVersionService {
-    private readonly http = inject(HttpClient);
+    private readonly lectureUnitApi = inject(LectureUnitApi);
 
     private latestNavigation = 0;
 
@@ -36,6 +25,6 @@ export class IrisMaterialVersionService {
     }
 
     getMaterialVersions(lectureUnitId: number): Observable<LectureUnitMaterialVersions> {
-        return this.http.get<LectureUnitMaterialVersions>(`api/lecture/lecture-units/${lectureUnitId}/material-versions`);
+        return this.lectureUnitApi.getLectureUnitMaterialVersions(lectureUnitId);
     }
 }

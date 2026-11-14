@@ -5,13 +5,12 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AttachmentVideoUnit } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
 import dayjs from 'dayjs/esm';
-import { AttachmentVideoUnitService } from 'app/lecture/manage/lecture-units/services/attachment-video-unit.service';
+import { AttachmentVideoUnitService, withFileName } from 'app/lecture/manage/lecture-units/services/attachment-video-unit.service';
 import { onError } from 'app/foundation/util/global.utils';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { AttachmentVideoUnitFormComponent, AttachmentVideoUnitFormData } from 'app/lecture/manage/lecture-units/attachment-video-unit-form/attachment-video-unit-form.component';
 import { combineLatest } from 'rxjs';
 import { finalize } from 'rxjs/operators';
-import { objectToJsonBlob } from 'app/foundation/util/blob-util';
 import { LectureUnitLayoutComponent } from '../lecture-unit-layout/lecture-unit-layout.component';
 
 @Component({
@@ -79,16 +78,9 @@ export class CreateAttachmentVideoUnitComponent implements OnInit {
 
         this.isLoading.set(true);
 
-        const formData = new FormData();
-
-        if (!!file && !!fileName) {
-            formData.append('file', file, fileName);
-            formData.append('attachment', objectToJsonBlob(this.attachmentToCreate));
-        }
-        formData.append('attachmentVideoUnit', objectToJsonBlob(this.attachmentVideoUnitToCreate));
-
+        const upload = !!file && !!fileName;
         this.attachmentVideoUnitService
-            .create(formData, lectureId)
+            .create(lectureId, this.attachmentVideoUnitToCreate, upload ? this.attachmentToCreate : undefined, upload ? withFileName(file, fileName) : undefined)
             .pipe(finalize(() => this.isLoading.set(false)))
             .subscribe({
                 next: () => this.router.navigate(['../../'], { relativeTo: this.activatedRoute }),

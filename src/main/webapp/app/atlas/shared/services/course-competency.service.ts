@@ -13,11 +13,10 @@ import {
     CourseCompetencyType,
 } from 'app/atlas/shared/entities/competency.model';
 import { map, tap } from 'rxjs/operators';
-import { convertDateFromClient, convertDateFromServer } from 'app/foundation/util/date.utils';
+import { convertDateFromServer } from 'app/foundation/util/date.utils';
 import { CompetencyPageableSearch, SearchResult } from 'app/foundation/pagination/pageable-table';
 import { HttpParams } from '@angular/common/http';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
-import { LectureUnitService } from 'app/lecture/manage/lecture-units/services/lecture-unit.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { CompetencyRecommendation } from 'app/atlas/manage/generate-competencies/generate-competencies.component';
 import { EntityTitleService, EntityType } from 'app/core/navbar/entity-title.service';
@@ -40,7 +39,6 @@ type CompetencyProgressResponseDTOType = HttpResponse<CompetencyProgressDTO>;
 export class CourseCompetencyService {
     protected httpClient = inject(HttpClient);
     protected entityTitleService = inject(EntityTitleService);
-    protected lectureUnitService = inject(LectureUnitService);
     protected accountService = inject(AccountService);
 
     protected resourceURL = 'api/atlas';
@@ -225,11 +223,6 @@ export class CourseCompetencyService {
         if (competency.softDueDate) {
             competency.softDueDate = convertDateFromServer(competency.softDueDate);
         }
-        competency.lectureUnitLinks?.forEach((lectureUnitLink) => {
-            if (lectureUnitLink.lectureUnit) {
-                lectureUnitLink.lectureUnit = this.lectureUnitService.convertLectureUnitDateFromServer(lectureUnitLink.lectureUnit);
-            }
-        });
         if (competency.course) {
             this.accountService.setAccessRightsForCourse(competency.course);
         }
@@ -247,29 +240,6 @@ export class CourseCompetencyService {
                     exerciseLink.exercise.course = course;
                 }
                 this.accountService.setAccessRightsForExercise(exerciseLink.exercise);
-            }
-        });
-    }
-
-    protected convertCompetencyFromClient(courseCompetency: CourseCompetency): CourseCompetency {
-        const copy = cloneWith(courseCompetency, {
-            softDueDate: convertDateFromClient(courseCompetency.softDueDate),
-        });
-
-        this.convertCompetencyLinksFromClient(copy);
-
-        return copy;
-    }
-
-    private convertCompetencyLinksFromClient(courseCompetency: CourseCompetency) {
-        courseCompetency.lectureUnitLinks?.forEach((lectureUnitLink) => {
-            if (lectureUnitLink.lectureUnit) {
-                lectureUnitLink.lectureUnit = this.lectureUnitService.convertLectureUnitDatesFromClient(lectureUnitLink.lectureUnit);
-            }
-        });
-        courseCompetency.exerciseLinks?.forEach((exerciseLink) => {
-            if (exerciseLink.exercise) {
-                exerciseLink.exercise = ExerciseService.convertExerciseFromClient(exerciseLink.exercise);
             }
         });
     }

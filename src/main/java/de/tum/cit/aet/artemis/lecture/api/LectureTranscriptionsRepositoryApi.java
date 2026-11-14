@@ -59,7 +59,7 @@ public class LectureTranscriptionsRepositoryApi extends AbstractLectureApi {
      */
     public Optional<LectureTranscriptionDTO> getTranscript(Long lectureUnitId) {
         return findByLectureUnit_Id(lectureUnitId).filter(transcription -> transcription.getLanguage() != null && transcription.getSegments() != null)
-                .map(transcription -> new LectureTranscriptionDTO(lectureUnitId, transcription.getLanguage(), transcription.getSegments()));
+                .map(transcription -> LectureTranscriptionDTO.of(lectureUnitId, transcription.getLanguage(), transcription.getSegments()));
     }
 
     /**

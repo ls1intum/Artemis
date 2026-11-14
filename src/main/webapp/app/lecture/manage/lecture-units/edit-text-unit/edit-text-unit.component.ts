@@ -1,12 +1,13 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { TextUnit } from 'app/lecture/shared/entities/lecture-unit/textUnit.model';
 import { TextUnitFormData } from 'app/lecture/manage/lecture-units/text-unit-form/text-unit-form.component';
-import { TextUnitService } from 'app/lecture/manage/lecture-units/services/text-unit.service';
+import { TextUnitApi } from 'app/openapi/api/text-unit-api';
+import { toLectureUnit, toLectureUnitRequest } from 'app/lecture/shared/util/generated-lecture.util';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { onError } from 'app/foundation/util/global.utils';
-import { finalize, switchMap, take } from 'rxjs/operators';
-import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { finalize, map, switchMap, take } from 'rxjs/operators';
+import { HttpErrorResponse } from '@angular/common/http';
 import { combineLatest } from 'rxjs';
 import { LectureUnitLayoutComponent } from '../lecture-unit-layout/lecture-unit-layout.component';
 import { TextUnitFormComponent } from '../text-unit-form/text-unit-form.component';
@@ -19,7 +20,7 @@ import { TextUnitFormComponent } from '../text-unit-form/text-unit-form.componen
 export class EditTextUnitComponent implements OnInit {
     private activatedRoute = inject(ActivatedRoute);
     private router = inject(Router);
-    private textUnitService = inject(TextUnitService);
+    private textUnitApi = inject(TextUnitApi);
     private alertService = inject(AlertService);
 
     readonly isLoading = signal(false);
@@ -36,13 +37,13 @@ export class EditTextUnitComponent implements OnInit {
                 switchMap(([params, parentParams]) => {
                     const textUnitId = Number(params.get('textUnitId'));
                     this.lectureId = Number(parentParams.get('lectureId'));
-                    return this.textUnitService.findById(textUnitId, this.lectureId);
+                    return this.textUnitApi.getTextUnit(textUnitId, this.lectureId).pipe(map((unit) => toLectureUnit<TextUnit>(unit)));
                 }),
                 finalize(() => this.isLoading.set(false)),
             )
             .subscribe({
-                next: (textUnitResponse: HttpResponse<TextUnit>) => {
-                    this.textUnit = textUnitResponse.body!;
+                next: (textUnit: TextUnit) => {
+                    this.textUnit = textUnit;
 
                     this.formData.set({
                         name: this.textUnit.name,
@@ -63,8 +64,8 @@ export class EditTextUnitComponent implements OnInit {
         this.textUnit.competencyLinks = competencyLinks;
 
         this.isLoading.set(true);
-        this.textUnitService
-            .update(this.textUnit, this.lectureId)
+        this.textUnitApi
+            .updateTextUnit(this.lectureId, toLectureUnitRequest(this.textUnit))
             .pipe(
                 finalize(() => {
                     this.isLoading.set(false);

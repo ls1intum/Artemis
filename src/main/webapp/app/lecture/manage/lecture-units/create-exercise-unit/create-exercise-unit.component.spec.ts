@@ -7,7 +7,8 @@ import { Observable, Subject, defer, finalize, of } from 'rxjs';
 import { CreateExerciseUnitComponent } from 'app/lecture/manage/lecture-units/create-exercise-unit/create-exercise-unit.component';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { SortService } from 'app/foundation/service/sort.service';
-import { ExerciseUnitService } from 'app/lecture/manage/lecture-units/services/exercise-unit.service';
+import { ExerciseUnitApi } from 'app/openapi/api/exercise-unit-api';
+import type { ExerciseUnit as GeneratedExerciseUnit } from 'app/openapi/model/exercise-unit';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { Course } from 'app/course/shared/entities/course.model';
@@ -18,7 +19,6 @@ import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
 import { HttpResponse } from '@angular/common/http';
 import { By } from '@angular/platform-browser';
-import { ExerciseUnit } from 'app/lecture/shared/entities/lecture-unit/exerciseUnit.model';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { UMLDiagramType } from '@tumaet/apollon';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -31,9 +31,10 @@ describe('CreateExerciseUnitComponent', () => {
     let courseManagementService: CourseManagementService;
     let findWithExercisesStub: MockInstance<CourseManagementService['findWithExercises']>;
 
-    let exerciseUnitService: ExerciseUnitService;
-    let findAllByLectureIdStub: MockInstance<ExerciseUnitService['findAllByLectureId']>;
-    let createStub: MockInstance<ExerciseUnitService['create']>;
+    let exerciseUnitApi: ExerciseUnitApi;
+    let findAllByLectureIdStub: MockInstance<ExerciseUnitApi['getAllExerciseUnitsOfLecture']>;
+    let createStub: MockInstance<ExerciseUnitApi['createExerciseUnit']>;
+    const createdUnit: GeneratedExerciseUnit = { id: 100, type: 'exercise' };
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
@@ -42,7 +43,7 @@ describe('CreateExerciseUnitComponent', () => {
                 MockProvider(CourseManagementService),
                 MockProvider(AlertService),
                 MockProvider(SortService),
-                MockProvider(ExerciseUnitService),
+                MockProvider(ExerciseUnitApi),
                 { provide: Router, useClass: MockRouter },
                 {
                     provide: ActivatedRoute,
@@ -81,9 +82,9 @@ describe('CreateExerciseUnitComponent', () => {
         createExerciseUnitComponent = createExerciseUnitComponentFixture.componentInstance;
         courseManagementService = TestBed.inject(CourseManagementService);
         findWithExercisesStub = vi.spyOn(courseManagementService, 'findWithExercises');
-        exerciseUnitService = TestBed.inject(ExerciseUnitService);
-        findAllByLectureIdStub = vi.spyOn(exerciseUnitService, 'findAllByLectureId');
-        createStub = vi.spyOn(exerciseUnitService, 'create');
+        exerciseUnitApi = TestBed.inject(ExerciseUnitApi);
+        findAllByLectureIdStub = vi.spyOn(exerciseUnitApi, 'getAllExerciseUnitsOfLecture');
+        createStub = vi.spyOn(exerciseUnitApi, 'createExerciseUnit');
     });
 
     afterEach(() => {
@@ -118,23 +119,9 @@ describe('CreateExerciseUnitComponent', () => {
             ),
         );
 
-        findAllByLectureIdStub.mockReturnValue(
-            of(
-                new HttpResponse({
-                    body: [],
-                    status: 200,
-                }),
-            ),
-        );
+        findAllByLectureIdStub.mockReturnValue(of([]));
 
-        createStub.mockReturnValue(
-            of(
-                new HttpResponse({
-                    body: new ExerciseUnit(),
-                    status: 201,
-                }),
-            ),
-        );
+        createStub.mockReturnValue(of(createdUnit));
 
         createExerciseUnitComponentFixture.detectChanges();
         expect(createExerciseUnitComponent.exercisesAvailableForUnitCreation()).toHaveLength(5);
@@ -156,12 +143,18 @@ describe('CreateExerciseUnitComponent', () => {
 
         await createExerciseUnitComponentFixture.whenStable();
         expect(createStub).toHaveBeenCalledTimes(3);
+        expect(createStub.mock.calls.map(([lectureId, unit]) => [lectureId, unit.exercise?.id])).toEqual([
+            [1, 1],
+            [1, 2],
+            [1, 3],
+        ]);
     });
+
     it('should let the lecture editor follow the create requests until they complete', () => {
         const course = new Course();
         const exercise = new TextExercise(course, undefined);
         exercise.id = 1;
-        const response = new Subject<HttpResponse<ExerciseUnit>>();
+        const response = new Subject<GeneratedExerciseUnit>();
         createStub.mockReturnValue(response);
         const createdSpy = vi.fn();
         let running = false;
@@ -182,7 +175,7 @@ describe('CreateExerciseUnitComponent', () => {
         expect(createStub).toHaveBeenCalledOnce();
         expect(running).toBe(true);
 
-        response.next(new HttpResponse({ body: new ExerciseUnit(), status: 201 }));
+        response.next(createdUnit);
         response.complete();
         expect(running).toBe(false);
         expect(createdSpy).toHaveBeenCalledOnce();
@@ -191,7 +184,7 @@ describe('CreateExerciseUnitComponent', () => {
     it('should not report the created items once the form is closed, since the page that followed the requests reloads its list', () => {
         const exercise = new TextExercise(new Course(), undefined);
         exercise.id = 1;
-        const response = new Subject<HttpResponse<ExerciseUnit>>();
+        const response = new Subject<GeneratedExerciseUnit>();
         createStub.mockReturnValue(response);
         // Angular drops the listeners of a destroyed output, so only the emit itself shows whether the form still reports the items.
         const emitSpy = vi.spyOn(createExerciseUnitComponent.onExerciseUnitCreated, 'emit');
@@ -201,7 +194,7 @@ describe('CreateExerciseUnitComponent', () => {
 
         createExerciseUnitComponent.createExerciseUnits();
         createExerciseUnitComponentFixture.destroy();
-        response.next(new HttpResponse({ body: new ExerciseUnit(), status: 201 }));
+        response.next(createdUnit);
         response.complete();
 
         expect(emitSpy).not.toHaveBeenCalled();
@@ -215,12 +208,8 @@ describe('CreateExerciseUnitComponent', () => {
             const course = new Course();
             course.exercises = exercises;
             findWithExercisesStub.mockReturnValue(of(new HttpResponse({ body: course, status: 200 })));
-            const linkedUnits = linkedExerciseIds.map((id) => {
-                const unit = new ExerciseUnit();
-                unit.exercise = exercises.find((exercise) => exercise.id === id);
-                return unit;
-            });
-            findAllByLectureIdStub.mockReturnValue(of(new HttpResponse({ body: linkedUnits, status: 200 })));
+            const linkedUnits = linkedExerciseIds.map((id): GeneratedExerciseUnit => ({ type: 'exercise', exercise: { id } }));
+            findAllByLectureIdStub.mockReturnValue(of(linkedUnits));
             createExerciseUnitComponentFixture.detectChanges();
         }
 

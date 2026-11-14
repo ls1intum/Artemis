@@ -31,8 +31,9 @@ export class QuizExerciseCreationUpdateApi {
      * @param courseId
      * @param exercise
      * @param files
+     * @param options the HttpContext and extra headers of this request; a declared header parameter overrides a header of the same name
      */
-    createCourseQuizExercise(courseId: number, exercise: QuizExerciseCreate, files?: Array<File>): Observable<QuizExerciseDetails> {
+    createCourseQuizExercise(courseId: number, exercise: QuizExerciseCreate, files?: Array<File>, options?: import('./request-options').RequestOptions): Observable<QuizExerciseDetails> {
         const url = `${this.basePath}/api/quiz/courses/${courseId}/quiz-exercises`;
         const formData = new FormData();
         if (exercise !== undefined && exercise !== null) {
@@ -41,7 +42,7 @@ export class QuizExerciseCreationUpdateApi {
         if (files !== undefined && files !== null) {
             files.forEach(item => { if (item !== undefined && item !== null) { formData.append('files', item); } });
         }
-        return this.http.post<QuizExerciseDetails>(url, formData);
+        return this.http.post<QuizExerciseDetails>(url, formData, options && { ...(options.context !== undefined && { context: options.context }), ...(options.headers !== undefined && { headers: options.headers }) });
     }
 
     /**
@@ -50,8 +51,9 @@ export class QuizExerciseCreationUpdateApi {
      * @param exerciseGroupId
      * @param exercise
      * @param files
+     * @param options the HttpContext and extra headers of this request; a declared header parameter overrides a header of the same name
      */
-    createExamQuizExercise(exerciseGroupId: number, exercise: QuizExerciseCreate, files?: Array<File>): Observable<QuizExerciseDetails> {
+    createExamQuizExercise(exerciseGroupId: number, exercise: QuizExerciseCreate, files?: Array<File>, options?: import('./request-options').RequestOptions): Observable<QuizExerciseDetails> {
         const url = `${this.basePath}/api/quiz/exercise-groups/${exerciseGroupId}/quiz-exercises`;
         const formData = new FormData();
         if (exercise !== undefined && exercise !== null) {
@@ -60,7 +62,7 @@ export class QuizExerciseCreationUpdateApi {
         if (files !== undefined && files !== null) {
             files.forEach(item => { if (item !== undefined && item !== null) { formData.append('files', item); } });
         }
-        return this.http.post<QuizExerciseDetails>(url, formData);
+        return this.http.post<QuizExerciseDetails>(url, formData, options && { ...(options.context !== undefined && { context: options.context }), ...(options.headers !== undefined && { headers: options.headers }) });
     }
 
     /**
@@ -70,8 +72,9 @@ export class QuizExerciseCreationUpdateApi {
      * @param exercise
      * @param notificationText
      * @param files
+     * @param options the HttpContext and extra headers of this request; a declared header parameter overrides a header of the same name
      */
-    updateQuizExercise(exerciseId: number, exercise: UpdateQuizExercise, notificationText?: string, files?: Array<File>): Observable<QuizExerciseDetails> {
+    updateQuizExercise(exerciseId: number, exercise: UpdateQuizExercise, notificationText?: string, files?: Array<File>, options?: import('./request-options').RequestOptions): Observable<QuizExerciseDetails> {
         const queryParams = new URLSearchParams();
         appendQueryParam(queryParams, 'notificationText', notificationText);
         const queryString = queryParams.toString();
@@ -83,7 +86,7 @@ export class QuizExerciseCreationUpdateApi {
         if (files !== undefined && files !== null) {
             files.forEach(item => { if (item !== undefined && item !== null) { formData.append('files', item); } });
         }
-        return this.http.put<QuizExerciseDetails>(url, formData);
+        return this.http.put<QuizExerciseDetails>(url, formData, options && { ...(options.context !== undefined && { context: options.context }), ...(options.headers !== undefined && { headers: options.headers }) });
     }
 
 }

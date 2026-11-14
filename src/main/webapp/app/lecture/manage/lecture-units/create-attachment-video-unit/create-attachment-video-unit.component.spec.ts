@@ -8,11 +8,10 @@ import { of } from 'rxjs';
 import { AttachmentVideoUnitFormComponent, AttachmentVideoUnitFormData } from 'app/lecture/manage/lecture-units/attachment-video-unit-form/attachment-video-unit-form.component';
 import { CreateAttachmentVideoUnitComponent } from 'app/lecture/manage/lecture-units/create-attachment-video-unit/create-attachment-video-unit.component';
 import { AttachmentVideoUnitService } from 'app/lecture/manage/lecture-units/services/attachment-video-unit.service';
-import { HttpResponse, provideHttpClient } from '@angular/common/http';
+import { provideHttpClient } from '@angular/common/http';
 import { Attachment, AttachmentType } from 'app/lecture/shared/entities/attachment.model';
 import { AttachmentVideoUnit } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
 import { By } from '@angular/platform-browser';
-import { objectToJsonBlob } from 'app/foundation/util/blob-util';
 import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { AccountService } from 'app/core/auth/account.service';
@@ -118,16 +117,7 @@ describe('CreateAttachmentVideoUnitComponent', () => {
         attachmentVideoUnit.name = attachmentVideoUnitFormData.formProperties.name;
         attachmentVideoUnit.videoSource = attachmentVideoUnitFormData.formProperties.videoSource;
 
-        const formData = new FormData();
-        formData.append('file', fakeFile, attachmentVideoUnitFormData.fileProperties.fileName);
-        formData.append('attachment', objectToJsonBlob(attachment));
-        formData.append('attachmentVideoUnit', objectToJsonBlob(attachmentVideoUnit));
-
-        const attachmentVideoUnitResponse: HttpResponse<AttachmentVideoUnit> = new HttpResponse({
-            body: attachmentVideoUnit,
-            status: 201,
-        });
-        const createAttachmentVideoUnitStub = vi.spyOn(attachmentVideoUnitService, 'create').mockReturnValue(of(attachmentVideoUnitResponse));
+        const createAttachmentVideoUnitStub = vi.spyOn(attachmentVideoUnitService, 'create').mockReturnValue(of(attachmentVideoUnit));
 
         const navigateSpy = vi.spyOn(router, 'navigate');
         createAttachmentVideoUnitComponentFixture.detectChanges();
@@ -136,13 +126,18 @@ describe('CreateAttachmentVideoUnitComponent', () => {
         attachmentVideoUnitFormComponent.formSubmitted.emit(attachmentVideoUnitFormData);
 
         await createAttachmentVideoUnitComponentFixture.whenStable();
-        expect(createAttachmentVideoUnitStub).toHaveBeenCalledWith(expect.any(FormData), 1);
+        expect(createAttachmentVideoUnitStub).toHaveBeenCalledOnce();
+        const [lectureId, sentUnit, sentAttachment, sentFile] = createAttachmentVideoUnitStub.mock.calls[0];
+        expect(lectureId).toBe(1);
+        expect(sentUnit.name).toBe(attachmentVideoUnitFormData.formProperties.name);
+        expect(sentAttachment!.name).toBe(attachmentVideoUnitFormData.formProperties.name);
+        expect(sentFile!.name).toBe('lorem ipsum');
         expect(navigateSpy).toHaveBeenCalledTimes(1);
     });
 
     it('should create a unit with only a name, so its video can be uploaded to TUM.Live afterwards', async () => {
         const attachmentVideoUnitService = TestBed.inject(AttachmentVideoUnitService);
-        const createStub = vi.spyOn(attachmentVideoUnitService, 'create').mockReturnValue(of(new HttpResponse({ body: new AttachmentVideoUnit(), status: 201 })));
+        const createStub = vi.spyOn(attachmentVideoUnitService, 'create').mockReturnValue(of(new AttachmentVideoUnit()));
         const navigateSpy = vi.spyOn(TestBed.inject(Router), 'navigate');
         createAttachmentVideoUnitComponentFixture.detectChanges();
 
@@ -150,10 +145,12 @@ describe('CreateAttachmentVideoUnitComponent', () => {
         attachmentVideoUnitFormComponent.formSubmitted.emit({ formProperties: { name: 'Recording' }, fileProperties: {} });
 
         await createAttachmentVideoUnitComponentFixture.whenStable();
-        expect(createStub).toHaveBeenCalledWith(expect.any(FormData), 1);
-        const sent = createStub.mock.calls[0][0] as FormData;
-        expect(sent.has('file')).toBe(false);
-        expect(sent.has('attachment')).toBe(false);
+        expect(createStub).toHaveBeenCalledOnce();
+        const [lectureId, sentUnit, sentAttachment, sentFile] = createStub.mock.calls[0];
+        expect(lectureId).toBe(1);
+        expect(sentUnit.name).toBe('Recording');
+        expect(sentAttachment).toBeUndefined();
+        expect(sentFile).toBeUndefined();
         expect(navigateSpy).toHaveBeenCalledTimes(1);
     });
 });

@@ -15,29 +15,35 @@ import de.tum.cit.aet.artemis.course.domain.CourseInformationSharingConfiguratio
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseOverviewDTO;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentType;
 import de.tum.cit.aet.artemis.videosource.domain.VideoSourceType;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record LectureDetailsDTO(Long id, String title, String description, ZonedDateTime startDate, ZonedDateTime endDate,
         @JsonProperty("isTutorialLecture") boolean isTutorialLecture, CourseDTO course, List<LectureUnitDetailsDTO> lectureUnits) implements LectureDTO {
 
+    @Schema(name = "LectureDetailsCourseDTO")
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public record CourseDTO(Long id, String title, String shortName, CourseInformationSharingConfiguration courseInformationSharingConfiguration,
             boolean athenaFormativeFeedbackEnabled) {
     }
 
+    @Schema(name = "LectureDetailsAttachmentDTO")
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public record AttachmentDTO(Long id, String name, String link, ZonedDateTime releaseDate, ZonedDateTime uploadDate, Integer version, AttachmentType attachmentType,
             String studentVersion, @Nullable List<Integer> displayPageNumbers) {
     }
 
+    @Schema(name = "LectureDetailsCompetencyDTO")
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public record CompetencyDTO(Long id, String title, CompetencyTaxonomy taxonomy) {
     }
 
+    @Schema(name = "LectureDetailsCompetencyLinkDTO")
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public record CompetencyLinkDTO(CompetencyDTO competency, double weight, boolean generatedByAi) {
     }
 
+    @Schema(name = "LectureDetailsLectureReferenceDTO")
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public record LectureReferenceDTO(Long id, @JsonProperty("isTutorialLecture") boolean isTutorialLecture, CourseDTO course) {
     }
@@ -48,6 +54,7 @@ public record LectureDetailsDTO(Long id, String title, String description, Zoned
     public sealed interface LectureUnitDetailsDTO permits AttachmentUnitDTO, ExerciseUnitDTO, OnlineUnitDTO, TextUnitDTO {
     }
 
+    @Schema(name = "LectureDetailsAttachmentUnitDTO")
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public record AttachmentUnitDTO(Long id, LectureReferenceDTO lecture, String name, ZonedDateTime releaseDate, boolean completed, boolean visibleToStudents,
             List<CompetencyLinkDTO> competencyLinks, AttachmentDTO attachment, String description, String videoSource, @Nullable VideoSourceType videoSourceType,
@@ -64,6 +71,7 @@ public record LectureDetailsDTO(Long id, String title, String description, Zoned
         }
     }
 
+    @Schema(name = "LectureDetailsExerciseUnitDTO")
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public record ExerciseUnitDTO(Long id, LectureReferenceDTO lecture, String name, ZonedDateTime releaseDate, boolean completed, boolean visibleToStudents,
             List<CompetencyLinkDTO> competencyLinks, ExerciseOverviewDTO exercise, @JsonProperty("type") String type) implements LectureUnitDetailsDTO {
@@ -73,6 +81,7 @@ public record LectureDetailsDTO(Long id, String title, String description, Zoned
         }
     }
 
+    @Schema(name = "LectureDetailsOnlineUnitDTO")
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public record OnlineUnitDTO(Long id, LectureReferenceDTO lecture, String name, ZonedDateTime releaseDate, boolean completed, boolean visibleToStudents,
             List<CompetencyLinkDTO> competencyLinks, String description, String source, @JsonProperty("type") String type) implements LectureUnitDetailsDTO {
@@ -82,6 +91,7 @@ public record LectureDetailsDTO(Long id, String title, String description, Zoned
         }
     }
 
+    @Schema(name = "LectureDetailsTextUnitDTO")
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public record TextUnitDTO(Long id, LectureReferenceDTO lecture, String name, ZonedDateTime releaseDate, boolean completed, boolean visibleToStudents,
             List<CompetencyLinkDTO> competencyLinks, String content, @JsonProperty("type") String type) implements LectureUnitDetailsDTO {

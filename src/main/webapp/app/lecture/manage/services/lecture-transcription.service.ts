@@ -1,39 +1,14 @@
 import { Service, inject } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { map } from 'rxjs/operators';
 import { Observable, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
-import { LectureTranscriptionDTO, TranscriptionStatus } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
+import { LectureTranscriptionApi } from 'app/openapi/api/lecture-transcription-api';
+import type { LectureTranscription } from 'app/openapi/model/lecture-transcription';
 
 @Service()
 export class LectureTranscriptionService {
-    private httpClient = inject(HttpClient);
+    private lectureTranscriptionApi = inject(LectureTranscriptionApi);
 
-    getTranscription(lectureUnitId: number): Observable<LectureTranscriptionDTO | undefined> {
-        return this.httpClient
-            .get<LectureTranscriptionDTO>(`api/lecture/lecture-units/${lectureUnitId}/transcript`, {
-                observe: 'response',
-            })
-            .pipe(
-                map((response) => response.body ?? undefined),
-                catchError(() => of(undefined)),
-            );
-    }
-
-    getTranscriptionStatus(lectureUnitId: number): Observable<TranscriptionStatus | undefined> {
-        return this.httpClient
-            .get<string>(`api/lecture/lecture-units/${lectureUnitId}/transcript/status`, {
-                observe: 'response',
-                responseType: 'text' as 'json',
-            })
-            .pipe(
-                map((response) => {
-                    if (response.body) {
-                        return response.body as TranscriptionStatus;
-                    }
-                    return undefined;
-                }),
-                catchError(() => of(undefined)),
-            );
+    getTranscription(lectureUnitId: number): Observable<LectureTranscription | undefined> {
+        return this.lectureTranscriptionApi.getTranscript(lectureUnitId).pipe(catchError(() => of(undefined)));
     }
 }

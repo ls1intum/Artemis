@@ -28,20 +28,22 @@ export class HyperionCodeGenerationApi {
      *
      * @param exerciseId
      * @param codeGenerationRequest
+     * @param options the HttpContext and extra headers of this request; a declared header parameter overrides a header of the same name
      */
-    generateCode(exerciseId: number, codeGenerationRequest: CodeGenerationRequest): Observable<CodeGenerationJobStart> {
+    generateCode(exerciseId: number, codeGenerationRequest: CodeGenerationRequest, options?: import('./request-options').RequestOptions): Observable<CodeGenerationJobStart> {
         const url = `${this.basePath}/api/hyperion/programming-exercises/${exerciseId}/generate-code`;
-        return this.http.post<CodeGenerationJobStart>(url, codeGenerationRequest);
+        return this.http.post<CodeGenerationJobStart>(url, codeGenerationRequest, options && { ...(options.context !== undefined && { context: options.context }), ...(options.headers !== undefined && { headers: options.headers }) });
     }
 
     /**
      *
      *
      * @param exerciseId
+     * @param options the HttpContext and extra headers of this request; a declared header parameter overrides a header of the same name
      */
-    getActiveCodeGenerationJob(exerciseId: number): Observable<CodeGenerationJobStart> {
+    getActiveCodeGenerationJob(exerciseId: number, options?: import('./request-options').RequestOptions): Observable<CodeGenerationJobStart> {
         const url = `${this.basePath}/api/hyperion/programming-exercises/${exerciseId}/code-generation/active-job`;
-        return this.http.get<CodeGenerationJobStart>(url);
+        return this.http.get<CodeGenerationJobStart>(url, options && { ...(options.context !== undefined && { context: options.context }), ...(options.headers !== undefined && { headers: options.headers }) });
     }
 
 }

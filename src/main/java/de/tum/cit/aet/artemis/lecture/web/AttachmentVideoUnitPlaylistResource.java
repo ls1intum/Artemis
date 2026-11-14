@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.lecture.web;
 
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -51,7 +52,7 @@ public class AttachmentVideoUnitPlaylistResource {
      * @param lectureUnitId the attachment video unit
      * @return 200 with the playlist URL, or 404 when the unit has no TUM Live video with a playlist that can be handed out now
      */
-    @GetMapping("lecture-units/{lectureUnitId}/playlist")
+    @GetMapping(value = "lecture-units/{lectureUnitId}/playlist", produces = MediaType.TEXT_PLAIN_VALUE)
     @EnforceAtLeastStudentInLectureUnit
     public ResponseEntity<String> getPlaylist(@PathVariable long lectureUnitId) {
         AttachmentVideoUnit unit = attachmentVideoUnitRepository.findWithLectureAndCourseAndAttachmentById(lectureUnitId)

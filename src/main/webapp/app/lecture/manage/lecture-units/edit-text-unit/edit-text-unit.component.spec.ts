@@ -5,11 +5,10 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TextUnitFormComponent, TextUnitFormData } from 'app/lecture/manage/lecture-units/text-unit-form/text-unit-form.component';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { of } from 'rxjs';
-import { TextUnitService } from 'app/lecture/manage/lecture-units/services/text-unit.service';
+import { TextUnitApi } from 'app/openapi/api/text-unit-api';
 import { MockProvider } from 'ng-mocks';
 import { EditTextUnitComponent } from 'app/lecture/manage/lecture-units/edit-text-unit/edit-text-unit.component';
-import { TextUnit } from 'app/lecture/shared/entities/lecture-unit/textUnit.model';
-import { HttpResponse, provideHttpClient } from '@angular/common/http';
+import { provideHttpClient } from '@angular/common/http';
 import { By } from '@angular/platform-browser';
 import { Alert, AlertService } from 'app/foundation/service/alert.service';
 import { MockResizeObserver } from 'test/helpers/mocks/service/mock-resize-observer';
@@ -33,7 +32,7 @@ describe('EditTextUnitComponent', () => {
         await TestBed.configureTestingModule({
             imports: [],
             providers: [
-                MockProvider(TextUnitService),
+                MockProvider(TextUnitApi),
                 MockProvider(AlertService),
                 {
                     provide: ActivatedRoute,
@@ -82,65 +81,38 @@ describe('EditTextUnitComponent', () => {
 
     it('should set form data correctly', async () => {
         vi.spyOn(console, 'warn').mockImplementation(() => {});
-        const textUnitService = TestBed.inject(TextUnitService);
+        const textUnitApi = TestBed.inject(TextUnitApi);
 
-        const originalTextUnit: TextUnit = new TextUnit();
-        originalTextUnit.id = 1;
-        originalTextUnit.name = 'Test';
-        originalTextUnit.releaseDate = dayjs().year(2010).month(3).date(5);
-        originalTextUnit.content = 'Lorem Ipsum';
+        const releaseDate = dayjs().year(2010).month(3).date(5);
+        const originalTextUnit = { id: 1, name: 'Test', releaseDate: releaseDate.toISOString(), content: 'Lorem Ipsum', type: 'text' };
 
-        const response: HttpResponse<TextUnit> = new HttpResponse({
-            body: originalTextUnit,
-            status: 200,
-        });
-
-        const findByIdStub = vi.spyOn(textUnitService, 'findById').mockReturnValue(of(response));
+        const findByIdStub = vi.spyOn(textUnitApi, 'getTextUnit').mockReturnValue(of(originalTextUnit));
         fixture.detectChanges();
         const textUnitFormComponent: TextUnitFormComponent = fixture.debugElement.query(By.directive(TextUnitFormComponent)).componentInstance;
 
         fixture.detectChanges();
         await fixture.whenStable();
-        expect(findByIdStub).toHaveBeenCalledTimes(1);
+        expect(findByIdStub).toHaveBeenCalledOnce();
         expect(editTextUnitComponent.formData().name).toEqual(originalTextUnit.name);
-        expect(editTextUnitComponent.formData().releaseDate).toEqual(originalTextUnit.releaseDate);
+        expect(editTextUnitComponent.formData().releaseDate).toEqual(releaseDate);
         expect(editTextUnitComponent.formData().content).toEqual(originalTextUnit.content);
         expect(textUnitFormComponent.formData()).toEqual(editTextUnitComponent.formData());
     });
 
     it('should send PUT request upon form submission and navigate', async () => {
         const router: Router = TestBed.inject(Router);
-        const textUnitService = TestBed.inject(TextUnitService);
+        const textUnitApi = TestBed.inject(TextUnitApi);
 
-        const originalTextUnit: TextUnit = new TextUnit();
-        originalTextUnit.id = 1;
-        originalTextUnit.name = 'Test';
-        originalTextUnit.releaseDate = dayjs().year(2010).month(3).date(5);
-        originalTextUnit.content = 'Lorem Ipsum';
+        const originalTextUnit = { id: 1, name: 'Test', releaseDate: dayjs().year(2010).month(3).date(5).toISOString(), content: 'Lorem Ipsum', type: 'text' };
 
-        const findByidResponse: HttpResponse<TextUnit> = new HttpResponse({
-            body: originalTextUnit,
-            status: 200,
-        });
-
-        const findByIdStub = vi.spyOn(textUnitService, 'findById').mockReturnValue(of(findByidResponse));
+        const findByIdStub = vi.spyOn(textUnitApi, 'getTextUnit').mockReturnValue(of(originalTextUnit));
 
         const formDate: TextUnitFormData = {
             name: 'CHANGED',
             releaseDate: dayjs().year(2010).month(3).date(5),
             content: 'Lorem Ipsum',
         };
-        const updatedTextUnit: TextUnit = new TextUnit();
-        updatedTextUnit.id = 1;
-        updatedTextUnit.name = formDate.name;
-        updatedTextUnit.releaseDate = formDate.releaseDate;
-        updatedTextUnit.content = formDate.content;
-
-        const updateResponse: HttpResponse<TextUnit> = new HttpResponse({
-            body: updatedTextUnit,
-            status: 200,
-        });
-        const updatedStub = vi.spyOn(textUnitService, 'update').mockReturnValue(of(updateResponse));
+        const updatedStub = vi.spyOn(textUnitApi, 'updateTextUnit').mockReturnValue(of({ ...originalTextUnit, name: formDate.name }));
         const navigateSpy = vi.spyOn(router, 'navigate');
 
         fixture.detectChanges();
@@ -150,7 +122,11 @@ describe('EditTextUnitComponent', () => {
 
         await fixture.whenStable();
         expect(findByIdStub).toHaveBeenCalledTimes(1);
-        expect(updatedStub).toHaveBeenCalledTimes(1);
+        expect(updatedStub).toHaveBeenCalledOnce();
+        expect(updatedStub).toHaveBeenCalledWith(
+            expect.anything(),
+            expect.objectContaining({ id: 1, name: 'CHANGED', content: 'Lorem Ipsum', releaseDate: formDate.releaseDate!.toISOString() }),
+        );
         expect(navigateSpy).toHaveBeenCalledTimes(1);
         navigateSpy.mockRestore();
     });

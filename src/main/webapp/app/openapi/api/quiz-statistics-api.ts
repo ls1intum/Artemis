@@ -28,10 +28,11 @@ export class QuizStatisticsApi {
      *
      *
      * @param quizExerciseId
+     * @param options the HttpContext and extra headers of this request; a declared header parameter overrides a header of the same name
      */
-    getQuizPointStatistic(quizExerciseId: number): Observable<QuizPointStatistics> {
+    getQuizPointStatistic(quizExerciseId: number, options?: import('./request-options').RequestOptions): Observable<QuizPointStatistics> {
         const url = `${this.basePath}/api/quiz/quiz-exercises/${quizExerciseId}/statistics/points`;
-        return this.http.get<QuizPointStatistics>(url);
+        return this.http.get<QuizPointStatistics>(url, options && { ...(options.context !== undefined && { context: options.context }), ...(options.headers !== undefined && { headers: options.headers }) });
     }
 
     /**
@@ -39,20 +40,22 @@ export class QuizStatisticsApi {
      *
      * @param quizExerciseId
      * @param questionId
+     * @param options the HttpContext and extra headers of this request; a declared header parameter overrides a header of the same name
      */
-    getQuizQuestionStatistic(quizExerciseId: number, questionId: number): Observable<QuizQuestionStatisticResponse> {
+    getQuizQuestionStatistic(quizExerciseId: number, questionId: number, options?: import('./request-options').RequestOptions): Observable<QuizQuestionStatisticResponse> {
         const url = `${this.basePath}/api/quiz/quiz-exercises/${quizExerciseId}/statistics/questions/${questionId}`;
-        return this.http.get<QuizQuestionStatisticResponse>(url);
+        return this.http.get<QuizQuestionStatisticResponse>(url, options && { ...(options.context !== undefined && { context: options.context }), ...(options.headers !== undefined && { headers: options.headers }) });
     }
 
     /**
      *
      *
      * @param quizExerciseId
+     * @param options the HttpContext and extra headers of this request; a declared header parameter overrides a header of the same name
      */
-    getQuizStatisticsOverview(quizExerciseId: number): Observable<QuizStatisticsOverview> {
+    getQuizStatisticsOverview(quizExerciseId: number, options?: import('./request-options').RequestOptions): Observable<QuizStatisticsOverview> {
         const url = `${this.basePath}/api/quiz/quiz-exercises/${quizExerciseId}/statistics/overview`;
-        return this.http.get<QuizStatisticsOverview>(url);
+        return this.http.get<QuizStatisticsOverview>(url, options && { ...(options.context !== undefined && { context: options.context }), ...(options.headers !== undefined && { headers: options.headers }) });
     }
 
 }

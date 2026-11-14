@@ -27,6 +27,7 @@ import { OnlineUnit } from 'app/lecture/shared/entities/lecture-unit/onlineUnit.
 import { TextUnit } from 'app/lecture/shared/entities/lecture-unit/textUnit.model';
 import { ExerciseUnit } from 'app/lecture/shared/entities/lecture-unit/exerciseUnit.model';
 import { convertDateFromClient, convertDateStringFromServer } from 'app/foundation/util/date.utils';
+import { addPublicFilePrefix } from 'app/app.constants';
 
 export interface CourseCompetencyRequestDTO {
     id?: number;
@@ -243,6 +244,7 @@ const toLectureUnit = (dto?: LectureUnitForCompetencyDTO): LectureUnit | undefin
                 attachment.link = dto.attachment.link;
                 attachment.releaseDate = convertDateStringFromServer(dto.attachment.releaseDate);
                 attachment.uploadDate = convertDateStringFromServer(dto.attachment.uploadDate);
+                attachment.linkUrl = addPublicFilePrefix(dto.attachment.link);
                 attachment.version = dto.attachment.version;
                 attachment.attachmentType = dto.attachment.attachmentType;
                 attachment.studentVersion = dto.attachment.studentVersion;
