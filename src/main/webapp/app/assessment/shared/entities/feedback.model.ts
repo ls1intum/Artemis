@@ -16,6 +16,9 @@ export enum FeedbackHighlightColor {
     GREEN = 'rgba(40, 167, 69, 0.6)',
 }
 
+/** The bound the server enforces on the points of a feedback the assessor gives. */
+export const MAX_MANUAL_CREDITS = 100;
+
 export enum FeedbackType {
     AUTOMATIC = 'AUTOMATIC',
     MANUAL = 'MANUAL',
@@ -288,6 +291,21 @@ export class Feedback implements BaseEntity {
         return that.filter(Feedback.hasCreditsAndComment).length > 0 && that.filter(Feedback.hasCreditsAndComment).length === that.length;
     }
 
+    /**
+     * Checks that every feedback the assessor gives has points the server accepts (Feedback.MAX_MANUAL_CREDITS on the server). A feedback linked to a grading instruction
+     * takes the points of the instruction, and an automatic feedback is not given by the assessor, so neither is checked here.
+     * @param that the feedback of the assessment
+     */
+    public static haveCreditsInBounds(that: Feedback[] | undefined): boolean {
+        return (that ?? []).every(
+            (feedback) =>
+                feedback.credits === undefined ||
+                feedback.gradingInstruction !== undefined ||
+                feedback.type === FeedbackType.AUTOMATIC ||
+                (Number.isFinite(feedback.credits) && Math.abs(feedback.credits) <= MAX_MANUAL_CREDITS),
+        );
+    }
+
     public static forModeling(credits: number, text?: string, referenceId?: string, referenceType?: string, dropInfo?: DropInfo): Feedback {
         const that = new Feedback();
         that.referenceId = referenceId;
@@ -390,6 +408,18 @@ export const checkSubsequentFeedbackInAssessment = (feedbacks: Feedback[]) => {
         }
     }
 };
+
+/** Count all applications of each persisted grading instruction across an assessment. */
+export function instructionCountsOf(feedbacks: Feedback[]): ReadonlyMap<number, number> {
+    const counts = new Map<number, number>();
+    for (const feedback of feedbacks) {
+        const instructionId = feedback.gradingInstruction?.id;
+        if (instructionId !== undefined) {
+            counts.set(instructionId, (counts.get(instructionId) ?? 0) + 1);
+        }
+    }
+    return counts;
+}
 
 /**
  * DTO representing feedback returned by the server.

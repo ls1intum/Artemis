@@ -1,3 +1,4 @@
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
 import { ChangeDetectionStrategy, Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { faSpinner } from '@fortawesome/free-solid-svg-icons';
@@ -14,7 +15,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 @Component({
     selector: 'jhi-learning-paths-configuration',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [FontAwesomeModule, TranslateDirective, HelpIconComponent, ArtemisTranslatePipe],
+    imports: [TumAetUiButtonDirective, FontAwesomeModule, TranslateDirective, HelpIconComponent, ArtemisTranslatePipe],
     templateUrl: './learning-paths-configuration.component.html',
     styleUrls: ['../learning-path-instructor-page/learning-path-instructor-page.component.scss'],
 })

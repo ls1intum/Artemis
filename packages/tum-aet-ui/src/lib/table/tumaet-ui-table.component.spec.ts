@@ -86,10 +86,10 @@ describe('TumAetUiTableComponent', () => {
         expect(rows.every((d) => !(d.nativeElement as HTMLElement).classList.contains('tumaet-ui-table-row-highlighted'))).toBe(true);
     });
 
-    it('announces the table as busy while loading', () => {
+    it('announces the table frame as busy while loading', () => {
         fixture.componentRef.setInput('loading', true);
         fixture.detectChanges();
-        expect(fixture.debugElement.query(By.css('table')).nativeElement.getAttribute('aria-busy')).toBe('true');
+        expect(fixture.debugElement.query(By.css('tumaet-ui-table-layout')).nativeElement.getAttribute('aria-busy')).toBe('true');
     });
 
     it('emits one initial dataRequest after first render with defaults', async () => {
@@ -154,11 +154,26 @@ describe('TumAetUiTableComponent', () => {
         expect(headerCells().length).toBe(2);
     });
 
-    it('shows the empty row when there are no rows', async () => {
+    it('shows the empty state with the empty message when there are no rows', async () => {
         fixture.componentRef.setInput('rows', []);
+        fixture.componentRef.setInput('emptyMessage', 'tumAetUi.table.noResults');
         fixture.detectChanges();
         await fixture.whenStable();
-        expect(fixture.debugElement.query(By.css('tr[role="row"] td[colspan], td[colspan]'))).toBeTruthy();
+
+        const empty = fixture.debugElement.query(By.css('[data-testid="table-empty"]'));
+        expect(empty).toBeTruthy();
+        expect(empty.nativeElement.textContent).toContain('No results found');
+    });
+
+    it('does not show the empty state while rows exist or while loading', async () => {
+        fixture.detectChanges();
+        await fixture.whenStable();
+        expect(fixture.debugElement.query(By.css('[data-testid="table-empty"]'))).toBeNull();
+
+        fixture.componentRef.setInput('rows', []);
+        fixture.componentRef.setInput('loading', true);
+        fixture.detectChanges();
+        expect(fixture.debugElement.query(By.css('[data-testid="table-empty"]'))).toBeNull();
     });
 
     it('emits dataRequest with the next page index when the paginator advances', async () => {

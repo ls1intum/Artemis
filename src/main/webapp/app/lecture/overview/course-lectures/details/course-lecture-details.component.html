@@ -42,7 +42,7 @@
                 @if (lecture.description) {
                     <div class="flex flex-wrap mb-2 mt-2 items-baseline">
                         <div class="w-auto">
-                            <h3 jhiTranslate="artemisApp.courseOverview.lectureDetails.description"></h3>
+                            <h3 class="text-lg! font-semibold" jhiTranslate="artemisApp.courseOverview.lectureDetails.description"></h3>
                         </div>
                     </div>
                     <div class="flex flex-wrap mb-2 markdown-preview">
@@ -53,12 +53,12 @@
                 @if (lecture.lectureUnits) {
                     <div class="flex flex-wrap mb-2 mt-2 items-center gap-3">
                         <div class="w-auto">
-                            <h3 class="mb-0" jhiTranslate="artemisApp.courseOverview.lectureDetails.lectureUnits"></h3>
+                            <h3 class="mb-0 text-lg! font-semibold" jhiTranslate="artemisApp.courseOverview.lectureDetails.lectureUnits"></h3>
                         </div>
                         @if (hasPdfLectureUnit()) {
                             <button
                                 tumAetUiButton
-                                severity="primary"
+                                severity="secondary"
                                 variant="solid"
                                 size="small"
                                 type="button"

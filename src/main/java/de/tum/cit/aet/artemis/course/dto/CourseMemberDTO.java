@@ -25,6 +25,17 @@ public record CourseMemberDTO(long id, @Nullable String login, @Nullable String 
         @Nullable String visibleRegistrationNumber, @Nullable String imageUrl, boolean activated, boolean internal) {
 
     /**
+     * Maps a user to the reduced response for member search: identity and display data only, without e-mail address and registration number.
+     *
+     * @param user the sanitized user
+     * @return the course member response without contact and registration data
+     */
+    public static CourseMemberDTO ofNameAndLogin(User user) {
+        return new CourseMemberDTO(user.getId(), user.getLogin(), user.getName(), user.getFirstName(), user.getLastName(), null, null, user.getImageUrl(), user.getActivated(),
+                user.isInternal());
+    }
+
+    /**
      * Maps a user after the existing course-member sanitization has been applied.
      *
      * @param user the sanitized user

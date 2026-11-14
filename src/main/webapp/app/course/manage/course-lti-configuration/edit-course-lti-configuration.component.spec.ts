@@ -26,7 +26,6 @@ import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { PaginatorState } from 'primeng/paginator';
 
 describe('Edit Course LTI Configuration Component', () => {
     let comp: EditCourseLtiConfigurationComponent;
@@ -218,7 +217,7 @@ describe('Edit Course LTI Configuration Component', () => {
             fixture.detectChanges();
             const transitionSpy = vi.spyOn(comp, 'transition').mockImplementation(() => {});
 
-            comp.onPageChange({ page: 2 } as PaginatorState);
+            comp.onPageChange(2);
 
             expect(comp.page()).toBe(3);
             expect(transitionSpy).toHaveBeenCalledOnce();

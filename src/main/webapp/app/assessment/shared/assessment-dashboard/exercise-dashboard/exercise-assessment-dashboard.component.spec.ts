@@ -369,6 +369,65 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         expect(complaintsLink.getAttribute('aria-label')).toBe('artemisApp.exercise.complaints');
     });
 
+    it.each([
+        [AssessmentType.SEMI_AUTOMATIC, true, undefined],
+        [AssessmentType.AUTOMATIC, false, 'artemisApp.assessmentUpload.notPossible.automaticAssessment'],
+    ])('should enable the manual assessment upload only when %s allows it', (assessmentType, expectedEnabled, expectedReason) => {
+        // The upload creates and overwrites manual assessments, so it is allowed under the same condition the assessment editor is. It stays visible when it is not allowed,
+        // with the reason, rather than disappearing without explanation.
+        setUpProgrammingExerciseForUpload({ assessmentType, dueDate: dayjs().subtract(1, 'day') });
+
+        fixture.detectChanges();
+
+        expect(comp.canOfferManualAssessmentUpload()).toBe(true);
+        expect(comp.canUploadManualAssessments()).toBe(expectedEnabled);
+        expect(comp.manualAssessmentUploadDisabledReason()).toBe(expectedReason);
+        expect(fixture.nativeElement.querySelector('[data-testid="open-assessment-upload"]')).not.toBeNull();
+    });
+
+    it('should disable the manual assessment upload until the due date has passed, naming that reason', () => {
+        setUpProgrammingExerciseForUpload({ assessmentType: AssessmentType.SEMI_AUTOMATIC, dueDate: dayjs().add(1, 'day') });
+
+        fixture.detectChanges();
+
+        expect(comp.canUploadManualAssessments()).toBe(false);
+        expect(comp.manualAssessmentUploadDisabledReason()).toBe('artemisApp.assessmentUpload.notPossible.beforeDueDate');
+    });
+
+    it('should not open the upload dialog when the upload is not allowed', () => {
+        // The disabled button is the only way in, but re-enabling it in the browser must not open a dialog the server would reject anyway.
+        setUpProgrammingExerciseForUpload({ assessmentType: AssessmentType.AUTOMATIC, dueDate: dayjs().subtract(1, 'day') });
+        fixture.detectChanges();
+
+        comp.openAssessmentUpload();
+
+        expect(comp['uploadDialogVisible']()).toBe(false);
+    });
+
+    function setUpProgrammingExerciseForUpload(overrides: Partial<ProgrammingExercise>): void {
+        const exerciseForUpload = { ...programmingExercise, isAtLeastInstructor: true, ...overrides } as ProgrammingExercise;
+        exerciseServiceGetForTutorsStub.mockReturnValue(of(new HttpResponse({ body: exerciseForUpload, headers: new HttpHeaders() })));
+        comp.exerciseId.set(exerciseForUpload.id!);
+    }
+
+    it('should open the manual assessment upload dialog', () => {
+        setUpProgrammingExerciseForUpload({ assessmentType: AssessmentType.SEMI_AUTOMATIC, dueDate: dayjs().subtract(1, 'day') });
+        fixture.detectChanges();
+        expect(comp['uploadDialogVisible']()).toBe(false);
+
+        comp.openAssessmentUpload();
+
+        expect(comp['uploadDialogVisible']()).toBe(true);
+    });
+
+    it('should reload the dashboard data after manual assessments were uploaded', () => {
+        const loadAllSpy = vi.spyOn(comp, 'loadAll').mockImplementation(() => {});
+
+        comp.onAssessmentsUploaded();
+
+        expect(loadAllSpy).toHaveBeenCalledOnce();
+    });
+
     it('should initialize with tutor leaderboard entry', () => {
         const tutor = { id: 10, login: 'tutor1' } as User;
         accountService.userIdentity.set(tutor);
@@ -941,6 +1000,69 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         comp.sortMoreFeedbackRows();
 
         expect(sortServiceFunctionSpy).toHaveBeenCalledWith(comp.submissionsWithMoreFeedbackRequests(), expect.any(Function), false);
+    });
+
+    it('should apply a column header sort of the assessed submissions of a correction round', () => {
+        const sortService = TestBed.inject(SortService);
+        const sortByPropertySpy = vi.spyOn(sortService, 'sortByProperty');
+        const firstSubmission = { id: 2 } as Submission;
+        const secondSubmission = { id: 1 } as Submission;
+        comp.assessedSubmissionsByRound.set([[], [firstSubmission, secondSubmission]]);
+
+        comp['onSubmissionSort'](1, { field: 'id', order: 1 });
+
+        expect(comp.sortPredicates[0]).toBe('id');
+        expect(comp.reverseOrders[0]).toBe(true);
+        expect(sortByPropertySpy).toHaveBeenCalledExactlyOnceWith(expect.any(Array), 'id', true);
+        // Only the rows of the given correction round are re-sorted (on a copy).
+        expect(sortByPropertySpy.mock.calls[0][0]).toEqual([firstSubmission, secondSubmission]);
+        expect(comp.assessedSubmissionsByRound()[0]).toEqual([]);
+
+        comp['onSubmissionSort'](1, { field: 'id', order: -1 });
+
+        expect(comp.reverseOrders[0]).toBe(false);
+        expect(sortByPropertySpy).toHaveBeenLastCalledWith(expect.any(Array), 'id', false);
+        expect(sortByPropertySpy).toHaveBeenCalledTimes(2);
+    });
+
+    it('should apply a column header sort of the complaints', () => {
+        const sortService = TestBed.inject(SortService);
+        const sortByPropertySpy = vi.spyOn(sortService, 'sortByProperty');
+        const sortByFunctionSpy = vi.spyOn(sortService, 'sortByFunction');
+
+        comp['onComplaintSort']({ field: 'complaint.submittedTime', order: -1 });
+
+        expect(comp.sortPredicates[1]).toBe('complaint.submittedTime');
+        expect(comp.reverseOrders[1]).toBe(false);
+        expect(sortByPropertySpy).toHaveBeenLastCalledWith(comp.submissionsWithComplaints(), 'complaint.submittedTime', false);
+
+        comp['onComplaintSort']({ field: 'responseTime', order: 1 });
+
+        expect(comp.sortPredicates[1]).toBe('responseTime');
+        expect(comp.reverseOrders[1]).toBe(true);
+        expect(sortByFunctionSpy).toHaveBeenCalledWith(comp.submissionsWithComplaints(), expect.any(Function), true);
+        // The other tables keep their own sort state.
+        expect(comp.sortPredicates[2]).toBe('complaint.accepted');
+        expect(comp.reverseOrders[2]).toBe(false);
+    });
+
+    it('should apply a column header sort of the more feedback requests', () => {
+        const sortService = TestBed.inject(SortService);
+        const sortByPropertySpy = vi.spyOn(sortService, 'sortByProperty');
+        const sortByFunctionSpy = vi.spyOn(sortService, 'sortByFunction');
+
+        comp['onMoreFeedbackSort']({ field: 'complaint.accepted', order: 1 });
+
+        expect(comp.sortPredicates[2]).toBe('complaint.accepted');
+        expect(comp.reverseOrders[2]).toBe(true);
+        expect(sortByPropertySpy).toHaveBeenLastCalledWith(comp.submissionsWithMoreFeedbackRequests(), 'complaint.accepted', true);
+
+        comp['onMoreFeedbackSort']({ field: 'responseTime', order: -1 });
+
+        expect(comp.sortPredicates[2]).toBe('responseTime');
+        expect(comp.reverseOrders[2]).toBe(false);
+        expect(sortByFunctionSpy).toHaveBeenCalledWith(comp.submissionsWithMoreFeedbackRequests(), expect.any(Function), false);
+        expect(comp.sortPredicates[1]).toBe('complaint.accepted');
     });
 
     it('should return submission language', () => {

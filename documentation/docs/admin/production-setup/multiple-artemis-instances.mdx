@@ -2,7 +2,7 @@
 id: multiple-artemis-instances
 title: Multiple Artemis Instances
 sidebar_label: Multiple Artemis Instances
-last_reviewed: 2026-11-03
+last_reviewed: 2026-11-09
 ---
 
 import Callout from "../../../src/components/Callout/Callout";
@@ -13,7 +13,6 @@ import buildAgentViewImg from "./assets/distributed-setup/build_agent_view.png"
 import deploymentBrokerImg from "./assets/distributed-setup/deployment_broker.drawio.png"
 import deploymentHazelcastImg from "./assets/distributed-setup/deployment_hazelcast.drawio.png"
 import multiInstanceSetupSimpleImg from "./assets/distributed-setup/deployment_after_simple.drawio.png"
-import multiNodeSetupImg from "./assets/distributed-setup/multi-node-setup.drawio.png"
 import registryImg from "./assets/distributed-setup/registry.png"
 import runConfigImg from "./assets/distributed-setup/run-config.png"
 import singleInstanceSetupImg from "./assets/distributed-setup/deployment_before.drawio.png"
@@ -279,7 +278,7 @@ You still have to make the registry available:
 
             proxy_set_header    Host                $http_host;
             proxy_set_header    X-Real-IP           $remote_addr;
-            proxy_set_header    X-Forwarded-For     $proxy_add_x_forwarded_for;
+            proxy_set_header    X-Forwarded-For     $remote_addr;
             proxy_set_header    X-Forwarded-Proto   $scheme;
 
             gzip off;
@@ -708,6 +707,63 @@ It may take a few seconds for the build agent to show up:
 />
 
 
+### Which setting goes on which node
+
+A multi-node installation has two kinds of nodes with one configuration each. The file names are the same as in a single-node setup; only the
+nodes that read a setting matter.
+
+| Setting | Core nodes | Build agents |
+| --- | --- | --- |
+| Profiles | `core`, `localvc`, `localci`, `scheduling` | `buildagent` |
+| Database (`spring.datasource`) | Yes, **one** database that all core nodes share | No. A build agent has no database access. |
+| `artemis.distributed-data.provider` | Yes, identical on all nodes | Yes, identical to the core nodes |
+| `artemis.version-control.url` and the repository authentication | Yes | `url` and `default-branch` only, see [Build Agents](#build-agents) |
+| `artemis.continuous-integration.build.images` (default Docker image per language) | Yes, exercises are created on core nodes | Not needed |
+| `build-timeout-seconds` (`min`, `default`, `max`) | Yes, `application-localci.yml` | Yes, `application-buildagent.yml`. The `max` values must be equal. |
+| `container-flags-limit`, including `allowed-custom-networks` | Yes | Yes, with the same values |
+| `bulk-trigger`, `concurrent-result-processing-size` | Yes | No |
+| `concurrent-build-size`, `specify-concurrent-builds`, `image-cleanup`, `container-cleanup`, `build-logs`, `proxies`, `docker-connection-uri` | No | Yes |
+| `build-agent.short-name` | No | Yes, unique per agent |
+| Docker registry login (`~/.docker/config.json`) | No | Yes, on every build agent host. See [LocalCI Build Environment](/admin/production-setup/localci-build-environment#images-from-a-private-registry). |
+
+The defaults of all these keys are in `application-localci.yml` and `application-buildagent.yml`, which are part of the `.war`. Put your changes into
+the configuration file that you already use for your installation (for example `application-prod.yml` or an external `application-local.yml`), not into the files inside the `.war`.
+Which Docker image a build runs in, what the container may do, and how the build can be adapted is described in [LocalCI Build Environment](/admin/production-setup/localci-build-environment).
+
+There is **one database** for the whole installation. It belongs to the core nodes and is shared by all of them. The state that the nodes exchange at runtime, such as the
+build queue and the build agents, is not in that database but in the [distributed data provider](/admin/production-setup/distributed-data).
+
+### Operating build agents
+
+**Adding build agents.** Start another Artemis node with the `buildagent` profile and a unique `build-agent.short-name`. It registers with the cluster within seconds, shows up under
+**Administration → Build System → Build Agents**, and takes jobs from the queue immediately. Nothing has to change on the core nodes or on the other agents.
+Pull the Docker images before you start it, so that its first builds do not wait for downloads.
+The agent only needs a connection to the [distributed data provider](/admin/production-setup/distributed-data), to Docker, and to the version control URL.
+
+**Scaling automatically.** Artemis has **no autoscaler** of its own: the number of build agents is the number that you start. The Build Agents page shows the length of the queue and the utilization of
+each agent, and agents can join and leave at any time. The metrics of the Artemis nodes expose the same numbers as the gauges `artemis.global.localci.queued`, `running`, `agents`
+and `maxConcurrentBuilds`, which a monitoring system such as Prometheus can scrape. A scaling rule in your own orchestration or virtualization environment has to watch the queue and start or stop agent nodes.
+Fix the number of concurrent builds per agent with `specify-concurrent-builds: true`, so that every added agent adds a known capacity.
+
+An orchestrator is easiest with the experimental [Kubernetes runner](/admin/production-setup/build-runners#kubernetes-runner). It runs every build as a Kubernetes Job, so the
+cluster schedules the build Pods itself, and a cluster autoscaler can add nodes when Pods wait for resources. The Helm chart can also scale the build agent controllers
+with the queue, using KEDA and Prometheus, see [Operating LocalCI on Kubernetes](/admin/production-setup/localci-on-kubernetes#automatically). The runner is a proof of concept and has not been
+through a production deployment.
+
+**Removing build agents.** Pause the agent on the Build Agents page, wait until its running builds have finished, then stop it.
+A paused agent takes no new jobs. If builds are still running after `pause-grace-period-seconds` (60 seconds by default), the agent cancels them and puts them back into the queue.
+
+**When a build agent fails during a build.** If the agent crashes, loses its connection or is stopped, the cluster notices that it left, and the jobs it was running go back into the
+queue with a higher retry count, where another agent picks them up. A second check runs every two minutes for jobs whose agent no longer exists, in case the notification was lost.
+A job is re-queued up to five times this way, and is then marked as failed. Separately, a build that is neither queued nor running and has not been seen for five minutes is marked
+**missing**, and Artemis queues it again up to three times (`max-missing-job-retries`). For a student, a failing agent therefore usually means a result that arrives later, not a lost build.
+An agent also pauses itself after `pause-after-consecutive-failed-jobs` (100) consecutive failed jobs, so that a broken host does not fail the whole queue.
+
+**Updating.** Build agents are updated together with the core nodes, following [Deploying a New Version](#deploying-a-new-version): Artemis has no rolling update.
+Pause the agents so that running builds finish, stop all nodes, start the first core node and wait for it, then start the remaining core nodes, and finally the build agents,
+which need a running core node (or the Redis or Valkey store) to join. Jobs that are lost during the restart are detected as missing builds and queued again, as described above.
+
+
 ## Running multiple instances locally
 
 For testing purposes, you can also run multiple instances on the same machine. You can do this by using
@@ -739,27 +795,21 @@ You should now be able to see all instances in the registry interface at http://
 
 ### Running multiple instances locally with Docker
 
-You can also run multiple instances of Artemis locally using Docker. This will start 3 Artemis instances, each running
+You can also run multiple instances of Artemis locally using Docker. This will start 2 Artemis instances, each running
 in its own container. A load balancer (nginx) will be used to distribute the requests to the different instances. The
 load balancer will be running in a separate container and will be accessible on ports 80/443 of the host system. The
-instances will be registered in the registry service running on a separate container. The instances will use the registry
-service to discover each other and form a Hazelcast cluster. Further details can be found in [Database Cache](#database-cache). The
+instances share their state through Valkey on the Redis [distributed data provider](/admin/production-setup/distributed-data),
+so they need no registry service and form no Hazelcast cluster. Further details can be found in [Database Cache](#database-cache). The
 instances will also use a ActiveMQ Artemis broker to synchronize WebSocket messages. Further details can be found in [WebSockets](#websockets). In summary, the setup will look like this:
 
-* 3 Artemis instances:
+* 2 Artemis instances:
     * artemis-app-node-1: using following spring profile: `prod,localvc,localci,core,scheduling,docker`
-    * artemis-app-node-2: using following profile: `prod,localvc,localci,buildagent,core,docker`
-    * artemis-app-node-3: using following profile: `prod,buildagent`
+    * artemis-app-node-2: using following profile: `localvc,localci,buildagent,core,prod,docker`
 * A PostgreSQL database addressable on port 5432 of the host system
 * A Load balancer (nginx) addressable on ports 80/443 of the host system: `http(s)://localhost`.
-* A Registry service addressable on port 8761 of the host system: http://localhost:8761
+* Valkey, addressable on port 6379 of the loopback interface of the host system. Only the user `artemis` can connect,
+    with the password in `REDIS_PASSWORD` (`artemis` unless set).
 * An ActiveMQ broker
-
-<Image
-    src={multiNodeSetupImg}
-    size={ImageSize.large}
-    alt={"Component diagram of a Artemis multi-instance deployment and how it connects to the required support services."}
-/>
 
 <Callout variant={CalloutVariant.info}>
     You don't have to start the client manually. The client files are served by the Artemis instances and can be
@@ -768,7 +818,7 @@ instances will also use a ActiveMQ Artemis broker to synchronize WebSocket messa
 
 These instances run under the `prod` profile, and `deployment/docker/artemis/config/prod-multinode.env` therefore does not contain a
 JWT signing key: a key committed to the repository would be readable by everyone. Export one before starting the
-containers, so that all three instances share it:
+containers, so that both instances share it:
 
 ```bash
 export ARTEMIS_E2E_JWT_SECRET="$(openssl rand -base64 64 | tr -d '\n')"
@@ -784,15 +834,6 @@ Set `INFO_TESTSERVER=false` for a production installation: its core nodes refuse
 its scheduling node includes them in the [telemetry](/admin/telemetry) report, the administrator's name only when
 `artemis.telemetry.sendAdminDetails` is enabled.
 Keep these shared values in that file rather than in `node1.env`, so every core node receives the same identity.
-
-<Callout variant={CalloutVariant.info}>
-    You may run into the following error when starting the containers
-    `No member group is available to assign partition ownership...`. This issue should resolve itself after a few
-    minutes. Otherwise, you can first start the following containers:
-    `docker compose --env-file .env -f deployment/docker/test-server-multi-node-postgresql-localci.yml up postgres jhipster-registry activemq-broker artemis-app-node-1`.
-    After these containers are up and running, you can start the remaining containers:
-    `docker compose --env-file .env -f deployment/docker/test-server-multi-node-postgresql-localci.yml up artemis-app-node-2 artemis-app-node-3 nginx`.
-</Callout>
 
 
 #### Linux setup
@@ -829,7 +870,7 @@ Keep these shared values in that file rather than in `node1.env`, so every core 
     docker compose --env-file .env -f deployment/docker/test-server-multi-node-postgresql-localci.yml up
     ```
 
-4. You can now access artemis on `http(s)://localhost` and the registry on http://localhost:8761.
+4. You can now access artemis on `http(s)://localhost`.
 
 
 #### Windows setup
@@ -849,7 +890,7 @@ Keep these shared values in that file rather than in `node1.env`, so every core 
     docker compose --env-file .env -f deployment/docker/test-server-multi-node-postgresql-localci.yml up
     ```
 
-3. You can now access artemis on `http(s)://localhost` and the registry on http://localhost:8761.
+3. You can now access artemis on `http(s)://localhost`.
 
 
 #### MacOS setup
@@ -863,4 +904,4 @@ Keep these shared values in that file rather than in `node1.env`, so every core 
     docker compose --env-file .env -f deployment/docker/test-server-multi-node-postgresql-localci.yml up
     ```
 
-3. You can now access artemis on `http(s)://localhost` and the registry on http://localhost:8761.
+3. You can now access artemis on `http(s)://localhost`.

@@ -2,7 +2,7 @@
 id: write-code-and-tests
 title: Write the Exercise Code and Tests
 sidebar_label: Write the Exercise Code and Tests
-last_reviewed: 2026-11-05
+last_reviewed: 2026-11-12
 ---
 
 import Callout from "../../../../src/components/Callout/Callout";
@@ -120,8 +120,8 @@ cd tests || exit 1
 
 **Alternative 2: Edit in Browser**
 
-Select the exercise title in course management and scroll to **Repositories and builds**. Open **Code** in the
-**Template** or **Solution** panel, then choose **Edit in editor** to adapt that repository in the online editor.
+Select the exercise title in course management and choose **Edit in editor** in the action bar at the top.
+The online editor opens the template repository.
 This action requires Editor access. The editor lets you switch between the exercise's repositories.
 
 <Image src={instructorEditor} alt="Online editor on the template repository, with the tasks beside the code" size={ImageSize.large} caption="Editing the template repository" />
@@ -194,7 +194,7 @@ Values that were not set show as **Unset**. If a whole area is missing from a sn
 
 The problem statement is what students read, and it is *interactive*: when you bind a task to test cases, Artemis shows each student whether their latest submission passes that task, right inside the description. Getting these bindings right is what turns a wall of text into a checklist students can work through.
 
-Edit it either with **Edit** on the exercise, or with **Code → Edit in editor** in a repository panel to have it side by side with the code. Both editors synchronize in real time when several people work at once — see [Collaborative Editing](#collaborative-editing).
+Edit it either with **Edit** on the exercise, or with **Edit in editor** in the action bar to have it side by side with the code. Both editors synchronize in real time when several people work at once — see [Collaborative Editing](#collaborative-editing).
 
 The problem statement is Markdown, plus the two Artemis-specific constructs below.
 
@@ -272,6 +272,40 @@ Write test cases in the Test repository using language-specific frameworks:
 | 18  | MATLAB     | mpminstall      | -              | [matlab.unittest](https://www.mathworks.com/help/matlab/matlab-unit-test-framework.html) |
 | 19  | Ruby       | Gem             | Rake           | [minitest](https://docs.seattlerb.org/minitest/)                                         |
 | 20  | Dart       | pub             | built-in       | [package.test](https://dart.dev/tools/testing)                                           |
+
+### C Exercises with GCC
+
+The C **GCC** template ships its Python test framework in the test repository. `Tests.py` registers the classes in `tests/`, runs them through `testUtils/Tester.py`, and exports JUnit XML for Artemis. The default tests compile the C assignment, check its output, and repeat execution with address, undefined-behavior, and leak sanitizers.
+
+For a local run, use a checkout of trusted solution code. `Tests.py` executes the compiled assignment with your user's permissions; run student submissions in the configured isolated build environment instead.
+
+The runner expects the assignment in `../assignment` relative to the test directory. The build plan copies the test-controlled Makefile into that assignment checkout, preserving its source and include-directory settings. For a local run, reproduce this directory layout, use the exercise's build image or install GCC, GNU make, sanitizer runtimes and the Python dependencies from `requirements.txt`, then run `python3 Tests.py` from the test directory.
+
+Implement additional tests under `tests/` and register them in `Tests.py`. A test's prerequisites identify the tests that must pass before it can run. Keep names consistent with the grading configuration and problem statement. The generated test repository's README describes the supporting files and local layout.
+
+### C Exercises with FACT
+
+The C **FACT** project template uses Python to run tests against the student's C program. Its build has two stages: a test-controlled Makefile compiles the assignment with GCC, then `Tests.py` loads `exercise.yml`, runs the FACT tests, and exports a JUnit XML report. The build plan collects `test-reports/tests-results.xml` for grading.
+
+The test repository separates the runner from the test definitions:
+
+- `Makefile` defines the source files, compiler, and compiler flags. The supplied template builds `exercise.c` using C11 and warning flags. Artemis copies this file into the assignment directory before compiling.
+- `exercise.yml` selects the translation unit and declares each test's name, type, requirements, and options. The supplied compilation, structural, and input/output tests depend on one another, so a failed prerequisite can prevent subsequent tests from running.
+- `exercise_io.txt` supplies the input/output cases. The example also replaces variable initializations in the source to test several values.
+- `Tests.py` is the entry point. Add or adapt tests in the definition files rather than adding each test to the runner.
+
+The default FACT build image, `ls1tum/artemis-fact-minimal-docker:1.1.0`, supplies FACT and its compiler dependencies. If you configure a custom image, verify that it supplies these dependencies too; the standard C GCC image is intended for the separate GCC template.
+
+For a local run, put a disposable checkout of trusted solution code in `assignment/` beside the test checkout, so it is available at `../assignment` from the test directory. `Tests.py` executes the compiled assignment with your user's permissions; run student submissions in the configured isolated build environment instead. Save any custom assignment Makefile outside the disposable checkout before continuing: the copy command replaces it. In an environment with FACT and its compiler dependencies, run these commands from the test directory to reproduce the build's Makefile preparation and test execution:
+
+```sh
+cp Makefile ../assignment/Makefile
+python3 Tests.py
+```
+
+When changing the exercise, update the translation unit and Makefile together, keep the test names aligned with the problem statement and grading configuration, and verify both the solution and template builds. The separate C **GCC** template uses its own test setup; these instructions apply to FACT.
+
+The generated test repository includes a README with the file roles and run command. The [FACT documentation](https://fact.readthedocs.io/en/latest/) explains the available test types and definition syntax.
 
 Check the build plan results:
 
@@ -672,6 +706,38 @@ Variables in SCREAMING_SNAKE_CASE (e.g., `MAIN_CLASS`) are replaced with actual 
 Best Expect documentation: [Exploring Expect](https://books.google.com.sg/books?id=t8C4pEDQ8s0C) book. The Artemis default template contains reusable helper functions in `config/default.exp` for common I/O use cases.
 
 This exercise type makes it quite easy to reuse existing exercises from the [Praktomat](https://github.com/KITPraktomatTeam/Praktomat) autograder system.
+
+## Keep Repositories Small
+
+Every student repository is a copy of the template repository. Each build agent, each student and the Artemis servers copy the repositories again and again, so their size multiplies: an exercise with a 400 MB template and 100 students needs about 40 GB for the working copies on the servers alone, and every student has to clone hundreds of megabytes. Very large repositories slow down cloning, pushing and building, and fill up the storage.
+
+Artemis therefore rejects a push that makes the files of a repository larger than the following limits:
+
+| Repository                                          | Limit |
+| --------------------------------------------------- | ----- |
+| Template, student and auxiliary repositories        | 20 MB |
+| Tests and solution repositories                     | 50 MB |
+
+The limit applies to the sum of the sizes of all files in the latest commit. A single file must additionally not be larger than 10 MB. A push that does not make a repository larger is always accepted, even if the repository is above the limit already. This way, repositories that were created before the limit existed stay usable and can be reduced step by step.
+
+Everything that is not code, tests or small resources should **not be stored in git**. This includes data sets, scenario collections, trained models, generated files, libraries and archives. Files that never change are best provided in another way and downloaded during the build:
+
+- **Download in the build script.** Download the files from a location that you control (for example a course web server or a release asset of a GitHub repository) in the build script of the exercise, and verify them with a checksum. Cache them in the Docker image or in a Gradle or Maven cache where possible.
+- **Put the files into the Docker image.** If the files are needed for every build, add them to the Docker image that the exercise uses (see [Configure the Build](./configure-the-build.mdx)). Then they are neither part of any repository nor downloaded again for each build.
+- **Let students download the files once.** If students need the files on their own computer, describe in the problem statement where to download them, and add the folder to `.gitignore`.
+
+Keep only the code that students edit, the tests and small resources in the repositories.
+
+### For Administrators: Configure the Limits
+
+The limits can be changed in the `artemis.version-control` section of the configuration. The values are in megabytes, and `0` disables the limit:
+
+```yaml
+artemis:
+    version-control:
+        max-repository-size-mb: 20
+        max-tests-and-solution-repository-size-mb: 50
+```
 
 ## Prevent Maven Central Rate Limits (Java and Kotlin)
 

@@ -1,0 +1,101 @@
+name: Nightly Security Scans
+
+# Brings up a throwaway Artemis with the runner of the E2E tests and scans it from the outside:
+#   - Schemathesis sends generated requests to the reading endpoints of the OpenAPI description and reports server errors and responses that do not match it.
+#   - The OWASP ZAP baseline scan crawls the client and reports header, cookie and configuration findings.
+# See supporting_scripts/security for the scripts, which also run on a developer machine.
+#
+# This is a monitor and not a gate of pull requests. A failure opens or updates one tracking issue. The workflow runs on a fixed schedule
+# against the default branch and does not use input of an event, so injection through event data does not apply.
+
+on:
+  schedule:
+    - cron: '30 2 * * 3'
+  workflow_dispatch:
+
+concurrency:
+  group: nightly-security-scans
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  scans:
+    name: nightly-security / api-scans
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up Java
+        uses: actions/setup-java@77dd5b2ce225ea11469928ac317850245a74ae78 # v6.2.0
+        with:
+          distribution: temurin
+          java-version: '25'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@8da46b539cd8fe6ab27ca75128919a18d757604c # v6.4.1
+
+      - name: Set up Node
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '24'
+
+      - name: Enable pnpm
+        run: corepack enable
+
+      - name: Install client dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Playwright dependencies
+        working-directory: src/test/playwright
+        run: pnpm install --frozen-lockfile
+
+      - name: Pre-build the Artemis server
+        timeout-minutes: 30
+        run: |
+          for attempt in 1 2 3; do
+            if timeout 8m ./gradlew classes resolveMainClassName -x webapp; then
+              exit 0
+            fi
+            echo "::warning::Pre-building the server failed (attempt ${attempt} of 3)"
+            sleep 20
+          done
+          exit 1
+
+      - name: Start Artemis
+        # The health spec only brings the stack up. The runner leaves server, client and database running for the scans below.
+        env:
+          SERVER_READY_TIMEOUT: '600'
+        run: ./supporting_scripts/e2e/run-e2e-tests-local-fast.sh --specs "e2e/SystemHealth.spec.ts"
+
+      - name: Scan the API and the client
+        run: ./supporting_scripts/security/run-api-scans.sh http://localhost:9000 security-scan-reports
+
+      - name: Stop Artemis
+        if: always()
+        run: ./supporting_scripts/e2e/run-e2e-tests-local-fast.sh --stop
+
+      - name: Upload reports and logs
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: nightly-security-scan-reports
+          path: |
+            security-scan-reports
+            .e2e-local/server.log
+          if-no-files-found: ignore
+
+      - name: Open a tracking issue on failure
+        if: failure()
+        uses: ./.github/actions/open-failure-issue
+        with:
+          title: Nightly security scans failed
+          assignee: krusche
+          github-token: ${{ github.token }}
+          body: >-
+            The nightly security scans failed. The reports of the run name the response that was a server error or did not match the
+            description of the API or the finding of the baseline scan.
