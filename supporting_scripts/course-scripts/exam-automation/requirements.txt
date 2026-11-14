@@ -178,9 +178,13 @@ charset-normalizer==3.5.2 \
     --hash=sha256:fd1fbe0f116b6e55da77aca2c6ddcddcfac2186cbf78bdebf40fc156efca389d \
     --hash=sha256:fe9753dfee015c570d73df76f899f18444d41388bffcde097deba51c4fadbb9f
     # via requests
-configparser==7.2.0 \
+configparser==7.2.0 ; python_full_version < '3.11' \
     --hash=sha256:b629cc8ae916e3afbd36d1b3d093f34193d851e11998920fdcfc4552218b7b70 \
     --hash=sha256:fee5e1f3db4156dcd0ed95bc4edfa3580475537711f67a819c966b389d09ce62
+    # via -r requirements.in
+configparser==7.3.0 ; python_full_version >= '3.11' \
+    --hash=sha256:2e148379c75806e4ab879bea6245774c65b6206236f4b3d74d8231cb1c46c741 \
+    --hash=sha256:301444a02c87d115db7fb76eb8900cb5f79e1cb667c7e86537308dd822584a6a
     # via -r requirements.in
 idna==3.20 \
     --hash=sha256:a7db850025b95ded1eae8a46181a1a6c56c92c96f0e2b005d9ff8dc0210cab44 \
