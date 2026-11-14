@@ -2,10 +2,12 @@ package de.tum.cit.aet.artemis.communication.dto;
 
 import java.time.ZonedDateTime;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.domain.conversation.ChannelSubType;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 // TODO: convert to record
@@ -152,6 +154,7 @@ public class ChannelDTO extends ConversationDTO {
         this.isChannelModerator = isChannelModerator;
     }
 
+    @Schema(description = "ID of the associated tutorial group, if any")
     public Long getTutorialGroupId() {
         return tutorialGroupId;
     }
@@ -160,6 +163,7 @@ public class ChannelDTO extends ConversationDTO {
         this.tutorialGroupId = tutorialGroupId;
     }
 
+    @Schema(description = "Title of the associated tutorial group, if any")
     public String getTutorialGroupTitle() {
         return tutorialGroupTitle;
     }
@@ -172,14 +176,17 @@ public class ChannelDTO extends ConversationDTO {
         return subType;
     }
 
+    @Schema(description = "ID of the referenced exercise, lecture or exam, if any")
     public Long getSubTypeReferenceId() {
         return subTypeReferenceId;
     }
 
+    @Schema(description = "Exercise release, lecture start or exam start. Present in channel overviews when the referenced date exists.")
     public ZonedDateTime getSubTypeReferenceStartDate() {
         return subTypeReferenceStartDate;
     }
 
+    @Schema(description = "Exercise due, lecture end or exam end. Present in channel overviews when the referenced date exists.")
     public ZonedDateTime getSubTypeReferenceEndDate() {
         return subTypeReferenceEndDate;
     }
@@ -189,6 +196,7 @@ public class ChannelDTO extends ConversationDTO {
      *
      * @param referenceDates the projected dates of the referenced item
      */
+    @JsonIgnore
     public void setSubTypeReferenceDates(ChannelSubTypeReferenceDatesDTO referenceDates) {
         this.subTypeReferenceStartDate = referenceDates.startDate();
         this.subTypeReferenceEndDate = referenceDates.endDate();
@@ -210,6 +218,7 @@ public class ChannelDTO extends ConversationDTO {
                 + tutorialGroupTitle + "}" + super.toString();
     }
 
+    @JsonIgnore
     private void setSubTypeWithReferenceFromChannel(Channel channel) {
         if (channel.getExercise() != null) {
             this.subType = ChannelSubType.EXERCISE;

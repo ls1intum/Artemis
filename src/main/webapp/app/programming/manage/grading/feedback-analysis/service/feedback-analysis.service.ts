@@ -1,9 +1,12 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { SearchResult, SearchTermPageableSearch } from 'app/foundation/pagination/pageable-table';
 import { BaseApiHttpService } from 'app/foundation/service/base-api-http.service';
 import { HttpParams } from '@angular/common/http';
 import { FilterData } from 'app/programming/manage/grading/feedback-analysis/modal/feedback-filter/feedback-filter-modal.component';
 import { ChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
+import { toChannelDTO, toChannelRequest } from 'app/communication/conversations/service/conversation-dto-mapper';
+import { ChannelApi } from 'app/openapi/api/channel-api';
+import { lastValueFrom } from 'rxjs';
 
 export interface FeedbackAnalysisResponse {
     feedbackDetails: SearchResult<FeedbackDetail>;
@@ -37,6 +40,8 @@ export interface FeedbackChannelRequestDTO {
 }
 @Injectable()
 export class FeedbackAnalysisService extends BaseApiHttpService {
+    private readonly channelApi = inject(ChannelApi);
+
     search(pageable: SearchTermPageableSearch, groupFeedback: boolean, options: { exerciseId: number; filters: FilterData }): Promise<FeedbackAnalysisResponse> {
         const params = new HttpParams()
             .set('page', pageable.page.toString())
@@ -68,7 +73,17 @@ export class FeedbackAnalysisService extends BaseApiHttpService {
         return this.get<FeedbackAffectedStudentDTO[]>(`assessment/exercises/${exerciseId}/feedback-details-participation`, { params });
     }
 
-    createChannel(courseId: number, exerciseId: number, feedbackChannelRequest: FeedbackChannelRequestDTO): Promise<ChannelDTO> {
-        return this.post<ChannelDTO>(`communication/courses/${courseId}/exercises/${exerciseId}/feedback-channel`, feedbackChannelRequest);
+    async createChannel(courseId: number, exerciseId: number, feedbackChannelRequest: FeedbackChannelRequestDTO): Promise<ChannelDTO> {
+        const response = await lastValueFrom(
+            this.channelApi.createFeedbackChannel(courseId, exerciseId, {
+                channel: toChannelRequest(feedbackChannelRequest.channel),
+                feedbackDetailTexts: feedbackChannelRequest.feedbackDetailTexts,
+                testCaseName: feedbackChannelRequest.testCaseName,
+            }),
+        );
+        if (response.body === null) {
+            throw new Error('The feedback channel response had no body.');
+        }
+        return toChannelDTO(response.body);
     }
 }
