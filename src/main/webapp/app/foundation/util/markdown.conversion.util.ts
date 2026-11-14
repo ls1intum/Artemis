@@ -6,6 +6,7 @@ import hljs from 'app/foundation/util/highlight-languages.util';
 import TurndownService from 'turndown';
 import MarkdownIt, { type MarkdownIt as MarkdownItInstance, type RendererRule, type Token } from 'markdown-it';
 import { markdownItGitHubAlerts } from 'app/foundation/util/markdown-github-alerts.plugin';
+import { isImageSourceAllowed } from 'app/foundation/util/image-host-policy.util';
 
 // An inline math formula has some other characters before or after the formula and uses $$ as delimiters
 const inlineFormulaRegex = /.+\$\$[^$]+\$\$|\$\$[^$]+\$\$.+/g;
@@ -195,7 +196,7 @@ function formulaStyle(style: string): string {
 /**
  * Restricts attributes of the sanitized tree. Inline `style` is kept only inside formulas, because KaTeX positions its glyphs with it, and even there only the
  * placement properties with plain lengths. It is also kept where the caller lists `style` as an allowed attribute. Images are requested without a referrer, so
- * the address of the page does not reach the image host.
+ * the address of the page does not reach the image host. An image of a host that the server does not allow loses its address, see `setAllowedImageHosts` in image-host-policy.util.
  */
 export function restrictRenderedAttributes(node: Element, keepStyle = false): void {
     if (!keepStyle && node.hasAttribute?.('style')) {
@@ -208,6 +209,10 @@ export function restrictRenderedAttributes(node: Element, keepStyle = false): vo
     }
     if (node.tagName === 'IMG') {
         node.setAttribute('referrerpolicy', 'no-referrer');
+        if (!isImageSourceAllowed(node.getAttribute('src'))) {
+            node.removeAttribute('src');
+            node.removeAttribute('srcset');
+        }
     }
 }
 

@@ -1,9 +1,43 @@
-import { beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { MarkdownitTagClass, htmlForMarkdown, markdownForHtml } from './markdown.conversion.util';
 import type { MarkdownItPlugin } from 'app/foundation/util/markdown-it.types';
+import { setAllowedImageHosts } from 'app/foundation/util/image-host-policy.util';
 import MarkdownIt, { type MarkdownIt as MarkdownItInstance } from 'markdown-it';
 
 describe('markdown.conversion.util', () => {
+    describe('allowed image hosts', () => {
+        const markdown = '![a](https://images.example.net/a.png) ![b](https://other.example.org/b.png) ![c](/api/core/files/markdown/c.png) ![d](https://eu.cdn.example.net/d.png)';
+
+        afterEach(() => setAllowedImageHosts(undefined));
+
+        it('keeps the images of every host by default', () => {
+            const html = htmlForMarkdown(markdown);
+
+            expect(html).toContain('https://images.example.net/a.png');
+            expect(html).toContain('https://other.example.org/b.png');
+        });
+
+        it('drops the address of an image of a host that is not allowed', () => {
+            setAllowedImageHosts('images.example.net, *.cdn.example.net');
+
+            const container = document.createElement('div');
+            container.innerHTML = htmlForMarkdown(markdown);
+            const sources = Array.from(container.querySelectorAll('img')).map((image) => image.getAttribute('src'));
+
+            expect(sources).toEqual(['https://images.example.net/a.png', null, '/api/core/files/markdown/c.png', 'https://eu.cdn.example.net/d.png']);
+        });
+
+        it('refuses spellings that the browser resolves to another host', () => {
+            setAllowedImageHosts('images.example.net');
+
+            const html = htmlForMarkdown(
+                '<img src="https://images.example.net.unlisted.example/a.png"> <img src="https:\\\\unlisted.example/b.png"> <img src="//unlisted.example/c.png">',
+            );
+
+            expect(html).not.toContain('unlisted.example');
+        });
+    });
+
     describe('htmlForMarkdown', () => {
         describe('empty and undefined input', () => {
             it('should return empty string for undefined input', () => {

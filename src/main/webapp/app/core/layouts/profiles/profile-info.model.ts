@@ -167,4 +167,6 @@ export class ProfileInfo {
     public versionControlUrl!: string;
     public localLLMDeploymentEnabled!: boolean;
     public allowedCustomDockerNetworks!: string[];
+    /** Comma separated hosts that images of rendered markdown may come from. Empty or absent allows every host. */
+    public allowedImageHosts?: string;
 }

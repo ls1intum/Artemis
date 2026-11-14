@@ -523,6 +523,18 @@ The OpenAPI specification (`/api-docs`) and the Swagger UI (`/swagger-ui`) are s
 (`springdoc.api-docs.enabled` and `springdoc.swagger-ui.enabled`). Only where you switch them on, the paths are reachable
 without a login. On a server where they are off, a request to these paths needs a signed-in user like any other path.
 
+## Hosts of Images in Markdown
+
+Posts, problem statements, announcements and other markdown can show images from any web address. To limit the hosts that images may be loaded from, list them in the setting `info.allowedImageHosts` of the core nodes:
+
+```yaml
+info:
+    # Comma separated host names. A leading `*.` stands for every subdomain.
+    allowedImageHosts: images.example.org, *.cdn.example.org
+```
+
+The setting is empty by default, which allows every host. Once it holds a host, Artemis shows images of the listed hosts, of the own host of the server (`server.url`), relative addresses and inline `data:` images. An image of any other host is not loaded: the client removes its address when it renders the markdown, and the server removes the image from the problem statements that it renders itself (`api/exercise/problem-statement/render`). A host name has to match exactly, so list `example.org` and `*.example.org` separately if you want both. The client receives the list with the other public settings of the server (`management/info`), so a change takes effect after a restart of the core nodes and a reload of the page.
+
 ## Rate Limiting
 
 Artemis provides **cluster-wide rate limiting** powered by [Bucket4j](https://bucket4j.com) (token buckets). The bucket state lives in the configured distributed data provider (Hazelcast, Redis or Valkey), or in the process itself with the `Local` provider.
