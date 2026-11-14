@@ -80,7 +80,9 @@ public class KubernetesBuildArchiveService {
                             RepositoryCheckoutPath.ASSIGNMENT.forProgrammingLanguage(buildJob.buildConfig().programmingLanguage()));
                     String testCheckoutPath = checkoutPath(buildJob.buildConfig().testCheckoutPath(),
                             RepositoryCheckoutPath.TEST.forProgrammingLanguage(buildJob.buildConfig().programmingLanguage()));
-                    addDirectory(tar, preparedBuildJob.testRepository(), targetDirectory(testCheckoutPath));
+                    if (preparedBuildJob.testRepository() != null) {
+                        addDirectory(tar, preparedBuildJob.testRepository(), targetDirectory(testCheckoutPath));
+                    }
                     addDirectory(tar, preparedBuildJob.assignmentRepository(), targetDirectory(assignmentCheckoutPath));
 
                     if (preparedBuildJob.solutionRepository() != null) {

@@ -21,6 +21,7 @@ import java.net.UnknownHostException;
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import javax.naming.InvalidNameException;
@@ -54,6 +55,7 @@ import de.tum.cit.aet.artemis.core.service.distributed.api.queue.DistributedQueu
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
+import de.tum.cit.aet.artemis.localci.exception.LocalCIException;
 import de.tum.cit.aet.artemis.localvc.service.AuthenticationContext;
 import de.tum.cit.aet.artemis.localvc.service.VcsAccessLogService;
 import de.tum.cit.aet.artemis.localvc.util.LocalVCTestRepository;
@@ -66,6 +68,9 @@ import de.tum.cit.aet.artemis.programming.domain.VcsAccessLog;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildPhaseCondition;
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.LockRepositoryPolicy;
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.SubmissionPolicy;
+import de.tum.cit.aet.artemis.programming.dto.BuildContainerDTO;
+import de.tum.cit.aet.artemis.programming.dto.BuildContainerDockerFlagsDTO;
+import de.tum.cit.aet.artemis.programming.dto.BuildContainerRepositoryDTO;
 import de.tum.cit.aet.artemis.programming.dto.BuildPhaseDTO;
 import de.tum.cit.aet.artemis.programming.dto.BuildPlanPhasesDTO;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseBuildConfigService;
@@ -548,6 +553,128 @@ class LocalVCLocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalC
             assertThat(buildJobQueueItem).isNotNull();
             assertThat(buildJobQueueItem.buildConfig().dockerRunConfig().network()).isEqualTo("none");
             assertThat(buildJobQueueItem.buildConfig().dockerRunConfig().env()).containsExactlyInAnyOrder("key=value", "key1=value1");
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void testAPlanWithSeveralContainersIsRefusedUntilTheyCanRunAsSeparateJobs() {
+            // a plan with two containers must not silently build its first container only
+            ProgrammingExerciseBuildConfig buildConfig = programmingExerciseUtilService.buildConfigOf(programmingExercise);
+            BuildPhaseDTO phase = new BuildPhaseDTO("test", "echo test", BuildPhaseCondition.ALWAYS, false, List.of());
+            buildConfig.setBuildPlanConfiguration(new BuildPlanPhasesDTO(null, null,
+                    List.of(new BuildContainerDTO("instructor_tests", null, List.of(phase)), new BuildContainerDTO("student_tests", null, List.of(phase))))
+                    .toBuildPlanConfiguration());
+            programmingExerciseBuildConfigRepository.save(buildConfig);
+            ProgrammingExerciseStudentParticipation studentParticipation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+
+            assertThatThrownBy(() -> localCITriggerService.triggerBuild(studentParticipation, false)).isInstanceOf(LocalCIException.class)
+                    .hasMessageContaining("more than one container is not supported yet");
+            assertThat(queuedJobs.getAll()).noneMatch(job -> job.participationId() == studentParticipation.getId());
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void testAScopedContainerReceivesOnlyTheRepositoriesItLists() {
+            // the container lists no repository, so its job carries the assignment repository alone
+            assertQueuedTestRepositoryOfContainer(List.of(), false);
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void testAContainerListingTheTestRepositoryReceivesIt() {
+            assertQueuedTestRepositoryOfContainer(List.of(new BuildContainerRepositoryDTO(RepositoryType.TESTS)), true);
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void testAnUnscopedContainerReceivesEveryRepository() {
+            // no repository list at all: the legacy behaviour, every repository of the exercise
+            assertQueuedTestRepositoryOfContainer(null, true);
+        }
+
+        /**
+         * Triggers a build of a plan whose one container lists the given repositories and asserts whether the queued job
+         * carries the test repository; the assignment repository is always present.
+         */
+        private void assertQueuedTestRepositoryOfContainer(List<BuildContainerRepositoryDTO> repositories, boolean testRepositoryExpected) {
+            ProgrammingExerciseBuildConfig buildConfig = programmingExerciseUtilService.buildConfigOf(programmingExercise);
+            var container = new BuildContainerDTO("scoped", null, repositories, List.of(new BuildPhaseDTO("test", "echo test", BuildPhaseCondition.ALWAYS, false, List.of())));
+            buildConfig.setBuildPlanConfiguration(new BuildPlanPhasesDTO(null, null, List.of(container)).toBuildPlanConfiguration());
+            programmingExerciseBuildConfigRepository.save(buildConfig);
+            ProgrammingExerciseStudentParticipation studentParticipation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+
+            localCITriggerService.triggerBuild(studentParticipation, false);
+
+            await().until(() -> {
+                BuildJobQueueItem buildJobQueueItem = queuedJobs.peek();
+                return buildJobQueueItem != null && buildJobQueueItem.participationId() == studentParticipation.getId();
+            });
+            var repositoryInfo = queuedJobs.poll().repositoryInfo();
+            assertThat(repositoryInfo.assignmentRepositoryUri()).as("the submission is always built").isNotNull();
+            if (testRepositoryExpected) {
+                assertThat(repositoryInfo.testRepositoryUri()).isNotNull();
+            }
+            else {
+                assertThat(repositoryInfo.testRepositoryUri()).as("the instructor's tests stay out of a container that does not list them").isNull();
+            }
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void testContainerDockerFlagsOverrideTheExercisesForItsJob() {
+            ProgrammingExerciseBuildConfig buildConfig = programmingExerciseUtilService.buildConfigOf(programmingExercise);
+            buildConfig.setDockerFlags("{\"network\": \"\", \"env\": {\"SHARED\": \"exercise\", \"MODE\": \"exercise\"}, \"memory\": 1024}");
+            var flags = new BuildContainerDockerFlagsDTO("none", Map.of("MODE", "container"), null, 256, null);
+            var container = new BuildContainerDTO("limited", null, null, List.of(new BuildPhaseDTO("test", "echo test", BuildPhaseCondition.ALWAYS, false, List.of())), flags);
+            buildConfig.setBuildPlanConfiguration(new BuildPlanPhasesDTO(null, null, List.of(container)).toBuildPlanConfiguration());
+            programmingExerciseBuildConfigRepository.save(buildConfig);
+            ProgrammingExerciseStudentParticipation studentParticipation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+
+            localCITriggerService.triggerBuild(studentParticipation, false);
+
+            await().until(() -> {
+                BuildJobQueueItem buildJobQueueItem = queuedJobs.peek();
+                return buildJobQueueItem != null && buildJobQueueItem.participationId() == studentParticipation.getId();
+            });
+            DockerRunConfig runConfig = queuedJobs.poll().buildConfig().dockerRunConfig();
+            assertThat(runConfig.network()).as("set by the container").isEqualTo("none");
+            assertThat(runConfig.memory()).as("set by the container").isEqualTo(256);
+            assertThat(runConfig.env()).as("the exercise's variables, the container's on top").containsExactlyInAnyOrder("SHARED=exercise", "MODE=container");
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void testContainerTimeoutBoundsItsJob() {
+            assertJobTimeoutOfContainer(90, 90);
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void testAStoredContainerTimeoutAboveTheExercisesIsCapped() {
+            // stored before the validator rejected it: the job still gets no more than the exercise's timeout
+            assertJobTimeoutOfContainer(300, 200);
+        }
+
+        /**
+         * Triggers a build of a plan whose one container sets the given timeout, with an exercise timeout of 200 seconds,
+         * and asserts the timeout the queued job carries.
+         */
+        private void assertJobTimeoutOfContainer(int containerTimeoutSeconds, int expectedJobTimeoutSeconds) {
+            ProgrammingExerciseBuildConfig buildConfig = programmingExerciseUtilService.buildConfigOf(programmingExercise);
+            buildConfig.setTimeoutSeconds(200);
+            var container = new BuildContainerDTO("bounded", null, null, List.of(new BuildPhaseDTO("test", "echo test", BuildPhaseCondition.ALWAYS, false, List.of())),
+                    containerTimeoutSeconds);
+            buildConfig.setBuildPlanConfiguration(new BuildPlanPhasesDTO(null, null, List.of(container)).toBuildPlanConfiguration());
+            programmingExerciseBuildConfigRepository.save(buildConfig);
+            ProgrammingExerciseStudentParticipation studentParticipation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+
+            localCITriggerService.triggerBuild(studentParticipation, false);
+
+            await().until(() -> {
+                BuildJobQueueItem buildJobQueueItem = queuedJobs.peek();
+                return buildJobQueueItem != null && buildJobQueueItem.participationId() == studentParticipation.getId();
+            });
+            assertThat(queuedJobs.poll().buildConfig().timeoutSeconds()).isEqualTo(expectedJobTimeoutSeconds);
         }
 
         @ParameterizedTest
