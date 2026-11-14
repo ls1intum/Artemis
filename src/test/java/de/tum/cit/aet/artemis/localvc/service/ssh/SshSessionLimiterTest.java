@@ -61,4 +61,31 @@ class SshSessionLimiterTest {
 
         verify(first, never()).disconnect(anyInt(), anyString());
     }
+
+    @Test
+    void sessionThatClosesWhileItIsAdmittedDoesNotKeepItsSlot() throws Exception {
+        SshSessionLimiter limiter = new SshSessionLimiter(1);
+        ServerSession closing = sessionFrom("203.0.113.5");
+        // open when the admission starts, closed by the time the session is registered
+        when(closing.isClosed()).thenReturn(false, true);
+        limiter.sessionEvent(closing, Event.KeyEstablished);
+
+        ServerSession next = sessionFrom("203.0.113.5");
+        limiter.sessionEvent(next, Event.KeyEstablished);
+
+        verify(next, never()).disconnect(anyInt(), anyString());
+    }
+
+    @Test
+    void sessionThatIsAlreadyClosedIsNotCounted() throws Exception {
+        SshSessionLimiter limiter = new SshSessionLimiter(1);
+        ServerSession closed = sessionFrom("203.0.113.5");
+        when(closed.isClosed()).thenReturn(true);
+        limiter.sessionEvent(closed, Event.KeyEstablished);
+
+        ServerSession next = sessionFrom("203.0.113.5");
+        limiter.sessionEvent(next, Event.KeyEstablished);
+
+        verify(next, never()).disconnect(anyInt(), anyString());
+    }
 }
