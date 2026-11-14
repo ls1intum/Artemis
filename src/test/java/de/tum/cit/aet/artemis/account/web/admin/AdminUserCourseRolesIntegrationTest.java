@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.net.URI;
 import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -95,14 +96,17 @@ class AdminUserCourseRolesIntegrationTest extends AbstractSpringIntegrationIndep
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
-    void getCourseRoles_loginWithDot_isResolved() throws Exception {
-        User user = userUtilService.createAndSaveUser(TEST_PREFIX + "first.last");
+    void getCourseRoles_encodedLoginWithDotAndAtSign_isResolved() throws Exception {
+        User user = userUtilService.createAndSaveUserWithEmail(TEST_PREFIX + "first.last@example.org", "admincourseroles.first.last@example.org");
         Course course = addCourse("Dotted course", TEST_PREFIX + "dot");
         userUtilService.enrollUserInCourse(user, course, CourseRole.INSTRUCTOR);
 
-        assertThat(user.getLogin()).contains(".");
-        assertThat(getCourseRoles(user.getLogin()))
-                .containsExactly(new UserCourseRoleDTO(course.getId(), "Dotted course", TEST_PREFIX + "dot", DEFAULT_SEMESTER, CourseRole.INSTRUCTOR));
+        String encodedLogin = user.getLogin().replace("@", "%40");
+        String json = mockMvc.perform(get(URI.create("/api/account/admin/users/" + encodedLogin + "/course-roles"))).andExpect(status().isOk()).andReturn().getResponse()
+                .getContentAsString();
+        List<UserCourseRoleDTO> roles = objectMapper.readValue(json, new TypeReference<>() {
+        });
+        assertThat(roles).containsExactly(new UserCourseRoleDTO(course.getId(), "Dotted course", TEST_PREFIX + "dot", DEFAULT_SEMESTER, CourseRole.INSTRUCTOR));
     }
 
     @Test

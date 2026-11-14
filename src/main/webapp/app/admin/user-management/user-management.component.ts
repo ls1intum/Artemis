@@ -261,7 +261,6 @@ export class UserManagementComponent implements OnInit, OnDestroy {
                             searchTerm: this.searchTerm(),
                             sortingOrder: this.ascending() ? SortingOrder.ASCENDING : SortingOrder.DESCENDING,
                             sortedColumn: this.predicate(),
-                            filters: this.filters(),
                         },
                         this.filters(),
                     ),
