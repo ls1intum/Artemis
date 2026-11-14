@@ -3,7 +3,14 @@ import { RouterLink } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateService } from '@ngx-translate/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { TumAetUiButtonComponent, TumAetUiInputDirective, TumAetUiPaginatorComponent, TumAetUiTableDirective, TumAetUiTagComponent } from '@tumaet/ui-angular';
+import {
+    TumAetUiButtonComponent,
+    TumAetUiInputDirective,
+    TumAetUiPaginatorComponent,
+    TumAetUiTableDirective,
+    TumAetUiTableLayoutComponent,
+    TumAetUiTagComponent,
+} from '@tumaet/ui-angular';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { Exercise, ExerciseType, IncludedInOverallScore, getIcon } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -31,6 +38,7 @@ type ResultState = 'graded' | 'pending' | 'notSubmitted';
         TumAetUiInputDirective,
         TumAetUiPaginatorComponent,
         TumAetUiTableDirective,
+        TumAetUiTableLayoutComponent,
         TumAetUiTagComponent,
     ],
 })

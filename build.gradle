@@ -27,10 +27,16 @@ buildscript {
             force "org.apache.httpcomponents.core5:httpcore5-h2:5.4.4"
             // Force the patched jsoup onto the build-script / plugin classpath as well. org.owasp.dependencycheck
             // (dependency-check-core 13.0.0) resolves jsoup 1.23.1 there, which is affected by CVE-2026-75140 and is
-            // reported by the GitHub dependency graph even though the shipped WAR declares 1.23.2 directly. Build-time
+            // reported by the GitHub dependency graph even though the shipped WAR declares 1.24.1 directly. Build-time
             // only, not shipped. Keep equal to the project-level jsoup version below and to the minimum in
             // gradle/dependency-families.gradle (verifyBuildscriptClasspathPins).
-            force "org.jsoup:jsoup:1.23.2"
+            force "org.jsoup:jsoup:1.24.1"
+            // Force the patched org.json onto the build-script / plugin classpath as well. org.owasp.dependencycheck
+            // (dependency-check-core 13.0.0) resolves 20260522, which is affected by an unbounded numeric string
+            // resource exhaustion in JSONTokener (fixed in 20260719) and reported by the GitHub dependency graph via
+            // settings.gradle. Build-time only, not shipped; the test classpath pins its own version below. Keep equal
+            // to the minimum in gradle/dependency-families.gradle (verifyBuildscriptClasspathPins).
+            force "org.json:json:20260814"
         }
     }
     // The custom OpenAPI generator (generatorName "angular22", https://github.com/ls1intum/openapi-generator-angular22)
@@ -82,17 +88,17 @@ plugins {
     id "com.adarshr.test-logger" version "4.0.0"
     id "com.diffplug.spotless" version "${spotless_plugin_version}"
     id "com.github.andygoossens.modernizer" version "${modernizer_plugin_version}"
-    id "io.github.ben-manes.versions" version "0.66.0"
+    id "io.github.ben-manes.versions" version "0.67.0"
     id "com.github.node-gradle.node" version "${gradle_node_plugin_version}"
     id "com.google.cloud.tools.jib" version "3.5.4"
     id "com.gorylenko.gradle-git-properties" version "4.0.1"
     id "io.spring.dependency-management" version "1.1.7"
-    id "nebula.lint" version "21.3.0"
+    id "nebula.lint" version "21.4.1"
     id "org.liquibase.gradle" version "${liquibase_plugin_version}"
     id "org.owasp.dependencycheck" version "13.0.0"
     id "org.sonarqube" version "${sonarqube_plugin_version}"
     id "org.springframework.boot" version "${spring_boot_version}"
-    id "org.springdoc.openapi-gradle-plugin" version "1.9.0"
+    id "org.springdoc.openapi-gradle-plugin" version "2.1.0"
     // Bump this one by hand, never on the strength of a green build. The custom "angular22" generator on the
     // buildscript classpath above declares openapi-generator 7.21.0 and is discovered through ServiceLoader, so
     // raising the plugin runs that generator against a core it was not compiled against - and nothing in CI would
@@ -102,8 +108,9 @@ plugins {
     // src/main/webapp/app/openapi aside, `git checkout` it, switch version, regenerate, diff.
     // 7.21.0 -> 7.25.0 was checked that way: the generator loads and emits a complete client, and the only
     // difference is `{ [key: string]: any }` becoming `{ [key: string]: any | null }` for free-form maps, which is
-    // the same type in TypeScript.
-    id "org.openapi.generator" version "7.25.0"
+    // the same type in TypeScript. 7.25.0 -> 7.27.0 was checked the same way and produced an identical client apart
+    // from .openapi-generator/VERSION.
+    id "org.openapi.generator" version "7.27.0"
     id "com.google.osdetector" version "1.7.3"
     id "org.cyclonedx.bom" version "3.5.1"
 }
@@ -116,7 +123,7 @@ envProperties.each { key, value ->
 }
 
 group = "de.tum.cit.aet.artemis"
-version = "10.6"
+version = "10.8"
 description = "Interactive Learning with Individual Feedback"
 
 java {
@@ -126,7 +133,7 @@ java {
 }
 
 wrapper {
-    gradleVersion = "9.8.2"
+    gradleVersion = "9.9.1"
 }
 
 node {
@@ -245,6 +252,7 @@ tasks.named('generateGitProperties') {
 //         this build uses today; after a Spring Boot bump the graph walks 4.1.1's imports as well.
 ext["hazelcast.version"] = hazelcast_version
 ext["testcontainers-redis-module.version"] = testcontainers_redis_version
+ext["logback.version"] = logback_version
 
 // Pin the entire Jackson 2.x and 3.x families to releases outside every known jackson-databind vulnerable
 // range. Spring Boot / Spring AI manage older jackson BOMs as dependency-management constraints, which beat
@@ -262,8 +270,12 @@ ext["testcontainers-redis-module.version"] = testcontainers_redis_version
 // com.fasterxml.jackson.core:jackson-annotations (that artifact never moved to the tools.jackson group) at a
 // version trailing the Jackson 2 line, and io.spring.dependency-management lets a later import override an
 // earlier one. Keeping the Jackson 2 BOM last is what stops it from dragging jackson-annotations backwards.
+// OpenTelemetry is pinned the same way: the Spring Boot BOM manages opentelemetry-api at an older line (1.62.0),
+// which the GitHub dependency graph reports (GHSA-ccrj-gw8r-854m, fixed in 1.67.0) although the resolutionStrategy
+// force above already puts every runtime configuration on ${opentelemetry_version}.
 dependencyManagement {
     imports {
+        mavenBom "io.opentelemetry:opentelemetry-bom:${opentelemetry_version}"
         mavenBom "tools.jackson:jackson-bom:3.2.4"
         mavenBom "com.fasterxml.jackson:jackson-bom:2.22.4"
     }
@@ -488,7 +500,7 @@ dependencies {
     implementation "org.apache.sshd:sshd-sftp:${sshd_version}"
 
     // Allows generating UML diagrams from text descriptions in problem statement markdown files for programming exercises
-    implementation "net.sourceforge.plantuml:plantuml-mit:1.2026.9"
+    implementation "net.sourceforge.plantuml:plantuml-mit:1.2026.10"
 
     implementation "me.xdrop:fuzzywuzzy:1.4.0"
     implementation("org.yaml:snakeyaml") {
@@ -503,7 +515,7 @@ dependencies {
     implementation "ch.qos.logback:logback-classic"
     implementation "ch.qos.logback:logback-core"
 
-    implementation "org.jsoup:jsoup:1.23.2"
+    implementation "org.jsoup:jsoup:1.24.1"
     // Shibboleth 9.2.3 decodes all Base64 with a STRICT 76-column codec. Since commons-codec 1.23.0,
     // this rejects valid SAML metadata certificates and SAML messages with different whitespace.
     // Update commons-codec to 1.23.0 once the OpenSAML dependency brings in shib-support 9.3.0 with the fix for
@@ -631,7 +643,7 @@ dependencies {
     // passkey functionality to simplify login — Spring Security versions managed by the Spring Boot BOM.
     implementation "org.springframework.security:spring-security-webauthn"
     implementation "com.webauthn4j:webauthn4j-spring-security-core:0.12.0.RELEASE"
-    implementation "com.webauthn4j:webauthn4j-core:0.31.11.RELEASE"
+    implementation "com.webauthn4j:webauthn4j-core:0.32.0.RELEASE"
 
     implementation "org.springframework.security:spring-security-messaging"
     implementation "org.springframework.security:spring-security-ldap"
@@ -687,14 +699,14 @@ dependencies {
     runtimeOnly "io.jsonwebtoken:jjwt-jackson:${jwt_version}"
 
     // required by sshd-git; pinned to a patched release addressing GHSA-4jwv-qpf8-5w8v, GHSA-6w4m-2xhg-2658, GHSA-fwcp-hj66-p6g3
-    implementation "org.bouncycastle:bcpkix-jdk18on:1.86"
+    implementation "org.bouncycastle:bcpkix-jdk18on:1.87"
     // 1.86 is a joint release of every module, so the provider is back in step with its siblings and no longer
     // needs the out-of-band patch level 1.85.2 carried (AES CBC-256 via the id_aes256_CBC OID silently derived a
     // 192-bit key, bc-java #2390). The org.bouncycastle entry in gradle/dependency-families.gradle keeps accepting
     // such a patch, because BC ships one whenever a single module needs fixing between joint releases.
-    implementation "org.bouncycastle:bcprov-jdk18on:1.86"
+    implementation "org.bouncycastle:bcprov-jdk18on:1.87"
     // pulled transitively by sshd-git; pin to patched version
-    implementation "org.bouncycastle:bcpg-jdk18on:1.86"
+    implementation "org.bouncycastle:bcpg-jdk18on:1.87"
 
     // required for database connections
     // REMOVE_IN_ARTEMIS_11 (MySQL): remove the driver once MySQL support is removed
@@ -702,16 +714,16 @@ dependencies {
     implementation "org.postgresql:postgresql:42.7.14"
 
     // Required by JPlag
-    implementation "com.ibm.icu:icu4j-charset:78.3"
+    implementation "com.ibm.icu:icu4j-charset:79.1"
     // Required by exam session service
     implementation "com.github.seancfoley:ipaddress:5.6.2"
 
     // used for testing and Java Template Upgrade Service
     implementation "org.apache.pdfbox:pdfbox:3.0.8"
     implementation "org.apache.commons:commons-csv:1.14.1"
-    implementation "org.commonmark:commonmark:0.31.0"
-    implementation "org.commonmark:commonmark-ext-gfm-tables:0.31.0"
-    implementation "org.commonmark:commonmark-ext-gfm-strikethrough:0.31.0"
+    implementation "org.commonmark:commonmark:0.32.0"
+    implementation "org.commonmark:commonmark-ext-gfm-tables:0.32.0"
+    implementation "org.commonmark:commonmark-ext-gfm-strikethrough:0.32.0"
 
     implementation "commons-fileupload:commons-fileupload:1.6.0"
 
@@ -771,10 +783,10 @@ dependencies {
     }
     testImplementation "org.mockito:mockito-junit-jupiter:${mockito_version}"
 
-    testImplementation "io.github.classgraph:classgraph:4.8.199"
+    testImplementation "io.github.classgraph:classgraph:4.8.200"
     testImplementation "org.awaitility:awaitility:4.3.0"
     testImplementation "org.apache.maven.shared:maven-invoker:3.3.0"
-    testImplementation "org.gradle:gradle-tooling-api:9.8.2"
+    testImplementation "org.gradle:gradle-tooling-api:9.9.1"
     testImplementation "org.apache.maven.surefire:surefire-report-parser:3.6.1"
     testImplementation "io.zonky.test:embedded-database-spring-test:2.8.0"
     testImplementation "com.redis:testcontainers-redis:${testcontainers_redis_version}"

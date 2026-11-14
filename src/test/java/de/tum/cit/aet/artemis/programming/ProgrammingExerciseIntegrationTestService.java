@@ -86,6 +86,7 @@ import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
+import de.tum.cit.aet.artemis.exercise.util.AsyncDeletionTestUtilService;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.fileupload.util.ZipFileTestUtilService;
 import de.tum.cit.aet.artemis.localci.service.LocalVCLocalCITestService;
@@ -172,6 +173,9 @@ public class ProgrammingExerciseIntegrationTestService {
 
     @Autowired
     private CourseTestRepository courseRepository;
+
+    @Autowired
+    private AsyncDeletionTestUtilService asyncDeletionTestUtilService;
 
     @Autowired
     private ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
@@ -615,7 +619,8 @@ public class ProgrammingExerciseIntegrationTestService {
             mockDelegate.mockDeleteBuildPlan(projectKey, projectKey + "-" + planName.toUpperCase(Locale.ROOT), false);
         }
         mockDelegate.mockDeleteBuildPlanProject(projectKey, false);
-        request.delete(path, HttpStatus.OK, params);
+        request.delete(path, HttpStatus.ACCEPTED, params);
+        asyncDeletionTestUtilService.awaitExerciseDeletion(programmingExercise.getId());
     }
 
     void testProgrammingExerciseDelete_failToDeleteBuildPlan() throws Exception {
@@ -630,7 +635,9 @@ public class ProgrammingExerciseIntegrationTestService {
         }
         mockDelegate.mockDeleteBuildPlanProject(projectKey, false);
 
-        request.delete(path, HttpStatus.INTERNAL_SERVER_ERROR, params);
+        // the deletion is accepted and fails in the background
+        request.delete(path, HttpStatus.ACCEPTED, params);
+        asyncDeletionTestUtilService.awaitExerciseDeletionFailure(programmingExercise.getId());
     }
 
     void testProgrammingExerciseDelete_buildPlanDoesntExist() throws Exception {
@@ -645,7 +652,8 @@ public class ProgrammingExerciseIntegrationTestService {
         }
         mockDelegate.mockDeleteBuildPlanProject(projectKey, false);
 
-        request.delete(path, HttpStatus.OK, params);
+        request.delete(path, HttpStatus.ACCEPTED, params);
+        asyncDeletionTestUtilService.awaitExerciseDeletion(programmingExercise.getId());
     }
 
     void testProgrammingExerciseDelete_failToDeleteCiProject() throws Exception {
@@ -660,7 +668,9 @@ public class ProgrammingExerciseIntegrationTestService {
         }
         mockDelegate.mockDeleteBuildPlanProject(projectKey, true);
 
-        request.delete(path, HttpStatus.INTERNAL_SERVER_ERROR, params);
+        // the deletion is accepted and fails in the background
+        request.delete(path, HttpStatus.ACCEPTED, params);
+        asyncDeletionTestUtilService.awaitExerciseDeletionFailure(programmingExercise.getId());
     }
 
     // VCS project deletion uses local VCS in the test environment, so no external call fails.
@@ -677,7 +687,8 @@ public class ProgrammingExerciseIntegrationTestService {
         }
         mockDelegate.mockDeleteBuildPlanProject(projectKey, false);
 
-        request.delete(path, HttpStatus.OK, params);
+        request.delete(path, HttpStatus.ACCEPTED, params);
+        asyncDeletionTestUtilService.awaitExerciseDeletion(programmingExercise.getId());
     }
 
     // VCS repository deletion uses local VCS in the test environment, so no external call fails.
@@ -694,7 +705,8 @@ public class ProgrammingExerciseIntegrationTestService {
         }
         mockDelegate.mockDeleteBuildPlanProject(projectKey, false);
 
-        request.delete(path, HttpStatus.OK, params);
+        request.delete(path, HttpStatus.ACCEPTED, params);
+        asyncDeletionTestUtilService.awaitExerciseDeletion(programmingExercise.getId());
     }
 
     void testProgrammingExerciseDelete_invalidId_forbidden() throws Exception {
@@ -2278,6 +2290,18 @@ public class ProgrammingExerciseIntegrationTestService {
         request.put("/api/programming/programming-exercises/" + programmingExercise.getId() + "/re-evaluate",
                 UpdateProgrammingExerciseDTO.of(programmingExerciseToBeConflicted, programmingExerciseUtilService.buildConfigOf(programmingExerciseToBeConflicted)),
                 HttpStatus.CONFLICT);
+    }
+
+    void testReEvaluateAndUpdateProgrammingExercise_changedShortName_badRequest() throws Exception {
+        ProgrammingExercise programmingExercise = createCourseWithProgrammingExerciseForReEvaluation();
+        String originalShortName = programmingExercise.getShortName();
+        // the DTO is built from the changed values of the entity, which is not saved
+        programmingExercise.setShortName(originalShortName + "x");
+        var updateDTO = UpdateProgrammingExerciseDTO.of(programmingExercise, programmingExerciseUtilService.buildConfigOf(programmingExercise));
+
+        request.put("/api/programming/programming-exercises/" + programmingExercise.getId() + "/re-evaluate", updateDTO, HttpStatus.BAD_REQUEST);
+
+        assertThat(programmingExerciseTestRepository.findById(programmingExercise.getId()).orElseThrow().getShortName()).isEqualTo(originalShortName);
     }
 
     /**

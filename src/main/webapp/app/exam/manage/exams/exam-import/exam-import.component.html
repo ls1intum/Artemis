@@ -1,15 +1,21 @@
 <form>
     <!-- State 1: Selection of an exam for import -->
     @if (!exam()) {
-        <div class="flex flex-col gap-4">
-            <div class="flex items-center gap-2">
-                <label for="searchExam" jhiTranslate="artemisApp.examManagement.import.search"></label>:
-                <input tumAetUiInput id="searchExam" type="text" name="searchExcercise" [(ngModel)]="searchTerm" />
-                @if (loading()) {
-                    <span class="ms-2" jhiTranslate="artemisApp.exercise.import.loading"></span>
-                }
+        <tumaet-ui-table-layout [loading]="loading()" [empty]="content().resultsOnPage.length === 0 && !loading()">
+            <div tumAetUiTableToolbar class="flex min-w-0 flex-1 items-center gap-2">
+                <input
+                    tumAetUiInput
+                    tumAetUiInputSize="small"
+                    id="searchExam"
+                    type="search"
+                    name="searchExcercise"
+                    class="max-w-lg min-w-24 flex-1"
+                    [placeholder]="'artemisApp.examManagement.import.search' | artemisTranslate"
+                    [attr.aria-label]="'artemisApp.examManagement.import.search' | artemisTranslate"
+                    [(ngModel)]="searchTerm"
+                />
             </div>
-            <table tumAetUiTable striped [sortField]="sortedColumn" [sortOrder]="listSorting ? 1 : -1" (sortChange)="onSortChange($event)">
+            <table tumAetUiTable size="small" striped [sortField]="sortedColumn" [sortOrder]="listSorting ? 1 : -1" (sortChange)="onSortChange($event)">
                 <thead>
                     <tr>
                         <th tumAetUiSortableColumn="ID" class="w-[8.333%]"><span>#</span></th>
@@ -37,6 +43,7 @@
                             <td>
                                 @if (!subsequentExerciseGroupSelection()) {
                                     <button
+                                        severity="secondary"
                                         tumAetUiButton
                                         type="button"
                                         class="whitespace-nowrap"
@@ -58,17 +65,16 @@
                     }
                 </tbody>
             </table>
-            <div class="flex justify-between p-2">
-                <tumaet-ui-paginator
-                    [page]="state.page - 1"
-                    [pageSize]="state.pageSize"
-                    [totalRecords]="total()"
-                    [showRowsPerPage]="false"
-                    [showCurrentPageReport]="false"
-                    (pageChange)="onPageChange($event + 1)"
-                />
-            </div>
-        </div>
+            <tumaet-ui-paginator
+                tumAetUiTableFooter
+                [page]="state.page - 1"
+                [pageSize]="state.pageSize"
+                [totalRecords]="total()"
+                [showRowsPerPage]="false"
+                [showCurrentPageReport]="false"
+                (pageChange)="onPageChange($event + 1)"
+            />
+        </tumaet-ui-table-layout>
     }
     <!-- State 2: Selection of exercises to be imported after an exam was selected -->
     @if (exam(); as selectedExam) {
@@ -85,7 +91,7 @@
                 <jhi-exam-exercise-import [exam]="selectedExam" [importInSameCourse]="isImportInSameCourse()" [targetCourseId]="targetCourseId()" />
             </div>
             <div class="flex justify-end pt-4">
-                <button tumAetUiButton type="button" [disabled]="isImportingExercises()" (click)="performImportOfExerciseGroups()">
+                <button severity="secondary" tumAetUiButton type="button" [disabled]="isImportingExercises()" (click)="performImportOfExerciseGroups()">
                     @if (isImportingExercises()) {
                         <fa-icon [icon]="faSpinner" animation="spin" />
                     }

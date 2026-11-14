@@ -33,7 +33,15 @@
         @if (isSaving()) {
             <span jhiTranslate="entity.action.saving" class="badge bg-secondary align-content-center"></span>
         }
-        <button tumAetUiButton type="button" id="cancel-save" severity="secondary" size="small" (click)="onCancel.emit()">
+        <button
+            [attr.aria-label]="'entity.action.cancel' | artemisTranslate"
+            tumAetUiButton
+            type="button"
+            id="cancel-save"
+            severity="secondary"
+            size="small"
+            (click)="onCancel.emit()"
+        >
             <fa-icon [fixedWidth]="true" [icon]="faBan" class="sm" />
             <span class="hidden sm:inline" jhiTranslate="entity.action.cancel"></span>
         </button>
@@ -41,10 +49,12 @@
             tumAetUiButton
             type="button"
             id="save-entity"
+            [severity]="isImport() ? 'secondary' : 'primary'"
             class="aria-disabled:opacity-60 aria-disabled:cursor-not-allowed"
             size="small"
             [tumAetUiTooltip]="invalidReasonTexts()"
             [tumAetUiTooltipDescribesHost]="false"
+            [attr.aria-label]="saveTitle() | artemisTranslate"
             [attr.aria-disabled]="isSubmitDisabled()"
             [attr.aria-describedby]="invalidReasons().length ? invalidReasonsId : null"
             (click)="onSave()"

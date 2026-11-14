@@ -104,7 +104,7 @@
             <fa-icon [icon]="faBan" />
             <span jhiTranslate="entity.action.cancel"></span>
         </tumaet-ui-button>
-        <tumaet-ui-button size="small" [disabled]="!importData()" [loading]="isLoading()" (clicked)="importCompetencies()">
+        <tumaet-ui-button size="small" severity="secondary" [disabled]="!importData()" [loading]="isLoading()" (clicked)="importCompetencies()">
             <fa-icon [icon]="faFileImport" />
             <span jhiTranslate="entity.action.to-import"></span>
         </tumaet-ui-button>

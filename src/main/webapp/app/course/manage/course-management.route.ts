@@ -6,6 +6,7 @@ import { TutorialGroupManagementCourseResolver } from 'app/tutorialgroup/manage/
 import { PendingChangesGuard } from 'app/foundation/guard/pending-changes.guard';
 import { LocalCIGuard } from 'app/localci/shared/localci-guard.service';
 import { IrisGuard } from 'app/iris/shared/iris-guard.service';
+import { HyperionGuard } from 'app/hyperion/shared/hyperion-guard.service';
 import { AthenaGuard } from 'app/course/manage/services/athena-guard.service';
 import { FaqResolve } from 'app/communication/faq/faq-resolve.service';
 import { CourseManagementResolve } from 'app/course/manage/services/course-management-resolve.service';
@@ -127,6 +128,15 @@ export const courseManagementRoutes: Routes = [
                 },
                 canActivate: [UserRouteAccessService, IrisGuard],
                 canDeactivate: [PendingChangesGuard],
+            },
+            {
+                path: ':courseId/smart-quizzes',
+                loadComponent: () => import('app/hyperion/manage/quiz-question-pool/quiz-question-pool.component').then((m) => m.QuizQuestionPoolComponent),
+                data: {
+                    authorities: IS_AT_LEAST_EDITOR,
+                    pageTitle: 'artemisApp.hyperion.quizQuestionPool.title',
+                },
+                canActivate: [UserRouteAccessService, HyperionGuard],
             },
             {
                 path: ':courseId/athena-settings',

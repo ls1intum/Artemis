@@ -330,10 +330,10 @@
             </div>
         }
         <!-- Overview Table -->
-        @if (registrationsDisplayedInTable() && registrationsDisplayedInTable().length > 0) {
+        @if (isImportDone() || registrationsDisplayedInTable()?.length) {
             <div class="mb-4! mt-6!">
-                <div class="table-wrapper-scroll-y scrollbar">
-                    <table tumAetUiTable size="small" [striped]="true" class="mt-2" data-testid="tutorial-groups-import-preview">
+                <tumaet-ui-table-layout class="[--table-layout-offset:22rem] max-md:[--table-layout-offset:30rem]" [empty]="!registrationsDisplayedInTable()?.length">
+                    <table tumAetUiTable size="small" [striped]="true" data-testid="tutorial-groups-import-preview">
                         <thead>
                             <tr>
                                 <th scope="col">#</th>
@@ -404,7 +404,7 @@
                             }
                         </tbody>
                     </table>
-                </div>
+                </tumaet-ui-table-layout>
             </div>
         }
     </div>
@@ -441,6 +441,7 @@
                 @if (!isImportDone()) {
                     <button
                         tumAetUiButton
+                        severity="secondary"
                         size="small"
                         type="submit"
                         id="import"

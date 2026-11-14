@@ -2,7 +2,7 @@
 id: upgrade-guide
 title: Upgrade Guide
 sidebar_label: Upgrade Guide
-last_reviewed: 2026-11-03
+last_reviewed: 2026-11-09
 ---
 
 import Callout from "../../src/components/Callout/Callout";
@@ -196,6 +196,44 @@ Restore the backup taken in step 4 of the upgrade procedure if the cause cannot 
 ## Version-Specific Migration Steps
 
 Some releases change behavior in a way that requires a one-time action on existing data. These steps are additional to the upgrade scenarios above.
+
+### 10.8: Client Address of Requests
+
+Artemis takes the address of a client from the address that Tomcat resolved for the request, and no longer reads `X-Forwarded-For` or other address headers itself. This applies to all rate limits except the one for Git over HTTP, which counts the address as described in the section linked below, to the check of internal endpoints (`artemis.security.internal.allowed-cidrs`) and to the address that is stored in an exam session.
+Tomcat believes forwarding headers only from the proxies in `server.tomcat.remoteip.internal-proxies`, which are the private networks by default. **If your reverse proxy reaches Artemis from a public address, name it there before you upgrade.** Otherwise all clients have the address of the proxy,
+share one budget of the login rate limits, and appear with one address in their exam sessions. See [Client Address of Git Requests](/admin/production-setup/security#client-address-of-git-requests).
+
+### 10.7: Rate Limit of Git Operations
+
+The authentication of git operations over HTTP and SSH has its own rate limit setting, `artemis.rate-limiting.git-authentication-requests-per-minute` (`ARTEMIS_RATELIMITING_GITAUTHENTICATIONREQUESTSPERMINUTE`), which is **30 per minute and client address** unless you set it.
+Before, git shared `authentication-requests-per-minute` with the logins. After the upgrade, that value only applies to logins, and the two limits no longer add up to one: **with the defaults, one client address may now make up to 30 login attempts and up to 30 git authentications
+per minute, where it could make 30 in total.** With a login limit of your own, for example 300, an address that could make 300 requests of both kinds in total may now make 300 logins and 30 git authentications.
+That is more room for guessing a password, because git over HTTP can verify a password like a login does. **Review the git limit on every installation**, whether you raised, lowered or never set the login limit:
+
+- If you **raised** `authentication-requests-per-minute` so that a lecture hall behind one address could push at a deadline, set the git setting to the same value before you upgrade, or git drops to 30.
+- If you **lowered** it, for example to 5, to make guessing harder, set the git setting to the same value too, or git is at 30 while the logins stay at 5.
+- If you never set it, decide whether 30 git authentications per client address and minute is what you want next to 30 logins, and lower the git setting if not.
+
+See [Rate Limiting](/admin/production-setup/security#rate-limiting).
+
+### 10.4: Course-Level Science Data Collection
+
+Science data collection is enabled per course and needs each student's consent in that course. See
+[Science Data Collection](/admin/science-data-collection). The migration changes the `science_event` table on the
+first start:
+
+- It adds a `course_id` column and fills it for existing events from the lecture, lecture unit, exercise, competency,
+  learning path or course each event refers to. Events whose resource no longer exists keep an empty `course_id`.
+- It adds a foreign key from `course_id` to `course`, so deleting a course deletes its science events, and two indexes,
+  on `course_id, timestamp, id` and on `identity, course_id`.
+- It drops the `science_setting` table, which held the global science preference of each user. These preferences are
+  not carried over: no course collects data until an administrator enables it, and the students of an enabled course
+  are asked again.
+
+The backfill, the foreign key and each index process the whole `science_event` table. On an instance that has
+collected events for a long time, that table can be large, so expect the first start to take correspondingly longer,
+and take the database backup described in the upgrade procedure right before you upgrade. Rolling the migration back
+recreates `science_setting` empty; the dropped preferences can only be restored from that backup.
 
 ### 10.1: Installation Metadata in Production
 

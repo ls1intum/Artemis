@@ -13,6 +13,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.stream.IntStream;
 
 import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
@@ -200,6 +201,20 @@ class AttachmentVideoUnitsIntegrationTest extends AbstractSpringIntegrationIndep
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void getAttachmentVideoUnitsData_asInstructor_slideMentioningOutlineWithoutEnoughUnitsIsIgnored() throws Exception {
+        // Page 12 contains the word "Outline" but lists only two units, so it cannot be the outline slide of a third unit
+        var lectureFile = createLectureFile(true, 12);
+        String filename = manualFileUpload(lecture1.getId(), lectureFile);
+
+        LectureUnitSplitInformationDTO lectureUnitSplitInfo = request.get("/api/lecture/lectures/" + lecture1.getId() + "/attachment-video-units/data/" + filename, HttpStatus.OK,
+                LectureUnitSplitInformationDTO.class);
+
+        assertThat(lectureUnitSplitInfo.units()).hasSize(2);
+        assertThat(lectureUnitSplitInfo.numberOfPages()).isEqualTo(20);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void getAttachmentVideoUnitsData_asInstructor_realSlides() throws Exception {
         var realFile = readFromFile();
         String filename = manualFileUpload(lecture1.getId(), realFile);
@@ -352,14 +367,16 @@ class AttachmentVideoUnitsIntegrationTest extends AbstractSpringIntegrationIndep
     /**
      * Generates a lecture file with 20 pages and with 2 slides that contain Outline
      *
-     * @param shouldBePDF true if the file should be PDF, false if it should be word doc
+     * @param shouldBePDF            true if the file should be PDF, false if it should be word doc
+     * @param additionalOutlinePages pages (1-based) that additionally contain the word Outline and list the same two units
      * @return MockMultipartFile lecture file
      */
-    private MockMultipartFile createLectureFile(boolean shouldBePDF) throws IOException {
+    private MockMultipartFile createLectureFile(boolean shouldBePDF, int... additionalOutlinePages) throws IOException {
         var font = new PDType1Font(Standard14Fonts.FontName.TIMES_ROMAN);
         try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream(); PDDocument document = new PDDocument()) {
             if (shouldBePDF) {
                 for (int i = 1; i <= 20; i++) {
+                    final int page = i;
                     document.addPage(new PDPage());
                     PDPageContentStream contentStream = new PDPageContentStream(document, document.getPage(i - 1));
 
@@ -367,7 +384,14 @@ class AttachmentVideoUnitsIntegrationTest extends AbstractSpringIntegrationIndep
                         case 6 -> generateBreakSlide(contentStream, font);
                         case 7 -> generateOutlineSlide(contentStream, font, "Example solution");
                         case 2, 8 -> generateOutlineSlide(contentStream, font, "Outline");
-                        default -> generateContentSlide(contentStream, font);
+                        default -> {
+                            if (IntStream.of(additionalOutlinePages).anyMatch(outlinePage -> outlinePage == page)) {
+                                generateOutlineSlide(contentStream, font, "Outline");
+                            }
+                            else {
+                                generateContentSlide(contentStream, font);
+                            }
+                        }
                     }
                 }
                 document.save(outputStream);

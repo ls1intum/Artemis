@@ -201,6 +201,34 @@ describe('Lti13DeepLinkingComponent', () => {
         expect(alertServiceMock.error).toHaveBeenCalledWith('artemisApp.lti13.deepLinking.unknownError');
     });
 
+    it.each([
+        ['is cancelled', () => Promise.resolve(false)],
+        ['fails', () => Promise.reject(new Error('navigation failed'))],
+    ])('shows an error and stops linking when the navigation to the content selection %s', async (_case, navigation) => {
+        component.selectExercise(exercise1.id);
+        component.courseId = 123;
+        ltiApiMock.lti13DeepLinking.mockReturnValue(of({ targetLinkUri: 'http://localhost:8090/lti/select-content?jwt=token&id=course' }));
+        routerMock.navigateByUrl.mockImplementation(navigation);
+
+        component.sendDeepLinkRequest();
+
+        await vi.waitFor(() => expect(component.isLinking()).toBe(false));
+        expect(alertServiceMock.error).toHaveBeenCalledWith('artemisApp.lti13.deepLinking.unknownError');
+    });
+
+    it('keeps linking while the navigation to the content selection succeeds', async () => {
+        component.selectExercise(exercise1.id);
+        component.courseId = 123;
+        ltiApiMock.lti13DeepLinking.mockReturnValue(of({ targetLinkUri: 'http://localhost:8090/lti/select-content?jwt=token&id=course' }));
+
+        component.sendDeepLinkRequest();
+        await Promise.resolve();
+
+        expect(routerMock.navigateByUrl).toHaveBeenCalledOnce();
+        expect(component.isLinking()).toBe(true);
+        expect(alertServiceMock.error).not.toHaveBeenCalled();
+    });
+
     it('should retrieve course lectures on init when user is authenticated', async () => {
         const loggedInUser: User = { id: 3, login: 'lti_user', firstName: 'TestUser', lastName: 'Moodle' } as User;
         accountServiceMock.identity.mockReturnValue(Promise.resolve(loggedInUser));
@@ -343,12 +371,28 @@ describe('Lti13DeepLinkingComponent', () => {
 
     it('should sort exercises by title in ascending order', () => {
         component.exercises.set([exercise1, exercise2, exercise3]);
-        component.predicate = 'title';
-        component.reverse = false;
+        component.predicate.set('title');
+        component.reverse.set(false);
 
         component.sortRows();
 
         expect(sortServiceMock.sortByProperty).toHaveBeenCalledWith(expect.arrayContaining([exercise1, exercise2, exercise3]), 'title', false);
+    });
+
+    it('should apply the column header sort and re-sort the exercises', () => {
+        component.exercises.set([exercise1, exercise2, exercise3]);
+
+        component.onSort({ field: 'title', order: 1 });
+
+        expect(component.predicate()).toBe('title');
+        expect(component.reverse()).toBe(true);
+        expect(sortServiceMock.sortByProperty).toHaveBeenLastCalledWith(expect.arrayContaining([exercise1, exercise2, exercise3]), 'title', true);
+
+        component.onSort({ field: 'type', order: -1 });
+
+        expect(component.predicate()).toBe('type');
+        expect(component.reverse()).toBe(false);
+        expect(sortServiceMock.sortByProperty).toHaveBeenLastCalledWith(expect.arrayContaining([exercise1, exercise2, exercise3]), 'type', false);
     });
 
     it('should handle empty course gracefully', async () => {

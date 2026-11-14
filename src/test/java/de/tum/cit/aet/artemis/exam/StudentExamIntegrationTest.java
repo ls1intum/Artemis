@@ -123,6 +123,7 @@ import de.tum.cit.aet.artemis.exercise.repository.SubmissionVersionRepository;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationDeletionService;
 import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.exercise.test_repository.SubmissionTestRepository;
+import de.tum.cit.aet.artemis.exercise.util.AsyncDeletionTestUtilService;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadSubmission;
@@ -170,6 +171,9 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
     private static final String TEST_PREFIX = "studexam";
 
     private static final String OTHER_STUDENT = TEST_PREFIX + "other" + "student42";
+
+    @Autowired
+    private AsyncDeletionTestUtilService asyncDeletionTestUtilService;
 
     @Autowired
     private ProgrammingExerciseTestService programmingExerciseTestService;
@@ -483,7 +487,8 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         // change back to instructor user
         userUtilService.changeUser(TEST_PREFIX + "instructor1");
         // Clean up to prevent exceptions during reset database
-        request.delete("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId(), HttpStatus.OK);
+        request.delete("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId(), HttpStatus.ACCEPTED);
+        asyncDeletionTestUtilService.awaitExamDeletion(exam.getId());
     }
 
     @Test
@@ -588,8 +593,10 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         jenkinsRequestMockProvider.mockDeleteBuildPlan(programmingExercise.getProjectKey(),
                 programmingExercise.getProjectKey() + "-PRACTICE" + instructor.getParticipantIdentifier().toUpperCase(Locale.ROOT), false);
 
-        request.delete("/api/exam/courses/" + exam2.getCourse().getId() + "/exams/" + exam2.getId(), HttpStatus.OK);
+        request.delete("/api/exam/courses/" + exam2.getCourse().getId() + "/exams/" + exam2.getId(), HttpStatus.ACCEPTED);
+        asyncDeletionTestUtilService.awaitExamDeletion(exam2.getId());
 
+        assertThat(examRepository.findById(exam2.getId())).isEmpty();
         assertThat(studentExamRepository.findAllTestRunsByExamId(exam2.getId())).isEmpty();
         assertThat(studentExamRepository.findByExamId(exam2.getId())).isEmpty();
     }
@@ -674,6 +681,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         final HttpHeaders headers = new HttpHeaders();
         headers.set("User-Agent", "foo");
         headers.set("X-Artemis-Client-Fingerprint", "bar");
+        // An address header of the request is not used, the session stores the address that the servlet container resolved
         headers.set("X-Forwarded-For", "10.0.28.1");
         return headers;
     }
@@ -761,7 +769,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         assertThat(examSession.getIpAddress()).isNull();
         assertThat(optionalExamSession.get().getUserAgent()).isEqualTo("foo");
         assertThat(optionalExamSession.get().getBrowserFingerprintHash()).isEqualTo("bar");
-        assertThat(optionalExamSession.get().getIpAddressAsIpAddress().toNormalizedString()).isEqualTo("10.0.28.1");
+        assertThat(optionalExamSession.get().getIpAddressAsIpAddress().toNormalizedString()).isEqualTo("127.0.0.1");
     }
 
     /**
@@ -1277,6 +1285,31 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testExamAnnouncementHistory() throws Exception {
+        exam1.setVisibleDate(ZonedDateTime.now().minusHours(3));
+        examRepository.save(exam1);
+        String base = "/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/announcements";
+        var first = request.postWithPlainStringResponseBody(base, "First message", ExamWideAnnouncementEventDTO.class, HttpStatus.OK);
+        var second = request.postWithPlainStringResponseBody(base, "Second message", ExamWideAnnouncementEventDTO.class, HttpStatus.OK);
+        // History remains available after conduction, even when the exam is no longer visible.
+        exam1.setEndDate(ZonedDateTime.now().minusMinutes(1));
+        exam1.setVisibleDate(ZonedDateTime.now().plusHours(1));
+        examRepository.save(exam1);
+        var history = request.getList(base, HttpStatus.OK, ExamWideAnnouncementEventDTO.class);
+        assertThat(history).extracting(ExamWideAnnouncementEventDTO::id).containsExactly(second.id(), first.id());
+        assertThat(history).extracting(ExamWideAnnouncementEventDTO::text).containsExactly("Second message", "First message");
+        assertThat(history).allSatisfy(event -> assertThat(event.createdDate()).isNotNull());
+        request.get("/api/exam/courses/" + course1.getId() + "/exams/" + Long.MAX_VALUE + "/announcements", HttpStatus.NOT_FOUND, List.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testExamAnnouncementHistoryRejectsStudents() throws Exception {
+        request.get("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/announcements", HttpStatus.FORBIDDEN, List.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testExamsCanNotBeSentBeforeVisibleDate() throws Exception {
         exam1.setVisibleDate(ZonedDateTime.now().plusMinutes(1));
         exam1 = examRepository.save(exam1);
@@ -1301,6 +1334,18 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         assertThat(result.text()).isEqualTo(testMessage);
         assertThat(result.createdDate()).isCloseTo(Instant.now(), within(5, ChronoUnit.SECONDS));
 
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void testExamAttendanceCheckRejectsTooLongMessage() throws Exception {
+        exam1.setVisibleDate(ZonedDateTime.now().minusMinutes(1));
+        exam1 = examRepository.save(exam1);
+
+        var tooLongMessage = "a".repeat(1001);
+        request.postWithPlainStringResponseBody(
+                "/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/students/" + studentExam1.getUser().getLogin() + "/attendance-check", tooLongMessage,
+                ExamAttendanceCheckEventDTO.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -3434,7 +3479,8 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         mockDeleteProgrammingExercise(programmingExercise, users);
 
         await().atMost(Duration.ofMinutes(2)).pollInterval(10, TimeUnit.MILLISECONDS).until(participantScoreScheduleService::isIdle);
-        request.delete("/api/exam/courses/" + exam2.getCourse().getId() + "/exams/" + exam2.getId(), HttpStatus.OK);
+        request.delete("/api/exam/courses/" + exam2.getCourse().getId() + "/exams/" + exam2.getId(), HttpStatus.ACCEPTED);
+        asyncDeletionTestUtilService.awaitExamDeletion(exam2.getId());
         assertThat(examRepository.findById(exam2.getId())).as("Exam was deleted").isEmpty();
     }
 

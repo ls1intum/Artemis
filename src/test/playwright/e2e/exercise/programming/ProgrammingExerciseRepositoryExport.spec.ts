@@ -270,8 +270,9 @@ test.describe('Programming exercise repository export', { tag: '@slow' }, () => 
      */
     test('Exports the exercise material for re-import', async ({ page, login }) => {
         await login(instructor, `/course-management/${course.id}/programming-exercises/${exercise.id}`);
+        await page.getByTestId('exercise-more-actions').click();
         const { filePath } = await downloadArchive(page, async () => {
-            await page.locator('jhi-programming-exercise-instructor-exercise-download button').first().click();
+            await page.getByTestId('download-exercise').click();
         });
 
         const entries = await readArchiveEntries(filePath);
@@ -316,8 +317,9 @@ test.describe('Programming exercise repository export', { tag: '@slow' }, () => 
      */
     test('Stores nested archives but still deflates plain files', async ({ page, login }) => {
         await login(instructor, `/course-management/${course.id}/programming-exercises/${exercise.id}`);
+        await page.getByTestId('exercise-more-actions').click();
         const { filePath } = await downloadArchive(page, async () => {
-            await page.locator('jhi-programming-exercise-instructor-exercise-download button').first().click();
+            await page.getByTestId('download-exercise').click();
         });
 
         const entries = await readArchiveEntries(filePath);

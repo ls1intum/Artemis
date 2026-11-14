@@ -1,6 +1,6 @@
 import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { Faq, FaqState, UpdateFaqDTO } from 'app/communication/shared/entities/faq.model';
-import { faCancel, faCheck, faEdit, faFileImport, faFilter, faPencilAlt, faPlus, faQuestion, faSort, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faCancel, faCheck, faEdit, faFileImport, faFilter, faPencilAlt, faPlus, faQuestion, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { BehaviorSubject, Subject, Subscription } from 'rxjs';
 import { debounceTime, map } from 'rxjs/operators';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -18,20 +18,27 @@ import { NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
-import { SortByDirective } from 'app/foundation/sort/directive/sort-by.directive';
-import { SortDirective } from 'app/foundation/sort/directive/sort.directive';
 import { CommonModule } from '@angular/common';
 import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 import { CustomExerciseCategoryBadgeComponent } from 'app/exercise/exercise-categories/custom-exercise-category-badge/custom-exercise-category-badge.component';
 import { CourseTitleBarActionsDirective } from 'app/course/shared/directives/course-title-bar-actions.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { FaqImportDialogComponent } from './import/faq-import-dialog.component';
-import { TumAetUiButtonComponent, TumAetUiEmptyStateComponent } from '@tumaet/ui-angular';
+import {
+    TumAetUiButtonComponent,
+    TumAetUiButtonDirective,
+    TumAetUiEmptyStateComponent,
+    TumAetUiTableDirective,
+    TumAetUiTableLayoutComponent,
+    TumAetUiTableSortEvent,
+    TumAetUiTableSortableColumnComponent,
+} from '@tumaet/ui-angular';
 @Component({
     selector: 'jhi-faq',
     templateUrl: './faq.component.html',
     styleUrls: [],
     imports: [
+        TumAetUiButtonDirective,
         CustomExerciseCategoryBadgeComponent,
         SearchFilterComponent,
         NgbDropdownModule,
@@ -40,8 +47,9 @@ import { TumAetUiButtonComponent, TumAetUiEmptyStateComponent } from '@tumaet/ui
         FontAwesomeModule,
         DeleteButtonDirective,
         RouterModule,
-        SortByDirective,
-        SortDirective,
+        TumAetUiTableDirective,
+        TumAetUiTableLayoutComponent,
+        TumAetUiTableSortableColumnComponent,
         CommonModule,
         CourseTitleBarActionsDirective,
         ArtemisTranslatePipe,
@@ -78,8 +86,8 @@ export class FaqComponent implements OnInit, OnDestroy {
 
     readonly activeFilters = signal(new Set<string>());
     searchInput = new BehaviorSubject<string>('');
-    predicate = 'id';
-    ascending = true;
+    readonly predicate = signal('id');
+    readonly ascending = signal(true);
 
     // Icons
     protected readonly faEdit = faEdit;
@@ -87,14 +95,13 @@ export class FaqComponent implements OnInit, OnDestroy {
     protected readonly faTrash = faTrash;
     protected readonly faPencilAlt = faPencilAlt;
     protected readonly faFilter = faFilter;
-    protected readonly faSort = faSort;
     protected readonly faCancel = faCancel;
     protected readonly faCheck = faCheck;
     protected readonly faQuestion = faQuestion;
 
     constructor() {
-        this.predicate = 'id';
-        this.ascending = true;
+        this.predicate.set('id');
+        this.ascending.set(true);
     }
 
     ngOnInit() {
@@ -145,10 +152,16 @@ export class FaqComponent implements OnInit, OnDestroy {
         this.filteredFaqs.set(this.faqService.applyFilters(this.activeFilters(), this.faqs ?? []));
     }
 
+    onSort(event: TumAetUiTableSortEvent): void {
+        this.predicate.set(event.field);
+        this.ascending.set(event.order === 1);
+        this.sortRows();
+    }
+
     sortRows() {
         // sortByProperty sorts in place and returns the same array reference; spread into a new
         // array so the signal emits a fresh reference and the template re-renders (zoneless).
-        this.filteredFaqs.set([...this.sortService.sortByProperty(this.filteredFaqs(), this.predicate, this.ascending)]);
+        this.filteredFaqs.set([...this.sortService.sortByProperty(this.filteredFaqs(), this.predicate(), this.ascending())]);
     }
 
     /**

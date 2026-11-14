@@ -11,12 +11,14 @@
                 <jhi-programming-exercise-instructor-submission-state [exercise]="exercise()!" [shouldToggle]="true" [toggleBreakpoint]="'md'" />
             }
             @if (exercise()!.isAtLeastInstructor && !exercise()!.teamMode) {
-                <jhi-external-submission class="inline-block" [exercise]="exercise()!" />
+                <jhi-external-submission class="inline-block" [exercise]="exercise()!" (resultCreated)="refresh()" />
             }
             @if (exercise()!.isAtLeastInstructor) {
                 <button
+                    severity="secondary"
                     type="button"
                     jhi-exercise-action-button
+                    [smallButton]="true"
                     [buttonIcon]="faDownload"
                     [buttonLabel]="'entity.action.export' | artemisTranslate"
                     [hideLabelMobile]="true"
@@ -27,7 +29,7 @@
                     <h5 jhiTranslate="artemisApp.exercise.export.options"></h5>
                     <button
                         size="small"
-                        severity="info"
+                        severity="secondary"
                         tumAetUiButton
                         type="button"
                         class="me-1"
@@ -46,7 +48,7 @@
                     }
                 </tumaet-ui-popover>
             }
-            <button size="small" severity="primary" tumAetUiButton type="button" [attr.aria-label]="'artemisApp.exercise.refresh' | artemisTranslate" (click)="refresh()">
+            <button size="small" severity="secondary" tumAetUiButton type="button" [attr.aria-label]="'artemisApp.exercise.refresh' | artemisTranslate" (click)="refresh()">
                 <fa-icon [icon]="faSync" />
                 <span class="hidden md:inline" jhiTranslate="artemisApp.exercise.refresh"></span>
             </button>
@@ -60,7 +62,7 @@
                     <strong class="text-primary"> {{ 'artemisApp.assessment.dashboard.activeFilter' | artemisTranslate }}: </strong>
                     <span class="ms-1" jhiTranslate="artemisApp.exercise.showingOnlyInRange" [translateValues]="{ range: rangeFilter()!.toString() }"></span>
                 </span>
-                <button severity="primary" tumAetUiButton type="button" (click)="resetFilterOptions()" jhiTranslate="artemisApp.assessment.dashboard.resetFilter"></button>
+                <button severity="secondary" tumAetUiButton type="button" (click)="resetFilterOptions()" jhiTranslate="artemisApp.assessment.dashboard.resetFilter"></button>
             </h4>
         }
         <jhi-participation-access-notice [exercise]="exercise()!" />
@@ -112,9 +114,10 @@
         @if (exercise()!.type === ExerciseType.PROGRAMMING && canAccessLiveRepository()) {
             <a
                 size="small"
-                severity="info"
+                severity="warn"
                 tumAetUiButton
-                [routerLink]="['/courses', course()!.id, 'exercises', 'programming-exercises', exercise()!.id, 'code-editor', dto.participationId]"
+                data-testid="participation-online-editor"
+                [routerLink]="onlineEditorLink(dto.participationId)"
                 [attr.aria-label]="'artemisApp.participation.onlineEditor' | artemisTranslate"
                 [jhiFeatureToggleLink]="FeatureToggle.ProgrammingExercises"
             >
@@ -136,7 +139,7 @@
         @if (basicPresentationEnabled() && !dto.testRun && dto.presentationScore !== 1) {
             <button
                 size="small"
-                severity="info"
+                severity="primary"
                 tumAetUiButton
                 type="button"
                 [attr.aria-label]="'artemisApp.participation.addPresentation.label' | artemisTranslate"
@@ -149,7 +152,7 @@
         @if (gradedPresentationEnabled() && !dto.testRun && hasGradedPresentationChanged(dto) && dto.presentationScore !== undefined) {
             <button
                 size="small"
-                severity="info"
+                severity="primary"
                 tumAetUiButton
                 type="button"
                 [disabled]="(dto.presentationScore ?? 0) < 0 || (dto.presentationScore ?? 0) > 100"
@@ -308,7 +311,7 @@
                     (inputValidityChange)="setDueDateTextValidity(cell.data.participationId, $event)"
                 />
                 <button
-                    severity="success"
+                    severity="primary"
                     variant="outlined"
                     size="small"
                     tumAetUiButton
@@ -320,7 +323,7 @@
                     <fa-icon [icon]="faCheck" />
                 </button>
                 <button
-                    severity="danger"
+                    severity="secondary"
                     variant="outlined"
                     size="small"
                     tumAetUiButton
@@ -347,6 +350,7 @@
             }
             @if (exercise()!.isAtLeastInstructor) {
                 <button
+                    severity="warn"
                     variant="text"
                     size="small"
                     tumAetUiButton

@@ -52,6 +52,7 @@
     tumaet-ui-tab-panel,
     tumaet-ui-tab-panels,
     tumaet-ui-table,
+    tumaet-ui-table-layout,
     tumaet-ui-table-virtual-scroll,
     tumaet-ui-tabs,
     tumaet-ui-tag,
@@ -102,18 +103,12 @@
     border-radius: var(--tumaet-ui-radius-md);
 }
 
-.tumaet-ui-btn::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    border-radius: inherit;
-    background-color: transparent;
-    pointer-events: none;
-    transition: background-color 0.15s ease;
+.tumaet-ui-btn:hover:not(:disabled):not([aria-disabled='true']) {
+    box-shadow: inset 0 0 0 999px var(--tumaet-ui-button-hover-overlay);
 }
 
-.tumaet-ui-btn:hover:not(:disabled):not([aria-disabled='true'])::after {
-    background-color: color-mix(in srgb, var(--tumaet-ui-text-color) 5%, transparent);
+.tumaet-ui-btn:active:not(:disabled):not([aria-disabled='true']) {
+    box-shadow: inset 0 0 0 999px var(--tumaet-ui-button-active-overlay);
 }
 
 .tumaet-ui-btn[aria-disabled='true'] {
@@ -121,7 +116,7 @@
 }
 
 .tumaet-ui-btn:focus-visible {
-    outline: 2px solid var(--tumaet-ui-focus-color);
+    outline: 2px solid var(--tumaet-ui-button-focus-color);
     outline-offset: 2px;
 }
 

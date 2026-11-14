@@ -27,7 +27,7 @@ import { IS_AT_LEAST_ADMIN, IS_AT_LEAST_EDITOR, IS_AT_LEAST_TUTOR } from 'app/fo
 import { TranslateService } from '@ngx-translate/core';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { LANGUAGES } from 'app/core/language/shared/language.constants';
-import { faBars, faChevronRight, faCog, faFlag, faLock, faSignOutAlt, faUser, faUserShield, faWrench } from '@fortawesome/free-solid-svg-icons';
+import { faBars, faChevronRight, faCog, faFlag, faLock, faSignOutAlt, faUser, faUserShield } from '@fortawesome/free-solid-svg-icons';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { onError } from 'app/foundation/util/global.utils';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
@@ -105,7 +105,6 @@ export class NavbarComponent implements OnInit, OnDestroy {
     protected readonly faBars = faBars;
     protected readonly faUser = faUser;
     protected readonly faCog = faCog;
-    protected readonly faWrench = faWrench;
     protected readonly faLock = faLock;
     protected readonly faFlag = faFlag;
     protected readonly faSignOutAlt = faSignOutAlt;
@@ -125,7 +124,6 @@ export class NavbarComponent implements OnInit, OnDestroy {
     languages = LANGUAGES;
     readonly version = signal<string>(undefined!);
     readonly currAccount = signal<User | undefined>(undefined);
-    isRegistrationEnabled = false;
     readonly passwordResetEnabled = signal(false);
     readonly breadcrumbs = signal<Breadcrumb[]>([]);
     breadcrumbSubscriptions: Subscription[] = [];
@@ -145,6 +143,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
     readonly isExamStarted = signal(false);
     readonly currentCourse = this.courseStorageService.currentCourse;
     readonly currentRoute = getCurrentRouteSignal(this.router);
+    readonly navigationContextIndicatorData = computed(() => this.computeNavigationContextIndicatorData());
     readonly routeIsAtStudentCourseView = getSignalBasedOnRoute(this.router, this.isStudentCourseViewRoute);
     readonly routeIsAtCourseManagementView = getSignalBasedOnRoute(this.router, this.isCourseManagementViewRoute);
     readonly perspectiveSwitchLinks = computed(() => this.computePerspectiveSwitchLinks());
@@ -310,6 +309,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
         teams: 'artemisApp.team.home.title',
         ratings: 'artemisApp.ratingList.pageTitle',
         competency_management: 'artemisApp.competency.manage.title',
+        smart_quizzes: 'artemisApp.hyperion.quizQuestionPool.title',
         prerequisite_management: 'artemisApp.prerequisite.manage.title',
         learning_path_management: 'artemisApp.learningPath.manageLearningPaths.title',
         assessment_locks: 'artemisApp.assessment.locks.home.title',
@@ -412,7 +412,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
             return;
         }
 
-        const path = fullURI.split('?')[0].replace(/\/+$/, '');
+        const path = fullURI.split(/[?#]/)[0].replace(/\/+$/, '');
         if (!path.startsWith('/course-management/') || path === '/course-management/new') {
             return;
         }
@@ -426,13 +426,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
             this.lastRouteUrlSegment = 'course-management';
 
             // The course management segment is represented by the course overview breadcrumb above.
-            let uri = fullURI.substring(currentPath.length);
-
-            // Remove any query parameters
-            const questionMark = uri.indexOf('?');
-            if (questionMark >= 0) {
-                uri = uri.substring(0, questionMark);
-            }
+            const uri = fullURI.substring(currentPath.length);
 
             // Go through all segments of the route starting from the root
             for (const segment of uri.split('/')) {
@@ -786,6 +780,27 @@ export class NavbarComponent implements OnInit, OnDestroy {
         return /(^|\/)course-management(\/|$)/.test(url.split('?')[0]);
     }
 
+    private computeNavigationContextIndicatorData(): NavigationContextIndicatorData | undefined {
+        const course = this.currentCourse();
+        if (course) {
+            return {
+                type: 'course',
+                routerLink: this.getCourseLink(course.id),
+                title: course.title,
+                imagePath: course.courseIconPath,
+            };
+        }
+
+        const path = this.currentRoute().split(/[?#]/)[0];
+        if (/^\/admin(?:\/|$)/.test(path)) {
+            return { type: 'administration', routerLink: '/admin', translationKey: 'global.menu.admin.main' };
+        }
+        if (/^\/user-settings(?:\/|$)/.test(path)) {
+            return { type: 'userSettings', routerLink: '/user-settings', translationKey: 'artemisApp.userSettings.userSettings' };
+        }
+        return undefined;
+    }
+
     private computePerspectiveSwitchLinks(): PerspectiveSwitchLinks | undefined {
         const currentRoute = this.currentRoute();
         const path = currentRoute.split(/[?#]/)[0];
@@ -1071,3 +1086,16 @@ interface PerspectiveRouteMapping {
     urlParts: string[];
     targetPath: string[];
 }
+
+type NavigationContextIndicatorData =
+    | {
+          type: 'course';
+          routerLink: (string | number)[] | undefined;
+          title: string | undefined;
+          imagePath: string | undefined;
+      }
+    | {
+          type: 'administration' | 'userSettings';
+          routerLink: string;
+          translationKey: string;
+      };

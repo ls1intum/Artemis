@@ -469,7 +469,14 @@ class PlagiarismCaseIntegrationTest extends AbstractSpringIntegrationIndependent
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetPlagiarismCaseForStudent_notYetCommunicated_forbidden() throws Exception {
+        request.get("/api/plagiarism/courses/" + course.getId() + "/plagiarism-cases/" + plagiarismCase1.getId() + "/for-student", HttpStatus.FORBIDDEN, PlagiarismCase.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetPlagiarismCaseForStudent() throws Exception {
+        addPost();
         var plagiarismCase = request.get("/api/plagiarism/courses/" + course.getId() + "/plagiarism-cases/" + plagiarismCase1.getId() + "/for-student", HttpStatus.OK,
                 PlagiarismCaseDetailDTO.class);
         assertThat(plagiarismCase.id()).as("should get plagiarism case for student").isEqualTo(plagiarismCase1.getId());

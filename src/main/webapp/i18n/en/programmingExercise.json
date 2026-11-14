@@ -1,6 +1,22 @@
 {
     "artemisApp": {
         "programmingExercise": {
+            "instructionTableLabel": "Table in the problem statement",
+            "repositoryBuildOverview": {
+                "title": "Repositories and builds",
+                "template": "Template",
+                "solution": "Solution",
+                "tests": "Tests",
+                "auxiliary": "Auxiliary repository",
+                "templateDescription": "The starting point for students.",
+                "solutionDescription": "The reference implementation.",
+                "templateExpectedScore": "Expected score: 0% before students implement the solution.",
+                "solutionExpectedScore": "Expected score: 100% for the reference implementation.",
+                "result": "Build result",
+                "resultsLoading": "Loading build result…",
+                "checkoutLoading": "Loading checkout directories…",
+                "checkoutUnavailable": "Checkout directories could not be loaded."
+            },
             "home": {
                 "title": "Programming Exercise",
                 "createLabel": "Create Programming Exercise",
@@ -74,11 +90,6 @@
             },
             "importFromFile": {
                 "title": "Import Programming Exercise from File",
-                "description": "The file must be a zip file containing the exercise configuration in JSON format at the root level and a zip file for each of the repositories (template, solution, tests). You can get such a file by exporting a programming exercise.",
-                "uploadForImport": "Upload Programming Exercise for Import",
-                "fileTooBigError": "The file {{ fileName }} is too large. The maximum file size is 20 MB.",
-                "fileTypeNotSupportedError": "The file type is not supported. Please select a file with the extension .zip.",
-                "noExerciseDetailsJsonAtRootLevel": "The zip file does not contain a JSON file at the root level with the exercise details.",
                 "notSupportedProgrammingLanguage": "The programming language {{ programmingLanguage }} is not yet supported for the import from file.",
                 "GccNotSupportedForC": "The project type is not yet supported for the import from file."
             },
@@ -346,8 +357,8 @@
                 "diffLineStatTooltip": "Lines added and removed by the AI refinement."
             },
             "status": {
-                "solutionFailsTest": "The Solution Repository does not fulfill one or more test cases. This could indicate an issue with the Solution Repository or the test cases.",
-                "templateFulfillsTest": "The Template Repository already fulfills one or more test cases. This could indicate an issue with the Template Repository or the test cases."
+                "solutionFailsTest": "The solution should score 100% and pass all tests. Check the solution repository and test cases.",
+                "templateFulfillsTest": "The template should score 0%. Check the template repository and test cases if its score differs."
             },
             "testCaseAnalysis": {
                 "invalidTestCases": "There are {{number}} test cases that were found in the problem statement markdown, but are not valid test cases in the test repository of this exercise:",
@@ -450,7 +461,6 @@
                     "task": "Task",
                     "testcase": "Test Case",
                     "errorCategory": "Error Category",
-                    "totalItems": "In total {{count}} item(s)",
                     "error": "An error occurred while loading the feedback.",
                     "search": "Search ...",
                     "filter": "Filters",
@@ -941,6 +951,13 @@
                 },
                 "outdated": "Outdated",
                 "reanalyze": "Re-analyze"
+            },
+            "buildNotifications": {
+                "enable": "Enable browser notifications for build results",
+                "disable": "Disable browser notifications for build results",
+                "blocked": "Notifications are blocked. Allow them in your browser settings.",
+                "error": "Browser notifications are unavailable. The tab icon still shows build results.",
+                "resultReceived": "Build result received"
             }
         },
         "checklistAnalysisRequest": {

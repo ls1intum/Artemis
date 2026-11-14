@@ -1,18 +1,25 @@
 package de.tum.cit.aet.artemis.core.service.distributed.redisson;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectStreamConstants;
 import java.io.Serial;
 import java.io.Serializable;
+import java.net.URI;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.junit.jupiter.api.Test;
 import org.redisson.client.codec.Codec;
 import org.redisson.client.handler.State;
 import org.redisson.codec.Kryo5Codec;
+import org.redisson.codec.SerializationCodec;
 
+import de.tum.cit.aet.artemis.core.service.distributed.ClusterNodeInfo;
+import de.tum.cit.aet.artemis.core.service.distributed.DistributedDataTypeFilter;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import io.netty.buffer.ByteBuf;
 
@@ -87,6 +94,47 @@ class BackwardCompatibleSerializationCodecTest {
 
         var throughKryo = (CustomSerializedValue) decode(new Kryo5Codec(), encode(new Kryo5Codec(), value));
         assertThat(throughKryo.rebuiltOnRead()).as("Kryo skipping readObject is the divergence this codec exists to avoid").isFalse();
+    }
+
+    @Test
+    void testRefusesToReadATypeThatIsNotStoredInEitherFormat() throws IOException {
+        URI notStored = URI.create("https://example.org/");
+
+        // Kryo format, as read for keys, set elements, queue entries and map values written by an older node
+        ByteBuf kryoEncoded = encode(new Kryo5Codec(), notStored);
+        assertThatThrownBy(() -> codec.getValueDecoder().decode(kryoEncoded, new State())).hasStackTraceContaining("java.net.URI");
+        ByteBuf kryoMapValue = encode(new Kryo5Codec(), notStored);
+        assertThatThrownBy(() -> decodeMapValue(codec, kryoMapValue)).hasStackTraceContaining("java.net.URI");
+
+        // Java serialization format, as written for map values
+        ByteBuf javaEncoded = encode(new SerializationCodec(), notStored);
+        assertThatThrownBy(() -> decodeMapValue(codec, javaEncoded)).hasStackTraceContaining("java.net.URI");
+    }
+
+    @Test
+    void testKryoReadsTheTypesArtemisStoresThroughTheFilter() throws IOException {
+        var node = new ClusterNodeInfo("node", "host:1", "host", 1, "instance");
+        var value = new ArrayList<>(List.of(node));
+
+        assertThat(decode(codec, encode(new Kryo5Codec(), value))).isEqualTo(value);
+        assertThat(decode(codec, encode(codec, value))).isEqualTo(value);
+        assertThat(decodeMapValue(codec, codec.getMapValueEncoder().encode(value))).isEqualTo(value);
+    }
+
+    @Test
+    void testOperatorConfiguredTypeIsReadInBothFormats() throws IOException {
+        var extended = new BackwardCompatibleSerializationCodec(DistributedDataTypeFilter.withAdditional(List.of("java.net.URI")));
+        URI uri = URI.create("https://example.org/");
+
+        assertThat(decode(extended, encode(new Kryo5Codec(), uri))).isEqualTo(uri);
+        assertThat(decodeMapValue(extended, encode(new SerializationCodec(), uri))).isEqualTo(uri);
+    }
+
+    @Test
+    void testFilterSurvivesRebindingToAnotherClassLoader() throws IOException {
+        var rebound = new BackwardCompatibleSerializationCodec(getClass().getClassLoader(), codec);
+
+        assertThatThrownBy(() -> decodeMapValue(rebound, encode(new SerializationCodec(), URI.create("https://example.org/")))).hasStackTraceContaining("java.net.URI");
     }
 
     private static ByteBuf encode(Codec codec, Object value) throws IOException {

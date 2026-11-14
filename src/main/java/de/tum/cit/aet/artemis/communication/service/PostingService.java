@@ -238,8 +238,7 @@ public abstract class PostingService {
      */
     private Set<ConversationNotificationRecipientSummary> getConversationParticipantsAsSummaries(Conversation postConversation) {
         return conversationParticipantRepository.findConversationParticipantsByConversationId(postConversation.getId()).stream()
-                .map(participant -> new ConversationNotificationRecipientSummary(participant.getUser(), participant.getIsMuted(),
-                        participant.getIsHidden() != null && participant.getIsHidden(), false))
+                .map(participant -> new ConversationNotificationRecipientSummary(participant.getUser(), participant.getIsMuted(), participant.getIsHidden(), false))
                 .collect(Collectors.toSet());
     }
 
@@ -256,8 +255,7 @@ public abstract class PostingService {
         }
 
         return conversationParticipantRepository.findConversationParticipantsWithUserCourseRolesByConversationId(conversation.getId()).stream()
-                .map(participant -> new ConversationNotificationRecipientSummary(participant.getUser(), participant.getIsMuted(),
-                        participant.getIsHidden() != null && participant.getIsHidden(),
+                .map(participant -> new ConversationNotificationRecipientSummary(participant.getUser(), participant.getIsMuted(), participant.getIsHidden(),
                         authorizationCheckService.isAtLeastTeachingAssistantInCourse(conversation.getCourse(), participant.getUser())));
     }
 
@@ -447,13 +445,13 @@ public abstract class PostingService {
         }
 
         mentionedUsers.forEach(user -> {
-            if (!user.getName().equals(matches.get(user.getLogin()))) {
-                throw new BadRequestAlertException("The name provided for user " + user.getLogin() + " does not match the user's full name " + user.getName(), POST_ENTITY_NAME,
-                        "invalidUserMention");
-            }
-
+            // The membership is checked before the name, so that a user outside the course always gets the same answer and a guessed name cannot be confirmed
             if (!authorizationCheckService.isAtLeastStudentInCourse(course, user)) {
                 throw new BadRequestAlertException("The user " + user.getLogin() + " is not a member of the course", POST_ENTITY_NAME, "invalidUserMention");
+            }
+
+            if (!user.getName().equals(matches.get(user.getLogin()))) {
+                throw new BadRequestAlertException("The name provided for user " + user.getLogin() + " does not match the user's name", POST_ENTITY_NAME, "invalidUserMention");
             }
         });
 

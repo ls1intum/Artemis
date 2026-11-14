@@ -6,6 +6,7 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.RejectedExecutionException;
 
 import org.apache.sshd.common.util.GenericUtils;
 import org.apache.sshd.common.util.MapEntryUtils;
@@ -13,6 +14,7 @@ import org.apache.sshd.common.util.threads.CloseableExecutorService;
 import org.apache.sshd.git.GitLocationResolver;
 import org.apache.sshd.git.pack.GitPackCommand;
 import org.apache.sshd.server.Environment;
+import org.apache.sshd.server.channel.ChannelSession;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.lib.RepositoryCache;
 import org.eclipse.jgit.transport.GitProtocolConstants;
@@ -20,13 +22,18 @@ import org.eclipse.jgit.transport.ReceivePack;
 import org.eclipse.jgit.transport.RemoteConfig;
 import org.eclipse.jgit.transport.UploadPack;
 import org.eclipse.jgit.util.FS;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.exception.HttpStatusException;
+import de.tum.cit.aet.artemis.localvc.service.LocalVCAccessLogRecorderService;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCFetchPreUploadHookSSH;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCPostPushHook;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCPrePushHook;
+import de.tum.cit.aet.artemis.localvc.service.LocalVCPushProcessingService;
+import de.tum.cit.aet.artemis.localvc.service.LocalVCReceivePackLimits;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCServletService;
+import de.tum.cit.aet.artemis.localvc.service.PasswordAuthenticationNoticeService;
 
 /**
  * Custom Git command handler that integrates Artemis-specific
@@ -36,17 +43,31 @@ public class SshGitCommand extends GitPackCommand {
 
     private final LocalVCServletService localVCServletService;
 
+    private final LocalVCAccessLogRecorderService accessLogRecorder;
+
+    private final LocalVCPushProcessingService pushProcessingService;
+
+    private final PasswordAuthenticationNoticeService passwordAuthenticationNoticeService;
+
     /**
      * Constructs a new {@link SshGitCommand}.
      *
-     * @param rootDirResolver       Resolver for GIT root directory
-     * @param command               Git command string to execute
-     * @param executorService       Optional executor service for command execution
-     * @param localVCServletService LocalVC service providing pre/post push/fetch hooks
+     * @param rootDirResolver                     Resolver for GIT root directory
+     * @param command                             Git command string to execute
+     * @param executorService                     Optional executor service for command execution
+     * @param localVCServletService               LocalVC service providing the push hooks with their checks
+     * @param accessLogRecorder                   writes the access log of fetch operations
+     * @param pushProcessingService               handles what a push leads to
+     * @param passwordAuthenticationNoticeService tells users who push with a password to switch, which an ssh push never is
      */
-    public SshGitCommand(GitLocationResolver rootDirResolver, String command, CloseableExecutorService executorService, LocalVCServletService localVCServletService) {
+    public SshGitCommand(GitLocationResolver rootDirResolver, String command, CloseableExecutorService executorService, LocalVCServletService localVCServletService,
+            LocalVCAccessLogRecorderService accessLogRecorder, LocalVCPushProcessingService pushProcessingService,
+            PasswordAuthenticationNoticeService passwordAuthenticationNoticeService) {
         super(rootDirResolver, command, executorService);
         this.localVCServletService = localVCServletService;
+        this.accessLogRecorder = accessLogRecorder;
+        this.pushProcessingService = pushProcessingService;
+        this.passwordAuthenticationNoticeService = passwordAuthenticationNoticeService;
     }
 
     /**
@@ -56,6 +77,36 @@ public class SshGitCommand extends GitPackCommand {
     @Override
     protected Path resolveRootDirectory(String command, String[] args) throws IOException {
         return getGitLocationResolver().resolveRootDirectory(command, args, getServerSession(), getFileSystem());
+    }
+
+    /**
+     * Starts the command on the shared pool. A command that finds the pool and its queue full is refused with a message to the client. The exception is not passed on, because
+     * the server would close the whole session for it and with it the other commands of the client.
+     *
+     * @param channel the channel of the command
+     * @param env     the environment of the command
+     * @throws IOException if the command cannot be started for another reason
+     */
+    @Override
+    public void start(ChannelSession channel, Environment env) throws IOException {
+        try {
+            super.start(channel, env);
+        }
+        catch (RejectedExecutionException | IOException e) {
+            if (!(e instanceof RejectedExecutionException) && !(e.getCause() instanceof RejectedExecutionException)) {
+                throw (IOException) e;
+            }
+            String message = "The server is busy. Please try again later.";
+            try {
+                if (getErrorStream() != null) {
+                    getErrorStream().write((message + System.lineSeparator()).getBytes(StandardCharsets.UTF_8));
+                }
+            }
+            catch (IOException ignored) {
+                // The client may already have disconnected
+            }
+            onExit(-1, message);
+        }
     }
 
     /**
@@ -100,7 +151,7 @@ public class SshGitCommand extends GitPackCommand {
                 switch (subCommand) {
                     case RemoteConfig.DEFAULT_UPLOAD_PACK -> {
                         // Prepare UploadPack handler
-                        UploadPack uploadPack = new UploadPack(repository);
+                        UploadPack uploadPack = LocalVCReceivePackLimits.apply(new UploadPack(repository));
 
                         // Extract protocol version from environment variables (if present)
                         Environment environment = getEnvironment();
@@ -112,18 +163,19 @@ public class SshGitCommand extends GitPackCommand {
                         }
 
                         // Register pre-upload hook for Artemis-specific logic
-                        uploadPack.setPreUploadHook(new LocalVCFetchPreUploadHookSSH(localVCServletService, getServerSession()));
+                        uploadPack.setPreUploadHook(new LocalVCFetchPreUploadHookSSH(accessLogRecorder, getServerSession()));
 
                         // Begin upload-pack operation
                         uploadPack.upload(getInputStream(), getOutputStream(), getErrorStream());
                     }
                     case RemoteConfig.DEFAULT_RECEIVE_PACK -> {
                         var exercise = getServerSession().getAttribute(SshConstants.REPOSITORY_EXERCISE_KEY);
-                        try (var ignored = localVCServletService.claimProgrammingExerciseMutation(repository, exercise)) {
-                            ReceivePack receivePack = new ReceivePack(repository);
+                        try (var _ = pushProcessingService.claimProgrammingExerciseMutation(repository, exercise)) {
+                            ReceivePack receivePack = LocalVCReceivePackLimits.apply(new ReceivePack(repository));
 
                             receivePack.setPreReceiveHook(new LocalVCPrePushHook(localVCServletService, user));
-                            receivePack.setPostReceiveHook(new LocalVCPostPushHook(localVCServletService, getServerSession(), user));
+                            receivePack.setPostReceiveHook(
+                                    new LocalVCPostPushHook(localVCServletService, pushProcessingService, passwordAuthenticationNoticeService, getServerSession(), user));
 
                             receivePack.receive(getInputStream(), getOutputStream(), getErrorStream());
                         }
@@ -150,6 +202,10 @@ public class SshGitCommand extends GitPackCommand {
         catch (Throwable t) {
             // Notify SSH server of failure with the exception type
             onExit(-1, t.getClass().getSimpleName());
+        }
+        finally {
+            // The thread belongs to a pool that serves other commands. The processing of a push sets an authentication for the thread, which must not stay for the next command.
+            SecurityContextHolder.clearContext();
         }
     }
 }
