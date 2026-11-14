@@ -206,7 +206,7 @@ public class AttachmentVideoUnitResource {
         String previousDescription = existingAttachmentVideoUnit.getDescription();
 
         // Update competency links using the proper mechanism
-        lectureUnitService.updateCompetencyLinks(attachmentVideoUnitDTO, existingAttachmentVideoUnit);
+        lectureUnitService.updateCompetencyLinks(attachmentVideoUnitDTO, existingAttachmentVideoUnit, existingAttachmentVideoUnit.getLecture().getCourse().getId());
 
         // Build a transient attachment carrying only the client-provided fields; the service copies them onto the managed attachment
         Attachment attachmentUpdate = toTransientAttachment(attachment);
@@ -362,7 +362,7 @@ public class AttachmentVideoUnitResource {
         attachmentVideoUnit.setReleaseDate(attachmentVideoUnitDTO.releaseDate());
         attachmentVideoUnit.setDescription(attachmentVideoUnitDTO.description());
         attachmentVideoUnit.setVideoSource(attachmentVideoUnitDTO.videoSource());
-        lectureUnitService.updateCompetencyLinks(attachmentVideoUnitDTO, attachmentVideoUnit);
+        lectureUnitService.updateCompetencyLinks(attachmentVideoUnitDTO, attachmentVideoUnit, lecture.getCourse().getId());
 
         lecture.addLectureUnit(attachmentVideoUnit);
         Lecture updatedLecture = lectureRepository.saveAndFlush(lecture);

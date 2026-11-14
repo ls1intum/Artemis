@@ -156,9 +156,9 @@ public class HyperionProgrammingExerciseContextRendererService {
         String problemStatement = Objects.requireNonNullElse(exercise.getProblemStatement(), "");
         ProgrammingLanguage language = exercise.getProgrammingLanguage();
         Map<String, String> templateRepoFiles = fetchRepoContents(exercise.getTemplateParticipation() == null ? null : exercise.getTemplateParticipation().getVcsRepositoryUri(),
-                "template", exercise.getId());
+                "template", exercise.getId(), language);
         Map<String, String> solutionRepoFiles = fetchRepoContents(exercise.getSolutionParticipation() == null ? null : exercise.getSolutionParticipation().getVcsRepositoryUri(),
-                "solution", exercise.getId());
+                "solution", exercise.getId(), language);
 
         templateRepoFiles = languageFilter.filter(templateRepoFiles, language);
         solutionRepoFiles = languageFilter.filter(solutionRepoFiles, language);
@@ -170,12 +170,14 @@ public class HyperionProgrammingExerciseContextRendererService {
         return String.join("\n\n", parts);
     }
 
-    private Map<String, String> fetchRepoContents(@Nullable LocalVCRepositoryUri localVCRepositoryUri, String label, long exerciseId) {
+    private Map<String, String> fetchRepoContents(@Nullable LocalVCRepositoryUri localVCRepositoryUri, String label, long exerciseId, ProgrammingLanguage language) {
         if (localVCRepositoryUri == null) {
             return Map.of();
         }
         try {
-            return repositoryService.getFilesContentFromBareRepositoryForLastCommit(localVCRepositoryUri);
+            // The files that the language filter drops are not read, so that they cannot use up the limit of the total size that the files of the context need
+            return repositoryService.getContextFilesContentFromBareRepositoryForLastCommit(localVCRepositoryUri, languageFilter.pathFilterFor(language),
+                    HyperionProgrammingLanguageContextFilterService.MAX_FILE_SIZE_BYTES);
         }
         catch (IOException ex) {
             log.warn("Could not fetch {} repository contents for exercise {}", label, exerciseId, ex);

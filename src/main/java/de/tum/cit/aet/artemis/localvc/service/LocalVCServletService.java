@@ -1,7 +1,7 @@
 package de.tum.cit.aet.artemis.localvc.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALVC;
-import static de.tum.cit.aet.artemis.core.util.HttpRequestUtils.getIpStringFromRequest;
+import static de.tum.cit.aet.artemis.core.util.HttpRequestUtils.getPeerIpAddress;
 import static de.tum.cit.aet.artemis.localvc.service.LocalVCCredentials.extractUsernameAndPassword;
 import static de.tum.cit.aet.artemis.localvc.service.LocalVCCredentials.secretMatches;
 import static de.tum.cit.aet.artemis.localvc.service.LocalVCPersonalAccessTokenManagementService.TOKEN_PREFIX;
@@ -19,6 +19,7 @@ import org.eclipse.jgit.lib.Repository;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpHeaders;
@@ -31,6 +32,7 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.admin.service.RateLimitService;
+import de.tum.cit.aet.artemis.core.config.BuildAgentNetworkPolicy;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
@@ -59,7 +61,6 @@ import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseParticipati
 import de.tum.cit.aet.artemis.programming.service.RepositoryAccessService;
 import de.tum.cit.aet.artemis.programming.web.repository.RepositoryActionType;
 import inet.ipaddr.IPAddress;
-import inet.ipaddr.IPAddressString;
 
 /**
  * This service is responsible for authenticating and authorizing git requests, over https and over ssh.
@@ -116,13 +117,21 @@ public class LocalVCServletService {
 
     private final PasswordAuthenticationNoticeService passwordAuthenticationNoticeService;
 
+    private final BuildAgentNetworkPolicy buildAgentNetworkPolicy;
+
+    private final long maxRepositorySizeMb;
+
+    private final long maxTestsAndSolutionRepositorySizeMb;
+
     public LocalVCServletService(AuthenticationManager authenticationManager, UserRepository userRepository, ProgrammingExerciseRepository programmingExerciseRepository,
             ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository, RepositoryAccessService repositoryAccessService,
             ProgrammingExerciseParticipationService programmingExerciseParticipationService, AuxiliaryRepositoryService auxiliaryRepositoryService,
             Optional<VcsAccessLogService> vcsAccessLogService, ParticipationVCSAccessTokenRepository participationVCSAccessTokenRepository,
             RepositoryVCSAccessTokenRepository repositoryVCSAccessTokenRepository, AuthorizationCheckService authorizationCheckService, RateLimitService rateLimitService,
             UserVcsAccessTokenService userVcsAccessTokenService, LocalVCRepositoryResolverService repositoryResolver, LocalVCAccessLogRecorderService accessLogRecorder,
-            LocalVCBuildAgentAuthenticationService buildAgentAuthenticationService, PasswordAuthenticationNoticeService passwordAuthenticationNoticeService) {
+            LocalVCBuildAgentAuthenticationService buildAgentAuthenticationService, PasswordAuthenticationNoticeService passwordAuthenticationNoticeService,
+            BuildAgentNetworkPolicy buildAgentNetworkPolicy, @Value("${artemis.version-control.max-repository-size-mb:20}") long maxRepositorySizeMb,
+            @Value("${artemis.version-control.max-tests-and-solution-repository-size-mb:50}") long maxTestsAndSolutionRepositorySizeMb) {
         this.authenticationManager = authenticationManager;
         this.userRepository = userRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
@@ -140,6 +149,9 @@ public class LocalVCServletService {
         this.accessLogRecorder = accessLogRecorder;
         this.buildAgentAuthenticationService = buildAgentAuthenticationService;
         this.passwordAuthenticationNoticeService = passwordAuthenticationNoticeService;
+        this.buildAgentNetworkPolicy = buildAgentNetworkPolicy;
+        this.maxRepositorySizeMb = maxRepositorySizeMb;
+        this.maxTestsAndSolutionRepositorySizeMb = maxTestsAndSolutionRepositorySizeMb;
     }
 
     /**
@@ -178,13 +190,11 @@ public class LocalVCServletService {
             return;
         }
 
-        // Only count rate limit on /info/refs (the initial handshake request per git operation).
-        // The data transfer requests (git-upload-pack, git-receive-pack) reuse the same credentials
-        // and should not consume additional rate limit budget.
-        if (request.getRequestURI().endsWith("/info/refs")) {
-            String ipString = getIpStringFromRequest(request);
-            final IPAddress ipAddress = new IPAddressString(ipString).getAddress();
-            rateLimitService.enforcePerMinute(ipAddress, RateLimitType.GIT_AUTHENTICATION);
+        // The initial handshake request of an operation (/info/refs) spends one token before its credentials are checked. A correct password gives it back in authenticateUser.
+        // The data transfer requests (git-upload-pack, git-receive-pack) reuse the credentials of the handshake, so they spend
+        // nothing here. A data transfer request that carries a password is charged in authenticateUser instead and gets the token back when the password is correct.
+        if (isHandshakeRequest(request)) {
+            spendAuthenticationRateLimit(request);
         }
 
         LocalVCRepositoryUri localVCRepositoryUri = repositoryResolver.parseRepositoryUri(request);
@@ -203,7 +213,7 @@ public class LocalVCServletService {
         // the requests that never need it (a staff token, a failed credential) still do not pay for it.
         Supplier<ProgrammingExerciseParticipation> participationForRepository = participationResolver(repositoryTypeOrUserName, localVCRepositoryUri, exercise.exerciseId());
 
-        var authenticated = authenticateUser(authorizationHeader, exercise, localVCRepositoryUri, participationForRepository);
+        var authenticated = authenticateUser(request, authorizationHeader, exercise, localVCRepositoryUri, participationForRepository);
         User user = authenticated.user();
         request.setAttribute(AUTHENTICATION_MECHANISM_REQUEST_ATTRIBUTE, authenticated.mechanism());
 
@@ -276,7 +286,7 @@ public class LocalVCServletService {
      * @throws LocalVCAuthException    if an error occurs during authentication with the local version control system
      * @throws AuthenticationException if the authentication credentials are invalid or authentication fails
      */
-    private AuthenticatedUser authenticateUser(String authorizationHeader, GitRepositoryAccessDTO exercise, LocalVCRepositoryUri localVCRepositoryUri,
+    private AuthenticatedUser authenticateUser(HttpServletRequest request, String authorizationHeader, GitRepositoryAccessDTO exercise, LocalVCRepositoryUri localVCRepositoryUri,
             Supplier<ProgrammingExerciseParticipation> participationForRepository) throws LocalVCAuthException, AuthenticationException {
 
         UsernameAndPassword usernameAndPassword = extractUsernameAndPassword(authorizationHeader);
@@ -333,10 +343,40 @@ public class LocalVCServletService {
 
         // if the user does not have an access token or used a password, we try to authenticate the user with it
         // Try to authenticate the user based on the configured options, this can include sending the data to an external system (e.g. LDAP) or using internal authentication.
+        // The handshake request was already charged one token before its credentials were looked at. A data transfer request that skips the handshake and sends a password
+        // spends one token before the password is checked, so that parallel requests cannot all pass a budget check first. Either token is given back when the password is
+        // correct, so a regular clone or push is not charged for its several requests, and it can complete even where the allowance is a single token.
+        boolean dataTransferRequest = !isHandshakeRequest(request);
+        if (dataTransferRequest) {
+            spendAuthenticationRateLimit(request);
+        }
         UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(username, passwordOrToken);
         authenticationManager.authenticate(authenticationToken);
+        rateLimitService.refundPerMinute(resolveClientAddress(request), RateLimitType.GIT_AUTHENTICATION);
 
         return new AuthenticatedUser(user, AuthenticationMechanism.PASSWORD);
+    }
+
+    private static boolean isHandshakeRequest(HttpServletRequest request) {
+        return request.getRequestURI().endsWith("/info/refs");
+    }
+
+    /**
+     * The address of the client as the proxies of this installation report it. The servlet container already resolves X-Forwarded-For for the proxies in
+     * server.tomcat.remoteip.internal-proxies (the private networks by default), and the trusted proxies of the build agent network policy are believed in addition,
+     * exactly as for the other git requests. A header sent by any other peer does not choose the budget.
+     */
+    private IPAddress resolveClientAddress(HttpServletRequest request) {
+        return getPeerIpAddress(request, buildAgentNetworkPolicy::isTrustedProxy).orElse(null);
+    }
+
+    /**
+     * Spends one token of the authentication budget of the client address and throws once the budget is spent.
+     *
+     * @param request the request to charge
+     */
+    private void spendAuthenticationRateLimit(HttpServletRequest request) {
+        rateLimitService.enforcePerMinute(resolveClientAddress(request), RateLimitType.GIT_AUTHENTICATION);
     }
 
     /**
@@ -446,6 +486,21 @@ public class LocalVCServletService {
         String projectKey = localVCRepositoryUri.getProjectKey();
 
         return getBuildConfigOrThrow(projectKey).isAllowBranching();
+    }
+
+    /**
+     * Returns the maximum size of the files of a repository, which a push must not exceed. Template repositories and student repositories (and everything that is not a tests or
+     * solution repository) have a smaller limit than tests and solution repositories.
+     *
+     * @param repository the repository that receives the push
+     * @return the limit in bytes, or {@link Long#MAX_VALUE} if the limit is disabled by configuration
+     */
+    public long getMaxRepositorySizeBytes(Repository repository) {
+        String repositoryTypeOrUserName = repositoryResolver.parseRepositoryUri(repository.getDirectory().toPath()).getRepositoryTypeOrUserName();
+        boolean isTestsOrSolutionRepository = repositoryTypeOrUserName.equals(RepositoryType.TESTS.toString())
+                || repositoryTypeOrUserName.equals(RepositoryType.SOLUTION.toString());
+        long limitInMegabytes = isTestsOrSolutionRepository ? maxTestsAndSolutionRepositorySizeMb : maxRepositorySizeMb;
+        return limitInMegabytes > 0 ? limitInMegabytes * 1024 * 1024 : Long.MAX_VALUE;
     }
 
     public static enum BranchingStatus {

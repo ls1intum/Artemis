@@ -596,7 +596,7 @@ public class LectureResource {
     @FeatureUsage(UserFeature.LECTURE_PAGES)
     @UsageInteraction(FeatureInteraction.AUTOMATIC)
     @GetMapping(value = "lectures/{lectureId}/title", produces = MediaType.TEXT_PLAIN_VALUE)
-    @EnforceAtLeastStudent
+    @EnforceAtLeastStudentInLecture
     public ResponseEntity<String> getLectureTitle(@PathVariable Long lectureId) {
         final var title = lectureRepository.getLectureTitle(lectureId);
         return title == null ? ResponseEntity.notFound().build() : ResponseEntity.ok(title);

@@ -11,13 +11,17 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInLectureUnit.EnforceAtLeastEditorInLectureUnit;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInLectureUnit.EnforceAtLeastStudentInLectureUnit;
+import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.lecture.api.LectureTranscriptionsRepositoryApi;
 import de.tum.cit.aet.artemis.lecture.config.LectureEnabled;
+import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.dto.LectureTranscriptionDTO;
+import de.tum.cit.aet.artemis.lecture.repository.AttachmentVideoUnitRepository;
 
 @Conditional(LectureEnabled.class)
 @Lazy
@@ -28,8 +32,15 @@ public class LectureTranscriptionResource {
 
     private final LectureTranscriptionsRepositoryApi lectureTranscriptionsRepositoryApi;
 
-    public LectureTranscriptionResource(LectureTranscriptionsRepositoryApi lectureTranscriptionsRepositoryApi) {
+    private final AttachmentVideoUnitRepository attachmentVideoUnitRepository;
+
+    private final AuthorizationCheckService authorizationCheckService;
+
+    public LectureTranscriptionResource(LectureTranscriptionsRepositoryApi lectureTranscriptionsRepositoryApi, AttachmentVideoUnitRepository attachmentVideoUnitRepository,
+            AuthorizationCheckService authorizationCheckService) {
         this.lectureTranscriptionsRepositoryApi = lectureTranscriptionsRepositoryApi;
+        this.attachmentVideoUnitRepository = attachmentVideoUnitRepository;
+        this.authorizationCheckService = authorizationCheckService;
     }
 
     /**
@@ -46,6 +57,14 @@ public class LectureTranscriptionResource {
     @GetMapping("lecture-units/{lectureUnitId}/transcript")
     @EnforceAtLeastStudentInLectureUnit
     public ResponseEntity<LectureTranscriptionDTO> getTranscript(@PathVariable Long lectureUnitId) {
+        // The role check only covers the course, so the unit itself has to be available for this request
+        Optional<AttachmentVideoUnit> unit = attachmentVideoUnitRepository.findWithLectureAndCourseAndAttachmentById(lectureUnitId);
+        if (unit.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+        if (!authorizationCheckService.isAllowedToSeeLectureUnit(unit.get(), null)) {
+            throw new AccessForbiddenException("AttachmentVideoUnit", lectureUnitId);
+        }
         Optional<LectureTranscriptionDTO> dtoOpt = lectureTranscriptionsRepositoryApi.getTranscript(lectureUnitId);
 
         if (dtoOpt.isEmpty()) {

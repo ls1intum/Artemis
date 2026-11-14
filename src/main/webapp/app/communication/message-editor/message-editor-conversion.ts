@@ -9,7 +9,8 @@ const numericPostReference = /(?<!&)#\d+/g;
 const referenceTypes = ['user', 'channel', 'programming', 'modeling', 'quiz', 'text', 'file-upload', 'lecture', 'lecture-unit', 'attachment', 'slide', 'faq'];
 // Classify formulas with the same existing grammar as the posting renderer. Duplicating
 // delimiter detection misses math spanning formatting/code and can lock out ordinary currency.
-const markdown = MarkdownIt({ html: true, breaks: true, linkify: true }).use(MarkdownItKatex, { enableMathInlineInHtml: true });
+// Reviewed false positive (Sonar S5247): raw HTML is enabled so it is rendered as the author wrote it, but the rendered HTML is always passed through DOMPurify before it is used.
+const markdown = MarkdownIt({ html: true, breaks: true, linkify: true }).use(MarkdownItKatex, { enableMathInlineInHtml: true }); // NOSONAR
 
 markdown.inline.ruler.before('html_inline', 'message_reference', (state, silent) => {
     if (state.src[state.pos] !== '[') {

@@ -1,16 +1,14 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { Course } from 'app/course/shared/entities/course.model';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
-import { faCheckCircle, faSort } from '@fortawesome/free-solid-svg-icons';
+import { faCheckCircle } from '@fortawesome/free-solid-svg-icons';
 import { ASC, DESC, SORT } from 'app/foundation/constants/pagination.constants';
 import { ActivatedRoute, Router } from '@angular/router';
 import { combineLatest } from 'rxjs';
 import { SortService } from 'app/foundation/service/sort.service';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FormsModule } from '@angular/forms';
-import { SortDirective } from 'app/foundation/sort/directive/sort.directive';
-import { SortByDirective } from 'app/foundation/sort/directive/sort-by.directive';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TumAetUiInputDirective, TumAetUiTableDirective, TumAetUiTableLayoutComponent, TumAetUiTableSortEvent, TumAetUiTableSortableColumnComponent } from '@tumaet/ui-angular';
 import { CoursePrerequisitesButtonComponent } from './course-prerequisites-button/course-prerequisites-button.component';
 import { CourseRegistrationButtonComponent } from './course-registration-button/course-registration-button.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -21,9 +19,10 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
     imports: [
         TranslateDirective,
         FormsModule,
-        SortDirective,
-        SortByDirective,
-        FaIconComponent,
+        TumAetUiInputDirective,
+        TumAetUiTableDirective,
+        TumAetUiTableLayoutComponent,
+        TumAetUiTableSortableColumnComponent,
         CoursePrerequisitesButtonComponent,
         CourseRegistrationButtonComponent,
         ArtemisTranslatePipe,
@@ -37,13 +36,12 @@ export class CourseRegistrationComponent implements OnInit {
 
     readonly coursesToSelect = signal<Course[]>([]);
     readonly loading = signal(false);
-    predicate!: string;
-    ascending!: boolean;
+    readonly predicate = signal<string>('title');
+    readonly ascending = signal(true);
     searchTermString = '';
     readonly filteredCoursesToSelect = signal<Course[]>([]);
     // Icons
     faCheckCircle = faCheckCircle;
-    faSort = faSort;
 
     ngOnInit(): void {
         this.handleNavigation();
@@ -58,10 +56,10 @@ export class CourseRegistrationComponent implements OnInit {
         this.loading.set(true);
         this.courseService.findAllForRegistration().subscribe((res) => {
             const courses = res.body!;
-            if (this.predicate === 'defaultSort' || !this.predicate) {
+            if (this.predicate() === 'defaultSort' || !this.predicate()) {
                 this.coursesToSelect.set(this.sortService.sortByProperty(courses, 'title', true));
             } else {
-                this.coursesToSelect.set(this.sortService.sortByProperty(courses, this.predicate, this.ascending));
+                this.coursesToSelect.set(this.sortService.sortByProperty(courses, this.predicate(), this.ascending()));
             }
             this.applySearch(); // Call this here to re-apply the search term after sorting
             this.loading.set(false);
@@ -77,6 +75,12 @@ export class CourseRegistrationComponent implements OnInit {
         this.coursesToSelect.set(this.coursesToSelect().filter((course) => course.id !== courseId));
     }
 
+    onSort(event: TumAetUiTableSortEvent): void {
+        this.predicate.set(event.field);
+        this.ascending.set(event.order === 1);
+        this.transition();
+    }
+
     /**
      * Triggers a route transition, updating the URL with the current sorting parameters.
      */
@@ -84,7 +88,7 @@ export class CourseRegistrationComponent implements OnInit {
         void this.router.navigate(['/courses/enroll'], {
             relativeTo: this.activatedRoute.parent,
             queryParams: {
-                sort: `${this.predicate},${this.ascending ? ASC : DESC}`,
+                sort: `${this.predicate()},${this.ascending() ? ASC : DESC}`,
                 search: this.searchTermString, // Add the search term to the query parameters
             },
         });
@@ -104,16 +108,16 @@ export class CourseRegistrationComponent implements OnInit {
             if (sortParam && typeof sortParam === 'string') {
                 const sort = sortParam.split(',');
                 if (sort.length === 2) {
-                    this.predicate = sort[0];
-                    this.ascending = sort[1] === ASC;
+                    this.predicate.set(sort[0]);
+                    this.ascending.set(sort[1] === ASC);
                 } else {
                     // Invalid format - use defaults
-                    this.predicate = 'title';
-                    this.ascending = true;
+                    this.predicate.set('title');
+                    this.ascending.set(true);
                 }
             } else {
-                this.predicate = 'title';
-                this.ascending = true;
+                this.predicate.set('title');
+                this.ascending.set(true);
             }
             this.searchTermString = params.get('search') || '';
             this.loadRegistrableCourses();

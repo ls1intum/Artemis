@@ -213,9 +213,8 @@ describe('CreateExerciseUnitComponent', () => {
             createExerciseUnitComponentFixture.detectChanges();
         }
 
-        function emptyRowKey(): string | null {
-            const cell = createExerciseUnitComponentFixture.debugElement.query(By.css('tbody td[colspan]'));
-            return cell ? (cell.nativeElement.getAttribute('ng-reflect-jhi-translate') ?? cell.nativeElement.textContent.trim()) : null;
+        function emptyState(): HTMLElement | null {
+            return createExerciseUnitComponentFixture.nativeElement.querySelector('[data-testid="table-empty"]');
         }
 
         beforeEach(() => {
@@ -270,7 +269,7 @@ describe('CreateExerciseUnitComponent', () => {
             loadCourse(exerciseKinds.length ? [textExercise] : [], linkedIds as number[]);
 
             expect(createExerciseUnitComponent.hasCourseExercises()).toBe(hasCourseExercises);
-            expect(emptyRowKey()).not.toBeNull();
+            expect(emptyState()).not.toBeNull();
         });
     });
 });

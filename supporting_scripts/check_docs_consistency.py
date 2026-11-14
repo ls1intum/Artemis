@@ -60,6 +60,7 @@ IMAGE_BUDGET_BYTES = 1_500_000
 # "<page>: <claim>" -> reason
 VERSION_ALLOWLIST: dict[str, str] = {
     "documentation/docs/developer/best-practices.mdx: Gradle 9.8.1": "records the environment of two dated reproducible builds, which is history, not the current pin",
+    "documentation/docs/developer/best-practices.mdx: Node 24.21.0": "records the environment of two dated reproducible builds, which is history, not the current pin",
     "documentation/docs/instructor/communication-support/iris.mdx: Java 21": "a sentence of an example prompt that an instructor gives Iris, not a statement about Artemis",
 }
 

@@ -227,23 +227,20 @@ public class UserCreationService {
 
     /**
      * Update basic information (first name, last name, email, language) for the current user.
-     * This method is typically invoked by the user
+     * This method is typically invoked by the user. The profile picture is not part of it: it is owned by the server and only changes through the upload and removal of the
+     * picture, so a value sent with the account information is not taken over.
      *
      * @param firstName first name of user
      * @param lastName  last name of user
      * @param email     email id of user
      * @param langKey   language key
-     * @param imageUrl  image URL of user
      */
-    public void updateBasicInformationOfCurrentUser(String firstName, String lastName, String email, String langKey, String imageUrl) {
+    public void updateBasicInformationOfCurrentUser(String firstName, String lastName, String email, String langKey) {
         SecurityUtils.getCurrentUserLogin().flatMap(userRepository::findOneByLogin).ifPresent(user -> {
             updateEmailIfChanged(user, email);
             user.setFirstName(firstName);
             user.setLastName(lastName);
             user.setLangKey(langKey);
-            if (imageUrl != null) {
-                user.setImageUrl(imageUrl);
-            }
             saveUser(user);
             log.info("Changed Information for User: {}", user);
         });

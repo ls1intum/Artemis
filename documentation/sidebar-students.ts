@@ -75,6 +75,7 @@ const sidebars: SidebarsConfig = {
                 'progress-analytics/learning-analytics',
                 'progress-analytics/adaptive-learning',
                 'progress-analytics/calendar',
+                'progress-analytics/science-data-collection',
             ],
         },
         {
