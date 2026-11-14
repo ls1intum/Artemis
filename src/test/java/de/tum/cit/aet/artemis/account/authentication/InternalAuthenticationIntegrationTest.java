@@ -291,6 +291,25 @@ class InternalAuthenticationIntegrationTest extends AbstractSpringIntegrationJen
 
         var responseBody = JsonObjectMapper.get().readValue(response.getContentAsString(), new TypeReference<Map<String, Object>>() {
         });
+        assertThat(responseBody).doesNotContainKey("access_token");
+    }
+
+    @Test
+    @WithAnonymousUser
+    void testJWTAuthenticationReturnsTheTokenInTheBodyOnlyWhenRequested() throws Exception {
+        LoginVM loginVM = new LoginVM();
+        loginVM.setUsername(USERNAME);
+        loginVM.setPassword(USER_PASSWORD);
+        loginVM.setRememberMe(true);
+
+        HttpHeaders httpHeaders = new HttpHeaders();
+        httpHeaders.add("User-Agent", "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36");
+
+        MockHttpServletResponse response = request.postWithoutResponseBody("/api/core/public/authenticate?returnToken=true", loginVM, HttpStatus.OK, httpHeaders);
+        AuthenticationIntegrationTestHelper.authenticationCookieAssertions(response.getCookie("jwt"), false);
+
+        var responseBody = JsonObjectMapper.get().readValue(response.getContentAsString(), new TypeReference<Map<String, Object>>() {
+        });
         assertThat(tokenProvider.validateTokenForAuthority(responseBody.get("access_token").toString(), null)).isTrue();
     }
 
