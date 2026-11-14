@@ -1,0 +1,9 @@
+// Styled here rather than with Tailwind utilities: Bootstrap's Reboot styles <h6> in unlayered CSS, which beats
+// Tailwind's utility layer whatever the specificity, so `text-base` on it never applied and the section title ended up
+// smaller than the box titles below it. A component class is unlayered too and more specific than the element rule.
+.athena-settings-section-title {
+    margin: 0 0 0.25rem;
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--body-color);
+}

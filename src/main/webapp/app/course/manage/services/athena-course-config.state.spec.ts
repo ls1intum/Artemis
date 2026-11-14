@@ -7,6 +7,8 @@ import { MockProvider } from 'ng-mocks';
 import { AthenaCourseConfigDTO, AthenaCourseConfigService } from 'app/course/manage/services/athena-course-config.service';
 import { AthenaCourseConfigState, createAthenaCourseConfigState } from 'app/course/manage/services/athena-course-config.state';
 import { AlertService } from 'app/foundation/service/alert.service';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 
 describe('AthenaCourseConfigState', () => {
     let athenaCourseConfigService: AthenaCourseConfigService;
@@ -87,7 +89,7 @@ describe('AthenaCourseConfigState', () => {
             // Only the switched feature is sent: restating the other one would write back the value this client last
             // read, undoing a change made elsewhere in the meantime.
             expect(updateSpy).toHaveBeenCalledExactlyOnceWith(5, { [feature]: true });
-            expect(state.config()).toEqual(expected);
+            expect(state.config()).toMatchObject(expected);
         });
 
         it('should still save a switched feature when no configuration was loaded', () => {
@@ -133,7 +135,7 @@ describe('AthenaCourseConfigState', () => {
             formative.error(failure());
 
             // Restoring the whole snapshot this switch was made on would also drop the grading switch made after it.
-            expect(state.config()).toEqual({ gradingFeedbackEnabled: true, formativeFeedbackEnabled: false });
+            expect(state.config()).toMatchObject({ gradingFeedbackEnabled: true, formativeFeedbackEnabled: false });
         });
 
         it('should keep showing the stored state when a feature is switched twice and both saves fail', () => {
@@ -221,6 +223,67 @@ describe('AthenaCourseConfigState', () => {
             expect(state.gradingFeedbackEnabled()).toBe(true);
         });
 
+        it.each([
+            { name: 'a switch', cached: true, selected: false, stored: false },
+            { name: 'a switch back', cached: false, selected: true, stored: true },
+            { name: 'a switch to something else than what is stored', cached: false, selected: true, stored: false },
+        ])('should show a revalidated feature when $name overlapping the load fails', ({ cached, selected, stored }) => {
+            // The cached state comes from an earlier load; another instructor has changed it since.
+            load.next({ gradingFeedbackEnabled: cached, formativeFeedbackEnabled: false });
+            const revalidation = new Subject<AthenaCourseConfigDTO>();
+            mockLoad(revalidation.asObservable());
+            state.load();
+            vi.spyOn(athenaCourseConfigService, 'updateCourseConfig').mockReturnValue(throwError(failure));
+
+            state.setEnabled('gradingFeedbackEnabled', selected);
+            revalidation.next({ gradingFeedbackEnabled: stored, formativeFeedbackEnabled: false });
+
+            expect(state.gradingFeedbackEnabled()).toBe(stored);
+        });
+
+        it('should show a revalidated feedback style when a save overlapping the load fails', () => {
+            load.next({ ...bothDisabled, defaultFeedbackDetail: 3 });
+            const revalidation = new Subject<AthenaCourseConfigDTO>();
+            mockLoad(revalidation.asObservable());
+            state.load();
+            vi.spyOn(athenaCourseConfigService, 'updateCourseConfig').mockReturnValue(throwError(failure));
+
+            state.setFeedbackStyleDefault('defaultFeedbackDetail', 2);
+            expect(state.defaultFeedbackDetail()).toBe(3);
+            revalidation.next({ ...bothDisabled, defaultFeedbackDetail: 1 });
+
+            expect(state.defaultFeedbackDetail()).toBe(1);
+        });
+
+        it('should roll a failed save back to a revalidated value that arrived while it was in flight', () => {
+            load.next({ ...bothDisabled, defaultFeedbackDetail: 3 });
+            const revalidation = new Subject<AthenaCourseConfigDTO>();
+            mockLoad(revalidation.asObservable());
+            state.load();
+            const save = new Subject<HttpResponse<AthenaCourseConfigDTO>>();
+            vi.spyOn(athenaCourseConfigService, 'updateCourseConfig').mockReturnValue(save.asObservable());
+
+            state.setFeedbackStyleDefault('defaultFeedbackDetail', 2);
+            revalidation.next({ ...bothDisabled, defaultFeedbackDetail: 1 });
+            expect(state.defaultFeedbackDetail()).toBe(2);
+            save.error(failure());
+
+            expect(state.defaultFeedbackDetail()).toBe(1);
+        });
+
+        it('should drop a revalidated value that a successful save overlapping the load has replaced', () => {
+            load.next({ ...bothDisabled, defaultFeedbackDetail: 3 });
+            const revalidation = new Subject<AthenaCourseConfigDTO>();
+            mockLoad(revalidation.asObservable());
+            state.load();
+            vi.spyOn(athenaCourseConfigService, 'updateCourseConfig').mockReturnValue(of(new HttpResponse({ body: { ...bothDisabled, defaultFeedbackDetail: 2 } })));
+
+            state.setFeedbackStyleDefault('defaultFeedbackDetail', 2);
+            revalidation.next({ ...bothDisabled, defaultFeedbackDetail: 1 });
+
+            expect(state.defaultFeedbackDetail()).toBe(2);
+        });
+
         it('should roll a failed switch back to the state the load supplied while it was in flight', () => {
             const save = new Subject<HttpResponse<AthenaCourseConfigDTO>>();
             vi.spyOn(athenaCourseConfigService, 'updateCourseConfig').mockReturnValue(save.asObservable());
@@ -264,7 +327,7 @@ describe('AthenaCourseConfigState', () => {
 
             state.setMasterEnabled(true);
 
-            expect(state.config()).toEqual({ gradingFeedbackEnabled: true, formativeFeedbackEnabled: false });
+            expect(state.config()).toMatchObject({ gradingFeedbackEnabled: true, formativeFeedbackEnabled: false });
             expect(state.masterEnabled()).toBe(true);
         });
     });
@@ -279,7 +342,7 @@ describe('createAthenaCourseConfigState', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            providers: [MockProvider(AthenaCourseConfigService), MockProvider(AlertService)],
+            providers: [MockProvider(AthenaCourseConfigService), MockProvider(AlertService), { provide: AccountService, useClass: MockAccountService }],
         });
         athenaCourseConfigService = TestBed.inject(AthenaCourseConfigService);
         courseId.set(5);
@@ -359,7 +422,7 @@ describe('createAthenaCourseConfigState', () => {
             load.next({ gradingFeedbackEnabled: true, formativeFeedbackEnabled: true });
             save.next(new HttpResponse({ body: { gradingFeedbackEnabled: false, formativeFeedbackEnabled: true } }));
 
-            expect(state()?.config()).toEqual(bothDisabled);
+            expect(state()?.config()).toMatchObject(bothDisabled);
         });
     });
 });
