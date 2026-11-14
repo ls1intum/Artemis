@@ -3,7 +3,7 @@ id: localci-build-environment
 title: LocalCI Build Environment
 sidebar_label: LocalCI Build Environment
 description: What a LocalCI build sees and what an administrator can change - environment variables, user, network, Docker images and registries, dependency caches, templates and build logs.
-last_reviewed: 2026-11-10
+last_reviewed: 2026-11-14
 ---
 
 import Callout from "../../../src/components/Callout/Callout";
@@ -65,8 +65,29 @@ Do not rely on a fixed UID: for a custom image you choose it, and for the images
 A user inside the container is not automatically a different user on the host. Running the Docker daemon in
 [rootless mode or with Podman](/admin/production-setup/integrated-code-lifecycle-setup#podman-as-docker-alternative) limits what a container escape could do.
 
-On Kubernetes, the user is also the one of the image, and the Pod does not restrict privilege escalation, see
-[Isolation and permissions](/admin/production-setup/build-runners#isolation-and-permissions).
+On Kubernetes, the user is also the one of the image. The privileges of the user are limited in the same way as with Docker, see
+[Which privileges a build has](#which-privileges-a-build-has).
+
+### Which privileges a build has
+
+Every build container starts with a reduced set of Linux capabilities, and its processes cannot gain privileges through setuid programs
+(Docker `no-new-privileges`, Kubernetes `allowPrivilegeEscalation: false`). This applies to both runners, to every exercise, and to the user of the image, including `root`.
+
+- **Dropped capabilities:** `NET_RAW`, `MKNOD`, `SYS_CHROOT`, `SETFCAP` and `AUDIT_WRITE`. They are part of the default set of Docker and Kubernetes but ordinary builds do not use them.
+- **What keeps working:** outbound TCP and UDP connections, DNS, dependency downloads, web requests of the tests, file ownership and permission changes, starting processes as another user (`su`, `gosu` as root), and installing packages as `root`.
+- **What stops working** (checked with a Debian image on Docker):
+  - Programs that need raw sockets, such as packet capture tools, fail because they need `NET_RAW`. The usual `ping` keeps working on Docker, because it falls back to ICMP datagram sockets, which the default
+    `net.ipv4.ping_group_range` of a Docker container allows. On Kubernetes this depends on the cluster setting, and `ping` needs `NET_RAW` where the setting does not include the group of the build user.
+  - A program that gains privileges through a setuid binary, for example `sudo` started by a non-root user of the image, is refused.
+  - Creating device files with `mknod`, using `chroot`, and setting file capabilities with `setcap` fail.
+- **Keeping `NET_RAW`:** instructors can enable **Allow raw network sockets** in the container configuration of an exercise, see
+  [Edit Container Configuration](/instructor/exercises/programming-exercise/configure-the-build#edit-container-configuration-optional). The setting is stored with the other
+  container flags of the exercise as `allowRawSockets`, so it needs no database change. It has no effect for an exercise with the network `none`, which never gets `NET_RAW`.
+- **Mixed versions:** a build agent that is not updated yet keeps the old behavior, and an exercise that sets `allowRawSockets` is read by an old agent as an exercise without it.
+  Update all build agents to the same release.
+
+Check an image with `docker run --rm --cap-drop NET_RAW --cap-drop MKNOD --cap-drop SYS_CHROOT --cap-drop SETFCAP --cap-drop AUDIT_WRITE --security-opt no-new-privileges <image> <command>`
+before you rely on it for an exercise that uses tools like these.
 
 ## Network access
 
@@ -79,8 +100,8 @@ therefore only affects what the **build script and the student code** can reach.
 - An exercise that selects no network uses the **default network of Docker**, which allows outbound connections, unless the installation sets another default with
   `container-defaults.network`, see [Container defaults](#container-defaults). The exceptions are the builds that [Hyperion](/admin/hyperion) triggers to synchronize the test cases of an exercise. They always run with
   the network `none` and without the environment variables of the exercise, so a dependency that is not in the image or in an offline cache cannot be downloaded there.
-- On Kubernetes, the network `none` is enforced with firewall rules in the Pod. A root process that keeps `CAP_NET_RAW` can open a packet socket that does not pass through those rules, so the builder of an
-  exercise with the network `none` does not get that capability. The rest of the default capability set stays, because exercise images install packages as root. Where the network of student code must be restricted
+- On Kubernetes, the network `none` is enforced with firewall rules in the Pod. The builder of such an exercise never gets `CAP_NET_RAW`, even if the exercise asks to keep it, see
+  [Which privileges a build has](#which-privileges-a-build-has). Where the network of student code must be restricted
   with certainty, also enforce the egress independently of the Pod, for example with a network policy in the build namespace, see
   [Operating LocalCI on Kubernetes](/admin/production-setup/localci-on-kubernetes#what-is-left-to-the-cluster).
 - Instructors select a network per exercise, from the list in `artemis.continuous-integration.container-flags-limit.allowed-custom-networks`.

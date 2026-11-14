@@ -2,7 +2,7 @@
 id: build-runners
 title: LocalCI Build Runners
 sidebar_label: LocalCI Build Runners
-last_reviewed: 2026-11-09
+last_reviewed: 2026-11-14
 ---
 
 import Callout from "../../../src/components/Callout/Callout";
@@ -108,15 +108,16 @@ neither a Docker socket nor a Kubernetes API token.
 - The **controller** service account, used by the build agent pod, is granted only what it needs in the build
   namespace: create, read, watch, and delete `Job`s and `Pod`s, read pod logs and events, and open exec sessions into a
   pod. It has no cluster-wide permissions and no permissions in any other namespace.
-- The builder container requests the `RuntimeDefault` seccomp profile. It deliberately keeps the default capability set
-  and allows privilege escalation, because exercise images legitimately install packages as root and use setuid tooling
-  such as `sudo` and `gosu`. This matches what the Docker runner allows; restricting it further would break exercises
-  on Kubernetes that build fine on Docker.
+- The builder container requests the `RuntimeDefault` seccomp profile, does not allow privilege escalation, and drops the
+  capabilities `NET_RAW`, `MKNOD`, `SYS_CHROOT`, `SETFCAP` and `AUDIT_WRITE`. The Docker runner applies the same
+  restrictions. Builds that run as root still install packages, change file ownership and open network connections.
+  Programs that rely on a setuid binary, for example `sudo` started by a non-root user of the image, no longer gain
+  privileges. An exercise can keep `NET_RAW` for tools that need raw sockets, see
+  [Which privileges a build has](/admin/production-setup/localci-build-environment#which-privileges-a-build-has).
 - Exercises configured with the Docker network mode `none` additionally get a short trusted init container that drops
   all IPv4 and IPv6 traffic except loopback. Only that init container gets `NET_ADMIN`; the builder does not. The builder
-  of such an exercise also loses `CAP_NET_RAW`, because a root process that keeps it can open a packet socket that sends
-  and receives frames without passing through those firewall rules. Raw sockets are of no use to a build without a network,
-  and every other capability of the default set stays.
+  of such an exercise always loses `CAP_NET_RAW`, even if the exercise asks to keep it, because raw sockets are of no
+  use to a build without a network and could send frames past those firewall rules.
 
 ### Configuration
 
@@ -236,7 +237,7 @@ Five things need a decision before that command:
    (Longhorn RWX, CephFS, NFS, EFS, Azure Files). Build agents need no shared storage; they clone over the network.
 
 3. **Pod Security admission**, which is what most often blocks a first install on a shared cluster. Builds run as root,
-   because exercise images install packages and use setuid tooling such as `sudo` and `gosu`, and the optional network
+   because exercise images install packages as root, and the optional network
    isolation container needs `NET_ADMIN`. Neither is allowed by the `baseline` profile, and `restricted` cannot run
    exercise images at all. The chart therefore labels the build namespace `privileged` through
    `buildAgents.podSecurityLevel`; only that namespace is affected, and the Artemis namespace keeps whatever the

@@ -2,7 +2,7 @@
 id: configure-the-build
 title: Configure the Build
 sidebar_label: Configure the Build
-last_reviewed: 2026-11-09
+last_reviewed: 2026-11-14
 ---
 
 import Callout from "../../../../src/components/Callout/Callout";
@@ -125,6 +125,19 @@ Currently, instructors can change which network the container joins, add additio
 
 **Use custom network** selects the container's network: the default bridge, one of the networks your administrators have configured, or **None**, which cuts the container off from the network entirely.
 Choosing **None** is how you stop students downloading additional dependencies during the build. The dependencies must then already be present in the Docker image.
+
+**Allow raw network sockets** is switched off by default. Builds run without the Linux capability to open raw network sockets, together with a few capabilities that ordinary builds do not use
+(`MKNOD`, `SYS_CHROOT`, `SETFCAP`, `AUDIT_WRITE`), and processes in the container cannot gain privileges through setuid programs. Normal builds are not affected: TCP and UDP connections, DNS, dependency
+downloads, web requests of the tests and installing packages as `root` keep working.
+Check your exercise if its build or its tests use one of these:
+
+- **Tools that need raw sockets**, such as packet capture or a `traceroute` that sends raw packets, stop working. Switch on **Allow raw network sockets** if the exercise needs them. The option has no effect with the network **None**.
+  The usual `ping` keeps working on Docker, because it falls back to ICMP datagram sockets. On Kubernetes this depends on the cluster setting `net.ipv4.ping_group_range`, so test it there.
+- **`sudo`** started by a non-root user of the image no longer gains `root`. Build the image with `USER root`, or run the step as `root`, instead of relying on `sudo`.
+- **`mknod`**, **`chroot`** and **`setcap`** are refused.
+
+If a build that worked before fails with "Operation not permitted", one of these is the likely cause. Test the exercise after the update with a sample submission.
+See [Which privileges a build has](/admin/production-setup/localci-build-environment#which-privileges-a-build-has) for the details.
 
 Additional environment variables can be added to the container configuration.
 This can be useful if the build process requires specific variables to be set.

@@ -213,7 +213,7 @@ public class BuildJobContainerService {
 
         HostConfig defaultHostConfig = buildAgentConfiguration.hostConfig();
         HostConfig customHostConfig = defaultHostConfig;
-        if (network != null || cpuCount > 0 || memory > 0 || memorySwap > 0) {
+        if (network != null || cpuCount > 0 || memory > 0 || memorySwap > 0 || runConfig.allowRawSockets()) {
             // Use provided values if they are greater than 0 and less than the maximum values, otherwise use either the maximum values or the default values from the host config.
             long adjustedCpuCount = (cpuCount > 0) ? ((maxCpuCount > 0) ? Math.min(cpuCount, maxCpuCount) : cpuCount)
                     : (defaultHostConfig.getCpuQuota() / defaultHostConfig.getCpuPeriod());
@@ -226,7 +226,8 @@ public class BuildJobContainerService {
                     ? ((maxMemorySwap > 0) ? Math.min(convertMemoryFromMBToBytes(memorySwap), convertMemoryFromMBToBytes(maxMemorySwap)) : convertMemoryFromMBToBytes(memorySwap))
                     : defaultHostConfig.getMemorySwap();
 
-            customHostConfig = copyAndAdjustHostConfig(defaultHostConfig, network, adjustedCpuCount, adjustedMemory, adjustedMemorySwap);
+            customHostConfig = copyAndAdjustHostConfig(defaultHostConfig, network, adjustedCpuCount, adjustedMemory, adjustedMemorySwap,
+                    runConfig.allowRawSockets() && !"none".equalsIgnoreCase(StringUtils.trimToEmpty(network)));
         }
 
         log.debug("Set docker network to {}", customHostConfig.getNetworkMode());
@@ -246,14 +247,14 @@ public class BuildJobContainerService {
         }
     }
 
-    private HostConfig copyAndAdjustHostConfig(HostConfig defaultHostConfig, String network, long cpuCount, long memory, long memorySwap) {
+    private HostConfig copyAndAdjustHostConfig(HostConfig defaultHostConfig, String network, long cpuCount, long memory, long memorySwap, boolean allowRawSockets) {
         long cpuPeriod = defaultHostConfig.getCpuPeriod();
         HostConfig host = HostConfig.newHostConfig().withCpuQuota(cpuCount * cpuPeriod).withCpuPeriod(cpuPeriod).withMemory(memory).withMemorySwap(memorySwap)
                 .withPidsLimit(defaultHostConfig.getPidsLimit()).withAutoRemove(true);
         if (network != null && !network.trim().isBlank()) {
             host.withNetworkMode(network);
         }
-        return host;
+        return BuildAgentConfiguration.restrictPrivileges(host, allowRawSockets);
     }
 
     private long convertMemoryFromMBToBytes(long memory) {

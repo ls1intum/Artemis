@@ -40,6 +40,7 @@ import com.github.dockerjava.api.command.ExecCreateCmdResponse;
 import com.github.dockerjava.api.command.ExecStartCmd;
 import com.github.dockerjava.api.command.InspectExecCmd;
 import com.github.dockerjava.api.command.InspectExecResponse;
+import com.github.dockerjava.api.model.Capability;
 import com.github.dockerjava.api.model.Container;
 import com.github.dockerjava.api.model.HostConfig;
 
@@ -177,6 +178,29 @@ class BuildJobContainerServiceTest extends AbstractArtemisBuildAgentTest {
         HostConfig hostConfig = captureHostConfig();
         assertThat(hostConfig).isNotNull();
         assertThat(hostConfig.getNetworkMode()).isEqualTo("my-network-name");
+    }
+
+    @Test
+    void testBuildContainerDropsTheUnusualCapabilitiesAndCannotGainPrivileges() {
+        buildJobContainerService.configureContainer(CONTAINER_NAME, IMAGE_NAME, BUILD_SCRIPT, new DockerRunConfig(List.of(), "my-network-name", 1, 1, 1));
+
+        HostConfig hostConfig = captureHostConfig();
+        assertThat(hostConfig.getCapDrop()).containsExactlyInAnyOrder(Capability.NET_RAW, Capability.MKNOD, Capability.SYS_CHROOT, Capability.SETFCAP, Capability.AUDIT_WRITE);
+        assertThat(hostConfig.getSecurityOpts()).isEqualTo(List.of("no-new-privileges"));
+    }
+
+    @Test
+    void testRawSocketsStayOnlyWhenTheExerciseAsksForThemAndHasANetwork() {
+        buildJobContainerService.configureContainer(CONTAINER_NAME, IMAGE_NAME, BUILD_SCRIPT, new DockerRunConfig(List.of(), null, 0, 0, 0, true));
+
+        assertThat(captureHostConfig().getCapDrop()).containsExactlyInAnyOrder(Capability.MKNOD, Capability.SYS_CHROOT, Capability.SETFCAP, Capability.AUDIT_WRITE);
+    }
+
+    @Test
+    void testNoNetworkDropsRawSocketsEvenWhenTheExerciseAsksForThem() {
+        buildJobContainerService.configureContainer(CONTAINER_NAME, IMAGE_NAME, BUILD_SCRIPT, new DockerRunConfig(List.of(), "none", 0, 0, 0, true));
+
+        assertThat(captureHostConfig().getCapDrop()).contains(Capability.NET_RAW);
     }
 
     @Test
