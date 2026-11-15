@@ -2418,6 +2418,33 @@ describe('QuizExerciseUpdateComponent', () => {
             expect((comp.quizExercise().quizQuestions?.[2] as MultipleChoiceQuestion).singleChoice).toBe(false);
             expect((comp.quizExercise().quizQuestions?.[3] as MultipleChoiceQuestion).singleChoice).toBe(true);
         });
+
+        it('should keep the quiz serializable so that a titled quiz with generated questions becomes valid', () => {
+            const quiz = new QuizExercise(undefined, undefined);
+            quiz.title = 'Generated quiz';
+            quiz.duration = 600;
+            quiz.quizQuestions = [];
+            comp.quizExercise.set(quiz);
+            comp.savedEntity = new QuizExercise(undefined, undefined);
+
+            comp.appendAiGeneratedQuestions([
+                {
+                    id: 'q1',
+                    type: 'single-choice',
+                    title: 'Generated Title',
+                    questionText: 'Generated question',
+                    options: [
+                        { text: 'A', correct: true },
+                        { text: 'B', correct: false },
+                    ],
+                },
+            ]);
+
+            expect(() => JSON.stringify(comp.quizExercise())).not.toThrow();
+            expect(comp.pendingChangesCache()).toBe(true);
+            expect(comp.invalidReasons().map((reason) => reason.translateKey)).not.toContain('artemisApp.quizExercise.invalidReasons.noQuestion');
+            expect(comp.invalidReasons().map((reason) => reason.translateKey)).not.toContain('artemisApp.quizExercise.invalidReasons.quizTitle');
+        });
     });
     describe('save tooltip', () => {
         beforeEach(() => {
