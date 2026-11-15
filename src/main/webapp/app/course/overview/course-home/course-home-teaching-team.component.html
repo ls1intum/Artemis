@@ -5,8 +5,9 @@
             <li class="flex items-center gap-3! min-w-0">
                 <tumaet-ui-avatar [name]="member.name" [imageUrl]="member.imageUrl ? image(member.imageUrl) : undefined" [decorative]="true" />
                 <div class="min-w-0">
-                    <span class="block font-medium wrap-anywhere">{{ member.name }}</span
-                    ><span class="text-sm text-muted-color">{{ 'artemisApp.courseHome.' + member.role | artemisTranslate }}</span>
+                    <span class="block font-medium wrap-anywhere">{{ member.name }}</span><span class="text-sm text-muted-color">{{
+                        'artemisApp.courseHome.' + member.role | artemisTranslate
+                    }}</span>
                 </div>
             </li>
         } @empty {
