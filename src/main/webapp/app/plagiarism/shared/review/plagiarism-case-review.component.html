@@ -13,7 +13,9 @@
                     {{ 'artemisApp.plagiarism.plagiarismCases.overallSimilarity' | artemisTranslate }}:
                     <strong>{{ submission.plagiarismComparison?.similarity?.toFixed(1) }}%</strong>
                 </div>
-                @if (submission.plagiarismComparison) {
+                <!-- The panel only attaches its content once its tab is shown, but Angular creates a projected component at once: without the guard every split view
+                     would load its comparison when the case opens. A visited comparison stays in the set, so its split view stays alive across tab switches. -->
+                @if (submission.plagiarismComparison && visitedComparisons().has(i)) {
                     <jhi-plagiarism-split-view
                         [comparison]="submission.plagiarismComparison"
                         [exercise]="plagiarismCase()?.exercise!"

@@ -151,6 +151,16 @@ describe('ChecklistPanelComponent', () => {
         expect(component.analysisResult()).toBeDefined();
     });
 
+    describe('Category chips', () => {
+        it('colors a known category in any case and falls back to the neutral color', () => {
+            expect(component.getCategoryColorClass('CLARITY')).toBe('bg-primary text-white');
+            expect(component.getCategoryColorClass('coherence')).toBe('bg-state-info text-white');
+            expect(component.getCategoryColorClass('Completeness')).toBe('bg-state-success text-white');
+            expect(component.getCategoryColorClass('SOMETHING_ELSE')).toBe('bg-text-secondary text-white');
+            expect(component.getCategoryColorClass(undefined)).toBe('bg-text-secondary text-white');
+        });
+    });
+
     describe('AI Action Methods', () => {
         const mockActionResponse: ChecklistActionResponse = {
             updatedProblemStatement: 'Updated problem statement',
