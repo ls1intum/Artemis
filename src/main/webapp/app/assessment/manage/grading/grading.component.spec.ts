@@ -18,6 +18,8 @@ import { ModePickerComponent } from 'app/exercise/mode-picker/mode-picker.compon
 import { GradeStepBoundsPipe } from 'app/foundation/pipes/grade-step-bounds.pipe';
 import { SafeHtmlPipe } from 'app/foundation/pipes/safe-html.pipe';
 import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
+import { HttpTestingController } from '@angular/common/http/testing';
+import { GradingScaleApi } from 'app/openapi/api/grading-scale-api';
 import { GradingService } from 'app/assessment/manage/grading/grading-service';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
@@ -681,8 +683,8 @@ describe('GradingComponent', () => {
 
         it('should not delete non-existing grading scale', () => {
             comp.existingGradingScale.set(false);
-            const gradingSystemDeleteForCourseSpy = vi.spyOn(gradingService, 'deleteGradingScaleForCourse');
-            const gradingSystemDeleteForExamSpy = vi.spyOn(gradingService, 'deleteGradingScaleForExam');
+            const gradingSystemDeleteForCourseSpy = vi.spyOn(TestBed.inject(GradingScaleApi), 'deleteGradingScaleForCourse');
+            const gradingSystemDeleteForExamSpy = vi.spyOn(TestBed.inject(GradingScaleApi), 'deleteGradingScaleForExam');
 
             comp.delete();
 
@@ -690,28 +692,20 @@ describe('GradingComponent', () => {
             expect(gradingSystemDeleteForExamSpy).not.toHaveBeenCalled();
         });
 
-        it('should delete grading scale for course', () => {
+        it.each([
+            ['course', false, `/api/assessment/courses/${courseId}/grading-scale`],
+            ['exam', true, `/api/assessment/courses/${courseId}/exams/2/grading-scale`],
+        ])('should delete the grading scale of the %s', (_scope, isExam, url) => {
             comp.existingGradingScale.set(true);
-            comp.isExam.set(false);
+            comp.isExam.set(isExam);
             comp.courseId = courseId;
-            const gradingSystemDeleteForCourseStub = vi.spyOn(gradingService, 'deleteGradingScaleForCourse').mockReturnValue(of(new HttpResponse<void>({ body: undefined })));
+            comp.examId = 2;
 
             comp.delete();
 
-            expect(gradingSystemDeleteForCourseStub).toHaveBeenNthCalledWith(1, comp.courseId);
-            expect(gradingSystemDeleteForCourseStub).toHaveBeenCalledTimes(1);
-            expect(comp.existingGradingScale()).toBe(false);
-        });
-
-        it('should delete grading scale for exam', () => {
-            comp.existingGradingScale.set(true);
-            comp.isExam.set(true);
-            const gradingSystemDeleteForExamStub = vi.spyOn(gradingService, 'deleteGradingScaleForExam').mockReturnValue(of(new HttpResponse<void>({ body: undefined })));
-
-            comp.delete();
-
-            expect(gradingSystemDeleteForExamStub).toHaveBeenNthCalledWith(1, comp.courseId, comp.examId);
-            expect(gradingSystemDeleteForExamStub).toHaveBeenCalledTimes(1);
+            const request = TestBed.inject(HttpTestingController).expectOne({ method: 'DELETE', url });
+            expect(comp.existingGradingScale()).toBe(true);
+            request.flush(null);
             expect(comp.existingGradingScale()).toBe(false);
         });
 

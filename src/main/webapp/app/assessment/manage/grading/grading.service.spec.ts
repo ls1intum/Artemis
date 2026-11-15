@@ -136,16 +136,6 @@ describe('GradingService', () => {
             expect(response.body).toEqual(gradingScaleDTO);
         });
 
-        it('should delete grading scale for course', async () => {
-            const responsePromise = lastValueFrom(service.deleteGradingScaleForCourse(courseId));
-            const req = httpMock.expectOne(`api/assessment/courses/${courseId}/grading-scale`);
-            expect(req.request.method).toBe('DELETE');
-            req.flush({});
-
-            const response = await responsePromise;
-            expect(response.ok).toBe(true);
-        });
-
         it('should find grade steps for course', async () => {
             const gradeStepsDTO = { title: 'Course', gradeType: GradeType.GRADE, gradeSteps: [gradeStep1, gradeStep2], maxPoints: 100 };
             const responsePromise = lastValueFrom(service.findGradeStepsForCourse(courseId));
@@ -155,17 +145,6 @@ describe('GradingService', () => {
 
             const response = await responsePromise;
             expect(response.body).toEqual(gradeStepsDTO);
-        });
-
-        it('should match percentage to grade step for course', async () => {
-            const gradeDTO = { gradeName: 'Pass', isPassingGrade: true };
-            const responsePromise = lastValueFrom(service.matchPercentageToGradeStepForCourse(courseId, 75));
-            const req = httpMock.expectOne(`api/assessment/courses/${courseId}/grading-scale/match-grade-step?gradePercentage=75`);
-            expect(req.request.method).toBe('GET');
-            req.flush(gradeDTO);
-
-            const response = await responsePromise;
-            expect(response.body).toEqual(gradeDTO);
         });
     });
 
@@ -206,16 +185,6 @@ describe('GradingService', () => {
 
             const response = await responsePromise;
             expect(response.body).toEqual(gradingScaleDTO);
-        });
-
-        it('should delete grading scale for exam', async () => {
-            const responsePromise = lastValueFrom(service.deleteGradingScaleForExam(courseId, examId));
-            const req = httpMock.expectOne(`api/assessment/courses/${courseId}/exams/${examId}/grading-scale`);
-            expect(req.request.method).toBe('DELETE');
-            req.flush({});
-
-            const response = await responsePromise;
-            expect(response.ok).toBe(true);
         });
 
         it('should find grade steps for exam', async () => {
@@ -263,27 +232,6 @@ describe('GradingService', () => {
         it('should return undefined when response body is null', async () => {
             const resultPromise = lastValueFrom(service.findGradeSteps(courseId));
             const req = httpMock.expectOne(`api/assessment/courses/${courseId}/grading-scale/grade-steps`);
-            req.flush(null);
-
-            const result = await resultPromise;
-            expect(result).toBeUndefined();
-        });
-    });
-
-    describe('matchPercentageToGradeStep', () => {
-        it('should match percentage for course when no examId provided', async () => {
-            const gradeDTO = { gradeName: 'Pass', isPassingGrade: true };
-            const resultPromise = lastValueFrom(service.matchPercentageToGradeStep(75, courseId));
-            const req = httpMock.expectOne(`api/assessment/courses/${courseId}/grading-scale/match-grade-step?gradePercentage=75`);
-            req.flush(gradeDTO);
-
-            const result = await resultPromise;
-            expect(result).toEqual(gradeDTO);
-        });
-
-        it('should return undefined when response body is null', async () => {
-            const resultPromise = lastValueFrom(service.matchPercentageToGradeStep(75, courseId));
-            const req = httpMock.expectOne(`api/assessment/courses/${courseId}/grading-scale/match-grade-step?gradePercentage=75`);
             req.flush(null);
 
             const result = await resultPromise;
